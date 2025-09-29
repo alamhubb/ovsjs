@@ -6,10 +6,7 @@ import SlimeGenerator from "slime-generator/src/SlimeGenerator.ts";
 import {es6Tokens} from "slime-parser/src/language/es2015/Es6Tokens.ts";
 import OvsParser from "./parser/OvsParser.ts";
 import OvsCstToSlimeAstUtil from "./factory/OvsCstToSlimeAstUtil.ts";
-import JsonUtil from "subhuti/src/utils/JsonUtil.ts";
 import type {SlimeGeneratorResult} from "slime-generator/src/SlimeCodeMapping.ts";
-import Es6Parser from "slime-parser/src/language/es2015/Es6Parser.ts";
-import SlimeCstToAstUtil, {SlimeCstToAst} from "slime-parser/src/language/SlimeCstToAstUtil.ts";
 
 
 export function traverseClearTokens(currentNode: SubhutiCst) {
