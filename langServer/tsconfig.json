@@ -1,0 +1,37 @@
+{
+  "compilerOptions": {
+    "module": "ES2022",
+    "useDefineForClassFields": true,
+    "moduleResolution": "Node",
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "target": "ES2020",
+    "strict": false,
+    "esModuleInterop": true,
+    "lib": [
+      "ES2020",
+      "DOM"
+    ],
+    "types": [
+      "node",
+      "babel"
+    ],
+    "plugins": [
+      {
+        "name": "typescript-todo-or-die-plugin",
+        "options": {
+          "after_date": {
+            "warn": "1w"
+          },
+          "when": {
+            "warn": "1p"
+          }
+        },
+        "additionalKeywords": [
+          "FIX",
+          "TODO_OR_DIE"
+        ]
+      }
+    ]
+  }
+}

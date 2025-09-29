@@ -1,0 +1,16 @@
+{
+  "name": "slime-generator",
+  "version": "0.0.1",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "slime-ast": "^0.0.1",
+    "slime-parser": "^0.0.1",
+    "subhuti": "^0.1.3"
+  }
+}

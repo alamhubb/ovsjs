@@ -1,0 +1,28 @@
+{
+	"typescript.format.semicolons": "insert",
+	"editor.insertSpaces": false,
+	"editor.detectIndentation": false,
+	"files.insertFinalNewline": true,
+	"json.format.keepLines": true,
+	"typescript.tsdk": "node_modules/typescript/lib",
+	"[typescript]": {
+		"editor.defaultFormatter": "vscode.typescript-language-features"
+	},
+	"[javascript]": {
+		"editor.defaultFormatter": "vscode.typescript-language-features"
+	},
+	"[json]": {
+		"editor.defaultFormatter": "vscode.json-language-features"
+	},
+	"[jsonc]": {
+		"editor.defaultFormatter": "vscode.json-language-features"
+	},
+	"files.exclude": {
+		"packages/*/*.d.ts": true,
+		"packages/*/*.js": true,
+		"packages/*/*.map": true,
+		"packages/*/lib/**/*.d.ts": true,
+		"packages/*/lib/**/*.js": true,
+		"packages/*/lib/**/*.map": true
+	}
+}

@@ -1,0 +1,17 @@
+{
+	"extends": "./tsconfig.base.json",
+	"compilerOptions": {
+		"composite": false,
+		"noEmit": true,
+	},
+	"include": [ "packages/*/tests" ],
+	"references": [
+		{ "path": "./packages/eslint/tsconfig.json" },
+		{ "path": "./packages/jsdelivr/tsconfig.json" },
+		{ "path": "./packages/kit/tsconfig.json" },
+		{ "path": "./packages/typescript/tsconfig.json" },
+		{ "path": "./packages/vscode/tsconfig.json" },
+		{ "path": "./packages/monaco/tsconfig.json" },
+		{ "path": "./packages/test-utils/tsconfig.json" },
+	],
+}

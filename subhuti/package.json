@@ -1,0 +1,33 @@
+{
+  "name": "subhuti",
+  "version": "0.1.3",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "test": "tsx test/HelloWorldGrammarParser.ts",
+    "build": "tsc"
+  },
+  "homepage": "https://github.com/alamhubb/subhuti",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alamhubb/subhuti.git"
+  },
+  "contributors": [
+    {
+      "name": "alamhubb",
+      "githubUsername": "alamhubb",
+      "url": "https://github.com/alamhubb"
+    }
+  ],
+  "keywords": [
+    "subhuti",
+    "parser",
+    "auto-parser",
+    "generator",
+    "auto-generator",
+    "transformer",
+    "auto-transfomer"
+  ],
+  "author": "alamhubb",
+  "description": "Automatic conversion between two different programming languages through two grammar files that define the same grammar structure and grammar name"
+}

@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "module": "ES2022",
+    "useDefineForClassFields": true,
+    "moduleResolution": "Node",
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "target": "ES2015",
+    "strict": false,
+    "esModuleInterop": true,
+    "verbatimModuleSyntax": true,
+    "lib": [
+      "ES2019",
+      "dom"
+    ],
+    "types": [
+      "node"
+    ]
+  }
+}
