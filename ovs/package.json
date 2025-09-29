@@ -3,7 +3,6 @@
   "version": "0.0.9",
   "main": "lib/index.js",
   "license": "MIT",
-  "type": "module",
   "scripts": {
     "dev": "tsx ../node_modules/vite/bin/vite.js",
     "build": "tsc && vite build",
