@@ -1,0 +1,7 @@
+export const hello = {
+    render() {
+        return div{
+           1
+       }
+    }
+}
