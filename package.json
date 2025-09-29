@@ -2,7 +2,9 @@
   "name": "root",
   "private": true,
   "workspaces": [
-    "*",
+    "langServer",
+    "ovs",
+    "slime/*",
     "packages/*"
   ],
   "dependencies": {},
