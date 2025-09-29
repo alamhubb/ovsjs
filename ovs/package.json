@@ -3,9 +3,12 @@
   "version": "0.0.9",
   "main": "lib/index.js",
   "license": "MIT",
+  "type": "module",
   "scripts": {
-    "test": "tsx test/HelloWorldGrammarParser.ts",
-    "build": "tsc"
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "test": "tsx test/HelloWorldGrammarParser.ts"
   },
   "homepage": "https://github.com/alamhubb/ovs",
   "repository": {
@@ -35,7 +38,7 @@
   "devDependencies": {
     "@types/node": "^22.7.6",
     "tsx": "^4.19.1",
-    "typescript": "^5.6.2",
+    "typescript": "~5.8.3",
     "vite": "^7.1.7"
   },
   "dependencies": {
