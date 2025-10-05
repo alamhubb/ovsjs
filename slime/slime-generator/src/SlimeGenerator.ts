@@ -234,9 +234,21 @@ export default class SlimeGenerator {
   }
 
   private static generatorProperty(node: SlimeProperty) {
-    this.generatorNode(node.key)
-    this.addCode(es6TokensObj.Colon)
-    this.generatorNode(node.value)
+    // 检查 value 是否是 FunctionExpression 且 key 与 function id 同名
+    if (node.value.type === SlimeAstType.FunctionExpression &&
+      node.value.id &&
+      node.key.type === SlimeAstType.Identifier &&
+      node.key.name === node.value.id.name) {
+      // 使用方法简写语法
+      this.generatorNode(node.key)
+      this.generatorNode(node.value.params)
+      this.generatorNode(node.value.body)
+    } else {
+      // 常规属性语法
+      this.generatorNode(node.key)
+      this.addCode(es6TokensObj.Colon)
+      this.generatorNode(node.value)
+    }
     this.addComma()
   }
 

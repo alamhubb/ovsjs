@@ -36,11 +36,12 @@
   "description": "A technology similar to JSX, but unlike JSX which still uses XML syntax, OVS uses OOP syntax similar to Flutter and SwiftUI to develop UI.",
   "devDependencies": {
     "@types/node": "^22.7.6",
+    "@vitejs/plugin-vue": "^6.0.1",
+    "@vue/tsconfig": "^0.8.1",
+    "prettier": "^3.6.2",
     "tsx": "^4.19.1",
     "typescript": "~5.8.3",
     "vite": "^7.1.7",
-    "@vitejs/plugin-vue": "^6.0.1",
-    "@vue/tsconfig": "^0.8.1",
     "vue-tsc": "^3.0.7"
   },
   "dependencies": {

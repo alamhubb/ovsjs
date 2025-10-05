@@ -7,7 +7,7 @@ import {es6Tokens} from "slime-parser/src/language/es2015/Es6Tokens.ts";
 import OvsParser from "./parser/OvsParser.ts";
 import OvsCstToSlimeAstUtil from "./factory/OvsCstToSlimeAstUtil.ts";
 import type {SlimeGeneratorResult} from "slime-generator/src/SlimeCodeMapping.ts";
-
+import prettier from 'prettier';
 
 export function traverseClearTokens(currentNode: SubhutiCst) {
   if (!currentNode || !currentNode.children || !currentNode.children.length)
@@ -42,8 +42,8 @@ export interface SourceMapSourceGenerateIndexLength {
   generateLength: number[]
 }
 
+// 同步版本（不格式化，用于 Language Server）
 export function vitePluginOvsTransform(code: string): SlimeGeneratorResult {
-
   const lexer = new SubhutiLexer(es6Tokens)
   const tokens = lexer.lexer(code)
 
@@ -59,6 +59,40 @@ export function vitePluginOvsTransform(code: string): SlimeGeneratorResult {
   return SlimeGenerator.generator(ast, tokens)
 }
 
+// 异步版本（支持格式化，用于 Vite 插件）
+export async function vitePluginOvsTransformAsync(code: string, prettify: boolean = false): Promise<SlimeGeneratorResult> {
+  const lexer = new SubhutiLexer(es6Tokens)
+  const tokens = lexer.lexer(code)
+
+  if (!tokens.length) return {
+    code: code,
+    mapping: []
+  }
+  const parser = new OvsParser(tokens)
+
+  let curCst = parser.Program()
+  curCst = traverseClearTokens(curCst)
+  const ast = OvsCstToSlimeAstUtil.toProgram(curCst)
+  const result = SlimeGenerator.generator(ast, tokens)
+
+  // 如果需要格式化
+  if (prettify) {
+    try {
+      result.code = await prettier.format(result.code, {
+        parser: 'babel',
+        semi: false,
+        singleQuote: true,
+        tabWidth: 2,
+        printWidth: 80
+      })
+    } catch (e) {
+      console.warn('OVS code formatting failed:', e)
+    }
+  }
+
+  return result
+}
+
 export default function vitePluginOvs(): Plugin {
   const filter = createFilter(
     /\.ovs$/,
@@ -67,11 +101,13 @@ export default function vitePluginOvs(): Plugin {
   return {
     name: 'vite-plugin-ovs',
     enforce: 'pre',
-    transform(code, id) {
+    async transform(code, id) {
       if (!filter(id)) {
         return
       }
-      const res = vitePluginOvsTransform(code)
+      // 开发模式下启用格式化
+      const isDev = process.env.NODE_ENV !== 'production'
+      const res = await vitePluginOvsTransformAsync(code, isDev)
       const resCode = `${res.code}`
       return {
         code: resCode,
