@@ -1,7 +1,10 @@
 export const hello = {
     render() {
         return div{
-           1
+           1,
+           456,
+           div {
+           123}
        }
     }
 }
