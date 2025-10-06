@@ -44,10 +44,14 @@ export default class OvsParser extends Es6Parser<OvsTokenConsumer> {
     this.tokenConsumer.LParen()
     this.Expression()
     this.tokenConsumer.RParen()
+    this.tokenConsumer.LBrace()
     this.OvsChildList()
+    this.tokenConsumer.RBrace()
     this.Option(() => {
       this.tokenConsumer.ElseTok()
+      this.tokenConsumer.LBrace()
       this.OvsChildList()
+      this.tokenConsumer.RBrace()
     })
   }
 
