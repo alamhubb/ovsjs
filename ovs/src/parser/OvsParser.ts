@@ -17,13 +17,37 @@ export default class OvsParser extends Es6Parser<OvsTokenConsumer> {
 
   @SubhutiRule
   OvsChildList() {
-    this.OvsRenderDomViewDeclarator()
     this.Many(() => {
-      this.tokenConsumer.Comma()
       this.OvsRenderDomViewDeclarator()
     })
+  }
+
+  @SubhutiRule
+  OvsStatement() {
+    this.Or([
+      {
+        alt: () => {
+          this.OvsRenderDomViewDeclarator()
+        }
+      },
+      {
+        alt: () => {
+          this.OvsIfStatement()
+        }
+      }
+    ])
+  }
+
+  @SubhutiRule
+  OvsIfStatement() {
+    this.tokenConsumer.IfTok()
+    this.tokenConsumer.LParen()
+    this.Expression()
+    this.tokenConsumer.RParen()
+    this.OvsChildList()
     this.Option(() => {
-      this.tokenConsumer.Comma()
+      this.tokenConsumer.ElseTok()
+      this.OvsChildList()
     })
   }
 
@@ -60,7 +84,7 @@ export default class OvsParser extends Es6Parser<OvsTokenConsumer> {
     this.tokenConsumer.LBrace()
     //这里要改一下，支持三种，一种是嵌套的，一种是元素，一种是命名=的
     this.Option(() => {
-      this.OvsChildList()
+      this.OvsStatement()
     })
     this.tokenConsumer.RBrace()
     const curCst = this.getCurCst()

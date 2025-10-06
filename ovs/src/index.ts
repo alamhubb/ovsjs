@@ -8,6 +8,7 @@ import OvsParser from "./parser/OvsParser.ts";
 import OvsCstToSlimeAstUtil from "./factory/OvsCstToSlimeAstUtil.ts";
 import type {SlimeGeneratorResult} from "slime-generator/src/SlimeCodeMapping.ts";
 import prettier from 'prettier';
+import {LogUtil} from "ovs-lsp/src/logutil.ts";
 
 export function traverseClearTokens(currentNode: SubhutiCst) {
   if (!currentNode || !currentNode.children || !currentNode.children.length)
@@ -54,6 +55,8 @@ export function vitePluginOvsTransform(code: string): SlimeGeneratorResult {
   const parser = new OvsParser(tokens)
 
   let curCst = parser.Program()
+
+  LogUtil.log(curCst)
   curCst = traverseClearTokens(curCst)
   const ast = OvsCstToSlimeAstUtil.toProgram(curCst)
   return SlimeGenerator.generator(ast, tokens)
