@@ -350,6 +350,10 @@ export default class SlimeGenerator {
       this.generatorImportDeclaration(node as SlimeImportDeclaration)
     } else if (node.type === SlimeAstType.FunctionParams) {
       this.generatorFunctionParams(node as SlimeFunctionParams)
+    } else if (node.type === 'ConditionalExpression') {
+      this.generatorConditionalExpression(node as any)
+    } else if (node.type === 'BooleanLiteral') {
+      this.generateCode += node.value ? 'true' : 'false'
     } else {
       throw new Error('不支持的类型：' + node.type)
     }
@@ -358,6 +362,14 @@ export default class SlimeGenerator {
     }
   }
 
+
+  private static generatorConditionalExpression(node: any) {
+    this.generatorNode(node.test)
+    this.generateCode += '?'
+    this.generatorNode(node.consequent)
+    this.generateCode += ':'
+    this.generatorNode(node.alternate)
+  }
 
   private static generatorObjectPattern(node: SlimeObjectPattern) {
     this.generatorNodes(node.properties)

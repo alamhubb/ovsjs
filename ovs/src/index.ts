@@ -56,8 +56,9 @@ export function vitePluginOvsTransform(code: string): SlimeGeneratorResult {
 
   let curCst = parser.Program()
 
-  LogUtil.log(curCst)
   curCst = traverseClearTokens(curCst)
+  traverseClearLoc(curCst)
+  LogUtil.log(curCst)
   const ast = OvsCstToSlimeAstUtil.toProgram(curCst)
   return SlimeGenerator.generator(ast, tokens)
 }
