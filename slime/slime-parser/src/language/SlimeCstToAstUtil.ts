@@ -45,7 +45,7 @@ import {
   type SlimeImportNamespaceSpecifier,
   type SlimeImportExpression,
   SlimeVariableDeclarationKindValue,
-  type SlimeVariableDeclarationKind
+  type SlimeVariableDeclarationKind, type SlimeClassExpression
 } from "slime-ast/src/SlimeAstInterface.ts";
 import SubhutiCst, {type SubhutiSourceLocation} from "subhuti/src/struct/SubhutiCst.ts";
 import Es6Parser from "./es2015/Es6Parser.ts";
@@ -841,6 +841,8 @@ export class SlimeCstToAst {
       return this.createFunctionExpressionAst(first)
     } else if (first.name === Es6Parser.prototype.ObjectLiteral.name) {
       return this.createObjectExpressionAst(first)
+    } else if (first.name === Es6Parser.prototype.ClassExpression.name) {
+      return this.createClassExpressionAst(first)
     } else {
       throw new Error('未知的createPrimaryExpressionAst：' + first.name)
     }
@@ -859,6 +861,21 @@ export class SlimeCstToAst {
       }
     }
     return SlimeAstUtil.createObjectExpression(ary)
+  }
+
+  createClassExpressionAst(cst: SubhutiCst): SlimeClassExpression {
+    const astName = checkCstName(cst, Es6Parser.prototype.ClassExpression.name);
+    const ary: Array<SlimeProperty> = []
+    if (cst.children.length > 2) {
+      const PropertyDefinitionListCst = cst.children[1]
+      for (const child of PropertyDefinitionListCst.children) {
+        if (child.name === Es6Parser.prototype.PropertyDefinition.name) {
+          const property = this.createPropertyDefinitionAst(child)
+          ary.push(property)
+        }
+      }
+    }
+    return SlimeAstUtil.createClassExpression(ary)
   }
 
   createPropertyDefinitionAst(cst: SubhutiCst): SlimeProperty {

@@ -49,7 +49,7 @@ import {
   type SlimeClassBody,
   type SlimeExportNamedDeclaration,
   type SlimeDeclaration,
-  type SlimeExportSpecifier, type SlimeVariableDeclarationKind, type SlimeExportToken,
+  type SlimeExportSpecifier, type SlimeVariableDeclarationKind, type SlimeExportToken, type SlimeClassExpression,
 } from "./SlimeAstInterface.ts";
 
 import {SlimeAstType} from "./SlimeAstType.ts";
@@ -222,6 +222,13 @@ class SlimeAst {
   }
 
   createObjectExpression(properties: Array<SlimeProperty> = []): SlimeObjectExpression {
+    return this.commonLocType({
+      type: SlimeAstType.ObjectExpression,
+      properties: properties
+    })
+  }
+
+  createClassExpression(properties: Array<SlimeProperty> = []): SlimeClassExpression {
     return this.commonLocType({
       type: SlimeAstType.ObjectExpression,
       properties: properties

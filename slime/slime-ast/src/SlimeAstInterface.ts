@@ -1,5 +1,5 @@
 import {
-  type AssignmentOperator, BaseExpression, BaseNode,
+  type AssignmentOperator, type BaseClass, type BaseDeclaration, BaseExpression, BaseNode,
   type BinaryOperator, BlockStatement, Expression, Identifier,
   type LogicalOperator, MaybeNamedFunctionDeclaration, NewExpression, Pattern, Property, SpreadElement, Super,
   type UnaryOperator,
@@ -636,7 +636,7 @@ export interface SlimeClassDeclaration extends SlimeMaybeNamedClassDeclaration {
   class?: SlimeBaseNode;
 }
 
-export interface SlimeClassExpression extends SlimeBaseNode {
+export interface SlimeClassExpression extends SlimeBaseClass {
   type: "ClassExpression";
   id?: SlimeIdentifier | null | undefined;
 }

@@ -145,6 +145,7 @@ export default class OvsParser extends Es6Parser<OvsTokenConsumer> {
     return super.exec(curCst, code);
   }
 
+  //递归加入到子节点
   transCst(curCst: SubhutiCst) {
     if (curCst.children) {
       const children = []

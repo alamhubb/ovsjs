@@ -1,16 +1,10 @@
 import {vitePluginOvsTransform} from "ovsjs/src"
 
+
+Error.stackTraceLimit = 50
+
 const code = `
-export const test = {
-  render() {
-    return div { 
-      const abc = true
-      if (abc) {
-        123
-      }
-    }
-  }
-}
+class a extends b {}
 `
 
 const res = vitePluginOvsTransform(code)
