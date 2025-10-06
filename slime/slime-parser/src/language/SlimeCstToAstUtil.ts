@@ -865,17 +865,8 @@ export class SlimeCstToAst {
 
   createClassExpressionAst(cst: SubhutiCst): SlimeClassExpression {
     const astName = checkCstName(cst, Es6Parser.prototype.ClassExpression.name);
-    const ary: Array<SlimeProperty> = []
-    if (cst.children.length > 2) {
-      const PropertyDefinitionListCst = cst.children[1]
-      for (const child of PropertyDefinitionListCst.children) {
-        if (child.name === Es6Parser.prototype.PropertyDefinition.name) {
-          const property = this.createPropertyDefinitionAst(child)
-          ary.push(property)
-        }
-      }
-    }
-    return SlimeAstUtil.createClassExpression(ary)
+
+    return SlimeAstUtil.createClassExpression()
   }
 
   createPropertyDefinitionAst(cst: SubhutiCst): SlimeProperty {

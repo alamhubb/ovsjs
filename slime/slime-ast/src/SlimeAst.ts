@@ -228,11 +228,8 @@ class SlimeAst {
     })
   }
 
-  createClassExpression(properties: Array<SlimeProperty> = []): SlimeClassExpression {
-    return this.commonLocType({
-      type: SlimeAstType.ObjectExpression,
-      properties: properties
-    })
+  createClassExpression(): SlimeClassExpression {
+
   }
 
   createCallExpression(callee: SlimeExpression | SlimeSuper, args: Array<SlimeExpression | SlimeSpreadElement>): SlimeSimpleCallExpression {
