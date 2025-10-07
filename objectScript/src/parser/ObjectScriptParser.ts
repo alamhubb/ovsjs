@@ -1,6 +1,6 @@
 import {Subhuti, SubhutiRule} from "subhuti/src/parser/SubhutiParser";
 import Es6Parser from "slime-parser/src/language/es2015/Es6Parser";
-import ObjectScriptTokenConsumer from "./OvsConsumer";
+import ObjectScriptTokenConsumer from "./ObjectScriptTokenConsumer";
 
 
 @Subhuti
