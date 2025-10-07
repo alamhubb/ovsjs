@@ -337,18 +337,30 @@ export class SlimeCstToAst {
   createClassDeclarationAst(cst: SubhutiCst): SlimeClassDeclaration {
     const astName = checkCstName(cst, Es6Parser.prototype.ClassDeclaration.name);
 
-    const id = this.createBindingIdentifierAst(cst.children[1])
-    const body = this.createClassTailAst(cst.children[2])
+    const id = this.createBindingIdentifierAst(cst.children[1]) // 解析 class 声明中的标识符
+    const classTail = this.createClassTailAst(cst.children[2]) // 统一处理 ClassTail，获取 body / super
 
-    const ast = SlimeAstUtil.createClassDeclaration(id, body, cst.loc)
+    const ast = SlimeAstUtil.createClassDeclaration(id, classTail.body, cst.loc) // 构造类声明 AST
+    ast.superClass = classTail.superClass ?? undefined // 如果存在继承则挂载 superClass
 
     return ast
   }
 
-  createClassTailAst(cst: SubhutiCst): SlimeClassBody {
+  createClassTailAst(cst: SubhutiCst): {superClass: SlimeExpression | null; body: SlimeClassBody} {
     const astName = checkCstName(cst, Es6Parser.prototype.ClassTail.name);
-    const body = this.createClassBodyAst(cst.children[1])
-    return body
+    let bodyIndex = 1 // 默认 ClassBody 在索引 1
+    let superClass: SlimeExpression | null = null // 超类默认为 null
+    if (cst.children[0] && cst.children[0].name === Es6Parser.prototype.ClassHeritage.name) {
+      superClass = this.createClassHeritageAst(cst.children[0]) // 如果存在 ClassHeritage 则解析 superClass
+      bodyIndex = 2 // ClassBody 顺延到索引 2
+    }
+    const body = this.createClassBodyAst(cst.children[bodyIndex]) // 解析类主体
+    return {superClass, body} // 返回组合结果，方便上层使用
+  }
+
+  createClassHeritageAst(cst: SubhutiCst): SlimeExpression {
+    const astName = checkCstName(cst, Es6Parser.prototype.ClassHeritage.name);
+    return this.createLeftHandSideExpressionAst(cst.children[1]) // ClassHeritage -> extends + LeftHandSideExpression
   }
 
   createClassBodyItemAst(staticCst: SubhutiCst, cst: SubhutiCst): SlimeMethodDefinition | SlimePropertyDefinition {
@@ -361,22 +373,27 @@ export class SlimeCstToAst {
 
   createClassBodyAst(cst: SubhutiCst): SlimeClassBody {
     const astName = checkCstName(cst, Es6Parser.prototype.ClassBody.name);
-    //ClassBody.ClassElementList
-    const body: Array<SlimeMethodDefinition | SlimePropertyDefinition> = cst.children[0].children.map(item => {
-        const astName = checkCstName(item, Es6Parser.prototype.ClassElement.name);
-        if (item.children.length > 1) {
-          return this.createClassBodyItemAst(item.children[0], item.children[1])
-        } else {
-          return this.createClassBodyItemAst(null, item.children[0])
+    const elementsWrapper = cst.children && cst.children[0] // ClassBody -> ClassElementList?，第一项为列表容器
+    const body: Array<SlimeMethodDefinition | SlimePropertyDefinition> = [] // 收集类成员
+    if (elementsWrapper && Array.isArray(elementsWrapper.children)) {
+      for (const element of elementsWrapper.children) { // 遍历 ClassElement
+        const elementChildren = element.children ?? [] // 兼容无子节点情况
+        if (!elementChildren.length) {
+          continue // 没有内容的 ClassElement 直接忽略
+        }
+        const staticCst = elementChildren.length > 1 ? elementChildren[0] : null // 如果有多个子节点，第一个通常是 static 修饰
+        const targetCst = elementChildren[elementChildren.length - 1] // 最后一个节点是真正的成员定义
+        const item = this.createClassBodyItemAst(staticCst, targetCst) // 根据成员类型生成 AST
+        if (item) {
+          body.push(item) // 过滤掉返回 undefined 的情况
         }
       }
-    )
-    const ast: SlimeClassBody = {
-      type: astName as any,
-      body: body,
-      loc: cst.loc
     }
-    return ast
+    return {
+      type: astName as any, // 构造 ClassBody AST
+      body: body, // 挂载类成员数组
+      loc: cst.loc // 透传位置信息
+    }
   }
 
   createFormalParameterListAst(cst: SubhutiCst): SlimePattern[] {
@@ -866,7 +883,16 @@ export class SlimeCstToAst {
   createClassExpressionAst(cst: SubhutiCst): SlimeClassExpression {
     const astName = checkCstName(cst, Es6Parser.prototype.ClassExpression.name);
 
-    return SlimeAstUtil.createClassExpression()
+    let id: SlimeIdentifier | null = null // class 表达式可选的标识符
+    let tailStartIndex = 1 // 默认 ClassTail 位于索引 1
+    const nextChild = cst.children[1]
+    if (nextChild && nextChild.name === Es6Parser.prototype.BindingIdentifier.name) {
+      id = this.createBindingIdentifierAst(nextChild) // 若存在标识符则解析
+      tailStartIndex = 2 // ClassTail 的位置后移
+    }
+    const classTail = this.createClassTailAst(cst.children[tailStartIndex]) // 统一解析 ClassTail
+
+    return SlimeAstUtil.createClassExpression(id, classTail.superClass, classTail.body, cst.loc) // 生成 ClassExpression AST
   }
 
   createPropertyDefinitionAst(cst: SubhutiCst): SlimeProperty {

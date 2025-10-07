@@ -275,6 +275,30 @@ export default class SlimeGenerator {
 
   }
 
+  private static generatorClassExpression(node: SlimeClassExpression) {
+    this.addCode(es6TokensObj.ClassTok) // 输出 class 关键字并记录映射
+    if (node.id) {
+      this.addSpacing() // 类名与关键字之间添加空格
+      this.generatorNode(node.id) // 递归生成类名标识符
+    }
+    if (node.superClass) {
+      this.addSpacing() // class Name 与 extends 之间的空格
+      this.addCode(es6TokensObj.ExtendsTok) // 输出 extends 关键字
+      this.addSpacing() // extends 与父类表达式之间的空格
+      this.generatorNode(node.superClass) // 递归生成父类表达式
+    }
+    this.generatorClassBody(node.body) // 生成类主体花括号及成员
+  }
+
+  private static generatorClassBody(body: SlimeClassBody) {
+    this.addLBrace(body.loc) // 输出左花括号，并绑定定位
+    if (body?.body?.length) {
+      body.body.forEach((element) => {
+        this.generatorNode(element) // 遍历生成每个类成员
+      })
+    }
+    this.addRBrace(body.loc) // 输出右花括号
+  }
 
   private static generatorNode(node: SlimeBaseNode) {
     if (node.type === SlimeAstType.Program) {
@@ -328,6 +352,8 @@ export default class SlimeGenerator {
       this.generatorFunctionDeclaration(node as SlimeFunctionDeclaration)
     } else if (node.type === SlimeAstType.ClassDeclaration) {
       this.generatorClassDeclaration(node as SlimeClassDeclaration)
+    } else if (node.type === SlimeAstType.ClassExpression) {
+      this.generatorClassExpression(node as SlimeClassExpression) // 新增对 ClassExpression 的处理
     } else if (node.type === SlimeAstType.VariableDeclaration) {
       this.generatorVariableDeclaration(node as SlimeVariableDeclaration)
     } else if (node.type === SlimeAstType.ExpressionStatement) {
@@ -357,8 +383,8 @@ export default class SlimeGenerator {
     } else {
       throw new Error('不支持的类型：' + node.type)
     }
-    if (node.loc.newLine) {
-      this.addNewLine()
+    if (node.loc && node.loc.newLine) {
+      this.addNewLine() // 根据定位信息决定是否插入换行
     }
   }
 

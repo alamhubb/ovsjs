@@ -1316,3 +1316,1603 @@
   ]
 }
 ================================================================================
+
+[2025-10-07T16:15:00.693Z]
+{
+  "name": "Program",
+  "children": [
+    {
+      "name": "ModuleItemList",
+      "children": [
+        {
+          "name": "StatementListItem",
+          "children": [
+            {
+              "name": "Statement",
+              "children": [
+                {
+                  "name": "ExpressionStatement",
+                  "children": [
+                    {
+                      "name": "Expression",
+                      "children": [
+                        {
+                          "name": "AssignmentExpression",
+                          "children": [
+                            {
+                              "name": "ConditionalExpression",
+                              "children": [
+                                {
+                                  "name": "LogicalORExpression",
+                                  "children": [
+                                    {
+                                      "name": "LogicalANDExpression",
+                                      "children": [
+                                        {
+                                          "name": "BitwiseORExpression",
+                                          "children": [
+                                            {
+                                              "name": "BitwiseXORExpression",
+                                              "children": [
+                                                {
+                                                  "name": "BitwiseANDExpression",
+                                                  "children": [
+                                                    {
+                                                      "name": "EqualityExpression",
+                                                      "children": [
+                                                        {
+                                                          "name": "RelationalExpression",
+                                                          "children": [
+                                                            {
+                                                              "name": "ShiftExpression",
+                                                              "children": [
+                                                                {
+                                                                  "name": "AdditiveExpression",
+                                                                  "children": [
+                                                                    {
+                                                                      "name": "MultiplicativeExpression",
+                                                                      "children": [
+                                                                        {
+                                                                          "name": "UnaryExpression",
+                                                                          "children": [
+                                                                            {
+                                                                              "name": "PostfixExpression",
+                                                                              "children": [
+                                                                                {
+                                                                                  "name": "LeftHandSideExpression",
+                                                                                  "children": [
+                                                                                    {
+                                                                                      "name": "NewExpression",
+                                                                                      "children": [
+                                                                                        {
+                                                                                          "name": "MemberExpression",
+                                                                                          "children": [
+                                                                                            {
+                                                                                              "name": "PrimaryExpression",
+                                                                                              "children": [
+                                                                                                {
+                                                                                                  "name": "ClassExpression",
+                                                                                                  "children": [
+                                                                                                    {
+                                                                                                      "name": "ClassTok",
+                                                                                                      "value": "class"
+                                                                                                    },
+                                                                                                    {
+                                                                                                      "name": "BindingIdentifier",
+                                                                                                      "children": [
+                                                                                                        {
+                                                                                                          "name": "Identifier",
+                                                                                                          "value": "a"
+                                                                                                        }
+                                                                                                      ]
+                                                                                                    },
+                                                                                                    {
+                                                                                                      "name": "ClassTail",
+                                                                                                      "children": [
+                                                                                                        {
+                                                                                                          "name": "ClassHeritage",
+                                                                                                          "children": [
+                                                                                                            {
+                                                                                                              "name": "ExtendsTok",
+                                                                                                              "value": "extends"
+                                                                                                            },
+                                                                                                            {
+                                                                                                              "name": "LeftHandSideExpression",
+                                                                                                              "children": [
+                                                                                                                {
+                                                                                                                  "name": "NewExpression",
+                                                                                                                  "children": [
+                                                                                                                    {
+                                                                                                                      "name": "MemberExpression",
+                                                                                                                      "children": [
+                                                                                                                        {
+                                                                                                                          "name": "PrimaryExpression",
+                                                                                                                          "children": [
+                                                                                                                            {
+                                                                                                                              "name": "IdentifierReference",
+                                                                                                                              "children": [
+                                                                                                                                {
+                                                                                                                                  "name": "Identifier",
+                                                                                                                                  "value": "b"
+                                                                                                                                }
+                                                                                                                              ]
+                                                                                                                            }
+                                                                                                                          ]
+                                                                                                                        }
+                                                                                                                      ]
+                                                                                                                    }
+                                                                                                                  ]
+                                                                                                                }
+                                                                                                              ]
+                                                                                                            }
+                                                                                                          ]
+                                                                                                        },
+                                                                                                        {
+                                                                                                          "name": "LBrace",
+                                                                                                          "value": "{"
+                                                                                                        },
+                                                                                                        {
+                                                                                                          "name": "ClassBody",
+                                                                                                          "children": [
+                                                                                                            {
+                                                                                                              "name": "ClassElementList"
+                                                                                                            }
+                                                                                                          ]
+                                                                                                        },
+                                                                                                        {
+                                                                                                          "name": "RBrace",
+                                                                                                          "value": "}"
+                                                                                                        }
+                                                                                                      ]
+                                                                                                    }
+                                                                                                  ]
+                                                                                                }
+                                                                                              ]
+                                                                                            }
+                                                                                          ]
+                                                                                        }
+                                                                                      ]
+                                                                                    }
+                                                                                  ]
+                                                                                }
+                                                                              ]
+                                                                            }
+                                                                          ]
+                                                                        }
+                                                                      ]
+                                                                    }
+                                                                  ]
+                                                                }
+                                                              ]
+                                                            }
+                                                          ]
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+================================================================================
+
+[2025-10-07T16:16:01.680Z]
+{
+  "name": "Program",
+  "children": [
+    {
+      "name": "ModuleItemList",
+      "children": [
+        {
+          "name": "StatementListItem",
+          "children": [
+            {
+              "name": "Statement",
+              "children": [
+                {
+                  "name": "ExpressionStatement",
+                  "children": [
+                    {
+                      "name": "Expression",
+                      "children": [
+                        {
+                          "name": "AssignmentExpression",
+                          "children": [
+                            {
+                              "name": "ConditionalExpression",
+                              "children": [
+                                {
+                                  "name": "LogicalORExpression",
+                                  "children": [
+                                    {
+                                      "name": "LogicalANDExpression",
+                                      "children": [
+                                        {
+                                          "name": "BitwiseORExpression",
+                                          "children": [
+                                            {
+                                              "name": "BitwiseXORExpression",
+                                              "children": [
+                                                {
+                                                  "name": "BitwiseANDExpression",
+                                                  "children": [
+                                                    {
+                                                      "name": "EqualityExpression",
+                                                      "children": [
+                                                        {
+                                                          "name": "RelationalExpression",
+                                                          "children": [
+                                                            {
+                                                              "name": "ShiftExpression",
+                                                              "children": [
+                                                                {
+                                                                  "name": "AdditiveExpression",
+                                                                  "children": [
+                                                                    {
+                                                                      "name": "MultiplicativeExpression",
+                                                                      "children": [
+                                                                        {
+                                                                          "name": "UnaryExpression",
+                                                                          "children": [
+                                                                            {
+                                                                              "name": "PostfixExpression",
+                                                                              "children": [
+                                                                                {
+                                                                                  "name": "LeftHandSideExpression",
+                                                                                  "children": [
+                                                                                    {
+                                                                                      "name": "NewExpression",
+                                                                                      "children": [
+                                                                                        {
+                                                                                          "name": "MemberExpression",
+                                                                                          "children": [
+                                                                                            {
+                                                                                              "name": "PrimaryExpression",
+                                                                                              "children": [
+                                                                                                {
+                                                                                                  "name": "ClassExpression",
+                                                                                                  "children": [
+                                                                                                    {
+                                                                                                      "name": "ClassTok",
+                                                                                                      "value": "class"
+                                                                                                    },
+                                                                                                    {
+                                                                                                      "name": "BindingIdentifier",
+                                                                                                      "children": [
+                                                                                                        {
+                                                                                                          "name": "Identifier",
+                                                                                                          "value": "a"
+                                                                                                        }
+                                                                                                      ]
+                                                                                                    },
+                                                                                                    {
+                                                                                                      "name": "ClassTail",
+                                                                                                      "children": [
+                                                                                                        {
+                                                                                                          "name": "ClassHeritage",
+                                                                                                          "children": [
+                                                                                                            {
+                                                                                                              "name": "ExtendsTok",
+                                                                                                              "value": "extends"
+                                                                                                            },
+                                                                                                            {
+                                                                                                              "name": "LeftHandSideExpression",
+                                                                                                              "children": [
+                                                                                                                {
+                                                                                                                  "name": "NewExpression",
+                                                                                                                  "children": [
+                                                                                                                    {
+                                                                                                                      "name": "MemberExpression",
+                                                                                                                      "children": [
+                                                                                                                        {
+                                                                                                                          "name": "PrimaryExpression",
+                                                                                                                          "children": [
+                                                                                                                            {
+                                                                                                                              "name": "IdentifierReference",
+                                                                                                                              "children": [
+                                                                                                                                {
+                                                                                                                                  "name": "Identifier",
+                                                                                                                                  "value": "b"
+                                                                                                                                }
+                                                                                                                              ]
+                                                                                                                            }
+                                                                                                                          ]
+                                                                                                                        }
+                                                                                                                      ]
+                                                                                                                    }
+                                                                                                                  ]
+                                                                                                                }
+                                                                                                              ]
+                                                                                                            }
+                                                                                                          ]
+                                                                                                        },
+                                                                                                        {
+                                                                                                          "name": "LBrace",
+                                                                                                          "value": "{"
+                                                                                                        },
+                                                                                                        {
+                                                                                                          "name": "ClassBody",
+                                                                                                          "children": [
+                                                                                                            {
+                                                                                                              "name": "ClassElementList"
+                                                                                                            }
+                                                                                                          ]
+                                                                                                        },
+                                                                                                        {
+                                                                                                          "name": "RBrace",
+                                                                                                          "value": "}"
+                                                                                                        }
+                                                                                                      ]
+                                                                                                    }
+                                                                                                  ]
+                                                                                                }
+                                                                                              ]
+                                                                                            }
+                                                                                          ]
+                                                                                        }
+                                                                                      ]
+                                                                                    }
+                                                                                  ]
+                                                                                }
+                                                                              ]
+                                                                            }
+                                                                          ]
+                                                                        }
+                                                                      ]
+                                                                    }
+                                                                  ]
+                                                                }
+                                                              ]
+                                                            }
+                                                          ]
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+================================================================================
+
+[2025-10-07T16:16:29.130Z]
+{
+  "name": "Program",
+  "children": [
+    {
+      "name": "ModuleItemList",
+      "children": [
+        {
+          "name": "StatementListItem",
+          "children": [
+            {
+              "name": "Statement",
+              "children": [
+                {
+                  "name": "ExpressionStatement",
+                  "children": [
+                    {
+                      "name": "Expression",
+                      "children": [
+                        {
+                          "name": "AssignmentExpression",
+                          "children": [
+                            {
+                              "name": "ConditionalExpression",
+                              "children": [
+                                {
+                                  "name": "LogicalORExpression",
+                                  "children": [
+                                    {
+                                      "name": "LogicalANDExpression",
+                                      "children": [
+                                        {
+                                          "name": "BitwiseORExpression",
+                                          "children": [
+                                            {
+                                              "name": "BitwiseXORExpression",
+                                              "children": [
+                                                {
+                                                  "name": "BitwiseANDExpression",
+                                                  "children": [
+                                                    {
+                                                      "name": "EqualityExpression",
+                                                      "children": [
+                                                        {
+                                                          "name": "RelationalExpression",
+                                                          "children": [
+                                                            {
+                                                              "name": "ShiftExpression",
+                                                              "children": [
+                                                                {
+                                                                  "name": "AdditiveExpression",
+                                                                  "children": [
+                                                                    {
+                                                                      "name": "MultiplicativeExpression",
+                                                                      "children": [
+                                                                        {
+                                                                          "name": "UnaryExpression",
+                                                                          "children": [
+                                                                            {
+                                                                              "name": "PostfixExpression",
+                                                                              "children": [
+                                                                                {
+                                                                                  "name": "LeftHandSideExpression",
+                                                                                  "children": [
+                                                                                    {
+                                                                                      "name": "NewExpression",
+                                                                                      "children": [
+                                                                                        {
+                                                                                          "name": "MemberExpression",
+                                                                                          "children": [
+                                                                                            {
+                                                                                              "name": "PrimaryExpression",
+                                                                                              "children": [
+                                                                                                {
+                                                                                                  "name": "ClassExpression",
+                                                                                                  "children": [
+                                                                                                    {
+                                                                                                      "name": "ClassTok",
+                                                                                                      "value": "class"
+                                                                                                    },
+                                                                                                    {
+                                                                                                      "name": "BindingIdentifier",
+                                                                                                      "children": [
+                                                                                                        {
+                                                                                                          "name": "Identifier",
+                                                                                                          "value": "a"
+                                                                                                        }
+                                                                                                      ]
+                                                                                                    },
+                                                                                                    {
+                                                                                                      "name": "ClassTail",
+                                                                                                      "children": [
+                                                                                                        {
+                                                                                                          "name": "ClassHeritage",
+                                                                                                          "children": [
+                                                                                                            {
+                                                                                                              "name": "ExtendsTok",
+                                                                                                              "value": "extends"
+                                                                                                            },
+                                                                                                            {
+                                                                                                              "name": "LeftHandSideExpression",
+                                                                                                              "children": [
+                                                                                                                {
+                                                                                                                  "name": "NewExpression",
+                                                                                                                  "children": [
+                                                                                                                    {
+                                                                                                                      "name": "MemberExpression",
+                                                                                                                      "children": [
+                                                                                                                        {
+                                                                                                                          "name": "PrimaryExpression",
+                                                                                                                          "children": [
+                                                                                                                            {
+                                                                                                                              "name": "IdentifierReference",
+                                                                                                                              "children": [
+                                                                                                                                {
+                                                                                                                                  "name": "Identifier",
+                                                                                                                                  "value": "b"
+                                                                                                                                }
+                                                                                                                              ]
+                                                                                                                            }
+                                                                                                                          ]
+                                                                                                                        }
+                                                                                                                      ]
+                                                                                                                    }
+                                                                                                                  ]
+                                                                                                                }
+                                                                                                              ]
+                                                                                                            }
+                                                                                                          ]
+                                                                                                        },
+                                                                                                        {
+                                                                                                          "name": "LBrace",
+                                                                                                          "value": "{"
+                                                                                                        },
+                                                                                                        {
+                                                                                                          "name": "ClassBody",
+                                                                                                          "children": [
+                                                                                                            {
+                                                                                                              "name": "ClassElementList"
+                                                                                                            }
+                                                                                                          ]
+                                                                                                        },
+                                                                                                        {
+                                                                                                          "name": "RBrace",
+                                                                                                          "value": "}"
+                                                                                                        }
+                                                                                                      ]
+                                                                                                    }
+                                                                                                  ]
+                                                                                                }
+                                                                                              ]
+                                                                                            }
+                                                                                          ]
+                                                                                        }
+                                                                                      ]
+                                                                                    }
+                                                                                  ]
+                                                                                }
+                                                                              ]
+                                                                            }
+                                                                          ]
+                                                                        }
+                                                                      ]
+                                                                    }
+                                                                  ]
+                                                                }
+                                                              ]
+                                                            }
+                                                          ]
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+================================================================================
+
+[2025-10-07T16:16:39.578Z]
+{
+  "name": "Program",
+  "children": [
+    {
+      "name": "ModuleItemList",
+      "children": [
+        {
+          "name": "StatementListItem",
+          "children": [
+            {
+              "name": "Statement",
+              "children": [
+                {
+                  "name": "ExpressionStatement",
+                  "children": [
+                    {
+                      "name": "Expression",
+                      "children": [
+                        {
+                          "name": "AssignmentExpression",
+                          "children": [
+                            {
+                              "name": "ConditionalExpression",
+                              "children": [
+                                {
+                                  "name": "LogicalORExpression",
+                                  "children": [
+                                    {
+                                      "name": "LogicalANDExpression",
+                                      "children": [
+                                        {
+                                          "name": "BitwiseORExpression",
+                                          "children": [
+                                            {
+                                              "name": "BitwiseXORExpression",
+                                              "children": [
+                                                {
+                                                  "name": "BitwiseANDExpression",
+                                                  "children": [
+                                                    {
+                                                      "name": "EqualityExpression",
+                                                      "children": [
+                                                        {
+                                                          "name": "RelationalExpression",
+                                                          "children": [
+                                                            {
+                                                              "name": "ShiftExpression",
+                                                              "children": [
+                                                                {
+                                                                  "name": "AdditiveExpression",
+                                                                  "children": [
+                                                                    {
+                                                                      "name": "MultiplicativeExpression",
+                                                                      "children": [
+                                                                        {
+                                                                          "name": "UnaryExpression",
+                                                                          "children": [
+                                                                            {
+                                                                              "name": "PostfixExpression",
+                                                                              "children": [
+                                                                                {
+                                                                                  "name": "LeftHandSideExpression",
+                                                                                  "children": [
+                                                                                    {
+                                                                                      "name": "NewExpression",
+                                                                                      "children": [
+                                                                                        {
+                                                                                          "name": "MemberExpression",
+                                                                                          "children": [
+                                                                                            {
+                                                                                              "name": "PrimaryExpression",
+                                                                                              "children": [
+                                                                                                {
+                                                                                                  "name": "ClassExpression",
+                                                                                                  "children": [
+                                                                                                    {
+                                                                                                      "name": "ClassTok",
+                                                                                                      "value": "class"
+                                                                                                    },
+                                                                                                    {
+                                                                                                      "name": "BindingIdentifier",
+                                                                                                      "children": [
+                                                                                                        {
+                                                                                                          "name": "Identifier",
+                                                                                                          "value": "a"
+                                                                                                        }
+                                                                                                      ]
+                                                                                                    },
+                                                                                                    {
+                                                                                                      "name": "ClassTail",
+                                                                                                      "children": [
+                                                                                                        {
+                                                                                                          "name": "ClassHeritage",
+                                                                                                          "children": [
+                                                                                                            {
+                                                                                                              "name": "ExtendsTok",
+                                                                                                              "value": "extends"
+                                                                                                            },
+                                                                                                            {
+                                                                                                              "name": "LeftHandSideExpression",
+                                                                                                              "children": [
+                                                                                                                {
+                                                                                                                  "name": "NewExpression",
+                                                                                                                  "children": [
+                                                                                                                    {
+                                                                                                                      "name": "MemberExpression",
+                                                                                                                      "children": [
+                                                                                                                        {
+                                                                                                                          "name": "PrimaryExpression",
+                                                                                                                          "children": [
+                                                                                                                            {
+                                                                                                                              "name": "IdentifierReference",
+                                                                                                                              "children": [
+                                                                                                                                {
+                                                                                                                                  "name": "Identifier",
+                                                                                                                                  "value": "b"
+                                                                                                                                }
+                                                                                                                              ]
+                                                                                                                            }
+                                                                                                                          ]
+                                                                                                                        }
+                                                                                                                      ]
+                                                                                                                    }
+                                                                                                                  ]
+                                                                                                                }
+                                                                                                              ]
+                                                                                                            }
+                                                                                                          ]
+                                                                                                        },
+                                                                                                        {
+                                                                                                          "name": "LBrace",
+                                                                                                          "value": "{"
+                                                                                                        },
+                                                                                                        {
+                                                                                                          "name": "ClassBody",
+                                                                                                          "children": [
+                                                                                                            {
+                                                                                                              "name": "ClassElementList"
+                                                                                                            }
+                                                                                                          ]
+                                                                                                        },
+                                                                                                        {
+                                                                                                          "name": "RBrace",
+                                                                                                          "value": "}"
+                                                                                                        }
+                                                                                                      ]
+                                                                                                    }
+                                                                                                  ]
+                                                                                                }
+                                                                                              ]
+                                                                                            }
+                                                                                          ]
+                                                                                        }
+                                                                                      ]
+                                                                                    }
+                                                                                  ]
+                                                                                }
+                                                                              ]
+                                                                            }
+                                                                          ]
+                                                                        }
+                                                                      ]
+                                                                    }
+                                                                  ]
+                                                                }
+                                                              ]
+                                                            }
+                                                          ]
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+================================================================================
+
+[2025-10-07T16:17:50.628Z]
+{
+  "name": "Program",
+  "children": [
+    {
+      "name": "ModuleItemList",
+      "children": [
+        {
+          "name": "StatementListItem",
+          "children": [
+            {
+              "name": "Statement",
+              "children": [
+                {
+                  "name": "ExpressionStatement",
+                  "children": [
+                    {
+                      "name": "Expression",
+                      "children": [
+                        {
+                          "name": "AssignmentExpression",
+                          "children": [
+                            {
+                              "name": "ConditionalExpression",
+                              "children": [
+                                {
+                                  "name": "LogicalORExpression",
+                                  "children": [
+                                    {
+                                      "name": "LogicalANDExpression",
+                                      "children": [
+                                        {
+                                          "name": "BitwiseORExpression",
+                                          "children": [
+                                            {
+                                              "name": "BitwiseXORExpression",
+                                              "children": [
+                                                {
+                                                  "name": "BitwiseANDExpression",
+                                                  "children": [
+                                                    {
+                                                      "name": "EqualityExpression",
+                                                      "children": [
+                                                        {
+                                                          "name": "RelationalExpression",
+                                                          "children": [
+                                                            {
+                                                              "name": "ShiftExpression",
+                                                              "children": [
+                                                                {
+                                                                  "name": "AdditiveExpression",
+                                                                  "children": [
+                                                                    {
+                                                                      "name": "MultiplicativeExpression",
+                                                                      "children": [
+                                                                        {
+                                                                          "name": "UnaryExpression",
+                                                                          "children": [
+                                                                            {
+                                                                              "name": "PostfixExpression",
+                                                                              "children": [
+                                                                                {
+                                                                                  "name": "LeftHandSideExpression",
+                                                                                  "children": [
+                                                                                    {
+                                                                                      "name": "NewExpression",
+                                                                                      "children": [
+                                                                                        {
+                                                                                          "name": "MemberExpression",
+                                                                                          "children": [
+                                                                                            {
+                                                                                              "name": "PrimaryExpression",
+                                                                                              "children": [
+                                                                                                {
+                                                                                                  "name": "ClassExpression",
+                                                                                                  "children": [
+                                                                                                    {
+                                                                                                      "name": "ClassTok",
+                                                                                                      "value": "class"
+                                                                                                    },
+                                                                                                    {
+                                                                                                      "name": "BindingIdentifier",
+                                                                                                      "children": [
+                                                                                                        {
+                                                                                                          "name": "Identifier",
+                                                                                                          "value": "a"
+                                                                                                        }
+                                                                                                      ]
+                                                                                                    },
+                                                                                                    {
+                                                                                                      "name": "ClassTail",
+                                                                                                      "children": [
+                                                                                                        {
+                                                                                                          "name": "ClassHeritage",
+                                                                                                          "children": [
+                                                                                                            {
+                                                                                                              "name": "ExtendsTok",
+                                                                                                              "value": "extends"
+                                                                                                            },
+                                                                                                            {
+                                                                                                              "name": "LeftHandSideExpression",
+                                                                                                              "children": [
+                                                                                                                {
+                                                                                                                  "name": "NewExpression",
+                                                                                                                  "children": [
+                                                                                                                    {
+                                                                                                                      "name": "MemberExpression",
+                                                                                                                      "children": [
+                                                                                                                        {
+                                                                                                                          "name": "PrimaryExpression",
+                                                                                                                          "children": [
+                                                                                                                            {
+                                                                                                                              "name": "IdentifierReference",
+                                                                                                                              "children": [
+                                                                                                                                {
+                                                                                                                                  "name": "Identifier",
+                                                                                                                                  "value": "b"
+                                                                                                                                }
+                                                                                                                              ]
+                                                                                                                            }
+                                                                                                                          ]
+                                                                                                                        }
+                                                                                                                      ]
+                                                                                                                    }
+                                                                                                                  ]
+                                                                                                                }
+                                                                                                              ]
+                                                                                                            }
+                                                                                                          ]
+                                                                                                        },
+                                                                                                        {
+                                                                                                          "name": "LBrace",
+                                                                                                          "value": "{"
+                                                                                                        },
+                                                                                                        {
+                                                                                                          "name": "ClassBody",
+                                                                                                          "children": [
+                                                                                                            {
+                                                                                                              "name": "ClassElementList"
+                                                                                                            }
+                                                                                                          ]
+                                                                                                        },
+                                                                                                        {
+                                                                                                          "name": "RBrace",
+                                                                                                          "value": "}"
+                                                                                                        }
+                                                                                                      ]
+                                                                                                    }
+                                                                                                  ]
+                                                                                                }
+                                                                                              ]
+                                                                                            }
+                                                                                          ]
+                                                                                        }
+                                                                                      ]
+                                                                                    }
+                                                                                  ]
+                                                                                }
+                                                                              ]
+                                                                            }
+                                                                          ]
+                                                                        }
+                                                                      ]
+                                                                    }
+                                                                  ]
+                                                                }
+                                                              ]
+                                                            }
+                                                          ]
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+================================================================================
+
+[2025-10-07T16:18:16.409Z]
+{
+  "name": "Program",
+  "children": [
+    {
+      "name": "ModuleItemList",
+      "children": [
+        {
+          "name": "StatementListItem",
+          "children": [
+            {
+              "name": "Statement",
+              "children": [
+                {
+                  "name": "ExpressionStatement",
+                  "children": [
+                    {
+                      "name": "Expression",
+                      "children": [
+                        {
+                          "name": "AssignmentExpression",
+                          "children": [
+                            {
+                              "name": "ConditionalExpression",
+                              "children": [
+                                {
+                                  "name": "LogicalORExpression",
+                                  "children": [
+                                    {
+                                      "name": "LogicalANDExpression",
+                                      "children": [
+                                        {
+                                          "name": "BitwiseORExpression",
+                                          "children": [
+                                            {
+                                              "name": "BitwiseXORExpression",
+                                              "children": [
+                                                {
+                                                  "name": "BitwiseANDExpression",
+                                                  "children": [
+                                                    {
+                                                      "name": "EqualityExpression",
+                                                      "children": [
+                                                        {
+                                                          "name": "RelationalExpression",
+                                                          "children": [
+                                                            {
+                                                              "name": "ShiftExpression",
+                                                              "children": [
+                                                                {
+                                                                  "name": "AdditiveExpression",
+                                                                  "children": [
+                                                                    {
+                                                                      "name": "MultiplicativeExpression",
+                                                                      "children": [
+                                                                        {
+                                                                          "name": "UnaryExpression",
+                                                                          "children": [
+                                                                            {
+                                                                              "name": "PostfixExpression",
+                                                                              "children": [
+                                                                                {
+                                                                                  "name": "LeftHandSideExpression",
+                                                                                  "children": [
+                                                                                    {
+                                                                                      "name": "NewExpression",
+                                                                                      "children": [
+                                                                                        {
+                                                                                          "name": "MemberExpression",
+                                                                                          "children": [
+                                                                                            {
+                                                                                              "name": "PrimaryExpression",
+                                                                                              "children": [
+                                                                                                {
+                                                                                                  "name": "ClassExpression",
+                                                                                                  "children": [
+                                                                                                    {
+                                                                                                      "name": "ClassTok",
+                                                                                                      "value": "class"
+                                                                                                    },
+                                                                                                    {
+                                                                                                      "name": "BindingIdentifier",
+                                                                                                      "children": [
+                                                                                                        {
+                                                                                                          "name": "Identifier",
+                                                                                                          "value": "a"
+                                                                                                        }
+                                                                                                      ]
+                                                                                                    },
+                                                                                                    {
+                                                                                                      "name": "ClassTail",
+                                                                                                      "children": [
+                                                                                                        {
+                                                                                                          "name": "ClassHeritage",
+                                                                                                          "children": [
+                                                                                                            {
+                                                                                                              "name": "ExtendsTok",
+                                                                                                              "value": "extends"
+                                                                                                            },
+                                                                                                            {
+                                                                                                              "name": "LeftHandSideExpression",
+                                                                                                              "children": [
+                                                                                                                {
+                                                                                                                  "name": "NewExpression",
+                                                                                                                  "children": [
+                                                                                                                    {
+                                                                                                                      "name": "MemberExpression",
+                                                                                                                      "children": [
+                                                                                                                        {
+                                                                                                                          "name": "PrimaryExpression",
+                                                                                                                          "children": [
+                                                                                                                            {
+                                                                                                                              "name": "IdentifierReference",
+                                                                                                                              "children": [
+                                                                                                                                {
+                                                                                                                                  "name": "Identifier",
+                                                                                                                                  "value": "b"
+                                                                                                                                }
+                                                                                                                              ]
+                                                                                                                            }
+                                                                                                                          ]
+                                                                                                                        }
+                                                                                                                      ]
+                                                                                                                    }
+                                                                                                                  ]
+                                                                                                                }
+                                                                                                              ]
+                                                                                                            }
+                                                                                                          ]
+                                                                                                        },
+                                                                                                        {
+                                                                                                          "name": "LBrace",
+                                                                                                          "value": "{"
+                                                                                                        },
+                                                                                                        {
+                                                                                                          "name": "ClassBody",
+                                                                                                          "children": [
+                                                                                                            {
+                                                                                                              "name": "ClassElementList"
+                                                                                                            }
+                                                                                                          ]
+                                                                                                        },
+                                                                                                        {
+                                                                                                          "name": "RBrace",
+                                                                                                          "value": "}"
+                                                                                                        }
+                                                                                                      ]
+                                                                                                    }
+                                                                                                  ]
+                                                                                                }
+                                                                                              ]
+                                                                                            }
+                                                                                          ]
+                                                                                        }
+                                                                                      ]
+                                                                                    }
+                                                                                  ]
+                                                                                }
+                                                                              ]
+                                                                            }
+                                                                          ]
+                                                                        }
+                                                                      ]
+                                                                    }
+                                                                  ]
+                                                                }
+                                                              ]
+                                                            }
+                                                          ]
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+================================================================================
+
+[2025-10-07T16:18:34.954Z]
+{
+  "name": "Program",
+  "children": [
+    {
+      "name": "ModuleItemList",
+      "children": [
+        {
+          "name": "StatementListItem",
+          "children": [
+            {
+              "name": "Statement",
+              "children": [
+                {
+                  "name": "ExpressionStatement",
+                  "children": [
+                    {
+                      "name": "Expression",
+                      "children": [
+                        {
+                          "name": "AssignmentExpression",
+                          "children": [
+                            {
+                              "name": "ConditionalExpression",
+                              "children": [
+                                {
+                                  "name": "LogicalORExpression",
+                                  "children": [
+                                    {
+                                      "name": "LogicalANDExpression",
+                                      "children": [
+                                        {
+                                          "name": "BitwiseORExpression",
+                                          "children": [
+                                            {
+                                              "name": "BitwiseXORExpression",
+                                              "children": [
+                                                {
+                                                  "name": "BitwiseANDExpression",
+                                                  "children": [
+                                                    {
+                                                      "name": "EqualityExpression",
+                                                      "children": [
+                                                        {
+                                                          "name": "RelationalExpression",
+                                                          "children": [
+                                                            {
+                                                              "name": "ShiftExpression",
+                                                              "children": [
+                                                                {
+                                                                  "name": "AdditiveExpression",
+                                                                  "children": [
+                                                                    {
+                                                                      "name": "MultiplicativeExpression",
+                                                                      "children": [
+                                                                        {
+                                                                          "name": "UnaryExpression",
+                                                                          "children": [
+                                                                            {
+                                                                              "name": "PostfixExpression",
+                                                                              "children": [
+                                                                                {
+                                                                                  "name": "LeftHandSideExpression",
+                                                                                  "children": [
+                                                                                    {
+                                                                                      "name": "NewExpression",
+                                                                                      "children": [
+                                                                                        {
+                                                                                          "name": "MemberExpression",
+                                                                                          "children": [
+                                                                                            {
+                                                                                              "name": "PrimaryExpression",
+                                                                                              "children": [
+                                                                                                {
+                                                                                                  "name": "ClassExpression",
+                                                                                                  "children": [
+                                                                                                    {
+                                                                                                      "name": "ClassTok",
+                                                                                                      "value": "class"
+                                                                                                    },
+                                                                                                    {
+                                                                                                      "name": "BindingIdentifier",
+                                                                                                      "children": [
+                                                                                                        {
+                                                                                                          "name": "Identifier",
+                                                                                                          "value": "a"
+                                                                                                        }
+                                                                                                      ]
+                                                                                                    },
+                                                                                                    {
+                                                                                                      "name": "ClassTail",
+                                                                                                      "children": [
+                                                                                                        {
+                                                                                                          "name": "ClassHeritage",
+                                                                                                          "children": [
+                                                                                                            {
+                                                                                                              "name": "ExtendsTok",
+                                                                                                              "value": "extends"
+                                                                                                            },
+                                                                                                            {
+                                                                                                              "name": "LeftHandSideExpression",
+                                                                                                              "children": [
+                                                                                                                {
+                                                                                                                  "name": "NewExpression",
+                                                                                                                  "children": [
+                                                                                                                    {
+                                                                                                                      "name": "MemberExpression",
+                                                                                                                      "children": [
+                                                                                                                        {
+                                                                                                                          "name": "PrimaryExpression",
+                                                                                                                          "children": [
+                                                                                                                            {
+                                                                                                                              "name": "IdentifierReference",
+                                                                                                                              "children": [
+                                                                                                                                {
+                                                                                                                                  "name": "Identifier",
+                                                                                                                                  "value": "b"
+                                                                                                                                }
+                                                                                                                              ]
+                                                                                                                            }
+                                                                                                                          ]
+                                                                                                                        }
+                                                                                                                      ]
+                                                                                                                    }
+                                                                                                                  ]
+                                                                                                                }
+                                                                                                              ]
+                                                                                                            }
+                                                                                                          ]
+                                                                                                        },
+                                                                                                        {
+                                                                                                          "name": "LBrace",
+                                                                                                          "value": "{"
+                                                                                                        },
+                                                                                                        {
+                                                                                                          "name": "ClassBody",
+                                                                                                          "children": [
+                                                                                                            {
+                                                                                                              "name": "ClassElementList"
+                                                                                                            }
+                                                                                                          ]
+                                                                                                        },
+                                                                                                        {
+                                                                                                          "name": "RBrace",
+                                                                                                          "value": "}"
+                                                                                                        }
+                                                                                                      ]
+                                                                                                    }
+                                                                                                  ]
+                                                                                                }
+                                                                                              ]
+                                                                                            }
+                                                                                          ]
+                                                                                        }
+                                                                                      ]
+                                                                                    }
+                                                                                  ]
+                                                                                }
+                                                                              ]
+                                                                            }
+                                                                          ]
+                                                                        }
+                                                                      ]
+                                                                    }
+                                                                  ]
+                                                                }
+                                                              ]
+                                                            }
+                                                          ]
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+================================================================================
+
+[2025-10-07T16:23:34.336Z]
+{
+  "name": "Program",
+  "children": [
+    {
+      "name": "ModuleItemList",
+      "children": [
+        {
+          "name": "StatementListItem",
+          "children": [
+            {
+              "name": "Statement",
+              "children": [
+                {
+                  "name": "ExpressionStatement",
+                  "children": [
+                    {
+                      "name": "Expression",
+                      "children": [
+                        {
+                          "name": "AssignmentExpression",
+                          "children": [
+                            {
+                              "name": "ConditionalExpression",
+                              "children": [
+                                {
+                                  "name": "LogicalORExpression",
+                                  "children": [
+                                    {
+                                      "name": "LogicalANDExpression",
+                                      "children": [
+                                        {
+                                          "name": "BitwiseORExpression",
+                                          "children": [
+                                            {
+                                              "name": "BitwiseXORExpression",
+                                              "children": [
+                                                {
+                                                  "name": "BitwiseANDExpression",
+                                                  "children": [
+                                                    {
+                                                      "name": "EqualityExpression",
+                                                      "children": [
+                                                        {
+                                                          "name": "RelationalExpression",
+                                                          "children": [
+                                                            {
+                                                              "name": "ShiftExpression",
+                                                              "children": [
+                                                                {
+                                                                  "name": "AdditiveExpression",
+                                                                  "children": [
+                                                                    {
+                                                                      "name": "MultiplicativeExpression",
+                                                                      "children": [
+                                                                        {
+                                                                          "name": "UnaryExpression",
+                                                                          "children": [
+                                                                            {
+                                                                              "name": "PostfixExpression",
+                                                                              "children": [
+                                                                                {
+                                                                                  "name": "LeftHandSideExpression",
+                                                                                  "children": [
+                                                                                    {
+                                                                                      "name": "NewExpression",
+                                                                                      "children": [
+                                                                                        {
+                                                                                          "name": "MemberExpression",
+                                                                                          "children": [
+                                                                                            {
+                                                                                              "name": "PrimaryExpression",
+                                                                                              "children": [
+                                                                                                {
+                                                                                                  "name": "ClassExpression",
+                                                                                                  "children": [
+                                                                                                    {
+                                                                                                      "name": "ClassTok",
+                                                                                                      "value": "class"
+                                                                                                    },
+                                                                                                    {
+                                                                                                      "name": "BindingIdentifier",
+                                                                                                      "children": [
+                                                                                                        {
+                                                                                                          "name": "Identifier",
+                                                                                                          "value": "a"
+                                                                                                        }
+                                                                                                      ]
+                                                                                                    },
+                                                                                                    {
+                                                                                                      "name": "ClassTail",
+                                                                                                      "children": [
+                                                                                                        {
+                                                                                                          "name": "ClassHeritage",
+                                                                                                          "children": [
+                                                                                                            {
+                                                                                                              "name": "ExtendsTok",
+                                                                                                              "value": "extends"
+                                                                                                            },
+                                                                                                            {
+                                                                                                              "name": "LeftHandSideExpression",
+                                                                                                              "children": [
+                                                                                                                {
+                                                                                                                  "name": "NewExpression",
+                                                                                                                  "children": [
+                                                                                                                    {
+                                                                                                                      "name": "MemberExpression",
+                                                                                                                      "children": [
+                                                                                                                        {
+                                                                                                                          "name": "PrimaryExpression",
+                                                                                                                          "children": [
+                                                                                                                            {
+                                                                                                                              "name": "IdentifierReference",
+                                                                                                                              "children": [
+                                                                                                                                {
+                                                                                                                                  "name": "Identifier",
+                                                                                                                                  "value": "b"
+                                                                                                                                }
+                                                                                                                              ]
+                                                                                                                            }
+                                                                                                                          ]
+                                                                                                                        }
+                                                                                                                      ]
+                                                                                                                    }
+                                                                                                                  ]
+                                                                                                                }
+                                                                                                              ]
+                                                                                                            }
+                                                                                                          ]
+                                                                                                        },
+                                                                                                        {
+                                                                                                          "name": "LBrace",
+                                                                                                          "value": "{"
+                                                                                                        },
+                                                                                                        {
+                                                                                                          "name": "ClassBody",
+                                                                                                          "children": [
+                                                                                                            {
+                                                                                                              "name": "ClassElementList"
+                                                                                                            }
+                                                                                                          ]
+                                                                                                        },
+                                                                                                        {
+                                                                                                          "name": "RBrace",
+                                                                                                          "value": "}"
+                                                                                                        }
+                                                                                                      ]
+                                                                                                    }
+                                                                                                  ]
+                                                                                                }
+                                                                                              ]
+                                                                                            }
+                                                                                          ]
+                                                                                        }
+                                                                                      ]
+                                                                                    }
+                                                                                  ]
+                                                                                }
+                                                                              ]
+                                                                            }
+                                                                          ]
+                                                                        }
+                                                                      ]
+                                                                    }
+                                                                  ]
+                                                                }
+                                                              ]
+                                                            }
+                                                          ]
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+================================================================================
