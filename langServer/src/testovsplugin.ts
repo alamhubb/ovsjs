@@ -4,7 +4,7 @@ import {vitePluginOvsTransform} from "ovsjs/src"
 Error.stackTraceLimit = 50
 
 const code = `
-class a extends b {}
+object a {}
 `
 
 const res = vitePluginOvsTransform(code)

@@ -14,17 +14,25 @@ export default class ObjectScriptParser extends Es6Parser<ObjectScriptTokenConsu
   }
 
   @SubhutiRule
-  ObjectHeritage() {
-    this.tokenConsumer.ExtendsTok()
-    this.LeftHandSideExpression()
+  ObjectTail() {
+    this.Option(() => this.ObjectHeritage())
+    this.tokenConsumer.LBrace()
+    this.Option(() => this.ClassBody())
+    this.tokenConsumer.RBrace()
   }
 
+  @SubhutiRule
+  ObjectHeritage() {
+    this.tokenConsumer.ExtendsTok()
+    this.BindingIdentifier()
+  }
 
   @SubhutiRule
   Declaration() {
     this.Or([
       {alt: () => this.HoistableDeclaration()},
       {alt: () => this.ClassDeclaration()},
+      {alt: () => this.ObjectDeclaration()},
       {alt: () => this.VariableDeclaration()}
     ])
   }
