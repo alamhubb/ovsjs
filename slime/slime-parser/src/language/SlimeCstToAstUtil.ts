@@ -335,13 +335,21 @@ export class SlimeCstToAst {
   }
 
   createClassDeclarationAst(cst: SubhutiCst): SlimeClassDeclaration {
+    // 检查 CST 节点名称是否为 ClassDeclaration
     const astName = checkCstName(cst, Es6Parser.prototype.ClassDeclaration.name);
 
-    const id = this.createBindingIdentifierAst(cst.children[1]) // 解析 class 声明中的标识符
-    const classTail = this.createClassTailAst(cst.children[2]) // 统一处理 ClassTail，获取 body / super
+    // 获取类名标识符（children[1] 是 BindingIdentifier）
+    const id = this.createBindingIdentifierAst(cst.children[1])
+    // 解析 ClassTail，获取类体和父类信息（children[2] 是 ClassTail）
+    const classTailResult = this.createClassTailAst(cst.children[2])
 
-    const ast = SlimeAstUtil.createClassDeclaration(id, classTail.body, cst.loc) // 构造类声明 AST
-    ast.superClass = classTail.superClass ?? undefined // 如果存在继承则挂载 superClass
+    // 创建类声明 AST 节点
+    const ast = SlimeAstUtil.createClassDeclaration(id, classTailResult.body, cst.loc)
+
+    // 如果存在父类（extends），则添加 superClass 属性
+    if (classTailResult.superClass) {
+      ast.superClass = classTailResult.superClass
+    }
 
     return ast
   }
