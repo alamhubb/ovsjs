@@ -230,12 +230,12 @@ class SlimeAst {
 
   createClassExpression(id?: SlimeIdentifier | null, superClass?: SlimeExpression | null, body?: SlimeClassBody, loc?: SubhutiSourceLocation): SlimeClassExpression {
     return this.commonLocType({
-      type: SlimeAstType.ClassExpression, // 指定节点类型为 ClassExpression，方便下游识别
-      id: id ?? null, // 保存类名，若未提供则明确设为 null
-      superClass: superClass ?? null, // 记录继承的父类表达式，无继承则为 null
-      body: body, // 挂载类主体 ClassBody
-      loc: loc // 保留源代码位置信息
-    } as SlimeClassExpression)
+      type: SlimeAstType.ClassExpression,  // 节点类型
+      id: id,                               // 类名（可选，匿名类为 null）
+      body: body,                           // 类体（包含方法和属性）
+      superClass: superClass,               // 父类表达式（可选，没有 extends 时为 null 或 undefined）
+      loc: loc                              // 源码位置信息
+    })
   }
 
   createCallExpression(callee: SlimeExpression | SlimeSuper, args: Array<SlimeExpression | SlimeSpreadElement>): SlimeSimpleCallExpression {
