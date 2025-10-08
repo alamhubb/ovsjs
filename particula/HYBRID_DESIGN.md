@@ -4,9 +4,13 @@
 
 本文档定义了 **Particula 和 Subhuti 的混合架构设计**，用于解决多继承场景下的 Parser 组合问题。
 
+**核心理念：**
+> **Particula 用于组合多个 Subhuti Parser，而不是拆分单个规则**
+
 **设计原则：**
 - **单继承场景** → 使用 Subhuti 继承模式 ✅
 - **多继承场景** → 使用 Particula 组合模式 ✅
+- **规则组织** → Parser 内部保持完整，不拆分单个规则 ✅
 
 ---
 
@@ -34,6 +38,33 @@
 **混合架构：**
 - 保留 Subhuti 的继承优势（简单、类型安全）
 - 引入 Particula 的组合能力（灵活、可扩展）
+
+### ⚠️ 重要：不拆分单个规则！
+
+**❌ 错误理解：每个规则都是 Parser**
+```typescript
+// 太碎片化了！
+new IdentifierRule()
+new ExpressionRule()
+new StatementRule()
+// ... 几十个规则类 😵
+// 依赖关系复杂，维护困难
+```
+
+**✅ 正确理解：每个 Parser 是一组规则**
+```typescript
+// 一个 Parser = 一组相关规则
+ES6Parser {
+  @SubhutiRule Expression() { }
+  @SubhutiRule Statement() { }
+  @SubhutiRule Declaration() { }
+  // ... 几十个规则在一起
+  // 规则间自由调用：this.Expression()
+}
+
+// Particula 只用于组合多个 Parser
+ParserA + ParserB → HybridParser
+```
 
 ---
 
@@ -74,14 +105,20 @@
 
 ### 1. SubhutiParserAdapter（适配器）
 
-**职责：** 将 Subhuti Parser 转换为 Particula Plugin
+**职责：** 将整个 Subhuti Parser 转换为 Particula Plugin（不拆分单个规则）
+
+**核心原则：**
+- ✅ 将 Parser 作为整体转换
+- ✅ 只暴露入口规则（如 Program）
+- ✅ Parser 内部规则调用保持在 Subhuti 内
+- ❌ 不拆分单个规则为独立 Plugin
 
 **接口设计：**
 
 ```typescript
 class SubhutiParserAdapter {
   /**
-   * 将 Subhuti Parser 转为 Particula Plugin
+   * 将整个 Subhuti Parser 转为 Particula Plugin
    * 
    * @param name - 插件名称
    * @param ParserClass - Subhuti Parser 类
@@ -92,8 +129,12 @@ class SubhutiParserAdapter {
     name: string,
     ParserClass: typeof SubhutiParser,
     options?: {
-      // 要提取哪些规则（方法名）
-      extractRules?: string[]
+      // 入口规则（默认 ['Program']）
+      // 只暴露这些规则，其他规则在 Parser 内部调用
+      entryRules?: string[]
+      
+      // 是否暴露所有规则（不推荐，会很复杂）
+      exposeAll?: boolean
       
       // Token 定义
       tokens?: SubhutiCreateToken[]
@@ -107,28 +148,25 @@ class SubhutiParserAdapter {
   ): ParticulaPlugin
   
   /**
-   * 从 Parser 实例中提取所有规则方法名
+   * 提取 Parser 的所有 tokens
    */
-  static extractRuleNames(parser: SubhutiParser): string[]
-  
-  /**
-   * 从 Parser 类中提取所有 @SubhutiRule 装饰的方法
-   */
-  static extractDecoratedRules(ParserClass: typeof SubhutiParser): string[]
+  static extractTokens(ParserClass: typeof SubhutiParser): SubhutiCreateToken[]
 }
 ```
 
 **实现要点：**
 
-1. **规则提取**
-   - 扫描 Parser 类的所有方法
-   - 识别 @SubhutiRule 装饰器
-   - 提取方法名作为规则名
+1. **整体包装（推荐）**
+   - 将 Parser 作为黑盒
+   - 只暴露入口规则
+   - Parser 内部规则调用通过 this.method()
+   - 依赖关系在 Parser 内部自动处理
 
-2. **规则包装**
-   - 将 Subhuti 方法包装为 Particula 规则
-   - 保持调用上下文（this 绑定）
-   - 处理参数和返回值
+2. **实例管理**
+   - 为每次解析创建 Parser 实例
+   - 设置 tokens 和上下文
+   - 调用入口规则
+   - 返回 CST
 
 3. **Token 处理**
    - 收集 Parser 的 TokenConsumer 的所有 tokens
@@ -179,15 +217,22 @@ class HybridParticulaParser extends ParticulaParser {
 **使用示例：**
 
 ```typescript
+// ✅ 正确：将整个 Parser 作为插件
 const parser = new HybridParticulaParser()
   .useSubhutiParser('Object', ObjectScriptParser, {
-    extractRules: ['ObjectDeclaration', 'ObjectTail']
+    entryRules: ['Program']  // 只暴露入口，内部规则自动处理
   })
   .useSubhutiParser('Generic', GenericParser, {
-    extractRules: ['GenericDeclaration', 'TypeParameter']
+    entryRules: ['Program']
   })
 
 parser.parse(tokens, 'Program')
+
+// ObjectScriptParser 内部：
+// - 有几十个规则
+// - 规则互相调用：this.ObjectDeclaration()
+// - 依赖关系自动处理
+// - 完全在 Subhuti 内部完成
 ```
 
 ---
@@ -539,102 +584,115 @@ export interface SecondaryParserConfig {
 
 ## 🔍 关键实现细节
 
-### 1. 规则提取机制
+### 1. 整体包装机制（推荐）
 
 ```typescript
-// 从 Subhuti Parser 提取 @SubhutiRule 装饰的方法
+// 将整个 Subhuti Parser 作为黑盒包装
 
 class SubhutiParserAdapter {
-  static extractDecoratedRules(ParserClass: typeof SubhutiParser): string[] {
-    const rules: string[] = []
-    const proto = ParserClass.prototype
-    
-    // 遍历原型链
-    for (const key of Object.getOwnPropertyNames(proto)) {
-      if (key === 'constructor') continue
-      
-      const descriptor = Object.getOwnPropertyDescriptor(proto, key)
-      if (!descriptor?.value || typeof descriptor.value !== 'function') {
-        continue
-      }
-      
-      // 检查是否有 @SubhutiRule 装饰器元数据
-      const metadata = Reflect.getMetadata('subhuti:rule', proto, key)
-      if (metadata) {
-        rules.push(key)
-      }
-    }
-    
-    return rules
-  }
-}
-```
-
-### 2. 规则调用桥接
-
-```typescript
-// 在 Particula 中调用 Subhuti 规则
-
-class SubhutiParserAdapter {
-  static toPlugin(name: string, ParserClass: typeof SubhutiParser, options) {
-    // 创建 Parser 实例（用于规则调用）
-    const parserInstance = new ParserClass()
-    
-    const rules = options.extractRules || this.extractDecoratedRules(ParserClass)
+  static toPlugin(
+    name: string,
+    ParserClass: typeof SubhutiParser,
+    options?: { entryRules?: string[], ... }
+  ): ParticulaPlugin {
+    const entryRules = options?.entryRules || ['Program']
     
     return {
       name,
-      rules: rules.map(ruleName => ({
+      rules: entryRules.map(ruleName => ({
         name: ruleName,
         parse: (ctx: ParseContext) => {
-          // 获取底层 Subhuti Parser
-          const subhutiParser = ctx.parser.getBaseParser()
+          // 1. 创建 Parser 实例
+          const parser = new ParserClass()
           
-          // 临时替换为适配的 parser 实例的状态
-          const originalTokens = subhutiParser.tokens
-          const originalCst = subhutiParser.getCurCst()
+          // 2. 设置上下文
+          parser.setTokens(ctx.getTokens())
           
-          // 设置当前状态
-          parserInstance.setTokens(ctx.getTokens())
-          parserInstance.setCurCst(ctx.getCst())
+          // 3. 调用入口规则
+          const method = (parser as any)[ruleName]
+          if (method) {
+            method.call(parser)
+          }
           
-          // 调用 Subhuti 规则
-          const method = (parserInstance as any)[ruleName]
-          method.call(parserInstance)
+          // 4. Parser 内部的所有规则调用都通过 this.method()
+          //    完全在 Subhuti 内部完成，不需要跨 Plugin
           
-          // 恢复状态
-          subhutiParser.setTokens(originalTokens)
-          subhutiParser.setCurCst(originalCst)
+          // 5. 返回 CST
+          return parser.getCurCst()
         }
       })),
-      tokens: options.tokens || []
+      tokens: this.extractTokens(ParserClass)
     }
   }
 }
 ```
 
-### 3. Token 合并策略
+### 2. Parser 选择和切换
 
 ```typescript
-// 合并多个 Parser 的 Tokens
+// 主从模式：根据 token 特征选择合适的 Parser
 
-class HybridParticulaParser extends ParticulaParser {
+class MainSecondaryParser {
+  parse(tokens: SubhutiMatchToken[], startRule: string, mode: string) {
+    if (mode === 'primary-first') {
+      // 1. 先用主 Parser
+      try {
+        const mainParser = new this.MainParserClass()
+        mainParser.setTokens(tokens)
+        mainParser[startRule]()
+        return mainParser.getCurCst()
+      } catch (error) {
+        // 2. 主 Parser 失败，尝试从 Parser
+        for (const secondary of this.secondaries) {
+          try {
+            const parser = new secondary.ParserClass()
+            parser.setTokens(tokens)
+            parser[startRule]()
+            return parser.getCurCst()
+          } catch {}
+        }
+        throw error
+      }
+    }
+    
+    // 其他模式...
+  }
+}
+```
+
+### 3. Token 收集和合并
+
+```typescript
+// 从 Parser 收集 tokens 并合并
+
+class SubhutiParserAdapter {
+  static extractTokens(ParserClass: typeof SubhutiParser): SubhutiCreateToken[] {
+    // 1. 创建 Parser 实例
+    const parser = new ParserClass()
+    
+    // 2. 从 TokenConsumer 提取 tokens
+    const tokenConsumer = (parser as any).tokenConsumer
+    const tokens: SubhutiCreateToken[] = []
+    
+    // 3. 遍历 TokenConsumer 的所有方法，找到 token 定义
+    // （具体实现取决于 Subhuti 的 token 存储方式）
+    
+    return tokens
+  }
+}
+
+class HybridParticulaParser {
   private mergeAllTokens(): SubhutiCreateToken[] {
     const tokenMap = new Map<string, SubhutiCreateToken>()
     
-    // 1. 收集所有 tokens
+    // 收集所有 Parser 的 tokens
     for (const plugin of this.getPlugins()) {
       for (const token of plugin.tokens || []) {
         const tokenName = (token as any).tokenName || token.name
         
-        // 2. 处理冲突
-        if (tokenMap.has(tokenName)) {
-          const existing = tokenMap.get(tokenName)
-          // 使用优先级更高的（后注册的优先）
-          if ((token as any).priority >= (existing as any).priority) {
-            tokenMap.set(tokenName, token)
-          }
-        } else {
+        // 处理冲突：后注册的优先
+        if (!tokenMap.has(tokenName) || 
+            (token as any).priority >= (tokenMap.get(tokenName) as any).priority) {
           tokenMap.set(tokenName, token)
         }
       }
@@ -773,18 +831,104 @@ class MainSecondaryParser {
 
 - **单继承** → Subhuti（简单、直接）
 - **多继承** → Particula（灵活、强大）
+- **规则组织** → Parser 内部完整，不拆分
+
+### 核心理念（重要！）
+
+> **Particula 用于组合多个 Subhuti Parser，而不是拆分单个规则**
+
+**✅ 正确做法：**
+```typescript
+// 1. Subhuti Parser 保持完整
+class ES6Parser extends ES5Parser {
+  @SubhutiRule Expression() { }
+  @SubhutiRule Statement() { }
+  // ... 几十个规则
+  // 规则间通过 this.method() 调用
+}
+
+// 2. 只在需要组合时用 Particula
+const parser = new HybridParticulaParser()
+  .useSubhutiParser('Object', ObjectScriptParser)  // 整个 Parser
+  .useSubhutiParser('Generic', GenericParser)      // 整个 Parser
+```
+
+**❌ 错误做法：**
+```typescript
+// 拆分单个规则（太复杂，不要这样做）
+new IdentifierRule()
+new ExpressionRule()
+// ...
+```
 
 ### 关键组件
 
-1. **SubhutiParserAdapter** - 适配器，连接两个世界
-2. **HybridParticulaParser** - 混合 Parser，简化使用
-3. **MainSecondaryParser** - 主从模式，实际应用
+1. **SubhutiParserAdapter** - 适配器，将整个 Parser 转为 Plugin
+2. **HybridParticulaParser** - 混合 Parser，简化组合
+3. **MainSecondaryParser** - 主从模式，智能选择
 
 ### 使用建议
 
-- 新项目：优先考虑 Particula
-- 现有项目：保持 Subhuti，需要时引入 Particula
-- 复杂场景：使用主从模式
+- **单继承场景** → 直接用 Subhuti 继承
+- **多继承场景** → 用 Particula 组合多个 Parser
+- **主从关系明确** → 用 MainSecondaryParser
+- **规则保持完整** → 不拆分，保持在 Parser 内部
+
+---
+
+## ⚡ 设计要点速查
+
+### 问题：规则依赖复杂怎么办？
+
+**❌ 不要这样：**
+```typescript
+// 拆分单个规则 - 依赖管理噩梦
+class IdentifierRule extends ParticulaRule {
+  dependencies = []
+}
+class ExpressionRule extends ParticulaRule {
+  dependencies = ['Identifier']  // 手动管理
+}
+class StatementRule extends ParticulaRule {
+  dependencies = ['Expression']  // 手动管理
+}
+```
+
+**✅ 应该这样：**
+```typescript
+// Parser 内部自动处理依赖
+class MyParser extends ES6Parser {
+  @SubhutiRule
+  Expression() {
+    this.Identifier()  // 直接调用，自动处理
+  }
+  
+  @SubhutiRule
+  Statement() {
+    this.Expression()  // 自动处理
+  }
+}
+```
+
+### 问题：什么时候用 Particula？
+
+**只在这些场景：**
+1. ✅ 需要组合多个 Parser（菱形继承）
+2. ✅ 主从模式（ES6 + 扩展）
+3. ✅ 动态选择 Parser
+
+**不要在这些场景：**
+1. ❌ 单一继承链
+2. ❌ 简单的规则扩展
+3. ❌ 拆分单个规则
+
+### 问题：如何保持简单？
+
+**原则：**
+1. **默认用 Subhuti** - 继承简单直接
+2. **需要才用 Particula** - 组合多个 Parser
+3. **整体不拆分** - Parser 作为完整单元
+4. **主从模式优先** - 明确的层级关系
 
 ---
 
