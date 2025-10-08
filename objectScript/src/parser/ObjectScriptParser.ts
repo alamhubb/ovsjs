@@ -1,16 +1,19 @@
-import {Subhuti, SubhutiRule} from "subhuti/src/parser/SubhutiParser";
+import {Subhuti, SubhutiRule, type SubhutiTokenConsumerConstructor} from "subhuti/src/parser/SubhutiParser";
 import Es6Parser from "slime-parser/src/language/es2015/Es6Parser";
 import ObjectScriptTokenConsumer from "./ObjectScriptTokenConsumer";
-
+import SubhutiMatchToken from "subhuti/src/struct/SubhutiMatchToken";
 
 @Subhuti
-export default class ObjectScriptParser extends Es6Parser<ObjectScriptTokenConsumer> {
+export default class ObjectScriptParser<T extends ObjectScriptTokenConsumer> extends Es6Parser<T> {
+  constructor(tokens?: SubhutiMatchToken[], TokenConsumerClass: SubhutiTokenConsumerConstructor<T> = ObjectScriptTokenConsumer as any) {
+    super(tokens, TokenConsumerClass);
+  }
 
   @SubhutiRule
   ObjectDeclaration() {
     this.tokenConsumer.ObjectToken()
     this.BindingIdentifier()
-    this.ClassTail()
+    this.ObjectTail()
   }
 
   @SubhutiRule

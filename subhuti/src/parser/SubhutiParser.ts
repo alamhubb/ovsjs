@@ -4,6 +4,7 @@ import JsonUtil from "../utils/JsonUtil.ts"
 import {SubhutiCreateToken} from "../struct/SubhutiCreateToken.ts"
 import SubhutiTokenConsumer from "./SubhutiTokenConsumer.ts"
 import QqqqUtil from "../utils/qqqqUtil.ts"
+import Es5TokenConsumer from "slime-parser/src/language/es5/Es5TokenConsume.ts";
 
 export class SubhutiParserOr {
   alt: Function
@@ -51,7 +52,19 @@ function generateUUID() {
   })
 }
 
+export type SubhutiTokenConsumerConstructor<T extends SubhutiTokenConsumer> = new (parser: SubhutiParser<T>) => T
+
 export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiTokenConsumer> {
+
+  constructor(tokens?: SubhutiMatchToken[], TokenConsumerClass: SubhutiTokenConsumerConstructor<T> = SubhutiTokenConsumer as any) {
+    if (tokens) {
+      this.setTokens(tokens)
+    }
+    this.tokenConsumer = new TokenConsumerClass(this) as T
+    this.thisClassName = this.constructor.name
+    this.uuid = generateUUID()
+  }
+
   faultTolerance = true
   tokenConsumer: T
   _tokens: SubhutiMatchToken[] = []
@@ -138,13 +151,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     QqqqUtil.log(this.cstStack.map(item => item.name).join(','))
   }
 
-  constructor(tokens?: SubhutiMatchToken[]) {
-    if (tokens) {
-      this.setTokens(tokens)
-    }
-    this.thisClassName = this.constructor.name
-    this.uuid = generateUUID()
-  }
 
   setCurCst(curCst: SubhutiCst) {
     this.curCst = curCst

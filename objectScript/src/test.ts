@@ -2,9 +2,9 @@ import {traverseClearLoc, traverseClearTokens, vitePluginOvsTransform} from "ovs
 import SubhutiLexer from "subhuti/src/parser/SubhutiLexer";
 import {es6Tokens} from "slime-parser/src/language/es2015/Es6Tokens";
 import OvsParser from "ovsjs/src/parser/OvsParser";
-import {LogUtil} from "ovs-lsp/src/logutil";
 import {objectScript6Tokens} from "./parser/ObjectScriptTokenConsumer";
 import ObjectScriptParser from "./parser/ObjectScriptParser";
+import {LogUtil} from "./logutil";
 
 
 Error.stackTraceLimit = 50

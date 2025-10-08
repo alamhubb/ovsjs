@@ -4490,3 +4490,65 @@
   ]
 }
 ================================================================================
+
+[2025-10-08T14:23:53.806Z]
+{
+  "name": "Program",
+  "children": [
+    {
+      "name": "ModuleItemList",
+      "children": [
+        {
+          "name": "StatementListItem",
+          "children": [
+            {
+              "name": "Declaration",
+              "children": [
+                {
+                  "name": "ObjectDeclaration",
+                  "children": [
+                    {
+                      "name": "ObjectToken",
+                      "value": "object"
+                    },
+                    {
+                      "name": "BindingIdentifier",
+                      "children": [
+                        {
+                          "name": "Identifier",
+                          "value": "a"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "ObjectTail",
+                      "children": [
+                        {
+                          "name": "LBrace",
+                          "value": "{"
+                        },
+                        {
+                          "name": "ClassBody",
+                          "children": [
+                            {
+                              "name": "ClassElementList"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "RBrace",
+                          "value": "}"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+================================================================================
