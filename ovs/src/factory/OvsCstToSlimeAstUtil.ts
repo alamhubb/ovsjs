@@ -4,8 +4,6 @@ import {
   type SlimeCallExpression,
   type SlimeExpression, 
   type SlimeExpressionStatement,
-  type SlimeImportDeclaration, 
-  type SlimeImportDefaultSpecifier, 
   type SlimeModuleDeclaration,
   type SlimeProgram, 
   SlimeProgramSourceType,
@@ -43,45 +41,40 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
    */
   private ovsRenderDomViewDepth = 0;
 
+  /**
+   * 将 CST 转换为 Program AST
+   * 
+   * 职责：纯语法转换（OVS 语法 → JavaScript AST）
+   * 不包含：
+   * - import 添加（移到外层 ensureOvsAPIImport）
+   * - 组件包装（移到外层 wrapAsVueComponent）
+   * 
+   * @param cst Program CST 节点
+   * @returns Program AST
+   */
   toProgram(cst: SubhutiCst): SlimeProgram {
     checkCstName(cst, Es6Parser.prototype.Program.name);
-    //找到导入模块，看有没有导入ovs，没有的话则添加导入代码
+    
+    // 获取第一个子节点（ModuleItemList 或 StatementList）
     const first = cst.children?.[0]
     if (!first) {
       throw new Error('Program has no children')
     }
     
-    let program: SlimeProgram
+    // 根据子节点类型转换为 AST
     let body: Array<SlimeStatement | SlimeModuleDeclaration> = []
-    let hasImportOvsFLag = false
-    
     if (first.name === Es6Parser.prototype.ModuleItemList.name) {
+      // 模块代码（包含 import/export）
       body = this.createModuleItemListAst(first)
-      for (const item of body) {
-        if (item.type === SlimeAstType.ImportDeclaration) {
-          const importDeclaration: SlimeImportDeclaration = item as SlimeImportDeclaration
-          const importDefaultSpecifiers: SlimeImportDefaultSpecifier[] = importDeclaration.specifiers.filter(item => item.type === SlimeAstType.ImportDefaultSpecifier)
-          hasImportOvsFLag = importDefaultSpecifiers.some(item => item.local.name === 'OvsAPI')
-        }
-      }
     } else if (first.name === Es6Parser.prototype.StatementList.name) {
+      // 脚本代码（不包含 import/export）
       body = this.createStatementListAst(first)
     }
 
-    if (!hasImportOvsFLag) {
-      const local = SlimeAstUtil.createIdentifier('OvsAPI')
-      const ovsImportDefaultSpecifiers: SlimeImportDefaultSpecifier = SlimeAstUtil.createImportDefaultSpecifier(local)
-      const from = SlimeAstUtil.createFromKeyword()
-      const source = SlimeAstUtil.createStringLiteral('ovsjs/src/OvsAPI')
-      const ovsImport = SlimeAstUtil.createImportDeclaration([ovsImportDefaultSpecifiers], from, source)
-      if (ovsImport.loc) {
-      ovsImport.loc.newLine = true
-      }
-      body.unshift(ovsImport)
-    }
-
-    program = SlimeAstUtil.createProgram(body, SlimeProgramSourceType.module)
+    // 创建 Program AST
+    const program = SlimeAstUtil.createProgram(body, SlimeProgramSourceType.module)
     program.loc = cst.loc
+    
     return program
   }
 
@@ -96,12 +89,6 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     }
     return left
   }
-
-  /**
-   * OVS 不需要重写 createStatementDeclarationAst
-   * 父类已经处理了所有 ES6 语句类型
-   * 我们只需要重写 createExpressionStatementAst 来实现特殊的渲染逻辑
-   */
 
   /**
    * 重写 ExpressionStatement 处理
@@ -140,7 +127,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
       return {
         type: SlimeAstType.ExpressionStatement,
         expression: pushCall,
-        loc: cst.loc
+      loc: cst.loc
       } as SlimeExpressionStatement
     } else {
       // 不在 OvsRenderDomViewDeclaration 内部，调用父类方法保持原样

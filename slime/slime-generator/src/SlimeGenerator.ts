@@ -486,7 +486,7 @@ export default class SlimeGenerator {
     } else if (node.type === SlimeAstType.ExportNamedDeclaration) {
       this.generatorExportNamedDeclaration(node as SlimeExportNamedDeclaration)
     } else if (node.type === SlimeAstType.ExportDefaultDeclaration) {
-
+      this.generatorExportDefaultDeclaration(node as any)
     } else if (node.type === SlimeAstType.ImportDeclaration) {
       this.generatorImportDeclaration(node as SlimeImportDeclaration)
     } else if (node.type === SlimeAstType.FunctionParams) {
@@ -894,5 +894,17 @@ export default class SlimeGenerator {
    */
   private static generatorEmptyStatement(node: any) {
     this.addCode(es6TokensObj.Semicolon)
+  }
+
+  /**
+   * 生成 export default 声明
+   * export default expression
+   */
+  private static generatorExportDefaultDeclaration(node: any) {
+    this.addCode(es6TokensObj.ExportTok)
+    this.addCodeSpacing()  // 添加空格
+    this.addCode(es6TokensObj.DefaultTok)
+    this.addCodeSpacing()  // 添加空格
+    this.generatorNode(node.declaration)
   }
 }
