@@ -16,66 +16,10 @@ export default class OvsParser extends Es6Parser<OvsTokenConsumer> {
   }
 
   @SubhutiRule
-  OvsChildList() {
-    this.Many(() => {
-      this.OvsRenderDomViewDeclarator()
-    })
-  }
-
-  @SubhutiRule
-  OvsStatement() {
-    this.Or([
-      {
-        alt: () => {
-          this.OvsRenderDomViewDeclarator()
-        }
-      },
-      {
-        alt: () => {
-          this.OvsIfStatement()
-        }
-      }
-    ])
-  }
-
-  @SubhutiRule
-  OvsIfStatement() {
-    this.tokenConsumer.IfTok()
-    this.tokenConsumer.LParen()
-    this.Expression()
-    this.tokenConsumer.RParen()
-    this.tokenConsumer.LBrace()
-    this.OvsChildList()
-    this.tokenConsumer.RBrace()
-    this.Option(() => {
-      this.tokenConsumer.ElseTok()
-      this.tokenConsumer.LBrace()
-      this.OvsChildList()
-      this.tokenConsumer.RBrace()
-    })
-  }
-
-  @SubhutiRule
   OvsLexicalBinding() {
     this.BindingIdentifier()
     this.Initializer()
   }
-
-  @SubhutiRule
-  OvsRenderDomViewDeclarator() {
-    this.Or([
-      {
-        alt: () => {
-          this.OvsLexicalBinding()
-        }
-      }, {
-        alt: () => {
-          this.AssignmentExpression()
-        }
-      }
-    ])
-  }
-
 
   @SubhutiRule
   OvsRenderDomViewDeclaration() {
@@ -88,7 +32,7 @@ export default class OvsParser extends Es6Parser<OvsTokenConsumer> {
     this.tokenConsumer.LBrace()
     //这里要改一下，支持三种，一种是嵌套的，一种是元素，一种是命名=的
     this.Option(() => {
-      this.OvsStatement()
+      this.StatementList()
     })
     this.tokenConsumer.RBrace()
     const curCst = this.getCurCst()
