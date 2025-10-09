@@ -20,8 +20,26 @@ export default class ObjectScriptParser<T extends ObjectScriptTokenConsumer> ext
   ObjectTail() {
     this.Option(() => this.ObjectHeritage())
     this.tokenConsumer.LBrace()
-    this.Option(() => this.ClassBody())
+    this.Option(() => this.ObjectBody())
     this.tokenConsumer.RBrace()
+  }
+
+  @SubhutiRule
+  ObjectBody() {
+    this.ObjectElementList()
+  }
+
+  @SubhutiRule
+  ObjectElementList() {
+    this.Many(() => this.ObjectElement())
+  }
+
+  @SubhutiRule
+  ObjectElement() {
+    this.Or([
+      {alt: () => this.MethodDefinition()},
+      {alt: () => this.EmptySemicolon()}
+    ])
   }
 
   @SubhutiRule
