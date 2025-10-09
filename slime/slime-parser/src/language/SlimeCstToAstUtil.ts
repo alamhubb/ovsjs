@@ -260,6 +260,7 @@ export class SlimeCstToAst {
       return this.createExpressionStatementAst(cst)
     } else if (cst.name === Es6Parser.prototype.ReturnStatement.name) {
       return this.createReturnStatementAst(cst)
+    } else if (cst.name === Es6Parser.prototype.IfStatement.name) {
     }
   }
 
@@ -354,7 +355,7 @@ export class SlimeCstToAst {
     return ast
   }
 
-  createClassTailAst(cst: SubhutiCst): {superClass: SlimeExpression | null; body: SlimeClassBody} {
+  createClassTailAst(cst: SubhutiCst): { superClass: SlimeExpression | null; body: SlimeClassBody } {
     const astName = checkCstName(cst, Es6Parser.prototype.ClassTail.name);
     let bodyIndex = 1 // 默认 ClassBody 在索引 1
     let superClass: SlimeExpression | null = null // 超类默认为 null
