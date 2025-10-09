@@ -44,12 +44,14 @@ export class SubhutiBackData {
   curCstTokens: SubhutiMatchToken[]
 }
 
-function generateUUID() {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-    var r = Math.random() * 16 | 0
-    var v = c === 'x' ? r : (r & 0x3 | 0x8)
-    return v.toString(16)
-  })
+export class SubhutiUtil{
+  static generateUUID() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+      var r = Math.random() * 16 | 0
+      var v = c === 'x' ? r : (r & 0x3 | 0x8)
+      return v.toString(16)
+    }).replace(/-/g,'_')
+  }
 }
 
 export type SubhutiTokenConsumerConstructor<T extends SubhutiTokenConsumer> = new (parser: SubhutiParser<T>) => T
@@ -62,7 +64,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     }
     this.tokenConsumer = new TokenConsumerClass(this) as T
     this.thisClassName = this.constructor.name
-    this.uuid = generateUUID()
+    this.uuid = SubhutiUtil.generateUUID()
   }
 
   faultTolerance = true

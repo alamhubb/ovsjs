@@ -5,9 +5,21 @@ import OvsParser from "ovsjs/src/parser/OvsParser";
 import {objectScript6Tokens} from "./parser/ObjectScriptTokenConsumer";
 import ObjectScriptParser from "./parser/ObjectScriptParser";
 import {LogUtil} from "./logutil";
+import {SubhutiUtil} from "subhuti/src/parser/SubhutiParser";
 
 
 Error.stackTraceLimit = 50
+
+console.log(SubhutiUtil.generateUUID())
+
+class tempA{
+  a = 1
+  b = 2
+}
+
+const a = new tempA()
+
+
 
 const code = `
 object a {
