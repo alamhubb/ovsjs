@@ -272,7 +272,18 @@ export default class SlimeGenerator {
   }
 
   private static generatorClassDeclaration(node: SlimeClassDeclaration) {
-
+    this.addCode(es6TokensObj.ClassTok) // 输出 class 关键字并记录映射
+    if (node.id) {
+      this.addSpacing() // 类名与关键字之间添加空格
+      this.generatorNode(node.id) // 递归生成类名标识符
+    }
+    if (node.superClass) {
+      this.addSpacing() // class Name 与 extends 之间的空格
+      this.addCode(es6TokensObj.ExtendsTok) // 输出 extends 关键字
+      this.addSpacing() // extends 与父类表达式之间的空格
+      this.generatorNode(node.superClass) // 递归生成父类表达式
+    }
+    this.generatorClassBody(node.body) // 生成类主体花括号及成员
   }
 
   private static generatorClassExpression(node: SlimeClassExpression) {
@@ -298,6 +309,74 @@ export default class SlimeGenerator {
       })
     }
     this.addRBrace(body.loc) // 输出右花括号
+  }
+
+  private static generatorMethodDefinition(node: any) {
+    // 处理 static 关键字
+    if (node.static) {
+      this.addCode(es6TokensObj.StaticTok)
+      this.addSpacing()
+    }
+    
+    // 处理 key（方法名）
+    if (node.key) {
+      this.generatorNode(node.key)
+    }
+    
+    // 处理 value（函数参数和函数体，但不输出 function 关键字和函数名）
+    if (node.value) {
+      // 只输出参数和函数体，不输出 function 关键字
+      if (node.value.params) {
+        this.generatorNode(node.value.params)
+      }
+      if (node.value.body) {
+        this.generatorNode(node.value.body)
+      }
+    }
+  }
+
+  private static generatorPropertyDefinition(node: any) {
+    // 处理 static 关键字
+    if (node.static) {
+      this.addCode(es6TokensObj.StaticTok)
+      this.addSpacing()
+    }
+    
+    // 处理 key（属性名）
+    if (node.key) {
+      this.generatorNode(node.key)
+    }
+    
+    // 处理 value（属性值）
+    if (node.value) {
+      this.addSpacing()
+      this.addCode(es6TokensObj.Eq)
+      this.addSpacing()
+      this.generatorNode(node.value)
+    }
+  }
+
+  private static generatorNewExpression(node: any) {
+    this.addCode(es6TokensObj.NewTok)
+    this.addSpacing()
+    
+    // 处理 callee（类名）
+    if (node.callee) {
+      this.generatorNode(node.callee)
+    }
+    
+    // 处理 arguments
+    this.addLParen()
+    if (node.arguments && node.arguments.length > 0) {
+      node.arguments.forEach((arg: any, index: number) => {
+        if (index > 0) {
+          this.addComma()
+          this.addSpacing()
+        }
+        this.generatorNode(arg)
+      })
+    }
+    this.addRParen()
   }
 
   private static generatorNode(node: SlimeBaseNode) {
@@ -354,6 +433,12 @@ export default class SlimeGenerator {
       this.generatorClassDeclaration(node as SlimeClassDeclaration)
     } else if (node.type === SlimeAstType.ClassExpression) {
       this.generatorClassExpression(node as SlimeClassExpression) // 新增对 ClassExpression 的处理
+    } else if (node.type === SlimeAstType.MethodDefinition) {
+      this.generatorMethodDefinition(node as any) // 新增对 MethodDefinition 的处理
+    } else if (node.type === 'PropertyDefinition') {
+      this.generatorPropertyDefinition(node as any) // 新增对 PropertyDefinition 的处理
+    } else if (node.type === 'NewExpression') {
+      this.generatorNewExpression(node as any) // 新增对 NewExpression 的处理
     } else if (node.type === SlimeAstType.VariableDeclaration) {
       this.generatorVariableDeclaration(node as SlimeVariableDeclaration)
     } else if (node.type === SlimeAstType.ExpressionStatement) {

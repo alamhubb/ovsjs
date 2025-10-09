@@ -868,6 +868,9 @@ export class SlimeCstToAst {
       return this.createObjectExpressionAst(first)
     } else if (first.name === Es6Parser.prototype.ClassExpression.name) {
       return this.createClassExpressionAst(first)
+    } else if (first.name === Es6TokenConsumer.prototype.ThisTok.name) {
+      // 处理 this 关键字
+      return SlimeAstUtil.createIdentifier('this', first.loc)
     } else {
       throw new Error('未知的createPrimaryExpressionAst：' + first.name)
     }

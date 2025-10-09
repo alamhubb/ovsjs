@@ -13,11 +13,6 @@ export default class ObjectScriptParser<T extends ObjectScriptTokenConsumer> ext
   ObjectDeclaration() {
     this.tokenConsumer.ObjectToken()
     this.BindingIdentifier()
-    this.ObjectTail()
-  }
-
-  @SubhutiRule
-  ObjectTail() {
     this.Option(() => this.ObjectHeritage())
     this.tokenConsumer.LBrace()
     this.Option(() => this.ObjectBody())
@@ -38,8 +33,16 @@ export default class ObjectScriptParser<T extends ObjectScriptTokenConsumer> ext
   ObjectElement() {
     this.Or([
       {alt: () => this.MethodDefinition()},
+      {alt: () => this.ObjectPropertyAssignment()},
       {alt: () => this.EmptySemicolon()}
     ])
+  }
+
+  @SubhutiRule
+  ObjectPropertyAssignment() {
+    this.BindingIdentifier()
+    this.tokenConsumer.Eq()
+    this.AssignmentExpression()
   }
 
   @SubhutiRule
