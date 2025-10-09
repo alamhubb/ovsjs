@@ -1,10 +1,12 @@
-import {hello} from "@/views/hello.ovs";
+// 使用默认导入（OVS 文件导出的是 default）
+import Hello from "@/views/hello.ovs";
 
 export const App = {
-    components:{
+    components: {
+        Hello
     },
     render() {
-        console.log(hello)
-        return hello.render()
+        // Hello 是一个函数组件，直接调用返回 VNode
+        return Hello()
     }
 };

@@ -991,8 +991,8 @@ export class SlimeCstToAst {
     const astName = checkCstName(cst, Es6Parser.prototype.VariableDeclarator.name);
     const id = this.createBindingIdentifierAst(cst.children[0])
 
-    console.log(6565656)
-    console.log(id)
+    // console.log(6565656)
+    // console.log(id)
     let variableDeclarator: SlimeVariableDeclarator
     const varCst = cst.children[1]
     if (varCst) {

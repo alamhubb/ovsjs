@@ -589,8 +589,8 @@ export default class SlimeGenerator {
   }
 
   private static generatorVariableDeclaration(node: SlimeVariableDeclaration) {
-    console.log(989898)
-    console.log(node.kind.loc)
+    // console.log(989898)
+    // console.log(node.kind.loc)
     this.addCodeAndMappings(es6TokenMapObj[node.kind.value.valueOf()], node.kind.loc)
     this.addCodeSpacing()
     for (const declaration of node.declarations) {
@@ -717,9 +717,9 @@ export default class SlimeGenerator {
       column: this.generateColumn,
     }
     if (!sourcePosition) {
-      console.log(989898)
-      console.log(sourcePosition)
-      console.log(generate)
+      // console.log(989898)
+      // console.log(sourcePosition)
+      // console.log(generate)
     }
     this.mappings.push({
       source: sourcePosition,
