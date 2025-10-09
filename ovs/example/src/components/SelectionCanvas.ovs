@@ -1,0 +1,132 @@
+export class SelectionCanvas {
+    constructor() {
+        this.regions = []
+        this.activeRegionId = null
+        this.isSelecting = false
+        this.startPos = { x: 0, y: 0 }
+        this.selectionBox = { x: 0, y: 0, width: 0, height: 0 }
+    }
+    
+    startSelection(e) {
+        if (e.target.classList.contains('selection-canvas')) {
+            this.isSelecting = true
+            const rect = e.currentTarget.getBoundingClientRect()
+            this.startPos.x = e.clientX - rect.left
+            this.startPos.y = e.clientY - rect.top
+            
+            this.selectionBox.x = this.startPos.x
+            this.selectionBox.y = this.startPos.y
+            this.selectionBox.width = 0
+            this.selectionBox.height = 0
+        }
+    }
+    
+    updateSelection(e) {
+        if (!this.isSelecting) return
+        
+        const rect = e.currentTarget.getBoundingClientRect()
+        const currentX = e.clientX - rect.left
+        const currentY = e.clientY - rect.top
+        
+        const x = Math.min(this.startPos.x, currentX)
+        const y = Math.min(this.startPos.y, currentY)
+        const width = Math.abs(currentX - this.startPos.x)
+        const height = Math.abs(currentY - this.startPos.y)
+        
+        this.selectionBox.x = x
+        this.selectionBox.y = y
+        this.selectionBox.width = width
+        this.selectionBox.height = height
+    }
+    
+    endSelection(e) {
+        if (!this.isSelecting) return
+        
+        if (this.selectionBox.width > 10 && this.selectionBox.height > 10) {
+            const newRegion = {
+                id: Date.now().toString(),
+                x: this.selectionBox.x,
+                y: this.selectionBox.y,
+                width: this.selectionBox.width,
+                height: this.selectionBox.height,
+                label: '未命名区域'
+            }
+            
+            this.regions.push(newRegion)
+            this.activeRegionId = newRegion.id
+            this.$emit('regionCreated', newRegion)
+        }
+        
+        this.isSelecting = false
+    }
+    
+    selectRegion(id) {
+        this.activeRegionId = id
+        this.$emit('regionSelected', id)
+    }
+    
+    deleteRegion(id) {
+        const index = this.regions.findIndex(r => r.id === id)
+        if (index !== -1) {
+            this.regions.splice(index, 1)
+        }
+        if (this.activeRegionId === id) {
+            this.activeRegionId = null
+        }
+    }
+    
+    render() {
+        return div({
+            class: 'selection-canvas',
+            onMousedown: this.startSelection,
+            onMousemove: this.updateSelection,
+            onMouseup: this.endSelection
+        }) {
+            // 已创建的区域列表
+            this.regions.map(region => 
+                div({
+                    key: region.id,
+                    class: ['region', region.id === this.activeRegionId ? 'active' : ''],
+                    style: {
+                        left: region.x + 'px',
+                        top: region.y + 'px',
+                        width: region.width + 'px',
+                        height: region.height + 'px'
+                    },
+                    onClick: (e) => {
+                        e.stopPropagation()
+                        this.selectRegion(region.id)
+                    }
+                }) {
+                    div({ class: 'region-label' }) {
+                        region.label
+                    }
+                    
+                    button({
+                        class: 'delete-btn',
+                        onClick: (e) => {
+                            e.stopPropagation()
+                            this.deleteRegion(region.id)
+                        }
+                    }) {
+                        '×'
+                    }
+                }
+            )
+            
+            // 正在绘制的选区
+            if (this.isSelecting) {
+                div({
+                    class: 'selecting-box',
+                    style: {
+                        left: this.selectionBox.x + 'px',
+                        top: this.selectionBox.y + 'px',
+                        width: this.selectionBox.width + 'px',
+                        height: this.selectionBox.height + 'px'
+                    }
+                })
+            }
+        }
+    }
+}
+

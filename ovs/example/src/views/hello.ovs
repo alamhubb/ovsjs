@@ -1,6 +1,6 @@
-div {
-    const abc = true
-    if (abc) {
-      123
-    }
+export const hello = div {
+  const abc = true
+  if (abc) {
+    123
   }
+}

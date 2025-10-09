@@ -66,145 +66,78 @@ export interface SourceMapSourceGenerateIndexLength {
   generateLength: number[]
 }
 
-/**
- * 从文件名提取组件名称（PascalCase）
- * @param filename 文件路径，如 'src/components/hello-world.ovs'
- * @returns 组件名称，如 'HelloWorld'
- * 
- * 转换规则：
- * - hello.ovs → Hello
- * - my-component.ovs → MyComponent
- * - hello_world.ovs → HelloWorld
- */
+/*
+// ============================================================
+// 以下函数已废弃：不再自动包装为组件
+// 保留代码以备将来可能需要自动包装的场景
+// ============================================================
+
 function getComponentName(filename?: string): string {
   if (!filename) return 'Component'
-  
-  // 提取文件名（去掉路径和扩展名）
   const basename = filename
-    .split('/').pop()           // 处理 Unix 路径
-    ?.split('\\').pop()         // 处理 Windows 路径
-    ?.replace(/\.ovs$/, '')     // 去掉 .ovs 扩展名
-    || 'Component'
-  
-  // 转换为 PascalCase
-  // 按 - 或 _ 分割，每个单词首字母大写
+    .split('/').pop()?.split('\\').pop()?.replace(/\.ovs$/, '') || 'Component'
   return basename
     .split(/[-_]/)
     .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join('')
 }
 
-/**
- * 判断语句是否是 OvsRenderDomViewDeclaration 生成的 IIFE
- * @param statement AST 语句节点
- * @returns 是否是渲染元素的 IIFE
- * 
- * 识别模式：
- * ExpressionStatement {
- *   expression: CallExpression {
- *     callee: FunctionExpression { ... }
- *   }
- * }
- */
 function isOvsRenderDomViewIIFE(statement: SlimeStatement): boolean {
-  // 必须是 ExpressionStatement
-  if (statement.type !== SlimeAstType.ExpressionStatement) {
-    return false
-  }
-  
+  if (statement.type !== SlimeAstType.ExpressionStatement) return false
   const expr = (statement as SlimeExpressionStatement).expression
-  
-  // 必须是 CallExpression
-  if (expr.type !== SlimeAstType.CallExpression) {
-    return false
-  }
-  
-  // callee 必须是 FunctionExpression（IIFE 的特征）
-  if (expr.callee.type !== SlimeAstType.FunctionExpression) {
-    return false
-  }
-  
+  if (expr.type !== SlimeAstType.CallExpression) return false
+  if (expr.callee.type !== SlimeAstType.FunctionExpression) return false
   return true
 }
 
-/**
- * 将 AST 包装为 Vue 函数组件
- * @param ast 原始的 Program AST
- * @param filename 文件名，用于生成组件名称
- * @returns 包装后的 Program AST
- * 
- * 转换逻辑：
- * 1. 分类 body 中的语句：
- *    - ImportDeclaration → 保留在顶层
- *    - OvsRenderDomViewDeclaration (IIFE) → 提取为渲染元素
- *    - 其他语句 → 放入组件函数内
- * 2. 创建函数组件：
- *    export default function ComponentName() {
- *      ...topLevelCode
- *      return renderElements
- *    }
- */
 function wrapAsVueComponent(ast: SlimeProgram, filename?: string): SlimeProgram {
   const componentName = getComponentName(filename)
-  
-  // 分类 body 中的语句
-  const imports: any[] = []                      // import 语句
-  const topLevelCode: SlimeStatement[] = []      // 顶层代码（const、function 等）
-  const renderElements: SlimeExpression[] = []   // 渲染元素（IIFE）
+  const imports: any[] = []
+  const topLevelCode: SlimeStatement[] = []
+  const renderElements: SlimeExpression[] = []
   
   for (const statement of ast.body) {
     if (statement.type === SlimeAstType.ImportDeclaration) {
-      // import 语句保留在顶层
       imports.push(statement)
     } else if (isOvsRenderDomViewIIFE(statement as SlimeStatement)) {
-      // OvsRenderDomViewDeclaration 生成的 IIFE，提取表达式
       const expr = (statement as SlimeExpressionStatement).expression
       renderElements.push(expr)
     } else {
-      // 其他语句放入组件函数内
       topLevelCode.push(statement as SlimeStatement)
     }
   }
   
-  // 创建 return 语句
   const returnStatement = SlimeAstUtil.createReturnStatement(
     renderElements.length === 1
-      ? renderElements[0]  // 单个元素直接返回
-      : SlimeAstUtil.createArrayExpression(renderElements)  // 多个元素返回数组
+      ? renderElements[0]
+      : SlimeAstUtil.createArrayExpression(renderElements)
   )
   
-  // 创建函数体：{ ...topLevelCode, return ... }
   const functionBody = SlimeAstUtil.createBlockStatement(
     SlimeAstUtil.creatLBrace(),
     SlimeAstUtil.createRBrace(),
-    [
-      ...topLevelCode,  // 顶层代码
-      returnStatement   // return 语句
-    ]
+    [...topLevelCode, returnStatement]
   )
   
-  // 创建函数参数（空参数）
   const functionParams = SlimeAstUtil.createFunctionParams(
     SlimeAstUtil.createLParen(),
     SlimeAstUtil.createRParen()
   )
   
-  // 创建函数表达式：function() { ... }
   const functionExpression = SlimeAstUtil.createFunctionExpression(
     functionBody,
-    SlimeAstUtil.createIdentifier(componentName),  // 函数名
+    SlimeAstUtil.createIdentifier(componentName),
     functionParams
   )
   
-  // 创建 export default
   const exportDefault = SlimeAstUtil.createExportDefaultDeclaration(functionExpression)
   
-  // 返回新的 Program
   return SlimeAstUtil.createProgram(
     [...imports, exportDefault] as any,
     SlimeProgramSourceType.module
   )
 }
+*/
 
 /**
  * 自动添加 OvsAPI 的 import 语句（如果不存在）
@@ -290,10 +223,8 @@ export async function vitePluginOvsTransform(
   // 4. 添加 import：自动添加 OvsAPI import（如果不存在）
   ast = ensureOvsAPIImport(ast)
 
-  // 5. 组件包装：将顶层代码包装为 Vue 函数组件
-  ast = wrapAsVueComponent(ast, filename)
-
-  // 6. 代码生成：AST → code
+  // 5. 代码生成：AST → code
+  // 注意：不再自动包装为组件，由开发者在 OVS 文件中自己控制导出
   const result = SlimeGenerator.generator(ast, tokens)
 
   // 7. 代码格式化（可选）

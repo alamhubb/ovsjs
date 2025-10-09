@@ -355,14 +355,22 @@ export class SlimeCstToAst {
 
     } else if (first1.name === Es6Parser.prototype.Declaration.name) {
       const declaration = this.createDeclarationAst(cst.children[1])
-      console.log('asdfsadfsad')
-      console.log(cst.children[1])
-      console.log(declaration)
+      // console.log('asdfsadfsad')
+      // console.log(cst.children[1])
+      // console.log(declaration)
 
       return SlimeAstUtil.createExportNamedDeclaration(token, declaration, [], null, cst.loc)
 
     } else if (first1.name === Es6Parser.prototype.DefaultTokHoistableDeclarationClassDeclarationAssignmentExpression.name) {
-      const del = this.createDefaultExportDeclarationAst(cst.children[2])
+      // export default 后面的内容
+      // DefaultTokHoistableDeclarationClassDeclarationAssignmentExpression 的子节点：
+      // [0] = DefaultTok
+      // [1] = HoistableDeclaration | ClassDeclaration | AssignmentExpression
+      const defaultExportCst = first1.children?.[1]
+      if (!defaultExportCst) {
+        throw new Error('export default 后面缺少内容')
+      }
+      const del = this.createDefaultExportDeclarationAst(defaultExportCst)
       return SlimeAstUtil.createExportDefaultDeclaration(del, cst.loc)
     }
   }
@@ -376,10 +384,34 @@ export class SlimeCstToAst {
     }
   }
 
+  /**
+   * 创建 export default 的声明部分
+   * 支持：class、function、expression
+   */
   createDefaultExportDeclarationAst(cst: SubhutiCst): SlimeMaybeNamedFunctionDeclaration | SlimeMaybeNamedClassDeclaration | SlimeExpression {
+    if (!cst) {
+      throw new Error('createDefaultExportDeclarationAst: cst is undefined')
+    }
+    
+    // 如果是 AssignmentExpressionEmptySemicolon，提取 AssignmentExpression
+    if (cst.name === 'AssignmentExpressionEmptySemicolon') {
+      // 第一个子节点是 AssignmentExpression
+      const assignmentExpr = cst.children?.[0]
+      if (assignmentExpr) {
+        return this.createAssignmentExpressionAst(assignmentExpr)
+      }
+    }
+    
     switch (cst.name) {
       case Es6Parser.prototype.ClassDeclaration.name:
         return this.createClassDeclarationAst(cst);
+      case Es6Parser.prototype.FunctionDeclaration.name:
+        return this.createFunctionExpressionAst(cst) as any;
+      case Es6Parser.prototype.AssignmentExpression.name:
+        return this.createAssignmentExpressionAst(cst);
+      default:
+        // 尝试作为表达式处理
+        return this.createExpressionAst(cst);
     }
   }
 
