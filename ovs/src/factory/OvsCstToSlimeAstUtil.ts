@@ -1,18 +1,21 @@
 import {SlimeCstToAst} from "slime-parser/src/language/SlimeCstToAstUtil.ts";
-import SubhutiCst, {type SubhutiPosition, type SubhutiSourceLocation} from "subhuti/src/struct/SubhutiCst.ts";
+import SubhutiCst from "subhuti/src/struct/SubhutiCst.ts";
 import {
   type SlimeCallExpression,
-  type SlimeExpression, type SlimeImportDeclaration, type SlimeImportDefaultSpecifier, type SlimeModuleDeclaration,
-  type SlimeProgram, SlimeProgramSourceType,
-  type SlimeStatement
+  type SlimeExpression, 
+  type SlimeExpressionStatement,
+  type SlimeImportDeclaration, 
+  type SlimeImportDefaultSpecifier, 
+  type SlimeModuleDeclaration,
+  type SlimeProgram, 
+  SlimeProgramSourceType,
+  type SlimeStatement,
+  type SlimeIdentifier
 } from "slime-ast/src/SlimeAstInterface.ts";
 import OvsParser from "../parser/OvsParser.ts";
-import JsonUtil from "subhuti/src/utils/JsonUtil.ts";
 import SlimeAstUtil from "slime-ast/src/SlimeAst.ts";
-import type {OvsAstLexicalBinding, OvsAstRenderDomViewDeclaration} from "../interface/OvsInterface";
 import Es6Parser from "slime-parser/src/language/es2015/Es6Parser.ts";
 import {SlimeAstType} from "slime-ast/src/SlimeAstType.ts";
-import Es6TokenConsumer from "slime-parser/src/language/es2015/Es6Tokens.ts";
 
 export function checkCstName(cst: SubhutiCst, cstName: string) {
   if (cst.name !== cstName) {
@@ -27,13 +30,21 @@ export function throwNewError(errorMsg: string = 'syntax error') {
 }
 
 export class OvsCstToSlimeAst extends SlimeCstToAst {
+  // 计数器：标记当前是否在 OvsRenderDomViewDeclaration 内部
+  private ovsRenderDomViewDepth = 0;
+
   toProgram(cst: SubhutiCst): SlimeProgram {
-    const astName = checkCstName(cst, Es6Parser.prototype.Program.name);
+    checkCstName(cst, Es6Parser.prototype.Program.name);
     //找到导入模块，看有没有导入ovs，没有的话则添加导入代码
-    const first = cst.children[0]
+    const first = cst.children?.[0]
+    if (!first) {
+      throw new Error('Program has no children')
+    }
+    
     let program: SlimeProgram
-    let body: Array<SlimeStatement | SlimeModuleDeclaration>
+    let body: Array<SlimeStatement | SlimeModuleDeclaration> = []
     let hasImportOvsFLag = false
+    
     if (first.name === Es6Parser.prototype.ModuleItemList.name) {
       body = this.createModuleItemListAst(first)
       for (const item of body) {
@@ -53,7 +64,9 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
       const from = SlimeAstUtil.createFromKeyword()
       const source = SlimeAstUtil.createStringLiteral('ovsjs/src/OvsAPI')
       const ovsImport = SlimeAstUtil.createImportDeclaration([ovsImportDefaultSpecifiers], from, source)
-      ovsImport.loc.newLine = true
+      if (ovsImport.loc) {
+        ovsImport.loc.newLine = true
+      }
       body.unshift(ovsImport)
     }
 
@@ -74,83 +87,125 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     return left
   }
 
-  createOvsRenderDomViewDeclarationAst(cst: SubhutiCst): SlimeCallExpression {
-    const astName = checkCstName(cst, OvsParser.prototype.OvsRenderDomViewDeclaration.name);
-    let children = []
-    if (cst.children.length > 1) {
-      children = cst.children[2].children.filter(item => item.name === OvsParser.prototype.OvsRenderDomViewDeclarator.name).map(item => this.createOvsRenderDomViewDeclaratorAst(item)) as any[]
+  // 重写 ExpressionStatement 处理
+  createExpressionStatementAst(cst: SubhutiCst): SlimeExpressionStatement {
+    const exprCst = cst.children?.[0]
+    if (!exprCst) {
+      throw new Error('ExpressionStatement has no expression')
     }
-
-    const id = this.createIdentifierAst(cst.children[0])
-    id.loc = cst.children[0].loc
-
-    const ast: OvsAstRenderDomViewDeclaration = {
-      type: astName as any,
-      id: id,
-      // children: cst.children[2].children.filter(item => item.name === OvsParser.prototype.OvsRenderDomViewDeclarator.name),
-      children: children,
-      loc: cst.loc
-      // children: this.createAssignmentExpressionAst(cst.children[2])
-    } as any
-
-    const res = this.createOvsRenderDomViewDeclarationEstreeAst(ast)
-    // left = this.ovsRenderDomViewDeclarationAstToEstreeAst(left)
-    return res
+    
+    const expr = this.createExpressionAst(exprCst)
+    
+    // 如果在 OvsRenderDomViewDeclaration 内部，转换为 children.push(expr)
+    if (this.ovsRenderDomViewDepth > 0) {
+      const pushCall = SlimeAstUtil.createCallExpression(
+        SlimeAstUtil.createMemberExpression(
+          SlimeAstUtil.createIdentifier('children'),
+          SlimeAstUtil.createDotOperator(cst.loc || undefined),
+          SlimeAstUtil.createIdentifier('push')
+        ),
+        [expr]
+      )
+      
+      return {
+        type: SlimeAstType.ExpressionStatement,
+        expression: pushCall,
+        loc: cst.loc
+      } as SlimeExpressionStatement
+    } else {
+      // 不在内部，调用父类方法
+      return super.createExpressionStatementAst(cst)
+    }
   }
 
-  createOvsRenderDomViewDeclarationEstreeAst(ast: OvsAstRenderDomViewDeclaration): SlimeCallExpression {
-    const body = this.createOvsAPICreateVNode(ast)
-    const viewIIFE = this.createIIFE(body)
-    return viewIIFE
+  createOvsRenderDomViewDeclarationAst(cst: SubhutiCst): SlimeCallExpression {
+    checkCstName(cst, OvsParser.prototype.OvsRenderDomViewDeclaration.name);
+    
+    // 获取元素名称（如 'div'）
+    const idCst = cst.children?.[0]
+    if (!idCst) {
+      throw new Error('OvsRenderDomViewDeclaration has no identifier')
+    }
+    const id = this.createIdentifierAst(idCst)
+    id.loc = idCst.loc
+
+    // 进入 OvsRenderDomViewDeclaration，计数器 +1
+    this.ovsRenderDomViewDepth++
+    
+    try {
+      // 获取 StatementList (cst.children[2])
+      const statementListCst = cst.children?.[2]
+      if (!statementListCst) {
+        throw new Error('OvsRenderDomViewDeclaration has no StatementList')
+      }
+      
+      // 转换 StatementList，会自动处理所有语句（包括 ExpressionStatement）
+      const bodyStatements = this.createStatementListAst(statementListCst)
+      
+      // 生成完整的函数体
+      const iifeFunctionBody: SlimeStatement[] = [
+        // const children = []
+        {
+          type: SlimeAstType.VariableDeclaration,
+          kind: 'const' as any,
+          declarations: [
+            {
+              type: SlimeAstType.VariableDeclarator,
+              id: SlimeAstUtil.createIdentifier('children'),
+              init: SlimeAstUtil.createArrayExpression([]),
+              loc: cst.loc
+            }
+          ],
+          loc: cst.loc
+        } as any,
+        // 转换后的语句（ExpressionStatement 已经变成 children.push()）
+        ...bodyStatements,
+        // return OvsAPI.createVNode(...)
+        this.createReturnOvsAPICreateVNode(id)
+      ]
+      
+      // 生成 IIFE
+      return this.createIIFE(iifeFunctionBody)
+    } finally {
+      // 退出 OvsRenderDomViewDeclaration，计数器 -1
+      this.ovsRenderDomViewDepth--
+    }
   }
 
-  createIIFE(body: Array<SlimeStatement>): SlimeCallExpression {
-    const blockStatement = SlimeAstUtil.createBlockStatement(null, null, body, body[0].loc)
-    const lp = SlimeAstUtil.createLParen(blockStatement.loc)
-    const rp = SlimeAstUtil.createRParen(blockStatement.loc)
+  // 创建 return OvsAPI.createVNode('div', children)
+  private createReturnOvsAPICreateVNode(id: SlimeIdentifier): SlimeStatement {
+    const memberExpression = SlimeAstUtil.createMemberExpression(
+      SlimeAstUtil.createIdentifier('OvsAPI'),
+      SlimeAstUtil.createDotOperator(id.loc || undefined),
+      SlimeAstUtil.createIdentifier('createVNode')
+    )
+    
+    const callExpression = SlimeAstUtil.createCallExpression(
+      memberExpression,
+      [
+        SlimeAstUtil.createStringLiteral(id.name),  // 元素名称
+        SlimeAstUtil.createIdentifier('children')    // children 数组
+      ]
+    )
+    
+    return SlimeAstUtil.createReturnStatement(callExpression)
+  }
+
+  // 创建 IIFE：(function() { ... })()
+  private createIIFE(body: Array<SlimeStatement>): SlimeCallExpression {
+    const loc = body[0]?.loc || undefined
+    const blockStatement = SlimeAstUtil.createBlockStatement(
+      { type: 'LBrace', value: '{', loc } as any,
+      { type: 'RBrace', value: '}', loc } as any,
+      body,
+      loc
+    )
+    const lp = SlimeAstUtil.createLParen(loc)
+    const rp = SlimeAstUtil.createRParen(loc)
     const functionParams = SlimeAstUtil.createFunctionParams(lp, rp)
-    const functionExpression = SlimeAstUtil.createFunctionExpression(blockStatement, null, functionParams, blockStatement.loc)
+    const functionExpression = SlimeAstUtil.createFunctionExpression(blockStatement, null, functionParams, loc)
     const callExpression = SlimeAstUtil.createCallExpression(functionExpression, [])
     return callExpression
-  }
-
-  createOvsAPICreateVNode(ast: OvsAstRenderDomViewDeclaration): SlimeStatement[] {
-    const memberExpressionObject = SlimeAstUtil.createIdentifier('OvsAPI')
-    memberExpressionObject.loc = ast.id.loc
-
-    const memberExpressionProperty = SlimeAstUtil.createIdentifier('createVNode')
-    memberExpressionProperty.loc = ast.id.loc
-
-    const dot = SlimeAstUtil.createDotOperator(ast.id.loc)
-
-    const memberExpression = SlimeAstUtil.createMemberExpression(memberExpressionObject, dot, memberExpressionProperty)
-    memberExpression.loc = ast.id.loc
-
-    const OvsAPICreateVNodeFirstParamsViewName = SlimeAstUtil.createStringLiteral(ast.id.name)
-    OvsAPICreateVNodeFirstParamsViewName.loc = ast.id.loc
-
-    const OvsAPICreateVNodeSecondParamsChildren = SlimeAstUtil.createArrayExpression(ast.children)
-
-    const callExpression = SlimeAstUtil.createCallExpression(memberExpression, [OvsAPICreateVNodeFirstParamsViewName, OvsAPICreateVNodeSecondParamsChildren])
-    const ReturnStatement = SlimeAstUtil.createReturnStatement(callExpression)
-
-    ReturnStatement.loc = ast.loc
-    return [ReturnStatement]
-  }
-
-  createOvsRenderDomViewDeclaratorAst(cst: SubhutiCst): SlimeExpression {
-    const astName = checkCstName(cst, OvsParser.prototype.OvsRenderDomViewDeclarator.name);
-    const firstChild = cst.children[0]
-    if (firstChild.name === OvsParser.prototype.OvsLexicalBinding.name) {
-      const ast: OvsAstLexicalBinding = {
-        type: OvsParser.prototype.OvsLexicalBinding.name as any,
-        id: this.createIdentifierAst(firstChild.children[0].children[0]) as any,
-        init: this.createAssignmentExpressionAst(firstChild.children[1].children[1]) as any,
-      }
-      return ast as any
-    } else {
-      return this.createAssignmentExpressionAst(firstChild)
-    }
   }
 }
 
