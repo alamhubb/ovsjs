@@ -158,6 +158,8 @@ export default class SlimeGenerator {
 
   private static generatorExpressionStatement(node: SlimeExpressionStatement) {
     this.generatorNode(node.expression)
+    // 添加分号
+    this.addCode(es6TokensObj.Semicolon)
   }
 
   private static generatorCallExpression(node: SlimeCallExpression) {
@@ -447,6 +449,34 @@ export default class SlimeGenerator {
       this.generatorReturnStatement(node as SlimeReturnStatement)
     } else if (node.type === SlimeAstType.BlockStatement) {
       this.generatorBlockStatement(node as SlimeBlockStatement)
+    } else if (node.type === SlimeAstType.IfStatement) {
+      this.generatorIfStatement(node as any)
+    } else if (node.type === SlimeAstType.ForStatement) {
+      this.generatorForStatement(node as any)
+    } else if (node.type === SlimeAstType.ForInStatement || node.type === SlimeAstType.ForOfStatement) {
+      this.generatorForInOfStatement(node as any)
+    } else if (node.type === SlimeAstType.WhileStatement) {
+      this.generatorWhileStatement(node as any)
+    } else if (node.type === SlimeAstType.DoWhileStatement) {
+      this.generatorDoWhileStatement(node as any)
+    } else if (node.type === SlimeAstType.SwitchStatement) {
+      this.generatorSwitchStatement(node as any)
+    } else if (node.type === SlimeAstType.TryStatement) {
+      this.generatorTryStatement(node as any)
+    } else if (node.type === SlimeAstType.ThrowStatement) {
+      this.generatorThrowStatement(node as any)
+    } else if (node.type === SlimeAstType.BreakStatement) {
+      this.generatorBreakStatement(node as any)
+    } else if (node.type === SlimeAstType.ContinueStatement) {
+      this.generatorContinueStatement(node as any)
+    } else if (node.type === SlimeAstType.LabeledStatement) {
+      this.generatorLabeledStatement(node as any)
+    } else if (node.type === SlimeAstType.WithStatement) {
+      this.generatorWithStatement(node as any)
+    } else if (node.type === SlimeAstType.DebuggerStatement) {
+      this.generatorDebuggerStatement(node as any)
+    } else if (node.type === SlimeAstType.EmptyStatement) {
+      this.generatorEmptyStatement(node as any)
     } else if (node.type === SlimeAstType.ImportSpecifier) {
       this.generatorImportSpecifier(node as SlimeImportSpecifier)
     } else if (node.type === SlimeAstType.ImportDefaultSpecifier) {
@@ -566,6 +596,8 @@ export default class SlimeGenerator {
     for (const declaration of node.declarations) {
       this.generatorNode(declaration)
     }
+    // 添加分号
+    this.addCode(es6TokensObj.Semicolon)
   }
 
   static get lastMapping() {
@@ -698,4 +730,169 @@ export default class SlimeGenerator {
   /*private static generatorModuleDeclaration(node: SlimeModuleDeclaration[]) {
       node.
   }*/
+
+  /**
+   * 生成 if 语句
+   * if (test) consequent [else alternate]
+   */
+  private static generatorIfStatement(node: any) {
+    this.addCode(es6TokensObj.IfTok)
+    this.addCode(es6TokensObj.LParen)
+    this.generatorNode(node.test)
+    this.addCode(es6TokensObj.RParen)
+    this.generatorNode(node.consequent)
+    if (node.alternate) {
+      this.addCode(es6TokensObj.ElseTok)
+      this.generatorNode(node.alternate)
+    }
+  }
+
+  /**
+   * 生成 for 语句
+   */
+  private static generatorForStatement(node: any) {
+    this.addCode(es6TokensObj.ForTok)
+    this.addCode(es6TokensObj.LParen)
+    if (node.init) this.generatorNode(node.init)
+    this.addCode(es6TokensObj.Semicolon)
+    if (node.test) this.generatorNode(node.test)
+    this.addCode(es6TokensObj.Semicolon)
+    if (node.update) this.generatorNode(node.update)
+    this.addCode(es6TokensObj.RParen)
+    this.generatorNode(node.body)
+  }
+
+  /**
+   * 生成 for...in / for...of 语句
+   */
+  private static generatorForInOfStatement(node: any) {
+    this.addCode(es6TokensObj.ForTok)
+    this.addCode(es6TokensObj.LParen)
+    this.generatorNode(node.left)
+    if (node.type === SlimeAstType.ForInStatement) {
+      this.addCode(es6TokensObj.InTok)
+    } else {
+      this.addCode(es6TokensObj.OfTok)
+    }
+    this.generatorNode(node.right)
+    this.addCode(es6TokensObj.RParen)
+    this.generatorNode(node.body)
+  }
+
+  /**
+   * 生成 while 语句
+   */
+  private static generatorWhileStatement(node: any) {
+    this.addCode(es6TokensObj.WhileTok)
+    this.addCode(es6TokensObj.LParen)
+    this.generatorNode(node.test)
+    this.addCode(es6TokensObj.RParen)
+    this.generatorNode(node.body)
+  }
+
+  /**
+   * 生成 do...while 语句
+   */
+  private static generatorDoWhileStatement(node: any) {
+    this.addCode(es6TokensObj.DoTok)
+    this.generatorNode(node.body)
+    this.addCode(es6TokensObj.WhileTok)
+    this.addCode(es6TokensObj.LParen)
+    this.generatorNode(node.test)
+    this.addCode(es6TokensObj.RParen)
+  }
+
+  /**
+   * 生成 switch 语句
+   */
+  private static generatorSwitchStatement(node: any) {
+    this.addCode(es6TokensObj.SwitchTok)
+    this.addCode(es6TokensObj.LParen)
+    this.generatorNode(node.discriminant)
+    this.addCode(es6TokensObj.RParen)
+    this.addCode(es6TokensObj.LBrace)
+    if (node.cases) {
+      this.generatorNodes(node.cases)
+    }
+    this.addCode(es6TokensObj.RBrace)
+  }
+
+  /**
+   * 生成 try 语句
+   */
+  private static generatorTryStatement(node: any) {
+    this.addCode(es6TokensObj.TryTok)
+    this.generatorNode(node.block)
+    if (node.handler) {
+      this.generatorNode(node.handler)
+    }
+    if (node.finalizer) {
+      this.addCode(es6TokensObj.FinallyTok)
+      this.generatorNode(node.finalizer)
+    }
+  }
+
+  /**
+   * 生成 throw 语句
+   */
+  private static generatorThrowStatement(node: any) {
+    this.addCode(es6TokensObj.ThrowTok)
+    if (node.argument) {
+      this.generatorNode(node.argument)
+    }
+  }
+
+  /**
+   * 生成 break 语句
+   */
+  private static generatorBreakStatement(node: any) {
+    this.addCode(es6TokensObj.BreakTok)
+    if (node.label) {
+      this.generatorNode(node.label)
+    }
+  }
+
+  /**
+   * 生成 continue 语句
+   */
+  private static generatorContinueStatement(node: any) {
+    this.addCode(es6TokensObj.ContinueTok)
+    if (node.label) {
+      this.generatorNode(node.label)
+    }
+  }
+
+  /**
+   * 生成标签语句
+   */
+  private static generatorLabeledStatement(node: any) {
+    this.generatorNode(node.label)
+    this.addCode(es6TokensObj.Colon)
+    this.generatorNode(node.body)
+  }
+
+  /**
+   * 生成 with 语句
+   */
+  private static generatorWithStatement(node: any) {
+    this.addCode(es6TokensObj.WithTok)
+    this.addCode(es6TokensObj.LParen)
+    this.generatorNode(node.object)
+    this.addCode(es6TokensObj.RParen)
+    this.generatorNode(node.body)
+  }
+
+  /**
+   * 生成 debugger 语句
+   */
+  private static generatorDebuggerStatement(node: any) {
+    this.addCode(es6TokensObj.DebuggerTok)
+  }
+
+  /**
+   * 生成空语句
+   */
+  private static generatorEmptyStatement(node: any) {
+    this.addCode(es6TokensObj.Semicolon)
+  }
 }

@@ -47,4 +47,22 @@ export enum SlimeAstType {
     RParen = 'RParen', // 右圆括号
     LBrace = 'LBrace', // 左花括号
     RBrace = 'RBrace', // 右花括号
+    
+    // 控制流语句
+    IfStatement = 'IfStatement', // if 语句
+    ForStatement = 'ForStatement', // for 语句
+    ForInStatement = 'ForInStatement', // for...in 语句
+    ForOfStatement = 'ForOfStatement', // for...of 语句
+    WhileStatement = 'WhileStatement', // while 语句
+    DoWhileStatement = 'DoWhileStatement', // do...while 语句
+    SwitchStatement = 'SwitchStatement', // switch 语句
+    SwitchCase = 'SwitchCase', // switch case 分支
+    TryStatement = 'TryStatement', // try 语句
+    CatchClause = 'CatchClause', // catch 子句
+    ThrowStatement = 'ThrowStatement', // throw 语句
+    BreakStatement = 'BreakStatement', // break 语句
+    ContinueStatement = 'ContinueStatement', // continue 语句
+    LabeledStatement = 'LabeledStatement', // 标签语句
+    WithStatement = 'WithStatement', // with 语句
+    DebuggerStatement = 'DebuggerStatement', // debugger 语句
 }

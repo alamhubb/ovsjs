@@ -45,7 +45,7 @@ export interface SourceMapSourceGenerateIndexLength {
 }
 
 // 同步版本（不格式化，用于 Language Server）
-export function vitePluginOvsTransform(code: string): SlimeGeneratorResult {
+export async function vitePluginOvsTransform(code: string): Promise<SlimeGeneratorResult> {
   const lexer = new SubhutiLexer(es6Tokens)
   const tokens = lexer.lexer(code)
 
@@ -61,7 +61,21 @@ export function vitePluginOvsTransform(code: string): SlimeGeneratorResult {
   // traverseClearLoc(outCst)
   // LogUtil.log(outCst)
   const ast = OvsCstToSlimeAstUtil.toProgram(curCst)
-  return SlimeGenerator.generator(ast, tokens)
+  const result = SlimeGenerator.generator(ast, tokens)
+
+  // 如果需要格式化
+  try {
+    result.code = await prettier.format(result.code, {
+      parser: 'babel',
+      semi: false,
+      singleQuote: true,
+      tabWidth: 2,
+      printWidth: 80
+    })
+  } catch (e) {
+    console.warn('OVS code formatting failed:', e)
+  }
+  return result
 }
 
 // 异步版本（支持格式化，用于 Vite 插件）

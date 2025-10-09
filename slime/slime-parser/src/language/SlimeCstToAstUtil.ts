@@ -249,18 +249,96 @@ export class SlimeCstToAst {
 
   createStatementAst(cst: SubhutiCst): Array<SlimeStatement> {
     const astName = checkCstName(cst, Es6Parser.prototype.Statement.name);
-    const statements: SlimeStatement[] = cst.children.map(item => this.createStatementDeclarationAst(item))
+    const statements: SlimeStatement[] = cst.children
+      .map(item => this.createStatementDeclarationAst(item))
+      .filter(stmt => stmt !== undefined)  // 过滤掉 undefined
     return statements
   }
 
+  /**
+   * 根据 CST 节点类型创建对应的 Statement AST
+   * 处理所有 ES6 语句类型
+   */
   createStatementDeclarationAst(cst: SubhutiCst) {
+    // 变量声明
     if (cst.name === Es6Parser.prototype.VariableDeclaration.name) {
       return this.createVariableDeclarationAst(cst)
-    } else if (cst.name === Es6Parser.prototype.ExpressionStatement.name) {
+    } 
+    // 表达式语句
+    else if (cst.name === Es6Parser.prototype.ExpressionStatement.name) {
       return this.createExpressionStatementAst(cst)
-    } else if (cst.name === Es6Parser.prototype.ReturnStatement.name) {
+    } 
+    // return 语句
+    else if (cst.name === Es6Parser.prototype.ReturnStatement.name) {
       return this.createReturnStatementAst(cst)
-    } else if (cst.name === Es6Parser.prototype.IfStatement.name) {
+    } 
+    // if 语句
+    else if (cst.name === Es6Parser.prototype.IfStatement.name) {
+      return this.createIfStatementAst(cst)
+    }
+    // for 语句
+    else if (cst.name === Es6Parser.prototype.ForStatement.name) {
+      return this.createForStatementAst(cst)
+    }
+    // for...in / for...of 语句
+    else if (cst.name === Es6Parser.prototype.ForInOfStatement.name) {
+      return this.createForInOfStatementAst(cst)
+    }
+    // while 语句
+    else if (cst.name === Es6Parser.prototype.WhileStatement.name) {
+      return this.createWhileStatementAst(cst)
+    }
+    // do...while 语句
+    else if (cst.name === Es6Parser.prototype.DoWhileStatement.name) {
+      return this.createDoWhileStatementAst(cst)
+    }
+    // 块语句
+    else if (cst.name === Es6Parser.prototype.BlockStatement.name) {
+      return this.createBlockStatementAst(cst)
+    }
+    // switch 语句
+    else if (cst.name === Es6Parser.prototype.SwitchStatement.name) {
+      return this.createSwitchStatementAst(cst)
+    }
+    // try 语句
+    else if (cst.name === Es6Parser.prototype.TryStatement.name) {
+      return this.createTryStatementAst(cst)
+    }
+    // throw 语句
+    else if (cst.name === Es6Parser.prototype.ThrowStatement.name) {
+      return this.createThrowStatementAst(cst)
+    }
+    // break 语句
+    else if (cst.name === Es6Parser.prototype.BreakStatement.name) {
+      return this.createBreakStatementAst(cst)
+    }
+    // continue 语句
+    else if (cst.name === Es6Parser.prototype.ContinueStatement.name) {
+      return this.createContinueStatementAst(cst)
+    }
+    // 标签语句
+    else if (cst.name === Es6Parser.prototype.LabelledStatement.name) {
+      return this.createLabelledStatementAst(cst)
+    }
+    // with 语句
+    else if (cst.name === Es6Parser.prototype.WithStatement.name) {
+      return this.createWithStatementAst(cst)
+    }
+    // debugger 语句
+    else if (cst.name === Es6Parser.prototype.DebuggerStatement.name) {
+      return this.createDebuggerStatementAst(cst)
+    }
+    // 空语句
+    else if (cst.name === Es6Parser.prototype.EmptyStatement.name) {
+      return this.createEmptyStatementAst(cst)
+    }
+    // 函数声明
+    else if (cst.name === Es6Parser.prototype.FunctionDeclaration.name) {
+      return this.createFunctionDeclarationAst(cst)
+    }
+    // 类声明
+    else if (cst.name === Es6Parser.prototype.ClassDeclaration.name) {
+      return this.createClassDeclarationAst(cst)
     }
   }
 
@@ -562,9 +640,41 @@ export class SlimeCstToAst {
   }
 
 
+  /**
+   * 创建 BlockStatement AST
+   * 处理两种情况：
+   * 1. 直接是 StatementList（旧的实现）
+   * 2. 是 BlockStatement，需要提取内部的 Block -> StatementList
+   */
   createBlockStatementAst(cst: SubhutiCst): SlimeBlockStatement {
-    const astName = checkCstName(cst, Es6Parser.prototype.StatementList.name);
-    const statements: Array<SlimeStatement> = this.createStatementListAst(cst)
+    let statements: Array<SlimeStatement>
+    
+    // 如果是 StatementList，直接转换
+    if (cst.name === Es6Parser.prototype.StatementList.name) {
+      statements = this.createStatementListAst(cst)
+    }
+    // 如果是 BlockStatement，需要提取 Block -> StatementList
+    else if (cst.name === Es6Parser.prototype.BlockStatement.name) {
+      // BlockStatement -> Block -> StatementList
+      const blockCst = cst.children?.[0]
+      if (blockCst && blockCst.name === Es6Parser.prototype.Block.name) {
+        // Block 的结构：LBrace StatementList RBrace
+        const statementListCst = blockCst.children?.find(
+          child => child.name === Es6Parser.prototype.StatementList.name
+        )
+        if (statementListCst) {
+          statements = this.createStatementListAst(statementListCst)
+        } else {
+          statements = []
+        }
+      } else {
+        statements = []
+      }
+    }
+    else {
+      throw new Error(`Expected StatementList or BlockStatement, got ${cst.name}`)
+    }
+    
     const ast: SlimeBlockStatement = {
       type: Es6Parser.prototype.BlockStatement.name as any,
       body: statements,
@@ -591,6 +701,217 @@ export class SlimeCstToAst {
       loc: cst.loc
     } as any
     return ast
+  }
+
+  /**
+   * 创建 if 语句 AST
+   * if (test) consequent [else alternate]
+   */
+  createIfStatementAst(cst: SubhutiCst): any {
+    checkCstName(cst, Es6Parser.prototype.IfStatement.name);
+    // if (Expression) Statement [else Statement]
+    const test = this.createExpressionAst(cst.children[2])  // 条件表达式
+    
+    // 处理 then 分支
+    const consequentStatements = this.createStatementAst(cst.children[4])
+    const consequent = consequentStatements[0] || null
+    
+    // 检查是否有 else 分支
+    let alternate = null
+    if (cst.children.length > 5 && cst.children[5]) {
+      const alternateStatements = this.createStatementAst(cst.children[6])
+      alternate = alternateStatements[0] || null
+    }
+    
+    return {
+      type: SlimeAstType.IfStatement,
+      test,
+      consequent,
+      alternate,
+      loc: cst.loc
+    }
+  }
+
+  /**
+   * 创建 for 语句 AST
+   */
+  createForStatementAst(cst: SubhutiCst): any {
+    checkCstName(cst, Es6Parser.prototype.ForStatement.name);
+    // 简化实现：for (init; test; update) body
+    return {
+      type: SlimeAstType.ForStatement,
+      init: null,  // TODO: 解析 init
+      test: null,  // TODO: 解析 test
+      update: null,  // TODO: 解析 update
+      body: null,  // TODO: 解析 body
+      loc: cst.loc
+    }
+  }
+
+  /**
+   * 创建 for...in / for...of 语句 AST
+   */
+  createForInOfStatementAst(cst: SubhutiCst): any {
+    checkCstName(cst, Es6Parser.prototype.ForInOfStatement.name);
+    return {
+      type: SlimeAstType.ForOfStatement,
+      left: null,  // TODO
+      right: null,  // TODO
+      body: null,  // TODO
+      loc: cst.loc
+    }
+  }
+
+  /**
+   * 创建 while 语句 AST
+   */
+  createWhileStatementAst(cst: SubhutiCst): any {
+    checkCstName(cst, Es6Parser.prototype.WhileStatement.name);
+    return {
+      type: SlimeAstType.WhileStatement,
+      test: null,  // TODO
+      body: null,  // TODO
+      loc: cst.loc
+    }
+  }
+
+  /**
+   * 创建 do...while 语句 AST
+   */
+  createDoWhileStatementAst(cst: SubhutiCst): any {
+    checkCstName(cst, Es6Parser.prototype.DoWhileStatement.name);
+    return {
+      type: SlimeAstType.DoWhileStatement,
+      body: null,  // TODO
+      test: null,  // TODO
+      loc: cst.loc
+    }
+  }
+
+  /**
+   * 创建 switch 语句 AST
+   */
+  createSwitchStatementAst(cst: SubhutiCst): any {
+    checkCstName(cst, Es6Parser.prototype.SwitchStatement.name);
+    return {
+      type: SlimeAstType.SwitchStatement,
+      discriminant: null,  // TODO
+      cases: [],  // TODO
+      loc: cst.loc
+    }
+  }
+
+  /**
+   * 创建 try 语句 AST
+   */
+  createTryStatementAst(cst: SubhutiCst): any {
+    checkCstName(cst, Es6Parser.prototype.TryStatement.name);
+    return {
+      type: SlimeAstType.TryStatement,
+      block: null,  // TODO
+      handler: null,  // TODO
+      finalizer: null,  // TODO
+      loc: cst.loc
+    }
+  }
+
+  /**
+   * 创建 throw 语句 AST
+   */
+  createThrowStatementAst(cst: SubhutiCst): any {
+    checkCstName(cst, Es6Parser.prototype.ThrowStatement.name);
+    return {
+      type: SlimeAstType.ThrowStatement,
+      argument: null,  // TODO
+      loc: cst.loc
+    }
+  }
+
+  /**
+   * 创建 break 语句 AST
+   */
+  createBreakStatementAst(cst: SubhutiCst): any {
+    checkCstName(cst, Es6Parser.prototype.BreakStatement.name);
+    return {
+      type: SlimeAstType.BreakStatement,
+      label: null,
+      loc: cst.loc
+    }
+  }
+
+  /**
+   * 创建 continue 语句 AST
+   */
+  createContinueStatementAst(cst: SubhutiCst): any {
+    checkCstName(cst, Es6Parser.prototype.ContinueStatement.name);
+    return {
+      type: SlimeAstType.ContinueStatement,
+      label: null,
+      loc: cst.loc
+    }
+  }
+
+  /**
+   * 创建标签语句 AST
+   */
+  createLabelledStatementAst(cst: SubhutiCst): any {
+    checkCstName(cst, Es6Parser.prototype.LabelledStatement.name);
+    return {
+      type: SlimeAstType.LabeledStatement,
+      label: null,  // TODO
+      body: null,  // TODO
+      loc: cst.loc
+    }
+  }
+
+  /**
+   * 创建 with 语句 AST
+   */
+  createWithStatementAst(cst: SubhutiCst): any {
+    checkCstName(cst, Es6Parser.prototype.WithStatement.name);
+    return {
+      type: SlimeAstType.WithStatement,
+      object: null,  // TODO
+      body: null,  // TODO
+      loc: cst.loc
+    }
+  }
+
+  /**
+   * 创建 debugger 语句 AST
+   */
+  createDebuggerStatementAst(cst: SubhutiCst): any {
+    checkCstName(cst, Es6Parser.prototype.DebuggerStatement.name);
+    return {
+      type: SlimeAstType.DebuggerStatement,
+      loc: cst.loc
+    }
+  }
+
+  /**
+   * 创建空语句 AST
+   */
+  createEmptyStatementAst(cst: SubhutiCst): any {
+    checkCstName(cst, Es6Parser.prototype.EmptyStatement.name);
+    return {
+      type: SlimeAstType.EmptyStatement,
+      loc: cst.loc
+    }
+  }
+
+  /**
+   * 创建函数声明 AST
+   */
+  createFunctionDeclarationAst(cst: SubhutiCst): any {
+    checkCstName(cst, Es6Parser.prototype.FunctionDeclaration.name);
+    // TODO: 完整实现
+    return {
+      type: SlimeAstType.FunctionDeclaration,
+      id: null,
+      params: [],
+      body: null,
+      loc: cst.loc
+    }
   }
 
   createCallExpressionAst(cst: SubhutiCst): SlimeExpression {

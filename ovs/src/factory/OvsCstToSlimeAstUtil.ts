@@ -75,7 +75,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
       const source = SlimeAstUtil.createStringLiteral('ovsjs/src/OvsAPI')
       const ovsImport = SlimeAstUtil.createImportDeclaration([ovsImportDefaultSpecifiers], from, source)
       if (ovsImport.loc) {
-        ovsImport.loc.newLine = true
+      ovsImport.loc.newLine = true
       }
       body.unshift(ovsImport)
     }
@@ -96,6 +96,12 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     }
     return left
   }
+
+  /**
+   * OVS 不需要重写 createStatementDeclarationAst
+   * 父类已经处理了所有 ES6 语句类型
+   * 我们只需要重写 createExpressionStatementAst 来实现特殊的渲染逻辑
+   */
 
   /**
    * 重写 ExpressionStatement 处理
@@ -188,13 +194,10 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
       // 其中 ExpressionStatement 会被 createExpressionStatementAst 转换为 children.push()
       const bodyStatements = this.createStatementListAst(statementListCst)
       
-      // 过滤掉 undefined 值（某些语句类型可能未被处理）
-      const validStatements = bodyStatements.filter(stmt => stmt !== undefined)
-      
       // 生成完整的 IIFE 函数体
       const iifeFunctionBody: SlimeStatement[] = [
         // 1. 声明 children 数组：const children = []
-        // 修复：使用 SlimeAstUtil 创建正确的 VariableDeclaration
+        // 使用 SlimeAstUtil 创建正确的 VariableDeclaration
         SlimeAstUtil.createVariableDeclaration(
           SlimeAstUtil.createVariableDeclarationKind(SlimeVariableDeclarationKindValue.const, cst.loc),  // 使用枚举值
           [
@@ -207,7 +210,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
           cst.loc
         ),
         // 2. 转换后的语句（ExpressionStatement 已经变成 children.push()）
-        ...validStatements,
+        ...bodyStatements,
         // 3. 返回 OvsAPI.createVNode('div', children)
         this.createReturnOvsAPICreateVNode(id)
       ]

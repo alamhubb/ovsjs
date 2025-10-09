@@ -11,7 +11,8 @@ const code = `  div {
 }
 `
 
-const res = vitePluginOvsTransform(code)
-console.log('code:', res.code)
+const res = vitePluginOvsTransform(code).then((res) => {
+  console.log('code:', res.code)
+})
 
 
