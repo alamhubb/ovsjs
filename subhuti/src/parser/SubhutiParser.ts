@@ -286,7 +286,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     if (this.continueMatch || (this.faultTolerance && this.tokens.length < oldTokensLength)) {
       if (cst.children[0]) {
         if (!cst.children[0].loc) {
-          console.log(cst.children[0])
+          // console.log(cst.children[0])
           return cst
         }
         cst.loc = {

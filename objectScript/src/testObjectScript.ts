@@ -10,14 +10,17 @@ import {LogUtil} from "./logutil";
 Error.stackTraceLimit = 50
 
 const code = `
-object a {}
+object a {
+  a = 1
+  b=2
+}
 `
 
 const lexer = new SubhutiLexer(objectScript6Tokens)
 const tokens = lexer.lexer(code)
 
-console.log(tokens)
-console.log(tokens.length)
+// console.log(tokens)
+// console.log(tokens.length)
 
 const parser = new ObjectScriptParser(tokens)
 
