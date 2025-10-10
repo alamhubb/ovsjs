@@ -693,7 +693,7 @@ export class SlimeCstToAst {
     if (cst.children[1].name === Es6Parser.prototype.FormalParameterList.name) {
       const FormalParameterListCst = cst.children[1]
       const params = this.createFormalParameterListAst(FormalParameterListCst)
-      SlimeAstUtil.createFunctionParams(lp, rp, cst.loc, params)
+      return SlimeAstUtil.createFunctionParams(lp, rp, cst.loc, params)
     }
     return SlimeAstUtil.createFunctionParams(lp, rp, cst.loc)
   }
@@ -1252,7 +1252,18 @@ export class SlimeCstToAst {
   createAdditiveExpressionAst(cst: SubhutiCst): SlimeExpression {
     const astName = checkCstName(cst, Es6Parser.prototype.AdditiveExpression.name);
     if (cst.children.length > 1) {
-
+      // 有运算符，创建 BinaryExpression
+      const left = this.createExpressionAst(cst.children[0])
+      const operator = cst.children[1].value as any  // +/- 运算符
+      const right = this.createExpressionAst(cst.children[2])
+      
+      return {
+        type: SlimeAstType.BinaryExpression,
+        operator: operator,
+        left: left,
+        right: right,
+        loc: cst.loc
+      } as any
     }
     return this.createExpressionAst(cst.children[0])
   }

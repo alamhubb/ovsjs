@@ -305,9 +305,7 @@ export async function vitePluginOvsTransform(
   const result = SlimeGenerator.generator(ast, tokens)
 
   // 7. 代码格式化（可选）
-  // 注意：在开发模式下禁用 Prettier，因为它会破坏注释
-  // 只在生产构建时启用格式化
-  if (prettify && process.env.NODE_ENV === 'production') {
+  if (prettify) {
     try {
       result.code = await prettier.format(result.code, {
         parser: 'babel',

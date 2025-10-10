@@ -777,13 +777,14 @@ export default class SlimeGenerator {
 
 
   private static addMappings(generateToken: SubhutiCreateToken, sourcePosition: SlimeCodeLocation) {
-    if (this.mappings.length) {
-      const lastMapping = this.mappings[this.mappings.length - 1]
-
-      if (sourcePosition.line > lastMapping.source.line) {
-        this.addNewLine()
-      }
-    }
+    // 移除自动换行逻辑，让 Prettier 来处理格式化
+    // 注释掉的代码会导致在不合适的位置插入换行（如 return 和返回值之间）
+    // if (this.mappings.length) {
+    //   const lastMapping = this.mappings[this.mappings.length - 1]
+    //   if (sourcePosition.line > lastMapping.source.line) {
+    //     this.addNewLine()
+    //   }
+    // }
 
     let generate: SlimeCodeLocation = {
       type: generateToken.name,
