@@ -163,12 +163,15 @@ export default class SlimeGenerator {
   }
 
   private static generatorCallExpression(node: SlimeCallExpression) {
-    //IIFE
-    if (node.callee.type === SlimeAstType.FunctionExpression) {
+    //IIFE - 需要括号包裹 FunctionExpression 和 ArrowFunctionExpression
+    const needsParen = node.callee.type === SlimeAstType.FunctionExpression ||
+                       node.callee.type === SlimeAstType.ArrowFunctionExpression
+    
+    if (needsParen) {
       this.addLParen()
     }
     this.generatorNode(node.callee as SlimeExpression)
-    if (node.callee.type === SlimeAstType.FunctionExpression) {
+    if (needsParen) {
       this.addRParen()
     }
 
@@ -845,14 +848,33 @@ export default class SlimeGenerator {
    */
   private static generatorForInOfStatement(node: any) {
     this.addCode(es6TokensObj.ForTok)
+    this.addCodeSpacing()
     this.addCode(es6TokensObj.LParen)
-    this.generatorNode(node.left)
+    
+    // 生成 left (变量声明)，但不添加分号
+    if (node.left.type === SlimeAstType.VariableDeclaration) {
+      this.addCode(es6TokenMapObj[node.left.kind.value.valueOf()])
+      this.addCodeSpacing()
+      // 只生成第一个声明的 id
+      if (node.left.declarations && node.left.declarations.length > 0) {
+        this.generatorNode(node.left.declarations[0].id)
+      }
+    } else {
+      this.generatorNode(node.left)
+    }
+    
+    // 生成 in 或 of
+    this.addCodeSpacing()
     if (node.type === SlimeAstType.ForInStatement) {
       this.addCode(es6TokensObj.InTok)
     } else {
       this.addCode(es6TokensObj.OfTok)
     }
+    this.addCodeSpacing()
+    
+    // 生成 right (被迭代的对象)
     this.generatorNode(node.right)
+    
     this.addCode(es6TokensObj.RParen)
     this.generatorNode(node.body)
   }

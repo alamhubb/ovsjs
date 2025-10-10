@@ -184,12 +184,14 @@ export const es5TokensObj = {
     VerticalBarVerticalBar: createValueRegToken(Es5TokensName.VerticalBarVerticalBar, /\|\|/, '||'),
     
     // 注释必须在 Asterisk 和 Slash 之前，才能优先匹配
+    // [^\r\n]* 可以匹配任何字符（包括中文），除了换行符
     SingleLineComment: createValueRegToken(
         Es5TokensName.SingleLineComment,
         /\/\/[^\r\n]*/,
         '//',
         SubhutiCreateTokenGroupType.skip  // 跳过注释，不参与语法分析
     ),
+    // [\s\S]*? 可以匹配任何字符（包括中文和换行）
     MultiLineComment: createValueRegToken(
         Es5TokensName.MultiLineComment,
         /\/\*[\s\S]*?\*\//,
