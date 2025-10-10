@@ -1,0 +1,27 @@
+const double = (x) => x * 2
+const getValue = () => 42
+const multiply = (a, b) => a * b
+
+const result1 = double(5)
+const result2 = getValue()
+const result3 = multiply(3, 4)
+
+div {
+  h1 { "Arrow Functions" }
+  
+  div {
+    p { "double(5) = " }
+    p { result1 }
+  }
+  
+  div {
+    p { "getValue() = " }
+    p { result2 }
+  }
+  
+  div {
+    p { "multiply(3,4) = " }
+    p { result3 }
+  }
+}
+

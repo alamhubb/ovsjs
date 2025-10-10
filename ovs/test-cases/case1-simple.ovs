@@ -1,0 +1,12 @@
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+div {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+

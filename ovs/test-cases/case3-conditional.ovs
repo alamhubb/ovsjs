@@ -1,0 +1,20 @@
+const showHeader = true
+const count = 10
+
+div {
+  if (showHeader) {
+    h1 { "Header Visible" }
+  }
+  
+  div {
+    p { "Count: " }
+    p { count }
+  }
+  
+  if (count > 5) {
+    div {
+      p { "Count is high!" }
+    }
+  }
+}
+

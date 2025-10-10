@@ -1,0 +1,28 @@
+const appTitle = "Multi-View Demo"
+const author = "OVS Team"
+
+console.log("Rendering multiple views...")
+
+div {
+  h1 { "View 1 Header" }
+  p { appTitle }
+}
+
+div {
+  h2 { "View 2 Content" }
+  p { "Main content area" }
+}
+
+div {
+  h3 { "View 3 Info" }
+  p { "Author: " }
+  p { author }
+}
+
+div {
+  h4 { "View 4 Footer" }
+  p { "End of demo" }
+}
+
+console.log("All views rendered!")
+

@@ -1,0 +1,18 @@
+const userName = "John"
+const userAge = 25
+const userRole = "Developer"
+
+div {
+  h1 { userName }
+  
+  div {
+    p { "Age: " }
+    p { userAge }
+  }
+  
+  div {
+    p { "Role: " }
+    p { userRole }
+  }
+}
+
