@@ -1,11 +1,10 @@
-// 使用命名导入（从 OVS 文件导入 hello）
-import {hello} from "@/views/hello.ovs";
+// Test: No default export in hello.ovs
+// All expressions wrapped in IIFE, returned as array
+import DefaultViews from "@/views/hello.ovs";
 
 export const App = {
-    components: {
-    },
     render() {
-        // hello 是一个 IIFE 表达式，直接返回 VNode
-        return hello
+        // DefaultViews is an array containing all views
+        return DefaultViews
     }
 };

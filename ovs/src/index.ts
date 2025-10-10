@@ -15,7 +15,8 @@ import {
   type SlimeExpression,
   type SlimeImportDeclaration,
   type SlimeImportDefaultSpecifier,
-  SlimeProgramSourceType
+  SlimeProgramSourceType,
+  SlimeVariableDeclarationKindValue
 } from "slime-ast/src/SlimeAstInterface.ts";
 import SlimeAstUtil from "slime-ast/src/SlimeAst.ts";
 import {SlimeAstType} from "slime-ast/src/SlimeAstType.ts";
@@ -66,22 +67,28 @@ export interface SourceMapSourceGenerateIndexLength {
   generateLength: number[]
 }
 
-/*
-// ============================================================
-// 以下函数已废弃：不再自动包装为组件
-// 保留代码以备将来可能需要自动包装的场景
-// ============================================================
-
-function getComponentName(filename?: string): string {
-  if (!filename) return 'Component'
-  const basename = filename
-    .split('/').pop()?.split('\\').pop()?.replace(/\.ovs$/, '') || 'Component'
-  return basename
-    .split(/[-_]/)
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join('')
+/**
+ * 判断 statement 是否是声明语句
+ * @param node AST 节点
+ * @returns 是否是声明
+ */
+function isDeclaration(node: any): boolean {
+  return [
+    SlimeAstType.VariableDeclaration,    // const/let/var
+    SlimeAstType.VariableStatement,      // 也支持 VariableStatement
+    SlimeAstType.FunctionDeclaration,
+    SlimeAstType.ClassDeclaration,
+    SlimeAstType.ImportDeclaration,
+    SlimeAstType.ExportNamedDeclaration,
+    SlimeAstType.ExportDefaultDeclaration,
+  ].includes(node.type)
 }
 
+/**
+ * 判断 statement 是否是 OVS 视图的 IIFE
+ * @param statement 语句节点
+ * @returns 是否是 OVS 视图 IIFE
+ */
 function isOvsRenderDomViewIIFE(statement: SlimeStatement): boolean {
   if (statement.type !== SlimeAstType.ExpressionStatement) return false
   const expr = (statement as SlimeExpressionStatement).expression
@@ -90,33 +97,99 @@ function isOvsRenderDomViewIIFE(statement: SlimeStatement): boolean {
   return true
 }
 
-function wrapAsVueComponent(ast: SlimeProgram, filename?: string): SlimeProgram {
-  const componentName = getComponentName(filename)
-  const imports: any[] = []
-  const topLevelCode: SlimeStatement[] = []
-  const renderElements: SlimeExpression[] = []
+/**
+ * 包裹顶层表达式
+ * 
+ * 规则：
+ * 1. Declaration 始终保持顶层
+ * 2. 有 export default - 只处理 default，其他不管
+ * 3. 没有 export default - 用 IIFE 包裹所有表达式
+ * 
+ * @param ast Program AST
+ * @returns 包裹后的 Program AST
+ */
+function wrapTopLevelExpressions(ast: SlimeProgram): SlimeProgram {
+  const declarations: any[] = []
+  const expressions: SlimeStatement[] = []
+  let hasExportDefault = false
   
+  // 1. 分类
   for (const statement of ast.body) {
-    if (statement.type === SlimeAstType.ImportDeclaration) {
-      imports.push(statement)
-    } else if (isOvsRenderDomViewIIFE(statement as SlimeStatement)) {
-      const expr = (statement as SlimeExpressionStatement).expression
-      renderElements.push(expr)
+    if (statement.type === SlimeAstType.ExportDefaultDeclaration) {
+      hasExportDefault = true
+      declarations.push(statement)
+    } else if (isDeclaration(statement)) {
+      declarations.push(statement)
+    } else if (statement.type === SlimeAstType.ExpressionStatement) {
+      expressions.push(statement as SlimeStatement)
     } else {
-      topLevelCode.push(statement as SlimeStatement)
+      // 其他类型的语句（如 if、for 等）也归类为表达式
+      expressions.push(statement as SlimeStatement)
     }
   }
   
-  const returnStatement = SlimeAstUtil.createReturnStatement(
-    renderElements.length === 1
-      ? renderElements[0]
-      : SlimeAstUtil.createArrayExpression(renderElements)
-  )
+  // 2. 如果有 export default，不做包裹
+  if (hasExportDefault) {
+    return ast
+  }
   
+  // 3. 如果没有表达式，保持原样
+  if (expressions.length === 0) {
+    return ast
+  }
+  
+  // 4. 包裹所有表达式
+  const iifeBody: SlimeStatement[] = [
+    // const children = []
+    SlimeAstUtil.createVariableDeclaration(
+      SlimeAstUtil.createVariableDeclarationKind(
+        SlimeVariableDeclarationKindValue.const,
+        undefined
+      ),
+      [
+        SlimeAstUtil.createVariableDeclarator(
+          SlimeAstUtil.createIdentifier('children'),
+          SlimeAstUtil.createEqualOperator(),
+          SlimeAstUtil.createArrayExpression([])
+        )
+      ]
+    )
+  ]
+  
+  // 处理所有表达式
+  for (const expr of expressions) {
+    if (isOvsRenderDomViewIIFE(expr)) {
+      // OVS 视图 → children.push(vnode)
+      const vnodeExpr = (expr as SlimeExpressionStatement).expression
+      const pushCall = SlimeAstUtil.createCallExpression(
+        SlimeAstUtil.createMemberExpression(
+          SlimeAstUtil.createIdentifier('children'),
+          SlimeAstUtil.createDotOperator(),
+          SlimeAstUtil.createIdentifier('push')
+        ),
+        [vnodeExpr]
+      )
+      iifeBody.push({
+        type: SlimeAstType.ExpressionStatement,
+        expression: pushCall
+      } as SlimeExpressionStatement)
+    } else {
+      // 其他表达式保持原样
+      iifeBody.push(expr)
+    }
+  }
+  
+  // return children
+  const returnStatement = SlimeAstUtil.createReturnStatement(
+    SlimeAstUtil.createIdentifier('children')
+  )
+  iifeBody.push(returnStatement)
+  
+  // 创建 IIFE
   const functionBody = SlimeAstUtil.createBlockStatement(
     SlimeAstUtil.creatLBrace(),
     SlimeAstUtil.createRBrace(),
-    [...topLevelCode, returnStatement]
+    iifeBody
   )
   
   const functionParams = SlimeAstUtil.createFunctionParams(
@@ -126,18 +199,20 @@ function wrapAsVueComponent(ast: SlimeProgram, filename?: string): SlimeProgram 
   
   const functionExpression = SlimeAstUtil.createFunctionExpression(
     functionBody,
-    SlimeAstUtil.createIdentifier(componentName),
+    null,  // 匿名函数
     functionParams
   )
   
-  const exportDefault = SlimeAstUtil.createExportDefaultDeclaration(functionExpression)
+  const iife = SlimeAstUtil.createCallExpression(functionExpression, [])
   
+  const exportDefault = SlimeAstUtil.createExportDefaultDeclaration(iife)
+  
+  // 返回新的 Program
   return SlimeAstUtil.createProgram(
-    [...imports, exportDefault] as any,
+    [...declarations, exportDefault] as any,
     SlimeProgramSourceType.module
   )
 }
-*/
 
 /**
  * 自动添加 OvsAPI 的 import 语句（如果不存在）
@@ -223,12 +298,16 @@ export async function vitePluginOvsTransform(
   // 4. 添加 import：自动添加 OvsAPI import（如果不存在）
   ast = ensureOvsAPIImport(ast)
 
-  // 5. 代码生成：AST → code
-  // 注意：不再自动包装为组件，由开发者在 OVS 文件中自己控制导出
+  // 5. 包裹顶层表达式：根据是否有 export default 决定是否包裹
+  ast = wrapTopLevelExpressions(ast)
+
+  // 6. 代码生成：AST → code
   const result = SlimeGenerator.generator(ast, tokens)
 
   // 7. 代码格式化（可选）
-  if (prettify) {
+  // 注意：在开发模式下禁用 Prettier，因为它会破坏注释
+  // 只在生产构建时启用格式化
+  if (prettify && process.env.NODE_ENV === 'production') {
     try {
       result.code = await prettier.format(result.code, {
         parser: 'babel',

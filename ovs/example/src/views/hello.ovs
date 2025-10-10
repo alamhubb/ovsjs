@@ -1,6 +1,19 @@
-export const hello = div {
-  const abc = true
-  if (abc) {
-    123
+const showHeader = true
+const count = 10
+
+div {
+  if (showHeader) {
+    h1 { "Header Visible" }
+  }
+  
+  div {
+    p { "Count: " }
+    p { count }
+  }
+  
+  if (count > 5) {
+    div {
+      p { "Count is high!" }
+    }
   }
 }
