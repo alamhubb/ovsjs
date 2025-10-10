@@ -307,8 +307,22 @@ export class SlimeCstToAst {
    * 处理所有 ES6 语句类型
    */
   createStatementDeclarationAst(cst: SubhutiCst) {
+    // BreakableStatement - 包装节点，递归处理子节点
+    if (cst.name === Es6Parser.prototype.BreakableStatement.name) {
+      if (cst.children && cst.children.length > 0) {
+        return this.createStatementDeclarationAst(cst.children[0])
+      }
+      return undefined
+    }
+    // IterationStatement - 循环语句包装节点
+    else if (cst.name === Es6Parser.prototype.IterationStatement.name) {
+      if (cst.children && cst.children.length > 0) {
+        return this.createStatementDeclarationAst(cst.children[0])
+      }
+      return undefined
+    }
     // 变量声明
-    if (cst.name === Es6Parser.prototype.VariableDeclaration.name) {
+    else if (cst.name === Es6Parser.prototype.VariableDeclaration.name) {
       return this.createVariableDeclarationAst(cst)
     } 
     // 表达式语句
@@ -863,11 +877,67 @@ export class SlimeCstToAst {
    */
   createForInOfStatementAst(cst: SubhutiCst): any {
     checkCstName(cst, Es6Parser.prototype.ForInOfStatement.name);
+    
+    // ForInOfStatement 结构：
+    // children[0]: ForTok
+    // children[1]: LParen
+    // children[2]: ForDeclaration (let/const item)
+    // children[3]: InTok or OfTok
+    // children[4]: Expression (items)
+    // children[5]: RParen
+    // children[6]: Statement (body)
+    
+    // 解析 left (for 变量声明)
+    const forDeclarationCst = cst.children[2]
+    let left: any = null
+    if (forDeclarationCst.name === Es6Parser.prototype.ForDeclaration.name) {
+      // ForDeclaration 内部是 LetOrConst + ForBinding
+      const letOrConstCst = forDeclarationCst.children[0]
+      const forBindingCst = forDeclarationCst.children[1]
+      
+      // 创建变量声明
+      const kind = letOrConstCst.children[0].value  // 'let' or 'const'
+      const id = this.createBindingIdentifierAst(forBindingCst.children[0])
+      
+      left = {
+        type: SlimeAstType.VariableDeclaration,
+        declarations: [{
+          type: SlimeAstType.VariableDeclarator,
+          id: id,
+          init: null,
+          loc: forBindingCst.loc
+        }],
+        kind: {
+          type: 'VariableDeclarationKind',
+          value: kind,
+          loc: letOrConstCst.loc
+        },
+        loc: forDeclarationCst.loc
+      }
+    }
+    
+    // 判断是 in 还是 of
+    const inOrOfCst = cst.children[3]
+    const isForOf = inOrOfCst.value === 'of' || inOrOfCst.name === 'OfTok'
+    
+    // 解析 right (items)
+    const rightExprCst = cst.children[4]
+    const right = this.createExpressionAst(rightExprCst)
+    
+    // 解析 body
+    const bodyCst = cst.children[6]
+    // bodyCst 是 Statement 类型，使用 createStatementAst
+    const bodyStatements = this.createStatementAst(bodyCst)
+    // body 应该是单个 Statement，如果返回数组取第一个
+    const body = Array.isArray(bodyStatements) && bodyStatements.length > 0 
+      ? bodyStatements[0] 
+      : bodyStatements
+    
     return {
-      type: SlimeAstType.ForOfStatement,
-      left: null,  // TODO
-      right: null,  // TODO
-      body: null,  // TODO
+      type: isForOf ? SlimeAstType.ForOfStatement : SlimeAstType.ForInStatement,
+      left: left,
+      right: right,
+      body: body,
       loc: cst.loc
     }
   }

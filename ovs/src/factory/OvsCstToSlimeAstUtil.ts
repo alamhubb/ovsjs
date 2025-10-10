@@ -136,18 +136,23 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
   }
 
   /**
-   * 转换 OvsRenderDomViewDeclaration 为 IIFE
+   * 转换 OvsRenderDomViewDeclaration 为表达式或 IIFE
    * 
    * 转换流程：
    * 1. 进入时计数器 +1（标记进入 OvsRenderDomViewDeclaration）
    * 2. 转换 StatementList（ExpressionStatement 会自动转为 children.push()）
-   * 3. 生成 IIFE 函数体：
-   *    - const children = []
-   *    - 转换后的语句
-   *    - return OvsAPI.createVNode('div', children)
+   * 3. 判断是简单还是复杂情况：
+   *    - 简单（只有表达式）：OvsAPI.createVNode('div', [children])  ⭐ 无 IIFE
+   *    - 复杂（有语句）：(function() { const children = []; ...; return OvsAPI.createVNode('div', children) })()
    * 4. 退出时计数器 -1（用 try-finally 保证）
    * 
-   * 示例：
+   * 示例（简单）：
+   * 输入：div { h1 { greeting } }
+   * 输出：OvsAPI.createVNode('div', [
+   *   OvsAPI.createVNode('h1', [greeting])
+   * ])
+   * 
+   * 示例（复杂）：
    * 输入：div { const a = 1; 123 }
    * 输出：(function() {
    *   const children = []
@@ -156,7 +161,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
    *   return OvsAPI.createVNode('div', children)
    * })()
    */
-  createOvsRenderDomViewDeclarationAst(cst: SubhutiCst): SlimeCallExpression {
+  createOvsRenderDomViewDeclarationAst(cst: SubhutiCst): SlimeExpression {
     checkCstName(cst, OvsParser.prototype.OvsRenderDomViewDeclaration.name);
     
     // 获取元素名称（如 'div'）
@@ -181,34 +186,137 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
       // 其中 ExpressionStatement 会被 createExpressionStatementAst 转换为 children.push()
       const bodyStatements = this.createStatementListAst(statementListCst)
       
-      // 生成完整的 IIFE 函数体
-      const iifeFunctionBody: SlimeStatement[] = [
-        // 1. 声明 children 数组：const children = []
-        // 使用 SlimeAstUtil 创建正确的 VariableDeclaration
-        SlimeAstUtil.createVariableDeclaration(
-          SlimeAstUtil.createVariableDeclarationKind(SlimeVariableDeclarationKindValue.const, cst.loc),  // 使用枚举值
-          [
-            SlimeAstUtil.createVariableDeclarator(
-              SlimeAstUtil.createIdentifier('children'),
-              SlimeAstUtil.createEqualOperator(cst.loc),  // 添加 = 操作符
-              SlimeAstUtil.createArrayExpression([])
-            )
-          ],
-          cst.loc
-        ),
-        // 2. 转换后的语句（ExpressionStatement 已经变成 children.push()）
-        ...bodyStatements,
-        // 3. 返回 OvsAPI.createVNode('div', children)
-        this.createReturnOvsAPICreateVNode(id)
-      ]
+      // 判断是简单还是复杂情况
+      const isSimple = this.isSimpleViewBody(bodyStatements)
       
-      // 生成 IIFE：(function() { ... })()
-      return this.createIIFE(iifeFunctionBody)
+      if (isSimple) {
+        // 简单情况：直接返回 createVNode 调用，无 IIFE
+        return this.createSimpleView(id, bodyStatements, cst.loc)
+      } else {
+        // 复杂情况：生成完整 IIFE
+        return this.createComplexIIFE(id, bodyStatements, cst.loc)
+      }
     } finally {
       // 退出 OvsRenderDomViewDeclaration，计数器 -1
       // 使用 finally 确保即使出错也会恢复计数器
       this.ovsRenderDomViewDepth--
     }
+  }
+
+  /**
+   * 判断 view body 是否为简单情况
+   * 
+   * 简单情况：只包含 ExpressionStatement（表达式语句）
+   * 复杂情况：包含任何其他类型的语句（变量声明、控制流等）
+   * 
+   * @param statements 语句数组
+   * @returns true 为简单情况，false 为复杂情况
+   */
+  private isSimpleViewBody(statements: SlimeStatement[]): boolean {
+    return statements.every(stmt => {
+      // 只允许 ExpressionStatement
+      if (stmt.type !== SlimeAstType.ExpressionStatement) {
+        return false
+      }
+      
+      // ExpressionStatement 内部可以是任何表达式
+      // 包括 OvsView (IIFE CallExpression)、变量引用、字面量等
+      return true
+    })
+  }
+
+  /**
+   * 创建简单视图（直接返回 createVNode 调用，无 IIFE）
+   * 
+   * 生成：
+   * OvsAPI.createVNode('div', [child1, child2])
+   * 
+   * @param id 元素标识符
+   * @param statements 语句数组（只包含 ExpressionStatement）
+   * @param loc 位置信息
+   * @returns CallExpression - createVNode 调用
+   */
+  private createSimpleView(
+    id: SlimeIdentifier, 
+    statements: SlimeStatement[], 
+    loc: any
+  ): SlimeCallExpression {
+    // 从 ExpressionStatement 中提取表达式
+    // 注意：这些语句实际上是 children.push(expr)，我们需要提取出 expr
+    const childExpressions: SlimeExpression[] = statements.map(stmt => {
+      const exprStmt = stmt as SlimeExpressionStatement
+      // exprStmt.expression 是 children.push(expr) 调用
+      // 我们需要提取 push 的第一个参数
+      const pushCall = exprStmt.expression as SlimeCallExpression
+      if (pushCall.type === SlimeAstType.CallExpression && pushCall.arguments.length > 0) {
+        return pushCall.arguments[0] as SlimeExpression
+      }
+      // 如果不是 push 调用，直接返回表达式
+      return exprStmt.expression
+    })
+
+    // 创建 children 数组：[child1, child2, ...]
+    const childrenArray = SlimeAstUtil.createArrayExpression(childExpressions)
+
+    // 创建 OvsAPI.createVNode('div', [...]) 调用
+    const createVNodeCall = SlimeAstUtil.createCallExpression(
+      SlimeAstUtil.createMemberExpression(
+        SlimeAstUtil.createIdentifier('OvsAPI'),
+        SlimeAstUtil.createDotOperator(loc),
+        SlimeAstUtil.createIdentifier('createVNode')
+      ),
+      [
+        SlimeAstUtil.createStringLiteral(id.name),
+        childrenArray
+      ]
+    )
+
+    // 直接返回 createVNode 调用，不包裹 IIFE
+    return createVNodeCall
+  }
+
+  /**
+   * 创建完整的 IIFE（有语句的复杂情况）
+   * 
+   * 生成：
+   * (function() {
+   *   const children = []
+   *   ...statements
+   *   return OvsAPI.createVNode('div', children)
+   * })()
+   * 
+   * @param id 元素标识符
+   * @param statements 语句数组
+   * @param loc 位置信息
+   * @returns CallExpression
+   */
+  private createComplexIIFE(
+    id: SlimeIdentifier, 
+    statements: SlimeStatement[], 
+    loc: any
+  ): SlimeCallExpression {
+    // 生成完整的 IIFE 函数体
+    const iifeFunctionBody: SlimeStatement[] = [
+      // 1. 声明 children 数组：const children = []
+      SlimeAstUtil.createVariableDeclaration(
+        SlimeAstUtil.createVariableDeclarationKind(SlimeVariableDeclarationKindValue.const, loc),
+        [
+          SlimeAstUtil.createVariableDeclarator(
+            SlimeAstUtil.createIdentifier('children'),
+            SlimeAstUtil.createEqualOperator(loc),
+            SlimeAstUtil.createArrayExpression([])
+          )
+        ],
+        loc
+      ),
+      // 2. 转换后的语句（ExpressionStatement 已经变成 children.push()）
+      ...statements,
+      // 3. 返回 OvsAPI.createVNode('div', children)
+      this.createReturnOvsAPICreateVNode(id)
+    ]
+    
+    // 生成 IIFE：(function() { ... })()
+    return this.createIIFE(iifeFunctionBody)
   }
 
   /**

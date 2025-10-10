@@ -40,17 +40,20 @@ const vNodeExtend = {
 
 export default class OvsAPI {
     static createVNode(tagName: string, children, props?) {
-        console.log('chufale')
-        console.log(tagName)
+        console.log('createVNode:', tagName, 'children:', children)
         let vueChildren = null
         if (Array.isArray(children)) {
             vueChildren = children
         } else {
             vueChildren = [children]
         }
-        let ho = h(tagName, vueChildren)
-        ho = Object.assign({}, vNodeExtend, ho)
-        console.log(ho)
-        return ho
+        let vnode = h(tagName, props || {}, vueChildren)
+        // 不要覆盖 children！只扩展方法
+        const extended = Object.assign(vnode, {
+            add: vNodeExtend.add,
+            insert: vNodeExtend.insert
+        })
+        console.log('返回 VNode:', extended)
+        return extended
     }
 }

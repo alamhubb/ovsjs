@@ -93,7 +93,8 @@ export default class SubhutiLexer {
         if (resTokens.length > 1) {
           throw new Error('匹配了多个关键字:' + resTokens.map(item => item.tokenName).join(','))
         }
-        resToken = resTokens[0]
+        // 如果过滤后有关键字，使用关键字；否则使用第一个 token
+        resToken = resTokens.length > 0 ? resTokens[0] : maxLengthTokens[0]
       } else {
         resToken = maxLengthTokens[0]
       }

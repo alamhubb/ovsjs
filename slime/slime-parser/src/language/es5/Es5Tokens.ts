@@ -96,7 +96,10 @@ export const Es5TokensName = {
     StringLiteral: 'StringLiteral',
     RegularExpressionLiteral: 'RegularExpressionLiteral',
     Spacing: 'Spacing',
-    LineBreak: 'LineBreak'
+    LineBreak: 'LineBreak',
+    // Comments
+    SingleLineComment: 'SingleLineComment',
+    MultiLineComment: 'MultiLineComment'
 };
 export const es5TokensObj = {
 
@@ -179,8 +182,23 @@ export const es5TokensObj = {
     RBracket: createValueRegToken(Es5TokensName.RBracket, /]/, ']'),
     Dot: createValueRegToken(Es5TokensName.Dot, /\./, '.'),
     VerticalBarVerticalBar: createValueRegToken(Es5TokensName.VerticalBarVerticalBar, /\|\|/, '||'),
+    
+    // 注释必须在 Asterisk 和 Slash 之前，才能优先匹配
+    SingleLineComment: createValueRegToken(
+        Es5TokensName.SingleLineComment,
+        /\/\/[^\r\n]*/,
+        '//',
+        SubhutiCreateTokenGroupType.skip  // 跳过注释，不参与语法分析
+    ),
+    MultiLineComment: createValueRegToken(
+        Es5TokensName.MultiLineComment,
+        /\/\*[\s\S]*?\*\//,
+        '/*',
+        SubhutiCreateTokenGroupType.skip  // 跳过注释，不参与语法分析
+    ),
+    
     Asterisk: createValueRegToken(Es5TokensName.Asterisk, /\*/, '*'),
-    Slash: createValueRegToken(Es5TokensName.Slash, /\/\//, '//'),
+    Slash: createValueRegToken(Es5TokensName.Slash, /\//, '/'),  // 修复：应该匹配单个 /
     Plus: createValueRegToken(Es5TokensName.Plus, /\+/, '+'),
     PlusEq: createValueRegToken(Es5TokensName.PlusEq, /\+=/, '+='),
     AsteriskEq: createValueRegToken(Es5TokensName.AsteriskEq, /\*=/, '*='),

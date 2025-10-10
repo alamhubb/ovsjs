@@ -85,7 +85,7 @@ function isDeclaration(node: any): boolean {
 }
 
 /**
- * 判断 statement 是否是 OVS 视图的 IIFE
+ * 判断 statement 是否是 OVS 视图的 IIFE（复杂视图）
  * @param statement 语句节点
  * @returns 是否是 OVS 视图 IIFE
  */
@@ -95,6 +95,35 @@ function isOvsRenderDomViewIIFE(statement: SlimeStatement): boolean {
   if (expr.type !== SlimeAstType.CallExpression) return false
   if (expr.callee.type !== SlimeAstType.FunctionExpression) return false
   return true
+}
+
+/**
+ * 判断 statement 是否是 OVS 视图（简单视图或复杂视图）
+ * @param statement 语句节点
+ * @returns 是否是 OVS 视图
+ */
+function isOvsRenderDomView(statement: SlimeStatement): boolean {
+  if (statement.type !== SlimeAstType.ExpressionStatement) return false
+  const expr = (statement as SlimeExpressionStatement).expression
+  
+  // 复杂视图：IIFE 形式
+  if (expr.type === SlimeAstType.CallExpression && expr.callee.type === SlimeAstType.FunctionExpression) {
+    return true
+  }
+  
+  // 简单视图：直接的 createVNode 调用
+  // OvsAPI.createVNode(...)
+  if (expr.type === SlimeAstType.CallExpression) {
+    const callExpr = expr as SlimeCallExpression
+    if (callExpr.callee.type === SlimeAstType.MemberExpression) {
+      const memberExpr = callExpr.callee as any
+      if (memberExpr.object?.name === 'OvsAPI' && memberExpr.property?.name === 'createVNode') {
+        return true
+      }
+    }
+  }
+  
+  return false
 }
 
 /**
@@ -158,8 +187,8 @@ function wrapTopLevelExpressions(ast: SlimeProgram): SlimeProgram {
   
   // 处理所有表达式
   for (const expr of expressions) {
-    if (isOvsRenderDomViewIIFE(expr)) {
-      // OVS 视图 → children.push(vnode)
+    if (isOvsRenderDomView(expr)) {
+      // OVS 视图（简单或复杂）→ children.push(vnode)
       const vnodeExpr = (expr as SlimeExpressionStatement).expression
       const pushCall = SlimeAstUtil.createCallExpression(
         SlimeAstUtil.createMemberExpression(

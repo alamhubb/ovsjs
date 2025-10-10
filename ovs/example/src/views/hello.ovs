@@ -1,19 +1,50 @@
-function getGreeting() {
-  return "Hello from function!"
+/* 
+ * OVS 完整功能演示
+ * 展示简单视图优化、复杂视图支持、注释功能
+ */
+
+// 辅助函数
+function getMessage() {
+  return "All optimizations working!"
 }
 
-function add(a, b) {
-  return a + b
-}
+const message = getMessage()
 
-const greeting = getGreeting()
-const sum = add(10, 20)
-
+// ============================================
+// 场景 1: 简单嵌套视图（优化：无 IIFE）
+// ============================================
 div {
-  h1 { greeting }
+  h1 { "Simple Views Test" }
+  p { message }
   
+  // 嵌套的 div
   div {
-    p { "10 + 20 = " }
-    p { sum }
+    span { "Nested" }
+    span { " view" }
+  }
+}
+
+// ============================================
+// 场景 2: 复杂视图 - for 循环（保留 IIFE）
+// ============================================
+div {
+  h2 { "Complex Views Test" }
+  
+  /* 定义数组并遍历 */
+  const items = ["apple", "banana", "cherry"]
+  for (let item of items) {
+    p { item }  // 动态渲染每个水果
+  }
+}
+
+// ============================================
+// 场景 3: 复杂视图 - if 条件（保留 IIFE）
+// ============================================
+div {
+  h2 { "Conditional Test" }
+  
+  const showExtra = true
+  if (showExtra) {
+    p { "Extra content shown!" }  // 条件渲染
   }
 }
