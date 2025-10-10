@@ -1,19 +1,19 @@
-const showHeader = true
-const count = 10
+function getGreeting() {
+  return "Hello from function!"
+}
+
+function add(a, b) {
+  return a + b
+}
+
+const greeting = getGreeting()
+const sum = add(10, 20)
 
 div {
-  if (showHeader) {
-    h1 { "Header Visible" }
-  }
+  h1 { greeting }
   
   div {
-    p { "Count: " }
-    p { count }
-  }
-  
-  if (count > 5) {
-    div {
-      p { "Count is high!" }
-    }
+    p { "10 + 20 = " }
+    p { sum }
   }
 }

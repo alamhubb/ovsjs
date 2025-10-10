@@ -1364,10 +1364,16 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
 
   @SubhutiRule
   ArrowParameters() {
-    /* this.Or([
-       {alt: () => this.BindingIdentifier()},
-       {alt: () => this.CoverParenthesizedExpressionAndArrowParameterList()}
-     ])*/
+    this.Or([
+      {alt: () => this.BindingIdentifier()},
+      {alt: () => {
+        this.tokenConsumer.LParen()
+        this.Option(() => {
+          this.FormalParameterList()
+        })
+        this.tokenConsumer.RParen()
+      }}
+    ])
   }
 
   @SubhutiRule

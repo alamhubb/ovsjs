@@ -33,6 +33,8 @@ export enum SlimeAstType {
     ReturnStatement = 'ReturnStatement', // return 语句
     BlockStatement = 'BlockStatement', // 花括号包裹的语句块
     FunctionExpression = 'FunctionExpression', // function () {} 表达式
+    ArrowFunctionExpression = 'ArrowFunctionExpression', // () => {} 箭头函数表达式
+    BinaryExpression = 'BinaryExpression', // 二元运算表达式（+, -, *, / 等）
     VariableDeclarator = 'VariableDeclarator', // 变量声明中的单个声明项
     NumericLiteral = 'NumericLiteral', // 数字字面量
     StringLiteral = 'StringLiteral', // 字符串字面量

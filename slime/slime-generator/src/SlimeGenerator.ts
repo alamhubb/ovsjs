@@ -198,6 +198,59 @@ export default class SlimeGenerator {
     this.generatorNode(node.body)
   }
 
+  /**
+   * 生成箭头函数表达式
+   */
+  private static generatorArrowFunctionExpression(node: any) {
+    // 输出参数
+    if (node.params && node.params.length === 1 && node.params[0].type === SlimeAstType.Identifier) {
+      // 单个参数，不需要括号
+      this.generatorNode(node.params[0])
+    } else {
+      // 多个参数或无参数，需要括号
+      this.addLParen()
+      if (node.params) {
+        node.params.forEach((param: any, index: number) => {
+          if (index !== 0) {
+            this.addComma()
+          }
+          this.generatorNode(param)
+        })
+      }
+      this.addRParen()
+    }
+    
+    // 输出箭头
+    this.addSpacing()
+    this.addCode(es6TokensObj.Arrow)
+    this.addSpacing()
+    
+    // 输出函数体
+    if (node.expression && node.body.type !== SlimeAstType.BlockStatement) {
+      // 表达式形式：x => x * 2
+      this.generatorNode(node.body)
+    } else {
+      // 块语句形式：x => { return x * 2 }
+      this.generatorNode(node.body)
+    }
+  }
+
+  /**
+   * 生成二元运算表达式
+   */
+  private static generatorBinaryExpression(node: any) {
+    // 输出左操作数
+    this.generatorNode(node.left)
+    
+    // 输出运算符
+    this.addSpacing()
+    this.addCode({ name: 'Operator', value: node.operator })
+    this.addSpacing()
+    
+    // 输出右操作数
+    this.generatorNode(node.right)
+  }
+
   private static generatorFunctionParams(node: SlimeFunctionParams) {
     this.addLParen(node.lParen.loc)
     if (node.params) {
@@ -270,7 +323,27 @@ export default class SlimeGenerator {
   }
 
   private static generatorFunctionDeclaration(node: SlimeFunctionDeclaration) {
-
+    // 输出 function 关键字
+    this.addCode(es6TokensObj.FunctionTok)
+    
+    // 输出函数名
+    if (node.id) {
+      this.addSpacing()  // function 和函数名之间需要空格
+      this.generatorIdentifier(node.id)
+    }
+    
+    // 输出参数列表
+    if (node.params) {
+      this.generatorFunctionParams(node.params)
+    } else {
+      this.addLParen()
+      this.addRParen()
+    }
+    
+    // 输出函数体
+    if (node.body) {
+      this.generatorBlockStatement(node.body as SlimeBlockStatement)
+    }
   }
 
   private static generatorClassDeclaration(node: SlimeClassDeclaration) {
@@ -396,6 +469,10 @@ export default class SlimeGenerator {
       this.generatorCallExpression(node as SlimeCallExpression)
     } else if (node.type === SlimeAstType.FunctionExpression) {
       this.generatorFunctionExpression(node as SlimeFunctionExpression)
+    } else if (node.type === SlimeAstType.ArrowFunctionExpression) {
+      this.generatorArrowFunctionExpression(node as any)
+    } else if (node.type === SlimeAstType.BinaryExpression) {
+      this.generatorBinaryExpression(node as any)
     } else if (node.type === SlimeAstType.StringLiteral) {
       this.generatorStringLiteral(node as SlimeStringLiteral)
     } else if (node.type === SlimeAstType.ArrayExpression) {

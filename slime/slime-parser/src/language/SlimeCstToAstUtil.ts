@@ -243,7 +243,54 @@ export class SlimeCstToAst {
 
   createStatementListItemAst(cst: SubhutiCst): Array<SlimeStatement> {
     const astName = checkCstName(cst, Es6Parser.prototype.StatementListItem.name);
-    const statements = cst.children.map(item => this.createStatementAst(item)).flat()
+    const statements = cst.children.map(item => {
+      // 如果是 Declaration，直接处理
+      if (item.name === Es6Parser.prototype.Declaration.name) {
+        return [this.createDeclarationAst(item) as any]
+      }
+      
+      // 如果是 Statement，需要特殊处理 FunctionExpression 和 ClassExpression
+      const statement = this.createStatementAst(item)
+      const result = statement.flat()
+      
+      // 检查是否是命名的 FunctionExpression 或 ClassExpression（应该转为 Declaration）
+      return result.map(stmt => {
+        if (stmt.type === SlimeAstType.ExpressionStatement) {
+          const expr = (stmt as SlimeExpressionStatement).expression
+          
+          // 命名的 FunctionExpression → FunctionDeclaration
+          if (expr.type === SlimeAstType.FunctionExpression) {
+            const funcExpr = expr as SlimeFunctionExpression
+            if (funcExpr.id) {
+              return {
+                type: SlimeAstType.FunctionDeclaration,
+                id: funcExpr.id,
+                params: funcExpr.params,
+                body: funcExpr.body,
+                generator: funcExpr.generator,
+                async: funcExpr.async,
+                loc: funcExpr.loc
+              } as SlimeFunctionDeclaration
+            }
+          }
+          
+          // ClassExpression → ClassDeclaration
+          if (expr.type === SlimeAstType.ClassExpression) {
+            const classExpr = expr as any
+            if (classExpr.id) {
+              return {
+                type: SlimeAstType.ClassDeclaration,
+                id: classExpr.id,
+                superClass: classExpr.superClass,
+                body: classExpr.body,
+                loc: classExpr.loc
+              } as any
+            }
+          }
+        }
+        return stmt
+      })
+    }).flat()
     return statements
   }
 
@@ -651,23 +698,54 @@ export class SlimeCstToAst {
     return SlimeAstUtil.createFunctionParams(lp, rp, cst.loc)
   }
 
-  createMethodDefinitionAst(cst: SubhutiCst, staticCst?: SubhutiCst): SlimeMethodDefinition {
+  createMethodDefinitionAst(staticCst: SubhutiCst | null, cst: SubhutiCst): SlimeMethodDefinition {
+    // 注意：参数顺序是 (staticCst, cst)，与调用保持一致
     const astName = checkCstName(cst, Es6Parser.prototype.MethodDefinition.name);
-    const first = cst.children[0]
+    const first = cst.children?.[0]
+    
+    if (!first) {
+      throw new Error('MethodDefinition has no children')
+    }
+    
     if (first.name === Es6Parser.prototype.PropertyNameMethodDefinition.name) {
       const SlimeFunctionExpression = this.createPropertyNameMethodDefinitionAst(first)
-      return SlimeAstUtil.createMethodDefinition(SlimeFunctionExpression.id, SlimeFunctionExpression)
-    } else if (first.name === Es6Parser.prototype.PropertyNameMethodDefinition.name) {
-
+      const methodDef = SlimeAstUtil.createMethodDefinition(SlimeFunctionExpression.id, SlimeFunctionExpression)
+      
+      // 如果有 static 修饰符
+      if (staticCst && staticCst.name === Es6TokenConsumer.prototype.StaticTok.name) {
+        methodDef.static = true
+      }
+      
+      return methodDef
     } else {
-      throw new Error('不支持的类型')
+      throw new Error('不支持的类型: ' + first.name)
     }
   }
 
   createFunctionExpressionAst(cst: SubhutiCst): SlimeFunctionExpression {
     const astName = checkCstName(cst, Es6Parser.prototype.FunctionExpression.name);
-    const FunctionFormalParametersBodyDefineCst: SubhutiCst = cst.children[1]
+    // FunctionExpression 结构：
+    // children[0]: FunctionTok
+    // children[1]: BindingIdentifier (可选，函数名)
+    // children[2 或 1]: FunctionFormalParametersBodyDefine (参数和函数体)
+    
+    let functionId: SlimeIdentifier | null = null
+    let formalParametersBodyIndex = 1
+    
+    // 如果有 BindingIdentifier，说明是命名函数表达式
+    if (cst.children.length > 2 && cst.children[1].name === Es6Parser.prototype.BindingIdentifier.name) {
+      functionId = this.createBindingIdentifierAst(cst.children[1])
+      formalParametersBodyIndex = 2
+    }
+    
+    const FunctionFormalParametersBodyDefineCst = cst.children[formalParametersBodyIndex]
     const FunctionFormalParametersBodyDefineAst = this.createFunctionFormalParametersBodyDefineAst(FunctionFormalParametersBodyDefineCst, cst.loc)
+    
+    // 如果有函数名，设置 id
+    if (functionId) {
+      FunctionFormalParametersBodyDefineAst.id = functionId
+    }
+    
     return FunctionFormalParametersBodyDefineAst
   }
 
@@ -934,16 +1012,28 @@ export class SlimeCstToAst {
   /**
    * 创建函数声明 AST
    */
-  createFunctionDeclarationAst(cst: SubhutiCst): any {
+  createFunctionDeclarationAst(cst: SubhutiCst): SlimeFunctionDeclaration {
     checkCstName(cst, Es6Parser.prototype.FunctionDeclaration.name);
-    // TODO: 完整实现
+    // FunctionDeclaration 结构：
+    // children[0]: FunctionTok
+    // children[1]: BindingIdentifier (函数名)
+    // children[2]: FunctionFormalParametersBodyDefine (参数和函数体)
+    
+    const bindingIdentifierCst = cst.children[1]
+    const functionName = this.createBindingIdentifierAst(bindingIdentifierCst)
+    
+    const formalParametersBodyCst = cst.children[2]
+    const functionExpression = this.createFunctionFormalParametersBodyDefineAst(formalParametersBodyCst, cst.loc)
+    
     return {
       type: SlimeAstType.FunctionDeclaration,
-      id: null,
-      params: [],
-      body: null,
+      id: functionName,
+      params: functionExpression.params,
+      body: functionExpression.body,
+      generator: false,
+      async: false,
       loc: cst.loc
-    }
+    } as SlimeFunctionDeclaration
   }
 
   createCallExpressionAst(cst: SubhutiCst): SlimeExpression {
@@ -1170,7 +1260,18 @@ export class SlimeCstToAst {
   createMultiplicativeExpressionAst(cst: SubhutiCst): SlimeExpression {
     const astName = checkCstName(cst, Es6Parser.prototype.MultiplicativeExpression.name);
     if (cst.children.length > 1) {
-
+      // 有运算符，创建 BinaryExpression
+      const left = this.createExpressionAst(cst.children[0])
+      const operator = cst.children[1].children[0].value as any  // */% 运算符
+      const right = this.createExpressionAst(cst.children[2])
+      
+      return {
+        type: SlimeAstType.BinaryExpression,
+        operator: operator,
+        left: left,
+        right: right,
+        loc: cst.loc
+      } as any
     }
     return this.createExpressionAst(cst.children[0])
   }
@@ -1359,7 +1460,12 @@ export class SlimeCstToAst {
     let left
     let right
     if (cst.children.length === 1) {
-      return this.createExpressionAst(cst.children[0])
+      const child = cst.children[0]
+      // 检查是否是箭头函数
+      if (child.name === Es6Parser.prototype.ArrowFunction.name) {
+        return this.createArrowFunctionAst(child)
+      }
+      return this.createExpressionAst(child)
     }
     const ast: SlimeAssignmentExpression = {
       type: astName as any,
@@ -1369,6 +1475,92 @@ export class SlimeCstToAst {
       loc: cst.loc
     } as any
     return ast
+  }
+
+  /**
+   * 创建箭头函数 AST
+   */
+  createArrowFunctionAst(cst: SubhutiCst): SlimeArrowFunctionExpression {
+    checkCstName(cst, Es6Parser.prototype.ArrowFunction.name);
+    // ArrowFunction 结构：
+    // children[0]: ArrowParameters (参数)
+    // children[1]: Arrow (=>)
+    // children[2]: ConciseBody (函数体)
+    
+    const arrowParametersCst = cst.children[0]
+    const conciseBodyCst = cst.children[2]
+    
+    // 解析参数
+    const params = this.createArrowParametersAst(arrowParametersCst)
+    
+    // 解析函数体
+    const body = this.createConciseBodyAst(conciseBodyCst)
+    
+    return {
+      type: SlimeAstType.ArrowFunctionExpression,
+      id: null,
+      params: params,
+      body: body,
+      generator: false,
+      async: false,
+      expression: body.type !== SlimeAstType.BlockStatement,
+      loc: cst.loc
+    } as any
+  }
+
+  /**
+   * 创建箭头函数参数 AST
+   */
+  createArrowParametersAst(cst: SubhutiCst): SlimePattern[] {
+    checkCstName(cst, Es6Parser.prototype.ArrowParameters.name);
+    
+    // ArrowParameters 可以是多种形式，这里简化处理
+    if (cst.children.length === 0) {
+      return []
+    }
+    
+    const first = cst.children[0]
+    
+    // 单个参数：BindingIdentifier
+    if (first.name === Es6Parser.prototype.BindingIdentifier.name) {
+      const param = this.createBindingIdentifierAst(first)
+      return [param]
+    }
+    
+    // 参数列表：( FormalParameterList )
+    if (first.name === Es6TokenConsumer.prototype.LParen.name) {
+      // 查找 FormalParameterList
+      const formalParameterListCst = cst.children.find(
+        child => child.name === Es6Parser.prototype.FormalParameterList.name
+      )
+      if (formalParameterListCst) {
+        return this.createFormalParameterListAst(formalParameterListCst)
+      }
+      return []
+    }
+    
+    return []
+  }
+
+  /**
+   * 创建箭头函数体 AST
+   */
+  createConciseBodyAst(cst: SubhutiCst): SlimeBlockStatement | SlimeExpression {
+    checkCstName(cst, Es6Parser.prototype.ConciseBody.name);
+    
+    const first = cst.children[0]
+    
+    // 如果是 BlockStatement，解析为 BlockStatement
+    if (first.name === Es6Parser.prototype.FunctionBodyDefine.name) {
+      return this.createFunctionBodyDefineAst(first)
+    }
+    
+    // 否则是表达式，解析为表达式
+    if (first.name === Es6Parser.prototype.AssignmentExpression.name) {
+      return this.createAssignmentExpressionAst(first)
+    }
+    
+    return this.createExpressionAst(first)
   }
 
   createConditionalExpressionAst(cst: SubhutiCst): SlimeExpression {
