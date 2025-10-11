@@ -1,0 +1,551 @@
+---
+description: GuideBot 项目信息 - 项目定位、技术规范、功能设计、架构、当前状态
+alwaysApply: true
+---
+
+# 🎯 GuideBot 项目信息
+
+## 当前阶段
+`STAGE_1_REQUIREMENTS` - 需求设计阶段
+
+---
+
+# 📌 项目简介
+
+**GuideBot - AI 想法实现引导平台**
+
+> 手把手教你用AI，一步步将想法实现
+
+**GuideBot** 是一个 AI 协作引导助手，帮助用户将模糊的想法转化为可执行的项目。
+
+**工作原理：**
+```
+模糊想法 → 清晰需求 → 可执行提示词 → 完整项目
+```
+
+---
+
+## 项目定位
+
+**GuideBot = AI 协作引导助手**
+
+---
+
+## 核心功能
+
+- 💭 **想法收集** - 引导式对话，将模糊想法转化为清晰需求
+- 🤖 **智能提示** - 自动生成与 AI 对话的提示词
+- 📊 **进度跟踪** - 可视化项目进度，记录关键决策
+- 📚 **知识复用** - 成功案例沉淀为可复用模板
+
+---
+
+## 两种实现形式
+
+**README 版（已实现的方法论）：**
+- 文档形式，规范明确，AI 可直接读取
+- 适用：开发者、技术项目
+- 状态：方法论已完善，现在要做成网站
+
+**网站版（当前开发）：**
+- 可视化，交互丰富，操作简单
+- 适用：所有人，尤其非技术人员
+- 状态：规划阶段
+
+---
+
+## 关联项目
+
+| 项目 | 路径 | 说明 | 文档 |
+|------|------|------|------|
+| **OVS 框架** | `../ovs/` | 声明式 UI 框架 | `../ovs/aireadme.md`<br>`../ovs/docs/USER_GUIDE.md` |
+
+---
+
+# 💻 技术栈和编码规范
+
+## 通用编码规范
+
+**沟通语言：** 全程使用中文
+
+**代码风格：** 保持与项目空间下其他项目一致的编码风格
+
+---
+
+## OVS 代码规范
+
+### 命名规范
+
+- **组件：** `PascalCase`  
+  示例：`IdeaInputForm.ovs`, `PromptDisplay.ovs`
+
+- **变量：** `camelCase`  
+  示例：`userName`, `isActive`, `taskList`
+
+- **函数：** 动词开头  
+  示例：`getUserData`, `handleClick`, `formatDate`
+
+---
+
+### OVS 限制与替代方案
+
+**除法运算：**
+```typescript
+// ❌ 不要这样写（OVS 不支持除法）
+value / 2
+
+// ✅ 使用乘法替代
+value * 0.5
+```
+
+**复杂逻辑：**
+- OVS 适合简单的模板逻辑
+- 复杂业务逻辑提取到 TypeScript 文件
+- 在 OVS 中只调用函数，不写复杂表达式
+
+---
+
+### OVS 最佳实践
+
+**组件拆分：**
+```
+- 一个组件只做一件事
+- 超过 100 行考虑拆分
+- 可复用的部分独立为组件
+```
+
+**状态管理：**
+```
+- 简单状态：ref / reactive
+- 复杂状态：提取到独立的 TS 文件
+- 跨组件通信：props / emit
+```
+
+---
+
+## TypeScript 规范
+
+### 类型定义
+
+```typescript
+// ✅ 定义清晰的接口
+interface Project {
+  id: string
+  name: string
+  status: 'planning' | 'developing' | 'completed'
+}
+
+// ✅ 使用类型别名
+type TaskStatus = 'todo' | 'inProgress' | 'completed'
+```
+
+---
+
+### 避免 any
+
+```typescript
+// ❌ 不要使用 any
+function processData(data: any) { ... }
+
+// ✅ 定义具体类型
+function processData(data: ProjectData) { ... }
+```
+
+---
+
+## 代码示例
+
+### OVS 组件示例
+
+```ovs
+<script lang="ts">
+import { ref } from 'vue'
+
+interface Props {
+  title: string
+  count?: number
+}
+
+const props = defineProps<Props>()
+const localCount = ref(props.count || 0)
+
+const handleIncrement = () => {
+  localCount.value = localCount.value + 1
+}
+</script>
+
+<template>
+  <div class="card">
+    <h2>{{ title }}</h2>
+    <p>Count: {{ localCount }}</p>
+    <button @click="handleIncrement">增加</button>
+  </div>
+</template>
+
+<style scoped>
+.card {
+  padding: 1rem;
+  border: 1px solid #ccc;
+}
+</style>
+```
+
+---
+
+### TypeScript 工具函数示例
+
+```typescript
+// utils/promptGenerator.ts
+
+export interface PromptTemplate {
+  task: string
+  background: string
+  requirements: string[]
+  acceptance: string[]
+}
+
+export function generatePrompt(template: PromptTemplate): string {
+  const { task, background, requirements, acceptance } = template
+  
+  return `
+【任务】${task}
+
+【背景】
+${background}
+
+【要求】
+${requirements.map((r, i) => `${i + 1}. ${r}`).join('\n')}
+
+【验收标准】
+${acceptance.map(a => `- [ ] ${a}`).join('\n')}
+  `.trim()
+}
+```
+
+---
+
+## 错误处理
+
+**优雅的错误处理：**
+```typescript
+try {
+  const result = await fetchData()
+  // 处理成功情况
+} catch (error) {
+  // 提供有意义的错误信息
+  console.error('获取数据失败:', error)
+  showErrorMessage('无法加载数据，请稍后重试')
+}
+```
+
+---
+
+## 性能优化建议
+
+- 大列表使用虚拟滚动
+- 图片懒加载
+- 合理使用 `computed` 缓存计算结果
+- 避免不必要的组件重渲染
+
+---
+
+# 💡 功能设计
+
+## 最简版本核心功能（三步）
+
+1. **输入想法** - 用户在文本框输入项目想法
+2. **生成提示词** - 点击按钮，系统立即生成结构化提示词
+3. **复制使用** - 一键复制提示词，去AI对话使用
+
+---
+
+## 提示词生成逻辑（最简版本）
+
+**生成方式：** 固定模板 + 简单填充
+
+**模板结构：**
+```
+【任务】{用户输入的想法}
+
+【背景】
+- 这是一个新项目/功能
+- 使用 {项目技术栈}
+
+【要求】
+- 实现核心功能
+- 代码清晰规范
+- 确保可运行
+
+【步骤】
+1. 分析需求，确定实现方案
+2. 创建必要的文件和代码结构
+3. 实现核心功能
+4. 测试验证
+
+【验收标准】
+- [ ] 功能正常运行
+- [ ] 代码无明显错误
+- [ ] 符合最佳实践
+```
+
+**填充规则：**
+- 【任务】→ 直接使用用户输入的想法
+- 【背景】→ 使用固定模板，技术栈默认为空（或让用户选择）
+- 【要求】→ 使用固定的3条通用要求
+- 【步骤】→ 使用固定的4步通用流程
+- 【验收标准】→ 使用固定的3条通用标准
+
+---
+
+## 最简版本交互流程
+
+**单页面设计：**
+- 上方：输入区（多行文本框 + 生成按钮）
+- 下方：结果展示区（生成的提示词 + 复制按钮）
+- 侧边：历史记录（localStorage存储，可查看/复用）
+
+**操作流程：**
+输入想法 → 点击"生成" → 展示提示词 → 点击"复制" → 完成
+
+---
+
+## 完整版功能（五大模块）
+
+**1. 💭 想法收集**
+- 引导式对话，将模糊想法转化为清晰需求
+
+**2. 📋 需求拆解**
+- 自动拆解为可执行任务清单
+
+**3. 🤖 AI 操作引导（核心）**
+- 生成与 AI 对话的具体提示词
+
+**4. 📊 进度跟踪**
+- 可视化项目进度，记录关键决策
+
+**5. 📚 知识库**
+- 积累成功案例，形成可复用模板
+
+---
+
+# 🏗️ 技术架构
+
+## 技术选型
+
+- **前端：** OVS 声明式语法 → 编译为 Vue 3
+- **构建：** Vite（热更新、快速）
+- **语言：** TypeScript（类型安全）
+- **存储：** localStorage（本地存储，最简版本）→ 云端（未来）
+
+---
+
+## UI设计（最简版本）
+
+**页面布局：**
+- 单页面应用
+- 上方：输入区（文本框 + 生成按钮）
+- 下方：结果展示区（提示词 + 复制按钮）
+- 侧边：历史记录面板（可收起）
+
+**交互流程：**
+1. 初始：输入框空白，按钮置灰
+2. 输入：文字输入后按钮可点击
+3. 生成：点击按钮→loading→展示结果→保存历史
+4. 复制：点击复制→提示"已复制"
+5. 历史：点击记录→填充到输入框
+
+---
+
+## 组件拆分
+
+**OVS 组件：**
+```
+- MainPage.ovs        // 主页面
+- IdeaInput.ovs       // 输入区
+- PromptDisplay.ovs   // 结果展示
+- HistoryPanel.ovs    // 历史记录
+- Button.ovs          // 按钮
+- TextArea.ovs        // 文本框
+- Card.ovs            // 卡片
+```
+
+**工具函数（TS）：**
+```
+- promptGenerator.ts  // 提示词生成
+- storage.ts          // 本地存储
+```
+
+---
+
+## 项目结构
+
+```
+guidebot/
+├── src/
+│   ├── views/
+│   │   └── MainPage.ovs
+│   ├── components/
+│   │   ├── IdeaInput.ovs
+│   │   ├── PromptDisplay.ovs
+│   │   ├── HistoryPanel.ovs
+│   │   ├── Button.ovs
+│   │   ├── TextArea.ovs
+│   │   └── Card.ovs
+│   └── utils/
+│       ├── promptGenerator.ts
+│       └── storage.ts
+├── .cursor/rules/
+│   ├── cursorrules.mdc    # AI 工作规则与方法论
+│   └── projectinfo.mdc    # 项目信息（本文件）
+├── package.json
+├── vite.config.ts
+└── tsconfig.json
+```
+
+**说明：** 项目不使用 README.md，所有信息都在 `.cursor/rules/` 的两个 .mdc 文件中，由 Cursor 自动加载。
+
+---
+
+# 📊 核心数据结构
+
+## Project（项目）
+
+```typescript
+interface Project {
+  id: string
+  name: string
+  status: 'planning' | 'developing' | 'completed'
+  
+  initialIdea: string        // 最初的想法
+  createdAt: string          // 创建时间
+  updatedAt: string          // 更新时间
+}
+
+// 注：完整版可能包含 requirements、tasks、notes、decisions 等字段
+// 最简版本暂时只用基本字段
+```
+
+---
+
+## Task（任务）
+
+```typescript
+interface Task {
+  id: string
+  title: string
+  status: 'todo' | 'inProgress' | 'completed'
+  priority: 'P0' | 'P1' | 'P2'
+  
+  prompt: string
+  expectedResult: string
+  checkList: string[]
+  dependencies: string[]
+}
+```
+
+---
+
+## PromptTemplate（提示词模板）
+
+```typescript
+interface PromptTemplate {
+  id: string
+  name: string
+  category: 'init' | 'feature' | 'debug' | 'optimize'
+  
+  template: string
+  variables: {name: string, description: string}[]
+  examples: string[]
+  usageCount: number
+}
+```
+
+---
+
+# 🎯 当前状态与开发计划
+
+## 项目状态
+
+| 项目 | 状态 |
+|------|------|
+| **阶段** | 需求设计阶段（STAGE_1_REQUIREMENTS） |
+| **版本** | 0.1.0 (规划中) |
+| **当前步骤** | 等待用户明确要做什么 |
+
+---
+
+## 📍 下一步行动
+
+**当前状态：** 等待用户指令（需求定义、功能开发、或其他）
+
+---
+
+## 版本迭代路线
+
+**阶段1 - 最简版本（1-2周）** ←【当前】
+- [x] 完成规范文档（规则已整理为双 .mdc）
+- [ ] 创建项目脚手架
+- [ ] 实现想法输入页
+- [ ] 实现提示词生成器
+- [ ] 本地存储功能
+
+**阶段2 - 完整版（3-4周）**
+- [ ] AI 辅助需求分析
+- [ ] 提示词模板库
+- [ ] 项目管理看板
+- [ ] 用户账号系统
+
+**阶段3 - 增强版（6-8周）**
+- [ ] 项目模板市场
+- [ ] 社区分享功能
+- [ ] AI 智能推荐
+
+---
+
+## 🚀 快速开始
+
+**技术栈：** OVS + Vue 3 + TypeScript + Vite（纯前端）
+
+**计划中的启动方式（项目文件待创建）：**
+```bash
+cd guidebot
+npm install          # 待创建 package.json
+npm run dev          # 待配置 vite
+# 访问 http://localhost:5173
+```
+
+**当前状态：** 项目脚手架尚未创建，上述命令暂不可用
+
+**文档位置：**
+- AI 工作规则与方法论：`.cursor/rules/cursorrules.mdc`
+- 项目信息（本文件）：`.cursor/rules/projectinfo.mdc`
+- 两个文件都由 Cursor 自动加载
+
+---
+
+# 📝 变更记录（最近3次，仅用于回滚）
+
+## 2025-10-12 01:20
+- 修复项目信息中的模糊和不完善之处
+  - 补充"提示词生成逻辑"的完整填充规则（5个字段的填充方式）
+  - 简化 Project 数据结构：移除未定义的类型引用，只保留基本字段
+  - 更新"快速开始"章节：标注为"计划中的启动方式"，说明项目文件待创建
+- 根本原因：用户要求检查规则文件，发现项目信息中有模糊和不完善之处
+
+## 2025-10-12 01:05
+- 创建 projectinfo.mdc 专属变更记录
+  - 每个 .mdc 文件独立维护自己的变更历史
+  - projectinfo.mdc 记录项目信息、功能设计、技术架构、状态变更
+- 根本原因：用户要求分别在两个 .mdc 中创建各自的变更记录
+
+## 2025-10-12 00:55
+- 删除 README.md，内容完全迁移到 projectinfo.mdc
+  - 合并内容：项目简介、核心功能、快速开始
+  - 更新项目结构说明，移除 README.md 引用
+  - 项目不再使用 README.md
+- 根本原因：用户要求删除 README.md，避免信息分散
+
+---
+
+**项目版本:** 0.1.0 (规划阶段)  
+**最后更新:** 2025-10-12 01:20
