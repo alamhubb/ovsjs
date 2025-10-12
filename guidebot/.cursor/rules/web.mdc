@@ -1,5 +1,5 @@
 ---
-description: GuideBot 项目信息 - 项目定位、技术规范、功能设计、架构、当前状态
+description: GuideBot网站需求文档 - 基于guidebot.mdc产出的结果，用于生成GuideBot网站代码，包含项目定位、功能设计、技术栈、当前进度
 alwaysApply: true
 ---
 
@@ -676,6 +676,18 @@ npm run dev          # 待配置 vite
 # 📝 变更记录（最近3次，仅用于回滚）
 
 ## 2025-10-12 [当前会话]
+- 文件重命名与定位调整：projectinfo.mdc → web.mdc
+  - 位置：description、所有文件引用
+  - 改动：
+    1. 文件名从 projectinfo.mdc 改为 web.mdc
+    2. description 从"项目信息"改为"网站需求文档 - 基于guidebot.mdc产出的结果，用于生成GuideBot网站代码"
+    3. 所有对cursorrules.mdc的引用改为guidebot.mdc
+  - 影响：
+    1. 更清晰地表明这是"基于guidebot产出的需求文档"，而不是独立的项目信息
+    2. web.mdc的定位：GuideBot网站项目的具体需求，用于生成web代码
+    3. 与guidebot.mdc的关系：guidebot是核心产品（方法论），web是产品产出的结果（需求文档）
+- 根本原因：用户明确定位"guidebot是核心产品，web是基于guidebot产出的结果，用来生成web代码的"
+
 - 新增核心价值定位："不用深度思考怎么写提示词，也能很好的开发出产品"
   - 位置：项目定位-核心价值定位（第51行）
   - 改动：在核心价值定位最前面增加用户原话，明确GuideBot解决的核心问题
