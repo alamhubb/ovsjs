@@ -522,8 +522,8 @@ guidebot/
 │       ├── promptGenerator.ts
 │       └── storage.ts
 ├── .cursor/rules/
-│   ├── cursorrules.mdc    # AI 工作规则与方法论
-│   └── projectinfo.mdc    # 项目信息（本文件）
+│   ├── guidebot.mdc    # AI 工作规则与方法论
+│   └── web.mdc    # 项目信息（本文件）
 ├── package.json
 ├── vite.config.ts
 └── tsconfig.json
@@ -667,8 +667,8 @@ npm run dev          # 待配置 vite
 **当前状态：** 项目脚手架尚未创建，上述命令暂不可用
 
 **文档位置：**
-- AI 工作规则与方法论：`.cursor/rules/cursorrules.mdc`
-- 项目信息（本文件）：`.cursor/rules/projectinfo.mdc`
+- AI 工作规则与方法论：`.cursor/rules/guidebot.mdc`
+- 项目信息（本文件）：`.cursor/rules/web.mdc`
 - 两个文件都由 Cursor 自动加载
 
 ---
@@ -712,13 +712,13 @@ npm run dev          # 待配置 vite
 - 根本原因：用户要求检查规则文件，发现项目信息中有模糊和不完善之处
 
 ## 2025-10-12 01:05
-- 创建 projectinfo.mdc 专属变更记录
+- 创建 web.mdc 专属变更记录
   - 每个 .mdc 文件独立维护自己的变更历史
-  - projectinfo.mdc 记录项目信息、功能设计、技术架构、状态变更
+  - web.mdc 记录项目信息、功能设计、技术架构、状态变更
 - 根本原因：用户要求分别在两个 .mdc 中创建各自的变更记录
 
 ## 2025-10-12 00:55
-- 删除 README.md，内容完全迁移到 projectinfo.mdc
+- 删除 README.md，内容完全迁移到 web.mdc
   - 合并内容：项目简介、核心功能、快速开始
   - 更新项目结构说明，移除 README.md 引用
   - 项目不再使用 README.md
