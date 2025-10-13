@@ -442,6 +442,12 @@ export class SlimeCstToAst {
     switch (first.name) {
       case Es6Parser.prototype.VariableDeclaration.name:
         return this.createVariableDeclarationAst(first);
+      case Es6Parser.prototype.ClassDeclaration.name:
+        return this.createClassDeclarationAst(first);
+      case Es6Parser.prototype.FunctionDeclaration.name:
+        return this.createFunctionDeclarationAst(first);
+      default:
+        throw new Error(`Unsupported Declaration type: ${first.name}`)
     }
   }
 
@@ -547,8 +553,10 @@ export class SlimeCstToAst {
     if (cst.name === Es6Parser.prototype.MethodDefinition.name) {
       return this.createMethodDefinitionAst(staticCst, cst)
     } else if (cst.name === Es6Parser.prototype.PropertyDefinition.name) {
-      // return this.createExportDeclarationAst(item)
+      return this.createPropertyDefinitionAst(cst)
     }
+    // 如果是其他类型，返回undefined（会被过滤）
+    return undefined as any
   }
 
   createClassBodyAst(cst: SubhutiCst): SlimeClassBody {

@@ -1,17 +1,6 @@
 export class GuideBot {
     constructor() {
-        this.projectName = '任务管理工具'
-        this.messages = [
-            { type: 'ai', content: '我生成了一个超简单版的任务管理工具，你可以在右侧预览区试试。' },
-            { type: 'ai', content: '现在只有最基本的功能：添加任务、标记完成。' }
-        ]
-        this.tasks = [
-            { id: 1, title: '完成项目需求文档', completed: false },
-            { id: 2, title: '设计页面布局', completed: true },
-            { id: 3, title: '实现核心功能', completed: false }
-        ]
-        this.newTaskInput = ''
-        this.chatInput = ''
+        // Empty constructor - required for OVS compatibility
     }
     
     addTask() {
