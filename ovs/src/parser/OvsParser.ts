@@ -55,11 +55,6 @@ export default class OvsParser extends Es6Parser<OvsTokenConsumer> {
       },
       {
         alt: () => {
-          this.ConditionalExpression()
-        }
-      },
-      {
-        alt: () => {
           this.YieldExpression()
         }
       },
@@ -76,6 +71,11 @@ export default class OvsParser extends Es6Parser<OvsTokenConsumer> {
           this.LeftHandSideExpression()
           this.AssignmentOperator()
           this.AssignmentExpression()
+        }
+      },
+      {
+        alt: () => {
+          this.ConditionalExpression()
         }
       }
     ])

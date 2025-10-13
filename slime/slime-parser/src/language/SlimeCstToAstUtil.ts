@@ -554,9 +554,40 @@ export class SlimeCstToAst {
       return this.createMethodDefinitionAst(staticCst, cst)
     } else if (cst.name === Es6Parser.prototype.PropertyDefinition.name) {
       return this.createPropertyDefinitionAst(cst)
+    } else if (cst.name === Es6Parser.prototype.FieldDefinition.name) {
+      return this.createFieldDefinitionAst(staticCst, cst)
     }
     // 如果是其他类型，返回undefined（会被过滤）
     return undefined as any
+  }
+
+  createInitializerAst(cst: SubhutiCst): SlimeExpression {
+    const astName = checkCstName(cst, Es6Parser.prototype.Initializer.name);
+    // Initializer -> Eq + AssignmentExpression
+    const assignmentExpressionCst = cst.children[1]
+    return this.createAssignmentExpressionAst(assignmentExpressionCst)
+  }
+
+  createFieldDefinitionAst(staticCst: SubhutiCst | null, cst: SubhutiCst): SlimePropertyDefinition {
+    const astName = checkCstName(cst, Es6Parser.prototype.FieldDefinition.name);
+
+    // FieldDefinition -> PropertyName + Initializer?
+    const propertyNameCst = cst.children[0]
+    const key = this.createPropertyNameAst(propertyNameCst)
+
+    // 检查是否有初始化器
+    let value: SlimeExpression | null = null
+    if (cst.children.length > 1) {
+      const initializerCst = cst.children[1]
+      if (initializerCst && initializerCst.name === Es6Parser.prototype.Initializer.name) {
+        value = this.createInitializerAst(initializerCst)
+      }
+    }
+
+    // 检查是否有 static 修饰符
+    const isStatic = staticCst && staticCst.name === Es6TokenConsumer.prototype.StaticTok.name
+
+    return SlimeAstUtil.createPropertyDefinition(key, value, isStatic || false)
   }
 
   createClassBodyAst(cst: SubhutiCst): SlimeClassBody {
@@ -724,20 +755,20 @@ export class SlimeCstToAst {
     // 注意：参数顺序是 (staticCst, cst)，与调用保持一致
     const astName = checkCstName(cst, Es6Parser.prototype.MethodDefinition.name);
     const first = cst.children?.[0]
-    
+
     if (!first) {
       throw new Error('MethodDefinition has no children')
     }
-    
+
     if (first.name === Es6Parser.prototype.PropertyNameMethodDefinition.name) {
       const SlimeFunctionExpression = this.createPropertyNameMethodDefinitionAst(first)
       const methodDef = SlimeAstUtil.createMethodDefinition(SlimeFunctionExpression.id, SlimeFunctionExpression)
-      
+
       // 如果有 static 修饰符
       if (staticCst && staticCst.name === Es6TokenConsumer.prototype.StaticTok.name) {
         methodDef.static = true
       }
-      
+
       return methodDef
     } else {
       throw new Error('不支持的类型: ' + first.name)
@@ -1546,8 +1577,7 @@ export class SlimeCstToAst {
 
   createAssignmentExpressionAst(cst: SubhutiCst): SlimeExpression {
     const astName = checkCstName(cst, Es6Parser.prototype.AssignmentExpression.name);
-    let left
-    let right
+
     if (cst.children.length === 1) {
       const child = cst.children[0]
       // 检查是否是箭头函数
@@ -1556,13 +1586,24 @@ export class SlimeCstToAst {
       }
       return this.createExpressionAst(child)
     }
+
+    // AssignmentExpression -> LeftHandSideExpression + Eq + AssignmentExpression
+    // 或 LeftHandSideExpression + AssignmentOperator + AssignmentExpression
+    const leftCst = cst.children[0]
+    const operatorCst = cst.children[1]
+    const rightCst = cst.children[2]
+
+    const left = this.createExpressionAst(leftCst)
+    const right = this.createAssignmentExpressionAst(rightCst)
+    const operator = operatorCst.value || '='
+
     const ast: SlimeAssignmentExpression = {
-      type: astName as any,
-      // operator: AssignmentOperator;
-      left: left,
+      type: 'AssignmentExpression',
+      operator: operator as any,
+      left: left as any,
       right: right,
       loc: cst.loc
-    } as any
+    }
     return ast
   }
 

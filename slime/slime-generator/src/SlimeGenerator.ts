@@ -573,6 +573,8 @@ export default class SlimeGenerator {
       this.generatorFunctionParams(node as SlimeFunctionParams)
     } else if (node.type === 'ConditionalExpression') {
       this.generatorConditionalExpression(node as any)
+    } else if (node.type === 'AssignmentExpression') {
+      this.generatorAssignmentExpression(node as any)
     } else if (node.type === 'BooleanLiteral') {
       this.generateCode += node.value ? 'true' : 'false'
     } else {
@@ -590,6 +592,14 @@ export default class SlimeGenerator {
     this.generatorNode(node.consequent)
     this.generateCode += ':'
     this.generatorNode(node.alternate)
+  }
+
+  private static generatorAssignmentExpression(node: any) {
+    this.generatorNode(node.left)
+    this.addSpacing()
+    this.generateCode += node.operator || '='
+    this.addSpacing()
+    this.generatorNode(node.right)
   }
 
   private static generatorObjectPattern(node: SlimeObjectPattern) {

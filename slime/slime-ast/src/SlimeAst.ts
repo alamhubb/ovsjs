@@ -395,6 +395,16 @@ class SlimeAst {
       static: false,
     })
   }
+
+  createPropertyDefinition(key: SlimeExpression | SlimePrivateIdentifier, value?: SlimeExpression | null, isStatic: boolean = false): SlimePropertyDefinition {
+    return this.commonLocType({
+      type: SlimeAstType.PropertyDefinition,
+      key: key,
+      value: value ?? null,
+      computed: false,
+      static: isStatic,
+    })
+  }
 }
 
 const SlimeAstUtil = new SlimeAst()

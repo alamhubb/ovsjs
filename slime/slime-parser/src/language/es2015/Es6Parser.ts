@@ -809,7 +809,6 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
   @SubhutiRule
   AssignmentExpression() {
     this.Or([
-      {alt: () => this.ConditionalExpression()},
       {
         alt: () => {
           this.YieldExpression()
@@ -829,7 +828,8 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
           this.AssignmentOperator()
           this.AssignmentExpression()
         }
-      }
+      },
+      {alt: () => this.ConditionalExpression()}
     ])
   }
 
@@ -1346,7 +1346,7 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
 
   @SubhutiRule
   FunctionBody() {
-    this.StatementList()
+    this.Option(() => this.StatementList())
   }
 
   @SubhutiRule
@@ -1556,8 +1556,26 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
           this.MethodDefinition()
         }
       },
+      {
+        alt: () => {
+          this.FieldDefinition()
+        }
+      },
+      {
+        alt: () => {
+          this.tokenConsumer.StaticTok()
+          this.FieldDefinition()
+        }
+      },
       {alt: () => this.EmptySemicolon()}
     ])
+  }
+
+  @SubhutiRule
+  FieldDefinition() {
+    this.PropertyName()
+    this.Option(() => this.Initializer())
+    this.Option(() => this.EmptySemicolon())
   }
 
   @SubhutiRule
