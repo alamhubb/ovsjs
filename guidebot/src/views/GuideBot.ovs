@@ -1,0 +1,167 @@
+export class GuideBot {
+    constructor() {
+        this.projectName = '任务管理工具'
+        this.messages = [
+            { type: 'ai', content: '我生成了一个超简单版的任务管理工具，你可以在右侧预览区试试。' },
+            { type: 'ai', content: '现在只有最基本的功能：添加任务、标记完成。' }
+        ]
+        this.tasks = [
+            { id: 1, title: '完成项目需求文档', completed: false },
+            { id: 2, title: '设计页面布局', completed: true },
+            { id: 3, title: '实现核心功能', completed: false }
+        ]
+        this.newTaskInput = ''
+        this.chatInput = ''
+    }
+    
+    addTask() {
+        if (this.newTaskInput.trim()) {
+            this.tasks.push({
+                id: Date.now(),
+                title: this.newTaskInput,
+                completed: false
+            })
+            this.newTaskInput = ''
+        }
+    }
+    
+    toggleTask(task) {
+        task.completed = !task.completed
+    }
+    
+    render() {
+        return div({ class: 'container' }) {
+            // 左侧对话区
+            div({ class: 'chat-panel' }) {
+                // 头部
+                div({ class: 'chat-header' }) {
+                    h1 { 'GuideBot' }
+                    input({
+                        type: 'text',
+                        class: 'project-input',
+                        placeholder: '项目名称（例如：任务管理工具）',
+                        value: this.projectName,
+                        onInput: (e) => this.projectName = e.target.value
+                    })
+                }
+                
+                // 消息列表
+                div({ class: 'chat-messages' }) {
+                    this.messages.map(msg =>
+                        div({ class: `message ${msg.type}` }) {
+                            p { msg.content }
+                        }
+                    )
+                    
+                    div({ class: 'message ai' }) {
+                        p { '哪里需要调整？' }
+                        div({ class: 'option-card' }) { '💡 添加删除按钮' }
+                        div({ class: 'option-card' }) { '🎨 修改颜色风格' }
+                        div({ class: 'option-card' }) { '📝 添加任务分类' }
+                        div({ class: 'option-card' }) { '✏️ 自己描述...' }
+                    }
+                }
+                
+                // 输入区
+                div({ class: 'chat-input-area' }) {
+                    textarea({
+                        class: 'chat-input',
+                        rows: 3,
+                        placeholder: '或者直接告诉我你想调整什么...',
+                        value: this.chatInput,
+                        onInput: (e) => this.chatInput = e.target.value
+                    })
+                }
+            }
+            
+            // 中间预览区
+            div({ class: 'preview-panel' }) {
+                // 工具栏
+                div({ class: 'preview-toolbar' }) {
+                    span({ style: { fontWeight: '500', marginRight: 'auto' } }) { '实时预览' }
+                    button({ class: 'device-btn active' }) { '💻 桌面' }
+                    button({ class: 'device-btn' }) { '📱 手机' }
+                    button({ class: 'device-btn' }) { '🔄 刷新' }
+                }
+                
+                // 预览内容
+                div({ class: 'preview-frame' }) {
+                    div({ class: 'preview-content' }) {
+                        div({ class: 'demo-app' }) {
+                            h1 { '我的任务' }
+                            
+                            // 添加任务输入框
+                            div({ class: 'task-input-area' }) {
+                                input({
+                                    type: 'text',
+                                    placeholder: '输入新任务...',
+                                    value: this.newTaskInput,
+                                    onInput: (e) => this.newTaskInput = e.target.value,
+                                    onKeypress: (e) => e.key === 'Enter' && this.addTask()
+                                })
+                                button({ onClick: () => this.addTask() }) { '添加' }
+                            }
+                            
+                            // 任务列表
+                            div({ class: 'task-list' }) {
+                                this.tasks.map(task =>
+                                    div({
+                                        class: `task-item${task.completed ? ' completed' : ''}`,
+                                        key: task.id
+                                    }) {
+                                        input({
+                                            type: 'checkbox',
+                                            checked: task.completed,
+                                            onChange: () => this.toggleTask(task)
+                                        })
+                                        span { task.title }
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // 右侧文档区
+            div({ class: 'doc-panel' }) {
+                div({ class: 'doc-header' }) {
+                    h2 { '需求文档' }
+                }
+                
+                div({ class: 'doc-content' }) {
+                    div({ class: 'doc-section' }) {
+                        h3 { '📋 功能清单' }
+                        div { '✅ 添加任务' }
+                        div { '✅ 标记完成' }
+                        div { '⏳ 删除任务（待添加）' }
+                    }
+                    
+                    div({ class: 'doc-section' }) {
+                        h3 { '🎨 用户体验' }
+                        div { '单页面应用' }
+                        div { '简洁风格' }
+                        div { '桌面优先' }
+                    }
+                    
+                    div({ class: 'doc-section' }) {
+                        h3 { '💾 技术栈' }
+                        div { 'OVS + Vue 3' }
+                        div { 'localStorage存储' }
+                        div { '无需后端' }
+                    }
+                    
+                    div({ class: 'doc-section' }) {
+                        h3 { '📊 数据结构' }
+                        div { 'Task: {id, title, completed}' }
+                    }
+                }
+                
+                div({ class: 'doc-footer' }) {
+                    button({ class: 'download-btn' }) { '📥 下载需求文档' }
+                }
+            }
+        }
+    }
+}
+

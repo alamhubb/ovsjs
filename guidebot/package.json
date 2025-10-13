@@ -1,0 +1,20 @@
+{
+  "name": "guidebot-web",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx ../node_modules/vite/bin/vite.js --open",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "vue": "^3.5.12"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.1",
+    "tsx": "^4.19.1",
+    "typescript": "~5.8.3",
+    "vite": "^7.1.7",
+    "vue-tsc": "^3.0.7"
+  }
+}
