@@ -243,19 +243,18 @@ export default class Es5Parser<T extends Es5TokenConsumer> extends SubhutiParser
     this.UnaryExpression();
     this.Many(() => {
       this.Or([
-        {alt: () => this.AbsAssignmentOperator()},
-        {alt: () => this.tokenConsumer.VerticalBarVerticalBar()},
-        {alt: () => this.tokenConsumer.AmpersandAmpersand()},
-        {alt: () => this.tokenConsumer.VerticalBar()},
-        {alt: () => this.tokenConsumer.Circumflex()},
-        {alt: () => this.tokenConsumer.Ampersand()},
-        {alt: () => this.AbsEqualityOperator()},
-        {alt: () => this.AbsRelationalOperator()},
-        {alt: () => this.tokenConsumer.InstanceOfTok()},
-        {alt: () => this.tokenConsumer.InTok()},
-        {alt: () => this.AbsShiftOperator()},
-        {alt: () => this.AbsMultiplicativeOperator()},
-        {alt: () => this.AbsAdditiveOperator()},
+        {alt: () => this.tokenConsumer.VerticalBarVerticalBar()},  // ||
+        {alt: () => this.tokenConsumer.AmpersandAmpersand()},      // &&
+        {alt: () => this.tokenConsumer.VerticalBar()},             // |
+        {alt: () => this.tokenConsumer.Circumflex()},              // ^
+        {alt: () => this.tokenConsumer.Ampersand()},               // &
+        {alt: () => this.AbsEqualityOperator()},                   // ==, !=, ===, !==
+        {alt: () => this.AbsRelationalOperator()},                 // <, >, <=, >=
+        {alt: () => this.tokenConsumer.InstanceOfTok()},           // instanceof
+        {alt: () => this.tokenConsumer.InTok()},                   // in
+        {alt: () => this.AbsShiftOperator()},                      // <<, >>, >>>
+        {alt: () => this.AbsMultiplicativeOperator()},             // *, /, %
+        {alt: () => this.AbsAdditiveOperator()},                   // +, -
       ]);
       this.UnaryExpression();
     });
@@ -336,32 +335,46 @@ export default class Es5Parser<T extends Es5TokenConsumer> extends SubhutiParser
     this.UnaryExpression();
     this.Many(() => {
       this.Or([
-        {alt: () => this.AbsAssignmentOperator()},
-        {alt: () => this.tokenConsumer.VerticalBarVerticalBar()},
-        {alt: () => this.tokenConsumer.AmpersandAmpersand()},
-        {alt: () => this.tokenConsumer.VerticalBar()},
-        {alt: () => this.tokenConsumer.Circumflex()},
-        {alt: () => this.tokenConsumer.Ampersand()},
-        {alt: () => this.AbsEqualityOperator()},
-        {alt: () => this.AbsRelationalOperator()},
-        {alt: () => this.tokenConsumer.InstanceOfTok()},
-        {alt: () => this.AbsShiftOperator()},
-        {alt: () => this.AbsMultiplicativeOperator()},
-        {alt: () => this.AbsAdditiveOperator()},
+        {alt: () => this.tokenConsumer.VerticalBarVerticalBar()},  // ||
+        {alt: () => this.tokenConsumer.AmpersandAmpersand()},      // &&
+        {alt: () => this.tokenConsumer.VerticalBar()},             // |
+        {alt: () => this.tokenConsumer.Circumflex()},              // ^
+        {alt: () => this.tokenConsumer.Ampersand()},               // &
+        {alt: () => this.AbsEqualityOperator()},                   // ==, !=, ===, !==
+        {alt: () => this.AbsRelationalOperator()},                 // <, >, <=, >=
+        {alt: () => this.tokenConsumer.InstanceOfTok()},           // instanceof
+        // 注意：NoIn版本不包含 InTok
+        {alt: () => this.AbsShiftOperator()},                      // <<, >>, >>>
+        {alt: () => this.AbsMultiplicativeOperator()},             // *, /, %
+        {alt: () => this.AbsAdditiveOperator()},                   // +, -
       ]);
       this.UnaryExpression();
     });
   }
 
-  // 11.12 条件运算符
+  // 11.12 条件运算符 + 11.13 赋值表达式
   @SubhutiRule
   AssignmentExpression() {
     this.BinaryExpression();
     this.Option(() => {
-      this.tokenConsumer.Question();
-      this.AssignmentExpression();
-      this.tokenConsumer.Colon();
-      this.AssignmentExpression();
+      this.Or([
+        {
+          // 11.12 条件运算符 (? :)
+          alt: () => {
+            this.tokenConsumer.Question();
+            this.AssignmentExpression();
+            this.tokenConsumer.Colon();
+            this.AssignmentExpression();
+          }
+        },
+        {
+          // 11.13 赋值运算符 (=, +=, -=, 等)
+          alt: () => {
+            this.AbsAssignmentOperator();
+            this.AssignmentExpression();
+          }
+        }
+      ]);
     });
   }
 
@@ -369,10 +382,24 @@ export default class Es5Parser<T extends Es5TokenConsumer> extends SubhutiParser
   AssignmentExpressionNoIn() {
     this.BinaryExpressionNoIn();
     this.Option(() => {
-      this.tokenConsumer.Question();
-      this.AssignmentExpression();
-      this.tokenConsumer.Colon();
-      this.AssignmentExpressionNoIn();
+      this.Or([
+        {
+          // 11.12 条件运算符 (? :)
+          alt: () => {
+            this.tokenConsumer.Question();
+            this.AssignmentExpression();
+            this.tokenConsumer.Colon();
+            this.AssignmentExpressionNoIn();
+          }
+        },
+        {
+          // 11.13 赋值运算符 (=, +=, -=, 等)
+          alt: () => {
+            this.AbsAssignmentOperator();
+            this.AssignmentExpressionNoIn();
+          }
+        }
+      ]);
     });
   }
 
