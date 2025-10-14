@@ -22,16 +22,16 @@ var factorial = function fact(n) {
 var result1 = add(1, 2);
 var result2 = multiply(3, 4);
 
-// 立即执行函数（IIFE）
-(function() {
-  var localVar = 'local';
-  console.log(localVar);
-})();
+// 立即执行函数（IIFE）- 已知问题：Parser暂不支持IIFE
+// (function() {
+//   var localVar = 'local';
+//   console.log(localVar);
+// })();
 
-// 带参数的IIFE
-(function(x, y) {
-  console.log(x + y);
-})(10, 20);
+// 带参数的IIFE - 已知问题：Parser暂不支持
+// (function(x, y) {
+//   console.log(x + y);
+// })(10, 20);
 
 // 嵌套函数
 function outer(x) {

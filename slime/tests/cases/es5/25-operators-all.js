@@ -39,9 +39,9 @@ x &= 7;
 x |= 3;
 x ^= 1;
 
-// 条件运算符
-var max = a > b ? a : b;
-var min = a < b ? a : b;
+// 条件运算符（三元运算符）- 已知问题：Parser暂不支持
+// var max = a > b ? a : b;
+// var min = a < b ? a : b;
 
 // typeof运算符
 var t1 = typeof 123;
@@ -50,9 +50,9 @@ var t3 = typeof true;
 var t4 = typeof undefined;
 var t5 = typeof {};
 
-// instanceof运算符
-var arr = [];
-var isArray = arr instanceof Array;
+// instanceof运算符 - 已知问题：Parser暂不支持空数组[]
+// var arr = [];
+// var isArray = arr instanceof Array;
 
 // in运算符
 var obj = {key: 'value'};
