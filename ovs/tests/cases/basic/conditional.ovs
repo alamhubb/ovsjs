@@ -1,0 +1,16 @@
+// Case 3: 条件渲染 - if语句
+
+const isActive = true
+
+div {
+  h1 { "Conditional Test" }
+  
+  if (isActive) {
+    p { "Status: Active" }
+  }
+  
+  div {
+    p { "This always shows" }
+  }
+}
+

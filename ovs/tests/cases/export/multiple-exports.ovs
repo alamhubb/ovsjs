@@ -1,0 +1,18 @@
+// Multiple Exports - 多个导出
+
+const appTitle = "My Dashboard"
+
+export const HeaderView = div {
+  h1 { appTitle }
+  p { "Welcome" }
+}
+
+export const ContentView = div {
+  h2 { "Content" }
+  p { "Main content area" }
+}
+
+export const FooterView = div {
+  p { "Footer" }
+}
+

@@ -1,0 +1,43 @@
+// Export Class - export class 导出形式
+
+export class MyComponent {
+  constructor() {
+    // Empty constructor - required for OVS compatibility
+  }
+  
+  initData() {
+    if (this.initialized === undefined) {
+      this.title = "My Component"
+      this.items = [
+        { id: 1, name: "Item 1" },
+        { id: 2, name: "Item 2" }
+      ]
+      this.initialized = true
+    }
+  }
+  
+  handleClick(item) {
+    console.log("Clicked:", item.name)
+  }
+  
+  render() {
+    this.initData()
+    return div({ class: "component" }) {
+      h1 { this.title }
+      
+      div({ class: "items" }) {
+        this.items.map(item =>
+          div({ class: "item", key: item.id }) {
+            span { item.name }
+            button({
+              onClick: () => this.handleClick(item)
+            }) {
+              "Click"
+            }
+          }
+        )
+      }
+    }
+  }
+}
+
