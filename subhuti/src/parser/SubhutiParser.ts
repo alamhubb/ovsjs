@@ -534,10 +534,11 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
       if (this.continueForAndNoBreak) {
         // 容错模式下，即使成功也要检查是否有"更好的"部分匹配
         if (this.faultTolerance) {
+          // 获取消费最多的失败分支
           const res = this.getTokensLengthMin(thisBackAry)
           if (res) {
             if (res.tokens.length < this.tokens.length) {
-              // 有更好的部分匹配（消费token更少 = 剩余更多 = 更精确）
+              // 如果失败分支消费的更多，用失败分支！
               this.setBackDataNoContinueMatch(res)
             }
           }
@@ -585,6 +586,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     return
   }
 
+  //查找消费最多，剩余最少的
   getTokensLengthMin(thisBackAry: SubhutiBackData[]) {
     const res = thisBackAry.sort((a, b) => {
       return a.tokens.length - b.tokens.length
