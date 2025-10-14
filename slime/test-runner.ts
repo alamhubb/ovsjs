@@ -9,7 +9,8 @@ import SubhutiLexer from '../../subhuti/src/parser/SubhutiLexer.ts'
 
 const testCases = [
   'tests/cases/01-for-loop.js',
-  'tests/cases/02-while-loop.js'
+  'tests/cases/02-while-loop.js',
+  'tests/cases/03-guidebot.js'
 ]
 
 async function runTests() {
