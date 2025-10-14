@@ -5,9 +5,9 @@
   "license": "MIT",
   "scripts": {
     "dev": "tsx ../node_modules/vite/bin/vite.js",
+    "test": "tsx test-runner.ts",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "test": "tsx tests/run-all-tests.ts",
     "test:unit": "tsx tests/run-tests.ts unit",
     "test:integration": "tsx tests/run-tests.ts integration",
     "test:regression": "tsx tests/run-tests.ts regression",
