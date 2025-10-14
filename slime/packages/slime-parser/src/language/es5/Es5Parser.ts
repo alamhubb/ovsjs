@@ -265,19 +265,18 @@ export default class Es5Parser<T extends Es5TokenConsumer> extends SubhutiParser
   @SubhutiRule
   AbsAssignmentOperator() {
     this.Or([
-      {alt: () => this.tokenConsumer.Eq()},
-      {alt: () => this.tokenConsumer.PlusEq()},
-      {alt: () => this.tokenConsumer.AmpersandAmpersand()},
-      {alt: () => this.tokenConsumer.VerticalBar()},
-      {alt: () => this.tokenConsumer.Circumflex()},
-      {alt: () => this.tokenConsumer.Ampersand()},
-      {alt: () => this.AbsEqualityOperator()},
-      {alt: () => this.AbsRelationalOperator()},
-      {alt: () => this.tokenConsumer.InstanceOfTok()},
-      {alt: () => this.tokenConsumer.InTok()},
-      {alt: () => this.AbsShiftOperator()},
-      {alt: () => this.AbsMultiplicativeOperator()},
-      {alt: () => this.AbsAdditiveOperator()},
+      {alt: () => this.tokenConsumer.Eq()},              // =
+      {alt: () => this.tokenConsumer.PlusEq()},          // +=
+      {alt: () => this.tokenConsumer.MinusEq()},         // -=
+      {alt: () => this.tokenConsumer.AsteriskEq()},      // *=
+      {alt: () => this.tokenConsumer.SlashEq()},         // /=
+      {alt: () => this.tokenConsumer.PercentEq()},       // %=
+      {alt: () => this.tokenConsumer.LessLessEq()},      // <<=
+      {alt: () => this.tokenConsumer.MoreMoreEq()},      // >>=
+      {alt: () => this.tokenConsumer.MoreMoreMoreEq()},  // >>>=
+      {alt: () => this.tokenConsumer.AmpersandEq()},     // &=
+      {alt: () => this.tokenConsumer.CircumflexEq()},    // ^=
+      {alt: () => this.tokenConsumer.VerticalBarEq()},   // |=
     ]);
   }
 
