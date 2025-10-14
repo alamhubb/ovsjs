@@ -11,7 +11,7 @@ const testCases = [
   // 递进式测试：一个个启用
   'tests/cases/es5/01-basic-expressions.js',
   'tests/cases/es5/02-control-flow.js',
-  // 'tests/cases/es5/03-functions.js',
+  'tests/cases/es5/03-functions.js',
   // 'tests/cases/es5/04-objects-arrays.js',
   // 'tests/cases/es5/05-operators.js',
   // 'tests/cases/es5/06-exception-handling.js',

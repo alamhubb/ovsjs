@@ -458,6 +458,11 @@ export default class SlimeGenerator {
   }
 
   private static generatorNode(node: SlimeBaseNode) {
+    // 防御性检查：如果node为null或undefined，直接返回
+    if (!node) {
+      return
+    }
+    
     if (node.type === SlimeAstType.Program) {
       return this.generatorProgram(node as SlimeProgram)
     } else if (node.type === SlimeAstType.PrivateIdentifier) {
@@ -541,6 +546,8 @@ export default class SlimeGenerator {
       this.generatorDoWhileStatement(node as any)
     } else if (node.type === SlimeAstType.SwitchStatement) {
       this.generatorSwitchStatement(node as any)
+    } else if (node.type === SlimeAstType.SwitchCase) {
+      this.generatorSwitchCase(node as any)
     } else if (node.type === SlimeAstType.TryStatement) {
       this.generatorTryStatement(node as any)
     } else if (node.type === SlimeAstType.ThrowStatement) {
@@ -936,6 +943,28 @@ export default class SlimeGenerator {
       this.generatorNodes(node.cases)
     }
     this.addCode(es6TokensObj.RBrace)
+  }
+
+  /**
+   * 生成 switch case 分支
+   */
+  private static generatorSwitchCase(node: any) {
+    if (node.test) {
+      // case 分支
+      this.addCode(es6TokensObj.CaseTok)
+      this.addSpacing()
+      this.generatorNode(node.test)
+      this.addCode(es6TokensObj.Colon)
+    } else {
+      // default 分支
+      this.addCode(es6TokensObj.DefaultTok)
+      this.addCode(es6TokensObj.Colon)
+    }
+    
+    // 生成 consequent 语句
+    if (node.consequent && node.consequent.length > 0) {
+      this.generatorNodes(node.consequent)
+    }
   }
 
   /**

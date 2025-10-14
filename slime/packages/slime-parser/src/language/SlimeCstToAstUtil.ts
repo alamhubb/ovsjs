@@ -1680,6 +1680,11 @@ export class SlimeCstToAst {
     // children[1]: Arrow (=>)
     // children[2]: ConciseBody (函数体)
     
+    // 防御性检查：确保children存在且有足够元素
+    if (!cst.children || cst.children.length < 3) {
+      throw new Error(`createArrowFunctionAst: 期望3个children，实际${cst.children?.length || 0}个`)
+    }
+    
     const arrowParametersCst = cst.children[0]
     const conciseBodyCst = cst.children[2]
     
@@ -1739,6 +1744,11 @@ export class SlimeCstToAst {
    * 创建箭头函数体 AST
    */
   createConciseBodyAst(cst: SubhutiCst): SlimeBlockStatement | SlimeExpression {
+    // 防御性检查
+    if (!cst) {
+      throw new Error('createConciseBodyAst: cst is null or undefined')
+    }
+    
     checkCstName(cst, Es6Parser.prototype.ConciseBody.name);
     
     const first = cst.children[0]
