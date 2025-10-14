@@ -910,6 +910,83 @@ JSON.stringify(value [, replacer [, space]])
 
 ---
 
+## Es5Parser 实现限制
+
+### ⚠️ 不支持自动分号插入（ASI）
+
+**限制说明：**
+本Parser实现**不支持**ES5规范第7.9节定义的自动分号插入（Automatic Semicolon Insertion）特性。
+
+**要求：**
+所有语句必须显式使用分号结尾。
+
+**不支持的写法：**
+```javascript
+// ❌ 以下代码无法解析（缺少分号）
+var a = 1
+var b = 2
+return 123
+
+function test() {
+  console.log("hello")
+}
+```
+
+**必须使用的写法：**
+```javascript
+// ✅ 必须显式添加分号
+var a = 1;
+var b = 2;
+return 123;
+
+function test() {
+  console.log("hello");
+}
+```
+
+**原因：**
+- ASI实现复杂，需要错误恢复机制和上下文判断
+- 简化Parser实现，降低维护成本
+- 显式分号更明确，符合现代最佳实践
+
+**适用场景：**
+- ✅ TypeScript/现代JavaScript项目（通常配置显式分号）
+- ✅ 代码生成工具的输出（可控制格式）
+- ✅ 编译器前端（输入代码可规范化）
+- ❌ 解析任意ES5代码（可能省略分号）
+
+**建议：**
+如果需要解析省略分号的代码，建议：
+1. 使用预处理工具添加分号（如Prettier）
+2. 或使用完整的ES5 Parser（如Babel、Acorn）
+3. 或扩展本Parser实现ASI支持（预计5-10小时工作量）
+
+---
+
+### ✅ 完整实现的ES5特性
+
+**表达式（100%）：**
+- 所有运算符（一元、二元、条件、赋值、逗号）
+- 属性访问（点、括号）
+- 函数调用、new运算符
+- 对象字面量（含getter/setter）
+- 数组字面量
+
+**语句（100%）：**
+- 所有控制流语句（if, switch, for, while, do-while, for-in）
+- 异常处理（try/catch/finally, throw）
+- 变量声明（var）
+- 函数声明和表达式
+- 其他语句（return, break, continue, with, debugger等）
+
+**特殊特性：**
+- ✅ getter/setter 属性（ES5新增）
+- ✅ 函数表达式（匿名/命名）
+- ✅ 标签语句
+- ✅ 正则表达式字面量
+
+---
+
 ## 完整规范链接
 
 **HTML版本：** https://262.ecma-international.org/5.1/index.html  
