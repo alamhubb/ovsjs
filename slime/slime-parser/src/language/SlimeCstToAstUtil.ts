@@ -1398,10 +1398,44 @@ export class SlimeCstToAst {
 
   createUnaryExpressionAst(cst: SubhutiCst): SlimeExpression {
     const astName = checkCstName(cst, Es6Parser.prototype.UnaryExpression.name);
-    if (cst.children.length > 1) {
-
+    
+    // 如果只有一个子节点，直接递归处理
+    if (cst.children.length === 1) {
+      return this.createExpressionAst(cst.children[0])
     }
-    return this.createExpressionAst(cst.children[0])
+    
+    // 如果有两个子节点，是一元运算符表达式
+    // children[0]: 运算符 token (!, +, -, ~, typeof, void, delete等)
+    // children[1]: UnaryExpression（操作数）
+    const operatorToken = cst.children[0]
+    const argumentCst = cst.children[1]
+    
+    // 获取运算符类型
+    const operatorMap: {[key: string]: string} = {
+      'Exclamation': '!',
+      'Plus': '+',
+      'Minus': '-',
+      'Tilde': '~',
+      'TypeofTok': 'typeof',
+      'VoidTok': 'void',
+      'DeleteTok': 'delete',
+      'PlusPlus': '++',
+      'MinusMinus': '--',
+    }
+    
+    const operator = operatorMap[operatorToken.name] || operatorToken.value
+    
+    // 递归处理操作数
+    const argument = this.createExpressionAst(argumentCst)
+    
+    // 创建 UnaryExpression AST
+    return {
+      type: SlimeAstType.UnaryExpression,
+      operator: operator,
+      prefix: true,  // 前缀运算符
+      argument: argument,
+      loc: cst.loc
+    } as any
   }
 
   createPostfixExpressionAst(cst: SubhutiCst): SlimeExpression {

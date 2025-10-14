@@ -7,7 +7,11 @@
     "dev": "tsx ../node_modules/vite/bin/vite.js",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "test": "tsx test/HelloWorldGrammarParser.ts"
+    "test": "tsx tests/run-all-tests.ts",
+    "test:unit": "tsx tests/run-tests.ts unit",
+    "test:integration": "tsx tests/run-tests.ts integration",
+    "test:regression": "tsx tests/run-tests.ts regression",
+    "test:watch": "tsx --watch tests/run-all-tests.ts"
   },
   "homepage": "https://github.com/alamhubb/ovs",
   "repository": {

@@ -176,15 +176,20 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     this.ovsRenderDomViewDepth++
     
     try {
-      // 获取 StatementList (cst.children[2])
-      const statementListCst = cst.children?.[2]
-      if (!statementListCst) {
-        throw new Error('OvsRenderDomViewDeclaration has no StatementList')
-      }
+      // 查找 StatementList 节点
+      // 结构可能是：
+      // - 无Arguments: [Identifier, LBrace, StatementList?, RBrace]
+      // - 有Arguments: [Identifier, Arguments, LBrace, StatementList?, RBrace]
+      const statementListCst = cst.children?.find(child => 
+        child.name === 'StatementList'
+      )
       
+      // StatementList是可选的（空div也合法）
       // 转换 StatementList，会自动处理所有语句
       // 其中 ExpressionStatement 会被 createExpressionStatementAst 转换为 children.push()
-      const bodyStatements = this.createStatementListAst(statementListCst)
+      const bodyStatements = statementListCst 
+        ? this.createStatementListAst(statementListCst)
+        : []
       
       // 判断是简单还是复杂情况
       const isSimple = this.isSimpleViewBody(bodyStatements)

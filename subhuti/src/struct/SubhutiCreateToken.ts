@@ -4,6 +4,7 @@ export enum SubhutiCreateTokenGroupType {
 
 export class SubhutiCreateToken {
   name: string;
+  type: string;  // 添加 type 属性
   pattern?: RegExp;
   isKeyword?: boolean;
   group?: string;
@@ -12,6 +13,7 @@ export class SubhutiCreateToken {
 
   constructor(ovsToken: SubhutiCreateToken) {
     this.name = ovsToken.name;
+    this.type = ovsToken.name;  // type 默认等于 name
     this.pattern = ovsToken.pattern
     if (ovsToken.value) {
       this.value = ovsToken.value
