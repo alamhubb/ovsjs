@@ -1506,6 +1506,9 @@ export class SlimeCstToAst {
     } else if (first.name === Es6TokenConsumer.prototype.ThisTok.name) {
       // 处理 this 关键字
       return SlimeAstUtil.createIdentifier('this', first.loc)
+    } else if (first.name === Es6TokenConsumer.prototype.RegularExpressionLiteral.name) {
+      // 处理正则表达式字面量
+      return SlimeAstUtil.createStringLiteral(first.value)  // 暂时处理为字符串
     } else {
       throw new Error('未知的createPrimaryExpressionAst：' + first.name)
     }

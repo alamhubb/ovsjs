@@ -35,6 +35,7 @@ export enum SlimeAstType {
     FunctionExpression = 'FunctionExpression', // function () {} 表达式
     ArrowFunctionExpression = 'ArrowFunctionExpression', // () => {} 箭头函数表达式
     BinaryExpression = 'BinaryExpression', // 二元运算表达式（+, -, *, / 等）
+    UnaryExpression = 'UnaryExpression', // 一元运算表达式（!, +, -, ~, typeof, void, delete, ++, --）
     VariableDeclarator = 'VariableDeclarator', // 变量声明中的单个声明项
     NumericLiteral = 'NumericLiteral', // 数字字面量
     StringLiteral = 'StringLiteral', // 字符串字面量

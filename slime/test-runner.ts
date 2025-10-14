@@ -1,16 +1,24 @@
 import { readFileSync } from 'fs'
-import Es6Parser from '../slime-parser/src/language/es2015/Es6Parser.ts'
-import { es6Tokens } from '../slime-parser/src/language/es2015/Es6Tokens.ts'
-import { SlimeCstToAst } from '../slime-parser/src/language/SlimeCstToAstUtil.ts'
-import SlimeGenerator from '../slime-generator/src/SlimeGenerator.ts'
-import SubhutiLexer from '../../subhuti/src/parser/SubhutiLexer.ts'
+import Es6Parser from './packages/slime-parser/src/language/es2015/Es6Parser.ts'
+import { es6Tokens } from './packages/slime-parser/src/language/es2015/Es6Tokens.ts'
+import { SlimeCstToAst } from './packages/slime-parser/src/language/SlimeCstToAstUtil.ts'
+import SlimeGenerator from './packages/slime-generator/src/SlimeGenerator.ts'
+import SubhutiLexer from '../subhuti/src/parser/SubhutiLexer.ts'
 
 // Slime测试 - 测试Parser和Generator
 
 const testCases = [
-  'tests/cases/01-for-loop.js',
-  'tests/cases/02-while-loop.js',
-  'tests/cases/03-guidebot.js'
+  // 递进式测试：一个个启用
+  'tests/cases/es5/01-basic-expressions.js',
+  'tests/cases/es5/02-control-flow.js',
+  // 'tests/cases/es5/03-functions.js',
+  // 'tests/cases/es5/04-objects-arrays.js',
+  // 'tests/cases/es5/05-operators.js',
+  // 'tests/cases/es5/06-exception-handling.js',
+  // 'tests/cases/es5/07-strict-mode.js',
+  // 'tests/cases/es5/08-array-methods.js',
+  // 'tests/cases/es5/09-object-methods.js',
+  // 'tests/cases/es5/10-json.js'
 ]
 
 async function runTests() {

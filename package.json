@@ -4,6 +4,7 @@
   "workspaces": [
     "langServer",
     "ovs",
+    "slime",
     "slime/packages/*",
     "packages/*"
   ],

@@ -577,6 +577,8 @@ export default class SlimeGenerator {
       this.generatorAssignmentExpression(node as any)
     } else if (node.type === 'BooleanLiteral') {
       this.generateCode += node.value ? 'true' : 'false'
+    } else if (node.type === 'UnaryExpression') {
+      this.generatorUnaryExpression(node as any)
     } else {
       throw new Error('不支持的类型：' + node.type)
     }
@@ -585,6 +587,15 @@ export default class SlimeGenerator {
     }
   }
 
+
+  private static generatorUnaryExpression(node: any) {
+    // UnaryExpression: operator + argument
+    this.generateCode += node.operator
+    if (node.operator === 'typeof' || node.operator === 'void' || node.operator === 'delete') {
+      this.generateCode += ' '  // 关键字后需要空格
+    }
+    this.generatorNode(node.argument)
+  }
 
   private static generatorConditionalExpression(node: any) {
     this.generatorNode(node.test)
