@@ -1,0 +1,74 @@
+import { readFileSync } from 'fs'
+import Es6Parser from '../slime-parser/src/language/es2015/Es6Parser.ts'
+import { es6Tokens } from '../slime-parser/src/language/es2015/Es6Tokens.ts'
+import { SlimeCstToAst } from '../slime-parser/src/language/SlimeCstToAstUtil.ts'
+import SlimeGenerator from '../slime-generator/src/SlimeGenerator.ts'
+import SubhutiLexer from '../../subhuti/src/parser/SubhutiLexer.ts'
+
+// Slime测试 - 测试Parser和Generator
+
+const testCases = [
+  'tests/cases/01-for-loop.js',
+  'tests/cases/02-while-loop.js'
+]
+
+async function runTests() {
+  console.log('╔' + '═'.repeat(78) + '╗')
+  console.log('║' + ' Slime库测试'.padEnd(78, ' ') + '║')
+  console.log('╚' + '═'.repeat(78) + '╝')
+  
+  let passCount = 0
+  let failCount = 0
+  
+  for (const testCase of testCases) {
+    const fileName = testCase.split('/').pop()
+    console.log(`\n📝 测试: ${fileName}`)
+    console.log('─'.repeat(80))
+    
+    try {
+      const code = readFileSync(testCase, 'utf-8')
+      
+      // 1. 词法分析
+      const lexer = new SubhutiLexer(es6Tokens)
+      const tokens = lexer.lexer(code)
+      
+      // 2. 语法分析
+      const parser = new Es6Parser(tokens)
+      const cst = parser.Program()
+      
+      // 调试：检查CST
+      if (!cst) {
+        throw new Error('Parser.Program()返回undefined，CST为空')
+      }
+      
+      // 3. CST -> AST
+      const slimeCstToAst = new SlimeCstToAst()
+      const ast = slimeCstToAst.toProgram(cst)
+      
+      // 4. AST -> Code
+      const result = SlimeGenerator.generator(ast, tokens)
+      
+      console.log(`✅ 编译成功 - ${fileName}`)
+      console.log(`生成代码长度: ${result.code.length}字符`)
+      passCount++
+    } catch (e) {
+      console.log(`❌ 编译失败 - ${fileName}`)
+      console.log(`   错误: ${e.message}`)
+      console.log(e.stack)
+      failCount++
+    }
+  }
+  
+  console.log('\n' + '═'.repeat(80))
+  console.log(`📊 测试总结: ${passCount}/${testCases.length} 通过`)
+  console.log('═'.repeat(80))
+  
+  if (failCount === 0) {
+    console.log('\n🎉 所有Slime测试通过！')
+  } else {
+    console.log(`\n⚠️  ${failCount} 个测试失败`)
+  }
+}
+
+runTests().catch(console.error)
+

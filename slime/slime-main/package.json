@@ -1,0 +1,15 @@
+{
+  "name": "slime-main",
+  "version": "0.0.1",
+  "description": "Slime库测试和调试工具",
+  "scripts": {
+    "test": "tsx test-runner.ts"
+  },
+  "dependencies": {
+    "slime-ast": "^0.0.1",
+    "slime-parser": "^0.0.1",
+    "slime-generator": "^0.0.1",
+    "subhuti": "^0.1.3"
+  }
+}
+

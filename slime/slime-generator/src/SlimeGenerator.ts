@@ -850,7 +850,7 @@ export default class SlimeGenerator {
     this.addCode(es6TokensObj.Semicolon)
     if (node.update) this.generatorNode(node.update)
     this.addCode(es6TokensObj.RParen)
-    this.generatorNode(node.body)
+    if (node.body) this.generatorNode(node.body)
   }
 
   /**
@@ -895,9 +895,9 @@ export default class SlimeGenerator {
   private static generatorWhileStatement(node: any) {
     this.addCode(es6TokensObj.WhileTok)
     this.addCode(es6TokensObj.LParen)
-    this.generatorNode(node.test)
+    if (node.test) this.generatorNode(node.test)
     this.addCode(es6TokensObj.RParen)
-    this.generatorNode(node.body)
+    if (node.body) this.generatorNode(node.body)
   }
 
   /**

@@ -1,0 +1,28 @@
+// Case 9: 循环 - For和While循环
+
+const items = [10, 20, 30]
+let sum = 0
+
+for (let i = 0; i < items.length; i++) {
+  sum = sum + items[i]
+}
+
+let count = 0
+while (count < 3) {
+  count = count + 1
+}
+
+div {
+  h1 { "Loops Demo" }
+  
+  div {
+    p { "For loop sum: " }
+    p { sum }
+  }
+  
+  div {
+    p { "While loop count: " }
+    p { count }
+  }
+}
+

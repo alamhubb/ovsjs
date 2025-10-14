@@ -1189,9 +1189,41 @@ export class SlimeCstToAst {
     } else if (cst.name === Es6Parser.prototype.MetaProperty.name) {
       return this.createPrimaryExpressionAst(cst)
     } else if (cst.name === Es6Parser.prototype.NewMemberExpressionArguments.name) {
-      return this.createPrimaryExpressionAst(cst)
+      return this.createNewExpressionAst(cst)
     } else {
       throw new Error('不支持的类型')
+    }
+  }
+
+  createNewExpressionAst(cst: SubhutiCst): any {
+    // 支持两种类型：NewExpression 和 NewMemberExpressionArguments
+    const isNewMemberExpr = cst.name === Es6Parser.prototype.NewMemberExpressionArguments.name
+    const isNewExpr = cst.name === Es6Parser.prototype.NewExpression.name
+    
+    if (!isNewMemberExpr && !isNewExpr) {
+      throw new Error('createNewExpressionAst: 不支持的类型 ' + cst.name)
+    }
+    
+    if (isNewMemberExpr) {
+      // NewMemberExpressionArguments -> new + MemberExpression + Arguments
+      // children[0]: new关键字
+      // children[1]: MemberExpression（类名）
+      // children[2]: Arguments（参数列表）
+      
+      const calleeExpression = this.createMemberExpressionAst(cst.children[1])
+      const args = this.createArgumentsAst(cst.children[2])
+      
+      const newExpression: any = {
+        type: 'NewExpression',
+        callee: calleeExpression,
+        arguments: args,
+        loc: cst.loc
+      }
+      
+      return newExpression
+    } else {
+      // NewExpression -> 递归处理
+      return this.createExpressionAst(cst.children[0])
     }
   }
 
@@ -1283,6 +1315,8 @@ export class SlimeCstToAst {
     } else if (astName === Es6Parser.prototype.CallExpression.name) {
       left = this.createCallExpressionAst(cst)
     } else if (astName === Es6Parser.prototype.NewExpression.name) {
+      left = this.createNewExpressionAst(cst)
+    } else if (astName === Es6Parser.prototype.NewMemberExpressionArguments.name) {
       left = this.createNewExpressionAst(cst)
     } else if (astName === Es6Parser.prototype.MemberExpression.name) {
       left = this.createMemberExpressionAst(cst)
@@ -1448,14 +1482,6 @@ export class SlimeCstToAst {
 
   createLeftHandSideExpressionAst(cst: SubhutiCst): SlimeExpression {
     const astName = checkCstName(cst, Es6Parser.prototype.LeftHandSideExpression.name);
-    if (cst.children.length > 1) {
-
-    }
-    return this.createExpressionAst(cst.children[0])
-  }
-
-  createNewExpressionAst(cst: SubhutiCst): SlimeExpression {
-    const astName = checkCstName(cst, Es6Parser.prototype.NewExpression.name);
     if (cst.children.length > 1) {
 
     }
