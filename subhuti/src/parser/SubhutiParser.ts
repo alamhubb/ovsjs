@@ -484,7 +484,26 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     this.allowErrorStack.push(this.curCst.name)
   }
 
-  //or语法，遍历匹配语法，语法匹配成功，则跳出匹配，执行下一规则
+  /**
+   * Or语法：遍历所有规则分支，任一分支匹配成功则跳出
+   * 
+   * 核心机制：
+   * 1. 依次尝试每个分支（alt函数）
+   * 2. 任一分支成功 → 跳出循环
+   * 3. 所有分支都失败：
+   *    - 非容错模式 → 返回失败
+   *    - 容错模式 → 选择"消费token最多"的分支（最接近成功）
+   * 
+   * 容错处理的关键逻辑：
+   * - 如果所有Or分支都失败，说明当前tokens无法匹配任何一个规则分支
+   * - thisBackAry记录了每个分支的"部分成功"状态
+   * - 策略：选择消费token最多的分支（getTokensLengthMin）
+   * - 原理：消费token越多，说明越接近正确的语法，保留这个结果继续
+   * 
+   * 与FaultToleranceMany的区别：
+   * - FaultToleranceMany：循环尝试同一个规则（Many语法）
+   * - Or：尝试多个不同规则分支（Or语法）
+   */
   Or(subhutiParserOrs: SubhutiParserOr[]): SubhutiCst {
     if (!this.checkMethodCanExec) {
       return
@@ -495,71 +514,74 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
     let lastBreakFlag = this.orBreakFlag
 
-    const thisBackAry: SubhutiBackData[] = []
-
-    // const uuid = generateUUID()
+    const thisBackAry: SubhutiBackData[] = []  // 保存每个分支的部分成功状态
 
     for (const subhutiParserOr of subhutiParserOrs) {
       index++
-      //If it is the last round of the for loop, an error will be reported if it fails.
+      // 如果是最后一个分支，失败时报错
       if (index === funLength) {
-        this.setAllowError(false)
+        this.setAllowError(false)  // 最后一次尝试，不允许错误
       } else {
-        this.setAllowError(true)
+        this.setAllowError(true)   // 允许错误，继续尝试下一个分支
       }
-      let backData = JsonUtil.cloneDeep(this.backData)
+      let backData = JsonUtil.cloneDeep(this.backData)  // 保存当前状态
 
-      //考虑到执行空的话，如果执行了空元素，应该是跳出的
+      // 考虑到执行空元素的情况，如果执行了空元素，应该是跳出的
       this.setOrBreakFlag(false)
-      subhutiParserOr.alt()
-      // If the processing is successful, then exit the loop
-      // 执行成功，则完成任务，做多一次，则必须跳出
-      // 只有有成功的匹配才跳出循环，否则就一直执行，直至循环结束
+      subhutiParserOr.alt()  // 尝试执行当前分支
+      
+      // 如果匹配成功，跳出循环
       if (this.continueForAndNoBreak) {
-        //容错模式下，如果错误匹配的数量大于
+        // 容错模式下，即使成功也要检查是否有"更好的"部分匹配
         if (this.faultTolerance) {
           const res = this.getTokensLengthMin(thisBackAry)
           if (res) {
             if (res.tokens.length < this.tokens.length) {
+              // 有更好的部分匹配（消费token更少 = 剩余更多 = 更精确）
               this.setBackDataNoContinueMatch(res)
             }
           }
         }
-        //别的while都是，没token，才break，这个满足一次就必须break，无论有没有tokens还
+        // Or语法只要有一个分支成功就必须break，无论还有没有tokens
         break
       } else if (!this.continueForAndNoBreak) {
+        // 当前分支失败
         if (this.tokens.length < backData.tokens.length) {
+          // 有部分token被消费（部分匹配成功）
           const thisBackData = JsonUtil.cloneDeep(this.backData)
-          thisBackAry.push(thisBackData)
+          thisBackAry.push(thisBackData)  // 记录这个"部分成功"的状态
         }
-        //最后一边有可能成功，但是不跳出，匹配空的情况
-        //匹配失败
+        
+        // 匹配失败的处理
         if (index !== funLength) {
-          //只要不为最后一次，都设为true
-          //没逃出，则重置数据，继续执行
+          // 不是最后一个分支：重置状态，尝试下一个分支
           this.setBackData(backData)
         } else {
+          // 最后一个分支也失败了：所有分支都失败
           this.setBackDataNoContinueMatch(backData)
         }
-        // this.printTokens()
       }
     }
+    
     let curFlag = this.orBreakFlag
-    //本级和上级有一个为true则改为true，or的情况为什么需要上级的情况来决定，如果or之后，是失败，就应该是匹配失败了呀，如果是在many中呢
-    //不需要啊，结果是什么就是什么
-    // if (this.orBreakFlag || lastBreakFlag) {
-    //   this.setOrBreakFlag(true)
-    // }
-    //必须放这里，放this.continueExec可能不执行，放index === funLength  也有可能this.continueExec 时不执行，俩地方都放可能执行两次，只能放这里
+    
+    // 必须放这里，不能放在其他位置（会导致重复执行或不执行）
     this.setAllowErrorLastStateAndPop()
+    
     if (curFlag) {
+      // 有分支成功
       return this.getCurCst()
     }
+    
+    // 容错模式：所有分支都失败，但有部分成功
     if (this.faultTolerance && thisBackAry.length) {
+      // 选择"消费token最多"的分支（最接近正确的语法）
       const res = this.getTokensLengthMin(thisBackAry)
       this.setBackDataNoContinueMatch(res)
       return this.getCurCst()
     }
+    
+    // 完全失败，无任何匹配
     return
   }
 
@@ -609,11 +631,26 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
   }
 
 
+  /**
+   * 容错版的Many循环
+   * 
+   * 核心机制：
+   * 1. 循环尝试执行fun()，直到匹配失败或没有更多tokens
+   * 2. 如果匹配失败，根据容错策略处理：
+   *    - 有部分成功（thisBackData存在）→ 保留部分结果
+   *    - 完全失败 → 跳过当前token，继续尝试剩余tokens
+   * 
+   * 容错处理的关键逻辑：
+   * - 当所有规则分支都匹配失败时，说明当前第一个token无法匹配任何规则
+   * - 这证明当前token是"非法语句的开始"或"错误的token"
+   * - 策略：跳过这个token（consumeMatchToken），从下一个token重新尝试
+   * - 这样可以在遇到局部语法错误时继续解析剩余代码，而不是整体失败
+   */
   FaultToleranceMany(fun: Function) {
     if (!this.checkMethodCanExec) {
       return
     }
-    //不需要 再循环内部修改，因为如果子节点改了，退出子节点时也会重置回来的
+    // 不需要在循环内部修改allowError，因为如果子节点改了，退出子节点时也会重置回来的
     this.setAllowErrorNewState()
 
     let lastBreakFlag = this.orBreakFlag
@@ -623,38 +660,53 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     let matchCount = 0
 
     this.setContinueMatchAndNoBreak(true)
+    // 循环条件：继续匹配 或 (容错模式 且 还有tokens)
     while (this.continueForAndNoBreak || (this.faultTolerance && this.tokens.length)) {
       const continueState = this.continueForAndNoBreak
       this.setOrBreakFlag(false)
-      backData = JsonUtil.cloneDeep(this.backData)
-      fun()
-      //If the match fails, the tokens are reset.
+      backData = JsonUtil.cloneDeep(this.backData)  // 保存当前状态
+      fun()  // 尝试执行匹配规则
+      
+      // 如果匹配失败，tokens会被重置
       if (!this.continueForAndNoBreak) {
         let thisBackData
+        // 判断：是否有部分token被消费（部分匹配成功）
         if (this.tokens.length < backData.tokens.length) {
-          thisBackData = JsonUtil.cloneDeep(this.backData)
+          thisBackData = JsonUtil.cloneDeep(this.backData)  // 保存部分成功的状态
         }
-        this.setBackData(backData)
+        this.setBackData(backData)  // 先回退到尝试前的状态
+        
         if (this.faultTolerance) {
           if (thisBackData) {
+            // 情况1：有部分匹配成功
+            // 说明：某个规则分支匹配了部分token（如 var a = 1 缺分号）
+            // 策略：保留部分结果，继续解析剩余tokens
+            // 【ASI扩展点】这里可以尝试插入分号后重新解析
             this.setBackDataNoContinueMatch(thisBackData)
           } else if (!continueState) {
+            // 情况2：完全失败，且是首次尝试
+            // 说明：当前第一个token匹配所有规则分支都失败
+            // 原因：这个token是"非法语句的开始"或"错误的token"
+            // 策略：跳过当前token，从下一个token重新开始尝试
+            // 【ASI扩展点】这里也可以尝试插入分号后重新解析
             this.consumeMatchToken()
           }
-          continue
+          continue  // 继续循环，尝试剩余tokens
         } else {
+          // 非容错模式：直接退出
           break
         }
-        //如果匹配失败则跳出
-        //如果跳出，则重置
-        //orBreakFlag 为false则 continueMatch 也肯定为false，肯定会触发这里
+        // 注：如果匹配失败则跳出循环
+        // orBreakFlag为false则continueMatch也肯定为false，肯定会触发这里的逻辑
       }
-      matchCount++
+      matchCount++  // 成功匹配计数
     }
+    
     if (matchCount || this.orBreakFlag || lastBreakFlag) {
       this.setOrBreakFlag(true)
     }
-    //只能放这里，放循环里会重复pop，，many允许多次 if (this.continueExec)，第一次执行后有tokens，就会触发了，会有问题
+    // 必须放这里，不能放循环里会重复pop
+    // many允许多次执行，如果放循环内，第一次执行后有tokens就会触发，会有问题
     this.setAllowErrorLastStateAndPop()
     if (!matchCount) {
       return
