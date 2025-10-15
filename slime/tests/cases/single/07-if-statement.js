@@ -24,3 +24,13 @@ if (z < 5) {
   z = 3;
 }
 
+// 复杂条件（括号表达式）
+if ((x > 0) && (y < 10)) {
+  var valid = true;
+}
+
+// 嵌套条件
+if (((a < b) || (c > d)) && (e === f)) {
+  var complexCond = true;
+}
+

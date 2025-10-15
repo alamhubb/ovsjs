@@ -21,3 +21,11 @@ const result2 = add(3, 4);
 const result3 = greet();
 const result4 = complex(2, 3);
 
+// 箭头函数嵌套
+const outer = x => y => x + y;
+const curried = outer(10);
+
+// 箭头函数作为参数
+const nums = [1, 2, 3];
+const doubled = nums.map(n => n * 2);
+

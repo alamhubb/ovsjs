@@ -16,3 +16,10 @@ var notEqual = 1 != 2;
 var strictEqual = 1 === 1;
 var strictNotEqual = 1 !== '1';
 
+// 复合比较（括号表达式）
+var comp1 = (1 < 2) && (3 > 2);
+var comp2 = (x >= 0) || (y <= 10);
+
+// 嵌套比较
+var comp3 = ((a < b) && (b < c)) || (d === e);
+

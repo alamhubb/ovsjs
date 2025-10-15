@@ -1595,22 +1595,9 @@ export class SlimeCstToAst {
       // 处理正则表达式字面量
       return SlimeAstUtil.createStringLiteral(first.value)  // 暂时处理为字符串
     } else if (first.name === Es6Parser.prototype.CoverParenthesizedExpressionAndArrowParameterList.name) {
-      // 【重要】处理括号表达式：( Expression )
-      //
-      // CoverParenthesizedExpressionAndArrowParameterList CST结构：
-      //   children[0]: LParen (
-      //   children[1]: Expression
-      //   children[2]: RParen )
-      //
-      // 转换策略：
-      //   括号只是语法包装，AST层不需要保留括号信息
-      //   直接返回内部Expression的AST即可
-      //
-      // 示例：
-      //   代码：(1 < 2)
-      //   CST：CoverParenthesized( LParen, Expression(1<2), RParen )
-      //   AST：BinaryExpression(1 < 2)  ← 直接返回内部表达式
-      const expressionCst = first.children[1]  // 获取Expression部分
+      // 处理括号表达式：( Expression )
+      // 结构：children[0]=LParen, children[1]=Expression, children[2]=RParen
+      const expressionCst = first.children[1]
       return this.createExpressionAst(expressionCst)
     } else {
       throw new Error('未知的createPrimaryExpressionAst：' + first.name)

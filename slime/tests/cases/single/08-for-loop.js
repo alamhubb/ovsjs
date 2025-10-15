@@ -20,3 +20,8 @@ for (var key in obj) {
   console.log(key);
 }
 
+// 复杂循环条件（括号表达式）
+for (var m = 0; (m < 10) && (m % 2 === 0); m++) {
+  var even = m;
+}
+

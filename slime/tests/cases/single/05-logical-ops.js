@@ -10,6 +10,8 @@ var or = true || false;
 // 逻辑非
 var not = !true;
 
-// 复合逻辑（需要修复Parser框架的Or回退机制）
-// var complex = (1 < 2) && (3 > 2) || false;
+// 括号表达式 + 逻辑运算（测试括号表达式支持）
+var complex1 = (1 < 2) && (3 > 2);
+var complex2 = (1 < 2) || false;
+var complex3 = (1 < 2) && (3 > 2) || false;
 
