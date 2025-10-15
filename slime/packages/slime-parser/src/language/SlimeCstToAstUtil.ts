@@ -775,6 +775,53 @@ export class SlimeCstToAst {
     }
   }
 
+  createBindingPatternAst(cst: SubhutiCst): SlimePattern {
+    checkCstName(cst, Es6Parser.prototype.BindingPattern.name)
+    
+    const child = cst.children[0]
+    
+    if (child.name === Es6Parser.prototype.ArrayBindingPattern.name) {
+      return this.createArrayBindingPatternAst(child)
+    } else if (child.name === Es6Parser.prototype.ObjectBindingPattern.name) {
+      return this.createObjectBindingPatternAst(child)
+    } else {
+      throw new Error(`Unknown BindingPattern type: ${child.name}`)
+    }
+  }
+  
+  createArrayBindingPatternAst(cst: SubhutiCst): SlimePattern {
+    checkCstName(cst, Es6Parser.prototype.ArrayBindingPattern.name)
+    
+    // 简化实现：创建ArrayPattern
+    const elements: (SlimePattern | null)[] = []
+    
+    // 解析BindingElementList
+    for (const child of cst.children) {
+      if (child.name === Es6Parser.prototype.BindingElement.name || 
+          child.name === Es6Parser.prototype.BindingIdentifier.name) {
+        const element = this.createBindingIdentifierAst(child)
+        elements.push(element)
+      }
+    }
+    
+    return {
+      type: SlimeAstType.ArrayPattern,
+      elements,
+      loc: cst.loc
+    } as any
+  }
+  
+  createObjectBindingPatternAst(cst: SubhutiCst): SlimePattern {
+    checkCstName(cst, Es6Parser.prototype.ObjectBindingPattern.name)
+    
+    // 简化实现：创建ObjectPattern
+    return {
+      type: SlimeAstType.ObjectPattern,
+      properties: [],
+      loc: cst.loc
+    } as any
+  }
+
   createFunctionExpressionAst(cst: SubhutiCst): SlimeFunctionExpression {
     const astName = checkCstName(cst, Es6Parser.prototype.FunctionExpression.name);
     // FunctionExpression 结构：
@@ -1252,7 +1299,18 @@ export class SlimeCstToAst {
 
   createVariableDeclaratorAst(cst: SubhutiCst): SlimeVariableDeclarator {
     const astName = checkCstName(cst, Es6Parser.prototype.VariableDeclarator.name);
-    const id = this.createBindingIdentifierAst(cst.children[0])
+    
+    // children[0]可能是BindingIdentifier或BindingPattern（解构）
+    const firstChild = cst.children[0]
+    let id: SlimeIdentifier | SlimePattern
+    
+    if (firstChild.name === Es6Parser.prototype.BindingIdentifier.name) {
+      id = this.createBindingIdentifierAst(firstChild)
+    } else if (firstChild.name === Es6Parser.prototype.BindingPattern.name) {
+      id = this.createBindingPatternAst(firstChild)
+    } else {
+      throw new Error(`Unexpected variable declarator id type: ${firstChild.name}`)
+    }
 
     // console.log(6565656)
     // console.log(id)
@@ -1549,6 +1607,7 @@ export class SlimeCstToAst {
     const first = cst.children[0]
 
     if (cst.children.length > 2) {
+      // PropertyName : AssignmentExpression（完整形式）
       const PropertyNameCst = cst.children[0]
       const AssignmentExpressionCst = cst.children[2]
 
@@ -1559,13 +1618,21 @@ export class SlimeCstToAst {
 
       return keyAst
     } else if (first.name === Es6Parser.prototype.MethodDefinition.name) {
-      const SlimeMethodDefinition = this.createMethodDefinitionAst(first)
+      // 方法定义（对象中的方法没有static）
+      const SlimeMethodDefinition = this.createMethodDefinitionAst(null, first)
 
       const keyAst = SlimeAstUtil.createPropertyAst(SlimeMethodDefinition.key, SlimeMethodDefinition.value)
 
       return keyAst
+    } else if (first.name === Es6Parser.prototype.IdentifierReference.name) {
+      // 属性简写 {name} -> {name: name}
+      const identifierCst = first.children[0] // IdentifierReference -> Identifier
+      const identifier = this.createIdentifierAst(identifierCst)
+      const keyAst = SlimeAstUtil.createPropertyAst(identifier, identifier)
+      keyAst.shorthand = true
+      return keyAst
     } else {
-      throw new Error('不支持的类型')
+      throw new Error(`不支持的PropertyDefinition类型: ${first.name}`)
     }
   }
 
@@ -1607,7 +1674,8 @@ export class SlimeCstToAst {
     const astName = checkCstName(cst, Es6Parser.prototype.ArrayLiteral.name);
     const ast: SlimeArrayExpression = {
       type: 'ArrayExpression',
-      elements: this.createElementListAst(cst.children[1])
+      elements: this.createElementListAst(cst.children[1]),
+      loc: cst.loc
     }
     return ast
   }

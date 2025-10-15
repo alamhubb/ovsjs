@@ -5,11 +5,11 @@ import { SlimeCstToAst } from './packages/slime-parser/src/language/SlimeCstToAs
 import SlimeGenerator from './packages/slime-generator/src/SlimeGenerator.ts'
 import SubhutiLexer from '../subhuti/src/parser/SubhutiLexer.ts'
 
-// Slime测试 - 三阶段渐进测试
-// 01-10: 只测Parser | 11-20: 只测Generator | 21-30: 完整链路
+// Slime测试 - ES6 Parser三阶段测试
+// 01-10: ES6基础语法 | 11-20: Generator测试 | 21-30: ES6高级特性
 
 const testCases = [
-  // 阶段1：只测Parser（01-10）
+  // 完整测试：01-30所有用例
   'tests/cases/es5/01-literals.js',
   'tests/cases/es5/02-identifiers.js',
   'tests/cases/es5/03-binary-ops.js',
@@ -19,41 +19,37 @@ const testCases = [
   'tests/cases/es5/07-if-statement.js',
   'tests/cases/es5/08-for-loop.js',
   'tests/cases/es5/09-function-decl.js',
-  'tests/cases/es5/10-complex-parsing.js',
-  
-  // 阶段2：测试Generator（11-20）- 复用01-10的代码，验证代码生成
-  'tests/cases/es5/11-literals-gen.js',
-  'tests/cases/es5/12-identifiers-gen.js',
-  'tests/cases/es5/13-binary-ops-gen.js',
-  'tests/cases/es5/14-comparison-gen.js',
-  'tests/cases/es5/15-logical-ops-gen.js',
-  'tests/cases/es5/16-var-decl-gen.js',
-  'tests/cases/es5/17-if-statement-gen.js',
-  'tests/cases/es5/18-for-loop-gen.js',
-  'tests/cases/es5/19-function-decl-gen.js',
-  'tests/cases/es5/20-complex-gen.js',
-  
-  // 阶段3：完整链路（21-30）- 验证往返转换（逐个启用）
-  // 'tests/cases/es5/21-simple-roundtrip.js',
-  // 'tests/cases/es5/22-control-flow.js',
+  'tests/cases/es5/10-objects-arrays.js',
+  'tests/cases/es5/11-arrow-functions.js',
+  'tests/cases/es5/12-template-literals.js',
+  'tests/cases/es5/13-destructuring.js',
+  'tests/cases/es5/14-spread-rest.js',
+  'tests/cases/es5/15-class-basic.js',
+  'tests/cases/es5/16-class-extends.js',
+  'tests/cases/es5/17-enhanced-object.js',
+  'tests/cases/es5/18-default-params.js',
+  'tests/cases/es5/19-for-of-loop.js',
+  'tests/cases/es5/20-mixed-es6.js',
+  'tests/cases/es5/21-simple-roundtrip.js',
+  'tests/cases/es5/22-control-flow.js',
   'tests/cases/es5/23-functions.js',
   'tests/cases/es5/24-objects-arrays.js',
   'tests/cases/es5/25-operators-all.js',
-  // 'tests/cases/es5/26-exception-handling.js',
-  // 'tests/cases/es5/27-strict-mode.js',
-  // 'tests/cases/es5/28-array-methods.js',
-  // 'tests/cases/es5/29-object-methods.js',
-  // 'tests/cases/es5/30-production-level.js',
+  'tests/cases/es5/26-exception-handling.js',
+  'tests/cases/es5/27-strict-mode.js',
+  'tests/cases/es5/28-array-methods.js',
+  'tests/cases/es5/29-object-methods.js',
+  'tests/cases/es5/30-production-level.js',
 ]
 
 function getStageInfo(fileName: string): { stage: string; color: string } {
   const num = parseInt(fileName.split('-')[0])
   if (num >= 1 && num <= 10) {
-    return { stage: '阶段1-Parser', color: '🔵' }
+    return { stage: '阶段1-基础语法', color: '🔵' }
   } else if (num >= 11 && num <= 20) {
-    return { stage: '阶段2-Generator', color: '🟢' }
+    return { stage: '阶段2-ES6新特性', color: '🟢' }
   } else if (num >= 21 && num <= 30) {
-    return { stage: '阶段3-完整链路', color: '🟣' }
+    return { stage: '阶段3-复杂特性', color: '🟣' }
   }
   return { stage: '未知阶段', color: '⚪' }
 }

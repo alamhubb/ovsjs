@@ -268,12 +268,12 @@ export default class SlimeGenerator {
   }
 
   private static generatorArrayExpression(node: SlimeArrayExpression) {
-    this.addLBracket()
+    this.addLBracket(node.loc)
     for (const element of node.elements) {
       this.generatorNode(element as SlimeExpression)
       this.addComma()
     }
-    this.addRBracket()
+    this.addRBracket(node.loc)
   }
 
   private static generatorObjectExpression(node: SlimeObjectExpression) {
