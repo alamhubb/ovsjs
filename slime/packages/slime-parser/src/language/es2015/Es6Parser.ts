@@ -3,6 +3,7 @@ import SubhutiMatchToken from "subhuti/src/struct/SubhutiMatchToken.ts"
 import {Subhuti, SubhutiRule, type SubhutiTokenConsumerConstructor} from "subhuti/src/parser/SubhutiParser.ts"
 import Es5TokenConsumer from "../es5/Es5TokenConsume.ts";
 import Es5Parser from "../es5/Es5Parser.ts";
+import {Es5TokensName} from "../es5/Es5Tokens.ts";
 
 @Subhuti
 export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> {
@@ -23,14 +24,14 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
   private static preprocessSetGetTokens(tokens: SubhutiMatchToken[]): SubhutiMatchToken[] {
     for (let i = 0; i < tokens.length; i++) {
       const token = tokens[i];
-      
-      if (token.tokenName === 'SetTok' || token.tokenName === 'GetTok') {
+
+      if (token.tokenName === Es5TokensName.SetTok || token.tokenName === Es5TokensName.GetTok) {
         // 检查后面的token
         const nextToken = i + 1 < tokens.length ? tokens[i + 1] : null;
-        
+
         // 如果后面不是Identifier，改为Identifier
-        if (!nextToken || nextToken.tokenName !== 'Identifier') {
-          token.tokenName = 'Identifier';
+        if (!nextToken || nextToken.tokenName !== Es5TokensName.Identifier) {
+          token.tokenName = Es5TokensName.Identifier;
         }
         // 否则保留为SetTok/GetTok（可能是getter/setter）
       }
@@ -1492,13 +1493,15 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
   ArrowParameters() {
     this.Or([
       {alt: () => this.BindingIdentifier()},
-      {alt: () => {
-        this.tokenConsumer.LParen()
-        this.Option(() => {
-          this.FormalParameterList()
-        })
-        this.tokenConsumer.RParen()
-      }}
+      {
+        alt: () => {
+          this.tokenConsumer.LParen()
+          this.Option(() => {
+            this.FormalParameterList()
+          })
+          this.tokenConsumer.RParen()
+        }
+      }
     ])
   }
 
