@@ -19,6 +19,7 @@ export enum SlimeAstType {
     MethodDefinition = 'MethodDefinition', // class 或对象中的方法定义
     PropertyDefinition = 'PropertyDefinition', // class 中的属性定义
     YieldExpression = 'YieldExpression', // yield 表达式
+    AwaitExpression = 'AwaitExpression', // await 表达式
     ExpressionStatement = 'ExpressionStatement', // 表达式语句包装节点
     EmptyStatement = 'EmptyStatement', // 单独的分号语句
     VariableDeclaration = 'VariableDeclaration', // 变量声明语句

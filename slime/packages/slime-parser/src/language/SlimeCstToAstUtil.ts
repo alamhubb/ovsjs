@@ -736,9 +736,21 @@ export class SlimeCstToAst {
 
   createPropertyNameMethodDefinitionAst(cst: SubhutiCst): SlimeFunctionExpression {
     const astName = checkCstName(cst, Es6Parser.prototype.PropertyNameMethodDefinition.name);
-    const PropertyName = cst.children[0]
-    const FunctionFormalParametersBodyDefineCst: SubhutiCst = cst.children[1]
-    const functionExpression = this.createFunctionFormalParametersBodyDefineAst(FunctionFormalParametersBodyDefineCst, cst.children[0].loc)
+    
+    // 检查是否有async
+    let offset = 0;
+    let isAsync = false;
+    if (cst.children[0] && cst.children[0].name === 'AsyncTok') {
+      isAsync = true;
+      offset = 1;
+    }
+    
+    const PropertyName = cst.children[0 + offset]
+    const FunctionFormalParametersBodyDefineCst: SubhutiCst = cst.children[1 + offset]
+    const functionExpression = this.createFunctionFormalParametersBodyDefineAst(FunctionFormalParametersBodyDefineCst, cst.children[0 + offset].loc)
+    
+    // 设置async标志
+    functionExpression.async = isAsync;
 
     // 处理PropertyName：可能是LiteralPropertyName或ComputedPropertyName
     const PropertyNameFirst = PropertyName.children[0]
@@ -807,7 +819,13 @@ export class SlimeCstToAst {
     }
 
     if (first.name === Es6Parser.prototype.PropertyNameMethodDefinition.name) {
-      const PropertyName = first.children[0]
+      // 检查是否有async
+      let offset = 0;
+      if (first.children[0] && first.children[0].name === 'AsyncTok') {
+        offset = 1;
+      }
+      
+      const PropertyName = first.children[0 + offset]
       const SlimeFunctionExpression = this.createPropertyNameMethodDefinitionAst(first)
       
       // 获取key：如果是计算属性，从PropertyName提取
@@ -906,22 +924,35 @@ export class SlimeCstToAst {
 
   createFunctionExpressionAst(cst: SubhutiCst): SlimeFunctionExpression {
     const astName = checkCstName(cst, Es6Parser.prototype.FunctionExpression.name);
-    // FunctionExpression 结构：
-    // children[0]: FunctionTok
-    // children[1]: BindingIdentifier (可选，函数名)
-    // children[2 或 1]: FunctionFormalParametersBodyDefine (参数和函数体)
+    // FunctionExpression 结构（带async）：
+    // children[0]: AsyncTok (可选)
+    // children[1]: FunctionTok
+    // children[2]: BindingIdentifier (可选，函数名)
+    // children[3 或 2 或 1]: FunctionFormalParametersBodyDefine (参数和函数体)
+    
+    let offset = 0;
+    let isAsync = false;
+    
+    // 检查是否有async
+    if (cst.children[0] && cst.children[0].name === 'AsyncTok') {
+      isAsync = true;
+      offset = 1;
+    }
     
     let functionId: SlimeIdentifier | null = null
-    let formalParametersBodyIndex = 1
+    let formalParametersBodyIndex = 1 + offset
     
     // 如果有 BindingIdentifier，说明是命名函数表达式
-    if (cst.children.length > 2 && cst.children[1].name === Es6Parser.prototype.BindingIdentifier.name) {
-      functionId = this.createBindingIdentifierAst(cst.children[1])
-      formalParametersBodyIndex = 2
+    if (cst.children.length > 2 + offset && cst.children[1 + offset].name === Es6Parser.prototype.BindingIdentifier.name) {
+      functionId = this.createBindingIdentifierAst(cst.children[1 + offset])
+      formalParametersBodyIndex = 2 + offset
     }
     
     const FunctionFormalParametersBodyDefineCst = cst.children[formalParametersBodyIndex]
     const FunctionFormalParametersBodyDefineAst = this.createFunctionFormalParametersBodyDefineAst(FunctionFormalParametersBodyDefineCst, cst.loc)
+    
+    // 设置async标志
+    FunctionFormalParametersBodyDefineAst.async = isAsync;
     
     // 如果有函数名，设置 id
     if (functionId) {
@@ -1252,15 +1283,24 @@ export class SlimeCstToAst {
    */
   createFunctionDeclarationAst(cst: SubhutiCst): SlimeFunctionDeclaration {
     checkCstName(cst, Es6Parser.prototype.FunctionDeclaration.name);
-    // FunctionDeclaration 结构：
-    // children[0]: FunctionTok
-    // children[1]: BindingIdentifier (函数名)
-    // children[2]: FunctionFormalParametersBodyDefine (参数和函数体)
+    // FunctionDeclaration 结构（带async）：
+    // children[0]: AsyncTok (可选)
+    // children[1]: FunctionTok
+    // children[2]: BindingIdentifier (函数名)
+    // children[3]: FunctionFormalParametersBodyDefine (参数和函数体)
     
-    const bindingIdentifierCst = cst.children[1]
+    // 检查是否有async
+    let offset = 0;
+    let isAsync = false;
+    if (cst.children[0] && cst.children[0].name === 'AsyncTok') {
+      isAsync = true;
+      offset = 1;
+    }
+    
+    const bindingIdentifierCst = cst.children[1 + offset]
     const functionName = this.createBindingIdentifierAst(bindingIdentifierCst)
     
-    const formalParametersBodyCst = cst.children[2]
+    const formalParametersBodyCst = cst.children[2 + offset]
     const functionExpression = this.createFunctionFormalParametersBodyDefineAst(formalParametersBodyCst, cst.loc)
     
     return {
@@ -1269,7 +1309,7 @@ export class SlimeCstToAst {
       params: functionExpression.params,
       body: functionExpression.body,
       generator: false,
-      async: false,
+      async: isAsync,
       loc: cst.loc
     } as SlimeFunctionDeclaration
   }
@@ -1490,6 +1530,8 @@ export class SlimeCstToAst {
       left = this.createPrimaryExpressionAst(cst)
     } else if (astName === Es6Parser.prototype.YieldExpression.name) {
       left = this.createYieldExpressionAst(cst)
+    } else if (astName === Es6Parser.prototype.AwaitExpression.name) {
+      left = this.createAwaitExpressionAst(cst)
     } else {
       throw new Error('暂不支持的类型：' + cst.name)
     }
@@ -1895,18 +1937,27 @@ export class SlimeCstToAst {
    */
   createArrowFunctionAst(cst: SubhutiCst): SlimeArrowFunctionExpression {
     checkCstName(cst, Es6Parser.prototype.ArrowFunction.name);
-    // ArrowFunction 结构：
-    // children[0]: ArrowParameters (参数)
-    // children[1]: Arrow (=>)
-    // children[2]: ConciseBody (函数体)
+    // ArrowFunction 结构（带async）：
+    // children[0]: AsyncTok (可选)
+    // children[1]: ArrowParameters (参数)
+    // children[2]: Arrow (=>)
+    // children[3]: ConciseBody (函数体)
     
-    // 防御性检查：确保children存在且有足够元素
-    if (!cst.children || cst.children.length < 3) {
-      throw new Error(`createArrowFunctionAst: 期望3个children，实际${cst.children?.length || 0}个`)
+    // 检查是否有async
+    let offset = 0;
+    let isAsync = false;
+    if (cst.children[0] && cst.children[0].name === 'AsyncTok') {
+      isAsync = true;
+      offset = 1;
     }
     
-    const arrowParametersCst = cst.children[0]
-    const conciseBodyCst = cst.children[2]
+    // 防御性检查：确保children存在且有足够元素
+    if (!cst.children || cst.children.length < 3 + offset) {
+      throw new Error(`createArrowFunctionAst: 期望${3 + offset}个children，实际${cst.children?.length || 0}个`)
+    }
+    
+    const arrowParametersCst = cst.children[0 + offset]
+    const conciseBodyCst = cst.children[2 + offset]
     
     // 解析参数
     const params = this.createArrowParametersAst(arrowParametersCst)
@@ -1920,7 +1971,7 @@ export class SlimeCstToAst {
       params: params,
       body: body,
       generator: false,
-      async: false,
+      async: isAsync,
       expression: body.type !== SlimeAstType.BlockStatement,
       loc: cst.loc
     } as any
@@ -2024,6 +2075,18 @@ export class SlimeCstToAst {
       type: SlimeAstType.YieldExpression,
       argument,
       delegate,
+      loc: cst.loc
+    } as any
+  }
+
+  createAwaitExpressionAst(cst: SubhutiCst): any {
+    // await UnaryExpression
+    checkCstName(cst, Es6Parser.prototype.AwaitExpression.name);
+    const argumentCst = cst.children[1]
+    const argument = this.createExpressionAst(argumentCst)
+    return {
+      type: SlimeAstType.AwaitExpression,
+      argument,
       loc: cst.loc
     } as any
   }

@@ -1,9 +1,17 @@
-import { readFileSync } from 'fs'
+import { readFileSync, writeFileSync } from 'fs'
 import Es6Parser from './packages/slime-parser/src/language/es2015/Es6Parser.ts'
 import { es6Tokens } from './packages/slime-parser/src/language/es2015/Es6Tokens.ts'
 import { SlimeCstToAst } from './packages/slime-parser/src/language/SlimeCstToAstUtil.ts'
 import SlimeGenerator from './packages/slime-generator/src/SlimeGenerator.ts'
 import SubhutiLexer from '../subhuti/src/parser/SubhutiLexer.ts'
+
+// 进度文件
+const PROGRESS_FILE = 'progress.json'
+
+// 更新进度
+function updateProgress(data: any) {
+  writeFileSync(PROGRESS_FILE, JSON.stringify(data, null, 2))
+}
 
 // Slime测试 - ES6 Parser三阶段测试
 // 01-10: ES6基础语法 | 11-20: Generator测试 | 21-30: ES6高级特性
@@ -76,6 +84,17 @@ function getStageInfo(fileName: string): { stage: string; color: string } {
 async function runTests() {
   const startTotal = Date.now()
   
+  // 初始化进度文件
+  updateProgress({
+    status: 'starting',
+    startTime: startTotal,
+    total: testCases.length,
+    passCount: 0,
+    failCount: 0,
+    current: null,
+    stage: null
+  })
+  
   console.log('╔' + '═'.repeat(78) + '╗')
   console.log('║' + ' Slime ES6 Parser完整测试 (40个用例)'.padEnd(78, ' ') + '║')
   console.log('║' + ' 预计耗时: 约8秒'.padEnd(78, ' ') + '║')
@@ -99,6 +118,18 @@ async function runTests() {
       currentStage = stage
     }
     
+    // 更新进度：开始测试
+    updateProgress({
+      status: 'running',
+      startTime: startTotal,
+      total: testCases.length,
+      passCount,
+      failCount,
+      current: fileName,
+      stage: stage,
+      progress: `${i + 1}/${testCases.length}`
+    })
+    
     try {
       const code = readFileSync(testCase, 'utf-8')
       const lexer = new SubhutiLexer(es6Tokens)
@@ -120,10 +151,35 @@ async function runTests() {
       console.log(`❌ [${i+1}/${testCases.length}] ${fileName.padEnd(35)} ${elapsed}ms - ${e.message.substring(0, 40)}`)
       failCount++
     }
+    
+    // 更新进度：测试完成
+    updateProgress({
+      status: 'running',
+      startTime: startTotal,
+      total: testCases.length,
+      passCount,
+      failCount,
+      current: fileName,
+      stage: stage,
+      progress: `${i + 1}/${testCases.length}`
+    })
   }
   
   const totalElapsed = Date.now() - startTotal
   const avgTime = Math.round(totalElapsed / testCases.length)
+  
+  // 写入最终进度
+  updateProgress({
+    status: 'completed',
+    startTime: startTotal,
+    endTime: Date.now(),
+    total: testCases.length,
+    passCount,
+    failCount,
+    slowTests,
+    avgTime,
+    totalElapsed
+  })
   
   console.log('\n' + '═'.repeat(80))
   console.log(`📊 测试总结: ${passCount}/${testCases.length} 通过`)

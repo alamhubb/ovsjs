@@ -7,7 +7,35 @@ import Es5Parser from "../es5/Es5Parser.ts";
 @Subhuti
 export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> {
   constructor(tokens?: SubhutiMatchToken[], TokenConsumerClass: SubhutiTokenConsumerConstructor<T> = Es6TokenConsumer as any) {
+    // 预处理tokens：根据上下文将SetTok/GetTok转换为Identifier
+    if (tokens) {
+      tokens = Es6Parser.preprocessSetGetTokens(tokens);
+    }
     super(tokens, TokenConsumerClass);
+  }
+
+  /**
+   * 预处理SetTok/GetTok：根据后面的token判断是否为真正的getter/setter
+   * 规则：
+   * - set/get后面是Identifier → 保留为关键字（可能是getter/setter）
+   * - set/get后面不是Identifier → 改为Identifier（成员访问、变量名等）
+   */
+  private static preprocessSetGetTokens(tokens: SubhutiMatchToken[]): SubhutiMatchToken[] {
+    for (let i = 0; i < tokens.length; i++) {
+      const token = tokens[i];
+      
+      if (token.tokenName === 'SetTok' || token.tokenName === 'GetTok') {
+        // 检查后面的token
+        const nextToken = i + 1 < tokens.length ? tokens[i + 1] : null;
+        
+        // 如果后面不是Identifier，改为Identifier
+        if (!nextToken || nextToken.tokenName !== 'Identifier') {
+          token.tokenName = 'Identifier';
+        }
+        // 否则保留为SetTok/GetTok（可能是getter/setter）
+      }
+    }
+    return tokens;
   }
 
   @SubhutiRule
@@ -615,6 +643,7 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
   @SubhutiRule
   UnaryExpression() {
     this.Or([
+      {alt: () => this.AwaitExpression()},
       {
         alt: () => {
           this.PostfixExpression()
@@ -1372,6 +1401,7 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
 
   @SubhutiRule
   FunctionDeclaration() {
+    this.Option(() => this.tokenConsumer.AsyncTok())
     this.tokenConsumer.FunctionTok()
     this.BindingIdentifier()
     this.FunctionFormalParametersBodyDefine()
@@ -1379,6 +1409,7 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
 
   @SubhutiRule
   FunctionExpression() {
+    this.Option(() => this.tokenConsumer.AsyncTok())
     this.tokenConsumer.FunctionTok()
     this.Option(() => this.BindingIdentifier())
     this.FunctionFormalParametersBodyDefine()
@@ -1450,6 +1481,7 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
 
   @SubhutiRule
   ArrowFunction() {
+    this.Option(() => this.tokenConsumer.AsyncTok())
     this.ArrowParameters()
     // TODO: Implement [no LineTerminator here] check
     this.tokenConsumer.Arrow()
@@ -1495,6 +1527,7 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
 
   @SubhutiRule
   PropertyNameMethodDefinition() {
+    this.Option(() => this.tokenConsumer.AsyncTok())
     this.PropertyName()
     this.FunctionFormalParametersBodyDefine()
   }
@@ -1600,6 +1633,12 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
         }
       ])
     })
+  }
+
+  @SubhutiRule
+  AwaitExpression() {
+    this.tokenConsumer.AwaitTok()
+    this.UnaryExpression()
   }
 
   @SubhutiRule

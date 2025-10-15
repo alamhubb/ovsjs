@@ -174,6 +174,15 @@ export default class SlimeGenerator {
     }
   }
 
+  private static generatorAwaitExpression(node: any) {
+    // await argument
+    this.addCode(es6TokensObj.AwaitTok)
+    if (node.argument) {
+      this.addSpacing()
+      this.generatorNode(node.argument)
+    }
+  }
+
   private static generatorCallExpression(node: SlimeCallExpression) {
     //IIFE - 需要括号包裹 FunctionExpression 和 ArrowFunctionExpression
     const needsParen = node.callee.type === SlimeAstType.FunctionExpression ||
@@ -201,6 +210,12 @@ export default class SlimeGenerator {
   }
 
   private static generatorFunctionExpression(node: SlimeFunctionExpression) {
+    // 如果是async函数，先输出async关键字
+    if (node.async) {
+      this.addCode(es6TokensObj.AsyncTok)
+      this.addSpacing()
+    }
+    
     this.addCodeAndMappings(es6TokensObj.FunctionTok, node.loc)
     if (node.id) {
       this.addSpacing()
@@ -228,6 +243,12 @@ export default class SlimeGenerator {
    * 生成箭头函数表达式
    */
   private static generatorArrowFunctionExpression(node: any) {
+    // 如果是async箭头函数，先输出async关键字
+    if (node.async) {
+      this.addCode(es6TokensObj.AsyncTok)
+      this.addSpacing()
+    }
+    
     // 输出参数
     if (node.params && node.params.length === 1 && node.params[0].type === SlimeAstType.Identifier) {
       // 单个参数，不需要括号
@@ -355,6 +376,12 @@ export default class SlimeGenerator {
   }
 
   private static generatorFunctionDeclaration(node: SlimeFunctionDeclaration) {
+    // 如果是async函数，先输出async关键字
+    if (node.async) {
+      this.addCode(es6TokensObj.AsyncTok)
+      this.addSpacing()
+    }
+    
     // 输出 function 关键字
     this.addCode(es6TokensObj.FunctionTok)
     
@@ -422,6 +449,12 @@ export default class SlimeGenerator {
     // 处理 static 关键字
     if (node.static) {
       this.addCode(es6TokensObj.StaticTok)
+      this.addSpacing()
+    }
+    
+    // 处理 async 关键字
+    if (node.value && node.value.async) {
+      this.addCode(es6TokensObj.AsyncTok)
       this.addSpacing()
     }
     
@@ -617,6 +650,8 @@ export default class SlimeGenerator {
       this.generatorUnaryExpression(node as any)
     } else if (node.type === SlimeAstType.YieldExpression) {
       this.generatorYieldExpression(node as any)
+    } else if (node.type === SlimeAstType.AwaitExpression) {
+      this.generatorAwaitExpression(node as any)
     } else {
       console.error('未知节点:', JSON.stringify(node, null, 2))
       throw new Error('不支持的类型：' + node.type)

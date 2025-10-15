@@ -14,6 +14,8 @@ export const Es6TokenName = {
     FromTok: 'FromTok',
     ExportTok: 'ExportTok',
     YieldTok: 'YieldTok',
+    AsyncTok: 'AsyncTok',
+    AwaitTok: 'AwaitTok',
     SuperTok: 'SuperTok',
     TargetTok: 'TargetTok',
     LetTok: 'LetTok',
@@ -38,6 +40,8 @@ export const es6TokensObj = {
     FromTok: createKeywordToken(Es6TokenName.FromTok, "from"),
     ExportTok: createKeywordToken(Es6TokenName.ExportTok, "export"),
     YieldTok: createKeywordToken(Es6TokenName.YieldTok, "yield"),
+    AsyncTok: createKeywordToken(Es6TokenName.AsyncTok, "async"),
+    AwaitTok: createKeywordToken(Es6TokenName.AwaitTok, "await"),
     SuperTok: createKeywordToken(Es6TokenName.SuperTok, "super"),
     TargetTok: createKeywordToken(Es6TokenName.TargetTok, "target"),
     LetTok: createKeywordToken(Es6TokenName.LetTok, "let"),
@@ -83,6 +87,14 @@ export default class Es6TokenConsumer extends Es5TokenConsumer {
 
     YieldTok() {
         return this.consume(es6TokensObj.YieldTok);
+    }
+
+    AsyncTok() {
+        return this.consume(es6TokensObj.AsyncTok);
+    }
+
+    AwaitTok() {
+        return this.consume(es6TokensObj.AwaitTok);
     }
 
     SuperTok() {
