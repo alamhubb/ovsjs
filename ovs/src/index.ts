@@ -29,12 +29,12 @@ import {SlimeAstType} from "slime-ast/src/SlimeAstType.ts";
 export function traverseClearTokens(currentNode: SubhutiCst) {
   if (!currentNode || !currentNode.children || !currentNode.children.length)
     return currentNode
-  
+
   // 递归遍历子节点
   if (currentNode.children && currentNode.children.length > 0) {
     currentNode.children.forEach(child => traverseClearTokens(child))
   }
-  
+
   // 清除 tokens 属性
   currentNode.tokens = undefined
   return currentNode
@@ -46,14 +46,21 @@ export function traverseClearTokens(currentNode: SubhutiCst) {
  * @returns 清除后的节点
  */
 export function traverseClearLoc(currentNode: SubhutiCst) {
-  if (!currentNode || !currentNode.children || !currentNode.children.length)
+  if (!currentNode)
     return currentNode
-  
+
+  // 用来清除叶子节点的loc，如果不需要可注释
+  currentNode.loc = undefined as any
+
+  if (!currentNode.children || !currentNode.children.length) {
+    return currentNode
+  }
+
   // 递归遍历子节点
   if (currentNode.children && currentNode.children.length > 0) {
     currentNode.children.forEach(child => traverseClearLoc(child))
   }
-  
+
   // 清除 loc 属性
   currentNode.loc = undefined as any
   return currentNode
@@ -105,12 +112,12 @@ function isOvsRenderDomViewIIFE(statement: SlimeStatement): boolean {
 function isOvsRenderDomView(statement: SlimeStatement): boolean {
   if (statement.type !== SlimeAstType.ExpressionStatement) return false
   const expr = (statement as SlimeExpressionStatement).expression
-  
+
   // 复杂视图：IIFE 形式
   if (expr.type === SlimeAstType.CallExpression && expr.callee.type === SlimeAstType.FunctionExpression) {
     return true
   }
-  
+
   // 简单视图：直接的 createVNode 调用
   // OvsAPI.createVNode(...)
   if (expr.type === SlimeAstType.CallExpression) {
@@ -122,18 +129,18 @@ function isOvsRenderDomView(statement: SlimeStatement): boolean {
       }
     }
   }
-  
+
   return false
 }
 
 /**
  * 包裹顶层表达式
- * 
+ *
  * 规则：
  * 1. Declaration 始终保持顶层
  * 2. 有 export default - 只处理 default，其他不管
  * 3. 没有 export default - 用 IIFE 包裹所有表达式
- * 
+ *
  * @param ast Program AST
  * @returns 包裹后的 Program AST
  */
@@ -141,7 +148,7 @@ function wrapTopLevelExpressions(ast: SlimeProgram): SlimeProgram {
   const declarations: any[] = []
   const expressions: SlimeStatement[] = []
   let hasExportDefault = false
-  
+
   // 1. 分类
   for (const statement of ast.body) {
     if (statement.type === SlimeAstType.ExportDefaultDeclaration) {
@@ -156,17 +163,17 @@ function wrapTopLevelExpressions(ast: SlimeProgram): SlimeProgram {
       expressions.push(statement as SlimeStatement)
     }
   }
-  
+
   // 2. 如果有 export default，不做包裹
   if (hasExportDefault) {
     return ast
   }
-  
+
   // 3. 如果没有表达式，保持原样
   if (expressions.length === 0) {
     return ast
   }
-  
+
   // 4. 包裹所有表达式
   const iifeBody: SlimeStatement[] = [
     // const children = []
@@ -184,7 +191,7 @@ function wrapTopLevelExpressions(ast: SlimeProgram): SlimeProgram {
       ]
     )
   ]
-  
+
   // 处理所有表达式
   for (const expr of expressions) {
     if (isOvsRenderDomView(expr)) {
@@ -207,35 +214,35 @@ function wrapTopLevelExpressions(ast: SlimeProgram): SlimeProgram {
       iifeBody.push(expr)
     }
   }
-  
+
   // return children
   const returnStatement = SlimeAstUtil.createReturnStatement(
     SlimeAstUtil.createIdentifier('children')
   )
   iifeBody.push(returnStatement)
-  
+
   // 创建 IIFE
   const functionBody = SlimeAstUtil.createBlockStatement(
     SlimeAstUtil.creatLBrace(),
     SlimeAstUtil.createRBrace(),
     iifeBody
   )
-  
+
   const functionParams = SlimeAstUtil.createFunctionParams(
     SlimeAstUtil.createLParen(),
     SlimeAstUtil.createRParen()
   )
-  
+
   const functionExpression = SlimeAstUtil.createFunctionExpression(
     functionBody,
     null,  // 匿名函数
     functionParams
   )
-  
+
   const iife = SlimeAstUtil.createCallExpression(functionExpression, [])
-  
+
   const exportDefault = SlimeAstUtil.createExportDefaultDeclaration(iife)
-  
+
   // 返回新的 Program
   return SlimeAstUtil.createProgram(
     [...declarations, exportDefault] as any,
@@ -251,19 +258,19 @@ function wrapTopLevelExpressions(ast: SlimeProgram): SlimeProgram {
 function ensureOvsAPIImport(ast: SlimeProgram): SlimeProgram {
   // 检查是否已经导入了 OvsAPI
   let hasImportOvsAPI = false
-  
+
   for (const statement of ast.body) {
     if (statement.type === SlimeAstType.ImportDeclaration) {
       const importDecl = statement as SlimeImportDeclaration
       const defaultSpecifiers = importDecl.specifiers.filter(
         spec => spec.type === SlimeAstType.ImportDefaultSpecifier
       ) as SlimeImportDefaultSpecifier[]
-      
+
       hasImportOvsAPI = defaultSpecifiers.some(spec => spec.local.name === 'OvsAPI')
       if (hasImportOvsAPI) break
     }
   }
-  
+
   // 如果没有导入，添加 import OvsAPI
   if (!hasImportOvsAPI) {
     const ovsImport = SlimeAstUtil.createImportDeclaration(
@@ -271,16 +278,16 @@ function ensureOvsAPIImport(ast: SlimeProgram): SlimeProgram {
       SlimeAstUtil.createFromKeyword(),
       SlimeAstUtil.createStringLiteral('ovsjs/src/OvsAPI')
     )
-    
+
     // 设置换行标记
     if (ovsImport.loc) {
       ovsImport.loc.newLine = true
     }
-    
+
     // 添加到 body 最前面
     ast.body.unshift(ovsImport)
   }
-  
+
   return ast
 }
 
@@ -290,7 +297,7 @@ function ensureOvsAPIImport(ast: SlimeProgram): SlimeProgram {
  * @param filename 文件名（用于生成组件名称）
  * @param prettify 是否使用 Prettier 格式化
  * @returns 转换结果（包含代码和 source map）
- * 
+ *
  * 转换流程：
  * 1. 词法分析：code → tokens
  * 2. 语法分析：tokens → CST
@@ -301,7 +308,7 @@ function ensureOvsAPIImport(ast: SlimeProgram): SlimeProgram {
  * 7. 代码格式化：使用 Prettier（可选）
  */
 export async function vitePluginOvsTransform(
-  code: string, 
+  code: string,
   filename?: string,
   prettify: boolean = true
 ): Promise<SlimeGeneratorResult> {
@@ -354,7 +361,7 @@ export async function vitePluginOvsTransform(
 /**
  * Vite 插件：处理 .ovs 文件
  * @returns Vite 插件配置
- * 
+ *
  * 功能：
  * - 拦截 .ovs 文件
  * - 转换为 Vue 函数组件
@@ -363,23 +370,23 @@ export async function vitePluginOvsTransform(
 export default function vitePluginOvs(): Plugin {
   // 创建文件过滤器：只处理 .ovs 文件
   const filter = createFilter(/\.ovs$/, null)
-  
+
   return {
     name: 'vite-plugin-ovs',
     enforce: 'pre',  // 在其他插件之前执行
-    
+
     async transform(code, id) {
       // 只处理 .ovs 文件
       if (!filter(id)) {
         return
       }
-      
+
       // 开发模式下启用格式化（提升开发体验）
       const isDev = process.env.NODE_ENV !== 'production'
-      
+
       // 转换 OVS 代码，传递文件名用于生成组件名称
       const res = await vitePluginOvsTransform(code, id, isDev)
-      
+
       return {
         code: res.code,
         map: null  // TODO: 支持 source map
