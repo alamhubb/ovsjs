@@ -57,16 +57,16 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
       {alt: () => this.tokenConsumer.RegularExpressionLiteral()},
       {alt: () => this.TemplateLiteral()},
       // 【重要】括号表达式支持（之前被注释掉导致严重bug）
-      // 
+      //
       // CoverParenthesizedExpressionAndArrowParameterList 处理两种情况：
       // 1. 括号表达式：(expression)
       // 2. 箭头函数参数：(param1, param2) => ...
-      // 
+      //
       // 之前被注释掉导致的问题：
       //   代码：var x = (1 < 2) || false
       //   问题：(1 < 2) 无法被识别为有效表达式
       //   结果：Parser失败，容错模式产生错误CST
-      // 
+      //
       // 修复：启用此规则，确保括号表达式被正确识别
       {alt: () => this.CoverParenthesizedExpressionAndArrowParameterList()}
     ])

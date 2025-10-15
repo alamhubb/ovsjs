@@ -377,26 +377,10 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     }
     this.setAllowErrorLastStateAndPop()
 
-    // Option语义："0或1次"，失败应该是"0次"，不应该"部分成功"
-    // 
-    // 【重要】Option是可选项，失败时应该返回"无匹配"（相当于0次）
-    // 不应该保留部分成功的CST，因为：
-    // 1. 部分成功破坏了Optional的语义（要么完整匹配，要么不匹配）
-    // 2. 保留部分CST会导致父规则的children不完整
-    // 
-    // 修复前的错误逻辑：
-    //   if (this.faultTolerance && thisBackData) {
-    //     this.setBackDataNoContinueMatch(thisBackData)  ← 错误：保留部分成功
-    //     return this.getCurCst()
-    //   }
-    // 
-    // Bug案例：Initializer = Eq + AssignmentExpression
-    //   - Eq成功（消费'='）
-    //   - AssignmentExpression失败（因为括号表达式不支持）
-    //   - 错误逻辑会保留只有'='的Initializer
-    //   - 结果：VariableDeclarator的children只有Identifier和Initializer（只有'='）
-    // 
-    // （容错应该在更高层处理，Option本身必须保证语义正确性）
+    if (this.faultTolerance && thisBackData) {
+      this.setBackDataNoContinueMatch(thisBackData)
+      return this.getCurCst()
+    }
     if (!curFlag) {
       return
     }
@@ -548,14 +532,18 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
       
       // 如果匹配成功，跳出循环
       if (this.continueForAndNoBreak) {
+        // 容错模式下，即使成功也要检查是否有"更好的"部分匹配
+        if (this.faultTolerance) {
+          // 获取消费最多的失败分支
+          const res = this.getTokensLengthMin(thisBackAry)
+          if (res) {
+            if (res.tokens.length < this.tokens.length) {
+              // 如果失败分支消费的更多，用失败分支！
+              this.setBackDataNoContinueMatch(res)
+            }
+          }
+        }
         // Or语法只要有一个分支成功就必须break，无论还有没有tokens
-        // 
-        // 【重要】不再在成功分支检查失败分支的"部分成功"
-        // 之前的容错逻辑会导致：成功分支被失败分支的"部分匹配"覆盖
-        // Bug案例：var x = (1 < 2) || false
-        //   - ArrowFunction失败（只消费了'('）
-        //   - ConditionalExpression成功（完整匹配）
-        //   - 错误逻辑会选择ArrowFunction的部分成功，导致语义错误
         break
       } else if (!this.continueForAndNoBreak) {
         // 当前分支失败
@@ -586,24 +574,15 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
       return this.getCurCst()
     }
     
-    // 所有分支都失败：完全回溯，不选择部分成功
-    // 
-    // 【重要】Or语义是"选择一个成功的分支"，所有分支都失败时应该返回失败
-    // 不应该选择"部分成功"的分支，因为：
-    // 1. 部分成功不是真正的成功，保留它会破坏语法语义
-    // 2. 容错应该在更高层（如FaultToleranceMany）处理，而非Or层
-    // 3. Or的职责是"语法分支选择"，不是"错误恢复"
-    // 
-    // 修复前的错误逻辑：
-    //   thisBackAry记录所有失败分支的"部分成功"
-    //   选择消费token最多的，当作Or的结果 ← 这是错的！
-    // 
-    // Bug案例：ArrowParameters ( LParen + FormalParameterList + RParen )
-    //   - 分支1: BindingIdentifier → 失败
-    //   - 分支2: LParen + Option(FormalParameterList) + RParen
-    //     * LParen成功，Option失败，RParen失败
-    //     * 错误逻辑会保留只有LParen的"部分成功"
-    //   - 结果：ArrowParameters只包含'('，破坏了语法语义
+    // 容错模式：所有分支都失败，但有部分成功
+    if (this.faultTolerance && thisBackAry.length) {
+      // 选择"消费token最多"的分支（最接近正确的语法）
+      const res = this.getTokensLengthMin(thisBackAry)
+      this.setBackDataNoContinueMatch(res)
+      return this.getCurCst()
+    }
+    
+    // 完全失败，无任何匹配
     return
   }
 
