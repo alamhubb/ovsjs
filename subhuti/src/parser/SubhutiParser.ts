@@ -377,6 +377,28 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     }
     this.setAllowErrorLastStateAndPop()
 
+    // 容错模式：保留部分成功
+    // 
+    // 【设计意图】
+    //   Option是可选项（0或1次），失败也是正常的
+    //   但如果部分成功（消费了部分tokens），保留这个状态
+    //   让上层可以基于部分成功继续处理
+    // 
+    // 【应用场景】
+    //   语法错误的代码，如：var x =  （缺少初始化值）
+    //   Initializer = Eq + AssignmentExpression
+    //   - Eq成功，消费'='
+    //   - AssignmentExpression失败（没有值）
+    //   保留只有'='的Initializer（部分成功）
+    // 
+    // 【核心价值】
+    //   IDE场景下，提供更精确的错误提示：
+    //   - "变量x缺少初始化值"（知道有'='）
+    //   vs "语法错误"（完全失败，不知道用户意图）
+    // 
+    // 【理论风险】
+    //   部分成功破坏了Option的"0或1"语义
+    //   CST可能不完整，需要AST转换和上层容错处理
     if (this.faultTolerance && thisBackData) {
       this.setBackDataNoContinueMatch(thisBackData)
       return this.getCurCst()
@@ -532,13 +554,32 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
       
       // 如果匹配成功，跳出循环
       if (this.continueForAndNoBreak) {
-        // 容错模式下，即使成功也要检查是否有"更好的"部分匹配
+        // 容错模式：贪婪匹配优化
+        // 
+        // 【设计意图】
+        //   在"成功但消费少"和"失败但消费多"之间，选择消费更多的
+        //   原理：消费更多tokens = 更接近完整的语法匹配
+        // 
+        // 【触发条件】
+        //   1. 当前分支成功（continueForAndNoBreak = true）
+        //   2. 之前有失败分支部分成功（thisBackAry有记录）
+        //   3. 失败分支剩余tokens < 成功分支剩余tokens（失败分支消费更多）
+        // 
+        // 【实际效果】
+        //   在JavaScript语法下很少触发，因为：
+        //   - JavaScript语法设计良好，Or分支优先级明确
+        //   - 失败分支通常消费很少就失败
+        //   - 成功分支通常消费完整语法
+        // 
+        // 【理论风险】
+        //   失败分支的CST可能不完整，但依赖容错假设：
+        //   "消费更多 = 更接近正确"，在实践中通常成立
         if (this.faultTolerance) {
           // 获取消费最多的失败分支
           const res = this.getTokensLengthMin(thisBackAry)
           if (res) {
             if (res.tokens.length < this.tokens.length) {
-              // 如果失败分支消费的更多，用失败分支！
+              // 失败分支剩余更少（消费更多），选择失败分支
               this.setBackDataNoContinueMatch(res)
             }
           }
@@ -575,6 +616,26 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     }
     
     // 容错模式：所有分支都失败，但有部分成功
+    // 
+    // 【设计意图】
+    //   选择失败分支中消费最多的（最接近正确的语法）
+    //   保留部分匹配结果，让上层（FaultToleranceMany）可以继续处理
+    // 
+    // 【应用场景】
+    //   语法错误的代码，如：var x = (1 + 2  （缺少右括号）
+    //   - LParen成功，消费'('
+    //   - Expression成功，消费'1 + 2'
+    //   - RParen失败，期望')'但遇到EOF
+    //   保留部分成功（有LParen和Expression），继续解析后续代码
+    // 
+    // 【核心价值】
+    //   IDE场景下，用户输入不完整代码时：
+    //   - 保留部分AST，提供语法提示
+    //   - 不因为一个错误就完全失败
+    //   - 继续解析后续代码，提供更多错误信息
+    // 
+    // 【理论风险】
+    //   部分成功的CST不完整，依赖上层容错机制和AST转换的容错处理
     if (this.faultTolerance && thisBackAry.length) {
       // 选择"消费token最多"的分支（最接近正确的语法）
       const res = this.getTokensLengthMin(thisBackAry)
