@@ -508,7 +508,10 @@ export class SlimeCstToAst {
   }
 
   createVariableDeclarationListAst(cst: SubhutiCst): SlimeVariableDeclarator[] {
-    let declarations = cst.children.map(item => this.createVariableDeclaratorAst(item)) as any[]
+    // 过滤出VariableDeclarator节点（跳过Comma token）
+    let declarations = cst.children
+      .filter(item => item.name === Es6Parser.prototype.VariableDeclarator.name)
+      .map(item => this.createVariableDeclaratorAst(item)) as any[]
     return declarations
   }
 
@@ -769,6 +772,30 @@ export class SlimeCstToAst {
         methodDef.static = true
       }
 
+      return methodDef
+    } else if (first.name === Es6Parser.prototype.GetMethodDefinition.name) {
+      // getter方法
+      const propertyNameCst = first.children[1] // GetTok后是PropertyName
+      const key = this.createPropertyNameAst(propertyNameCst)
+      const functionBodyCst = first.children[4] // PropertyName后是LParen、RParen、FunctionBodyDefine
+      const body = this.createFunctionBodyDefineAst(functionBodyCst)
+      
+      const methodDef = SlimeAstUtil.createMethodDefinition(key, {
+        type: 'FunctionExpression',
+        id: null,
+        params: [],
+        body: body
+      } as any)
+      methodDef.kind = 'get'
+      
+      return methodDef
+    } else if (first.name === Es6Parser.prototype.SetMethodDefinition.name) {
+      // setter方法
+      const propertyNameMethodCst = first.children[1] // SetTok后是PropertyNameMethodDefinition
+      const SlimeFunctionExpression = this.createPropertyNameMethodDefinitionAst(propertyNameMethodCst)
+      const methodDef = SlimeAstUtil.createMethodDefinition(SlimeFunctionExpression.id, SlimeFunctionExpression)
+      methodDef.kind = 'set'
+      
       return methodDef
     } else {
       throw new Error('不支持的类型: ' + first.name)
