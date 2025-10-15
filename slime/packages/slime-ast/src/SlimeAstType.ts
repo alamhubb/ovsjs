@@ -17,6 +17,8 @@ export enum SlimeAstType {
     ExportDefaultDeclaration = 'ExportDefaultDeclaration', // export default 声明
     ExportAllDeclaration = 'ExportAllDeclaration', // export * from 的导出声明
     MethodDefinition = 'MethodDefinition', // class 或对象中的方法定义
+    PropertyDefinition = 'PropertyDefinition', // class 中的属性定义
+    YieldExpression = 'YieldExpression', // yield 表达式
     ExpressionStatement = 'ExpressionStatement', // 表达式语句包装节点
     EmptyStatement = 'EmptyStatement', // 单独的分号语句
     VariableDeclaration = 'VariableDeclaration', // 变量声明语句

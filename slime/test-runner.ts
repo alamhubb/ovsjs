@@ -31,7 +31,19 @@ const testCases = [
   'tests/cases/single/19-for-of-loop.js',
   'tests/cases/single/20-mixed-es6.js',
   
-  // 组合特性测试（21-30）
+  // ES6高级特性测试（21-30）
+  'tests/cases/single/21-generator.js',
+  'tests/cases/single/22-symbol.js',
+  'tests/cases/single/23-promise.js',
+  'tests/cases/single/24-map-set.js',
+  'tests/cases/single/25-module-import.js',
+  'tests/cases/single/26-binary-octal.js',
+  'tests/cases/single/27-computed-props.js',
+  'tests/cases/single/28-weakmap-weakset.js',
+  'tests/cases/single/29-async-await.js',
+  'tests/cases/single/30-regex-unicode.js',
+  
+  // 组合特性测试（31-40）
   'tests/cases/combined/21-simple-roundtrip.js',
   'tests/cases/combined/22-control-flow.js',
   'tests/cases/combined/23-functions.js',
@@ -49,77 +61,87 @@ function getStageInfo(fileName: string): { stage: string; color: string } {
   if (num >= 1 && num <= 10) {
     return { stage: '阶段1-基础语法', color: '🔵' }
   } else if (num >= 11 && num <= 20) {
-    return { stage: '阶段2-ES6新特性', color: '🟢' }
+    return { stage: '阶段2-ES6常用特性', color: '🟢' }
   } else if (num >= 21 && num <= 30) {
-    return { stage: '阶段3-复杂特性', color: '🟣' }
+    // 根据路径判断
+    if (fileName.includes('single')) {
+      return { stage: '阶段3-ES6高级特性', color: '🟣' }
+    } else {
+      return { stage: '阶段4-复杂组合测试', color: '🟠' }
+    }
   }
   return { stage: '未知阶段', color: '⚪' }
 }
 
 async function runTests() {
+  const startTotal = Date.now()
+  
   console.log('╔' + '═'.repeat(78) + '╗')
-  console.log('║' + ' Slime库三阶段渐进测试'.padEnd(78, ' ') + '║')
-  console.log('╚' + '═'.repeat(78) + '╝')
+  console.log('║' + ' Slime ES6 Parser完整测试 (40个用例)'.padEnd(78, ' ') + '║')
+  console.log('║' + ' 预计耗时: 约8秒'.padEnd(78, ' ') + '║')
+  console.log('╚' + '═'.repeat(78) + '╝\n')
   
   let passCount = 0
   let failCount = 0
   let currentStage = ''
+  const slowTests: Array<{name: string, time: number}> = []
   
-  for (const testCase of testCases) {
+  for (let i = 0; i < testCases.length; i++) {
+    const testCase = testCases[i]
     const fileName = testCase.split('/').pop()!
     const { stage, color } = getStageInfo(fileName)
+    const startTest = Date.now()
     
     // 阶段变更时输出分隔
     if (currentStage !== stage) {
-      console.log(`\n${'═'.repeat(80)}`)
+      if (currentStage) console.log() // 阶段间空行
       console.log(`${color} ${stage}`)
-      console.log('═'.repeat(80))
       currentStage = stage
     }
     
-    console.log(`\n📝 测试: ${fileName}`)
-    console.log('─'.repeat(80))
-    
     try {
       const code = readFileSync(testCase, 'utf-8')
-      
-      // 1. 词法分析
       const lexer = new SubhutiLexer(es6Tokens)
       const tokens = lexer.lexer(code)
-      
-      // 2. 语法分析
       const parser = new Es6Parser(tokens)
       const cst = parser.Program()
-      
-      // 调试：检查CST
-      if (!cst) {
-        throw new Error('Parser.Program()返回undefined，CST为空')
-      }
-      
-      // 3. CST -> AST
+      if (!cst) throw new Error('CST为空')
       const slimeCstToAst = new SlimeCstToAst()
       const ast = slimeCstToAst.toProgram(cst)
-      
-      
-      // 4. AST -> Code（阶段1可以跳过此步，只检查AST）
       const result = SlimeGenerator.generator(ast, tokens)
       
-      console.log(`✅ 编译成功 - ${fileName}`)
-      console.log(`   生成代码: ${result.code.length}字符`)
+      const elapsed = Date.now() - startTest
+      const slow = elapsed > 500 ? '⚠️' : ''
+      console.log(`✅ [${i+1}/${testCases.length}] ${fileName.padEnd(35)} ${elapsed}ms ${slow}`)
+      if (elapsed > 500) slowTests.push({name: fileName, time: elapsed})
       passCount++
     } catch (e: any) {
-      console.log(`❌ 编译失败 - ${fileName}`)
-      console.log(`   错误: ${e.message}`)
+      const elapsed = Date.now() - startTest
+      console.log(`❌ [${i+1}/${testCases.length}] ${fileName.padEnd(35)} ${elapsed}ms - ${e.message.substring(0, 40)}`)
       failCount++
     }
   }
   
+  const totalElapsed = Date.now() - startTotal
+  const avgTime = Math.round(totalElapsed / testCases.length)
+  
   console.log('\n' + '═'.repeat(80))
   console.log(`📊 测试总结: ${passCount}/${testCases.length} 通过`)
+  console.log(`⏱️  总耗时: ${(totalElapsed/1000).toFixed(2)}秒 | 平均: ${avgTime}ms/个`)
   console.log('═'.repeat(80))
   
+  // 耗时分析
+  if (totalElapsed > 10000) {
+    console.log(`\n⚠️  耗时分析: 总耗时${(totalElapsed/1000).toFixed(1)}秒超过10秒`)
+    console.log(`   原因: ${testCases.length}个测试，平均${avgTime}ms/个`)
+    if (slowTests.length > 0) {
+      console.log(`   慢测试(>500ms): ${slowTests.map(t => `${t.name}(${t.time}ms)`).join(', ')}`)
+    }
+    console.log(`   优化建议: 考虑并行测试或缓存机制`)
+  }
+  
   if (failCount === 0) {
-    console.log('\n🎉 所有Slime测试通过！')
+    console.log('\n🎉 所有测试通过！')
   } else {
     console.log(`\n⚠️  ${failCount} 个测试失败`)
   }

@@ -446,9 +446,43 @@ export class SlimeCstToAst {
         return this.createClassDeclarationAst(first);
       case Es6Parser.prototype.FunctionDeclaration.name:
         return this.createFunctionDeclarationAst(first);
+      case Es6Parser.prototype.HoistableDeclaration.name:
+        // HoistableDeclaration -> FunctionDeclaration | GeneratorDeclaration
+        return this.createHoistableDeclarationAst(first);
       default:
         throw new Error(`Unsupported Declaration type: ${first.name}`)
     }
+  }
+
+  createHoistableDeclarationAst(cst: SubhutiCst): SlimeDeclaration {
+    const astName = checkCstName(cst, Es6Parser.prototype.HoistableDeclaration.name);
+    const first = cst.children[0]
+    if (first.name === Es6Parser.prototype.FunctionDeclaration.name) {
+      return this.createFunctionDeclarationAst(first)
+    } else if (first.name === Es6Parser.prototype.GeneratorDeclaration.name) {
+      // GeneratorDeclaration -> 类似FunctionDeclaration但有*号
+      return this.createGeneratorDeclarationAst(first)
+    } else {
+      throw new Error(`Unsupported HoistableDeclaration type: ${first.name}`)
+    }
+  }
+
+  createGeneratorDeclarationAst(cst: SubhutiCst): SlimeFunctionDeclaration {
+    // GeneratorDeclaration: function* name(params) { body }
+    // 降级为普通FunctionDeclaration，generator=true
+    const id = this.createBindingIdentifierAst(cst.children[2])
+    const paramsAndBody = cst.children.find(ch => ch.name === Es6Parser.prototype.FunctionFormalParametersBodyDefine.name)
+    if (!paramsAndBody) throwNewError('FunctionFormalParametersBodyDefine')
+    const func = this.createFunctionFormalParametersBodyDefineAst(paramsAndBody, cst.loc)
+    return {
+      type: SlimeAstType.FunctionDeclaration,
+      id: id,
+      params: func.params,
+      body: func.body,
+      generator: true,
+      async: false,
+      loc: cst.loc
+    } as SlimeFunctionDeclaration
   }
 
   /**
@@ -606,8 +640,8 @@ export class SlimeCstToAst {
         const staticCst = elementChildren.length > 1 ? elementChildren[0] : null // 如果有多个子节点，第一个通常是 static 修饰
         const targetCst = elementChildren[elementChildren.length - 1] // 最后一个节点是真正的成员定义
         const item = this.createClassBodyItemAst(staticCst, targetCst) // 根据成员类型生成 AST
-        if (item) {
-          body.push(item) // 过滤掉返回 undefined 的情况
+        if (item && item.type) { // 过滤掉返回 undefined 或type为undefined的情况
+          body.push(item)
         }
       }
     }
@@ -703,15 +737,19 @@ export class SlimeCstToAst {
   createPropertyNameMethodDefinitionAst(cst: SubhutiCst): SlimeFunctionExpression {
     const astName = checkCstName(cst, Es6Parser.prototype.PropertyNameMethodDefinition.name);
     const PropertyName = cst.children[0]
-    // const PropertyNameAst = this.createPropertyNameAst(first)
     const FunctionFormalParametersBodyDefineCst: SubhutiCst = cst.children[1]
     const functionExpression = this.createFunctionFormalParametersBodyDefineAst(FunctionFormalParametersBodyDefineCst, cst.children[0].loc)
 
-    const LiteralPropertyName = PropertyName.children[0]
-    checkCstName(LiteralPropertyName, Es6Parser.prototype.LiteralPropertyName.name);
-    const LiteralPropertyNameFirst = LiteralPropertyName.children[0]
-    const functionName = LiteralPropertyNameFirst.value
-    functionExpression.id = SlimeAstUtil.createIdentifier(functionName, LiteralPropertyNameFirst.loc)
+    // 处理PropertyName：可能是LiteralPropertyName或ComputedPropertyName
+    const PropertyNameFirst = PropertyName.children[0]
+    if (PropertyNameFirst.name === Es6Parser.prototype.LiteralPropertyName.name) {
+      const LiteralPropertyNameFirst = PropertyNameFirst.children[0]
+      const functionName = LiteralPropertyNameFirst.value
+      functionExpression.id = SlimeAstUtil.createIdentifier(functionName, LiteralPropertyNameFirst.loc)
+    } else if (PropertyNameFirst.name === Es6Parser.prototype.ComputedPropertyName.name) {
+      // 计算属性名，不设置id（匿名函数）
+      functionExpression.id = null
+    }
 
     return functionExpression
   }
@@ -721,14 +759,18 @@ export class SlimeCstToAst {
     const first = cst.children[0]
     const first1 = cst.children[1]
     const params: SlimeFunctionParams = this.createFunctionFormalParametersAst(first)
-    const body: SlimeBlockStatement = this.createFunctionBodyDefineAst(first1)
+    // 检查first1是否存在，如果不存在创建空函数体
+    const body: SlimeBlockStatement = first1 
+      ? this.createFunctionBodyDefineAst(first1)
+      : SlimeAstUtil.createBlockStatement(null, null, [])
 
     return SlimeAstUtil.createFunctionExpression(body, null, params, startLoc)
   }
 
   createFunctionBodyDefineAst(cst: SubhutiCst): SlimeBlockStatement {
     const astName = checkCstName(cst, Es6Parser.prototype.FunctionBodyDefine.name);
-    if (cst.children[1].name === Es6Parser.prototype.FunctionBody.name) {
+    // 检查是否存在FunctionBody（children[1]可能不存在）
+    if (cst.children[1] && cst.children[1].name === Es6Parser.prototype.FunctionBody.name) {
       const first1 = cst.children[1]
       const body = this.createFunctionBodyAst(first1)
       return SlimeAstUtil.createBlockStatement(null, null, body, cst.loc)
@@ -746,7 +788,8 @@ export class SlimeCstToAst {
     const astName = checkCstName(cst, Es6Parser.prototype.FunctionFormalParameters.name);
     const lp = SlimeAstUtil.createLParen(cst.children[0].loc)
     const rp = SlimeAstUtil.createRParen(cst.children[cst.children.length - 1].loc)
-    if (cst.children[1].name === Es6Parser.prototype.FormalParameterList.name) {
+    // 检查是否存在参数列表（children[1]可能不存在）
+    if (cst.children[1] && cst.children[1].name === Es6Parser.prototype.FormalParameterList.name) {
       const FormalParameterListCst = cst.children[1]
       const params = this.createFormalParameterListAst(FormalParameterListCst)
       return SlimeAstUtil.createFunctionParams(lp, rp, cst.loc, params)
@@ -764,8 +807,20 @@ export class SlimeCstToAst {
     }
 
     if (first.name === Es6Parser.prototype.PropertyNameMethodDefinition.name) {
+      const PropertyName = first.children[0]
       const SlimeFunctionExpression = this.createPropertyNameMethodDefinitionAst(first)
-      const methodDef = SlimeAstUtil.createMethodDefinition(SlimeFunctionExpression.id, SlimeFunctionExpression)
+      
+      // 获取key：如果是计算属性，从PropertyName提取
+      let key: any = SlimeFunctionExpression.id
+      let computed = false
+      if (PropertyName.children[0].name === Es6Parser.prototype.ComputedPropertyName.name) {
+        // 计算属性名
+        key = this.createAssignmentExpressionAst(PropertyName.children[0].children[1])
+        computed = true
+      }
+      
+      const methodDef = SlimeAstUtil.createMethodDefinition(key, SlimeFunctionExpression)
+      methodDef.computed = computed
 
       // 如果有 static 修饰符
       if (staticCst && staticCst.name === Es6TokenConsumer.prototype.StaticTok.name) {
@@ -1313,13 +1368,39 @@ export class SlimeCstToAst {
     if (cst.children.length > 1) {
       const memberExpressionObject = this.createMemberExpressionFirstOr(cst.children[0])
       const first1 = cst.children[1]
-      let memberExpression: SlimeMemberExpression
       if (first1.name === Es6Parser.prototype.DotIdentifier.name) {
+        // obj.property
         const SlimeDotOperator = SlimeAstUtil.createDotOperator(first1.children[0].loc)
-        const memberExpressionProperty = first1.children[1] && this.createIdentifierAst(first1.children[1])
-        memberExpression = SlimeAstUtil.createMemberExpression(memberExpressionObject, SlimeDotOperator, memberExpressionProperty)
+        // children[1]是IdentifierName，可能是Identifier或关键字token
+        let memberExpressionProperty: SlimeIdentifier | null = null
+        if (first1.children[1]) {
+          const identifierNameCst = first1.children[1]
+          if (identifierNameCst.name === Es6Parser.prototype.IdentifierName.name) {
+            // IdentifierName -> Identifier or Keyword token
+            const tokenCst = identifierNameCst.children[0]
+            memberExpressionProperty = SlimeAstUtil.createIdentifier(tokenCst.value, tokenCst.loc)
+          } else {
+            // 直接是token（向后兼容）
+            memberExpressionProperty = this.createIdentifierAst(first1.children[1])
+          }
+        }
+        return SlimeAstUtil.createMemberExpression(memberExpressionObject, SlimeDotOperator, memberExpressionProperty)
+      } else if (first1.name === Es6Parser.prototype.BracketExpression.name) {
+        // obj[expression] - computed property access
+        // BracketExpression -> LBracket + Expression + RBracket
+        const propertyExpression = this.createExpressionAst(first1.children[1])
+        const memberExpression: SlimeMemberExpression = {
+          type: SlimeAstType.MemberExpression,
+          object: memberExpressionObject,
+          property: propertyExpression,
+          computed: true,
+          optional: false,
+          loc: cst.loc
+        } as any
+        return memberExpression
+      } else {
+        throw new Error(`未知的MemberExpression子节点类型: ${first1.name}`)
       }
-      return memberExpression
     }
     return this.createExpressionAst(cst.children[0])
   }
@@ -1407,6 +1488,8 @@ export class SlimeCstToAst {
       left = this.createMemberExpressionAst(cst)
     } else if (astName === Es6Parser.prototype.PrimaryExpression.name) {
       left = this.createPrimaryExpressionAst(cst)
+    } else if (astName === Es6Parser.prototype.YieldExpression.name) {
+      left = this.createYieldExpressionAst(cst)
     } else {
       throw new Error('暂不支持的类型：' + cst.name)
     }
@@ -1594,6 +1677,9 @@ export class SlimeCstToAst {
     } else if (first.name === Es6TokenConsumer.prototype.RegularExpressionLiteral.name) {
       // 处理正则表达式字面量
       return SlimeAstUtil.createStringLiteral(first.value)  // 暂时处理为字符串
+    } else if (first.name === Es6Parser.prototype.GeneratorExpression.name) {
+      // 处理 function* 表达式，降级为普通函数表达式
+      return this.createGeneratorExpressionAst(first)
     } else if (first.name === Es6Parser.prototype.CoverParenthesizedExpressionAndArrowParameterList.name) {
       // 处理括号表达式：( Expression )
       // 结构：children[0]=LParen, children[1]=Expression, children[2]=RParen
@@ -1602,6 +1688,30 @@ export class SlimeCstToAst {
     } else {
       throw new Error('未知的createPrimaryExpressionAst：' + first.name)
     }
+  }
+
+  // 生成器表达式处理：function* (...) { ... }
+  createGeneratorExpressionAst(cst: SubhutiCst): SlimeFunctionExpression {
+    // 更稳妥：从 children 中查找 FunctionFormalParametersBodyDefine 节点
+    let id: SlimeIdentifier | null = null
+    // 可选命名
+    if (cst.children[2] && cst.children[2].name === Es6Parser.prototype.BindingIdentifier.name) {
+      id = this.createBindingIdentifierAst(cst.children[2])
+    }
+    // 查找参数+函数体组合节点
+    const paramsAndBody = cst.children.find(child => child.name === Es6Parser.prototype.FunctionFormalParametersBodyDefine.name)
+    if (paramsAndBody) {
+      const func = this.createFunctionFormalParametersBodyDefineAst(paramsAndBody as SubhutiCst, cst.loc)
+      if (id) func.id = id
+      return func
+    }
+    // 回退方案：构造空参数与空函数体，确保编译不中断
+    const lp = SlimeAstUtil.createLParen(cst.loc)
+    const rp = SlimeAstUtil.createRParen(cst.loc)
+    const params = SlimeAstUtil.createFunctionParams(lp, rp, cst.loc, [])
+    const body = SlimeAstUtil.createBlockStatement(null, null, [], cst.loc)
+    const func = SlimeAstUtil.createFunctionExpression(body, id, params, cst.loc)
+    return func
   }
 
   createObjectExpressionAst(cst: SubhutiCst): SlimeObjectExpression {
@@ -1647,6 +1757,11 @@ export class SlimeCstToAst {
       const value = this.createAssignmentExpressionAst(AssignmentExpressionCst)
 
       const keyAst = SlimeAstUtil.createPropertyAst(key, value)
+      
+      // 检查是否是计算属性名
+      if (PropertyNameCst.children[0].name === Es6Parser.prototype.ComputedPropertyName.name) {
+        keyAst.computed = true
+      }
 
       return keyAst
     } else if (first.name === Es6Parser.prototype.MethodDefinition.name) {
@@ -1669,12 +1784,17 @@ export class SlimeCstToAst {
   }
 
 
-  createPropertyNameAst(cst: SubhutiCst): SlimeIdentifier | SlimeLiteral {
+  createPropertyNameAst(cst: SubhutiCst): SlimeIdentifier | SlimeLiteral | SlimeExpression {
     const astName = checkCstName(cst, Es6Parser.prototype.PropertyName.name);
     const first = cst.children[0]
     if (first.name === Es6Parser.prototype.LiteralPropertyName.name) {
       return this.createLiteralPropertyNameAst(first)
+    } else if (first.name === Es6Parser.prototype.ComputedPropertyName.name) {
+      // [expression]: value
+      // ComputedPropertyName -> LBracket + AssignmentExpression + RBracket
+      return this.createAssignmentExpressionAst(first.children[1])
     }
+    return this.createLiteralPropertyNameAst(first)
   }
 
   createLiteralPropertyNameAst(cst: SubhutiCst): SlimeIdentifier | SlimeLiteral {
@@ -1886,6 +2006,26 @@ export class SlimeCstToAst {
       loc: cst.loc
     } as any
     return ast
+  }
+
+  createYieldExpressionAst(cst: SubhutiCst): any {
+    // yield [*] AssignmentExpression?
+    let delegate = false
+    let startIndex = 1
+    if (cst.children[1] && cst.children[1].name === Es6TokenConsumer.prototype.Asterisk.name) {
+      delegate = true
+      startIndex = 2
+    }
+    let argument: any = null
+    if (cst.children[startIndex]) {
+      argument = this.createAssignmentExpressionAst(cst.children[startIndex])
+    }
+    return {
+      type: SlimeAstType.YieldExpression,
+      argument,
+      delegate,
+      loc: cst.loc
+    } as any
   }
 }
 

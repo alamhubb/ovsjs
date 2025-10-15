@@ -213,11 +213,11 @@ export const es5TokensObj = {
     Identifier: createEmptyValueRegToken(Es5TokensName.Identifier, /[A-Za-z_$][A-Za-z0-9_$]*/),
 
     // Literals
-    NumericLiteral: createEmptyValueRegToken(Es5TokensName.NumericLiteral, /-?\d+(\.\d+)?/),
+    NumericLiteral: createEmptyValueRegToken(Es5TokensName.NumericLiteral, /-?(0[xX][0-9a-fA-F]+|0[oO][0-7]+|0[bB][01]+|\d+(\.\d+)?([eE][+-]?\d+)?)/),
     StringLiteral: createEmptyValueRegToken(Es5TokensName.StringLiteral, /(["'])((?:\\\1|(?:(?!\1|\n|\r).)*)*)\1/),
     RegularExpressionLiteral: createEmptyValueRegToken(
         Es5TokensName.RegularExpressionLiteral,
-        /\/(?:\\.|[^\\\/])+\/[gimuy]*/
+        /\/(?:[^\/\\\r\n\[]|\\.|\[(?:[^\]\\\r\n]|\\.)*\])+\/[gimsuvy]*/
     ),
     Spacing: createValueRegToken(
          Es5TokensName.Spacing,

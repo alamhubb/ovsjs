@@ -382,7 +382,55 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
   @SubhutiRule
   DotIdentifier() {
     this.tokenConsumer.Dot()
-    this.tokenConsumer.Identifier()
+    // IdentifierName: 可以是Identifier或保留字（for、if等）
+    this.IdentifierName()
+  }
+
+  @SubhutiRule
+  IdentifierName() {
+    // 成员访问中的属性名可以是保留字
+    this.Or([
+      {alt: () => this.tokenConsumer.Identifier()},
+      {alt: () => this.tokenConsumer.ForTok()},
+      {alt: () => this.tokenConsumer.IfTok()},
+      {alt: () => this.tokenConsumer.ElseTok()},
+      {alt: () => this.tokenConsumer.WhileTok()},
+      {alt: () => this.tokenConsumer.DoTok()},
+      {alt: () => this.tokenConsumer.SwitchTok()},
+      {alt: () => this.tokenConsumer.CaseTok()},
+      {alt: () => this.tokenConsumer.BreakTok()},
+      {alt: () => this.tokenConsumer.ContinueTok()},
+      {alt: () => this.tokenConsumer.ReturnTok()},
+      {alt: () => this.tokenConsumer.ThrowTok()},
+      {alt: () => this.tokenConsumer.TryTok()},
+      {alt: () => this.tokenConsumer.CatchTok()},
+      {alt: () => this.tokenConsumer.FinallyTok()},
+      {alt: () => this.tokenConsumer.NewTok()},
+      {alt: () => this.tokenConsumer.DeleteTok()},
+      {alt: () => this.tokenConsumer.TypeofTok()},
+      {alt: () => this.tokenConsumer.VoidTok()},
+      {alt: () => this.tokenConsumer.InTok()},
+      {alt: () => this.tokenConsumer.InstanceOfTok()},
+      {alt: () => this.tokenConsumer.ThisTok()},
+      {alt: () => this.tokenConsumer.FunctionTok()},
+      {alt: () => this.tokenConsumer.VarTok()},
+      {alt: () => this.tokenConsumer.LetTok()},
+      {alt: () => this.tokenConsumer.ConstTok()},
+      {alt: () => this.tokenConsumer.ClassTok()},
+      {alt: () => this.tokenConsumer.ExtendsTok()},
+      {alt: () => this.tokenConsumer.StaticTok()},
+      {alt: () => this.tokenConsumer.ImportTok()},
+      {alt: () => this.tokenConsumer.ExportTok()},
+      {alt: () => this.tokenConsumer.FromTok()},
+      {alt: () => this.tokenConsumer.AsTok()},
+      {alt: () => this.tokenConsumer.OfTok()},
+      {alt: () => this.tokenConsumer.YieldTok()},
+      {alt: () => this.tokenConsumer.SuperTok()},
+      {alt: () => this.tokenConsumer.GetTok()},
+      {alt: () => this.tokenConsumer.SetTok()},
+      {alt: () => this.tokenConsumer.AsyncTok()},
+      {alt: () => this.tokenConsumer.AwaitTok()},
+    ])
   }
 
   @SubhutiRule
