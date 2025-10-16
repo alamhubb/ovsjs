@@ -456,8 +456,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
       if (this.faultTolerance || (this.allowError && !this.optionAndOrAllowErrorMatchOnce)) {
         return
       }
-      console.log('this.optionAndOrAllowErrorMatchOnce')
-      console.log(this.optionAndOrAllowErrorMatchOnce)
       this.printTokens()
       if (popToken) {
         throw new Error('syntax error expect：' + popToken.tokenValue)
@@ -466,7 +464,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
       }
     }
     this.setContinueMatchAndNoBreak(true)
-    console.log('shezhile  this.optionAndOrAllowErrorMatchOnce = true')
     this.optionAndOrAllowErrorMatchOnce = true
     //性能优化先不管
     // this.setAllowError(this.allowErrorStack.length > 1)
@@ -537,7 +534,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
   optionAndOrAllowErrorMatchOnce = true
 
   setAllowErrorNewState() {
-    console.log('shezhi false')
     this.setAllowError(true)
     this.optionAndOrAllowErrorMatchOnce = false
     this.allowErrorStack.push(this.curCst.name)

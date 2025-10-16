@@ -1,11 +1,11 @@
 {
   "status": "completed",
-  "startTime": 1760606887738,
-  "endTime": 1760606888577,
+  "startTime": 1760615572125,
+  "endTime": 1760615573177,
   "total": 40,
-  "passCount": 0,
-  "failCount": 40,
+  "passCount": 5,
+  "failCount": 35,
   "slowTests": [],
-  "avgTime": 21,
-  "totalElapsed": 838
+  "avgTime": 26,
+  "totalElapsed": 1052
 }
