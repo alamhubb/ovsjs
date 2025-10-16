@@ -1,88 +1,72 @@
 {
   "status": "completed",
-  "startTime": 1760602729611,
-  "endTime": 1760602804906,
+  "startTime": 1760604897010,
+  "endTime": 1760604953476,
   "total": 40,
-  "passCount": 37,
-  "failCount": 3,
+  "passCount": 38,
+  "failCount": 2,
   "slowTests": [
     {
-      "name": "03-binary-ops.js",
-      "time": 712
-    },
-    {
-      "name": "04-comparison.js",
-      "time": 704
-    },
-    {
       "name": "07-if-statement.js",
-      "time": 918
+      "time": 584
     },
     {
       "name": "08-for-loop.js",
-      "time": 729
+      "time": 532
     },
     {
       "name": "09-function-decl.js",
-      "time": 877
+      "time": 562
     },
     {
       "name": "10-objects-arrays.js",
-      "time": 3904
-    },
-    {
-      "name": "11-arrow-functions.js",
-      "time": 587
+      "time": 2735
     },
     {
       "name": "14-spread-rest.js",
-      "time": 1528
+      "time": 1081
     },
     {
-      "name": "18-default-params.js",
-      "time": 524
-    },
-    {
-      "name": "22-symbol.js",
-      "time": 641
+      "name": "21-generator.js",
+      "time": 958
     },
     {
       "name": "23-promise.js",
-      "time": 8096
+      "time": 6076
     },
     {
       "name": "24-map-set.js",
-      "time": 20513
+      "time": 16743
     },
     {
       "name": "27-computed-props.js",
-      "time": 2654
+      "time": 2082
     },
     {
       "name": "28-weakmap-weakset.js",
-      "time": 4156
+      "time": 3179
     },
     {
       "name": "30-regex-unicode.js",
-      "time": 1627
+      "time": 1094
     },
     {
       "name": "24-objects-arrays.js",
-      "time": 3898
+      "time": 2696
     },
     {
       "name": "25-operators-all.js",
-      "time": 1295
+      "time": 745
     },
     {
       "name": "28-array-methods.js",
-      "time": 1312
+      "time": 832
     },
     {
       "name": "30-production-level.js",
-      "time": 2789
+      "time": 2067
     }
   ],
-  "avgTime": 1882,
-  "totalElapsed": 75295
+  "avgTime": 1412,
+  "totalElapsed": 56466
 }
