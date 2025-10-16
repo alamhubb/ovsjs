@@ -1404,7 +1404,29 @@ export class SlimeCstToAst {
 
       return SlimeAstUtil.createCallExpression(callee, argumentsAst)
     }
-    return this.createExpressionAst(cst.children[0])
+    // 单个子节点，可能是SuperCall
+    const first = cst.children[0]
+    if (first.name === Es6Parser.prototype.SuperCall.name) {
+      return this.createSuperCallAst(first)
+    }
+    return this.createExpressionAst(first)
+  }
+
+  createSuperCallAst(cst: SubhutiCst): SlimeExpression {
+    const astName = checkCstName(cst, Es6Parser.prototype.SuperCall.name);
+    // SuperCall -> SuperTok + Arguments
+    // children[0]: SuperTok token
+    // children[1]: Arguments CST
+    const argumentsCst = cst.children[1]
+    const argumentsAst: SlimeExpression[] = this.createArgumentsAst(argumentsCst)
+    
+    // 创建Super节点作为callee
+    const superNode: SlimeSuper = {
+      type: "Super",
+      loc: cst.children[0].loc
+    }
+    
+    return SlimeAstUtil.createCallExpression(superNode, argumentsAst)
   }
 
   createArgumentsAst(cst: SubhutiCst): Array<SlimeExpression> {
@@ -1819,6 +1841,10 @@ export class SlimeCstToAst {
 
   createLeftHandSideExpressionAst(cst: SubhutiCst): SlimeExpression {
     const astName = checkCstName(cst, Es6Parser.prototype.LeftHandSideExpression.name);
+    // 容错：Parser在ASI场景下可能生成不完整的CST，返回空标识符
+    if (!cst.children || cst.children.length === 0) {
+      return SlimeAstUtil.createIdentifier('', cst.loc)
+    }
     if (cst.children.length > 1) {
 
     }

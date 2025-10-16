@@ -684,6 +684,9 @@ export default class SlimeGenerator {
       this.generatorAwaitExpression(node as any)
     } else if (node.type === SlimeAstType.TemplateLiteral) {
       this.generatorTemplateLiteral(node as any)
+    } else if (node.type === "Super") {
+      // Super关键字：直接输出"super"
+      this.generateCode += 'super'
     } else {
       console.error('未知节点:', JSON.stringify(node, null, 2))
       throw new Error('不支持的类型：' + node.type)
