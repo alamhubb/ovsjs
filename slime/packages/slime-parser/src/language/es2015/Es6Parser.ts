@@ -139,7 +139,8 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
   Literal() {
     this.Or([
       {alt: () => this.tokenConsumer.NullLiteral()},
-      {alt: () => this.tokenConsumer.BooleanLiteral()},
+      {alt: () => this.tokenConsumer.TrueTok()},
+      {alt: () => this.tokenConsumer.FalseTok()},
       {alt: () => this.tokenConsumer.NumericLiteral()},
       {alt: () => this.tokenConsumer.StringLiteral()}
     ])

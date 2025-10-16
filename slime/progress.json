@@ -1,11 +1,96 @@
 {
   "status": "completed",
-  "startTime": 1760595149561,
-  "endTime": 1760595179466,
+  "startTime": 1760602056357,
+  "endTime": 1760602141599,
   "total": 40,
-  "passCount": 5,
-  "failCount": 35,
-  "slowTests": [],
-  "avgTime": 748,
-  "totalElapsed": 29904
+  "passCount": 37,
+  "failCount": 3,
+  "slowTests": [
+    {
+      "name": "03-binary-ops.js",
+      "time": 756
+    },
+    {
+      "name": "04-comparison.js",
+      "time": 723
+    },
+    {
+      "name": "07-if-statement.js",
+      "time": 982
+    },
+    {
+      "name": "08-for-loop.js",
+      "time": 811
+    },
+    {
+      "name": "09-function-decl.js",
+      "time": 1094
+    },
+    {
+      "name": "10-objects-arrays.js",
+      "time": 4051
+    },
+    {
+      "name": "11-arrow-functions.js",
+      "time": 606
+    },
+    {
+      "name": "14-spread-rest.js",
+      "time": 1923
+    },
+    {
+      "name": "17-enhanced-object.js",
+      "time": 1508
+    },
+    {
+      "name": "18-default-params.js",
+      "time": 923
+    },
+    {
+      "name": "20-mixed-es6.js",
+      "time": 655
+    },
+    {
+      "name": "22-symbol.js",
+      "time": 679
+    },
+    {
+      "name": "23-promise.js",
+      "time": 8715
+    },
+    {
+      "name": "24-map-set.js",
+      "time": 23259
+    },
+    {
+      "name": "27-computed-props.js",
+      "time": 2684
+    },
+    {
+      "name": "28-weakmap-weakset.js",
+      "time": 4345
+    },
+    {
+      "name": "30-regex-unicode.js",
+      "time": 1670
+    },
+    {
+      "name": "24-objects-arrays.js",
+      "time": 4125
+    },
+    {
+      "name": "25-operators-all.js",
+      "time": 1369
+    },
+    {
+      "name": "28-array-methods.js",
+      "time": 1439
+    },
+    {
+      "name": "30-production-level.js",
+      "time": 3379
+    }
+  ],
+  "avgTime": 2131,
+  "totalElapsed": 85242
 }

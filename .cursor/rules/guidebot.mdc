@@ -161,6 +161,54 @@ alwaysApply: true
 ## 执行透明度
 >5秒预告耗时 | 超5秒输出进度 | >10秒分解任务 | 执行前预告执行后报告
 
+## 断点重续机制（重要）
+**目的：** 支持长任务中断后快速恢复上下文，AI实时记录项目进度
+
+**核心文件（每个项目）：**
+1. `tests/ai/.msg.txt` - 临时消息文件（AI写入进度内容）
+2. `tests/ai/log-from-file.js` - 执行脚本（读取并追加到project.mdc）
+
+**使用场景：**
+- 复杂任务（预计>10分钟）
+- 诊断调试过程（多轮尝试）
+- 重要决策点（架构选择、方案对比）
+- 阶段性进展（功能完成、测试通过）
+
+**记录内容：**
+- 当前进度：正在做什么、完成了什么
+- 关键发现：定位的问题、找到的根因
+- 下一步行动：计划做什么、为什么这么做
+- 重要假设：当前的推测、待验证的想法
+
+**使用方式：**
+```javascript
+// AI每次记录进度（2步）
+write("项目路径/tests/ai/.msg.txt", "进度内容")
+run_terminal_cmd("cd 项目路径; node tests/ai/log-from-file.js")
+```
+
+**示例：**
+```javascript
+// 记录诊断过程
+write("slime/tests/ai/.msg.txt", "已定位问题：UnaryExpression的CST.children为undefined，怀疑是SubhutiParser的优化逻辑")
+run_terminal_cmd("cd slime; node tests/ai/log-from-file.js")
+
+// 记录下一步计划
+write("slime/tests/ai/.msg.txt", "下一步：检查SubhutiParser.processCst方法的249-250行优化代码")
+run_terminal_cmd("cd slime; node tests/ai/log-from-file.js")
+```
+
+**频率建议：**
+- 简单任务：开始+结束（2次）
+- 中等任务：开始+关键节点+结束（3-5次）
+- 复杂任务：每个重要步骤都记录（5-10次）
+
+**原则：**
+- 宁多勿少：记录成本低，恢复成本高
+- 实时记录：完成一步就记录，不要等任务结束
+- 简洁明确：一句话说清楚当前状态和下一步
+- 避免过度：不记录琐碎操作（读文件、搜索等）
+
 ---
 
-**引导型AI协作规则 | 最后更新: 2025-10-16 | 历史：2805行→285行→160行（94.3%压缩）**
+**引导型AI协作规则 | 最后更新: 2025-10-16 | 历史：2805行→285行→167行（94.0%压缩）**

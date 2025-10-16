@@ -32,7 +32,8 @@ export default class Es5Parser<T extends Es5TokenConsumer> extends SubhutiParser
   AbsLiteral() {
     this.Or([
       {alt: () => this.tokenConsumer.NullLiteral()},
-      {alt: () => this.tokenConsumer.BooleanLiteral()},
+      {alt: () => this.tokenConsumer.TrueTok()},
+      {alt: () => this.tokenConsumer.FalseTok()},
       {alt: () => this.tokenConsumer.NumericLiteral()},
       {alt: () => this.tokenConsumer.StringLiteral()},
       {alt: () => this.tokenConsumer.RegularExpressionLiteral()},

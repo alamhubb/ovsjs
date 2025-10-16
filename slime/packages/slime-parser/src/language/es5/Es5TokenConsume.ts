@@ -15,13 +15,6 @@ export default class Es5TokenConsumer extends SubhutiTokenConsumer {
         return this.consume(es5TokensObj.NullLiteral);
     }
 
-    BooleanLiteral() {
-        this.or([
-            {alt: () => this.TrueTok()},
-            {alt: () => this.FalseTok()}
-        ])
-    }
-
     TrueTok() {
         return this.consume(es5TokensObj.TrueTok);
     }

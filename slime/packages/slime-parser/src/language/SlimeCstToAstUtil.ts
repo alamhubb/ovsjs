@@ -1737,9 +1737,22 @@ export class SlimeCstToAst {
       throw new Error(`UnaryExpression CST没有children，可能是Parser生成的CST不完整`)
     }
     
-    // 如果只有一个子节点，直接递归处理
+    // 如果只有一个子节点，检查是否是表达式节点还是token
     if (cst.children.length === 1) {
-      return this.createExpressionAst(cst.children[0])
+      const child = cst.children[0]
+      
+      // 检查是否是token（token有value属性但没有children）
+      if (child.value !== undefined && !child.children) {
+        // 这是一个token，说明Parser层生成的CST不完整
+        // UnaryExpression应该有运算符+操作数两个子节点，或者直接是PostfixExpression
+        throw new Error(
+          `UnaryExpression CST不完整：只有运算符token '${child.name}' (${child.value})，缺少操作数。` +
+          `这是Parser层的问题，请检查Es6Parser.UnaryExpression的Or分支逻辑。`
+        )
+      }
+      
+      // 是表达式节点，递归处理
+      return this.createExpressionAst(child)
     }
     
     // 如果有两个子节点，是一元运算符表达式
