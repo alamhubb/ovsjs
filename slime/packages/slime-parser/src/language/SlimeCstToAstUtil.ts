@@ -910,15 +910,34 @@ export class SlimeCstToAst {
   createArrayBindingPatternAst(cst: SubhutiCst): SlimePattern {
     checkCstName(cst, Es6Parser.prototype.ArrayBindingPattern.name)
     
-    // 简化实现：创建ArrayPattern
+    // CST结构：[LBracket, BindingElementList?, RBracket]
     const elements: (SlimePattern | null)[] = []
     
-    // 解析BindingElementList
-    for (const child of cst.children) {
-      if (child.name === Es6Parser.prototype.BindingElement.name || 
-          child.name === Es6Parser.prototype.BindingIdentifier.name) {
-        const element = this.createBindingIdentifierAst(child)
-        elements.push(element)
+    // 查找BindingElementList
+    const bindingList = cst.children.find(ch => ch.name === Es6Parser.prototype.BindingElementList.name)
+    if (bindingList) {
+      // BindingElementList包含BindingElisionElement和Comma
+      for (const child of bindingList.children) {
+        if (child.name === Es6Parser.prototype.BindingElisionElement.name) {
+          // BindingElisionElement可能包含BindingElement或Elision（空）
+          const bindingElement = child.children.find((ch: any) => 
+            ch.name === Es6Parser.prototype.BindingElement.name)
+          
+          if (bindingElement) {
+            // BindingElement -> SingleNameBinding -> BindingIdentifier
+            const singleName = bindingElement.children[0]
+            if (singleName && singleName.name === Es6Parser.prototype.SingleNameBinding.name) {
+              const identifier = singleName.children.find((ch: any) => 
+                ch.name === Es6Parser.prototype.BindingIdentifier.name)
+              if (identifier) {
+                elements.push(this.createBindingIdentifierAst(identifier))
+              }
+            }
+          } else {
+            // Elision（空元素，如 [, b]）
+            elements.push(null)
+          }
+        }
       }
     }
     

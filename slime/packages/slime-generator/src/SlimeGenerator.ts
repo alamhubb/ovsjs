@@ -764,7 +764,18 @@ export default class SlimeGenerator {
   }
 
   private static generatorArrayPattern(node: SlimeArrayPattern) {
-    this.generatorNodes(node.elements)
+    // 输出数组解构：[a, b, c]
+    this.addLBracket()
+    node.elements.forEach((element, index) => {
+      if (element) {
+        this.generatorNode(element)
+      }
+      // 添加逗号（除了最后一个元素）
+      if (index < node.elements.length - 1) {
+        this.addComma()
+      }
+    })
+    this.addRBracket()
   }
 
   private static generatorRestElement(node: SlimeRestElement) {
