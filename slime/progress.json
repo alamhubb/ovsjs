@@ -1,0 +1,104 @@
+{
+  "status": "completed",
+  "startTime": 1760550018019,
+  "endTime": 1760550172578,
+  "total": 40,
+  "passCount": 40,
+  "failCount": 0,
+  "slowTests": [
+    {
+      "name": "03-binary-ops.js",
+      "time": 955
+    },
+    {
+      "name": "04-comparison.js",
+      "time": 926
+    },
+    {
+      "name": "07-if-statement.js",
+      "time": 1208
+    },
+    {
+      "name": "08-for-loop.js",
+      "time": 1033
+    },
+    {
+      "name": "09-function-decl.js",
+      "time": 1313
+    },
+    {
+      "name": "10-objects-arrays.js",
+      "time": 6882
+    },
+    {
+      "name": "11-arrow-functions.js",
+      "time": 737
+    },
+    {
+      "name": "14-spread-rest.js",
+      "time": 2378
+    },
+    {
+      "name": "17-enhanced-object.js",
+      "time": 579
+    },
+    {
+      "name": "18-default-params.js",
+      "time": 768
+    },
+    {
+      "name": "21-generator.js",
+      "time": 1667
+    },
+    {
+      "name": "22-symbol.js",
+      "time": 864
+    },
+    {
+      "name": "23-promise.js",
+      "time": 17641
+    },
+    {
+      "name": "24-map-set.js",
+      "time": 59801
+    },
+    {
+      "name": "27-computed-props.js",
+      "time": 4625
+    },
+    {
+      "name": "28-weakmap-weakset.js",
+      "time": 6455
+    },
+    {
+      "name": "29-async-await.js",
+      "time": 20490
+    },
+    {
+      "name": "30-regex-unicode.js",
+      "time": 2032
+    },
+    {
+      "name": "23-functions.js",
+      "time": 4879
+    },
+    {
+      "name": "24-objects-arrays.js",
+      "time": 6840
+    },
+    {
+      "name": "25-operators-all.js",
+      "time": 1363
+    },
+    {
+      "name": "28-array-methods.js",
+      "time": 2106
+    },
+    {
+      "name": "30-production-level.js",
+      "time": 5397
+    }
+  ],
+  "avgTime": 3864,
+  "totalElapsed": 154559
+}
