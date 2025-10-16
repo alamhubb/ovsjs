@@ -1,20 +1,32 @@
 {
   "status": "completed",
-  "startTime": 1760632493422,
-  "endTime": 1760632500092,
+  "startTime": 1760637665951,
+  "endTime": 1760637675907,
   "total": 40,
-  "passCount": 32,
-  "failCount": 8,
+  "passCount": 40,
+  "failCount": 0,
   "slowTests": [
     {
-      "name": "05-logical-ops.js",
-      "time": 817
+      "name": "24-map-set.js",
+      "time": 1583
     },
     {
-      "name": "24-map-set.js",
-      "time": 1129
+      "name": "29-async-await.js",
+      "time": 909
+    },
+    {
+      "name": "23-functions.js",
+      "time": 1020
+    },
+    {
+      "name": "24-objects-arrays.js",
+      "time": 1800
+    },
+    {
+      "name": "30-production-level.js",
+      "time": 731
     }
   ],
-  "avgTime": 167,
-  "totalElapsed": 6670
+  "avgTime": 249,
+  "totalElapsed": 9956
 }
