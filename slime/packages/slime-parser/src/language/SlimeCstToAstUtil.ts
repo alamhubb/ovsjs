@@ -79,6 +79,12 @@ export class SlimeCstToAst {
     const astName = checkCstName(cst, Es6Parser.prototype.Program.name);
     const first = cst.children[0]
     let program: SlimeProgram
+    
+    // 容错：如果children为空或undefined，返回空程序
+    // if (!first) {
+    //   return SlimeAstUtil.createProgram([], SlimeProgramSourceType.module)
+    // }
+    
     if (first.name === Es6Parser.prototype.ModuleItemList.name) {
       const body = this.createModuleItemListAst(first)
       program = SlimeAstUtil.createProgram(body, SlimeProgramSourceType.module)
