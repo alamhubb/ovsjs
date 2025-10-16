@@ -453,7 +453,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
       //内部consume,也需要把标识设为false，有可能深层子设为了true，但是后来又改为了false，如果不同步改就会没同步
       this.setContinueMatchAndNoBreak(false)
       // this.setContinueFor(false)
-      if (this.faultTolerance || (this.allowError && !this.optionAndOrAllowErrorMatchOnce)) {
+      if (this.faultTolerance || this.outerHasAllowError || (this.allowError && !this.optionAndOrAllowErrorMatchOnce)) {
         return
       }
       this.printTokens()
@@ -526,8 +526,8 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
   }
 
   //使用的应该是出去本次以外，还剩下的状态
-  onlySetAllowErrorLastPopState() {
-    this.setAllowError(this.allowErrorStack.length > 1)
+  get outerHasAllowError() {
+    return this.allowErrorStack.length > 1
   }
 
   //允许错误匹配一次
@@ -594,7 +594,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
       // 如果是最后一个分支，失败时报错
       if (index === funLength) {
-        this.onlySetAllowErrorLastPopState()  // 最后一次尝试，不允许错误
+        this.setAllowError(false)   // 最后一次尝试，不允许错误
       } else {
         this.setAllowError(true)   // 允许错误，继续尝试下一个分支
       }
