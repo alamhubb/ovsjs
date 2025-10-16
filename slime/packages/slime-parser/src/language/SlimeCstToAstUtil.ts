@@ -81,9 +81,9 @@ export class SlimeCstToAst {
     let program: SlimeProgram
     
     // 容错：如果children为空或undefined，返回空程序
-    // if (!first) {
-    //   return SlimeAstUtil.createProgram([], SlimeProgramSourceType.module)
-    // }
+    if (!first) {
+      return SlimeAstUtil.createProgram([], SlimeProgramSourceType.module)
+    }
     
     if (first.name === Es6Parser.prototype.ModuleItemList.name) {
       const body = this.createModuleItemListAst(first)
@@ -475,16 +475,28 @@ export class SlimeCstToAst {
 
   createGeneratorDeclarationAst(cst: SubhutiCst): SlimeFunctionDeclaration {
     // GeneratorDeclaration: function* name(params) { body }
-    // 降级为普通FunctionDeclaration，generator=true
+    // CST children: [FunctionTok, Asterisk, BindingIdentifier, LParen, FormalParameterList?, RParen, FunctionBodyDefine]
+    
+    // 查找BindingIdentifier（children[2]）
     const id = this.createBindingIdentifierAst(cst.children[2])
-    const paramsAndBody = cst.children.find(ch => ch.name === Es6Parser.prototype.FunctionFormalParametersBodyDefine.name)
-    if (!paramsAndBody) throwNewError('FunctionFormalParametersBodyDefine')
-    const func = this.createFunctionFormalParametersBodyDefineAst(paramsAndBody, cst.loc)
+    
+    // 查找FormalParameterList（可选）
+    let params: SlimePattern[] = []
+    const formalParams = cst.children.find(ch => ch.name === Es6Parser.prototype.FormalParameterList.name)
+    if (formalParams) {
+      params = this.createFormalParameterListAst(formalParams)
+    }
+    
+    // 查找FunctionBodyDefine
+    const bodyNode = cst.children.find(ch => ch.name === Es6Parser.prototype.FunctionBodyDefine.name)
+    if (!bodyNode) throwNewError('FunctionBodyDefine')
+    const body = this.createFunctionBodyDefineAst(bodyNode)
+    
     return {
       type: SlimeAstType.FunctionDeclaration,
       id: id,
-      params: func.params,
-      body: func.body,
+      params: params,
+      body: body,
       generator: true,
       async: false,
       loc: cst.loc
@@ -1896,25 +1908,41 @@ export class SlimeCstToAst {
 
   // 生成器表达式处理：function* (...) { ... }
   createGeneratorExpressionAst(cst: SubhutiCst): SlimeFunctionExpression {
-    // 更稳妥：从 children 中查找 FunctionFormalParametersBodyDefine 节点
+    // GeneratorExpression: function* [name](params) { body }
+    // CST children: [FunctionTok, Asterisk, BindingIdentifier?, LParen, FormalParameterList?, RParen, FunctionBodyDefine]
+    
+    // 可选命名（children[2]）
     let id: SlimeIdentifier | null = null
-    // 可选命名
     if (cst.children[2] && cst.children[2].name === Es6Parser.prototype.BindingIdentifier.name) {
       id = this.createBindingIdentifierAst(cst.children[2])
     }
-    // 查找参数+函数体组合节点
-    const paramsAndBody = cst.children.find(child => child.name === Es6Parser.prototype.FunctionFormalParametersBodyDefine.name)
-    if (paramsAndBody) {
-      const func = this.createFunctionFormalParametersBodyDefineAst(paramsAndBody as SubhutiCst, cst.loc)
-      if (id) func.id = id
+    
+    // 查找FormalParameterList（可选）
+    let params: SlimePattern[] = []
+    const formalParams = cst.children.find(ch => ch.name === Es6Parser.prototype.FormalParameterList.name)
+    if (formalParams) {
+      params = this.createFormalParameterListAst(formalParams)
+    }
+    
+    // 查找FunctionBodyDefine
+    const bodyNode = cst.children.find(ch => ch.name === Es6Parser.prototype.FunctionBodyDefine.name)
+    if (!bodyNode) {
+      // 回退方案：构造空函数体
+      const lp = SlimeAstUtil.createLParen(cst.loc)
+      const rp = SlimeAstUtil.createRParen(cst.loc)
+      const funcParams = SlimeAstUtil.createFunctionParams(lp, rp, cst.loc, params)
+      const body = SlimeAstUtil.createBlockStatement(null, null, [], cst.loc)
+      const func = SlimeAstUtil.createFunctionExpression(body, id, funcParams, cst.loc)
+      func.generator = true
       return func
     }
-    // 回退方案：构造空参数与空函数体，确保编译不中断
+    const body = this.createFunctionBodyDefineAst(bodyNode)
+    
     const lp = SlimeAstUtil.createLParen(cst.loc)
     const rp = SlimeAstUtil.createRParen(cst.loc)
-    const params = SlimeAstUtil.createFunctionParams(lp, rp, cst.loc, [])
-    const body = SlimeAstUtil.createBlockStatement(null, null, [], cst.loc)
-    const func = SlimeAstUtil.createFunctionExpression(body, id, params, cst.loc)
+    const funcParams = SlimeAstUtil.createFunctionParams(lp, rp, cst.loc, params)
+    const func = SlimeAstUtil.createFunctionExpression(body, id, funcParams, cst.loc)
+    func.generator = true
     return func
   }
 

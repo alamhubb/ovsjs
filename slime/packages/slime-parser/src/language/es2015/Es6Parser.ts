@@ -1664,7 +1664,9 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
     this.tokenConsumer.Asterisk()
     this.BindingIdentifier()
     this.tokenConsumer.LParen()
-    this.FormalParameterList()
+    this.Option(() => {
+      this.FormalParameterList()
+    })
     this.tokenConsumer.RParen()
     this.FunctionBodyDefine()
   }
@@ -1675,7 +1677,9 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
     this.tokenConsumer.Asterisk()
     this.Option(() => this.BindingIdentifier())
     this.tokenConsumer.LParen()
-    this.FormalParameterList()
+    this.Option(() => {
+      this.FormalParameterList()
+    })
     this.tokenConsumer.RParen()
     this.FunctionBodyDefine()
   }

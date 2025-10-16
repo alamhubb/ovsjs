@@ -411,15 +411,35 @@ export default class SlimeGenerator {
     // 输出 function 关键字
     this.addCode(es6TokensObj.FunctionTok)
     
+    // Generator函数：输出 * 号
+    if (node.generator) {
+      this.addCode(es6TokensObj.Asterisk)
+    }
+    
     // 输出函数名
     if (node.id) {
-      this.addSpacing()  // function 和函数名之间需要空格
+      this.addSpacing()  // function/function* 和函数名之间需要空格
       this.generatorIdentifier(node.id)
     }
     
     // 输出参数列表
     if (node.params) {
-      this.generatorFunctionParams(node.params)
+      // 如果params是SlimeFunctionParams对象（带lParen/rParen）
+      if ((node.params as any).lParen) {
+        this.generatorFunctionParams(node.params as SlimeFunctionParams)
+      } else {
+        // 如果params是数组（Generator函数的情况）
+        this.addLParen()
+        if (Array.isArray(node.params) && node.params.length > 0) {
+          (node.params as SlimePattern[]).forEach((param, index) => {
+            if (index !== 0) {
+              this.addComma()
+            }
+            this.generatorNode(param)
+          })
+        }
+        this.addRParen()
+      }
     } else {
       this.addLParen()
       this.addRParen()
