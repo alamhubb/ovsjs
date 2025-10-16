@@ -1060,13 +1060,94 @@ export class SlimeCstToAst {
    */
   createForStatementAst(cst: SubhutiCst): any {
     checkCstName(cst, Es6Parser.prototype.ForStatement.name);
-    // 简化实现：for (init; test; update) body
+    
+    // ForStatement 结构：
+    // children[0]: ForTok
+    // children[1]: LParen
+    // children[2...n-2]: Or节点的内容（init、分号、test、分号、update）
+    // children[n-1]: RParen
+    // children[n]: Statement (body)
+    
+    let init: any = null
+    let test: any = null
+    let update: any = null
+    
+    // body总是最后一个Statement
+    const bodyCst = cst.children[cst.children.length - 1]
+    let body: any = this.createStatementAst(bodyCst)
+    
+    // 如果body是数组，取第一个元素
+    if (Array.isArray(body)) {
+      body = body[0]
+    }
+    
+    // 从children[2]开始，找到所有非RParen的节点
+    let loopPartsEndIndex = cst.children.length - 1
+    for (let i = 2; i < cst.children.length; i++) {
+      if (cst.children[i].name === 'RParen' || cst.children[i].loc?.type === 'RParen') {
+        loopPartsEndIndex = i
+        break
+      }
+    }
+    
+    const loopParts: SubhutiCst[] = []
+    for (let i = 2; i < loopPartsEndIndex; i++) {
+      loopParts.push(cst.children[i])
+    }
+    
+    // 解析loopParts
+    // 结构：[init, test, Semicolon, update] 或 [test, Semicolon, update]
+    // init可能是VariableDeclaration或Expression
+    
+    let idx = 0
+    
+    // init: 第一个节点
+    if (idx < loopParts.length) {
+      const node = loopParts[idx]
+      if (node.name === Es6Parser.prototype.VariableDeclaration.name) {
+        init = this.createVariableDeclarationAst(node)
+        idx++
+      } else if (node.name === Es6Parser.prototype.Expression.name) {
+        init = this.createExpressionAst(node)
+        idx++
+      }
+    }
+    
+    // test: 第二个节点（如果是Expression）
+    if (idx < loopParts.length && loopParts[idx].name === Es6Parser.prototype.Expression.name) {
+      console.log(`\ntest CST:`)
+      console.log(`  Expression children: ${loopParts[idx].children?.length || 0}`)
+      if (loopParts[idx].children && loopParts[idx].children[0]) {
+        const assignExpr = loopParts[idx].children[0]
+        console.log(`  AssignmentExpression children: ${assignExpr.children?.length || 0}`)
+        if (assignExpr.children) {
+          assignExpr.children.forEach((ch, i) => {
+            console.log(`    [${i}]: ${ch.name || 'token'} (${ch.loc?.type || 'N/A'})`)
+          })
+        }
+      }
+      test = this.createExpressionAst(loopParts[idx])
+      console.log(`  test result: ${test?.type}`)
+      idx++
+    }
+    
+    // 跳过Semicolon
+    if (idx < loopParts.length && loopParts[idx].loc?.type === 'Semicolon') {
+      idx++
+    }
+    
+    // update: 最后一个Expression
+    if (idx < loopParts.length && loopParts[idx].name === Es6Parser.prototype.Expression.name) {
+      update = this.createExpressionAst(loopParts[idx])
+      idx++
+    }
+    
     return {
       type: SlimeAstType.ForStatement,
-      init: null,  // TODO: 解析 init
-      test: null,  // TODO: 解析 test
-      update: null,  // TODO: 解析 update
-      body: null,  // TODO: 解析 body
+      init: init,
+      test: test,
+      update: update,
+      body: body,
       loc: cst.loc
     }
   }
@@ -1469,8 +1550,15 @@ export class SlimeCstToAst {
       const eqAst = SlimeAstUtil.createEqualOperator(eqCst.loc)
       const initCst = varCst.children[1]
       if (initCst) {
-        const init = this.createAssignmentExpressionAst(initCst)
-        variableDeclarator = SlimeAstUtil.createVariableDeclarator(id, eqAst, init)
+        // 检查initCst是否是AssignmentExpression
+        if (initCst.name === Es6Parser.prototype.AssignmentExpression.name) {
+          const init = this.createAssignmentExpressionAst(initCst)
+          variableDeclarator = SlimeAstUtil.createVariableDeclarator(id, eqAst, init)
+        } else {
+          // 如果不是AssignmentExpression，直接作为表达式处理
+          const init = this.createExpressionAst(initCst)
+          variableDeclarator = SlimeAstUtil.createVariableDeclarator(id, eqAst, init)
+        }
       } else {
         variableDeclarator = SlimeAstUtil.createVariableDeclarator(id, eqAst)
       }
@@ -1643,6 +1731,12 @@ export class SlimeCstToAst {
   createUnaryExpressionAst(cst: SubhutiCst): SlimeExpression {
     const astName = checkCstName(cst, Es6Parser.prototype.UnaryExpression.name);
     
+    // 防御性检查：如果没有children，抛出更详细的错误
+    if (!cst.children || cst.children.length === 0) {
+      console.error('UnaryExpression CST没有children:', JSON.stringify(cst, null, 2))
+      throw new Error(`UnaryExpression CST没有children，可能是Parser生成的CST不完整`)
+    }
+    
     // 如果只有一个子节点，直接递归处理
     if (cst.children.length === 1) {
       return this.createExpressionAst(cst.children[0])
@@ -1685,7 +1779,27 @@ export class SlimeCstToAst {
   createPostfixExpressionAst(cst: SubhutiCst): SlimeExpression {
     const astName = checkCstName(cst, Es6Parser.prototype.PostfixExpression.name);
     if (cst.children.length > 1) {
-
+      // PostfixExpression: argument ++ | argument --
+      const argument = this.createExpressionAst(cst.children[0])
+      
+      // 查找operator token（++或--）
+      let operator: string | undefined
+      for (let i = 1; i < cst.children.length; i++) {
+        if (cst.children[i].loc && (cst.children[i].loc.type === 'PlusPlus' || cst.children[i].loc.type === 'MinusMinus')) {
+          operator = cst.children[i].loc.value
+          break
+        }
+      }
+      
+      if (operator) {
+        return {
+          type: SlimeAstType.UpdateExpression,
+          operator: operator,
+          argument: argument,
+          prefix: false,  // 后缀表达式
+          loc: cst.loc
+        } as any
+      }
     }
     return this.createExpressionAst(cst.children[0])
   }
@@ -1864,6 +1978,23 @@ export class SlimeCstToAst {
     return ast
   }
 
+  createLiteralFromToken(token: any): SlimeExpression {
+    const tokenName = token.tokenName
+    if (tokenName === Es6TokenConsumer.prototype.NullLiteral.name) {
+      return SlimeAstUtil.createNullLiteralToken()
+    } else if (tokenName === Es6TokenConsumer.prototype.TrueTok.name) {
+      return SlimeAstUtil.createBooleanLiteral(true)
+    } else if (tokenName === Es6TokenConsumer.prototype.FalseTok.name) {
+      return SlimeAstUtil.createBooleanLiteral(false)
+    } else if (tokenName === Es6TokenConsumer.prototype.NumericLiteral.name) {
+      return SlimeAstUtil.createNumericLiteral(Number(token.tokenValue))
+    } else if (tokenName === Es6TokenConsumer.prototype.StringLiteral.name) {
+      return SlimeAstUtil.createStringLiteral(token.tokenValue)
+    } else {
+      throw new Error(`Unsupported literal token: ${tokenName}`)
+    }
+  }
+
   createArrayExpressionAst(cst: SubhutiCst): SlimeArrayExpression {
     const astName = checkCstName(cst, Es6Parser.prototype.ArrayLiteral.name);
     const ast: SlimeArrayExpression = {
@@ -1909,6 +2040,7 @@ export class SlimeCstToAst {
       if (child.name === Es6Parser.prototype.ArrowFunction.name) {
         return this.createArrowFunctionAst(child)
       }
+      // 否则作为表达式处理
       return this.createExpressionAst(child)
     }
 

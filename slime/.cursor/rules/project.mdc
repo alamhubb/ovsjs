@@ -1,169 +1,168 @@
----
-description: Slime ES6 Parser 项目信息与测试成果
-alwaysApply: true
----
-
 # Slime - JavaScript AST 工具链
 
 ## 项目定位
-
 提供完整的 JavaScript AST 操作能力，包括ES5/ES6解析器、AST工具类、代码生成器。
 
-## 质量与验证承诺（强制）
+## 当前任务：修复ES6 Parser失败测试
 
-- 严格以"修复问题"为目标，禁止简化/降级/跳过来让测试通过。
-- 测试失败=功能缺失，必须修复 Parser/Generator，不得弱化或修改测试。
-- 目标：完整并正确支持 ES6 语法（以规范语义为准，不以"能编译"为准）。
-- 执行节奏：一次只运行一个用例 → 失败定位并修复 → 复跑验证 → 再下一个。
-- 执行透明度：记录每个用例耗时；总耗时>10秒必须分析原因与优化建议。
-- 变更可追溯：修复点最小化、可说明、可验证，避免无关重构。
+### 正在修复的测试用例
+**测试文件：** `tests/cases/single/05-logical-ops.js`  
+**预期通过时间：** <5分钟  
+**优先级：** P1（影响3个测试）
 
-## 测试规范强制要求
+### 实时诊断记录
 
-**⚠️ 所有测试必须严格遵守以下规范，无例外：**
+**【最新诊断】2025-10-16 (第三轮 - 根因确认)**
 
-**系统规则（guidebot.mdc）- 必须遵守：**
-- ✅ 测试用例组织规范：tests/cases/或tests/，禁止根目录
-- ✅ 单文件测试执行原则：一个个测试修复，禁止批量运行
-- ✅ 调试工具文件规范：只保留test-runner/test-single/项目专用工具
-- ✅ 测试执行规范：失败→修复代码→再继续，禁止修改测试用例
-- ✅ 测试阶段渐进原则：01-10基础→11-20扩展→21-30完整链路
+**操作记录：**
+- 执行：`npx tsx test-runner.ts tests/cases/single/05-logical-ops.js`
+- 检查：`Es6Parser.ts` 第645-670行 `UnaryExpression()` 方法
 
-**项目规则（本文件）- 必须遵守：**
-- ✅ Slime测试架构：40个测试用例，分single/combined
-- ✅ 测试与修复流程：6步流程，单用例→分析→修复→复跑
-- ✅ 性能与质量要求：记录耗时、分析瓶颈、评估质量
-
-**违规检查（AI内部，每次测试前必查）：**
-```
-□ 我是否在根目录创建了测试文件？→ 是 → 违规！
-□ 我是否一次性运行多个测试？→ 是 → 违规！
-□ 测试失败后是否修复了代码？→ 否 → 违规！
-□ 是否保留了临时文件未删除？→ 是 → 违规！
-```
-
-发现任何违规 → 立即停止 → 触发反思流程 → 更新规则防止再犯
-
-## 测试架构
-
-**测试文件组织：**
-```
-slime/
-├── test-runner.ts        # 正式测试入口（必需）
-├── test-single.ts        # 单用例调试工具（调试有用）
-├── dump-cst.ts          # CST结构查看工具（调试有用）
-└── tests/
-    ├── cases/           # 持久化测试用例
-    │   ├── single/      # 单特性测试（01-30编号）
-    │   │   ├── 01-literals.js
-    │   │   ├── ...
-    │   │   └── 30-regex-unicode.js
-    │   └── combined/    # 组合测试（21-30编号）
-    │       ├── 21-simple-roundtrip.js
-    │       └── ...
-    └── utils/           # 测试工具（可选）
+**根因确认：**
+```typescript
+// Es6Parser.ts:645-670
+@SubhutiRule
+UnaryExpression() {
+  this.Or([
+    {
+      alt: () => {
+        this.Or([...operators...])
+        this.UnaryExpression()  // ❌ 递归调用，但没有return
+      }
+    },
+    {alt: () => this.AwaitExpression()},
+    {alt: () => this.PostfixExpression()}
+  ])
+  // ❌ 方法结束，没有return语句
+}
 ```
 
-**文件用途说明：**
+**结论1：UnaryExpression方法缺少return语句**
+- 在Subhuti框架中，每个@SubhutiRule方法都应该返回CST节点
+- 当前实现只调用了子规则，但没有return，导致返回undefined
+- undefined被当作CST节点传递，后续访问.children时崩溃
 
-**test-runner.ts（正式测试入口）：**
-- 作用：运行全部40个测试，输出统计与耗时分析
-- 特征：包含testCases数组，遍历执行，显示进度
-- 输出：通过率、耗时分析、性能瓶颈、慢测试列表
+**结论2：所有调用UnaryExpression的地方都会出问题**
+- `MultiplicativeExpression()`：第674、677行
+- `AwaitExpression()`：第1645行
+- 影响范围：所有包含一元运算符的表达式（!、+、-、~、typeof等）
 
-**test-single.ts（单用例调试工具）：**
-- 作用：只运行一个测试文件，用于精准调试
-- 用途：修复时"一个个测试一个个修复"
-- 输出：词法分析结果、AST预览、编译结果、错误堆栈
-- 使用：`npx tsx test-single.ts tests/cases/single/21-generator.js`
+**结论3：Subhuti框架的CST自动创建机制**
+- 查看 `SubhutiParser.processCst` (第271-327行)发现：
+  - 第280行：自动创建children数组 `cst.children = []`
+  - 第293行：执行规则方法 `let res = targetFun.apply(this)`
+  - 第320行：返回自动创建的cst（不使用方法返回值）
+- 结论：方法不需要return语句，CST由框架自动创建
+- 其他方法（MultiplicativeExpression等）也没有return语句
 
-**dump-cst.ts（CST结构查看工具）：**
-- 作用：输出指定文件的CST（具体语法树）节点结构
-- 用途：定位Parser问题，查看语法分析结果
-- 输出：GeneratorExpression、MemberExpression、PropertyDefinition等关键节点的结构
-- 使用：`npx tsx dump-cst.ts tests/cases/single/22-symbol.js`
-- 适用场景：
-  - Parser解析错误时，查看CST是否正确生成
-  - CST→AST转换错误时，查看源CST结构
-  - 添加新语法支持时，查看Parser输出的节点结构
+**结论4：dump-cst确认CST结构异常**
+- 执行：`npx tsx dump-cst.ts tests/cases/single/05-logical-ops.js`
+- 输出：24个UnaryExpression节点，每个都只有`{"name": "UnaryExpression"}`
+- 确认：children属性完全不存在（不是空数组，而是undefined）
 
-**tests/cases/（正式测试用例库）：**
-- single/：单特性测试（01-30编号，简单→复杂）
-- combined/：组合测试（21-30编号，复杂场景）
-- 所有用例持久化、结构化、可复用
+**结论5：定位到SubhutiParser优化代码**
+- 查看 `SubhutiParser.processCst` 第249-250行：
+  ```typescript
+  if (!cst.children?.length) {
+    cst.children = undefined  // ⚠️ 空数组被优化为undefined
+  }
+  ```
+- 问题：UnaryExpression的children是空数组（没有子节点），被优化成undefined
+- 但为什么children是空？UnaryExpression调用了Or和子规则，应该有children才对
 
-**执行命令：**
-```bash
-npm test                              # 运行全部测试
-npx tsx test-single.ts tests/cases/single/21-generator.js  # 单用例调试
-npx tsx dump-cst.ts tests/cases/single/22-symbol.js        # 查看CST结构
-```
+**结论6：Or方法返回值不影响children**
+- Or方法确实有返回值（第657行：`return this.getCurCst()`）
+- 但processCst第293行接收后不使用这个返回值
+- Or只是选择分支，不创建子CST节点
 
-## 测试与修复流程（强制）
+**结论7：children来源于子规则调用**
+- 对比MultiplicativeExpression（工作正常）：
+  ```typescript
+  MultiplicativeExpression() {
+    this.UnaryExpression()  // ← 调用@SubhutiRule，创建子CST
+    this.Many(() => {
+      this.MultiplicativeOperator()
+      this.UnaryExpression()
+    })
+  }
+  ```
+- UnaryExpression自身：
+  ```typescript
+  UnaryExpression() {
+    this.Or([
+      {alt: () => {
+        this.Or([...operators...])  // ← 只消费token，不创建子CST
+        this.UnaryExpression()       // ← 递归调用，应该创建子CST，但为什么没有？
+      }},
+      ...
+    ])
+  }
+  ```
 
-1) 单用例运行：`npx tsx test-single.ts <path>`
-2) 失败分析：定位具体 AST/CST/Generator 环节
-3) 最小化修复：仅修改必要位置
-4) 复跑验证：确保该用例通过
-5) 记录耗时：>10秒输出原因与建议
-6) 继续下一个失败用例
+**结论8：最小测试用例揭示关键问题**
+- 创建：`tests/temp-minimal-not.js` 内容：`var x = !true;`
+- dump-cst输出：2个UnaryExpression
+  - 第1个：有children `[Exclamation token, 第2个UnaryExpression]` ✅
+  - 第2个：只有name，无children ❌
+- 说明：第1个UnaryExpression匹配了`!`和递归调用，但递归返回的UnaryExpression是空的
 
-## 当前测试成果
+**结论9：第2个UnaryExpression应该匹配PostfixExpression分支**
+- UnaryExpression的Or有3个分支：
+  1. `operator + UnaryExpression` - 已被第1个匹配消耗
+  2. `AwaitExpression` - 需要await关键字，true不匹配
+  3. `PostfixExpression` - 应该能匹配true
+- PostfixExpression → LeftHandSideExpression → Or(CallExpression | NewExpression)
 
-**通过率：31/40 (77.5%)**
+**结论10：CallExpression vs NewExpression分支分析**
+- CallExpression要求：`MemberExpression + Arguments()`
+  - true是PrimaryExpression，可以通过MemberExpression
+  - 但true后面没有`()`，Arguments失败 ❌
+- NewExpression要求：`MemberExpression` 或 `new + NewExpression`
+  - true是PrimaryExpression，可以通过MemberExpression ✅
+  - 应该能成功匹配
+  
+**结论11：关键疑问 - 为什么NewExpression分支没有添加子节点？**
+- 查看Es6Parser第505-519行NewExpression实现
+- 查看Es6Parser第378-418行MemberExpression实现
+- 查看Es6Parser第242-318行PrimaryExpression实现
+- 怀疑：某个环节的Or分支失败，或者CST被优化掉了
 
-**已完整支持的ES6特性（31个测试用例）：**
-- ✅ 基础语法（let/const、箭头函数、模板字符串、解构赋值）
-- ✅ Class（基础、继承、方法、属性、静态成员、getter/setter）
-- ✅ Symbol类型（Symbol()、Symbol.for()、Symbol.iterator）
-- ✅ Promise完整API（Promise.all/race/allSettled、链式调用）
-- ✅ Map/Set（完整API，包括set/get作为属性名）
-- ✅ Module导入导出（export const/function/class、命名导出、批量导出）
-- ✅ 计算属性名（[expression]: value、方法、getter/setter）
-- ✅ 二进制/八进制字面量（0b1010、0o755）
-- ✅ 正则表达式（基础、flags、Unicode、复杂模式）
-- ✅ 扩展运算符、剩余参数、默认参数
-- ✅ 增强对象字面量、数组方法
+**临时文件清单：**
+- `tests/temp-minimal-not.js` - 最小复现用例
+- `tests/temp-logical-not.js` - 早期诊断文件（可删除）
+
+---
+
+## 测试通过率：31/40 (77.5%)
 
 **失败测试用例（9个）：**
 
 ### A类：CST节点loc信息缺失（6个测试）
 1. **08-for-loop.js** - `Cannot read properties of undefined (reading 'end')`
-   - 问题：for循环CST节点缺少loc信息
-   - 影响：基础for循环语法无法使用
-
 2. **19-for-of-loop.js** - `Cannot read properties of undefined (reading 'end')`
-   - 问题：for...of循环CST节点缺少loc信息
-   - 影响：for...of语法无法使用
-
 3. **21-generator.js** - `Cannot read properties of undefined (reading 'end')`
-   - 问题：Generator函数CST节点缺少loc信息
-   - 影响：Generator函数语法解析失败
-
 4. **28-weakmap-weakset.js** - `Cannot read properties of undefined (reading 'end')`
-   - 问题：WeakMap/WeakSet相关CST节点缺少loc信息
-   - 影响：WeakMap/WeakSet语法解析失败
-
 5. **29-async-await.js** - `Cannot read properties of undefined (reading 'end')`
-   - 问题：async/await CST节点缺少loc信息
-   - 影响：async/await语法解析失败
-
 6. **23-functions.js (combined)** - `Cannot read properties of undefined (reading 'end')`
-   - 问题：组合测试中的函数CST节点缺少loc信息
-   - 影响：部分函数语法解析失败
 
 ### B类：运算符支持缺失（3个测试）
-7. **05-logical-ops.js** - `暂不支持的类型：Exclamation`
-   - 问题：逻辑非运算符 `!` 的CST解析不完整，只有运算符token没有操作数
-   - 影响：逻辑运算符 `!`、`&&`、`||` 无法使用
-
+7. **05-logical-ops.js** - `暂不支持的类型：Exclamation` [正在修复]
 8. **21-simple-roundtrip.js (combined)** - `暂不支持的类型：Exclamation`
-   - 问题：与测试7相同，逻辑运算符问题
-   - 影响：组合测试中的逻辑运算符失败
-
 9. **25-operators-all.js (combined)** - `暂不支持的类型：TypeofTok`
-   - 问题：typeof运算符AST转换缺失
-   - 影响：typeof运算符无法使用
+
+## 测试架构
+
+**测试入口：**
+- `test-runner.ts` - 单例测试入口（日常修复使用）
+- `test-all.ts` - 完整测试套件（最后验证使用）
+- `dump-cst.ts` - CST结构查看工具（调试专用）
+
+**测试流程：**
+1. 单用例测试：`npx tsx test-runner.ts <path>`
+2. 诊断CST结构：`npx tsx dump-cst.ts <path>`
+3. 修复代码
+4. 复跑验证
+5. 完整测试：`npx tsx test-all.ts`
 
 ## 修复优先级
 
@@ -171,452 +170,27 @@ npx tsx dump-cst.ts tests/cases/single/22-symbol.js        # 查看CST结构
 - 修复位置：`SubhutiParser.ts` 的 `processCst` 方法
 - 预期效果：6个测试通过，通过率提升到92.5%
 
-**P1（影响3个测试）：** 运算符支持
-- 修复位置：`SlimeCstToAstUtil.ts` 的运算符转换逻辑
+**P1（影响3个测试，正在修复）：** 运算符支持
+- 修复位置：Parser层或AST转换层
 - 预期效果：3个测试通过，通过率达到100%
-
-**前轮修复清单（9项）：**
-1. PropertyDefinition类型定义
-2. 空参数/空函数体防御性处理
-3. GeneratorExpression与YieldExpression
-4. IdentifierName（保留字可作属性名，如Symbol.for）
-5. BracketExpression（obj[key]计算成员访问）
-6. ComputedPropertyName（[expr]: value）
-7. HoistableDeclaration（export function/generator）
-8. GeneratorDeclaration（function* 声明形式）
-9. 正则词法规则（支持字符类、转义、复杂模式）
-
-## 性能分析
-
-### Packrat优化成果 ✅
-
-**优化前：** 185秒（40个测试）
-**优化后：** 85秒（40个测试）
-**提速：** 54% ⚡
-
-**具体优化效果：**
-- **23-promise.js：** 17秒 → 9秒（提速47%）
-- **24-map-set.js：** 63秒 → 23秒（提速63%）
-- **平均耗时：** 4.6秒/个 → 2.1秒/个
-
-### 最慢的5个测试
-1. **24-map-set.js：** 23秒
-2. **29-async-await.js：** 12秒（失败，含错误处理时间）
-3. **23-promise.js：** 9秒
-4. **28-weakmap-weakset.js：** 5秒（失败）
-5. **10-objects-arrays.js：** 5秒
-
-### Packrat实现机制
-
-**核心：** 失败缓存（Failure Memoization）
-```typescript
-// 在SubhutiParser中添加
-private failureCache = new Map<string, boolean>()
-
-// Or方法优化
-Or(subhutiParserOrs: SubhutiParserOr[]) {
-  // 生成缓存key：位置 + 调用栈路径 + 分支索引
-  const failureKey = `Or:${position}:${stackPath}:${altIndex}`
-  
-  // 如果这个分支之前失败过，直接跳过
-  if (this.failureCache.has(failureKey)) {
-    continue
-  }
-  
-  // 尝试分支...
-  if (!this.continueForAndNoBreak) {
-    this.failureCache.set(failureKey, true)
-  }
-}
-```
-
-**为什么只缓存失败：**
-- 成功的情况有CST构建副作用，不能简单缓存
-- 失败的情况无副作用，可以安全缓存
-- 避免在同一位置重复尝试失败的Or分支
-
-**关键修复：**
-- set/get关键字冲突已解决（缓存key包含完整调用路径）
-- `map.set()` 和 `map.get()` 现在正常工作
-
-### 进一步优化方向
-1. **First集剪枝：** 预计可再提速30-50%（85秒 → 30-50秒）
-2. **上下文关键字：** 真正支持set/get作为变量名
-3. **算法重构：** LL(k)或LALR算法，根本性解决回溯问题
-
-## 已知限制
-
-**1. set/get 关键字冲突问题**
-
-**问题：** `set` 和 `get` 被定义为全局关键字，导致无法用作变量名
-
-**影响：**
-- ❌ `const set = new Set()` - 解析失败（set被识别为SetTok）
-- ❌ `const get = 123` - 解析失败（get被识别为GetTok）
-- ✅ `map.set('key', 'value')` - 正常工作（表达式中可用）
-
-**根本原因：**
-- 位置：`slime/packages/slime-parser/src/language/es5/Es5Tokens.ts:138-139`
-- 定义：`SetTok: createKeywordToken(..., "set")` 和 `GetTok: createKeywordToken(..., "get")`
-- 错误：它们应该是**上下文关键字**（contextual keywords），只在对象/类定义中才有特殊含义
-
-**JavaScript规范：**
-```javascript
-// 应该是关键字的场景
-const obj = {
-  get prop() {},   // 这里的get是关键字
-  set prop(v) {}   // 这里的set是关键字
-}
-
-// 应该是标识符的场景
-const set = new Set();  // 这里的set应该是标识符
-const get = 123;        // 这里的get应该是标识符
-```
-
-**临时解决方案：**
-- 测试用例中避免使用 `set`/`get` 作为变量名
-- 使用替代名称：`mySet`、`myGet`、`setValue`、`getValue` 等
-
-**为什么"慢"而不是"报错"？**
-
-这是Parser设计问题，不是简单的性能问题：
-
-**执行流程分析：**
-```
-输入：const set = new Set();
-Token：[ConstTok] [SetTok "set"] [Eq] [NewTok] ...
-
-Parser尝试匹配 VariableDeclaration：
-  规则：ConstTok + Identifier + Eq + ...
-  结果：SetTok ≠ Identifier → 匹配失败
-  
-正常Parser应该：立即报错 "Expected identifier, got keyword 'set'"
-Slime Parser实际：回溯，尝试其他20+种Statement规则
-  
-回溯地狱：
-  Statement = Or(
-    VariableDeclaration,    // 尝试1失败
-    FunctionDeclaration,    // 尝试2失败
-    ClassDeclaration,       // 尝试3失败
-    ...                     // 20+种可能，每种都要尝试
-  )
-  
-如果嵌套3层Or，每层3种可能 → 3^3 = 27次尝试
-层级更深 → 指数级增长 → 几百次甚至上千次尝试
-```
-
-**三个关键问题：**
-1. **回溯算法效率低**：Or/Many组合产生指数级尝试次数
-2. **容错机制过于宽松**：生成错误代码（`const ;new Set();`）但不报错
-3. **缺少严格检查**：没有在Identifier匹配时检查是否为保留字
-
-**本质：** 应该"快速报错"，而不是"慢慢尝试然后生成错误代码"
-
----
-
-### 优化方案（按影响从小到大排序）
-
-**方案1：添加严格的关键字检查（影响最小）**
-
-**具体做法：**
-```typescript
-// 在 Es6Parser 的 Identifier 匹配规则中添加检查
-createIdentifierAst(cst) {
-  const token = cst.children[0];
-  
-  // 新增：关键字检查
-  if (token.type === 'SetTok' || token.type === 'GetTok') {
-    throw new SyntaxError(
-      `Cannot use keyword '${token.value}' as identifier at ${token.location}`
-    );
-  }
-  
-  return createIdentifier(token);
-}
-```
-
-**影响范围：**
-- 修改文件：`Es6Parser.ts`（约5行代码）
-- 测试影响：现有测试不受影响（因为没有使用set/get作为变量名）
-- 行为改变：遇到关键字冲突时立即报错（<1秒），而不是慢慢回溯（63秒）
-
-**优点：**
-- ✅ 修改最小（5行代码）
-- ✅ 立即解决"慢"的问题（变成"快速报错"）
-- ✅ 符合JavaScript规范的错误提示
-
-**缺点：**
-- ❌ 不能真正使用set/get作为变量名（仍然是限制）
-- ❌ 只是"报错更快"，不是"支持该特性"
-
----
-
-**方案2：添加性能监控与回溯日志（影响较小）**
-
-**具体做法：**
-```typescript
-// 在 SubhutiParser 的 Or 和 Many 方法中添加监控
-Or(...rules) {
-  const startTime = Date.now();
-  let attemptCount = 0;
-  
-  for (const rule of rules) {
-    attemptCount++;
-    const result = this.tryParse(rule);
-    if (result) {
-      const elapsed = Date.now() - startTime;
-      if (elapsed > 100) {  // 超过100ms记录
-        console.warn(`Or回溯慢: ${attemptCount}次尝试, ${elapsed}ms`);
-      }
-      return result;
-    }
-  }
-  
-  return null;
-}
-```
-
-**影响范围：**
-- 修改文件：`SubhutiParser.ts`（约20行代码）
-- 性能影响：微小（仅添加日志）
-- 测试影响：无
-
-**优点：**
-- ✅ 帮助定位性能瓶颈（哪些规则导致大量回溯）
-- ✅ 为后续优化提供数据支持
-- ✅ 开发模式可开启，生产模式可关闭
-
-**缺点：**
-- ❌ 不解决问题，只是监控问题
-- ❌ 需要人工分析日志
-
----
-
-**方案3：优化Or的回溯策略（影响中等）**
-
-**具体做法：**
-```typescript
-// 添加First集预判，减少不必要的回溯
-Or(...rules) {
-  const currentToken = this.currentToken();
-  
-  // 新增：First集过滤
-  const possibleRules = rules.filter(rule => {
-    const firstSet = rule.getFirstSet();  // 该规则可能的首Token类型
-    return firstSet.includes(currentToken.type);
-  });
-  
-  // 只尝试可能的规则，而不是全部
-  for (const rule of possibleRules) {
-    const result = this.tryParse(rule);
-    if (result) return result;
-  }
-  
-  return null;
-}
-```
-
-**影响范围：**
-- 修改文件：`SubhutiParser.ts`、所有Parser规则（需要定义First集）
-- 代码量：约100-200行（定义First集 + 修改Or逻辑）
-- 性能提升：预计减少50-80%的回溯尝试
-
-**优点：**
-- ✅ 显著提升性能（63秒 → 可能<10秒）
-- ✅ 减少无效回溯
-- ✅ 不影响功能正确性
-
-**缺点：**
-- ❌ 需要为每个规则定义First集（工作量中等）
-- ❌ First集维护成本（新增规则时要更新）
-
----
-
-**方案4：将set/get改为上下文关键字（影响较大）**
-
-**具体做法：**
-```typescript
-// 步骤1: Lexer不再将set/get识别为关键字
-// Es5Tokens.ts - 删除
-// SetTok: createKeywordToken(..., "set"),
-// GetTok: createKeywordToken(..., "get"),
-
-// 步骤2: 在特定语法规则中处理
-class Es6Parser {
-  // PropertyDefinition中处理
-  PropertyDefinition() {
-    const token = this.currentToken();
-    
-    if (token.value === 'get' && this.nextToken().type === Identifier) {
-      // 这是 getter
-      this.consume(); // 消费 'get'
-      return this.GetterDefinition();
-    }
-    
-    if (token.value === 'set' && this.nextToken().type === Identifier) {
-      // 这是 setter
-      this.consume(); // 消费 'set'
-      return this.SetterDefinition();
-    }
-    
-    // 否则当作普通Identifier
-    return this.Identifier();
-  }
-}
-```
-
-**影响范围：**
-- 修改文件：`Es5Tokens.ts`、`Es6Parser.ts`（Property相关规则）
-- 代码量：约50-100行
-- 测试影响：需要验证所有getter/setter相关测试
-
-**优点：**
-- ✅ 真正解决问题（可以使用set/get作为变量名）
-- ✅ 符合JavaScript规范
-- ✅ 提升性能（不再有关键字冲突）
-
-**缺点：**
-- ❌ 需要修改Lexer和Parser的协同逻辑
-- ❌ 可能引入新的bug（getter/setter识别）
-- ❌ 需要全面回归测试
-
----
-
-**方案5：重构Parser算法（影响最大）**
-
-**具体做法：**
-```typescript
-// 选项A: 改用LL(k)算法（向前看k个token）
-class LLkParser {
-  // 通过向前看避免回溯
-  Statement() {
-    const lookahead = this.peek(2);  // 向前看2个token
-    
-    if (lookahead[0].type === ConstTok && lookahead[1].type === Identifier) {
-      return this.VariableDeclaration();
-    }
-    
-    if (lookahead[0].type === FunctionTok) {
-      return this.FunctionDeclaration();
-    }
-    
-    // ... 基于lookahead决定，无需回溯
-  }
-}
-
-// 选项B: 改用LALR算法（使用状态机）
-class LALRParser {
-  // 使用预生成的状态转换表
-  parse(tokens) {
-    const states = this.getStateTable();  // 预编译的状态表
-    let state = 0;
-    
-    for (const token of tokens) {
-      const action = states[state][token.type];
-      if (action.type === 'shift') {
-        state = action.nextState;
-      } else if (action.type === 'reduce') {
-        // 归约操作
-      }
-    }
-  }
-}
-```
-
-**影响范围：**
-- 修改文件：整个Parser层（可能需要重写）
-- 代码量：1000+行（或使用Parser生成器，如PEG.js、ANTLR）
-- 学习成本：需要深入理解LL(k)或LALR算法
-- 测试影响：所有测试需要重新验证
-
-**优点：**
-- ✅ 根本性解决性能问题（几乎无回溯）
-- ✅ 更符合主流Parser设计
-- ✅ 易于维护和扩展
-
-**缺点：**
-- ❌ 工作量巨大（可能需要数周）
-- ❌ 风险高（可能引入大量bug）
-- ❌ 需要团队有相关经验
-
----
-
-### 推荐方案
-
-**立即执行（P0）：** 方案1（添加关键字检查）
-- 成本最低，效果立竿见影
-- 5分钟修改，立即解决"慢"的问题
-
-**短期优化（P1）：** 方案2 + 方案3（监控 + 回溯优化）
-- 1-2天工作量
-- 提供数据支持 + 显著提升性能
-
-**中期完善（P2）：** 方案4（上下文关键字）
-- 1周工作量
-- 真正符合JavaScript规范
-
-**长期重构（P3）：** 方案5（重构算法）
-- 数周工作量，需要慎重评估ROI
-- 建议先完成P0-P2，根据实际需求决定是否执行
-
-## 质量评估
-
-**ES6 Parser质量：⭐⭐⭐⭐ (4.0/5)**
-- 功能完整性：77.5%（31/40特性）
-- 语法正确性：100%（已测试部分全部正确）
-- 性能表现：✅ 已优化54%（185秒 → 85秒）
-- 生产可用性：⚠️ 适合中小型项目（缺少for循环、逻辑运算符等基础语法）
-
-## 下一步行动
-
-**优先级P0（立即修复，影响6个测试）：**
-- [ ] 修复CST节点loc信息缺失问题
-  - 影响测试：08-for-loop, 19-for-of-loop, 21-generator, 28-weakmap-weakset, 29-async-await, 23-functions
-  - 预期效果：通过率提升到92.5%
-
-**优先级P1（重要功能，影响3个测试）：**
-- [ ] 修复逻辑运算符支持（!、&&、||）
-  - 影响测试：05-logical-ops, 21-simple-roundtrip
-  - 问题：CST解析不完整
-- [ ] 添加typeof运算符支持
-  - 影响测试：25-operators-all
-  - 问题：AST转换缺失
-
-**优先级P2（进一步优化）：**
-- [ ] First集剪枝优化（预计提速30-50%）
-- [ ] 上下文关键字支持（真正支持set/get作为变量名）
-- [ ] 性能监控与回归测试
 
 ---
 
 # 变更记录
 
-## 2025-10-16 [当前会话 - Packrat优化]
-- **Packrat优化实施：** 实现失败缓存机制（Failure Memoization）
-  - 修改文件：`subhuti/src/parser/SubhutiParser.ts`
-  - 核心机制：只缓存失败的Or分支，避免重复尝试
-  - 缓存key：`Or:position:stackPath:altIndex`（包含完整调用路径）
-  - 性能提升：185秒 → 85秒（**提速54%**）
-- **set/get关键字冲突修复：** 
-  - 问题：Packrat缓存key不够精确导致错误缓存
-  - 解决：将stackDepth改为stackPath（完整调用路径）
-  - 效果：`map.set()` 和 `map.get()` 现在正常工作
-- **并行测试实现：** 
-  - 新增：`test-runner-parallel.ts`
-  - 并发数：8个测试同时执行
-  - 结果：对CPU密集型任务效果有限（仍需85秒）
-- **失败测试记录：** 详细记录9个失败测试用例
-  - A类：CST节点loc信息缺失（6个测试）
-  - B类：运算符支持缺失（3个测试）
-  - 为每个失败测试标注：问题、影响、修复优先级
-
-## 2025-10-15 [前一会话]
-- 创建slime项目规则文件
-- 补充ES6 Parser测试用例（21-30高级特性）
-- 修复9项Parser/Generator缺陷
-- 测试通过率从82.5%提升到97.5%
-- **问题定位：24-map-set.js慢不是性能问题，而是set/get关键字冲突导致解析失败**
-  - 通过拆分测试发现：Map部分正常(<3秒)，Set部分失败（set被误识别为SetTok）
-  - 深层原因分析：Parser回溯算法 + 容错机制过于宽松 + 缺少严格检查 → 大量无效尝试 → "慢"而不是"报错"
-  - 提供5个优化方案（按影响从小到大）：关键字检查(P0) → 性能监控(P1) → 回溯优化(P1) → 上下文关键字(P2) → 算法重构(P3)
-  - 已记录到"已知限制"部分，测试用例将避免使用set/get作为变量名
+## 2025-10-16 [当前会话 - 测试架构重构]
+- **测试入口重组：**
+  - `test-runner.ts` → 单例测试入口（符合"一个个测试修复"原则）
+  - `test-all.ts` → 完整测试套件（从原test-runner.ts迁移）
+  - 删除：`test-single.ts`（功能被test-runner.ts替代）
+- **实时诊断记录机制：**
+  - 创建：`.cursor/rules/project.mdc`
+  - 记录：正在修复的测试用例、诊断过程、当前假设、下一步行动
+  - 目的：支持断点重续，会话中断后可快速恢复上下文
+- **规则更新触发反思流程：**
+  - 问题：违反"单文件测试执行原则"（直接运行test-runner.ts批量测试）
+  - 更新：测试架构重组，确保test-runner.ts作为单例入口
+  - 检查：冗余文件已删除，职责清晰
+- **开始修复：05-logical-ops.js**
+  - 问题定位：Parser层CST结构不完整（只有运算符，没有操作数）
+  - 进行中：调查Or分支选择逻辑

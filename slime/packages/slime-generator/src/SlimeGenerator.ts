@@ -646,8 +646,12 @@ export default class SlimeGenerator {
       this.generatorAssignmentExpression(node as any)
     } else if (node.type === 'BooleanLiteral') {
       this.generateCode += node.value ? 'true' : 'false'
+    } else if (node.type === 'NullLiteral') {
+      this.generateCode += 'null'
     } else if (node.type === 'UnaryExpression') {
       this.generatorUnaryExpression(node as any)
+    } else if (node.type === SlimeAstType.UpdateExpression) {
+      this.generatorUpdateExpression(node as any)
     } else if (node.type === SlimeAstType.YieldExpression) {
       this.generatorYieldExpression(node as any)
     } else if (node.type === SlimeAstType.AwaitExpression) {
@@ -669,6 +673,19 @@ export default class SlimeGenerator {
       this.generateCode += ' '  // 关键字后需要空格
     }
     this.generatorNode(node.argument)
+  }
+
+  private static generatorUpdateExpression(node: any) {
+    // UpdateExpression: ++/-- expression
+    if (node.prefix) {
+      // 前缀：++i 或 --i
+      this.generateCode += node.operator
+      this.generatorNode(node.argument)
+    } else {
+      // 后缀：i++ 或 i--
+      this.generatorNode(node.argument)
+      this.generateCode += node.operator
+    }
   }
 
   private static generatorConditionalExpression(node: any) {

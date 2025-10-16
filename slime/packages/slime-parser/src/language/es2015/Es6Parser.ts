@@ -1180,6 +1180,7 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
       {
         alt: () => {
           this.VariableDeclaration()
+          this.EmptySemicolon()
           this.Option(() => this.Expression())
           this.EmptySemicolon()
           this.Option(() => this.Expression())
