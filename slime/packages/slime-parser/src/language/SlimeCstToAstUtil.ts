@@ -1559,6 +1559,17 @@ export class SlimeCstToAst {
           loc: cst.loc
         } as any
         return memberExpression
+      } else if (first1.name === Es6Parser.prototype.TemplateLiteral.name) {
+        // Tagged Template Literals: tag`template`
+        // 创建TaggedTemplateExpression
+        const tag = memberExpressionObject
+        const quasi = this.createTemplateLiteralAst(first1)
+        return {
+          type: 'TaggedTemplateExpression',
+          tag: tag,
+          quasi: quasi,
+          loc: cst.loc
+        } as any
       } else {
         throw new Error(`未知的MemberExpression子节点类型: ${first1.name}`)
       }
@@ -2342,8 +2353,9 @@ export class SlimeCstToAst {
     if (cst.children.length === 1) {
       return this.createExpressionAst(cst.children[0])
     } else {
-      alternate = this.createAssignmentExpressionAst(cst.children[1])
+      // CST children: [LogicalORExpression, Question, AssignmentExpression, Colon, AssignmentExpression]
       consequent = this.createAssignmentExpressionAst(cst.children[2])
+      alternate = this.createAssignmentExpressionAst(cst.children[4])
     }
     const ast: SlimeConditionalExpression = {
       type: astName as any,

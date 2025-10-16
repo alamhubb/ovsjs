@@ -1,45 +1,39 @@
+// 单个测试用例运行器
 import { readFileSync } from 'fs'
 import Es6Parser from './packages/slime-parser/src/language/es2015/Es6Parser.ts'
 import { es6Tokens } from './packages/slime-parser/src/language/es2015/Es6Tokens.ts'
+import SubhutiLexer from '../subhuti/src/parser/SubhutiLexer.ts'
 import { SlimeCstToAst } from './packages/slime-parser/src/language/SlimeCstToAstUtil.ts'
 import SlimeGenerator from './packages/slime-generator/src/SlimeGenerator.ts'
-import SubhutiLexer from '../subhuti/src/parser/SubhutiLexer.ts'
 
-// Slime测试 - 单例测试入口
-// 用途：测试单个用例，精准调试
-// 执行：npx tsx test-runner.ts <path>
-
-const testFile = process.argv[2] || 'tests/cases/single/01-literals.js'
-
-if (!testFile) {
-  console.log('❌ 缺少测试文件参数')
-  console.log('用法: npx tsx test-runner.ts <path>')
-  console.log('示例: npx tsx test-runner.ts tests/cases/single/05-logical-ops.js')
+const file = process.argv[2]
+if (!file) {
+  console.log('usage: npx tsx test-runner.ts <file>')
   process.exit(1)
 }
 
-console.log(`\n📝 测试: ${testFile}\n`)
+const code = readFileSync(file, 'utf-8')
+console.log(`\n📝 测试: ${file}\n`)
+console.log('代码:')
+console.log(code)
+console.log()
 
 const startTime = Date.now()
 
 try {
-  const code = readFileSync(testFile, 'utf-8')
-  console.log(`代码:\n${code}\n`)
-  
-  // 1. 词法分析
+  // 1. Lexer
   const lexer = new SubhutiLexer(es6Tokens)
   const tokens = lexer.lexer(code)
   console.log(`✅ 词法分析完成，tokens数量: ${tokens.length}`)
   console.log('前10个tokens:')
-  tokens.slice(0, 10).forEach((t: any, i: number) => {
+  tokens.slice(0, 10).forEach((t: any, i) => {
     console.log(`  [${i}] ${t.tokenName.padEnd(20)} "${t.tokenValue}"`)
   })
   console.log()
   
-  // 2. 语法分析
+  // 2. Parser
   const parser = new Es6Parser(tokens)
   const cst = parser.Program()
-  if (!cst) throw new Error('CST为空')
   console.log(`✅ 语法分析完成`)
   console.log()
   
@@ -64,3 +58,4 @@ try {
   console.log(`堆栈:\n${e.stack}`)
   process.exit(1)
 }
+
