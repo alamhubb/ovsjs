@@ -525,11 +525,12 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
   }
 
   onlySetAllowErrorLastState() {
-    this.setAllowError(this.allowErrorStackTrue)
+    this.setAllowError(this.allowErrorStack.length > 0)
   }
 
-  get allowErrorStackTrue() {
-    return this.allowErrorStack.length > 0
+  //使用的应该是出去本次以外，还剩下的状态
+  onlySetAllowErrorLastPopState() {
+    this.setAllowError(this.allowErrorStack.length > 1)
   }
 
   //允许错误匹配一次
@@ -597,7 +598,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
       // 如果是最后一个分支，失败时报错
       if (index === funLength) {
-        this.onlySetAllowErrorLastState()  // 最后一次尝试，不允许错误
+        this.onlySetAllowErrorLastPopState()  // 最后一次尝试，不允许错误
       } else {
         this.setAllowError(true)   // 允许错误，继续尝试下一个分支
       }
