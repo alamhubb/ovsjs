@@ -47,13 +47,13 @@ export class SubhutiBackData {
   curCstTokensLength: number            // 快照索引：tokens长度
 }
 
-export class SubhutiUtil{
+export class SubhutiUtil {
   static generateUUID() {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
       var r = Math.random() * 16 | 0
       var v = c === 'x' ? r : (r & 0x3 | 0x8)
       return v.toString(16)
-    }).replace(/-/g,'_')
+    }).replace(/-/g, '_')
   }
 }
 
@@ -70,7 +70,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     this.uuid = SubhutiUtil.generateUUID()
   }
 
-  faultTolerance = true
+  faultTolerance = false
   tokenConsumer: T
   _tokens: SubhutiMatchToken[] = []
   private tokenIndex: number = 0  // 方案B：tokens读取索引（替代shift）
@@ -80,7 +80,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
   private _continueMatch = true
   thisClassName: string
   uuid: string
-  
+
   // Packrat Parsing: 失败缓存表（只缓存失败，不缓存成功）
   // 成功的情况有副作用（CST构建），不能简单缓存
   // 失败的情况无副作用，可以安全缓存
@@ -157,7 +157,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
   printTokens() {
     // this.printStateAndBreak()
     // this.printCst()
-    QqqqUtil.log('tokens:' + this.tokens.map(item => item.tokenName).join(','))
+    // console.log('tokens:' + this.tokens.map(item => item.tokenName).join(','))
   }
 
   printCstStacks() {
@@ -209,6 +209,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
   _allowError = false
 
   setAllowError(allowError: boolean) {
+    // console.trace('shezhi allerr:' + allowError)
     this._allowError = allowError
   }
 
@@ -230,6 +231,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         return
       }
     }
+    // console.log(ruleName)
     const initFlag = this.initFlag
     if (initFlag) {
       this.initFlag = false
@@ -450,10 +452,12 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
       //因为CheckMethodCanExec 中组织了空token，所以这里不会触发
       //内部consume,也需要把标识设为false，有可能深层子设为了true，但是后来又改为了false，如果不同步改就会没同步
       this.setContinueMatchAndNoBreak(false)
-      // this.setContinueFor(false);
-      if (this.faultTolerance || (this.allowError && !this.optionAndOrAllowErrorMatchOnce)) {
+      // this.setContinueFor(false)
+      if (this.faultTolerance || ((this.allowError || this.allowErrorStackTrue) && !this.optionAndOrAllowErrorMatchOnce)) {
         return
       }
+      console.log('this.optionAndOrAllowErrorMatchOnce')
+      console.log(this.optionAndOrAllowErrorMatchOnce)
       this.printTokens()
       if (popToken) {
         throw new Error('syntax error expect：' + popToken.tokenValue)
@@ -462,6 +466,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
       }
     }
     this.setContinueMatchAndNoBreak(true)
+    console.log('shezhile  this.optionAndOrAllowErrorMatchOnce = true')
     this.optionAndOrAllowErrorMatchOnce = true
     //性能优化先不管
     // this.setAllowError(this.allowErrorStack.length > 1)
@@ -520,13 +525,19 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
   }
 
   onlySetAllowErrorLastState() {
-    this.setAllowError(!!this.allowErrorStack.length)
+    this.setAllowError(this.allowErrorStackTrue)
+  }
+
+  get allowErrorStackTrue() {
+    return this.allowErrorStack.length > 0
   }
 
 
+  //允许错误匹配一次
   optionAndOrAllowErrorMatchOnce = true
 
   setAllowErrorNewState() {
+    console.log('shezhi false')
     this.setAllowError(true)
     this.optionAndOrAllowErrorMatchOnce = false
     this.allowErrorStack.push(this.curCst.name)
@@ -534,24 +545,24 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
   /**
    * Or语法：遍历所有规则分支，任一分支匹配成功则跳出
-   * 
+   *
    * 核心机制：
    * 1. 依次尝试每个分支（alt函数）
    * 2. 任一分支成功 → 跳出循环
    * 3. 所有分支都失败：
    *    - 非容错模式 → 返回失败
    *    - 容错模式 → 选择"消费token最多"的分支（最接近成功）
-   * 
+   *
    * 容错处理的关键逻辑：
    * - 如果所有Or分支都失败，说明当前tokens无法匹配任何一个规则分支
    * - thisBackAry记录了每个分支的"部分成功"状态
    * - 策略：选择消费token最多的分支（getTokensLengthMin）
    * - 原理：消费token越多，说明越接近正确的语法，保留这个结果继续
-   * 
+   *
    * 与FaultToleranceMany的区别：
    * - FaultToleranceMany：循环尝试同一个规则（Many语法）
    * - Or：尝试多个不同规则分支（Or语法）
-   * 
+   *
    * Packrat优化：
    * - 只缓存失败的尝试（避免重复失败）
    * - 成功的情况有CST构建副作用，不能简单缓存
@@ -561,7 +572,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     if (!this.checkMethodCanExec) {
       return
     }
-    
+
     this.setAllowErrorNewState()
     const funLength = subhutiParserOrs.length
     let index = 0
@@ -572,19 +583,19 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
     for (const subhutiParserOr of subhutiParserOrs) {
       index++
-      
+
       // Packrat: 生成当前分支的缓存key
       // 包含：token位置 + 调用栈路径 + 分支索引
       const position = this.tokens.length
       const stackPath = this.ruleExecErrorStack.join('>')  // 完整调用路径
       const altIndex = index - 1  // 分支索引
       const failureKey = `Or:${position}:${stackPath}:${altIndex}`
-      
+
       // Packrat: 如果这个分支之前尝试过并失败，跳过
       if (this.failureCache.has(failureKey)) {
         continue  // 跳过这个分支，尝试下一个
       }
-      
+
       // 如果是最后一个分支，失败时报错
       if (index === funLength) {
         this.setAllowError(false)  // 最后一次尝试，不允许错误
@@ -596,7 +607,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
       // 考虑到执行空元素的情况，如果执行了空元素，应该是跳出的
       this.setOrBreakFlag(false)
       subhutiParserOr.alt()  // 尝试执行当前分支
-      
+
       // 如果匹配成功，跳出循环
       if (this.continueForAndNoBreak) {
         // 容错模式：贪婪匹配优化
@@ -633,16 +644,16 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         break
       } else if (!this.continueForAndNoBreak) {
         // 当前分支失败
-        
+
         // Packrat: 记录这个分支在这个位置失败了
         this.failureCache.set(failureKey, true)
-        
+
         if (this.tokenIndex > backData.tokenIndex) {  // 方案B：比较索引
           // 有部分token被消费（部分匹配成功）
           const thisBackData = this.backData  // 方案B：快照索引
           thisBackAry.push(thisBackData)  // 记录这个"部分成功"的状态
         }
-        
+
         // 匹配失败的处理
         if (index !== funLength) {
           // 不是最后一个分支：重置状态，尝试下一个分支
@@ -653,17 +664,17 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         }
       }
     }
-    
+
     let curFlag = this.orBreakFlag
-    
+
     // 必须放这里，不能放在其他位置（会导致重复执行或不执行）
     this.setAllowErrorLastStateAndPop()
-    
+
     if (curFlag) {
       // 有分支成功
       return this.getCurCst()
     }
-    
+
     // 容错模式：所有分支都失败，但有部分成功
     // 
     // 【设计意图】
@@ -691,7 +702,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
       this.setBackDataNoContinueMatch(res)
       return this.getCurCst()
     }
-    
+
     // 完全失败，无任何匹配
     return
   }
@@ -750,13 +761,13 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
   /**
    * 容错版的Many循环
-   * 
+   *
    * 核心机制：
    * 1. 循环尝试执行fun()，直到匹配失败或没有更多tokens
    * 2. 如果匹配失败，根据容错策略处理：
    *    - 有部分成功（thisBackData存在）→ 保留部分结果
    *    - 完全失败 → 跳过当前token，继续尝试剩余tokens
-   * 
+   *
    * 容错处理的关键逻辑：
    * - 当所有规则分支都匹配失败时，说明当前第一个token无法匹配任何规则
    * - 这证明当前token是"非法语句的开始"或"错误的token"
@@ -783,7 +794,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
       this.setOrBreakFlag(false)
       backData = this.backData  // 方案B：快照索引，只拷贝3个数字
       fun()  // 尝试执行匹配规则
-      
+
       // 如果匹配失败，tokens会被重置
       if (!this.continueForAndNoBreak) {
         let thisBackData
@@ -792,7 +803,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
           thisBackData = this.backData  // 方案B：快照索引
         }
         this.setBackData(backData)  // 先回退到尝试前的状态
-        
+
         if (this.faultTolerance) {
           if (thisBackData) {
             // 情况1：有部分匹配成功
@@ -818,7 +829,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
       }
       matchCount++  // 成功匹配计数
     }
-    
+
     if (matchCount || this.orBreakFlag || lastBreakFlag) {
       this.setOrBreakFlag(true)
     }

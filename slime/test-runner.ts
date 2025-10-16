@@ -9,7 +9,7 @@ import SubhutiLexer from '../subhuti/src/parser/SubhutiLexer.ts'
 // 用途：测试单个用例，精准调试
 // 执行：npx tsx test-runner.ts <path>
 
-const testFile = process.argv[2]
+const testFile = process.argv[2] || 'tests/cases/single/01-literals.js'
 
 if (!testFile) {
   console.log('❌ 缺少测试文件参数')

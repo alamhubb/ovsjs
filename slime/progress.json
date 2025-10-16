@@ -1,16 +1,11 @@
 {
   "status": "completed",
-  "startTime": 1760605465269,
-  "endTime": 1760605470872,
+  "startTime": 1760606887738,
+  "endTime": 1760606888577,
   "total": 40,
-  "passCount": 38,
-  "failCount": 2,
-  "slowTests": [
-    {
-      "name": "24-map-set.js",
-      "time": 1131
-    }
-  ],
-  "avgTime": 140,
-  "totalElapsed": 5603
+  "passCount": 0,
+  "failCount": 40,
+  "slowTests": [],
+  "avgTime": 21,
+  "totalElapsed": 838
 }

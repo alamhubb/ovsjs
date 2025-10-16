@@ -39,6 +39,26 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
     return tokens;
   }
 
+  /**
+   * IdentifierReference: 标识符引用（用于读取变量值）
+   * 
+   * 1. ECMAScript规范的语义区分：
+   *    - IdentifierReference用于引用已存在的变量（右值）
+   *    - 例如：const x = y; // y是IdentifierReference
+   *    - 与BindingIdentifier（声明）和LabelIdentifier（标签）语义不同
+   * 
+   * 2. 预留扩展空间（完整ES规范）：
+   *    IdentifierReference:
+   *      Identifier
+   *      [但不包括严格模式的保留字]
+   *      [但不包括 yield 在生成器上下文中]
+   *      [但不包括 await 在async函数上下文中]
+   *    当前简化实现只支持Identifier，未来可在Or中添加上下文相关的分支
+   * 
+   * 3. Or的副作用机制：
+   *    - Or会重置optionAndOrAllowErrorMatchOnce标志
+   *    - 确保正确的回溯行为和错误处理
+   */
   @SubhutiRule
   IdentifierReference() {
     this.Or([
@@ -46,6 +66,25 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
     ])
   }
 
+  /**
+   * BindingIdentifier: 绑定标识符（用于声明新变量）
+   * 
+   * 1. ECMAScript规范的语义区分：
+   *    - BindingIdentifier用于创建新的变量绑定（左值）
+   *    - 例如：const x = 1; // x是BindingIdentifier
+   *    - 例如：function foo(param) {} // param是BindingIdentifier
+   * 
+   * 2. 预留扩展空间（完整ES规范）：
+   *    BindingIdentifier:
+   *      Identifier
+   *      yield    (在非生成器上下文中可作为变量名)
+   *      await    (在非async上下文中可作为变量名)
+   *    当前简化实现只支持Identifier，未来需要添加上下文检查分支
+   * 
+   * 3. Or的副作用机制：
+   *    - Or会重置optionAndOrAllowErrorMatchOnce标志
+   *    - 确保外层Or（如ArrowParameters）能正确回溯
+   */
   @SubhutiRule
   BindingIdentifier() {
     this.Or([
@@ -53,6 +92,24 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
     ])
   }
 
+  /**
+   * LabelIdentifier: 标签标识符（用于break/continue的目标）
+   * 
+   * 1. ECMAScript规范的语义区分：
+   *    - LabelIdentifier用于标记语句，供break/continue跳转
+   *    - 例如：myLabel: for(...) { break myLabel; }
+   *    - 与变量标识符完全不同的命名空间
+   * 
+   * 2. 预留扩展空间（完整ES规范）：
+   *    LabelIdentifier:
+   *      Identifier
+   *      [但不包括 yield 和 await]
+   *    当前简化实现只支持Identifier，未来可添加关键字过滤分支
+   * 
+   * 3. Or的副作用机制：
+   *    - Or会重置optionAndOrAllowErrorMatchOnce标志
+   *    - 统一的错误处理和allowError栈管理
+   */
   @SubhutiRule
   LabelIdentifier() {
     this.Or([
