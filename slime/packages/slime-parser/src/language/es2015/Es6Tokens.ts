@@ -33,12 +33,6 @@ export const Es6TokenName = {
 }
 
 export const es6TokensObj = {
-  NoSubstitutionTemplate: createEmptyValueRegToken(
-    Es6TokenName.NoSubstitutionTemplate, /`(?:[^`\\$]|\\.|\$(?!\{))*`/
-  ),
-  TemplateHead: createEmptyValueRegToken(Es6TokenName.TemplateHead, /`(?:[^`\\$]|\\.|\$(?!\{))*\$\{/),
-  TemplateMiddle: createEmptyValueRegToken(Es6TokenName.TemplateMiddle,  /}(?:[^`\\$]|\\.|\$(?!\{))*\$\{/),
-  TemplateTail: createEmptyValueRegToken(Es6TokenName.TemplateTail,  /}(?:[^`\\$]|\\.|\$(?!\{))*`/),
   ...es5TokensObj,
   ImportTok: createKeywordToken(Es6TokenName.ImportTok, "import"),
   AsTok: createKeywordToken(Es6TokenName.AsTok, "as"),
@@ -59,6 +53,15 @@ export const es6TokensObj = {
   Arrow: createRegToken(Es6TokenName.Arrow, /=>/),
 
   Ellipsis: createValueRegToken(Es6TokenName.Ellipsis, /\.\.\./, '...'),
+  
+  // 模板字符串tokens  
+  // TemplateTail和TemplateMiddle改为*（0次或多次），允许紧邻的}和`
+  NoSubstitutionTemplate: createEmptyValueRegToken(
+    Es6TokenName.NoSubstitutionTemplate, /`(?:[^`\\$]|\\.|\$(?!\{))*`/
+  ),
+  TemplateHead: createEmptyValueRegToken(Es6TokenName.TemplateHead, /`(?:[^`\\$]|\\.|\$(?!\{))*\$\{/),
+  TemplateMiddle: createEmptyValueRegToken(Es6TokenName.TemplateMiddle,  /}(?:[^`\\$]|\\.|\$(?!\{))*\$\{/),
+  TemplateTail: createEmptyValueRegToken(Es6TokenName.TemplateTail,  /}(?:[^`\\$]|\\.|\$(?!\{))*`/),
 };
 export const es6Tokens = Object.values(es6TokensObj);
 export const es6TokenMapObj: { [key in string]: SubhutiCreateToken } = Object.fromEntries(

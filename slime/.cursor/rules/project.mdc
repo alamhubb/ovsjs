@@ -6,466 +6,669 @@
 ## 当前任务：修复ES6 Parser失败测试
 
 ### 正在修复的测试用例
-**测试文件：** `tests/cases/single/05-logical-ops.js`  
-**预期通过时间：** <5分钟  
-**优先级：** P1（影响3个测试）
+**已完成：**
+- ✅ 12-template-literals.js（模板字符串AST支持）
+- ✅ 15-class-basic.js（Lexer上下文感知修复）
 
-### 实时诊断记录
+**当前状态：** 等待用户确认，准备推进下一个测试  
+**修复进度：** 2/8 完成（25%）
 
-**【最新诊断】2025-10-16 (第三轮 - 根因确认)**
+### 最新诊断（2025-10-16）
 
-**操作记录：**
-- 执行：`npx tsx test-runner.ts tests/cases/single/05-logical-ops.js`
-- 检查：`Es6Parser.ts` 第645-670行 `UnaryExpression()` 方法
+**✅ 已解决：** 模板字符串在`}`后无法识别的问题
 
-**根因确认：**
-```typescript
-// Es6Parser.ts:645-670
-@SubhutiRule
-UnaryExpression() {
-  this.Or([
-    {
-      alt: () => {
-        this.Or([...operators...])
-        this.UnaryExpression()  // ❌ 递归调用，但没有return
-      }
-    },
-    {alt: () => this.AwaitExpression()},
-    {alt: () => this.PostfixExpression()}
-  ])
-  // ❌ 方法结束，没有return语句
+**解决方案：** 用户提出的上下文感知方案（前瞻检查）
+- 在SubhutiLexer匹配token前，检查已解析的tokens
+- 如果没有未闭合的TemplateHead/TemplateMiddle，跳过TemplateTail/TemplateMiddle
+- 实现：hasUnclosedTemplate()方法（仅30行代码）
+
+**修改位置：** subhuti/src/parser/SubhutiLexer.ts
+```javascript
+// 第44-53行：上下文检查
+if (isTemplateToken && !hasUnclosedTemplate(resTokens)) {
+  continue  // 跳过模板token匹配
+}
+
+// 第33-49行：判断逻辑
+hasUnclosedTemplate(tokens) {
+  let count = 0
+  tokens.forEach(t => {
+    if (t === 'TemplateHead') count++
+    if (t === 'TemplateTail') count--
+  })
+  return count > 0
 }
 ```
 
-**结论1：UnaryExpression方法缺少return语句**
-- 在Subhuti框架中，每个@SubhutiRule方法都应该返回CST节点
-- 当前实现只调用了子规则，但没有return，导致返回undefined
-- undefined被当作CST节点传递，后续访问.children时崩溃
+**测试结果：** ✅ 15-class-basic.js通过（125ms）
 
-**结论2：所有调用UnaryExpression的地方都会出问题**
-- `MultiplicativeExpression()`：第674、677行
-- `AwaitExpression()`：第1645行
-- 影响范围：所有包含一元运算符的表达式（!、+、-、~、typeof等）
-
-**结论3：Subhuti框架的CST自动创建机制**
-- 查看 `SubhutiParser.processCst` (第271-327行)发现：
-  - 第280行：自动创建children数组 `cst.children = []`
-  - 第293行：执行规则方法 `let res = targetFun.apply(this)`
-  - 第320行：返回自动创建的cst（不使用方法返回值）
-- 结论：方法不需要return语句，CST由框架自动创建
-- 其他方法（MultiplicativeExpression等）也没有return语句
-
-**结论4：dump-cst确认CST结构异常**
-- 执行：`npx tsx dump-cst.ts tests/cases/single/05-logical-ops.js`
-- 输出：24个UnaryExpression节点，每个都只有`{"name": "UnaryExpression"}`
-- 确认：children属性完全不存在（不是空数组，而是undefined）
-
-**结论5：定位到SubhutiParser优化代码**
-- 查看 `SubhutiParser.processCst` 第249-250行：
-  ```typescript
-  if (!cst.children?.length) {
-    cst.children = undefined  // ⚠️ 空数组被优化为undefined
-  }
-  ```
-- 问题：UnaryExpression的children是空数组（没有子节点），被优化成undefined
-- 但为什么children是空？UnaryExpression调用了Or和子规则，应该有children才对
-
-**结论6：Or方法返回值不影响children**
-- Or方法确实有返回值（第657行：`return this.getCurCst()`）
-- 但processCst第293行接收后不使用这个返回值
-- Or只是选择分支，不创建子CST节点
-
-**结论7：children来源于子规则调用**
-- 对比MultiplicativeExpression（工作正常）：
-  ```typescript
-  MultiplicativeExpression() {
-    this.UnaryExpression()  // ← 调用@SubhutiRule，创建子CST
-    this.Many(() => {
-      this.MultiplicativeOperator()
-      this.UnaryExpression()
-    })
-  }
-  ```
-- UnaryExpression自身：
-  ```typescript
-  UnaryExpression() {
-    this.Or([
-      {alt: () => {
-        this.Or([...operators...])  // ← 只消费token，不创建子CST
-        this.UnaryExpression()       // ← 递归调用，应该创建子CST，但为什么没有？
-      }},
-      ...
-    ])
-  }
-  ```
-
-**结论8：最小测试用例揭示关键问题**
-- 创建：`tests/temp-minimal-not.js` 内容：`var x = !true;`
-- dump-cst输出：2个UnaryExpression
-  - 第1个：有children `[Exclamation token, 第2个UnaryExpression]` ✅
-  - 第2个：只有name，无children ❌
-- 说明：第1个UnaryExpression匹配了`!`和递归调用，但递归返回的UnaryExpression是空的
-
-**结论9：第2个UnaryExpression应该匹配PostfixExpression分支**
-- UnaryExpression的Or有3个分支：
-  1. `operator + UnaryExpression` - 已被第1个匹配消耗
-  2. `AwaitExpression` - 需要await关键字，true不匹配
-  3. `PostfixExpression` - 应该能匹配true
-- PostfixExpression → LeftHandSideExpression → Or(CallExpression | NewExpression)
-
-**结论10：CallExpression vs NewExpression分支分析**
-- CallExpression要求：`MemberExpression + Arguments()`
-  - true是PrimaryExpression，可以通过MemberExpression
-  - 但true后面没有`()`，Arguments失败 ❌
-- NewExpression要求：`MemberExpression` 或 `new + NewExpression`
-  - true是PrimaryExpression，可以通过MemberExpression ✅
-  - 应该能成功匹配
-  
-**结论11：关键疑问 - 为什么NewExpression分支没有添加子节点？**
-- 查看Es6Parser第505-519行NewExpression实现
-- 查看Es6Parser第378-418行MemberExpression实现
-- 查看Es6Parser第242-318行PrimaryExpression实现
-- 怀疑：某个环节的Or分支失败，或者CST被优化掉了
-
-**临时文件清单：**
-- `tests/temp-minimal-not.js` - 最小复现用例
-- `tests/temp-logical-not.js` - 早期诊断文件（可删除）
+**关键意义：** 用简单方案解决了看似需要重构的问题
 
 ---
 
-## 测试通过率：37/40 (92.5%) ✅
+## 测试通过率：预计34+/40 (85%+)
 
 **最新测试时间：** 2025-10-16  
-**总耗时：** 75.3秒（平均1882ms/测试）
+**已修复：** 2个（12-template-literals, 15-class-basic）
+**待验证：** 可能连带修复18-default-params、20-mixed-es6
 
-### 通过的测试（37个）
-✅ **阶段1-基础语法** (10/10) - 全部通过  
-✅ **阶段2-ES6常用特性** (10/10) - 全部通过  
-✅ **阶段3-ES6高级特性** (9/10) - 1个失败  
-✅ **阶段4-复杂组合测试** (8/10) - 2个失败
+### 剩余失败测试（最多6个）
 
-### 失败测试用例（3个）
-所有失败均为相同错误类型：`Cannot read properties of undefined (reading ...)`
+**模板字符串相关（可能已修复）**
+- ✅ 12-template-literals.js - 已修复
+- ✅ 15-class-basic.js - 已修复
+- ⏳ 18-default-params.js - 待测试（可能已修复）
+- ⏳ 20-mixed-es6.js - 待测试（可能已修复）
 
-1. **21-generator.js** (single) - Generator函数解析
-2. **29-async-await.js** (single) - Async/Await语法解析
-3. **23-functions.js** (combined) - 复杂函数组合测试
+**CST undefined相关（4个）**
+- ❌ 16-class-extends.js - Class继承
+- ❌ 21-generator.js - Generator函数
+- ❌ 29-async-await.js - Async/Await
+- ❌ 23-functions.js (combined) - 复杂函数组合
 
-### 修复历史
-- ✅ **B类问题已全部修复**（运算符支持）
-  - 05-logical-ops.js - 逻辑运算符 (!、&&、||)
-  - 21-simple-roundtrip.js - 综合运算符
-  - 25-operators-all.js - 全部运算符（包括typeof）
-  
-- ⚠️ **A类问题部分修复**（CST节点信息）
-  - ✅ 08-for-loop.js - 已修复
-  - ✅ 19-for-of-loop.js - 已修复  
-  - ✅ 28-weakmap-weakset.js - 已修复
-  - ❌ 21-generator.js - 仍失败
-  - ❌ 29-async-await.js - 仍失败
-  - ❌ 23-functions.js - 仍失败
+### 修复成果（本次会话）
+- ✅ 12-template-literals.js（模板字符串AST支持）
+  - 修改文件：SlimeAstType、SlimeAst、SlimeCstToAstUtil、SlimeGenerator
+  - 支持特性：基础模板、插值、多行、表达式、嵌套
+
+- ✅ 15-class-basic.js（Lexer上下文感知）
+  - 修改文件：SubhutiLexer.ts（仅30行代码）
+  - 实现：前瞻检查未闭合模板字符串
+  - 方案：用户提出，简单高效
+
+---
 
 ## 测试架构
 
 **测试入口：**
 - `test-runner.ts` - 单例测试入口（日常修复使用）
 - `test-all.ts` - 完整测试套件（40个用例，顺序执行）
-- `test-runner-parallel.ts` - 并行测试（并发8个，约10-20秒完成）
+- `test-runner-parallel.ts` - 并行测试（并发8个，约10-20秒）
 - `dump-cst.ts` - CST结构查看工具（调试专用）
 
 **测试流程：**
 1. 单用例测试：`npx tsx test-runner.ts <path>`
 2. 诊断CST结构：`npx tsx dump-cst.ts <path>`
-3. 修复代码
-4. 复跑验证
-5. 完整测试：`npx tsx test-all.ts`
-6. 快速验证：`npx tsx test-runner-parallel.ts`（并行）
-
-## 下一步修复
-
-**P0（影响3个测试）：** Generator/Async特定语法解析
-- 失败测试：21-generator.js, 29-async-await.js, 23-functions.js
-- 错误特征：Cannot read properties of undefined
-- 修复位置：可能在Generator/Async相关的Parser规则或AST转换层
-- 预期效果：通过率达到100%
+3. 修复代码 → 复跑验证
+4. 完整测试：`npx tsx test-all.ts`
+5. 快速验证：`npx tsx test-runner-parallel.ts`
 
 ---
 
-# 变更记录
+## 下一步修复
 
-## 2025-10-16 [当前会话]
+**选项A：继续修复Lexer问题**
+- 影响：4个模板字符串相关测试
+- 难度：需要重构Subhuti为状态化Lexer（工作量巨大）
 
-### 最新进展：测试通过率提升至92.5% ✅
-- **完整测试执行：** 40个测试用例全部运行完成（75.3秒）
-- **通过率提升：** 31/40 (77.5%) → 37/40 (92.5%)
-- **修复成果：**
-  - ✅ **B类问题全部修复**（运算符支持）：3个测试通过
-    - 05-logical-ops.js（逻辑运算符!、&&、||）
-    - 21-simple-roundtrip.js（综合运算符）
-    - 25-operators-all.js（包括typeof）
-  - ✅ **A类问题部分修复**（CST节点信息）：3个测试通过
-    - 08-for-loop.js
-    - 19-for-of-loop.js
-    - 28-weakmap-weakset.js
-- **剩余问题：** 3个测试失败（Generator/Async特定语法）
-  - 21-generator.js
-  - 29-async-await.js
-  - 23-functions.js (combined)
+**选项B：跳过Lexer问题，修复CST undefined（推荐）**
+- 影响：4个测试（16、21、29、23-functions）
+- 难度：中等，可能更容易解决
 
-### 早期工作：测试架构重构
-- **测试入口重组：**
-  - `test-runner.ts` → 单例测试入口（日常修复使用）
-  - `test-all.ts` → 完整测试套件（40个用例，顺序执行）
-  - 删除：`test-single.ts`（功能被test-runner.ts替代）
-- **实时诊断记录机制：**
-  - 创建：`.cursor/rules/project.mdc`
-  - 记录：正在修复的测试用例、诊断过程、当前假设、下一步行动
-  - 目的：支持断点重续，会话中断后可快速恢复上下文
-- **规则更新触发反思流程：**
-  - 问题：违反"单文件测试执行原则"（直接运行test-runner.ts批量测试）
-  - 更新：测试架构重组，确保test-runner.ts作为单例入口
-  - 检查：冗余文件已删除，职责清晰
-- **开始修复：05-logical-ops.js**
-  - 问题定位：Parser层CST结构不完整（只有运算符，没有操作数）
-  - 进行中：调查Or分支选择逻辑
+---
 
-**【进度】2025-10-16 15:32**
-- 运行环境：Windows PowerShell 5.1（`&&` 无效）。已改用分号分隔命令。
-- 动作：准备执行 `cd slime; npx tsx test-runner.ts tests/cases/single/05-logical-ops.js` 复现错误。
-- 并行动作：全局搜索 `Exclamation`、`TypeofTok`、`UnaryExpression` 的CST→AST映射实现位置。
-- 目标：定位抛出“暂不支持的类型：Exclamation”的代码分支，补全一元运算符 `!` 和 `typeof` 的转换。
+# 修复进度记录
 
-**【进度】2025-10-16 15:20:37**
-- ✅ 确认最简方案：只需2个文件（.msg.txt接收内容 + log-from-file.js执行追加）
+**【2025-10-16 最新】**
 
-**【进度】2025-10-16 15:22:56**
-- ✅ 断点重续机制已记录到系统规则
-- 位置：.cursor/rules/guidebot.mdc 第164-210行
-- 内容：核心文件、使用场景、记录内容、使用方式、频率建议、原则
-- 目的：支持长任务中断后快速恢复上下文
-- 核心：2个文件（.msg.txt接收内容 + log-from-file.js追加到project.mdc）
+✅ **已完成：12-template-literals.js**
+- 问题：模板字符串完全不支持
+- 修改：4个文件（SlimeAstType、SlimeAst、SlimeCstToAstUtil、SlimeGenerator）
+- 结果：完整支持模板字符串（基础、插值、多行、表达式、嵌套）
 
-**【进度】2025-10-16 15:24:54**
-- 【开始修复】05-logical-ops.js测试用例
-- 问题：暂不支持的类型：Exclamation
-- 已知：CST中UnaryExpression节点存在，但children为undefined
-- 已知：SubhutiParser第249-250行会将空children优化为undefined
-- 计划：定位SlimeCstToAstUtil.ts中处理Exclamation token的代码，补全转换逻辑
+❌ **当前卡住：15-class-basic.js 等4个模板字符串相关测试**
+- 问题根因：Lexer设计缺陷
+  - TemplateTail正则：`/}(?:[^`\\$]|\\.|\$(?!\{))*`/`
+  - 问题：`}\nreturn ` ` `被错误匹配为一个TemplateTail token
+  - 测试发现：`}\nreturn `Hello, I'` 在单引号处失败
+- 技术限制：
+  - 当前Lexer是无状态的（stateless）
+  - 模板字符串需要上下文感知（context-aware）
+  - `}`在模板中是TemplateTail，在普通代码中是RBrace
+  - Lexer无法区分上下文
+- 尝试的方案：
+  1. ✗ 调整token定义顺序（无效，最长匹配策略）
+  2. ✗ 修改正则为+（避免空内容，无效）
+  3. ✗ 禁止换行符（会破坏多行模板字符串）
+- 待选方案：
+  - 方案1：重构Subhuti为状态化Lexer（工作量巨大）
+  - 方案2：暂时跳过，标记为已知限制
+  - 方案3：寻找更复杂的正则或Parser层容错
 
-**【进度】2025-10-16 15:25:23**
-- 【错误定位】复现成功
-- 错误位置：SlimeCstToAstUtil.ts 第1624行 createExpressionAst方法
-- 调用链：createUnaryExpressionAst(1742) → createExpressionAst(1624)
-- 根本原因：createExpressionAst方法遇到Exclamation token时抛出"暂不支持的类型"错误
-- 下一步：查看1624行代码，补全Exclamation token的处理逻辑
+**当前状态：** 等待用户决策
+- 继续尝试修复Lexer问题？
+- 还是先修复其他测试用例，最后再解决这个底层问题？
 
-**【进度】2025-10-16 15:26:24**
-- 【关键发现】CST结构不完整
-- 查看dump-cst输出：UnaryExpression只有1个child（Exclamation token）
-- 缺少：操作数（应该是第2个child，如`true`）
-- 当前代码逻辑：createUnaryExpressionAst第1741-1742行，当只有1个child时，直接递归调用createExpressionAst
-- 错误原因：children[0]是token而非表达式节点，createExpressionAst无法处理token
-- 问题根源：Parser生成的CST不完整，只有运算符没有操作数
-- 下一步：这不是AST转换层的问题，需要回到Parser层检查为什么没有生成完整的CST
+**剩余失败测试（7个）：**
+- 15-class-basic.js - Class+模板字符串（Lexer问题）
+- 16-class-extends.js - Class继承（CST undefined）
+- 18-default-params.js - 默认参数+模板字符串（Lexer问题）
+- 20-mixed-es6.js - 混合ES6（CST undefined）
+- 21-generator.js - Generator（已知CST问题）
+- 29-async-await.js - Async/Await（已知CST问题）
+- 23-functions.js - 复杂函数（已知CST问题）
 
-**【进度】2025-10-16 15:27:09**
-- 【Parser层分析】UnaryExpression规则
-- Es6Parser第645-670行：3个分支（AwaitExpression | PostfixExpression | operator+UnaryExpression）
-- 对于`!true`：应该匹配第3个分支（Exclamation + 递归UnaryExpression）
-- dump-cst显示：只有1个UnaryExpression，说明递归调用没有创建子CST节点
-- 怀疑：Subhuti框架在处理递归规则调用时，没有正确添加子CST到children
-- 下一步：检查SubhutiParser.processCst方法，了解子规则调用如何添加子CST
+**【进度】2025-10-17 01:01:11**
+- 【清理project.mdc】2025-10-16
+操作：删除冗余和重复内容
+删除内容：
+- 第43-162行：过时的05-logical-ops.js历史诊断（400多行）
+- 第222-461行：重复的变更记录和详细进度
+保留内容：
+- 项目定位和当前任务（清晰明了）
+- 最新诊断（15-class-basic.js的Lexer问题）
+- 测试通过率（32/40, 80.0%）
+- 测试架构说明
+- 最新修复进度（12-template-literals.js已完成）
+- 下一步修复选项（等待决策）
 
-**【进度】2025-10-16 15:27:47**
-- 【Subhuti框架理解】processCst方法分析
-- 第285行：子规则调用时，自动将新CST添加到父CST.children
-- 第293行：执行规则方法（消费token、调用子规则）
-- 第297-320行：匹配成功返回CST
-- 第323-325行：匹配失败从父CST.children中移除
-- 推断：递归UnaryExpression()返回undefined（匹配失败），被移除
-- 但Exclamation token已消费，仍在children中
-- 疑问：为什么递归的UnaryExpression会匹配失败？
-- 下一步：手动跟踪`!true`的解析流程，找出失败原因
+文件大小：从541行压缩到150行左右（约73%压缩率）
+信息密度：提升，只保留当前相关和必要信息
+更新原则：以后通过log-from-file.js追加的内容会继续添加到末尾
 
-**【进度】2025-10-16 15:30:23**
-- 【决策】暂停深度分析，采用实用主义方法
-- 已消耗时间：约40分钟深度分析Parser和Subhuti框架
-- 当前状态：理解了CST生成流程，但未定位根本问题
-- 决策理由：断点重续机制的目的是支持长任务，但不是无限延长单个问题
-- 下一步行动：
-  1. 先尝试最简单的修复：在createUnaryExpressionAst中添加防御性代码
-  2. 如果测试仍然失败，创建一个专门的任务来修复Parser层
-  3. 记录当前所有发现，便于后续继续
-- 时间控制：每个问题控制在1小时内，超时则升级或拆分
+下一步：等待用户决策是否跳过Lexer问题
 
-**【进度】2025-10-16 15:31:21**
-- 【AST层修复完成】错误提示优化
-- 修改：SlimeCstToAstUtil.ts第1740-1756行
-- 添加：检测children[0]是否为token的逻辑
-- 结果：错误提示更清晰，明确指出是Parser层问题
-- 错误信息："UnaryExpression CST不完整：只有运算符token 'Exclamation' (!)，缺少操作数"
-- 确认：问题必须在Parser层修复，AST层无法绕过
-- 下一步：修复Es6Parser.UnaryExpression的Or分支顺序或逻辑
+**【进度】2025-10-17 01:03:41**
+- 【系统规则更新】2025-10-16
+操作：将测试推进方式和项目管理原则提炼为通用规则
+位置：.cursor/rules/guidebot.mdc 第212-310行
+新增内容：
+1. 测试修复推进规则（第212-239行）
+   - 核心原则：一个个推进、单独测试、遇阻等待、透明进度
+   - 推进流程：测试→分析→修复→验证→记录→确认→推进
+   - 遇阻处理：技术难题、时间控制、决策点
+   - 禁止行为：批量修复、自行跳过、未及时更新
 
-**【进度】2025-10-16 15:32:00**
-- 【Parser层修复尝试1】调整Or分支顺序
-- 修改：Es6Parser.ts第645-671行UnaryExpression方法
-- 变更：将operator+UnaryExpression分支移到PostfixExpression之前
-- 理由：一元运算符优先级高于后缀表达式，应该先尝试匹配
-- 原顺序：AwaitExpression → PostfixExpression → operator+UnaryExpression
-- 新顺序：AwaitExpression → operator+UnaryExpression → PostfixExpression
-- 下一步：运行测试验证修复是否有效
+2. 项目信息管理规则（第241-310行）
+   - 文件结构：project.mdc（唯一信息源）+ .msg.txt + log-from-file.js
+   - 组织结构：头部（当前任务、最新诊断）+ 中部（测试架构）+ 尾部（自动追加进度）
+   - 更新原则：实时更新、头部维护、定期清理、信息密度
+   - 更新时机：测试通过/失败、完成修复、遇阻、决策、清理
+   - 禁止行为：混合项目信息、文件膨胀、重复记录
 
-**【进度】2025-10-16 15:33:01**
-- 【修复进展】调整分支顺序有效但不完全
-- dump-cst显示：现在有2个UnaryExpression（进步！）
-- 第1个：有2个children（Exclamation token + 第2个UnaryExpression）✅
-- 第2个：空的（没有children）❌
-- 问题：第2个UnaryExpression匹配失败，返回空CST
-- 根因：第2个UnaryExpression应该匹配PostfixExpression分支，但似乎失败了
-- 假设：PostfixExpression也匹配失败，导致整个UnaryExpression失败
-- 下一步：检查PostfixExpression为什么无法匹配`true`
+目的：让每个项目都能按照统一规则推进，提高协作效率
+受益：所有后续项目都可以复用这些规则
 
-**【进度】2025-10-16 15:35:36**
-- 【时间控制】会话已超过1小时
-- 开始时间：约北京时间15:00
-- 当前时间：约16:40（估计）
-- 已投入：约100分钟深度分析和多轮修复尝试
-- 当前状态：Parser分支顺序已调整，CST有2个UnaryExpression，但第2个为空
-- 关键问题：第2个UnaryExpression无法匹配`true`，原因未明
-- 决策：暂停当前修复，记录所有发现，创建后续任务
-- 理由：单个问题投入时间过长，需要重新评估方法或寻求其他方案
-- 下一步：总结所有发现，更新project.mdc，标记为"需要深入研究"
+下一步：继续修复slime测试用例，应用这些新规则
 
-**【进度】2025-10-16 15:36:39**
-- 【重要发现】MemberExpression定义已找到
-- 位置：Es6Parser.ts第378-409行
-- 分支1：PrimaryExpression（应该能匹配`true`）✅
-- 分支2-4：SuperProperty/MetaProperty/NewMemberExpressionArguments（不适用）
-- 后缀：Many处理点/括号/模板（`true`后没有后缀，匹配0次）✅
-- 结论：MemberExpression理论上应该能匹配`true`
-- 当前状态：dump-cst显示第2个UnaryExpression为空（没有children）
-- 推测：所有Or分支都失败，但processCst返回了空CST（可能是容错机制）
-- 需要验证：为什么PrimaryExpression分支无法匹配`true`
-- 建议：添加调试日志，或直接测试PostfixExpression能否单独匹配`true`
+**【进度】2025-10-17 01:06:23**
+- 【15-class-basic.js问题详解】2025-10-16
 
-**【进度】2025-10-16 15:37:33**
-- 【根因发现！】`true;`被解析为EmptyStatement
-- 测试：单独的`true;`
-- 结果：✅编译成功，但AST只有EmptyStatement
-- CST：没有UnaryExpression（count=0）
-- 结论：Parser完全跳过了`true` token
-- 根本问题：顶层语法规则没有正确处理表达式语句
-- 这解释了：为什么`!true`中的第2个UnaryExpression为空（因为`true`被跳过了）
-- 下一步：检查Program/StatementList规则，找到跳过`true`的原因
-- 假设：可能ExpressionStatement的Or分支匹配失败，回溯后整个语句被跳过
+## 最简化测试用例
+```javascript
+}
+`Hello`;
+```
+错误：无法匹配token:`
 
-**【进度】2025-10-16 15:38:26**
-- 【最终结论】问题不在UnaryExpression分支顺序
-- 验证：恢复原始分支顺序后，`true;`仍被解析为EmptyStatement
-- 结论：问题在更上层的语法规则（Statement/Program/StatementList）
-- 根本问题：Parser在顶层跳过了表达式语句中的`true` token
-- 这不是UnaryExpression的问题，而是ExpressionStatement或更上层的问题
-- 建议：需要检查ExpressionStatement、Statement、StatementList的规则定义
-- 时间投入：约2小时深度分析，已超出单个问题的合理时间
-- 决策：记录所有发现到project.mdc，标记为"需要专家级调试"，暂停修复
+## 问题本质
 
-**【进度】2025-10-16 15:43:30**
-- 【新策略】采用自底向上的测试方法
-- 思路：不从Program开始，直接测试具体语法规则
-- 方法：创建测试工具，直接调用Parser的特定方法（如Expression、UnaryExpression）
-- 优势：快速定位哪一层出问题，避免在整个调用链中迷失
-- 步骤：PrimaryExpression → MemberExpression → PostfixExpression → UnaryExpression → Expression
-- 目标：找到`true`被跳过的确切位置
+**Lexer错误行为：**
+输入：`}\n\`Hello\``
+错误解析为：
+1. Token[0]: TemplateTail = `}\n\``  ❌ 错误！
+2. Token[1]: Identifier = `Hello`
+3. 无法匹配最后的反引号 ` → 失败
 
-**【进度】2025-10-16 15:45:11**
-- 【突破性发现】PrimaryExpression无法匹配`true`
-- 测试工具：test-rule-directly.ts 创建完成
-- 测试：直接调用 PrimaryExpression("true")
-- 结果：❌ 返回 undefined（匹配失败）
-- 意义：这是最底层的规则，连PrimaryExpression都无法匹配true
-- 推断：PrimaryExpression的Or分支定义有问题，或者TrueTok不在分支列表中
-- 下一步：检查Es5Parser/Es6Parser的PrimaryExpression实现
+**正确解析应该是：**
+1. Token[0]: RBrace = `}`
+2. Token[1]: NoSubstitutionTemplate = `` `Hello` ``
+3. Token[2]: Semicolon = `;`
 
-**【进度】2025-10-16 15:46:57**
-- 【根本问题找到】BooleanLiteral缺少return语句
-- 位置：Es5TokenConsume.ts 第18-23行
-- 问题：BooleanLiteral()调用了this.or()但没有return
-- 对比：其他方法如ThisTok()都有return语句
-- 影响：Parser调用tokenConsumer.BooleanLiteral()返回undefined，导致匹配失败
-- 这解释了：为什么PrimaryExpression无法匹配`true`
-- 修复：添加return语句
-- 验证：修复后重新测试PrimaryExpression
+## 根本原因
 
-**【进度】2025-10-16 15:48:40**
-- 【细化测试】从AbsLiteral开始逐层测试
-- 测试1：AbsLiteral("true") → ❌ 失败
-- 说明：问题不在PrimaryExpression，在更底层
-- 怀疑：Parser的初始化状态有问题，initFlag或continueMatch
-- 下一步：检查为什么直接调用规则方法会失败，可能需要特殊的初始化
+**TemplateTail的正则表达式：**
+```javascript
+/}(?:[^`\\$]|\\.|\$(?!\{))*`/
+```
 
-**【进度】2025-10-16 15:49:57**
-- 【关键发现】continueMatch变成false
-- 测试：手动调用AbsLiteral("true")
-- 调用前：initFlag=true, continueMatch=true
-- 调用后：continueMatch=false，tokens未消费（还剩1个）
-- 结论：BooleanLiteral()内部调用失败，导致continueMatch被设为false
-- 验证：Program("true;")能成功，但true被跳过，只解析了分号
-- 下一步：深入BooleanLiteral()，看为什么this.or()会失败
+这个正则的问题：
+- 以 `}` 开头：意图匹配模板字符串中的 `${expr}` 部分
+- 但Lexer是**无状态的**，无法区分：
+  - `}` 是模板字符串的结束（TemplateTail）
+  - `}` 是普通的右花括号（RBrace）
 
-**【进度】2025-10-16 15:50:55**
-- 【根本原因确认】curCst未初始化
-- 错误：Cannot read properties of undefined (reading 'children')
-- 位置：SubhutiParser.ts:492 generateCstByToken()
-- 原因：直接调用tokenConsumer方法时，this.curCst是undefined
-- 理解：@SubhutiRule装饰器会初始化curCst，但直接调用token方法不会
-- 这解释了：为什么Program能成功（有CST上下文），直接调用规则方法失败（没有上下文）
-- 真相：不是return语句的问题，是直接调用方式不对
-- 正确方式：必须从顶层规则（如Program）开始调用
+**实际匹配过程：**
+```
+输入: "}\n`Hello`"
+      ^
+TemplateTail正则尝试匹配:
+} ← 匹配开头的}
+\n ← 匹配[^`\\$]（换行符）
+` ← 匹配结尾的`
+结果: "}\n`" 被整体匹配为TemplateTail ❌
 
-**【进度】2025-10-16 15:51:33**
-- 【问题依然存在】添加return无效
-- 修改：Es5TokenConsume.ts BooleanLiteral添加return
-- 测试：05-logical-ops.js
-- 结果：仍然失败，同样的错误（UnaryExpression CST不完整）
-- 分析manual-test输出：Program("true;")跳过了true，只解析了分号
-- 推断：Statement的Or分支选择了EmptyStatement，没有尝试ExpressionStatement
-- 下一步：检查Statement定义，看Or分支顺序是否有问题
+剩余: "Hello`;"
+      无法继续解析，在遇到第二个`时失败
+```
 
-**【进度】2025-10-17 00:35:39**
-- 【测试结果】2025-10-16 执行完整测试套件
-通过率：32/40 (80.0%) - 比之前的92.5%下降
-总耗时：6.67秒（平均167ms/个）
-失败8个测试：
-1. 12-template-literals.js - 模板字符串不支持
-2. 15-class-basic.js - Class+模板字符串
-3. 16-class-extends.js - Class继承（CST undefined）
-4. 18-default-params.js - 默认参数+模板字符串
-5. 20-mixed-es6.js - 混合ES6（CST undefined）
-6. 21-generator.js - Generator（已知）
-7. 29-async-await.js - Async/Await（已知）
-8. 23-functions.js - 复杂函数（已知）
+## 影响范围
 
-新发现问题类型：
-- 模板字符串（TemplateLiteral）完全不支持（4个测试失败）
-- CST undefined错误（4个测试，包括3个已知的Generator/Async相关）
+**触发条件：** `}` 后紧跟模板字符串（跨行或同行）
 
-**【进度】2025-10-17 00:41:41**
-- 【修复完成】12-template-literals.js ✅
+**受影响的场景：**
+1. Class方法后的模板字符串
+   ```javascript
+   class Foo {
+     method() {}
+     msg = `hello`;  // ❌
+   }
+   ```
+
+2. 函数后的模板字符串
+   ```javascript
+   function test() {}
+   const x = `hello`;  // ❌
+   ```
+
+3. 代码块后的模板字符串
+   ```javascript
+   if (true) {}
+   const x = `hello`;  // ❌
+   ```
+
+**受影响的测试：**
+- 15-class-basic.js
+- 18-default-params.js
+- 20-mixed-es6.js（可能）
+- 其他任何在`}`后使用模板字符串的用例
+
+## 为什么难以修复？
+
+**问题级别：** 架构层面（Lexer设计缺陷）
+
+**需要的解决方案：**
+模板字符串本质上需要**上下文感知的Lexer**：
+- 在模板字符串内部：`}` 是 TemplateTail
+- 在普通代码中：`}` 是 RBrace
+
+**当前Lexer的限制：**
+- 完全无状态
+- 只能通过正则表达式匹配
+- 无法感知上下文
+- 使用最长匹配策略
+
+**尝试过的方案都失败的原因：**
+1. 调整token顺序 → 无效（最长匹配策略）
+2. 修改正则为+ → 无效（仍会跨行匹配）
+3. 禁止换行 → 破坏多行模板字符串功能
+
+## 可能的解决方案
+
+**方案1: 重构为状态化Lexer（根本解决）**
+- 工作量：巨大，需要重构整个Subhuti框架
+- 实现：在Lexer中维护状态，区分模板字符串上下文
+- 时间估计：1-2周
+- 风险：高，可能影响所有现有功能
+
+**方案2: 在Parser层容错（变通方案）**
+- 思路：Lexer错误匹配后，Parser尝试恢复
+- 工作量：中等
+- 缺点：无法完全解决，只能部分场景work around
+
+**方案3: 暂时标记为已知限制（务实方案）**
+- 影响：4个测试无法通过
+- 文档：在README中说明限制
+- 后续：等待有时间再重构
+
+**方案4: 修改TemplateTail正则（尝试优化）**
+- 思路：更精确的正则，减少误匹配
+- 例如：要求TemplateTail前必须有`${`上下文
+- 可行性：低（正则无法实现lookbehind足够远）
+
+## 我的建议
+
+**推荐：方案3（暂时跳过）**
+
+**理由：**
+1. 修复成本极高（需要重构Lexer）
+2. 影响有限（4个测试，约10%）
+3. 其他7个测试可能更容易修复
+4. 可以在文档中明确说明限制
+
+**替代策略：**
+- 先修复其他4个CST undefined测试
+- 如果那些测试也很难，再回来重新评估
+- 或者使用workaround：要求用户在`}`后添加分号或空行
+
+**文档说明：**
+```markdown
+## 已知限制
+- 模板字符串不能紧跟在`}`后面（跨行或同行）
+- 解决方法：在`}`后添加分号或其他语句
+
+// ❌ 错误
+function test() {}
+const x = `hello`;
+
+// ✅ 正确
+function test() {}
+;const x = `hello`;  // 添加分号
+
+// ✅ 正确  
+function test() {}
+const y = 1;
+const x = `hello`;  // 中间有其他语句
+```
+
+是否同意这个方案？
+
+**【进度】2025-10-17 01:08:32**
+- 【创建Lexer问题演示文件】2025-10-16
+文件：tests/lexer-issue-demo.ts
+用途：可执行的Lexer问题最小复现演示
+
+运行方式：
+```bash
+cd slime
+npx tsx tests/lexer-issue-demo.ts
+```
+
+展示内容：
+1. 测试1：正常情况（单独模板字符串）✅
+2. 测试2：问题情况（}后跟模板字符串）❌
+3. 测试3：逐字符分析，精确定位问题发生位置
+4. 问题根因分析和解决方案建议
+
+关键发现（测试3结果）：
+- 位置3：TemplateTail错误匹配了 "}\n`"
+- 位置9：无法匹配第二个反引号，失败
+
+文件特点：
+- 独立可运行，无需其他依赖
+- 清晰的输出格式，易于理解
+- 包含完整的问题分析和解释
+- 可作为文档参考
+
+下一步：等待用户决策是否跳过此问题
+
+**【进度】2025-10-17 01:16:46**
+- 【业内模板字符串Lexer解决方案总结】2025-10-16
+
+## 业内主流方案
+
+### 方案1：状态化Lexer（最常用）✅
+
+**代表项目：** Babel、TypeScript、Acorn、ESLint
+
+**核心思想：** Lexer维护一个状态栈，根据上下文切换不同的词法规则
+
+**实现机制：**
+```javascript
+class Lexer {
+  state = 'DEFAULT'  // 当前状态
+  stateStack = []    // 状态栈
+  
+  // 遇到 ` 开始模板字符串
+  onTemplateStart() {
+    this.stateStack.push(this.state)
+    this.state = 'TEMPLATE'
+  }
+  
+  // 遇到 ${ 进入表达式
+  onTemplateExprStart() {
+    this.stateStack.push(this.state)
+    this.state = 'DEFAULT'  // 回到普通JS上下文
+    this.braceDepth = 1     // 跟踪花括号深度
+  }
+  
+  // 遇到 } 可能结束表达式
+  onBrace() {
+    if (this.state === 'DEFAULT' && this.braceDepth > 0) {
+      this.braceDepth--
+      if (this.braceDepth === 0) {
+        this.state = this.stateStack.pop()  // 回到TEMPLATE状态
+      }
+    }
+  }
+  
+  // 状态决定token类型
+  nextToken() {
+    if (this.state === 'TEMPLATE') {
+      // 在模板中，} 是 TemplateTail
+      if (char === '}') return TemplateTail
+    } else {
+      // 普通代码中，} 是 RBrace
+      if (char === '}') return RBrace
+    }
+  }
+}
+```
+
+**优点：**
+- ✅ 完全解决问题
+- ✅ 可处理任意嵌套
+- ✅ 符合语言规范
+
+**缺点：**
+- ❌ 实现复杂
+- ❌ 需要重构现有架构
+
+### 方案2：Lexer-Parser协同（次常用）
+
+**代表项目：** Chevrotain、一些手写解析器
+
+**核心思想：** Lexer保持简单，Parser感知上下文并指导Lexer
+
+**实现机制：**
+```javascript
+class Parser {
+  parseTemplateString() {
+    this.lexer.enterTemplateMode()  // 通知Lexer进入模板模式
+    
+    while (true) {
+      const token = this.lexer.next()
+      if (token === TemplateEnd) break
+      
+      if (token === TemplateExprStart) {
+        this.lexer.exitTemplateMode()  // 切换回普通模式
+        this.parseExpression()
+        this.lexer.enterTemplateMode()  // 重新进入模板模式
+      }
+    }
+  }
+}
+```
+
+**优点：**
+- ✅ Lexer相对简单
+- ✅ Parser有更多控制权
+
+**缺点：**
+- ❌ Lexer-Parser耦合
+- ❌ 违反分层原则
+
+### 方案3：双Lexer模式（少见）
+
+**代表项目：** 一些教学项目
+
+**核心思想：** 为模板字符串创建专门的子Lexer
+
+**实现机制：**
+```javascript
+class MainLexer {
+  nextToken() {
+    if (this.peek() === '`') {
+      return this.templateLexer.tokenize(this.input)
+    }
+    // 普通token处理
+  }
+}
+
+class TemplateLexer {
+  tokenize(input) {
+    // 专门处理模板字符串的逻辑
+    // 维护自己的状态
+  }
+}
+```
+
+**优点：**
+- ✅ 模块化
+- ✅ 职责清晰
+
+**缺点：**
+- ❌ 代码重复
+- ❌ 维护成本高
+
+### 方案4：Lookahead（性能较差）
+
+**核心思想：** 遇到 `}` 时向前查看，判断是否是TemplateTail
+
+**实现：**
+```javascript
+if (char === '}') {
+  // 向前看，如果后面有 ` 且前面有 ${，则是TemplateTail
+  if (isInTemplateContext()) {
+    return TemplateTail
+  }
+  return RBrace
+}
+```
+
+**优点：**
+- ✅ 实现相对简单
+
+**缺点：**
+- ❌ 性能差
+- ❌ 无法处理复杂嵌套
+
+## 推荐方案
+
+**对于Slime项目：**
+
+鉴于：
+1. Subhuti框架目前是完全无状态的
+2. 改造成本大
+3. 只影响4个测试（10%）
+
+**短期建议：** 方案3变种 - 特殊处理
+```javascript
+// 在Es6Tokens.ts中
+TemplateTail: createEmptyValueRegToken(
+  Es6TokenName.TemplateTail,  
+  // 修改正则：要求前面必须是$或字母数字（lookahead）
+  /(?<=[a-zA-Z0-9$])}(?:[^`\\$]|\\.|\$(?!\{))*`/
+)
+```
+
+**长期建议：** 方案1 - 重构为状态化Lexer
+- 参考Babel的实现
+- 维护状态栈
+- 根据上下文切换规则
+
+## Babel实际实现参考
+
+Babel的Tokenizer（packages/babel-parser/src/tokenizer/index.ts）使用：
+- `this.state.type` 记录当前token类型
+- `readTmplToken()` 专门处理模板字符串
+- `finishToken()` 根据状态决定token类型
+- 在 `${` 时切换回普通模式
+- 维护花括号计数器
+
+TypeScript类似，在Scanner中维护状态机。
+
+## 结论
+
+业内标准做法是**状态化Lexer**，这是正确且彻底的解决方案。
+
+对于Slime：建议先标记为已知限制，未来有资源时重构。
+
+**【进度】2025-10-17 01:23:02**
+- 【修复完成】15-class-basic.js ✅
 时间：2025-10-16
-问题：模板字符串完全不支持
-修改文件：
-1. slime-ast/src/SlimeAstType.ts - 添加TemplateLiteral、TemplateElement、TaggedTemplateExpression枚举
-2. slime-ast/src/SlimeAst.ts - 添加createTemplateLiteral()和createTemplateElement()方法
-3. slime-parser/.../SlimeCstToAstUtil.ts - 实现createTemplateLiteralAst()、processTemplateSpans()、processTemplateMiddleList()
-4. slime-generator/src/SlimeGenerator.ts - 实现generatorTemplateLiteral()代码生成
+问题：模板字符串在`}`后无法识别（Lexer上下文问题）
 
-测试结果：✅ 编译成功
-支持特性：
-- 基础模板字符串：`hello`
-- 插值：`Hello, ${name}!`
-- 多行模板字符串（保留换行）
-- 表达式插值：`Sum: ${10 + 20}`
-- 嵌套模板：`Outer: ${`Inner: ${name}`}`
+修复方案：用户提出的上下文感知方案（前瞻检查）
+- 思路：在Lexer匹配TemplateTail/TemplateMiddle前，检查已解析的tokens
+- 逻辑：如果没有未闭合的TemplateHead/TemplateMiddle，跳过这些token的匹配
+- 实现：在SubhutiLexer.ts添加hasUnclosedTemplate()方法
+
+修改文件：
+1. subhuti/src/parser/SubhutiLexer.ts
+   - 第33-53行：在token匹配循环中添加上下文检查
+   - 第25-49行：实现hasUnclosedTemplate()方法
+
+实现细节：
+```javascript
+hasUnclosedTemplate(tokens) {
+  let unclosedCount = 0
+  for (token of tokens) {
+    if (token === 'TemplateHead') unclosedCount++
+    if (token === 'TemplateTail') unclosedCount--
+    // TemplateMiddle不改变计数（关闭+开启）
+  }
+  return unclosedCount > 0
+}
+```
+
+测试结果：✅ 编译成功（125ms）
+生成代码正确，包含完整的Class定义和模板字符串
+
+关键意义：
+- 用简单方案（30行代码）解决了看似需要重构的问题
+- 无需状态机，只需前瞻检查
+- 用户的技术直觉完全正确
 
 下一步：等待用户确认，然后修复下一个测试
+
+**【进度】2025-10-17 01:27:18**
+- 【测试通过】18-default-params.js ✅
+时间：2025-10-16
+状态：被15-class-basic.js的修复连带解决
+原因：同样是模板字符串在`}`后的问题
+
+测试结果：✅ 编译成功（183ms）
+生成代码正确，包含：
+- 函数默认参数
+- 箭头函数默认参数
+- 多个默认参数
+- 模板字符串在函数体内
+
+修复进度：3/8 完成（37.5%）
+已完成：
+- ✅ 12-template-literals.js
+- ✅ 15-class-basic.js
+- ✅ 18-default-params.js
+
+剩余测试：5个
+- ⏳ 20-mixed-es6.js（待测试）
+- ❌ 16-class-extends.js
+- ❌ 21-generator.js
+- ❌ 29-async-await.js
+- ❌ 23-functions.js
+
+下一步：等待用户确认，推进下一个测试
+
+**【进度】2025-10-17 01:27:49**
+- 【测试通过】20-mixed-es6.js ✅
+时间：2025-10-16
+状态：被15-class-basic.js的修复连带解决
+
+测试结果：✅ 编译成功（220ms）
+包含特性：
+- Class + constructor + 默认参数
+- Class属性（箭头函数）
+- Class方法（rest参数、reduce）
+- 解构赋值
+- 模板字符串
+
+修复进度：4/8 完成（50%）✅
+已完成：
+- ✅ 12-template-literals.js
+- ✅ 15-class-basic.js
+- ✅ 18-default-params.js
+- ✅ 20-mixed-es6.js
+
+剩余测试：4个（全部是CST undefined问题）
+- ❌ 16-class-extends.js - Class继承
+- ❌ 21-generator.js - Generator函数
+- ❌ 29-async-await.js - Async/Await
+- ❌ 23-functions.js - 复杂函数组合
+
+关键发现：
+- Lexer上下文感知修复一次性解决了4个模板字符串相关测试
+- 剩余4个都是相同类型的问题（CST undefined）
+- 通过率预计从80%提升到90%
+
+下一步：等待用户确认，推进16-class-extends.js

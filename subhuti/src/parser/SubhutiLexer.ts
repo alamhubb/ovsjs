@@ -22,6 +22,32 @@ export default class SubhutiLexer {
     this.generateTokenMap()
   }
 
+  /**
+   * 检查已解析的tokens中是否有未闭合的模板字符串
+   * 逻辑：
+   * - TemplateHead: 开启一个模板字符串（等待TemplateMiddle或TemplateTail）
+   * - TemplateMiddle: 关闭前一个，开启新的（${...}${...}的中间）
+   * - TemplateTail: 关闭一个模板字符串
+   * - NoSubstitutionTemplateTok: 完整的模板字符串（`hello`），不影响计数
+   */
+  private hasUnclosedTemplate(tokens: SubhutiMatchToken[]): boolean {
+    let unclosedCount = 0
+    
+    for (const token of tokens) {
+      if (token.tokenName === 'TemplateHead') {
+        unclosedCount++  // 开启一个模板
+      } else if (token.tokenName === 'TemplateMiddle') {
+        // TemplateMiddle既关闭前一个，又开启新的，所以不改变计数
+        // unclosedCount不变
+      } else if (token.tokenName === 'TemplateTail') {
+        unclosedCount--  // 关闭一个模板
+      }
+      // NoSubstitutionTemplateTok不影响计数（自闭合）
+    }
+    
+    return unclosedCount > 0
+  }
+
   lexer(input: string): SubhutiMatchToken[] {
     const resTokens: SubhutiMatchToken[] = [] // 初始化结果token数组
     let lineNum = 0
@@ -40,6 +66,18 @@ export default class SubhutiLexer {
       // 匹配的token数量
       for (const token of this.tokens) {
         // 遍历所有token
+        
+        // 【上下文感知】检查是否应该匹配模板字符串相关token
+        const isTemplateToken = token.name === 'TemplateTail' || token.name === 'TemplateMiddle'
+        if (isTemplateToken) {
+          // 检查是否有未闭合的模板字符串
+          const hasUnclosedTemplate = this.hasUnclosedTemplate(resTokens)
+          if (!hasUnclosedTemplate) {
+            // 没有未闭合的模板字符串，跳过TemplateTail和TemplateMiddle的匹配
+            continue
+          }
+        }
+        
         // 处理正则
         const newPattern = new RegExp('^(?:' + token.pattern.source + ')') // 创建新的正则表达式
 
