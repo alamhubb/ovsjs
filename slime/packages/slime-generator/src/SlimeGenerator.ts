@@ -183,6 +183,32 @@ export default class SlimeGenerator {
     }
   }
 
+  private static generatorTemplateLiteral(node: any) {
+    // 生成模板字符串：`part1 ${expr1} part2 ${expr2} part3`
+    this.generateCode += '`'
+    
+    const quasis = node.quasis || []
+    const expressions = node.expressions || []
+    
+    // quasis和expressions交替出现，quasis总是比expressions多1个
+    for (let i = 0; i < quasis.length; i++) {
+      const quasi = quasis[i]
+      // 输出模板元素的内容
+      if (quasi.value && quasi.value.cooked !== undefined) {
+        this.generateCode += quasi.value.cooked
+      }
+      
+      // 如果不是最后一个quasi，输出对应的expression
+      if (i < expressions.length) {
+        this.generateCode += '${'
+        this.generatorNode(expressions[i])
+        this.generateCode += '}'
+      }
+    }
+    
+    this.generateCode += '`'
+  }
+
   private static generatorCallExpression(node: SlimeCallExpression) {
     //IIFE - 需要括号包裹 FunctionExpression 和 ArrowFunctionExpression
     const needsParen = node.callee.type === SlimeAstType.FunctionExpression ||
@@ -656,6 +682,8 @@ export default class SlimeGenerator {
       this.generatorYieldExpression(node as any)
     } else if (node.type === SlimeAstType.AwaitExpression) {
       this.generatorAwaitExpression(node as any)
+    } else if (node.type === SlimeAstType.TemplateLiteral) {
+      this.generatorTemplateLiteral(node as any)
     } else {
       console.error('未知节点:', JSON.stringify(node, null, 2))
       throw new Error('不支持的类型：' + node.type)

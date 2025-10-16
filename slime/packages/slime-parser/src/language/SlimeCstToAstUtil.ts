@@ -1854,6 +1854,9 @@ export class SlimeCstToAst {
       // 结构：children[0]=LParen, children[1]=Expression, children[2]=RParen
       const expressionCst = first.children[1]
       return this.createExpressionAst(expressionCst)
+    } else if (first.name === Es6Parser.prototype.TemplateLiteral.name) {
+      // 处理模板字符串
+      return this.createTemplateLiteralAst(first)
     } else {
       throw new Error('未知的createPrimaryExpressionAst：' + first.name)
     }
@@ -1881,6 +1884,94 @@ export class SlimeCstToAst {
     const body = SlimeAstUtil.createBlockStatement(null, null, [], cst.loc)
     const func = SlimeAstUtil.createFunctionExpression(body, id, params, cst.loc)
     return func
+  }
+
+  // 模板字符串处理
+  createTemplateLiteralAst(cst: SubhutiCst): SlimeExpression {
+    checkCstName(cst, Es6Parser.prototype.TemplateLiteral.name)
+    
+    const first = cst.children[0]
+    
+    // 简单模板：`hello` (无插值)
+    if (first.name === Es6TokenConsumer.prototype.NoSubstitutionTemplate.name) {
+      // 直接转为StringLiteral，去掉前后的反引号
+      const raw = first.value || ''
+      const cooked = raw.slice(1, -1) // 去掉 ` 和 `
+      return SlimeAstUtil.createStringLiteral(`"${cooked}"`)
+    }
+    
+    // 带插值模板：`hello ${name}` 或 `a ${x} b ${y} c`
+    const quasis: any[] = []
+    const expressions: SlimeExpression[] = []
+    
+    // children[0] = TemplateHead
+    if (first.name === Es6TokenConsumer.prototype.TemplateHead.name) {
+      const raw = first.value || ''
+      const cooked = raw.slice(1, -2) // 去掉 ` 和 ${
+      quasis.push(SlimeAstUtil.createTemplateElement(false, raw, cooked, first.loc))
+    }
+    
+    // children[1] = Expression
+    if (cst.children[1] && cst.children[1].name === Es6Parser.prototype.Expression.name) {
+      expressions.push(this.createExpressionAst(cst.children[1]))
+    }
+    
+    // children[2] = TemplateSpans
+    if (cst.children[2] && cst.children[2].name === Es6Parser.prototype.TemplateSpans.name) {
+      this.processTemplateSpans(cst.children[2], quasis, expressions)
+    }
+    
+    return SlimeAstUtil.createTemplateLiteral(quasis, expressions, cst.loc)
+  }
+
+  // 处理TemplateSpans：可能是TemplateTail或TemplateMiddleList+TemplateTail
+  processTemplateSpans(cst: SubhutiCst, quasis: any[], expressions: SlimeExpression[]): void {
+    const first = cst.children[0]
+    
+    // 情况1：直接是TemplateTail -> }` 结束
+    if (first.name === Es6TokenConsumer.prototype.TemplateTail.name) {
+      const raw = first.value || ''
+      const cooked = raw.slice(1, -1) // 去掉 } 和 `
+      quasis.push(SlimeAstUtil.createTemplateElement(true, raw, cooked, first.loc))
+      return
+    }
+    
+    // 情况2：TemplateMiddleList -> 有更多插值
+    if (first.name === Es6Parser.prototype.TemplateMiddleList.name) {
+      this.processTemplateMiddleList(first, quasis, expressions)
+      
+      // 然后处理TemplateTail
+      if (cst.children[1] && cst.children[1].name === Es6TokenConsumer.prototype.TemplateTail.name) {
+        const tail = cst.children[1]
+        const raw = tail.value || ''
+        const cooked = raw.slice(1, -1) // 去掉 } 和 `
+        quasis.push(SlimeAstUtil.createTemplateElement(true, raw, cooked, tail.loc))
+      }
+    }
+  }
+
+  // 处理TemplateMiddleList：递归处理多个TemplateMiddle+Expression
+  processTemplateMiddleList(cst: SubhutiCst, quasis: any[], expressions: SlimeExpression[]): void {
+    // TemplateMiddleList结构：
+    // - children[0] = TemplateMiddle (token)
+    // - children[1] = Expression
+    // - children[2] = TemplateMiddleList (递归，可选)
+    
+    if (cst.children[0] && cst.children[0].name === Es6TokenConsumer.prototype.TemplateMiddle.name) {
+      const middle = cst.children[0]
+      const raw = middle.value || ''
+      const cooked = raw.slice(1, -2) // 去掉 } 和 ${
+      quasis.push(SlimeAstUtil.createTemplateElement(false, raw, cooked, middle.loc))
+    }
+    
+    if (cst.children[1] && cst.children[1].name === Es6Parser.prototype.Expression.name) {
+      expressions.push(this.createExpressionAst(cst.children[1]))
+    }
+    
+    // 递归处理下一个TemplateMiddleList
+    if (cst.children[2] && cst.children[2].name === Es6Parser.prototype.TemplateMiddleList.name) {
+      this.processTemplateMiddleList(cst.children[2], quasis, expressions)
+    }
   }
 
   createObjectExpressionAst(cst: SubhutiCst): SlimeObjectExpression {

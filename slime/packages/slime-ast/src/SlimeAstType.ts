@@ -72,4 +72,9 @@ export enum SlimeAstType {
     LabeledStatement = 'LabeledStatement', // 标签语句
     WithStatement = 'WithStatement', // with 语句
     DebuggerStatement = 'DebuggerStatement', // debugger 语句
+    
+    // 模板字符串
+    TemplateLiteral = 'TemplateLiteral', // 模板字符串字面量
+    TemplateElement = 'TemplateElement', // 模板字符串元素
+    TaggedTemplateExpression = 'TaggedTemplateExpression', // 标签模板表达式
 }

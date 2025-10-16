@@ -385,6 +385,27 @@ class SlimeAst {
     })
   }
 
+  createTemplateLiteral(quasis: any[], expressions: SlimeExpression[], loc?: SubhutiSourceLocation): any {
+    return this.commonLocType({
+      type: SlimeAstType.TemplateLiteral,
+      quasis: quasis,
+      expressions: expressions,
+      loc: loc
+    })
+  }
+
+  createTemplateElement(tail: boolean, raw: string, cooked?: string | null, loc?: SubhutiSourceLocation): any {
+    return this.commonLocType({
+      type: SlimeAstType.TemplateElement,
+      tail: tail,
+      value: {
+        raw: raw,
+        cooked: cooked !== undefined ? cooked : raw
+      },
+      loc: loc
+    })
+  }
+
   createMethodDefinition(key: SlimeExpression | SlimePrivateIdentifier, value: SlimeFunctionExpression): SlimeMethodDefinition {
     return this.commonLocType({
       type: SlimeAstType.MethodDefinition,

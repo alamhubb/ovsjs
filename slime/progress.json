@@ -1,16 +1,20 @@
 {
   "status": "completed",
-  "startTime": 1760617332341,
-  "endTime": 1760617336648,
+  "startTime": 1760632493422,
+  "endTime": 1760632500092,
   "total": 40,
-  "passCount": 31,
-  "failCount": 9,
+  "passCount": 32,
+  "failCount": 8,
   "slowTests": [
     {
+      "name": "05-logical-ops.js",
+      "time": 817
+    },
+    {
       "name": "24-map-set.js",
-      "time": 958
+      "time": 1129
     }
   ],
-  "avgTime": 108,
-  "totalElapsed": 4307
+  "avgTime": 167,
+  "totalElapsed": 6670
 }
