@@ -133,28 +133,44 @@ UnaryExpression() {
 
 ---
 
-## 测试通过率：31/40 (77.5%)
+## 测试通过率：37/40 (92.5%) ✅
 
-**失败测试用例（9个）：**
+**最新测试时间：** 2025-10-16  
+**总耗时：** 75.3秒（平均1882ms/测试）
 
-### A类：CST节点loc信息缺失（6个测试）
-1. **08-for-loop.js** - `Cannot read properties of undefined (reading 'end')`
-2. **19-for-of-loop.js** - `Cannot read properties of undefined (reading 'end')`
-3. **21-generator.js** - `Cannot read properties of undefined (reading 'end')`
-4. **28-weakmap-weakset.js** - `Cannot read properties of undefined (reading 'end')`
-5. **29-async-await.js** - `Cannot read properties of undefined (reading 'end')`
-6. **23-functions.js (combined)** - `Cannot read properties of undefined (reading 'end')`
+### 通过的测试（37个）
+✅ **阶段1-基础语法** (10/10) - 全部通过  
+✅ **阶段2-ES6常用特性** (10/10) - 全部通过  
+✅ **阶段3-ES6高级特性** (9/10) - 1个失败  
+✅ **阶段4-复杂组合测试** (8/10) - 2个失败
 
-### B类：运算符支持缺失（3个测试）
-7. **05-logical-ops.js** - `暂不支持的类型：Exclamation` [正在修复]
-8. **21-simple-roundtrip.js (combined)** - `暂不支持的类型：Exclamation`
-9. **25-operators-all.js (combined)** - `暂不支持的类型：TypeofTok`
+### 失败测试用例（3个）
+所有失败均为相同错误类型：`Cannot read properties of undefined (reading ...)`
+
+1. **21-generator.js** (single) - Generator函数解析
+2. **29-async-await.js** (single) - Async/Await语法解析
+3. **23-functions.js** (combined) - 复杂函数组合测试
+
+### 修复历史
+- ✅ **B类问题已全部修复**（运算符支持）
+  - 05-logical-ops.js - 逻辑运算符 (!、&&、||)
+  - 21-simple-roundtrip.js - 综合运算符
+  - 25-operators-all.js - 全部运算符（包括typeof）
+  
+- ⚠️ **A类问题部分修复**（CST节点信息）
+  - ✅ 08-for-loop.js - 已修复
+  - ✅ 19-for-of-loop.js - 已修复  
+  - ✅ 28-weakmap-weakset.js - 已修复
+  - ❌ 21-generator.js - 仍失败
+  - ❌ 29-async-await.js - 仍失败
+  - ❌ 23-functions.js - 仍失败
 
 ## 测试架构
 
 **测试入口：**
 - `test-runner.ts` - 单例测试入口（日常修复使用）
-- `test-all.ts` - 完整测试套件（最后验证使用）
+- `test-all.ts` - 完整测试套件（40个用例，顺序执行）
+- `test-runner-parallel.ts` - 并行测试（并发8个，约10-20秒完成）
 - `dump-cst.ts` - CST结构查看工具（调试专用）
 
 **测试流程：**
@@ -163,25 +179,43 @@ UnaryExpression() {
 3. 修复代码
 4. 复跑验证
 5. 完整测试：`npx tsx test-all.ts`
+6. 快速验证：`npx tsx test-runner-parallel.ts`（并行）
 
-## 修复优先级
+## 下一步修复
 
-**P0（影响6个测试）：** CST节点loc信息缺失
-- 修复位置：`SubhutiParser.ts` 的 `processCst` 方法
-- 预期效果：6个测试通过，通过率提升到92.5%
-
-**P1（影响3个测试，正在修复）：** 运算符支持
-- 修复位置：Parser层或AST转换层
-- 预期效果：3个测试通过，通过率达到100%
+**P0（影响3个测试）：** Generator/Async特定语法解析
+- 失败测试：21-generator.js, 29-async-await.js, 23-functions.js
+- 错误特征：Cannot read properties of undefined
+- 修复位置：可能在Generator/Async相关的Parser规则或AST转换层
+- 预期效果：通过率达到100%
 
 ---
 
 # 变更记录
 
-## 2025-10-16 [当前会话 - 测试架构重构]
+## 2025-10-16 [当前会话]
+
+### 最新进展：测试通过率提升至92.5% ✅
+- **完整测试执行：** 40个测试用例全部运行完成（75.3秒）
+- **通过率提升：** 31/40 (77.5%) → 37/40 (92.5%)
+- **修复成果：**
+  - ✅ **B类问题全部修复**（运算符支持）：3个测试通过
+    - 05-logical-ops.js（逻辑运算符!、&&、||）
+    - 21-simple-roundtrip.js（综合运算符）
+    - 25-operators-all.js（包括typeof）
+  - ✅ **A类问题部分修复**（CST节点信息）：3个测试通过
+    - 08-for-loop.js
+    - 19-for-of-loop.js
+    - 28-weakmap-weakset.js
+- **剩余问题：** 3个测试失败（Generator/Async特定语法）
+  - 21-generator.js
+  - 29-async-await.js
+  - 23-functions.js (combined)
+
+### 早期工作：测试架构重构
 - **测试入口重组：**
-  - `test-runner.ts` → 单例测试入口（符合"一个个测试修复"原则）
-  - `test-all.ts` → 完整测试套件（从原test-runner.ts迁移）
+  - `test-runner.ts` → 单例测试入口（日常修复使用）
+  - `test-all.ts` → 完整测试套件（40个用例，顺序执行）
   - 删除：`test-single.ts`（功能被test-runner.ts替代）
 - **实时诊断记录机制：**
   - 创建：`.cursor/rules/project.mdc`
