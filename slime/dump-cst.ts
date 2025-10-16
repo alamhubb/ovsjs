@@ -32,30 +32,10 @@ function brief(node: any) {
   }
 }
 
-console.log('== GeneratorExpression ==')
-const gens = findNodes(cst, 'GeneratorExpression')
-console.log(`count=${gens.length}`)
-if (gens[0]) console.log(JSON.stringify(brief(gens[0]), null, 2))
-
-console.log('\n== MemberExpression ==')
-const mems = findNodes(cst, 'MemberExpression')
-console.log(`count=${mems.length}`)
-if (mems[0]) console.log(JSON.stringify(brief(mems[0]), null, 2))
-
-console.log('\n== PropertyDefinition ==')
-const props = findNodes(cst, 'PropertyDefinition')
-console.log(`count=${props.length}`)
-if (props[0]) console.log(JSON.stringify(brief(props[0]), null, 2))
-
-console.log('\n== PropertyName ==')
-const pnames = findNodes(cst, 'PropertyName')
-console.log(`count=${pnames.length}`)
-if (pnames[0]) console.log(JSON.stringify(brief(pnames[0]), null, 2))
-
-console.log('\n== DotIdentifier ==')
-const dots = findNodes(cst, 'DotIdentifier')
-console.log(`count=${dots.length}`)
-if (dots[0]) {
-  console.log('Full node:')
-  console.log(JSON.stringify(dots[0], null, 2))
+console.log('== UnaryExpression ==')
+const unary = findNodes(cst, 'UnaryExpression')
+console.log(`count=${unary.length}`)
+for (let i = 0; i < Math.min(unary.length, 3); i++) {
+  console.log(`\n第${i+1}个UnaryExpression:`)
+  console.log(JSON.stringify(unary[i], null, 2))
 }

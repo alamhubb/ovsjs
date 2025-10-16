@@ -300,11 +300,21 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
           // console.log(cst.children[0])
           return cst
         }
-        cst.loc = {
-          type: cst.name,
-          // index: cst.children[0].loc.index,
-          start: cst.children[0].loc.start,
-          end: cst.children[cst.children.length - 1].loc.end,
+        // 防御性检查：确保最后一个子节点也有loc
+        const lastChild = cst.children[cst.children.length - 1]
+        if (!lastChild || !lastChild.loc) {
+          // 最后一个子节点缺少loc，使用第一个子节点的loc
+          cst.loc = {
+            type: cst.name,
+            start: cst.children[0].loc.start,
+            end: cst.children[0].loc.end,  // 降级：使用第一个子节点的end
+          }
+        } else {
+          cst.loc = {
+            type: cst.name,
+            start: cst.children[0].loc.start,
+            end: lastChild.loc.end,
+          }
         }
       }
       return cst

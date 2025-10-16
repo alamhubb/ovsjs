@@ -110,26 +110,72 @@ npx tsx dump-cst.ts tests/cases/single/22-symbol.js        # 查看CST结构
 
 ## 当前测试成果
 
-**通过率：39/40 (97.5%)**
+**通过率：31/40 (77.5%)**
 
-**已完整支持的ES6特性（39个测试用例）：**
+**已完整支持的ES6特性（31个测试用例）：**
 - ✅ 基础语法（let/const、箭头函数、模板字符串、解构赋值）
 - ✅ Class（基础、继承、方法、属性、静态成员、getter/setter）
-- ✅ Generator函数与yield表达式（function*、yield、yield*）
 - ✅ Symbol类型（Symbol()、Symbol.for()、Symbol.iterator）
 - ✅ Promise完整API（Promise.all/race/allSettled、链式调用）
-- ✅ Map/Set/WeakMap/WeakSet（完整API）
+- ✅ Map/Set（完整API，包括set/get作为属性名）
 - ✅ Module导入导出（export const/function/class、命名导出、批量导出）
 - ✅ 计算属性名（[expression]: value、方法、getter/setter）
 - ✅ 二进制/八进制字面量（0b1010、0o755）
 - ✅ 正则表达式（基础、flags、Unicode、复杂模式）
 - ✅ 扩展运算符、剩余参数、默认参数
-- ✅ for...of循环、增强对象字面量
+- ✅ 增强对象字面量、数组方法
 
-**剩余1个未支持：**
-- ❌ async/await语法（需添加AsyncTok/AwaitTok关键字，需底层改造）
+**失败测试用例（9个）：**
 
-**本轮修复清单（9项）：**
+### A类：CST节点loc信息缺失（6个测试）
+1. **08-for-loop.js** - `Cannot read properties of undefined (reading 'end')`
+   - 问题：for循环CST节点缺少loc信息
+   - 影响：基础for循环语法无法使用
+
+2. **19-for-of-loop.js** - `Cannot read properties of undefined (reading 'end')`
+   - 问题：for...of循环CST节点缺少loc信息
+   - 影响：for...of语法无法使用
+
+3. **21-generator.js** - `Cannot read properties of undefined (reading 'end')`
+   - 问题：Generator函数CST节点缺少loc信息
+   - 影响：Generator函数语法解析失败
+
+4. **28-weakmap-weakset.js** - `Cannot read properties of undefined (reading 'end')`
+   - 问题：WeakMap/WeakSet相关CST节点缺少loc信息
+   - 影响：WeakMap/WeakSet语法解析失败
+
+5. **29-async-await.js** - `Cannot read properties of undefined (reading 'end')`
+   - 问题：async/await CST节点缺少loc信息
+   - 影响：async/await语法解析失败
+
+6. **23-functions.js (combined)** - `Cannot read properties of undefined (reading 'end')`
+   - 问题：组合测试中的函数CST节点缺少loc信息
+   - 影响：部分函数语法解析失败
+
+### B类：运算符支持缺失（3个测试）
+7. **05-logical-ops.js** - `暂不支持的类型：Exclamation`
+   - 问题：逻辑非运算符 `!` 的CST解析不完整，只有运算符token没有操作数
+   - 影响：逻辑运算符 `!`、`&&`、`||` 无法使用
+
+8. **21-simple-roundtrip.js (combined)** - `暂不支持的类型：Exclamation`
+   - 问题：与测试7相同，逻辑运算符问题
+   - 影响：组合测试中的逻辑运算符失败
+
+9. **25-operators-all.js (combined)** - `暂不支持的类型：TypeofTok`
+   - 问题：typeof运算符AST转换缺失
+   - 影响：typeof运算符无法使用
+
+## 修复优先级
+
+**P0（影响6个测试）：** CST节点loc信息缺失
+- 修复位置：`SubhutiParser.ts` 的 `processCst` 方法
+- 预期效果：6个测试通过，通过率提升到92.5%
+
+**P1（影响3个测试）：** 运算符支持
+- 修复位置：`SlimeCstToAstUtil.ts` 的运算符转换逻辑
+- 预期效果：3个测试通过，通过率达到100%
+
+**前轮修复清单（9项）：**
 1. PropertyDefinition类型定义
 2. 空参数/空函数体防御性处理
 3. GeneratorExpression与YieldExpression
@@ -142,22 +188,61 @@ npx tsx dump-cst.ts tests/cases/single/22-symbol.js        # 查看CST结构
 
 ## 性能分析
 
-**总耗时：185秒（40个测试）**
-- 平均：4.6秒/个
-- 预期：8秒总耗时
-- **实际慢23倍**
+### Packrat优化成果 ✅
 
-**主要瓶颈（3个）：**
-1. **24-map-set.js: 慢**（原因：关键字冲突 - 见已知限制）
-2. 23-promise.js: 17秒 - 链式调用与复杂表达式
-3. 10-objects-arrays.js: 7秒 - 对象字面量解析
+**优化前：** 185秒（40个测试）
+**优化后：** 85秒（40个测试）
+**提速：** 54% ⚡
 
-**根本原因：** Parser在Or/Many组合时的回溯算法效率低
+**具体优化效果：**
+- **23-promise.js：** 17秒 → 9秒（提速47%）
+- **24-map-set.js：** 63秒 → 23秒（提速63%）
+- **平均耗时：** 4.6秒/个 → 2.1秒/个
 
-**优化方向：**
-1. 短期：添加Parser性能日志，定位具体回溯点
-2. 中期：优化Or的回溯策略，减少不必要尝试
-3. 长期：考虑改用LL(k)或LALR算法
+### 最慢的5个测试
+1. **24-map-set.js：** 23秒
+2. **29-async-await.js：** 12秒（失败，含错误处理时间）
+3. **23-promise.js：** 9秒
+4. **28-weakmap-weakset.js：** 5秒（失败）
+5. **10-objects-arrays.js：** 5秒
+
+### Packrat实现机制
+
+**核心：** 失败缓存（Failure Memoization）
+```typescript
+// 在SubhutiParser中添加
+private failureCache = new Map<string, boolean>()
+
+// Or方法优化
+Or(subhutiParserOrs: SubhutiParserOr[]) {
+  // 生成缓存key：位置 + 调用栈路径 + 分支索引
+  const failureKey = `Or:${position}:${stackPath}:${altIndex}`
+  
+  // 如果这个分支之前失败过，直接跳过
+  if (this.failureCache.has(failureKey)) {
+    continue
+  }
+  
+  // 尝试分支...
+  if (!this.continueForAndNoBreak) {
+    this.failureCache.set(failureKey, true)
+  }
+}
+```
+
+**为什么只缓存失败：**
+- 成功的情况有CST构建副作用，不能简单缓存
+- 失败的情况无副作用，可以安全缓存
+- 避免在同一位置重复尝试失败的Or分支
+
+**关键修复：**
+- set/get关键字冲突已解决（缓存key包含完整调用路径）
+- `map.set()` 和 `map.get()` 现在正常工作
+
+### 进一步优化方向
+1. **First集剪枝：** 预计可再提速30-50%（85秒 → 30-50秒）
+2. **上下文关键字：** 真正支持set/get作为变量名
+3. **算法重构：** LL(k)或LALR算法，根本性解决回溯问题
 
 ## 已知限制
 
@@ -476,30 +561,56 @@ class LALRParser {
 
 ## 质量评估
 
-**ES6 Parser质量：⭐⭐⭐⭐½ (4.5/5)**
-- 功能完整性：97.5%（39/40特性）
+**ES6 Parser质量：⭐⭐⭐⭐ (4.0/5)**
+- 功能完整性：77.5%（31/40特性）
 - 语法正确性：100%（已测试部分全部正确）
-- 生产可用性：✅ 适合中大型项目（除async/await）
-- 性能表现：⚠️ 可用但部分场景慢（需优化）
+- 性能表现：✅ 已优化54%（185秒 → 85秒）
+- 生产可用性：⚠️ 适合中小型项目（缺少for循环、逻辑运算符等基础语法）
 
 ## 下一步行动
 
-**优先级P0（必需）：**
-- [ ] async/await支持（添加关键字定义）
+**优先级P0（立即修复，影响6个测试）：**
+- [ ] 修复CST节点loc信息缺失问题
+  - 影响测试：08-for-loop, 19-for-of-loop, 21-generator, 28-weakmap-weakset, 29-async-await, 23-functions
+  - 预期效果：通过率提升到92.5%
 
-**优先级P1（重要）：**
-- [ ] 优化Parser性能（24-map-set从63秒→<1秒）
-- [ ] 添加性能测试基准
+**优先级P1（重要功能，影响3个测试）：**
+- [ ] 修复逻辑运算符支持（!、&&、||）
+  - 影响测试：05-logical-ops, 21-simple-roundtrip
+  - 问题：CST解析不完整
+- [ ] 添加typeof运算符支持
+  - 影响测试：25-operators-all
+  - 问题：AST转换缺失
 
-**优先级P2（可选）：**
-- [ ] 补充边界测试用例
+**优先级P2（进一步优化）：**
+- [ ] First集剪枝优化（预计提速30-50%）
+- [ ] 上下文关键字支持（真正支持set/get作为变量名）
 - [ ] 性能监控与回归测试
 
 ---
 
 # 变更记录
 
-## 2025-10-15 [当前会话]
+## 2025-10-16 [当前会话 - Packrat优化]
+- **Packrat优化实施：** 实现失败缓存机制（Failure Memoization）
+  - 修改文件：`subhuti/src/parser/SubhutiParser.ts`
+  - 核心机制：只缓存失败的Or分支，避免重复尝试
+  - 缓存key：`Or:position:stackPath:altIndex`（包含完整调用路径）
+  - 性能提升：185秒 → 85秒（**提速54%**）
+- **set/get关键字冲突修复：** 
+  - 问题：Packrat缓存key不够精确导致错误缓存
+  - 解决：将stackDepth改为stackPath（完整调用路径）
+  - 效果：`map.set()` 和 `map.get()` 现在正常工作
+- **并行测试实现：** 
+  - 新增：`test-runner-parallel.ts`
+  - 并发数：8个测试同时执行
+  - 结果：对CPU密集型任务效果有限（仍需85秒）
+- **失败测试记录：** 详细记录9个失败测试用例
+  - A类：CST节点loc信息缺失（6个测试）
+  - B类：运算符支持缺失（3个测试）
+  - 为每个失败测试标注：问题、影响、修复优先级
+
+## 2025-10-15 [前一会话]
 - 创建slime项目规则文件
 - 补充ES6 Parser测试用例（21-30高级特性）
 - 修复9项Parser/Generator缺陷
