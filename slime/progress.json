@@ -1,104 +1,76 @@
 {
   "status": "completed",
-  "startTime": 1760550018019,
-  "endTime": 1760550172578,
+  "startTime": 1760587569763,
+  "endTime": 1760587658488,
   "total": 40,
-  "passCount": 40,
-  "failCount": 0,
+  "passCount": 31,
+  "failCount": 9,
   "slowTests": [
     {
       "name": "03-binary-ops.js",
-      "time": 955
+      "time": 693
     },
     {
       "name": "04-comparison.js",
-      "time": 926
+      "time": 736
     },
     {
       "name": "07-if-statement.js",
-      "time": 1208
-    },
-    {
-      "name": "08-for-loop.js",
-      "time": 1033
+      "time": 1075
     },
     {
       "name": "09-function-decl.js",
-      "time": 1313
+      "time": 1221
     },
     {
       "name": "10-objects-arrays.js",
-      "time": 6882
+      "time": 5136
     },
     {
       "name": "11-arrow-functions.js",
-      "time": 737
+      "time": 1195
     },
     {
       "name": "14-spread-rest.js",
-      "time": 2378
-    },
-    {
-      "name": "17-enhanced-object.js",
-      "time": 579
+      "time": 2300
     },
     {
       "name": "18-default-params.js",
-      "time": 768
-    },
-    {
-      "name": "21-generator.js",
-      "time": 1667
+      "time": 1385
     },
     {
       "name": "22-symbol.js",
-      "time": 864
+      "time": 653
     },
     {
       "name": "23-promise.js",
-      "time": 17641
+      "time": 9724
     },
     {
       "name": "24-map-set.js",
-      "time": 59801
+      "time": 21555
     },
     {
       "name": "27-computed-props.js",
-      "time": 4625
-    },
-    {
-      "name": "28-weakmap-weakset.js",
-      "time": 6455
-    },
-    {
-      "name": "29-async-await.js",
-      "time": 20490
+      "time": 3644
     },
     {
       "name": "30-regex-unicode.js",
-      "time": 2032
-    },
-    {
-      "name": "23-functions.js",
-      "time": 4879
+      "time": 2011
     },
     {
       "name": "24-objects-arrays.js",
-      "time": 6840
-    },
-    {
-      "name": "25-operators-all.js",
-      "time": 1363
+      "time": 4774
     },
     {
       "name": "28-array-methods.js",
-      "time": 2106
+      "time": 1306
     },
     {
       "name": "30-production-level.js",
-      "time": 5397
+      "time": 2334
     }
   ],
-  "avgTime": 3864,
-  "totalElapsed": 154559
+  "avgTime": 2218,
+  "totalElapsed": 88725
 }

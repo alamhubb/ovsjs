@@ -557,10 +557,11 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
       index++
       
       // Packrat: 生成当前分支的缓存key
+      // 包含：token位置 + 调用栈路径 + 分支索引
       const position = this.tokens.length
-      const stackDepth = this.cstStack.length
+      const stackPath = this.ruleExecErrorStack.join('>')  // 完整调用路径
       const altIndex = index - 1  // 分支索引
-      const failureKey = `Or:${position}:${stackDepth}:${altIndex}`
+      const failureKey = `Or:${position}:${stackPath}:${altIndex}`
       
       // Packrat: 如果这个分支之前尝试过并失败，跳过
       if (this.failureCache.has(failureKey)) {
