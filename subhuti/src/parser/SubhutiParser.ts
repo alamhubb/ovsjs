@@ -76,6 +76,13 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
   private _continueMatch = true
   thisClassName: string
   uuid: string
+  
+  // Packrat Parsing: 失败缓存表（只缓存失败，不缓存成功）
+  // 成功的情况有副作用（CST构建），不能简单缓存
+  // 失败的情况无副作用，可以安全缓存
+  // key: "ruleName:position:stackDepth"
+  // value: true（表示这个位置这个规则已经尝试过并失败）
+  private failureCache = new Map<string, boolean>()
 
   //只针对or，特殊，many有可能没匹配就触发true导致不执行下面的，避免这种情况
   //记录是否匹配成功，用来未匹配成功则pop子节点的记录
@@ -224,6 +231,8 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
       this.setContinueMatch(true)
       this.cstStack = []
       this.ruleExecErrorStack = []
+      // Packrat: 每次新的parse开始时，清空失败缓存
+      this.failureCache.clear()
     } else {
       if (!this.checkMethodCanExec) {
         return
@@ -525,11 +534,17 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
    * 与FaultToleranceMany的区别：
    * - FaultToleranceMany：循环尝试同一个规则（Many语法）
    * - Or：尝试多个不同规则分支（Or语法）
+   * 
+   * Packrat优化：
+   * - 只缓存失败的尝试（避免重复失败）
+   * - 成功的情况有CST构建副作用，不能简单缓存
+   * - 失败的情况无副作用，可以安全跳过
    */
   Or(subhutiParserOrs: SubhutiParserOr[]): SubhutiCst {
     if (!this.checkMethodCanExec) {
       return
     }
+    
     this.setAllowErrorNewState()
     const funLength = subhutiParserOrs.length
     let index = 0
@@ -540,6 +555,18 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
     for (const subhutiParserOr of subhutiParserOrs) {
       index++
+      
+      // Packrat: 生成当前分支的缓存key
+      const position = this.tokens.length
+      const stackDepth = this.cstStack.length
+      const altIndex = index - 1  // 分支索引
+      const failureKey = `Or:${position}:${stackDepth}:${altIndex}`
+      
+      // Packrat: 如果这个分支之前尝试过并失败，跳过
+      if (this.failureCache.has(failureKey)) {
+        continue  // 跳过这个分支，尝试下一个
+      }
+      
       // 如果是最后一个分支，失败时报错
       if (index === funLength) {
         this.setAllowError(false)  // 最后一次尝试，不允许错误
@@ -588,6 +615,10 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         break
       } else if (!this.continueForAndNoBreak) {
         // 当前分支失败
+        
+        // Packrat: 记录这个分支在这个位置失败了
+        this.failureCache.set(failureKey, true)
+        
         if (this.tokens.length < backData.tokens.length) {
           // 有部分token被消费（部分匹配成功）
           const thisBackData = JsonUtil.cloneDeep(this.backData)
