@@ -328,16 +328,16 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
   }
 
   /**
-   * 创建简单视图（直接返回 createVNode 调用，无 IIFE）
+   * 创建简单视图（直接返回 h 调用，无 IIFE）
    * 
    * 生成：
-   * OvsAPI.createVNode('div', {}, [child1, child2])
+   * h('div', {}, [child1, child2])
    * 
    * @param id 元素标识符
    * @param statements 语句数组（只包含 ExpressionStatement）
    * @param attrsVarName attrs变量名（简单视图通常为null）
    * @param loc 位置信息
-   * @returns CallExpression - createVNode 调用
+   * @returns CallExpression - h 调用
    */
   private createSimpleView(
     id: SlimeIdentifier, 
@@ -362,25 +362,21 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     // 创建 children 数组：[child1, child2, ...]
     const childrenArray = SlimeAstUtil.createArrayExpression(childExpressions)
 
-    // 创建空的 attrs 对象（简单视图不需要attrs）
-    const attrsObject = SlimeAstUtil.createObjectExpression([])
+    // 创建空的 props 对象（简单视图不需要props）
+    const propsObject = SlimeAstUtil.createObjectExpression([])
 
-    // 创建 OvsAPI.createVNode('div', {}, [...]) 调用
-    const createVNodeCall = SlimeAstUtil.createCallExpression(
-      SlimeAstUtil.createMemberExpression(
-        SlimeAstUtil.createIdentifier('OvsAPI'),
-        SlimeAstUtil.createDotOperator(loc),
-        SlimeAstUtil.createIdentifier('createVNode')
-      ),
+    // 创建 h('div', {}, [...]) 调用
+    const hCall = SlimeAstUtil.createCallExpression(
+      SlimeAstUtil.createIdentifier('h'),
       [
-        SlimeAstUtil.createStringLiteral(id.name),
-        attrsObject,
-        childrenArray
+        SlimeAstUtil.createStringLiteral(id.name),  // 第一个参数：元素名称
+        propsObject,                                 // 第二个参数：props
+        childrenArray                                // 第三个参数：children
       ]
     )
 
-    // 直接返回 createVNode 调用，不包裹 IIFE
-    return createVNodeCall
+    // 直接返回 h 调用，不包裹 IIFE
+    return hCall
   }
 
   /**
@@ -452,10 +448,10 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
   }
 
   /**
-   * 创建 return OvsAPI.createVNode('div', {attrs: temp$$attrs$$uuid}, children) 语句
+   * 创建 return h('div', props, children) 语句
    * 
    * 生成：
-   * return OvsAPI.createVNode('div', {attrs: temp$$attrs$$uuid}, children)
+   * return h('div', { ...temp$$attrs$$uuid }, children)
    * 
    * @param id 元素标识符（如 'div', 'span'）
    * @param attrsVarName attrs变量名（如 temp$$attrs$$uuid）
@@ -467,34 +463,32 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
   ): SlimeStatement {
     const loc = id.loc || undefined
     
-    // 创建 OvsAPI.createVNode 成员表达式
-    const memberExpression = SlimeAstUtil.createMemberExpression(
-      SlimeAstUtil.createIdentifier('OvsAPI'),
-      SlimeAstUtil.createDotOperator(loc),
-      SlimeAstUtil.createIdentifier('createVNode')
-    )
+    // 创建 h 函数标识符（直接调用 h，不是 OvsAPI.createVNode）
+    const hIdentifier = SlimeAstUtil.createIdentifier('h')
     
-    // 创建 attrs 对象：{attrs: temp$$attrs$$uuid} 或 {}
-    let attrsObject
+    // 创建 props 对象：如果有 attrsVarName，使用展开语法 {...temp$$attrs$$uuid}，否则为空对象 {}
+    let propsObject
     if (attrsVarName) {
-      attrsObject = SlimeAstUtil.createObjectExpression([
-        SlimeAstUtil.createPropertyAst(
-          SlimeAstUtil.createIdentifier('attrs'),
-          SlimeAstUtil.createIdentifier(attrsVarName)
-        )
+      // 创建 {...temp$$attrs$$uuid} 展开语法
+      propsObject = SlimeAstUtil.createObjectExpression([
+        {
+          type: 'SpreadElement',
+          argument: SlimeAstUtil.createIdentifier(attrsVarName),
+          loc
+        } as any
       ])
     } else {
-      attrsObject = SlimeAstUtil.createObjectExpression([])
+      propsObject = SlimeAstUtil.createObjectExpression([])
     }
     
-    // 创建函数调用：OvsAPI.createVNode('div', children, {attrs: temp$$attrs$$uuid})
-    // 注意：OvsAPI的参数顺序是 (tagName, children, props)
+    // 创建函数调用：h('div', {...temp$$attrs$$uuid}, children)
+    // Vue h 函数的参数顺序是 (type, props, children)
     const callExpression = SlimeAstUtil.createCallExpression(
-      memberExpression,
+      hIdentifier,
       [
         SlimeAstUtil.createStringLiteral(id.name),   // 第一个参数：元素名称字符串
-        SlimeAstUtil.createIdentifier('children'),   // 第二个参数：children 数组
-        attrsObject                                   // 第三个参数：attrs 对象
+        propsObject,                                  // 第二个参数：props 对象
+        SlimeAstUtil.createIdentifier('children')    // 第三个参数：children 数组
       ]
     )
     

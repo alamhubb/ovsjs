@@ -15,6 +15,7 @@ import {
   type SlimeExpression,
   type SlimeImportDeclaration,
   type SlimeImportDefaultSpecifier,
+  type SlimeImportSpecifier,
   SlimeProgramSourceType,
   SlimeVariableDeclarationKindValue
 } from "slime-ast/src/SlimeAstInterface.ts";
@@ -256,36 +257,45 @@ function wrapTopLevelExpressions(ast: SlimeProgram): SlimeProgram {
  * @returns 添加了 import 的 Program AST
  */
 function ensureOvsAPIImport(ast: SlimeProgram): SlimeProgram {
-  // 检查是否已经导入了 OvsAPI
-  let hasImportOvsAPI = false
+  // 检查是否已经导入了 h 函数
+  let hasImportH = false
 
   for (const statement of ast.body) {
     if (statement.type === SlimeAstType.ImportDeclaration) {
       const importDecl = statement as SlimeImportDeclaration
-      const defaultSpecifiers = importDecl.specifiers.filter(
-        spec => spec.type === SlimeAstType.ImportDefaultSpecifier
-      ) as SlimeImportDefaultSpecifier[]
+      const namedSpecifiers = importDecl.specifiers.filter(
+        spec => spec.type === SlimeAstType.ImportSpecifier
+      ) as SlimeImportSpecifier[]
 
-      hasImportOvsAPI = defaultSpecifiers.some(spec => spec.local.name === 'OvsAPI')
-      if (hasImportOvsAPI) break
+      hasImportH = namedSpecifiers.some(spec => 
+        spec.imported.type === SlimeAstType.Identifier && spec.imported.name === 'h'
+      )
+      if (hasImportH) break
     }
   }
 
-  // 如果没有导入，添加 import OvsAPI
-  if (!hasImportOvsAPI) {
-    const ovsImport = SlimeAstUtil.createImportDeclaration(
-      [SlimeAstUtil.createImportDefaultSpecifier(SlimeAstUtil.createIdentifier('OvsAPI'))],
+  // 如果没有导入，添加 import { h } from 'vue'
+  if (!hasImportH) {
+    // 手动创建 ImportSpecifier（因为SlimeAstUtil没有提供方法）
+    const hSpecifier: SlimeImportSpecifier = {
+      type: SlimeAstType.ImportSpecifier,
+      local: SlimeAstUtil.createIdentifier('h'),
+      imported: SlimeAstUtil.createIdentifier('h')
+    }
+    
+    const hImport = SlimeAstUtil.createImportDeclaration(
+      [hSpecifier],
       SlimeAstUtil.createFromKeyword(),
-      SlimeAstUtil.createStringLiteral('ovsjs/src/OvsAPI')
+      SlimeAstUtil.createStringLiteral('vue')
     )
 
     // 设置换行标记
-    if (ovsImport.loc) {
-      ovsImport.loc.newLine = true
+    if (hImport.loc) {
+      hImport.loc.newLine = true
     }
 
     // 添加到 body 最前面
-    ast.body.unshift(ovsImport)
+    ast.body.unshift(hImport)
   }
 
   return ast
@@ -394,3 +404,4 @@ export default function vitePluginOvs(): Plugin {
     }
   }
 }
+
