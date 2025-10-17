@@ -1713,16 +1713,37 @@ export class SlimeCstToAst {
     return []
   }
 
-  createArgumentListAst(cst: SubhutiCst): Array<SlimeExpression> {
+  createArgumentListAst(cst: SubhutiCst): Array<SlimeExpression | SlimeSpreadElement> {
     const astName = checkCstName(cst, Es6Parser.prototype.ArgumentList.name);
-    const ArgumentList: SlimeExpression[] = []
+    const ArgumentList: Array<SlimeExpression | SlimeSpreadElement> = []
     for (const child of cst.children) {
       if (child.name === Es6Parser.prototype.AssignmentExpression.name) {
         const res = this.createAssignmentExpressionAst(child)
         ArgumentList.push(res)
+      } else if (child.name === Es6Parser.prototype.EllipsisAssignmentExpression.name) {
+        // 处理 spread 参数：...args
+        const res = this.createEllipsisAssignmentExpressionAst(child)
+        ArgumentList.push(res)
       }
     }
     return ArgumentList
+  }
+
+  createEllipsisAssignmentExpressionAst(cst: SubhutiCst): SlimeSpreadElement {
+    const astName = checkCstName(cst, Es6Parser.prototype.EllipsisAssignmentExpression.name);
+    // EllipsisAssignmentExpression: [Ellipsis, AssignmentExpression]
+    const expression = cst.children.find(ch => 
+      ch.name === Es6Parser.prototype.AssignmentExpression.name
+    )
+    if (!expression) {
+      throw new Error('EllipsisAssignmentExpression missing AssignmentExpression')
+    }
+    
+    return {
+      type: 'SpreadElement',
+      argument: this.createAssignmentExpressionAst(expression),
+      loc: cst.loc
+    }
   }
 
   createMemberExpressionFirstOr(cst: SubhutiCst): SlimeExpression | SlimeSuper {

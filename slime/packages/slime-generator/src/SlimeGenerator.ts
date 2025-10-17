@@ -295,7 +295,12 @@ export default class SlimeGenerator {
         if (index !== 0) {
           this.addComma()
         }
-        this.generatorNode(argument as SlimeExpression)
+        // 检查是否是SpreadElement
+        if (argument.type === SlimeAstType.SpreadElement) {
+          this.generatorSpreadElement(argument as SlimeSpreadElement)
+        } else {
+          this.generatorNode(argument as SlimeExpression)
+        }
       })
     }
     this.addRParen()

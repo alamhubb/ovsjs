@@ -380,3 +380,79 @@ private static generatorArrayExpression(node: SlimeArrayExpression) {
 - P0-1（RestElement）：✅ 完成
 - P0-2（SpreadElement数组）：✅ 完成
 - 额外发现：函数调用中的spread参数问题（不在P0范围）
+
+**【进度】2025-10-17 13:43:18**
+- ✅ 新问题修复完成：函数调用中的SpreadElement丢失
+
+**修改文件：**
+1. `packages/slime-parser/src/language/SlimeCstToAstUtil.ts:1716-1747`
+2. `packages/slime-generator/src/SlimeGenerator.ts:291-306`
+
+**修改内容：**
+
+**1. CST→AST转换层：**
+```typescript
+// 新增方法
+createEllipsisAssignmentExpressionAst(cst: SubhutiCst): SlimeSpreadElement {
+  const expression = cst.children.find(ch => 
+    ch.name === Es6Parser.prototype.AssignmentExpression.name
+  )
+  return {
+    type: 'SpreadElement',
+    argument: this.createAssignmentExpressionAst(expression),
+    loc: cst.loc
+  }
+}
+
+// 修改 createArgumentListAst
+createArgumentListAst(cst: SubhutiCst) {
+  const ArgumentList = []
+  for (const child of cst.children) {
+    if (child.name === AssignmentExpression) {
+      ArgumentList.push(this.createAssignmentExpressionAst(child))
+    } else if (child.name === EllipsisAssignmentExpression) {  // ✅ 添加
+      ArgumentList.push(this.createEllipsisAssignmentExpressionAst(child))
+    }
+  }
+  return ArgumentList
+}
+```
+
+**2. 代码生成层：**
+```typescript
+// 修改 generatorCallExpression
+private static generatorCallExpression(node: SlimeCallExpression) {
+  // ... 生成 callee
+  
+  this.addLParen()
+  if (node.arguments.length) {
+    node.arguments.forEach((argument, index) => {
+      if (index !== 0) {
+        this.addComma()
+      }
+      // ✅ 检查是否是SpreadElement
+      if (argument.type === SlimeAstType.SpreadElement) {
+        this.generatorSpreadElement(argument)
+      } else {
+        this.generatorNode(argument)
+      }
+    })
+  }
+  this.addRParen()
+}
+```
+
+**测试结果：**
+✅ 80-spread-function-call.js - 通过
+- 输入：`add(...nums)`
+- 输出：`add(...nums)` ✅ 正确（之前是 `add()`）
+
+⚠️ 82-spread-nested.js - 失败
+- 输入：`const nested = {...{a: 1}, ...{b: {...{c: 2}}}}`
+- 输出：`const nested ;` ❌ 对象spread问题（不在本次范围）
+
+**修复总结：**
+- P0-1（RestElement）：✅ 完成
+- P0-2（SpreadElement数组）：✅ 完成
+- 新问题（SpreadElement函数调用）：✅ 完成
+- 其他发现：对象spread不支持（需要单独修复）
