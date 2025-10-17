@@ -1832,25 +1832,14 @@ export class SlimeCstToAst {
         const args = this.createArgumentsAst(child)
         current = SlimeAstUtil.createCallExpression(current, args)
         
-      } else if (child.name === 'Dot' || child.value === '.') {
-        // . - 成员访问操作符，后面应该跟Identifier或IdentifierName
-        i++  // 移到下一个child（property名）
-        if (i < cst.children.length) {
-          const propChild = cst.children[i]
-          let property: SlimeIdentifier | null = null
-          
-          if (propChild.name === Es6Parser.prototype.IdentifierName.name) {
-            const tokenCst = propChild.children[0]
-            property = SlimeAstUtil.createIdentifier(tokenCst.value, tokenCst.loc)
-          } else if (propChild.name === 'Identifier' || propChild.value) {
-            property = SlimeAstUtil.createIdentifier(propChild.value, propChild.loc)
-          }
-          
-          if (property) {
-            const dotOp = SlimeAstUtil.createDotOperator(child.loc)
-            current = SlimeAstUtil.createMemberExpression(current, dotOp, property)
-          }
-        }
+      } else if (child.name === Es6Parser.prototype.DotMemberExpression.name) {
+        // DotMemberExpression包含Dot和IdentifierName
+        const dotChild = child.children[0]  // Dot token
+        const identifierNameCst = child.children[1]  // IdentifierName
+        const tokenCst = identifierNameCst.children[0]  // 实际的token（Identifier或关键字）
+        const property = SlimeAstUtil.createIdentifier(tokenCst.value, tokenCst.loc)
+        const dotOp = SlimeAstUtil.createDotOperator(dotChild.loc)
+        current = SlimeAstUtil.createMemberExpression(current, dotOp, property)
         
       } else if (child.name === Es6Parser.prototype.BracketExpression.name) {
         // [expr] - computed property
@@ -2262,7 +2251,18 @@ export class SlimeCstToAst {
   createEqualityExpressionAst(cst: SubhutiCst): SlimeExpression {
     const astName = checkCstName(cst, Es6Parser.prototype.EqualityExpression.name);
     if (cst.children.length > 1) {
-
+      // 有运算符，创建 BinaryExpression
+      const left = this.createExpressionAst(cst.children[0])
+      const operator = cst.children[1].value as any  // ===, !==, ==, != 运算符
+      const right = this.createExpressionAst(cst.children[2])
+      
+      return {
+        type: SlimeAstType.BinaryExpression,
+        operator: operator,
+        left: left,
+        right: right,
+        loc: cst.loc
+      } as any
     }
     return this.createExpressionAst(cst.children[0])
   }
@@ -2270,7 +2270,18 @@ export class SlimeCstToAst {
   createRelationalExpressionAst(cst: SubhutiCst): SlimeExpression {
     const astName = checkCstName(cst, Es6Parser.prototype.RelationalExpression.name);
     if (cst.children.length > 1) {
-
+      // 有运算符，创建 BinaryExpression
+      const left = this.createExpressionAst(cst.children[0])
+      const operator = cst.children[1].value as any  // <, >, <=, >= 运算符
+      const right = this.createExpressionAst(cst.children[2])
+      
+      return {
+        type: SlimeAstType.BinaryExpression,
+        operator: operator,
+        left: left,
+        right: right,
+        loc: cst.loc
+      } as any
     }
     return this.createExpressionAst(cst.children[0])
   }
@@ -2642,6 +2653,11 @@ export class SlimeCstToAst {
       const SlimeMethodDefinition = this.createMethodDefinitionAst(null, first)
 
       const keyAst = SlimeAstUtil.createPropertyAst(SlimeMethodDefinition.key, SlimeMethodDefinition.value)
+      
+      // 继承MethodDefinition的computed标志
+      if (SlimeMethodDefinition.computed) {
+        keyAst.computed = true
+      }
 
       return keyAst
     } else if (first.name === Es6Parser.prototype.IdentifierReference.name) {
@@ -2802,7 +2818,8 @@ export class SlimeCstToAst {
 
     const left = this.createExpressionAst(leftCst)
     const right = this.createAssignmentExpressionAst(rightCst)
-    const operator = operatorCst.value || '='
+    // AssignmentOperator节点下有子节点(PlusEq/MinusEq等)，需要从children[0].value获取
+    const operator = (operatorCst.children && operatorCst.children[0]?.value) || operatorCst.value || '='
 
     const ast: SlimeAssignmentExpression = {
       type: 'AssignmentExpression',

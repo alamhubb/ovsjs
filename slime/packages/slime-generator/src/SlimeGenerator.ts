@@ -467,7 +467,8 @@ export default class SlimeGenerator {
 
   private static generatorProperty(node: SlimeProperty) {
     // 检查 value 是否是 FunctionExpression 且 key 与 function id 同名
-    if (node.value.type === SlimeAstType.FunctionExpression &&
+    if (!node.computed &&  // 计算属性不使用简写
+      node.value.type === SlimeAstType.FunctionExpression &&
       (node as any).value.id &&
       node.key.type === SlimeAstType.Identifier &&
       node.key.name === (node as any).value.id.name) {
@@ -624,7 +625,13 @@ export default class SlimeGenerator {
     
     // 处理 key（方法名）
     if (node.key) {
-      this.generatorNode(node.key)
+      if (node.computed) {
+        this.addLBracket()
+        this.generatorNode(node.key)
+        this.addRBracket()
+      } else {
+        this.generatorNode(node.key)
+      }
     }
     
     // 处理 value（函数参数和函数体，但不输出 function 关键字和函数名）

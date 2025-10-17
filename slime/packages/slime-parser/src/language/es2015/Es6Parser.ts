@@ -620,8 +620,7 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
         },
         {
           alt: () => {
-            this.tokenConsumer.Dot()
-            this.tokenConsumer.Identifier()
+            this.DotMemberExpression()  // 使用DotMemberExpression支持关键字
           }
         },
         {alt: () => this.TemplateLiteral()}
