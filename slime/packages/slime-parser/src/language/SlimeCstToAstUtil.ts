@@ -1208,6 +1208,23 @@ export class SlimeCstToAst {
       }
     }
     
+    // ES2018: 检查是否有BindingRestElement（...rest）
+    const restElement = cst.children.find(ch => ch.name === Es6Parser.prototype.BindingRestElement.name)
+    if (restElement) {
+      // BindingRestElement -> Ellipsis + BindingIdentifier
+      const identifier = restElement.children.find((ch: any) => 
+        ch.name === Es6Parser.prototype.BindingIdentifier.name)
+      if (identifier) {
+        const restId = this.createBindingIdentifierAst(identifier)
+        const restNode = {
+          type: SlimeAstType.RestElement,
+          argument: restId,
+          loc: restElement.loc
+        }
+        properties.push(restNode as any)
+      }
+    }
+    
     return {
       type: SlimeAstType.ObjectPattern,
       properties,

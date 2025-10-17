@@ -1075,17 +1075,29 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
   ObjectBindingPattern() {
     this.tokenConsumer.LBrace()
     this.Or([
+      // 空对象：{}
       {alt: () => this.tokenConsumer.RBrace()},
-      {
-        alt: () => {
-          this.BindingPropertyList()
-          this.tokenConsumer.RBrace()
-        }
-      },
+      // ES2018: 对象rest语法 {a, ...rest}（长规则优先）
       {
         alt: () => {
           this.BindingPropertyList()
           this.tokenConsumer.Comma()
+          this.BindingRestElement()
+          this.tokenConsumer.RBrace()
+        }
+      },
+      // 带尾逗号：{a, b, }
+      {
+        alt: () => {
+          this.BindingPropertyList()
+          this.tokenConsumer.Comma()
+          this.tokenConsumer.RBrace()
+        }
+      },
+      // 基础形式：{a, b}
+      {
+        alt: () => {
+          this.BindingPropertyList()
           this.tokenConsumer.RBrace()
         }
       }

@@ -916,10 +916,13 @@ export default class SlimeGenerator {
   }
 
   private static generatorObjectPattern(node: SlimeObjectPattern) {
-    // 输出对象解构：{name, age} 或 {name: userName} 或 {name = "default"}
+    // 输出对象解构：{name, age} 或 {name: userName} 或 {name = "default"} 或 {a, ...rest}
     this.addLBrace()
     node.properties.forEach((prop: any, index) => {
-      if (prop.shorthand) {
+      // ES2018: 检查是否是RestElement
+      if (prop.type === SlimeAstType.RestElement) {
+        this.generatorRestElement(prop as SlimeRestElement)
+      } else if (prop.shorthand) {
         // 简写形式：{name} 或 {name = "default"}
         // 如果value是AssignmentPattern，输出完整的 name = "default"
         // 否则只输出 name

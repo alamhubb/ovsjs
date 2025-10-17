@@ -979,3 +979,36 @@ Parser的Many循环在带参数的链式调用中提前终止（只收集2次调
 **ES6核心特性支持度：100%**
 
 **结论：** Slime是一个生产级别的ES6 Parser，支持所有核心ES6特性！
+
+**【进度】2025/10/17 17:57:33**
+## 🎉 ES2018对象rest/spread支持完成！
+
+**修改内容：**
+
+1. **Parser层（Es6Parser.ts）** - 支持对象rest语法
+   - 修改ObjectBindingPattern规则，添加BindingRestElement支持
+   - 语法：`{a, ...rest}` 类似于数组的 `[a, ...rest]`
+
+2. **AST转换层（SlimeCstToAstUtil.ts）** - 生成RestElement节点
+   - 修改createObjectBindingPatternAst方法
+   - 检查并处理BindingRestElement，生成RestElement AST节点
+
+3. **代码生成层（SlimeGenerator.ts）** - 输出...语法
+   - 修改generatorObjectPattern方法
+   - 检查properties中的RestElement类型，正确输出`...identifier`
+
+**测试结果：**
+- ✅ 数组rest：`const [first, ...rest] = arr` - 正常工作
+- ✅ 对象rest：`const {a, ...others} = obj` - 新增支持！
+- ✅ 测试29：100%通过
+
+**ES2018特性支持度：**
+- ✅ 对象解构rest：`{a, ...rest}` - 完全支持
+- ⚠️ 对象字面量spread：`{...obj}` - 暂未支持（需要额外实现）
+
+**修改文件：**
+1. slime/packages/slime-parser/src/language/es2015/Es6Parser.ts（+7行）
+2. slime/packages/slime-parser/src/language/SlimeCstToAstUtil.ts（+16行）
+3. slime/packages/slime-generator/src/SlimeGenerator.ts（+3行）
+
+**总计修改行数：26行**
