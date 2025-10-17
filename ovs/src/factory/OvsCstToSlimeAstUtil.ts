@@ -42,7 +42,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
   private ovsRenderDomViewDepth = 0;
   
   /**
-   * 当前view的临时attrs变量名栈（支持嵌套）
+   * 当前view的临时attrs变量名栈（支持嵌套）,必须使用，不使用而是使用ovsview中循环的方法的话解决不了 if for 中使用此方式的问题
    */
   private attrsVarNameStack: Array<string | null> = [];
 
