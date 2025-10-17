@@ -165,8 +165,10 @@ alwaysApply: true
 **目的：** 支持长任务中断后快速恢复上下文，AI实时记录项目进度
 
 **核心文件（每个项目）：**
-1. `tests/ai/.msg.txt` - 临时消息文件（AI写入进度内容）
+1. `tests/ai/.msg.txt` - 临时消息文件（AI写入进度内容）⚠️ **禁止删除**
 2. `tests/ai/log-from-file.js` - 执行脚本（读取并追加到project.mdc）
+
+**重要：** `.msg.txt`是断点重续的核心文件，任何情况下都**不能删除**！
 
 **使用场景：**
 - 复杂任务（预计>10分钟）
@@ -292,6 +294,7 @@ run_terminal_cmd("cd slime; node tests/ai/log-from-file.js")
    - 删除：已完成任务的详细诊断
    - 删除：重复的进度记录
    - 保留：当前相关、测试架构、最新进度
+   - ⚠️ **禁止删除：** `tests/ai/.msg.txt`和`log-from-file.js`
 
 4. **信息密度** - 优先保留有用信息，避免冗余
    - 当前状态 > 历史记录
@@ -310,6 +313,7 @@ run_terminal_cmd("cd slime; node tests/ai/log-from-file.js")
 - ❌ 多个项目信息混在一个文件
 - ❌ 长期不清理导致文件膨胀（>500行警告）
 - ❌ 重复记录相同内容
+- ⚠️ **严禁删除：** `tests/ai/.msg.txt` 和 `log-from-file.js`（断点重续核心文件）
 
 ---
 

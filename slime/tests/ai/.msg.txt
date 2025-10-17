@@ -1,75 +1,18 @@
-✅ P1-3修复完成：数组rest解构
+✅ Guidebot规则更新完成
 
-**修改文件：**
-- `packages/slime-parser/src/language/es2015/Es6Parser.ts:1077-1106`
+**更新内容：**
+在"断点重续机制"和"项目信息管理规则"中添加明确要求：
 
-**修改内容：**
+**新增规则：**
+1. 核心文件说明中添加：`tests/ai/.msg.txt` ⚠️ **禁止删除**
+2. 重要提示：".msg.txt是断点重续的核心文件，任何情况下都不能删除！"
+3. 定期清理规则中添加：⚠️ **禁止删除：** `tests/ai/.msg.txt`和`log-from-file.js`
+4. 禁止行为中添加：⚠️ **严禁删除：** `tests/ai/.msg.txt` 和 `log-from-file.js`（断点重续核心文件）
 
-**Parser规则顺序调整：**
-```typescript
-// 修改前（短规则在中间）
-ArrayBindingPattern() {
-  this.tokenConsumer.LBracket()
-  this.Or([
-    {alt: () => {  // 规则1：[] 或 [...all]
-      this.Option(() => this.Elision())
-      this.Option(() => this.BindingRestElement())
-      this.tokenConsumer.RBracket()
-    }},
-    {alt: () => {  // 规则2：[first, second]（短规则）
-      this.BindingElementList()
-      this.tokenConsumer.RBracket()
-    }},
-    {alt: () => {  // 规则3：[first, ...rest]（长规则）
-      this.BindingElementList()
-      this.tokenConsumer.Comma()
-      this.Option(() => this.Elision())
-      this.Option(() => this.BindingRestElement())
-      this.tokenConsumer.RBracket()
-    }}
-  ])
-}
+**目的：**
+防止AI在清理项目文件时误删断点重续的核心工具文件。
 
-// 修改后（长规则优先）
-ArrayBindingPattern() {
-  this.tokenConsumer.LBracket()
-  this.Or([
-    // 长规则优先：[first, ...rest]
-    {alt: () => {
-      this.BindingElementList()
-      this.tokenConsumer.Comma()
-      this.Option(() => this.Elision())
-      this.Option(() => this.BindingRestElement())
-      this.tokenConsumer.RBracket()
-    }},
-    // 短规则：[first, second]
-    {alt: () => {
-      this.BindingElementList()
-      this.tokenConsumer.RBracket()
-    }},
-    // 特殊规则：[] 或 [...all]
-    {alt: () => {
-      this.Option(() => this.Elision())
-      this.Option(() => this.BindingRestElement())
-      this.tokenConsumer.RBracket()
-    }}
-  ])
-}
-```
-
-**测试结果：**
-✅ 64-destruct-array-rest.js - 全部通过
-- `const [first, ...rest] = [1, 2, 3, 4, 5]`
-- `const [a, b, ...others] = [10, 20, 30, 40]`
-- `const [...all] = [1, 2, 3]`
-- `const [x, ...empty] = [1]`
-- 生成代码全部正确 ✅
-
-✅ 62-destruct-array-basic.js - 仍然通过
-- 基础数组解构正常工作
-
-✅ 63-destruct-array-skip.js - 仍然通过
-- 跳过元素的解构正常工作
-
-**修复状态：**
-- P1-3（数组rest解构）：✅ 完成
+**位置：**
+- 第168-170行：核心文件说明
+- 第294行：定期清理规则
+- 第312行：禁止行为清单
