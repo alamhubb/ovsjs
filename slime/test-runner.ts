@@ -1,4 +1,4 @@
-// 单个测试用例运行器
+// 单个测试用例运行器（严格验证版本）
 import { readFileSync } from 'fs'
 import Es6Parser from './packages/slime-parser/src/language/es2015/Es6Parser.ts'
 import { es6Tokens } from './packages/slime-parser/src/language/es2015/Es6Tokens.ts'
@@ -36,11 +36,26 @@ try {
   const ast = slimeCstToAst.toProgram(cst)
   console.log(`✅ AST转换完成，${ast.body.length}个顶层语句`)
   
-  
   // 4. AST -> Code
   const result = SlimeGenerator.generator(ast, tokens)
   
   const elapsed = Date.now() - startTime
+  
+  // 严格验证：生成代码不为空
+  if (!result.code || result.code.trim() === '') {
+    console.log(`❌ 编译失败 (${elapsed}ms)`)
+    console.log(`错误: 生成代码为空（Parser可能返回了空CST）`)
+    process.exit(1)
+  }
+  
+  // 严格验证：AST不为空
+  if (ast.body.length === 0) {
+    console.log(`⚠️ 编译成功但AST为空 (${elapsed}ms)`)
+    console.log(`警告: AST转换返回0个语句，可能Parser不支持此语法`)
+    console.log(`生成代码:\n${result.code}`)
+    process.exit(1)
+  }
+  
   console.log(`✅ 编译成功 (${elapsed}ms)`)
   console.log(`生成代码:\n${result.code}`)
 } catch (e: any) {

@@ -901,6 +901,7 @@ export default class SlimeGenerator {
   }
 
   private static generatorRestElement(node: SlimeRestElement) {
+    this.addCode(es6TokensObj.Ellipsis)
     this.generatorNode(node.argument)
   }
 

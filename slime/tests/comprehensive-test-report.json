@@ -1,0 +1,582 @@
+{
+  "total": 120,
+  "passed": 25,
+  "failed": 95,
+  "results": [
+    {
+      "file": "41-let-basic.js",
+      "status": "PASS"
+    },
+    {
+      "file": "42-const-basic.js",
+      "status": "PASS"
+    },
+    {
+      "file": "43-let-block-scope.js",
+      "status": "PASS"
+    },
+    {
+      "file": "44-const-reassignment-error.js",
+      "status": "PASS"
+    },
+    {
+      "file": "45-temporal-dead-zone.js",
+      "status": "PASS"
+    },
+    {
+      "file": "46-arrow-simple.js",
+      "status": "PASS"
+    },
+    {
+      "file": "47-arrow-implicit-return.js",
+      "status": "PASS"
+    },
+    {
+      "file": "48-arrow-explicit-return.js",
+      "status": "PASS"
+    },
+    {
+      "file": "49-arrow-no-params.js",
+      "status": "PASS"
+    },
+    {
+      "file": "50-arrow-single-param.js",
+      "status": "PASS"
+    },
+    {
+      "file": "51-arrow-multiple-params.js",
+      "status": "PASS"
+    },
+    {
+      "file": "52-arrow-object-return.js",
+      "status": "PASS"
+    },
+    {
+      "file": "53-arrow-nested.js",
+      "status": "PASS"
+    },
+    {
+      "file": "54-template-basic.js",
+      "status": "PASS"
+    },
+    {
+      "file": "55-template-multiline.js",
+      "status": "PASS"
+    },
+    {
+      "file": "56-template-expression.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/56-template-expression.js"
+    },
+    {
+      "file": "57-template-nested.js",
+      "status": "PASS"
+    },
+    {
+      "file": "58-template-function-call.js",
+      "status": "PASS"
+    },
+    {
+      "file": "59-template-tagged.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/59-template-tagged.js"
+    },
+    {
+      "file": "60-template-raw-strings.js",
+      "status": "PASS"
+    },
+    {
+      "file": "61-template-complex.js",
+      "status": "PASS"
+    },
+    {
+      "file": "62-destruct-array-basic.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/62-destruct-array-basic.js"
+    },
+    {
+      "file": "63-destruct-array-skip.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/63-destruct-array-skip.js"
+    },
+    {
+      "file": "64-destruct-array-rest.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/64-destruct-array-rest.js"
+    },
+    {
+      "file": "65-destruct-object-basic.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/65-destruct-object-basic.js"
+    },
+    {
+      "file": "66-destruct-object-rename.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/66-destruct-object-rename.js"
+    },
+    {
+      "file": "67-destruct-object-default.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/67-destruct-object-default.js"
+    },
+    {
+      "file": "68-destruct-nested.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/68-destruct-nested.js"
+    },
+    {
+      "file": "69-destruct-params.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/69-destruct-params.js"
+    },
+    {
+      "file": "70-destruct-mixed.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/70-destruct-mixed.js"
+    },
+    {
+      "file": "71-destruct-complex.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/71-destruct-complex.js"
+    },
+    {
+      "file": "72-default-params-basic.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/72-default-params-basic.js"
+    },
+    {
+      "file": "73-default-params-expression.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/73-default-params-expression.js"
+    },
+    {
+      "file": "74-default-params-previous.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/74-default-params-previous.js"
+    },
+    {
+      "file": "75-default-params-destructure.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/75-default-params-destructure.js"
+    },
+    {
+      "file": "76-default-params-undefined.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/76-default-params-undefined.js"
+    },
+    {
+      "file": "77-rest-params.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/77-rest-params.js"
+    },
+    {
+      "file": "78-rest-array-destruct.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/78-rest-array-destruct.js"
+    },
+    {
+      "file": "79-spread-array.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/79-spread-array.js"
+    },
+    {
+      "file": "80-spread-function-call.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/80-spread-function-call.js"
+    },
+    {
+      "file": "81-spread-object.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/81-spread-object.js"
+    },
+    {
+      "file": "82-spread-nested.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/82-spread-nested.js"
+    },
+    {
+      "file": "83-spread-concat.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/83-spread-concat.js"
+    },
+    {
+      "file": "84-rest-spread-combined.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/84-rest-spread-combined.js"
+    },
+    {
+      "file": "85-class-basic.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/85-class-basic.js"
+    },
+    {
+      "file": "86-class-constructor.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/86-class-constructor.js"
+    },
+    {
+      "file": "87-class-methods.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/87-class-methods.js"
+    },
+    {
+      "file": "88-class-static.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/88-class-static.js"
+    },
+    {
+      "file": "89-class-getter-setter.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/89-class-getter-setter.js"
+    },
+    {
+      "file": "90-class-extends.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/90-class-extends.js"
+    },
+    {
+      "file": "91-class-super-constructor.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/91-class-super-constructor.js"
+    },
+    {
+      "file": "92-class-super-method.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/92-class-super-method.js"
+    },
+    {
+      "file": "93-class-expression.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/93-class-expression.js"
+    },
+    {
+      "file": "94-class-computed-names.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/94-class-computed-names.js"
+    },
+    {
+      "file": "95-class-private-like.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/95-class-private-like.js"
+    },
+    {
+      "file": "96-class-inheritance-chain.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/96-class-inheritance-chain.js"
+    },
+    {
+      "file": "97-class-mixin.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/97-class-mixin.js"
+    },
+    {
+      "file": "98-class-complex.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/98-class-complex.js"
+    },
+    {
+      "file": "99-class-new-target.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/99-class-new-target.js"
+    },
+    {
+      "file": "100-module-export-default.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/100-module-export-default.js"
+    },
+    {
+      "file": "101-module-export-named.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/101-module-export-named.js"
+    },
+    {
+      "file": "102-module-export-multiple.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/102-module-export-multiple.js"
+    },
+    {
+      "file": "103-module-export-rename.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/103-module-export-rename.js"
+    },
+    {
+      "file": "104-module-import-default.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/104-module-import-default.js"
+    },
+    {
+      "file": "105-module-import-named.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/105-module-import-named.js"
+    },
+    {
+      "file": "106-module-import-namespace.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/106-module-import-namespace.js"
+    },
+    {
+      "file": "107-module-import-rename.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/107-module-import-rename.js"
+    },
+    {
+      "file": "108-module-export-from.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/108-module-export-from.js"
+    },
+    {
+      "file": "109-module-mixed.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/109-module-mixed.js"
+    },
+    {
+      "file": "110-promise-basic.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/110-promise-basic.js"
+    },
+    {
+      "file": "111-promise-then-catch.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/111-promise-then-catch.js"
+    },
+    {
+      "file": "112-promise-chaining.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/112-promise-chaining.js"
+    },
+    {
+      "file": "113-promise-all.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/113-promise-all.js"
+    },
+    {
+      "file": "114-promise-race.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/114-promise-race.js"
+    },
+    {
+      "file": "115-promise-resolve-reject.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/115-promise-resolve-reject.js"
+    },
+    {
+      "file": "116-promise-finally.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/116-promise-finally.js"
+    },
+    {
+      "file": "117-promise-complex.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/117-promise-complex.js"
+    },
+    {
+      "file": "118-generator-basic.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/118-generator-basic.js"
+    },
+    {
+      "file": "119-generator-yield.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/119-generator-yield.js"
+    },
+    {
+      "file": "120-generator-yield-star.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/120-generator-yield-star.js"
+    },
+    {
+      "file": "121-generator-params.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/121-generator-params.js"
+    },
+    {
+      "file": "122-generator-return.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/122-generator-return.js"
+    },
+    {
+      "file": "123-generator-throw.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/123-generator-throw.js"
+    },
+    {
+      "file": "124-generator-iterator.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/124-generator-iterator.js"
+    },
+    {
+      "file": "125-generator-complex.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/125-generator-complex.js"
+    },
+    {
+      "file": "126-object-shorthand-property.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/126-object-shorthand-property.js"
+    },
+    {
+      "file": "127-object-shorthand-method.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/127-object-shorthand-method.js"
+    },
+    {
+      "file": "128-object-computed-property.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/128-object-computed-property.js"
+    },
+    {
+      "file": "129-object-getter-setter.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/129-object-getter-setter.js"
+    },
+    {
+      "file": "130-object-proto.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/130-object-proto.js"
+    },
+    {
+      "file": "131-object-super.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/131-object-super.js"
+    },
+    {
+      "file": "132-object-complex.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/132-object-complex.js"
+    },
+    {
+      "file": "133-forof-array.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/133-forof-array.js"
+    },
+    {
+      "file": "134-forof-string.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/134-forof-string.js"
+    },
+    {
+      "file": "135-forof-map-set.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/135-forof-map-set.js"
+    },
+    {
+      "file": "136-forof-generator.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/136-forof-generator.js"
+    },
+    {
+      "file": "137-forof-destructure.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/137-forof-destructure.js"
+    },
+    {
+      "file": "138-symbol-basic.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/138-symbol-basic.js"
+    },
+    {
+      "file": "139-symbol-description.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/139-symbol-description.js"
+    },
+    {
+      "file": "140-symbol-wellknown.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/140-symbol-wellknown.js"
+    },
+    {
+      "file": "141-symbol-registry.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/141-symbol-registry.js"
+    },
+    {
+      "file": "142-symbol-property.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/142-symbol-property.js"
+    },
+    {
+      "file": "143-map-basic.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/143-map-basic.js"
+    },
+    {
+      "file": "144-map-methods.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/144-map-methods.js"
+    },
+    {
+      "file": "145-set-basic.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/145-set-basic.js"
+    },
+    {
+      "file": "146-set-methods.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/146-set-methods.js"
+    },
+    {
+      "file": "147-weakmap-weakset.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/147-weakmap-weakset.js"
+    },
+    {
+      "file": "148-map-set-complex.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/148-map-set-complex.js"
+    },
+    {
+      "file": "149-async-basic.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/149-async-basic.js"
+    },
+    {
+      "file": "150-await-promise.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/150-await-promise.js"
+    },
+    {
+      "file": "151-async-error-handling.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/151-async-error-handling.js"
+    },
+    {
+      "file": "152-async-parallel.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/152-async-parallel.js"
+    },
+    {
+      "file": "153-async-complex.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/153-async-complex.js"
+    },
+    {
+      "file": "154-binary-octal-literals.js",
+      "status": "PASS"
+    },
+    {
+      "file": "155-unicode-escapes.js",
+      "status": "PASS"
+    },
+    {
+      "file": "156-regex-flags.js",
+      "status": "PASS"
+    },
+    {
+      "file": "157-proxy-basic.js",
+      "status": "FAIL",
+      "reason": "Command failed: npx tsx test-runner.ts tests/cases/comprehensive/157-proxy-basic.js"
+    },
+    {
+      "file": "158-reflect-api.js",
+      "status": "PASS"
+    },
+    {
+      "file": "159-tail-call-optimization.js",
+      "status": "PASS"
+    },
+    {
+      "file": "160-number-methods.js",
+      "status": "PASS"
+    }
+  ]
+}

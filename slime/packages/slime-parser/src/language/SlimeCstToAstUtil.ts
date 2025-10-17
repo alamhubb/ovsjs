@@ -1372,9 +1372,24 @@ export class SlimeCstToAst {
       const letOrConstCst = forDeclarationCst.children[0]
       const forBindingCst = forDeclarationCst.children[1]
       
+      // ForBinding可能是BindingIdentifier或BindingPattern
+      // ForBinding的children[0]才是实际的Binding
+      const actualBinding = forBindingCst.children[0]
+      let id;
+      
+      if (actualBinding.name === Es6Parser.prototype.BindingPattern.name) {
+        // for (const [key, value] of map) 或 for (const {name} of arr)
+        id = this.createBindingPatternAst(actualBinding);
+      } else if (actualBinding.name === Es6Parser.prototype.BindingIdentifier.name) {
+        // for (const item of arr)
+        id = this.createBindingIdentifierAst(actualBinding);
+      } else {
+        // 降级处理
+        id = this.createBindingIdentifierAst(actualBinding);
+      }
+      
       // 创建变量声明
       const kind = letOrConstCst.children[0].value  // 'let' or 'const'
-      const id = this.createBindingIdentifierAst(forBindingCst.children[0])
       
       left = {
         type: SlimeAstType.VariableDeclaration,

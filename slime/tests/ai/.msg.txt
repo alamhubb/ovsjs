@@ -1,8 +1,35 @@
-【修复进度】2025-10-16
+✅ P0-1修复完成：RestElement缺少`...`前缀
 
-已修复：14/20（编码错误批量完成）
+**修改文件：**
+- `packages/slime-generator/src/SlimeGenerator.ts:904`
 
----
+**修改内容：**
+```typescript
+// 修改前
+private static generatorRestElement(node: SlimeRestElement) {
+  this.generatorNode(node.argument)
+}
 
-## [15/20] ⏳ 正在处理：super.method() 代码生成优化
-问题：生成 supermethod() 而不是 super.method()
+// 修改后
+private static generatorRestElement(node: SlimeRestElement) {
+  this.addCode(es6TokensObj.Ellipsis)  // ✅ 添加 ... 前缀
+  this.generatorNode(node.argument)
+}
+```
+
+**测试结果：**
+✅ 77-rest-params.js - 通过
+- 输入：`function sum(...numbers)`
+- 输出：`function sum(...numbers)` ✅ 正确
+
+⚠️ 84-rest-spread-combined.js - 编译成功，但暴露SpreadElement问题
+- 输入：`return [...args, 'end']`
+- 输出：`return ['end',]` ❌ args和spread都丢失（这是P0-2的问题）
+
+❌ 78-rest-array-destruct.js - 失败（这是P1问题，不在本次修复范围）
+- `const [first, ...rest] = arr` - 生成空代码
+
+**修复状态：**
+- P0-1（RestElement）：✅ 完成
+- P0-2（SpreadElement）：待修复
+- P1（数组rest解构）：暂不修复
