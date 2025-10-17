@@ -1077,23 +1077,26 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
   ArrayBindingPattern() {
     this.tokenConsumer.LBracket()
     this.Or([
+      // 长规则优先：[first, ...rest]
       {
         alt: () => {
+          this.BindingElementList()
+          this.tokenConsumer.Comma()
           this.Option(() => this.Elision())
           this.Option(() => this.BindingRestElement())
           this.tokenConsumer.RBracket()
         }
       },
+      // 短规则：[first, second]
       {
         alt: () => {
           this.BindingElementList()
           this.tokenConsumer.RBracket()
         }
       },
+      // 特殊规则：[] 或 [...all]
       {
         alt: () => {
-          this.BindingElementList()
-          this.tokenConsumer.Comma()
           this.Option(() => this.Elision())
           this.Option(() => this.BindingRestElement())
           this.tokenConsumer.RBracket()
@@ -1129,14 +1132,16 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
   @SubhutiRule
   BindingProperty() {
     this.Or([
-      {alt: () => this.SingleNameBinding()},
+      // 长规则优先：{name: userName}
       {
         alt: () => {
           this.PropertyName()
           this.tokenConsumer.Colon()
           this.BindingElement()
         }
-      }
+      },
+      // 短规则回退：{name}
+      {alt: () => this.SingleNameBinding()}
     ])
   }
 

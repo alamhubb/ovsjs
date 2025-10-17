@@ -1147,24 +1147,22 @@ export class SlimeCstToAst {
               ch.name === Es6Parser.prototype.BindingElement.name)
             
             if (propName && bindingElement) {
-              const keyId = propName.children[0]
-              const key = SlimeAstUtil.createIdentifier(keyId.value, keyId.loc)
+              // PropertyName可能包含LiteralPropertyName或ComputedPropertyName
+              // 需要递归找到Identifier token
+              const key = this.createPropertyNameAst(propName)
               
-              const singleName = bindingElement.children[0]
-              const identifier = singleName.children.find((ch: any) => 
-                ch.name === Es6Parser.prototype.BindingIdentifier.name)
-              if (identifier) {
-                const value = this.createBindingIdentifierAst(identifier)
-                properties.push({
-                  type: SlimeAstType.Property,
-                  key: key,
-                  value: value,
-                  kind: 'init',
-                  computed: false,
-                  shorthand: false,
-                  loc: child.loc
-                })
-              }
+              // BindingElement可能是SingleNameBinding或BindingPattern
+              const value = this.createBindingElementAst(bindingElement)
+              
+              properties.push({
+                type: SlimeAstType.Property,
+                key: key,
+                value: value,
+                kind: 'init',
+                computed: false,
+                shorthand: false,
+                loc: child.loc
+              })
             }
           }
         }

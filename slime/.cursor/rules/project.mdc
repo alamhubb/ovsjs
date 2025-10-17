@@ -514,3 +514,171 @@ private static generatorExportSpecifier(spec) {
 ✅ 1. export重命名：`export {name as userName}`
 ✅ 2. export from：`export {name} from './module.js'`
 ✅ 3. 组合：`export {name as userName} from './module.js'`
+
+**【进度】2025-10-17 14:27:23**
+- ✅ ES版本特性确认
+
+**测试方法：** 在Node.js中运行测试代码
+
+**结果：**
+
+1. **对象解构重命名** `const {name: userName} = obj`
+   - ✅ ES6 (ES2015) 特性
+   - Node.js原生支持
+   - 应该在Slime项目中修复
+
+2. **数组解构rest** `const [first, ...rest] = arr`
+   - ✅ ES6 (ES2015) 特性
+   - Node.js原生支持
+   - 应该在Slime项目中修复
+
+3. **对象rest** `const {a, ...rest} = obj`
+   - ❌ ES2018 (ES9) 特性
+   - 不在ES6范围内
+   - 不应该在Slime项目中修复
+
+**结论：**
+剩余的2个P1问题都是ES6特性，应该修复：
+- P1-2: 对象解构重命名
+- P1-3: 数组解构rest
+
+**下一步：**
+开始修复P1-2（对象解构重命名）
+
+**【进度】2025-10-17 14:30:30**
+- ✅ P1-2修复完成：对象解构重命名
+
+**修改文件：**
+1. `packages/slime-parser/src/language/es2015/Es6Parser.ts:1130-1143`
+2. `packages/slime-parser/src/language/SlimeCstToAstUtil.ts:1142-1167`
+
+**修改内容：**
+
+**1. Parser规则顺序调整：**
+```typescript
+// 修改前（短规则在前）
+BindingProperty() {
+  this.Or([
+    {alt: () => this.SingleNameBinding()},  // 短规则
+    {alt: () => {
+      this.PropertyName()
+      this.Colon()
+      this.BindingElement()
+    }}
+  ])
+}
+
+// 修改后（长规则优先）
+BindingProperty() {
+  this.Or([
+    // 长规则优先：{name: userName}
+    {alt: () => {
+      this.PropertyName()
+      this.Colon()
+      this.BindingElement()
+    }},
+    // 短规则回退：{name}
+    {alt: () => this.SingleNameBinding()}
+  ])
+}
+```
+
+**2. CST→AST转换修复：**
+```typescript
+// 修改前（错误的token提取）
+const keyId = propName.children[0]
+const key = SlimeAstUtil.createIdentifier(keyId.value, keyId.loc)
+
+// 修改后（使用正确的方法）
+const key = this.createPropertyNameAst(propName)
+const value = this.createBindingElementAst(bindingElement)
+```
+
+**测试结果：**
+✅ 66-destruct-object-rename.js - 通过
+- 输入：`const {name: userName} = {name: 'Alice'}`
+- 输出：`const {name: userName} = {name:'Alice',}` ✅ 正确
+
+✅ 65-destruct-object-basic.js - 仍然通过
+- 输入：`const {name, age} = {...}`
+- 输出：`const {name,age} = {...}` ✅ 正确
+
+**修复状态：**
+- P1-2（对象解构重命名）：✅ 完成
+
+**【进度】2025-10-17 14:35:37**
+- ✅ P1-3修复完成：数组rest解构
+
+**修改文件：**
+- `packages/slime-parser/src/language/es2015/Es6Parser.ts:1077-1106`
+
+**修改内容：**
+
+**Parser规则顺序调整：**
+```typescript
+// 修改前（短规则在中间）
+ArrayBindingPattern() {
+  this.tokenConsumer.LBracket()
+  this.Or([
+    {alt: () => {  // 规则1：[] 或 [...all]
+      this.Option(() => this.Elision())
+      this.Option(() => this.BindingRestElement())
+      this.tokenConsumer.RBracket()
+    }},
+    {alt: () => {  // 规则2：[first, second]（短规则）
+      this.BindingElementList()
+      this.tokenConsumer.RBracket()
+    }},
+    {alt: () => {  // 规则3：[first, ...rest]（长规则）
+      this.BindingElementList()
+      this.tokenConsumer.Comma()
+      this.Option(() => this.Elision())
+      this.Option(() => this.BindingRestElement())
+      this.tokenConsumer.RBracket()
+    }}
+  ])
+}
+
+// 修改后（长规则优先）
+ArrayBindingPattern() {
+  this.tokenConsumer.LBracket()
+  this.Or([
+    // 长规则优先：[first, ...rest]
+    {alt: () => {
+      this.BindingElementList()
+      this.tokenConsumer.Comma()
+      this.Option(() => this.Elision())
+      this.Option(() => this.BindingRestElement())
+      this.tokenConsumer.RBracket()
+    }},
+    // 短规则：[first, second]
+    {alt: () => {
+      this.BindingElementList()
+      this.tokenConsumer.RBracket()
+    }},
+    // 特殊规则：[] 或 [...all]
+    {alt: () => {
+      this.Option(() => this.Elision())
+      this.Option(() => this.BindingRestElement())
+      this.tokenConsumer.RBracket()
+    }}
+  ])
+}
+```
+
+**测试结果：**
+✅ 64-destruct-array-rest.js - 全部通过
+- `const [first, ...rest] = [1, 2, 3, 4, 5]`
+- `const [a, b, ...others] = [10, 20, 30, 40]`
+- `const [...all] = [1, 2, 3]`
+- `const [x, ...empty] = [1]`
+- 生成代码全部正确 ✅
+
+✅ 62-destruct-array-basic.js - 仍然通过
+- 基础数组解构正常工作
+
+✅ 63-destruct-array-skip.js - 仍然通过
+- 跳过元素的解构正常工作
+
+**修复状态：**
+- P1-3（数组rest解构）：✅ 完成

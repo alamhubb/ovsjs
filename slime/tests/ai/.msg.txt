@@ -1,42 +1,75 @@
-✅ Export from修复完成
+✅ P1-3修复完成：数组rest解构
 
 **修改文件：**
-- `packages/slime-parser/src/language/SlimeCstToAstUtil.ts:515-525`
+- `packages/slime-parser/src/language/es2015/Es6Parser.ts:1077-1106`
 
 **修改内容：**
+
+**Parser规则顺序调整：**
 ```typescript
-// 修改前
-} else if (first1.name === Es6Parser.prototype.ExportClauseFromClauseEmptySemicolon.name) {
-  const source = first1.children.find(...)
-  if (source) {
-    const fromClause = this.createFromClauseAst(source)
-    return SlimeAstUtil.createExportNamedDeclaration(token, null, [], fromClause.source, cst.loc)
-    //                                                          ↑↑ 空数组
-  }
+// 修改前（短规则在中间）
+ArrayBindingPattern() {
+  this.tokenConsumer.LBracket()
+  this.Or([
+    {alt: () => {  // 规则1：[] 或 [...all]
+      this.Option(() => this.Elision())
+      this.Option(() => this.BindingRestElement())
+      this.tokenConsumer.RBracket()
+    }},
+    {alt: () => {  // 规则2：[first, second]（短规则）
+      this.BindingElementList()
+      this.tokenConsumer.RBracket()
+    }},
+    {alt: () => {  // 规则3：[first, ...rest]（长规则）
+      this.BindingElementList()
+      this.tokenConsumer.Comma()
+      this.Option(() => this.Elision())
+      this.Option(() => this.BindingRestElement())
+      this.tokenConsumer.RBracket()
+    }}
+  ])
 }
 
-// 修改后
-} else if (first1.name === Es6Parser.prototype.ExportClauseFromClauseEmptySemicolon.name) {
-  const exportClause = first1.children.find(ch => 
-    ch.name === Es6Parser.prototype.ExportClause.name)
-  const source = first1.children.find(ch => ch.name === Es6Parser.prototype.FromClause.name)
-  
-  const specifiers = exportClause ? this.createExportClauseAst(exportClause) : []
-  //                                  ↑↑ 解析ExportClause得到specifiers
-  
-  if (source) {
-    const fromClause = this.createFromClauseAst(source)
-    return SlimeAstUtil.createExportNamedDeclaration(token, null, specifiers, fromClause.source, cst.loc)
-  }
+// 修改后（长规则优先）
+ArrayBindingPattern() {
+  this.tokenConsumer.LBracket()
+  this.Or([
+    // 长规则优先：[first, ...rest]
+    {alt: () => {
+      this.BindingElementList()
+      this.tokenConsumer.Comma()
+      this.Option(() => this.Elision())
+      this.Option(() => this.BindingRestElement())
+      this.tokenConsumer.RBracket()
+    }},
+    // 短规则：[first, second]
+    {alt: () => {
+      this.BindingElementList()
+      this.tokenConsumer.RBracket()
+    }},
+    // 特殊规则：[] 或 [...all]
+    {alt: () => {
+      this.Option(() => this.Elision())
+      this.Option(() => this.BindingRestElement())
+      this.tokenConsumer.RBracket()
+    }}
+  ])
 }
 ```
 
 **测试结果：**
-✅ 108-module-export-from.js - 通过
-- 输入：`export {name, age} from './user.js'`
-- 输出：`export {name, age} from './user.js'` ✅ 正确（之前是 `export`）
+✅ 64-destruct-array-rest.js - 全部通过
+- `const [first, ...rest] = [1, 2, 3, 4, 5]`
+- `const [a, b, ...others] = [10, 20, 30, 40]`
+- `const [...all] = [1, 2, 3]`
+- `const [x, ...empty] = [1]`
+- 生成代码全部正确 ✅
 
-**完整修复总结：**
-✅ 1. export重命名：`export {name as userName}`
-✅ 2. export from：`export {name} from './module.js'`
-✅ 3. 组合：`export {name as userName} from './module.js'`
+✅ 62-destruct-array-basic.js - 仍然通过
+- 基础数组解构正常工作
+
+✅ 63-destruct-array-skip.js - 仍然通过
+- 跳过元素的解构正常工作
+
+**修复状态：**
+- P1-3（数组rest解构）：✅ 完成
