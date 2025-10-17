@@ -1037,8 +1037,13 @@ export default class SlimeGenerator {
     // console.log(node.kind.loc)
     this.addCodeAndMappings(es6TokenMapObj[node.kind.value.valueOf()], node.kind.loc)
     this.addCodeSpacing()
-    for (const declaration of node.declarations) {
-      this.generatorNode(declaration)
+    for (let i = 0; i < node.declarations.length; i++) {
+      this.generatorNode(node.declarations[i])
+      // 添加逗号分隔符（除了最后一个）
+      if (i < node.declarations.length - 1) {
+        this.addCode(es6TokensObj.Comma)
+        this.addCodeSpacing()
+      }
     }
     // 添加分号
     this.addCode(es6TokensObj.Semicolon)
