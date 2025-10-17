@@ -85,26 +85,55 @@
 ### 测试命令
 ```bash
 # 单个测试
-npx tsx test-runner.ts tests/cases/single/01-literals.js
+npx tsx test-runner.ts tests/cases/01-literals.js
 
 # 并行测试（推荐）
-npx tsx test-runner-parallel.ts  # ~10秒，40个用例
+npx tsx test-runner-parallel.ts  # ~10秒
 
 # 完整测试
-npx tsx test-all.ts  # ~85秒，顺序执行
+npx tsx test-all.ts  # 顺序执行所有用例
 ```
 
-### 测试结构
+### 测试架构（扁平化）
+
+**tests目录结构：**
 ```
 tests/
-├── cases/
-│   ├── single/          # 30个单特性测试
-│   ├── combined/        # 10个组合测试
-│   └── comprehensive/   # 120个全面测试
+├── cases/             # 所有测试用例（01-xx编号，简单→复杂，禁止分子目录）
+│   ├── 01-literals.js
+│   ├── 02-variables.js
+│   ├── 03-functions.js
+│   ├── ...
+│   └── xx-comprehensive-es6.js
 └── ai/
-    ├── .msg.txt        # 临时消息
+    ├── .msg.txt        # 临时消息（⚠️ 禁止删除）
     └── log-from-file.js # 追加工具
 ```
+
+**设计理念：**
+- 扁平化：所有测试用例平铺在`tests/cases/`下
+- 禁止：按类型创建子目录（single/、combined/、comprehensive/等）
+- 统一编号：`01-功能名.js`（两位数）
+- 复杂度排序：简单→复杂，方便按顺序测试
+
+**命名规范：**
+- 格式：`01-功能描述.js`（两位数编号）
+- 示例：
+  - `01-literals.js` - 字面量
+  - `02-variables.js` - 变量声明
+  - `03-functions.js` - 函数
+  - `04-arrow-functions.js` - 箭头函数
+  - `05-classes.js` - 类
+  - `06-destructuring.js` - 解构
+  - `07-spread-rest.js` - Spread/Rest
+  - `08-modules.js` - 模块
+  - `09-async.js` - 异步
+  - `10-comprehensive.js` - 综合测试
+
+**测试原则：**
+- 失败=功能缺失：优先修复代码，而不是简化测试
+- 单文件执行：每个测试用例可独立运行
+- 进度监控：超过10秒的测试要输出进度
 
 ---
 
@@ -281,3 +310,14 @@ tests/
 - 第168-170行：核心文件说明
 - 第294行：定期清理规则
 - 第312行：禁止行为清单
+
+---
+
+# 变更记录
+
+## 2025-10-17 [测试架构优化]
+- 更新测试规范，遵守系统规则
+- 测试用例扁平化：tests/cases/下统一编号，不分子目录
+- 命名规范：01-功能名.js（两位数编号，简单→复杂）
+- 禁止按类型创建子目录（single/、combined/、comprehensive/等）
+- 测试命令路径更新：移除single/等路径前缀

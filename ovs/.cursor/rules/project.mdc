@@ -262,12 +262,14 @@ npm run preview         # 预览构建结果
 
 ### 测试架构（AI开发优化）
 
-**tests目录结构（精简版）：**
+**tests目录结构（极简版）：**
 ```
 tests/
-├── cases/              # 测试用例（AI直接使用）
-│   ├── single/        # 单个特性测试（01-10编号，简单→复杂）
-│   └── combined/      # 组合特性测试（01-02编号）
+├── cases/             # 所有测试用例（01-12编号，简单→复杂，禁止分子目录）
+│   ├── 01-simple.ovs
+│   ├── 02-nested.ovs
+│   ├── ...
+│   └── 12-complex-feature.ovs
 └── utils/             # 调试工具（AI辅助使用）
     ├── check-iife-ast.ts         # 检查AST结构
     └── show-hello-compiled.ts    # 查看编译结果
@@ -278,6 +280,12 @@ tests/
 - AI通过复制.ovs用例到example/测试编译器功能
 - utils/下的工具用于手动调试和查看编译结果
 - 极简结构：从25个文件精简到14个（减少44%）
+- 扁平化：不按类型分子目录（single/combined等），所有用例平铺在cases/下
+
+**命名规范：**
+- 格式：`01-功能名.ovs`（两位数编号）
+- 顺序：按复杂度排序（简单→复杂）
+- 禁止：按类型创建子目录（single/、combined/等）
 
 **AI如何使用：**
 1. **测试编译功能**：复制cases/下的.ovs到example/src/views/hello.ovs，启动dev服务器查看
@@ -312,16 +320,16 @@ div {
 ### 测试用例快速体验
 ```bash
 # 复制基础示例
-Copy-Item tests\cases\single\01-simple.ovs example\src\views\hello.ovs
+Copy-Item tests\cases\01-simple.ovs example\src\views\hello.ovs
 
-# 复制箭头函数示例（已验证）
-Copy-Item tests\cases\single\07-arrow-functions.ovs example\src\views\hello.ovs
+# 复制箭头函数示例
+Copy-Item tests\cases\07-arrow-functions.ovs example\src\views\hello.ovs
 
 # 复制Class示例
-Copy-Item tests\cases\single\08-class.ovs example\src\views\hello.ovs
+Copy-Item tests\cases\08-class.ovs example\src\views\hello.ovs
 
 # 复制组合测试（export + class）
-Copy-Item tests\cases\combined\01-export-class.ovs example\src\views\hello.ovs
+Copy-Item tests\cases\11-export-class.ovs example\src\views\hello.ovs
 ```
 
 ### 浏览器调试指南
@@ -785,6 +793,12 @@ div {
 
 # 变更记录
 
+## 2025-10-17 [测试架构优化]
+- 简化测试用例组织：不再区分single/combined子目录
+- 所有测试用例平铺在tests/cases/下，按编号排序（01-12）
+- 更新规则：禁止按类型创建子目录，保持扁平化结构
+- 更新命名规范：01-功能名.ovs（两位数编号，简单→复杂）
+
 ## 2025-10-14 [创建+整理]
 - 创建项目信息文件，基于guidebot.mdc规范组织项目信息
 - 第一阶段：整合12个项目文档到project.mdc（aireadme、FEATURES_SHOWCASE、测试指南等）
@@ -796,10 +810,9 @@ div {
   - 删除verify-complete.ts
   - 重命名final-test.ts → test-runner.ts（统一测试入口）
   - package.json中的dev脚本使用tsx
-  - 测试用例重组：按single/combined分类，所有文件编号（01-10）
+  - 测试用例重组：按编号排序（01-12），所有文件统一编号
   - 删除自动化测试基础设施（unit/integration/regression/fixtures/配置/运行器）
   - tests目录精简：从25个文件→14个文件（减少44%），只保留AI开发需要的
 - 最终结构：.cursor/rules/下只有guidebot.mdc和project.mdc两个文件
 - 根目录精简：只保留5个必需文件（配置+入口+测试入口）
-- 测试用例结构：single/（10个单个特性）+ combined/（2个组合特性）
 - 记录当前项目状态：STAGE_4_OPTIMIZATION，功能完整，生产可用
