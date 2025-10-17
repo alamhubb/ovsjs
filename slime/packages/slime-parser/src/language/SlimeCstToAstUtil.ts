@@ -198,15 +198,18 @@ export class SlimeCstToAst {
     const specifiers: Array<SlimeImportSpecifier> = []
     for (const child of importsList.children) {
       if (child.name === Es6Parser.prototype.ImportSpecifier.name) {
-        // ImportSpecifier: IdentifierName [as ImportedBinding]
-        const identifierName = child.children.find((ch: any) => 
-          ch.name === Es6Parser.prototype.IdentifierName.name)
+        // ImportSpecifier有两种形式：
+        // 1. ImportedBinding （简写）
+        // 2. Identifier AsTok ImportedBinding （重命名）
+        
+        const identifierToken = child.children.find((ch: any) => 
+          ch.name === Es6TokenConsumer.prototype.Identifier.name)
         const binding = child.children.find((ch: any) => 
           ch.name === Es6Parser.prototype.ImportedBinding.name)
         
-        if (identifierName && binding) {
-          // import {name as localName}
-          const imported = this.createIdentifierNameAst(identifierName)
+        if (identifierToken && binding) {
+          // import {name as localName} - 重命名形式
+          const imported = SlimeAstUtil.createIdentifier(identifierToken.value, identifierToken.loc)
           const local = this.createImportedBindingAst(binding)
           specifiers.push({
             type: SlimeAstType.ImportSpecifier,
@@ -215,7 +218,7 @@ export class SlimeCstToAst {
             loc: child.loc
           } as any)
         } else if (binding) {
-          // import {name} (简写)
+          // import {name} - 简写形式
           const id = this.createImportedBindingAst(binding)
           specifiers.push({
             type: SlimeAstType.ImportSpecifier,

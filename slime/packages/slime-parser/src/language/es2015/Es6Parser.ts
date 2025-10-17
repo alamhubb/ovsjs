@@ -1934,14 +1934,16 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
   @SubhutiRule
   ImportSpecifier() {
     this.Or([
-      {alt: () => this.ImportedBinding()},
+      // 长规则优先：import {name as userName}
       {
         alt: () => {
           this.tokenConsumer.Identifier()
           this.tokenConsumer.AsTok()
           this.ImportedBinding()
         }
-      }
+      },
+      // 短规则回退：import {name}
+      {alt: () => this.ImportedBinding()}
     ])
   }
 

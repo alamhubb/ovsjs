@@ -228,3 +228,135 @@ tests/
 - ✅ 所有ES6 spread/rest特性正确支持
 - ⚠️ 解构重命名语法不支持（有替代方案）
 - ❌ ES7+特性不支持（按设计）
+
+**【进度】2025-10-17 13:57:21**
+- ⚠️ import重命名问题诊断
+
+**问题：**
+`import {name as userName} from './module.js'` 完全无法解析，Parser返回空CST
+
+**已验证：**
+- ✅ 简单import可以工作：`import {greet} from './module.js'`
+- ❌ import重命名失败：`import {greet as hello} from './module.js'`
+- CST完全为空，Parser解析失败
+
+**Parser规则（Es6Parser.ts:1935-1946）：**
+```typescript
+ImportSpecifier() {
+  this.Or([
+    {alt: () => this.ImportedBinding()},  // import {name}
+    {
+      alt: () => {
+        this.tokenConsumer.Identifier()  // name
+        this.tokenConsumer.AsTok()       // as
+        this.ImportedBinding()            // userName
+      }
+    }
+  ])
+}
+```
+
+**Token定义（Es6Tokens.ts:38）：**
+```typescript
+AsTok: createKeywordToken(Es6TokenName.AsTok, "as")
+```
+
+**怀疑：**
+"as"被定义为全局关键字可能导致Lexer/Parser冲突。
+在ES6中，"as"是contextual keyword，只在特定上下文中才是关键字。
+
+**下一步：**
+需要深入调试Lexer和Parser，查看token流和解析过程。
+
+**【进度】2025-10-17 14:00:57**
+- ✅ P1-1修复完成：import重命名
+
+**问题根因：**
+Parser规则顺序错误！短规则在前导致贪婪匹配失败。
+
+**修改文件：**
+- `packages/slime-parser/src/language/es2015/Es6Parser.ts:1935-1948`
+
+**修改内容：**
+```typescript
+// 修改前（错误的顺序）
+ImportSpecifier() {
+  this.Or([
+    {alt: () => this.ImportedBinding()},  // 短规则在前
+    {
+      alt: () => {
+        this.tokenConsumer.Identifier()
+        this.tokenConsumer.AsTok()
+        this.ImportedBinding()
+      }
+    }
+  ])
+}
+
+// 修改后（正确的顺序）
+ImportSpecifier() {
+  this.Or([
+    // 重命名形式优先（更长的匹配）
+    {
+      alt: () => {
+        this.tokenConsumer.Identifier()
+        this.tokenConsumer.AsTok()
+        this.ImportedBinding()
+      }
+    },
+    // 简写形式其次
+    {alt: () => this.ImportedBinding()}
+  ])
+}
+```
+
+**原理：**
+Subhuti Parser使用回溯策略，会依次尝试Or中的选项：
+1. 先尝试长规则（Identifier + as + ImportedBinding）
+2. 如果失败（没有as），回溯并尝试短规则（ImportedBinding）
+3. 把长规则放前面，确保有as时优先匹配
+
+**测试结果：**
+✅ 107-module-import-rename.js - 通过
+- 输入：`import {name as userName} from './module.js'`
+- 输出：`import {name as userName} from './module.js'` ✅ 正确
+
+✅ 105-module-import-named.js - 仍然通过
+- 输入：`import {name, greet} from './module.js'`
+- 输出：`import {name,greet} from './module.js'` ✅ 正确
+
+⚠️ 103-module-export-rename.js - 发现新问题
+- 输入：`export {name as userName, age as userAge}`
+- 输出：`export ` ❌ 生成代码不完整（export重命名也有问题）
+
+**修复状态：**
+- P1-1（import重命名）：✅ 完成
+- 发现：export重命名也有类似问题
+
+**【进度】2025-10-17 14:17:57**
+- ✅ Subhuti项目文档创建完成
+
+**创建文件：**
+- `subhuti/.cursor/rules/project.mdc`
+
+**文档内容：**
+1. 项目定位和核心理念
+2. ⚠️ Or规则的匹配策略（核心重点）
+   - 顺序尝试，第一个成功即返回
+   - 不是贪婪匹配，不是最长匹配
+   - 长规则必须在短规则前面
+3. 错误示例和正确示例对比
+4. 编写Parser规则的最佳实践
+5. 回溯机制说明
+6. 与其他Parser Generator对比
+7. 调试技巧和API参考
+8. Slime项目的实际案例
+
+**核心要点：**
+- Or规则是**顺序选择**，不是**最长匹配**
+- 第一个成功的分支立即返回，不继续尝试
+- 规则顺序决定解析结果
+- 长tokens分支必须在前面
+
+**实际案例：**
+ImportSpecifier规则顺序调整，解决了import重命名问题。
