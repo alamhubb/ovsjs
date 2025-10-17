@@ -25,34 +25,16 @@ try {
   const lexer = new SubhutiLexer(es6Tokens)
   const tokens = lexer.lexer(code)
   console.log(`✅ 词法分析完成，tokens数量: ${tokens.length}`)
-  console.log('前10个tokens:')
-  tokens.slice(0, 10).forEach((t: any, i) => {
-    console.log(`  [${i}] ${t.tokenName.padEnd(20)} "${t.tokenValue}"`)
-  })
-  console.log()
   
   // 2. Parser
   const parser = new Es6Parser(tokens)
   const cst = parser.Program()
   console.log(`✅ 语法分析完成`)
-  console.log()
   
   // 3. CST -> AST
   const slimeCstToAst = new SlimeCstToAst()
   const ast = slimeCstToAst.toProgram(cst)
   console.log(`✅ AST转换完成，${ast.body.length}个顶层语句`)
-  console.log('AST预览:')
-  console.log(JSON.stringify(ast, null, 2).substring(0, 500) + '...')
-  
-  // Debug解构
-  if (ast.body.length > 0 && (ast.body[0] as any).declarations) {
-    const pattern = (ast.body[0] as any).declarations[0]?.id
-    if (pattern?.type === 'ArrayPattern') {
-      console.log('\n[DEBUG] ArrayPattern.elements:', pattern.elements.map((e: any) => e === null ? 'null' : (e.type === 'RestElement' ? `...${e.argument.name}` : e.name)))
-    }
-  }
-  
-  console.log()
   
   // 4. AST -> Code
   const result = SlimeGenerator.generator(ast, tokens)

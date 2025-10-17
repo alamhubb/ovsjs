@@ -154,14 +154,13 @@ export class SlimeCstToAst {
       const specifier = this.createImportedDefaultBindingAst(first)
       return [specifier]
     } else if (first.name === Es6Parser.prototype.NameSpaceImport.name) {
-      this.createNameSpaceImportAst(first)
+      // import * as name from 'module'
+      return [this.createNameSpaceImportSpecifierAst(first)]
     } else if (first.name === Es6Parser.prototype.NamedImports.name) {
-      this.createNameSpaceImportAst(first)
-    } else if (first.name === Es6Parser.prototype.ImportedDefaultBindingCommaNameSpaceImport.name) {
-      this.createNameSpaceImportAst(first)
-    } else if (first.name === Es6Parser.prototype.ImportedDefaultBindingCommaNamedImports.name) {
-      this.createNameSpaceImportAst(first)
+      // import {name, greet} from 'module'
+      return this.createNamedImportsListAst(first)
     }
+    return []
   }
 
   createImportedDefaultBindingAst(cst: SubhutiCst): SlimeImportDefaultSpecifier {
@@ -178,26 +177,62 @@ export class SlimeCstToAst {
     return this.createBindingIdentifierAst(first)
   }
 
-  createNameSpaceImportAst(cst: SubhutiCst): Array<SlimeImportSpecifier | SlimeImportDefaultSpecifier | SlimeImportNamespaceSpecifier> {
-    let astName = checkCstName(cst, Es6Parser.prototype.ImportDeclaration.name);
-    const first = cst.children[0]
-    const first1 = cst.children[0]
-    if (first1.name === Es6Parser.prototype.ImportClause.name) {
-
-    } else if (first1.name === Es6Parser.prototype.ModuleSpecifier.name) {
-
-    }
+  createNameSpaceImportSpecifierAst(cst: SubhutiCst): SlimeImportNamespaceSpecifier {
+    // NameSpaceImport: Asterisk as ImportedBinding
+    // children: [Asterisk, AsTok, ImportedBinding]
+    const binding = cst.children.find(ch => ch.name === Es6Parser.prototype.ImportedBinding.name)
+    if (!binding) throw new Error('NameSpaceImport missing ImportedBinding')
+    const local = this.createImportedBindingAst(binding)
+    return {
+      type: SlimeAstType.ImportNamespaceSpecifier,
+      local: local,
+      loc: cst.loc
+    } as any
   }
 
-  createNamedImportsAst(cst: SubhutiCst): SlimeImportDeclaration {
-    let astName = checkCstName(cst, Es6Parser.prototype.ImportDeclaration.name);
-    const first = cst.children[0]
-    const first1 = cst.children[0]
-    if (first1.name === Es6Parser.prototype.ImportClause.name) {
-
-    } else if (first1.name === Es6Parser.prototype.ModuleSpecifier.name) {
-
+  createNamedImportsListAst(cst: SubhutiCst): Array<SlimeImportSpecifier> {
+    // NamedImports: {LBrace, ImportsList?, RBrace}
+    const importsList = cst.children.find(ch => ch.name === Es6Parser.prototype.ImportsList.name)
+    if (!importsList) return []
+    
+    const specifiers: Array<SlimeImportSpecifier> = []
+    for (const child of importsList.children) {
+      if (child.name === Es6Parser.prototype.ImportSpecifier.name) {
+        // ImportSpecifier: IdentifierName [as ImportedBinding]
+        const identifierName = child.children.find((ch: any) => 
+          ch.name === Es6Parser.prototype.IdentifierName.name)
+        const binding = child.children.find((ch: any) => 
+          ch.name === Es6Parser.prototype.ImportedBinding.name)
+        
+        if (identifierName && binding) {
+          // import {name as localName}
+          const imported = this.createIdentifierNameAst(identifierName)
+          const local = this.createImportedBindingAst(binding)
+          specifiers.push({
+            type: SlimeAstType.ImportSpecifier,
+            imported: imported,
+            local: local,
+            loc: child.loc
+          } as any)
+        } else if (binding) {
+          // import {name} (简写)
+          const id = this.createImportedBindingAst(binding)
+          specifiers.push({
+            type: SlimeAstType.ImportSpecifier,
+            imported: id,
+            local: id,
+            loc: child.loc
+          } as any)
+        }
+      }
     }
+    return specifiers
+  }
+  
+  createIdentifierNameAst(cst: SubhutiCst): SlimeIdentifier {
+    // IdentifierName -> Identifier or Keyword token
+    const token = cst.children[0]
+    return SlimeAstUtil.createIdentifier(token.value, token.loc)
   }
 
   createImportedDefaultBindingCommaNameSpaceImportAst(cst: SubhutiCst): SlimeImportDeclaration {
@@ -415,11 +450,26 @@ export class SlimeCstToAst {
     const first1 = cst.children[1]
     let token = SlimeAstUtil.createExportToken(first.loc)
     if (first1.name === Es6Parser.prototype.AsteriskFromClauseEmptySemicolon.name) {
-
+      // export * from './module.js'
+      const source = first1.children.find((ch: any) => ch.name === Es6Parser.prototype.FromClause.name)
+      if (source) {
+        const fromClause = this.createFromClauseAst(source)
+        return {
+          type: 'ExportAllDeclaration',
+          source: fromClause.source,
+          loc: cst.loc
+        } as any
+      }
     } else if (first1.name === Es6Parser.prototype.ExportClauseFromClauseEmptySemicolon.name) {
-
+      // export {name, age} from './module.js'
+      const source = first1.children.find((ch: any) => ch.name === Es6Parser.prototype.FromClause.name)
+      if (source) {
+        const fromClause = this.createFromClauseAst(source)
+        return SlimeAstUtil.createExportNamedDeclaration(token, null, [], fromClause.source, cst.loc)
+      }
     } else if (first1.name === Es6Parser.prototype.ExportClauseEmptySemicolon.name) {
-
+      // export {}
+      return SlimeAstUtil.createExportNamedDeclaration(token, null, [], null, cst.loc)
     } else if (first1.name === Es6Parser.prototype.Declaration.name) {
       const declaration = this.createDeclarationAst(cst.children[1])
       // console.log('asdfsadfsad')
@@ -1684,11 +1734,12 @@ export class SlimeCstToAst {
     }
     
     if (isNewMemberExpr) {
-      // NewMemberExpressionArguments -> new + MemberExpression + Arguments
-      // children[0]: new关键字
+      // NewMemberExpressionArguments -> NewTok + MemberExpression + Arguments
+      // children[0]: NewTok (token节点)
       // children[1]: MemberExpression（类名）
       // children[2]: Arguments（参数列表）
       
+      // 跳过NewTok，直接处理MemberExpression
       const calleeExpression = this.createMemberExpressionAst(cst.children[1])
       const args = this.createArgumentsAst(cst.children[2])
       
@@ -1701,7 +1752,14 @@ export class SlimeCstToAst {
       
       return newExpression
     } else {
-      // NewExpression -> 递归处理
+      // NewExpression -> 递归处理（跳过NewTok）
+      // 查找非token的子节点
+      const nonTokenChild = cst.children.find(ch => 
+        ch.name !== Es6Parser.prototype.NewTok?.name && ch.value !== 'new')
+      if (nonTokenChild) {
+        return this.createExpressionAst(nonTokenChild)
+      }
+      // 降级：返回第一个非token子节点
       return this.createExpressionAst(cst.children[0])
     }
   }

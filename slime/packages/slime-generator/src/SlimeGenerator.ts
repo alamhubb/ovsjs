@@ -110,9 +110,38 @@ export default class SlimeGenerator {
   }
 
   private static generatorImportDeclaration(node: SlimeImportDeclaration) {
-    this.addCodeAndMappings(es6TokensObj.ImportTok, node.loc)
+    this.addCode(es6TokensObj.ImportTok)
     this.addSpacing()
-    this.generatorNodes(node.specifiers)
+    
+    if (node.specifiers && node.specifiers.length > 0) {
+      const hasDefault = node.specifiers.some((s: any) => s.type === SlimeAstType.ImportDefaultSpecifier)
+      const hasNamed = node.specifiers.some((s: any) => s.type === SlimeAstType.ImportSpecifier)
+      const hasNamespace = node.specifiers.some((s: any) => s.type === SlimeAstType.ImportNamespaceSpecifier)
+      
+      if (hasDefault) {
+        const defaultSpec = node.specifiers.find((s: any) => s.type === SlimeAstType.ImportDefaultSpecifier)
+        this.generatorNode(defaultSpec)
+        if (hasNamed || hasNamespace) {
+          this.addComma()
+          this.addSpacing()
+        }
+      }
+      
+      if (hasNamespace) {
+        const nsSpec = node.specifiers.find((s: any) => s.type === SlimeAstType.ImportNamespaceSpecifier)
+        this.generatorNode(nsSpec)
+      } else if (hasNamed) {
+        // import {name, greet}
+        const namedSpecs = node.specifiers.filter((s: any) => s.type === SlimeAstType.ImportSpecifier)
+        this.addLBrace()
+        namedSpecs.forEach((specifier: any, index) => {
+          if (index > 0) this.addComma()
+          this.generatorNode(specifier)
+        })
+        this.addRBrace()
+      }
+    }
+    
     this.addSpacing()
     this.addCodeAndMappings(es6TokensObj.FromTok, node.loc)
     this.addSpacing()
@@ -128,7 +157,18 @@ export default class SlimeGenerator {
 
 
   private static generatorImportSpecifier(node: SlimeImportSpecifier) {
-
+    // import {name} or import {name as localName}
+    if (node.imported.name !== node.local.name) {
+      // import {name as localName}
+      this.generatorNode(node.imported)
+      this.addSpacing()
+      this.addCode(es6TokensObj.AsTok)
+      this.addSpacing()
+      this.generatorNode(node.local)
+    } else {
+      // import {name}
+      this.generatorNode(node.local)
+    }
   }
 
   private static generatorImportDefaultSpecifier(node: SlimeImportDefaultSpecifier) {
@@ -137,14 +177,40 @@ export default class SlimeGenerator {
 
 
   private static generatorImportNamespaceSpecifier(node: SlimeImportNamespaceSpecifier) {
-
+    // import * as name
+    this.addCode(es6TokensObj.Asterisk)
+    this.addSpacing()
+    this.addCode(es6TokensObj.AsTok)
+    this.addSpacing()
+    this.generatorNode(node.local)
   }
 
 
   private static generatorExportNamedDeclaration(node: SlimeExportNamedDeclaration) {
-    this.addCodeAndMappings(es6TokensObj.ExportTok, node.export.loc)
+    this.addCode(es6TokensObj.ExportTok)
     this.addSpacing()
-    this.generatorNode(node.declaration)
+    if (node.declaration) {
+      this.generatorNode(node.declaration)
+    } else if (node.source) {
+      // export {name} from './module.js'
+      this.addLBrace()
+      this.addRBrace()
+      this.addSpacing()
+      this.addCode(es6TokensObj.FromTok)
+      this.addSpacing()
+      this.generatorNode(node.source)
+    }
+  }
+  
+  private static generatorExportAllDeclaration(node: any) {
+    // export * from './module.js'
+    this.addCode(es6TokensObj.ExportTok)
+    this.addSpacing()
+    this.addCode(es6TokensObj.Asterisk)
+    this.addSpacing()
+    this.addCode(es6TokensObj.FromTok)
+    this.addSpacing()
+    this.generatorNode(node.source)
   }
 
 
@@ -710,6 +776,8 @@ export default class SlimeGenerator {
       this.generatorExportNamedDeclaration(node as SlimeExportNamedDeclaration)
     } else if (node.type === SlimeAstType.ExportDefaultDeclaration) {
       this.generatorExportDefaultDeclaration(node as any)
+    } else if (node.type === 'ExportAllDeclaration') {
+      this.generatorExportAllDeclaration(node as any)
     } else if (node.type === SlimeAstType.ImportDeclaration) {
       this.generatorImportDeclaration(node as SlimeImportDeclaration)
     } else if (node.type === SlimeAstType.FunctionParams) {
