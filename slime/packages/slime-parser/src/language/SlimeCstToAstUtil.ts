@@ -1806,19 +1806,67 @@ export class SlimeCstToAst {
 
   createCallExpressionAst(cst: SubhutiCst): SlimeExpression {
     const astName = checkCstName(cst, Es6Parser.prototype.CallExpression.name);
-    if (cst.children.length > 1) {
-      const argumentsCst = cst.children[1]
-      let argumentsAst: SlimeExpression[] = this.createArgumentsAst(argumentsCst)
-      const callee = this.createMemberExpressionAst(cst.children[0])
-
-      return SlimeAstUtil.createCallExpression(callee, argumentsAst)
+    
+    if (cst.children.length === 1) {
+      // 单个子节点，可能是SuperCall
+      const first = cst.children[0]
+      if (first.name === Es6Parser.prototype.SuperCall.name) {
+        return this.createSuperCallAst(first)
+      }
+      return this.createExpressionAst(first)
     }
-    // 单个子节点，可能是SuperCall
-    const first = cst.children[0]
-    if (first.name === Es6Parser.prototype.SuperCall.name) {
-      return this.createSuperCallAst(first)
+    
+    // 多个children：MemberExpression + Arguments + 可选的链式调用
+    // children[0]: MemberExpression
+    // children[1]: Arguments (第一次调用)
+    // children[2+]: Dot/Identifier/Arguments（链式调用）
+    
+    let current: SlimeExpression = this.createMemberExpressionAst(cst.children[0])
+    
+    // 循环处理所有后续children
+    for (let i = 1; i < cst.children.length; i++) {
+      const child = cst.children[i]
+      
+      if (child.name === Es6Parser.prototype.Arguments.name) {
+        // () - 函数调用
+        const args = this.createArgumentsAst(child)
+        current = SlimeAstUtil.createCallExpression(current, args)
+        
+      } else if (child.name === 'Dot' || child.value === '.') {
+        // . - 成员访问操作符，后面应该跟Identifier或IdentifierName
+        i++  // 移到下一个child（property名）
+        if (i < cst.children.length) {
+          const propChild = cst.children[i]
+          let property: SlimeIdentifier | null = null
+          
+          if (propChild.name === Es6Parser.prototype.IdentifierName.name) {
+            const tokenCst = propChild.children[0]
+            property = SlimeAstUtil.createIdentifier(tokenCst.value, tokenCst.loc)
+          } else if (propChild.name === 'Identifier' || propChild.value) {
+            property = SlimeAstUtil.createIdentifier(propChild.value, propChild.loc)
+          }
+          
+          if (property) {
+            const dotOp = SlimeAstUtil.createDotOperator(child.loc)
+            current = SlimeAstUtil.createMemberExpression(current, dotOp, property)
+          }
+        }
+        
+      } else if (child.name === Es6Parser.prototype.BracketExpression.name) {
+        // [expr] - computed property
+        const propertyExpression = this.createExpressionAst(child.children[1])
+        current = {
+          type: SlimeAstType.MemberExpression,
+          object: current,
+          property: propertyExpression,
+          computed: true,
+          optional: false,
+          loc: cst.loc
+        } as any
+      }
     }
-    return this.createExpressionAst(first)
+    
+    return current
   }
 
   createSuperCallAst(cst: SubhutiCst): SlimeExpression {
@@ -1999,55 +2047,72 @@ export class SlimeCstToAst {
 
   createMemberExpressionAst(cst: SubhutiCst): SlimeExpression {
     const astName = checkCstName(cst, Es6Parser.prototype.MemberExpression.name);
-    if (cst.children.length > 1) {
-      const memberExpressionObject = this.createMemberExpressionFirstOr(cst.children[0])
-      const first1 = cst.children[1]
-      if (first1.name === Es6Parser.prototype.DotIdentifier.name) {
-        // obj.property
-        const SlimeDotOperator = SlimeAstUtil.createDotOperator(first1.children[0].loc)
+    
+    if (cst.children.length === 0) {
+      throw new Error('MemberExpression has no children')
+    }
+    
+    // 从第一个child创建base对象
+    let current: SlimeExpression = this.createMemberExpressionFirstOr(cst.children[0])
+    
+    // 循环处理剩余的children（DotIdentifier、BracketExpression、Arguments、TemplateLiteral）
+    for (let i = 1; i < cst.children.length; i++) {
+      const child = cst.children[i]
+      
+      if (child.name === Es6Parser.prototype.DotIdentifier.name) {
+        // .property - 成员访问
+        const SlimeDotOperator = SlimeAstUtil.createDotOperator(child.children[0].loc)
+        
         // children[1]是IdentifierName，可能是Identifier或关键字token
-        let memberExpressionProperty: SlimeIdentifier | null = null
-        if (first1.children[1]) {
-          const identifierNameCst = first1.children[1]
+        let property: SlimeIdentifier | null = null
+        if (child.children[1]) {
+          const identifierNameCst = child.children[1]
           if (identifierNameCst.name === Es6Parser.prototype.IdentifierName.name) {
             // IdentifierName -> Identifier or Keyword token
             const tokenCst = identifierNameCst.children[0]
-            memberExpressionProperty = SlimeAstUtil.createIdentifier(tokenCst.value, tokenCst.loc)
+            property = SlimeAstUtil.createIdentifier(tokenCst.value, tokenCst.loc)
           } else {
             // 直接是token（向后兼容）
-            memberExpressionProperty = this.createIdentifierAst(first1.children[1])
+            property = this.createIdentifierAst(identifierNameCst)
           }
         }
-        return SlimeAstUtil.createMemberExpression(memberExpressionObject, SlimeDotOperator, memberExpressionProperty)
-      } else if (first1.name === Es6Parser.prototype.BracketExpression.name) {
-        // obj[expression] - computed property access
-        // BracketExpression -> LBracket + Expression + RBracket
-        const propertyExpression = this.createExpressionAst(first1.children[1])
-        const memberExpression: SlimeMemberExpression = {
+        
+        // 创建新的MemberExpression，current作为object
+        current = SlimeAstUtil.createMemberExpression(current, SlimeDotOperator, property)
+        
+      } else if (child.name === Es6Parser.prototype.BracketExpression.name) {
+        // [expression] - computed property access
+        const propertyExpression = this.createExpressionAst(child.children[1])
+        current = {
           type: SlimeAstType.MemberExpression,
-          object: memberExpressionObject,
+          object: current,
           property: propertyExpression,
           computed: true,
           optional: false,
           loc: cst.loc
         } as any
-        return memberExpression
-      } else if (first1.name === Es6Parser.prototype.TemplateLiteral.name) {
-        // Tagged Template Literals: tag`template`
-        // 创建TaggedTemplateExpression
-        const tag = memberExpressionObject
-        const quasi = this.createTemplateLiteralAst(first1)
-        return {
+        
+      } else if (child.name === Es6Parser.prototype.Arguments.name) {
+        // () - function call
+        const args = this.createArgumentsAst(child)
+        current = SlimeAstUtil.createCallExpression(current, args)
+        
+      } else if (child.name === Es6Parser.prototype.TemplateLiteral.name) {
+        // `template` - Tagged Template
+        const quasi = this.createTemplateLiteralAst(child)
+        current = {
           type: 'TaggedTemplateExpression',
-          tag: tag,
+          tag: current,
           quasi: quasi,
           loc: cst.loc
         } as any
+        
       } else {
-        throw new Error(`未知的MemberExpression子节点类型: ${first1.name}`)
+        throw new Error(`未知的MemberExpression子节点类型: ${child.name}`)
       }
     }
-    return this.createExpressionAst(cst.children[0])
+    
+    return current
   }
 
   createVariableDeclaratorAst(cst: SubhutiCst): SlimeVariableDeclarator {

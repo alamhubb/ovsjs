@@ -472,6 +472,13 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
     // IdentifierName: 可以是Identifier或保留字（for、if等）
     this.IdentifierName()
   }
+  
+  // Override ES5的DotMemberExpression，支持关键字作为属性名
+  @SubhutiRule
+  DotMemberExpression() {
+    this.tokenConsumer.Dot()
+    this.IdentifierName()  // ES6支持关键字作为属性名（如.catch、.then等）
+  }
 
   @SubhutiRule
   IdentifierName() {

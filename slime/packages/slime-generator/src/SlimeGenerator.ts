@@ -617,6 +617,11 @@ export default class SlimeGenerator {
       this.addSpacing()
     }
     
+    // 处理 generator 方法（*号）
+    if (node.value && node.value.generator) {
+      this.addCode(es6TokensObj.Asterisk)
+    }
+    
     // 处理 key（方法名）
     if (node.key) {
       this.generatorNode(node.key)
