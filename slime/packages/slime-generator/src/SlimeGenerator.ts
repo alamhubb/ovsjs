@@ -963,13 +963,25 @@ export default class SlimeGenerator {
   }
 
   private static generatorMemberExpression(node: SlimeMemberExpression) {
-    // object.property（暂不支持可选链）
+    // object.property 或 object[property]
     this.generatorNode(node.object as SlimeExpression)
-    if (node.dot) {
-      this.addDot(node.dot.loc)
-    }
-    if (node.property) {
+    
+    if (node.computed) {
+      // object[property]
+      this.addLBracket()
       this.generatorNode(node.property)
+      this.addRBracket()
+    } else {
+      // object.property
+      if (node.dot) {
+        this.addDot(node.dot.loc)
+      } else {
+        // 没有dot字段时，直接添加点号（如super.method()）
+        this.addCode(es6TokensObj.Dot)
+      }
+      if (node.property) {
+        this.generatorNode(node.property)
+      }
     }
   }
 
