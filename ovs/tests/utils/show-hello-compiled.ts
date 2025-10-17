@@ -1,4 +1,4 @@
-import { vitePluginOvsTransform } from './src/index.ts'
+import { vitePluginOvsTransform } from '../../src/index.ts'
 import { readFileSync } from 'fs'
 
 const helloPath = 'd:/project/qkyproject/test-volar/ovs/example/src/views/hello.ovs'

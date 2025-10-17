@@ -1,29 +1,28 @@
-// Case 8: 箭头函数 - 单参数、无参数、多参数
+// 测试 attrs 功能
 
 const double = (x) => x * 2
 const getValue = () => 42
-const multiply = (a, b) => a * b
-
-const result1 = double(5)
-const result2 = getValue()
-const result3 = multiply(3, 4)
 
 div {
-  h1 { "Arrow Functions" }
+  let a = 10
+  name = a
+  age = 25
+  role = "Developer"
+
+  h1 { "User Info" }
 
   div {
-    p { "double(5) = " }
-    p { result1 }
+    p { "Name: " }
+    p { name }
   }
 
   div {
-    p { "getValue() = " }
-    p { result2 }
+    p { "Age: " }
+    p { age }
   }
 
   div {
-    p { "multiply(3,4) = " }
-    p { result3 }
+    p { "Role: " }
+    p { role }
   }
 }
-
