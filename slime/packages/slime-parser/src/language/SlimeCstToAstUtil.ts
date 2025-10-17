@@ -2442,10 +2442,40 @@ export class SlimeCstToAst {
     return ast
   }
 
-  createElementListAst(cst: SubhutiCst): Array<null | SlimeExpression> {
+  createElementListAst(cst: SubhutiCst): Array<null | SlimeExpression | SlimeSpreadElement> {
     const astName = checkCstName(cst, Es6Parser.prototype.ElementList.name);
-    const ast: Array<null | SlimeExpression> = cst.children.filter(item => item.name === Es6Parser.prototype.AssignmentExpression.name).map(item => this.createAssignmentExpressionAst(item))
+    const ast: Array<null | SlimeExpression | SlimeSpreadElement> = []
+    
+    // 遍历所有子节点，处理 AssignmentExpression、SpreadElement 和 Elision
+    for (const child of cst.children) {
+      if (child.name === Es6Parser.prototype.AssignmentExpression.name) {
+        ast.push(this.createAssignmentExpressionAst(child))
+      } else if (child.name === Es6Parser.prototype.SpreadElement.name) {
+        ast.push(this.createSpreadElementAst(child))
+      } else if (child.name === Es6Parser.prototype.Elision.name) {
+        // Elision 代表空元素：[1, , 3]
+        ast.push(null)
+      }
+    }
+    
     return ast
+  }
+
+  createSpreadElementAst(cst: SubhutiCst): SlimeSpreadElement {
+    const astName = checkCstName(cst, Es6Parser.prototype.SpreadElement.name);
+    // SpreadElement: [Ellipsis, AssignmentExpression]
+    const expression = cst.children.find(ch => 
+      ch.name === Es6Parser.prototype.AssignmentExpression.name
+    )
+    if (!expression) {
+      throw new Error('SpreadElement missing AssignmentExpression')
+    }
+    
+    return {
+      type: 'SpreadElement',
+      argument: this.createAssignmentExpressionAst(expression),
+      loc: cst.loc
+    }
   }
 
 

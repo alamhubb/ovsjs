@@ -406,7 +406,15 @@ export default class SlimeGenerator {
   private static generatorArrayExpression(node: SlimeArrayExpression) {
     this.addLBracket(node.loc)
     for (const element of node.elements) {
-      this.generatorNode(element as SlimeExpression)
+      if (element === null) {
+        // 空元素：[1, , 3]，只添加逗号
+      } else if (element.type === SlimeAstType.SpreadElement) {
+        // SpreadElement：[...arr]
+        this.generatorSpreadElement(element as SlimeSpreadElement)
+      } else {
+        // 普通表达式
+        this.generatorNode(element as SlimeExpression)
+      }
       this.addComma()
     }
     this.addRBracket(node.loc)
@@ -698,6 +706,9 @@ export default class SlimeGenerator {
     } else if (node.type === SlimeAstType.RestElement) {
       this.generatorRestElement(node as SlimeRestElement)
 
+    } else if (node.type === SlimeAstType.SpreadElement) {
+      this.generatorSpreadElement(node as SlimeSpreadElement)
+
     } else if (node.type === SlimeAstType.Identifier) {
       this.generatorIdentifier(node as SlimeIdentifier)
 
@@ -901,6 +912,11 @@ export default class SlimeGenerator {
   }
 
   private static generatorRestElement(node: SlimeRestElement) {
+    this.addCode(es6TokensObj.Ellipsis)
+    this.generatorNode(node.argument)
+  }
+
+  private static generatorSpreadElement(node: SlimeSpreadElement) {
     this.addCode(es6TokensObj.Ellipsis)
     this.generatorNode(node.argument)
   }

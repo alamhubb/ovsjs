@@ -1,35 +1,89 @@
-✅ P0-1修复完成：RestElement缺少`...`前缀
+✅ P0-2修复完成：SpreadElement在数组中丢失
 
 **修改文件：**
-- `packages/slime-generator/src/SlimeGenerator.ts:904`
+1. `packages/slime-parser/src/language/SlimeCstToAstUtil.ts:2445-2479`
+2. `packages/slime-generator/src/SlimeGenerator.ts:406-421, 916-919, 709-711`
 
 **修改内容：**
+
+**1. CST→AST转换层：**
 ```typescript
-// 修改前
-private static generatorRestElement(node: SlimeRestElement) {
-  this.generatorNode(node.argument)
+// 新增方法
+createSpreadElementAst(cst: SubhutiCst): SlimeSpreadElement {
+  const expression = cst.children.find(ch => 
+    ch.name === Es6Parser.prototype.AssignmentExpression.name
+  )
+  return {
+    type: 'SpreadElement',
+    argument: this.createAssignmentExpressionAst(expression),
+    loc: cst.loc
+  }
 }
 
-// 修改后
-private static generatorRestElement(node: SlimeRestElement) {
-  this.addCode(es6TokensObj.Ellipsis)  // ✅ 添加 ... 前缀
-  this.generatorNode(node.argument)
+// 修改 createElementListAst
+createElementListAst(cst: SubhutiCst) {
+  const ast = []
+  for (const child of cst.children) {
+    if (child.name === AssignmentExpression) {
+      ast.push(this.createAssignmentExpressionAst(child))
+    } else if (child.name === SpreadElement) {  // ✅ 添加
+      ast.push(this.createSpreadElementAst(child))
+    } else if (child.name === Elision) {
+      ast.push(null)  // 空元素
+    }
+  }
+  return ast
 }
 ```
 
+**2. 代码生成层：**
+```typescript
+// 新增方法
+private static generatorSpreadElement(node: SlimeSpreadElement) {
+  this.addCode(es6TokensObj.Ellipsis)
+  this.generatorNode(node.argument)
+}
+
+// 修改 generatorArrayExpression
+private static generatorArrayExpression(node: SlimeArrayExpression) {
+  this.addLBracket(node.loc)
+  for (const element of node.elements) {
+    if (element === null) {
+      // 空元素
+    } else if (element.type === SlimeAstType.SpreadElement) {  // ✅ 添加
+      this.generatorSpreadElement(element)
+    } else {
+      this.generatorNode(element)
+    }
+    this.addComma()
+  }
+  this.addRBracket(node.loc)
+}
+
+// 在 generatorNode 中添加
+} else if (node.type === SlimeAstType.SpreadElement) {
+  this.generatorSpreadElement(node as SlimeSpreadElement)
+```
+
 **测试结果：**
-✅ 77-rest-params.js - 通过
-- 输入：`function sum(...numbers)`
-- 输出：`function sum(...numbers)` ✅ 正确
+✅ 79-spread-array.js - 通过
+- 输入：`const arr2 = [...arr1, 4, 5]`
+- 输出：`const arr2 = [...arr1,4,5,]` ✅ 正确
 
-⚠️ 84-rest-spread-combined.js - 编译成功，但暴露SpreadElement问题
+✅ 83-spread-concat.js - 通过
+- 输入：`const arr = [...[1, 2], ...[3, 4], ...[5]]`
+- 输出：`const arr = [...[1,2,],...[3,4,],...[5,],]` ✅ 正确
+
+✅ 84-rest-spread-combined.js - 通过
 - 输入：`return [...args, 'end']`
-- 输出：`return ['end',]` ❌ args和spread都丢失（这是P0-2的问题）
+- 输出：`return [...args,'end',]` ✅ 正确（之前是 `['end',]`）
 
-❌ 78-rest-array-destruct.js - 失败（这是P1问题，不在本次修复范围）
-- `const [first, ...rest] = arr` - 生成空代码
+⚠️ 80-spread-function-call.js - 发现新问题
+- 输入：`add(...nums)`
+- 输出：`add()` ❌ 函数调用中的spread参数丢失
+- 这是CallExpression的问题，不在数组spread范围内
 
 **修复状态：**
 - P0-1（RestElement）：✅ 完成
-- P0-2（SpreadElement）：待修复
-- P1（数组rest解构）：暂不修复
+- P0-2（SpreadElement数组）：✅ 完成
+- 额外发现：函数调用中的spread参数问题（不在P0范围）
