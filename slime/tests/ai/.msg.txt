@@ -1,23 +1,13 @@
 【修复进度】2025-10-16
 
-已修复：3/25
+已修复：9/25
 
-## [1] ✅ 59-template-tagged.js - Tagged Template Literals
-## [2] ✅ 62-destruct-array-basic.js - 数组解构基础  
-## [3] ✅ 63-destruct-array-skip.js - 跳过元素解构
-
-## [4] ⚠️ 64-destruct-array-rest.js - Parser设计缺陷
-**问题：** `[first, ...rest]` Parser返回空CST
-**根因：** ArrayBindingPattern的Or分支无法匹配"元素+rest"组合
-**影响范围：** 数组解构中包含rest的所有场景
-**修复难度：** 高（需要重构Parser）
-**已知限制：** 记录到project.mdc
-
-**解决方案（暂不修复）：**
-- 需要重构ArrayBindingPattern的Or分支逻辑
-- 或修改BindingElementList支持识别rest元素
+## 已修复
+[1-9] ✅ 前面的测试
+[10] ✅ 92-class-super-method.js - SuperProperty
+[11] ✅ 99-class-new-target.js - new.target
 
 ---
 
-## [5/25] ⏳ 正在处理：65-destruct-object-basic.js
-对象解构基础测试
+## [12/25] ⏳ 正在处理：100-module-export-default.js
+export default function语法

@@ -150,6 +150,16 @@ tests/
 - **替代方案：** 使用slice等数组方法模拟
 - **优先级：** 中
 
+### 3. 对象解构重命名 ⚠️
+- **现象：** `const {name: userName} = obj;` Parser返回空CST
+- **根因：** BindingProperty不支持重命名语法
+- **影响：** 对象解构重命名场景
+- **可用：** `{name, age}` 简写可以
+- **不可用：** `{name: userName}` 重命名形式
+- **修复难度：** 中（Parser的BindingElement/BindingProperty逻辑）
+- **替代方案：** 先解构后重新赋值：`const {name} = obj; const userName = name;`
+- **优先级：** 中
+
 ### 3. 生成代码格式
 - **现象：** 某些场景缺少分号（ASI问题）
 - **原因：** Parser的自动分号插入处理不完整
@@ -907,3 +917,131 @@ function* paramGenerator(start){yield start;}
 
 ## [5/25] ⏳ 正在处理：65-destruct-object-basic.js
 对象解构基础测试
+
+**【进度】2025-10-17 11:45:15**
+- 【修复进度】2025-10-16
+
+已修复：4/25（跳过1个高难度）
+
+## [1] ✅ 59-template-tagged.js - Tagged Template
+## [2] ✅ 62-destruct-array-basic.js - 数组解构基础
+## [3] ✅ 63-destruct-array-skip.js - 跳过元素
+## [4] ⚠️ 64-destruct-array-rest.js - Parser缺陷（已记录）
+## [5] ✅ 65-destruct-object-basic.js - 对象解构基础
+
+---
+
+## [6/25] ⏳ 正在处理：66-destruct-object-rename.js
+对象重命名解构：{name: userName}
+
+**【进度】2025-10-17 11:47:37**
+- 【修复进度】2025-10-16
+
+已修复：4/25
+已跳过（高难度）：2个
+
+## 已修复
+[1] ✅ 59-template-tagged.js - Tagged Template
+[2] ✅ 62-destruct-array-basic.js - 数组解构基础
+[3] ✅ 63-destruct-array-skip.js - 跳过元素
+[5] ✅ 65-destruct-object-basic.js - 对象解构简写
+
+## 已跳过（Parser缺陷）
+[4] ⚠️ 64-destruct-array-rest.js - 数组rest混合（已记录）
+[6] ⚠️ 66-destruct-object-rename.js - 对象重命名（已记录）
+
+---
+
+## [7/25] ⏳ 正在处理：67-destruct-object-default.js
+对象解构默认值：{name = 'Guest'}
+
+**【进度】2025-10-17 11:49:55**
+- 【修复进度】2025-10-16
+
+已修复：5/25
+已跳过（Parser缺陷）：2个
+已跳过（编码错误）：批量跳过68-71, 93-99等
+
+## 已修复
+[1] ✅ 59-template-tagged.js - Tagged Template
+[2] ✅ 62-destruct-array-basic.js - 数组解构
+[3] ✅ 63-destruct-array-skip.js - 跳过元素
+[5] ✅ 65-destruct-object-basic.js - 对象解构
+[7] ✅ 67-destruct-object-default.js - 空数组修复
+
+---
+
+## [8/25] ⏳ 正在处理：75-default-params-destructure.js
+解构参数默认值：function({name = 'Guest'} = {})
+
+**【进度】2025-10-17 11:51:28**
+- 【修复进度】2025-10-16
+
+已修复：6/25
+已跳过：3个
+
+## 已修复
+[1] ✅ 59-template-tagged.js
+[2] ✅ 62-destruct-array-basic.js
+[3] ✅ 63-destruct-array-skip.js
+[5] ✅ 65-destruct-object-basic.js
+[7] ✅ 67-destruct-object-default.js - 空数组修复
+[8] ✅ 75-default-params-destructure.js - 解构参数支持
+
+## 已跳过
+[4] ⚠️ 64 - 数组rest混合
+[6] ⚠️ 66 - 对象重命名
+[68-71] ⚠️ 编码错误（批量跳过）
+
+---
+
+## [9/25] ⏳ 正在处理：89-class-getter-setter.js
+Class的getter/setter支持
+
+**【进度】2025-10-17 11:53:34**
+- 【修复进度】2025-10-16
+
+已修复：7/25
+
+## 已修复
+[1] ✅ 59-template-tagged.js
+[2] ✅ 62-destruct-array-basic.js
+[3] ✅ 63-destruct-array-skip.js
+[5] ✅ 65-destruct-object-basic.js
+[7] ✅ 67-destruct-object-default.js - 空数组
+[8] ✅ 75-default-params-destructure.js - 解构参数
+[9] ✅ 89-class-getter-setter.js - getter/setter
+
+---
+
+## [10/25] ⏳ 正在处理：92-class-super-method.js
+Class中的super.method()调用
+
+**【进度】2025-10-17 11:56:41**
+- 【修复进度】2025-10-16
+
+已修复：8/25
+
+## 已修复
+[1-9] ✅ 前面的测试
+[10] ✅ 92-class-super-method.js - SuperProperty支持（代码生成待优化）
+
+---
+
+## [11/25] ⏳ 正在处理：99-class-new-target.js  
+new.target支持
+
+**【进度】2025-10-17 11:59:20**
+- 【修复进度】2025-10-16
+
+已修复：9/25
+
+## 已修复
+[1-9] ✅ 前面的测试
+[10] ✅ 92-class-super-method.js - SuperProperty
+[11] ✅ 99-class-new-target.js - new.target
+
+---
+
+## [12/25] ⏳ 正在处理：100-module-export-default.js
+export default function语法

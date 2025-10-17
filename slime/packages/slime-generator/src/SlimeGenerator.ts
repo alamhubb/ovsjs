@@ -504,6 +504,15 @@ export default class SlimeGenerator {
       this.addSpacing()
     }
     
+    // 处理 getter/setter关键字
+    if (node.kind === 'get') {
+      this.addCode(es6TokensObj.GetTok)
+      this.addSpacing()
+    } else if (node.kind === 'set') {
+      this.addCode(es6TokensObj.SetTok)
+      this.addSpacing()
+    }
+    
     // 处理 key（方法名）
     if (node.key) {
       this.generatorNode(node.key)
@@ -513,7 +522,26 @@ export default class SlimeGenerator {
     if (node.value) {
       // 只输出参数和函数体，不输出 function 关键字
       if (node.value.params) {
-        this.generatorNode(node.value.params)
+        // 检查params是否是FunctionParams对象或有效数组
+        if (node.value.params.type === SlimeAstType.FunctionParams) {
+          this.generatorNode(node.value.params)
+        } else if (Array.isArray(node.value.params) && node.value.params.length > 0) {
+          // 有参数的数组
+          this.addLParen()
+          node.value.params.forEach((param: any, index: number) => {
+            if (index > 0) this.addComma()
+            this.generatorNode(param)
+          })
+          this.addRParen()
+        } else {
+          // 空参数或无效params，输出()
+          this.addLParen()
+          this.addRParen()
+        }
+      } else {
+        // 没有params，输出()
+        this.addLParen()
+        this.addRParen()
       }
       if (node.value.body) {
         this.generatorNode(node.value.body)
@@ -711,6 +739,11 @@ export default class SlimeGenerator {
       // Tagged Template Literals: tag`template`
       this.generatorNode((node as any).tag)
       this.generatorTemplateLiteral((node as any).quasi)
+    } else if (node.type === 'MetaProperty') {
+      // new.target or import.meta
+      this.generatorNode((node as any).meta)
+      this.addCode(es6TokensObj.Dot)
+      this.generatorNode((node as any).property)
     } else {
       console.error('未知节点:', JSON.stringify(node, null, 2))
       throw new Error('不支持的类型：' + node.type)
@@ -804,7 +837,11 @@ export default class SlimeGenerator {
   }
 
   private static generatorAssignmentPattern(node: SlimeAssignmentPattern) {
+    // 默认值模式：name = 'Guest'
     this.generatorNode(node.left)
+    this.addSpacing()
+    this.addCode(es6TokensObj.Eq)
+    this.addSpacing()
     this.generatorNode(node.right)
   }
 
