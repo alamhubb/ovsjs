@@ -190,16 +190,41 @@ export default class SlimeGenerator {
     this.addCode(es6TokensObj.ExportTok)
     this.addSpacing()
     if (node.declaration) {
+      // export const name = 'Alice'
       this.generatorNode(node.declaration)
-    } else if (node.source) {
-      // export {name} from './module.js'
+    } else if (node.specifiers && node.specifiers.length > 0) {
+      // export {name} 或 export {name as userName}
       this.addLBrace()
+      node.specifiers.forEach((spec, index) => {
+        if (index > 0) {
+          this.addComma()
+          this.addSpacing()
+        }
+        this.generatorExportSpecifier(spec)
+      })
       this.addRBrace()
-      this.addSpacing()
-      this.addCode(es6TokensObj.FromTok)
-      this.addSpacing()
-      this.generatorNode(node.source)
+      
+      if (node.source) {
+        // export {name} from './module.js'
+        this.addSpacing()
+        this.addCode(es6TokensObj.FromTok)
+        this.addSpacing()
+        this.generatorNode(node.source)
+      }
     }
+  }
+
+  private static generatorExportSpecifier(spec: any) {
+    // local: 本地名称, exported: 导出名称
+    this.generatorNode(spec.local)
+    if (spec.local !== spec.exported) {
+      // export {name as userName}
+      this.addSpacing()
+      this.addCode(es6TokensObj.AsTok)
+      this.addSpacing()
+      this.generatorNode(spec.exported)
+    }
+    // else: export {name} - 简写形式，只输出一次
   }
   
   private static generatorExportAllDeclaration(node: any) {

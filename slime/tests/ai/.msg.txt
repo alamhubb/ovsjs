@@ -1,26 +1,42 @@
-✅ Subhuti项目文档创建完成
+✅ Export from修复完成
 
-**创建文件：**
-- `subhuti/.cursor/rules/project.mdc`
+**修改文件：**
+- `packages/slime-parser/src/language/SlimeCstToAstUtil.ts:515-525`
 
-**文档内容：**
-1. 项目定位和核心理念
-2. ⚠️ Or规则的匹配策略（核心重点）
-   - 顺序尝试，第一个成功即返回
-   - 不是贪婪匹配，不是最长匹配
-   - 长规则必须在短规则前面
-3. 错误示例和正确示例对比
-4. 编写Parser规则的最佳实践
-5. 回溯机制说明
-6. 与其他Parser Generator对比
-7. 调试技巧和API参考
-8. Slime项目的实际案例
+**修改内容：**
+```typescript
+// 修改前
+} else if (first1.name === Es6Parser.prototype.ExportClauseFromClauseEmptySemicolon.name) {
+  const source = first1.children.find(...)
+  if (source) {
+    const fromClause = this.createFromClauseAst(source)
+    return SlimeAstUtil.createExportNamedDeclaration(token, null, [], fromClause.source, cst.loc)
+    //                                                          ↑↑ 空数组
+  }
+}
 
-**核心要点：**
-- Or规则是**顺序选择**，不是**最长匹配**
-- 第一个成功的分支立即返回，不继续尝试
-- 规则顺序决定解析结果
-- 长tokens分支必须在前面
+// 修改后
+} else if (first1.name === Es6Parser.prototype.ExportClauseFromClauseEmptySemicolon.name) {
+  const exportClause = first1.children.find(ch => 
+    ch.name === Es6Parser.prototype.ExportClause.name)
+  const source = first1.children.find(ch => ch.name === Es6Parser.prototype.FromClause.name)
+  
+  const specifiers = exportClause ? this.createExportClauseAst(exportClause) : []
+  //                                  ↑↑ 解析ExportClause得到specifiers
+  
+  if (source) {
+    const fromClause = this.createFromClauseAst(source)
+    return SlimeAstUtil.createExportNamedDeclaration(token, null, specifiers, fromClause.source, cst.loc)
+  }
+}
+```
 
-**实际案例：**
-ImportSpecifier规则顺序调整，解决了import重命名问题。
+**测试结果：**
+✅ 108-module-export-from.js - 通过
+- 输入：`export {name, age} from './user.js'`
+- 输出：`export {name, age} from './user.js'` ✅ 正确（之前是 `export`）
+
+**完整修复总结：**
+✅ 1. export重命名：`export {name as userName}`
+✅ 2. export from：`export {name} from './module.js'`
+✅ 3. 组合：`export {name as userName} from './module.js'`

@@ -360,3 +360,157 @@ Subhuti Parser使用回溯策略，会依次尝试Or中的选项：
 
 **实际案例：**
 ImportSpecifier规则顺序调整，解决了import重命名问题。
+
+**【进度】2025-10-17 14:22:44**
+- ✅ Export重命名修复完成
+
+**修改文件：**
+1. `packages/slime-parser/src/language/SlimeCstToAstUtil.ts:473-287`
+2. `packages/slime-generator/src/SlimeGenerator.ts:189-228`
+
+**修改内容：**
+
+**1. CST→AST转换层（新增3个方法）：**
+```typescript
+createExportClauseAst(cst: SubhutiCst): Array<any> {
+  const exportsList = cst.children.find(ch => 
+    ch.name === Es6Parser.prototype.ExportsList.name)
+  return exportsList ? this.createExportsListAst(exportsList) : []
+}
+
+createExportsListAst(cst: SubhutiCst): Array<any> {
+  const specifiers = []
+  for (const child of cst.children) {
+    if (child.name === Es6Parser.prototype.ExportSpecifier.name) {
+      specifiers.push(this.createExportSpecifierAst(child))
+    }
+  }
+  return specifiers
+}
+
+createExportSpecifierAst(cst: SubhutiCst): any {
+  const identifiers = cst.children.filter(ch => 
+    ch.name === Es6TokenConsumer.prototype.Identifier.name)
+  
+  if (identifiers.length === 2) {
+    // export {name as userName}
+    return {
+      type: 'ExportSpecifier',
+      local: createIdentifier(identifiers[0]),
+      exported: createIdentifier(identifiers[1]),
+      loc: cst.loc
+    }
+  } else {
+    // export {name}
+    const id = createIdentifier(identifiers[0])
+    return { type: 'ExportSpecifier', local: id, exported: id }
+  }
+}
+```
+
+**2. 代码生成层（新增generatorExportSpecifier方法）：**
+```typescript
+private static generatorExportNamedDeclaration(node) {
+  this.addCode(es6TokensObj.ExportTok)
+  this.addSpacing()
+  
+  if (node.declaration) {
+    // export const name = 'Alice'
+    this.generatorNode(node.declaration)
+  } else if (node.specifiers && node.specifiers.length > 0) {
+    // export {name} 或 export {name as userName}
+    this.addLBrace()
+    node.specifiers.forEach((spec, index) => {
+      if (index > 0) {
+        this.addComma()
+        this.addSpacing()
+      }
+      this.generatorExportSpecifier(spec)
+    })
+    this.addRBrace()
+    
+    if (node.source) {
+      // export {name} from './module.js'
+      this.addSpacing()
+      this.addCode(FromTok)
+      this.addSpacing()
+      this.generatorNode(node.source)
+    }
+  }
+}
+
+private static generatorExportSpecifier(spec) {
+  this.generatorNode(spec.local)
+  if (spec.local !== spec.exported) {
+    // export {name as userName}
+    this.addSpacing()
+    this.addCode(AsTok)
+    this.addSpacing()
+    this.generatorNode(spec.exported)
+  }
+}
+```
+
+**测试结果：**
+✅ 103-module-export-rename.js - 通过
+- 输入：`export {name as userName, age as userAge}`
+- 输出：`export {name as userName, age as userAge}` ✅ 正确
+
+✅ 101-module-export-named.js - 通过
+- 输入：`export const name = 'Alice'`
+- 输出：`export const name = 'Alice'` ✅ 正确
+
+✅ 102-module-export-multiple.js - 通过
+- 所有export语句正确生成
+
+⚠️ 108-module-export-from.js - 发现问题
+- 输入：`export {name, age} from './user.js'`
+- 输出：`export` ❌ 不完整（export from的specifiers缺失）
+
+**修复状态：**
+- export重命名：✅ 完成
+- export from的specifiers：待修复（小问题）
+
+**【进度】2025-10-17 14:23:29**
+- ✅ Export from修复完成
+
+**修改文件：**
+- `packages/slime-parser/src/language/SlimeCstToAstUtil.ts:515-525`
+
+**修改内容：**
+```typescript
+// 修改前
+} else if (first1.name === Es6Parser.prototype.ExportClauseFromClauseEmptySemicolon.name) {
+  const source = first1.children.find(...)
+  if (source) {
+    const fromClause = this.createFromClauseAst(source)
+    return SlimeAstUtil.createExportNamedDeclaration(token, null, [], fromClause.source, cst.loc)
+    //                                                          ↑↑ 空数组
+  }
+}
+
+// 修改后
+} else if (first1.name === Es6Parser.prototype.ExportClauseFromClauseEmptySemicolon.name) {
+  const exportClause = first1.children.find(ch => 
+    ch.name === Es6Parser.prototype.ExportClause.name)
+  const source = first1.children.find(ch => ch.name === Es6Parser.prototype.FromClause.name)
+  
+  const specifiers = exportClause ? this.createExportClauseAst(exportClause) : []
+  //                                  ↑↑ 解析ExportClause得到specifiers
+  
+  if (source) {
+    const fromClause = this.createFromClauseAst(source)
+    return SlimeAstUtil.createExportNamedDeclaration(token, null, specifiers, fromClause.source, cst.loc)
+  }
+}
+```
+
+**测试结果：**
+✅ 108-module-export-from.js - 通过
+- 输入：`export {name, age} from './user.js'`
+- 输出：`export {name, age} from './user.js'` ✅ 正确（之前是 `export`）
+
+**完整修复总结：**
+✅ 1. export重命名：`export {name as userName}`
+✅ 2. export from：`export {name} from './module.js'`
+✅ 3. 组合：`export {name as userName} from './module.js'`

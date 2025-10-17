@@ -238,6 +238,54 @@ export class SlimeCstToAst {
     return SlimeAstUtil.createIdentifier(token.value, token.loc)
   }
 
+  createExportClauseAst(cst: SubhutiCst): Array<any> {
+    // ExportClause: LBrace (ExportsList | RBrace)
+    const exportsList = cst.children.find((ch: any) => 
+      ch.name === Es6Parser.prototype.ExportsList.name)
+    if (!exportsList) return []
+    
+    return this.createExportsListAst(exportsList)
+  }
+
+  createExportsListAst(cst: SubhutiCst): Array<any> {
+    // ExportsList: ExportSpecifier (, ExportSpecifier)*
+    const specifiers: Array<any> = []
+    for (const child of cst.children) {
+      if (child.name === Es6Parser.prototype.ExportSpecifier.name) {
+        specifiers.push(this.createExportSpecifierAst(child))
+      }
+    }
+    return specifiers
+  }
+
+  createExportSpecifierAst(cst: SubhutiCst): any {
+    // ExportSpecifier: Identifier (as Identifier)?
+    const identifiers = cst.children.filter((ch: any) => 
+      ch.name === Es6TokenConsumer.prototype.Identifier.name)
+    
+    if (identifiers.length === 2) {
+      // export {name as userName}
+      const local = SlimeAstUtil.createIdentifier(identifiers[0].value, identifiers[0].loc)
+      const exported = SlimeAstUtil.createIdentifier(identifiers[1].value, identifiers[1].loc)
+      return {
+        type: 'ExportSpecifier',
+        local: local,
+        exported: exported,
+        loc: cst.loc
+      }
+    } else if (identifiers.length === 1) {
+      // export {name}
+      const id = SlimeAstUtil.createIdentifier(identifiers[0].value, identifiers[0].loc)
+      return {
+        type: 'ExportSpecifier',
+        local: id,
+        exported: id,
+        loc: cst.loc
+      }
+    }
+    throw new Error('ExportSpecifier invalid structure')
+  }
+
   createImportedDefaultBindingCommaNameSpaceImportAst(cst: SubhutiCst): SlimeImportDeclaration {
     let astName = checkCstName(cst, Es6Parser.prototype.ImportDeclaration.name);
     const first = cst.children[0]
@@ -465,14 +513,22 @@ export class SlimeCstToAst {
       }
     } else if (first1.name === Es6Parser.prototype.ExportClauseFromClauseEmptySemicolon.name) {
       // export {name, age} from './module.js'
+      const exportClause = first1.children.find((ch: any) => 
+        ch.name === Es6Parser.prototype.ExportClause.name)
       const source = first1.children.find((ch: any) => ch.name === Es6Parser.prototype.FromClause.name)
+      
+      const specifiers = exportClause ? this.createExportClauseAst(exportClause) : []
+      
       if (source) {
         const fromClause = this.createFromClauseAst(source)
-        return SlimeAstUtil.createExportNamedDeclaration(token, null, [], fromClause.source, cst.loc)
+        return SlimeAstUtil.createExportNamedDeclaration(token, null, specifiers, fromClause.source, cst.loc)
       }
     } else if (first1.name === Es6Parser.prototype.ExportClauseEmptySemicolon.name) {
-      // export {}
-      return SlimeAstUtil.createExportNamedDeclaration(token, null, [], null, cst.loc)
+      // export {name, age} 或 export {name as userName}
+      const exportClause = first1.children.find((ch: any) => 
+        ch.name === Es6Parser.prototype.ExportClause.name)
+      const specifiers = exportClause ? this.createExportClauseAst(exportClause) : []
+      return SlimeAstUtil.createExportNamedDeclaration(token, null, specifiers, null, cst.loc)
     } else if (first1.name === Es6Parser.prototype.Declaration.name) {
       const declaration = this.createDeclarationAst(cst.children[1])
       // console.log('asdfsadfsad')
