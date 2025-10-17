@@ -101,11 +101,14 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
    * 核心逻辑：
    * - 检查 ovsRenderDomViewDepth 计数器
    * - 如果 > 0，说明在 OvsRenderDomViewDeclaration 内部
-   * - 识别赋值表达式（name = value）→ 生成 temp$$attrs$$.name = value + children.push(temp$$attrs$$.name)
+   * - 识别赋值表达式（name = value）→ 生成三条语句：
+   *   1. let name = value
+   *   2. temp$$attrs$$.name = name
+   *   3. children.push(temp$$attrs$$.name)
    * - 其他表达式 → children.push(expression)
    * 
    * 示例：
-   * 输入：name = 123  → [temp$$attrs$$.name = 123, children.push(temp$$attrs$$.name)]
+   * 输入：name = 123  → [let name = 123, temp$$attrs$$.name = name, children.push(temp$$attrs$$.name)]
    * 输入：456        → children.push(456)
    */
   createExpressionStatementAst(cst: SubhutiCst): SlimeExpressionStatement | any {
@@ -131,8 +134,21 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
         const varValue = expr.right
         const loc = cst.loc
         
-        // 生成两条语句：
-        // 1. temp$$attrs$$uuid.name = value
+        // 生成三条语句：
+        // 1. let name = value
+        const varDeclaration = SlimeAstUtil.createVariableDeclaration(
+          SlimeAstUtil.createVariableDeclarationKind(SlimeVariableDeclarationKindValue.let, loc),
+          [
+            SlimeAstUtil.createVariableDeclarator(
+              SlimeAstUtil.createIdentifier(varName),
+              SlimeAstUtil.createEqualOperator(loc),
+              varValue
+            )
+          ],
+          loc
+        )
+        
+        // 2. temp$$attrs$$uuid.name = name
         const attrsAssignment = {
           type: SlimeAstType.ExpressionStatement,
           expression: {
@@ -143,13 +159,13 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
               SlimeAstUtil.createDotOperator(loc),
               SlimeAstUtil.createIdentifier(varName)
             ),
-            right: varValue,
+            right: SlimeAstUtil.createIdentifier(varName),  // 使用声明的变量
             loc
           },
           loc
         }
         
-        // 2. children.push(temp$$attrs$$uuid.name)
+        // 3. children.push(temp$$attrs$$uuid.name)
         const pushStatement = {
           type: SlimeAstType.ExpressionStatement,
           expression: SlimeAstUtil.createCallExpression(
@@ -169,8 +185,8 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
           loc
         }
         
-        // 返回数组（稍后会被展开）
-        return [attrsAssignment, pushStatement]
+        // 返回三条语句数组（稍后会被展开）
+        return [varDeclaration, attrsAssignment, pushStatement]
       }
       
       // 其他表达式 → children.push(expr)
@@ -198,26 +214,30 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
    * 转换 OvsRenderDomViewDeclaration 为表达式或 IIFE
    * 
    * 转换流程：
-   * 1. 进入时计数器 +1（标记进入 OvsRenderDomViewDeclaration）
-   * 2. 转换 StatementList（ExpressionStatement 会自动转为 children.push()）
+   * 1. 进入时计数器 +1，生成唯一的attrs变量名并入栈
+   * 2. 转换 StatementList（赋值表达式转为三条语句，其他表达式转为 children.push()）
    * 3. 判断是简单还是复杂情况：
-   *    - 简单（只有表达式）：OvsAPI.createVNode('div', [children])  ⭐ 无 IIFE
-   *    - 复杂（有语句）：(function() { const children = []; ...; return OvsAPI.createVNode('div', children) })()
-   * 4. 退出时计数器 -1（用 try-finally 保证）
+   *    - 简单（只有表达式）：OvsAPI.createVNode('div', {}, [children])  ⭐ 无 IIFE
+   *    - 复杂（有语句）：IIFE包裹
+   * 4. 退出时计数器 -1，弹出栈（用 try-finally 保证）
    * 
    * 示例（简单）：
    * 输入：div { h1 { greeting } }
-   * 输出：OvsAPI.createVNode('div', [
-   *   OvsAPI.createVNode('h1', [greeting])
+   * 输出：OvsAPI.createVNode('div', {}, [
+   *   OvsAPI.createVNode('h1', {}, [greeting])
    * ])
    * 
-   * 示例（复杂）：
-   * 输入：div { const a = 1; 123 }
+   * 示例（复杂，带attrs）：
+   * 输入：div { let a = 1; name = a; 123 }
    * 输出：(function() {
    *   const children = []
-   *   const a = 1
+   *   const temp$$attrs$$uuid = {}
+   *   let a = 1
+   *   let name = a
+   *   temp$$attrs$$uuid.name = name
+   *   children.push(temp$$attrs$$uuid.name)
    *   children.push(123)
-   *   return OvsAPI.createVNode('div', children)
+   *   return OvsAPI.createVNode('div', {attrs: temp$$attrs$$uuid}, children)
    * })()
    */
   createOvsRenderDomViewDeclarationAst(cst: SubhutiCst): SlimeExpression {
@@ -370,7 +390,9 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
    * (function() {
    *   const children = []
    *   const temp$$attrs$$uuid = {}
-   *   temp$$attrs$$uuid.name = value
+   *   let name = value
+   *   temp$$attrs$$uuid.name = name
+   *   children.push(temp$$attrs$$uuid.name)
    *   ...statements
    *   return OvsAPI.createVNode('div', {attrs: temp$$attrs$$uuid}, children)
    * })()
@@ -465,13 +487,14 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
       attrsObject = SlimeAstUtil.createObjectExpression([])
     }
     
-    // 创建函数调用：OvsAPI.createVNode('div', {attrs: temp$$attrs$$uuid}, children)
+    // 创建函数调用：OvsAPI.createVNode('div', children, {attrs: temp$$attrs$$uuid})
+    // 注意：OvsAPI的参数顺序是 (tagName, children, props)
     const callExpression = SlimeAstUtil.createCallExpression(
       memberExpression,
       [
-        SlimeAstUtil.createStringLiteral(id.name),  // 第一个参数：元素名称字符串
-        attrsObject,                                 // 第二个参数：attrs 对象
-        SlimeAstUtil.createIdentifier('children')    // 第三个参数：children 数组
+        SlimeAstUtil.createStringLiteral(id.name),   // 第一个参数：元素名称字符串
+        SlimeAstUtil.createIdentifier('children'),   // 第二个参数：children 数组
+        attrsObject                                   // 第三个参数：attrs 对象
       ]
     )
     
