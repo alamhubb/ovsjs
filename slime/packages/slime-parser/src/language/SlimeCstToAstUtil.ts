@@ -2298,17 +2298,25 @@ export class SlimeCstToAst {
     const astName = checkCstName(cst, Es6Parser.prototype.AdditiveExpression.name);
     if (cst.children.length > 1) {
       // 有运算符，创建 BinaryExpression
-      const left = this.createExpressionAst(cst.children[0])
-      const operator = cst.children[1].value as any  // +/- 运算符
-      const right = this.createExpressionAst(cst.children[2])
+      // 支持多个运算符：x + y + z => BinaryExpression(BinaryExpression(x, +, y), +, z)
+      let left = this.createExpressionAst(cst.children[0])
       
-      return {
-        type: SlimeAstType.BinaryExpression,
-        operator: operator,
-        left: left,
-        right: right,
-        loc: cst.loc
-      } as any
+      // 循环处理剩余的 (operator, operand) 对
+      // CST结构: [operand, operator, operand, operator, operand, ...]
+      for (let i = 1; i < cst.children.length; i += 2) {
+        const operator = cst.children[i].value as any  // +/- 运算符
+        const right = this.createExpressionAst(cst.children[i + 1])
+        
+        left = {
+          type: SlimeAstType.BinaryExpression,
+          operator: operator,
+          left: left,
+          right: right,
+          loc: cst.loc
+        } as any
+      }
+      
+      return left
     }
     return this.createExpressionAst(cst.children[0])
   }
@@ -2317,17 +2325,24 @@ export class SlimeCstToAst {
     const astName = checkCstName(cst, Es6Parser.prototype.MultiplicativeExpression.name);
     if (cst.children.length > 1) {
       // 有运算符，创建 BinaryExpression
-      const left = this.createExpressionAst(cst.children[0])
-      const operator = cst.children[1].children[0].value as any  // */% 运算符
-      const right = this.createExpressionAst(cst.children[2])
+      // 支持多个运算符：a * b * c => BinaryExpression(BinaryExpression(a, *, b), *, c)
+      let left = this.createExpressionAst(cst.children[0])
       
-      return {
-        type: SlimeAstType.BinaryExpression,
-        operator: operator,
-        left: left,
-        right: right,
-        loc: cst.loc
-      } as any
+      // 循环处理剩余的 (operator, operand) 对
+      for (let i = 1; i < cst.children.length; i += 2) {
+        const operator = cst.children[i].children[0].value as any  // */% 运算符
+        const right = this.createExpressionAst(cst.children[i + 1])
+        
+        left = {
+          type: SlimeAstType.BinaryExpression,
+          operator: operator,
+          left: left,
+          right: right,
+          loc: cst.loc
+        } as any
+      }
+      
+      return left
     }
     return this.createExpressionAst(cst.children[0])
   }
