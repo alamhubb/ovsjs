@@ -2804,6 +2804,8 @@ export class SlimeCstToAst {
       value = SlimeAstUtil.createBooleanLiteral(true)
     } else if (firstChild.name === Es6TokenConsumer.prototype.FalseTok.name) {
       value = SlimeAstUtil.createBooleanLiteral(false)
+    } else if (firstChild.name === Es6TokenConsumer.prototype.NullLiteral.name) {
+      value = SlimeAstUtil.createNullLiteralToken()
     } else {
       value = SlimeAstUtil.createStringLiteral(firstValue)
     }
