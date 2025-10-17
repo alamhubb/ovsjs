@@ -84,6 +84,128 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
   }
 
 
+  createDeclarationAst(cst: SubhutiCst): any {
+    // Declaration -> OvsViewDeclaration | VariableDeclaration | FunctionDeclaration | ...
+    // 检查第一个child是否是 OvsViewDeclaration
+    const first = cst.children?.[0]
+    if (first && first.name === OvsParser.prototype.OvsViewDeclaration.name) {
+      return this.createOvsViewDeclarationAst(first)
+    }
+    return super.createDeclarationAst(cst)
+  }
+
+  /**
+   * 转换 OvsViewDeclaration 为函数声明
+   * 
+   * 输入：ovsView parent1 ({attrs}) : div { ... }
+   * 输出：function parent1({attrs}) { return h('div', ...) }
+   */
+  createOvsViewDeclarationAst(cst: SubhutiCst): any {
+    checkCstName(cst, OvsParser.prototype.OvsViewDeclaration.name)
+    
+    // 结构：OvsViewToken, ovsRenderDomClassDeclaration, OvsRenderDomViewDeclaration
+    const children = cst.children || []
+    
+    // 1. 从 ovsRenderDomClassDeclaration 中提取组件名和参数
+    const classDeclCst = children[1]
+    if (!classDeclCst) {
+      throw new Error('OvsViewDeclaration: missing class declaration')
+    }
+    
+    // ovsRenderDomClassDeclaration 的结构：Identifier, FunctionFormalParameters?, Colon
+    const classDeclChildren = classDeclCst.children || []
+    
+    // 组件名
+    const componentNameCst = classDeclChildren[0]
+    if (!componentNameCst) {
+      throw new Error('OvsViewDeclaration: missing component name')
+    }
+    const componentName = this.createIdentifierAst(componentNameCst)
+    
+    // 参数（可能在索引1或不存在）
+    let params
+    const secondChild = classDeclChildren[1]
+    if (secondChild && secondChild.name === 'FunctionFormalParameters') {
+      params = this.createFunctionFormalParametersAst(secondChild)
+    } else {
+      // 无参数，创建空参数列表
+      const loc = cst.loc
+      params = {
+        lp: { type: 'LParen', value: '(', loc } as any,
+        rp: { type: 'RParen', value: ')', loc } as any,
+        functionFormalParameter: []
+      }
+    }
+    
+    // 2. 视图内容（第3个：OvsRenderDomViewDeclaration）
+    const viewCst = children[2]
+    if (!viewCst) {
+      throw new Error('OvsViewDeclaration: missing view declaration')
+    }
+    
+    // 转换视图为表达式（IIFE或h调用）
+    const viewExpression = this.createOvsRenderDomViewDeclarationAst(viewCst)
+    
+    // 根据视图类型展开到函数体
+    let functionBodyStatements: SlimeStatement[] = []
+    
+    if (viewExpression.type === SlimeAstType.CallExpression) {
+      const iife = viewExpression as SlimeCallExpression
+      const iifeFunc = iife.callee
+      
+      if (iifeFunc.type === 'FunctionExpression') {
+        // 复杂视图的 IIFE：(function() { const children = []; ...; return h(...) })()
+        // 展开 IIFE 内容到函数体
+        const iifeBody = (iifeFunc as any).body.body as SlimeStatement[]
+        
+        // 去掉最后一条 return 语句，修改为 return h(...)
+        const statementsWithoutReturn = iifeBody.slice(0, -1)
+        const lastReturn = iifeBody[iifeBody.length - 1]
+        
+        if (lastReturn && lastReturn.type === SlimeAstType.ReturnStatement) {
+          const returnExpr = (lastReturn as any).argument
+          functionBodyStatements = [
+            ...statementsWithoutReturn,
+            SlimeAstUtil.createReturnStatement(returnExpr)
+          ]
+        } else {
+          functionBodyStatements = iifeBody
+        }
+      } else {
+        // 简单视图的 h 调用：h('div', {}, [...])
+        functionBodyStatements = [
+          SlimeAstUtil.createReturnStatement(viewExpression)
+        ]
+      }
+    } else {
+      // 其他类型，直接 return
+      functionBodyStatements = [
+        SlimeAstUtil.createReturnStatement(viewExpression)
+      ]
+    }
+    
+    // 创建函数体
+    const functionBody = SlimeAstUtil.createBlockStatement(
+      { type: 'LBrace', value: '{', loc: cst.loc } as any,
+      { type: 'RBrace', value: '}', loc: cst.loc } as any,
+      functionBodyStatements,
+      cst.loc
+    )
+    
+    // 创建函数声明（手动构造AST节点）
+    const functionDeclaration = {
+      type: 'FunctionDeclaration',
+      id: componentName,
+      params: params,
+      body: functionBody,
+      generator: false,
+      async: false,
+      loc: cst.loc
+    }
+    
+    return functionDeclaration
+  }
+
   createExpressionAst(cst: SubhutiCst): SlimeExpression {
     const astName = cst.name
     let left
@@ -466,16 +588,15 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     // 创建 h 函数标识符（直接调用 h，不是 OvsAPI.createVNode）
     const hIdentifier = SlimeAstUtil.createIdentifier('h')
     
-    // 创建 props 对象：如果有 attrsVarName，使用展开语法 {...temp$$attrs$$uuid}，否则为空对象 {}
+    // 创建 props 对象：{ovsAttr: temp$$attrs$$uuid} 或 {}
     let propsObject
     if (attrsVarName) {
-      // 创建 {...temp$$attrs$$uuid} 展开语法
+      // 创建 {ovsAttr: temp$$attrs$$uuid}
       propsObject = SlimeAstUtil.createObjectExpression([
-        {
-          type: 'SpreadElement',
-          argument: SlimeAstUtil.createIdentifier(attrsVarName),
-          loc
-        } as any
+        SlimeAstUtil.createPropertyAst(
+          SlimeAstUtil.createIdentifier('ovsAttr'),
+          SlimeAstUtil.createIdentifier(attrsVarName)
+        )
       ])
     } else {
       propsObject = SlimeAstUtil.createObjectExpression([])

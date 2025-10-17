@@ -1,28 +1,14 @@
-// 测试 attrs 功能
+// 测试 ovsView 组件声明
 
-const double = (x) => x * 2
-const getValue = () => 42
+ovsView MyCard ({attrs}) : div {
+    h1 { attrs.title }
+    p { attrs.content }
+}
 
-div {
-  let a = 10
-  name = a
-  age = 25
-  role = "Developer"
+export default div {
 
-  h1 { "User Info" }
+    let c = div{999}
 
-  div {
-    p { "Name: " }
-    p { name }
-  }
-
-  div {
-    p { "Age: " }
-    p { age }
-  }
-
-  div {
-    p { "Role: " }
-    p { role }
-  }
+    h2 { "Component Demo" }
+    MyCard({attrs: {title: c, content: "World"}})
 }

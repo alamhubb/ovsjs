@@ -3,7 +3,8 @@ import {createFilter, type Plugin} from "vite"
 import SubhutiLexer from 'subhuti/src/parser/SubhutiLexer.ts'
 import SubhutiCst from "subhuti/src/struct/SubhutiCst.ts";
 import SlimeGenerator from "slime-generator/src/SlimeGenerator.ts";
-import {es6Tokens} from "slime-parser/src/language/es2015/Es6Tokens.ts";
+import {ovs6Tokens} from "./parser/OvsConsumer.ts";
+import OvsTokenConsumer from "./parser/OvsConsumer.ts";
 import OvsParser from "./parser/OvsParser.ts";
 import OvsCstToSlimeAstUtil from "./factory/OvsCstToSlimeAstUtil.ts";
 import type {SlimeGeneratorResult} from "slime-generator/src/SlimeCodeMapping.ts";
@@ -322,8 +323,8 @@ export async function vitePluginOvsTransform(
   filename?: string,
   prettify: boolean = true
 ): Promise<SlimeGeneratorResult> {
-  // 1. 词法分析
-  const lexer = new SubhutiLexer(es6Tokens)
+  // 1. 词法分析（使用包含 ovsView 关键字的 tokens）
+  const lexer = new SubhutiLexer(ovs6Tokens)
   const tokens = lexer.lexer(code)
 
   // 空代码直接返回
@@ -334,8 +335,8 @@ export async function vitePluginOvsTransform(
     }
   }
 
-  // 2. 语法分析：tokens → CST
-  const parser = new OvsParser(tokens)
+  // 2. 语法分析：tokens → CST（传入 OvsTokenConsumer）
+  const parser = new OvsParser(tokens, OvsTokenConsumer)
   let curCst = parser.Program()
 
   // 3. 语法转换：CST → AST（OVS 语法 → JavaScript AST）

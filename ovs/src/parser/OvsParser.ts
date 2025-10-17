@@ -7,6 +7,14 @@ import Es6Parser from "slime-parser/src/language/es2015/Es6Parser.ts";
 @Subhuti
 export default class OvsParser extends Es6Parser<OvsTokenConsumer> {
   @SubhutiRule
+  OvsViewDeclaration() {
+    // ovsView + ovsRenderDomClassDeclaration + OvsRenderDomViewDeclaration
+    this.tokenConsumer.OvsViewToken()
+    this.ovsRenderDomClassDeclaration()  // 复用：Identifier, FunctionFormalParameters?, Colon
+    this.OvsRenderDomViewDeclaration()   // 视图内容
+  }
+
+  @SubhutiRule
   ovsRenderDomClassDeclaration() {
     this.tokenConsumer.Identifier()
     this.Option(() => {
@@ -40,9 +48,29 @@ export default class OvsParser extends Es6Parser<OvsTokenConsumer> {
   }
 
   @SubhutiRule
-  OvsRenderDomStatement() {
-    this.ovsRenderDomClassDeclaration()
-    this.OvsRenderDomViewDeclaration()
+  Declaration() {
+    this.Or([
+      {
+        alt: () => {
+          this.OvsViewDeclaration()  // 添加 ovsView 组件声明
+        }
+      },
+      {
+        alt: () => {
+          this.HoistableDeclaration()
+        }
+      },
+      {
+        alt: () => {
+          this.ClassDeclaration()
+        }
+      },
+      {
+        alt: () => {
+          this.VariableDeclaration()
+        }
+      }
+    ])
   }
 
   @SubhutiRule
