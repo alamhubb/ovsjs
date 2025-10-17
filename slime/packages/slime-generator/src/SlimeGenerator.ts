@@ -793,6 +793,8 @@ export default class SlimeGenerator {
       this.generatorSwitchCase(node as any)
     } else if (node.type === SlimeAstType.TryStatement) {
       this.generatorTryStatement(node as any)
+    } else if (node.type === 'CatchClause') {
+      this.generatorCatchClause(node as any)
     } else if (node.type === SlimeAstType.ThrowStatement) {
       this.generatorThrowStatement(node as any)
     } else if (node.type === SlimeAstType.BreakStatement) {
@@ -1319,13 +1321,31 @@ export default class SlimeGenerator {
    */
   private static generatorTryStatement(node: any) {
     this.addCode(es6TokensObj.TryTok)
+    this.addSpacing()
     this.generatorNode(node.block)
     if (node.handler) {
       this.generatorNode(node.handler)
     }
     if (node.finalizer) {
       this.addCode(es6TokensObj.FinallyTok)
+      this.addSpacing()
       this.generatorNode(node.finalizer)
+    }
+  }
+  
+  /**
+   * 生成 catch 子句
+   */
+  private static generatorCatchClause(node: any) {
+    this.addCode(es6TokensObj.CatchTok)
+    this.addSpacing()
+    this.addLParen()
+    if (node.param) {
+      this.generatorNode(node.param)
+    }
+    this.addRParen()
+    if (node.body) {
+      this.generatorNode(node.body)
     }
   }
 

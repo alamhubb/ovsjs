@@ -200,16 +200,16 @@ export class SlimeCstToAst {
       if (child.name === Es6Parser.prototype.ImportSpecifier.name) {
         // ImportSpecifier有两种形式：
         // 1. ImportedBinding （简写）
-        // 2. Identifier AsTok ImportedBinding （重命名）
+        // 2. IdentifierName AsTok ImportedBinding （重命名）
         
-        const identifierToken = child.children.find((ch: any) => 
-          ch.name === Es6TokenConsumer.prototype.Identifier.name)
+        const identifierName = child.children.find((ch: any) => 
+          ch.name === Es6Parser.prototype.IdentifierName.name)
         const binding = child.children.find((ch: any) => 
           ch.name === Es6Parser.prototype.ImportedBinding.name)
         
-        if (identifierToken && binding) {
-          // import {name as localName} - 重命名形式
-          const imported = SlimeAstUtil.createIdentifier(identifierToken.value, identifierToken.loc)
+        if (identifierName && binding) {
+          // import {name as localName} 或 import {default as MyClass} - 重命名形式
+          const imported = this.createIdentifierNameAst(identifierName)
           const local = this.createImportedBindingAst(binding)
           specifiers.push({
             type: SlimeAstType.ImportSpecifier,
@@ -259,23 +259,26 @@ export class SlimeCstToAst {
   }
 
   createExportSpecifierAst(cst: SubhutiCst): any {
-    // ExportSpecifier: Identifier (as Identifier)?
-    const identifiers = cst.children.filter((ch: any) => 
-      ch.name === Es6TokenConsumer.prototype.Identifier.name)
+    // ExportSpecifier: IdentifierName (as IdentifierName)?
+    // IdentifierName可以是Identifier或任何关键字（如default、class等）
     
-    if (identifiers.length === 2) {
-      // export {name as userName}
-      const local = SlimeAstUtil.createIdentifier(identifiers[0].value, identifiers[0].loc)
-      const exported = SlimeAstUtil.createIdentifier(identifiers[1].value, identifiers[1].loc)
+    // 查找所有IdentifierName节点
+    const identifierNames = cst.children.filter((ch: any) => 
+      ch.name === Es6Parser.prototype.IdentifierName.name)
+    
+    if (identifierNames.length === 2) {
+      // export {name as userName} 或 export {default as Person}
+      const local = this.createIdentifierNameAst(identifierNames[0])
+      const exported = this.createIdentifierNameAst(identifierNames[1])
       return {
         type: 'ExportSpecifier',
         local: local,
         exported: exported,
         loc: cst.loc
       }
-    } else if (identifiers.length === 1) {
+    } else if (identifierNames.length === 1) {
       // export {name}
-      const id = SlimeAstUtil.createIdentifier(identifiers[0].value, identifiers[0].loc)
+      const id = this.createIdentifierNameAst(identifierNames[0])
       return {
         type: 'ExportSpecifier',
         local: id,
@@ -284,6 +287,22 @@ export class SlimeCstToAst {
       }
     }
     throw new Error('ExportSpecifier invalid structure')
+  }
+  
+  /**
+   * 从IdentifierName CST中提取标识符
+   * IdentifierName可以是Identifier或任何关键字token
+   */
+  createIdentifierNameAst(cst: SubhutiCst): SlimeIdentifier {
+    checkCstName(cst, Es6Parser.prototype.IdentifierName.name)
+    
+    // IdentifierName的children[0]是实际的token（Identifier或关键字）
+    const token = cst.children[0]
+    if (token && token.value) {
+      return SlimeAstUtil.createIdentifier(token.value, token.loc)
+    }
+    
+    throw new Error('IdentifierName has no token')
   }
 
   createImportedDefaultBindingCommaNameSpaceImportAst(cst: SubhutiCst): SlimeImportDeclaration {
@@ -1021,6 +1040,23 @@ export class SlimeCstToAst {
       methodDef.kind = 'set'
       
       return methodDef
+    } else if (first.name === Es6Parser.prototype.GeneratorMethod.name) {
+      // generator方法：*methodName() { yield ... }
+      // GeneratorMethod: Asterisk PropertyName FunctionFormalParametersBodyDefine
+      const propertyNameCst = first.children[1]
+      const bodyDefCst = first.children[2]
+      
+      const key = this.createPropertyNameAst(propertyNameCst)
+      const functionExpression = this.createFunctionFormalParametersBodyDefineAst(bodyDefCst, first.loc)
+      
+      const methodDef = SlimeAstUtil.createMethodDefinition(key, functionExpression as any)
+      methodDef.kind = 'method'
+      // 标记为generator方法
+      if (methodDef.value) {
+        methodDef.value.generator = true
+      }
+      
+      return methodDef
     } else {
       throw new Error('不支持的类型: ' + first.name)
     }
@@ -1499,10 +1535,25 @@ export class SlimeCstToAst {
    */
   createWhileStatementAst(cst: SubhutiCst): any {
     checkCstName(cst, Es6Parser.prototype.WhileStatement.name);
+    // WhileStatement: WhileTok LParen Expression RParen Statement
+    // children[0]: WhileTok
+    // children[1]: LParen
+    // children[2]: Expression
+    // children[3]: RParen
+    // children[4]: Statement
+    
+    const expression = cst.children.find(ch => ch.name === Es6Parser.prototype.Expression.name)
+    const statement = cst.children.find(ch => ch.name === Es6Parser.prototype.Statement.name)
+    
+    const test = expression ? this.createExpressionAst(expression) : null
+    // createStatementAst返回数组，取第一个元素
+    const bodyArray = statement ? this.createStatementAst(statement) : []
+    const body = bodyArray.length > 0 ? bodyArray[0] : null
+    
     return {
       type: SlimeAstType.WhileStatement,
-      test: null,  // TODO
-      body: null,  // TODO
+      test: test,
+      body: body,
       loc: cst.loc
     }
   }
@@ -1538,13 +1589,99 @@ export class SlimeCstToAst {
    */
   createTryStatementAst(cst: SubhutiCst): any {
     checkCstName(cst, Es6Parser.prototype.TryStatement.name);
+    // TryStatement: TryTok Block (Catch Finally? | Finally)
+    // children[0]: TryTok
+    // children[1]: Block
+    // children[2]（可选）: Catch
+    // children[3]（可选）: Finally
+    
+    const blockCst = cst.children.find(ch => ch.name === Es6Parser.prototype.Block.name)
+    const catchCst = cst.children.find(ch => ch.name === Es6Parser.prototype.Catch.name)
+    const finallyCst = cst.children.find(ch => ch.name === Es6Parser.prototype.Finally.name)
+    
+    const block = blockCst ? this.createBlockAst(blockCst) : null
+    const handler = catchCst ? this.createCatchClauseAst(catchCst) : null
+    const finalizer = finallyCst ? this.createFinallyAst(finallyCst) : null
+    
     return {
       type: SlimeAstType.TryStatement,
-      block: null,  // TODO
-      handler: null,  // TODO
-      finalizer: null,  // TODO
+      block: block,
+      handler: handler,
+      finalizer: finalizer,
       loc: cst.loc
     }
+  }
+  
+  /**
+   * 从Block CST创建BlockStatement AST
+   * Block: LBrace StatementList? RBrace
+   */
+  createBlockAst(cst: SubhutiCst): SlimeBlockStatement {
+    checkCstName(cst, Es6Parser.prototype.Block.name)
+    
+    // Block 的结构：LBrace StatementList? RBrace
+    const statementListCst = cst.children?.find(
+      child => child.name === Es6Parser.prototype.StatementList.name
+    )
+    
+    const statements = statementListCst ? this.createStatementListAst(statementListCst) : []
+    
+    return {
+      type: SlimeAstType.BlockStatement,
+      body: statements,
+      lBrace: null,
+      rBrace: null,
+      loc: cst.loc
+    } as SlimeBlockStatement
+  }
+  
+  /**
+   * 创建 Catch 子句 AST
+   */
+  createCatchClauseAst(cst: SubhutiCst): any {
+    checkCstName(cst, Es6Parser.prototype.Catch.name);
+    // Catch: CatchTok LParen CatchParameter RParen Block
+    
+    const paramCst = cst.children.find(ch => ch.name === Es6Parser.prototype.CatchParameter.name)
+    const blockCst = cst.children.find(ch => ch.name === Es6Parser.prototype.Block.name)
+    
+    const param = paramCst ? this.createCatchParameterAst(paramCst) : null
+    const body = blockCst ? this.createBlockAst(blockCst) : null
+    
+    return {
+      type: 'CatchClause',
+      param: param,
+      body: body,
+      loc: cst.loc
+    }
+  }
+  
+  /**
+   * 创建 CatchParameter AST
+   */
+  createCatchParameterAst(cst: SubhutiCst): any {
+    checkCstName(cst, Es6Parser.prototype.CatchParameter.name);
+    // CatchParameter: BindingIdentifier | BindingPattern
+    const first = cst.children[0]
+    
+    if (first.name === Es6Parser.prototype.BindingIdentifier.name) {
+      return this.createBindingIdentifierAst(first)
+    } else if (first.name === Es6Parser.prototype.BindingPattern.name) {
+      return this.createBindingPatternAst(first)
+    }
+    
+    return null
+  }
+  
+  /**
+   * 创建 Finally 子句 AST
+   */
+  createFinallyAst(cst: SubhutiCst): any {
+    checkCstName(cst, Es6Parser.prototype.Finally.name);
+    // Finally: FinallyTok Block
+    
+    const blockCst = cst.children.find(ch => ch.name === Es6Parser.prototype.Block.name)
+    return blockCst ? this.createBlockAst(blockCst) : null
   }
 
   /**

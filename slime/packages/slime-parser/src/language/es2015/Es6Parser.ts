@@ -476,8 +476,10 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
   @SubhutiRule
   IdentifierName() {
     // 成员访问中的属性名可以是保留字
+    // ES6规范：IdentifierName包括所有标识符和保留字
     this.Or([
       {alt: () => this.tokenConsumer.Identifier()},
+      // 控制流关键字
       {alt: () => this.tokenConsumer.ForTok()},
       {alt: () => this.tokenConsumer.IfTok()},
       {alt: () => this.tokenConsumer.ElseTok()},
@@ -492,6 +494,7 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
       {alt: () => this.tokenConsumer.TryTok()},
       {alt: () => this.tokenConsumer.CatchTok()},
       {alt: () => this.tokenConsumer.FinallyTok()},
+      // 运算符关键字
       {alt: () => this.tokenConsumer.NewTok()},
       {alt: () => this.tokenConsumer.DeleteTok()},
       {alt: () => this.tokenConsumer.TypeofTok()},
@@ -499,6 +502,7 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
       {alt: () => this.tokenConsumer.InTok()},
       {alt: () => this.tokenConsumer.InstanceOfTok()},
       {alt: () => this.tokenConsumer.ThisTok()},
+      // 声明关键字
       {alt: () => this.tokenConsumer.FunctionTok()},
       {alt: () => this.tokenConsumer.VarTok()},
       {alt: () => this.tokenConsumer.LetTok()},
@@ -506,17 +510,25 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
       {alt: () => this.tokenConsumer.ClassTok()},
       {alt: () => this.tokenConsumer.ExtendsTok()},
       {alt: () => this.tokenConsumer.StaticTok()},
+      // 模块关键字
       {alt: () => this.tokenConsumer.ImportTok()},
       {alt: () => this.tokenConsumer.ExportTok()},
+      {alt: () => this.tokenConsumer.DefaultTok()},  // ⭐ 添加DefaultTok
       {alt: () => this.tokenConsumer.FromTok()},
       {alt: () => this.tokenConsumer.AsTok()},
       {alt: () => this.tokenConsumer.OfTok()},
+      // 异步/生成器关键字
       {alt: () => this.tokenConsumer.YieldTok()},
       {alt: () => this.tokenConsumer.SuperTok()},
-      {alt: () => this.tokenConsumer.GetTok()},
-      {alt: () => this.tokenConsumer.SetTok()},
       {alt: () => this.tokenConsumer.AsyncTok()},
       {alt: () => this.tokenConsumer.AwaitTok()},
+      // Getter/Setter
+      {alt: () => this.tokenConsumer.GetTok()},
+      {alt: () => this.tokenConsumer.SetTok()},
+      // 值字面量关键字
+      {alt: () => this.tokenConsumer.NullTok()},
+      {alt: () => this.tokenConsumer.TrueTok()},
+      {alt: () => this.tokenConsumer.FalseTok()},
     ])
   }
 
@@ -1943,7 +1955,7 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
       // 长规则优先：import {name as userName}
       {
         alt: () => {
-          this.tokenConsumer.Identifier()
+          this.IdentifierName()
           this.tokenConsumer.AsTok()
           this.ImportedBinding()
         }
@@ -2065,10 +2077,10 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
 
   @SubhutiRule
   ExportSpecifier() {
-    this.tokenConsumer.Identifier()
+    this.IdentifierName()
     this.Option(() => {
       this.tokenConsumer.AsTok()
-      this.tokenConsumer.Identifier()
+      this.IdentifierName()
     })
   }
 }
