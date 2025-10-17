@@ -1,0 +1,698 @@
+# Subhuti - Parser Generator Framework
+
+## 项目定位
+轻量级Parser Generator框架，提供Lexer和Parser基础设施，支持快速构建编程语言解析器。
+
+**名称由来：** Subhuti (सुभूति) - 孙悟空的师父菩提祖师，寓意让编程语言转换如七十二变般灵活。
+
+## 核心理念
+通过定义相同语法结构和语法名称的两个语法文件，实现不同编程语言之间的自动转换。
+
+---
+
+## ⚠️ 核心工作机制（重要！）
+
+### Or规则的匹配策略
+
+**关键特性：顺序尝试，第一个成功即返回**
+
+Subhuti的`Or`规则**不是贪婪匹配**，也**不是最长匹配**，而是：
+
+```
+1. 按顺序尝试每个分支
+2. 第一个成功的分支立即返回
+3. 不会继续尝试后续分支
+4. 不会比较哪个分支匹配更长
+```
+
+### 📋 错误示例（会导致解析失败）
+
+```typescript
+// ❌ 错误：短规则在前
+ImportSpecifier() {
+  this.Or([
+    {alt: () => this.ImportedBinding()},  // 短规则：匹配 "name"
+    {
+      alt: () => {
+        this.tokenConsumer.Identifier()   // 长规则：匹配 "name as userName"
+        this.tokenConsumer.AsTok()
+        this.ImportedBinding()
+      }
+    }
+  ])
+}
+```
+
+**问题：**
+- Token流：`[name, as, userName]`
+- 第一个分支尝试：`ImportedBinding()` → 消费 "name" → ✅ 成功
+- Or立即返回，不尝试第二个分支
+- 结果：只消费了 "name"，剩余 `[as, userName]`
+- 上层规则期望 `,` 或 `}`，实际遇到 `as` → 解析失败
+- 整个ImportDeclaration失败，返回空CST
+
+### ✅ 正确示例（长规则优先）
+
+```typescript
+// ✅ 正确：长规则在前
+ImportSpecifier() {
+  this.Or([
+    // 长规则优先！
+    {
+      alt: () => {
+        this.tokenConsumer.Identifier()   // name
+        this.tokenConsumer.AsTok()        // as
+        this.ImportedBinding()             // userName
+      }
+    },
+    // 短规则作为回退
+    {alt: () => this.ImportedBinding()}
+  ])
+}
+```
+
+**流程：**
+- Token流：`[name, as, userName]`
+- 第一个分支尝试：`Identifier()` → ✅, `AsTok()` → ✅, `ImportedBinding()` → ✅
+- 全部成功，返回
+- 所有token被正确消费 ✅
+
+**Token流：**`[name]`（没有as）
+- 第一个分支尝试：`Identifier()` → ✅, `AsTok()` → ❌ 失败
+- 回溯到尝试前的位置
+- 第二个分支尝试：`ImportedBinding()` → ✅
+- 成功，返回
+
+---
+
+## 🎯 编写Parser规则的最佳实践
+
+### 1. Or规则顺序原则
+
+**规则：** 长规则在前，短规则在后
+
+```typescript
+// ✅ 正确
+this.Or([
+  {alt: () => {
+    // 长规则：需要匹配更多token
+    this.tokenA()
+    this.tokenB()
+    this.tokenC()
+  }},
+  {alt: () => {
+    // 短规则：只匹配少数token
+    this.tokenA()
+  }}
+])
+
+// ❌ 错误
+this.Or([
+  {alt: () => this.tokenA()},      // 短规则在前 → 会提前成功
+  {alt: () => {
+    this.tokenA()
+    this.tokenB()
+    this.tokenC()
+  }}
+])
+```
+
+### 2. 常见陷阱
+
+**陷阱1：前缀相同的规则**
+```typescript
+// ❌ 会失败
+this.Or([
+  {alt: () => this.Identifier()},           // "name"
+  {alt: () => {                             // "name as userName"
+    this.Identifier()
+    this.AsTok()
+    this.Identifier()
+  }}
+])
+```
+
+**陷阱2：包含关系的规则**
+```typescript
+// ❌ 会失败
+PropertyDefinition() {
+  this.Or([
+    {alt: () => this.IdentifierReference()},     // 短：{name}
+    {alt: () => {                                 // 长：{name: value}
+      this.PropertyName()
+      this.Colon()
+      this.AssignmentExpression()
+    }}
+  ])
+}
+```
+
+### 3. 正确的规则设计
+
+**方案A：长规则优先**
+```typescript
+this.Or([
+  {alt: () => {
+    // 完整形式
+    this.PropertyName()
+    this.Colon()
+    this.AssignmentExpression()
+  }},
+  {alt: () => this.MethodDefinition()},
+  {alt: () => this.IdentifierReference()}  // 简写在最后
+])
+```
+
+**方案B：使用Option**
+```typescript
+// 如果两个规则是包含关系，可以用Option
+this.Identifier()
+this.Option(() => {
+  this.AsTok()
+  this.Identifier()
+})
+```
+
+---
+
+## 🔧 回溯机制
+
+Subhuti支持回溯（Backtracking）：
+
+```typescript
+this.Or([
+  {alt: () => {
+    this.tokenA()    // ✅ 成功
+    this.tokenB()    // ❌ 失败
+    // 自动回溯，恢复到Or前的位置
+  }},
+  {alt: () => {
+    this.tokenA()    // ✅ 成功
+    this.tokenC()    // ✅ 成功
+    // 整个分支成功
+  }}
+])
+```
+
+**回溯代价：**
+- 每次失败都要恢复token位置
+- 多次回溯影响性能
+- 因此要把成功率高的分支放前面
+
+---
+
+## 🧪 实际案例：Slime项目中的修复
+
+### 案例1：ImportSpecifier（已修复）
+
+**问题代码：**
+```typescript
+ImportSpecifier() {
+  this.Or([
+    {alt: () => this.ImportedBinding()},  // ❌ 短规则在前
+    {alt: () => {
+      this.Identifier()
+      this.AsTok()
+      this.ImportedBinding()
+    }}
+  ])
+}
+```
+
+**解析 `name as userName`：**
+- 第一个分支消费 "name" → 成功
+- 返回，剩余 `[as, userName]` → 上层规则失败
+- 整个ImportDeclaration返回空CST
+
+**修复后：**
+```typescript
+ImportSpecifier() {
+  this.Or([
+    {alt: () => {              // ✅ 长规则在前
+      this.Identifier()
+      this.AsTok()
+      this.ImportedBinding()
+    }},
+    {alt: () => this.ImportedBinding()}
+  ])
+}
+```
+
+**结果：**
+- 第一个分支尝试消费 `[name, as, userName]` → 全部成功
+- 完美解析 ✅
+
+---
+
+## 📚 技术架构
+
+### 核心组件
+
+**SubhutiLexer：** 词法分析器
+- 将源代码转换为Token流
+- 支持正则表达式定义Token
+
+**SubhutiParser：** 语法分析器
+- 基于Parser Combinator模式
+- 使用装饰器定义规则（`@SubhutiRule`）
+- 支持回溯（Backtracking）
+- 生成CST（Concrete Syntax Tree）
+
+**SubhutiTokenConsumer：** Token消费器
+- 提供`consume(token)`方法
+- 自动处理token匹配和位置更新
+
+### CST结构
+
+```typescript
+interface SubhutiCst {
+  name: string              // 规则名称
+  children: SubhutiCst[]    // 子节点
+  tokens: SubhutiMatchToken[] // 匹配的token
+  loc: SubhutiSourceLocation  // 源码位置
+}
+```
+
+---
+
+## 🎯 设计哲学
+
+**PEG风格（Parsing Expression Grammar）：**
+- 顺序选择（Ordered Choice）
+- 第一个成功即返回
+- 程序员负责规则顺序
+- 性能优先（避免不必要的尝试）
+
+**与传统Parser Generator对比：**
+
+| 特性 | Subhuti (PEG) | 传统LR/LALR |
+|------|---------------|-------------|
+| 匹配策略 | 第一个成功 | 最长匹配 |
+| 规则顺序 | 重要 ⭐⭐⭐ | 不重要 |
+| 回溯 | 支持 | 不支持 |
+| 二义性 | 程序员控制 | 自动检测 |
+| 性能 | 快（避免预测） | 中等 |
+
+---
+
+## ✅ 编写规则的核心原则
+
+### 原则1：长规则优先
+
+在`Or`中，把需要消费更多token的规则放在前面。
+
+### 原则2：特殊在前，通用在后
+
+```typescript
+this.Or([
+  {alt: () => this.MethodDefinition()},      // 特殊语法
+  {alt: () => this.IdentifierReference()}    // 通用标识符
+])
+```
+
+### 原则3：避免前缀冲突
+
+如果两个规则有相同前缀，一定要长规则在前：
+
+```typescript
+// ✅ 正确
+this.Or([
+  {alt: () => {
+    this.A()
+    this.B()
+    this.C()
+  }},
+  {alt: () => {
+    this.A()
+    this.B()
+  }},
+  {alt: () => this.A()}
+])
+```
+
+### 原则4：使用Option代替Or（当适用时）
+
+```typescript
+// 如果是可选部分，用Option比Or更清晰
+this.Identifier()
+this.Option(() => {
+  this.AsTok()
+  this.Identifier()
+})
+```
+
+---
+
+## 🐛 常见问题和调试
+
+### 问题1：返回空CST
+
+**症状：** Parser返回空children，AST转换失败
+
+**原因：** 
+- Or规则顺序错误，短规则消费了部分token
+- 上层规则期望其他token，解析失败
+- 容错机制返回空CST
+
+**调试方法：**
+```bash
+# 查看CST结构
+npx tsx dump-cst.ts yourfile.js
+
+# 查看完整CST
+npx tsx dump-full-cst.ts yourfile.js
+
+# 查看Parser错误
+npx tsx dump-parser-errors.ts yourfile.js
+```
+
+### 问题2：部分token未消费
+
+**症状：** 代码只有部分被解析
+
+**原因：** 规则匹配成功但消费token不完整
+
+**解决：** 检查规则定义，确保消费所有必要的token
+
+---
+
+## 📖 API参考
+
+### Parser装饰器
+
+```typescript
+@SubhutiRule
+RuleName() {
+  // 规则定义
+}
+```
+
+### Parser方法
+
+**Or - 顺序选择（第一个成功）：**
+```typescript
+this.Or([
+  {alt: () => { /* 尝试1 */ }},
+  {alt: () => { /* 尝试2 */ }},
+  {alt: () => { /* 尝试3 */ }}
+])
+```
+
+**Many - 0次或多次：**
+```typescript
+this.Many(() => {
+  this.SomeRule()
+})
+```
+
+**Option - 0次或1次：**
+```typescript
+this.Option(() => {
+  this.OptionalRule()
+})
+```
+
+**FaultToleranceMany - 容错的Many：**
+```typescript
+this.FaultToleranceMany(() => {
+  this.RuleWithErrors()
+})
+```
+
+---
+
+## 🎓 学习要点
+
+### 重要概念
+
+**1. Or是顺序选择，不是并行尝试**
+- ❌ 不会：尝试所有分支，选择最长匹配
+- ✅ 实际：按顺序尝试，第一个成功就返回
+
+**2. 规则顺序影响解析结果**
+- 同样的规则，不同顺序，结果可能完全不同
+- 长规则必须在短规则前面
+
+**3. 回溯有性能代价**
+- 失败的分支会触发回溯
+- 频繁回溯影响性能
+- 把常见情况放前面
+
+### 实用技巧
+
+**技巧1：注释标注规则长度**
+```typescript
+this.Or([
+  // 长规则：property: value
+  {alt: () => {
+    this.PropertyName()
+    this.Colon()
+    this.Value()
+  }},
+  // 短规则：property
+  {alt: () => this.PropertyName()}
+])
+```
+
+**技巧2：使用Option简化可选部分**
+```typescript
+// 代替：
+// this.Or([
+//   {alt: () => { this.A(); this.B() }},
+//   {alt: () => this.A()}
+// ])
+
+// 使用：
+this.A()
+this.Option(() => this.B())
+```
+
+**技巧3：复杂规则拆分**
+```typescript
+// 把复杂的Or规则拆分为多个子规则
+ComplexRule() {
+  this.Or([
+    {alt: () => this.LongForm()},
+    {alt: () => this.ShortForm()}
+  ])
+}
+
+LongForm() {
+  this.A()
+  this.B()
+  this.C()
+}
+
+ShortForm() {
+  this.A()
+}
+```
+
+---
+
+## 📊 与其他Parser Generator对比
+
+| 特性 | Subhuti | ANTLR | PEG.js | Chevrotain |
+|------|---------|-------|--------|------------|
+| **匹配策略** | 顺序选择 | 预测 | 顺序选择 | 预测 |
+| **回溯** | 支持 | 不支持 | 支持 | 不支持 |
+| **二义性处理** | 顺序决定 | 报错 | 顺序决定 | 程序员控制 |
+| **规则顺序** | ⭐⭐⭐ 关键 | 不重要 | ⭐⭐⭐ 关键 | 重要 |
+| **性能** | 快 | 快 | 中 | 快 |
+| **易用性** | TypeScript装饰器 | 独立语法 | 独立语法 | TypeScript API |
+
+---
+
+## 🚀 快速开始
+
+### 定义Lexer
+
+```typescript
+const tokens = [
+  createKeywordToken('IfTok', 'if'),
+  createKeywordToken('ElseTok', 'else'),
+  createRegToken('Identifier', /[a-zA-Z_][a-zA-Z0-9_]*/),
+  createRegToken('Number', /[0-9]+/)
+]
+
+const lexer = new SubhutiLexer(tokens)
+const tokenStream = lexer.tokenize(sourceCode)
+```
+
+### 定义Parser
+
+```typescript
+class MyParser extends SubhutiParser {
+  @SubhutiRule
+  Statement() {
+    this.Or([
+      {alt: () => this.IfStatement()},
+      {alt: () => this.ExpressionStatement()}
+    ])
+  }
+  
+  @SubhutiRule
+  IfStatement() {
+    this.tokenConsumer.IfTok()
+    this.tokenConsumer.LParen()
+    this.Expression()
+    this.tokenConsumer.RParen()
+    this.Statement()
+    this.Option(() => {
+      this.tokenConsumer.ElseTok()
+      this.Statement()
+    })
+  }
+}
+```
+
+### 使用Parser
+
+```typescript
+const parser = new MyParser(tokenStream)
+const cst = parser.Statement()
+```
+
+---
+
+## 🔍 调试技巧
+
+### 1. 打印CST结构
+
+```typescript
+console.log(JSON.stringify(cst, null, 2))
+```
+
+### 2. 检查token消费
+
+```typescript
+// Parser执行前
+console.log('Token数量:', tokens.length)
+
+// Parser执行后
+console.log('当前位置:', parser.currentIndex)
+console.log('剩余token:', tokens.length - parser.currentIndex)
+```
+
+### 3. 分析规则匹配
+
+在规则中添加日志：
+```typescript
+@SubhutiRule
+MyRule() {
+  console.log('尝试MyRule')
+  this.Or([
+    {alt: () => {
+      console.log('尝试分支1')
+      this.RuleA()
+    }},
+    {alt: () => {
+      console.log('尝试分支2')
+      this.RuleB()
+    }}
+  ])
+}
+```
+
+---
+
+## 📝 最佳实践总结
+
+### ✅ 推荐
+
+1. **长规则优先** - Or规则中最重要的原则
+2. **添加注释** - 说明每个分支的用途和长度
+3. **拆分复杂规则** - 提高可读性和可维护性
+4. **使用Option** - 比Or更清晰地表达可选部分
+
+### ❌ 避免
+
+1. **短规则在前** - 会导致解析失败
+2. **复杂的Or嵌套** - 难以理解和调试
+3. **没有注释** - 难以知道规则顺序的原因
+4. **过度回溯** - 影响性能
+
+---
+
+## 🧪 测试规范
+
+### 测试架构
+
+**tests目录结构（扁平化）：**
+```
+tests/
+├── cases/             # 所有测试用例（01-xx编号，简单→复杂，禁止分子目录）
+│   ├── 01-simple-lexer.ts
+│   ├── 02-basic-parser.ts
+│   ├── 03-or-rule.ts
+│   ├── ...
+│   └── xx-complex-grammar.ts
+└── utils/             # 调试工具（如有需要）
+```
+
+**设计理念：**
+- 扁平化：所有测试用例平铺在`tests/cases/`下
+- 禁止：按类型创建子目录（unit/、integration/、lexer/、parser/等）
+- 统一编号：`01-功能名.扩展名`（两位数）
+- 复杂度排序：简单→复杂，方便按顺序测试
+
+**命名规范：**
+- 格式：`01-功能描述.ts`（两位数编号）
+- 示例：
+  - `01-simple-lexer.ts` - 基础词法分析
+  - `02-basic-parser.ts` - 基础语法分析
+  - `03-or-rule-short-first.ts` - Or规则短规则在前（反例）
+  - `04-or-rule-long-first.ts` - Or规则长规则在前（正例）
+  - `05-backtracking.ts` - 回溯机制
+  - `06-option-rule.ts` - Option规则
+  - `07-many-rule.ts` - Many规则
+
+**测试原则：**
+- 失败=功能缺失：优先修复代码，而不是简化测试
+- 单文件执行：每个测试用例可独立运行
+- 进度监控：超过10秒的测试要输出进度
+
+**调试工具：**
+```bash
+# 查看CST结构
+npx tsx dump-cst.ts yourfile.js
+
+# 查看完整CST
+npx tsx dump-full-cst.ts yourfile.js
+
+# 查看Parser错误
+npx tsx dump-parser-errors.ts yourfile.js
+```
+
+---
+
+## 🎯 实际应用案例
+
+**Slime项目：** JavaScript ES5/ES6 Parser
+- 使用Subhuti构建完整的JavaScript解析器
+- 支持ES5/ES6所有核心语法
+- CST转AST，代码生成
+
+**成功经验：**
+- 规则顺序调整解决了import重命名问题
+- 长规则优先避免了多个解析陷阱
+- 容错机制保证了部分代码也能解析
+
+---
+
+## 📋 项目信息
+
+**项目地址：** github.com/...  
+**版本：** 0.1.3  
+**最后更新：** 2025-10-17  
+**维护者：** AI辅助开发
+
+---
+
+# 变更记录
+
+## 2025-10-17 [测试规范更新]
+- 添加测试规范章节，遵守系统规则
+- 测试用例扁平化：tests/cases/下统一编号，不分子目录
+- 命名规范：01-功能名.ts（两位数编号，简单→复杂）
+- 禁止按类型创建子目录（unit/、integration/、lexer/、parser/等）

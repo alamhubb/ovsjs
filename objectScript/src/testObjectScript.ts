@@ -1,12 +1,12 @@
-import {traverseClearLoc, traverseClearTokens} from "../../slime/slime/src/index"
 import SubhutiLexer from "subhuti/src/parser/SubhutiLexer";
 import {objectScript6Tokens} from "./parser/ObjectScriptTokenConsumer";
 import ObjectScriptParser from "./parser/ObjectScriptParser";
 import {LogUtil} from "./logutil";
 import {SubhutiUtil} from "subhuti/src/parser/SubhutiParser";
 import JsonUtil from "subhuti/src/utils/JsonUtil";
-import ObjectCstToSlimeAstUtil from "./factory/ObjectCstToSlimeAst";
 import SlimeGenerator from "slime-generator/src/SlimeGenerator";
+import {traverseClearTokens} from "ovsjs/src";
+import ObjectCstToSlimeAstUtil from "./factory/ObjectCstToSlimeAst.ts";
 
 
 Error.stackTraceLimit = 50

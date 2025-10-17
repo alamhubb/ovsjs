@@ -1,0 +1,225 @@
+
+[2025-10-17T06:10:11.040Z]
+{
+  "name": "ImportSpecifier",
+  "children": [
+    {
+      "name": "ImportedBinding",
+                          "children": [
+                            {
+                              "name": "BindingIdentifier",
+                              "children": [
+                                {
+                                  "name": "Identifier",
+                                  "loc": {
+                                    "value": "name",
+                                    "type": "Identifier",
+                                    "start": {
+                  "index": 0,
+                  "line": 0,
+                  "column": 0
+                                    },
+                                    "end": {
+                  "index": 4,
+                  "line": 0,
+                  "column": 4
+                                    }
+                                  },
+                                  "value": "name"
+                                }
+                              ],
+                              "loc": {
+                                "type": "BindingIdentifier",
+                                "start": {
+              "index": 0,
+              "line": 0,
+                      "column": 0
+                    },
+                    "end": {
+              "index": 4,
+              "line": 0,
+              "column": 4
+                                                                                                                                                                                            }
+                                                                                                                                                                                          },
+                                                                                                                                                                                          "tokens": [
+                                                                                                                                                                                            {
+                                                                                                                                                                                              "tokenName": "Identifier",
+                                                                                                                                                                                              "tokenValue": "name",
+              "rowNum": 0,
+                          "columnStartNum": 0,
+              "columnEndNum": 4,
+              "index": 0
+            }
+          ]
+                                }
+                              ],
+                              "loc": {
+        "type": "ImportedBinding",
+                                "start": {
+          "index": 0,
+          "line": 0,
+                      "column": 0
+                    },
+                    "end": {
+          "index": 4,
+          "line": 0,
+          "column": 4
+        }
+      }
+                }
+              ],
+              "loc": {
+    "type": "ImportSpecifier",
+                "start": {
+      "index": 0,
+      "line": 0,
+                  "column": 0
+                },
+                "end": {
+      "index": 4,
+      "line": 0,
+      "column": 4
+    }
+  },
+  "tokens": []
+}
+================================================================================
+
+[2025-10-17T06:18:14.845Z]
+{
+  "name": "ImportSpecifier",
+  "children": [
+    {
+      "name": "Identifier",
+      "loc": {
+        "value": "name",
+        "type": "Identifier",
+        "start": {
+          "index": 0,
+          "line": 0,
+          "column": 0
+        },
+        "end": {
+          "index": 4,
+          "line": 0,
+          "column": 4
+        }
+      },
+      "value": "name"
+    },
+    {
+      "name": "AsTok",
+      "loc": {
+        "value": "as",
+        "type": "AsTok",
+        "start": {
+          "index": 5,
+          "line": 0,
+          "column": 5
+        },
+        "end": {
+          "index": 7,
+          "line": 0,
+          "column": 7
+        }
+      },
+      "value": "as"
+    },
+    {
+      "name": "ImportedBinding",
+      "children": [
+        {
+          "name": "BindingIdentifier",
+          "children": [
+            {
+              "name": "Identifier",
+              "loc": {
+                "value": "userName",
+                "type": "Identifier",
+                "start": {
+                  "index": 8,
+                  "line": 0,
+                  "column": 8
+                },
+                "end": {
+                  "index": 16,
+                  "line": 0,
+                  "column": 16
+                }
+              },
+              "value": "userName"
+            }
+          ],
+          "loc": {
+            "type": "BindingIdentifier",
+            "start": {
+              "index": 8,
+              "line": 0,
+              "column": 8
+            },
+            "end": {
+              "index": 16,
+              "line": 0,
+              "column": 16
+            }
+          },
+          "tokens": [
+            {
+              "tokenName": "Identifier",
+              "tokenValue": "userName",
+              "rowNum": 0,
+              "columnStartNum": 8,
+              "columnEndNum": 16,
+              "index": 8
+            }
+          ]
+        }
+      ],
+      "loc": {
+        "type": "ImportedBinding",
+        "start": {
+          "index": 8,
+          "line": 0,
+          "column": 8
+        },
+        "end": {
+          "index": 16,
+          "line": 0,
+          "column": 16
+        }
+      }
+    }
+  ],
+  "loc": {
+    "type": "ImportSpecifier",
+    "start": {
+      "index": 0,
+      "line": 0,
+      "column": 0
+    },
+    "end": {
+      "index": 16,
+      "line": 0,
+      "column": 16
+    }
+  },
+  "tokens": [
+    {
+      "tokenName": "Identifier",
+      "tokenValue": "name",
+      "rowNum": 0,
+      "columnStartNum": 0,
+      "columnEndNum": 4,
+      "index": 0
+    },
+    {
+      "tokenName": "AsTok",
+      "tokenValue": "as",
+      "rowNum": 0,
+      "columnStartNum": 5,
+      "columnEndNum": 7,
+      "index": 5
+    }
+  ]
+}
+================================================================================
