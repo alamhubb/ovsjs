@@ -4,12 +4,14 @@ import Es6TokenConsumer, {Es6TokenName, es6TokensObj} from "slime-parser/src/lan
 export const ovsTokenName = {
   ...Es6TokenName,
   OvsToken: "OvsToken",
-  OvsViewToken: "OvsViewToken"
+  OvsViewToken: "OvsViewToken",
+  SlotToken: "SlotToken"
 }
 export const ovsTokensObj = {
   ...es6TokensObj,
   OvsToken: createKeywordToken(ovsTokenName.OvsToken, "Ovs"),
-  OvsViewToken: createKeywordToken(ovsTokenName.OvsViewToken, "ovsView")
+  OvsViewToken: createKeywordToken(ovsTokenName.OvsViewToken, "ovsView"),
+  SlotToken: createKeywordToken(ovsTokenName.SlotToken, "slot")
 }
 export const ovs6Tokens = Object.values(ovsTokensObj)
 
@@ -20,5 +22,9 @@ export default class OvsTokenConsumer extends Es6TokenConsumer {
   
   OvsViewToken() {
     return this.consume(ovsTokensObj.OvsViewToken)
+  }
+  
+  SlotToken() {
+    return this.consume(ovsTokensObj.SlotToken)
   }
 }

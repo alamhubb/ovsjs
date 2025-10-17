@@ -1,14 +1,35 @@
-// 测试 ovsView 组件声明
+// OVS 完整功能演示：组件+插槽+属性
 
-ovsView MyCard ({attrs}) : div {
-    h1 { attrs.title }
-    p { attrs.content }
+// 组件1：带插槽的卡片
+ovsView Card ({attrs}) : div {
+    h2 { attrs.title }
+    slot{}
+    p { "Card Footer" }
 }
 
+// 组件2：复杂组件（内部计算）
+ovsView PriceTag ({attrs}) : div {
+    let price = attrs.price
+    let discount = price * 0.8
+    
+    h3 { "Price Info" }
+    p { "原价：" }
+    p { price }
+    p { "折扣：" }
+    p { discount }
+    slot{}
+}
+
+// 使用组件
 export default div {
-
-    let c = div{999}
-
-    h2 { "Component Demo" }
-    MyCard({attrs: {title: c, content: "World"}})
+    h1 { "OVS Component System" }
+    
+    Card({attrs: {title: "用户卡片"}}) {
+        p { "Alice" }
+        p { "Developer" }
+    }
+    
+    PriceTag({attrs: {price: 100}}) {
+        p { "立即购买" }
+    }
 }

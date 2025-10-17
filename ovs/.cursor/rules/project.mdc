@@ -20,17 +20,19 @@ STAGE_4_OPTIMIZATION
 - ✅ 核心功能：100% 完成
 - ✅ 高级功能：91.7% 完成（11/12测试通过）
 - ✅ 智能IIFE优化：完成（简单视图零开销，复杂视图完整支持）
+- ✅ 组件系统：完成（ovsView组件声明、attrs属性传递）
+- ✅ Vue集成：完成（直接使用Vue h函数）
 - ✅ 注释支持：完整实现（单行//、多行/**/）
 - ✅ 文档完整：100% 完成
 - ✅ 测试覆盖：完善（单元/集成/回归测试）
 - ✅ 生产可用：功能稳定，性能优秀
-- 版本：0.0.9（功能完整，生产可用）
+- 版本：0.1.0（新增组件系统）
 - 开发服务器：http://localhost:5173（实时热更新）
 
 ## 下一步行动
+- 测试组件系统的各种使用场景
+- 完善组件文档和示例
 - 优化已知限制（除法运算、Class constructor参数、注释稳定性）
-- 继续完善文档和示例
-- 准备发布正式版本
 
 ---
 
@@ -38,6 +40,8 @@ STAGE_4_OPTIMIZATION
 
 ## 核心功能（用户能做什么）
 - **声明式UI编写**：用简洁的语法编写复杂UI
+- **组件系统**：使用 `ovsView` 声明可复用组件
+- **属性传递**：通过 attrs 对象传递组件属性
 - **完整JavaScript支持**：函数、循环、面向对象、运算符、控制流
 - **智能导出系统**：自动识别导出方式（默认、命名、自动包裹）
 - **实时开发体验**：热更新、即时编译预览
@@ -46,8 +50,11 @@ STAGE_4_OPTIMIZATION
 ## 交互/接口（基本流程、呈现方式）
 **开发流程：**
 1. 编写.ovs文件 → 2. 自动编译为Vue代码 → 3. 浏览器实时预览
+
 **语法接口：**
 - OVS元素：`div { "content" }` 
+- 组件声明：`ovsView ComponentName ({attrs}) : rootElement { ... }`
+- 属性赋值：`name = value` （自动收集到 attrs）
 - 条件渲染：`if (condition) { element }`
 - 循环渲染：`for (item of list) { element }`
 - 导出接口：`export const/default`
@@ -117,10 +124,10 @@ ovs/
 ```
 
 ## 编译流程
-1. **词法分析**（SubhutiLexer）→ Token流
+1. **词法分析**（SubhutiLexer + ovs6Tokens）→ Token流（识别ovsView关键字）
 2. **语法分析**（OvsParser）→ CST语法树  
 3. **语法转换**（OvsCstToSlimeAst）→ AST抽象语法树
-4. **导入添加**（ensureOvsAPIImport）→ 添加必要import
+4. **导入添加**（ensureOvsAPIImport）→ 添加 `import { h } from 'vue'`
 5. **表达式包裹**（wrapTopLevelExpressions）→ 智能IIFE优化
 6. **代码生成**（SlimeGenerator）→ 最终JavaScript代码
 
@@ -364,6 +371,55 @@ Copy-Item tests\cases\11-export-class.ovs example\src\views\hello.ovs
 # 【完整语法参考】
 
 ## OVS语法规则
+
+### 组件系统（NEW）
+
+**组件声明：**
+```javascript
+ovsView ComponentName ({attrs}) : rootElement {
+  // 组件内部逻辑
+  let data = attrs.value
+  
+  h1 { attrs.title }
+  slot{}  // 插槽
+  p { data }
+}
+
+// 编译为 ↓
+function ComponentName({attrs}, {slots}) {
+  let data = attrs.value
+  return h('div', {}, [
+    h('h1', {}, [attrs.title]),
+    slots.default(),  // 渲染插槽
+    h('p', {}, [data])
+  ])
+}
+```
+
+**组件调用：**
+```javascript
+div {
+  MyCard({attrs: {title: "Hello", content: "World"}}) {
+    p { "插槽内容" }
+    "child content"
+  }
+}
+
+// 编译为 ↓
+h('div', {}, [
+  h(MyCard, {attrs: {title: "Hello", content: "World"}}, [
+    h('p', {}, ["插槽内容"]),
+    "child content"
+  ])
+])
+```
+
+**关键特性：**
+- 组件名首字母大写：自动识别为组件，生成 `h(Component, ...)`
+- 标签名小写：识别为HTML标签，生成 `h('div', ...)`
+- Arguments 参数：作为 props 对象传递
+- 花括号内容：作为 children 传递
+- `slot{}`：编译为 `slots.default()`，组件自动添加 `{slots}` 参数
 
 ### 核心渲染规则
 **在 `div { }` 中，所有的表达式语句都会被渲染：**
@@ -779,11 +835,11 @@ div {
     (function(){             // 内层IIFE
       const children = []    // 新作用域的children
       children.push(456)
-      return OvsAPI.createVNode('span', children)
+      return h('span', {}, children)
     })()
   )
   children.push(789)
-  return OvsAPI.createVNode('div', children)
+  return h('div', {}, children)
 })()
 ```
 
@@ -791,7 +847,340 @@ div {
 
 ---
 
+# 【组件系统技术实现】
+
+## 1. 智能识别机制
+
+### 组件 vs 标签的识别
+
+**核心逻辑：**
+```typescript
+// 在 createOvsRenderDomViewDeclarationAst 中
+const id = this.createIdentifierAst(idCst)  // 获取名称
+const isComponent = id.name[0] === id.name[0].toUpperCase()  // 首字母大写判断
+```
+
+**编译结果差异：**
+```javascript
+// 小写 → HTML标签
+div { "content" }
+// ↓
+h('div', {}, ["content"])  // 字符串
+
+// 大写 → Vue组件
+MyCard { "content" }
+// ↓
+h(MyCard, {}, ["content"])  // Identifier（不加引号）
+```
+
+### Arguments 参数提取
+
+**CST 结构：**
+```
+OvsRenderDomViewDeclaration
+├─ Identifier: "MyCard"
+├─ Arguments
+│  ├─ LParen: "("
+│  ├─ ArgumentList
+│  │  └─ AssignmentExpression (ObjectExpression)
+│  └─ RParen: ")"
+└─ LBrace/StatementList/RBrace
+```
+
+**提取代码：**
+```typescript
+const argumentsCst = cst.children?.find(child => child.name === 'Arguments')
+if (argumentsCst) {
+  const argListCst = argumentsCst.children.find(child => child.name === 'ArgumentList')
+  const firstArgCst = argListCst.children[0]
+  componentProps = this.createExpressionAst(firstArgCst.children[0])
+}
+```
+
+## 2. 属性赋值系统
+
+### 栈机制原理
+
+**为什么需要栈？**
+
+嵌套view会覆盖 attrs 变量名：
+```javascript
+div {              // 进入：push('AAA')，栈 = [AAA]
+  name = 10        // 使用栈顶 AAA ✅
+  
+  h1 {             // 进入：push('BBB')，栈 = [AAA, BBB]
+    title = 20     // 使用栈顶 BBB ✅
+  }                // 退出：pop()，栈 = [AAA] ✅ 恢复外层
+  
+  age = 30         // 使用栈顶 AAA ✅ (关键！)
+}
+```
+
+**实现代码：**
+```typescript
+// OvsCstToSlimeAst 类
+private attrsVarNameStack: Array<string | null> = []
+
+createOvsRenderDomViewDeclarationAst(cst) {
+  const uuid = Math.random().toString(36).substring(2, 10)
+  this.attrsVarNameStack.push(`temp$$attrs$$${uuid}`)  // 进入时压栈
+  
+  try {
+    // 转换语句...
+  } finally {
+    this.attrsVarNameStack.pop()  // 退出时弹栈（确保恢复）
+  }
+}
+
+createExpressionStatementAst(cst) {
+  const currentAttrsVarName = this.attrsVarNameStack[length - 1]  // 取栈顶
+  
+  if (isAssignment) {
+    // 使用 currentAttrsVarName 生成代码
+  }
+}
+```
+
+### 赋值表达式转换
+
+**输入：**
+```javascript
+div {
+  name = 10
+  age = 25
+}
+```
+
+**执行流程：**
+1. 进入 `createOvsRenderDomViewDeclarationAst`，生成 uuid = "abc123"，压栈
+2. 调用 `createStatementListAst`
+3. 遍历语句 → 调用 `createExpressionStatementAst`
+   - `name = 10` → 识别为赋值 → 生成3条语句
+   - `age = 25` → 识别为赋值 → 生成3条语句
+4. 退出时弹栈
+
+**生成代码：**
+```javascript
+(function() {
+  const children = []
+  const temp$$attrs$$abc123 = {}
+  
+  // name = 10 → 3条语句
+  let name = 10                      // 1. 变量声明
+  temp$$attrs$$abc123.name = name    // 2. 赋值到attrs
+  children.push(temp$$attrs$$abc123.name)  // 3. push到children
+  
+  // age = 25 → 3条语句
+  let age = 25
+  temp$$attrs$$abc123.age = age
+  children.push(temp$$attrs$$abc123.age)
+  
+  return h('div', {ovsAttr: temp$$attrs$$abc123}, children)
+})()
+```
+
+## 3. 组件声明转换
+
+### ovsView 语法规则
+
+**Parser规则：**
+```typescript
+@SubhutiRule
+OvsViewDeclaration() {
+  this.tokenConsumer.OvsViewToken()        // ovsView
+  this.ovsRenderDomClassDeclaration()       // ComponentName ({params}) :
+  this.OvsRenderDomViewDeclaration()        // div { ... }
+}
+
+@SubhutiRule
+ovsRenderDomClassDeclaration() {
+  this.tokenConsumer.Identifier()           // ComponentName
+  this.Option(() => {
+    this.FunctionFormalParameters()         // ({params})
+  })
+  this.tokenConsumer.Colon()                // :
+}
+```
+
+### IIFE 展开机制
+
+**简单组件（无语句）：**
+```javascript
+ovsView MyCard ({attrs}) : div {
+  h1 { attrs.title }
+}
+
+// 视图转换为 ↓
+h('div', {}, [h('h1', {}, [attrs.title])])
+
+// 最终函数 ↓
+function MyCard({attrs}) {
+  return h('div', {}, [h('h1', {}, [attrs.title])])
+}
+```
+
+**复杂组件（有语句）：**
+```javascript
+ovsView ProductCard ({attrs}) : div {
+  let price = attrs.price
+  let discount = price * 0.8
+  p { discount }
+}
+
+// 视图转换为 IIFE ↓
+(function() {
+  const children = []
+  const temp$$attrs$$uuid = {}
+  let price = attrs.price
+  let discount = price * 0.8
+  children.push(h('p', {}, [discount]))
+  return h('div', {ovsAttr: temp$$attrs$$uuid}, children)
+})()
+
+// 展开IIFE内容到函数体 ↓
+function ProductCard({attrs}) {
+  const children = []
+  const temp$$attrs$$uuid = {}
+  let price = attrs.price
+  let discount = price * 0.8
+  children.push(h('p', {}, [discount]))
+  return h('div', {ovsAttr: temp$$attrs$$uuid}, children)
+}
+```
+
+**展开逻辑：**
+```typescript
+createOvsViewDeclarationAst(cst) {
+  // 1. 提取组件名和参数
+  const componentName = ...
+  const params = ...
+  
+  // 2. 转换视图（会生成IIFE或h调用）
+  const viewExpression = this.createOvsRenderDomViewDeclarationAst(viewCst)
+  
+  // 3. 判断是否是IIFE
+  if (viewExpression.type === 'CallExpression' && 
+      viewExpression.callee.type === 'FunctionExpression') {
+    // 是IIFE，提取函数体
+    const iifeBody = viewExpression.callee.body.body
+    functionBodyStatements = iifeBody  // 直接使用IIFE的函数体
+  } else {
+    // 不是IIFE（简单视图），直接return
+    functionBodyStatements = [returnStatement(viewExpression)]
+  }
+  
+  // 4. 创建函数声明
+  return FunctionDeclaration(componentName, params, functionBody)
+}
+```
+
+## 4. 完整编译流程示例
+
+**输入代码：**
+```javascript
+ovsView MyButton ({attrs}) : div {
+  let text = attrs.label || "Click"
+  button { text }
+}
+
+div {
+  MyButton({attrs: {label: "提交"}})
+}
+```
+
+**编译步骤：**
+
+1. **词法分析** → 识别 `ovsView` 关键字token
+2. **语法分析** → 生成CST（OvsViewDeclaration节点）
+3. **AST转换** → 
+   - `createOvsViewDeclarationAst` → 函数声明
+   - `createOvsRenderDomViewDeclarationAst` → 视图IIFE
+4. **IIFE展开** → 提取函数体内容
+5. **智能识别** → `MyButton` 首字母大写，识别为组件
+6. **代码生成** → 最终JavaScript
+
+**输出代码：**
+```javascript
+import { h } from 'vue'
+
+function MyButton({ attrs }) {
+  const children = []
+  const temp$$attrs$$xyz = {}
+  let text = attrs.label || 'Click'
+  children.push(h('button', {}, [text]))
+  return h('div', { ovsAttr: temp$$attrs$$xyz }, children)
+}
+
+export default (function () {
+  const children = []
+  children.push(h(MyButton, { attrs: { label: '提交' } }, []))
+  return children
+})()
+```
+
+## 5. 关键设计决策
+
+### 为什么用栈而不是单个变量？
+
+**问题场景：**
+```javascript
+div {
+  name = 10     // 需要用外层attrs
+  h1 {          // 内层view开始
+    title = 20  // 需要用内层attrs
+  }             // 内层view结束
+  age = 30      // 需要恢复外层attrs ← 关键！
+}
+```
+
+如果用单个变量，内层view结束后无法恢复外层的attrsVarName。
+
+### 为什么组件调用要区分大小写？
+
+遵循 Vue 规范：
+- JSX/TSX：`<MyComponent />` vs `<div />`
+- h函数：`h(MyComponent)` vs `h('div')`
+
+大小写区分让编译器自动判断，无需额外标记。
+
+### 为什么属性用 {ovsAttr: ...} 而不是展开？
+
+统一内部约定：
+- `{ovsAttr: temp$$attrs$$}` - OVS内部生成的attrs
+- `{attrs: ...}` - 用户显式传递的props
+
+便于区分和调试，避免属性名冲突。
+
+---
+
 # 变更记录
+
+## 2025-10-17 [组件系统 - v0.1.0]
+- **新增组件系统**：
+  - 添加 `ovsView` 关键字（OvsConsumer.ts + ovs6Tokens）
+  - 实现组件声明语法：`ovsView ComponentName ({attrs}) : rootElement { ... }`
+  - 实现组件调用语法：`MyCard({attrs: {...}}){ children }`
+  - 自动识别组件（首字母大写）vs 标签（小写）
+  - 组件编译输出：`function ComponentName({attrs}, {slots}) { return h(...) }`
+  - 组件调用编译：`h(MyCard, {attrs: ...}, children)`
+
+- **插槽系统**：
+  - 添加 `slot` 关键字（SlotToken）
+  - 实现插槽语法：`slot{}` 编译为 `slots.default()`
+  - 组件函数自动添加第二个参数：`{slots}`
+  - 完整支持Vue 3的插槽机制
+
+- **属性系统**：
+  - 属性赋值语法：`name = value` 自动收集到 attrs
+  - 生成三条语句：`let name = value; temp$$attrs$$.name = name; children.push(...)`
+  - 栈机制（attrsVarNameStack）支持嵌套view的attrs隔离
+  - 统一内部传递：`{ovsAttr: temp$$attrs$$}`
+  - 组件props传递：`{attrs: ...}` 用户显式传递
+
+- **Vue集成优化**：
+  - 从 `OvsAPI.createVNode` 迁移到 `import { h } from 'vue'`
+  - 直接生成Vue h函数调用，减少中间层
+  - 支持完整的Vue组件特性（props、slots）
 
 ## 2025-10-17 [测试架构优化]
 - 简化测试用例组织：不再区分single/combined子目录

@@ -122,20 +122,41 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     }
     const componentName = this.createIdentifierAst(componentNameCst)
     
-    // 参数（可能在索引1或不存在）
-    let params
+    // 参数（第一个参数从 ovsRenderDomClassDeclaration 提取）
+    let firstParams
     const secondChild = classDeclChildren[1]
     if (secondChild && secondChild.name === 'FunctionFormalParameters') {
-      params = this.createFunctionFormalParametersAst(secondChild)
+      firstParams = this.createFunctionFormalParametersAst(secondChild)
     } else {
       // 无参数，创建空参数列表
       const loc = cst.loc
-      params = {
-        lp: { type: 'LParen', value: '(', loc } as any,
-        rp: { type: 'RParen', value: ')', loc } as any,
-        functionFormalParameter: []
-      }
+      firstParams = SlimeAstUtil.createFunctionParams(
+        SlimeAstUtil.createLParen(loc),
+        SlimeAstUtil.createRParen(loc),
+        loc,
+        []
+      )
     }
+    
+    // 添加第二个参数 {slots}（用于插槽支持）
+    const slotsParam = {
+      type: SlimeAstType.ObjectPattern,
+      properties: [
+        SlimeAstUtil.createPropertyAst(
+          SlimeAstUtil.createIdentifier('slots'),
+          SlimeAstUtil.createIdentifier('slots')
+        )
+      ]
+    }
+    
+    // 合并参数：({attrs}, {slots})
+    const existingParams = firstParams.params || []
+    const params = SlimeAstUtil.createFunctionParams(
+      firstParams.lParen,
+      firstParams.rParen,
+      cst.loc,
+      [...existingParams, slotsParam]
+    )
     
     // 2. 视图内容（第3个：OvsRenderDomViewDeclaration）
     const viewCst = children[2]
@@ -209,12 +230,33 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
   createExpressionAst(cst: SubhutiCst): SlimeExpression {
     const astName = cst.name
     let left
-    if (astName === OvsParser.prototype.OvsRenderDomViewDeclaration.name) {
+    if (astName === OvsParser.prototype.SlotDeclaration.name) {
+      left = this.createSlotDeclarationAst(cst)
+    } else if (astName === OvsParser.prototype.OvsRenderDomViewDeclaration.name) {
       left = this.createOvsRenderDomViewDeclarationAst(cst)
     } else {
       left = super.createExpressionAst(cst)
     }
     return left
+  }
+
+  /**
+   * 转换 slot{} 为 slots.default() 调用
+   */
+  createSlotDeclarationAst(cst: SubhutiCst): SlimeExpression {
+    checkCstName(cst, OvsParser.prototype.SlotDeclaration.name)
+    
+    // slot{} → slots.default()
+    const slotsDefaultCall = SlimeAstUtil.createCallExpression(
+      SlimeAstUtil.createMemberExpression(
+        SlimeAstUtil.createIdentifier('slots'),
+        SlimeAstUtil.createDotOperator(cst.loc),
+        SlimeAstUtil.createIdentifier('default')
+      ),
+      []
+    )
+    
+    return slotsDefaultCall
   }
 
   /**
@@ -365,13 +407,33 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
   createOvsRenderDomViewDeclarationAst(cst: SubhutiCst): SlimeExpression {
     checkCstName(cst, OvsParser.prototype.OvsRenderDomViewDeclaration.name);
     
-    // 获取元素名称（如 'div'）
+    // 获取元素/组件名称
     const idCst = cst.children?.[0]
     if (!idCst) {
       throw new Error('OvsRenderDomViewDeclaration has no identifier')
     }
     const id = this.createIdentifierAst(idCst)
     id.loc = idCst.loc
+    
+    // 检查是否是组件（首字母大写）
+    const isComponent = id.name[0] === id.name[0].toUpperCase()
+    
+    // 查找 Arguments 节点（组件调用参数）
+    const argumentsCst = cst.children?.find(child => child.name === 'Arguments')
+    let componentProps: SlimeExpression | null = null
+    
+    if (argumentsCst && argumentsCst.children) {
+      // 提取 Arguments 内的参数（通常是一个对象）
+      // Arguments 结构：LParen, ArgumentList?, RParen
+      const argListCst = argumentsCst.children.find(child => child.name === 'ArgumentList')
+      if (argListCst && argListCst.children) {
+        // ArgumentList 第一个元素
+        const firstArgCst = argListCst.children[0]
+        if (firstArgCst && firstArgCst.children?.[0]) {
+          componentProps = this.createExpressionAst(firstArgCst.children[0])
+        }
+      }
+    }
 
     // 进入 OvsRenderDomViewDeclaration，计数器 +1
     this.ovsRenderDomViewDepth++
@@ -382,9 +444,6 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     
     try {
       // 查找 StatementList 节点
-      // 结构可能是：
-      // - 无Arguments: [Identifier, LBrace, StatementList?, RBrace]
-      // - 有Arguments: [Identifier, Arguments, LBrace, StatementList?, RBrace]
       const statementListCst = cst.children?.find(child => 
         child.name === 'StatementList'
       )
@@ -413,11 +472,11 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
       const currentAttrsVarName = this.attrsVarNameStack[this.attrsVarNameStack.length - 1]
       
       if (isSimple) {
-        // 简单情况：直接返回 createVNode 调用，无 IIFE
-        return this.createSimpleView(id, bodyStatements, currentAttrsVarName, cst.loc)
+        // 简单情况：直接返回 h 调用，无 IIFE
+        return this.createSimpleView(id, bodyStatements, currentAttrsVarName, isComponent, componentProps, cst.loc)
       } else {
         // 复杂情况：生成完整 IIFE
-        return this.createComplexIIFE(id, bodyStatements, currentAttrsVarName, cst.loc)
+        return this.createComplexIIFE(id, bodyStatements, currentAttrsVarName, isComponent, componentProps, cst.loc)
       }
     } finally {
       // 退出 OvsRenderDomViewDeclaration，计数器 -1 并弹出栈
@@ -465,39 +524,41 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     id: SlimeIdentifier, 
     statements: SlimeStatement[],
     _attrsVarName: string | null,
+    isComponent: boolean,
+    componentProps: SlimeExpression | null,
     loc: any
   ): SlimeCallExpression {
     // 从 ExpressionStatement 中提取表达式
-    // 注意：这些语句实际上是 children.push(expr)，我们需要提取出 expr
     const childExpressions: SlimeExpression[] = statements.map(stmt => {
       const exprStmt = stmt as SlimeExpressionStatement
-      // exprStmt.expression 是 children.push(expr) 调用
-      // 我们需要提取 push 的第一个参数
       const pushCall = exprStmt.expression as SlimeCallExpression
       if (pushCall.type === SlimeAstType.CallExpression && pushCall.arguments.length > 0) {
         return pushCall.arguments[0] as SlimeExpression
       }
-      // 如果不是 push 调用，直接返回表达式
       return exprStmt.expression
     })
 
-    // 创建 children 数组：[child1, child2, ...]
+    // 创建 children 数组
     const childrenArray = SlimeAstUtil.createArrayExpression(childExpressions)
 
-    // 创建空的 props 对象（简单视图不需要props）
-    const propsObject = SlimeAstUtil.createObjectExpression([])
+    // 创建 props 对象：如果是组件调用，使用 componentProps，否则用空对象
+    const propsObject = componentProps || SlimeAstUtil.createObjectExpression([])
 
-    // 创建 h('div', {}, [...]) 调用
+    // 创建第一个参数：组件用 Identifier，标签用 StringLiteral
+    const firstArg = isComponent 
+      ? id  // MyComponent（不加引号）
+      : SlimeAstUtil.createStringLiteral(id.name)  // 'div'（加引号）
+
+    // 创建 h(Component, props, children) 或 h('div', {}, children) 调用
     const hCall = SlimeAstUtil.createCallExpression(
       SlimeAstUtil.createIdentifier('h'),
       [
-        SlimeAstUtil.createStringLiteral(id.name),  // 第一个参数：元素名称
-        propsObject,                                 // 第二个参数：props
-        childrenArray                                // 第三个参数：children
+        firstArg,         // 第一个参数：组件标识符或标签字符串
+        propsObject,      // 第二个参数：props
+        childrenArray     // 第三个参数：children
       ]
     )
 
-    // 直接返回 h 调用，不包裹 IIFE
     return hCall
   }
 
@@ -508,16 +569,15 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
    * (function() {
    *   const children = []
    *   const temp$$attrs$$uuid = {}
-   *   let name = value
-   *   temp$$attrs$$uuid.name = name
-   *   children.push(temp$$attrs$$uuid.name)
    *   ...statements
-   *   return OvsAPI.createVNode('div', {attrs: temp$$attrs$$uuid}, children)
+   *   return h('div', {ovsAttr: temp$$attrs$$uuid}, children)
    * })()
    * 
-   * @param id 元素标识符
+   * @param id 元素/组件标识符
    * @param statements 语句数组
    * @param attrsVarName attrs变量名
+   * @param isComponent 是否是组件
+   * @param componentProps 组件props
    * @param loc 位置信息
    * @returns CallExpression
    */
@@ -525,6 +585,8 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     id: SlimeIdentifier, 
     statements: SlimeStatement[],
     attrsVarName: string | null,
+    isComponent: boolean,
+    componentProps: SlimeExpression | null,
     loc: any
   ): SlimeCallExpression {
     // 生成完整的 IIFE 函数体
@@ -562,36 +624,44 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     // 3. 转换后的语句（包含 temp$$attrs$$.name = value 和 children.push()）
     iifeFunctionBody.push(...statements)
     
-    // 4. 返回 OvsAPI.createVNode('div', {attrs: temp$$attrs$$uuid}, children)
-    iifeFunctionBody.push(this.createReturnOvsAPICreateVNode(id, attrsVarName))
+    // 4. 返回 h('div', {ovsAttr: temp$$attrs$$uuid}, children)
+    iifeFunctionBody.push(this.createReturnOvsAPICreateVNode(id, attrsVarName, isComponent, componentProps))
     
     // 生成 IIFE：(function() { ... })()
     return this.createIIFE(iifeFunctionBody)
   }
 
   /**
-   * 创建 return h('div', props, children) 语句
+   * 创建 return h(...) 语句
    * 
    * 生成：
-   * return h('div', { ...temp$$attrs$$uuid }, children)
+   * return h('div', {ovsAttr: temp$$attrs$$}, children) 或
+   * return h(MyComponent, {attrs: ...}, children)
    * 
-   * @param id 元素标识符（如 'div', 'span'）
-   * @param attrsVarName attrs变量名（如 temp$$attrs$$uuid）
+   * @param id 元素/组件标识符
+   * @param attrsVarName attrs变量名
+   * @param isComponent 是否是组件
+   * @param componentProps 组件props对象
    * @returns ReturnStatement
    */
   private createReturnOvsAPICreateVNode(
     id: SlimeIdentifier, 
-    attrsVarName: string | null
+    attrsVarName: string | null,
+    isComponent: boolean,
+    componentProps: SlimeExpression | null
   ): SlimeStatement {
     const loc = id.loc || undefined
     
-    // 创建 h 函数标识符（直接调用 h，不是 OvsAPI.createVNode）
+    // 创建 h 函数标识符
     const hIdentifier = SlimeAstUtil.createIdentifier('h')
     
-    // 创建 props 对象：{ovsAttr: temp$$attrs$$uuid} 或 {}
+    // 创建 props 对象
     let propsObject
-    if (attrsVarName) {
-      // 创建 {ovsAttr: temp$$attrs$$uuid}
+    if (isComponent && componentProps) {
+      // 组件调用：使用 componentProps
+      propsObject = componentProps
+    } else if (attrsVarName) {
+      // 普通元素有attrs：{ovsAttr: temp$$attrs$$uuid}
       propsObject = SlimeAstUtil.createObjectExpression([
         SlimeAstUtil.createPropertyAst(
           SlimeAstUtil.createIdentifier('ovsAttr'),
@@ -599,15 +669,20 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
         )
       ])
     } else {
+      // 普通元素无attrs：{}
       propsObject = SlimeAstUtil.createObjectExpression([])
     }
     
-    // 创建函数调用：h('div', {...temp$$attrs$$uuid}, children)
-    // Vue h 函数的参数顺序是 (type, props, children)
+    // 创建第一个参数：组件用 Identifier，标签用 StringLiteral
+    const firstArg = isComponent 
+      ? id  // MyComponent（不加引号）
+      : SlimeAstUtil.createStringLiteral(id.name)  // 'div'（加引号）
+    
+    // 创建函数调用：h(Component, props, children) 或 h('div', props, children)
     const callExpression = SlimeAstUtil.createCallExpression(
       hIdentifier,
       [
-        SlimeAstUtil.createStringLiteral(id.name),   // 第一个参数：元素名称字符串
+        firstArg,                                     // 第一个参数：组件标识符或标签字符串
         propsObject,                                  // 第二个参数：props 对象
         SlimeAstUtil.createIdentifier('children')    // 第三个参数：children 数组
       ]
