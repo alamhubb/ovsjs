@@ -1752,14 +1752,7 @@ export class SlimeCstToAst {
       
       return newExpression
     } else {
-      // NewExpression -> 递归处理（跳过NewTok）
-      // 查找非token的子节点
-      const nonTokenChild = cst.children.find(ch => 
-        ch.name !== Es6Parser.prototype.NewTok?.name && ch.value !== 'new')
-      if (nonTokenChild) {
-        return this.createExpressionAst(nonTokenChild)
-      }
-      // 降级：返回第一个非token子节点
+      // NewExpression -> 递归处理
       return this.createExpressionAst(cst.children[0])
     }
   }
