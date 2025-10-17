@@ -764,12 +764,15 @@ export default class SlimeGenerator {
   }
 
   private static generatorArrayPattern(node: SlimeArrayPattern) {
-    // 输出数组解构：[a, b, c]
+    // 输出数组解构：[a, b, c] 或 [a, , c]（跳过元素）
     this.addLBracket()
     node.elements.forEach((element, index) => {
       if (element) {
         this.generatorNode(element)
       }
+      // null元素表示跳过（Elision），如 [a, , c]
+      // 只输出逗号，不输出内容
+      
       // 添加逗号（除了最后一个元素）
       if (index < node.elements.length - 1) {
         this.addComma()

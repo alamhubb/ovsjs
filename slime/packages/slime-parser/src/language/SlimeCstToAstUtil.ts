@@ -919,7 +919,19 @@ export class SlimeCstToAst {
       // BindingElementList包含BindingElisionElement和Comma
       for (const child of bindingList.children) {
         if (child.name === Es6Parser.prototype.BindingElisionElement.name) {
-          // BindingElisionElement可能包含BindingElement或Elision（空）
+          // BindingElisionElement可能包含：Elision + BindingElement
+          // 先检查是否有Elision（跳过的元素）
+          const elision = child.children.find((ch: any) => 
+            ch.name === Es6Parser.prototype.Elision.name)
+          if (elision) {
+            // Elision可能包含多个逗号，每个逗号代表一个null
+            const commaCount = elision.children?.filter((ch: any) => ch.value === ',').length || 1
+            for (let i = 0; i < commaCount; i++) {
+              elements.push(null)
+            }
+          }
+          
+          // 然后检查是否有BindingElement
           const bindingElement = child.children.find((ch: any) => 
             ch.name === Es6Parser.prototype.BindingElement.name)
           
@@ -933,9 +945,6 @@ export class SlimeCstToAst {
                 elements.push(this.createBindingIdentifierAst(identifier))
               }
             }
-          } else {
-            // Elision（空元素，如 [, b]）
-            elements.push(null)
           }
         }
       }

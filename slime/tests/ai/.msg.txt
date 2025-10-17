@@ -2,12 +2,16 @@
 
 ## [1/25] ✅ 已修复：59-template-tagged.js
 **问题：** Tagged Template Literals不支持
-**修复：** 添加TaggedTemplateExpression AST和代码生成支持
-**状态：** 测试通过 ✅
+**修复：** 添加TaggedTemplateExpression AST和代码生成
+**状态：** 通过 ✅
+
+## [2/25] ✅ 已修复：62-destruct-array-basic.js
+**问题：** 数组解构变量名丢失
+**修复：** 修复ArrayBindingPattern AST转换和ArrayPattern代码生成
+**状态：** 通过 ✅
 
 ---
 
-## [2/25] ⏳ 正在处理：62-destruct-array-basic.js
-**问题：** 文件编码错误（UTF-8 BOM）
-**原因：** 中文注释
-**修复方案：** 已用write工具重新创建（英文注释）
+## [3/25] ⏳ 正在处理：63-destruct-array-skip.js
+**问题：** 文件编码错误（中文注释导致BOM）
+**修复：** 用Node.js重新创建文件
