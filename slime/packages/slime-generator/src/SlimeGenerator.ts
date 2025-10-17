@@ -453,9 +453,13 @@ export default class SlimeGenerator {
   private static generatorObjectExpression(node: SlimeObjectExpression) {
     this.addLBrace()
     node.properties.forEach((item, index) => {
-
-      this.generatorNode(item)
-      if (index !== node.properties.length - 1) {
+      // ES2018: SpreadElement需要特殊处理
+      if (item.type === SlimeAstType.SpreadElement) {
+        this.generatorSpreadElement(item as SlimeSpreadElement)
+        this.addComma()
+      } else {
+        // Property类型会自己添加逗号
+        this.generatorNode(item)
       }
     })
     this.addRBrace()

@@ -2664,7 +2664,20 @@ export class SlimeCstToAst {
     const astName = checkCstName(cst, Es6Parser.prototype.PropertyDefinition.name);
     const first = cst.children[0]
 
-    if (cst.children.length > 2) {
+    // ES2018: 对象spread {...obj}
+    // 检查first是否是Ellipsis token（name为'EllipsisTok'）
+    if (first.name === 'EllipsisTok' || first.value === '...') {
+      // PropertyDefinition -> Ellipsis + AssignmentExpression
+      const AssignmentExpressionCst = cst.children[1]
+      const argument = this.createAssignmentExpressionAst(AssignmentExpressionCst)
+      
+      // 返回SpreadElement（作为Property的一种特殊形式）
+      return {
+        type: SlimeAstType.SpreadElement,
+        argument: argument,
+        loc: cst.loc
+      } as any
+    } else if (cst.children.length > 2) {
       // PropertyName : AssignmentExpression（完整形式）
       const PropertyNameCst = cst.children[0]
       const AssignmentExpressionCst = cst.children[2]

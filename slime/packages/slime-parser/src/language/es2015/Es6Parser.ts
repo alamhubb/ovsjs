@@ -290,6 +290,13 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
   @SubhutiRule
   PropertyDefinition() {
     this.Or([
+      // ES2018: 对象spread语法 {...obj}
+      {
+        alt: () => {
+          this.tokenConsumer.Ellipsis()
+          this.AssignmentExpression()
+        }
+      },
       //顺序前置，优先匹配
       {
         alt: () => {
