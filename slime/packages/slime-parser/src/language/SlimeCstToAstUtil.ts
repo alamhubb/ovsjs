@@ -1069,14 +1069,15 @@ export class SlimeCstToAst {
             ch.name === Es6Parser.prototype.BindingElement.name)
           
           if (bindingElement) {
-            // BindingElement -> SingleNameBinding -> BindingIdentifier
-            const singleName = bindingElement.children[0]
-            if (singleName && singleName.name === Es6Parser.prototype.SingleNameBinding.name) {
-              const identifier = singleName.children.find((ch: any) => 
-                ch.name === Es6Parser.prototype.BindingIdentifier.name)
-              if (identifier) {
-                elements.push(this.createBindingIdentifierAst(identifier))
-              }
+            const firstChild = bindingElement.children[0]
+            
+            // BindingElement可以是SingleNameBinding或BindingPattern
+            if (firstChild && firstChild.name === Es6Parser.prototype.SingleNameBinding.name) {
+              // 情况1：SingleNameBinding（会处理默认值，生成AssignmentPattern）
+              elements.push(this.createSingleNameBindingAst(firstChild))
+            } else if (firstChild && firstChild.name === Es6Parser.prototype.BindingPattern.name) {
+              // 情况2：嵌套的BindingPattern（如 [a, [b, c]]）
+              elements.push(this.createBindingPatternAst(firstChild))
             }
           }
         }
@@ -1124,21 +1125,23 @@ export class SlimeCstToAst {
             ch.name === Es6Parser.prototype.SingleNameBinding.name)
           
           if (singleName) {
-            // 简写形式：{name} = {name: name}
+            // 简写形式：{name} 或 {name = "Guest"}
+            // createSingleNameBindingAst会处理默认值，返回Identifier或AssignmentPattern
+            const value = this.createSingleNameBindingAst(singleName)
+            // key始终是Identifier（没有默认值）
             const identifier = singleName.children.find((ch: any) => 
               ch.name === Es6Parser.prototype.BindingIdentifier.name)
-            if (identifier) {
-              const id = this.createBindingIdentifierAst(identifier)
-              properties.push({
-                type: SlimeAstType.Property,
-                key: id,
-                value: id,
-                kind: 'init',
-                computed: false,
-                shorthand: true,
-                loc: child.loc
-              })
-            }
+            const key = this.createBindingIdentifierAst(identifier)
+            
+            properties.push({
+              type: SlimeAstType.Property,
+              key: key,
+              value: value,
+              kind: 'init',
+              computed: false,
+              shorthand: true,
+              loc: child.loc
+            })
           } else {
             // 完整形式：{name: userName}
             const propName = child.children.find((ch: any) => 

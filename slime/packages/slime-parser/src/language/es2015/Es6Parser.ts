@@ -975,7 +975,8 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
       {
         alt: () => {
           this.BindingPattern()
-          this.Initializer()
+          // 解构也可以没有初始值（如 let [a, b]）
+          this.Option(() => this.Initializer())
         }
       }
     ])
@@ -1817,14 +1818,14 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
     this.Or([
       {
         alt: () => {
-
-          this.Statement()
-
+          // Declaration必须在前：FunctionDeclaration等特殊规则优先
+          this.Declaration()
         }
       },
       {
         alt: () => {
-          this.Declaration()
+          // Statement在后：通用规则作为回退
+          this.Statement()
         }
       }
     ])

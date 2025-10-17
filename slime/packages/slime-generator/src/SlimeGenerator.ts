@@ -902,12 +902,18 @@ export default class SlimeGenerator {
   }
 
   private static generatorObjectPattern(node: SlimeObjectPattern) {
-    // 输出对象解构：{name, age} 或 {name: userName}
+    // 输出对象解构：{name, age} 或 {name: userName} 或 {name = "default"}
     this.addLBrace()
     node.properties.forEach((prop: any, index) => {
       if (prop.shorthand) {
-        // 简写形式：{name}
-        this.generatorNode(prop.key)
+        // 简写形式：{name} 或 {name = "default"}
+        // 如果value是AssignmentPattern，输出完整的 name = "default"
+        // 否则只输出 name
+        if (prop.value && prop.value.type === SlimeAstType.AssignmentPattern) {
+          this.generatorNode(prop.value)
+        } else {
+          this.generatorNode(prop.key)
+        }
       } else {
         // 完整形式：{name: userName}
         this.generatorNode(prop.key)
