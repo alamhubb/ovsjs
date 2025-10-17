@@ -950,6 +950,23 @@ export class SlimeCstToAst {
       }
     }
     
+    // 检查是否有BindingRestElement（...rest）
+    const restElement = cst.children.find(ch => ch.name === Es6Parser.prototype.BindingRestElement.name)
+    if (restElement) {
+      // BindingRestElement -> Ellipsis + BindingIdentifier
+      const identifier = restElement.children.find((ch: any) => 
+        ch.name === Es6Parser.prototype.BindingIdentifier.name)
+      if (identifier) {
+        const restId = this.createBindingIdentifierAst(identifier)
+        const restNode = {
+          type: SlimeAstType.RestElement,
+          argument: restId,
+          loc: restElement.loc
+        }
+        elements.push(restNode as any)
+      }
+    }
+    
     return {
       type: SlimeAstType.ArrayPattern,
       elements,
@@ -960,10 +977,70 @@ export class SlimeCstToAst {
   createObjectBindingPatternAst(cst: SubhutiCst): SlimePattern {
     checkCstName(cst, Es6Parser.prototype.ObjectBindingPattern.name)
     
-    // 简化实现：创建ObjectPattern
+    // CST结构：[LBrace, BindingPropertyList?, RBrace]
+    const properties: any[] = []
+    
+    // 查找BindingPropertyList
+    const propList = cst.children.find(ch => ch.name === Es6Parser.prototype.BindingPropertyList.name)
+    if (propList) {
+      // BindingPropertyList包含BindingProperty和Comma节点
+      for (const child of propList.children) {
+        if (child.name === Es6Parser.prototype.BindingProperty.name) {
+          // BindingProperty -> SingleNameBinding (简写) 或 PropertyName + BindingElement (完整)
+          const singleName = child.children.find((ch: any) => 
+            ch.name === Es6Parser.prototype.SingleNameBinding.name)
+          
+          if (singleName) {
+            // 简写形式：{name} = {name: name}
+            const identifier = singleName.children.find((ch: any) => 
+              ch.name === Es6Parser.prototype.BindingIdentifier.name)
+            if (identifier) {
+              const id = this.createBindingIdentifierAst(identifier)
+              properties.push({
+                type: SlimeAstType.Property,
+                key: id,
+                value: id,
+                kind: 'init',
+                computed: false,
+                shorthand: true,
+                loc: child.loc
+              })
+            }
+          } else {
+            // 完整形式：{name: userName}
+            const propName = child.children.find((ch: any) => 
+              ch.name === Es6Parser.prototype.PropertyName.name)
+            const bindingElement = child.children.find((ch: any) => 
+              ch.name === Es6Parser.prototype.BindingElement.name)
+            
+            if (propName && bindingElement) {
+              const keyId = propName.children[0]
+              const key = SlimeAstUtil.createIdentifier(keyId.value, keyId.loc)
+              
+              const singleName = bindingElement.children[0]
+              const identifier = singleName.children.find((ch: any) => 
+                ch.name === Es6Parser.prototype.BindingIdentifier.name)
+              if (identifier) {
+                const value = this.createBindingIdentifierAst(identifier)
+                properties.push({
+                  type: SlimeAstType.Property,
+                  key: key,
+                  value: value,
+                  kind: 'init',
+                  computed: false,
+                  shorthand: false,
+                  loc: child.loc
+                })
+              }
+            }
+          }
+        }
+      }
+    }
+    
     return {
       type: SlimeAstType.ObjectPattern,
-      properties: [],
+      properties,
       loc: cst.loc
     } as any
   }

@@ -760,7 +760,25 @@ export default class SlimeGenerator {
   }
 
   private static generatorObjectPattern(node: SlimeObjectPattern) {
-    this.generatorNodes(node.properties)
+    // 输出对象解构：{name, age} 或 {name: userName}
+    this.addLBrace()
+    node.properties.forEach((prop: any, index) => {
+      if (prop.shorthand) {
+        // 简写形式：{name}
+        this.generatorNode(prop.key)
+      } else {
+        // 完整形式：{name: userName}
+        this.generatorNode(prop.key)
+        this.addCode(es6TokensObj.Colon)
+        this.addSpacing()
+        this.generatorNode(prop.value)
+      }
+      // 添加逗号（除了最后一个）
+      if (index < node.properties.length - 1) {
+        this.addComma()
+      }
+    })
+    this.addRBrace()
   }
 
   private static generatorArrayPattern(node: SlimeArrayPattern) {

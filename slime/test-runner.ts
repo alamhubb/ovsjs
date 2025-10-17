@@ -43,6 +43,15 @@ try {
   console.log(`✅ AST转换完成，${ast.body.length}个顶层语句`)
   console.log('AST预览:')
   console.log(JSON.stringify(ast, null, 2).substring(0, 500) + '...')
+  
+  // Debug解构
+  if (ast.body.length > 0 && (ast.body[0] as any).declarations) {
+    const pattern = (ast.body[0] as any).declarations[0]?.id
+    if (pattern?.type === 'ArrayPattern') {
+      console.log('\n[DEBUG] ArrayPattern.elements:', pattern.elements.map((e: any) => e === null ? 'null' : (e.type === 'RestElement' ? `...${e.argument.name}` : e.name)))
+    }
+  }
+  
   console.log()
   
   // 4. AST -> Code
@@ -58,4 +67,3 @@ try {
   console.log(`堆栈:\n${e.stack}`)
   process.exit(1)
 }
-

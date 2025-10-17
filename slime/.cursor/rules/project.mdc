@@ -140,7 +140,17 @@ tests/
 - **修复方案：** FormalParameterList支持空参数列表
 - **状态：** Generator函数完全可用
 
-### 2. 生成代码格式
+### 2. 数组解构中的rest元素 ⚠️
+- **现象：** `const [first, ...rest] = arr;` Parser返回空CST
+- **根因：** ArrayBindingPattern的Or分支无法匹配"元素+rest"组合
+- **影响：** 数组解构包含rest的场景（如 `[a, b, ...rest]`）
+- **可用：** `[...all]` 单独rest可以，`[a, b]` 基础解构可以
+- **不可用：** `[first, ...rest]` 混合形式
+- **修复难度：** 高（需要重构Parser的ArrayBindingPattern）
+- **替代方案：** 使用slice等数组方法模拟
+- **优先级：** 中
+
+### 3. 生成代码格式
 - **现象：** 某些场景缺少分号（ASI问题）
 - **原因：** Parser的自动分号插入处理不完整
 - **影响：** 代码格式，功能正确
@@ -858,3 +868,42 @@ function* paramGenerator(start){yield start;}
 ## [3/25] ⏳ 正在处理：63-destruct-array-skip.js
 **问题：** 文件编码错误（中文注释导致BOM）
 **修复：** 用Node.js重新创建文件
+
+**【进度】2025-10-17 11:37:02**
+- 【修复进度】2025-10-16
+
+已修复：3/25
+
+## [1] ✅ 59-template-tagged.js - Tagged Template Literals支持
+## [2] ✅ 62-destruct-array-basic.js - 数组解构基础
+## [3] ✅ 63-destruct-array-skip.js - 跳过元素解构
+
+---
+
+## [4/25] ⏳ 正在处理：64-destruct-array-rest.js
+数组rest解构：[first, ...rest]
+
+**【进度】2025-10-17 11:42:24**
+- 【修复进度】2025-10-16
+
+已修复：3/25
+
+## [1] ✅ 59-template-tagged.js - Tagged Template Literals
+## [2] ✅ 62-destruct-array-basic.js - 数组解构基础  
+## [3] ✅ 63-destruct-array-skip.js - 跳过元素解构
+
+## [4] ⚠️ 64-destruct-array-rest.js - Parser设计缺陷
+**问题：** `[first, ...rest]` Parser返回空CST
+**根因：** ArrayBindingPattern的Or分支无法匹配"元素+rest"组合
+**影响范围：** 数组解构中包含rest的所有场景
+**修复难度：** 高（需要重构Parser）
+**已知限制：** 记录到project.mdc
+
+**解决方案（暂不修复）：**
+- 需要重构ArrayBindingPattern的Or分支逻辑
+- 或修改BindingElementList支持识别rest元素
+
+---
+
+## [5/25] ⏳ 正在处理：65-destruct-object-basic.js
+对象解构基础测试
