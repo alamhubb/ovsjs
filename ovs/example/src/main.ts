@@ -1,5 +1,4 @@
 import { createApp, h } from 'vue'
-import './style.css'
 import DefaultViews from "@/views/hello.ovs"
 
 const App = {

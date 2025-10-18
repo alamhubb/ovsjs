@@ -1,8 +1,12 @@
 // OVS 完整功能演示：组件+插槽+属性
 
+const obj = {
+    color: "red",
+}
+
 // 组件1：带插槽的卡片
 ovsView Card ({attrs}) : div {
-    h2 { attrs.title }
+    h2({style:obj}) { attrs.title }
     slot{}
     p { "Card Footer" }
 }
