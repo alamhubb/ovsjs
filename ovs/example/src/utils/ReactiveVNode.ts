@@ -59,6 +59,37 @@ export function createReactiveVNode(
 
   const api: ReactiveVNodeApi = {
     toVnode(): VNode {
+      // 智能组件处理：如果 type 是函数，先调用它
+      if (typeof state.type === 'function') {
+        try {
+          // 类型断言为通用函数，避免 Vue Component 类型冲突
+          const componentFn = state.type as any
+          
+          // 调用组件函数，传入 props 和 slots
+          const result = componentFn(state.props, { 
+            slots: { 
+              default: () => mapChildrenToVNodes(state.children) 
+            } 
+          })
+          
+          // 如果返回 ReactiveVNodeApi，递归调用 toVnode
+          if (isReactiveVNodeApi(result)) {
+            return result.toVnode()
+          }
+          
+          // 如果返回 VNode，直接使用（兼容普通 Vue 组件）
+          if (result && typeof result === 'object' && 'type' in result) {
+            return result as VNode
+          }
+          
+          // 其他情况，fallback 到原有逻辑
+        } catch (e) {
+          // 如果调用失败，fallback 到 Vue 的 h() 函数处理
+          console.warn('Component function call failed, falling back to Vue h():', e)
+        }
+      }
+      
+      // 原有逻辑：普通 HTML 元素或 Vue 内置组件
       const vnodeChildren = mapChildrenToVNodes(state.children)
       return h(state.type as any, state.props, vnodeChildren as any)
     },

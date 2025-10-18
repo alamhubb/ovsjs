@@ -253,13 +253,13 @@ function wrapTopLevelExpressions(ast: SlimeProgram): SlimeProgram {
 }
 
 /**
- * 自动添加 OvsAPI 的 import 语句（如果不存在）
+ * 自动添加 ReactiveVNode 的 import 语句（如果不存在）
  * @param ast Program AST
  * @returns 添加了 import 的 Program AST
  */
 function ensureOvsAPIImport(ast: SlimeProgram): SlimeProgram {
-  // 检查是否已经导入了 h 函数
-  let hasImportH = false
+  // 检查是否已经导入了 createReactiveVNode 函数
+  let hasImportReactiveVNode = false
 
   for (const statement of ast.body) {
     if (statement.type === SlimeAstType.ImportDeclaration) {
@@ -268,35 +268,35 @@ function ensureOvsAPIImport(ast: SlimeProgram): SlimeProgram {
         spec => spec.type === SlimeAstType.ImportSpecifier
       ) as SlimeImportSpecifier[]
 
-      hasImportH = namedSpecifiers.some(spec => 
-        spec.imported.type === SlimeAstType.Identifier && spec.imported.name === 'h'
+      hasImportReactiveVNode = namedSpecifiers.some(spec => 
+        spec.imported.type === SlimeAstType.Identifier && spec.imported.name === 'createReactiveVNode'
       )
-      if (hasImportH) break
+      if (hasImportReactiveVNode) break
     }
   }
 
-  // 如果没有导入，添加 import { h } from 'vue'
-  if (!hasImportH) {
+  // 如果没有导入，添加 import { createReactiveVNode } from '../utils/ReactiveVNode'
+  if (!hasImportReactiveVNode) {
     // 手动创建 ImportSpecifier（因为SlimeAstUtil没有提供方法）
-    const hSpecifier: SlimeImportSpecifier = {
+    const reactiveVNodeSpecifier: SlimeImportSpecifier = {
       type: SlimeAstType.ImportSpecifier,
-      local: SlimeAstUtil.createIdentifier('h'),
-      imported: SlimeAstUtil.createIdentifier('h')
+      local: SlimeAstUtil.createIdentifier('createReactiveVNode'),
+      imported: SlimeAstUtil.createIdentifier('createReactiveVNode')
     }
     
-    const hImport = SlimeAstUtil.createImportDeclaration(
-      [hSpecifier],
+    const reactiveVNodeImport = SlimeAstUtil.createImportDeclaration(
+      [reactiveVNodeSpecifier],
       SlimeAstUtil.createFromKeyword(),
-      SlimeAstUtil.createStringLiteral('vue')
+      SlimeAstUtil.createStringLiteral('../utils/ReactiveVNode')
     )
 
     // 设置换行标记
-    if (hImport.loc) {
-      hImport.loc.newLine = true
+    if (reactiveVNodeImport.loc) {
+      reactiveVNodeImport.loc.newLine = true
     }
 
     // 添加到 body 最前面
-    ast.body.unshift(hImport)
+    ast.body.unshift(reactiveVNodeImport)
   }
 
   return ast
@@ -313,7 +313,7 @@ function ensureOvsAPIImport(ast: SlimeProgram): SlimeProgram {
  * 1. 词法分析：code → tokens
  * 2. 语法分析：tokens → CST
  * 3. 语法转换：CST → AST（OVS 语法 → JavaScript AST）
- * 4. 添加 import：自动添加 OvsAPI import
+ * 4. 添加 import：自动添加 createReactiveVNode import
  * 5. 组件包装：AST → Vue 组件 AST
  * 6. 代码生成：AST → code
  * 7. 代码格式化：使用 Prettier（可选）
@@ -342,7 +342,7 @@ export async function vitePluginOvsTransform(
   // 3. 语法转换：CST → AST（OVS 语法 → JavaScript AST）
   let ast = OvsCstToSlimeAstUtil.toProgram(curCst)
 
-  // 4. 添加 import：自动添加 OvsAPI import（如果不存在）
+  // 4. 添加 import：自动添加 createReactiveVNode import（如果不存在）
   ast = ensureOvsAPIImport(ast)
 
   // 5. 包裹顶层表达式：根据是否有 export default 决定是否包裹
