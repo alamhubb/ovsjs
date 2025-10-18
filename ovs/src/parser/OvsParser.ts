@@ -26,10 +26,10 @@ export default class OvsParser extends Es6Parser<OvsTokenConsumer> {
 
   @SubhutiRule
   OvsViewDeclaration() {
-    // ovsView ComponentName ({attrs}) { ... }
+    // ovsView + ovsRenderDomClassDeclaration + OvsRenderDomViewDeclaration
     this.tokenConsumer.OvsViewToken()
-    this.ovsRenderDomClassDeclaration()  // Identifier, FunctionFormalParameters?
-    this.BlockStatement()   // BlockStatement: { ... return div { } ... }
+    this.ovsRenderDomClassDeclaration()  // 复用：Identifier, FunctionFormalParameters?, Colon
+    this.OvsRenderFunction()   // 视图内容
   }
 
   @SubhutiRule
@@ -38,7 +38,7 @@ export default class OvsParser extends Es6Parser<OvsTokenConsumer> {
     this.Option(() => {
       this.FunctionFormalParameters()
     })
-    // 去掉 Colon，改为 BlockStatement
+    this.tokenConsumer.Colon()
   }
 
   @SubhutiRule

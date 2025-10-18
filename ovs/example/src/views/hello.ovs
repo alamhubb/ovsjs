@@ -14,7 +14,7 @@ function autoIncrement() {
 
 const obj = {
     color: "red",
-    font-size: count+'px'
+    'font-size': count+'px'
 }
 
 // 组件1：带插槽的卡片
