@@ -232,7 +232,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     let left
     if (astName === OvsParser.prototype.SlotDeclaration.name) {
       left = this.createSlotDeclarationAst(cst)
-    } else if (astName === OvsParser.prototype.OvsRenderDomViewDeclaration.name) {
+    } else if (astName === OvsParser.prototype.OvsRenderFunction.name) {
       left = this.createOvsRenderDomViewDeclarationAst(cst)
     } else {
       left = super.createExpressionAst(cst)
@@ -405,7 +405,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
    * })()
    */
   createOvsRenderDomViewDeclarationAst(cst: SubhutiCst): SlimeExpression {
-    checkCstName(cst, OvsParser.prototype.OvsRenderDomViewDeclaration.name);
+    checkCstName(cst, OvsParser.prototype.OvsRenderFunction.name);
     
     // 获取元素/组件名称
     const idCst = cst.children?.[0]

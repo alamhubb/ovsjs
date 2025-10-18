@@ -7,11 +7,29 @@ import Es6Parser from "slime-parser/src/language/es2015/Es6Parser.ts";
 @Subhuti
 export default class OvsParser extends Es6Parser<OvsTokenConsumer> {
   @SubhutiRule
+  OvsRenderFunction() {
+    // this.Option(() => {
+    this.tokenConsumer.Identifier()
+    // })
+    this.Option(() => {
+      this.Arguments()
+    })
+    this.tokenConsumer.LBrace()
+    //这里要改一下，支持三种，一种是嵌套的，一种是元素，一种是命名=的
+    this.Option(() => {
+      this.StatementList()
+    })
+    this.tokenConsumer.RBrace()
+    const curCst = this.getCurCst()
+    return curCst
+  }
+
+  @SubhutiRule
   OvsViewDeclaration() {
     // ovsView + ovsRenderDomClassDeclaration + OvsRenderDomViewDeclaration
     this.tokenConsumer.OvsViewToken()
     this.ovsRenderDomClassDeclaration()  // 复用：Identifier, FunctionFormalParameters?, Colon
-    this.OvsRenderDomViewDeclaration()   // 视图内容
+    this.OvsRenderFunction()   // 视图内容
   }
 
   @SubhutiRule
@@ -40,23 +58,6 @@ export default class OvsParser extends Es6Parser<OvsTokenConsumer> {
     this.tokenConsumer.RBrace()
   }
 
-  @SubhutiRule
-  OvsRenderDomViewDeclaration() {
-    // this.Option(() => {
-    this.tokenConsumer.Identifier()
-    // })
-    this.Option(() => {
-      this.Arguments()
-    })
-    this.tokenConsumer.LBrace()
-    //这里要改一下，支持三种，一种是嵌套的，一种是元素，一种是命名=的
-    this.Option(() => {
-      this.StatementList()
-    })
-    this.tokenConsumer.RBrace()
-    const curCst = this.getCurCst()
-    return curCst
-  }
 
   @SubhutiRule
   Declaration() {
@@ -94,7 +95,7 @@ export default class OvsParser extends Es6Parser<OvsTokenConsumer> {
       },
       {
         alt: () => {
-          this.OvsRenderDomViewDeclaration()
+          this.OvsRenderFunction()
         }
       },
       {
@@ -149,7 +150,7 @@ export default class OvsParser extends Es6Parser<OvsTokenConsumer> {
     //将ovs view转为自执行函数
     if (curCst.name === this.OvsLexicalBinding.name) {
       curCst = OvsVueRenderFactory.createInitializerVueRenderCst(curCst)
-    } else if (curCst.name === this.OvsRenderDomViewDeclaration.name) {
+    } else if (curCst.name === this.OvsRenderFunction.name) {
       curCst = OvsVueRenderFactory.createOvsVueRenderCst(curCst)
     }
     return curCst
