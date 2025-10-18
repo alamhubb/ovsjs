@@ -19,24 +19,31 @@ const obj = {
     "font-size": count.value+'px'
 }
 
-// 组件1：带插槽的卡片
-ovsView Card ({attrs}) : div {
-    h2({style:obj}) { attrs.title }
-    slot{}
-    p { "Card Footer" }
+// 组件1：带插槽的卡片（新语法）
+ovsView Card ({attrs}) {
+    return div {
+    console.log(attrs)
+        h2({style:obj}) { attrs.title }
+        slot{}
+        p { "Card Footer" }
+    }
 }
 
-// 组件2：复杂组件（内部计算）
+// 组件2：复杂组件（新语法：return + BlockStatement）
 ovsView PriceTag ({attrs}) {
     let price = attrs.price
-    let discount = price * 0.8
 
-    div {
+    return div {
         h3 { "Price Info" }
-        p { "原价：" }
-        p { price }
-        p { "折扣：" }
-        p { discount }
+
+        let discount = price * 0.8
+
+        div {
+            p { "原价：" }
+            p { price }
+            p { "折扣：" }
+            p { discount }
+        }
         slot{}
     }
 }
