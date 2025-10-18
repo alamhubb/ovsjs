@@ -146,6 +146,8 @@ export default class SlimeGenerator {
     this.addCodeAndMappings(es6TokensObj.FromTok, node.loc)
     this.addSpacing()
     this.generatorNode(node.source)
+    // 添加分号
+    this.addCode(es6TokensObj.Semicolon)
   }
 
 

@@ -1,15 +1,15 @@
-import {reactive} from "vue";
+import {reactive,ref} from "vue";
 
 // OVS 完整功能演示：组件+插槽+属性
 
-let count = reactive(14);
+let count = reactive(Number(14));
 
 function autoIncrement() {
 console.log('自动计数开始');
   const interval = setInterval(() => {
     count += 1;
     console.log('当前计数:', count);
-  }, 2000); // 5000毫秒 = 5秒
+  }, 1000); // 5000毫秒 = 5秒
 
   // 返回停止函数
   return () => clearInterval(interval);
