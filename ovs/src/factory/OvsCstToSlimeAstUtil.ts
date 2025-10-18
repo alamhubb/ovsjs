@@ -424,7 +424,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
 
     // 进入 OvsRenderDomViewDeclaration，计数器 +1
     this.ovsRenderDomViewDepth++
-    // 生成唯一的attrs变量名并压入栈
+    // 生成唯一的 uuid（用于 attrs 变量名，children 固定不需要 uuid）
     const uuid = Math.random().toString(36).substring(2, 10)
     const attrsVarName = `temp$$attrs$$${uuid}`
     this.attrsVarNameStack.push(attrsVarName)
@@ -611,7 +611,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     // 3. 转换后的语句（包含 temp$$attrs$$.name = value 和 children.push()）
     iifeFunctionBody.push(...statements)
 
-    // 4. 返回 h('div', {ovsAttr: temp$$attrs$$uuid}, children)
+    // 4. 返回 createReactiveVNode('div', {ovsAttr: temp$$attrs$$uuid}, children)
     iifeFunctionBody.push(this.createReturnOvsAPICreateVNode(id, attrsVarName, isComponent, componentProps))
 
     // 生成 IIFE：(function() { ... })()
@@ -623,7 +623,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
    *
    * 生成：
    * return createReactiveVNode('div', {ovsAttr: temp$$attrs$$}, children) 或
-   * return createReactiveVNode(MyComponent, {attrs: ...}, children)
+   * return createReactiveVNode(MyComponent, props, children)
    *
    * @param id 元素/组件标识符
    * @param attrsVarName attrs变量名
@@ -671,7 +671,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
       [
         firstArg,                                     // 第一个参数：组件标识符或标签字符串
         propsObject,                                  // 第二个参数：props 对象
-        SlimeAstUtil.createIdentifier('children')    // 第三个参数：children 数组
+        SlimeAstUtil.createIdentifier('children')    // 第三个参数：children 数组（固定名字）
       ]
     )
 
