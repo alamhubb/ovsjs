@@ -138,24 +138,16 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
       )
     }
 
-    // 添加第二个参数 {slots}（用于插槽支持）
-    const slotsParam = {
-      type: SlimeAstType.ObjectPattern,
-      properties: [
-        SlimeAstUtil.createPropertyAst(
-          SlimeAstUtil.createIdentifier('slots'),
-          SlimeAstUtil.createIdentifier('slots')
-        )
-      ]
-    }
+    // 添加第二个参数 child（避免与内部 children 数组冲突）
+    const childParam = SlimeAstUtil.createIdentifier('child')
 
-    // 合并参数：({attrs}, {slots})
+    // 合并参数：(props, child)
     const existingParams = firstParams.params || []
     const params = SlimeAstUtil.createFunctionParams(
       firstParams.lParen,
       firstParams.rParen,
       cst.loc,
-      [...existingParams, slotsParam]
+      [...existingParams, childParam]
     )
 
     // 2. 视图内容（第3个：OvsRenderDomViewDeclaration）
@@ -167,7 +159,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     // 转换视图为表达式（IIFE或h调用）
     const viewExpression = this.createOvsRenderDomViewDeclarationAst(viewCst)
 
-    // 根据视图类型展开到函数体
+    // 根据视图类型展开到函数体（内部 children 数组不会与参数 child 冲突）
     let functionBodyStatements: SlimeStatement[] = []
 
     if (viewExpression.type === SlimeAstType.CallExpression) {
@@ -176,7 +168,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
 
       if (iifeFunc.type === 'FunctionExpression') {
         // 复杂视图的 IIFE：(function() { const children = []; ...; return h(...) })()
-        // 展开 IIFE 内容到函数体
+        // 直接展开 IIFE 内容到函数体（参数是 child，内部是 children，不冲突）
         const iifeBody = (iifeFunc as any).body.body as SlimeStatement[]
 
         // 去掉最后一条 return 语句，修改为 return h(...)
@@ -231,6 +223,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     const astName = cst.name
     let left
     if (astName === OvsParser.prototype.SlotDeclaration.name) {
+      // slot{} 改为直接渲染 children
       left = this.createSlotDeclarationAst(cst)
     } else if (astName === OvsParser.prototype.OvsRenderFunction.name) {
       left = this.createOvsRenderDomViewDeclarationAst(cst)
@@ -241,22 +234,13 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
   }
 
   /**
-   * 转换 slot{} 为 slots.default() 调用
+   * 转换 slot{} 为 child（渲染第二个参数）
    */
   createSlotDeclarationAst(cst: SubhutiCst): SlimeExpression {
     checkCstName(cst, OvsParser.prototype.SlotDeclaration.name)
 
-    // slot{} → slots.default()
-    const slotsDefaultCall = SlimeAstUtil.createCallExpression(
-      SlimeAstUtil.createMemberExpression(
-        SlimeAstUtil.createIdentifier('slots'),
-        SlimeAstUtil.createDotOperator(cst.loc),
-        SlimeAstUtil.createIdentifier('default')
-      ),
-      []
-    )
-
-    return slotsDefaultCall
+    // slot{} → child（渲染第二个参数 child）
+    return SlimeAstUtil.createIdentifier('child')
   }
 
   /**
@@ -727,6 +711,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
 
     return callExpression
   }
+
 }
 
 const OvsCstToSlimeAstUtil = new OvsCstToSlimeAst()

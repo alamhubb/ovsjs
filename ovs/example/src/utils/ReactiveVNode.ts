@@ -65,12 +65,8 @@ export function createReactiveVNode(
           // 类型断言为通用函数，避免 Vue Component 类型冲突
           const componentFn = state.type as any
           
-          // 调用组件函数，传入 props 和 slots
-          const result = componentFn(state.props, { 
-            slots: { 
-              default: () => mapChildrenToVNodes(state.children) 
-            } 
-          })
+          // 调用组件函数，传入 props 和 child（注意：参数名是 child 不是 children）
+          const result = componentFn(state.props, mapChildrenToVNodes(state.children))
           
           // 如果返回 ReactiveVNodeApi，递归调用 toVnode
           if (isReactiveVNodeApi(result)) {
