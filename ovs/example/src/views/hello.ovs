@@ -27,16 +27,18 @@ ovsView Card ({attrs}) : div {
 }
 
 // 组件2：复杂组件（内部计算）
-ovsView PriceTag ({attrs}) : div {
+ovsView PriceTag ({attrs}) {
     let price = attrs.price
     let discount = price * 0.8
-    
-    h3 { "Price Info" }
-    p { "原价：" }
-    p { price }
-    p { "折扣：" }
-    p { discount }
-    slot{}
+
+    div {
+        h3 { "Price Info" }
+        p { "原价：" }
+        p { price }
+        p { "折扣：" }
+        p { discount }
+        slot{}
+    }
 }
 
 // 使用组件
