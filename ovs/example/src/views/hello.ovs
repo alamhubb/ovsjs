@@ -17,16 +17,16 @@ const obj = {
     'font-size': count+'px'
 }
 
-// 组件1：带插槽的卡片
-ovsView Card ({attrs}) : div {
-    h2({style:obj}) { attrs.title }
+// 组件1：带插槽的卡片（直接使用 props）
+ovsView Card () : div {
+    h2({style:obj}) { props.title }
     slot{}
     p { "Card Footer" }
 }
 
 // 组件2：复杂组件（内部计算）
-ovsView PriceTag ({attrs}) : div {
-    let price = attrs.price
+ovsView PriceTag () : div {
+    let price = props.price
     let discount = price * 0.8
 
     h3 { "Price Info" }
@@ -37,16 +37,16 @@ ovsView PriceTag ({attrs}) : div {
     slot{}
 }
 
-// 使用组件
+// 使用组件（直接传递 props 对象）
 export default div {
     h1 { "OVS Component System" }
     
-    Card({attrs: {title: "用户卡片"}}) {
+    Card({title: "用户卡片"}) {
         p { "Alice" }
         p { "Developer" }
     }
     
-    PriceTag({attrs: {price: 100}}) {
+    PriceTag({price: 100}) {
         p { "立即购买" }
     }
 }

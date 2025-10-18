@@ -122,32 +122,18 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     }
     const componentName = this.createIdentifierAst(componentNameCst)
 
-    // 参数（第一个参数从 ovsRenderDomClassDeclaration 提取）
-    let firstParams
-    const secondChild = classDeclChildren[1]
-    if (secondChild && secondChild.name === 'FunctionFormalParameters') {
-      firstParams = this.createFunctionFormalParametersAst(secondChild)
-    } else {
-      // 无参数，创建空参数列表
-      const loc = cst.loc
-      firstParams = SlimeAstUtil.createFunctionParams(
-        SlimeAstUtil.createLParen(loc),
-        SlimeAstUtil.createRParen(loc),
-        loc,
-        []
-      )
-    }
-
-    // 添加第二个参数 child（避免与内部 children 数组冲突）
+    // 第一个参数固定为 props（不再使用用户声明的参数）
+    const propsParam = SlimeAstUtil.createIdentifier('props')
+    
+    // 第二个参数 child（用于接收 children）
     const childParam = SlimeAstUtil.createIdentifier('child')
 
-    // 合并参数：(props, child)
-    const existingParams = firstParams.params || []
+    // 组件参数：(props, child)
     const params = SlimeAstUtil.createFunctionParams(
-      firstParams.lParen,
-      firstParams.rParen,
+      SlimeAstUtil.createLParen(cst.loc),
+      SlimeAstUtil.createRParen(cst.loc),
       cst.loc,
-      [...existingParams, childParam]
+      [propsParam, childParam]
     )
 
     // 2. 视图内容（第3个：OvsRenderDomViewDeclaration）
@@ -407,14 +393,31 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     let componentProps: SlimeExpression | null = null
 
     if (argumentsCst && argumentsCst.children) {
-      // 提取 Arguments 内的参数（通常是一个对象）
+      // 提取 Arguments 内的参数
       // Arguments 结构：LParen, ArgumentList?, RParen
       const argListCst = argumentsCst.children.find(child => child.name === 'ArgumentList')
       if (argListCst && argListCst.children) {
         // ArgumentList 第一个元素
         const firstArgCst = argListCst.children[0]
         if (firstArgCst && firstArgCst.children?.[0]) {
-          componentProps = this.createExpressionAst(firstArgCst.children[0])
+          const argExpr = this.createExpressionAst(firstArgCst.children[0])
+          
+          // 如果参数是 {attrs: {...}}，提取 attrs 的值
+          if (argExpr.type === 'ObjectExpression' && argExpr.properties) {
+            const attrsProperty = argExpr.properties.find((prop: any) => 
+              prop.key?.name === 'attrs' || prop.key?.value === 'attrs'
+            )
+            if (attrsProperty && attrsProperty.value) {
+              // 提取 attrs 的值作为 componentProps
+              componentProps = attrsProperty.value
+            } else {
+              // 没有 attrs 属性，直接使用整个对象
+              componentProps = argExpr
+            }
+          } else {
+            // 不是对象表达式，直接使用
+            componentProps = argExpr
+          }
         }
       }
     }
