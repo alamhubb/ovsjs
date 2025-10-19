@@ -16,7 +16,7 @@ const obj = {
 }
 
 // 组件1：带插槽的卡片
-ovsView Card ({props}) : div {
+ovsView Card ({props,child}) : div {
     h2({style:obj}) { 
         #{ props.title }
     }
@@ -27,7 +27,7 @@ ovsView Card ({props}) : div {
 }
 
 // 组件2：复杂组件（内部计算 + 渲染）
-ovsView PriceTag ({props}) : div {
+ovsView PriceTag ({props,child}) : div {
     let price = props.price
     let discount = price * 0.8
 
