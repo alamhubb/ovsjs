@@ -48,17 +48,6 @@ export default class OvsParser extends Es6Parser<OvsTokenConsumer> {
   }
 
   @SubhutiRule
-  SlotDeclaration() {
-    // slot{}
-    this.tokenConsumer.SlotToken()
-    this.tokenConsumer.LBrace()
-    this.Option(() => {
-      this.StatementList()
-    })
-    this.tokenConsumer.RBrace()
-  }
-
-  @SubhutiRule
   RenderExpression() {
     // #{ expression }
     this.tokenConsumer.Hash()
@@ -100,11 +89,6 @@ export default class OvsParser extends Es6Parser<OvsTokenConsumer> {
       {
         alt: () => {
           this.RenderExpression()  // #{ expression } 渲染语法
-        }
-      },
-      {
-        alt: () => {
-          this.SlotDeclaration()
         }
       },
       {

@@ -122,19 +122,36 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     }
     const componentName = this.createIdentifierAst(componentNameCst)
 
-    // 第一个参数固定为 props（不再使用用户声明的参数）
-    const propsParam = SlimeAstUtil.createIdentifier('props')
+    // 参数处理：使用用户声明的参数 + child参数用于接收插槽
+    let params
+    const formalParamsCst = classDeclChildren.find(c => c.name === 'FunctionFormalParameters')
     
-    // 第二个参数 child（用于接收 children）
+    // 第二个参数固定为 child（用于接收插槽内容）
     const childParam = SlimeAstUtil.createIdentifier('child')
-
-    // 组件参数：(props, child)
-    const params = SlimeAstUtil.createFunctionParams(
-      SlimeAstUtil.createLParen(cst.loc),
-      SlimeAstUtil.createRParen(cst.loc),
-      cst.loc,
-      [propsParam, childParam]
-    )
+    
+    if (formalParamsCst) {
+      // 用户声明了参数，使用用户的参数 + child
+      const userParams = this.createFunctionFormalParametersAst(formalParamsCst)
+      // 获取用户参数列表
+      const userParamList = (userParams as any).params || []
+      
+      params = SlimeAstUtil.createFunctionParams(
+        SlimeAstUtil.createLParen(cst.loc),
+        SlimeAstUtil.createRParen(cst.loc),
+        cst.loc,
+        [...userParamList, childParam]
+      )
+    } else {
+      // 用户没有声明参数，使用默认的 (props, child)
+      const propsParam = SlimeAstUtil.createIdentifier('props')
+      
+      params = SlimeAstUtil.createFunctionParams(
+        SlimeAstUtil.createLParen(cst.loc),
+        SlimeAstUtil.createRParen(cst.loc),
+        cst.loc,
+        [propsParam, childParam]
+      )
+    }
 
     // 2. 视图内容（第3个：OvsRenderDomViewDeclaration）
     const viewCst = children[2]
@@ -211,9 +228,6 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     if (astName === OvsParser.prototype.RenderExpression.name) {
       // #{ expression } 渲染表达式
       left = this.createRenderExpressionAst(cst)
-    } else if (astName === OvsParser.prototype.SlotDeclaration.name) {
-      // slot{} 改为直接渲染 children
-      left = this.createSlotDeclarationAst(cst)
     } else if (astName === OvsParser.prototype.OvsRenderFunction.name) {
       left = this.createOvsRenderDomViewDeclarationAst(cst)
     } else {
@@ -241,17 +255,6 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     const innerExpr = super.createExpressionAst(expressionCst)
     
     return innerExpr
-  }
-
-  /**
-   * 转换 slot{} 为 child（渲染第二个参数）
-   */
-  createSlotDeclarationAst(cst: SubhutiCst): SlimeExpression {
-    checkCstName(cst, OvsParser.prototype.SlotDeclaration.name)
-
-    // slot{} → child（渲染第二个参数 child）
-    const result: any = SlimeAstUtil.createIdentifier('child')
-    return result
   }
 
   /**
@@ -284,20 +287,18 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
       actualCst = actualCst.children[0]
     }
     
-    // ⭐ 特殊处理：AssignmentExpression 可能包含 RenderExpression、SlotDeclaration 等
+    // ⭐ 特殊处理：AssignmentExpression 可能包含 RenderExpression 等
     // AssignmentExpression 的第一个子节点可能是这些特殊类型
     let isRenderExpression = false
-    let isSlotDeclaration = false
     let isOvsRenderFunction = false
     
     if (actualCst.name === 'AssignmentExpression' && actualCst.children && actualCst.children.length > 0) {
       const firstChild = actualCst.children[0]
       isRenderExpression = firstChild.name === OvsParser.prototype.RenderExpression.name
-      isSlotDeclaration = firstChild.name === OvsParser.prototype.SlotDeclaration.name
       isOvsRenderFunction = firstChild.name === OvsParser.prototype.OvsRenderFunction.name
       
       // 如果是特殊类型，使用第一个子节点作为 actualCst
-      if (isRenderExpression || isSlotDeclaration || isOvsRenderFunction) {
+      if (isRenderExpression || isOvsRenderFunction) {
         actualCst = firstChild
       }
     }
@@ -305,7 +306,6 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     const cstName = actualCst.name
     const isOvsRenderFunctionDirect = cstName === OvsParser.prototype.OvsRenderFunction.name
     const isRenderExpressionDirect = cstName === OvsParser.prototype.RenderExpression.name
-    const isSlotDeclarationDirect = cstName === OvsParser.prototype.SlotDeclaration.name
 
     const expr = this.createExpressionAst(exprCst)
 
@@ -380,7 +380,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
       }
 
       // 判断是否应该渲染（基于 CST 类型）
-      const shouldRender = isOvsRenderFunctionDirect || isRenderExpressionDirect || isSlotDeclarationDirect || isOvsRenderFunction || isRenderExpression || isSlotDeclaration
+      const shouldRender = isOvsRenderFunctionDirect || isRenderExpressionDirect || isOvsRenderFunction || isRenderExpression
       
       if (shouldRender) {
         // 生成 children.push(expr)

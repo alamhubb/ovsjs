@@ -16,18 +16,18 @@ const obj = {
 }
 
 // 组件1：带插槽的卡片
-ovsView Card (props) : div {
+ovsView Card ({props}) : div {
     h2({style:obj}) { 
         #{ props.title }
     }
-    slot{}
+    #{ child }
     p { 
         #{ "Card Footer" }
     }
 }
 
 // 组件2：复杂组件（内部计算 + 渲染）
-ovsView PriceTag (props) : div {
+ovsView PriceTag ({props}) : div {
     let price = props.price
     let discount = price * 0.8
 
@@ -36,7 +36,7 @@ ovsView PriceTag (props) : div {
     p { #{ price } }
     p { #{ "折扣：" } }
     p { #{ discount } }
-    slot{}
+    #{ child }
 }
 
 // 使用组件
@@ -47,10 +47,8 @@ export default div {
         p { #{ "Alice" } }
         p { #{ "Developer" } }
     }
-
-    const price =  div { 100 }
-
-    PriceTag({price: price}) {
+    
+    PriceTag({price: 100}) {
         p { #{ "立即购买" } }
     }
 }
