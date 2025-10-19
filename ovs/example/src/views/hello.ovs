@@ -1,4 +1,4 @@
-// OVS 完整功能演示：组件+插槽+属性
+// OVS 完整功能演示：新的 #{} 渲染语法
 
 let count = 14;
 
@@ -6,9 +6,7 @@ function autoIncrement() {
   const interval = setInterval(() => {
     count += 1;
     console.log('当前计数:', count);
-  }, 5000); // 5000毫秒 = 5秒
-
-  // 返回停止函数
+  }, 5000);
   return () => clearInterval(interval);
 }
 
@@ -17,36 +15,42 @@ const obj = {
     'font-size': count+'px'
 }
 
-// 组件1：带插槽的卡片（直接使用 props）
+// 组件1：带插槽的卡片
 ovsView Card () : div {
-    h2({style:obj}) { props.title }
+    h2({style:obj}) { 
+        #{ props.title }
+    }
     slot{}
-    p { "Card Footer" }
+    p { 
+        #{ "Card Footer" }
+    }
 }
 
-// 组件2：复杂组件（内部计算）
+// 组件2：复杂组件（内部计算 + 渲染）
 ovsView PriceTag () : div {
     let price = props.price
     let discount = price * 0.8
 
-    h3 { "Price Info" }
-    p { "原价：" }
-    p { price }
-    p { "折扣：" }
-    p { discount }
+    h3 { #{ "Price Info" } }
+    p { #{ "原价：" } }
+    p { #{ price } }
+    p { #{ "折扣：" } }
+    p { #{ discount } }
     slot{}
 }
 
-// 使用组件（直接传递 props 对象）
+// 使用组件
 export default div {
-    h1 { "OVS Component System" }
+    h1 { #{ "OVS Component System" } }
     
     Card({title: "用户卡片"}) {
-        p { "Alice" }
-        p { "Developer" }
+        p { #{ "Alice" } }
+        p { #{ "Developer" } }
     }
-    
-    PriceTag({price: 100}) {
-        p { "立即购买" }
+
+    const price =  div { 100 }
+
+    PriceTag({price: price}) {
+        p { #{ "立即购买" } }
     }
 }
