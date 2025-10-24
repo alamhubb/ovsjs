@@ -105,23 +105,14 @@ function isOvsRenderDomView(statement: SlimeStatement): boolean {
     return true
   }
 
-  // 简单视图：直接的 h() 调用或 createVNode 调用
-  // h(...) 或 OvsAPI.createVNode(...)
+  // 简单视图：直接的 createReactiveVNode() 调用
   if (expr.type === SlimeAstType.CallExpression) {
     const callExpr = expr as SlimeCallExpression
     
-    // 检查 h() 函数调用
+    // 检查 createReactiveVNode() 函数调用
     if (callExpr.callee.type === SlimeAstType.Identifier) {
       const identifier = callExpr.callee as any
-      if (identifier.name === 'h') {
-        return true
-      }
-    }
-    
-    // 检查 OvsAPI.createVNode() 调用（向后兼容）
-    if (callExpr.callee.type === SlimeAstType.MemberExpression) {
-      const memberExpr = callExpr.callee as any
-      if (memberExpr.object?.name === 'OvsAPI' && memberExpr.property?.name === 'createVNode') {
+      if (identifier.name === 'createReactiveVNode') {
         return true
       }
     }
@@ -282,8 +273,8 @@ function wrapTopLevelExpressions(ast: SlimeProgram): SlimeProgram {
  * @returns 添加了 import 的 Program AST
  */
 function ensureOvsAPIImport(ast: SlimeProgram): SlimeProgram {
-  // 检查是否已经导入了 h 函数
-  let hasImportH = false
+  // 检查是否已经导入了 createReactiveVNode 函数
+  let hasImport = false
 
   for (const statement of ast.body) {
     if (statement.type === SlimeAstType.ImportDeclaration) {
@@ -292,35 +283,35 @@ function ensureOvsAPIImport(ast: SlimeProgram): SlimeProgram {
         spec => spec.type === SlimeAstType.ImportSpecifier
       ) as SlimeImportSpecifier[]
 
-      hasImportH = namedSpecifiers.some(spec => 
-        spec.imported.type === SlimeAstType.Identifier && spec.imported.name === 'h'
+      hasImport = namedSpecifiers.some(spec => 
+        spec.imported.type === SlimeAstType.Identifier && spec.imported.name === 'createReactiveVNode'
       )
-      if (hasImportH) break
+      if (hasImport) break
     }
   }
 
-  // 如果没有导入，添加 import { h } from 'vue'
-  if (!hasImportH) {
-    // 手动创建 ImportSpecifier（因为SlimeAstUtil没有提供方法）
-    const hSpecifier: SlimeImportSpecifier = {
+  // 如果没有导入，添加 import { createReactiveVNode } from '../utils/ReactiveVNode'
+  if (!hasImport) {
+    // 手动创建 ImportSpecifier
+    const specifier: SlimeImportSpecifier = {
       type: SlimeAstType.ImportSpecifier,
-      local: SlimeAstUtil.createIdentifier('h'),
-      imported: SlimeAstUtil.createIdentifier('h')
+      local: SlimeAstUtil.createIdentifier('createReactiveVNode'),
+      imported: SlimeAstUtil.createIdentifier('createReactiveVNode')
     }
     
-    const hImport = SlimeAstUtil.createImportDeclaration(
-      [hSpecifier],
+    const importDecl = SlimeAstUtil.createImportDeclaration(
+      [specifier],
       SlimeAstUtil.createFromKeyword(),
-      SlimeAstUtil.createStringLiteral('vue')
+      SlimeAstUtil.createStringLiteral('../utils/ReactiveVNode')
     )
 
     // 设置换行标记
-    if (hImport.loc) {
-      hImport.loc.newLine = true
+    if (importDecl.loc) {
+      importDecl.loc.newLine = true
     }
 
     // 添加到 body 最前面
-    ast.body.unshift(hImport)
+    ast.body.unshift(importDecl)
   }
 
   return ast
