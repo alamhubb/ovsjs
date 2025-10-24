@@ -1,130 +1,25 @@
-import { h, ref } from 'vue'
+import { h, ref, computed } from 'vue'
 
-// OVS 示例 - #{} 不渲染块演示
-
-// 创建响应式计数器
 const count = ref(0)
 
-// 每秒自增
 setInterval(() => {
   count.value++
   console.log('计数器：', count.value)
 }, 1000)
 
+const colors = ['red','green','blue','orange','purple']
+const colorIndex = ref(0)
 
-  // 数据定义
-  const appName = "OVS 演示系统"
-  const version = "1.0.0"
-  const userName = "Alice"
-  const userScore = 95
-  
-  // 工具函数（最简单实现）
-  function formatScore(score) {
-    return score + " 分"
-  }
-  
-  function getGreeting(name) {
-    return "你好，" + name + "！"
-  }
-  
-  console.log("系统启动，版本：", version)
+// 使用 computed 计算当前样式
+const style = computed(() => ({ color: colors[colorIndex.value] }))
 
-// 信息卡片组件
-ovsView InfoBox ({props}) : div {
-  #{
-    const title = props.title
-    const content = props.content
-  }
-  
-  h3 {
-  title
-  }
-  p { content }
-}
+// 每秒切换颜色
+setInterval(() => {
+  colorIndex.value = (colorIndex.value + 1) % colors.length
+}, 1000)
 
-// 主界面
-div {
-  count
-  // 页面标题
-  h1 { appName }
-  
-  p { "版本：" }
-  p { version }
-  
-  hr {}
-  
-  // 用户信息
-  h2 { "用户资料" }
-  
-  div {
-    p { "用户名：" }
-    p { userName }
-  }
-  
-  div {
-    #{
-      const scoreText = formatScore(userScore)
-    }
-    
-    p { "评分：" }
-    p { scoreText }
-  }
-  
-  // 功能展示
-  h2 { "#{} 功能演示" }
-  
-  div {
-    h3 { "1. 普通函数调用会被渲染" }
-    p { "问候语：" }
-    getGreeting(userName)
-  }
-  
-  div {
-    h3 { "2. #{} 内的调用不渲染" }
-    p { "下面的 console.log 不会显示在页面上" }
-    #{
-      console.log("这是调试信息，只在控制台显示")
-      const temp = "temporary"
-    }
-    p { "（请按F12查看控制台）" }
-  }
-  
-  div {
-    h3 { "3. #{} 内的元素仍然渲染" }
-    #{
-      const msg = "我在 #{} 内"
-      
-      p { msg }
-      p { "但我仍然显示在页面上" }
-    }
-  }
-  
-  div {
-    h3 { "4. 嵌套 #{} 展开" }
-    #{
-      const x = 1
-      #{
-        const y = 2
-        const z = x + y
-      }
-      
-      p { "x + y = " }
-      p { z }
-    }
-  }
-  
-  // 底部
-  hr {}
-  
-  div {
-    #{
-      const now = new Date()
-      const timeStr = now.toLocaleTimeString()
-    }
-    
-    p { "页面生成时间：" }
-    p { timeStr }
-  }
-  
-  p { "© 2025 OVS - 声明式UI框架" }
+div({style: style}) {
+  p { 'Hello, OVS!' }
+  p { count }
+  p { '颜色变化演示' }
 }

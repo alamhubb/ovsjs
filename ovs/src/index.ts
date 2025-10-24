@@ -318,7 +318,7 @@ function wrapTopLevelExpressions(ast: SlimeProgram): SlimeProgram {
 }
 
 /**
- * 自动添加 h 函数的 import 语句（从 Vue 导入）
+ * 自动添加 createReactiveVNode 函数的 import 语句
  * @param ast Program AST
  * @returns 添加了 import 的 Program AST
  */
