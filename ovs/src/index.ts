@@ -13,9 +13,8 @@ import {
   type SlimeProgram,
   type SlimeStatement,
   type SlimeExpressionStatement,
-  type SlimeExpression,
+  type SlimeCallExpression,
   type SlimeImportDeclaration,
-  type SlimeImportDefaultSpecifier,
   type SlimeImportSpecifier,
   SlimeProgramSourceType,
   SlimeVariableDeclarationKindValue
@@ -84,26 +83,12 @@ export interface SourceMapSourceGenerateIndexLength {
 function isDeclaration(node: any): boolean {
   return [
     SlimeAstType.VariableDeclaration,    // const/let/var
-    SlimeAstType.VariableStatement,      // 也支持 VariableStatement
     SlimeAstType.FunctionDeclaration,
     SlimeAstType.ClassDeclaration,
     SlimeAstType.ImportDeclaration,
     SlimeAstType.ExportNamedDeclaration,
     SlimeAstType.ExportDefaultDeclaration,
   ].includes(node.type)
-}
-
-/**
- * 判断 statement 是否是 OVS 视图的 IIFE（复杂视图）
- * @param statement 语句节点
- * @returns 是否是 OVS 视图 IIFE
- */
-function isOvsRenderDomViewIIFE(statement: SlimeStatement): boolean {
-  if (statement.type !== SlimeAstType.ExpressionStatement) return false
-  const expr = (statement as SlimeExpressionStatement).expression
-  if (expr.type !== SlimeAstType.CallExpression) return false
-  if (expr.callee.type !== SlimeAstType.FunctionExpression) return false
-  return true
 }
 
 /**
@@ -120,10 +105,20 @@ function isOvsRenderDomView(statement: SlimeStatement): boolean {
     return true
   }
 
-  // 简单视图：直接的 createVNode 调用
-  // OvsAPI.createVNode(...)
+  // 简单视图：直接的 h() 调用或 createVNode 调用
+  // h(...) 或 OvsAPI.createVNode(...)
   if (expr.type === SlimeAstType.CallExpression) {
     const callExpr = expr as SlimeCallExpression
+    
+    // 检查 h() 函数调用
+    if (callExpr.callee.type === SlimeAstType.Identifier) {
+      const identifier = callExpr.callee as any
+      if (identifier.name === 'h') {
+        return true
+      }
+    }
+    
+    // 检查 OvsAPI.createVNode() 调用（向后兼容）
     if (callExpr.callee.type === SlimeAstType.MemberExpression) {
       const memberExpr = callExpr.callee as any
       if (memberExpr.object?.name === 'OvsAPI' && memberExpr.property?.name === 'createVNode') {
@@ -140,7 +135,7 @@ function isOvsRenderDomView(statement: SlimeStatement): boolean {
  *
  * 规则：
  * 1. Declaration 始终保持顶层
- * 2. 有 export default - 只处理 default，其他不管
+ * 2. 有 export default - 不做包裹，但需要检查是否需要转换为函数
  * 3. 没有 export default - 用 IIFE 包裹所有表达式
  *
  * @param ast Program AST
@@ -150,11 +145,13 @@ function wrapTopLevelExpressions(ast: SlimeProgram): SlimeProgram {
   const declarations: any[] = []
   const expressions: SlimeStatement[] = []
   let hasExportDefault = false
+  let exportDefaultStatement: any = null
 
   // 1. 分类
   for (const statement of ast.body) {
     if (statement.type === SlimeAstType.ExportDefaultDeclaration) {
       hasExportDefault = true
+      exportDefaultStatement = statement
       declarations.push(statement)
     } else if (isDeclaration(statement)) {
       declarations.push(statement)
@@ -166,8 +163,35 @@ function wrapTopLevelExpressions(ast: SlimeProgram): SlimeProgram {
     }
   }
 
-  // 2. 如果有 export default，不做包裹
-  if (hasExportDefault) {
+  // 2. 如果有 export default，需要检查是否是 VNode 表达式，如是则包装成函数
+  if (hasExportDefault && exportDefaultStatement) {
+    const declaration = exportDefaultStatement as any
+    const expr = declaration.declaration
+    
+    // 检查导出的是否是一个 OVS 视图表达式（h 函数调用或 IIFE 调用）
+    if (expr && expr.type === SlimeAstType.CallExpression) {
+      const callExpr = expr as SlimeCallExpression
+      
+      // 检查是否是 h() 调用（OVS 元素）或 IIFE（OVS 视图函数）
+      const isHCall = callExpr.callee.type === SlimeAstType.Identifier && 
+                      (callExpr.callee as any).name === 'h'
+      const isIIFE = callExpr.callee.type === SlimeAstType.FunctionExpression
+      
+      if (isHCall || isIIFE) {
+        // 创建一个返回 VNode 的箭头函数
+        const arrowFunc = {
+          type: SlimeAstType.ArrowFunctionExpression,
+          params: [],  // 空参数数组（不是FunctionParams对象）
+          body: expr,
+          async: false,
+          expression: true  // 表达式形式的箭头函数
+        } as any
+        
+        // 更新 export default 的内容
+        declaration.declaration = arrowFunc
+      }
+    }
+    
     return ast
   }
 
@@ -253,13 +277,13 @@ function wrapTopLevelExpressions(ast: SlimeProgram): SlimeProgram {
 }
 
 /**
- * 自动添加 ReactiveVNode 的 import 语句（如果不存在）
+ * 自动添加 h 函数的 import 语句（从 Vue 导入）
  * @param ast Program AST
  * @returns 添加了 import 的 Program AST
  */
 function ensureOvsAPIImport(ast: SlimeProgram): SlimeProgram {
-  // 检查是否已经导入了 createReactiveVNode 函数
-  let hasImportReactiveVNode = false
+  // 检查是否已经导入了 h 函数
+  let hasImportH = false
 
   for (const statement of ast.body) {
     if (statement.type === SlimeAstType.ImportDeclaration) {
@@ -268,35 +292,35 @@ function ensureOvsAPIImport(ast: SlimeProgram): SlimeProgram {
         spec => spec.type === SlimeAstType.ImportSpecifier
       ) as SlimeImportSpecifier[]
 
-      hasImportReactiveVNode = namedSpecifiers.some(spec => 
-        spec.imported.type === SlimeAstType.Identifier && spec.imported.name === 'createReactiveVNode'
+      hasImportH = namedSpecifiers.some(spec => 
+        spec.imported.type === SlimeAstType.Identifier && spec.imported.name === 'h'
       )
-      if (hasImportReactiveVNode) break
+      if (hasImportH) break
     }
   }
 
-  // 如果没有导入，添加 import { createReactiveVNode } from '../utils/ReactiveVNode'
-  if (!hasImportReactiveVNode) {
+  // 如果没有导入，添加 import { h } from 'vue'
+  if (!hasImportH) {
     // 手动创建 ImportSpecifier（因为SlimeAstUtil没有提供方法）
-    const reactiveVNodeSpecifier: SlimeImportSpecifier = {
+    const hSpecifier: SlimeImportSpecifier = {
       type: SlimeAstType.ImportSpecifier,
-      local: SlimeAstUtil.createIdentifier('createReactiveVNode'),
-      imported: SlimeAstUtil.createIdentifier('createReactiveVNode')
+      local: SlimeAstUtil.createIdentifier('h'),
+      imported: SlimeAstUtil.createIdentifier('h')
     }
     
-    const reactiveVNodeImport = SlimeAstUtil.createImportDeclaration(
-      [reactiveVNodeSpecifier],
+    const hImport = SlimeAstUtil.createImportDeclaration(
+      [hSpecifier],
       SlimeAstUtil.createFromKeyword(),
-      SlimeAstUtil.createStringLiteral('../utils/ReactiveVNode')
+      SlimeAstUtil.createStringLiteral('vue')
     )
 
     // 设置换行标记
-    if (reactiveVNodeImport.loc) {
-      reactiveVNodeImport.loc.newLine = true
+    if (hImport.loc) {
+      hImport.loc.newLine = true
     }
 
     // 添加到 body 最前面
-    ast.body.unshift(reactiveVNodeImport)
+    ast.body.unshift(hImport)
   }
 
   return ast
@@ -313,14 +337,14 @@ function ensureOvsAPIImport(ast: SlimeProgram): SlimeProgram {
  * 1. 词法分析：code → tokens
  * 2. 语法分析：tokens → CST
  * 3. 语法转换：CST → AST（OVS 语法 → JavaScript AST）
- * 4. 添加 import：自动添加 createReactiveVNode import
+ * 4. 添加 import：自动添加 h 函数 import（如果不存在）
  * 5. 组件包装：AST → Vue 组件 AST
  * 6. 代码生成：AST → code
  * 7. 代码格式化：使用 Prettier（可选）
  */
 export async function vitePluginOvsTransform(
   code: string,
-  filename?: string,
+  _filename?: string,
   prettify: boolean = true
 ): Promise<SlimeGeneratorResult> {
   // 1. 词法分析（使用包含 ovsView 关键字的 tokens）
@@ -342,7 +366,7 @@ export async function vitePluginOvsTransform(
   // 3. 语法转换：CST → AST（OVS 语法 → JavaScript AST）
   let ast = OvsCstToSlimeAstUtil.toProgram(curCst)
 
-  // 4. 添加 import：自动添加 createReactiveVNode import（如果不存在）
+  // 4. 添加 import：自动添加 h 函数 import（如果不存在）
   ast = ensureOvsAPIImport(ast)
 
   // 5. 包裹顶层表达式：根据是否有 export default 决定是否包裹

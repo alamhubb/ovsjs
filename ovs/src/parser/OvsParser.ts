@@ -48,14 +48,36 @@ export default class OvsParser extends Es6Parser<OvsTokenConsumer> {
   }
 
   @SubhutiRule
-  RenderExpression() {
-    // #{ expression }
+  NoRenderBlock() {
+    // #{ statements } - 不渲染代码块
     this.tokenConsumer.Hash()
     this.tokenConsumer.LBrace()
-    this.Expression()
+    this.Option(() => {
+      this.StatementList()
+    })
     this.tokenConsumer.RBrace()
   }
 
+  @SubhutiRule
+  Statement() {
+    this.Or([
+      { alt: () => this.NoRenderBlock() },        // 新增：#{}块优先
+      { alt: () => this.BlockStatement() },
+      { alt: () => this.VariableDeclaration() },
+      { alt: () => this.EmptyStatement() },
+      { alt: () => this.ExpressionStatement() },
+      { alt: () => this.IfStatement() },
+      { alt: () => this.BreakableStatement() },
+      { alt: () => this.ContinueStatement() },
+      { alt: () => this.BreakStatement() },
+      { alt: () => this.ReturnStatement() },
+      { alt: () => this.WithStatement() },
+      { alt: () => this.LabelledStatement() },
+      { alt: () => this.ThrowStatement() },
+      { alt: () => this.TryStatement() },
+      { alt: () => this.DebuggerStatement() }
+    ])
+  }
 
   @SubhutiRule
   Declaration() {
@@ -86,11 +108,6 @@ export default class OvsParser extends Es6Parser<OvsTokenConsumer> {
   @SubhutiRule
   AssignmentExpression() {
     this.Or([
-      {
-        alt: () => {
-          this.RenderExpression()  // #{ expression } 渲染语法
-        }
-      },
       {
         alt: () => {
           this.OvsRenderFunction()

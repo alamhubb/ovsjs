@@ -1,54 +1,117 @@
-// OVS 完整功能演示：新的 #{} 渲染语法
+// OVS 示例 - #{} 不渲染块演示
 
-let count = 14;
-
-function autoIncrement() {
-  const interval = setInterval(() => {
-    count += 1;
-    console.log('当前计数:', count);
-  }, 5000);
-  return () => clearInterval(interval);
+#{
+  // 数据定义
+  const appName = "OVS 演示系统"
+  const version = "1.0.0"
+  const userName = "Alice"
+  const userScore = 95
+  
+  // 工具函数（最简单实现）
+  function formatScore(score) {
+    return score + " 分"
+  }
+  
+  function getGreeting(name) {
+    return "你好，" + name + "！"
+  }
+  
+  console.log("系统启动，版本：", version)
 }
 
-const obj = {
-    color: "red",
-    'font-size': count+'px'
+// 信息卡片组件
+ovsView InfoBox ({props}) : div {
+  #{
+    const title = props.title
+    const content = props.content
+  }
+  
+  h3 { title }
+  p { content }
 }
 
-// 组件1：带插槽的卡片
-ovsView Card ({props,child}) : div {
-    h2({style:obj}) { 
-        #{ props.title }
+// 主界面
+div {
+  // 页面标题
+  h1 { appName }
+  
+  p { "版本：" }
+  p { version }
+  
+  hr {}
+  
+  // 用户信息
+  h2 { "用户资料" }
+  
+  div {
+    p { "用户名：" }
+    p { userName }
+  }
+  
+  div {
+    #{
+      const scoreText = formatScore(userScore)
     }
-    #{ child }
-    p { 
-        #{ "Card Footer" }
-    }
-}
-
-// 组件2：复杂组件（内部计算 + 渲染）
-ovsView PriceTag ({props,child}) : div {
-    let price = props.price
-    let discount = price * 0.8
-
-    h3 { #{ "Price Info" } }
-    p { #{ "原价：" } }
-    p { #{ price } }
-    p { #{ "折扣：" } }
-    p { #{ discount } }
-    #{ child }
-}
-
-// 使用组件
-export default div {
-    h1 { #{ "OVS Component System" } }
     
-    Card({title: "用户卡片"}) {
-        p { #{ "Alice" } }
-        p { #{ "Developer" } }
+    p { "评分：" }
+    p { scoreText }
+  }
+  
+  // 功能展示
+  h2 { "#{} 功能演示" }
+  
+  div {
+    h3 { "1. 普通函数调用会被渲染" }
+    p { "问候语：" }
+    getGreeting(userName)
+  }
+  
+  div {
+    h3 { "2. #{} 内的调用不渲染" }
+    p { "下面的 console.log 不会显示在页面上" }
+    #{
+      console.log("这是调试信息，只在控制台显示")
+      const temp = "temporary"
+    }
+    p { "（请按F12查看控制台）" }
+  }
+  
+  div {
+    h3 { "3. #{} 内的元素仍然渲染" }
+    #{
+      const msg = "我在 #{} 内"
+      
+      p { msg }
+      p { "但我仍然显示在页面上" }
+    }
+  }
+  
+  div {
+    h3 { "4. 嵌套 #{} 展开" }
+    #{
+      const x = 1
+      #{
+        const y = 2
+        const z = x + y
+      }
+      
+      p { "x + y = " }
+      p { z }
+    }
+  }
+  
+  // 底部
+  hr {}
+  
+  div {
+    #{
+      const now = new Date()
+      const timeStr = now.toLocaleTimeString()
     }
     
-    PriceTag({price: 100}) {
-        p { #{ "立即购买" } }
-    }
+    p { "页面生成时间：" }
+    p { timeStr }
+  }
+  
+  p { "© 2025 OVS - 声明式UI框架" }
 }
