@@ -66,7 +66,7 @@ export function createReactiveVNode(
           const componentFn = state.type as any
           
           // 调用组件函数，传入 props 和 child（注意：参数名是 child 不是 children）
-          const result = componentFn(state.props, mapChildrenToVNodes(state.children))
+          const result = componentFn(state)
           
           // 如果返回 ReactiveVNodeApi，递归调用 toVnode
           if (isReactiveVNodeApi(result)) {
