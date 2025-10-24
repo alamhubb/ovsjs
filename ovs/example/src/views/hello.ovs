@@ -1,4 +1,4 @@
-import { h, ref, computed } from 'vue'
+import { h, ref, reactive } from 'vue'
 
 const count = ref(0)
 
@@ -8,14 +8,19 @@ setInterval(() => {
 }, 1000)
 
 const colors = ['red','green','blue','orange','purple']
-const colorIndex = ref(0)
+let colorIndex = 0
 
-// 使用 computed 计算当前样式
-const style = computed(() => ({ color: colors[colorIndex.value] }))
+// 使用 reactive 创建响应式样式对象
+const style = reactive({ color: colors[0] })
 
 // 每秒切换颜色
 setInterval(() => {
-  colorIndex.value = (colorIndex.value + 1) % colors.length
+  colorIndex = colorIndex + 1
+  if (colorIndex >= colors.length) {
+    colorIndex = 0
+  }
+  style.color = colors[colorIndex]
+  console.log('颜色切换到：', style.color)
 }, 1000)
 
 div({style: style}) {
