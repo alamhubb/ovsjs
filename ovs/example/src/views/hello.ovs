@@ -43,7 +43,7 @@ ovsView InfoBox ({props}) : div {
 }
 
 // 主界面
-div {
+export default ()=>div {
 
   count.value
   // 页面标题
