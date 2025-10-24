@@ -1,0 +1,6 @@
+// 测试：导出一个函数
+export default () => {
+  const message = "Hello from function"
+  return message
+}
+

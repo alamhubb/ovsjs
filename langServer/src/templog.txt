@@ -976,3 +976,148 @@
   ]
 }
 ================================================================================
+
+[2025-10-24T16:19:38.491Z]
+createTypeScriptServices
+================================================================================
+
+[2025-10-24T16:19:38.497Z]
+getLocalTsdkPath
+================================================================================
+
+[2025-10-24T16:19:38.498Z]
+onInitialize
+================================================================================
+
+[2025-10-24T16:19:38.508Z]
+params
+================================================================================
+
+[2025-10-24T16:19:38.780Z]
+res.capabilities.completionProvider.triggerCharacters
+================================================================================
+
+[2025-10-24T16:19:38.780Z]
+{
+  "textDocumentSync": 2,
+  "workspace": {
+    "workspaceFolders": {
+      "supported": true,
+      "changeNotifications": true
+    }
+  },
+  "selectionRangeProvider": true,
+  "foldingRangeProvider": true,
+  "documentSymbolProvider": true,
+  "documentFormattingProvider": true,
+  "documentRangeFormattingProvider": true,
+  "referencesProvider": true,
+  "implementationProvider": true,
+  "definitionProvider": true,
+  "typeDefinitionProvider": true,
+  "callHierarchyProvider": true,
+  "hoverProvider": true,
+  "documentHighlightProvider": true,
+  "workspaceSymbolProvider": {},
+  "renameProvider": {
+    "prepareProvider": true
+  },
+  "inlayHintProvider": {},
+  "signatureHelpProvider": {
+    "triggerCharacters": [
+      "(",
+      ",",
+      "<"
+    ],
+    "retriggerCharacters": [
+      ")"
+    ]
+  },
+  "completionProvider": {
+    "triggerCharacters": [
+      ".",
+      "\"",
+      "'",
+      "`",
+      "/",
+      "<",
+      "@",
+      "#",
+      "*"
+    ],
+    "resolveProvider": true
+  },
+  "semanticTokensProvider": {
+    "full": true,
+    "range": true,
+    "legend": {
+      "tokenTypes": [
+        "namespace",
+        "class",
+        "enum",
+        "interface",
+        "typeParameter",
+        "type",
+        "parameter",
+        "variable",
+        "property",
+        "enumMember",
+        "function",
+        "method"
+      ],
+      "tokenModifiers": [
+        "declaration",
+        "readonly",
+        "static",
+        "async",
+        "defaultLibrary",
+        "local"
+      ]
+    }
+  },
+  "codeActionProvider": {
+    "codeActionKinds": [
+      "",
+      "quickfix",
+      "refactor",
+      "refactor.extract",
+      "refactor.inline",
+      "refactor.rewrite",
+      "source",
+      "source.fixAll",
+      "source.organizeImports"
+    ],
+    "resolveProvider": true
+  },
+  "documentOnTypeFormattingProvider": {
+    "firstTriggerCharacter": ";",
+    "moreTriggerCharacter": [
+      "}",
+      "\n"
+    ]
+  },
+  "experimental": {
+    "autoInsertionProvider": {
+      "triggerCharacters": [
+        ">"
+      ],
+      "configurationSections": [
+        [
+          "javascript.autoClosingTags",
+          "typescript.autoClosingTags"
+        ]
+      ]
+    },
+    "fileRenameEditsProvider": true,
+    "fileReferencesProvider": true
+  }
+}
+================================================================================
+
+[2025-10-24T16:19:39.119Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-24T16:19:39.119Z]
+3333
+================================================================================
