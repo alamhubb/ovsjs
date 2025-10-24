@@ -135,14 +135,14 @@ function isOvsRenderDomView(statement: SlimeStatement): boolean {
 function wrapTopLevelExpressions(ast: SlimeProgram): SlimeProgram {
   const declarations: any[] = []
   const expressions: SlimeStatement[] = []
-  let hasExportDefault = false
-  let exportDefaultStatement: any = null
+  let hasAnyExport = false  // 检查是否有任何导出
 
   // 1. 分类
   for (const statement of ast.body) {
-    if (statement.type === SlimeAstType.ExportDefaultDeclaration) {
-      hasExportDefault = true
-      exportDefaultStatement = statement
+    // 检查是否有任何导出（export default 或 export named）
+    if (statement.type === SlimeAstType.ExportDefaultDeclaration ||
+        statement.type === SlimeAstType.ExportNamedDeclaration) {
+      hasAnyExport = true
       declarations.push(statement)
     } else if (isDeclaration(statement)) {
       declarations.push(statement)
@@ -154,35 +154,8 @@ function wrapTopLevelExpressions(ast: SlimeProgram): SlimeProgram {
     }
   }
 
-  // 2. 如果有 export default，需要检查是否是 VNode 表达式，如是则包装成函数
-  if (hasExportDefault && exportDefaultStatement) {
-    const declaration = exportDefaultStatement as any
-    const expr = declaration.declaration
-    
-    // 检查导出的是否是一个 OVS 视图表达式（h 函数调用或 IIFE 调用）
-    if (expr && expr.type === SlimeAstType.CallExpression) {
-      const callExpr = expr as SlimeCallExpression
-      
-      // 检查是否是 h() 调用（OVS 元素）或 IIFE（OVS 视图函数）
-      const isHCall = callExpr.callee.type === SlimeAstType.Identifier && 
-                      (callExpr.callee as any).name === 'h'
-      const isIIFE = callExpr.callee.type === SlimeAstType.FunctionExpression
-      
-      if (isHCall || isIIFE) {
-        // 创建一个返回 VNode 的箭头函数
-        const arrowFunc = {
-          type: SlimeAstType.ArrowFunctionExpression,
-          params: [],  // 空参数数组（不是FunctionParams对象）
-          body: expr,
-          async: false,
-          expression: true  // 表达式形式的箭头函数
-        } as any
-        
-        // 更新 export default 的内容
-        declaration.declaration = arrowFunc
-      }
-    }
-    
+  // 2. 如果有任何导出（export default 或 export const 等），保持原样
+  if (hasAnyExport) {
     return ast
   }
 

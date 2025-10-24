@@ -1,6 +1,17 @@
+import { h, ref } from 'vue'
+
 // OVS 示例 - #{} 不渲染块演示
 
-#{
+// 创建响应式计数器
+export const count = ref(0)
+
+// 每秒自增
+setInterval(() => {
+  count.value++
+  console.log('计数器：', count.value)
+}, 1000)
+
+
   // 数据定义
   const appName = "OVS 演示系统"
   const version = "1.0.0"
@@ -17,7 +28,6 @@
   }
   
   console.log("系统启动，版本：", version)
-}
 
 // 信息卡片组件
 ovsView InfoBox ({props}) : div {
@@ -26,12 +36,16 @@ ovsView InfoBox ({props}) : div {
     const content = props.content
   }
   
-  h3 { title }
+  h3 {
+  title
+  }
   p { content }
 }
 
 // 主界面
-div {
+export default div {
+
+  count.value
   // 页面标题
   h1 { appName }
   

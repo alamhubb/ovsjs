@@ -1,9 +1,10 @@
-export function setupCounter(element: HTMLButtonElement) {
-  let counter = 0
-  const setCounter = (count: number) => {
-    counter = count
-    element.innerHTML = `count is ${counter}`
-  }
-  element.addEventListener('click', () => setCounter(counter + 1))
-  setCounter(0)
-}
+import { ref } from 'vue'
+
+// 创建响应式计数器
+export const count = ref(0)
+
+// 每秒自增
+setInterval(() => {
+  count.value++
+  console.log('计数器：', count.value)
+}, 1000)
