@@ -143,6 +143,30 @@ function wrapTopLevelExpressions(ast: SlimeProgram): SlimeProgram {
     if (statement.type === SlimeAstType.ExportDefaultDeclaration ||
         statement.type === SlimeAstType.ExportNamedDeclaration) {
       hasAnyExport = true
+      
+      // 特殊处理：export default ()=> ... 自动执行
+      if (statement.type === SlimeAstType.ExportDefaultDeclaration) {
+        const exportStmt = statement as any
+        const declaration = exportStmt.declaration
+        
+        // 检查是否是箭头函数
+        if (declaration && declaration.type === SlimeAstType.ArrowFunctionExpression) {
+          const arrowFunc = declaration
+          
+          // 检查是否是 ()=> 形式（无参数）
+          if (arrowFunc.params && arrowFunc.params.length === 0) {
+            // 包裹成 IIFE：(()=> ...)()
+            const iife = SlimeAstUtil.createCallExpression(
+              arrowFunc,  // 箭头函数作为 callee
+              []          // 无参数调用
+            )
+            
+            // 更新 export default 的内容
+            exportStmt.declaration = iife
+          }
+        }
+      }
+      
       declarations.push(statement)
     } else if (isDeclaration(statement)) {
       declarations.push(statement)
