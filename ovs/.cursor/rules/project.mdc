@@ -1399,6 +1399,30 @@ div {
 
 # 变更记录
 
+【2025-10-24 16:58:08】
+【2025-10-24】OVS v0.2.0 - #{} 不渲染块功能完整实现
+
+✅ 核心功能实现：
+1. #{} 语法支持 - 隔离不渲染的代码
+2. 智能渲染系统 - 元素优先、默认渲染、#{} 隔离
+3. 自动导出优化 - 简单/复杂自动判断
+4. ReactiveVNode 集成 - 响应式支持
+
+✅ 修改文件：
+- OvsParser.ts - 添加 NoRenderBlock 规则，删除 RenderExpression
+- OvsCstToSlimeAstUtil.ts - 实现 #{} 展开和渲染判断
+- index.ts - 优化导出逻辑，所有代码包裹到 IIFE
+
+✅ 测试验证：
+- 创建测试用例 13-norender-block.ovs
+- 所有核心功能测试通过
+- hello.ovs 完整示例（110行）正常编译
+
+✅ 页面就绪：
+- 开发服务器：http://localhost:5175
+- main.ts 使用 DefaultViews.map(v => v.toVnode())
+- 展示 #{} 功能的4个示例
+
 ## 2025-10-24 [v0.2.0 - `#{}` 不渲染块 + 智能渲染系统]
 
 ### 🎯 核心设计变更

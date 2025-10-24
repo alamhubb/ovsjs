@@ -92,6 +92,54 @@ function isDeclaration(node: any): boolean {
 }
 
 /**
+ * 判断语句列表中是否有非渲染语句（复用 OvsRenderFunction 的判断逻辑）
+ * 
+ * 复杂情况（需要 IIFE）：
+ * - 有 Declaration（const、function、class）
+ * - 有控制流语句（if、for、while）
+ * - 有非 children.push 的 ExpressionStatement
+ * 
+ * 简单情况（直接导出）：
+ * - 只有 children.push 语句
+ * 
+ * @param statements 语句数组
+ * @returns 是否有非渲染语句
+ */
+function hasNonRenderStatements(statements: SlimeStatement[]): boolean {
+  return statements.some(stmt => {
+    // Declaration（如 const x = 1）→ 复杂
+    if (stmt.type === SlimeAstType.VariableDeclaration || 
+        stmt.type === SlimeAstType.FunctionDeclaration ||
+        stmt.type === SlimeAstType.ClassDeclaration) {
+      return true
+    }
+    
+    // IfStatement、ForStatement 等 → 复杂
+    if (stmt.type === SlimeAstType.IfStatement ||
+        stmt.type === SlimeAstType.ForStatement ||
+        stmt.type === SlimeAstType.WhileStatement) {
+      return true
+    }
+    
+    // ExpressionStatement 但不是 children.push → 复杂
+    if (stmt.type === SlimeAstType.ExpressionStatement) {
+      const exprStmt = stmt as SlimeExpressionStatement
+      if (exprStmt.expression.type !== SlimeAstType.CallExpression) {
+        return true
+      }
+      const callExpr = exprStmt.expression as SlimeCallExpression
+      if (callExpr.callee.type === 'MemberExpression') {
+        const memberExpr = callExpr.callee as any
+        return !(memberExpr.object?.name === 'children' && memberExpr.property?.name === 'push')
+      }
+      return true
+    }
+    
+    return false
+  })
+}
+
+/**
  * 判断 statement 是否是 OVS 视图（简单视图或复杂视图）
  * @param statement 语句节点
  * @returns 是否是 OVS 视图
@@ -133,41 +181,23 @@ function isOvsRenderDomView(statement: SlimeStatement): boolean {
  * @returns 包裹后的 Program AST
  */
 function wrapTopLevelExpressions(ast: SlimeProgram): SlimeProgram {
-  const declarations: any[] = []
+  const imports: any[] = []           // import 语句（必须在顶层）
+  const exports: any[] = []           // export 语句
+  const declarations: any[] = []      // 其他 declarations（const、function等）
   const expressions: SlimeStatement[] = []
   let hasAnyExport = false  // 检查是否有任何导出
 
   // 1. 分类
   for (const statement of ast.body) {
+    // Import 语句必须在模块顶层
+    if (statement.type === SlimeAstType.ImportDeclaration) {
+      imports.push(statement)
+    }
     // 检查是否有任何导出（export default 或 export named）
-    if (statement.type === SlimeAstType.ExportDefaultDeclaration ||
+    else if (statement.type === SlimeAstType.ExportDefaultDeclaration ||
         statement.type === SlimeAstType.ExportNamedDeclaration) {
       hasAnyExport = true
-      
-      // 特殊处理：export default ()=> ... 自动执行
-      if (statement.type === SlimeAstType.ExportDefaultDeclaration) {
-        const exportStmt = statement as any
-        const declaration = exportStmt.declaration
-        
-        // 检查是否是箭头函数
-        if (declaration && declaration.type === SlimeAstType.ArrowFunctionExpression) {
-          const arrowFunc = declaration
-          
-          // 检查是否是 ()=> 形式（无参数）
-          if (arrowFunc.params && arrowFunc.params.length === 0) {
-            // 包裹成 IIFE：(()=> ...)()
-            const iife = SlimeAstUtil.createCallExpression(
-              arrowFunc,  // 箭头函数作为 callee
-              []          // 无参数调用
-            )
-            
-            // 更新 export default 的内容
-            exportStmt.declaration = iife
-          }
-        }
-      }
-      
-      declarations.push(statement)
+      exports.push(statement)
     } else if (isDeclaration(statement)) {
       declarations.push(statement)
     } else if (statement.type === SlimeAstType.ExpressionStatement) {
@@ -187,10 +217,33 @@ function wrapTopLevelExpressions(ast: SlimeProgram): SlimeProgram {
   if (expressions.length === 0) {
     return ast
   }
+  
+  // 4. 判断简单还是复杂（复用 OvsRenderFunction 的判断逻辑）
+  const ovsViews = expressions.filter(e => isOvsRenderDomView(e))
+  
+  // 合并所有语句用于判断
+  const allStatements = [...declarations, ...expressions]
+  
+  // 简单条件：只有一个 view，且没有其他非渲染语句
+  if (ovsViews.length === 1 && expressions.length === 1 && !hasNonRenderStatements(allStatements)) {
+    // 简单情况：直接导出这个 view
+    const viewExpr = (ovsViews[0] as SlimeExpressionStatement).expression
+    const exportDefault = SlimeAstUtil.createExportDefaultDeclaration(viewExpr)
+    
+    return SlimeAstUtil.createProgram(
+      [...imports, exportDefault] as any,  // import 必须在最前面
+      SlimeProgramSourceType.module
+    )
+  }
 
-  // 4. 包裹所有表达式
-  const iifeBody: SlimeStatement[] = [
-    // const children = []
+  // 5. 复杂情况：用 IIFE 包裹所有内容（declarations + expressions）
+  const iifeBody: SlimeStatement[] = []
+  
+  // 先添加所有 declarations（const、function 等）
+  iifeBody.push(...declarations)
+  
+  // 添加 const children = []
+  iifeBody.push(
     SlimeAstUtil.createVariableDeclaration(
       SlimeAstUtil.createVariableDeclarationKind(
         SlimeVariableDeclarationKindValue.const,
@@ -204,9 +257,9 @@ function wrapTopLevelExpressions(ast: SlimeProgram): SlimeProgram {
         )
       ]
     )
-  ]
+  )
 
-  // 处理所有表达式
+  // 处理所有 expressions
   for (const expr of expressions) {
     if (isOvsRenderDomView(expr)) {
       // OVS 视图（简单或复杂）→ children.push(vnode)
@@ -257,9 +310,9 @@ function wrapTopLevelExpressions(ast: SlimeProgram): SlimeProgram {
 
   const exportDefault = SlimeAstUtil.createExportDefaultDeclaration(iife)
 
-  // 返回新的 Program
+  // 返回新的 Program（import 必须在最前面）
   return SlimeAstUtil.createProgram(
-    [...declarations, exportDefault] as any,
+    [...imports, exportDefault] as any,
     SlimeProgramSourceType.module
   )
 }
