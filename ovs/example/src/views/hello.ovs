@@ -3,7 +3,7 @@ import { h, ref } from 'vue'
 // OVS 示例 - #{} 不渲染块演示
 
 // 创建响应式计数器
-export const count = ref(0)
+const count = ref(0)
 
 // 每秒自增
 setInterval(() => {
@@ -43,7 +43,7 @@ ovsView InfoBox ({props}) : div {
 }
 
 // 主界面
-export default div {
+div {
 
   count.value
   // 页面标题
