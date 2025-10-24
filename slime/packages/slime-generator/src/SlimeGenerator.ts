@@ -398,8 +398,17 @@ export default class SlimeGenerator {
     
     // 输出函数体
     if (node.expression && node.body.type !== SlimeAstType.BlockStatement) {
-      // 表达式形式：x => x * 2
-      this.generatorNode(node.body)
+      // 表达式形式：x => x * 2 或 x => ({ key: value })
+      
+      // ✅ 关键修复：如果body是ObjectExpression，需要加括号
+      // 因为 { } 会被解析为函数体块，而不是对象字面量
+      if (node.body.type === SlimeAstType.ObjectExpression) {
+        this.addLParen()
+        this.generatorNode(node.body)
+        this.addRParen()
+      } else {
+        this.generatorNode(node.body)
+      }
     } else {
       // 块语句形式：x => { return x * 2 }
       this.generatorNode(node.body)
@@ -465,6 +474,13 @@ export default class SlimeGenerator {
       }
     })
     this.addRBrace()
+  }
+
+  private static generatorParenthesizedExpression(node: any) {
+    // 括号表达式：(expression)
+    this.addLParen()
+    this.generatorNode(node.expression)
+    this.addRParen()
   }
 
   private static generatorPrivateIdentifier(node: SlimePrivateIdentifier) {
@@ -745,6 +761,8 @@ export default class SlimeGenerator {
       this.generatorArrayExpression(node as SlimeArrayExpression)
     } else if (node.type === SlimeAstType.ObjectExpression) {
       this.generatorObjectExpression(node as SlimeObjectExpression)
+    } else if (node.type === SlimeAstType.ParenthesizedExpression) {
+      this.generatorParenthesizedExpression(node as any)
     } else if (node.type === SlimeAstType.Property) {
       this.generatorProperty(node as SlimeProperty)
 

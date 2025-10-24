@@ -2493,7 +2493,9 @@ export class SlimeCstToAst {
       // 处理括号表达式：( Expression )
       // 结构：children[0]=LParen, children[1]=Expression, children[2]=RParen
       const expressionCst = first.children[1]
-      return this.createExpressionAst(expressionCst)
+      const innerExpression = this.createExpressionAst(expressionCst)
+      // 创建 ParenthesizedExpression 节点，保留括号信息
+      return SlimeAstUtil.createParenthesizedExpression(innerExpression, first.loc)
     } else if (first.name === Es6Parser.prototype.TemplateLiteral.name) {
       // 处理模板字符串
       return this.createTemplateLiteralAst(first)

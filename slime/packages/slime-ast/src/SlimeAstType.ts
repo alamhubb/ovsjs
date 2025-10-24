@@ -40,6 +40,7 @@ export enum SlimeAstType {
     BinaryExpression = 'BinaryExpression', // 二元运算表达式（+, -, *, / 等）
     UnaryExpression = 'UnaryExpression', // 一元运算表达式（!, +, -, ~, typeof, void, delete）
     UpdateExpression = 'UpdateExpression', // 更新表达式（++, --）
+    ParenthesizedExpression = 'ParenthesizedExpression', // 括号表达式 (expr)
     VariableDeclarator = 'VariableDeclarator', // 变量声明中的单个声明项
     NumericLiteral = 'NumericLiteral', // 数字字面量
     StringLiteral = 'StringLiteral', // 字符串字面量

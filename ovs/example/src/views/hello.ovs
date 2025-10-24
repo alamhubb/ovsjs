@@ -1,18 +1,21 @@
-import { h, ref, reactive } from 'vue'
+import { h, ref, computed } from 'vue'
 
-// 创建响应式计数器
 const count = ref(0)
-// 使用 reactive 创建响应式样式对象
-const colors = ['red','green','blue','orange','purple']
-const style = reactive({ color: colors[0] })
-let colorIndex = 0
 
 setInterval(() => {
   count.value++
+  console.log('计数器：', count.value)
+}, 1000)
 
-   colorIndex = count.value % colors.length
+const colors = ['red','green','blue','orange','purple']
+const colorIndex = ref(0)
 
-   style.color = colors[colorIndex]
+// 使用 computed 计算当前样式
+const style = computed(() => ({ color: colors[colorIndex.value] }))
+
+// 每秒切换颜色
+setInterval(() => {
+  colorIndex.value = (colorIndex.value + 1) % colors.length
 }, 1000)
 
 div({style: style}) {

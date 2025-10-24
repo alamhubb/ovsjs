@@ -228,6 +228,14 @@ class SlimeAst {
     })
   }
 
+  createParenthesizedExpression(expression: SlimeExpression, loc?: SubhutiSourceLocation): any {
+    return this.commonLocType({
+      type: SlimeAstType.ParenthesizedExpression,
+      expression: expression,
+      loc: loc
+    })
+  }
+
   createClassExpression(id?: SlimeIdentifier | null, superClass?: SlimeExpression | null, body?: SlimeClassBody, loc?: SubhutiSourceLocation): SlimeClassExpression {
     return this.commonLocType({
       type: SlimeAstType.ClassExpression,  // 节点类型

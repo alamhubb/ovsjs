@@ -308,7 +308,9 @@ export type SlimeExpression =
   SlimeMetaProperty |
   SlimeNewExpression |
   SlimeObjectExpression |
+  SlimeParenthesizedExpression |
   SlimeSequenceExpression |
+  SlimeSpreadElement |
   SlimeTaggedTemplateExpression |
   SlimeTemplateLiteral |
   SlimeThisExpression |
@@ -384,6 +386,11 @@ export interface SlimeBinaryExpression extends SlimeBaseNode {
   operator: BinaryOperator;
   left: SlimeExpression | SlimePrivateIdentifier;
   right: SlimeExpression;
+}
+
+export interface SlimeParenthesizedExpression extends SlimeBaseNode {
+  type: "ParenthesizedExpression";
+  expression: SlimeExpression;
 }
 
 // Expression 相关接口继续
