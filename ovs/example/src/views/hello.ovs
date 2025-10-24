@@ -44,7 +44,7 @@ ovsView InfoBox ({props}) : div {
 
 // 主界面
 div {
-  count.value
+  count
   // 页面标题
   h1 { appName }
   
