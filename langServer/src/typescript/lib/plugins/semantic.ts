@@ -849,7 +849,7 @@ export function create(
         },
 
         async provideDocumentSemanticTokens(document, range, legend, token) {
-
+          LogUtil.log('chufa  provideDocumentSemanticTokens')
           const uri = URI.parse(document.uri);
 
           if (!isSemanticDocument(uri, document)) {

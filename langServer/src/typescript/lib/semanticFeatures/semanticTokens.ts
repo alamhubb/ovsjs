@@ -8,6 +8,8 @@ import {LogUtil} from "../../../logutil";
 export function register(ts: typeof import('typescript'), ctx: SharedContext) {
     return (uri: URI, document: TextDocument, range: vscode.Range, legend: vscode.SemanticTokensLegend) => {
 
+        console.log('chufale tokens de shiyan ')
+
         const fileName = ctx.uriToFileName(uri);
 
 
@@ -73,6 +75,10 @@ export function register(ts: typeof import('typescript'), ctx: SharedContext) {
                 tokens.push([line, startCharacter, endCharacter - startCharacter, serverToken, serverTokenModifiers]);
             }
         }
+
+        LogUtil.log('反悔了tokens')
+        LogUtil.log(tokens)
+
         return tokens;
 
         function tsTokenTypeToServerTokenType(tokenType: number) {
