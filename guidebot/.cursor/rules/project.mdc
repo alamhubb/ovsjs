@@ -1,0 +1,268 @@
+# GuideBot 项目
+
+## 项目定位
+**GuideBot** 是一个使用 OVS（Object-oriented View Syntax）语法构建的 AI 驱动的网站开发工具 UI 演示项目。
+
+**项目类型：** 完整的 Web 应用示例（展示 OVS 语法的实际应用）
+
+**核心目标：**
+- 展示 OVS 语法在复杂应用中的使用
+- 演示如何用 OVS 构建交互式 UI
+- 提供 OVS class 组件的最佳实践参考
+
+---
+
+## 当前阶段
+`STAGE_4_OPTIMIZATION` - 功能完善、优化体验
+
+---
+
+## 功能清单
+
+### 已实现功能
+- ✅ 三栏自适应布局（对话区 + 预览区 + 文档区）
+- ✅ 任务管理功能（添加、完成任务）
+- ✅ 响应式数据绑定
+- ✅ OVS class 组件语法演示
+- ✅ 事件处理（onClick、onInput、onKeypress）
+- ✅ 列表渲染（tasks.map）
+- ✅ 条件样式（动态 class）
+
+### 待添加功能
+- ⏳ 删除任务功能
+- ⏳ 任务分类
+- ⏳ 搜索过滤
+- ⏳ 数据持久化（localStorage）
+- ⏳ 主题切换
+- ⏳ 移动端适配
+
+---
+
+## 技术栈
+
+### 核心技术
+- **OVS** - Object-oriented View Syntax（自定义语法）
+- **Vue 3** - 渐进式 JavaScript 框架
+- **Vite** - 下一代前端构建工具
+- **TypeScript** - JavaScript 的超集
+
+### 开发工具
+- Vite Plugin OVS - 处理 .ovs 文件编译
+- Vue DevTools - 调试工具
+
+---
+
+## 项目结构
+
+```
+guidebot/
+├── .cursor/rules/
+│   └── project.mdc          # 项目文档（本文件）
+├── src/
+│   ├── views/
+│   │   └── GuideBot.ovs     # 主应用组件（OVS 语法）
+│   ├── main.ts              # 应用入口
+│   └── style.css            # 样式文件
+├── index.html               # HTML 模板
+├── vite.config.ts           # Vite 配置（包含 OVS 插件）
+├── package.json             # 项目配置
+└── README.md                # 用户指南
+```
+
+---
+
+## 核心实现
+
+### GuideBot 组件架构
+
+**文件：** `src/views/GuideBot.ovs`
+
+```javascript
+export class GuideBot {
+    // 构造函数（OVS 兼容性要求）
+    constructor() { }
+    
+    // 数据初始化
+    initData() {
+        this.projectName = '任务管理工具'
+        this.messages = [...]
+        this.tasks = [...]
+        this.newTaskInput = ''
+        this.chatInput = ''
+        this.initialized = true
+    }
+    
+    // 业务方法
+    addTask() { }
+    toggleTask(task) { }
+    
+    // 渲染方法（OVS 语法）
+    render() {
+        return div({ class: 'container' }) {
+            // 三栏布局
+            div({ class: 'chat-panel' }) { }
+            div({ class: 'preview-panel' }) { }
+            div({ class: 'doc-panel' }) { }
+        }
+    }
+}
+```
+
+### OVS 语法特性展示
+
+**1. 嵌套结构**
+```javascript
+div({ class: 'container' }) {
+    div({ class: 'panel' }) {
+        h1 { 'GuideBot' }
+        p { '内容' }
+    }
+}
+```
+
+**2. 属性绑定**
+```javascript
+input({
+    type: 'text',
+    value: this.newTaskInput,
+    onInput: (e) => this.newTaskInput = e.target.value
+})
+```
+
+**3. 列表渲染**
+```javascript
+this.tasks.map(task =>
+    div({ class: 'task-item', key: task.id }) {
+        span { task.title }
+    }
+)
+```
+
+**4. 条件样式**
+```javascript
+div({
+    class: `task-item${task.completed ? ' completed' : ''}`
+}) { }
+```
+
+### Vite 配置
+
+**文件：** `vite.config.ts`
+
+```typescript
+import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+import vitePluginOvs from '../ovs/src/index.ts'
+
+export default defineConfig({
+  plugins: [
+    vue(),
+    vitePluginOvs()  // 启用 OVS 支持
+  ],
+  esbuild: {
+    target: 'es2022'
+  }
+})
+```
+
+---
+
+## 开发指南
+
+### 本地开发
+
+```bash
+# 安装依赖（在主项目根目录）
+npm install
+
+# 进入 guidebot 目录
+cd guidebot
+
+# 启动开发服务器
+npm run dev
+
+# 访问 http://localhost:5173/
+```
+
+### 构建生产版本
+
+```bash
+npm run build
+```
+
+### 预览生产构建
+
+```bash
+npm run preview
+```
+
+---
+
+## 学习要点
+
+### 1. OVS Class 组件
+- 使用 class 封装组件逻辑
+- `constructor()` - 必需（OVS 兼容性）
+- `initData()` - 数据初始化
+- `render()` - 返回 OVS 语法的 UI 结构
+
+### 2. 响应式数据
+- Vue 3 响应式系统自动追踪数据变化
+- 直接修改 `this.xxx` 即可触发 UI 更新
+- 无需手动调用 `setState` 或 `forceUpdate`
+
+### 3. 事件处理
+- `onClick: () => this.method()`
+- `onInput: (e) => this.property = e.target.value`
+- `onKeypress: (e) => e.key === 'Enter' && this.method()`
+
+### 4. 布局设计
+- 三栏自适应布局（30% + 50% + 20%）
+- Flexbox 布局
+- 响应式设计
+
+---
+
+## 常见问题
+
+### Q: 如何添加新功能？
+A: 在 `GuideBot` class 中添加方法，然后在 `render()` 中使用 OVS 语法调用。
+
+### Q: 如何修改样式？
+A: 编辑 `src/style.css` 文件。
+
+### Q: 如何调试？
+A: 使用 Vue DevTools 查看组件状态，或在浏览器控制台查看编译后的代码。
+
+---
+
+## 相关文档
+
+### 主项目文档
+- [Test-Volar README](../../README.md) - 主项目说明
+- [OVS 使用指南](../../ovs/docs/USAGE_GUIDE.md) - OVS 语法详解
+- [OVS 设计思考](../../particula/OVS_DESIGN_THINKING.md) - 设计理念
+
+### GuideBot 文档
+- [GuideBot README](../README.md) - 用户指南
+
+---
+
+## 技术债务
+
+### 待优化
+- [ ] 添加 TypeScript 类型定义
+- [ ] 优化大列表渲染性能
+- [ ] 添加错误边界
+- [ ] 改进可访问性（ARIA 属性）
+
+### 待重构
+- [ ] 拆分大组件为子组件
+- [ ] 提取可复用的 UI 组件
+- [ ] 状态管理优化（考虑 Pinia）
+
+---
+
+**项目状态：** 演示可用，功能完善中
+
+**最后更新：** 2025-10-29
