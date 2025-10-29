@@ -6,6 +6,7 @@
     "ovs",
     "slime",
     "slime/packages/*",
+    "packages/*",
     "subhuti",
     "packages/*"
   ],
