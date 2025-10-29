@@ -4,7 +4,7 @@ import ts from 'typescript';
 import {URI} from 'vscode-uri';
 import {LogUtil} from "./logutil.js";
 import SlimeCodeMapping from "slime-generator/src/SlimeCodeMapping";
-import {vitePluginOvsTransform} from "ovsjs/src";
+import {vitePluginOvsTransform, vitePluginOvsTransformWithBeautify} from "ovsjs/src";
 
 export const ovsLanguagePlugin: LanguagePlugin<URI> = {
   getLanguageId(uri) {
@@ -110,8 +110,8 @@ export class OvsVirtualCode implements VirtualCode {
     let mapping = []
     try {
       LogUtil.log('3333')
-      // 使用 js-beautify 格式化（同步）
-      const res = vitePluginOvsTransform(styleText, true)
+      // 使用带格式化的同步方法（保持 source map 准确）
+      const res = vitePluginOvsTransformWithBeautify(styleText)
       newCode = res.code
       mapping = res.mapping
     } catch (e: any) {

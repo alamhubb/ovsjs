@@ -260,7 +260,7 @@ function runTest(testCase: TestCase) {
 
   try {
     // 编译代码
-    const result = vitePluginOvsTransform(testCase.code, false)
+    const result = vitePluginOvsTransform(testCase.code)
 
     // 显示映射
     visualizeMapping(testCase.code, result)
