@@ -550,4 +550,3 @@ This project is part of the OVS ecosystem and follows the main project's license
   Made with ❤️ for intelligent code assistance
 </p>
 
-
