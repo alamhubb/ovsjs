@@ -207,6 +207,60 @@ alwaysApply: true
 **原则：** 失败=功能缺失修复代码 | 拆分测试 | 单文件执行 | >10秒用进度监控
 **命名：** 01-功能名.扩展名（编号两位数，简单→复杂）
 
+## 渐进式测试方法（重要）
+
+**适用场景：** 调试复杂问题、验证修复、Source Map验证
+
+**核心原则：**
+1. **分层验证** - 从最简单场景到复杂场景，逐步增加复杂度
+2. **先测原始** - 先验证未修改的基础功能是否正确，再测试修改后的
+3. **单元隔离** - 不启动完整服务，直接测试核心函数
+4. **精确对比** - 创建专门测试文件，输出详细的对比信息
+
+**测试流程：**
+```
+1. 创建独立测试文件（test-xxx.ts）
+2. 导入核心函数（不要完整系统）
+3. 准备最简单输入 → 验证基础功能
+4. 逐步增加复杂度 → 定位问题边界
+5. 验证修复 → 对比修复前后
+```
+
+**示例：Source Map 测试**
+```typescript
+// 步骤 1：验证原始 mapping（未格式化）
+const result1 = generateCode(simpleInput);
+verifyMapping(result1.code, result1.mapping);  // 先确认基础正确
+
+// 步骤 2：验证修改后（格式化）
+const result2 = generateCodeWithFormat(simpleInput);
+verifyMapping(result2.code, result2.mapping);  // 再验证修改正确
+
+// 步骤 3：逐步增加复杂度
+const result3 = generateCodeWithFormat(complexInput);
+verifyMapping(result3.code, result3.mapping);
+```
+
+**检查清单：**
+- [ ] 测试文件独立（不依赖服务启动）
+- [ ] 从简单到复杂（单语句 → 多语句 → 用户问题）
+- [ ] 先测原始后测修改（确保基础正确）
+- [ ] 输出详细信息（位置、字符、期望vs实际）
+- [ ] 自动化验证（不靠人眼，用代码检查）
+
+**避免：**
+- ❌ 直接测试复杂场景（问题难定位）
+- ❌ 修改后立即测试（不知道原始是否正确）
+- ❌ 依赖完整服务（启动慢、干扰多）
+- ❌ 只看输出不验证（容易漏掉问题）
+
+**案例：本次 UpdateExpression Bug**
+- ✅ 创建 test-count-mapping.ts（独立测试）
+- ✅ 先测简单代码（let a=1;let b=2）→ 发现正确
+- ✅ 再测复杂代码（count.value++）→ 定位问题
+- ✅ 输出详细信息（位置对比、差值计算）
+- ✅ 快速定位：差值 -2 = operator.length
+
 ## 任务执行
 **适用所有任务：** 评估分解→创建todolist→逐步执行→进度输出→总结
 
