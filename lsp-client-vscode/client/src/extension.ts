@@ -5,6 +5,7 @@
 
 import * as path from 'path';
 import { workspace, ExtensionContext } from 'vscode';
+import { createLabsInfo } from '@volar/vscode';
 
 import {
   LanguageClient,
@@ -56,6 +57,11 @@ export function activate(context: ExtensionContext) {
 
   // Start the client. This will also launch the server
   client.start();
+
+  // Register with Volar Labs
+  const labsInfo = createLabsInfo();
+  labsInfo.addLanguageClient(client);
+  return labsInfo.extensionExports;
 }
 
 export function deactivate(): Thenable<void> | undefined {
