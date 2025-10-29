@@ -35,6 +35,11 @@
       }
     ],
     "grammars": [
+      {
+        "language": "ovs",
+        "scopeName": "source.ovs",
+        "path": "./syntaxes/ovs.tmLanguage.json"
+      }
     ],
     "configuration": {
       "type": "object",
