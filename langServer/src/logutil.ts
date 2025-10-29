@@ -1,7 +1,6 @@
 import * as fs from 'fs'
 import * as path from 'path'
 import {fileURLToPath} from 'url'
-import JsonUtil from "./utils/JsonUtil";
 
 export class LogUtil {
     private static logFilePath: string
@@ -18,20 +17,21 @@ export class LogUtil {
         }
     }
 
-    static log(data?: any, msg = null) {
+    static log(...datas) {
         // JsonUtil.log(data)
         try {
             const timestamp = new Date().toISOString()
             let logMessage = `\n[${timestamp}]`
 
+          for (const data of datas) {
             if (data !== undefined) {
-                if (typeof data === 'object') {
-                    logMessage += '\n' + JSON.stringify(data, null, 2)
-                } else {
-                    logMessage += '\n' + String(data)
-                }
+              if (typeof data === 'object') {
+                logMessage += '\n' + JSON.stringify(data, null, 2)
+              } else {
+                logMessage += '\n' + String(data)
+              }
             }
-
+          }
             logMessage += '\n' + '='.repeat(80) + '\n'
 
             fs.appendFileSync(this.logFilePath, logMessage)

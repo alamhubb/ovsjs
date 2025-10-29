@@ -187,8 +187,8 @@ private class FooLspServerDescriptor(project: Project) : LspServerDescriptor(pro
         println("Current PATH: $path")
         val cmd = GeneralCommandLine(
             "tsx.cmd",
-            "D:/project/qkyproject/ovs-lsp-all/test-volar-copy/langServer/src/ovsserver.ts",
-//            "D:/project/qkyproject/test-volar/langServer/src/ovsserver.ts",
+//            "D:/project/qkyproject/ovs-lsp-all/test-volar-copy/langServer/src/ovsserver.ts",
+            "D:/project/qkyproject/test-volar/langServer/src/ovsserver.ts",
             "--stdio"
         )
 //        cmd.charset = Charsets.UTF_8

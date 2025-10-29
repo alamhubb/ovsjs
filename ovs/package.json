@@ -11,7 +11,9 @@
     "test:unit": "tsx tests/run-tests.ts unit",
     "test:integration": "tsx tests/run-tests.ts integration",
     "test:regression": "tsx tests/run-tests.ts regression",
-    "test:watch": "tsx --watch tests/run-all-tests.ts"
+    "test:watch": "tsx --watch tests/run-all-tests.ts",
+    "test:semantic": "tsx test-semantic-tokens.ts",
+    "debug:let": "tsx debug-let-token.ts"
   },
   "homepage": "https://github.com/alamhubb/ovs",
   "repository": {

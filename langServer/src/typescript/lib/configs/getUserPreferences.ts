@@ -39,15 +39,15 @@ export async function getUserPreferences(
 		allowIncompleteCompletions: true,
 		displayPartsForJSDoc: true,
 
-		// inlay hints
-		includeInlayParameterNameHints: getInlayParameterNameHintsPreference(config),
-		includeInlayParameterNameHintsWhenArgumentMatchesName: !(config.inlayHints?.parameterNames?.suppressWhenArgumentMatchesName ?? true),
-		includeInlayFunctionParameterTypeHints: config.inlayHints?.parameterTypes?.enabled ?? false,
-		includeInlayVariableTypeHints: config.inlayHints?.variableTypes?.enabled ?? false,
-		includeInlayVariableTypeHintsWhenTypeMatchesName: !(config.inlayHints?.variableTypes?.suppressWhenTypeMatchesName ?? true),
-		includeInlayPropertyDeclarationTypeHints: config.inlayHints?.propertyDeclarationTypes?.enabled ?? false,
-		includeInlayFunctionLikeReturnTypeHints: config.inlayHints?.functionLikeReturnTypes?.enabled ?? false,
-		includeInlayEnumMemberValueHints: config.inlayHints?.enumMemberValues?.enabled ?? false,
+	// inlay hints（默认启用所有类型提示）
+	includeInlayParameterNameHints: getInlayParameterNameHintsPreference(config),
+	includeInlayParameterNameHintsWhenArgumentMatchesName: !(config.inlayHints?.parameterNames?.suppressWhenArgumentMatchesName ?? true),
+	includeInlayFunctionParameterTypeHints: config.inlayHints?.parameterTypes?.enabled ?? true,  // 改为 true
+	includeInlayVariableTypeHints: config.inlayHints?.variableTypes?.enabled ?? true,  // 改为 true（关键！）
+	includeInlayVariableTypeHintsWhenTypeMatchesName: !(config.inlayHints?.variableTypes?.suppressWhenTypeMatchesName ?? true),
+	includeInlayPropertyDeclarationTypeHints: config.inlayHints?.propertyDeclarationTypes?.enabled ?? true,  // 改为 true
+	includeInlayFunctionLikeReturnTypeHints: config.inlayHints?.functionLikeReturnTypes?.enabled ?? true,  // 改为 true
+	includeInlayEnumMemberValueHints: config.inlayHints?.enumMemberValues?.enabled ?? true,  // 改为 true
 
 		// https://github.com/microsoft/vscode/blob/main/extensions/typescript-language-features/src/languageFeatures/completions.ts#L728-L730
 		includeCompletionsForModuleExports: config.suggest?.autoImports ?? true,

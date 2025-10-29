@@ -1,20 +1,13 @@
-import * as kit from '@volar/kit';
 import {ovsLanguagePlugin} from "./OvsLanguagePlugin.ts";
 import {createTypeScriptServices} from "./typescript";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import {loadTsdkByPath} from "@volar/language-server/node";
-import {createLanguage, createUriMap, ProjectContext} from "@volar/kit";
 import * as ts from "typescript";
-import {asFileName, asPosix, asUri} from "@volar/kit/lib/utils.ts";
 import {createLanguageServiceHost, resolveFileLanguageId, TypeScriptProjectHost} from "@volar/typescript";
-import {createServiceEnvironment} from "@volar/kit/lib/createServiceEnvironment.ts";
-import {arrayItemsEqual} from "@volar/typescript/lib/quickstart/createLanguageServicePlugin.ts";
-import {getUserPreferences} from "./typescript/lib/configs/getUserPreferences.ts";
-import type {SharedContext} from "./typescript/lib/semanticFeatures/types.ts";
 import {GetCompletionsAtPositionOptions} from "typescript";
-import {safeCall} from "./typescript/lib/shared.ts";
-import {Testkitlog} from "./testkitlog.ts";
+import {createUriMap} from "@volar/language-service";
+import {createLanguage} from "@volar/language-core";
 
 
 const documentRegistries: [boolean, string, ts.DocumentRegistry][] = [];

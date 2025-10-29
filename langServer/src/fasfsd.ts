@@ -1,3 +1,2 @@
-if (true){
-  123
-}
+let a = 1
+let b = a

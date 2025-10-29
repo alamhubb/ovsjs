@@ -1,25 +1,235 @@
 
-[2025-10-25T04:05:42.377Z]
+[2025-10-29T09:16:27.357Z]
 createTypeScriptServices
 ================================================================================
 
-[2025-10-25T04:05:42.384Z]
+[2025-10-29T09:16:27.363Z]
 getLocalTsdkPath
 ================================================================================
 
-[2025-10-25T04:05:42.384Z]
+[2025-10-29T09:16:27.363Z]
 onInitialize
 ================================================================================
 
-[2025-10-25T04:05:42.389Z]
+[2025-10-29T09:16:27.367Z]
 params
 ================================================================================
 
-[2025-10-25T04:05:42.644Z]
+[2025-10-29T09:16:27.368Z]
+{
+  "processId": null,
+  "rootUri": null,
+  "capabilities": {
+    "workspace": {
+      "applyEdit": true,
+      "workspaceEdit": {
+        "documentChanges": true,
+        "resourceOperations": [
+          "create"
+        ],
+        "failureHandling": "abort",
+        "normalizesLineEndings": true
+      },
+      "didChangeWatchedFiles": {
+        "relativePatternSupport": true,
+        "dynamicRegistration": true
+      },
+      "executeCommand": {
+        "dynamicRegistration": false
+      },
+      "workspaceFolders": true,
+      "configuration": true,
+      "semanticTokens": {
+        "refreshSupport": true
+      }
+    },
+    "textDocument": {
+      "synchronization": {
+        "willSave": false,
+        "willSaveWaitUntil": false,
+        "didSave": true,
+        "dynamicRegistration": false
+      },
+      "completion": {
+        "completionItem": {
+          "snippetSupport": true,
+          "documentationFormat": [
+            "markdown",
+            "plaintext"
+          ],
+          "deprecatedSupport": true,
+          "tagSupport": {
+            "valueSet": [
+              1
+            ]
+          },
+          "insertReplaceSupport": true,
+          "resolveSupport": {
+            "properties": [
+              "documentation"
+            ]
+          },
+          "labelDetailsSupport": true
+        },
+        "completionItemKind": {
+          "valueSet": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25
+          ]
+        },
+        "completionList": {
+          "itemDefaults": [
+            "commitCharacters",
+            "editRange",
+            "insertTextFormat",
+            "insertTextMode",
+            "data"
+          ]
+        }
+      },
+      "hover": {
+        "contentFormat": [
+          "markdown",
+          "plaintext"
+        ]
+      },
+      "references": {
+        "dynamicRegistration": true
+      },
+      "formatting": {
+        "dynamicRegistration": true
+      },
+      "definition": {
+        "linkSupport": true
+      },
+      "typeDefinition": {
+        "linkSupport": true
+      },
+      "codeAction": {
+        "codeActionLiteralSupport": {
+          "codeActionKind": {
+            "valueSet": [
+              "quickfix",
+              "",
+              "source",
+              "refactor"
+            ]
+          }
+        },
+        "disabledSupport": true,
+        "dataSupport": true,
+        "resolveSupport": {
+          "properties": [
+            "edit"
+          ]
+        }
+      },
+      "documentLink": {
+        "tooltipSupport": true,
+        "dynamicRegistration": true
+      },
+      "colorProvider": {
+        "dynamicRegistration": true
+      },
+      "publishDiagnostics": {
+        "tagSupport": {
+          "valueSet": [
+            1,
+            2
+          ]
+        },
+        "versionSupport": true,
+        "dataSupport": true
+      },
+      "semanticTokens": {
+        "requests": {
+          "range": false,
+          "full": {
+            "delta": false
+          }
+        },
+        "tokenTypes": [
+          "namespace",
+          "class",
+          "enum",
+          "interface",
+          "typeParameter",
+          "type",
+          "parameter",
+          "variable",
+          "property",
+          "enumMember",
+          "function",
+          "method"
+        ],
+        "tokenModifiers": [
+          "declaration",
+          "readonly",
+          "static",
+          "async",
+          "defaultLibrary",
+          "local"
+        ],
+        "formats": [
+          "relative"
+        ],
+        "overlappingTokenSupport": true,
+        "multilineTokenSupport": true,
+        "serverCancelSupport": false
+      },
+      "diagnostic": {
+        "dynamicRegistration": true
+      }
+    },
+    "window": {
+      "showMessage": {},
+      "showDocument": {
+        "support": true
+      }
+    },
+    "general": {
+      "staleRequestSupport": {
+        "cancel": true,
+        "retryOnContentModified": []
+      }
+    }
+  },
+  "clientInfo": {
+    "name": "IntelliJ IDEA Ultimate Edition",
+    "version": "252.25557.131"
+  },
+  "workspaceFolders": []
+}
+================================================================================
+
+[2025-10-29T09:16:27.646Z]
 res.capabilities.completionProvider.triggerCharacters
 ================================================================================
 
-[2025-10-25T04:05:42.644Z]
+[2025-10-29T09:16:27.646Z]
 {
   "textDocumentSync": 2,
   "workspace": {
@@ -136,3294 +346,212 @@ res.capabilities.completionProvider.triggerCharacters
 }
 ================================================================================
 
-[2025-10-25T04:05:42.985Z]
+[2025-10-29T09:16:27.646Z]
+✅✅✅ InlayHint Provider IS DECLARED ✅✅✅
+================================================================================
+
+[2025-10-29T09:16:27.646Z]
+{}
+================================================================================
+
+[2025-10-29T09:16:27.995Z]
 styleTextstyleTextstyleTextstyleText
 ================================================================================
 
-[2025-10-25T04:05:42.985Z]
+[2025-10-29T09:16:27.996Z]
 3333
 ================================================================================
 
-[2025-10-25T04:05:42.989Z]
-44444
-================================================================================
-
-[2025-10-25T04:05:43.006Z]
-5555
-================================================================================
-
-[2025-10-25T04:05:43.011Z]
-56666
-================================================================================
-
-[2025-10-25T04:05:43.012Z]
-57777
-================================================================================
-
-[2025-10-25T04:05:43.013Z]
-6666
-================================================================================
-
-[2025-10-25T04:06:53.837Z]
-createTypeScriptServices
-================================================================================
-
-[2025-10-25T04:06:53.843Z]
-getLocalTsdkPath
-================================================================================
-
-[2025-10-25T04:06:53.844Z]
-onInitialize
-================================================================================
-
-[2025-10-25T04:06:53.848Z]
-params
-================================================================================
-
-[2025-10-25T04:06:54.113Z]
-res.capabilities.completionProvider.triggerCharacters
-================================================================================
-
-[2025-10-25T04:06:54.113Z]
-{
-  "textDocumentSync": 2,
-  "workspace": {
-    "workspaceFolders": {
-      "supported": true,
-      "changeNotifications": true
-    }
-  },
-  "selectionRangeProvider": true,
-  "foldingRangeProvider": true,
-  "documentSymbolProvider": true,
-  "documentFormattingProvider": true,
-  "documentRangeFormattingProvider": true,
-  "referencesProvider": true,
-  "implementationProvider": true,
-  "definitionProvider": true,
-  "typeDefinitionProvider": true,
-  "callHierarchyProvider": true,
-  "hoverProvider": true,
-  "documentHighlightProvider": true,
-  "workspaceSymbolProvider": {},
-  "renameProvider": {
-    "prepareProvider": true
-  },
-  "inlayHintProvider": {},
-  "signatureHelpProvider": {
-    "triggerCharacters": [
-      "(",
-      ",",
-      "<"
-    ],
-    "retriggerCharacters": [
-      ")"
-    ]
-  },
-  "completionProvider": {
-    "triggerCharacters": [
-      ".",
-      "\"",
-      "'",
-      "`",
-      "/",
-      "<",
-      "@",
-      "#",
-      "*"
-    ],
-    "resolveProvider": true
-  },
-  "semanticTokensProvider": {
-    "full": true,
-    "range": true,
-    "legend": {
-      "tokenTypes": [
-        "namespace",
-        "class",
-        "enum",
-        "interface",
-        "typeParameter",
-        "type",
-        "parameter",
-        "variable",
-        "property",
-        "enumMember",
-        "function",
-        "method"
-      ],
-      "tokenModifiers": [
-        "declaration",
-        "readonly",
-        "static",
-        "async",
-        "defaultLibrary",
-        "local"
-      ]
-    }
-  },
-  "codeActionProvider": {
-    "codeActionKinds": [
-      "",
-      "quickfix",
-      "refactor",
-      "refactor.extract",
-      "refactor.inline",
-      "refactor.rewrite",
-      "source",
-      "source.fixAll",
-      "source.organizeImports"
-    ],
-    "resolveProvider": true
-  },
-  "documentOnTypeFormattingProvider": {
-    "firstTriggerCharacter": ";",
-    "moreTriggerCharacter": [
-      "}",
-      "\n"
-    ]
-  },
-  "experimental": {
-    "autoInsertionProvider": {
-      "triggerCharacters": [
-        ">"
-      ],
-      "configurationSections": [
-        [
-          "javascript.autoClosingTags",
-          "typescript.autoClosingTags"
-        ]
-      ]
-    },
-    "fileRenameEditsProvider": true,
-    "fileReferencesProvider": true
-  }
-}
-================================================================================
-
-[2025-10-25T04:06:54.458Z]
-styleTextstyleTextstyleTextstyleText
-================================================================================
-
-[2025-10-25T04:06:54.458Z]
-3333
-================================================================================
-
-[2025-10-25T04:06:54.461Z]
-44444
-================================================================================
-
-[2025-10-25T04:06:54.472Z]
-5555
-================================================================================
-
-[2025-10-25T04:06:54.475Z]
-56666
-================================================================================
-
-[2025-10-25T04:06:54.475Z]
-57777
-================================================================================
-
-[2025-10-25T04:06:54.476Z]
-6666
-================================================================================
-
-[2025-10-25T04:06:54.478Z]
-68888
-================================================================================
-
-[2025-10-25T04:06:54.479Z]
-69999
-================================================================================
-
-[2025-10-25T04:08:04.624Z]
-createTypeScriptServices
-================================================================================
-
-[2025-10-25T04:08:04.631Z]
-getLocalTsdkPath
-================================================================================
-
-[2025-10-25T04:08:04.631Z]
-onInitialize
-================================================================================
-
-[2025-10-25T04:08:04.636Z]
-params
-================================================================================
-
-[2025-10-25T04:08:04.898Z]
-res.capabilities.completionProvider.triggerCharacters
-================================================================================
-
-[2025-10-25T04:08:04.899Z]
-{
-  "textDocumentSync": 2,
-  "workspace": {
-    "workspaceFolders": {
-      "supported": true,
-      "changeNotifications": true
-    }
-  },
-  "selectionRangeProvider": true,
-  "foldingRangeProvider": true,
-  "documentSymbolProvider": true,
-  "documentFormattingProvider": true,
-  "documentRangeFormattingProvider": true,
-  "referencesProvider": true,
-  "implementationProvider": true,
-  "definitionProvider": true,
-  "typeDefinitionProvider": true,
-  "callHierarchyProvider": true,
-  "hoverProvider": true,
-  "documentHighlightProvider": true,
-  "workspaceSymbolProvider": {},
-  "renameProvider": {
-    "prepareProvider": true
-  },
-  "inlayHintProvider": {},
-  "signatureHelpProvider": {
-    "triggerCharacters": [
-      "(",
-      ",",
-      "<"
-    ],
-    "retriggerCharacters": [
-      ")"
-    ]
-  },
-  "completionProvider": {
-    "triggerCharacters": [
-      ".",
-      "\"",
-      "'",
-      "`",
-      "/",
-      "<",
-      "@",
-      "#",
-      "*"
-    ],
-    "resolveProvider": true
-  },
-  "semanticTokensProvider": {
-    "full": true,
-    "range": true,
-    "legend": {
-      "tokenTypes": [
-        "namespace",
-        "class",
-        "enum",
-        "interface",
-        "typeParameter",
-        "type",
-        "parameter",
-        "variable",
-        "property",
-        "enumMember",
-        "function",
-        "method"
-      ],
-      "tokenModifiers": [
-        "declaration",
-        "readonly",
-        "static",
-        "async",
-        "defaultLibrary",
-        "local"
-      ]
-    }
-  },
-  "codeActionProvider": {
-    "codeActionKinds": [
-      "",
-      "quickfix",
-      "refactor",
-      "refactor.extract",
-      "refactor.inline",
-      "refactor.rewrite",
-      "source",
-      "source.fixAll",
-      "source.organizeImports"
-    ],
-    "resolveProvider": true
-  },
-  "documentOnTypeFormattingProvider": {
-    "firstTriggerCharacter": ";",
-    "moreTriggerCharacter": [
-      "}",
-      "\n"
-    ]
-  },
-  "experimental": {
-    "autoInsertionProvider": {
-      "triggerCharacters": [
-        ">"
-      ],
-      "configurationSections": [
-        [
-          "javascript.autoClosingTags",
-          "typescript.autoClosingTags"
-        ]
-      ]
-    },
-    "fileRenameEditsProvider": true,
-    "fileReferencesProvider": true
-  }
-}
-================================================================================
-
-[2025-10-25T04:08:05.249Z]
-styleTextstyleTextstyleTextstyleText
-================================================================================
-
-[2025-10-25T04:08:05.249Z]
-3333
-================================================================================
-
-[2025-10-25T04:08:05.254Z]
-44444
-================================================================================
-
-[2025-10-25T04:08:05.266Z]
-5555
-================================================================================
-
-[2025-10-25T04:08:05.268Z]
-56666
-================================================================================
-
-[2025-10-25T04:08:05.269Z]
-57777
-================================================================================
-
-[2025-10-25T04:08:05.269Z]
-6666
-================================================================================
-
-[2025-10-25T04:08:05.271Z]
-68888
-================================================================================
-
-[2025-10-25T04:08:05.271Z]
-69999
-================================================================================
-
-[2025-10-25T04:15:02.869Z]
-createTypeScriptServices
-================================================================================
-
-[2025-10-25T04:15:02.876Z]
-getLocalTsdkPath
-================================================================================
-
-[2025-10-25T04:15:02.877Z]
-onInitialize
-================================================================================
-
-[2025-10-25T04:15:02.882Z]
-params
-================================================================================
-
-[2025-10-25T04:15:03.145Z]
-res.capabilities.completionProvider.triggerCharacters
-================================================================================
-
-[2025-10-25T04:15:03.145Z]
-{
-  "textDocumentSync": 2,
-  "workspace": {
-    "workspaceFolders": {
-      "supported": true,
-      "changeNotifications": true
-    }
-  },
-  "selectionRangeProvider": true,
-  "foldingRangeProvider": true,
-  "documentSymbolProvider": true,
-  "documentFormattingProvider": true,
-  "documentRangeFormattingProvider": true,
-  "referencesProvider": true,
-  "implementationProvider": true,
-  "definitionProvider": true,
-  "typeDefinitionProvider": true,
-  "callHierarchyProvider": true,
-  "hoverProvider": true,
-  "documentHighlightProvider": true,
-  "workspaceSymbolProvider": {},
-  "renameProvider": {
-    "prepareProvider": true
-  },
-  "inlayHintProvider": {},
-  "signatureHelpProvider": {
-    "triggerCharacters": [
-      "(",
-      ",",
-      "<"
-    ],
-    "retriggerCharacters": [
-      ")"
-    ]
-  },
-  "completionProvider": {
-    "triggerCharacters": [
-      ".",
-      "\"",
-      "'",
-      "`",
-      "/",
-      "<",
-      "@",
-      "#",
-      "*"
-    ],
-    "resolveProvider": true
-  },
-  "semanticTokensProvider": {
-    "full": true,
-    "range": true,
-    "legend": {
-      "tokenTypes": [
-        "namespace",
-        "class",
-        "enum",
-        "interface",
-        "typeParameter",
-        "type",
-        "parameter",
-        "variable",
-        "property",
-        "enumMember",
-        "function",
-        "method"
-      ],
-      "tokenModifiers": [
-        "declaration",
-        "readonly",
-        "static",
-        "async",
-        "defaultLibrary",
-        "local"
-      ]
-    }
-  },
-  "codeActionProvider": {
-    "codeActionKinds": [
-      "",
-      "quickfix",
-      "refactor",
-      "refactor.extract",
-      "refactor.inline",
-      "refactor.rewrite",
-      "source",
-      "source.fixAll",
-      "source.organizeImports"
-    ],
-    "resolveProvider": true
-  },
-  "documentOnTypeFormattingProvider": {
-    "firstTriggerCharacter": ";",
-    "moreTriggerCharacter": [
-      "}",
-      "\n"
-    ]
-  },
-  "experimental": {
-    "autoInsertionProvider": {
-      "triggerCharacters": [
-        ">"
-      ],
-      "configurationSections": [
-        [
-          "javascript.autoClosingTags",
-          "typescript.autoClosingTags"
-        ]
-      ]
-    },
-    "fileRenameEditsProvider": true,
-    "fileReferencesProvider": true
-  }
-}
-================================================================================
-
-[2025-10-25T04:15:03.498Z]
-styleTextstyleTextstyleTextstyleText
-================================================================================
-
-[2025-10-25T04:15:03.498Z]
-3333
-================================================================================
-
-[2025-10-25T04:15:03.502Z]
-44444
-================================================================================
-
-[2025-10-25T04:15:03.516Z]
-5555
-================================================================================
-
-[2025-10-25T04:15:03.520Z]
-56666
-================================================================================
-
-[2025-10-25T04:15:03.521Z]
-57777
-================================================================================
-
-[2025-10-25T04:15:03.521Z]
-6666
-================================================================================
-
-[2025-10-25T04:15:03.523Z]
-68888
-================================================================================
-
-[2025-10-25T04:15:03.523Z]
-69999
-================================================================================
-
-[2025-10-25T04:15:03.524Z]
-import {createReactiveVNode} from '../utils/ReactiveVNode';
-let a = 1;let b = a;let c = b;let d = e;
-================================================================================
-
-[2025-10-25T04:21:53.419Z]
-createTypeScriptServices
-================================================================================
-
-[2025-10-25T04:21:53.425Z]
-getLocalTsdkPath
-================================================================================
-
-[2025-10-25T04:21:53.426Z]
-onInitialize
-================================================================================
-
-[2025-10-25T04:21:53.433Z]
-params
-================================================================================
-
-[2025-10-25T04:21:53.731Z]
-res.capabilities.completionProvider.triggerCharacters
-================================================================================
-
-[2025-10-25T04:21:53.732Z]
-{
-  "textDocumentSync": 2,
-  "workspace": {
-    "workspaceFolders": {
-      "supported": true,
-      "changeNotifications": true
-    }
-  },
-  "selectionRangeProvider": true,
-  "foldingRangeProvider": true,
-  "documentSymbolProvider": true,
-  "documentFormattingProvider": true,
-  "documentRangeFormattingProvider": true,
-  "referencesProvider": true,
-  "implementationProvider": true,
-  "definitionProvider": true,
-  "typeDefinitionProvider": true,
-  "callHierarchyProvider": true,
-  "hoverProvider": true,
-  "documentHighlightProvider": true,
-  "workspaceSymbolProvider": {},
-  "renameProvider": {
-    "prepareProvider": true
-  },
-  "inlayHintProvider": {},
-  "signatureHelpProvider": {
-    "triggerCharacters": [
-      "(",
-      ",",
-      "<"
-    ],
-    "retriggerCharacters": [
-      ")"
-    ]
-  },
-  "completionProvider": {
-    "triggerCharacters": [
-      ".",
-      "\"",
-      "'",
-      "`",
-      "/",
-      "<",
-      "@",
-      "#",
-      "*"
-    ],
-    "resolveProvider": true
-  },
-  "semanticTokensProvider": {
-    "full": true,
-    "range": true,
-    "legend": {
-      "tokenTypes": [
-        "namespace",
-        "class",
-        "enum",
-        "interface",
-        "typeParameter",
-        "type",
-        "parameter",
-        "variable",
-        "property",
-        "enumMember",
-        "function",
-        "method"
-      ],
-      "tokenModifiers": [
-        "declaration",
-        "readonly",
-        "static",
-        "async",
-        "defaultLibrary",
-        "local"
-      ]
-    }
-  },
-  "codeActionProvider": {
-    "codeActionKinds": [
-      "",
-      "quickfix",
-      "refactor",
-      "refactor.extract",
-      "refactor.inline",
-      "refactor.rewrite",
-      "source",
-      "source.fixAll",
-      "source.organizeImports"
-    ],
-    "resolveProvider": true
-  },
-  "documentOnTypeFormattingProvider": {
-    "firstTriggerCharacter": ";",
-    "moreTriggerCharacter": [
-      "}",
-      "\n"
-    ]
-  },
-  "experimental": {
-    "autoInsertionProvider": {
-      "triggerCharacters": [
-        ">"
-      ],
-      "configurationSections": [
-        [
-          "javascript.autoClosingTags",
-          "typescript.autoClosingTags"
-        ]
-      ]
-    },
-    "fileRenameEditsProvider": true,
-    "fileReferencesProvider": true
-  }
-}
-================================================================================
-
-[2025-10-25T04:21:54.038Z]
-styleTextstyleTextstyleTextstyleText
-================================================================================
-
-[2025-10-25T04:21:54.039Z]
-3333
-================================================================================
-
-[2025-10-25T04:21:54.044Z]
-44444
-================================================================================
-
-[2025-10-25T04:21:54.055Z]
-5555
-================================================================================
-
-[2025-10-25T04:21:54.060Z]
-56666
-================================================================================
-
-[2025-10-25T04:21:54.061Z]
-57777
-================================================================================
-
-[2025-10-25T04:21:54.061Z]
-6666
-================================================================================
-
-[2025-10-25T04:21:54.062Z]
-68888
-================================================================================
-
-[2025-10-25T04:21:54.063Z]
-7777
-================================================================================
-
-[2025-10-25T04:25:09.110Z]
-createTypeScriptServices
-================================================================================
-
-[2025-10-25T04:25:09.117Z]
-getLocalTsdkPath
-================================================================================
-
-[2025-10-25T04:25:09.117Z]
-onInitialize
-================================================================================
-
-[2025-10-25T04:25:09.129Z]
-params
-================================================================================
-
-[2025-10-25T04:25:09.435Z]
-res.capabilities.completionProvider.triggerCharacters
-================================================================================
-
-[2025-10-25T04:25:09.436Z]
-{
-  "textDocumentSync": 2,
-  "workspace": {
-    "workspaceFolders": {
-      "supported": true,
-      "changeNotifications": true
-    }
-  },
-  "selectionRangeProvider": true,
-  "foldingRangeProvider": true,
-  "documentSymbolProvider": true,
-  "documentFormattingProvider": true,
-  "documentRangeFormattingProvider": true,
-  "referencesProvider": true,
-  "implementationProvider": true,
-  "definitionProvider": true,
-  "typeDefinitionProvider": true,
-  "callHierarchyProvider": true,
-  "hoverProvider": true,
-  "documentHighlightProvider": true,
-  "workspaceSymbolProvider": {},
-  "renameProvider": {
-    "prepareProvider": true
-  },
-  "inlayHintProvider": {},
-  "signatureHelpProvider": {
-    "triggerCharacters": [
-      "(",
-      ",",
-      "<"
-    ],
-    "retriggerCharacters": [
-      ")"
-    ]
-  },
-  "completionProvider": {
-    "triggerCharacters": [
-      ".",
-      "\"",
-      "'",
-      "`",
-      "/",
-      "<",
-      "@",
-      "#",
-      "*"
-    ],
-    "resolveProvider": true
-  },
-  "semanticTokensProvider": {
-    "full": true,
-    "range": true,
-    "legend": {
-      "tokenTypes": [
-        "namespace",
-        "class",
-        "enum",
-        "interface",
-        "typeParameter",
-        "type",
-        "parameter",
-        "variable",
-        "property",
-        "enumMember",
-        "function",
-        "method"
-      ],
-      "tokenModifiers": [
-        "declaration",
-        "readonly",
-        "static",
-        "async",
-        "defaultLibrary",
-        "local"
-      ]
-    }
-  },
-  "codeActionProvider": {
-    "codeActionKinds": [
-      "",
-      "quickfix",
-      "refactor",
-      "refactor.extract",
-      "refactor.inline",
-      "refactor.rewrite",
-      "source",
-      "source.fixAll",
-      "source.organizeImports"
-    ],
-    "resolveProvider": true
-  },
-  "documentOnTypeFormattingProvider": {
-    "firstTriggerCharacter": ";",
-    "moreTriggerCharacter": [
-      "}",
-      "\n"
-    ]
-  },
-  "experimental": {
-    "autoInsertionProvider": {
-      "triggerCharacters": [
-        ">"
-      ],
-      "configurationSections": [
-        [
-          "javascript.autoClosingTags",
-          "typescript.autoClosingTags"
-        ]
-      ]
-    },
-    "fileRenameEditsProvider": true,
-    "fileReferencesProvider": true
-  }
-}
-================================================================================
-
-[2025-10-25T04:25:09.749Z]
-styleTextstyleTextstyleTextstyleText
-================================================================================
-
-[2025-10-25T04:25:09.750Z]
-3333
-================================================================================
-
-[2025-10-25T04:25:09.754Z]
-44444
-================================================================================
-
-[2025-10-25T04:25:09.766Z]
-5555
-================================================================================
-
-[2025-10-25T04:25:09.769Z]
-56666
-================================================================================
-
-[2025-10-25T04:25:09.769Z]
-57777
-================================================================================
-
-[2025-10-25T04:25:09.770Z]
-6666
-================================================================================
-
-[2025-10-25T04:25:09.771Z]
-68888
-================================================================================
-
-[2025-10-25T04:25:09.771Z]
-7777
-================================================================================
-
-[2025-10-25T04:25:09.772Z]
+[2025-10-29T09:16:28.024Z]
 mappings ascopy mapping
 ================================================================================
 
-[2025-10-25T04:25:09.772Z]
+[2025-10-29T09:16:28.024Z]
 let a = 1
 let b = a
-let c = b
-let d = e
-let e = 
 ================================================================================
 
-[2025-10-25T04:25:09.772Z]
+[2025-10-29T09:16:28.024Z]
 import {createReactiveVNode} from '../utils/ReactiveVNode';
-let a = 1;let b = a;let c = b;let d = e;let e ;
+let a = 1;let b = a;
 ================================================================================
 
-[2025-10-25T04:25:11.096Z]
+[2025-10-29T09:16:28.822Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-29T09:16:28.828Z]
+反悔了tokens
+================================================================================
+
+[2025-10-29T09:16:28.828Z]
+[
+  [
+    1,
+    4,
+    1,
+    7,
+    1
+  ],
+  [
+    1,
+    14,
+    1,
+    7,
+    1
+  ],
+  [
+    1,
+    18,
+    1,
+    7,
+    0
+  ]
+]
+================================================================================
+
+[2025-10-29T09:16:28.830Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-29T09:16:37.921Z]
 styleTextstyleTextstyleTextstyleText
 ================================================================================
 
-[2025-10-25T04:25:11.097Z]
+[2025-10-29T09:16:37.922Z]
 3333
 ================================================================================
 
-[2025-10-25T04:25:11.099Z]
-44444
-================================================================================
-
-[2025-10-25T04:25:11.104Z]
-5555
-================================================================================
-
-[2025-10-25T04:25:11.106Z]
-56666
-================================================================================
-
-[2025-10-25T04:25:11.106Z]
-57777
-================================================================================
-
-[2025-10-25T04:25:11.107Z]
-6666
-================================================================================
-
-[2025-10-25T04:25:11.108Z]
-68888
-================================================================================
-
-[2025-10-25T04:25:11.108Z]
-7777
-================================================================================
-
-[2025-10-25T04:25:11.108Z]
+[2025-10-29T09:16:37.931Z]
 mappings ascopy mapping
 ================================================================================
 
-[2025-10-25T04:25:11.108Z]
+[2025-10-29T09:16:37.931Z]
+let a = 1
+let b = 
+================================================================================
+
+[2025-10-29T09:16:37.932Z]
+import {createReactiveVNode} from '../utils/ReactiveVNode';
+let a = 1;let b ;
+================================================================================
+
+[2025-10-29T09:16:38.331Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-29T09:16:38.333Z]
+反悔了tokens
+================================================================================
+
+[2025-10-29T09:16:38.333Z]
+[
+  [
+    1,
+    4,
+    1,
+    7,
+    1
+  ],
+  [
+    1,
+    14,
+    1,
+    7,
+    1
+  ]
+]
+================================================================================
+
+[2025-10-29T09:16:38.334Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-29T09:16:38.897Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-29T09:16:38.897Z]
+3333
+================================================================================
+
+[2025-10-29T09:16:38.902Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-29T09:16:38.903Z]
 let a = 1
 let b = a
-let c = b
-let d = e
-l
 ================================================================================
 
-[2025-10-25T04:25:11.109Z]
+[2025-10-29T09:16:38.903Z]
 import {createReactiveVNode} from '../utils/ReactiveVNode';
-export default (function(){let a = 1;let b = a;let c = b;let d = e;const children = [];l;return children})()
+let a = 1;let b = a;
 ================================================================================
 
-[2025-10-25T04:25:11.234Z]
+[2025-10-29T09:16:39.392Z]
 languageService.getCompletionsAtPosition(
 ================================================================================
 
-[2025-10-25T04:25:11.234Z]
-offset：148
+[2025-10-29T09:16:39.392Z]
+offset：79
 ================================================================================
 
-[2025-10-25T04:25:11.234Z]
+[2025-10-29T09:16:39.392Z]
 triggerKind：1
 ================================================================================
 
-[2025-10-25T04:25:11.234Z]
+[2025-10-29T09:16:39.392Z]
 存在info
 ================================================================================
 
-[2025-10-25T04:25:11.234Z]
+[2025-10-29T09:16:39.392Z]
 import {createReactiveVNode} from '../utils/ReactiveVNode';
-export default (function(){let a = 1;let b = a;let c = b;let d = e;const children = [];l;return children})()
+let a = 1;let b = a;
 ================================================================================
 
-[2025-10-25T04:25:11.235Z]
-958
+[2025-10-29T09:16:39.392Z]
+971
 ================================================================================
 
-[2025-10-25T04:25:11.235Z]
+[2025-10-29T09:16:39.393Z]
 convertCompletionInfo
 ================================================================================
 
-[2025-10-25T04:25:12.111Z]
-styleTextstyleTextstyleTextstyleText
-================================================================================
-
-[2025-10-25T04:25:12.111Z]
-3333
-================================================================================
-
-[2025-10-25T04:25:12.113Z]
-44444
-================================================================================
-
-[2025-10-25T04:25:12.117Z]
-5555
-================================================================================
-
-[2025-10-25T04:25:12.118Z]
-56666
-================================================================================
-
-[2025-10-25T04:25:12.119Z]
-57777
-================================================================================
-
-[2025-10-25T04:25:12.119Z]
-6666
-================================================================================
-
-[2025-10-25T04:25:12.119Z]
-68888
-================================================================================
-
-[2025-10-25T04:25:12.119Z]
-7777
-================================================================================
-
-[2025-10-25T04:25:12.120Z]
-mappings ascopy mapping
-================================================================================
-
-[2025-10-25T04:25:12.120Z]
-let a = 1
-let b = a
-let c = b
-let d = e
-le
-================================================================================
-
-[2025-10-25T04:25:12.120Z]
-import {createReactiveVNode} from '../utils/ReactiveVNode';
-export default (function(){let a = 1;let b = a;let c = b;let d = e;const children = [];le;return children})()
-================================================================================
-
-[2025-10-25T04:25:13.013Z]
-styleTextstyleTextstyleTextstyleText
-================================================================================
-
-[2025-10-25T04:25:13.013Z]
-3333
-================================================================================
-
-[2025-10-25T04:25:13.015Z]
-44444
-================================================================================
-
-[2025-10-25T04:25:13.018Z]
-5555
-================================================================================
-
-[2025-10-25T04:25:13.019Z]
-56666
-================================================================================
-
-[2025-10-25T04:25:13.019Z]
-57777
-================================================================================
-
-[2025-10-25T04:25:13.020Z]
-6666
-================================================================================
-
-[2025-10-25T04:25:13.020Z]
-68888
-================================================================================
-
-[2025-10-25T04:25:13.020Z]
-7777
-================================================================================
-
-[2025-10-25T04:25:13.020Z]
-mappings ascopy mapping
-================================================================================
-
-[2025-10-25T04:25:13.020Z]
-let a = 1
-let b = a
-let c = b
-let d = e
-let 
-================================================================================
-
-[2025-10-25T04:25:13.020Z]
-import {createReactiveVNode} from '../utils/ReactiveVNode';
-let a = 1;let b = a;let c = b;let d = e;
-================================================================================
-
-[2025-10-25T04:25:13.112Z]
-styleTextstyleTextstyleTextstyleText
-================================================================================
-
-[2025-10-25T04:25:13.112Z]
-3333
-================================================================================
-
-[2025-10-25T04:25:13.114Z]
-44444
-================================================================================
-
-[2025-10-25T04:25:13.117Z]
-5555
-================================================================================
-
-[2025-10-25T04:25:13.118Z]
-56666
-================================================================================
-
-[2025-10-25T04:25:13.118Z]
-57777
-================================================================================
-
-[2025-10-25T04:25:13.119Z]
-6666
-================================================================================
-
-[2025-10-25T04:25:13.119Z]
-68888
-================================================================================
-
-[2025-10-25T04:25:13.119Z]
-7777
-================================================================================
-
-[2025-10-25T04:25:13.120Z]
-mappings ascopy mapping
-================================================================================
-
-[2025-10-25T04:25:13.120Z]
-let a = 1
-let b = a
-let c = b
-let d = e
-let e
-================================================================================
-
-[2025-10-25T04:25:13.120Z]
-import {createReactiveVNode} from '../utils/ReactiveVNode';
-let a = 1;let b = a;let c = b;let d = e;let e ;
-================================================================================
-
-[2025-10-25T04:25:13.133Z]
-languageService.getCompletionsAtPosition(
-================================================================================
-
-[2025-10-25T04:25:13.133Z]
-offset：105
-================================================================================
-
-[2025-10-25T04:25:13.133Z]
-triggerKind：1
-================================================================================
-
-[2025-10-25T04:25:13.133Z]
-没有提示的文本
-================================================================================
-
-[2025-10-25T04:25:13.134Z]
-import {createReactiveVNode} from '../utils/ReactiveVNode';
-let a = 1;let b = a;let c = b;let d = e;let e ;
-================================================================================
-
-[2025-10-25T04:25:13.510Z]
-styleTextstyleTextstyleTextstyleText
-================================================================================
-
-[2025-10-25T04:25:13.510Z]
-3333
-================================================================================
-
-[2025-10-25T04:25:13.511Z]
-44444
-================================================================================
-
-[2025-10-25T04:25:13.514Z]
-5555
-================================================================================
-
-[2025-10-25T04:25:13.514Z]
-56666
-================================================================================
-
-[2025-10-25T04:25:13.514Z]
-57777
-================================================================================
-
-[2025-10-25T04:25:13.515Z]
-6666
-================================================================================
-
-[2025-10-25T04:25:13.515Z]
-68888
-================================================================================
-
-[2025-10-25T04:25:13.515Z]
-7777
-================================================================================
-
-[2025-10-25T04:25:13.515Z]
-mappings ascopy mapping
-================================================================================
-
-[2025-10-25T04:25:13.515Z]
-let a = 1
-let b = a
-let c = b
-let d = e
-let e 
-================================================================================
-
-[2025-10-25T04:25:13.516Z]
-import {createReactiveVNode} from '../utils/ReactiveVNode';
-let a = 1;let b = a;let c = b;let d = e;let e ;
-================================================================================
-
-[2025-10-25T04:25:13.882Z]
-styleTextstyleTextstyleTextstyleText
-================================================================================
-
-[2025-10-25T04:25:13.882Z]
-3333
-================================================================================
-
-[2025-10-25T04:25:13.883Z]
-44444
-================================================================================
-
-[2025-10-25T04:25:13.887Z]
-5555
-================================================================================
-
-[2025-10-25T04:25:13.888Z]
-56666
-================================================================================
-
-[2025-10-25T04:25:13.889Z]
-57777
-================================================================================
-
-[2025-10-25T04:25:13.889Z]
-6666
-================================================================================
-
-[2025-10-25T04:25:13.889Z]
-68888
-================================================================================
-
-[2025-10-25T04:25:13.889Z]
-7777
-================================================================================
-
-[2025-10-25T04:25:13.890Z]
-mappings ascopy mapping
-================================================================================
-
-[2025-10-25T04:25:13.890Z]
-let a = 1
-let b = a
-let c = b
-let d = e
-let e =
-================================================================================
-
-[2025-10-25T04:25:13.891Z]
-import {createReactiveVNode} from '../utils/ReactiveVNode';
-let a = 1;let b = a;let c = b;let d = e;let e ;
-================================================================================
-
-[2025-10-25T04:25:14.389Z]
-styleTextstyleTextstyleTextstyleText
-================================================================================
-
-[2025-10-25T04:25:14.390Z]
-3333
-================================================================================
-
-[2025-10-25T04:25:14.391Z]
-44444
-================================================================================
-
-[2025-10-25T04:25:14.394Z]
-5555
-================================================================================
-
-[2025-10-25T04:25:14.394Z]
-56666
-================================================================================
-
-[2025-10-25T04:25:14.395Z]
-57777
-================================================================================
-
-[2025-10-25T04:25:14.395Z]
-6666
-================================================================================
-
-[2025-10-25T04:25:14.395Z]
-68888
-================================================================================
-
-[2025-10-25T04:25:14.395Z]
-7777
-================================================================================
-
-[2025-10-25T04:25:14.395Z]
-mappings ascopy mapping
-================================================================================
-
-[2025-10-25T04:25:14.396Z]
-let a = 1
-let b = a
-let c = b
-let d = e
-let e = 
-================================================================================
-
-[2025-10-25T04:25:14.396Z]
-import {createReactiveVNode} from '../utils/ReactiveVNode';
-let a = 1;let b = a;let c = b;let d = e;let e ;
-================================================================================
-
-[2025-10-25T04:25:17.444Z]
-styleTextstyleTextstyleTextstyleText
-================================================================================
-
-[2025-10-25T04:25:17.445Z]
-3333
-================================================================================
-
-[2025-10-25T04:25:17.447Z]
-44444
-================================================================================
-
-[2025-10-25T04:25:17.451Z]
-5555
-================================================================================
-
-[2025-10-25T04:25:17.452Z]
-56666
-================================================================================
-
-[2025-10-25T04:25:17.452Z]
-57777
-================================================================================
-
-[2025-10-25T04:25:17.452Z]
-6666
-================================================================================
-
-[2025-10-25T04:25:17.452Z]
-68888
-================================================================================
-
-[2025-10-25T04:25:17.453Z]
-7777
-================================================================================
-
-[2025-10-25T04:25:17.453Z]
-mappings ascopy mapping
-================================================================================
-
-[2025-10-25T04:25:17.453Z]
-let a = 1
-let b = a
-let c = b
-let d = e
-let e = b
-================================================================================
-
-[2025-10-25T04:25:17.454Z]
-import {createReactiveVNode} from '../utils/ReactiveVNode';
-let a = 1;let b = a;let c = b;let d = e;let e = b;
-================================================================================
-
-[2025-10-25T04:25:17.478Z]
-languageService.getCompletionsAtPosition(
-================================================================================
-
-[2025-10-25T04:25:17.478Z]
-offset：109
-================================================================================
-
-[2025-10-25T04:25:17.478Z]
-triggerKind：1
-================================================================================
-
-[2025-10-25T04:25:17.478Z]
-存在info
-================================================================================
-
-[2025-10-25T04:25:17.479Z]
-import {createReactiveVNode} from '../utils/ReactiveVNode';
-let a = 1;let b = a;let c = b;let d = e;let e = b;
-================================================================================
-
-[2025-10-25T04:25:17.479Z]
-974
-================================================================================
-
-[2025-10-25T04:25:17.479Z]
-convertCompletionInfo
-================================================================================
-
-[2025-10-25T04:25:26.453Z]
-styleTextstyleTextstyleTextstyleText
-================================================================================
-
-[2025-10-25T04:25:26.453Z]
-3333
-================================================================================
-
-[2025-10-25T04:25:26.457Z]
-44444
-================================================================================
-
-[2025-10-25T04:25:26.465Z]
-5555
-================================================================================
-
-[2025-10-25T04:25:26.466Z]
-56666
-================================================================================
-
-[2025-10-25T04:25:26.467Z]
-57777
-================================================================================
-
-[2025-10-25T04:25:26.467Z]
-6666
-================================================================================
-
-[2025-10-25T04:25:26.468Z]
-68888
-================================================================================
-
-[2025-10-25T04:25:26.468Z]
-7777
-================================================================================
-
-[2025-10-25T04:25:26.468Z]
-mappings ascopy mapping
-================================================================================
-
-[2025-10-25T04:25:26.468Z]
-let a = 1
-let b = a
-let c = b
-let d = c
-let e = b
-================================================================================
-
-[2025-10-25T04:25:26.468Z]
-import {createReactiveVNode} from '../utils/ReactiveVNode';
-let a = 1;let b = a;let c = b;let d = c;let e = b;
-================================================================================
-
-[2025-10-25T04:25:26.497Z]
-languageService.getCompletionsAtPosition(
-================================================================================
-
-[2025-10-25T04:25:26.498Z]
-offset：99
-================================================================================
-
-[2025-10-25T04:25:26.498Z]
-triggerKind：1
-================================================================================
-
-[2025-10-25T04:25:26.499Z]
-存在info
-================================================================================
-
-[2025-10-25T04:25:26.500Z]
-import {createReactiveVNode} from '../utils/ReactiveVNode';
-let a = 1;let b = a;let c = b;let d = c;let e = b;
-================================================================================
-
-[2025-10-25T04:25:26.500Z]
-974
-================================================================================
-
-[2025-10-25T04:25:26.500Z]
-convertCompletionInfo
-================================================================================
-
-[2025-10-25T04:25:29.121Z]
-styleTextstyleTextstyleTextstyleText
-================================================================================
-
-[2025-10-25T04:25:29.123Z]
-3333
-================================================================================
-
-[2025-10-25T04:25:29.127Z]
-44444
-================================================================================
-
-[2025-10-25T04:25:29.131Z]
-5555
-================================================================================
-
-[2025-10-25T04:25:29.131Z]
-56666
-================================================================================
-
-[2025-10-25T04:25:29.131Z]
-57777
-================================================================================
-
-[2025-10-25T04:25:29.133Z]
-6666
-================================================================================
-
-[2025-10-25T04:25:29.133Z]
-68888
-================================================================================
-
-[2025-10-25T04:25:29.133Z]
-7777
-================================================================================
-
-[2025-10-25T04:25:29.134Z]
-mappings ascopy mapping
-================================================================================
-
-[2025-10-25T04:25:29.134Z]
-let a = 1
-let b = a
-let c = b
-let d = c
-let e = d
-================================================================================
-
-[2025-10-25T04:25:29.134Z]
-import {createReactiveVNode} from '../utils/ReactiveVNode';
-let a = 1;let b = a;let c = b;let d = c;let e = d;
-================================================================================
-
-[2025-10-25T04:25:29.158Z]
-languageService.getCompletionsAtPosition(
-================================================================================
-
-[2025-10-25T04:25:29.158Z]
-offset：109
-================================================================================
-
-[2025-10-25T04:25:29.158Z]
-triggerKind：1
-================================================================================
-
-[2025-10-25T04:25:29.159Z]
-存在info
-================================================================================
-
-[2025-10-25T04:25:29.159Z]
-import {createReactiveVNode} from '../utils/ReactiveVNode';
-let a = 1;let b = a;let c = b;let d = c;let e = d;
-================================================================================
-
-[2025-10-25T04:25:29.159Z]
-974
-================================================================================
-
-[2025-10-25T04:25:29.159Z]
-convertCompletionInfo
-================================================================================
-
-[2025-10-25T04:47:45.291Z]
-createTypeScriptServices
-================================================================================
-
-[2025-10-25T04:47:45.303Z]
-getLocalTsdkPath
-================================================================================
-
-[2025-10-25T04:47:45.303Z]
-onInitialize
-================================================================================
-
-[2025-10-25T04:47:45.310Z]
-params
-================================================================================
-
-[2025-10-25T04:47:45.605Z]
-res.capabilities.completionProvider.triggerCharacters
-================================================================================
-
-[2025-10-25T04:47:45.605Z]
-{
-  "textDocumentSync": 2,
-  "workspace": {
-    "workspaceFolders": {
-      "supported": true,
-      "changeNotifications": true
-    }
-  },
-  "selectionRangeProvider": true,
-  "foldingRangeProvider": true,
-  "documentSymbolProvider": true,
-  "documentFormattingProvider": true,
-  "documentRangeFormattingProvider": true,
-  "referencesProvider": true,
-  "implementationProvider": true,
-  "definitionProvider": true,
-  "typeDefinitionProvider": true,
-  "callHierarchyProvider": true,
-  "hoverProvider": true,
-  "documentHighlightProvider": true,
-  "workspaceSymbolProvider": {},
-  "renameProvider": {
-    "prepareProvider": true
-  },
-  "inlayHintProvider": {},
-  "signatureHelpProvider": {
-    "triggerCharacters": [
-      "(",
-      ",",
-      "<"
-    ],
-    "retriggerCharacters": [
-      ")"
-    ]
-  },
-  "completionProvider": {
-    "triggerCharacters": [
-      ".",
-      "\"",
-      "'",
-      "`",
-      "/",
-      "<",
-      "@",
-      "#",
-      "*"
-    ],
-    "resolveProvider": true
-  },
-  "semanticTokensProvider": {
-    "full": true,
-    "range": true,
-    "legend": {
-      "tokenTypes": [
-        "namespace",
-        "class",
-        "enum",
-        "interface",
-        "typeParameter",
-        "type",
-        "parameter",
-        "variable",
-        "property",
-        "enumMember",
-        "function",
-        "method"
-      ],
-      "tokenModifiers": [
-        "declaration",
-        "readonly",
-        "static",
-        "async",
-        "defaultLibrary",
-        "local"
-      ]
-    }
-  },
-  "codeActionProvider": {
-    "codeActionKinds": [
-      "",
-      "quickfix",
-      "refactor",
-      "refactor.extract",
-      "refactor.inline",
-      "refactor.rewrite",
-      "source",
-      "source.fixAll",
-      "source.organizeImports"
-    ],
-    "resolveProvider": true
-  },
-  "documentOnTypeFormattingProvider": {
-    "firstTriggerCharacter": ";",
-    "moreTriggerCharacter": [
-      "}",
-      "\n"
-    ]
-  },
-  "experimental": {
-    "autoInsertionProvider": {
-      "triggerCharacters": [
-        ">"
-      ],
-      "configurationSections": [
-        [
-          "javascript.autoClosingTags",
-          "typescript.autoClosingTags"
-        ]
-      ]
-    },
-    "fileRenameEditsProvider": true,
-    "fileReferencesProvider": true
-  }
-}
-================================================================================
-
-[2025-10-25T04:47:46.020Z]
-styleTextstyleTextstyleTextstyleText
-================================================================================
-
-[2025-10-25T04:47:46.022Z]
-3333
-================================================================================
-
-[2025-10-25T04:47:46.035Z]
-44444
-================================================================================
-
-[2025-10-25T04:47:46.136Z]
-5555
-================================================================================
-
-[2025-10-25T04:47:46.139Z]
-56666
-================================================================================
-
-[2025-10-25T04:47:46.140Z]
-57777
-================================================================================
-
-[2025-10-25T04:47:46.143Z]
-6666
-================================================================================
-
-[2025-10-25T04:47:46.148Z]
-68888
-================================================================================
-
-[2025-10-25T04:47:46.151Z]
-7777
-================================================================================
-
-[2025-10-25T04:47:46.152Z]
-mappings ascopy mapping
-================================================================================
-
-[2025-10-25T04:47:46.152Z]
-let a = 1
-let b = a
-let c = b
-let d = c
-let e = d
-================================================================================
-
-[2025-10-25T04:47:46.153Z]
-import {createReactiveVNode} from '../utils/ReactiveVNode';
-let a = 1;let b = a;let c = b;let d = c;let e = d;
-================================================================================
-
-[2025-10-25T10:13:57.661Z]
-createTypeScriptServices
-================================================================================
-
-[2025-10-25T10:13:57.667Z]
-getLocalTsdkPath
-================================================================================
-
-[2025-10-25T10:13:57.668Z]
-onInitialize
-================================================================================
-
-[2025-10-25T10:13:57.672Z]
-params
-================================================================================
-
-[2025-10-25T10:13:57.930Z]
-res.capabilities.completionProvider.triggerCharacters
-================================================================================
-
-[2025-10-25T10:13:57.930Z]
-{
-  "textDocumentSync": 2,
-  "workspace": {
-    "workspaceFolders": {
-      "supported": true,
-      "changeNotifications": true
-    }
-  },
-  "selectionRangeProvider": true,
-  "foldingRangeProvider": true,
-  "documentSymbolProvider": true,
-  "documentFormattingProvider": true,
-  "documentRangeFormattingProvider": true,
-  "referencesProvider": true,
-  "implementationProvider": true,
-  "definitionProvider": true,
-  "typeDefinitionProvider": true,
-  "callHierarchyProvider": true,
-  "hoverProvider": true,
-  "documentHighlightProvider": true,
-  "workspaceSymbolProvider": {},
-  "renameProvider": {
-    "prepareProvider": true
-  },
-  "inlayHintProvider": {},
-  "signatureHelpProvider": {
-    "triggerCharacters": [
-      "(",
-      ",",
-      "<"
-    ],
-    "retriggerCharacters": [
-      ")"
-    ]
-  },
-  "completionProvider": {
-    "triggerCharacters": [
-      ".",
-      "\"",
-      "'",
-      "`",
-      "/",
-      "<",
-      "@",
-      "#",
-      "*"
-    ],
-    "resolveProvider": true
-  },
-  "semanticTokensProvider": {
-    "full": true,
-    "range": true,
-    "legend": {
-      "tokenTypes": [
-        "namespace",
-        "class",
-        "enum",
-        "interface",
-        "typeParameter",
-        "type",
-        "parameter",
-        "variable",
-        "property",
-        "enumMember",
-        "function",
-        "method"
-      ],
-      "tokenModifiers": [
-        "declaration",
-        "readonly",
-        "static",
-        "async",
-        "defaultLibrary",
-        "local"
-      ]
-    }
-  },
-  "codeActionProvider": {
-    "codeActionKinds": [
-      "",
-      "quickfix",
-      "refactor",
-      "refactor.extract",
-      "refactor.inline",
-      "refactor.rewrite",
-      "source",
-      "source.fixAll",
-      "source.organizeImports"
-    ],
-    "resolveProvider": true
-  },
-  "documentOnTypeFormattingProvider": {
-    "firstTriggerCharacter": ";",
-    "moreTriggerCharacter": [
-      "}",
-      "\n"
-    ]
-  },
-  "experimental": {
-    "autoInsertionProvider": {
-      "triggerCharacters": [
-        ">"
-      ],
-      "configurationSections": [
-        [
-          "javascript.autoClosingTags",
-          "typescript.autoClosingTags"
-        ]
-      ]
-    },
-    "fileRenameEditsProvider": true,
-    "fileReferencesProvider": true
-  }
-}
-================================================================================
-
-[2025-10-25T10:13:58.266Z]
-styleTextstyleTextstyleTextstyleText
-================================================================================
-
-[2025-10-25T10:13:58.266Z]
-3333
-================================================================================
-
-[2025-10-25T10:13:58.270Z]
-44444
-================================================================================
-
-[2025-10-25T10:13:58.282Z]
-5555
-================================================================================
-
-[2025-10-25T10:13:58.285Z]
-56666
-================================================================================
-
-[2025-10-25T10:13:58.286Z]
-57777
-================================================================================
-
-[2025-10-25T10:13:58.287Z]
-6666
-================================================================================
-
-[2025-10-25T10:13:58.289Z]
-68888
-================================================================================
-
-[2025-10-25T10:13:58.289Z]
-7777
-================================================================================
-
-[2025-10-25T10:13:58.290Z]
-mappings ascopy mapping
-================================================================================
-
-[2025-10-25T10:13:58.290Z]
-let a = 1
-let b = a
-let c = b
-let d = c
-let e = d
-================================================================================
-
-[2025-10-25T10:13:58.290Z]
-import {createReactiveVNode} from '../utils/ReactiveVNode';
-let a = 1;let b = a;let c = b;let d = c;let e = d;
-================================================================================
-
-[2025-10-25T10:14:01.770Z]
-styleTextstyleTextstyleTextstyleText
-================================================================================
-
-[2025-10-25T10:14:01.771Z]
-3333
-================================================================================
-
-[2025-10-25T10:14:01.780Z]
-44444
-================================================================================
-
-[2025-10-25T10:14:01.793Z]
-5555
-================================================================================
-
-[2025-10-25T10:14:01.794Z]
-56666
-================================================================================
-
-[2025-10-25T10:14:01.794Z]
-57777
-================================================================================
-
-[2025-10-25T10:14:01.795Z]
-6666
-================================================================================
-
-[2025-10-25T10:14:01.795Z]
-68888
-================================================================================
-
-[2025-10-25T10:14:01.795Z]
-7777
-================================================================================
-
-[2025-10-25T10:14:01.795Z]
-mappings ascopy mapping
-================================================================================
-
-[2025-10-25T10:14:01.795Z]
-let a = 1
-let b = a
-let c = b
-let d = c
-let e = d
-
-================================================================================
-
-[2025-10-25T10:14:01.795Z]
-import {createReactiveVNode} from '../utils/ReactiveVNode';
-let a = 1;let b = a;let c = b;let d = c;let e = d;
-================================================================================
-
-[2025-10-25T10:14:02.923Z]
-styleTextstyleTextstyleTextstyleText
-================================================================================
-
-[2025-10-25T10:14:02.924Z]
-3333
-================================================================================
-
-[2025-10-25T10:14:02.925Z]
-44444
-================================================================================
-
-[2025-10-25T10:14:02.930Z]
-5555
-================================================================================
-
-[2025-10-25T10:14:02.932Z]
-56666
-================================================================================
-
-[2025-10-25T10:14:02.932Z]
-57777
-================================================================================
-
-[2025-10-25T10:14:02.932Z]
-6666
-================================================================================
-
-[2025-10-25T10:14:02.933Z]
-68888
-================================================================================
-
-[2025-10-25T10:14:02.933Z]
-7777
-================================================================================
-
-[2025-10-25T10:14:02.933Z]
-mappings ascopy mapping
-================================================================================
-
-[2025-10-25T10:14:02.934Z]
-let a = 1
-let b = a
-let c = b
-let d = c
-let e = d
-le
-================================================================================
-
-[2025-10-25T10:14:02.934Z]
-import {createReactiveVNode} from '../utils/ReactiveVNode';
-export default (function(){let a = 1;let b = a;let c = b;let d = c;let e = d;const children = [];le;return children})()
-================================================================================
-
-[2025-10-25T10:14:02.994Z]
-languageService.getCompletionsAtPosition(
-================================================================================
-
-[2025-10-25T10:14:02.995Z]
-offset：159
-================================================================================
-
-[2025-10-25T10:14:02.995Z]
-triggerKind：1
-================================================================================
-
-[2025-10-25T10:14:02.995Z]
-存在info
-================================================================================
-
-[2025-10-25T10:14:02.995Z]
-import {createReactiveVNode} from '../utils/ReactiveVNode';
-export default (function(){let a = 1;let b = a;let c = b;let d = c;let e = d;const children = [];le;return children})()
-================================================================================
-
-[2025-10-25T10:14:02.995Z]
-959
-================================================================================
-
-[2025-10-25T10:14:02.996Z]
-convertCompletionInfo
-================================================================================
-
-[2025-10-25T10:14:04.238Z]
-styleTextstyleTextstyleTextstyleText
-================================================================================
-
-[2025-10-25T10:14:04.239Z]
-3333
-================================================================================
-
-[2025-10-25T10:14:04.241Z]
-44444
-================================================================================
-
-[2025-10-25T10:14:04.245Z]
-5555
-================================================================================
-
-[2025-10-25T10:14:04.246Z]
-56666
-================================================================================
-
-[2025-10-25T10:14:04.246Z]
-57777
-================================================================================
-
-[2025-10-25T10:14:04.246Z]
-6666
-================================================================================
-
-[2025-10-25T10:14:04.247Z]
-68888
-================================================================================
-
-[2025-10-25T10:14:04.247Z]
-7777
-================================================================================
-
-[2025-10-25T10:14:04.247Z]
-mappings ascopy mapping
-================================================================================
-
-[2025-10-25T10:14:04.247Z]
-let a = 1
-let b = a
-let c = b
-let d = c
-let e = d
-let
-================================================================================
-
-[2025-10-25T10:14:04.247Z]
-import {createReactiveVNode} from '../utils/ReactiveVNode';
-let a = 1;let b = a;let c = b;let d = c;let e = d;
-================================================================================
-
-[2025-10-25T10:14:04.579Z]
-styleTextstyleTextstyleTextstyleText
-================================================================================
-
-[2025-10-25T10:14:04.579Z]
-3333
-================================================================================
-
-[2025-10-25T10:14:04.581Z]
-44444
-================================================================================
-
-[2025-10-25T10:14:04.584Z]
-5555
-================================================================================
-
-[2025-10-25T10:14:04.585Z]
-56666
-================================================================================
-
-[2025-10-25T10:14:04.585Z]
-57777
-================================================================================
-
-[2025-10-25T10:14:04.585Z]
-6666
-================================================================================
-
-[2025-10-25T10:14:04.585Z]
-68888
-================================================================================
-
-[2025-10-25T10:14:04.585Z]
-7777
-================================================================================
-
-[2025-10-25T10:14:04.586Z]
-mappings ascopy mapping
-================================================================================
-
-[2025-10-25T10:14:04.586Z]
-let a = 1
-let b = a
-let c = b
-let d = c
-let e = d
-let 
-================================================================================
-
-[2025-10-25T10:14:04.586Z]
-import {createReactiveVNode} from '../utils/ReactiveVNode';
-let a = 1;let b = a;let c = b;let d = c;let e = d;
-================================================================================
-
-[2025-10-25T10:14:07.551Z]
-styleTextstyleTextstyleTextstyleText
-================================================================================
-
-[2025-10-25T10:14:07.552Z]
-3333
-================================================================================
-
-[2025-10-25T10:14:07.554Z]
-44444
-================================================================================
-
-[2025-10-25T10:14:07.557Z]
-5555
-================================================================================
-
-[2025-10-25T10:14:07.557Z]
-56666
-================================================================================
-
-[2025-10-25T10:14:07.558Z]
-57777
-================================================================================
-
-[2025-10-25T10:14:07.558Z]
-6666
-================================================================================
-
-[2025-10-25T10:14:07.559Z]
-68888
-================================================================================
-
-[2025-10-25T10:14:07.559Z]
-7777
-================================================================================
-
-[2025-10-25T10:14:07.560Z]
-mappings ascopy mapping
-================================================================================
-
-[2025-10-25T10:14:07.560Z]
-let a = 1
-let b = a
-let c = b
-let d = c
-let e = d
-let f
-================================================================================
-
-[2025-10-25T10:14:07.560Z]
-import {createReactiveVNode} from '../utils/ReactiveVNode';
-let a = 1;let b = a;let c = b;let d = c;let e = d;let f ;
-================================================================================
-
-[2025-10-25T10:14:07.573Z]
-languageService.getCompletionsAtPosition(
-================================================================================
-
-[2025-10-25T10:14:07.574Z]
-offset：115
-================================================================================
-
-[2025-10-25T10:14:07.574Z]
-triggerKind：1
-================================================================================
-
-[2025-10-25T10:14:07.574Z]
-没有提示的文本
-================================================================================
-
-[2025-10-25T10:14:07.574Z]
-import {createReactiveVNode} from '../utils/ReactiveVNode';
-let a = 1;let b = a;let c = b;let d = c;let e = d;let f ;
-================================================================================
-
-[2025-10-25T10:14:08.461Z]
-styleTextstyleTextstyleTextstyleText
-================================================================================
-
-[2025-10-25T10:14:08.461Z]
-3333
-================================================================================
-
-[2025-10-25T10:14:08.463Z]
-44444
-================================================================================
-
-[2025-10-25T10:14:08.467Z]
-5555
-================================================================================
-
-[2025-10-25T10:14:08.468Z]
-56666
-================================================================================
-
-[2025-10-25T10:14:08.468Z]
-57777
-================================================================================
-
-[2025-10-25T10:14:08.468Z]
-6666
-================================================================================
-
-[2025-10-25T10:14:08.469Z]
-68888
-================================================================================
-
-[2025-10-25T10:14:08.469Z]
-7777
-================================================================================
-
-[2025-10-25T10:14:08.469Z]
-mappings ascopy mapping
-================================================================================
-
-[2025-10-25T10:14:08.469Z]
-let a = 1
-let b = a
-let c = b
-let d = c
-let e = d
-let f = 
-================================================================================
-
-[2025-10-25T10:14:08.470Z]
-import {createReactiveVNode} from '../utils/ReactiveVNode';
-let a = 1;let b = a;let c = b;let d = c;let e = d;let f ;
-================================================================================
-
-[2025-10-25T10:14:08.491Z]
-styleTextstyleTextstyleTextstyleText
-================================================================================
-
-[2025-10-25T10:14:08.491Z]
-3333
-================================================================================
-
-[2025-10-25T10:14:08.493Z]
-44444
-================================================================================
-
-[2025-10-25T10:14:08.497Z]
-5555
-================================================================================
-
-[2025-10-25T10:14:08.497Z]
-56666
-================================================================================
-
-[2025-10-25T10:14:08.498Z]
-57777
-================================================================================
-
-[2025-10-25T10:14:08.498Z]
-6666
-================================================================================
-
-[2025-10-25T10:14:08.498Z]
-68888
-================================================================================
-
-[2025-10-25T10:14:08.498Z]
-7777
-================================================================================
-
-[2025-10-25T10:14:08.498Z]
-mappings ascopy mapping
-================================================================================
-
-[2025-10-25T10:14:08.499Z]
-let a = 1
-let b = a
-let c = b
-let d = c
-let e = d
-let f = e
-================================================================================
-
-[2025-10-25T10:14:08.499Z]
-import {createReactiveVNode} from '../utils/ReactiveVNode';
-let a = 1;let b = a;let c = b;let d = c;let e = d;let f = e;
-================================================================================
-
-[2025-10-25T10:14:08.524Z]
-languageService.getCompletionsAtPosition(
-================================================================================
-
-[2025-10-25T10:14:08.524Z]
-offset：119
-================================================================================
-
-[2025-10-25T10:14:08.525Z]
-triggerKind：1
-================================================================================
-
-[2025-10-25T10:14:08.525Z]
-存在info
-================================================================================
-
-[2025-10-25T10:14:08.525Z]
-import {createReactiveVNode} from '../utils/ReactiveVNode';
-let a = 1;let b = a;let c = b;let d = c;let e = d;let f = e;
-================================================================================
-
-[2025-10-25T10:14:08.525Z]
-975
-================================================================================
-
-[2025-10-25T10:14:08.525Z]
-convertCompletionInfo
-================================================================================
-
-[2025-10-25T10:17:27.108Z]
-createTypeScriptServices
-================================================================================
-
-[2025-10-25T10:17:27.114Z]
-getLocalTsdkPath
-================================================================================
-
-[2025-10-25T10:17:27.115Z]
-onInitialize
-================================================================================
-
-[2025-10-25T10:17:27.119Z]
-params
-================================================================================
-
-[2025-10-25T10:17:27.380Z]
-res.capabilities.completionProvider.triggerCharacters
-================================================================================
-
-[2025-10-25T10:17:27.380Z]
-{
-  "textDocumentSync": 2,
-  "workspace": {
-    "workspaceFolders": {
-      "supported": true,
-      "changeNotifications": true
-    }
-  },
-  "selectionRangeProvider": true,
-  "foldingRangeProvider": true,
-  "documentSymbolProvider": true,
-  "documentFormattingProvider": true,
-  "documentRangeFormattingProvider": true,
-  "referencesProvider": true,
-  "implementationProvider": true,
-  "definitionProvider": true,
-  "typeDefinitionProvider": true,
-  "callHierarchyProvider": true,
-  "hoverProvider": true,
-  "documentHighlightProvider": true,
-  "workspaceSymbolProvider": {},
-  "renameProvider": {
-    "prepareProvider": true
-  },
-  "inlayHintProvider": {},
-  "signatureHelpProvider": {
-    "triggerCharacters": [
-      "(",
-      ",",
-      "<"
-    ],
-    "retriggerCharacters": [
-      ")"
-    ]
-  },
-  "completionProvider": {
-    "triggerCharacters": [
-      ".",
-      "\"",
-      "'",
-      "`",
-      "/",
-      "<",
-      "@",
-      "#",
-      "*"
-    ],
-    "resolveProvider": true
-  },
-  "semanticTokensProvider": {
-    "full": true,
-    "range": true,
-    "legend": {
-      "tokenTypes": [
-        "namespace",
-        "class",
-        "enum",
-        "interface",
-        "typeParameter",
-        "type",
-        "parameter",
-        "variable",
-        "property",
-        "enumMember",
-        "function",
-        "method"
-      ],
-      "tokenModifiers": [
-        "declaration",
-        "readonly",
-        "static",
-        "async",
-        "defaultLibrary",
-        "local"
-      ]
-    }
-  },
-  "codeActionProvider": {
-    "codeActionKinds": [
-      "",
-      "quickfix",
-      "refactor",
-      "refactor.extract",
-      "refactor.inline",
-      "refactor.rewrite",
-      "source",
-      "source.fixAll",
-      "source.organizeImports"
-    ],
-    "resolveProvider": true
-  },
-  "documentOnTypeFormattingProvider": {
-    "firstTriggerCharacter": ";",
-    "moreTriggerCharacter": [
-      "}",
-      "\n"
-    ]
-  },
-  "experimental": {
-    "autoInsertionProvider": {
-      "triggerCharacters": [
-        ">"
-      ],
-      "configurationSections": [
-        [
-          "javascript.autoClosingTags",
-          "typescript.autoClosingTags"
-        ]
-      ]
-    },
-    "fileRenameEditsProvider": true,
-    "fileReferencesProvider": true
-  }
-}
-================================================================================
-
-[2025-10-25T10:17:27.722Z]
-styleTextstyleTextstyleTextstyleText
-================================================================================
-
-[2025-10-25T10:17:27.722Z]
-3333
-================================================================================
-
-[2025-10-25T10:17:27.726Z]
-44444
-================================================================================
-
-[2025-10-25T10:17:27.739Z]
-5555
-================================================================================
-
-[2025-10-25T10:17:27.742Z]
-56666
-================================================================================
-
-[2025-10-25T10:17:27.743Z]
-57777
-================================================================================
-
-[2025-10-25T10:17:27.744Z]
-6666
-================================================================================
-
-[2025-10-25T10:17:27.746Z]
-68888
-================================================================================
-
-[2025-10-25T10:17:27.746Z]
-7777
-================================================================================
-
-[2025-10-25T10:17:27.747Z]
-mappings ascopy mapping
-================================================================================
-
-[2025-10-25T10:17:27.748Z]
-let a = 1
-let b = a
-let c = b
-let d = c
-let e = d
-let f = e
-================================================================================
-
-[2025-10-25T10:17:27.748Z]
-import {createReactiveVNode} from '../utils/ReactiveVNode';
-let a = 1;let b = a;let c = b;let d = c;let e = d;let f = e;
-================================================================================
-
-[2025-10-25T10:18:53.007Z]
-styleTextstyleTextstyleTextstyleText
-================================================================================
-
-[2025-10-25T10:18:53.007Z]
-3333
-================================================================================
-
-[2025-10-25T10:18:53.011Z]
-44444
-================================================================================
-
-[2025-10-25T10:18:53.017Z]
-5555
-================================================================================
-
-[2025-10-25T10:18:53.018Z]
-56666
-================================================================================
-
-[2025-10-25T10:18:53.018Z]
-57777
-================================================================================
-
-[2025-10-25T10:18:53.018Z]
-6666
-================================================================================
-
-[2025-10-25T10:18:53.019Z]
-68888
-================================================================================
-
-[2025-10-25T10:18:53.019Z]
-7777
-================================================================================
-
-[2025-10-25T10:18:53.019Z]
-mappings ascopy mapping
-================================================================================
-
-[2025-10-25T10:18:53.019Z]
-let a = 1
-let b = a
-let c = b
-let d = c
-let e = d
-let f = e
-
-================================================================================
-
-[2025-10-25T10:18:53.020Z]
-import {createReactiveVNode} from '../utils/ReactiveVNode';
-let a = 1;let b = a;let c = b;let d = c;let e = d;let f = e;
-================================================================================
-
-[2025-10-25T10:18:53.762Z]
-styleTextstyleTextstyleTextstyleText
-================================================================================
-
-[2025-10-25T10:18:53.763Z]
-3333
-================================================================================
-
-[2025-10-25T10:18:53.765Z]
-44444
-================================================================================
-
-[2025-10-25T10:18:53.771Z]
-5555
-================================================================================
-
-[2025-10-25T10:18:53.772Z]
-56666
-================================================================================
-
-[2025-10-25T10:18:53.772Z]
-57777
-================================================================================
-
-[2025-10-25T10:18:53.773Z]
-6666
-================================================================================
-
-[2025-10-25T10:18:53.774Z]
-68888
-================================================================================
-
-[2025-10-25T10:18:53.774Z]
-7777
-================================================================================
-
-[2025-10-25T10:18:53.775Z]
-mappings ascopy mapping
-================================================================================
-
-[2025-10-25T10:18:53.775Z]
-let a = 1
-let b = a
-let c = b
-let d = c
-let e = d
-let f = e
-l
-================================================================================
-
-[2025-10-25T10:18:53.775Z]
-import {createReactiveVNode} from '../utils/ReactiveVNode';
-export default (function(){let a = 1;let b = a;let c = b;let d = c;let e = d;let f = e;const children = [];l;return children})()
-================================================================================
-
-[2025-10-25T10:18:53.842Z]
-languageService.getCompletionsAtPosition(
-================================================================================
-
-[2025-10-25T10:18:53.842Z]
-offset：168
-================================================================================
-
-[2025-10-25T10:18:53.843Z]
-triggerKind：1
-================================================================================
-
-[2025-10-25T10:18:53.843Z]
-存在info
-================================================================================
-
-[2025-10-25T10:18:53.843Z]
-import {createReactiveVNode} from '../utils/ReactiveVNode';
-export default (function(){let a = 1;let b = a;let c = b;let d = c;let e = d;let f = e;const children = [];l;return children})()
-================================================================================
-
-[2025-10-25T10:18:53.844Z]
-960
-================================================================================
-
-[2025-10-25T10:18:53.844Z]
-convertCompletionInfo
-================================================================================
-
-[2025-10-25T10:18:55.049Z]
-styleTextstyleTextstyleTextstyleText
-================================================================================
-
-[2025-10-25T10:18:55.049Z]
-3333
-================================================================================
-
-[2025-10-25T10:18:55.052Z]
-44444
-================================================================================
-
-[2025-10-25T10:18:55.059Z]
-5555
-================================================================================
-
-[2025-10-25T10:18:55.064Z]
-56666
-================================================================================
-
-[2025-10-25T10:18:55.064Z]
-57777
-================================================================================
-
-[2025-10-25T10:18:55.065Z]
-6666
-================================================================================
-
-[2025-10-25T10:18:55.066Z]
-68888
-================================================================================
-
-[2025-10-25T10:18:55.066Z]
-7777
-================================================================================
-
-[2025-10-25T10:18:55.067Z]
-mappings ascopy mapping
-================================================================================
-
-[2025-10-25T10:18:55.067Z]
-let a = 1
-let b = a
-let c = b
-let d = c
-let e = d
-let f = e
-let
-================================================================================
-
-[2025-10-25T10:18:55.067Z]
-import {createReactiveVNode} from '../utils/ReactiveVNode';
-let a = 1;let b = a;let c = b;let d = c;let e = d;let f = e;
-================================================================================
-
-[2025-10-25T10:21:16.972Z]
-createTypeScriptServices
-================================================================================
-
-[2025-10-25T10:21:16.979Z]
-getLocalTsdkPath
-================================================================================
-
-[2025-10-25T10:21:16.979Z]
-onInitialize
-================================================================================
-
-[2025-10-25T10:21:16.986Z]
-params
-================================================================================
-
-[2025-10-25T10:21:17.285Z]
-res.capabilities.completionProvider.triggerCharacters
-================================================================================
-
-[2025-10-25T10:21:17.285Z]
-{
-  "textDocumentSync": 2,
-  "workspace": {
-    "workspaceFolders": {
-      "supported": true,
-      "changeNotifications": true
-    }
-  },
-  "selectionRangeProvider": true,
-  "foldingRangeProvider": true,
-  "documentSymbolProvider": true,
-  "documentFormattingProvider": true,
-  "documentRangeFormattingProvider": true,
-  "referencesProvider": true,
-  "implementationProvider": true,
-  "definitionProvider": true,
-  "typeDefinitionProvider": true,
-  "callHierarchyProvider": true,
-  "hoverProvider": true,
-  "documentHighlightProvider": true,
-  "workspaceSymbolProvider": {},
-  "renameProvider": {
-    "prepareProvider": true
-  },
-  "inlayHintProvider": {},
-  "signatureHelpProvider": {
-    "triggerCharacters": [
-      "(",
-      ",",
-      "<"
-    ],
-    "retriggerCharacters": [
-      ")"
-    ]
-  },
-  "completionProvider": {
-    "triggerCharacters": [
-      ".",
-      "\"",
-      "'",
-      "`",
-      "/",
-      "<",
-      "@",
-      "#",
-      "*"
-    ],
-    "resolveProvider": true
-  },
-  "semanticTokensProvider": {
-    "full": true,
-    "range": true,
-    "legend": {
-      "tokenTypes": [
-        "namespace",
-        "class",
-        "enum",
-        "interface",
-        "typeParameter",
-        "type",
-        "parameter",
-        "variable",
-        "property",
-        "enumMember",
-        "function",
-        "method"
-      ],
-      "tokenModifiers": [
-        "declaration",
-        "readonly",
-        "static",
-        "async",
-        "defaultLibrary",
-        "local"
-      ]
-    }
-  },
-  "codeActionProvider": {
-    "codeActionKinds": [
-      "",
-      "quickfix",
-      "refactor",
-      "refactor.extract",
-      "refactor.inline",
-      "refactor.rewrite",
-      "source",
-      "source.fixAll",
-      "source.organizeImports"
-    ],
-    "resolveProvider": true
-  },
-  "documentOnTypeFormattingProvider": {
-    "firstTriggerCharacter": ";",
-    "moreTriggerCharacter": [
-      "}",
-      "\n"
-    ]
-  },
-  "experimental": {
-    "autoInsertionProvider": {
-      "triggerCharacters": [
-        ">"
-      ],
-      "configurationSections": [
-        [
-          "javascript.autoClosingTags",
-          "typescript.autoClosingTags"
-        ]
-      ]
-    },
-    "fileRenameEditsProvider": true,
-    "fileReferencesProvider": true
-  }
-}
-================================================================================
-
-[2025-10-25T10:21:17.632Z]
-styleTextstyleTextstyleTextstyleText
-================================================================================
-
-[2025-10-25T10:21:17.632Z]
-3333
-================================================================================
-
-[2025-10-25T10:21:17.637Z]
-44444
-================================================================================
-
-[2025-10-25T10:21:17.650Z]
-5555
-================================================================================
-
-[2025-10-25T10:21:17.654Z]
-56666
-================================================================================
-
-[2025-10-25T10:21:17.655Z]
-57777
-================================================================================
-
-[2025-10-25T10:21:17.656Z]
-6666
-================================================================================
-
-[2025-10-25T10:21:17.658Z]
-68888
-================================================================================
-
-[2025-10-25T10:21:17.658Z]
-7777
-================================================================================
-
-[2025-10-25T10:21:17.659Z]
-mappings ascopy mapping
-================================================================================
-
-[2025-10-25T10:21:17.659Z]
-let a = 1
-let b = a
-let c = b
-let d = c
-let e = d
-let f = e
-let
-================================================================================
-
-[2025-10-25T10:21:17.659Z]
-import {createReactiveVNode} from '../utils/ReactiveVNode';
-let a = 1;let b = a;let c = b;let d = c;let e = d;let f = e;
-================================================================================
-
-[2025-10-25T10:22:37.118Z]
-styleTextstyleTextstyleTextstyleText
-================================================================================
-
-[2025-10-25T10:22:37.119Z]
-3333
-================================================================================
-
-[2025-10-25T10:22:37.124Z]
-44444
-================================================================================
-
-[2025-10-25T10:22:37.133Z]
-5555
-================================================================================
-
-[2025-10-25T10:22:37.134Z]
-56666
-================================================================================
-
-[2025-10-25T10:22:37.134Z]
-57777
-================================================================================
-
-[2025-10-25T10:22:37.135Z]
-6666
-================================================================================
-
-[2025-10-25T10:22:37.135Z]
-68888
-================================================================================
-
-[2025-10-25T10:22:37.135Z]
-7777
-================================================================================
-
-[2025-10-25T10:22:37.136Z]
-mappings ascopy mapping
-================================================================================
-
-[2025-10-25T10:22:37.136Z]
-let a = 1
-let b = a
-let c = b
-let d = c
-let e = d
-let f = e
-let 
-================================================================================
-
-[2025-10-25T10:22:37.136Z]
-import {createReactiveVNode} from '../utils/ReactiveVNode';
-let a = 1;let b = a;let c = b;let d = c;let e = d;let f = e;
-================================================================================
-
-[2025-10-25T10:22:40.173Z]
-styleTextstyleTextstyleTextstyleText
-================================================================================
-
-[2025-10-25T10:22:40.173Z]
-3333
-================================================================================
-
-[2025-10-25T10:22:40.176Z]
-44444
-================================================================================
-
-[2025-10-25T10:22:40.181Z]
-5555
-================================================================================
-
-[2025-10-25T10:22:40.182Z]
-56666
-================================================================================
-
-[2025-10-25T10:22:40.183Z]
-57777
-================================================================================
-
-[2025-10-25T10:22:40.183Z]
-6666
-================================================================================
-
-[2025-10-25T10:22:40.183Z]
-68888
-================================================================================
-
-[2025-10-25T10:22:40.183Z]
-7777
-================================================================================
-
-[2025-10-25T10:22:40.184Z]
-mappings ascopy mapping
-================================================================================
-
-[2025-10-25T10:22:40.184Z]
-let a = 1
-let b = a
-let c = b
-let d = c
-let e = d
-let f = e
-let g
-================================================================================
-
-[2025-10-25T10:22:40.184Z]
-import {createReactiveVNode} from '../utils/ReactiveVNode';
-let a = 1;let b = a;let c = b;let d = c;let e = d;let f = e;let g ;
-================================================================================
-
-[2025-10-25T10:22:40.204Z]
-languageService.getCompletionsAtPosition(
-================================================================================
-
-[2025-10-25T10:22:40.204Z]
-offset：125
-================================================================================
-
-[2025-10-25T10:22:40.204Z]
-triggerKind：1
-================================================================================
-
-[2025-10-25T10:22:40.204Z]
-没有提示的文本
-================================================================================
-
-[2025-10-25T10:22:40.204Z]
-import {createReactiveVNode} from '../utils/ReactiveVNode';
-let a = 1;let b = a;let c = b;let d = c;let e = d;let f = e;let g ;
-================================================================================
-
-[2025-10-25T10:22:41.001Z]
-styleTextstyleTextstyleTextstyleText
-================================================================================
-
-[2025-10-25T10:22:41.001Z]
-3333
-================================================================================
-
-[2025-10-25T10:22:41.004Z]
-44444
-================================================================================
-
-[2025-10-25T10:22:41.010Z]
-5555
-================================================================================
-
-[2025-10-25T10:22:41.011Z]
-56666
-================================================================================
-
-[2025-10-25T10:22:41.011Z]
-57777
-================================================================================
-
-[2025-10-25T10:22:41.011Z]
-6666
-================================================================================
-
-[2025-10-25T10:22:41.012Z]
-68888
-================================================================================
-
-[2025-10-25T10:22:41.012Z]
-7777
-================================================================================
-
-[2025-10-25T10:22:41.012Z]
-mappings ascopy mapping
-================================================================================
-
-[2025-10-25T10:22:41.012Z]
-let a = 1
-let b = a
-let c = b
-let d = c
-let e = d
-let f = e
-let g =
-================================================================================
-
-[2025-10-25T10:22:41.012Z]
-import {createReactiveVNode} from '../utils/ReactiveVNode';
-let a = 1;let b = a;let c = b;let d = c;let e = d;let f = e;let g ;
-================================================================================
-
-[2025-10-25T10:22:41.679Z]
-styleTextstyleTextstyleTextstyleText
-================================================================================
-
-[2025-10-25T10:22:41.679Z]
-3333
-================================================================================
-
-[2025-10-25T10:22:41.682Z]
-44444
-================================================================================
-
-[2025-10-25T10:22:41.686Z]
-5555
-================================================================================
-
-[2025-10-25T10:22:41.687Z]
-56666
-================================================================================
-
-[2025-10-25T10:22:41.687Z]
-57777
-================================================================================
-
-[2025-10-25T10:22:41.687Z]
-6666
-================================================================================
-
-[2025-10-25T10:22:41.687Z]
-68888
-================================================================================
-
-[2025-10-25T10:22:41.687Z]
-7777
-================================================================================
-
-[2025-10-25T10:22:41.688Z]
-mappings ascopy mapping
-================================================================================
-
-[2025-10-25T10:22:41.688Z]
-let a = 1
-let b = a
-let c = b
-let d = c
-let e = d
-let f = e
-let g = 
-================================================================================
-
-[2025-10-25T10:22:41.688Z]
-import {createReactiveVNode} from '../utils/ReactiveVNode';
-let a = 1;let b = a;let c = b;let d = c;let e = d;let f = e;let g ;
-================================================================================
-
-[2025-10-25T10:22:46.349Z]
-styleTextstyleTextstyleTextstyleText
-================================================================================
-
-[2025-10-25T10:22:46.349Z]
-3333
-================================================================================
-
-[2025-10-25T10:22:46.351Z]
-44444
-================================================================================
-
-[2025-10-25T10:22:46.354Z]
-5555
-================================================================================
-
-[2025-10-25T10:22:46.355Z]
-56666
-================================================================================
-
-[2025-10-25T10:22:46.355Z]
-57777
-================================================================================
-
-[2025-10-25T10:22:46.356Z]
-6666
-================================================================================
-
-[2025-10-25T10:22:46.356Z]
-68888
-================================================================================
-
-[2025-10-25T10:22:46.356Z]
-7777
-================================================================================
-
-[2025-10-25T10:22:46.356Z]
-mappings ascopy mapping
-================================================================================
-
-[2025-10-25T10:22:46.356Z]
-let a = 1
-let b = a
-let c = b
-let d = c
-let e = d
-let f = e
-let g =
-================================================================================
-
-[2025-10-25T10:22:46.356Z]
-import {createReactiveVNode} from '../utils/ReactiveVNode';
-let a = 1;let b = a;let c = b;let d = c;let e = d;let f = e;let g ;
+[2025-10-29T09:16:40.653Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-29T09:16:40.655Z]
+反悔了tokens
+================================================================================
+
+[2025-10-29T09:16:40.655Z]
+[
+  [
+    1,
+    4,
+    1,
+    7,
+    1
+  ],
+  [
+    1,
+    14,
+    1,
+    7,
+    1
+  ],
+  [
+    1,
+    18,
+    1,
+    7,
+    0
+  ]
+]
+================================================================================
+
+[2025-10-29T09:16:40.655Z]
+chufa  provideDocumentSemanticTokens
 ================================================================================

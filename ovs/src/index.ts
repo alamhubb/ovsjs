@@ -21,7 +21,6 @@ import {
 } from "slime-ast/src/SlimeAstInterface.ts";
 import SlimeAstUtil from "slime-ast/src/SlimeAst.ts";
 import {SlimeAstType} from "slime-ast/src/SlimeAstType.ts";
-import {LogUtil} from "ovs-lsp/src/logutil.ts";
 
 /**
  * 递归清除 CST 节点的 tokens 属性（用于调试）
@@ -391,8 +390,6 @@ export function vitePluginOvsTransform(
   const lexer = new SubhutiLexer(ovs6Tokens)
   const tokens = lexer.lexer(code)
 
-  LogUtil.log("44444")
-
   // 空代码直接返回
   if (!tokens.length) {
     return {
@@ -405,20 +402,14 @@ export function vitePluginOvsTransform(
   const parser = new OvsParser(tokens, OvsTokenConsumer)
   let curCst = parser.Program()
 
-  LogUtil.log("5555")
-
   // 3. 语法转换：CST → AST（OVS 语法 → JavaScript AST）
   let ast = OvsCstToSlimeAstUtil.toProgram(curCst)
-  LogUtil.log("56666")
   // 4. 添加 import：自动添加 h 函数 import（如果不存在）
   ast = ensureOvsAPIImport(ast)
-  LogUtil.log("57777")
   // 5. 包裹顶层表达式：根据是否有 export default 决定是否包裹
   ast = wrapTopLevelExpressions(ast)
-  LogUtil.log("6666")
   // 6. 代码生成：AST → code
   const result = SlimeGenerator.generator(ast, tokens)
-  LogUtil.log("68888")
   // 7. 代码格式化（可选）
   // if (prettify) {
   //   try {
@@ -437,7 +428,6 @@ export function vitePluginOvsTransform(
   //     LogUtil.log(e)
   //   }
   // }
-  LogUtil.log("7777")
   return result
 }
 

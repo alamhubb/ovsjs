@@ -1,4 +1,13 @@
-.idea
-node_modules
 dist
-/guidebot/package-lock.json
+node_modules
+*.tsbuildinfo
+extensions/labs/lib
+*.vsix
+
+packages/*/*.d.ts
+packages/*/*.js
+packages/*/*.map
+packages/*/lib/**/*.d.ts
+packages/*/lib/**/*.js
+packages/*/lib/**/*.map
+/.idea

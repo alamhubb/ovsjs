@@ -10,7 +10,6 @@ LogUtil.log('createTypeScriptServices')
 
 import {createTypeScriptServices} from "./typescript";
 import {ovsLanguagePlugin} from "./OvsLanguagePlugin.ts";
-import type {CodeActionKind} from "@volar/language-service";
 
 const connection = createConnection();
 
@@ -32,7 +31,7 @@ const tsdkPath = getLocalTsdkPath();
 LogUtil.log('onInitialize')
 connection.onInitialize(params => {
   LogUtil.log('params')
-  // LogUtil.log(params)
+  LogUtil.log(params)
   try {
     const tsdk = loadTsdkByPath(tsdkPath, params.locale);
     const languagePlugins = [ovsLanguagePlugin]
