@@ -5,6 +5,7 @@
     "langServer",
     "ovs",
     "subhuti",
+    "lsp-client-vscode",
     "slime",
     "slime/packages/*",
     "packages/*"
