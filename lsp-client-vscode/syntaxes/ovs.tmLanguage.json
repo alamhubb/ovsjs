@@ -1,0 +1,206 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "OVS (Object-oriented View Syntax)",
+  "scopeName": "source.ovs",
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#strings" },
+    { "include": "#template-strings" },
+    { "include": "#regex" },
+    { "include": "#numeric-literals" },
+    { "include": "#keywords" },
+    { "include": "#operators" },
+    { "include": "#punctuation" }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.double-slash.ovs",
+          "match": "//.*$"
+        },
+        {
+          "name": "comment.block.ovs",
+          "begin": "/\\*",
+          "end": "\\*/"
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.ovs",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.ovs",
+              "match": "\\\\."
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.single.ovs",
+          "begin": "'",
+          "end": "'",
+          "patterns": [
+            {
+              "name": "constant.character.escape.ovs",
+              "match": "\\\\."
+            }
+          ]
+        }
+      ]
+    },
+    "template-strings": {
+      "patterns": [
+        {
+          "name": "string.template.ovs",
+          "begin": "`",
+          "end": "`",
+          "patterns": [
+            {
+              "name": "constant.character.escape.ovs",
+              "match": "\\\\."
+            },
+            {
+              "name": "meta.template.expression.ovs",
+              "begin": "\\$\\{",
+              "end": "\\}",
+              "patterns": [
+                { "include": "$self" }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "regex": {
+      "patterns": [
+        {
+          "name": "string.regexp.ovs",
+          "match": "/(?![/*])(?:[^/\\\\\\[]|\\\\.|\\[(?:[^\\]\\\\]|\\\\.)*\\])+/[gimsuvy]*"
+        }
+      ]
+    },
+    "numeric-literals": {
+      "patterns": [
+        {
+          "name": "constant.numeric.hex.ovs",
+          "match": "\\b0[xX][0-9a-fA-F]+\\b"
+        },
+        {
+          "name": "constant.numeric.octal.ovs",
+          "match": "\\b0[oO][0-7]+\\b"
+        },
+        {
+          "name": "constant.numeric.binary.ovs",
+          "match": "\\b0[bB][01]+\\b"
+        },
+        {
+          "name": "constant.numeric.decimal.ovs",
+          "match": "\\b[0-9]+(\\.[0-9]+)?([eE][+-]?[0-9]+)?\\b"
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.ovs",
+          "match": "\\b(break|case|catch|continue|debugger|default|do|else|finally|for|if|return|switch|throw|try|while)\\b"
+        },
+        {
+          "name": "keyword.control.module.ovs",
+          "match": "\\b(import|export|from|as|of)\\b"
+        },
+        {
+          "name": "keyword.control.flow.ovs",
+          "match": "\\b(async|await|yield)\\b"
+        },
+        {
+          "name": "storage.type.ovs",
+          "match": "\\b(var|let|const|function|class|extends|static|get|set)\\b"
+        },
+        {
+          "name": "storage.modifier.ovs",
+          "match": "\\b(super|this|new|typeof|instanceof|delete|void|in|with|target)\\b"
+        },
+        {
+          "name": "constant.language.ovs",
+          "match": "\\b(null|true|false|undefined|NaN|Infinity)\\b"
+        },
+        {
+          "name": "keyword.other.ovs",
+          "match": "\\b(ovsView)\\b",
+          "comment": "OVS specific keywords"
+        }
+      ]
+    },
+    "operators": {
+      "patterns": [
+        {
+          "name": "keyword.operator.arrow.ovs",
+          "match": "=>"
+        },
+        {
+          "name": "keyword.operator.spread.ovs",
+          "match": "\\.\\.\\."
+        },
+        {
+          "name": "keyword.operator.comparison.ovs",
+          "match": "===|!==|==|!=|<=|>=|<|>"
+        },
+        {
+          "name": "keyword.operator.logical.ovs",
+          "match": "&&|\\|\\||!"
+        },
+        {
+          "name": "keyword.operator.assignment.ovs",
+          "match": "\\+=|-=|\\*=|/=|%=|&=|\\|=|\\^=|<<=|>>=|>>>=|\\*\\*=|=(?!=)"
+        },
+        {
+          "name": "keyword.operator.arithmetic.ovs",
+          "match": "\\+\\+|--|\\+|-|\\*\\*|\\*|/|%"
+        },
+        {
+          "name": "keyword.operator.bitwise.ovs",
+          "match": "&|\\||\\^|~|<<|>>|>>>"
+        },
+        {
+          "name": "keyword.operator.ternary.ovs",
+          "match": "\\?|:"
+        }
+      ]
+    },
+    "punctuation": {
+      "patterns": [
+        {
+          "name": "punctuation.terminator.statement.ovs",
+          "match": ";"
+        },
+        {
+          "name": "punctuation.separator.comma.ovs",
+          "match": ","
+        },
+        {
+          "name": "punctuation.accessor.ovs",
+          "match": "\\."
+        },
+        {
+          "name": "meta.brace.curly.ovs",
+          "match": "[{}]"
+        },
+        {
+          "name": "meta.brace.round.ovs",
+          "match": "[()]"
+        },
+        {
+          "name": "meta.brace.square.ovs",
+          "match": "[\\[\\]]"
+        }
+      ]
+    }
+  }
+}
+
+
