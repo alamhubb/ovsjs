@@ -1,114 +1,204 @@
-# Volar.js
+# Test-Volar
 
-## Packages
+> 一个编译器工具链 Monorepo 项目，包含多个独立的编程语言工具和 IDE 支持
+
+## 📦 项目列表
+
+### 核心编译器
+
+| 项目 | 描述 | 文档 |
+|------|------|------|
+| **[ovs](./ovs/)** | OVS 语言编译器 - 声明式 UI 语法（类似 Flutter/SwiftUI） | [README](./ovs/.cursor/rules/project.mdc) |
+| **[slime](./slime/)** | JavaScript/TypeScript 容错解析器和代码生成器 | [README](./slime/README.md) |
+| **[subhuti](./subhuti/)** | Parser 生成器框架 - 使用装饰器定义语法规则 | [README](./subhuti/README.md) |
+| **[objectScript](./objectScript/)** | ObjectScript 语言实现 | - |
+| **[particula](./particula/)** | 可组合的模块化解析器库 | [设计文档](./particula/HYBRID_DESIGN.md) |
+
+### IDE 支持
+
+| 项目 | 描述 | 文档 |
+|------|------|------|
+| **[langServer](./langServer/)** | OVS Language Server (LSP) - 基于 Volar 2.4.0 | [README](./langServer/README.md) |
+| **[ovs-lsp-intellij](./ovs-lsp-intellij/)** | IntelliJ IDEA 插件 - OVS 语言支持 | [README](./ovs-lsp-intellij/README.md) |
+
+### 示例应用
+
+| 项目 | 描述 | 文档 |
+|------|------|------|
+| **[guidebot](./guidebot/)** | OVS 完整应用示例 - AI 驱动的开发工具 UI | [README](./guidebot/README.md) |
+
+### 共享包 (packages/)
+
+- **language-core** - 语言核心
+- **language-server** - 语言服务器基础
+- **language-service** - 语言服务
+- **typescript** - TypeScript 集成
+- **source-map** - Source Map 支持
+- **monaco** - Monaco Editor 集成
+- **kit** - 工具集
+- **eslint** - ESLint 集成
+
+---
+
+## 🚀 快速开始
+
+### 安装依赖
+
+```bash
+# 根目录安装（使用 pnpm workspace）
+pnpm install
+```
+
+### 运行示例项目
+
+```bash
+# OVS 示例
+cd guidebot
+npm run dev
+
+# 语言服务器
+cd langServer
+tsx src/ovsserver.ts --stdio
+```
+
+### 构建 IntelliJ 插件
+
+```bash
+cd ovs-lsp-intellij
+./gradlew buildPlugin
+```
+
+---
+
+## 🏗️ 项目架构
 
 ```
-@volar/language-core
-  |
-  |--- @volar/language-service
-        |
-        |--- @volar/language-server
-        |     |
-        |     |--- @volar/vscode (as a client to the language server)
-        |
-        |--- @volar/kit (encapsulates @volar/language-service for Node.js applications)
-        |
-        |--- @volar/monaco (integrates @volar/language-service into Monaco Editor)
+编译器层次：
+┌─────────────────────────────────────────┐
+│  应用层: OVS, ObjectScript, Guidebot    │
+├─────────────────────────────────────────┤
+│  工具链: Slime (JS/TS Parser)           │
+├─────────────────────────────────────────┤
+│  框架层: Subhuti (Parser Generator)     │
+└─────────────────────────────────────────┘
+
+IDE 支持：
+┌─────────────────────────────────────────┐
+│  IntelliJ Plugin (LSP Client)           │
+├─────────────────────────────────────────┤
+│  Language Server (Volar-based)          │
+├─────────────────────────────────────────┤
+│  OVS Compiler (Virtual Code)            │
+└─────────────────────────────────────────┘
 ```
 
-### @volar/language-core
+---
 
-This module contains the core language processing functionalities, such as creating and updating virtual code objects. It serves as the foundation for the other modules, providing basic language processing capabilities.
+## 📚 技术栈
 
-### @volar/language-service
+- **TypeScript** - 主要开发语言
+- **Node.js** - 运行时环境
+- **Volar** - 语言服务器框架
+- **Kotlin** - IntelliJ 插件开发
+- **Gradle** - 构建工具（IntelliJ 插件）
+- **Vite** - 前端构建工具
+- **Vue 3** - UI 框架（OVS 运行时）
+- **Lerna** - Monorepo 管理
 
-This module provides language service functionalities, such as offering IntelliSense features. It depends on `@volar/language-core` for obtaining and processing virtual code, and then provides corresponding language services.
+---
 
-### @volar/language-server
+## 🎯 核心特性
 
-This module acts as a language server, utilizing the language services provided by `@volar/language-service` and offering these services to clients (like VS Code) through the Language Server Protocol (LSP). It also relies on `@volar/language-core` for handling basic language processing tasks.
+### OVS 语言
 
-### @volar/vscode
+```javascript
+// 声明式 UI，无需 JSX
+export class App {
+  render() {
+    return div({ class: 'container' }) {
+      h1 { 'Hello OVS' }
+      button({ onClick: () => this.handleClick() }) {
+        'Click Me'
+      }
+    }
+  }
+}
+```
 
-This module acts as a Language Server Protocol (LSP) language client. Its primary responsibility is to communicate with the `@volar/language-server` module (acting as an LSP server) and integrate the language services provided by the server into the VS Code editor. This architecture allows for the reuse of language services across different editors and IDEs, with the implementation of the corresponding LSP client. In this case, `@volar/vscode` is the LSP client implementation for VS Code.
+### 智能 IDE 支持
 
-### @volar/kit
+- ✅ 语法高亮
+- ✅ 代码补全
+- ✅ 类型推断
+- ✅ 错误诊断
+- ✅ 跳转定义
+- ✅ 悬停提示
 
-`@volar/kit` is a module that encapsulates `@volar/language-service`. It provides a simplified interface for using Volar's diagnostic and formatting features within Node.js applications.
+### 容错解析器
 
-### @volar/monaco
+Slime 支持解析包含语法错误的代码，适用于编辑器场景。
 
-This module is an extension of Volar.js for the Monaco Editor. It utilizes the language services provided by `@volar/language-service` and integrates these services into the Monaco Editor. This includes features like syntax highlighting, code completion, and definition jumping. Essentially, `@volar/monaco` serves as a bridge to bring Volar.js's language services into the Monaco Editor.
+---
 
-## ❤️ Thanks to Our Sponsors
+## 📖 文档说明
 
-This project is made possible thanks to our generous sponsors:
+每个子项目都有独立的文档：
 
-<table>
-  <tbody>
-    <tr>
-      <td align="center" valign="middle" colspan="6">
-        <b>Special Sponsor</b>
-      </td>
-    </tr>
-    <tr>
-      <td align="center" valign="middle" colspan="6">
-        <br>
-        <a href="https://voidzero.dev/">
-          <img src="https://raw.githubusercontent.com/johnsoncodehk/sponsors/master/logos/VoidZero.svg" height="60" />
-        </a>
-        <h3>Next Generation Tooling</h3>
-      </td>
-    </tr>
-    <tr>
-      <td align="center" valign="middle" colspan="6">
-        <b>Platinum Sponsors</b>
-      </td>
-    </tr>
-    <tr>
-      <td align="center" valign="middle" width="50%"  colspan="3">
-        <a href="https://vuejs.org/">
-          <img src="https://raw.githubusercontent.com/johnsoncodehk/sponsors/master/logos/Vue.svg" height="80" />
-        </a>
-        <p>An approachable, performant and versatile framework for building web user interfaces.</p>
-      </td>
-      <td align="center" valign="middle" width="50%" colspan="6">
-        <a href="https://stackblitz.com/">
-          <img src="https://raw.githubusercontent.com/johnsoncodehk/sponsors/master/logos/StackBlitz.svg" width="240" />
-        </a>
-        <p>Stay in the flow with instant dev experiences.<br>No more hours stashing/pulling/installing locally</p>
-        <p><b> — just click, and start coding.</b></p>
-      </td>
-    </tr>
-    <tr>
-      <td align="center" valign="middle" colspan="6">
-        <b>Gold Sponsors</b>
-      </td>
-    </tr>
-    <tr>
-      <td align="center" valign="middle" colspan="6">
-        <a href="https://www.jetbrains.com/">
-          <img src="https://raw.githubusercontent.com/johnsoncodehk/sponsors/master/logos/JetBrains.svg" width="80" />
-        </a>
-      </td>
-    </tr>
-    <tr>
-      <td align="center" valign="middle" colspan="6">
-        <b>Silver Sponsors</b>
-      </td>
-    </tr>
-    <tr>
-      <td align="center" valign="middle" width="33.3%" colspan="2">
-      </td>
-      <td align="center" valign="middle" width="33.3%" colspan="2">
-        <a href="https://www.prefect.io/"><img src="https://raw.githubusercontent.com/johnsoncodehk/sponsors/master/logos/Prefect.svg" width="200" /></a>
-      </td>
-      <td align="center" valign="middle" width="33.3%" colspan="2">
-      </td>
-    </tr>
-  </tbody>
-</table>
+- **README.md** - 用户指南和快速开始
+- **.cursor/rules/project.mdc** - 完整技术文档（AI 协作用）
 
-<p align="center">
-	<a href="https://github.com/sponsors/johnsoncodehk">Become a sponsor</a>
-</p>
+专题文档位于对应子项目目录下（如 `SOLUTION_*.md`、`*_GUIDE.md`）。
+
+---
+
+## 🔧 开发
+
+### 项目结构
+
+```
+test-volar/
+├── ovs/                    # OVS 编译器
+├── langServer/             # LSP 服务器
+├── ovs-lsp-intellij/       # IntelliJ 插件
+├── guidebot/               # 示例应用
+├── slime/                  # JS/TS 解析器
+├── subhuti/                # Parser 框架
+├── objectScript/           # ObjectScript 实现
+├── particula/              # 模块化解析器
+└── packages/               # 共享包
+```
+
+### 常用命令
+
+```bash
+# 安装依赖
+pnpm install
+
+# 构建所有包
+pnpm run build
+
+# 运行测试
+pnpm run test
+
+# 清理构建产物
+pnpm run clean
+```
+
+---
+
+## 📄 许可证
+
+MIT License - 详见 [LICENSE.md](./LICENSE.md)
+
+---
+
+## 🤝 贡献
+
+欢迎提交 Issue 和 Pull Request！
+
+请先阅读对应子项目的文档了解技术细节。
+
+---
+
+**Test-Volar** - _构建下一代编程语言工具链_ ✨
+
