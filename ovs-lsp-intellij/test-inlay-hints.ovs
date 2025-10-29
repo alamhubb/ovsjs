@@ -1,0 +1,26 @@
+// OVS Inlay Hints 测试文件
+// 期望看到变量类型提示（如果 InlayHint 工作）
+
+const name = "Alice"
+let age = 25
+const isActive = true
+
+function greet(userName) {
+  return "Hello " + userName
+}
+
+const numbers = [1, 2, 3]
+
+const user = {
+  name: "Bob",
+  age: 30
+}
+
+// 期望显示:
+// const name: string = "Alice"
+// let age: number = 25
+// const isActive: boolean = true
+// function greet(userName: any): string
+// const numbers: number[] = [1, 2, 3]
+// const user: { name: string; age: number } = ...
+

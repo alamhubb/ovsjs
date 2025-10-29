@@ -1,0 +1,184 @@
+// ========== ES6 语法高亮测试文件 ==========
+
+// ========== 1. 变量声明（ES6 关键字）==========
+let userName = "Alice"
+const userAge = 25
+var oldStyle = "legacy"
+
+// ========== 2. 类和继承 ==========
+class Person {
+  constructor(name, age) {
+    this.name = name
+    this.age = age
+  }
+  
+  greet() {
+    return `Hello, ${this.name}!`
+  }
+  
+  static create(name, age) {
+    return new Person(name, age)
+  }
+}
+
+class Employee extends Person {
+  constructor(name, age, salary) {
+    super(name, age)
+    this.salary = salary
+  }
+}
+
+// ========== 3. 异步函数 ==========
+async function fetchUserData(userId) {
+  try {
+    const response = await fetch(`/api/users/${userId}`)
+    const data = await response.json()
+    return data
+  } catch (error) {
+    console.error("Failed to fetch:", error)
+    throw error
+  }
+}
+
+// ========== 4. 箭头函数 ==========
+const double = x => x * 2
+const add = (a, b) => a + b
+const greet = () => "Hello World"
+const complex = (x, y) => {
+  const result = x + y
+  return result * 2
+}
+
+// ========== 5. 模板字符串 ==========
+const name = "Bob"
+const age = 30
+const message = `User ${name} is ${age} years old`
+const multiline = `
+  This is a
+  multiline string
+  with ${name}
+`
+
+// ========== 6. 解构 ==========
+const { firstName, lastName } = user
+const [first, second, ...rest] = array
+const { name: userName2, age: userAge2 } = person
+
+// ========== 7. 扩展运算符 ==========
+const newArray = [...oldArray, 4, 5, 6]
+const combined = [...array1, ...array2]
+function sum(...numbers) {
+  return numbers.reduce((a, b) => a + b, 0)
+}
+
+// ========== 8. 模块导入导出 ==========
+import { User, Product } from './models'
+import * as utils from './utils'
+import defaultExport from './default'
+
+export const API_URL = "/api/v1"
+export function helper() {
+  return "help"
+}
+export default class Main {}
+
+// ========== 9. 数字字面量（所有格式）==========
+const decimal = 123
+const float = 123.45
+const scientific = 1.23e10
+const hex = 0xFF
+const octal = 0o777
+const binary = 0b1010
+
+// ========== 10. 控制流 ==========
+if (condition) {
+  console.log("true")
+} else {
+  console.log("false")
+}
+
+for (let i = 0; i < 10; i++) {
+  console.log(i)
+}
+
+while (isRunning) {
+  doWork()
+}
+
+switch (status) {
+  case "pending":
+    processPending()
+    break
+  case "completed":
+    processCompleted()
+    break
+  default:
+    processDefault()
+}
+
+// ========== 11. Generator 和 Iterator ==========
+function* numberGenerator() {
+  yield 1
+  yield 2
+  yield 3
+}
+
+const obj = {
+  *[Symbol.iterator]() {
+    yield 1
+    yield 2
+  }
+}
+
+// ========== 12. 运算符（所有类型）==========
+const a = 10 + 5     // 加法
+const b = 10 - 5     // 减法
+const c = 10 * 5     // 乘法
+const d = 10 / 5     // 除法
+const e = 10 % 3     // 取模
+
+const eq1 = x === y  // 严格相等
+const eq2 = x !== y  // 严格不等
+const gt = x > y     // 大于
+const lt = x < y     // 小于
+
+const and = a && b   // 逻辑与
+const or = a || b    // 逻辑或
+const not = !a       // 逻辑非
+
+let n = 0
+n += 5              // 复合赋值
+n++                 // 自增
+n--                 // 自减
+
+// ========== 13. 注释（单行和多行）==========
+// 这是单行注释
+
+/*
+ * 这是多行注释
+ * 支持中文和 emoji 🎉
+ * 用于文档说明
+ */
+
+// ========== 14. typeof, instanceof, delete ==========
+const type = typeof value
+const isInstance = obj instanceof Person
+delete obj.property
+
+// ========== 15. this, super, new ==========
+function MyClass() {
+  this.value = 10
+}
+
+const instance = new MyClass()
+
+class Child extends Parent {
+  constructor() {
+    super()
+    this.childProp = "value"
+  }
+}
+
+// ========== 测试完成 ==========
+console.log("✅ ES6 语法高亮测试完成")
+
