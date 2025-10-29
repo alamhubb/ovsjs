@@ -4,6 +4,7 @@
   "workspaces": [
     "langServer",
     "ovs",
+    "subhuti",
     "slime",
     "slime/packages/*",
     "packages/*"
