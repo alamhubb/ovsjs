@@ -915,11 +915,13 @@ export default class SlimeGenerator {
     if (node.prefix) {
       // 前缀：++i 或 --i
       this.generateCode += node.operator
+      this.generateIndex += node.operator.length  // 更新索引
       this.generatorNode(node.argument)
     } else {
       // 后缀：i++ 或 i--
       this.generatorNode(node.argument)
       this.generateCode += node.operator
+      this.generateIndex += node.operator.length  // 更新索引
     }
   }
 
