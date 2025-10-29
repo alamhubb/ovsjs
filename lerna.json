@@ -1,4 +1,9 @@
 {
-  "$schema": "node_modules/lerna/schemas/lerna-schema.json",
-  "version": "0.0.0"
+	"$schema": "https://raw.githubusercontent.com/lerna-lite/lerna-lite/main/packages/cli/schemas/lerna-schema.json",
+	"npmClient": "pnpm",
+	"packages": [
+		"extensions/*",
+		"packages/*"
+	],
+	"version": "2.4.23"
 }

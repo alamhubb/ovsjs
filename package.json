@@ -1,17 +1,37 @@
 {
-  "name": "root",
   "private": true,
+  "packageManager": "pnpm@9.4.0",
   "workspaces": [
     "langServer",
     "ovs",
     "slime",
     "slime/packages/*",
-    "packages/*",
-    "subhuti",
     "packages/*"
   ],
-  "dependencies": {},
+  "scripts": {
+    "build": "tsc -b",
+    "watch": "tsc -b -w",
+    "watch:labs": "cd extensions/labs && npm run watch",
+    "prerelease": "npm run build && npm run test",
+    "release": "lerna publish --exact --force-publish --yes --sync-workspace-lock",
+    "release:next": "npm run release -- --dist-tag next --no-push",
+    "test": "vitest run",
+    "format": "dprint fmt",
+    "lint": "tsslint --project */*/tsconfig.json",
+    "lint:fix": "npm run lint -- --fix"
+  },
   "devDependencies": {
-    "lerna": "^9.0.0"
+    "@lerna-lite/cli": "latest",
+    "@lerna-lite/publish": "latest",
+    "@tsslint/cli": "^2.0.4",
+    "@tsslint/config": "^2.0.4",
+    "@tsslint/eslint": "^2.0.4",
+    "@typescript-eslint/eslint-plugin": "^8.19.0",
+    "dprint": "^0.50.0",
+    "typescript": "latest",
+    "vitest": "latest"
+  },
+  "dependencies": {
+    "pnpm": "^9.14.2"
   }
 }

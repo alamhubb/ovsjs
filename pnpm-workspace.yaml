@@ -1,0 +1,8 @@
+packages:
+  - 'langServer'
+  - 'subhuti'
+  - 'ovs'
+  - 'extensions/*'
+  - 'slime/packages/*'
+  - 'slime'
+  - 'packages/*'
