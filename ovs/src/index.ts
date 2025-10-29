@@ -8,7 +8,9 @@ import OvsTokenConsumer from "./parser/OvsConsumer.ts";
 import OvsParser from "./parser/OvsParser.ts";
 import OvsCstToSlimeAstUtil from "./factory/OvsCstToSlimeAstUtil.ts";
 import type {SlimeGeneratorResult} from "slime-generator/src/SlimeCodeMapping.ts";
+import SlimeCodeMapping from "slime-generator/src/SlimeCodeMapping.ts";
 import prettier from 'prettier';
+import beautify from 'js-beautify';
 import {
   type SlimeProgram,
   type SlimeStatement,
@@ -368,10 +370,66 @@ function ensureOvsAPIImport(ast: SlimeProgram): SlimeProgram {
 }
 
 /**
- * OVS 代码转换主函数
+ * 简单格式化：在语句后添加换行，并更新 mapping
+ * @param code 原始代码
+ * @param mapping 原始 mapping
+ * @returns 格式化后的代码和更新后的 mapping
+ */
+function simpleFormatWithMapping(
+  code: string,
+  mapping: SlimeCodeMapping[]
+): { code: string; mapping: SlimeCodeMapping[] } {
+  // 1. 找出所有需要插入换行的位置（在 ; 后面）
+  const insertPositions: number[] = [];
+  for (let i = 0; i < code.length; i++) {
+    if (code[i] === ';' && code[i + 1] !== '\n') {
+      insertPositions.push(i + 1);
+    }
+  }
+
+  if (insertPositions.length === 0) {
+    return { code, mapping };
+  }
+
+  // 2. 从后往前插入换行（避免位置变化影响）
+  let formatted = code;
+  for (let i = insertPositions.length - 1; i >= 0; i--) {
+    const pos = insertPositions[i];
+    formatted = formatted.slice(0, pos) + '\n' + formatted.slice(pos);
+  }
+
+  // 3. 更新 mapping：对每个 mapping，计算它前面有多少个插入点
+  const newMapping = mapping.map(map => {
+    if (!map.generate) {
+      return map;
+    }
+
+    // 深拷贝 mapping
+    const newMap = new SlimeCodeMapping();
+    newMap.source = map.source;
+    newMap.generate = { ...map.generate };
+
+    // 计算这个 mapping 前面有多少个插入点
+    let offsetCount = 0;
+    for (const insertPos of insertPositions) {
+      if (insertPos <= map.generate.index) {
+        offsetCount++;
+      }
+    }
+
+    // 更新 generated index
+    newMap.generate.index += offsetCount;
+
+    return newMap;
+  });
+
+  return { code: formatted, mapping: newMapping };
+}
+
+/**
+ * OVS 代码转换主函数（同步）
  * @param code OVS 源代码
- * @param filename 文件名（用于生成组件名称）
- * @param prettify 是否使用 Prettier 格式化
+ * @param beautifyCode 是否使用 js-beautify 格式化（同步）
  * @returns 转换结果（包含代码和 source map）
  *
  * 转换流程：
@@ -381,10 +439,11 @@ function ensureOvsAPIImport(ast: SlimeProgram): SlimeProgram {
  * 4. 添加 import：自动添加 h 函数 import（如果不存在）
  * 5. 组件包装：AST → Vue 组件 AST
  * 6. 代码生成：AST → code
- * 7. 代码格式化：使用 Prettier（可选）
+ * 7. 代码格式化：使用 js-beautify（可选，同步）
  */
 export function vitePluginOvsTransform(
-  code: string
+  code: string,
+  beautifyCode: boolean = false
 ): SlimeGeneratorResult {
   // 1. 词法分析（使用包含 ovsView 关键字的 tokens）
   const lexer = new SubhutiLexer(ovs6Tokens)
@@ -409,35 +468,41 @@ export function vitePluginOvsTransform(
   // 5. 包裹顶层表达式：根据是否有 export default 决定是否包裹
   ast = wrapTopLevelExpressions(ast)
   // 6. 代码生成：AST → code
-  const result = SlimeGenerator.generator(ast, tokens)
+  let result = SlimeGenerator.generator(ast, tokens)
+  
   // 7. 代码格式化（可选）
-  // if (prettify) {
-  //   try {
-  //     LogUtil.log("69999")
-  //     LogUtil.log(result.code)
-  //     result.code = await prettier.format(result.code, {
-  //       parser: 'babel',
-  //       semi: false,
-  //       singleQuote: true,
-  //       tabWidth: 2,
-  //       printWidth: 80
-  //     })
-  //     LogUtil.log("71111")
-  //   } catch (e) {
-  //     LogUtil.log('OVS code formatting failed:')
-  //     LogUtil.log(e)
-  //   }
-  // }
+  if (beautifyCode) {
+    try {
+      // 使用简单格式化并更新 mapping（保持 source map 准确）
+      const formatted = simpleFormatWithMapping(result.code, result.mapping);
+      result = {
+        code: formatted.code,
+        mapping: formatted.mapping
+      };
+    } catch (e) {
+      console.warn('OVS code formatting (simple) failed:', e);
+    }
+  }
+  
   return result
 }
 
+/**
+ * OVS 代码转换主函数（异步，支持 Prettier）
+ * @param code OVS 源代码
+ * @param _filename 文件名（保留用于将来）
+ * @param prettify 是否使用 Prettier 格式化（异步）
+ * @returns 转换结果（包含代码和 source map）
+ */
 export async function vitePluginOvsTransformSync(
   code: string,
   _filename?: string,
   prettify: boolean = true
 ): Promise<SlimeGeneratorResult> {
-  const result = vitePluginOvsTransform(code)
-  // 7. 代码格式化（可选）
+  // 调用同步方法，不使用 js-beautify（由 Prettier 异步格式化）
+  const result = vitePluginOvsTransform(code, false)
+  
+  // 使用 Prettier 异步格式化（可选）
   if (prettify) {
     try {
       result.code = await prettier.format(result.code, {
@@ -448,7 +513,7 @@ export async function vitePluginOvsTransformSync(
         printWidth: 80
       })
     } catch (e) {
-      console.warn('OVS code formatting failed:', e)
+      console.warn('OVS code formatting (prettier) failed:', e)
     }
   }
 

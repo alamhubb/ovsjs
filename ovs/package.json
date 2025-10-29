@@ -51,6 +51,9 @@
     "vue-tsc": "^3.0.7"
   },
   "dependencies": {
+    "@types/js-beautify": "^1.14.3",
+    "js-beautify": "^1.15.4",
+    "magic-string": "^0.30.21",
     "slime-ast": "^0.0.1",
     "slime-generator": "^0.0.1",
     "slime-parser": "^0.0.1",

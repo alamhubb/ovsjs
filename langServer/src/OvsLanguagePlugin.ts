@@ -110,7 +110,8 @@ export class OvsVirtualCode implements VirtualCode {
     let mapping = []
     try {
       LogUtil.log('3333')
-      const res = vitePluginOvsTransform(styleText)
+      // 使用 js-beautify 格式化（同步）
+      const res = vitePluginOvsTransform(styleText, true)
       newCode = res.code
       mapping = res.mapping
     } catch (e: any) {

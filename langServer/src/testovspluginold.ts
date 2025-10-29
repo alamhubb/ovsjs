@@ -6,7 +6,7 @@ import { SourceMap } from '@volar/source-map';
 const code = `let a = 1
 let b = a`
 
-const res = vitePluginOvsTransform(code)
+const res = vitePluginOvsTransform(code, false)
 
 console.log(777888)
 console.log(res.code)
