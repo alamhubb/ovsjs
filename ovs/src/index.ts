@@ -467,6 +467,16 @@ export function vitePluginOvsTransform(
   // 6. 代码生成：AST → code
   const result = SlimeGenerator.generator(ast, tokens)
   
+  // 7. 过滤无效映射：移除 source.value 为空或长度为0的映射
+  //    无效映射通常来自自动生成的代码（如 import 语句）
+  //    这些映射会干扰 LSP 功能，应该过滤掉
+  result.mapping = result.mapping.filter(m => 
+    m.source && 
+    m.source.value && 
+    m.source.value !== '' && 
+    m.source.length > 0
+  )
+  
   return result
 }
 

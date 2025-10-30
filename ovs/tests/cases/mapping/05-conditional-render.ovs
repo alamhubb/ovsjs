@@ -1,0 +1,11 @@
+// 测试05: 条件渲染
+// 验证: if语句中的变量和元素映射
+
+const isVisible = true
+
+div {
+  if (isVisible) {
+    p { "Visible content" }
+  }
+}
+

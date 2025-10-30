@@ -1,0 +1,14 @@
+// 测试07: 函数调用
+// 验证: 函数名和参数的映射
+
+function getMessage() {
+  return "Hello from function"
+}
+
+const name = "User"
+
+div {
+  p { getMessage() }
+  p { name }
+}
+

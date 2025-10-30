@@ -599,7 +599,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     // 创建第一个参数：组件用 Identifier，标签用 StringLiteral
     const firstArg = isComponent
       ? id  // MyComponent（不加引号）
-      : SlimeAstUtil.createStringLiteral(id.name, id.loc)  // 'div'（加引号），传递 loc
+      : SlimeAstUtil.createStringLiteral(id.name)  // 'div'（加引号），不传递loc（避免重复映射）
 
     // 创建 createReactiveVNode(Component, props, children) 或 createReactiveVNode('div', {}, children) 调用
     const vNodeCall = SlimeAstUtil.createCallExpression(
@@ -643,31 +643,31 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     // 生成完整的 IIFE 函数体
     const iifeFunctionBody: SlimeStatement[] = [
       // 1. 声明 children 数组：const children = []
+      // 注意：这是自动生成的代码，不传递loc（避免创建错误映射）
       SlimeAstUtil.createVariableDeclaration(
-        SlimeAstUtil.createVariableDeclarationKind(SlimeVariableDeclarationKindValue.const, id.loc || undefined),
+        SlimeAstUtil.createVariableDeclarationKind(SlimeVariableDeclarationKindValue.const),
         [
           SlimeAstUtil.createVariableDeclarator(
             SlimeAstUtil.createIdentifier('children'),
-            SlimeAstUtil.createEqualOperator(id.loc || undefined),
+            SlimeAstUtil.createEqualOperator(),
             SlimeAstUtil.createArrayExpression([])
           )
-        ],
-        id.loc || undefined
+        ]
       )
     ]
 
     // 2. 如果有attrs，声明 attrs 对象：const temp$$attrs$$uuid = {}
+    // 注意：这也是自动生成的代码，不传递loc（避免创建错误映射）
     if (attrsVarName) {
       const attrsDeclaration = SlimeAstUtil.createVariableDeclaration(
-        SlimeAstUtil.createVariableDeclarationKind(SlimeVariableDeclarationKindValue.const, id.loc || undefined),
+        SlimeAstUtil.createVariableDeclarationKind(SlimeVariableDeclarationKindValue.const),
         [
           SlimeAstUtil.createVariableDeclarator(
             SlimeAstUtil.createIdentifier(attrsVarName),
-            SlimeAstUtil.createEqualOperator(id.loc || undefined),
+            SlimeAstUtil.createEqualOperator(),
             SlimeAstUtil.createObjectExpression([])
           )
-        ],
-        id.loc || undefined
+        ]
       )
       iifeFunctionBody.push(attrsDeclaration)
     }
@@ -726,7 +726,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     // 创建第一个参数：组件用 Identifier，标签用 StringLiteral
     const firstArg = isComponent
       ? id  // MyComponent（不加引号）
-      : SlimeAstUtil.createStringLiteral(id.name, id.loc)  // 'div'（加引号），传递 loc
+      : SlimeAstUtil.createStringLiteral(id.name)  // 'div'（加引号），不传递loc（避免重复映射）
 
     // 创建函数调用：createReactiveVNode(Component, props, children) 或 createReactiveVNode('div', props, children)
     const callExpression = SlimeAstUtil.createCallExpression(

@@ -67,15 +67,12 @@ interface EnhancedMapping {
 
 export class MappingConverter {
     static convertMappings(mappings: SlimeCodeMapping[]): EnhancedMapping[] {
+        // 注意：无效映射已经在编译器（vitePluginOvsTransform）中过滤
+        // 这里只做基本的 null 检查，防御性编程
         return mappings
             .filter(mapping => {
-                // 过滤无效映射
-                if (!mapping.source || !mapping.generate) return false;
-                if (!mapping.source.value || mapping.source.value === 'null' ||
-                    mapping.source.value === 'undefined') {
-                    return false;
-                }
-                return mapping.source.length !== 0;
+                // 基本的 null/undefined 检查
+                return mapping.source && mapping.generate;
             })
             .map((mapping, index) => {
             const res = {

@@ -1,0 +1,23 @@
+// 测试10: 混合场景
+// 验证: 变量+嵌套+条件+循环的综合映射
+
+const title = "Product List"
+const products = ["Laptop", "Mouse", "Keyboard"]
+const showDetails = true
+
+div {
+  h1 { title }
+  
+  if (showDetails) {
+    div {
+      p { "Total items: " }
+      for (const product of products) {
+        div {
+          span { product }
+          p { "In stock" }
+        }
+      }
+    }
+  }
+}
+

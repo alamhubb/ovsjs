@@ -1,0 +1,11 @@
+// 测试06: 简单循环
+// 验证: 循环变量和迭代项的映射
+
+const items = ["Apple", "Banana", "Cherry"]
+
+div {
+  for (const item of items) {
+    p { item }
+  }
+}
+
