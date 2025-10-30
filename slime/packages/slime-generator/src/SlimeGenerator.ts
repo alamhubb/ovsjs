@@ -421,7 +421,8 @@ export default class SlimeGenerator {
       }
     } else {
       // 块语句形式：x => { return x * 2 }
-      this.generatorNode(node.body)
+      // 阶段2：箭头函数后不换行（可能后面有逗号或括号），传 false
+      this.generatorNode(node.body, false)
     }
   }
 
@@ -584,7 +585,8 @@ export default class SlimeGenerator {
     
     // 输出函数体
     if (node.body) {
-      this.generatorBlockStatement(node.body as SlimeBlockStatement)
+      // 阶段2：函数声明后需要换行，传 true
+      this.generatorBlockStatement(node.body as SlimeBlockStatement, true)
     }
   }
 
@@ -741,7 +743,12 @@ export default class SlimeGenerator {
     this.addRParen()
   }
 
-  private static generatorNode(node: SlimeBaseNode) {
+  /**
+   * 生成任意节点
+   * @param node AST 节点
+   * @param addNewLineAfter 如果节点是 BlockStatement，是否在 } 后换行（默认 false）
+   */
+  private static generatorNode(node: SlimeBaseNode, addNewLineAfter: boolean = false) {
     // 防御性检查：如果node为null或undefined，直接返回
     if (!node) {
       return
@@ -822,7 +829,8 @@ export default class SlimeGenerator {
     } else if (node.type === SlimeAstType.ReturnStatement) {
       this.generatorReturnStatement(node as SlimeReturnStatement)
     } else if (node.type === SlimeAstType.BlockStatement) {
-      this.generatorBlockStatement(node as SlimeBlockStatement)
+      // 阶段2：传递 addNewLineAfter 参数给 BlockStatement
+      this.generatorBlockStatement(node as SlimeBlockStatement, addNewLineAfter)
     } else if (node.type === SlimeAstType.IfStatement) {
       this.generatorIfStatement(node as any)
     } else if (node.type === SlimeAstType.ForStatement) {
@@ -1017,7 +1025,12 @@ export default class SlimeGenerator {
     this.generatorNode(node.right)
   }
 
-  private static generatorBlockStatement(node: SlimeBlockStatement) {
+  /**
+   * 生成块语句（{...}）
+   * @param node BlockStatement 节点
+   * @param addNewLineAfter 是否在 } 后换行（默认 false）
+   */
+  private static generatorBlockStatement(node: SlimeBlockStatement, addNewLineAfter: boolean = false) {
     this.addLBrace()
     this.addNewLine()  // 阶段2：{ 后换行
     this.indent++      // 阶段2：增加缩进层级
@@ -1028,7 +1041,11 @@ export default class SlimeGenerator {
     this.indent--      // 阶段2：减少缩进层级
     this.addIndent()   // 阶段2：添加 } 的缩进
     this.addRBrace()
-    this.addNewLine()  // 阶段2：} 后换行
+    
+    // 阶段2：根据参数决定是否在 } 后换行
+    if (addNewLineAfter) {
+      this.addNewLine()
+    }
   }
 
   private static generatorReturnStatement(node: SlimeReturnStatement) {
@@ -1287,10 +1304,14 @@ export default class SlimeGenerator {
     this.addCode(es6TokensObj.LParen)
     this.generatorNode(node.test)
     this.addCode(es6TokensObj.RParen)
-    this.generatorNode(node.consequent)
+    
+    // 阶段2：if 语句后需要换行，传 true
+    this.generatorNode(node.consequent, true)
+    
     if (node.alternate) {
       this.addCode(es6TokensObj.ElseTok)
-      this.generatorNode(node.alternate)
+      // 阶段2：else 语句后需要换行，传 true
+      this.generatorNode(node.alternate, true)
     }
   }
 
@@ -1306,7 +1327,11 @@ export default class SlimeGenerator {
     this.addCode(es6TokensObj.Semicolon)
     if (node.update) this.generatorNode(node.update)
     this.addCode(es6TokensObj.RParen)
-    if (node.body) this.generatorNode(node.body)
+    
+    // 阶段2：for 语句后需要换行，传 true
+    if (node.body) {
+      this.generatorNode(node.body, true)
+    }
   }
 
   /**
@@ -1342,7 +1367,9 @@ export default class SlimeGenerator {
     this.generatorNode(node.right)
     
     this.addCode(es6TokensObj.RParen)
-    this.generatorNode(node.body)
+    
+    // 阶段2：for...in/of 语句后需要换行，传 true
+    this.generatorNode(node.body, true)
   }
 
   /**
@@ -1353,7 +1380,11 @@ export default class SlimeGenerator {
     this.addCode(es6TokensObj.LParen)
     if (node.test) this.generatorNode(node.test)
     this.addCode(es6TokensObj.RParen)
-    if (node.body) this.generatorNode(node.body)
+    
+    // 阶段2：while 语句后需要换行，传 true
+    if (node.body) {
+      this.generatorNode(node.body, true)
+    }
   }
 
   /**
@@ -1411,21 +1442,38 @@ export default class SlimeGenerator {
   private static generatorTryStatement(node: any) {
     this.addCode(es6TokensObj.TryTok)
     this.addSpacing()
-    this.generatorNode(node.block)
+    
+    // try block 后不换行（后面紧跟 catch 或 finally），传 false
+    this.generatorNode(node.block, false)
+    
     if (node.handler) {
-      this.generatorNode(node.handler)
+      this.addCode(es6TokensObj.CatchTok)
+      this.addSpacing()
+      this.addLParen()
+      if (node.handler.param) {
+        this.generatorNode(node.handler.param)
+      }
+      this.addRParen()
+      
+      // catch block 后：如果没有 finally，需要换行；否则不换行
+      const hasFinalizer = !!node.finalizer
+      this.generatorNode(node.handler.body, !hasFinalizer)
     }
+    
     if (node.finalizer) {
       this.addCode(es6TokensObj.FinallyTok)
       this.addSpacing()
-      this.generatorNode(node.finalizer)
+      // finally block 后需要换行，传 true
+      this.generatorNode(node.finalizer, true)
     }
   }
   
   /**
-   * 生成 catch 子句
+   * 生成 catch 子句（已内联到 TryStatement 中）
+   * @deprecated 不再使用，保留以防万一
    */
   private static generatorCatchClause(node: any) {
+    // 这个方法已经不会被调用了，因为在 TryStatement 中直接处理了
     this.addCode(es6TokensObj.CatchTok)
     this.addSpacing()
     this.addLParen()
