@@ -568,17 +568,14 @@ export default function vitePluginOvs(): Plugin {
     name: 'vite-plugin-ovs',
     enforce: 'pre',  // 在其他插件之前执行
 
-    async transform(code, id) {
+    transform(code, id) {
       // 只处理 .ovs 文件
       if (!filter(id)) {
         return
       }
 
-      // 开发模式下启用格式化（提升开发体验）
-      const isDev = process.env.NODE_ENV !== 'production'
-
-      // 转换 OVS 代码，传递文件名用于生成组件名称
-      const res = await vitePluginOvsTransformSync(code, id, isDev)
+      // 转换 OVS 代码（SlimeGenerator 已自带格式化：分号后换行）
+      const res = vitePluginOvsTransform(code)
 
       return {
         code: res.code,

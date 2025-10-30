@@ -28461,3 +28461,4221 @@ chufa  provideDocumentSemanticTokens
 [2025-10-30T12:59:43.292Z]
 chufa  provideDocumentSemanticTokens
 ================================================================================
+
+[2025-10-30T13:00:13.573Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-30T13:00:13.574Z]
+3333
+================================================================================
+
+[2025-10-30T13:00:14.096Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-30T13:00:14.097Z]
+import { h, ref, computed } from 'vue'
+
+const count = ref(0)
+
+setInterval(() => {
+  count.value++
+  console.log('计数器：', count.value)
+}, 1000)
+
+const colors = ['red','green','blue','orange','purple']
+const colorIndex = ref(0)
+
+// 使用 computed 计算当前样式
+const style = computed(() => ({ color: colors[colorIndex.value] }))
+
+// 每秒切换颜色
+setInterval(() => {
+  colorIndex.value = (colorIndex.value + 1) % colors.length
+}, 1000)
+
+div({style: style}) {
+  p { 'Hello, OVS!' }
+  p { c }
+  p { '颜色变化演示' }
+  
+}
+================================================================================
+
+[2025-10-30T13:00:14.097Z]
+import {createReactiveVNode} from '../utils/ReactiveVNode';
+import {h,ref,computed} from 'vue';
+export default (function(){const count = ref(0);
+const colors = ['red','green','blue','orange','purple',];
+const colorIndex = ref(0);
+const style = computed(() => ({color:colors[colorIndex.value],}));
+const children = [];
+setInterval(() => {count.value++;
+console.log('计数器：',count.value);
+},1000);
+setInterval(() => {colorIndex.value = (colorIndex.value + 1) % colors.length;
+},1000);
+children.push(createReactiveVNode('div',{style:style,},[createReactiveVNode('p',{},['Hello, OVS!',]),createReactiveVNode('p',{},[c,]),createReactiveVNode('p',{},['颜色变化演示',]),]));
+return children})()
+================================================================================
+
+[2025-10-30T13:00:14.231Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-30T13:00:14.239Z]
+反悔了tokens
+================================================================================
+
+[2025-10-30T13:00:14.242Z]
+[
+  [
+    2,
+    33,
+    5,
+    7,
+    35
+  ],
+  [
+    2,
+    41,
+    3,
+    10,
+    0
+  ],
+  [
+    3,
+    6,
+    6,
+    7,
+    35
+  ],
+  [
+    4,
+    6,
+    10,
+    7,
+    35
+  ],
+  [
+    4,
+    19,
+    3,
+    10,
+    0
+  ],
+  [
+    5,
+    6,
+    5,
+    7,
+    35
+  ],
+  [
+    5,
+    14,
+    8,
+    10,
+    2
+  ],
+  [
+    5,
+    31,
+    5,
+    8,
+    1
+  ],
+  [
+    5,
+    37,
+    6,
+    7,
+    34
+  ],
+  [
+    5,
+    44,
+    10,
+    7,
+    34
+  ],
+  [
+    5,
+    55,
+    5,
+    8,
+    0
+  ],
+  [
+    6,
+    6,
+    8,
+    7,
+    35
+  ],
+  [
+    7,
+    0,
+    11,
+    10,
+    16
+  ],
+  [
+    7,
+    19,
+    5,
+    7,
+    34
+  ],
+  [
+    7,
+    25,
+    5,
+    8,
+    0
+  ],
+  [
+    8,
+    0,
+    7,
+    7,
+    16
+  ],
+  [
+    8,
+    8,
+    3,
+    11,
+    16
+  ],
+  [
+    8,
+    19,
+    5,
+    7,
+    34
+  ],
+  [
+    8,
+    25,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    0,
+    11,
+    10,
+    16
+  ],
+  [
+    10,
+    19,
+    10,
+    7,
+    34
+  ],
+  [
+    10,
+    30,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    39,
+    10,
+    7,
+    34
+  ],
+  [
+    10,
+    50,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    63,
+    6,
+    7,
+    34
+  ],
+  [
+    10,
+    70,
+    6,
+    8,
+    16
+  ],
+  [
+    12,
+    0,
+    8,
+    7,
+    34
+  ],
+  [
+    12,
+    9,
+    4,
+    11,
+    16
+  ],
+  [
+    12,
+    14,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    41,
+    5,
+    8,
+    1
+  ],
+  [
+    12,
+    47,
+    5,
+    7,
+    34
+  ],
+  [
+    12,
+    56,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    101,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    134,
+    19,
+    10,
+    0
+  ]
+]
+================================================================================
+
+[2025-10-30T13:00:14.247Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-30T13:00:14.306Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-30T13:00:14.307Z]
+3333
+================================================================================
+
+[2025-10-30T13:00:14.805Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-30T13:00:14.805Z]
+import { h, ref, computed } from 'vue'
+
+const count = ref(0)
+
+setInterval(() => {
+  count.value++
+  console.log('计数器：', count.value)
+}, 1000)
+
+const colors = ['red','green','blue','orange','purple']
+const colorIndex = ref(0)
+
+// 使用 computed 计算当前样式
+const style = computed(() => ({ color: colors[colorIndex.value] }))
+
+// 每秒切换颜色
+setInterval(() => {
+  colorIndex.value = (colorIndex.value + 1) % colors.length
+}, 1000)
+
+div({style: style}) {
+  p { 'Hello, OVS!' }
+  p { co }
+  p { '颜色变化演示' }
+  
+}
+================================================================================
+
+[2025-10-30T13:00:14.805Z]
+import {createReactiveVNode} from '../utils/ReactiveVNode';
+import {h,ref,computed} from 'vue';
+export default (function(){const count = ref(0);
+const colors = ['red','green','blue','orange','purple',];
+const colorIndex = ref(0);
+const style = computed(() => ({color:colors[colorIndex.value],}));
+const children = [];
+setInterval(() => {count.value++;
+console.log('计数器：',count.value);
+},1000);
+setInterval(() => {colorIndex.value = (colorIndex.value + 1) % colors.length;
+},1000);
+children.push(createReactiveVNode('div',{style:style,},[createReactiveVNode('p',{},['Hello, OVS!',]),createReactiveVNode('p',{},[co,]),createReactiveVNode('p',{},['颜色变化演示',]),]));
+return children})()
+================================================================================
+
+[2025-10-30T13:00:14.823Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-30T13:00:14.823Z]
+3333
+================================================================================
+
+[2025-10-30T13:00:15.271Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-30T13:00:15.271Z]
+import { h, ref, computed } from 'vue'
+
+const count = ref(0)
+
+setInterval(() => {
+  count.value++
+  console.log('计数器：', count.value)
+}, 1000)
+
+const colors = ['red','green','blue','orange','purple']
+const colorIndex = ref(0)
+
+// 使用 computed 计算当前样式
+const style = computed(() => ({ color: colors[colorIndex.value] }))
+
+// 每秒切换颜色
+setInterval(() => {
+  colorIndex.value = (colorIndex.value + 1) % colors.length
+}, 1000)
+
+div({style: style}) {
+  p { 'Hello, OVS!' }
+  p { co }
+  p { '颜色变化演示' }
+  
+}
+================================================================================
+
+[2025-10-30T13:00:15.271Z]
+import {createReactiveVNode} from '../utils/ReactiveVNode';
+import {h,ref,computed} from 'vue';
+export default (function(){const count = ref(0);
+const colors = ['red','green','blue','orange','purple',];
+const colorIndex = ref(0);
+const style = computed(() => ({color:colors[colorIndex.value],}));
+const children = [];
+setInterval(() => {count.value++;
+console.log('计数器：',count.value);
+},1000);
+setInterval(() => {colorIndex.value = (colorIndex.value + 1) % colors.length;
+},1000);
+children.push(createReactiveVNode('div',{style:style,},[createReactiveVNode('p',{},['Hello, OVS!',]),createReactiveVNode('p',{},[co,]),createReactiveVNode('p',{},['颜色变化演示',]),]));
+return children})()
+================================================================================
+
+[2025-10-30T13:00:15.355Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-30T13:00:15.357Z]
+反悔了tokens
+================================================================================
+
+[2025-10-30T13:00:15.358Z]
+[
+  [
+    2,
+    33,
+    5,
+    7,
+    35
+  ],
+  [
+    2,
+    41,
+    3,
+    10,
+    0
+  ],
+  [
+    3,
+    6,
+    6,
+    7,
+    35
+  ],
+  [
+    4,
+    6,
+    10,
+    7,
+    35
+  ],
+  [
+    4,
+    19,
+    3,
+    10,
+    0
+  ],
+  [
+    5,
+    6,
+    5,
+    7,
+    35
+  ],
+  [
+    5,
+    14,
+    8,
+    10,
+    2
+  ],
+  [
+    5,
+    31,
+    5,
+    8,
+    1
+  ],
+  [
+    5,
+    37,
+    6,
+    7,
+    34
+  ],
+  [
+    5,
+    44,
+    10,
+    7,
+    34
+  ],
+  [
+    5,
+    55,
+    5,
+    8,
+    0
+  ],
+  [
+    6,
+    6,
+    8,
+    7,
+    35
+  ],
+  [
+    7,
+    0,
+    11,
+    10,
+    16
+  ],
+  [
+    7,
+    19,
+    5,
+    7,
+    34
+  ],
+  [
+    7,
+    25,
+    5,
+    8,
+    0
+  ],
+  [
+    8,
+    0,
+    7,
+    7,
+    16
+  ],
+  [
+    8,
+    8,
+    3,
+    11,
+    16
+  ],
+  [
+    8,
+    19,
+    5,
+    7,
+    34
+  ],
+  [
+    8,
+    25,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    0,
+    11,
+    10,
+    16
+  ],
+  [
+    10,
+    19,
+    10,
+    7,
+    34
+  ],
+  [
+    10,
+    30,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    39,
+    10,
+    7,
+    34
+  ],
+  [
+    10,
+    50,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    63,
+    6,
+    7,
+    34
+  ],
+  [
+    10,
+    70,
+    6,
+    8,
+    16
+  ],
+  [
+    12,
+    0,
+    8,
+    7,
+    34
+  ],
+  [
+    12,
+    9,
+    4,
+    11,
+    16
+  ],
+  [
+    12,
+    14,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    41,
+    5,
+    8,
+    1
+  ],
+  [
+    12,
+    47,
+    5,
+    7,
+    34
+  ],
+  [
+    12,
+    56,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    101,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    135,
+    19,
+    10,
+    0
+  ]
+]
+================================================================================
+
+[2025-10-30T13:00:15.359Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-30T13:00:17.910Z]
+languageService.getCompletionsAtPosition(
+================================================================================
+
+[2025-10-30T13:00:17.911Z]
+offset：612
+================================================================================
+
+[2025-10-30T13:00:17.911Z]
+triggerKind：1
+================================================================================
+
+[2025-10-30T13:00:17.911Z]
+存在info
+================================================================================
+
+[2025-10-30T13:00:17.911Z]
+import {createReactiveVNode} from '../utils/ReactiveVNode';
+import {h,ref,computed} from 'vue';
+export default (function(){const count = ref(0);
+const colors = ['red','green','blue','orange','purple',];
+const colorIndex = ref(0);
+const style = computed(() => ({color:colors[colorIndex.value],}));
+const children = [];
+setInterval(() => {count.value++;
+console.log('计数器：',count.value);
+},1000);
+setInterval(() => {colorIndex.value = (colorIndex.value + 1) % colors.length;
+},1000);
+children.push(createReactiveVNode('div',{style:style,},[createReactiveVNode('p',{},['Hello, OVS!',]),createReactiveVNode('p',{},[co,]),createReactiveVNode('p',{},['颜色变化演示',]),]));
+return children})()
+================================================================================
+
+[2025-10-30T13:00:17.911Z]
+1011
+================================================================================
+
+[2025-10-30T13:00:17.912Z]
+convertCompletionInfo
+================================================================================
+
+[2025-10-30T13:00:17.966Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-30T13:00:17.966Z]
+3333
+================================================================================
+
+[2025-10-30T13:00:18.439Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-30T13:00:18.440Z]
+import { h, ref, computed } from 'vue'
+
+const count = ref(0)
+
+setInterval(() => {
+  count.value++
+  console.log('计数器：', count.value)
+}, 1000)
+
+const colors = ['red','green','blue','orange','purple']
+const colorIndex = ref(0)
+
+// 使用 computed 计算当前样式
+const style = computed(() => ({ color: colors[colorIndex.value] }))
+
+// 每秒切换颜色
+setInterval(() => {
+  colorIndex.value = (colorIndex.value + 1) % colors.length
+}, 1000)
+
+div({style: style}) {
+  p { 'Hello, OVS!' }
+  p { cou }
+  p { '颜色变化演示' }
+  
+}
+================================================================================
+
+[2025-10-30T13:00:18.440Z]
+import {createReactiveVNode} from '../utils/ReactiveVNode';
+import {h,ref,computed} from 'vue';
+export default (function(){const count = ref(0);
+const colors = ['red','green','blue','orange','purple',];
+const colorIndex = ref(0);
+const style = computed(() => ({color:colors[colorIndex.value],}));
+const children = [];
+setInterval(() => {count.value++;
+console.log('计数器：',count.value);
+},1000);
+setInterval(() => {colorIndex.value = (colorIndex.value + 1) % colors.length;
+},1000);
+children.push(createReactiveVNode('div',{style:style,},[createReactiveVNode('p',{},['Hello, OVS!',]),createReactiveVNode('p',{},[cou,]),createReactiveVNode('p',{},['颜色变化演示',]),]));
+return children})()
+================================================================================
+
+[2025-10-30T13:00:18.509Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-30T13:00:18.512Z]
+反悔了tokens
+================================================================================
+
+[2025-10-30T13:00:18.512Z]
+[
+  [
+    2,
+    33,
+    5,
+    7,
+    35
+  ],
+  [
+    2,
+    41,
+    3,
+    10,
+    0
+  ],
+  [
+    3,
+    6,
+    6,
+    7,
+    35
+  ],
+  [
+    4,
+    6,
+    10,
+    7,
+    35
+  ],
+  [
+    4,
+    19,
+    3,
+    10,
+    0
+  ],
+  [
+    5,
+    6,
+    5,
+    7,
+    35
+  ],
+  [
+    5,
+    14,
+    8,
+    10,
+    2
+  ],
+  [
+    5,
+    31,
+    5,
+    8,
+    1
+  ],
+  [
+    5,
+    37,
+    6,
+    7,
+    34
+  ],
+  [
+    5,
+    44,
+    10,
+    7,
+    34
+  ],
+  [
+    5,
+    55,
+    5,
+    8,
+    0
+  ],
+  [
+    6,
+    6,
+    8,
+    7,
+    35
+  ],
+  [
+    7,
+    0,
+    11,
+    10,
+    16
+  ],
+  [
+    7,
+    19,
+    5,
+    7,
+    34
+  ],
+  [
+    7,
+    25,
+    5,
+    8,
+    0
+  ],
+  [
+    8,
+    0,
+    7,
+    7,
+    16
+  ],
+  [
+    8,
+    8,
+    3,
+    11,
+    16
+  ],
+  [
+    8,
+    19,
+    5,
+    7,
+    34
+  ],
+  [
+    8,
+    25,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    0,
+    11,
+    10,
+    16
+  ],
+  [
+    10,
+    19,
+    10,
+    7,
+    34
+  ],
+  [
+    10,
+    30,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    39,
+    10,
+    7,
+    34
+  ],
+  [
+    10,
+    50,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    63,
+    6,
+    7,
+    34
+  ],
+  [
+    10,
+    70,
+    6,
+    8,
+    16
+  ],
+  [
+    12,
+    0,
+    8,
+    7,
+    34
+  ],
+  [
+    12,
+    9,
+    4,
+    11,
+    16
+  ],
+  [
+    12,
+    14,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    41,
+    5,
+    8,
+    1
+  ],
+  [
+    12,
+    47,
+    5,
+    7,
+    34
+  ],
+  [
+    12,
+    56,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    101,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    136,
+    19,
+    10,
+    0
+  ]
+]
+================================================================================
+
+[2025-10-30T13:00:18.513Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-30T13:00:18.538Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-30T13:00:18.539Z]
+3333
+================================================================================
+
+[2025-10-30T13:00:18.986Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-30T13:00:18.986Z]
+import { h, ref, computed } from 'vue'
+
+const count = ref(0)
+
+setInterval(() => {
+  count.value++
+  console.log('计数器：', count.value)
+}, 1000)
+
+const colors = ['red','green','blue','orange','purple']
+const colorIndex = ref(0)
+
+// 使用 computed 计算当前样式
+const style = computed(() => ({ color: colors[colorIndex.value] }))
+
+// 每秒切换颜色
+setInterval(() => {
+  colorIndex.value = (colorIndex.value + 1) % colors.length
+}, 1000)
+
+div({style: style}) {
+  p { 'Hello, OVS!' }
+  p { co }
+  p { '颜色变化演示' }
+  
+}
+================================================================================
+
+[2025-10-30T13:00:18.987Z]
+import {createReactiveVNode} from '../utils/ReactiveVNode';
+import {h,ref,computed} from 'vue';
+export default (function(){const count = ref(0);
+const colors = ['red','green','blue','orange','purple',];
+const colorIndex = ref(0);
+const style = computed(() => ({color:colors[colorIndex.value],}));
+const children = [];
+setInterval(() => {count.value++;
+console.log('计数器：',count.value);
+},1000);
+setInterval(() => {colorIndex.value = (colorIndex.value + 1) % colors.length;
+},1000);
+children.push(createReactiveVNode('div',{style:style,},[createReactiveVNode('p',{},['Hello, OVS!',]),createReactiveVNode('p',{},[co,]),createReactiveVNode('p',{},['颜色变化演示',]),]));
+return children})()
+================================================================================
+
+[2025-10-30T13:00:19.057Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-30T13:00:19.057Z]
+3333
+================================================================================
+
+[2025-10-30T13:00:19.514Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-30T13:00:19.515Z]
+import { h, ref, computed } from 'vue'
+
+const count = ref(0)
+
+setInterval(() => {
+  count.value++
+  console.log('计数器：', count.value)
+}, 1000)
+
+const colors = ['red','green','blue','orange','purple']
+const colorIndex = ref(0)
+
+// 使用 computed 计算当前样式
+const style = computed(() => ({ color: colors[colorIndex.value] }))
+
+// 每秒切换颜色
+setInterval(() => {
+  colorIndex.value = (colorIndex.value + 1) % colors.length
+}, 1000)
+
+div({style: style}) {
+  p { 'Hello, OVS!' }
+  p { c }
+  p { '颜色变化演示' }
+  
+}
+================================================================================
+
+[2025-10-30T13:00:19.515Z]
+import {createReactiveVNode} from '../utils/ReactiveVNode';
+import {h,ref,computed} from 'vue';
+export default (function(){const count = ref(0);
+const colors = ['red','green','blue','orange','purple',];
+const colorIndex = ref(0);
+const style = computed(() => ({color:colors[colorIndex.value],}));
+const children = [];
+setInterval(() => {count.value++;
+console.log('计数器：',count.value);
+},1000);
+setInterval(() => {colorIndex.value = (colorIndex.value + 1) % colors.length;
+},1000);
+children.push(createReactiveVNode('div',{style:style,},[createReactiveVNode('p',{},['Hello, OVS!',]),createReactiveVNode('p',{},[c,]),createReactiveVNode('p',{},['颜色变化演示',]),]));
+return children})()
+================================================================================
+
+[2025-10-30T13:00:19.537Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-30T13:00:19.537Z]
+3333
+================================================================================
+
+[2025-10-30T13:00:20.065Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-30T13:00:20.066Z]
+import { h, ref, computed } from 'vue'
+
+const count = ref(0)
+
+setInterval(() => {
+  count.value++
+  console.log('计数器：', count.value)
+}, 1000)
+
+const colors = ['red','green','blue','orange','purple']
+const colorIndex = ref(0)
+
+// 使用 computed 计算当前样式
+const style = computed(() => ({ color: colors[colorIndex.value] }))
+
+// 每秒切换颜色
+setInterval(() => {
+  colorIndex.value = (colorIndex.value + 1) % colors.length
+}, 1000)
+
+div({style: style}) {
+  p { 'Hello, OVS!' }
+  p {  }
+  p { '颜色变化演示' }
+  
+}
+================================================================================
+
+[2025-10-30T13:00:20.066Z]
+import {createReactiveVNode} from '../utils/ReactiveVNode';
+import {h,ref,computed} from 'vue';
+export default (function(){const count = ref(0);
+const colors = ['red','green','blue','orange','purple',];
+const colorIndex = ref(0);
+const style = computed(() => ({color:colors[colorIndex.value],}));
+const children = [];
+setInterval(() => {count.value++;
+console.log('计数器：',count.value);
+},1000);
+setInterval(() => {colorIndex.value = (colorIndex.value + 1) % colors.length;
+},1000);
+children.push(createReactiveVNode('div',{style:style,},[createReactiveVNode('p',{},['Hello, OVS!',]),createReactiveVNode('p',{},[]),createReactiveVNode('p',{},['颜色变化演示',]),]));
+return children})()
+================================================================================
+
+[2025-10-30T13:00:20.087Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-30T13:00:20.087Z]
+3333
+================================================================================
+
+[2025-10-30T13:00:20.558Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-30T13:00:20.558Z]
+import { h, ref, computed } from 'vue'
+
+const count = ref(0)
+
+setInterval(() => {
+  count.value++
+  console.log('计数器：', count.value)
+}, 1000)
+
+const colors = ['red','green','blue','orange','purple']
+const colorIndex = ref(0)
+
+// 使用 computed 计算当前样式
+const style = computed(() => ({ color: colors[colorIndex.value] }))
+
+// 每秒切换颜色
+setInterval(() => {
+  colorIndex.value = (colorIndex.value + 1) % colors.length
+}, 1000)
+
+div({style: style}) {
+  p { 'Hello, OVS!' }
+  p { c }
+  p { '颜色变化演示' }
+  
+}
+================================================================================
+
+[2025-10-30T13:00:20.558Z]
+import {createReactiveVNode} from '../utils/ReactiveVNode';
+import {h,ref,computed} from 'vue';
+export default (function(){const count = ref(0);
+const colors = ['red','green','blue','orange','purple',];
+const colorIndex = ref(0);
+const style = computed(() => ({color:colors[colorIndex.value],}));
+const children = [];
+setInterval(() => {count.value++;
+console.log('计数器：',count.value);
+},1000);
+setInterval(() => {colorIndex.value = (colorIndex.value + 1) % colors.length;
+},1000);
+children.push(createReactiveVNode('div',{style:style,},[createReactiveVNode('p',{},['Hello, OVS!',]),createReactiveVNode('p',{},[c,]),createReactiveVNode('p',{},['颜色变化演示',]),]));
+return children})()
+================================================================================
+
+[2025-10-30T13:00:20.640Z]
+languageService.getCompletionsAtPosition(
+================================================================================
+
+[2025-10-30T13:00:20.640Z]
+offset：611
+================================================================================
+
+[2025-10-30T13:00:20.640Z]
+triggerKind：1
+================================================================================
+
+[2025-10-30T13:00:20.641Z]
+存在info
+================================================================================
+
+[2025-10-30T13:00:20.641Z]
+import {createReactiveVNode} from '../utils/ReactiveVNode';
+import {h,ref,computed} from 'vue';
+export default (function(){const count = ref(0);
+const colors = ['red','green','blue','orange','purple',];
+const colorIndex = ref(0);
+const style = computed(() => ({color:colors[colorIndex.value],}));
+const children = [];
+setInterval(() => {count.value++;
+console.log('计数器：',count.value);
+},1000);
+setInterval(() => {colorIndex.value = (colorIndex.value + 1) % colors.length;
+},1000);
+children.push(createReactiveVNode('div',{style:style,},[createReactiveVNode('p',{},['Hello, OVS!',]),createReactiveVNode('p',{},[c,]),createReactiveVNode('p',{},['颜色变化演示',]),]));
+return children})()
+================================================================================
+
+[2025-10-30T13:00:20.641Z]
+1028
+================================================================================
+
+[2025-10-30T13:00:20.641Z]
+convertCompletionInfo
+================================================================================
+
+[2025-10-30T13:00:20.679Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-30T13:00:20.682Z]
+反悔了tokens
+================================================================================
+
+[2025-10-30T13:00:20.682Z]
+[
+  [
+    2,
+    33,
+    5,
+    7,
+    35
+  ],
+  [
+    2,
+    41,
+    3,
+    10,
+    0
+  ],
+  [
+    3,
+    6,
+    6,
+    7,
+    35
+  ],
+  [
+    4,
+    6,
+    10,
+    7,
+    35
+  ],
+  [
+    4,
+    19,
+    3,
+    10,
+    0
+  ],
+  [
+    5,
+    6,
+    5,
+    7,
+    35
+  ],
+  [
+    5,
+    14,
+    8,
+    10,
+    2
+  ],
+  [
+    5,
+    31,
+    5,
+    8,
+    1
+  ],
+  [
+    5,
+    37,
+    6,
+    7,
+    34
+  ],
+  [
+    5,
+    44,
+    10,
+    7,
+    34
+  ],
+  [
+    5,
+    55,
+    5,
+    8,
+    0
+  ],
+  [
+    6,
+    6,
+    8,
+    7,
+    35
+  ],
+  [
+    7,
+    0,
+    11,
+    10,
+    16
+  ],
+  [
+    7,
+    19,
+    5,
+    7,
+    34
+  ],
+  [
+    7,
+    25,
+    5,
+    8,
+    0
+  ],
+  [
+    8,
+    0,
+    7,
+    7,
+    16
+  ],
+  [
+    8,
+    8,
+    3,
+    11,
+    16
+  ],
+  [
+    8,
+    19,
+    5,
+    7,
+    34
+  ],
+  [
+    8,
+    25,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    0,
+    11,
+    10,
+    16
+  ],
+  [
+    10,
+    19,
+    10,
+    7,
+    34
+  ],
+  [
+    10,
+    30,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    39,
+    10,
+    7,
+    34
+  ],
+  [
+    10,
+    50,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    63,
+    6,
+    7,
+    34
+  ],
+  [
+    10,
+    70,
+    6,
+    8,
+    16
+  ],
+  [
+    12,
+    0,
+    8,
+    7,
+    34
+  ],
+  [
+    12,
+    9,
+    4,
+    11,
+    16
+  ],
+  [
+    12,
+    14,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    41,
+    5,
+    8,
+    1
+  ],
+  [
+    12,
+    47,
+    5,
+    7,
+    34
+  ],
+  [
+    12,
+    56,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    101,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    134,
+    19,
+    10,
+    0
+  ]
+]
+================================================================================
+
+[2025-10-30T13:00:20.682Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-30T13:00:20.696Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-30T13:00:20.696Z]
+3333
+================================================================================
+
+[2025-10-30T13:00:21.151Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-30T13:00:21.153Z]
+import { h, ref, computed } from 'vue'
+
+const count = ref(0)
+
+setInterval(() => {
+  count.value++
+  console.log('计数器：', count.value)
+}, 1000)
+
+const colors = ['red','green','blue','orange','purple']
+const colorIndex = ref(0)
+
+// 使用 computed 计算当前样式
+const style = computed(() => ({ color: colors[colorIndex.value] }))
+
+// 每秒切换颜色
+setInterval(() => {
+  colorIndex.value = (colorIndex.value + 1) % colors.length
+}, 1000)
+
+div({style: style}) {
+  p { 'Hello, OVS!' }
+  p { co }
+  p { '颜色变化演示' }
+  
+}
+================================================================================
+
+[2025-10-30T13:00:21.153Z]
+import {createReactiveVNode} from '../utils/ReactiveVNode';
+import {h,ref,computed} from 'vue';
+export default (function(){const count = ref(0);
+const colors = ['red','green','blue','orange','purple',];
+const colorIndex = ref(0);
+const style = computed(() => ({color:colors[colorIndex.value],}));
+const children = [];
+setInterval(() => {count.value++;
+console.log('计数器：',count.value);
+},1000);
+setInterval(() => {colorIndex.value = (colorIndex.value + 1) % colors.length;
+},1000);
+children.push(createReactiveVNode('div',{style:style,},[createReactiveVNode('p',{},['Hello, OVS!',]),createReactiveVNode('p',{},[co,]),createReactiveVNode('p',{},['颜色变化演示',]),]));
+return children})()
+================================================================================
+
+[2025-10-30T13:00:21.235Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-30T13:00:21.235Z]
+3333
+================================================================================
+
+[2025-10-30T13:00:21.692Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-30T13:00:21.693Z]
+import { h, ref, computed } from 'vue'
+
+const count = ref(0)
+
+setInterval(() => {
+  count.value++
+  console.log('计数器：', count.value)
+}, 1000)
+
+const colors = ['red','green','blue','orange','purple']
+const colorIndex = ref(0)
+
+// 使用 computed 计算当前样式
+const style = computed(() => ({ color: colors[colorIndex.value] }))
+
+// 每秒切换颜色
+setInterval(() => {
+  colorIndex.value = (colorIndex.value + 1) % colors.length
+}, 1000)
+
+div({style: style}) {
+  p { 'Hello, OVS!' }
+  p { cou }
+  p { '颜色变化演示' }
+  
+}
+================================================================================
+
+[2025-10-30T13:00:21.693Z]
+import {createReactiveVNode} from '../utils/ReactiveVNode';
+import {h,ref,computed} from 'vue';
+export default (function(){const count = ref(0);
+const colors = ['red','green','blue','orange','purple',];
+const colorIndex = ref(0);
+const style = computed(() => ({color:colors[colorIndex.value],}));
+const children = [];
+setInterval(() => {count.value++;
+console.log('计数器：',count.value);
+},1000);
+setInterval(() => {colorIndex.value = (colorIndex.value + 1) % colors.length;
+},1000);
+children.push(createReactiveVNode('div',{style:style,},[createReactiveVNode('p',{},['Hello, OVS!',]),createReactiveVNode('p',{},[cou,]),createReactiveVNode('p',{},['颜色变化演示',]),]));
+return children})()
+================================================================================
+
+[2025-10-30T13:00:21.714Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-30T13:00:21.714Z]
+3333
+================================================================================
+
+[2025-10-30T13:00:22.143Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-30T13:00:22.144Z]
+import { h, ref, computed } from 'vue'
+
+const count = ref(0)
+
+setInterval(() => {
+  count.value++
+  console.log('计数器：', count.value)
+}, 1000)
+
+const colors = ['red','green','blue','orange','purple']
+const colorIndex = ref(0)
+
+// 使用 computed 计算当前样式
+const style = computed(() => ({ color: colors[colorIndex.value] }))
+
+// 每秒切换颜色
+setInterval(() => {
+  colorIndex.value = (colorIndex.value + 1) % colors.length
+}, 1000)
+
+div({style: style}) {
+  p { 'Hello, OVS!' }
+  p { coun }
+  p { '颜色变化演示' }
+  
+}
+================================================================================
+
+[2025-10-30T13:00:22.144Z]
+import {createReactiveVNode} from '../utils/ReactiveVNode';
+import {h,ref,computed} from 'vue';
+export default (function(){const count = ref(0);
+const colors = ['red','green','blue','orange','purple',];
+const colorIndex = ref(0);
+const style = computed(() => ({color:colors[colorIndex.value],}));
+const children = [];
+setInterval(() => {count.value++;
+console.log('计数器：',count.value);
+},1000);
+setInterval(() => {colorIndex.value = (colorIndex.value + 1) % colors.length;
+},1000);
+children.push(createReactiveVNode('div',{style:style,},[createReactiveVNode('p',{},['Hello, OVS!',]),createReactiveVNode('p',{},[coun,]),createReactiveVNode('p',{},['颜色变化演示',]),]));
+return children})()
+================================================================================
+
+[2025-10-30T13:00:22.156Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-30T13:00:22.156Z]
+3333
+================================================================================
+
+[2025-10-30T13:00:22.581Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-30T13:00:22.581Z]
+import { h, ref, computed } from 'vue'
+
+const count = ref(0)
+
+setInterval(() => {
+  count.value++
+  console.log('计数器：', count.value)
+}, 1000)
+
+const colors = ['red','green','blue','orange','purple']
+const colorIndex = ref(0)
+
+// 使用 computed 计算当前样式
+const style = computed(() => ({ color: colors[colorIndex.value] }))
+
+// 每秒切换颜色
+setInterval(() => {
+  colorIndex.value = (colorIndex.value + 1) % colors.length
+}, 1000)
+
+div({style: style}) {
+  p { 'Hello, OVS!' }
+  p { count }
+  p { '颜色变化演示' }
+  
+}
+================================================================================
+
+[2025-10-30T13:00:22.581Z]
+import {createReactiveVNode} from '../utils/ReactiveVNode';
+import {h,ref,computed} from 'vue';
+export default (function(){const count = ref(0);
+const colors = ['red','green','blue','orange','purple',];
+const colorIndex = ref(0);
+const style = computed(() => ({color:colors[colorIndex.value],}));
+const children = [];
+setInterval(() => {count.value++;
+console.log('计数器：',count.value);
+},1000);
+setInterval(() => {colorIndex.value = (colorIndex.value + 1) % colors.length;
+},1000);
+children.push(createReactiveVNode('div',{style:style,},[createReactiveVNode('p',{},['Hello, OVS!',]),createReactiveVNode('p',{},[count,]),createReactiveVNode('p',{},['颜色变化演示',]),]));
+return children})()
+================================================================================
+
+[2025-10-30T13:00:22.659Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-30T13:00:22.662Z]
+反悔了tokens
+================================================================================
+
+[2025-10-30T13:00:22.663Z]
+[
+  [
+    2,
+    33,
+    5,
+    7,
+    35
+  ],
+  [
+    2,
+    41,
+    3,
+    10,
+    0
+  ],
+  [
+    3,
+    6,
+    6,
+    7,
+    35
+  ],
+  [
+    4,
+    6,
+    10,
+    7,
+    35
+  ],
+  [
+    4,
+    19,
+    3,
+    10,
+    0
+  ],
+  [
+    5,
+    6,
+    5,
+    7,
+    35
+  ],
+  [
+    5,
+    14,
+    8,
+    10,
+    2
+  ],
+  [
+    5,
+    31,
+    5,
+    8,
+    1
+  ],
+  [
+    5,
+    37,
+    6,
+    7,
+    34
+  ],
+  [
+    5,
+    44,
+    10,
+    7,
+    34
+  ],
+  [
+    5,
+    55,
+    5,
+    8,
+    0
+  ],
+  [
+    6,
+    6,
+    8,
+    7,
+    35
+  ],
+  [
+    7,
+    0,
+    11,
+    10,
+    16
+  ],
+  [
+    7,
+    19,
+    5,
+    7,
+    34
+  ],
+  [
+    7,
+    25,
+    5,
+    8,
+    0
+  ],
+  [
+    8,
+    0,
+    7,
+    7,
+    16
+  ],
+  [
+    8,
+    8,
+    3,
+    11,
+    16
+  ],
+  [
+    8,
+    19,
+    5,
+    7,
+    34
+  ],
+  [
+    8,
+    25,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    0,
+    11,
+    10,
+    16
+  ],
+  [
+    10,
+    19,
+    10,
+    7,
+    34
+  ],
+  [
+    10,
+    30,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    39,
+    10,
+    7,
+    34
+  ],
+  [
+    10,
+    50,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    63,
+    6,
+    7,
+    34
+  ],
+  [
+    10,
+    70,
+    6,
+    8,
+    16
+  ],
+  [
+    12,
+    0,
+    8,
+    7,
+    34
+  ],
+  [
+    12,
+    9,
+    4,
+    11,
+    16
+  ],
+  [
+    12,
+    14,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    41,
+    5,
+    8,
+    1
+  ],
+  [
+    12,
+    47,
+    5,
+    7,
+    34
+  ],
+  [
+    12,
+    56,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    101,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    129,
+    5,
+    7,
+    34
+  ],
+  [
+    12,
+    138,
+    19,
+    10,
+    0
+  ]
+]
+================================================================================
+
+[2025-10-30T13:00:22.663Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-30T13:00:24.550Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-30T13:00:24.550Z]
+3333
+================================================================================
+
+[2025-10-30T13:00:25.011Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-30T13:00:25.011Z]
+import { h, ref, computed } from 'vue'
+
+const count = ref(0)
+
+setInterval(() => {
+  count.value++
+  console.log('计数器：', count.value)
+}, 1000)
+
+const colors = ['red','green','blue','orange','purple']
+const colorIndex = ref(0)
+
+// 使用 computed 计算当前样式
+const style = computed(() => ({ color: colors[colorIndex.value] }))
+
+// 每秒切换颜色
+setInterval(() => {
+  colorIndex.value = (colorIndex.value + 1) % colors.length
+}, 1000)
+
+div({style: style}) {
+  p { 'Hello, OVS!' }
+  p { coun }
+  p { '颜色变化演示' }
+  
+}
+================================================================================
+
+[2025-10-30T13:00:25.011Z]
+import {createReactiveVNode} from '../utils/ReactiveVNode';
+import {h,ref,computed} from 'vue';
+export default (function(){const count = ref(0);
+const colors = ['red','green','blue','orange','purple',];
+const colorIndex = ref(0);
+const style = computed(() => ({color:colors[colorIndex.value],}));
+const children = [];
+setInterval(() => {count.value++;
+console.log('计数器：',count.value);
+},1000);
+setInterval(() => {colorIndex.value = (colorIndex.value + 1) % colors.length;
+},1000);
+children.push(createReactiveVNode('div',{style:style,},[createReactiveVNode('p',{},['Hello, OVS!',]),createReactiveVNode('p',{},[coun,]),createReactiveVNode('p',{},['颜色变化演示',]),]));
+return children})()
+================================================================================
+
+[2025-10-30T13:00:25.067Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-30T13:00:25.071Z]
+反悔了tokens
+================================================================================
+
+[2025-10-30T13:00:25.071Z]
+[
+  [
+    2,
+    33,
+    5,
+    7,
+    35
+  ],
+  [
+    2,
+    41,
+    3,
+    10,
+    0
+  ],
+  [
+    3,
+    6,
+    6,
+    7,
+    35
+  ],
+  [
+    4,
+    6,
+    10,
+    7,
+    35
+  ],
+  [
+    4,
+    19,
+    3,
+    10,
+    0
+  ],
+  [
+    5,
+    6,
+    5,
+    7,
+    35
+  ],
+  [
+    5,
+    14,
+    8,
+    10,
+    2
+  ],
+  [
+    5,
+    31,
+    5,
+    8,
+    1
+  ],
+  [
+    5,
+    37,
+    6,
+    7,
+    34
+  ],
+  [
+    5,
+    44,
+    10,
+    7,
+    34
+  ],
+  [
+    5,
+    55,
+    5,
+    8,
+    0
+  ],
+  [
+    6,
+    6,
+    8,
+    7,
+    35
+  ],
+  [
+    7,
+    0,
+    11,
+    10,
+    16
+  ],
+  [
+    7,
+    19,
+    5,
+    7,
+    34
+  ],
+  [
+    7,
+    25,
+    5,
+    8,
+    0
+  ],
+  [
+    8,
+    0,
+    7,
+    7,
+    16
+  ],
+  [
+    8,
+    8,
+    3,
+    11,
+    16
+  ],
+  [
+    8,
+    19,
+    5,
+    7,
+    34
+  ],
+  [
+    8,
+    25,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    0,
+    11,
+    10,
+    16
+  ],
+  [
+    10,
+    19,
+    10,
+    7,
+    34
+  ],
+  [
+    10,
+    30,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    39,
+    10,
+    7,
+    34
+  ],
+  [
+    10,
+    50,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    63,
+    6,
+    7,
+    34
+  ],
+  [
+    10,
+    70,
+    6,
+    8,
+    16
+  ],
+  [
+    12,
+    0,
+    8,
+    7,
+    34
+  ],
+  [
+    12,
+    9,
+    4,
+    11,
+    16
+  ],
+  [
+    12,
+    14,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    41,
+    5,
+    8,
+    1
+  ],
+  [
+    12,
+    47,
+    5,
+    7,
+    34
+  ],
+  [
+    12,
+    56,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    101,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    137,
+    19,
+    10,
+    0
+  ]
+]
+================================================================================
+
+[2025-10-30T13:00:25.072Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-30T13:00:28.011Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-30T13:00:28.012Z]
+3333
+================================================================================
+
+[2025-10-30T13:00:28.481Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-30T13:00:28.481Z]
+import { h, ref, computed } from 'vue'
+
+const count = ref(0)
+
+setInterval(() => {
+  count.value++
+  console.log('计数器：', count.value)
+}, 1000)
+
+const colors = ['red','green','blue','orange','purple']
+const colorIndex = ref(0)
+
+// 使用 computed 计算当前样式
+const style = computed(() => ({ color: colors[colorIndex.value] }))
+
+// 每秒切换颜色
+setInterval(() => {
+  colorIndex.value = (colorIndex.value + 1) % colors.length
+}, 1000)
+
+div({style: style}) {
+  p { 'Hello, OVS!' }
+  p { cou }
+  p { '颜色变化演示' }
+  
+}
+================================================================================
+
+[2025-10-30T13:00:28.481Z]
+import {createReactiveVNode} from '../utils/ReactiveVNode';
+import {h,ref,computed} from 'vue';
+export default (function(){const count = ref(0);
+const colors = ['red','green','blue','orange','purple',];
+const colorIndex = ref(0);
+const style = computed(() => ({color:colors[colorIndex.value],}));
+const children = [];
+setInterval(() => {count.value++;
+console.log('计数器：',count.value);
+},1000);
+setInterval(() => {colorIndex.value = (colorIndex.value + 1) % colors.length;
+},1000);
+children.push(createReactiveVNode('div',{style:style,},[createReactiveVNode('p',{},['Hello, OVS!',]),createReactiveVNode('p',{},[cou,]),createReactiveVNode('p',{},['颜色变化演示',]),]));
+return children})()
+================================================================================
+
+[2025-10-30T13:00:28.488Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-30T13:00:28.488Z]
+3333
+================================================================================
+
+[2025-10-30T13:00:28.956Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-30T13:00:28.956Z]
+import { h, ref, computed } from 'vue'
+
+const count = ref(0)
+
+setInterval(() => {
+  count.value++
+  console.log('计数器：', count.value)
+}, 1000)
+
+const colors = ['red','green','blue','orange','purple']
+const colorIndex = ref(0)
+
+// 使用 computed 计算当前样式
+const style = computed(() => ({ color: colors[colorIndex.value] }))
+
+// 每秒切换颜色
+setInterval(() => {
+  colorIndex.value = (colorIndex.value + 1) % colors.length
+}, 1000)
+
+div({style: style}) {
+  p { 'Hello, OVS!' }
+  p { co }
+  p { '颜色变化演示' }
+  
+}
+================================================================================
+
+[2025-10-30T13:00:28.957Z]
+import {createReactiveVNode} from '../utils/ReactiveVNode';
+import {h,ref,computed} from 'vue';
+export default (function(){const count = ref(0);
+const colors = ['red','green','blue','orange','purple',];
+const colorIndex = ref(0);
+const style = computed(() => ({color:colors[colorIndex.value],}));
+const children = [];
+setInterval(() => {count.value++;
+console.log('计数器：',count.value);
+},1000);
+setInterval(() => {colorIndex.value = (colorIndex.value + 1) % colors.length;
+},1000);
+children.push(createReactiveVNode('div',{style:style,},[createReactiveVNode('p',{},['Hello, OVS!',]),createReactiveVNode('p',{},[co,]),createReactiveVNode('p',{},['颜色变化演示',]),]));
+return children})()
+================================================================================
+
+[2025-10-30T13:00:28.996Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-30T13:00:28.997Z]
+3333
+================================================================================
+
+[2025-10-30T13:00:29.452Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-30T13:00:29.452Z]
+import { h, ref, computed } from 'vue'
+
+const count = ref(0)
+
+setInterval(() => {
+  count.value++
+  console.log('计数器：', count.value)
+}, 1000)
+
+const colors = ['red','green','blue','orange','purple']
+const colorIndex = ref(0)
+
+// 使用 computed 计算当前样式
+const style = computed(() => ({ color: colors[colorIndex.value] }))
+
+// 每秒切换颜色
+setInterval(() => {
+  colorIndex.value = (colorIndex.value + 1) % colors.length
+}, 1000)
+
+div({style: style}) {
+  p { 'Hello, OVS!' }
+  p { c }
+  p { '颜色变化演示' }
+  
+}
+================================================================================
+
+[2025-10-30T13:00:29.452Z]
+import {createReactiveVNode} from '../utils/ReactiveVNode';
+import {h,ref,computed} from 'vue';
+export default (function(){const count = ref(0);
+const colors = ['red','green','blue','orange','purple',];
+const colorIndex = ref(0);
+const style = computed(() => ({color:colors[colorIndex.value],}));
+const children = [];
+setInterval(() => {count.value++;
+console.log('计数器：',count.value);
+},1000);
+setInterval(() => {colorIndex.value = (colorIndex.value + 1) % colors.length;
+},1000);
+children.push(createReactiveVNode('div',{style:style,},[createReactiveVNode('p',{},['Hello, OVS!',]),createReactiveVNode('p',{},[c,]),createReactiveVNode('p',{},['颜色变化演示',]),]));
+return children})()
+================================================================================
+
+[2025-10-30T13:00:29.507Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-30T13:00:29.507Z]
+3333
+================================================================================
+
+[2025-10-30T13:00:29.978Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-30T13:00:29.979Z]
+import { h, ref, computed } from 'vue'
+
+const count = ref(0)
+
+setInterval(() => {
+  count.value++
+  console.log('计数器：', count.value)
+}, 1000)
+
+const colors = ['red','green','blue','orange','purple']
+const colorIndex = ref(0)
+
+// 使用 computed 计算当前样式
+const style = computed(() => ({ color: colors[colorIndex.value] }))
+
+// 每秒切换颜色
+setInterval(() => {
+  colorIndex.value = (colorIndex.value + 1) % colors.length
+}, 1000)
+
+div({style: style}) {
+  p { 'Hello, OVS!' }
+  p {  }
+  p { '颜色变化演示' }
+  
+}
+================================================================================
+
+[2025-10-30T13:00:29.979Z]
+import {createReactiveVNode} from '../utils/ReactiveVNode';
+import {h,ref,computed} from 'vue';
+export default (function(){const count = ref(0);
+const colors = ['red','green','blue','orange','purple',];
+const colorIndex = ref(0);
+const style = computed(() => ({color:colors[colorIndex.value],}));
+const children = [];
+setInterval(() => {count.value++;
+console.log('计数器：',count.value);
+},1000);
+setInterval(() => {colorIndex.value = (colorIndex.value + 1) % colors.length;
+},1000);
+children.push(createReactiveVNode('div',{style:style,},[createReactiveVNode('p',{},['Hello, OVS!',]),createReactiveVNode('p',{},[]),createReactiveVNode('p',{},['颜色变化演示',]),]));
+return children})()
+================================================================================
+
+[2025-10-30T13:00:29.979Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-30T13:00:30.039Z]
+反悔了tokens
+================================================================================
+
+[2025-10-30T13:00:30.039Z]
+[
+  [
+    2,
+    33,
+    5,
+    7,
+    35
+  ],
+  [
+    2,
+    41,
+    3,
+    10,
+    0
+  ],
+  [
+    3,
+    6,
+    6,
+    7,
+    35
+  ],
+  [
+    4,
+    6,
+    10,
+    7,
+    35
+  ],
+  [
+    4,
+    19,
+    3,
+    10,
+    0
+  ],
+  [
+    5,
+    6,
+    5,
+    7,
+    35
+  ],
+  [
+    5,
+    14,
+    8,
+    10,
+    2
+  ],
+  [
+    5,
+    31,
+    5,
+    8,
+    1
+  ],
+  [
+    5,
+    37,
+    6,
+    7,
+    34
+  ],
+  [
+    5,
+    44,
+    10,
+    7,
+    34
+  ],
+  [
+    5,
+    55,
+    5,
+    8,
+    0
+  ],
+  [
+    6,
+    6,
+    8,
+    7,
+    35
+  ],
+  [
+    7,
+    0,
+    11,
+    10,
+    16
+  ],
+  [
+    7,
+    19,
+    5,
+    7,
+    34
+  ],
+  [
+    7,
+    25,
+    5,
+    8,
+    0
+  ],
+  [
+    8,
+    0,
+    7,
+    7,
+    16
+  ],
+  [
+    8,
+    8,
+    3,
+    11,
+    16
+  ],
+  [
+    8,
+    19,
+    5,
+    7,
+    34
+  ],
+  [
+    8,
+    25,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    0,
+    11,
+    10,
+    16
+  ],
+  [
+    10,
+    19,
+    10,
+    7,
+    34
+  ],
+  [
+    10,
+    30,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    39,
+    10,
+    7,
+    34
+  ],
+  [
+    10,
+    50,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    63,
+    6,
+    7,
+    34
+  ],
+  [
+    10,
+    70,
+    6,
+    8,
+    16
+  ],
+  [
+    12,
+    0,
+    8,
+    7,
+    34
+  ],
+  [
+    12,
+    9,
+    4,
+    11,
+    16
+  ],
+  [
+    12,
+    14,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    41,
+    5,
+    8,
+    1
+  ],
+  [
+    12,
+    47,
+    5,
+    7,
+    34
+  ],
+  [
+    12,
+    56,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    101,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    132,
+    19,
+    10,
+    0
+  ]
+]
+================================================================================
+
+[2025-10-30T13:00:30.040Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-30T13:00:31.832Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-30T13:00:31.833Z]
+3333
+================================================================================
+
+[2025-10-30T13:00:32.345Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-30T13:00:32.345Z]
+import { h, ref, computed } from 'vue'
+
+const count = ref(0)
+
+setInterval(() => {
+  count.value++
+  console.log('计数器：', count.value)
+}, 1000)
+
+const colors = ['red','green','blue','orange','purple']
+const colorIndex = ref(0)
+
+// 使用 computed 计算当前样式
+const style = computed(() => ({ color: colors[colorIndex.value] }))
+
+// 每秒切换颜色
+setInterval(() => {
+  colorIndex.value = (colorIndex.value + 1) % colors.length
+}, 1000)
+
+div({style: style}) {
+  p { 'Hello, OVS!' }
+  p { c }
+  p { '颜色变化演示' }
+  
+}
+================================================================================
+
+[2025-10-30T13:00:32.346Z]
+import {createReactiveVNode} from '../utils/ReactiveVNode';
+import {h,ref,computed} from 'vue';
+export default (function(){const count = ref(0);
+const colors = ['red','green','blue','orange','purple',];
+const colorIndex = ref(0);
+const style = computed(() => ({color:colors[colorIndex.value],}));
+const children = [];
+setInterval(() => {count.value++;
+console.log('计数器：',count.value);
+},1000);
+setInterval(() => {colorIndex.value = (colorIndex.value + 1) % colors.length;
+},1000);
+children.push(createReactiveVNode('div',{style:style,},[createReactiveVNode('p',{},['Hello, OVS!',]),createReactiveVNode('p',{},[c,]),createReactiveVNode('p',{},['颜色变化演示',]),]));
+return children})()
+================================================================================
+
+[2025-10-30T13:00:32.420Z]
+languageService.getCompletionsAtPosition(
+================================================================================
+
+[2025-10-30T13:00:32.420Z]
+offset：611
+================================================================================
+
+[2025-10-30T13:00:32.421Z]
+triggerKind：1
+================================================================================
+
+[2025-10-30T13:00:32.421Z]
+存在info
+================================================================================
+
+[2025-10-30T13:00:32.422Z]
+import {createReactiveVNode} from '../utils/ReactiveVNode';
+import {h,ref,computed} from 'vue';
+export default (function(){const count = ref(0);
+const colors = ['red','green','blue','orange','purple',];
+const colorIndex = ref(0);
+const style = computed(() => ({color:colors[colorIndex.value],}));
+const children = [];
+setInterval(() => {count.value++;
+console.log('计数器：',count.value);
+},1000);
+setInterval(() => {colorIndex.value = (colorIndex.value + 1) % colors.length;
+},1000);
+children.push(createReactiveVNode('div',{style:style,},[createReactiveVNode('p',{},['Hello, OVS!',]),createReactiveVNode('p',{},[c,]),createReactiveVNode('p',{},['颜色变化演示',]),]));
+return children})()
+================================================================================
+
+[2025-10-30T13:00:32.423Z]
+1028
+================================================================================
+
+[2025-10-30T13:00:32.423Z]
+convertCompletionInfo
+================================================================================
+
+[2025-10-30T13:00:32.467Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-30T13:00:32.470Z]
+反悔了tokens
+================================================================================
+
+[2025-10-30T13:00:32.470Z]
+[
+  [
+    2,
+    33,
+    5,
+    7,
+    35
+  ],
+  [
+    2,
+    41,
+    3,
+    10,
+    0
+  ],
+  [
+    3,
+    6,
+    6,
+    7,
+    35
+  ],
+  [
+    4,
+    6,
+    10,
+    7,
+    35
+  ],
+  [
+    4,
+    19,
+    3,
+    10,
+    0
+  ],
+  [
+    5,
+    6,
+    5,
+    7,
+    35
+  ],
+  [
+    5,
+    14,
+    8,
+    10,
+    2
+  ],
+  [
+    5,
+    31,
+    5,
+    8,
+    1
+  ],
+  [
+    5,
+    37,
+    6,
+    7,
+    34
+  ],
+  [
+    5,
+    44,
+    10,
+    7,
+    34
+  ],
+  [
+    5,
+    55,
+    5,
+    8,
+    0
+  ],
+  [
+    6,
+    6,
+    8,
+    7,
+    35
+  ],
+  [
+    7,
+    0,
+    11,
+    10,
+    16
+  ],
+  [
+    7,
+    19,
+    5,
+    7,
+    34
+  ],
+  [
+    7,
+    25,
+    5,
+    8,
+    0
+  ],
+  [
+    8,
+    0,
+    7,
+    7,
+    16
+  ],
+  [
+    8,
+    8,
+    3,
+    11,
+    16
+  ],
+  [
+    8,
+    19,
+    5,
+    7,
+    34
+  ],
+  [
+    8,
+    25,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    0,
+    11,
+    10,
+    16
+  ],
+  [
+    10,
+    19,
+    10,
+    7,
+    34
+  ],
+  [
+    10,
+    30,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    39,
+    10,
+    7,
+    34
+  ],
+  [
+    10,
+    50,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    63,
+    6,
+    7,
+    34
+  ],
+  [
+    10,
+    70,
+    6,
+    8,
+    16
+  ],
+  [
+    12,
+    0,
+    8,
+    7,
+    34
+  ],
+  [
+    12,
+    9,
+    4,
+    11,
+    16
+  ],
+  [
+    12,
+    14,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    41,
+    5,
+    8,
+    1
+  ],
+  [
+    12,
+    47,
+    5,
+    7,
+    34
+  ],
+  [
+    12,
+    56,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    101,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    134,
+    19,
+    10,
+    0
+  ]
+]
+================================================================================
+
+[2025-10-30T13:00:32.471Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-30T13:00:34.473Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-30T13:00:34.474Z]
+3333
+================================================================================
+
+[2025-10-30T13:00:34.944Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-30T13:00:34.944Z]
+import { h, ref, computed } from 'vue'
+
+const count = ref(0)
+
+setInterval(() => {
+  count.value++
+  console.log('计数器：', count.value)
+}, 1000)
+
+const colors = ['red','green','blue','orange','purple']
+const colorIndex = ref(0)
+
+// 使用 computed 计算当前样式
+const style = computed(() => ({ color: colors[colorIndex.value] }))
+
+// 每秒切换颜色
+setInterval(() => {
+  colorIndex.value = (colorIndex.value + 1) % colors.length
+}, 1000)
+
+div({style: style}) {
+  p { 'Hello, OVS!' }
+  p { co }
+  p { '颜色变化演示' }
+  
+}
+================================================================================
+
+[2025-10-30T13:00:34.944Z]
+import {createReactiveVNode} from '../utils/ReactiveVNode';
+import {h,ref,computed} from 'vue';
+export default (function(){const count = ref(0);
+const colors = ['red','green','blue','orange','purple',];
+const colorIndex = ref(0);
+const style = computed(() => ({color:colors[colorIndex.value],}));
+const children = [];
+setInterval(() => {count.value++;
+console.log('计数器：',count.value);
+},1000);
+setInterval(() => {colorIndex.value = (colorIndex.value + 1) % colors.length;
+},1000);
+children.push(createReactiveVNode('div',{style:style,},[createReactiveVNode('p',{},['Hello, OVS!',]),createReactiveVNode('p',{},[co,]),createReactiveVNode('p',{},['颜色变化演示',]),]));
+return children})()
+================================================================================
+
+[2025-10-30T13:00:35.029Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-30T13:00:35.031Z]
+反悔了tokens
+================================================================================
+
+[2025-10-30T13:00:35.032Z]
+[
+  [
+    2,
+    33,
+    5,
+    7,
+    35
+  ],
+  [
+    2,
+    41,
+    3,
+    10,
+    0
+  ],
+  [
+    3,
+    6,
+    6,
+    7,
+    35
+  ],
+  [
+    4,
+    6,
+    10,
+    7,
+    35
+  ],
+  [
+    4,
+    19,
+    3,
+    10,
+    0
+  ],
+  [
+    5,
+    6,
+    5,
+    7,
+    35
+  ],
+  [
+    5,
+    14,
+    8,
+    10,
+    2
+  ],
+  [
+    5,
+    31,
+    5,
+    8,
+    1
+  ],
+  [
+    5,
+    37,
+    6,
+    7,
+    34
+  ],
+  [
+    5,
+    44,
+    10,
+    7,
+    34
+  ],
+  [
+    5,
+    55,
+    5,
+    8,
+    0
+  ],
+  [
+    6,
+    6,
+    8,
+    7,
+    35
+  ],
+  [
+    7,
+    0,
+    11,
+    10,
+    16
+  ],
+  [
+    7,
+    19,
+    5,
+    7,
+    34
+  ],
+  [
+    7,
+    25,
+    5,
+    8,
+    0
+  ],
+  [
+    8,
+    0,
+    7,
+    7,
+    16
+  ],
+  [
+    8,
+    8,
+    3,
+    11,
+    16
+  ],
+  [
+    8,
+    19,
+    5,
+    7,
+    34
+  ],
+  [
+    8,
+    25,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    0,
+    11,
+    10,
+    16
+  ],
+  [
+    10,
+    19,
+    10,
+    7,
+    34
+  ],
+  [
+    10,
+    30,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    39,
+    10,
+    7,
+    34
+  ],
+  [
+    10,
+    50,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    63,
+    6,
+    7,
+    34
+  ],
+  [
+    10,
+    70,
+    6,
+    8,
+    16
+  ],
+  [
+    12,
+    0,
+    8,
+    7,
+    34
+  ],
+  [
+    12,
+    9,
+    4,
+    11,
+    16
+  ],
+  [
+    12,
+    14,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    41,
+    5,
+    8,
+    1
+  ],
+  [
+    12,
+    47,
+    5,
+    7,
+    34
+  ],
+  [
+    12,
+    56,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    101,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    135,
+    19,
+    10,
+    0
+  ]
+]
+================================================================================
+
+[2025-10-30T13:00:35.032Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-30T13:00:35.175Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-30T13:00:35.176Z]
+3333
+================================================================================
+
+[2025-10-30T13:00:35.640Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-30T13:00:35.640Z]
+import { h, ref, computed } from 'vue'
+
+const count = ref(0)
+
+setInterval(() => {
+  count.value++
+  console.log('计数器：', count.value)
+}, 1000)
+
+const colors = ['red','green','blue','orange','purple']
+const colorIndex = ref(0)
+
+// 使用 computed 计算当前样式
+const style = computed(() => ({ color: colors[colorIndex.value] }))
+
+// 每秒切换颜色
+setInterval(() => {
+  colorIndex.value = (colorIndex.value + 1) % colors.length
+}, 1000)
+
+div({style: style}) {
+  p { 'Hello, OVS!' }
+  p { cou }
+  p { '颜色变化演示' }
+  
+}
+================================================================================
+
+[2025-10-30T13:00:35.641Z]
+import {createReactiveVNode} from '../utils/ReactiveVNode';
+import {h,ref,computed} from 'vue';
+export default (function(){const count = ref(0);
+const colors = ['red','green','blue','orange','purple',];
+const colorIndex = ref(0);
+const style = computed(() => ({color:colors[colorIndex.value],}));
+const children = [];
+setInterval(() => {count.value++;
+console.log('计数器：',count.value);
+},1000);
+setInterval(() => {colorIndex.value = (colorIndex.value + 1) % colors.length;
+},1000);
+children.push(createReactiveVNode('div',{style:style,},[createReactiveVNode('p',{},['Hello, OVS!',]),createReactiveVNode('p',{},[cou,]),createReactiveVNode('p',{},['颜色变化演示',]),]));
+return children})()
+================================================================================
+
+[2025-10-30T13:00:35.719Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-30T13:00:35.719Z]
+3333
+================================================================================
+
+[2025-10-30T13:00:36.199Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-30T13:00:36.199Z]
+import { h, ref, computed } from 'vue'
+
+const count = ref(0)
+
+setInterval(() => {
+  count.value++
+  console.log('计数器：', count.value)
+}, 1000)
+
+const colors = ['red','green','blue','orange','purple']
+const colorIndex = ref(0)
+
+// 使用 computed 计算当前样式
+const style = computed(() => ({ color: colors[colorIndex.value] }))
+
+// 每秒切换颜色
+setInterval(() => {
+  colorIndex.value = (colorIndex.value + 1) % colors.length
+}, 1000)
+
+div({style: style}) {
+  p { 'Hello, OVS!' }
+  p { coun }
+  p { '颜色变化演示' }
+  
+}
+================================================================================
+
+[2025-10-30T13:00:36.199Z]
+import {createReactiveVNode} from '../utils/ReactiveVNode';
+import {h,ref,computed} from 'vue';
+export default (function(){const count = ref(0);
+const colors = ['red','green','blue','orange','purple',];
+const colorIndex = ref(0);
+const style = computed(() => ({color:colors[colorIndex.value],}));
+const children = [];
+setInterval(() => {count.value++;
+console.log('计数器：',count.value);
+},1000);
+setInterval(() => {colorIndex.value = (colorIndex.value + 1) % colors.length;
+},1000);
+children.push(createReactiveVNode('div',{style:style,},[createReactiveVNode('p',{},['Hello, OVS!',]),createReactiveVNode('p',{},[coun,]),createReactiveVNode('p',{},['颜色变化演示',]),]));
+return children})()
+================================================================================
+
+[2025-10-30T13:00:36.271Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-30T13:00:36.275Z]
+反悔了tokens
+================================================================================
+
+[2025-10-30T13:00:36.276Z]
+[
+  [
+    2,
+    33,
+    5,
+    7,
+    35
+  ],
+  [
+    2,
+    41,
+    3,
+    10,
+    0
+  ],
+  [
+    3,
+    6,
+    6,
+    7,
+    35
+  ],
+  [
+    4,
+    6,
+    10,
+    7,
+    35
+  ],
+  [
+    4,
+    19,
+    3,
+    10,
+    0
+  ],
+  [
+    5,
+    6,
+    5,
+    7,
+    35
+  ],
+  [
+    5,
+    14,
+    8,
+    10,
+    2
+  ],
+  [
+    5,
+    31,
+    5,
+    8,
+    1
+  ],
+  [
+    5,
+    37,
+    6,
+    7,
+    34
+  ],
+  [
+    5,
+    44,
+    10,
+    7,
+    34
+  ],
+  [
+    5,
+    55,
+    5,
+    8,
+    0
+  ],
+  [
+    6,
+    6,
+    8,
+    7,
+    35
+  ],
+  [
+    7,
+    0,
+    11,
+    10,
+    16
+  ],
+  [
+    7,
+    19,
+    5,
+    7,
+    34
+  ],
+  [
+    7,
+    25,
+    5,
+    8,
+    0
+  ],
+  [
+    8,
+    0,
+    7,
+    7,
+    16
+  ],
+  [
+    8,
+    8,
+    3,
+    11,
+    16
+  ],
+  [
+    8,
+    19,
+    5,
+    7,
+    34
+  ],
+  [
+    8,
+    25,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    0,
+    11,
+    10,
+    16
+  ],
+  [
+    10,
+    19,
+    10,
+    7,
+    34
+  ],
+  [
+    10,
+    30,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    39,
+    10,
+    7,
+    34
+  ],
+  [
+    10,
+    50,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    63,
+    6,
+    7,
+    34
+  ],
+  [
+    10,
+    70,
+    6,
+    8,
+    16
+  ],
+  [
+    12,
+    0,
+    8,
+    7,
+    34
+  ],
+  [
+    12,
+    9,
+    4,
+    11,
+    16
+  ],
+  [
+    12,
+    14,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    41,
+    5,
+    8,
+    1
+  ],
+  [
+    12,
+    47,
+    5,
+    7,
+    34
+  ],
+  [
+    12,
+    56,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    101,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    137,
+    19,
+    10,
+    0
+  ]
+]
+================================================================================
+
+[2025-10-30T13:00:36.276Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-30T13:00:36.296Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-30T13:00:36.296Z]
+3333
+================================================================================
+
+[2025-10-30T13:00:36.774Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-30T13:00:36.774Z]
+import { h, ref, computed } from 'vue'
+
+const count = ref(0)
+
+setInterval(() => {
+  count.value++
+  console.log('计数器：', count.value)
+}, 1000)
+
+const colors = ['red','green','blue','orange','purple']
+const colorIndex = ref(0)
+
+// 使用 computed 计算当前样式
+const style = computed(() => ({ color: colors[colorIndex.value] }))
+
+// 每秒切换颜色
+setInterval(() => {
+  colorIndex.value = (colorIndex.value + 1) % colors.length
+}, 1000)
+
+div({style: style}) {
+  p { 'Hello, OVS!' }
+  p { count }
+  p { '颜色变化演示' }
+  
+}
+================================================================================
+
+[2025-10-30T13:00:36.774Z]
+import {createReactiveVNode} from '../utils/ReactiveVNode';
+import {h,ref,computed} from 'vue';
+export default (function(){const count = ref(0);
+const colors = ['red','green','blue','orange','purple',];
+const colorIndex = ref(0);
+const style = computed(() => ({color:colors[colorIndex.value],}));
+const children = [];
+setInterval(() => {count.value++;
+console.log('计数器：',count.value);
+},1000);
+setInterval(() => {colorIndex.value = (colorIndex.value + 1) % colors.length;
+},1000);
+children.push(createReactiveVNode('div',{style:style,},[createReactiveVNode('p',{},['Hello, OVS!',]),createReactiveVNode('p',{},[count,]),createReactiveVNode('p',{},['颜色变化演示',]),]));
+return children})()
+================================================================================
+
+[2025-10-30T13:00:36.845Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-30T13:00:36.847Z]
+反悔了tokens
+================================================================================
+
+[2025-10-30T13:00:36.848Z]
+[
+  [
+    2,
+    33,
+    5,
+    7,
+    35
+  ],
+  [
+    2,
+    41,
+    3,
+    10,
+    0
+  ],
+  [
+    3,
+    6,
+    6,
+    7,
+    35
+  ],
+  [
+    4,
+    6,
+    10,
+    7,
+    35
+  ],
+  [
+    4,
+    19,
+    3,
+    10,
+    0
+  ],
+  [
+    5,
+    6,
+    5,
+    7,
+    35
+  ],
+  [
+    5,
+    14,
+    8,
+    10,
+    2
+  ],
+  [
+    5,
+    31,
+    5,
+    8,
+    1
+  ],
+  [
+    5,
+    37,
+    6,
+    7,
+    34
+  ],
+  [
+    5,
+    44,
+    10,
+    7,
+    34
+  ],
+  [
+    5,
+    55,
+    5,
+    8,
+    0
+  ],
+  [
+    6,
+    6,
+    8,
+    7,
+    35
+  ],
+  [
+    7,
+    0,
+    11,
+    10,
+    16
+  ],
+  [
+    7,
+    19,
+    5,
+    7,
+    34
+  ],
+  [
+    7,
+    25,
+    5,
+    8,
+    0
+  ],
+  [
+    8,
+    0,
+    7,
+    7,
+    16
+  ],
+  [
+    8,
+    8,
+    3,
+    11,
+    16
+  ],
+  [
+    8,
+    19,
+    5,
+    7,
+    34
+  ],
+  [
+    8,
+    25,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    0,
+    11,
+    10,
+    16
+  ],
+  [
+    10,
+    19,
+    10,
+    7,
+    34
+  ],
+  [
+    10,
+    30,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    39,
+    10,
+    7,
+    34
+  ],
+  [
+    10,
+    50,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    63,
+    6,
+    7,
+    34
+  ],
+  [
+    10,
+    70,
+    6,
+    8,
+    16
+  ],
+  [
+    12,
+    0,
+    8,
+    7,
+    34
+  ],
+  [
+    12,
+    9,
+    4,
+    11,
+    16
+  ],
+  [
+    12,
+    14,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    41,
+    5,
+    8,
+    1
+  ],
+  [
+    12,
+    47,
+    5,
+    7,
+    34
+  ],
+  [
+    12,
+    56,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    101,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    129,
+    5,
+    7,
+    34
+  ],
+  [
+    12,
+    138,
+    19,
+    10,
+    0
+  ]
+]
+================================================================================
+
+[2025-10-30T13:00:36.849Z]
+chufa  provideDocumentSemanticTokens
+================================================================================

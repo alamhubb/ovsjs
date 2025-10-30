@@ -148,6 +148,7 @@ export default class SlimeGenerator {
     this.generatorNode(node.source)
     // 添加分号
     this.addCode(es6TokensObj.Semicolon)
+    this.addNewLine() // 阶段1：分号后换行
   }
 
 
@@ -253,6 +254,7 @@ export default class SlimeGenerator {
     this.generatorNode(node.expression)
     // 添加分号
     this.addCode(es6TokensObj.Semicolon)
+    this.addNewLine() // 阶段1：分号后换行
   }
 
   private static generatorYieldExpression(node: any) {
@@ -1094,6 +1096,7 @@ export default class SlimeGenerator {
     }
     // 添加分号
     this.addCode(es6TokensObj.Semicolon)
+    this.addNewLine() // 阶段1：分号后换行
   }
 
   static get lastMapping() {
