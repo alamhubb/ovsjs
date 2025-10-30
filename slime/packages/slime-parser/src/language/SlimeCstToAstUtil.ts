@@ -1807,9 +1807,30 @@ export class SlimeCstToAst {
    */
   createBreakStatementAst(cst: SubhutiCst): any {
     checkCstName(cst, Es6Parser.prototype.BreakStatement.name);
+    // BreakStatement: break Identifier? ;
+    // 可能包含一个可选的 Identifier 作为 label
+    let label: any = null
+    if (cst.children && cst.children.length > 0) {
+      const identifierCst = cst.children.find(ch =>
+        // 兼容三类：LabelIdentifier 规则、IdentifierName 包装、裸 Identifier token
+        ch.name === Es6Parser.prototype.LabelIdentifier.name ||
+        ch.name === Es6Parser.prototype.IdentifierName.name ||
+        ch.name === Es6TokenConsumer.prototype.Identifier.name
+      )
+      if (identifierCst) {
+        if (identifierCst.name === Es6Parser.prototype.IdentifierName.name) {
+          label = this.createIdentifierNameAst(identifierCst)
+        } else if (identifierCst.name === Es6Parser.prototype.LabelIdentifier.name) {
+          // LabelIdentifier内部直接是Identifier token
+          label = this.createIdentifierAst(identifierCst.children[0])
+        } else {
+          label = this.createIdentifierAst(identifierCst)
+        }
+      }
+    }
     return {
       type: SlimeAstType.BreakStatement,
-      label: null,
+      label: label,
       loc: cst.loc
     }
   }
@@ -1819,9 +1840,27 @@ export class SlimeCstToAst {
    */
   createContinueStatementAst(cst: SubhutiCst): any {
     checkCstName(cst, Es6Parser.prototype.ContinueStatement.name);
+    // ContinueStatement: continue Identifier? ;
+    let label: any = null
+    if (cst.children && cst.children.length > 0) {
+      const identifierCst = cst.children.find(ch =>
+        ch.name === Es6Parser.prototype.LabelIdentifier.name ||
+        ch.name === Es6Parser.prototype.IdentifierName.name ||
+        ch.name === Es6TokenConsumer.prototype.Identifier.name
+      )
+      if (identifierCst) {
+        if (identifierCst.name === Es6Parser.prototype.IdentifierName.name) {
+          label = this.createIdentifierNameAst(identifierCst)
+        } else if (identifierCst.name === Es6Parser.prototype.LabelIdentifier.name) {
+          label = this.createIdentifierAst(identifierCst.children[0])
+        } else {
+          label = this.createIdentifierAst(identifierCst)
+        }
+      }
+    }
     return {
       type: SlimeAstType.ContinueStatement,
-      label: null,
+      label: label,
       loc: cst.loc
     }
   }
@@ -1831,10 +1870,38 @@ export class SlimeCstToAst {
    */
   createLabelledStatementAst(cst: SubhutiCst): any {
     checkCstName(cst, Es6Parser.prototype.LabelledStatement.name);
+    // LabelledStatement: Identifier : Statement
+    // 取出 label（Identifier 或 IdentifierName）
+    let label: any = null
+    let body: any = null
+    if (cst.children && cst.children.length > 0) {
+      const identifierCst = cst.children.find(ch =>
+        ch.name === Es6Parser.prototype.LabelIdentifier.name ||
+        ch.name === Es6Parser.prototype.IdentifierName.name ||
+        ch.name === Es6TokenConsumer.prototype.Identifier.name
+      )
+      if (identifierCst) {
+        if (identifierCst.name === Es6Parser.prototype.IdentifierName.name) {
+          label = this.createIdentifierNameAst(identifierCst)
+        } else if (identifierCst.name === Es6Parser.prototype.LabelIdentifier.name) {
+          label = this.createIdentifierAst(identifierCst.children[0])
+        } else {
+          label = this.createIdentifierAst(identifierCst)
+        }
+      }
+
+      // 查找后续的 Statement 节点作为 body
+      const statementCst = cst.children.find(ch => ch.name === Es6Parser.prototype.Statement.name)
+      if (statementCst) {
+        const stmts = this.createStatementAst(statementCst)
+        body = Array.isArray(stmts) ? stmts[0] : stmts
+      }
+    }
+
     return {
       type: SlimeAstType.LabeledStatement,
-      label: null,  // TODO
-      body: null,  // TODO
+      label: label,
+      body: body,
       loc: cst.loc
     }
   }
