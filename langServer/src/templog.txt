@@ -23411,3 +23411,5053 @@ createTypeScriptServices
 [2025-10-30T12:33:05.304Z]
 createTypeScriptServices
 ================================================================================
+
+[2025-10-30T12:48:15.309Z]
+createTypeScriptServices
+================================================================================
+
+[2025-10-30T12:48:15.316Z]
+getLocalTsdkPath
+================================================================================
+
+[2025-10-30T12:48:15.316Z]
+onInitialize
+================================================================================
+
+[2025-10-30T12:48:15.324Z]
+params
+================================================================================
+
+[2025-10-30T12:48:15.324Z]
+{
+  "processId": 13756,
+  "clientInfo": {
+    "name": "Visual Studio Code",
+    "version": "1.105.1"
+  },
+  "locale": "en",
+  "rootPath": "d:\\project\\qkyproject\\test-volar\\ovs",
+  "rootUri": "file:///d%3A/project/qkyproject/test-volar/ovs",
+  "capabilities": {
+    "workspace": {
+      "applyEdit": true,
+      "workspaceEdit": {
+        "documentChanges": true,
+        "resourceOperations": [
+          "create",
+          "rename",
+          "delete"
+        ],
+        "failureHandling": "textOnlyTransactional",
+        "normalizesLineEndings": true,
+        "changeAnnotationSupport": {
+          "groupsOnLabel": true
+        }
+      },
+      "configuration": true,
+      "didChangeWatchedFiles": {
+        "dynamicRegistration": true,
+        "relativePatternSupport": true
+      },
+      "symbol": {
+        "dynamicRegistration": true,
+        "symbolKind": {
+          "valueSet": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26
+          ]
+        },
+        "tagSupport": {
+          "valueSet": [
+            1
+          ]
+        },
+        "resolveSupport": {
+          "properties": [
+            "location.range"
+          ]
+        }
+      },
+      "codeLens": {
+        "refreshSupport": true
+      },
+      "executeCommand": {
+        "dynamicRegistration": true
+      },
+      "didChangeConfiguration": {
+        "dynamicRegistration": true
+      },
+      "workspaceFolders": true,
+      "foldingRange": {
+        "refreshSupport": true
+      },
+      "semanticTokens": {
+        "refreshSupport": true
+      },
+      "fileOperations": {
+        "dynamicRegistration": true,
+        "didCreate": true,
+        "didRename": true,
+        "didDelete": true,
+        "willCreate": true,
+        "willRename": true,
+        "willDelete": true
+      },
+      "inlineValue": {
+        "refreshSupport": true
+      },
+      "inlayHint": {
+        "refreshSupport": true
+      },
+      "diagnostics": {
+        "refreshSupport": true
+      }
+    },
+    "textDocument": {
+      "publishDiagnostics": {
+        "relatedInformation": true,
+        "versionSupport": false,
+        "tagSupport": {
+          "valueSet": [
+            1,
+            2
+          ]
+        },
+        "codeDescriptionSupport": true,
+        "dataSupport": true
+      },
+      "synchronization": {
+        "dynamicRegistration": true,
+        "willSave": true,
+        "willSaveWaitUntil": true,
+        "didSave": true
+      },
+      "completion": {
+        "dynamicRegistration": true,
+        "contextSupport": true,
+        "completionItem": {
+          "snippetSupport": true,
+          "commitCharactersSupport": true,
+          "documentationFormat": [
+            "markdown",
+            "plaintext"
+          ],
+          "deprecatedSupport": true,
+          "preselectSupport": true,
+          "tagSupport": {
+            "valueSet": [
+              1
+            ]
+          },
+          "insertReplaceSupport": true,
+          "resolveSupport": {
+            "properties": [
+              "documentation",
+              "detail",
+              "additionalTextEdits"
+            ]
+          },
+          "insertTextModeSupport": {
+            "valueSet": [
+              1,
+              2
+            ]
+          },
+          "labelDetailsSupport": true
+        },
+        "insertTextMode": 2,
+        "completionItemKind": {
+          "valueSet": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25
+          ]
+        },
+        "completionList": {
+          "itemDefaults": [
+            "commitCharacters",
+            "editRange",
+            "insertTextFormat",
+            "insertTextMode",
+            "data"
+          ]
+        }
+      },
+      "hover": {
+        "dynamicRegistration": true,
+        "contentFormat": [
+          "markdown",
+          "plaintext"
+        ]
+      },
+      "signatureHelp": {
+        "dynamicRegistration": true,
+        "signatureInformation": {
+          "documentationFormat": [
+            "markdown",
+            "plaintext"
+          ],
+          "parameterInformation": {
+            "labelOffsetSupport": true
+          },
+          "activeParameterSupport": true
+        },
+        "contextSupport": true
+      },
+      "definition": {
+        "dynamicRegistration": true,
+        "linkSupport": true
+      },
+      "references": {
+        "dynamicRegistration": true
+      },
+      "documentHighlight": {
+        "dynamicRegistration": true
+      },
+      "documentSymbol": {
+        "dynamicRegistration": true,
+        "symbolKind": {
+          "valueSet": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26
+          ]
+        },
+        "hierarchicalDocumentSymbolSupport": true,
+        "tagSupport": {
+          "valueSet": [
+            1
+          ]
+        },
+        "labelSupport": true
+      },
+      "codeAction": {
+        "dynamicRegistration": true,
+        "isPreferredSupport": true,
+        "disabledSupport": true,
+        "dataSupport": true,
+        "resolveSupport": {
+          "properties": [
+            "edit"
+          ]
+        },
+        "codeActionLiteralSupport": {
+          "codeActionKind": {
+            "valueSet": [
+              "",
+              "quickfix",
+              "refactor",
+              "refactor.extract",
+              "refactor.inline",
+              "refactor.rewrite",
+              "source",
+              "source.organizeImports"
+            ]
+          }
+        },
+        "honorsChangeAnnotations": true
+      },
+      "codeLens": {
+        "dynamicRegistration": true
+      },
+      "formatting": {
+        "dynamicRegistration": true
+      },
+      "rangeFormatting": {
+        "dynamicRegistration": true,
+        "rangesSupport": true
+      },
+      "onTypeFormatting": {
+        "dynamicRegistration": true
+      },
+      "rename": {
+        "dynamicRegistration": true,
+        "prepareSupport": true,
+        "prepareSupportDefaultBehavior": 1,
+        "honorsChangeAnnotations": true
+      },
+      "documentLink": {
+        "dynamicRegistration": true,
+        "tooltipSupport": true
+      },
+      "typeDefinition": {
+        "dynamicRegistration": true,
+        "linkSupport": true
+      },
+      "implementation": {
+        "dynamicRegistration": true,
+        "linkSupport": true
+      },
+      "colorProvider": {
+        "dynamicRegistration": true
+      },
+      "foldingRange": {
+        "dynamicRegistration": true,
+        "rangeLimit": 5000,
+        "lineFoldingOnly": true,
+        "foldingRangeKind": {
+          "valueSet": [
+            "comment",
+            "imports",
+            "region"
+          ]
+        },
+        "foldingRange": {
+          "collapsedText": false
+        }
+      },
+      "declaration": {
+        "dynamicRegistration": true,
+        "linkSupport": true
+      },
+      "selectionRange": {
+        "dynamicRegistration": true
+      },
+      "callHierarchy": {
+        "dynamicRegistration": true
+      },
+      "semanticTokens": {
+        "dynamicRegistration": true,
+        "tokenTypes": [
+          "namespace",
+          "type",
+          "class",
+          "enum",
+          "interface",
+          "struct",
+          "typeParameter",
+          "parameter",
+          "variable",
+          "property",
+          "enumMember",
+          "event",
+          "function",
+          "method",
+          "macro",
+          "keyword",
+          "modifier",
+          "comment",
+          "string",
+          "number",
+          "regexp",
+          "operator",
+          "decorator"
+        ],
+        "tokenModifiers": [
+          "declaration",
+          "definition",
+          "readonly",
+          "static",
+          "deprecated",
+          "abstract",
+          "async",
+          "modification",
+          "documentation",
+          "defaultLibrary"
+        ],
+        "formats": [
+          "relative"
+        ],
+        "requests": {
+          "range": true,
+          "full": {
+            "delta": true
+          }
+        },
+        "multilineTokenSupport": false,
+        "overlappingTokenSupport": false,
+        "serverCancelSupport": true,
+        "augmentsSyntaxTokens": true
+      },
+      "linkedEditingRange": {
+        "dynamicRegistration": true
+      },
+      "typeHierarchy": {
+        "dynamicRegistration": true
+      },
+      "inlineValue": {
+        "dynamicRegistration": true
+      },
+      "inlayHint": {
+        "dynamicRegistration": true,
+        "resolveSupport": {
+          "properties": [
+            "tooltip",
+            "textEdits",
+            "label.tooltip",
+            "label.location",
+            "label.command"
+          ]
+        }
+      },
+      "diagnostic": {
+        "dynamicRegistration": true,
+        "relatedDocumentSupport": false
+      }
+    },
+    "window": {
+      "showMessage": {
+        "messageActionItem": {
+          "additionalPropertiesSupport": true
+        }
+      },
+      "showDocument": {
+        "support": true
+      },
+      "workDoneProgress": true
+    },
+    "general": {
+      "staleRequestSupport": {
+        "cancel": true,
+        "retryOnContentModified": [
+          "textDocument/semanticTokens/full",
+          "textDocument/semanticTokens/range",
+          "textDocument/semanticTokens/full/delta"
+        ]
+      },
+      "regularExpressions": {
+        "engine": "ECMAScript",
+        "version": "ES2020"
+      },
+      "markdown": {
+        "parser": "marked",
+        "version": "1.1.0"
+      },
+      "positionEncodings": [
+        "utf-16"
+      ]
+    },
+    "notebookDocument": {
+      "synchronization": {
+        "dynamicRegistration": true,
+        "executionSummarySupport": true
+      }
+    }
+  },
+  "trace": "off",
+  "workspaceFolders": [
+    {
+      "uri": "file:///d%3A/project/qkyproject/test-volar/ovs",
+      "name": "ovs"
+    }
+  ]
+}
+================================================================================
+
+[2025-10-30T12:48:15.732Z]
+res.capabilities.completionProvider.triggerCharacters
+================================================================================
+
+[2025-10-30T12:48:15.732Z]
+{
+  "textDocumentSync": 2,
+  "workspace": {
+    "workspaceFolders": {
+      "supported": true,
+      "changeNotifications": true
+    }
+  },
+  "selectionRangeProvider": true,
+  "foldingRangeProvider": true,
+  "documentSymbolProvider": true,
+  "documentFormattingProvider": true,
+  "documentRangeFormattingProvider": true,
+  "referencesProvider": true,
+  "implementationProvider": true,
+  "definitionProvider": true,
+  "typeDefinitionProvider": true,
+  "callHierarchyProvider": true,
+  "hoverProvider": true,
+  "documentHighlightProvider": true,
+  "workspaceSymbolProvider": {},
+  "renameProvider": {
+    "prepareProvider": true
+  },
+  "inlayHintProvider": {},
+  "signatureHelpProvider": {
+    "triggerCharacters": [
+      "(",
+      ",",
+      "<"
+    ],
+    "retriggerCharacters": [
+      ")"
+    ]
+  },
+  "completionProvider": {
+    "triggerCharacters": [
+      ".",
+      "\"",
+      "'",
+      "`",
+      "/",
+      "<",
+      "@",
+      "#",
+      "*"
+    ],
+    "resolveProvider": true
+  },
+  "semanticTokensProvider": {
+    "full": true,
+    "range": true,
+    "legend": {
+      "tokenTypes": [
+        "namespace",
+        "class",
+        "enum",
+        "interface",
+        "typeParameter",
+        "type",
+        "parameter",
+        "variable",
+        "property",
+        "enumMember",
+        "function",
+        "method"
+      ],
+      "tokenModifiers": [
+        "declaration",
+        "readonly",
+        "static",
+        "async",
+        "defaultLibrary",
+        "local"
+      ]
+    }
+  },
+  "codeActionProvider": {
+    "codeActionKinds": [
+      "",
+      "quickfix",
+      "refactor",
+      "refactor.extract",
+      "refactor.inline",
+      "refactor.rewrite",
+      "source",
+      "source.fixAll",
+      "source.organizeImports"
+    ],
+    "resolveProvider": true
+  },
+  "documentOnTypeFormattingProvider": {
+    "firstTriggerCharacter": ";",
+    "moreTriggerCharacter": [
+      "}",
+      "\n"
+    ]
+  },
+  "experimental": {
+    "autoInsertionProvider": {
+      "triggerCharacters": [
+        ">"
+      ],
+      "configurationSections": [
+        [
+          "javascript.autoClosingTags",
+          "typescript.autoClosingTags"
+        ]
+      ]
+    },
+    "fileRenameEditsProvider": true,
+    "fileReferencesProvider": true
+  }
+}
+================================================================================
+
+[2025-10-30T12:48:18.822Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-30T12:48:18.822Z]
+3333
+================================================================================
+
+[2025-10-30T12:48:18.889Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-30T12:48:18.889Z]
+import { h, ref, computed } from 'vue'
+
+const count = ref(0)
+
+setInterval(() => {
+  count.value++
+  console.log('计数器：', count.value)
+}, 1000)
+================================================================================
+
+[2025-10-30T12:48:18.889Z]
+import {createReactiveVNode} from '../utils/ReactiveVNode';
+import {h,ref,computed} from 'vue';
+export default (function(){const count = ref(0);
+const children = [];
+setInterval(() => {count.value++;
+console.log('计数器：',count.value);
+},1000);
+return children})()
+================================================================================
+
+[2025-10-30T12:48:19.680Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-30T12:48:19.681Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-30T12:48:19.740Z]
+反悔了tokens
+================================================================================
+
+[2025-10-30T12:48:19.740Z]
+[
+  [
+    2,
+    33,
+    5,
+    7,
+    35
+  ],
+  [
+    2,
+    41,
+    3,
+    10,
+    0
+  ],
+  [
+    3,
+    6,
+    8,
+    7,
+    35
+  ],
+  [
+    4,
+    0,
+    11,
+    10,
+    16
+  ],
+  [
+    4,
+    19,
+    5,
+    7,
+    34
+  ],
+  [
+    4,
+    25,
+    5,
+    8,
+    0
+  ],
+  [
+    5,
+    0,
+    7,
+    7,
+    16
+  ],
+  [
+    5,
+    8,
+    3,
+    11,
+    16
+  ],
+  [
+    5,
+    19,
+    5,
+    7,
+    34
+  ],
+  [
+    5,
+    25,
+    5,
+    8,
+    0
+  ]
+]
+================================================================================
+
+[2025-10-30T12:48:19.741Z]
+反悔了tokens
+================================================================================
+
+[2025-10-30T12:48:19.741Z]
+[
+  [
+    2,
+    33,
+    5,
+    7,
+    35
+  ],
+  [
+    2,
+    41,
+    3,
+    10,
+    0
+  ],
+  [
+    3,
+    6,
+    8,
+    7,
+    35
+  ],
+  [
+    4,
+    0,
+    11,
+    10,
+    16
+  ],
+  [
+    4,
+    19,
+    5,
+    7,
+    34
+  ],
+  [
+    4,
+    25,
+    5,
+    8,
+    0
+  ],
+  [
+    5,
+    0,
+    7,
+    7,
+    16
+  ],
+  [
+    5,
+    8,
+    3,
+    11,
+    16
+  ],
+  [
+    5,
+    19,
+    5,
+    7,
+    34
+  ],
+  [
+    5,
+    25,
+    5,
+    8,
+    0
+  ]
+]
+================================================================================
+
+[2025-10-30T12:48:19.743Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-30T12:48:19.743Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-30T12:49:50.963Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-30T12:49:50.963Z]
+3333
+================================================================================
+
+[2025-10-30T12:49:51.539Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-30T12:49:51.539Z]
+import { h, ref, computed } from 'vue'
+
+const count = ref(0)
+
+setInterval(() => {
+  count.value++
+  console.log('计数器：', count.value)
+}, 1000)
+
+const colors = ['red','green','blue','orange','purple']
+const colorIndex = ref(0)
+
+// 使用 computed 计算当前样式
+const style = computed(() => ({ color: colors[colorIndex.value] }))
+
+// 每秒切换颜色
+setInterval(() => {
+  colorIndex.value = (colorIndex.value + 1) % colors.length
+}, 1000)
+
+div({style: style}) {
+  p { 'Hello, OVS!' }
+  p { count }
+  p { '颜色变化演示' }
+  
+}
+================================================================================
+
+[2025-10-30T12:49:51.540Z]
+import {createReactiveVNode} from '../utils/ReactiveVNode';
+import {h,ref,computed} from 'vue';
+export default (function(){const count = ref(0);
+const colors = ['red','green','blue','orange','purple',];
+const colorIndex = ref(0);
+const style = computed(() => ({color:colors[colorIndex.value],}));
+const children = [];
+setInterval(() => {count.value++;
+console.log('计数器：',count.value);
+},1000);
+setInterval(() => {colorIndex.value = (colorIndex.value + 1) % colors.length;
+},1000);
+children.push(createReactiveVNode('div',{style:style,},[createReactiveVNode('p',{},['Hello, OVS!',]),createReactiveVNode('p',{},[count,]),createReactiveVNode('p',{},['颜色变化演示',]),]));
+return children})()
+================================================================================
+
+[2025-10-30T12:49:51.548Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-30T12:49:51.732Z]
+反悔了tokens
+================================================================================
+
+[2025-10-30T12:49:51.733Z]
+[
+  [
+    2,
+    33,
+    5,
+    7,
+    35
+  ],
+  [
+    2,
+    41,
+    3,
+    10,
+    0
+  ],
+  [
+    3,
+    6,
+    6,
+    7,
+    35
+  ],
+  [
+    4,
+    6,
+    10,
+    7,
+    35
+  ],
+  [
+    4,
+    19,
+    3,
+    10,
+    0
+  ],
+  [
+    5,
+    6,
+    5,
+    7,
+    35
+  ],
+  [
+    5,
+    14,
+    8,
+    10,
+    2
+  ],
+  [
+    5,
+    31,
+    5,
+    8,
+    1
+  ],
+  [
+    5,
+    37,
+    6,
+    7,
+    34
+  ],
+  [
+    5,
+    44,
+    10,
+    7,
+    34
+  ],
+  [
+    5,
+    55,
+    5,
+    8,
+    0
+  ],
+  [
+    6,
+    6,
+    8,
+    7,
+    35
+  ],
+  [
+    7,
+    0,
+    11,
+    10,
+    16
+  ],
+  [
+    7,
+    19,
+    5,
+    7,
+    34
+  ],
+  [
+    7,
+    25,
+    5,
+    8,
+    0
+  ],
+  [
+    8,
+    0,
+    7,
+    7,
+    16
+  ],
+  [
+    8,
+    8,
+    3,
+    11,
+    16
+  ],
+  [
+    8,
+    19,
+    5,
+    7,
+    34
+  ],
+  [
+    8,
+    25,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    0,
+    11,
+    10,
+    16
+  ],
+  [
+    10,
+    19,
+    10,
+    7,
+    34
+  ],
+  [
+    10,
+    30,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    39,
+    10,
+    7,
+    34
+  ],
+  [
+    10,
+    50,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    63,
+    6,
+    7,
+    34
+  ],
+  [
+    10,
+    70,
+    6,
+    8,
+    16
+  ],
+  [
+    12,
+    0,
+    8,
+    7,
+    34
+  ],
+  [
+    12,
+    9,
+    4,
+    11,
+    16
+  ],
+  [
+    12,
+    14,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    41,
+    5,
+    8,
+    1
+  ],
+  [
+    12,
+    47,
+    5,
+    7,
+    34
+  ],
+  [
+    12,
+    56,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    101,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    129,
+    5,
+    7,
+    34
+  ],
+  [
+    12,
+    138,
+    19,
+    10,
+    0
+  ]
+]
+================================================================================
+
+[2025-10-30T12:49:51.733Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-30T12:49:51.757Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-30T12:49:51.759Z]
+反悔了tokens
+================================================================================
+
+[2025-10-30T12:49:51.760Z]
+[
+  [
+    2,
+    33,
+    5,
+    7,
+    35
+  ],
+  [
+    2,
+    41,
+    3,
+    10,
+    0
+  ],
+  [
+    3,
+    6,
+    6,
+    7,
+    35
+  ],
+  [
+    4,
+    6,
+    10,
+    7,
+    35
+  ],
+  [
+    4,
+    19,
+    3,
+    10,
+    0
+  ],
+  [
+    5,
+    6,
+    5,
+    7,
+    35
+  ],
+  [
+    5,
+    14,
+    8,
+    10,
+    2
+  ],
+  [
+    5,
+    31,
+    5,
+    8,
+    1
+  ],
+  [
+    5,
+    37,
+    6,
+    7,
+    34
+  ],
+  [
+    5,
+    44,
+    10,
+    7,
+    34
+  ],
+  [
+    5,
+    55,
+    5,
+    8,
+    0
+  ],
+  [
+    6,
+    6,
+    8,
+    7,
+    35
+  ],
+  [
+    7,
+    0,
+    11,
+    10,
+    16
+  ],
+  [
+    7,
+    19,
+    5,
+    7,
+    34
+  ],
+  [
+    7,
+    25,
+    5,
+    8,
+    0
+  ],
+  [
+    8,
+    0,
+    7,
+    7,
+    16
+  ],
+  [
+    8,
+    8,
+    3,
+    11,
+    16
+  ],
+  [
+    8,
+    19,
+    5,
+    7,
+    34
+  ],
+  [
+    8,
+    25,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    0,
+    11,
+    10,
+    16
+  ],
+  [
+    10,
+    19,
+    10,
+    7,
+    34
+  ],
+  [
+    10,
+    30,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    39,
+    10,
+    7,
+    34
+  ],
+  [
+    10,
+    50,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    63,
+    6,
+    7,
+    34
+  ],
+  [
+    10,
+    70,
+    6,
+    8,
+    16
+  ],
+  [
+    12,
+    0,
+    8,
+    7,
+    34
+  ],
+  [
+    12,
+    9,
+    4,
+    11,
+    16
+  ],
+  [
+    12,
+    14,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    41,
+    5,
+    8,
+    1
+  ],
+  [
+    12,
+    47,
+    5,
+    7,
+    34
+  ],
+  [
+    12,
+    56,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    101,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    129,
+    5,
+    7,
+    34
+  ],
+  [
+    12,
+    138,
+    19,
+    10,
+    0
+  ]
+]
+================================================================================
+
+[2025-10-30T12:49:51.761Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-30T12:49:53.162Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-30T12:49:53.163Z]
+反悔了tokens
+================================================================================
+
+[2025-10-30T12:49:53.164Z]
+[
+  [
+    2,
+    33,
+    5,
+    7,
+    35
+  ],
+  [
+    2,
+    41,
+    3,
+    10,
+    0
+  ],
+  [
+    3,
+    6,
+    8,
+    7,
+    35
+  ],
+  [
+    4,
+    0,
+    11,
+    10,
+    16
+  ],
+  [
+    4,
+    19,
+    5,
+    7,
+    34
+  ],
+  [
+    4,
+    25,
+    5,
+    8,
+    0
+  ],
+  [
+    5,
+    0,
+    7,
+    7,
+    16
+  ],
+  [
+    5,
+    8,
+    3,
+    11,
+    16
+  ],
+  [
+    5,
+    19,
+    5,
+    7,
+    34
+  ],
+  [
+    5,
+    25,
+    5,
+    8,
+    0
+  ]
+]
+================================================================================
+
+[2025-10-30T12:49:53.164Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-30T12:49:53.548Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-30T12:49:53.548Z]
+3333
+================================================================================
+
+[2025-10-30T12:49:54.013Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-30T12:49:54.013Z]
+import { h, ref, computed } from 'vue'
+
+const count = ref(0)
+
+setInterval(() => {
+  count.value++
+  console.log('计数器：', count.value)
+}, 1000)
+
+const colors = ['red','green','blue','orange','purple']
+const colorIndex = ref(0)
+
+// 使用 computed 计算当前样式
+const style = computed(() => ({ color: colors[colorIndex.value] }))
+
+// 每秒切换颜色
+setInterval(() => {
+  colorIndex.value = (colorIndex.value + 1) % colors.length
+}, 1000)
+
+div({style: style}) {
+  p { 'Hello, OVS!' }
+  p { count }
+  p { '颜色变化演示' }
+  
+}
+================================================================================
+
+[2025-10-30T12:49:54.013Z]
+import {createReactiveVNode} from '../utils/ReactiveVNode';
+import {h,ref,computed} from 'vue';
+export default (function(){const count = ref(0);
+const colors = ['red','green','blue','orange','purple',];
+const colorIndex = ref(0);
+const style = computed(() => ({color:colors[colorIndex.value],}));
+const children = [];
+setInterval(() => {count.value++;
+console.log('计数器：',count.value);
+},1000);
+setInterval(() => {colorIndex.value = (colorIndex.value + 1) % colors.length;
+},1000);
+children.push(createReactiveVNode('div',{style:style,},[createReactiveVNode('p',{},['Hello, OVS!',]),createReactiveVNode('p',{},[count,]),createReactiveVNode('p',{},['颜色变化演示',]),]));
+return children})()
+================================================================================
+
+[2025-10-30T12:49:54.119Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-30T12:49:54.123Z]
+反悔了tokens
+================================================================================
+
+[2025-10-30T12:49:54.124Z]
+[
+  [
+    2,
+    33,
+    5,
+    7,
+    35
+  ],
+  [
+    2,
+    41,
+    3,
+    10,
+    0
+  ],
+  [
+    3,
+    6,
+    6,
+    7,
+    35
+  ],
+  [
+    4,
+    6,
+    10,
+    7,
+    35
+  ],
+  [
+    4,
+    19,
+    3,
+    10,
+    0
+  ],
+  [
+    5,
+    6,
+    5,
+    7,
+    35
+  ],
+  [
+    5,
+    14,
+    8,
+    10,
+    2
+  ],
+  [
+    5,
+    31,
+    5,
+    8,
+    1
+  ],
+  [
+    5,
+    37,
+    6,
+    7,
+    34
+  ],
+  [
+    5,
+    44,
+    10,
+    7,
+    34
+  ],
+  [
+    5,
+    55,
+    5,
+    8,
+    0
+  ],
+  [
+    6,
+    6,
+    8,
+    7,
+    35
+  ],
+  [
+    7,
+    0,
+    11,
+    10,
+    16
+  ],
+  [
+    7,
+    19,
+    5,
+    7,
+    34
+  ],
+  [
+    7,
+    25,
+    5,
+    8,
+    0
+  ],
+  [
+    8,
+    0,
+    7,
+    7,
+    16
+  ],
+  [
+    8,
+    8,
+    3,
+    11,
+    16
+  ],
+  [
+    8,
+    19,
+    5,
+    7,
+    34
+  ],
+  [
+    8,
+    25,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    0,
+    11,
+    10,
+    16
+  ],
+  [
+    10,
+    19,
+    10,
+    7,
+    34
+  ],
+  [
+    10,
+    30,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    39,
+    10,
+    7,
+    34
+  ],
+  [
+    10,
+    50,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    63,
+    6,
+    7,
+    34
+  ],
+  [
+    10,
+    70,
+    6,
+    8,
+    16
+  ],
+  [
+    12,
+    0,
+    8,
+    7,
+    34
+  ],
+  [
+    12,
+    9,
+    4,
+    11,
+    16
+  ],
+  [
+    12,
+    14,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    41,
+    5,
+    8,
+    1
+  ],
+  [
+    12,
+    47,
+    5,
+    7,
+    34
+  ],
+  [
+    12,
+    56,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    101,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    129,
+    5,
+    7,
+    34
+  ],
+  [
+    12,
+    138,
+    19,
+    10,
+    0
+  ]
+]
+================================================================================
+
+[2025-10-30T12:49:54.125Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-30T12:55:41.614Z]
+createTypeScriptServices
+================================================================================
+
+[2025-10-30T12:55:41.621Z]
+getLocalTsdkPath
+================================================================================
+
+[2025-10-30T12:55:41.621Z]
+onInitialize
+================================================================================
+
+[2025-10-30T12:55:41.628Z]
+params
+================================================================================
+
+[2025-10-30T12:55:41.628Z]
+{
+  "processId": 16008,
+  "clientInfo": {
+    "name": "Visual Studio Code",
+    "version": "1.105.1"
+  },
+  "locale": "en",
+  "rootPath": "d:\\project\\qkyproject\\test-volar\\ovs",
+  "rootUri": "file:///d%3A/project/qkyproject/test-volar/ovs",
+  "capabilities": {
+    "workspace": {
+      "applyEdit": true,
+      "workspaceEdit": {
+        "documentChanges": true,
+        "resourceOperations": [
+          "create",
+          "rename",
+          "delete"
+        ],
+        "failureHandling": "textOnlyTransactional",
+        "normalizesLineEndings": true,
+        "changeAnnotationSupport": {
+          "groupsOnLabel": true
+        }
+      },
+      "configuration": true,
+      "didChangeWatchedFiles": {
+        "dynamicRegistration": true,
+        "relativePatternSupport": true
+      },
+      "symbol": {
+        "dynamicRegistration": true,
+        "symbolKind": {
+          "valueSet": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26
+          ]
+        },
+        "tagSupport": {
+          "valueSet": [
+            1
+          ]
+        },
+        "resolveSupport": {
+          "properties": [
+            "location.range"
+          ]
+        }
+      },
+      "codeLens": {
+        "refreshSupport": true
+      },
+      "executeCommand": {
+        "dynamicRegistration": true
+      },
+      "didChangeConfiguration": {
+        "dynamicRegistration": true
+      },
+      "workspaceFolders": true,
+      "foldingRange": {
+        "refreshSupport": true
+      },
+      "semanticTokens": {
+        "refreshSupport": true
+      },
+      "fileOperations": {
+        "dynamicRegistration": true,
+        "didCreate": true,
+        "didRename": true,
+        "didDelete": true,
+        "willCreate": true,
+        "willRename": true,
+        "willDelete": true
+      },
+      "inlineValue": {
+        "refreshSupport": true
+      },
+      "inlayHint": {
+        "refreshSupport": true
+      },
+      "diagnostics": {
+        "refreshSupport": true
+      }
+    },
+    "textDocument": {
+      "publishDiagnostics": {
+        "relatedInformation": true,
+        "versionSupport": false,
+        "tagSupport": {
+          "valueSet": [
+            1,
+            2
+          ]
+        },
+        "codeDescriptionSupport": true,
+        "dataSupport": true
+      },
+      "synchronization": {
+        "dynamicRegistration": true,
+        "willSave": true,
+        "willSaveWaitUntil": true,
+        "didSave": true
+      },
+      "completion": {
+        "dynamicRegistration": true,
+        "contextSupport": true,
+        "completionItem": {
+          "snippetSupport": true,
+          "commitCharactersSupport": true,
+          "documentationFormat": [
+            "markdown",
+            "plaintext"
+          ],
+          "deprecatedSupport": true,
+          "preselectSupport": true,
+          "tagSupport": {
+            "valueSet": [
+              1
+            ]
+          },
+          "insertReplaceSupport": true,
+          "resolveSupport": {
+            "properties": [
+              "documentation",
+              "detail",
+              "additionalTextEdits"
+            ]
+          },
+          "insertTextModeSupport": {
+            "valueSet": [
+              1,
+              2
+            ]
+          },
+          "labelDetailsSupport": true
+        },
+        "insertTextMode": 2,
+        "completionItemKind": {
+          "valueSet": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25
+          ]
+        },
+        "completionList": {
+          "itemDefaults": [
+            "commitCharacters",
+            "editRange",
+            "insertTextFormat",
+            "insertTextMode",
+            "data"
+          ]
+        }
+      },
+      "hover": {
+        "dynamicRegistration": true,
+        "contentFormat": [
+          "markdown",
+          "plaintext"
+        ]
+      },
+      "signatureHelp": {
+        "dynamicRegistration": true,
+        "signatureInformation": {
+          "documentationFormat": [
+            "markdown",
+            "plaintext"
+          ],
+          "parameterInformation": {
+            "labelOffsetSupport": true
+          },
+          "activeParameterSupport": true
+        },
+        "contextSupport": true
+      },
+      "definition": {
+        "dynamicRegistration": true,
+        "linkSupport": true
+      },
+      "references": {
+        "dynamicRegistration": true
+      },
+      "documentHighlight": {
+        "dynamicRegistration": true
+      },
+      "documentSymbol": {
+        "dynamicRegistration": true,
+        "symbolKind": {
+          "valueSet": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26
+          ]
+        },
+        "hierarchicalDocumentSymbolSupport": true,
+        "tagSupport": {
+          "valueSet": [
+            1
+          ]
+        },
+        "labelSupport": true
+      },
+      "codeAction": {
+        "dynamicRegistration": true,
+        "isPreferredSupport": true,
+        "disabledSupport": true,
+        "dataSupport": true,
+        "resolveSupport": {
+          "properties": [
+            "edit"
+          ]
+        },
+        "codeActionLiteralSupport": {
+          "codeActionKind": {
+            "valueSet": [
+              "",
+              "quickfix",
+              "refactor",
+              "refactor.extract",
+              "refactor.inline",
+              "refactor.rewrite",
+              "source",
+              "source.organizeImports"
+            ]
+          }
+        },
+        "honorsChangeAnnotations": true
+      },
+      "codeLens": {
+        "dynamicRegistration": true
+      },
+      "formatting": {
+        "dynamicRegistration": true
+      },
+      "rangeFormatting": {
+        "dynamicRegistration": true,
+        "rangesSupport": true
+      },
+      "onTypeFormatting": {
+        "dynamicRegistration": true
+      },
+      "rename": {
+        "dynamicRegistration": true,
+        "prepareSupport": true,
+        "prepareSupportDefaultBehavior": 1,
+        "honorsChangeAnnotations": true
+      },
+      "documentLink": {
+        "dynamicRegistration": true,
+        "tooltipSupport": true
+      },
+      "typeDefinition": {
+        "dynamicRegistration": true,
+        "linkSupport": true
+      },
+      "implementation": {
+        "dynamicRegistration": true,
+        "linkSupport": true
+      },
+      "colorProvider": {
+        "dynamicRegistration": true
+      },
+      "foldingRange": {
+        "dynamicRegistration": true,
+        "rangeLimit": 5000,
+        "lineFoldingOnly": true,
+        "foldingRangeKind": {
+          "valueSet": [
+            "comment",
+            "imports",
+            "region"
+          ]
+        },
+        "foldingRange": {
+          "collapsedText": false
+        }
+      },
+      "declaration": {
+        "dynamicRegistration": true,
+        "linkSupport": true
+      },
+      "selectionRange": {
+        "dynamicRegistration": true
+      },
+      "callHierarchy": {
+        "dynamicRegistration": true
+      },
+      "semanticTokens": {
+        "dynamicRegistration": true,
+        "tokenTypes": [
+          "namespace",
+          "type",
+          "class",
+          "enum",
+          "interface",
+          "struct",
+          "typeParameter",
+          "parameter",
+          "variable",
+          "property",
+          "enumMember",
+          "event",
+          "function",
+          "method",
+          "macro",
+          "keyword",
+          "modifier",
+          "comment",
+          "string",
+          "number",
+          "regexp",
+          "operator",
+          "decorator"
+        ],
+        "tokenModifiers": [
+          "declaration",
+          "definition",
+          "readonly",
+          "static",
+          "deprecated",
+          "abstract",
+          "async",
+          "modification",
+          "documentation",
+          "defaultLibrary"
+        ],
+        "formats": [
+          "relative"
+        ],
+        "requests": {
+          "range": true,
+          "full": {
+            "delta": true
+          }
+        },
+        "multilineTokenSupport": false,
+        "overlappingTokenSupport": false,
+        "serverCancelSupport": true,
+        "augmentsSyntaxTokens": true
+      },
+      "linkedEditingRange": {
+        "dynamicRegistration": true
+      },
+      "typeHierarchy": {
+        "dynamicRegistration": true
+      },
+      "inlineValue": {
+        "dynamicRegistration": true
+      },
+      "inlayHint": {
+        "dynamicRegistration": true,
+        "resolveSupport": {
+          "properties": [
+            "tooltip",
+            "textEdits",
+            "label.tooltip",
+            "label.location",
+            "label.command"
+          ]
+        }
+      },
+      "diagnostic": {
+        "dynamicRegistration": true,
+        "relatedDocumentSupport": false
+      }
+    },
+    "window": {
+      "showMessage": {
+        "messageActionItem": {
+          "additionalPropertiesSupport": true
+        }
+      },
+      "showDocument": {
+        "support": true
+      },
+      "workDoneProgress": true
+    },
+    "general": {
+      "staleRequestSupport": {
+        "cancel": true,
+        "retryOnContentModified": [
+          "textDocument/semanticTokens/full",
+          "textDocument/semanticTokens/range",
+          "textDocument/semanticTokens/full/delta"
+        ]
+      },
+      "regularExpressions": {
+        "engine": "ECMAScript",
+        "version": "ES2020"
+      },
+      "markdown": {
+        "parser": "marked",
+        "version": "1.1.0"
+      },
+      "positionEncodings": [
+        "utf-16"
+      ]
+    },
+    "notebookDocument": {
+      "synchronization": {
+        "dynamicRegistration": true,
+        "executionSummarySupport": true
+      }
+    }
+  },
+  "trace": "off",
+  "workspaceFolders": [
+    {
+      "uri": "file:///d%3A/project/qkyproject/test-volar/ovs",
+      "name": "ovs"
+    }
+  ]
+}
+================================================================================
+
+[2025-10-30T12:55:42.015Z]
+res.capabilities.completionProvider.triggerCharacters
+================================================================================
+
+[2025-10-30T12:55:42.015Z]
+{
+  "textDocumentSync": 2,
+  "workspace": {
+    "workspaceFolders": {
+      "supported": true,
+      "changeNotifications": true
+    }
+  },
+  "selectionRangeProvider": true,
+  "foldingRangeProvider": true,
+  "documentSymbolProvider": true,
+  "documentFormattingProvider": true,
+  "documentRangeFormattingProvider": true,
+  "referencesProvider": true,
+  "implementationProvider": true,
+  "definitionProvider": true,
+  "typeDefinitionProvider": true,
+  "callHierarchyProvider": true,
+  "hoverProvider": true,
+  "documentHighlightProvider": true,
+  "workspaceSymbolProvider": {},
+  "renameProvider": {
+    "prepareProvider": true
+  },
+  "inlayHintProvider": {},
+  "signatureHelpProvider": {
+    "triggerCharacters": [
+      "(",
+      ",",
+      "<"
+    ],
+    "retriggerCharacters": [
+      ")"
+    ]
+  },
+  "completionProvider": {
+    "triggerCharacters": [
+      ".",
+      "\"",
+      "'",
+      "`",
+      "/",
+      "<",
+      "@",
+      "#",
+      "*"
+    ],
+    "resolveProvider": true
+  },
+  "semanticTokensProvider": {
+    "full": true,
+    "range": true,
+    "legend": {
+      "tokenTypes": [
+        "namespace",
+        "class",
+        "enum",
+        "interface",
+        "typeParameter",
+        "type",
+        "parameter",
+        "variable",
+        "property",
+        "enumMember",
+        "function",
+        "method"
+      ],
+      "tokenModifiers": [
+        "declaration",
+        "readonly",
+        "static",
+        "async",
+        "defaultLibrary",
+        "local"
+      ]
+    }
+  },
+  "codeActionProvider": {
+    "codeActionKinds": [
+      "",
+      "quickfix",
+      "refactor",
+      "refactor.extract",
+      "refactor.inline",
+      "refactor.rewrite",
+      "source",
+      "source.fixAll",
+      "source.organizeImports"
+    ],
+    "resolveProvider": true
+  },
+  "documentOnTypeFormattingProvider": {
+    "firstTriggerCharacter": ";",
+    "moreTriggerCharacter": [
+      "}",
+      "\n"
+    ]
+  },
+  "experimental": {
+    "autoInsertionProvider": {
+      "triggerCharacters": [
+        ">"
+      ],
+      "configurationSections": [
+        [
+          "javascript.autoClosingTags",
+          "typescript.autoClosingTags"
+        ]
+      ]
+    },
+    "fileRenameEditsProvider": true,
+    "fileReferencesProvider": true
+  }
+}
+================================================================================
+
+[2025-10-30T12:55:44.621Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-30T12:55:44.621Z]
+3333
+================================================================================
+
+[2025-10-30T12:55:44.688Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-30T12:55:44.689Z]
+import { h, ref, computed } from 'vue'
+
+const count = ref(0)
+
+setInterval(() => {
+  count.value++
+  console.log('计数器：', count.value)
+}, 1000)
+================================================================================
+
+[2025-10-30T12:55:44.689Z]
+import {createReactiveVNode} from '../utils/ReactiveVNode';
+import {h,ref,computed} from 'vue';
+export default (function(){const count = ref(0);
+const children = [];
+setInterval(() => {count.value++;
+console.log('计数器：',count.value);
+},1000);
+return children})()
+================================================================================
+
+[2025-10-30T12:55:45.539Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-30T12:55:45.540Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-30T12:55:45.594Z]
+反悔了tokens
+================================================================================
+
+[2025-10-30T12:55:45.594Z]
+[
+  [
+    2,
+    33,
+    5,
+    7,
+    35
+  ],
+  [
+    2,
+    41,
+    3,
+    10,
+    0
+  ],
+  [
+    3,
+    6,
+    8,
+    7,
+    35
+  ],
+  [
+    4,
+    0,
+    11,
+    10,
+    16
+  ],
+  [
+    4,
+    19,
+    5,
+    7,
+    34
+  ],
+  [
+    4,
+    25,
+    5,
+    8,
+    0
+  ],
+  [
+    5,
+    0,
+    7,
+    7,
+    16
+  ],
+  [
+    5,
+    8,
+    3,
+    11,
+    16
+  ],
+  [
+    5,
+    19,
+    5,
+    7,
+    34
+  ],
+  [
+    5,
+    25,
+    5,
+    8,
+    0
+  ]
+]
+================================================================================
+
+[2025-10-30T12:55:45.595Z]
+反悔了tokens
+================================================================================
+
+[2025-10-30T12:55:45.595Z]
+[
+  [
+    2,
+    33,
+    5,
+    7,
+    35
+  ],
+  [
+    2,
+    41,
+    3,
+    10,
+    0
+  ],
+  [
+    3,
+    6,
+    8,
+    7,
+    35
+  ],
+  [
+    4,
+    0,
+    11,
+    10,
+    16
+  ],
+  [
+    4,
+    19,
+    5,
+    7,
+    34
+  ],
+  [
+    4,
+    25,
+    5,
+    8,
+    0
+  ],
+  [
+    5,
+    0,
+    7,
+    7,
+    16
+  ],
+  [
+    5,
+    8,
+    3,
+    11,
+    16
+  ],
+  [
+    5,
+    19,
+    5,
+    7,
+    34
+  ],
+  [
+    5,
+    25,
+    5,
+    8,
+    0
+  ]
+]
+================================================================================
+
+[2025-10-30T12:55:45.597Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-30T12:55:45.597Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-30T12:55:45.599Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-30T12:55:45.599Z]
+3333
+================================================================================
+
+[2025-10-30T12:55:46.042Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-30T12:55:46.042Z]
+import { h, ref, computed } from 'vue'
+
+const count = ref(0)
+
+setInterval(() => {
+  count.value++
+  console.log('计数器：', count.value)
+}, 1000)
+
+const colors = ['red','green','blue','orange','purple']
+const colorIndex = ref(0)
+
+// 使用 computed 计算当前样式
+const style = computed(() => ({ color: colors[colorIndex.value] }))
+
+// 每秒切换颜色
+setInterval(() => {
+  colorIndex.value = (colorIndex.value + 1) % colors.length
+}, 1000)
+
+div({style: style}) {
+  p { 'Hello, OVS!' }
+  p { count }
+  p { '颜色变化演示' }
+  
+}
+================================================================================
+
+[2025-10-30T12:55:46.042Z]
+import {createReactiveVNode} from '../utils/ReactiveVNode';
+import {h,ref,computed} from 'vue';
+export default (function(){const count = ref(0);
+const colors = ['red','green','blue','orange','purple',];
+const colorIndex = ref(0);
+const style = computed(() => ({color:colors[colorIndex.value],}));
+const children = [];
+setInterval(() => {count.value++;
+console.log('计数器：',count.value);
+},1000);
+setInterval(() => {colorIndex.value = (colorIndex.value + 1) % colors.length;
+},1000);
+children.push(createReactiveVNode('div',{style:style,},[createReactiveVNode('p',{},['Hello, OVS!',]),createReactiveVNode('p',{},[count,]),createReactiveVNode('p',{},['颜色变化演示',]),]));
+return children})()
+================================================================================
+
+[2025-10-30T12:56:48.037Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-30T12:56:48.047Z]
+反悔了tokens
+================================================================================
+
+[2025-10-30T12:56:48.048Z]
+[
+  [
+    2,
+    33,
+    5,
+    7,
+    35
+  ],
+  [
+    2,
+    41,
+    3,
+    10,
+    0
+  ],
+  [
+    3,
+    6,
+    6,
+    7,
+    35
+  ],
+  [
+    4,
+    6,
+    10,
+    7,
+    35
+  ],
+  [
+    4,
+    19,
+    3,
+    10,
+    0
+  ],
+  [
+    5,
+    6,
+    5,
+    7,
+    35
+  ],
+  [
+    5,
+    14,
+    8,
+    10,
+    2
+  ],
+  [
+    5,
+    31,
+    5,
+    8,
+    1
+  ],
+  [
+    5,
+    37,
+    6,
+    7,
+    34
+  ],
+  [
+    5,
+    44,
+    10,
+    7,
+    34
+  ],
+  [
+    5,
+    55,
+    5,
+    8,
+    0
+  ],
+  [
+    6,
+    6,
+    8,
+    7,
+    35
+  ],
+  [
+    7,
+    0,
+    11,
+    10,
+    16
+  ],
+  [
+    7,
+    19,
+    5,
+    7,
+    34
+  ],
+  [
+    7,
+    25,
+    5,
+    8,
+    0
+  ],
+  [
+    8,
+    0,
+    7,
+    7,
+    16
+  ],
+  [
+    8,
+    8,
+    3,
+    11,
+    16
+  ],
+  [
+    8,
+    19,
+    5,
+    7,
+    34
+  ],
+  [
+    8,
+    25,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    0,
+    11,
+    10,
+    16
+  ],
+  [
+    10,
+    19,
+    10,
+    7,
+    34
+  ],
+  [
+    10,
+    30,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    39,
+    10,
+    7,
+    34
+  ],
+  [
+    10,
+    50,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    63,
+    6,
+    7,
+    34
+  ],
+  [
+    10,
+    70,
+    6,
+    8,
+    16
+  ],
+  [
+    12,
+    0,
+    8,
+    7,
+    34
+  ],
+  [
+    12,
+    9,
+    4,
+    11,
+    16
+  ],
+  [
+    12,
+    14,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    41,
+    5,
+    8,
+    1
+  ],
+  [
+    12,
+    47,
+    5,
+    7,
+    34
+  ],
+  [
+    12,
+    56,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    101,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    129,
+    5,
+    7,
+    34
+  ],
+  [
+    12,
+    138,
+    19,
+    10,
+    0
+  ]
+]
+================================================================================
+
+[2025-10-30T12:56:48.048Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-30T12:56:48.298Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-30T12:56:48.300Z]
+反悔了tokens
+================================================================================
+
+[2025-10-30T12:56:48.301Z]
+[
+  [
+    2,
+    33,
+    5,
+    7,
+    35
+  ],
+  [
+    2,
+    41,
+    3,
+    10,
+    0
+  ],
+  [
+    3,
+    6,
+    6,
+    7,
+    35
+  ],
+  [
+    4,
+    6,
+    10,
+    7,
+    35
+  ],
+  [
+    4,
+    19,
+    3,
+    10,
+    0
+  ],
+  [
+    5,
+    6,
+    5,
+    7,
+    35
+  ],
+  [
+    5,
+    14,
+    8,
+    10,
+    2
+  ],
+  [
+    5,
+    31,
+    5,
+    8,
+    1
+  ],
+  [
+    5,
+    37,
+    6,
+    7,
+    34
+  ],
+  [
+    5,
+    44,
+    10,
+    7,
+    34
+  ],
+  [
+    5,
+    55,
+    5,
+    8,
+    0
+  ],
+  [
+    6,
+    6,
+    8,
+    7,
+    35
+  ],
+  [
+    7,
+    0,
+    11,
+    10,
+    16
+  ],
+  [
+    7,
+    19,
+    5,
+    7,
+    34
+  ],
+  [
+    7,
+    25,
+    5,
+    8,
+    0
+  ],
+  [
+    8,
+    0,
+    7,
+    7,
+    16
+  ],
+  [
+    8,
+    8,
+    3,
+    11,
+    16
+  ],
+  [
+    8,
+    19,
+    5,
+    7,
+    34
+  ],
+  [
+    8,
+    25,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    0,
+    11,
+    10,
+    16
+  ],
+  [
+    10,
+    19,
+    10,
+    7,
+    34
+  ],
+  [
+    10,
+    30,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    39,
+    10,
+    7,
+    34
+  ],
+  [
+    10,
+    50,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    63,
+    6,
+    7,
+    34
+  ],
+  [
+    10,
+    70,
+    6,
+    8,
+    16
+  ],
+  [
+    12,
+    0,
+    8,
+    7,
+    34
+  ],
+  [
+    12,
+    9,
+    4,
+    11,
+    16
+  ],
+  [
+    12,
+    14,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    41,
+    5,
+    8,
+    1
+  ],
+  [
+    12,
+    47,
+    5,
+    7,
+    34
+  ],
+  [
+    12,
+    56,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    101,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    129,
+    5,
+    7,
+    34
+  ],
+  [
+    12,
+    138,
+    19,
+    10,
+    0
+  ]
+]
+================================================================================
+
+[2025-10-30T12:56:48.302Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-30T12:56:50.923Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-30T12:56:50.926Z]
+反悔了tokens
+================================================================================
+
+[2025-10-30T12:56:50.927Z]
+[
+  [
+    2,
+    33,
+    5,
+    7,
+    35
+  ],
+  [
+    2,
+    41,
+    3,
+    10,
+    0
+  ],
+  [
+    3,
+    6,
+    8,
+    7,
+    35
+  ],
+  [
+    4,
+    0,
+    11,
+    10,
+    16
+  ],
+  [
+    4,
+    19,
+    5,
+    7,
+    34
+  ],
+  [
+    4,
+    25,
+    5,
+    8,
+    0
+  ],
+  [
+    5,
+    0,
+    7,
+    7,
+    16
+  ],
+  [
+    5,
+    8,
+    3,
+    11,
+    16
+  ],
+  [
+    5,
+    19,
+    5,
+    7,
+    34
+  ],
+  [
+    5,
+    25,
+    5,
+    8,
+    0
+  ]
+]
+================================================================================
+
+[2025-10-30T12:56:50.927Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-30T12:56:51.637Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-30T12:56:51.637Z]
+3333
+================================================================================
+
+[2025-10-30T12:56:52.343Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-30T12:56:52.343Z]
+import { h, ref, computed } from 'vue'
+
+const count = ref(0)
+
+setInterval(() => {
+  count.value++
+  console.log('计数器：', count.value)
+}, 1000)
+
+const colors = ['red','green','blue','orange','purple']
+const colorIndex = ref(0)
+
+// 使用 computed 计算当前样式
+const style = computed(() => ({ color: colors[colorIndex.value] }))
+
+// 每秒切换颜色
+setInterval(() => {
+  colorIndex.value = (colorIndex.value + 1) % colors.length
+}, 1000)
+
+div({style: style}) {
+  p { 'Hello, OVS!' }
+  p { count }
+  p { '颜色变化演示' }
+  
+}
+================================================================================
+
+[2025-10-30T12:56:52.343Z]
+import {createReactiveVNode} from '../utils/ReactiveVNode';
+import {h,ref,computed} from 'vue';
+export default (function(){const count = ref(0);
+const colors = ['red','green','blue','orange','purple',];
+const colorIndex = ref(0);
+const style = computed(() => ({color:colors[colorIndex.value],}));
+const children = [];
+setInterval(() => {count.value++;
+console.log('计数器：',count.value);
+},1000);
+setInterval(() => {colorIndex.value = (colorIndex.value + 1) % colors.length;
+},1000);
+children.push(createReactiveVNode('div',{style:style,},[createReactiveVNode('p',{},['Hello, OVS!',]),createReactiveVNode('p',{},[count,]),createReactiveVNode('p',{},['颜色变化演示',]),]));
+return children})()
+================================================================================
+
+[2025-10-30T12:56:52.528Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-30T12:56:52.546Z]
+反悔了tokens
+================================================================================
+
+[2025-10-30T12:56:52.546Z]
+[
+  [
+    2,
+    33,
+    5,
+    7,
+    35
+  ],
+  [
+    2,
+    41,
+    3,
+    10,
+    0
+  ],
+  [
+    3,
+    6,
+    6,
+    7,
+    35
+  ],
+  [
+    4,
+    6,
+    10,
+    7,
+    35
+  ],
+  [
+    4,
+    19,
+    3,
+    10,
+    0
+  ],
+  [
+    5,
+    6,
+    5,
+    7,
+    35
+  ],
+  [
+    5,
+    14,
+    8,
+    10,
+    2
+  ],
+  [
+    5,
+    31,
+    5,
+    8,
+    1
+  ],
+  [
+    5,
+    37,
+    6,
+    7,
+    34
+  ],
+  [
+    5,
+    44,
+    10,
+    7,
+    34
+  ],
+  [
+    5,
+    55,
+    5,
+    8,
+    0
+  ],
+  [
+    6,
+    6,
+    8,
+    7,
+    35
+  ],
+  [
+    7,
+    0,
+    11,
+    10,
+    16
+  ],
+  [
+    7,
+    19,
+    5,
+    7,
+    34
+  ],
+  [
+    7,
+    25,
+    5,
+    8,
+    0
+  ],
+  [
+    8,
+    0,
+    7,
+    7,
+    16
+  ],
+  [
+    8,
+    8,
+    3,
+    11,
+    16
+  ],
+  [
+    8,
+    19,
+    5,
+    7,
+    34
+  ],
+  [
+    8,
+    25,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    0,
+    11,
+    10,
+    16
+  ],
+  [
+    10,
+    19,
+    10,
+    7,
+    34
+  ],
+  [
+    10,
+    30,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    39,
+    10,
+    7,
+    34
+  ],
+  [
+    10,
+    50,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    63,
+    6,
+    7,
+    34
+  ],
+  [
+    10,
+    70,
+    6,
+    8,
+    16
+  ],
+  [
+    12,
+    0,
+    8,
+    7,
+    34
+  ],
+  [
+    12,
+    9,
+    4,
+    11,
+    16
+  ],
+  [
+    12,
+    14,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    41,
+    5,
+    8,
+    1
+  ],
+  [
+    12,
+    47,
+    5,
+    7,
+    34
+  ],
+  [
+    12,
+    56,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    101,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    129,
+    5,
+    7,
+    34
+  ],
+  [
+    12,
+    138,
+    19,
+    10,
+    0
+  ]
+]
+================================================================================
+
+[2025-10-30T12:56:52.548Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-30T12:59:28.236Z]
+createTypeScriptServices
+================================================================================
+
+[2025-10-30T12:59:28.243Z]
+getLocalTsdkPath
+================================================================================
+
+[2025-10-30T12:59:28.243Z]
+onInitialize
+================================================================================
+
+[2025-10-30T12:59:28.249Z]
+params
+================================================================================
+
+[2025-10-30T12:59:28.249Z]
+{
+  "processId": 5936,
+  "clientInfo": {
+    "name": "Visual Studio Code",
+    "version": "1.105.1"
+  },
+  "locale": "en",
+  "rootPath": "d:\\project\\qkyproject\\test-volar\\ovs",
+  "rootUri": "file:///d%3A/project/qkyproject/test-volar/ovs",
+  "capabilities": {
+    "workspace": {
+      "applyEdit": true,
+      "workspaceEdit": {
+        "documentChanges": true,
+        "resourceOperations": [
+          "create",
+          "rename",
+          "delete"
+        ],
+        "failureHandling": "textOnlyTransactional",
+        "normalizesLineEndings": true,
+        "changeAnnotationSupport": {
+          "groupsOnLabel": true
+        }
+      },
+      "configuration": true,
+      "didChangeWatchedFiles": {
+        "dynamicRegistration": true,
+        "relativePatternSupport": true
+      },
+      "symbol": {
+        "dynamicRegistration": true,
+        "symbolKind": {
+          "valueSet": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26
+          ]
+        },
+        "tagSupport": {
+          "valueSet": [
+            1
+          ]
+        },
+        "resolveSupport": {
+          "properties": [
+            "location.range"
+          ]
+        }
+      },
+      "codeLens": {
+        "refreshSupport": true
+      },
+      "executeCommand": {
+        "dynamicRegistration": true
+      },
+      "didChangeConfiguration": {
+        "dynamicRegistration": true
+      },
+      "workspaceFolders": true,
+      "foldingRange": {
+        "refreshSupport": true
+      },
+      "semanticTokens": {
+        "refreshSupport": true
+      },
+      "fileOperations": {
+        "dynamicRegistration": true,
+        "didCreate": true,
+        "didRename": true,
+        "didDelete": true,
+        "willCreate": true,
+        "willRename": true,
+        "willDelete": true
+      },
+      "inlineValue": {
+        "refreshSupport": true
+      },
+      "inlayHint": {
+        "refreshSupport": true
+      },
+      "diagnostics": {
+        "refreshSupport": true
+      }
+    },
+    "textDocument": {
+      "publishDiagnostics": {
+        "relatedInformation": true,
+        "versionSupport": false,
+        "tagSupport": {
+          "valueSet": [
+            1,
+            2
+          ]
+        },
+        "codeDescriptionSupport": true,
+        "dataSupport": true
+      },
+      "synchronization": {
+        "dynamicRegistration": true,
+        "willSave": true,
+        "willSaveWaitUntil": true,
+        "didSave": true
+      },
+      "completion": {
+        "dynamicRegistration": true,
+        "contextSupport": true,
+        "completionItem": {
+          "snippetSupport": true,
+          "commitCharactersSupport": true,
+          "documentationFormat": [
+            "markdown",
+            "plaintext"
+          ],
+          "deprecatedSupport": true,
+          "preselectSupport": true,
+          "tagSupport": {
+            "valueSet": [
+              1
+            ]
+          },
+          "insertReplaceSupport": true,
+          "resolveSupport": {
+            "properties": [
+              "documentation",
+              "detail",
+              "additionalTextEdits"
+            ]
+          },
+          "insertTextModeSupport": {
+            "valueSet": [
+              1,
+              2
+            ]
+          },
+          "labelDetailsSupport": true
+        },
+        "insertTextMode": 2,
+        "completionItemKind": {
+          "valueSet": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25
+          ]
+        },
+        "completionList": {
+          "itemDefaults": [
+            "commitCharacters",
+            "editRange",
+            "insertTextFormat",
+            "insertTextMode",
+            "data"
+          ]
+        }
+      },
+      "hover": {
+        "dynamicRegistration": true,
+        "contentFormat": [
+          "markdown",
+          "plaintext"
+        ]
+      },
+      "signatureHelp": {
+        "dynamicRegistration": true,
+        "signatureInformation": {
+          "documentationFormat": [
+            "markdown",
+            "plaintext"
+          ],
+          "parameterInformation": {
+            "labelOffsetSupport": true
+          },
+          "activeParameterSupport": true
+        },
+        "contextSupport": true
+      },
+      "definition": {
+        "dynamicRegistration": true,
+        "linkSupport": true
+      },
+      "references": {
+        "dynamicRegistration": true
+      },
+      "documentHighlight": {
+        "dynamicRegistration": true
+      },
+      "documentSymbol": {
+        "dynamicRegistration": true,
+        "symbolKind": {
+          "valueSet": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26
+          ]
+        },
+        "hierarchicalDocumentSymbolSupport": true,
+        "tagSupport": {
+          "valueSet": [
+            1
+          ]
+        },
+        "labelSupport": true
+      },
+      "codeAction": {
+        "dynamicRegistration": true,
+        "isPreferredSupport": true,
+        "disabledSupport": true,
+        "dataSupport": true,
+        "resolveSupport": {
+          "properties": [
+            "edit"
+          ]
+        },
+        "codeActionLiteralSupport": {
+          "codeActionKind": {
+            "valueSet": [
+              "",
+              "quickfix",
+              "refactor",
+              "refactor.extract",
+              "refactor.inline",
+              "refactor.rewrite",
+              "source",
+              "source.organizeImports"
+            ]
+          }
+        },
+        "honorsChangeAnnotations": true
+      },
+      "codeLens": {
+        "dynamicRegistration": true
+      },
+      "formatting": {
+        "dynamicRegistration": true
+      },
+      "rangeFormatting": {
+        "dynamicRegistration": true,
+        "rangesSupport": true
+      },
+      "onTypeFormatting": {
+        "dynamicRegistration": true
+      },
+      "rename": {
+        "dynamicRegistration": true,
+        "prepareSupport": true,
+        "prepareSupportDefaultBehavior": 1,
+        "honorsChangeAnnotations": true
+      },
+      "documentLink": {
+        "dynamicRegistration": true,
+        "tooltipSupport": true
+      },
+      "typeDefinition": {
+        "dynamicRegistration": true,
+        "linkSupport": true
+      },
+      "implementation": {
+        "dynamicRegistration": true,
+        "linkSupport": true
+      },
+      "colorProvider": {
+        "dynamicRegistration": true
+      },
+      "foldingRange": {
+        "dynamicRegistration": true,
+        "rangeLimit": 5000,
+        "lineFoldingOnly": true,
+        "foldingRangeKind": {
+          "valueSet": [
+            "comment",
+            "imports",
+            "region"
+          ]
+        },
+        "foldingRange": {
+          "collapsedText": false
+        }
+      },
+      "declaration": {
+        "dynamicRegistration": true,
+        "linkSupport": true
+      },
+      "selectionRange": {
+        "dynamicRegistration": true
+      },
+      "callHierarchy": {
+        "dynamicRegistration": true
+      },
+      "semanticTokens": {
+        "dynamicRegistration": true,
+        "tokenTypes": [
+          "namespace",
+          "type",
+          "class",
+          "enum",
+          "interface",
+          "struct",
+          "typeParameter",
+          "parameter",
+          "variable",
+          "property",
+          "enumMember",
+          "event",
+          "function",
+          "method",
+          "macro",
+          "keyword",
+          "modifier",
+          "comment",
+          "string",
+          "number",
+          "regexp",
+          "operator",
+          "decorator"
+        ],
+        "tokenModifiers": [
+          "declaration",
+          "definition",
+          "readonly",
+          "static",
+          "deprecated",
+          "abstract",
+          "async",
+          "modification",
+          "documentation",
+          "defaultLibrary"
+        ],
+        "formats": [
+          "relative"
+        ],
+        "requests": {
+          "range": true,
+          "full": {
+            "delta": true
+          }
+        },
+        "multilineTokenSupport": false,
+        "overlappingTokenSupport": false,
+        "serverCancelSupport": true,
+        "augmentsSyntaxTokens": true
+      },
+      "linkedEditingRange": {
+        "dynamicRegistration": true
+      },
+      "typeHierarchy": {
+        "dynamicRegistration": true
+      },
+      "inlineValue": {
+        "dynamicRegistration": true
+      },
+      "inlayHint": {
+        "dynamicRegistration": true,
+        "resolveSupport": {
+          "properties": [
+            "tooltip",
+            "textEdits",
+            "label.tooltip",
+            "label.location",
+            "label.command"
+          ]
+        }
+      },
+      "diagnostic": {
+        "dynamicRegistration": true,
+        "relatedDocumentSupport": false
+      }
+    },
+    "window": {
+      "showMessage": {
+        "messageActionItem": {
+          "additionalPropertiesSupport": true
+        }
+      },
+      "showDocument": {
+        "support": true
+      },
+      "workDoneProgress": true
+    },
+    "general": {
+      "staleRequestSupport": {
+        "cancel": true,
+        "retryOnContentModified": [
+          "textDocument/semanticTokens/full",
+          "textDocument/semanticTokens/range",
+          "textDocument/semanticTokens/full/delta"
+        ]
+      },
+      "regularExpressions": {
+        "engine": "ECMAScript",
+        "version": "ES2020"
+      },
+      "markdown": {
+        "parser": "marked",
+        "version": "1.1.0"
+      },
+      "positionEncodings": [
+        "utf-16"
+      ]
+    },
+    "notebookDocument": {
+      "synchronization": {
+        "dynamicRegistration": true,
+        "executionSummarySupport": true
+      }
+    }
+  },
+  "trace": "off",
+  "workspaceFolders": [
+    {
+      "uri": "file:///d%3A/project/qkyproject/test-volar/ovs",
+      "name": "ovs"
+    }
+  ]
+}
+================================================================================
+
+[2025-10-30T12:59:28.633Z]
+res.capabilities.completionProvider.triggerCharacters
+================================================================================
+
+[2025-10-30T12:59:28.633Z]
+{
+  "textDocumentSync": 2,
+  "workspace": {
+    "workspaceFolders": {
+      "supported": true,
+      "changeNotifications": true
+    }
+  },
+  "selectionRangeProvider": true,
+  "foldingRangeProvider": true,
+  "documentSymbolProvider": true,
+  "documentFormattingProvider": true,
+  "documentRangeFormattingProvider": true,
+  "referencesProvider": true,
+  "implementationProvider": true,
+  "definitionProvider": true,
+  "typeDefinitionProvider": true,
+  "callHierarchyProvider": true,
+  "hoverProvider": true,
+  "documentHighlightProvider": true,
+  "workspaceSymbolProvider": {},
+  "renameProvider": {
+    "prepareProvider": true
+  },
+  "inlayHintProvider": {},
+  "signatureHelpProvider": {
+    "triggerCharacters": [
+      "(",
+      ",",
+      "<"
+    ],
+    "retriggerCharacters": [
+      ")"
+    ]
+  },
+  "completionProvider": {
+    "triggerCharacters": [
+      ".",
+      "\"",
+      "'",
+      "`",
+      "/",
+      "<",
+      "@",
+      "#",
+      "*"
+    ],
+    "resolveProvider": true
+  },
+  "semanticTokensProvider": {
+    "full": true,
+    "range": true,
+    "legend": {
+      "tokenTypes": [
+        "namespace",
+        "class",
+        "enum",
+        "interface",
+        "typeParameter",
+        "type",
+        "parameter",
+        "variable",
+        "property",
+        "enumMember",
+        "function",
+        "method"
+      ],
+      "tokenModifiers": [
+        "declaration",
+        "readonly",
+        "static",
+        "async",
+        "defaultLibrary",
+        "local"
+      ]
+    }
+  },
+  "codeActionProvider": {
+    "codeActionKinds": [
+      "",
+      "quickfix",
+      "refactor",
+      "refactor.extract",
+      "refactor.inline",
+      "refactor.rewrite",
+      "source",
+      "source.fixAll",
+      "source.organizeImports"
+    ],
+    "resolveProvider": true
+  },
+  "documentOnTypeFormattingProvider": {
+    "firstTriggerCharacter": ";",
+    "moreTriggerCharacter": [
+      "}",
+      "\n"
+    ]
+  },
+  "experimental": {
+    "autoInsertionProvider": {
+      "triggerCharacters": [
+        ">"
+      ],
+      "configurationSections": [
+        [
+          "javascript.autoClosingTags",
+          "typescript.autoClosingTags"
+        ]
+      ]
+    },
+    "fileRenameEditsProvider": true,
+    "fileReferencesProvider": true
+  }
+}
+================================================================================
+
+[2025-10-30T12:59:31.313Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-30T12:59:31.313Z]
+3333
+================================================================================
+
+[2025-10-30T12:59:31.389Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-30T12:59:31.390Z]
+import { h, ref, computed } from 'vue'
+
+const count = ref(0)
+
+setInterval(() => {
+  count.value++
+  console.log('计数器：', count.value)
+}, 1000)
+================================================================================
+
+[2025-10-30T12:59:31.390Z]
+import {createReactiveVNode} from '../utils/ReactiveVNode';
+import {h,ref,computed} from 'vue';
+export default (function(){const count = ref(0);
+const children = [];
+setInterval(() => {count.value++;
+console.log('计数器：',count.value);
+},1000);
+return children})()
+================================================================================
+
+[2025-10-30T12:59:32.197Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-30T12:59:32.198Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-30T12:59:32.249Z]
+反悔了tokens
+================================================================================
+
+[2025-10-30T12:59:32.249Z]
+[
+  [
+    2,
+    33,
+    5,
+    7,
+    35
+  ],
+  [
+    2,
+    41,
+    3,
+    10,
+    0
+  ],
+  [
+    3,
+    6,
+    8,
+    7,
+    35
+  ],
+  [
+    4,
+    0,
+    11,
+    10,
+    16
+  ],
+  [
+    4,
+    19,
+    5,
+    7,
+    34
+  ],
+  [
+    4,
+    25,
+    5,
+    8,
+    0
+  ],
+  [
+    5,
+    0,
+    7,
+    7,
+    16
+  ],
+  [
+    5,
+    8,
+    3,
+    11,
+    16
+  ],
+  [
+    5,
+    19,
+    5,
+    7,
+    34
+  ],
+  [
+    5,
+    25,
+    5,
+    8,
+    0
+  ]
+]
+================================================================================
+
+[2025-10-30T12:59:32.251Z]
+反悔了tokens
+================================================================================
+
+[2025-10-30T12:59:32.251Z]
+[
+  [
+    2,
+    33,
+    5,
+    7,
+    35
+  ],
+  [
+    2,
+    41,
+    3,
+    10,
+    0
+  ],
+  [
+    3,
+    6,
+    8,
+    7,
+    35
+  ],
+  [
+    4,
+    0,
+    11,
+    10,
+    16
+  ],
+  [
+    4,
+    19,
+    5,
+    7,
+    34
+  ],
+  [
+    4,
+    25,
+    5,
+    8,
+    0
+  ],
+  [
+    5,
+    0,
+    7,
+    7,
+    16
+  ],
+  [
+    5,
+    8,
+    3,
+    11,
+    16
+  ],
+  [
+    5,
+    19,
+    5,
+    7,
+    34
+  ],
+  [
+    5,
+    25,
+    5,
+    8,
+    0
+  ]
+]
+================================================================================
+
+[2025-10-30T12:59:32.253Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-30T12:59:32.254Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-30T12:59:42.462Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-30T12:59:42.463Z]
+3333
+================================================================================
+
+[2025-10-30T12:59:43.112Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-30T12:59:43.112Z]
+import { h, ref, computed } from 'vue'
+
+const count = ref(0)
+
+setInterval(() => {
+  count.value++
+  console.log('计数器：', count.value)
+}, 1000)
+
+const colors = ['red','green','blue','orange','purple']
+const colorIndex = ref(0)
+
+// 使用 computed 计算当前样式
+const style = computed(() => ({ color: colors[colorIndex.value] }))
+
+// 每秒切换颜色
+setInterval(() => {
+  colorIndex.value = (colorIndex.value + 1) % colors.length
+}, 1000)
+
+div({style: style}) {
+  p { 'Hello, OVS!' }
+  p { count }
+  p { '颜色变化演示' }
+  
+}
+================================================================================
+
+[2025-10-30T12:59:43.113Z]
+import {createReactiveVNode} from '../utils/ReactiveVNode';
+import {h,ref,computed} from 'vue';
+export default (function(){const count = ref(0);
+const colors = ['red','green','blue','orange','purple',];
+const colorIndex = ref(0);
+const style = computed(() => ({color:colors[colorIndex.value],}));
+const children = [];
+setInterval(() => {count.value++;
+console.log('计数器：',count.value);
+},1000);
+setInterval(() => {colorIndex.value = (colorIndex.value + 1) % colors.length;
+},1000);
+children.push(createReactiveVNode('div',{style:style,},[createReactiveVNode('p',{},['Hello, OVS!',]),createReactiveVNode('p',{},[count,]),createReactiveVNode('p',{},['颜色变化演示',]),]));
+return children})()
+================================================================================
+
+[2025-10-30T12:59:43.121Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-30T12:59:43.241Z]
+反悔了tokens
+================================================================================
+
+[2025-10-30T12:59:43.241Z]
+[
+  [
+    2,
+    33,
+    5,
+    7,
+    35
+  ],
+  [
+    2,
+    41,
+    3,
+    10,
+    0
+  ],
+  [
+    3,
+    6,
+    6,
+    7,
+    35
+  ],
+  [
+    4,
+    6,
+    10,
+    7,
+    35
+  ],
+  [
+    4,
+    19,
+    3,
+    10,
+    0
+  ],
+  [
+    5,
+    6,
+    5,
+    7,
+    35
+  ],
+  [
+    5,
+    14,
+    8,
+    10,
+    2
+  ],
+  [
+    5,
+    31,
+    5,
+    8,
+    1
+  ],
+  [
+    5,
+    37,
+    6,
+    7,
+    34
+  ],
+  [
+    5,
+    44,
+    10,
+    7,
+    34
+  ],
+  [
+    5,
+    55,
+    5,
+    8,
+    0
+  ],
+  [
+    6,
+    6,
+    8,
+    7,
+    35
+  ],
+  [
+    7,
+    0,
+    11,
+    10,
+    16
+  ],
+  [
+    7,
+    19,
+    5,
+    7,
+    34
+  ],
+  [
+    7,
+    25,
+    5,
+    8,
+    0
+  ],
+  [
+    8,
+    0,
+    7,
+    7,
+    16
+  ],
+  [
+    8,
+    8,
+    3,
+    11,
+    16
+  ],
+  [
+    8,
+    19,
+    5,
+    7,
+    34
+  ],
+  [
+    8,
+    25,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    0,
+    11,
+    10,
+    16
+  ],
+  [
+    10,
+    19,
+    10,
+    7,
+    34
+  ],
+  [
+    10,
+    30,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    39,
+    10,
+    7,
+    34
+  ],
+  [
+    10,
+    50,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    63,
+    6,
+    7,
+    34
+  ],
+  [
+    10,
+    70,
+    6,
+    8,
+    16
+  ],
+  [
+    12,
+    0,
+    8,
+    7,
+    34
+  ],
+  [
+    12,
+    9,
+    4,
+    11,
+    16
+  ],
+  [
+    12,
+    14,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    41,
+    5,
+    8,
+    1
+  ],
+  [
+    12,
+    47,
+    5,
+    7,
+    34
+  ],
+  [
+    12,
+    56,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    101,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    129,
+    5,
+    7,
+    34
+  ],
+  [
+    12,
+    138,
+    19,
+    10,
+    0
+  ]
+]
+================================================================================
+
+[2025-10-30T12:59:43.241Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-30T12:59:43.265Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-30T12:59:43.284Z]
+反悔了tokens
+================================================================================
+
+[2025-10-30T12:59:43.288Z]
+[
+  [
+    2,
+    33,
+    5,
+    7,
+    35
+  ],
+  [
+    2,
+    41,
+    3,
+    10,
+    0
+  ],
+  [
+    3,
+    6,
+    6,
+    7,
+    35
+  ],
+  [
+    4,
+    6,
+    10,
+    7,
+    35
+  ],
+  [
+    4,
+    19,
+    3,
+    10,
+    0
+  ],
+  [
+    5,
+    6,
+    5,
+    7,
+    35
+  ],
+  [
+    5,
+    14,
+    8,
+    10,
+    2
+  ],
+  [
+    5,
+    31,
+    5,
+    8,
+    1
+  ],
+  [
+    5,
+    37,
+    6,
+    7,
+    34
+  ],
+  [
+    5,
+    44,
+    10,
+    7,
+    34
+  ],
+  [
+    5,
+    55,
+    5,
+    8,
+    0
+  ],
+  [
+    6,
+    6,
+    8,
+    7,
+    35
+  ],
+  [
+    7,
+    0,
+    11,
+    10,
+    16
+  ],
+  [
+    7,
+    19,
+    5,
+    7,
+    34
+  ],
+  [
+    7,
+    25,
+    5,
+    8,
+    0
+  ],
+  [
+    8,
+    0,
+    7,
+    7,
+    16
+  ],
+  [
+    8,
+    8,
+    3,
+    11,
+    16
+  ],
+  [
+    8,
+    19,
+    5,
+    7,
+    34
+  ],
+  [
+    8,
+    25,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    0,
+    11,
+    10,
+    16
+  ],
+  [
+    10,
+    19,
+    10,
+    7,
+    34
+  ],
+  [
+    10,
+    30,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    39,
+    10,
+    7,
+    34
+  ],
+  [
+    10,
+    50,
+    5,
+    8,
+    0
+  ],
+  [
+    10,
+    63,
+    6,
+    7,
+    34
+  ],
+  [
+    10,
+    70,
+    6,
+    8,
+    16
+  ],
+  [
+    12,
+    0,
+    8,
+    7,
+    34
+  ],
+  [
+    12,
+    9,
+    4,
+    11,
+    16
+  ],
+  [
+    12,
+    14,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    41,
+    5,
+    8,
+    1
+  ],
+  [
+    12,
+    47,
+    5,
+    7,
+    34
+  ],
+  [
+    12,
+    56,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    101,
+    19,
+    10,
+    0
+  ],
+  [
+    12,
+    129,
+    5,
+    7,
+    34
+  ],
+  [
+    12,
+    138,
+    19,
+    10,
+    0
+  ]
+]
+================================================================================
+
+[2025-10-30T12:59:43.292Z]
+chufa  provideDocumentSemanticTokens
+================================================================================

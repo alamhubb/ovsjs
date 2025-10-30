@@ -33,12 +33,12 @@ export const ovsLanguagePlugin: LanguagePlugin<URI> = {
                 // LogUtil.log('code')
                 // LogUtil.log(code)
                 // LogUtil.log(code.languageId)
-                if (code.languageId === 'qqqts') {
+                if (code.languageId === 'js') {
                     scripts.push({
-                        fileName: fileName + '.' + code.id + '.ts',
+                        fileName: fileName + '.' + code.id + '.js',
                         code,
-                        extension: '.ts',
-                        scriptKind: ts.ScriptKind.TS,
+                        extension: '.js',
+                        scriptKind: ts.ScriptKind.JS
                     });
                 }
             }
@@ -150,8 +150,8 @@ export class OvsVirtualCode implements VirtualCode {
             },
         }]
         this.embeddedCodes = [{
-            id: 'ts1',
-            languageId: 'qqqts',
+            id: 'ovsts',
+            languageId: 'js',
             snapshot: {
                 getText: (start, end) => newCode.substring(start, end),
                 getLength: () => newCode.length,
