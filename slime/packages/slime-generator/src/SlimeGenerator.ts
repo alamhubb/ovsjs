@@ -53,6 +53,7 @@ export default class SlimeGenerator {
   private static generateColumn = 0
   private static generateIndex = 0
   private static tokens: SubhutiMatchToken[] = null
+  private static indent = 0  // 阶段2：缩进层级
 
   private static findNextTokenLocByTypeAndIndex(tokenType: string, index: number): SubhutiSourceLocation {
     const popToken = this.tokens.find(item => ((item.tokenName === tokenType) && (item.index > index)))
@@ -87,6 +88,7 @@ export default class SlimeGenerator {
     this.generateColumn = 0
     this.generateIndex = 0
     this.generateCode = ''
+    this.indent = 0  // 阶段2：重置缩进
     this.generatorNode(node)
     return {
       mapping: this.mappings,
@@ -148,7 +150,8 @@ export default class SlimeGenerator {
     this.generatorNode(node.source)
     // 添加分号
     this.addCode(es6TokensObj.Semicolon)
-    this.addNewLine() // 阶段1：分号后换行
+    this.addNewLine()  // 阶段1：分号后换行
+    // 注意：addIndent() 由 generatorNodes 根据是否是最后一个节点来决定
   }
 
 
@@ -245,6 +248,10 @@ export default class SlimeGenerator {
   private static generatorNodes(nodes: SlimeBaseNode[]) {
     nodes.forEach((node, index) => {
       this.generatorNode(node)
+      // 阶段2：如果不是最后一个节点，添加下一行的缩进
+      if (index < nodes.length - 1) {
+        this.addIndent()
+      }
       // this.addSemicolonAndNewLine()
     })
   }
@@ -254,7 +261,8 @@ export default class SlimeGenerator {
     this.generatorNode(node.expression)
     // 添加分号
     this.addCode(es6TokensObj.Semicolon)
-    this.addNewLine() // 阶段1：分号后换行
+    this.addNewLine()  // 阶段1：分号后换行
+    // 注意：addIndent() 由 generatorNodes 根据是否是最后一个节点来决定
   }
 
   private static generatorYieldExpression(node: any) {
@@ -1011,8 +1019,16 @@ export default class SlimeGenerator {
 
   private static generatorBlockStatement(node: SlimeBlockStatement) {
     this.addLBrace()
+    this.addNewLine()  // 阶段2：{ 后换行
+    this.indent++      // 阶段2：增加缩进层级
+    this.addIndent()   // 阶段2：添加缩进
+    
     this.generatorNodes(node.body)
+    
+    this.indent--      // 阶段2：减少缩进层级
+    this.addIndent()   // 阶段2：添加 } 的缩进
     this.addRBrace()
+    this.addNewLine()  // 阶段2：} 后换行
   }
 
   private static generatorReturnStatement(node: SlimeReturnStatement) {
@@ -1096,7 +1112,8 @@ export default class SlimeGenerator {
     }
     // 添加分号
     this.addCode(es6TokensObj.Semicolon)
-    this.addNewLine() // 阶段1：分号后换行
+    this.addNewLine()  // 阶段1：分号后换行
+    // 注意：addIndent() 由 generatorNodes 根据是否是最后一个节点来决定
   }
 
   static get lastMapping() {
@@ -1213,6 +1230,14 @@ export default class SlimeGenerator {
     this.generateLine++
     this.generateColumn = 0
     this.generateIndex++
+  }
+
+  /**
+   * 阶段2：添加当前缩进（2个空格 * indent层级）
+   */
+  private static addIndent() {
+    const indentStr = '  '.repeat(this.indent)
+    this.addString(indentStr)
   }
 
   private static addCodeSpacing() {
