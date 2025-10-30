@@ -1114,9 +1114,12 @@ export default class SlimeGenerator {
     }
   }
 
-  private static generatorVariableDeclaration(node: SlimeVariableDeclaration) {
-    // console.log(989898)
-    // console.log(node.kind.loc)
+  /**
+   * 生成变量声明（内部辅助方法）
+   * @param node VariableDeclaration 节点
+   * @param addSemicolonAndNewLine 是否添加分号和换行（默认 true）
+   */
+  private static generatorVariableDeclarationCore(node: SlimeVariableDeclaration, addSemicolonAndNewLine: boolean) {
     this.addCodeAndMappings(es6TokenMapObj[node.kind.value.valueOf()], node.kind.loc)
     this.addCodeSpacing()
     for (let i = 0; i < node.declarations.length; i++) {
@@ -1127,10 +1130,18 @@ export default class SlimeGenerator {
         this.addCodeSpacing()
       }
     }
-    // 添加分号
-    this.addCode(es6TokensObj.Semicolon)
-    this.addNewLine()  // 阶段1：分号后换行
+    // 根据参数决定是否添加分号和换行
+    if (addSemicolonAndNewLine) {
+      this.addCode(es6TokensObj.Semicolon)
+      this.addNewLine()  // 阶段1：分号后换行
+    }
     // 注意：addIndent() 由 generatorNodes 根据是否是最后一个节点来决定
+  }
+
+  private static generatorVariableDeclaration(node: SlimeVariableDeclaration) {
+    // console.log(989898)
+    // console.log(node.kind.loc)
+    this.generatorVariableDeclarationCore(node, true)
   }
 
   static get lastMapping() {
@@ -1321,7 +1332,16 @@ export default class SlimeGenerator {
   private static generatorForStatement(node: any) {
     this.addCode(es6TokensObj.ForTok)
     this.addCode(es6TokensObj.LParen)
-    if (node.init) this.generatorNode(node.init)
+    
+    // init 部分：如果是 VariableDeclaration，直接调用不添加分号
+    if (node.init) {
+      if (node.init.type === SlimeAstType.VariableDeclaration) {
+        this.generatorVariableDeclarationCore(node.init, false)
+      } else {
+        this.generatorNode(node.init)
+      }
+    }
+    
     this.addCode(es6TokensObj.Semicolon)
     if (node.test) this.generatorNode(node.test)
     this.addCode(es6TokensObj.Semicolon)
