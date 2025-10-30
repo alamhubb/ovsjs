@@ -10,7 +10,8 @@ import OvsCstToSlimeAstUtil from "./factory/OvsCstToSlimeAstUtil.ts";
 import type {SlimeGeneratorResult} from "slime-generator/src/SlimeCodeMapping.ts";
 import SlimeCodeMapping from "slime-generator/src/SlimeCodeMapping.ts";
 import prettier from 'prettier';
-import beautify from 'js-beautify';
+// beautify 已不再使用（格式化已融入 SlimeGenerator）
+// import beautify from 'js-beautify';
 import {
   type SlimeProgram,
   type SlimeStatement,
@@ -370,7 +371,14 @@ function ensureOvsAPIImport(ast: SlimeProgram): SlimeProgram {
 }
 
 /**
+ * @deprecated 已废弃：格式化功能已融入 SlimeGenerator 代码生成阶段
+ * @see SlimeGenerator.generatorBlockStatement - 代码生成时就完成格式化
+ * @see SlimeGenerator.addIndent - 缩进管理
+ * 
  * 简单格式化：在语句后添加换行，并更新 mapping
+ * 
+ * **保留原因：** 作为备选方案，适用于需要后处理已生成代码的特殊场景
+ * 
  * @param code 原始代码
  * @param mapping 原始 mapping
  * @returns 格式化后的代码和更新后的 mapping
@@ -427,9 +435,9 @@ export function simpleFormatWithMapping(
 }
 
 /**
- * OVS 代码转换主函数（同步，无格式化）
+ * OVS 代码转换主函数（同步，自带格式化）
  * @param code OVS 源代码
- * @returns 转换结果（包含代码和 source map）
+ * @returns 转换结果（包含格式化后的代码和准确的 source map）
  *
  * 转换流程：
  * 1. 词法分析：code → tokens
@@ -437,7 +445,13 @@ export function simpleFormatWithMapping(
  * 3. 语法转换：CST → AST（OVS 语法 → JavaScript AST）
  * 4. 添加 import：自动添加 h 函数 import（如果不存在）
  * 5. 组件包装：AST → Vue 组件 AST
- * 6. 代码生成：AST → code
+ * 6. 代码生成：AST → code（自动格式化：分号后换行、{} 缩进）
+ * 
+ * **格式化特性：**
+ * - ✅ 分号后自动换行
+ * - ✅ {} 块自动缩进（2个空格/层）
+ * - ✅ Source map 100% 准确
+ * - ✅ 零后处理成本（代码生成时完成）
  */
 export function vitePluginOvsTransform(
   code: string
@@ -481,11 +495,16 @@ export function vitePluginOvsTransform(
 }
 
 /**
+ * @deprecated 已废弃：不再使用后处理格式化，改用 vitePluginOvsTransform
+ * @see vitePluginOvsTransform - 直接使用此方法，SlimeGenerator 已自带格式化
+ * @see vitePluginOvs - Vite 插件已改用 vitePluginOvsTransform
+ * 
  * OVS 代码转换主函数（同步，带格式化）
+ * 
+ * **保留原因：** 历史兼容性，展示后处理格式化方案
+ * 
  * @param code OVS 源代码
  * @returns 转换结果（包含代码和 source map）
- * 
- * 使用简单格式化（在分号后添加换行）并保持 source map 准确
  */
 export function vitePluginOvsTransformWithBeautify(
   code: string
@@ -558,7 +577,12 @@ export async function vitePluginOvsTransformSync(
  * 功能：
  * - 拦截 .ovs 文件
  * - 转换为 Vue 函数组件
- * - 开发模式下启用 Prettier 格式化
+ * - 自动格式化生成的代码（分号后换行、{} 缩进）
+ * 
+ * **格式化方案：**
+ * - 使用 `vitePluginOvsTransform`，内部由 SlimeGenerator 在代码生成时完成格式化
+ * - 不再使用后处理方案（`simpleFormatWithMapping` 已废弃）
+ * - Source map 保持 100% 准确
  */
 export default function vitePluginOvs(): Plugin {
   // 创建文件过滤器：只处理 .ovs 文件
@@ -574,7 +598,7 @@ export default function vitePluginOvs(): Plugin {
         return
       }
 
-      // 转换 OVS 代码（SlimeGenerator 已自带格式化：分号后换行）
+      // 转换 OVS 代码（SlimeGenerator 已自带格式化：分号后换行 + {} 缩进）
       const res = vitePluginOvsTransform(code)
 
       return {
