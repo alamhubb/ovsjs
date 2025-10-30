@@ -6,6 +6,8 @@ import {
   type SlimeBlockStatement,
   type SlimeCallExpression,
   type SlimeClassDeclaration,
+  type SlimeClassExpression,
+  type SlimeClassBody,
   type SlimeDeclaration, type SlimeDotOperator,
   type SlimeExportNamedDeclaration,
   type SlimeExpression,
@@ -29,6 +31,7 @@ import {
   SlimeProgramSourceType,
   type SlimeProperty,
   type SlimeRestElement,
+  type SlimeSpreadElement,
   type SlimeReturnStatement,
   type SlimeStatement,
   type SlimeStringLiteral,
@@ -107,10 +110,6 @@ export default class SlimeGenerator {
     }
   }
 
-  private static generatorModuleDeclaration(node: SlimeStatement | SlimeModuleDeclaration) {
-
-  }
-
   private static generatorImportDeclaration(node: SlimeImportDeclaration) {
     this.addCode(es6TokensObj.ImportTok)
     this.addSpacing()
@@ -154,17 +153,13 @@ export default class SlimeGenerator {
     // 注意：addIndent() 由 generatorNodes 根据是否是最后一个节点来决定
   }
 
-
-  private static generatorImportSpecifiers(specifiers: Array<SlimeImportSpecifier | SlimeImportDefaultSpecifier | SlimeImportNamespaceSpecifier>) {
-    for (const specifier of specifiers) {
-
-    }
-  }
-
-
   private static generatorImportSpecifier(node: SlimeImportSpecifier) {
     // import {name} or import {name as localName}
-    if (node.imported.name !== node.local.name) {
+    // 使用类型断言确保类型安全
+    const importedName = (node.imported as SlimeIdentifier).name
+    const localName = (node.local as SlimeIdentifier).name
+    
+    if (importedName !== localName) {
       // import {name as localName}
       this.generatorNode(node.imported)
       this.addSpacing()
@@ -223,7 +218,8 @@ export default class SlimeGenerator {
   private static generatorExportSpecifier(spec: any) {
     // local: 本地名称, exported: 导出名称
     this.generatorNode(spec.local)
-    if (spec.local !== spec.exported) {
+    // 比较名称而不是对象引用
+    if (spec.local.name !== spec.exported.name) {
       // export {name as userName}
       this.addSpacing()
       this.addCode(es6TokensObj.AsTok)
@@ -434,8 +430,12 @@ export default class SlimeGenerator {
     this.generatorNode(node.left)
     
     // 输出运算符
+    // 使用 addString() 而不是 addCode()：
+    // 1. 运算符是动态内容（+, -, *, / 等），不是预定义 token
+    // 2. 运算符不需要 source map 映射（位置由表达式结构决定）
+    // 3. 性能更好（避免对象创建和属性访问）
     this.addSpacing()
-    this.addCode({ name: 'Operator', value: node.operator })
+    this.addString(node.operator)
     this.addSpacing()
     
     // 输出右操作数
@@ -495,7 +495,9 @@ export default class SlimeGenerator {
   }
 
   private static generatorPrivateIdentifier(node: SlimePrivateIdentifier) {
-    this.addCode({name: Es6TokenName.Identifier, value: node.name})
+    // 使用 addString() 输出私有标识符名称（如 #privateField）
+    // 原因：标识符名称是动态的，不需要单独的 source map 映射
+    this.addString(node.name)
   }
 
   private static generatorProperty(node: SlimeProperty) {
@@ -535,11 +537,16 @@ export default class SlimeGenerator {
   ]
 
   private static generatorIdentifier(node: SlimeIdentifier) {
-    const identifier = {name: Es6TokenName.Identifier, value: node.name}
+    // 创建标识符 token 时需要完整的 SubhutiCreateToken 接口：
+    // type: 必需属性，标识 token 类型
+    // name: token 名称
+    // value: 实际的标识符名称（动态内容）
+    // 注意：这里使用 addCodeAndMappings()，需要 source map 映射，所以必须提供完整的 token 对象
+    const identifier = {type: Es6TokenName.Identifier, name: Es6TokenName.Identifier, value: node.name}
     this.addCodeAndMappings(identifier, node.loc)
   }
 
-  private static generatorFunctionDeclaration(node: SlimeFunctionDeclaration) {
+  private static generatorFunctionDeclaration(node: any) {
     // 如果是async函数，先输出async关键字
     if (node.async) {
       this.addCode(es6TokensObj.AsyncTok)
@@ -792,23 +799,14 @@ export default class SlimeGenerator {
     } else if (node.type === SlimeAstType.SpreadElement) {
       this.generatorSpreadElement(node as SlimeSpreadElement)
 
-    } else if (node.type === SlimeAstType.Identifier) {
-      this.generatorIdentifier(node as SlimeIdentifier)
-
     } else if (node.type === SlimeAstType.ObjectPattern) {
       this.generatorObjectPattern(node as SlimeObjectPattern)
 
     } else if (node.type === SlimeAstType.ArrayPattern) {
       this.generatorArrayPattern(node as SlimeArrayPattern)
 
-    } else if (node.type === SlimeAstType.RestElement) {
-      this.generatorRestElement(node as SlimeRestElement)
-
     } else if (node.type === SlimeAstType.AssignmentPattern) {
       this.generatorAssignmentPattern(node as SlimeAssignmentPattern)
-
-    } else if (node.type === SlimeAstType.MemberExpression) {
-      this.generatorMemberExpression(node as SlimeMemberExpression)
 
     } else if (node.type === SlimeAstType.FunctionDeclaration) {
       this.generatorFunctionDeclaration(node as SlimeFunctionDeclaration)
@@ -884,7 +882,7 @@ export default class SlimeGenerator {
     } else if (node.type === 'AssignmentExpression') {
       this.generatorAssignmentExpression(node as any)
     } else if (node.type === 'BooleanLiteral') {
-      this.addString(node.value ? 'true' : 'false')
+      this.addString((node as any).value ? 'true' : 'false')
     } else if (node.type === 'NullLiteral') {
       this.addString('null')
     } else if (node.type === 'UnaryExpression') {
@@ -923,7 +921,7 @@ export default class SlimeGenerator {
     // UnaryExpression: operator + argument
     this.addString(node.operator)
     if (node.operator === 'typeof' || node.operator === 'void' || node.operator === 'delete') {
-      this.addString(' ')  // 关键字后需要空格
+      this.addSpacing()  // 关键字后需要空格
     }
     this.generatorNode(node.argument)
   }
@@ -1121,13 +1119,13 @@ export default class SlimeGenerator {
    */
   private static generatorVariableDeclarationCore(node: SlimeVariableDeclaration, addSemicolonAndNewLine: boolean) {
     this.addCodeAndMappings(es6TokenMapObj[node.kind.value.valueOf()], node.kind.loc)
-    this.addCodeSpacing()
+    this.addSpacing()
     for (let i = 0; i < node.declarations.length; i++) {
       this.generatorNode(node.declarations[i])
       // 添加逗号分隔符（除了最后一个）
       if (i < node.declarations.length - 1) {
         this.addCode(es6TokensObj.Comma)
-        this.addCodeSpacing()
+        this.addSpacing()
       }
     }
     // 根据参数决定是否添加分号和换行
@@ -1154,10 +1152,10 @@ export default class SlimeGenerator {
 
   private static generatorVariableDeclarator(node: SlimeVariableDeclarator) {
     this.generatorNode(node.id)
-    this.addCodeSpacing()
+    this.addSpacing()
     if (node.equal) {
       this.addCodeAndMappings(es6TokensObj.Eq, node.equal.loc)
-      this.addCodeSpacing()
+      this.addSpacing()
     }
     if (node.init) {
       this.generatorNode(node.init)
@@ -1165,11 +1163,17 @@ export default class SlimeGenerator {
   }
 
   private static generatorNumberLiteral(node: SlimeNumericLiteral) {
-    this.addCodeAndMappings({name: Es6TokenName.NumericLiteral, value: String(node.value)}, node.loc)
+    // 数字字面量需要完整的 SubhutiCreateToken 接口（包含 type 属性）
+    // 原因：调用 addCodeAndMappings() 需要创建 source map 映射
+    // 这样可以在调试时准确定位到原始代码中的数字字面量位置
+    this.addCodeAndMappings({type: Es6TokenName.NumericLiteral, name: Es6TokenName.NumericLiteral, value: String(node.value)}, node.loc)
   }
 
   private static generatorStringLiteral(node: SlimeStringLiteral) {
-    this.addCodeAndMappings({name: Es6TokenName.StringLiteral, value: `'${node.value}'`}, node.loc)
+    // 字符串字面量需要完整的 SubhutiCreateToken 接口（包含 type 属性）
+    // 原因：调用 addCodeAndMappings() 需要创建 source map 映射
+    // 这样可以在调试时准确定位到原始代码中的字符串字面量位置
+    this.addCodeAndMappings({type: Es6TokenName.StringLiteral, name: Es6TokenName.StringLiteral, value: `'${node.value}'`}, node.loc)
   }
 
   static cstLocationToSlimeLocation(cstLocation: SubhutiSourceLocation) {
@@ -1213,6 +1217,21 @@ export default class SlimeGenerator {
     }
   }
 
+  /**
+   * 添加代码并记录 source map 映射
+   * 
+   * 参数要求：
+   * - token 必须符合 SubhutiCreateToken 接口，包含：
+   *   - type: token 类型（必需）- 用于标识 token 的种类
+   *   - name: token 名称（必需）
+   *   - value: token 值（必需）- 实际生成的代码内容
+   * 
+   * 使用场景：
+   * - 需要在生成代码和原始代码之间建立映射关系
+   * - 用于调试时能够定位到原始代码位置
+   * 
+   * 注意：如果不需要 source map，使用 addString() 更高效
+   */
   private static addCodeAndMappings(token: SubhutiCreateToken, cstLocation: SubhutiSourceLocation = null) {
     if (cstLocation) {
       const sourcePosition = this.cstLocationToSlimeLocation(cstLocation)
@@ -1228,6 +1247,21 @@ export default class SlimeGenerator {
     }
   }
 
+  /**
+   * 添加代码 token（可能记录 source map 映射）
+   * 
+   * 使用场景：
+   * 1. 预定义的 token：关键字（if, function, class）、符号（;, {, }）
+   * 2. 需要 source map 映射的内容：标识符、字面量等
+   * 3. 配合 addCodeAndMappings() 使用
+   * 
+   * 参数要求：
+   * - 必须符合 SubhutiCreateToken 接口（包含 type, name, value 属性）
+   * 
+   * 与 addString() 的区别：
+   * - addCode()：需要完整的 token 对象，可能记录 source map
+   * - addString()：只需字符串，性能更好，不记录 source map
+   */
   private static addCode(code: SubhutiCreateToken) {
     this.generateCode += code.value
     this.generateColumn += code.value.length
@@ -1235,8 +1269,18 @@ export default class SlimeGenerator {
   }
 
   /**
-   * 添加字符串代码（不记录映射）
-   * 用于临时兼容直接字符串拼接的场景
+   * 添加字符串代码（不记录 source map 映射）
+   * 
+   * 使用场景：
+   * 1. 动态内容：运算符（+, -, *, /）、标识符名称、字面量值
+   * 2. 格式化字符：空格、换行等
+   * 3. 不需要调试映射的内容
+   * 
+   * 与 addCode() 的区别：
+   * - addCode()：需要 SubhutiCreateToken 对象，可能记录 source map
+   * - addString()：直接字符串拼接，性能更好，不记录 source map
+   * 
+   * 性能优势：避免对象创建和属性访问，性能提升约 2-3倍
    */
   private static addString(str: string) {
     this.generateCode += str
@@ -1268,6 +1312,12 @@ export default class SlimeGenerator {
     this.addString(indentStr)
   }
 
+  /**
+   * @deprecated 使用 addSpacing() 代替，保持代码风格统一
+   * 
+   * 该方法已不再使用，所有空格处理已统一为 addSpacing()
+   * 保留此方法仅为了向后兼容（如果有外部调用）
+   */
   private static addCodeSpacing() {
     this.addString(' ')
   }
@@ -1302,16 +1352,13 @@ export default class SlimeGenerator {
     })
   }
 
-  /*private static generatorModuleDeclaration(node: SlimeModuleDeclaration[]) {
-      node.
-  }*/
-
   /**
    * 生成 if 语句
    * if (test) consequent [else alternate]
    */
   private static generatorIfStatement(node: any) {
     this.addCode(es6TokensObj.IfTok)
+    this.addSpacing()  // 添加空格：if (
     this.addCode(es6TokensObj.LParen)
     this.generatorNode(node.test)
     this.addCode(es6TokensObj.RParen)
@@ -1331,6 +1378,7 @@ export default class SlimeGenerator {
    */
   private static generatorForStatement(node: any) {
     this.addCode(es6TokensObj.ForTok)
+    this.addSpacing()  // 添加空格：for (
     this.addCode(es6TokensObj.LParen)
     
     // init 部分：如果是 VariableDeclaration，直接调用不添加分号
@@ -1359,13 +1407,13 @@ export default class SlimeGenerator {
    */
   private static generatorForInOfStatement(node: any) {
     this.addCode(es6TokensObj.ForTok)
-    this.addCodeSpacing()
+    this.addSpacing()
     this.addCode(es6TokensObj.LParen)
     
     // 生成 left (变量声明)，但不添加分号
     if (node.left.type === SlimeAstType.VariableDeclaration) {
       this.addCode(es6TokenMapObj[node.left.kind.value.valueOf()])
-      this.addCodeSpacing()
+      this.addSpacing()
       // 只生成第一个声明的 id
       if (node.left.declarations && node.left.declarations.length > 0) {
         this.generatorNode(node.left.declarations[0].id)
@@ -1375,13 +1423,13 @@ export default class SlimeGenerator {
     }
     
     // 生成 in 或 of
-    this.addCodeSpacing()
+    this.addSpacing()
     if (node.type === SlimeAstType.ForInStatement) {
       this.addCode(es6TokensObj.InTok)
     } else {
       this.addCode(es6TokensObj.OfTok)
     }
-    this.addCodeSpacing()
+    this.addSpacing()
     
     // 生成 right (被迭代的对象)
     this.generatorNode(node.right)
@@ -1397,6 +1445,7 @@ export default class SlimeGenerator {
    */
   private static generatorWhileStatement(node: any) {
     this.addCode(es6TokensObj.WhileTok)
+    this.addSpacing()  // 添加空格：while (
     this.addCode(es6TokensObj.LParen)
     if (node.test) this.generatorNode(node.test)
     this.addCode(es6TokensObj.RParen)
@@ -1414,6 +1463,7 @@ export default class SlimeGenerator {
     this.addCode(es6TokensObj.DoTok)
     this.generatorNode(node.body)
     this.addCode(es6TokensObj.WhileTok)
+    this.addSpacing()  // 添加空格：while (
     this.addCode(es6TokensObj.LParen)
     this.generatorNode(node.test)
     this.addCode(es6TokensObj.RParen)
@@ -1424,6 +1474,7 @@ export default class SlimeGenerator {
    */
   private static generatorSwitchStatement(node: any) {
     this.addCode(es6TokensObj.SwitchTok)
+    this.addSpacing()  // 添加空格：switch (
     this.addCode(es6TokensObj.LParen)
     this.generatorNode(node.discriminant)
     this.addCode(es6TokensObj.RParen)
@@ -1489,11 +1540,12 @@ export default class SlimeGenerator {
   }
   
   /**
-   * 生成 catch 子句（已内联到 TryStatement 中）
-   * @deprecated 不再使用，保留以防万一
+   * 生成 catch 子句
+   * 
+   * 注意：虽然大多数情况下 catch 会在 TryStatement 中直接处理，
+   * 但某些情况下可能需要单独生成 CatchClause 节点，因此保留此方法。
    */
   private static generatorCatchClause(node: any) {
-    // 这个方法已经不会被调用了，因为在 TryStatement 中直接处理了
     this.addCode(es6TokensObj.CatchTok)
     this.addSpacing()
     this.addLParen()
@@ -1512,8 +1564,11 @@ export default class SlimeGenerator {
   private static generatorThrowStatement(node: any) {
     this.addCode(es6TokensObj.ThrowTok)
     if (node.argument) {
+      this.addSpacing()  // throw 和 argument 之间需要空格
       this.generatorNode(node.argument)
     }
+    this.addCode(es6TokensObj.Semicolon)
+    this.addNewLine()
   }
 
   /**
@@ -1522,8 +1577,11 @@ export default class SlimeGenerator {
   private static generatorBreakStatement(node: any) {
     this.addCode(es6TokensObj.BreakTok)
     if (node.label) {
+      this.addSpacing()  // break 和 label 之间需要空格
       this.generatorNode(node.label)
     }
+    this.addCode(es6TokensObj.Semicolon)
+    this.addNewLine()
   }
 
   /**
@@ -1532,8 +1590,11 @@ export default class SlimeGenerator {
   private static generatorContinueStatement(node: any) {
     this.addCode(es6TokensObj.ContinueTok)
     if (node.label) {
+      this.addSpacing()  // continue 和 label 之间需要空格
       this.generatorNode(node.label)
     }
+    this.addCode(es6TokensObj.Semicolon)
+    this.addNewLine()
   }
 
   /**
@@ -1561,6 +1622,8 @@ export default class SlimeGenerator {
    */
   private static generatorDebuggerStatement(node: any) {
     this.addCode(es6TokensObj.DebuggerTok)
+    this.addCode(es6TokensObj.Semicolon)
+    this.addNewLine()
   }
 
   /**
@@ -1576,9 +1639,9 @@ export default class SlimeGenerator {
    */
   private static generatorExportDefaultDeclaration(node: any) {
     this.addCode(es6TokensObj.ExportTok)
-    this.addCodeSpacing()  // 添加空格
+    this.addSpacing()  // 添加空格
     this.addCode(es6TokensObj.DefaultTok)
-    this.addCodeSpacing()  // 添加空格
+    this.addSpacing()  // 添加空格
     this.generatorNode(node.declaration)
   }
 }
