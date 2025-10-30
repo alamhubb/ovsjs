@@ -278,7 +278,7 @@ export default class SlimeGenerator {
 
   private static generatorTemplateLiteral(node: any) {
     // 生成模板字符串：`part1 ${expr1} part2 ${expr2} part3`
-    this.generateCode += '`'
+    this.addString('`')
     
     const quasis = node.quasis || []
     const expressions = node.expressions || []
@@ -288,18 +288,18 @@ export default class SlimeGenerator {
       const quasi = quasis[i]
       // 输出模板元素的内容
       if (quasi.value && quasi.value.cooked !== undefined) {
-        this.generateCode += quasi.value.cooked
+        this.addString(quasi.value.cooked)
       }
       
       // 如果不是最后一个quasi，输出对应的expression
       if (i < expressions.length) {
-        this.generateCode += '${'
+        this.addString('${')
         this.generatorNode(expressions[i])
-        this.generateCode += '}'
+        this.addString('}')
       }
     }
     
-    this.generateCode += '`'
+    this.addString('`')
   }
 
   private static generatorCallExpression(node: SlimeCallExpression) {
@@ -866,9 +866,9 @@ export default class SlimeGenerator {
     } else if (node.type === 'AssignmentExpression') {
       this.generatorAssignmentExpression(node as any)
     } else if (node.type === 'BooleanLiteral') {
-      this.generateCode += node.value ? 'true' : 'false'
+      this.addString(node.value ? 'true' : 'false')
     } else if (node.type === 'NullLiteral') {
-      this.generateCode += 'null'
+      this.addString('null')
     } else if (node.type === 'UnaryExpression') {
       this.generatorUnaryExpression(node as any)
     } else if (node.type === SlimeAstType.UpdateExpression) {
@@ -881,7 +881,7 @@ export default class SlimeGenerator {
       this.generatorTemplateLiteral(node as any)
     } else if (node.type === "Super") {
       // Super关键字：直接输出"super"
-      this.generateCode += 'super'
+      this.addString('super')
     } else if (node.type === 'TaggedTemplateExpression') {
       // Tagged Template Literals: tag`template`
       this.generatorNode((node as any).tag)
@@ -903,9 +903,9 @@ export default class SlimeGenerator {
 
   private static generatorUnaryExpression(node: any) {
     // UnaryExpression: operator + argument
-    this.generateCode += node.operator
+    this.addString(node.operator)
     if (node.operator === 'typeof' || node.operator === 'void' || node.operator === 'delete') {
-      this.generateCode += ' '  // 关键字后需要空格
+      this.addString(' ')  // 关键字后需要空格
     }
     this.generatorNode(node.argument)
   }
@@ -914,29 +914,27 @@ export default class SlimeGenerator {
     // UpdateExpression: ++/-- expression
     if (node.prefix) {
       // 前缀：++i 或 --i
-      this.generateCode += node.operator
-      this.generateIndex += node.operator.length  // 更新索引
+      this.addString(node.operator)
       this.generatorNode(node.argument)
     } else {
       // 后缀：i++ 或 i--
       this.generatorNode(node.argument)
-      this.generateCode += node.operator
-      this.generateIndex += node.operator.length  // 更新索引
+      this.addString(node.operator)
     }
   }
 
   private static generatorConditionalExpression(node: any) {
     this.generatorNode(node.test)
-    this.generateCode += '?'
+    this.addString('?')
     this.generatorNode(node.consequent)
-    this.generateCode += ':'
+    this.addString(':')
     this.generatorNode(node.alternate)
   }
 
   private static generatorAssignmentExpression(node: any) {
     this.generatorNode(node.left)
     this.addSpacing()
-    this.generateCode += node.operator || '='
+    this.addString(node.operator || '=')
     this.addSpacing()
     this.generatorNode(node.right)
   }
@@ -1169,7 +1167,14 @@ export default class SlimeGenerator {
 
   private static addCodeAndMappings(token: SubhutiCreateToken, cstLocation: SubhutiSourceLocation = null) {
     if (cstLocation) {
-      this.addCodeAndMappingsBySourcePosition(token, this.cstLocationToSlimeLocation(cstLocation))
+      const sourcePosition = this.cstLocationToSlimeLocation(cstLocation)
+      if (sourcePosition) {
+        // 有效的sourcePosition，记录映射
+        this.addCodeAndMappingsBySourcePosition(token, sourcePosition)
+      } else {
+        // cstLocation存在但无效（如value=null），只添加代码不记录映射
+        this.addCode(token)
+      }
     } else {
       this.addCode(token)
     }
@@ -1181,27 +1186,34 @@ export default class SlimeGenerator {
     this.generateIndex += code.value.length
   }
 
+  /**
+   * 添加字符串代码（不记录映射）
+   * 用于临时兼容直接字符串拼接的场景
+   */
+  private static addString(str: string) {
+    this.generateCode += str
+    this.generateColumn += str.length
+    this.generateIndex += str.length
+  }
+
   private static addSemicolonAndNewLine() {
     // this.addSemicolon()
     // this.addNewLine()
   }
 
   private static addSemicolon() {
-    this.generateCode += ';'
-    this.generateIndex += 1
+    this.addString(';')
   }
 
   private static addNewLine() {
     this.generateCode += '\n'
     this.generateLine++
     this.generateColumn = 0
-    this.generateIndex += 1
+    this.generateIndex++
   }
 
   private static addCodeSpacing() {
-    this.generateCode += ' '
-    this.generateColumn++
-    this.generateIndex++
+    this.addString(' ')
   }
 
 

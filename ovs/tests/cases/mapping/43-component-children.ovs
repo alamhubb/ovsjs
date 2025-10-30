@@ -1,0 +1,23 @@
+// 测试43: 组件嵌套
+// 验证: 组件children传递的映射
+
+const Container = (props) => {
+  return div {
+    h1 { "Container" }
+    div { props.children }
+  }
+}
+
+const Item = (props) => {
+  return p { props.text }
+}
+
+div {
+  Container({
+    children: [
+      Item({ text: "Item 1" }),
+      Item({ text: "Item 2" })
+    ]
+  })
+}
+

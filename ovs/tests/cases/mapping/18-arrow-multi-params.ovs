@@ -1,0 +1,17 @@
+// 测试18: 箭头函数（多参数）
+// 验证: 多参数箭头函数的映射
+
+const add = (a, b) => a + b
+const multiply = (x, y) => x * y
+const concat = (str1, str2) => str1 + str2
+
+const sum = add(10, 20)
+const product = multiply(3, 7)
+const text = concat("Hello", "World")
+
+div {
+  p { sum }
+  p { product }
+  p { text }
+}
+

@@ -1,0 +1,19 @@
+// 测试28: 一元运算符
+// 验证: !, +, -, typeof等一元运算符的映射
+
+const flag = true
+const notFlag = !flag
+const num = 10
+const negNum = -num
+const posNum = +num
+const typeStr = typeof "hello"
+const typeNum = typeof 123
+
+div {
+  p { notFlag }
+  p { negNum }
+  p { posNum }
+  p { typeStr }
+  p { typeNum }
+}
+

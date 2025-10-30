@@ -1,0 +1,19 @@
+// 测试35: 空值合并
+// 验证: ??空值合并运算符的映射
+
+const value1 = null
+const value2 = undefined
+const value3 = 0
+const value4 = ""
+const result1 = value1 ?? "default1"
+const result2 = value2 ?? "default2"
+const result3 = value3 ?? "default3"
+const result4 = value4 ?? "default4"
+
+div {
+  p { result1 }
+  p { result2 }
+  p { result3 }
+  p { result4 }
+}
+

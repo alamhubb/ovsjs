@@ -1,0 +1,17 @@
+// 测试26: 逻辑运算符
+// 验证: &&和||运算符的映射
+
+const a = true
+const b = false
+const result1 = a && b
+const result2 = a || b
+const result3 = a && !b
+const result4 = !a || b
+
+div {
+  p { result1 }
+  p { result2 }
+  p { result3 }
+  p { result4 }
+}
+

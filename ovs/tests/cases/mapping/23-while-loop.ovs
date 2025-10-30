@@ -1,0 +1,17 @@
+// 测试23: while循环
+// 验证: while循环的映射
+
+const numbers = []
+let i = 0
+
+while (i < 3) {
+  numbers.push(i)
+  i = i + 1
+}
+
+div {
+  p { numbers[0] }
+  p { numbers[1] }
+  p { numbers[2] }
+}
+

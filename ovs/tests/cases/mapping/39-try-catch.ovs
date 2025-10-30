@@ -1,0 +1,20 @@
+// 测试39: 异常处理
+// 验证: try-catch-finally的映射
+
+let result = ""
+let error = ""
+
+try {
+  const value = JSON.parse('{"name":"Alice"}')
+  result = value.name
+} catch (e) {
+  error = e.message
+} finally {
+  result = result || "default"
+}
+
+div {
+  p { result }
+  p { error }
+}
+

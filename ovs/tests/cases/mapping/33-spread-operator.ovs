@@ -1,0 +1,17 @@
+// 测试33: 展开运算符
+// 验证: ...展开运算符的映射
+
+const arr1 = [1, 2, 3]
+const arr2 = [4, 5, 6]
+const combined = [...arr1, ...arr2]
+const obj1 = { a: 1, b: 2 }
+const obj2 = { c: 3, d: 4 }
+const merged = { ...obj1, ...obj2 }
+
+div {
+  p { combined[0] }
+  p { combined[5] }
+  p { merged.a }
+  p { merged.d }
+}
+
