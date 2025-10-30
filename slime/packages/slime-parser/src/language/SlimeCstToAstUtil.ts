@@ -1590,13 +1590,102 @@ export class SlimeCstToAst {
 
   /**
    * 创建 switch 语句 AST
+   * SwitchStatement: switch ( Expression ) CaseBlock
    */
   createSwitchStatementAst(cst: SubhutiCst): any {
     checkCstName(cst, Es6Parser.prototype.SwitchStatement.name);
+    
+    // CST 结构：
+    // children[0]: SwitchTok
+    // children[1]: LParen
+    // children[2]: Expression - discriminant（判断表达式）
+    // children[3]: RParen
+    // children[4]: CaseBlock - cases
+    
+    // 提取 discriminant（判断表达式）
+    const discriminantCst = cst.children?.find(ch => ch.name === Es6Parser.prototype.Expression.name)
+    const discriminant = discriminantCst ? this.createExpressionAst(discriminantCst) : null
+    
+    // 提取 cases（从 CaseBlock 中）
+    const caseBlockCst = cst.children?.find(ch => ch.name === Es6Parser.prototype.CaseBlock.name)
+    const cases = caseBlockCst ? this.extractCasesFromCaseBlock(caseBlockCst) : []
+    
     return {
       type: SlimeAstType.SwitchStatement,
-      discriminant: null,  // TODO
-      cases: [],  // TODO
+      discriminant: discriminant,
+      cases: cases,
+      loc: cst.loc
+    }
+  }
+  
+  /**
+   * 从 CaseBlock 提取所有 case/default 子句
+   * CaseBlock: { CaseClauses? DefaultClause? CaseClauses? }
+   */
+  private extractCasesFromCaseBlock(caseBlockCst: SubhutiCst): any[] {
+    const cases: any[] = []
+    
+    if (!caseBlockCst.children) return cases
+    
+    // CaseBlock 的 children:
+    // [0]: LBrace
+    // [1-n]: CaseClauses / DefaultClause（可能有多个，可能没有）
+    // [last]: RBrace
+    
+    caseBlockCst.children.forEach(child => {
+      if (child.name === Es6Parser.prototype.CaseClauses.name) {
+        // CaseClauses 包含多个 CaseClause
+        if (child.children) {
+          child.children.forEach(caseClauseCst => {
+            cases.push(this.createSwitchCaseAst(caseClauseCst))
+          })
+        }
+      } else if (child.name === Es6Parser.prototype.DefaultClause.name) {
+        // DefaultClause
+        cases.push(this.createSwitchCaseAst(child))
+      }
+    })
+    
+    return cases
+  }
+  
+  /**
+   * 创建 SwitchCase AST（包括 case 和 default）
+   * CaseClause: case Expression : StatementList?
+   * DefaultClause: default : StatementList?
+   */
+  private createSwitchCaseAst(cst: SubhutiCst): any {
+    let test = null
+    let consequent: any[] = []
+    
+    if (cst.name === Es6Parser.prototype.CaseClause.name) {
+      // CaseClause 结构：
+      // children[0]: CaseTok
+      // children[1]: Expression - test
+      // children[2]: Colon
+      // children[3]: StatementList（可选）
+      
+      const testCst = cst.children?.find(ch => ch.name === Es6Parser.prototype.Expression.name)
+      test = testCst ? this.createExpressionAst(testCst) : null
+      
+      const stmtListCst = cst.children?.find(ch => ch.name === Es6Parser.prototype.StatementList.name)
+      consequent = stmtListCst ? this.createStatementListAst(stmtListCst) : []
+    } else if (cst.name === Es6Parser.prototype.DefaultClause.name) {
+      // DefaultClause 结构：
+      // children[0]: DefaultTok
+      // children[1]: Colon
+      // children[2]: StatementList（可选）
+      
+      test = null  // default 没有 test
+      
+      const stmtListCst = cst.children?.find(ch => ch.name === Es6Parser.prototype.StatementList.name)
+      consequent = stmtListCst ? this.createStatementListAst(stmtListCst) : []
+    }
+    
+    return {
+      type: SlimeAstType.SwitchCase,
+      test: test,
+      consequent: consequent,
       loc: cst.loc
     }
   }

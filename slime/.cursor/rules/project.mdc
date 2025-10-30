@@ -1715,3 +1715,78 @@ this.generateColumn += 2;
 **下一步：**
 P0、P1、P2 级别的所有问题已全部修复完成！
 总结所有修复成果，等待用户确认。
+
+**【进度】2025/10/31 01:36:52**
+## Switch 语句修复完成
+
+**修复时间：** 2025-10-30
+
+**问题：** switch 语句生成代码为 `switch (){}` - discriminant 和 cases 全部丢失
+
+**问题根因：**
+- 位置：SlimeCstToAstUtil.ts line 1594-1602
+- 原因：createSwitchStatementAst 方法只是 TODO 占位符，未实现
+- 影响：discriminant 硬编码为 null，cases 硬编码为空数组
+
+**修复内容：**
+
+1. **实现 createSwitchStatementAst 方法（line 1595-1619）**
+   - 从 CST children[2] 提取 discriminant（Expression）
+   - 从 CST children[4] 提取 CaseBlock
+   - 调用 extractCasesFromCaseBlock 解析所有 case
+
+2. **新增 extractCasesFromCaseBlock 辅助方法（line 1625-1650）**
+   - 遍历 CaseBlock 的 children
+   - 识别 CaseClauses 和 DefaultClause
+   - 递归提取所有 CaseClause
+   - 转换为 SwitchCase AST 数组
+
+3. **新增 createSwitchCaseAst 方法（line 1657-1691）**
+   - 处理 CaseClause：提取 test（Expression）和 consequent（StatementList）
+   - 处理 DefaultClause：test 为 null，提取 consequent（StatementList）
+   - 返回符合规范的 SwitchCase AST
+
+**测试验证：**
+- 测试通过率：4/4 (100%)
+- ✅ 简单 switch（2个 case）：switch (x) { case 1: break; case 2: break; }
+- ✅ 包含 default：switch (value) { case 1: ...; default: ...; }
+- ✅ 复杂 switch（fall-through）：case 1: case 2: ... 
+- ✅ switch 在函数中：function test(x) { switch (x) { ... } }
+
+**代码变更：**
+- 修改文件：SlimeCstToAstUtil.ts
+- 修改方法：1个（createSwitchStatementAst）
+- 新增方法：2个（extractCasesFromCaseBlock, createSwitchCaseAst）
+- 添加代码：约95行（含注释）
+
+**影响：**
+- switch 语句现在完全正常工作
+- discriminant 正确提取（如 x, value）
+- case 子句正确提取（包括 test 和 consequent）
+- default 子句正确提取
+- 支持 fall-through（连续的 case）
+- 支持复杂的 StatementList
+
+**修复前后对比：**
+```javascript
+// 修复前
+switch (){}
+
+// 修复后
+switch (x){
+  case 1:
+    break;
+  case 2:
+    break;
+  default:
+    console.log('other');
+}
+```
+
+**下一步：**
+所有计划中的修复已全部完成！
+- P0: ✅ 2个问题
+- P1: ✅ 3个问题
+- P2: ✅ 4个问题
+- Switch Bug: ✅ 1个问题
+总结所有修复成果。
