@@ -447,7 +447,7 @@ export default class SlimeGenerator {
   private static generatorArrayExpression(node: SlimeArrayExpression) {
     this.addLBracket(node.loc)
     for (const element of node.elements) {
-      if (element === null) {
+      if (element === null || element === undefined) {
         // 空元素：[1, , 3]，只添加逗号
       } else if (element.type === SlimeAstType.SpreadElement) {
         // SpreadElement：[...arr]
@@ -1128,6 +1128,14 @@ export default class SlimeGenerator {
 
   static cstLocationToSlimeLocation(cstLocation: SubhutiSourceLocation) {
     if (cstLocation) {
+      // 验证 loc 是否有效
+      if (!cstLocation.value || 
+          cstLocation.value === null ||
+          cstLocation.value === 'null' ||
+          cstLocation.value === 'undefined') {
+        return null;  // 无效 loc，不创建映射
+      }
+      
       const sourcePosition: SlimeCodeLocation = {
         type: cstLocation.type,
         index: cstLocation.start.index,

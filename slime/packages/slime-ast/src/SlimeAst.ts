@@ -372,10 +372,11 @@ class SlimeAst {
   }
 
 
-  createStringLiteral(value: string): SlimeStringLiteral {
+  createStringLiteral(value: string, loc?: SubhutiSourceLocation): SlimeStringLiteral {
     return this.commonLocType({
       type: SlimeAstType.StringLiteral,
-      value: value.replace(/^['"]|['"]$/g, '')
+      value: value.replace(/^['"]|['"]$/g, ''),
+      loc: loc
     })
   }
 
@@ -438,3 +439,4 @@ class SlimeAst {
 
 const SlimeAstUtil = new SlimeAst()
 export default SlimeAstUtil
+

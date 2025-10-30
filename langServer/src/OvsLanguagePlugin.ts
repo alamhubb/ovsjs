@@ -67,19 +67,32 @@ interface EnhancedMapping {
 
 export class MappingConverter {
   static convertMappings(mappings: SlimeCodeMapping[]): EnhancedMapping[] {
-    return mappings.map((mapping, index) => {
-      const res = {
-        original: {
-          offset: mapping.source.index,
-          length: mapping.source.length,
-        },
-        generated: {
-          offset: mapping.generate.index,
-          length: mapping.generate.length,
-        },
-      };
-      return res
-    });
+    return mappings
+      .filter(mapping => {
+        // 过滤无效映射
+        if (!mapping.source || !mapping.generate) return false;
+        if (!mapping.source.value || 
+            mapping.source.value === null || 
+            mapping.source.value === 'null' ||
+            mapping.source.value === 'undefined') {
+          return false;
+        }
+        if (mapping.source.length === 0) return false;
+        return true;
+      })
+      .map((mapping, index) => {
+        const res = {
+          original: {
+            offset: mapping.source.index,
+            length: mapping.source.length,
+          },
+          generated: {
+            offset: mapping.generate.index,
+            length: mapping.generate.length,
+          },
+        };
+        return res
+      });
   }
 }
 
@@ -149,6 +162,19 @@ export class OvsVirtualCode implements VirtualCode {
         getText: (start, end) => newCode.substring(start, end),
         getLength: () => newCode.length,
         getChangeRange: () => undefined,
+      },
+      // sourceOffsets: number[];
+      // generatedOffsets: number[];
+      // lengths: number[];
+      // generatedLengths?: number[];
+      // data: Data;
+      mappings: mappings,
+      embeddedCodes: [],
+    }];
+  }
+}
+
+
       },
       // sourceOffsets: number[];
       // generatedOffsets: number[];

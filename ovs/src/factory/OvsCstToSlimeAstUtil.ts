@@ -584,7 +584,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     const childExpressions: SlimeExpression[] = statements.map(stmt => {
       const exprStmt = stmt as SlimeExpressionStatement
       const pushCall = exprStmt.expression as SlimeCallExpression
-      if (pushCall.type === SlimeAstType.CallExpression && pushCall.arguments.length > 0) {
+      if (pushCall && pushCall.type === SlimeAstType.CallExpression && pushCall.arguments.length > 0) {
         return pushCall.arguments[0] as SlimeExpression
       }
       return exprStmt.expression
@@ -599,7 +599,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     // 创建第一个参数：组件用 Identifier，标签用 StringLiteral
     const firstArg = isComponent
       ? id  // MyComponent（不加引号）
-      : SlimeAstUtil.createStringLiteral(id.name)  // 'div'（加引号）
+      : SlimeAstUtil.createStringLiteral(id.name, id.loc)  // 'div'（加引号），传递 loc
 
     // 创建 createReactiveVNode(Component, props, children) 或 createReactiveVNode('div', {}, children) 调用
     const vNodeCall = SlimeAstUtil.createCallExpression(
@@ -726,7 +726,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     // 创建第一个参数：组件用 Identifier，标签用 StringLiteral
     const firstArg = isComponent
       ? id  // MyComponent（不加引号）
-      : SlimeAstUtil.createStringLiteral(id.name)  // 'div'（加引号）
+      : SlimeAstUtil.createStringLiteral(id.name, id.loc)  // 'div'（加引号），传递 loc
 
     // 创建函数调用：createReactiveVNode(Component, props, children) 或 createReactiveVNode('div', props, children)
     const callExpression = SlimeAstUtil.createCallExpression(
