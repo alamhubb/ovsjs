@@ -36316,3 +36316,9332 @@ chufa  provideDocumentSemanticTokens
 [2025-10-31T09:52:43.759Z]
 chufa  provideDocumentSemanticTokens
 ================================================================================
+
+[2025-10-31T09:57:26.215Z]
+createTypeScriptServices
+================================================================================
+
+[2025-10-31T09:57:26.221Z]
+getLocalTsdkPath
+================================================================================
+
+[2025-10-31T09:57:26.221Z]
+onInitialize
+================================================================================
+
+[2025-10-31T09:57:26.229Z]
+params
+================================================================================
+
+[2025-10-31T09:57:26.229Z]
+{
+  "processId": 17468,
+  "clientInfo": {
+    "name": "Visual Studio Code",
+    "version": "1.105.1"
+  },
+  "locale": "en",
+  "rootPath": "d:\\project\\qkyproject\\test-volar\\ovs",
+  "rootUri": "file:///d%3A/project/qkyproject/test-volar/ovs",
+  "capabilities": {
+    "workspace": {
+      "applyEdit": true,
+      "workspaceEdit": {
+        "documentChanges": true,
+        "resourceOperations": [
+          "create",
+          "rename",
+          "delete"
+        ],
+        "failureHandling": "textOnlyTransactional",
+        "normalizesLineEndings": true,
+        "changeAnnotationSupport": {
+          "groupsOnLabel": true
+        }
+      },
+      "configuration": true,
+      "didChangeWatchedFiles": {
+        "dynamicRegistration": true,
+        "relativePatternSupport": true
+      },
+      "symbol": {
+        "dynamicRegistration": true,
+        "symbolKind": {
+          "valueSet": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26
+          ]
+        },
+        "tagSupport": {
+          "valueSet": [
+            1
+          ]
+        },
+        "resolveSupport": {
+          "properties": [
+            "location.range"
+          ]
+        }
+      },
+      "codeLens": {
+        "refreshSupport": true
+      },
+      "executeCommand": {
+        "dynamicRegistration": true
+      },
+      "didChangeConfiguration": {
+        "dynamicRegistration": true
+      },
+      "workspaceFolders": true,
+      "foldingRange": {
+        "refreshSupport": true
+      },
+      "semanticTokens": {
+        "refreshSupport": true
+      },
+      "fileOperations": {
+        "dynamicRegistration": true,
+        "didCreate": true,
+        "didRename": true,
+        "didDelete": true,
+        "willCreate": true,
+        "willRename": true,
+        "willDelete": true
+      },
+      "inlineValue": {
+        "refreshSupport": true
+      },
+      "inlayHint": {
+        "refreshSupport": true
+      },
+      "diagnostics": {
+        "refreshSupport": true
+      }
+    },
+    "textDocument": {
+      "publishDiagnostics": {
+        "relatedInformation": true,
+        "versionSupport": false,
+        "tagSupport": {
+          "valueSet": [
+            1,
+            2
+          ]
+        },
+        "codeDescriptionSupport": true,
+        "dataSupport": true
+      },
+      "synchronization": {
+        "dynamicRegistration": true,
+        "willSave": true,
+        "willSaveWaitUntil": true,
+        "didSave": true
+      },
+      "completion": {
+        "dynamicRegistration": true,
+        "contextSupport": true,
+        "completionItem": {
+          "snippetSupport": true,
+          "commitCharactersSupport": true,
+          "documentationFormat": [
+            "markdown",
+            "plaintext"
+          ],
+          "deprecatedSupport": true,
+          "preselectSupport": true,
+          "tagSupport": {
+            "valueSet": [
+              1
+            ]
+          },
+          "insertReplaceSupport": true,
+          "resolveSupport": {
+            "properties": [
+              "documentation",
+              "detail",
+              "additionalTextEdits"
+            ]
+          },
+          "insertTextModeSupport": {
+            "valueSet": [
+              1,
+              2
+            ]
+          },
+          "labelDetailsSupport": true
+        },
+        "insertTextMode": 2,
+        "completionItemKind": {
+          "valueSet": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25
+          ]
+        },
+        "completionList": {
+          "itemDefaults": [
+            "commitCharacters",
+            "editRange",
+            "insertTextFormat",
+            "insertTextMode",
+            "data"
+          ]
+        }
+      },
+      "hover": {
+        "dynamicRegistration": true,
+        "contentFormat": [
+          "markdown",
+          "plaintext"
+        ]
+      },
+      "signatureHelp": {
+        "dynamicRegistration": true,
+        "signatureInformation": {
+          "documentationFormat": [
+            "markdown",
+            "plaintext"
+          ],
+          "parameterInformation": {
+            "labelOffsetSupport": true
+          },
+          "activeParameterSupport": true
+        },
+        "contextSupport": true
+      },
+      "definition": {
+        "dynamicRegistration": true,
+        "linkSupport": true
+      },
+      "references": {
+        "dynamicRegistration": true
+      },
+      "documentHighlight": {
+        "dynamicRegistration": true
+      },
+      "documentSymbol": {
+        "dynamicRegistration": true,
+        "symbolKind": {
+          "valueSet": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26
+          ]
+        },
+        "hierarchicalDocumentSymbolSupport": true,
+        "tagSupport": {
+          "valueSet": [
+            1
+          ]
+        },
+        "labelSupport": true
+      },
+      "codeAction": {
+        "dynamicRegistration": true,
+        "isPreferredSupport": true,
+        "disabledSupport": true,
+        "dataSupport": true,
+        "resolveSupport": {
+          "properties": [
+            "edit"
+          ]
+        },
+        "codeActionLiteralSupport": {
+          "codeActionKind": {
+            "valueSet": [
+              "",
+              "quickfix",
+              "refactor",
+              "refactor.extract",
+              "refactor.inline",
+              "refactor.rewrite",
+              "source",
+              "source.organizeImports"
+            ]
+          }
+        },
+        "honorsChangeAnnotations": true
+      },
+      "codeLens": {
+        "dynamicRegistration": true
+      },
+      "formatting": {
+        "dynamicRegistration": true
+      },
+      "rangeFormatting": {
+        "dynamicRegistration": true,
+        "rangesSupport": true
+      },
+      "onTypeFormatting": {
+        "dynamicRegistration": true
+      },
+      "rename": {
+        "dynamicRegistration": true,
+        "prepareSupport": true,
+        "prepareSupportDefaultBehavior": 1,
+        "honorsChangeAnnotations": true
+      },
+      "documentLink": {
+        "dynamicRegistration": true,
+        "tooltipSupport": true
+      },
+      "typeDefinition": {
+        "dynamicRegistration": true,
+        "linkSupport": true
+      },
+      "implementation": {
+        "dynamicRegistration": true,
+        "linkSupport": true
+      },
+      "colorProvider": {
+        "dynamicRegistration": true
+      },
+      "foldingRange": {
+        "dynamicRegistration": true,
+        "rangeLimit": 5000,
+        "lineFoldingOnly": true,
+        "foldingRangeKind": {
+          "valueSet": [
+            "comment",
+            "imports",
+            "region"
+          ]
+        },
+        "foldingRange": {
+          "collapsedText": false
+        }
+      },
+      "declaration": {
+        "dynamicRegistration": true,
+        "linkSupport": true
+      },
+      "selectionRange": {
+        "dynamicRegistration": true
+      },
+      "callHierarchy": {
+        "dynamicRegistration": true
+      },
+      "semanticTokens": {
+        "dynamicRegistration": true,
+        "tokenTypes": [
+          "namespace",
+          "type",
+          "class",
+          "enum",
+          "interface",
+          "struct",
+          "typeParameter",
+          "parameter",
+          "variable",
+          "property",
+          "enumMember",
+          "event",
+          "function",
+          "method",
+          "macro",
+          "keyword",
+          "modifier",
+          "comment",
+          "string",
+          "number",
+          "regexp",
+          "operator",
+          "decorator"
+        ],
+        "tokenModifiers": [
+          "declaration",
+          "definition",
+          "readonly",
+          "static",
+          "deprecated",
+          "abstract",
+          "async",
+          "modification",
+          "documentation",
+          "defaultLibrary"
+        ],
+        "formats": [
+          "relative"
+        ],
+        "requests": {
+          "range": true,
+          "full": {
+            "delta": true
+          }
+        },
+        "multilineTokenSupport": false,
+        "overlappingTokenSupport": false,
+        "serverCancelSupport": true,
+        "augmentsSyntaxTokens": true
+      },
+      "linkedEditingRange": {
+        "dynamicRegistration": true
+      },
+      "typeHierarchy": {
+        "dynamicRegistration": true
+      },
+      "inlineValue": {
+        "dynamicRegistration": true
+      },
+      "inlayHint": {
+        "dynamicRegistration": true,
+        "resolveSupport": {
+          "properties": [
+            "tooltip",
+            "textEdits",
+            "label.tooltip",
+            "label.location",
+            "label.command"
+          ]
+        }
+      },
+      "diagnostic": {
+        "dynamicRegistration": true,
+        "relatedDocumentSupport": false
+      }
+    },
+    "window": {
+      "showMessage": {
+        "messageActionItem": {
+          "additionalPropertiesSupport": true
+        }
+      },
+      "showDocument": {
+        "support": true
+      },
+      "workDoneProgress": true
+    },
+    "general": {
+      "staleRequestSupport": {
+        "cancel": true,
+        "retryOnContentModified": [
+          "textDocument/semanticTokens/full",
+          "textDocument/semanticTokens/range",
+          "textDocument/semanticTokens/full/delta"
+        ]
+      },
+      "regularExpressions": {
+        "engine": "ECMAScript",
+        "version": "ES2020"
+      },
+      "markdown": {
+        "parser": "marked",
+        "version": "1.1.0"
+      },
+      "positionEncodings": [
+        "utf-16"
+      ]
+    },
+    "notebookDocument": {
+      "synchronization": {
+        "dynamicRegistration": true,
+        "executionSummarySupport": true
+      }
+    }
+  },
+  "trace": "off",
+  "workspaceFolders": [
+    {
+      "uri": "file:///d%3A/project/qkyproject/test-volar/ovs",
+      "name": "ovs"
+    }
+  ]
+}
+================================================================================
+
+[2025-10-31T09:57:26.609Z]
+res.capabilities.completionProvider.triggerCharacters
+================================================================================
+
+[2025-10-31T09:57:26.609Z]
+{
+  "textDocumentSync": 2,
+  "workspace": {
+    "workspaceFolders": {
+      "supported": true,
+      "changeNotifications": true
+    }
+  },
+  "selectionRangeProvider": true,
+  "foldingRangeProvider": true,
+  "documentSymbolProvider": true,
+  "documentFormattingProvider": true,
+  "documentRangeFormattingProvider": true,
+  "referencesProvider": true,
+  "implementationProvider": true,
+  "definitionProvider": true,
+  "typeDefinitionProvider": true,
+  "callHierarchyProvider": true,
+  "hoverProvider": true,
+  "documentHighlightProvider": true,
+  "workspaceSymbolProvider": {},
+  "renameProvider": {
+    "prepareProvider": true
+  },
+  "inlayHintProvider": {},
+  "signatureHelpProvider": {
+    "triggerCharacters": [
+      "(",
+      ",",
+      "<"
+    ],
+    "retriggerCharacters": [
+      ")"
+    ]
+  },
+  "completionProvider": {
+    "triggerCharacters": [
+      ".",
+      "\"",
+      "'",
+      "`",
+      "/",
+      "<",
+      "@",
+      "#",
+      "*"
+    ],
+    "resolveProvider": true
+  },
+  "semanticTokensProvider": {
+    "full": true,
+    "range": true,
+    "legend": {
+      "tokenTypes": [
+        "namespace",
+        "class",
+        "enum",
+        "interface",
+        "typeParameter",
+        "type",
+        "parameter",
+        "variable",
+        "property",
+        "enumMember",
+        "function",
+        "method"
+      ],
+      "tokenModifiers": [
+        "declaration",
+        "readonly",
+        "static",
+        "async",
+        "defaultLibrary",
+        "local"
+      ]
+    }
+  },
+  "codeActionProvider": {
+    "codeActionKinds": [
+      "",
+      "quickfix",
+      "refactor",
+      "refactor.extract",
+      "refactor.inline",
+      "refactor.rewrite",
+      "source",
+      "source.fixAll",
+      "source.organizeImports"
+    ],
+    "resolveProvider": true
+  },
+  "documentOnTypeFormattingProvider": {
+    "firstTriggerCharacter": ";",
+    "moreTriggerCharacter": [
+      "}",
+      "\n"
+    ]
+  },
+  "experimental": {
+    "autoInsertionProvider": {
+      "triggerCharacters": [
+        ">"
+      ],
+      "configurationSections": [
+        [
+          "javascript.autoClosingTags",
+          "typescript.autoClosingTags"
+        ]
+      ]
+    },
+    "fileRenameEditsProvider": true,
+    "fileReferencesProvider": true
+  }
+}
+================================================================================
+
+[2025-10-31T09:57:28.472Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T09:57:28.472Z]
+3333
+================================================================================
+
+[2025-10-31T09:57:28.531Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T09:57:28.531Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+div {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T09:57:28.531Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  children.push(console.log('Starting simple test...'));
+  children.push(createComponentVNode(div,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T09:57:29.234Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T09:57:29.234Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T09:57:29.278Z]
+反悔了tokens
+================================================================================
+
+[2025-10-31T09:57:29.279Z]
+[
+  [
+    4,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    5,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    6,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    6,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    6,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    6,
+    24,
+    3,
+    11,
+    16
+  ],
+  [
+    7,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    7,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    7,
+    16,
+    20,
+    10,
+    0
+  ],
+  [
+    7,
+    45,
+    20,
+    10,
+    0
+  ],
+  [
+    7,
+    73,
+    7,
+    7,
+    34
+  ],
+  [
+    7,
+    84,
+    20,
+    10,
+    0
+  ],
+  [
+    7,
+    111,
+    7,
+    7,
+    34
+  ],
+  [
+    8,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    8,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    8,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    8,
+    24,
+    3,
+    11,
+    16
+  ]
+]
+================================================================================
+
+[2025-10-31T09:57:29.280Z]
+反悔了tokens
+================================================================================
+
+[2025-10-31T09:57:29.280Z]
+[
+  [
+    4,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    5,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    6,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    6,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    6,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    6,
+    24,
+    3,
+    11,
+    16
+  ],
+  [
+    7,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    7,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    7,
+    16,
+    20,
+    10,
+    0
+  ],
+  [
+    7,
+    45,
+    20,
+    10,
+    0
+  ],
+  [
+    7,
+    73,
+    7,
+    7,
+    34
+  ],
+  [
+    7,
+    84,
+    20,
+    10,
+    0
+  ],
+  [
+    7,
+    111,
+    7,
+    7,
+    34
+  ],
+  [
+    8,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    8,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    8,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    8,
+    24,
+    3,
+    11,
+    16
+  ]
+]
+================================================================================
+
+[2025-10-31T09:57:29.283Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T09:57:29.283Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T09:57:36.428Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T09:57:36.429Z]
+3333
+================================================================================
+
+[2025-10-31T09:57:36.516Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T09:57:36.516Z]
+import { h, ref, computed } from 'vue'
+
+const count = ref(0)
+
+setInterval(() => {
+  count.value++
+  console.log('计数器：', count.value)
+}, 1000)
+================================================================================
+
+[2025-10-31T09:57:36.516Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+import {h,ref,computed} from 'vue';
+export default (function(){
+  const children = [];
+  const count = ref(0);
+  children.push(setInterval(() => {
+    count.value++;
+    console.log('计数器：',count.value);
+  },1000));
+  return children})()
+================================================================================
+
+[2025-10-31T09:57:36.519Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T09:57:36.600Z]
+反悔了tokens
+================================================================================
+
+[2025-10-31T09:57:36.600Z]
+[
+  [
+    4,
+    8,
+    8,
+    7,
+    35
+  ],
+  [
+    5,
+    8,
+    5,
+    7,
+    35
+  ],
+  [
+    5,
+    16,
+    3,
+    10,
+    0
+  ],
+  [
+    6,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    6,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    6,
+    16,
+    11,
+    10,
+    16
+  ],
+  [
+    7,
+    4,
+    5,
+    7,
+    34
+  ],
+  [
+    7,
+    10,
+    5,
+    8,
+    0
+  ],
+  [
+    8,
+    4,
+    7,
+    7,
+    16
+  ],
+  [
+    8,
+    12,
+    3,
+    11,
+    16
+  ],
+  [
+    8,
+    23,
+    5,
+    7,
+    34
+  ],
+  [
+    8,
+    29,
+    5,
+    8,
+    0
+  ]
+]
+================================================================================
+
+[2025-10-31T09:57:36.601Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T09:57:36.620Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T09:57:36.622Z]
+反悔了tokens
+================================================================================
+
+[2025-10-31T09:57:36.622Z]
+[
+  [
+    4,
+    8,
+    8,
+    7,
+    35
+  ],
+  [
+    5,
+    8,
+    5,
+    7,
+    35
+  ],
+  [
+    5,
+    16,
+    3,
+    10,
+    0
+  ],
+  [
+    6,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    6,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    6,
+    16,
+    11,
+    10,
+    16
+  ],
+  [
+    7,
+    4,
+    5,
+    7,
+    34
+  ],
+  [
+    7,
+    10,
+    5,
+    8,
+    0
+  ],
+  [
+    8,
+    4,
+    7,
+    7,
+    16
+  ],
+  [
+    8,
+    12,
+    3,
+    11,
+    16
+  ],
+  [
+    8,
+    23,
+    5,
+    7,
+    34
+  ],
+  [
+    8,
+    29,
+    5,
+    8,
+    0
+  ]
+]
+================================================================================
+
+[2025-10-31T09:57:36.623Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T09:57:40.076Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T09:57:40.078Z]
+反悔了tokens
+================================================================================
+
+[2025-10-31T09:57:40.079Z]
+[
+  [
+    4,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    5,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    6,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    6,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    6,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    6,
+    24,
+    3,
+    11,
+    16
+  ],
+  [
+    7,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    7,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    7,
+    16,
+    20,
+    10,
+    0
+  ],
+  [
+    7,
+    45,
+    20,
+    10,
+    0
+  ],
+  [
+    7,
+    73,
+    7,
+    7,
+    34
+  ],
+  [
+    7,
+    84,
+    20,
+    10,
+    0
+  ],
+  [
+    7,
+    111,
+    7,
+    7,
+    34
+  ],
+  [
+    8,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    8,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    8,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    8,
+    24,
+    3,
+    11,
+    16
+  ]
+]
+================================================================================
+
+[2025-10-31T09:57:40.079Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T09:58:03.944Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T09:58:03.945Z]
+3333
+================================================================================
+
+[2025-10-31T09:58:03.972Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T09:58:03.972Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+d {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T09:58:03.972Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  children.push(console.log('Starting simple test...'));
+  children.push(createComponentVNode(d,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T09:58:06.441Z]
+languageService.getCompletionsAtPosition(
+================================================================================
+
+[2025-10-31T09:58:06.441Z]
+offset：285
+================================================================================
+
+[2025-10-31T09:58:06.441Z]
+triggerKind：1
+================================================================================
+
+[2025-10-31T09:58:06.442Z]
+存在info
+================================================================================
+
+[2025-10-31T09:58:06.442Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  children.push(console.log('Starting simple test...'));
+  children.push(createComponentVNode(d,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T09:58:06.442Z]
+998
+================================================================================
+
+[2025-10-31T09:58:06.443Z]
+convertCompletionInfo
+================================================================================
+
+[2025-10-31T09:58:06.495Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T09:58:06.495Z]
+3333
+================================================================================
+
+[2025-10-31T09:58:06.514Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T09:58:06.514Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+di {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T09:58:06.514Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  children.push(console.log('Starting simple test...'));
+  children.push(createComponentVNode(di,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T09:58:06.515Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T09:58:06.550Z]
+反悔了tokens
+================================================================================
+
+[2025-10-31T09:58:06.551Z]
+[
+  [
+    4,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    5,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    6,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    6,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    6,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    6,
+    24,
+    3,
+    11,
+    16
+  ],
+  [
+    7,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    7,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    7,
+    16,
+    20,
+    10,
+    0
+  ],
+  [
+    7,
+    44,
+    20,
+    10,
+    0
+  ],
+  [
+    7,
+    72,
+    7,
+    7,
+    34
+  ],
+  [
+    7,
+    83,
+    20,
+    10,
+    0
+  ],
+  [
+    7,
+    110,
+    7,
+    7,
+    34
+  ],
+  [
+    8,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    8,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    8,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    8,
+    24,
+    3,
+    11,
+    16
+  ]
+]
+================================================================================
+
+[2025-10-31T09:58:06.551Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T09:58:06.568Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T09:58:06.568Z]
+3333
+================================================================================
+
+[2025-10-31T09:58:06.586Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T09:58:06.586Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+div {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T09:58:06.586Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  children.push(console.log('Starting simple test...'));
+  children.push(createComponentVNode(div,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T09:58:06.639Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T09:58:06.639Z]
+3333
+================================================================================
+
+[2025-10-31T09:58:06.656Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T09:58:06.656Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+d {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T09:58:06.656Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  children.push(console.log('Starting simple test...'));
+  children.push(createComponentVNode(d,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T09:58:06.709Z]
+languageService.getCompletionsAtPosition(
+================================================================================
+
+[2025-10-31T09:58:06.709Z]
+offset：285
+================================================================================
+
+[2025-10-31T09:58:06.709Z]
+triggerKind：1
+================================================================================
+
+[2025-10-31T09:58:06.709Z]
+存在info
+================================================================================
+
+[2025-10-31T09:58:06.710Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  children.push(console.log('Starting simple test...'));
+  children.push(createComponentVNode(d,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T09:58:06.710Z]
+998
+================================================================================
+
+[2025-10-31T09:58:06.710Z]
+convertCompletionInfo
+================================================================================
+
+[2025-10-31T09:58:06.754Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T09:58:06.755Z]
+3333
+================================================================================
+
+[2025-10-31T09:58:06.767Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T09:58:06.767Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+di {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T09:58:06.767Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  children.push(console.log('Starting simple test...'));
+  children.push(createComponentVNode(di,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T09:58:06.893Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T09:58:06.894Z]
+反悔了tokens
+================================================================================
+
+[2025-10-31T09:58:06.894Z]
+[
+  [
+    4,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    5,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    6,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    6,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    6,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    6,
+    24,
+    3,
+    11,
+    16
+  ],
+  [
+    7,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    7,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    7,
+    16,
+    20,
+    10,
+    0
+  ],
+  [
+    7,
+    44,
+    20,
+    10,
+    0
+  ],
+  [
+    7,
+    72,
+    7,
+    7,
+    34
+  ],
+  [
+    7,
+    83,
+    20,
+    10,
+    0
+  ],
+  [
+    7,
+    110,
+    7,
+    7,
+    34
+  ],
+  [
+    8,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    8,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    8,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    8,
+    24,
+    3,
+    11,
+    16
+  ]
+]
+================================================================================
+
+[2025-10-31T09:58:06.894Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T09:58:07.086Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T09:58:07.086Z]
+3333
+================================================================================
+
+[2025-10-31T09:58:07.102Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T09:58:07.102Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+div {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T09:58:07.102Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  children.push(console.log('Starting simple test...'));
+  children.push(createComponentVNode(div,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T09:58:07.509Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T09:58:07.511Z]
+反悔了tokens
+================================================================================
+
+[2025-10-31T09:58:07.511Z]
+[
+  [
+    4,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    5,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    6,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    6,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    6,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    6,
+    24,
+    3,
+    11,
+    16
+  ],
+  [
+    7,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    7,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    7,
+    16,
+    20,
+    10,
+    0
+  ],
+  [
+    7,
+    45,
+    20,
+    10,
+    0
+  ],
+  [
+    7,
+    73,
+    7,
+    7,
+    34
+  ],
+  [
+    7,
+    84,
+    20,
+    10,
+    0
+  ],
+  [
+    7,
+    111,
+    7,
+    7,
+    34
+  ],
+  [
+    8,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    8,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    8,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    8,
+    24,
+    3,
+    11,
+    16
+  ]
+]
+================================================================================
+
+[2025-10-31T09:58:07.511Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T09:58:09.074Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T09:58:09.075Z]
+3333
+================================================================================
+
+[2025-10-31T09:58:09.087Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T09:58:09.087Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+di {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T09:58:09.087Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  children.push(console.log('Starting simple test...'));
+  children.push(createComponentVNode(di,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T09:58:09.476Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T09:58:09.477Z]
+反悔了tokens
+================================================================================
+
+[2025-10-31T09:58:09.477Z]
+[
+  [
+    4,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    5,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    6,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    6,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    6,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    6,
+    24,
+    3,
+    11,
+    16
+  ],
+  [
+    7,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    7,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    7,
+    16,
+    20,
+    10,
+    0
+  ],
+  [
+    7,
+    44,
+    20,
+    10,
+    0
+  ],
+  [
+    7,
+    72,
+    7,
+    7,
+    34
+  ],
+  [
+    7,
+    83,
+    20,
+    10,
+    0
+  ],
+  [
+    7,
+    110,
+    7,
+    7,
+    34
+  ],
+  [
+    8,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    8,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    8,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    8,
+    24,
+    3,
+    11,
+    16
+  ]
+]
+================================================================================
+
+[2025-10-31T09:58:09.478Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T09:58:09.738Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T09:58:09.738Z]
+3333
+================================================================================
+
+[2025-10-31T09:58:09.754Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T09:58:09.754Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+div {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T09:58:09.754Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  children.push(console.log('Starting simple test...'));
+  children.push(createComponentVNode(div,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T09:58:10.143Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T09:58:10.144Z]
+反悔了tokens
+================================================================================
+
+[2025-10-31T09:58:10.145Z]
+[
+  [
+    4,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    5,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    6,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    6,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    6,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    6,
+    24,
+    3,
+    11,
+    16
+  ],
+  [
+    7,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    7,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    7,
+    16,
+    20,
+    10,
+    0
+  ],
+  [
+    7,
+    45,
+    20,
+    10,
+    0
+  ],
+  [
+    7,
+    73,
+    7,
+    7,
+    34
+  ],
+  [
+    7,
+    84,
+    20,
+    10,
+    0
+  ],
+  [
+    7,
+    111,
+    7,
+    7,
+    34
+  ],
+  [
+    8,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    8,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    8,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    8,
+    24,
+    3,
+    11,
+    16
+  ]
+]
+================================================================================
+
+[2025-10-31T09:58:10.145Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T09:58:14.826Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T09:58:14.827Z]
+3333
+================================================================================
+
+[2025-10-31T09:58:14.838Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T09:58:14.838Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+d {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T09:58:14.839Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  children.push(console.log('Starting simple test...'));
+  children.push(createComponentVNode(d,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T09:58:14.880Z]
+languageService.getCompletionsAtPosition(
+================================================================================
+
+[2025-10-31T09:58:14.880Z]
+offset：285
+================================================================================
+
+[2025-10-31T09:58:14.880Z]
+triggerKind：1
+================================================================================
+
+[2025-10-31T09:58:14.880Z]
+存在info
+================================================================================
+
+[2025-10-31T09:58:14.881Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  children.push(console.log('Starting simple test...'));
+  children.push(createComponentVNode(d,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T09:58:14.881Z]
+998
+================================================================================
+
+[2025-10-31T09:58:14.881Z]
+convertCompletionInfo
+================================================================================
+
+[2025-10-31T09:58:15.120Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T09:58:15.120Z]
+3333
+================================================================================
+
+[2025-10-31T09:58:15.136Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T09:58:15.136Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+di {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T09:58:15.136Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  children.push(console.log('Starting simple test...'));
+  children.push(createComponentVNode(di,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T09:58:15.263Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T09:58:15.273Z]
+反悔了tokens
+================================================================================
+
+[2025-10-31T09:58:15.276Z]
+[
+  [
+    4,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    5,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    6,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    6,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    6,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    6,
+    24,
+    3,
+    11,
+    16
+  ],
+  [
+    7,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    7,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    7,
+    16,
+    20,
+    10,
+    0
+  ],
+  [
+    7,
+    44,
+    20,
+    10,
+    0
+  ],
+  [
+    7,
+    72,
+    7,
+    7,
+    34
+  ],
+  [
+    7,
+    83,
+    20,
+    10,
+    0
+  ],
+  [
+    7,
+    110,
+    7,
+    7,
+    34
+  ],
+  [
+    8,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    8,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    8,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    8,
+    24,
+    3,
+    11,
+    16
+  ]
+]
+================================================================================
+
+[2025-10-31T09:58:15.276Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T09:58:15.602Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T09:58:15.602Z]
+3333
+================================================================================
+
+[2025-10-31T09:58:15.615Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T09:58:15.615Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+div {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T09:58:15.615Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  children.push(console.log('Starting simple test...'));
+  children.push(createComponentVNode(div,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T09:58:15.999Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T09:58:16.001Z]
+反悔了tokens
+================================================================================
+
+[2025-10-31T09:58:16.001Z]
+[
+  [
+    4,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    5,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    6,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    6,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    6,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    6,
+    24,
+    3,
+    11,
+    16
+  ],
+  [
+    7,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    7,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    7,
+    16,
+    20,
+    10,
+    0
+  ],
+  [
+    7,
+    45,
+    20,
+    10,
+    0
+  ],
+  [
+    7,
+    73,
+    7,
+    7,
+    34
+  ],
+  [
+    7,
+    84,
+    20,
+    10,
+    0
+  ],
+  [
+    7,
+    111,
+    7,
+    7,
+    34
+  ],
+  [
+    8,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    8,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    8,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    8,
+    24,
+    3,
+    11,
+    16
+  ]
+]
+================================================================================
+
+[2025-10-31T09:58:16.001Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T10:14:34.761Z]
+createTypeScriptServices
+================================================================================
+
+[2025-10-31T10:14:34.768Z]
+getLocalTsdkPath
+================================================================================
+
+[2025-10-31T10:14:34.768Z]
+onInitialize
+================================================================================
+
+[2025-10-31T10:14:34.775Z]
+params
+================================================================================
+
+[2025-10-31T10:14:34.775Z]
+{
+  "processId": 18688,
+  "clientInfo": {
+    "name": "Visual Studio Code",
+    "version": "1.105.1"
+  },
+  "locale": "en",
+  "rootPath": "d:\\project\\qkyproject\\test-volar\\ovs",
+  "rootUri": "file:///d%3A/project/qkyproject/test-volar/ovs",
+  "capabilities": {
+    "workspace": {
+      "applyEdit": true,
+      "workspaceEdit": {
+        "documentChanges": true,
+        "resourceOperations": [
+          "create",
+          "rename",
+          "delete"
+        ],
+        "failureHandling": "textOnlyTransactional",
+        "normalizesLineEndings": true,
+        "changeAnnotationSupport": {
+          "groupsOnLabel": true
+        }
+      },
+      "configuration": true,
+      "didChangeWatchedFiles": {
+        "dynamicRegistration": true,
+        "relativePatternSupport": true
+      },
+      "symbol": {
+        "dynamicRegistration": true,
+        "symbolKind": {
+          "valueSet": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26
+          ]
+        },
+        "tagSupport": {
+          "valueSet": [
+            1
+          ]
+        },
+        "resolveSupport": {
+          "properties": [
+            "location.range"
+          ]
+        }
+      },
+      "codeLens": {
+        "refreshSupport": true
+      },
+      "executeCommand": {
+        "dynamicRegistration": true
+      },
+      "didChangeConfiguration": {
+        "dynamicRegistration": true
+      },
+      "workspaceFolders": true,
+      "foldingRange": {
+        "refreshSupport": true
+      },
+      "semanticTokens": {
+        "refreshSupport": true
+      },
+      "fileOperations": {
+        "dynamicRegistration": true,
+        "didCreate": true,
+        "didRename": true,
+        "didDelete": true,
+        "willCreate": true,
+        "willRename": true,
+        "willDelete": true
+      },
+      "inlineValue": {
+        "refreshSupport": true
+      },
+      "inlayHint": {
+        "refreshSupport": true
+      },
+      "diagnostics": {
+        "refreshSupport": true
+      }
+    },
+    "textDocument": {
+      "publishDiagnostics": {
+        "relatedInformation": true,
+        "versionSupport": false,
+        "tagSupport": {
+          "valueSet": [
+            1,
+            2
+          ]
+        },
+        "codeDescriptionSupport": true,
+        "dataSupport": true
+      },
+      "synchronization": {
+        "dynamicRegistration": true,
+        "willSave": true,
+        "willSaveWaitUntil": true,
+        "didSave": true
+      },
+      "completion": {
+        "dynamicRegistration": true,
+        "contextSupport": true,
+        "completionItem": {
+          "snippetSupport": true,
+          "commitCharactersSupport": true,
+          "documentationFormat": [
+            "markdown",
+            "plaintext"
+          ],
+          "deprecatedSupport": true,
+          "preselectSupport": true,
+          "tagSupport": {
+            "valueSet": [
+              1
+            ]
+          },
+          "insertReplaceSupport": true,
+          "resolveSupport": {
+            "properties": [
+              "documentation",
+              "detail",
+              "additionalTextEdits"
+            ]
+          },
+          "insertTextModeSupport": {
+            "valueSet": [
+              1,
+              2
+            ]
+          },
+          "labelDetailsSupport": true
+        },
+        "insertTextMode": 2,
+        "completionItemKind": {
+          "valueSet": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25
+          ]
+        },
+        "completionList": {
+          "itemDefaults": [
+            "commitCharacters",
+            "editRange",
+            "insertTextFormat",
+            "insertTextMode",
+            "data"
+          ]
+        }
+      },
+      "hover": {
+        "dynamicRegistration": true,
+        "contentFormat": [
+          "markdown",
+          "plaintext"
+        ]
+      },
+      "signatureHelp": {
+        "dynamicRegistration": true,
+        "signatureInformation": {
+          "documentationFormat": [
+            "markdown",
+            "plaintext"
+          ],
+          "parameterInformation": {
+            "labelOffsetSupport": true
+          },
+          "activeParameterSupport": true
+        },
+        "contextSupport": true
+      },
+      "definition": {
+        "dynamicRegistration": true,
+        "linkSupport": true
+      },
+      "references": {
+        "dynamicRegistration": true
+      },
+      "documentHighlight": {
+        "dynamicRegistration": true
+      },
+      "documentSymbol": {
+        "dynamicRegistration": true,
+        "symbolKind": {
+          "valueSet": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26
+          ]
+        },
+        "hierarchicalDocumentSymbolSupport": true,
+        "tagSupport": {
+          "valueSet": [
+            1
+          ]
+        },
+        "labelSupport": true
+      },
+      "codeAction": {
+        "dynamicRegistration": true,
+        "isPreferredSupport": true,
+        "disabledSupport": true,
+        "dataSupport": true,
+        "resolveSupport": {
+          "properties": [
+            "edit"
+          ]
+        },
+        "codeActionLiteralSupport": {
+          "codeActionKind": {
+            "valueSet": [
+              "",
+              "quickfix",
+              "refactor",
+              "refactor.extract",
+              "refactor.inline",
+              "refactor.rewrite",
+              "source",
+              "source.organizeImports"
+            ]
+          }
+        },
+        "honorsChangeAnnotations": true
+      },
+      "codeLens": {
+        "dynamicRegistration": true
+      },
+      "formatting": {
+        "dynamicRegistration": true
+      },
+      "rangeFormatting": {
+        "dynamicRegistration": true,
+        "rangesSupport": true
+      },
+      "onTypeFormatting": {
+        "dynamicRegistration": true
+      },
+      "rename": {
+        "dynamicRegistration": true,
+        "prepareSupport": true,
+        "prepareSupportDefaultBehavior": 1,
+        "honorsChangeAnnotations": true
+      },
+      "documentLink": {
+        "dynamicRegistration": true,
+        "tooltipSupport": true
+      },
+      "typeDefinition": {
+        "dynamicRegistration": true,
+        "linkSupport": true
+      },
+      "implementation": {
+        "dynamicRegistration": true,
+        "linkSupport": true
+      },
+      "colorProvider": {
+        "dynamicRegistration": true
+      },
+      "foldingRange": {
+        "dynamicRegistration": true,
+        "rangeLimit": 5000,
+        "lineFoldingOnly": true,
+        "foldingRangeKind": {
+          "valueSet": [
+            "comment",
+            "imports",
+            "region"
+          ]
+        },
+        "foldingRange": {
+          "collapsedText": false
+        }
+      },
+      "declaration": {
+        "dynamicRegistration": true,
+        "linkSupport": true
+      },
+      "selectionRange": {
+        "dynamicRegistration": true
+      },
+      "callHierarchy": {
+        "dynamicRegistration": true
+      },
+      "semanticTokens": {
+        "dynamicRegistration": true,
+        "tokenTypes": [
+          "namespace",
+          "type",
+          "class",
+          "enum",
+          "interface",
+          "struct",
+          "typeParameter",
+          "parameter",
+          "variable",
+          "property",
+          "enumMember",
+          "event",
+          "function",
+          "method",
+          "macro",
+          "keyword",
+          "modifier",
+          "comment",
+          "string",
+          "number",
+          "regexp",
+          "operator",
+          "decorator"
+        ],
+        "tokenModifiers": [
+          "declaration",
+          "definition",
+          "readonly",
+          "static",
+          "deprecated",
+          "abstract",
+          "async",
+          "modification",
+          "documentation",
+          "defaultLibrary"
+        ],
+        "formats": [
+          "relative"
+        ],
+        "requests": {
+          "range": true,
+          "full": {
+            "delta": true
+          }
+        },
+        "multilineTokenSupport": false,
+        "overlappingTokenSupport": false,
+        "serverCancelSupport": true,
+        "augmentsSyntaxTokens": true
+      },
+      "linkedEditingRange": {
+        "dynamicRegistration": true
+      },
+      "typeHierarchy": {
+        "dynamicRegistration": true
+      },
+      "inlineValue": {
+        "dynamicRegistration": true
+      },
+      "inlayHint": {
+        "dynamicRegistration": true,
+        "resolveSupport": {
+          "properties": [
+            "tooltip",
+            "textEdits",
+            "label.tooltip",
+            "label.location",
+            "label.command"
+          ]
+        }
+      },
+      "diagnostic": {
+        "dynamicRegistration": true,
+        "relatedDocumentSupport": false
+      }
+    },
+    "window": {
+      "showMessage": {
+        "messageActionItem": {
+          "additionalPropertiesSupport": true
+        }
+      },
+      "showDocument": {
+        "support": true
+      },
+      "workDoneProgress": true
+    },
+    "general": {
+      "staleRequestSupport": {
+        "cancel": true,
+        "retryOnContentModified": [
+          "textDocument/semanticTokens/full",
+          "textDocument/semanticTokens/range",
+          "textDocument/semanticTokens/full/delta"
+        ]
+      },
+      "regularExpressions": {
+        "engine": "ECMAScript",
+        "version": "ES2020"
+      },
+      "markdown": {
+        "parser": "marked",
+        "version": "1.1.0"
+      },
+      "positionEncodings": [
+        "utf-16"
+      ]
+    },
+    "notebookDocument": {
+      "synchronization": {
+        "dynamicRegistration": true,
+        "executionSummarySupport": true
+      }
+    }
+  },
+  "trace": "off",
+  "workspaceFolders": [
+    {
+      "uri": "file:///d%3A/project/qkyproject/test-volar/ovs",
+      "name": "ovs"
+    }
+  ]
+}
+================================================================================
+
+[2025-10-31T10:14:35.134Z]
+res.capabilities.completionProvider.triggerCharacters
+================================================================================
+
+[2025-10-31T10:14:35.134Z]
+{
+  "textDocumentSync": 2,
+  "workspace": {
+    "workspaceFolders": {
+      "supported": true,
+      "changeNotifications": true
+    }
+  },
+  "selectionRangeProvider": true,
+  "foldingRangeProvider": true,
+  "documentSymbolProvider": true,
+  "documentFormattingProvider": true,
+  "documentRangeFormattingProvider": true,
+  "referencesProvider": true,
+  "implementationProvider": true,
+  "definitionProvider": true,
+  "typeDefinitionProvider": true,
+  "callHierarchyProvider": true,
+  "hoverProvider": true,
+  "documentHighlightProvider": true,
+  "workspaceSymbolProvider": {},
+  "renameProvider": {
+    "prepareProvider": true
+  },
+  "inlayHintProvider": {},
+  "signatureHelpProvider": {
+    "triggerCharacters": [
+      "(",
+      ",",
+      "<"
+    ],
+    "retriggerCharacters": [
+      ")"
+    ]
+  },
+  "completionProvider": {
+    "triggerCharacters": [
+      ".",
+      "\"",
+      "'",
+      "`",
+      "/",
+      "<",
+      "@",
+      "#",
+      "*"
+    ],
+    "resolveProvider": true
+  },
+  "semanticTokensProvider": {
+    "full": true,
+    "range": true,
+    "legend": {
+      "tokenTypes": [
+        "namespace",
+        "class",
+        "enum",
+        "interface",
+        "typeParameter",
+        "type",
+        "parameter",
+        "variable",
+        "property",
+        "enumMember",
+        "function",
+        "method"
+      ],
+      "tokenModifiers": [
+        "declaration",
+        "readonly",
+        "static",
+        "async",
+        "defaultLibrary",
+        "local"
+      ]
+    }
+  },
+  "codeActionProvider": {
+    "codeActionKinds": [
+      "",
+      "quickfix",
+      "refactor",
+      "refactor.extract",
+      "refactor.inline",
+      "refactor.rewrite",
+      "source",
+      "source.fixAll",
+      "source.organizeImports"
+    ],
+    "resolveProvider": true
+  },
+  "documentOnTypeFormattingProvider": {
+    "firstTriggerCharacter": ";",
+    "moreTriggerCharacter": [
+      "}",
+      "\n"
+    ]
+  },
+  "experimental": {
+    "autoInsertionProvider": {
+      "triggerCharacters": [
+        ">"
+      ],
+      "configurationSections": [
+        [
+          "javascript.autoClosingTags",
+          "typescript.autoClosingTags"
+        ]
+      ]
+    },
+    "fileRenameEditsProvider": true,
+    "fileReferencesProvider": true
+  }
+}
+================================================================================
+
+[2025-10-31T10:14:38.027Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T10:14:38.027Z]
+3333
+================================================================================
+
+[2025-10-31T10:14:38.064Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T10:14:38.064Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+div {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T10:14:38.064Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  children.push(console.log('Starting simple test...'));
+  children.push(createComponentVNode(div,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T10:14:38.810Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T10:14:38.811Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T10:14:38.848Z]
+反悔了tokens
+================================================================================
+
+[2025-10-31T10:14:38.848Z]
+[
+  [
+    4,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    5,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    6,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    6,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    6,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    6,
+    24,
+    3,
+    11,
+    16
+  ],
+  [
+    7,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    7,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    7,
+    16,
+    20,
+    10,
+    0
+  ],
+  [
+    7,
+    45,
+    20,
+    10,
+    0
+  ],
+  [
+    7,
+    73,
+    7,
+    7,
+    34
+  ],
+  [
+    7,
+    84,
+    20,
+    10,
+    0
+  ],
+  [
+    7,
+    111,
+    7,
+    7,
+    34
+  ],
+  [
+    8,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    8,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    8,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    8,
+    24,
+    3,
+    11,
+    16
+  ]
+]
+================================================================================
+
+[2025-10-31T10:14:38.849Z]
+反悔了tokens
+================================================================================
+
+[2025-10-31T10:14:38.849Z]
+[
+  [
+    4,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    5,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    6,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    6,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    6,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    6,
+    24,
+    3,
+    11,
+    16
+  ],
+  [
+    7,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    7,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    7,
+    16,
+    20,
+    10,
+    0
+  ],
+  [
+    7,
+    45,
+    20,
+    10,
+    0
+  ],
+  [
+    7,
+    73,
+    7,
+    7,
+    34
+  ],
+  [
+    7,
+    84,
+    20,
+    10,
+    0
+  ],
+  [
+    7,
+    111,
+    7,
+    7,
+    34
+  ],
+  [
+    8,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    8,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    8,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    8,
+    24,
+    3,
+    11,
+    16
+  ]
+]
+================================================================================
+
+[2025-10-31T10:14:38.852Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T10:14:38.852Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T10:14:46.046Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T10:14:46.046Z]
+3333
+================================================================================
+
+[2025-10-31T10:14:46.115Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T10:14:46.115Z]
+import { h, ref, computed } from 'vue'
+
+const count = ref(0)
+
+setInterval(() => {
+  count.value++
+  console.log('计数器：', count.value)
+}, 1000)
+================================================================================
+
+[2025-10-31T10:14:46.116Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+import {h,ref,computed} from 'vue';
+export default (function(){
+  const children = [];
+  const count = ref(0);
+  children.push(setInterval(() => {
+    count.value++;
+    console.log('计数器：',count.value);
+  },1000));
+  return children})()
+================================================================================
+
+[2025-10-31T10:14:46.119Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T10:14:46.197Z]
+反悔了tokens
+================================================================================
+
+[2025-10-31T10:14:46.197Z]
+[
+  [
+    4,
+    8,
+    8,
+    7,
+    35
+  ],
+  [
+    5,
+    8,
+    5,
+    7,
+    35
+  ],
+  [
+    5,
+    16,
+    3,
+    10,
+    0
+  ],
+  [
+    6,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    6,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    6,
+    16,
+    11,
+    10,
+    16
+  ],
+  [
+    7,
+    4,
+    5,
+    7,
+    34
+  ],
+  [
+    7,
+    10,
+    5,
+    8,
+    0
+  ],
+  [
+    8,
+    4,
+    7,
+    7,
+    16
+  ],
+  [
+    8,
+    12,
+    3,
+    11,
+    16
+  ],
+  [
+    8,
+    23,
+    5,
+    7,
+    34
+  ],
+  [
+    8,
+    29,
+    5,
+    8,
+    0
+  ]
+]
+================================================================================
+
+[2025-10-31T10:14:46.197Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T10:14:46.213Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T10:14:46.214Z]
+反悔了tokens
+================================================================================
+
+[2025-10-31T10:14:46.214Z]
+[
+  [
+    4,
+    8,
+    8,
+    7,
+    35
+  ],
+  [
+    5,
+    8,
+    5,
+    7,
+    35
+  ],
+  [
+    5,
+    16,
+    3,
+    10,
+    0
+  ],
+  [
+    6,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    6,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    6,
+    16,
+    11,
+    10,
+    16
+  ],
+  [
+    7,
+    4,
+    5,
+    7,
+    34
+  ],
+  [
+    7,
+    10,
+    5,
+    8,
+    0
+  ],
+  [
+    8,
+    4,
+    7,
+    7,
+    16
+  ],
+  [
+    8,
+    12,
+    3,
+    11,
+    16
+  ],
+  [
+    8,
+    23,
+    5,
+    7,
+    34
+  ],
+  [
+    8,
+    29,
+    5,
+    8,
+    0
+  ]
+]
+================================================================================
+
+[2025-10-31T10:14:46.214Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T10:14:48.272Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T10:14:48.274Z]
+反悔了tokens
+================================================================================
+
+[2025-10-31T10:14:48.274Z]
+[
+  [
+    4,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    5,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    6,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    6,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    6,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    6,
+    24,
+    3,
+    11,
+    16
+  ],
+  [
+    7,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    7,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    7,
+    16,
+    20,
+    10,
+    0
+  ],
+  [
+    7,
+    45,
+    20,
+    10,
+    0
+  ],
+  [
+    7,
+    73,
+    7,
+    7,
+    34
+  ],
+  [
+    7,
+    84,
+    20,
+    10,
+    0
+  ],
+  [
+    7,
+    111,
+    7,
+    7,
+    34
+  ],
+  [
+    8,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    8,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    8,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    8,
+    24,
+    3,
+    11,
+    16
+  ]
+]
+================================================================================
+
+[2025-10-31T10:14:48.275Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T10:14:56.600Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T10:14:56.600Z]
+3333
+================================================================================
+
+[2025-10-31T10:14:56.629Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T10:14:56.630Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+di {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T10:14:56.630Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  children.push(console.log('Starting simple test...'));
+  children.push(createComponentVNode(di,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T10:14:56.773Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T10:14:56.774Z]
+3333
+================================================================================
+
+[2025-10-31T10:14:56.788Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T10:14:56.789Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+d {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T10:14:56.789Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  children.push(console.log('Starting simple test...'));
+  children.push(createComponentVNode(d,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T10:14:56.944Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T10:14:56.944Z]
+3333
+================================================================================
+
+[2025-10-31T10:14:56.959Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T10:14:56.959Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+ {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T10:14:56.959Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  children.push(console.log('Starting simple test...'));
+  {
+    createComponentVNode(h1,{},[appName,]);
+    createComponentVNode(p,{},[version,]);
+  }  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T10:14:57.021Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T10:14:57.024Z]
+反悔了tokens
+================================================================================
+
+[2025-10-31T10:14:57.024Z]
+[
+  [
+    4,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    5,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    6,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    6,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    6,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    6,
+    24,
+    3,
+    11,
+    16
+  ],
+  [
+    8,
+    4,
+    20,
+    10,
+    0
+  ],
+  [
+    8,
+    32,
+    7,
+    7,
+    34
+  ],
+  [
+    9,
+    4,
+    20,
+    10,
+    0
+  ],
+  [
+    9,
+    31,
+    7,
+    7,
+    34
+  ],
+  [
+    10,
+    5,
+    8,
+    7,
+    34
+  ],
+  [
+    10,
+    14,
+    4,
+    11,
+    16
+  ],
+  [
+    10,
+    19,
+    7,
+    7,
+    16
+  ],
+  [
+    10,
+    27,
+    3,
+    11,
+    16
+  ]
+]
+================================================================================
+
+[2025-10-31T10:14:57.025Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T10:14:57.795Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T10:14:57.795Z]
+3333
+================================================================================
+
+[2025-10-31T10:14:57.813Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T10:14:57.813Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+d {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T10:14:57.813Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  children.push(console.log('Starting simple test...'));
+  children.push(createComponentVNode(d,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T10:15:00.232Z]
+languageService.getCompletionsAtPosition(
+================================================================================
+
+[2025-10-31T10:15:00.233Z]
+offset：285
+================================================================================
+
+[2025-10-31T10:15:00.233Z]
+triggerKind：1
+================================================================================
+
+[2025-10-31T10:15:00.233Z]
+存在info
+================================================================================
+
+[2025-10-31T10:15:00.233Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  children.push(console.log('Starting simple test...'));
+  children.push(createComponentVNode(d,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T10:15:00.233Z]
+998
+================================================================================
+
+[2025-10-31T10:15:00.234Z]
+convertCompletionInfo
+================================================================================
+
+[2025-10-31T10:15:00.272Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T10:15:00.274Z]
+反悔了tokens
+================================================================================
+
+[2025-10-31T10:15:00.274Z]
+[
+  [
+    4,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    5,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    6,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    6,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    6,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    6,
+    24,
+    3,
+    11,
+    16
+  ],
+  [
+    7,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    7,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    7,
+    16,
+    20,
+    10,
+    0
+  ],
+  [
+    7,
+    43,
+    20,
+    10,
+    0
+  ],
+  [
+    7,
+    71,
+    7,
+    7,
+    34
+  ],
+  [
+    7,
+    82,
+    20,
+    10,
+    0
+  ],
+  [
+    7,
+    109,
+    7,
+    7,
+    34
+  ],
+  [
+    8,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    8,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    8,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    8,
+    24,
+    3,
+    11,
+    16
+  ]
+]
+================================================================================
+
+[2025-10-31T10:15:00.275Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T10:15:00.291Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T10:15:00.291Z]
+3333
+================================================================================
+
+[2025-10-31T10:15:00.307Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T10:15:00.307Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+di {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T10:15:00.307Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  children.push(console.log('Starting simple test...'));
+  children.push(createComponentVNode(di,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T10:15:00.357Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T10:15:00.358Z]
+3333
+================================================================================
+
+[2025-10-31T10:15:00.375Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T10:15:00.376Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+div {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T10:15:00.376Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  children.push(console.log('Starting simple test...'));
+  children.push(createComponentVNode(div,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T10:15:00.423Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T10:15:00.425Z]
+反悔了tokens
+================================================================================
+
+[2025-10-31T10:15:00.426Z]
+[
+  [
+    4,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    5,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    6,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    6,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    6,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    6,
+    24,
+    3,
+    11,
+    16
+  ],
+  [
+    7,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    7,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    7,
+    16,
+    20,
+    10,
+    0
+  ],
+  [
+    7,
+    45,
+    20,
+    10,
+    0
+  ],
+  [
+    7,
+    73,
+    7,
+    7,
+    34
+  ],
+  [
+    7,
+    84,
+    20,
+    10,
+    0
+  ],
+  [
+    7,
+    111,
+    7,
+    7,
+    34
+  ],
+  [
+    8,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    8,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    8,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    8,
+    24,
+    3,
+    11,
+    16
+  ]
+]
+================================================================================
+
+[2025-10-31T10:15:00.426Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T10:15:01.861Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T10:15:01.862Z]
+3333
+================================================================================
+
+[2025-10-31T10:15:01.877Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T10:15:01.877Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+di {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T10:15:01.877Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  children.push(console.log('Starting simple test...'));
+  children.push(createComponentVNode(di,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T10:15:02.277Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T10:15:02.278Z]
+反悔了tokens
+================================================================================
+
+[2025-10-31T10:15:02.279Z]
+[
+  [
+    4,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    5,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    6,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    6,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    6,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    6,
+    24,
+    3,
+    11,
+    16
+  ],
+  [
+    7,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    7,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    7,
+    16,
+    20,
+    10,
+    0
+  ],
+  [
+    7,
+    44,
+    20,
+    10,
+    0
+  ],
+  [
+    7,
+    72,
+    7,
+    7,
+    34
+  ],
+  [
+    7,
+    83,
+    20,
+    10,
+    0
+  ],
+  [
+    7,
+    110,
+    7,
+    7,
+    34
+  ],
+  [
+    8,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    8,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    8,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    8,
+    24,
+    3,
+    11,
+    16
+  ]
+]
+================================================================================
+
+[2025-10-31T10:15:02.279Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T10:15:02.478Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T10:15:02.478Z]
+3333
+================================================================================
+
+[2025-10-31T10:15:02.490Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T10:15:02.490Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+div {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T10:15:02.490Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  children.push(console.log('Starting simple test...'));
+  children.push(createComponentVNode(div,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T10:15:02.908Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T10:15:02.910Z]
+反悔了tokens
+================================================================================
+
+[2025-10-31T10:15:02.910Z]
+[
+  [
+    4,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    5,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    6,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    6,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    6,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    6,
+    24,
+    3,
+    11,
+    16
+  ],
+  [
+    7,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    7,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    7,
+    16,
+    20,
+    10,
+    0
+  ],
+  [
+    7,
+    45,
+    20,
+    10,
+    0
+  ],
+  [
+    7,
+    73,
+    7,
+    7,
+    34
+  ],
+  [
+    7,
+    84,
+    20,
+    10,
+    0
+  ],
+  [
+    7,
+    111,
+    7,
+    7,
+    34
+  ],
+  [
+    8,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    8,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    8,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    8,
+    24,
+    3,
+    11,
+    16
+  ]
+]
+================================================================================
+
+[2025-10-31T10:15:02.911Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T10:15:06.044Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T10:15:06.044Z]
+3333
+================================================================================
+
+[2025-10-31T10:15:06.066Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T10:15:06.066Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+
+div {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T10:15:06.066Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  children.push(console.log('Starting simple test...'));
+  children.push(createComponentVNode(div,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T10:15:06.224Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T10:15:06.225Z]
+3333
+================================================================================
+
+[2025-10-31T10:15:06.238Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T10:15:06.239Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+
+
+div {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T10:15:06.239Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  children.push(console.log('Starting simple test...'));
+  children.push(createComponentVNode(div,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T10:15:06.466Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T10:15:06.468Z]
+反悔了tokens
+================================================================================
+
+[2025-10-31T10:15:06.468Z]
+[
+  [
+    4,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    5,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    6,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    6,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    6,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    6,
+    24,
+    3,
+    11,
+    16
+  ],
+  [
+    7,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    7,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    7,
+    16,
+    20,
+    10,
+    0
+  ],
+  [
+    7,
+    45,
+    20,
+    10,
+    0
+  ],
+  [
+    7,
+    73,
+    7,
+    7,
+    34
+  ],
+  [
+    7,
+    84,
+    20,
+    10,
+    0
+  ],
+  [
+    7,
+    111,
+    7,
+    7,
+    34
+  ],
+  [
+    8,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    8,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    8,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    8,
+    24,
+    3,
+    11,
+    16
+  ]
+]
+================================================================================
+
+[2025-10-31T10:15:06.468Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T10:15:06.642Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T10:15:06.643Z]
+3333
+================================================================================
+
+[2025-10-31T10:15:06.658Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T10:15:06.658Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+f
+
+div {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T10:15:06.658Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  children.push(console.log('Starting simple test...'));
+  children.push(f);
+  children.push(createComponentVNode(div,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T10:15:06.702Z]
+languageService.getCompletionsAtPosition(
+================================================================================
+
+[2025-10-31T10:15:06.702Z]
+offset：264
+================================================================================
+
+[2025-10-31T10:15:06.702Z]
+triggerKind：1
+================================================================================
+
+[2025-10-31T10:15:06.702Z]
+存在info
+================================================================================
+
+[2025-10-31T10:15:06.702Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  children.push(console.log('Starting simple test...'));
+  children.push(f);
+  children.push(createComponentVNode(div,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T10:15:06.702Z]
+985
+================================================================================
+
+[2025-10-31T10:15:06.702Z]
+convertCompletionInfo
+================================================================================
+
+[2025-10-31T10:15:06.868Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T10:15:06.868Z]
+3333
+================================================================================
+
+[2025-10-31T10:15:06.882Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T10:15:06.883Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+fu
+
+div {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T10:15:06.883Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  children.push(console.log('Starting simple test...'));
+  children.push(fu);
+  children.push(createComponentVNode(div,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T10:15:07.079Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T10:15:07.081Z]
+反悔了tokens
+================================================================================
+
+[2025-10-31T10:15:07.081Z]
+[
+  [
+    4,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    5,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    6,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    6,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    6,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    6,
+    24,
+    3,
+    11,
+    16
+  ],
+  [
+    7,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    7,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    8,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    8,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    8,
+    16,
+    20,
+    10,
+    0
+  ],
+  [
+    8,
+    45,
+    20,
+    10,
+    0
+  ],
+  [
+    8,
+    73,
+    7,
+    7,
+    34
+  ],
+  [
+    8,
+    84,
+    20,
+    10,
+    0
+  ],
+  [
+    8,
+    111,
+    7,
+    7,
+    34
+  ],
+  [
+    9,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    9,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    9,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    9,
+    24,
+    3,
+    11,
+    16
+  ]
+]
+================================================================================
+
+[2025-10-31T10:15:07.081Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T10:15:07.094Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T10:15:07.094Z]
+3333
+================================================================================
+
+[2025-10-31T10:15:07.109Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T10:15:07.110Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+fun
+
+div {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T10:15:07.110Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  children.push(console.log('Starting simple test...'));
+  children.push(fun);
+  children.push(createComponentVNode(div,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T10:15:07.192Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T10:15:07.192Z]
+3333
+================================================================================
+
+[2025-10-31T10:15:07.208Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T10:15:07.208Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+func
+
+div {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T10:15:07.208Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  children.push(console.log('Starting simple test...'));
+  children.push(func);
+  children.push(createComponentVNode(div,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T10:15:07.387Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T10:15:07.387Z]
+3333
+================================================================================
+
+[2025-10-31T10:15:07.402Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T10:15:07.402Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+funct
+
+div {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T10:15:07.402Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  children.push(console.log('Starting simple test...'));
+  children.push(funct);
+  children.push(createComponentVNode(div,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T10:15:07.423Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T10:15:07.423Z]
+3333
+================================================================================
+
+[2025-10-31T10:15:07.436Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T10:15:07.436Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+functi
+
+div {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T10:15:07.436Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  children.push(console.log('Starting simple test...'));
+  children.push(functi);
+  children.push(createComponentVNode(div,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T10:15:07.513Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T10:15:07.513Z]
+3333
+================================================================================
+
+[2025-10-31T10:15:07.526Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T10:15:07.526Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+functio
+
+div {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T10:15:07.526Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  children.push(console.log('Starting simple test...'));
+  children.push(functio);
+  children.push(createComponentVNode(div,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T10:15:07.552Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T10:15:07.553Z]
+反悔了tokens
+================================================================================
+
+[2025-10-31T10:15:07.554Z]
+[
+  [
+    4,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    5,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    6,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    6,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    6,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    6,
+    24,
+    3,
+    11,
+    16
+  ],
+  [
+    7,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    7,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    8,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    8,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    8,
+    16,
+    20,
+    10,
+    0
+  ],
+  [
+    8,
+    45,
+    20,
+    10,
+    0
+  ],
+  [
+    8,
+    73,
+    7,
+    7,
+    34
+  ],
+  [
+    8,
+    84,
+    20,
+    10,
+    0
+  ],
+  [
+    8,
+    111,
+    7,
+    7,
+    34
+  ],
+  [
+    9,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    9,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    9,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    9,
+    24,
+    3,
+    11,
+    16
+  ]
+]
+================================================================================
+
+[2025-10-31T10:15:07.554Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T10:15:07.618Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T10:15:07.618Z]
+3333
+================================================================================
+
+[2025-10-31T10:15:07.625Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T10:15:07.626Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+function
+
+div {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T10:15:07.626Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  children.push(console.log('Starting simple test...'));
+  return children})()
+================================================================================
+
+[2025-10-31T10:15:07.771Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T10:15:07.771Z]
+3333
+================================================================================
+
+[2025-10-31T10:15:07.780Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T10:15:07.780Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+function 
+
+div {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T10:15:07.780Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  children.push(console.log('Starting simple test...'));
+  return children})()
+================================================================================
+
+[2025-10-31T10:15:07.906Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T10:15:07.906Z]
+3333
+================================================================================
+
+[2025-10-31T10:15:07.914Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T10:15:07.914Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+function d
+
+div {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T10:15:07.914Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  children.push(console.log('Starting simple test...'));
+  return children})()
+================================================================================
+
+[2025-10-31T10:15:08.034Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T10:15:08.034Z]
+3333
+================================================================================
+
+[2025-10-31T10:15:08.041Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T10:15:08.042Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+function di
+
+div {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T10:15:08.042Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  children.push(console.log('Starting simple test...'));
+  return children})()
+================================================================================
+
+[2025-10-31T10:15:08.065Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T10:15:08.066Z]
+反悔了tokens
+================================================================================
+
+[2025-10-31T10:15:08.066Z]
+[
+  [
+    4,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    5,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    6,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    6,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    6,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    6,
+    24,
+    3,
+    11,
+    16
+  ]
+]
+================================================================================
+
+[2025-10-31T10:15:08.066Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T10:15:08.152Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T10:15:08.152Z]
+3333
+================================================================================
+
+[2025-10-31T10:15:08.159Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T10:15:08.159Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+function div
+
+div {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T10:15:08.159Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  children.push(console.log('Starting simple test...'));
+  return children})()
+================================================================================
+
+[2025-10-31T10:15:08.425Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T10:15:08.426Z]
+3333
+================================================================================
+
+[2025-10-31T10:15:08.432Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T10:15:08.432Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+function div1
+
+div {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T10:15:08.432Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  children.push(console.log('Starting simple test...'));
+  return children})()
+================================================================================
+
+[2025-10-31T10:15:08.546Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T10:15:08.548Z]
+反悔了tokens
+================================================================================
+
+[2025-10-31T10:15:08.548Z]
+[
+  [
+    4,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    5,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    6,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    6,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    6,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    6,
+    24,
+    3,
+    11,
+    16
+  ]
+]
+================================================================================
+
+[2025-10-31T10:15:08.548Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T10:15:08.790Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T10:15:08.790Z]
+3333
+================================================================================
+
+[2025-10-31T10:15:08.799Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T10:15:08.800Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+function div1()
+
+div {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T10:15:08.800Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  children.push(console.log('Starting simple test...'));
+  return children})()
+================================================================================
+
+[2025-10-31T10:15:08.869Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T10:15:08.869Z]
+3333
+================================================================================
+
+[2025-10-31T10:15:08.877Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T10:15:08.877Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+function div1()
+
+div {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T10:15:08.877Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  children.push(console.log('Starting simple test...'));
+  return children})()
+================================================================================
+
+[2025-10-31T10:15:09.015Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T10:15:09.016Z]
+3333
+================================================================================
+
+[2025-10-31T10:15:09.029Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T10:15:09.030Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+function div1(){}
+
+div {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T10:15:09.030Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  function div1(){
+      }
+  children.push(console.log('Starting simple test...'));
+  children.push(createComponentVNode(div,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T10:15:09.221Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T10:15:09.224Z]
+反悔了tokens
+================================================================================
+
+[2025-10-31T10:15:09.224Z]
+[
+  [
+    4,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    5,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    6,
+    11,
+    4,
+    10,
+    33
+  ],
+  [
+    8,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    8,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    8,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    8,
+    24,
+    3,
+    11,
+    16
+  ],
+  [
+    9,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    9,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    9,
+    16,
+    20,
+    10,
+    0
+  ],
+  [
+    9,
+    45,
+    20,
+    10,
+    0
+  ],
+  [
+    9,
+    73,
+    7,
+    7,
+    34
+  ],
+  [
+    9,
+    84,
+    20,
+    10,
+    0
+  ],
+  [
+    9,
+    111,
+    7,
+    7,
+    34
+  ],
+  [
+    10,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    10,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    10,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    10,
+    24,
+    3,
+    11,
+    16
+  ]
+]
+================================================================================
+
+[2025-10-31T10:15:09.225Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T10:15:09.392Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T10:15:09.392Z]
+3333
+================================================================================
+
+[2025-10-31T10:15:09.407Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T10:15:09.408Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+function div1(){
+  
+}
+
+div {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T10:15:09.408Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  function div1(){
+      }
+  children.push(console.log('Starting simple test...'));
+  children.push(createComponentVNode(div,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T10:15:09.824Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T10:15:09.825Z]
+反悔了tokens
+================================================================================
+
+[2025-10-31T10:15:09.825Z]
+[
+  [
+    4,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    5,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    6,
+    11,
+    4,
+    10,
+    33
+  ],
+  [
+    8,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    8,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    8,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    8,
+    24,
+    3,
+    11,
+    16
+  ],
+  [
+    9,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    9,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    9,
+    16,
+    20,
+    10,
+    0
+  ],
+  [
+    9,
+    45,
+    20,
+    10,
+    0
+  ],
+  [
+    9,
+    73,
+    7,
+    7,
+    34
+  ],
+  [
+    9,
+    84,
+    20,
+    10,
+    0
+  ],
+  [
+    9,
+    111,
+    7,
+    7,
+    34
+  ],
+  [
+    10,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    10,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    10,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    10,
+    24,
+    3,
+    11,
+    16
+  ]
+]
+================================================================================
+
+[2025-10-31T10:15:09.826Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T10:15:09.858Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T10:15:09.858Z]
+3333
+================================================================================
+
+[2025-10-31T10:15:09.874Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T10:15:09.875Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+function div1(){
+  c
+}
+
+div {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T10:15:09.875Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  function div1(){
+    c;
+  }
+  children.push(console.log('Starting simple test...'));
+  children.push(createComponentVNode(div,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T10:15:09.916Z]
+languageService.getCompletionsAtPosition(
+================================================================================
+
+[2025-10-31T10:15:09.917Z]
+offset：214
+================================================================================
+
+[2025-10-31T10:15:09.917Z]
+triggerKind：1
+================================================================================
+
+[2025-10-31T10:15:09.917Z]
+存在info
+================================================================================
+
+[2025-10-31T10:15:09.917Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  function div1(){
+    c;
+  }
+  children.push(console.log('Starting simple test...'));
+  children.push(createComponentVNode(div,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T10:15:09.917Z]
+1026
+================================================================================
+
+[2025-10-31T10:15:09.918Z]
+convertCompletionInfo
+================================================================================
+
+[2025-10-31T10:15:09.967Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T10:15:09.967Z]
+3333
+================================================================================
+
+[2025-10-31T10:15:09.981Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T10:15:09.981Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+function div1(){
+  co
+}
+
+div {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T10:15:09.981Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  function div1(){
+    co;
+  }
+  children.push(console.log('Starting simple test...'));
+  children.push(createComponentVNode(div,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T10:15:10.113Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T10:15:10.113Z]
+3333
+================================================================================
+
+[2025-10-31T10:15:10.129Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T10:15:10.129Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+function div1(){
+  cons
+}
+
+div {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T10:15:10.129Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  function div1(){
+    cons;
+  }
+  children.push(console.log('Starting simple test...'));
+  children.push(createComponentVNode(div,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T10:15:10.268Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T10:15:10.268Z]
+3333
+================================================================================
+
+[2025-10-31T10:15:10.283Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T10:15:10.283Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+function div1(){
+  conso
+}
+
+div {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T10:15:10.283Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  function div1(){
+    conso;
+  }
+  children.push(console.log('Starting simple test...'));
+  children.push(createComponentVNode(div,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T10:15:10.309Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T10:15:10.310Z]
+反悔了tokens
+================================================================================
+
+[2025-10-31T10:15:10.311Z]
+[
+  [
+    4,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    5,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    6,
+    11,
+    4,
+    10,
+    33
+  ],
+  [
+    9,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    9,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    9,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    9,
+    24,
+    3,
+    11,
+    16
+  ],
+  [
+    10,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    10,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    10,
+    16,
+    20,
+    10,
+    0
+  ],
+  [
+    10,
+    45,
+    20,
+    10,
+    0
+  ],
+  [
+    10,
+    73,
+    7,
+    7,
+    34
+  ],
+  [
+    10,
+    84,
+    20,
+    10,
+    0
+  ],
+  [
+    10,
+    111,
+    7,
+    7,
+    34
+  ],
+  [
+    11,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    11,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    11,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    11,
+    24,
+    3,
+    11,
+    16
+  ]
+]
+================================================================================
+
+[2025-10-31T10:15:10.311Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T10:15:10.426Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T10:15:10.426Z]
+3333
+================================================================================
+
+[2025-10-31T10:15:10.442Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T10:15:10.442Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+function div1(){
+  console
+}
+
+div {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T10:15:10.442Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  function div1(){
+    console;
+  }
+  children.push(console.log('Starting simple test...'));
+  children.push(createComponentVNode(div,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T10:15:10.583Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T10:15:10.584Z]
+3333
+================================================================================
+
+[2025-10-31T10:15:10.593Z]
+styleErrrrrrrr
+================================================================================
+
+[2025-10-31T10:15:10.593Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+function div1(){
+  console.
+}
+
+div {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T10:15:10.593Z]
+this.tokenConsumer.NullTok is not a function
+================================================================================
+
+[2025-10-31T10:15:10.593Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T10:15:10.593Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+function div1(){
+  console.
+}
+
+div {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T10:15:10.594Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+function div1(){
+  console.
+}
+
+div {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T10:15:10.757Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T10:15:10.757Z]
+3333
+================================================================================
+
+[2025-10-31T10:15:10.772Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T10:15:10.773Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+function div1(){
+  console.l
+}
+
+div {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T10:15:10.773Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  function div1(){
+    console.l;
+  }
+  children.push(console.log('Starting simple test...'));
+  children.push(createComponentVNode(div,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T10:15:10.820Z]
+languageService.getCompletionsAtPosition(
+================================================================================
+
+[2025-10-31T10:15:10.820Z]
+offset：222
+================================================================================
+
+[2025-10-31T10:15:10.820Z]
+triggerKind：1
+================================================================================
+
+[2025-10-31T10:15:10.820Z]
+存在info
+================================================================================
+
+[2025-10-31T10:15:10.821Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  function div1(){
+    console.l;
+  }
+  children.push(console.log('Starting simple test...'));
+  children.push(createComponentVNode(div,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T10:15:10.821Z]
+34
+================================================================================
+
+[2025-10-31T10:15:10.821Z]
+convertCompletionInfo
+================================================================================
+
+[2025-10-31T10:15:10.849Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T10:15:10.851Z]
+反悔了tokens
+================================================================================
+
+[2025-10-31T10:15:10.851Z]
+[
+  [
+    4,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    5,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    6,
+    11,
+    4,
+    10,
+    33
+  ],
+  [
+    7,
+    4,
+    7,
+    7,
+    16
+  ],
+  [
+    9,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    9,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    9,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    9,
+    24,
+    3,
+    11,
+    16
+  ],
+  [
+    10,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    10,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    10,
+    16,
+    20,
+    10,
+    0
+  ],
+  [
+    10,
+    45,
+    20,
+    10,
+    0
+  ],
+  [
+    10,
+    73,
+    7,
+    7,
+    34
+  ],
+  [
+    10,
+    84,
+    20,
+    10,
+    0
+  ],
+  [
+    10,
+    111,
+    7,
+    7,
+    34
+  ],
+  [
+    11,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    11,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    11,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    11,
+    24,
+    3,
+    11,
+    16
+  ]
+]
+================================================================================
+
+[2025-10-31T10:15:10.852Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T10:15:10.935Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T10:15:10.935Z]
+3333
+================================================================================
+
+[2025-10-31T10:15:10.950Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T10:15:10.951Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+function div1(){
+  console.lo
+}
+
+div {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T10:15:10.951Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  function div1(){
+    console.lo;
+  }
+  children.push(console.log('Starting simple test...'));
+  children.push(createComponentVNode(div,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T10:15:11.342Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T10:15:11.344Z]
+反悔了tokens
+================================================================================
+
+[2025-10-31T10:15:11.344Z]
+[
+  [
+    4,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    5,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    6,
+    11,
+    4,
+    10,
+    33
+  ],
+  [
+    7,
+    4,
+    7,
+    7,
+    16
+  ],
+  [
+    9,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    9,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    9,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    9,
+    24,
+    3,
+    11,
+    16
+  ],
+  [
+    10,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    10,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    10,
+    16,
+    20,
+    10,
+    0
+  ],
+  [
+    10,
+    45,
+    20,
+    10,
+    0
+  ],
+  [
+    10,
+    73,
+    7,
+    7,
+    34
+  ],
+  [
+    10,
+    84,
+    20,
+    10,
+    0
+  ],
+  [
+    10,
+    111,
+    7,
+    7,
+    34
+  ],
+  [
+    11,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    11,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    11,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    11,
+    24,
+    3,
+    11,
+    16
+  ]
+]
+================================================================================
+
+[2025-10-31T10:15:11.345Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T10:15:11.480Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T10:15:11.480Z]
+3333
+================================================================================
+
+[2025-10-31T10:15:11.497Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T10:15:11.497Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+function div1(){
+  console.log
+}
+
+div {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T10:15:11.497Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  function div1(){
+    console.log;
+  }
+  children.push(console.log('Starting simple test...'));
+  children.push(createComponentVNode(div,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T10:15:11.885Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T10:15:11.887Z]
+反悔了tokens
+================================================================================
+
+[2025-10-31T10:15:11.887Z]
+[
+  [
+    4,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    5,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    6,
+    11,
+    4,
+    10,
+    33
+  ],
+  [
+    7,
+    4,
+    7,
+    7,
+    16
+  ],
+  [
+    7,
+    12,
+    3,
+    11,
+    16
+  ],
+  [
+    9,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    9,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    9,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    9,
+    24,
+    3,
+    11,
+    16
+  ],
+  [
+    10,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    10,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    10,
+    16,
+    20,
+    10,
+    0
+  ],
+  [
+    10,
+    45,
+    20,
+    10,
+    0
+  ],
+  [
+    10,
+    73,
+    7,
+    7,
+    34
+  ],
+  [
+    10,
+    84,
+    20,
+    10,
+    0
+  ],
+  [
+    10,
+    111,
+    7,
+    7,
+    34
+  ],
+  [
+    11,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    11,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    11,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    11,
+    24,
+    3,
+    11,
+    16
+  ]
+]
+================================================================================
+
+[2025-10-31T10:15:11.887Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T10:15:12.206Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T10:15:12.206Z]
+3333
+================================================================================
+
+[2025-10-31T10:15:12.225Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T10:15:12.225Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+function div1(){
+  console.log()
+}
+
+div {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T10:15:12.226Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  function div1(){
+    console.log();
+  }
+  children.push(console.log('Starting simple test...'));
+  children.push(createComponentVNode(div,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T10:15:12.474Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T10:15:12.474Z]
+3333
+================================================================================
+
+[2025-10-31T10:15:12.490Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T10:15:12.491Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+function div1(){
+  console.log(1)
+}
+
+div {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T10:15:12.491Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  function div1(){
+    console.log(1);
+  }
+  children.push(console.log('Starting simple test...'));
+  children.push(createComponentVNode(div,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T10:15:12.632Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T10:15:12.633Z]
+反悔了tokens
+================================================================================
+
+[2025-10-31T10:15:12.634Z]
+[
+  [
+    4,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    5,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    6,
+    11,
+    4,
+    10,
+    33
+  ],
+  [
+    7,
+    4,
+    7,
+    7,
+    16
+  ],
+  [
+    7,
+    12,
+    3,
+    11,
+    16
+  ],
+  [
+    9,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    9,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    9,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    9,
+    24,
+    3,
+    11,
+    16
+  ],
+  [
+    10,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    10,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    10,
+    16,
+    20,
+    10,
+    0
+  ],
+  [
+    10,
+    45,
+    20,
+    10,
+    0
+  ],
+  [
+    10,
+    73,
+    7,
+    7,
+    34
+  ],
+  [
+    10,
+    84,
+    20,
+    10,
+    0
+  ],
+  [
+    10,
+    111,
+    7,
+    7,
+    34
+  ],
+  [
+    11,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    11,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    11,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    11,
+    24,
+    3,
+    11,
+    16
+  ]
+]
+================================================================================
+
+[2025-10-31T10:15:12.634Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T10:15:12.864Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T10:15:12.865Z]
+3333
+================================================================================
+
+[2025-10-31T10:15:12.888Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T10:15:12.888Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+function div1(){
+  console.log(12)
+}
+
+div {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T10:15:12.888Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  function div1(){
+    console.log(12);
+  }
+  children.push(console.log('Starting simple test...'));
+  children.push(createComponentVNode(div,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T10:15:13.037Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T10:15:13.037Z]
+3333
+================================================================================
+
+[2025-10-31T10:15:13.054Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T10:15:13.054Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+function div1(){
+  console.log(123)
+}
+
+div {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T10:15:13.054Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  function div1(){
+    console.log(123);
+  }
+  children.push(console.log('Starting simple test...'));
+  children.push(createComponentVNode(div,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T10:15:13.292Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T10:15:13.293Z]
+反悔了tokens
+================================================================================
+
+[2025-10-31T10:15:13.293Z]
+[
+  [
+    4,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    5,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    6,
+    11,
+    4,
+    10,
+    33
+  ],
+  [
+    7,
+    4,
+    7,
+    7,
+    16
+  ],
+  [
+    7,
+    12,
+    3,
+    11,
+    16
+  ],
+  [
+    9,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    9,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    9,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    9,
+    24,
+    3,
+    11,
+    16
+  ],
+  [
+    10,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    10,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    10,
+    16,
+    20,
+    10,
+    0
+  ],
+  [
+    10,
+    45,
+    20,
+    10,
+    0
+  ],
+  [
+    10,
+    73,
+    7,
+    7,
+    34
+  ],
+  [
+    10,
+    84,
+    20,
+    10,
+    0
+  ],
+  [
+    10,
+    111,
+    7,
+    7,
+    34
+  ],
+  [
+    11,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    11,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    11,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    11,
+    24,
+    3,
+    11,
+    16
+  ]
+]
+================================================================================
+
+[2025-10-31T10:15:13.294Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T10:15:15.144Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T10:15:15.144Z]
+3333
+================================================================================
+
+[2025-10-31T10:15:15.161Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T10:15:15.161Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+function div1(){
+  console.log(123)
+}
+
+d {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T10:15:15.162Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  function div1(){
+    console.log(123);
+  }
+  children.push(console.log('Starting simple test...'));
+  children.push(createComponentVNode(d,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T10:15:15.205Z]
+languageService.getCompletionsAtPosition(
+================================================================================
+
+[2025-10-31T10:15:15.205Z]
+offset：330
+================================================================================
+
+[2025-10-31T10:15:15.205Z]
+triggerKind：1
+================================================================================
+
+[2025-10-31T10:15:15.206Z]
+存在info
+================================================================================
+
+[2025-10-31T10:15:15.206Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  function div1(){
+    console.log(123);
+  }
+  children.push(console.log('Starting simple test...'));
+  children.push(createComponentVNode(d,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T10:15:15.206Z]
+999
+================================================================================
+
+[2025-10-31T10:15:15.206Z]
+convertCompletionInfo
+================================================================================
+
+[2025-10-31T10:15:15.526Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T10:15:15.527Z]
+3333
+================================================================================
+
+[2025-10-31T10:15:15.545Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T10:15:15.545Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+function div1(){
+  console.log(123)
+}
+
+di {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T10:15:15.545Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  function div1(){
+    console.log(123);
+  }
+  children.push(console.log('Starting simple test...'));
+  children.push(createComponentVNode(di,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T10:15:15.576Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T10:15:15.579Z]
+反悔了tokens
+================================================================================
+
+[2025-10-31T10:15:15.579Z]
+[
+  [
+    4,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    5,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    6,
+    11,
+    4,
+    10,
+    33
+  ],
+  [
+    7,
+    4,
+    7,
+    7,
+    16
+  ],
+  [
+    7,
+    12,
+    3,
+    11,
+    16
+  ],
+  [
+    9,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    9,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    9,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    9,
+    24,
+    3,
+    11,
+    16
+  ],
+  [
+    10,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    10,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    10,
+    16,
+    20,
+    10,
+    0
+  ],
+  [
+    10,
+    44,
+    20,
+    10,
+    0
+  ],
+  [
+    10,
+    72,
+    7,
+    7,
+    34
+  ],
+  [
+    10,
+    83,
+    20,
+    10,
+    0
+  ],
+  [
+    10,
+    110,
+    7,
+    7,
+    34
+  ],
+  [
+    11,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    11,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    11,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    11,
+    24,
+    3,
+    11,
+    16
+  ]
+]
+================================================================================
+
+[2025-10-31T10:15:15.580Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T10:15:18.229Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T10:15:18.230Z]
+3333
+================================================================================
+
+[2025-10-31T10:15:18.246Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T10:15:18.246Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+function div1(){
+  console.log(123)
+}
+
+div1 {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T10:15:18.246Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  function div1(){
+    console.log(123);
+  }
+  children.push(console.log('Starting simple test...'));
+  children.push(createComponentVNode(div1,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T10:15:18.658Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T10:15:18.659Z]
+反悔了tokens
+================================================================================
+
+[2025-10-31T10:15:18.659Z]
+[
+  [
+    4,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    5,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    6,
+    11,
+    4,
+    10,
+    33
+  ],
+  [
+    7,
+    4,
+    7,
+    7,
+    16
+  ],
+  [
+    7,
+    12,
+    3,
+    11,
+    16
+  ],
+  [
+    9,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    9,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    9,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    9,
+    24,
+    3,
+    11,
+    16
+  ],
+  [
+    10,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    10,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    10,
+    16,
+    20,
+    10,
+    0
+  ],
+  [
+    10,
+    37,
+    4,
+    10,
+    32
+  ],
+  [
+    10,
+    46,
+    20,
+    10,
+    0
+  ],
+  [
+    10,
+    74,
+    7,
+    7,
+    34
+  ],
+  [
+    10,
+    85,
+    20,
+    10,
+    0
+  ],
+  [
+    10,
+    112,
+    7,
+    7,
+    34
+  ],
+  [
+    11,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    11,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    11,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    11,
+    24,
+    3,
+    11,
+    16
+  ]
+]
+================================================================================
+
+[2025-10-31T10:15:18.660Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T10:15:18.794Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-10-31T10:15:18.794Z]
+3333
+================================================================================
+
+[2025-10-31T10:15:18.813Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-10-31T10:15:18.813Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+function div1(){
+  console.log(123)
+}
+
+div {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-10-31T10:15:18.814Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  function div1(){
+    console.log(123);
+  }
+  children.push(console.log('Starting simple test...'));
+  children.push(createComponentVNode(div,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
+================================================================================
+
+[2025-10-31T10:15:19.219Z]
+chufa  provideDocumentSemanticTokens
+================================================================================
+
+[2025-10-31T10:15:19.220Z]
+反悔了tokens
+================================================================================
+
+[2025-10-31T10:15:19.220Z]
+[
+  [
+    4,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    5,
+    8,
+    7,
+    7,
+    35
+  ],
+  [
+    6,
+    11,
+    4,
+    10,
+    33
+  ],
+  [
+    7,
+    4,
+    7,
+    7,
+    16
+  ],
+  [
+    7,
+    12,
+    3,
+    11,
+    16
+  ],
+  [
+    9,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    9,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    9,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    9,
+    24,
+    3,
+    11,
+    16
+  ],
+  [
+    10,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    10,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    10,
+    16,
+    20,
+    10,
+    0
+  ],
+  [
+    10,
+    45,
+    20,
+    10,
+    0
+  ],
+  [
+    10,
+    73,
+    7,
+    7,
+    34
+  ],
+  [
+    10,
+    84,
+    20,
+    10,
+    0
+  ],
+  [
+    10,
+    111,
+    7,
+    7,
+    34
+  ],
+  [
+    11,
+    2,
+    8,
+    7,
+    34
+  ],
+  [
+    11,
+    11,
+    4,
+    11,
+    16
+  ],
+  [
+    11,
+    16,
+    7,
+    7,
+    16
+  ],
+  [
+    11,
+    24,
+    3,
+    11,
+    16
+  ]
+]
+================================================================================
+
+[2025-10-31T10:15:19.220Z]
+chufa  provideDocumentSemanticTokens
+================================================================================

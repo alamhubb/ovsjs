@@ -444,7 +444,16 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
       throw new Error('OvsRenderDomViewDeclaration has no identifier')
     }
     const id = this.createIdentifierAst(idCst)
-    id.loc = idCst.loc
+    
+    // 设置 loc 信息，确保包含 value（标签名）用于源码映射
+    if (idCst.loc) {
+      id.loc = {
+        type: idCst.loc.type,
+        value: id.name,  // 关键：设置 value 为标签名，供 SlimeGenerator 使用
+        start: idCst.loc.start,
+        end: idCst.loc.end
+      }
+    }
 
     // 查找 Arguments 节点（组件调用参数）
     // 简化逻辑：直接使用参数，不需要特殊的 attrs 提取
@@ -585,6 +594,12 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
         childrenArray     // 第三个参数：children
       ]
     )
+
+    // 关键：设置 CallExpression 的 loc，使其指向源代码中的标签位置
+    // 这样 LSP 可以准确映射到原始位置，提供准确的代码建议
+    if (id.loc) {
+      vNodeCall.loc = id.loc
+    }
 
     return vNodeCall
   }
@@ -769,6 +784,11 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
         SlimeAstUtil.createIdentifier('children')    // 第三个参数：children 数组（固定名字）
       ]
     )
+
+    // 关键：设置 CallExpression 的 loc，使其指向源代码中的标签位置
+    if (id.loc) {
+      callExpression.loc = id.loc
+    }
 
     // 包装为 return 语句
     return SlimeAstUtil.createReturnStatement(callExpression)

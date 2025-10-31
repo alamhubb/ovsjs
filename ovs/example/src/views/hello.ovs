@@ -5,6 +5,10 @@ const version = "1.0"
 
 console.log("Starting simple test...")
 
+function div1(){
+  console.log(123)
+}
+
 div {
   h1 { appName }
   p { version }
