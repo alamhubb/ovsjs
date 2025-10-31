@@ -2794,7 +2794,8 @@ export class SlimeCstToAst {
     if (cst.children.length > 2) {
       const PropertyDefinitionListCst = cst.children[1]
       for (const child of PropertyDefinitionListCst.children) {
-        if (child.name === Es6Parser.prototype.PropertyDefinition.name) {
+        // 跳过没有children的PropertyDefinition节点（SubhutiParser优化导致）
+        if (child.name === Es6Parser.prototype.PropertyDefinition.name && child.children && child.children.length > 0) {
           const property = this.createPropertyDefinitionAst(child)
           ary.push(property)
         }
@@ -2820,6 +2821,13 @@ export class SlimeCstToAst {
 
   createPropertyDefinitionAst(cst: SubhutiCst): SlimeProperty {
     const astName = checkCstName(cst, Es6Parser.prototype.PropertyDefinition.name);
+    
+    // 防御性检查：如果 children 为空，说明是空对象的情况，不应该被调用
+    // 这种情况通常不会发生，因为空对象{}不会有PropertyDefinition节点
+    if (!cst.children || cst.children.length === 0) {
+      throw new Error('PropertyDefinition CST has no children - this should not happen for valid syntax');
+    }
+    
     const first = cst.children[0]
 
     // ES2018: 对象spread {...obj}
