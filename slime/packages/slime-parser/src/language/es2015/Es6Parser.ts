@@ -1,11 +1,10 @@
 import Es6TokenConsumer from "./Es6Tokens.ts"
 import SubhutiMatchToken from "subhuti/src/struct/SubhutiMatchToken.ts"
-import {Subhuti, SubhutiRule, type SubhutiTokenConsumerConstructor} from "subhuti/src/parser/SubhutiParser.ts"
-import Es5Parser from "../es5/Es5Parser.ts";
+import SubhutiParser, {Subhuti, SubhutiRule, type SubhutiTokenConsumerConstructor} from "subhuti/src/parser/SubhutiParser.ts"
 import {Es5TokensName} from "../es5/Es5Tokens.ts";
 
 @Subhuti
-export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> {
+export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser<T> {
     constructor(tokens?: SubhutiMatchToken[], TokenConsumerClass: SubhutiTokenConsumerConstructor<T> = Es6TokenConsumer as SubhutiTokenConsumerConstructor<T>) {
         // 预处理tokens：根据上下文将SetTok/GetTok转换为Identifier
         if (tokens) {
@@ -488,7 +487,7 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
             {alt: () => this.tokenConsumer.GetTok()},
             {alt: () => this.tokenConsumer.SetTok()},
             // 值字面量关键字
-            {alt: () => this.tokenConsumer.NullTok()},
+            {alt: () => this.tokenConsumer.NullLiteral()},
             {alt: () => this.tokenConsumer.TrueTok()},
             {alt: () => this.tokenConsumer.FalseTok()},
         ])
@@ -2075,6 +2074,401 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
             this.tokenConsumer.AsTok()
             this.IdentifierName()
         })
+    }
+
+    // 7.8 字面量
+    @SubhutiRule
+    AbsLiteral() {
+        this.Or([
+            {alt: () => this.tokenConsumer.NullLiteral()},
+            {alt: () => this.tokenConsumer.TrueTok()},
+            {alt: () => this.tokenConsumer.FalseTok()},
+            {alt: () => this.tokenConsumer.NumericLiteral()},
+            {alt: () => this.tokenConsumer.StringLiteral()},
+            {alt: () => this.tokenConsumer.RegularExpressionLiteral()},
+        ]);
+    }
+
+    // 11.1.6 括号表达式
+    @SubhutiRule
+    ParenthesisExpression() {
+        this.tokenConsumer.LParen();
+        this.Expression();
+        this.tokenConsumer.RParen();
+    }
+
+    // 11.1.4 数组初始化器
+    @SubhutiRule
+    Array() {
+        this.tokenConsumer.LBracket();
+        this.Many(() => {
+            this.Or([
+                {alt: () => this.ElementList()},
+                {alt: () => this.Elision()},
+            ]);
+        });
+        this.tokenConsumer.RBracket();
+    }
+
+    // 11.1.5 对象初始化器
+    @SubhutiRule
+    Object() {
+        this.tokenConsumer.LBrace();
+        this.Option(() => {
+            this.PropertyNameAndValueList()
+        });
+        this.tokenConsumer.RBrace();
+    }
+
+    @SubhutiRule
+    PropertyNameAndValueList() {
+        this.PropertyAssignment();
+        this.Many(() => {
+            this.tokenConsumer.Comma();
+            this.PropertyAssignment();
+        });
+        this.Option(() => {
+            this.tokenConsumer.Comma();
+        });
+    }
+
+    // 11.1.5 属性赋值
+    @SubhutiRule
+    PropertyAssignment() {
+        this.Or([
+            {alt: () => this.RegularPropertyAssignment()},
+            {alt: () => this.GetPropertyAssignment()},
+            {alt: () => this.SetPropertyAssignment()},
+        ]);
+    }
+
+    // 11.1.5 常规属性赋值
+    @SubhutiRule
+    RegularPropertyAssignment() {
+        this.PropertyName();
+        this.tokenConsumer.Colon();
+        this.AssignmentExpression();
+    }
+
+    // 11.1.5 getter 属性赋值
+    @SubhutiRule
+    GetPropertyAssignment() {
+        this.tokenConsumer.GetTok();
+        this.PropertyName();
+        this.tokenConsumer.LParen();
+        this.tokenConsumer.RParen();
+        this.tokenConsumer.LBrace();
+        this.SourceElements();
+        this.tokenConsumer.RBrace();
+    }
+
+    // 11.1.5 setter 属性赋值
+    @SubhutiRule
+    SetPropertyAssignment() {
+        this.tokenConsumer.SetTok();
+        this.PropertyName();
+        this.tokenConsumer.LParen();
+        this.tokenConsumer.Identifier();
+        this.tokenConsumer.RParen();
+        this.tokenConsumer.LBrace();
+        this.SourceElements();
+        this.tokenConsumer.RBrace();
+    }
+
+    // 11.2 左值表达式
+    @SubhutiRule
+    MemberCallNewExpression() {
+        this.Many(() => {
+            this.tokenConsumer.NewTok();
+        });
+        this.Or([
+            {alt: () => this.PrimaryExpression()},
+            {alt: () => this.FunctionExpression()},
+        ]);
+        this.Many(() => {
+            this.Or([
+                {alt: () => this.BoxMemberExpression()},
+                {alt: () => this.DotMemberExpression()},
+                {alt: () => this.Arguments()},
+            ]);
+        });
+    }
+
+    // 11.2.1 属性访问表达式
+    @SubhutiRule
+    BoxMemberExpression() {
+        this.tokenConsumer.LBracket();
+        this.Expression();
+        this.tokenConsumer.RBracket();
+    }
+
+    // 11.5 乘法运算符, 11.6 加法运算符, 11.7 位移运算符, 11.8 关系运算符, 11.9 相等运算符, 11.10 二进制位运算符, 11.11 二进制逻辑运算符
+    @SubhutiRule
+    BinaryExpression() {
+        this.UnaryExpression();
+        this.Many(() => {
+            this.Or([
+                {alt: () => this.tokenConsumer.VerticalBarVerticalBar()},  // ||
+                {alt: () => this.tokenConsumer.AmpersandAmpersand()},      // &&
+                {alt: () => this.tokenConsumer.VerticalBar()},             // |
+                {alt: () => this.tokenConsumer.Circumflex()},              // ^
+                {alt: () => this.tokenConsumer.Ampersand()},               // &
+                {alt: () => this.AbsEqualityOperator()},                   // ==, !=, ===, !==
+                {alt: () => this.AbsRelationalOperator()},                 // <, >, <=, >=
+                {alt: () => this.tokenConsumer.InstanceOfTok()},           // instanceof
+                {alt: () => this.tokenConsumer.InTok()},                   // in
+                {alt: () => this.AbsShiftOperator()},                      // <<, >>, >>>
+                {alt: () => this.AbsMultiplicativeOperator()},             // *, /, %
+                {alt: () => this.AbsAdditiveOperator()},                   // +, -
+            ]);
+            this.UnaryExpression();
+        });
+    }
+
+    // 11.13 赋值运算符
+    @SubhutiRule
+    AbsAssignmentOperator() {
+        this.Or([
+            {alt: () => this.tokenConsumer.Eq()},              // =
+            {alt: () => this.tokenConsumer.PlusEq()},          // +=
+            {alt: () => this.tokenConsumer.MinusEq()},         // -=
+            {alt: () => this.tokenConsumer.AsteriskEq()},      // *=
+            {alt: () => this.tokenConsumer.SlashEq()},         // /=
+            {alt: () => this.tokenConsumer.PercentEq()},       // %=
+            {alt: () => this.tokenConsumer.LessLessEq()},      // <<=
+            {alt: () => this.tokenConsumer.MoreMoreEq()},      // >>=
+            {alt: () => this.tokenConsumer.MoreMoreMoreEq()},  // >>>=
+            {alt: () => this.tokenConsumer.AmpersandEq()},     // &=
+            {alt: () => this.tokenConsumer.CircumflexEq()},    // ^=
+            {alt: () => this.tokenConsumer.VerticalBarEq()},   // |=
+        ]);
+    }
+
+    // 11.9 相等运算符
+    @SubhutiRule
+    AbsEqualityOperator() {
+        this.Or([
+            {alt: () => this.tokenConsumer.EqEq()},
+            {alt: () => this.tokenConsumer.NotEq()},
+            {alt: () => this.tokenConsumer.EqEq()},
+            {alt: () => this.tokenConsumer.NotEqEq()},
+        ]);
+    }
+
+    // 11.8 关系运算符
+    @SubhutiRule
+    AbsRelationalOperator() {
+        this.Or([
+            {alt: () => this.tokenConsumer.Less()},
+            {alt: () => this.tokenConsumer.More()},
+            {alt: () => this.tokenConsumer.LessEq()},
+            {alt: () => this.tokenConsumer.MoreEq()},
+        ]);
+    }
+
+    // 11.7 位移运算符
+    @SubhutiRule
+    AbsShiftOperator() {
+        this.Or([
+            {alt: () => this.tokenConsumer.LessLess()},
+            {alt: () => this.tokenConsumer.MoreMore()},
+            {alt: () => this.tokenConsumer.MoreMoreMore()},
+        ]);
+    }
+
+    // 11.5 乘法运算符
+    @SubhutiRule
+    AbsMultiplicativeOperator() {
+        this.Or([
+            {alt: () => this.tokenConsumer.Asterisk()},
+            {alt: () => this.tokenConsumer.Slash()},
+            {alt: () => this.tokenConsumer.Percent()},
+        ]);
+    }
+
+    // 11.6 加法运算符
+    @SubhutiRule
+    AbsAdditiveOperator() {
+        this.Or([
+            {alt: () => this.tokenConsumer.Plus()},
+            {alt: () => this.tokenConsumer.Minus()},
+        ]);
+    }
+
+    @SubhutiRule
+    BinaryExpressionNoIn() {
+        this.UnaryExpression();
+        this.Many(() => {
+            this.Or([
+                {alt: () => this.tokenConsumer.VerticalBarVerticalBar()},  // ||
+                {alt: () => this.tokenConsumer.AmpersandAmpersand()},      // &&
+                {alt: () => this.tokenConsumer.VerticalBar()},             // |
+                {alt: () => this.tokenConsumer.Circumflex()},              // ^
+                {alt: () => this.tokenConsumer.Ampersand()},               // &
+                {alt: () => this.AbsEqualityOperator()},                   // ==, !=, ===, !==
+                {alt: () => this.AbsRelationalOperator()},                 // <, >, <=, >=
+                {alt: () => this.tokenConsumer.InstanceOfTok()},           // instanceof
+                // 注意：NoIn版本不包含 InTok
+                {alt: () => this.AbsShiftOperator()},                      // <<, >>, >>>
+                {alt: () => this.AbsMultiplicativeOperator()},             // *, /, %
+                {alt: () => this.AbsAdditiveOperator()},                   // +, -
+            ]);
+            this.UnaryExpression();
+        });
+    }
+
+    @SubhutiRule
+    AssignmentExpressionNoIn() {
+        this.BinaryExpressionNoIn();
+        this.Option(() => {
+            this.Or([
+                {
+                    // 11.12 条件运算符 (? :)
+                    alt: () => {
+                        this.tokenConsumer.Question();
+                        this.AssignmentExpression();
+                        this.tokenConsumer.Colon();
+                        this.AssignmentExpressionNoIn();
+                    }
+                },
+                {
+                    // 11.13 赋值运算符 (=, +=, -=, 等)
+                    alt: () => {
+                        this.AbsAssignmentOperator();
+                        this.AssignmentExpressionNoIn();
+                    }
+                }
+            ]);
+        });
+    }
+
+    @SubhutiRule
+    ExpressionNoIn() {
+        this.AssignmentExpressionNoIn();
+        this.Many(() => {
+            this.tokenConsumer.Comma();
+            this.AssignmentExpressionNoIn();
+        });
+    }
+
+    VariableDeclarationListNoIn() {
+        let numOfVars = 1;
+        this.VariableDeclarationNoIn();
+        this.Many(() => {
+            this.tokenConsumer.Comma();
+            this.VariableDeclarationNoIn();
+            numOfVars++;
+        });
+        return numOfVars;
+    }
+
+    @SubhutiRule
+    VariableDeclarationNoIn() {
+        this.tokenConsumer.Identifier();
+        this.Option(() => {
+            this.InitialiserNoIn();
+        });
+    }
+
+    // 12.2 初始化器
+    @SubhutiRule
+    Initialiser() {
+        this.tokenConsumer.Eq();
+        this.AssignmentExpression();
+    }
+
+    @SubhutiRule
+    InitialiserNoIn() {
+        this.tokenConsumer.Eq();
+        this.AssignmentExpressionNoIn();
+    }
+
+    // 12.6.1 do-while 语句
+    @SubhutiRule
+    DoIteration() {
+        this.tokenConsumer.DoTok();
+        this.Statement();
+        this.tokenConsumer.WhileTok();
+        this.tokenConsumer.LParen();
+        this.Expression();
+        this.tokenConsumer.RParen();
+        this.tokenConsumer.Semicolon();
+    }
+
+    // 12.6.2 while 语句
+    @SubhutiRule
+    WhileIteration() {
+        this.tokenConsumer.WhileTok();
+        this.tokenConsumer.LParen();
+        this.Expression();
+        this.tokenConsumer.RParen();
+        this.Statement();
+    }
+
+    // 12.6.3 for 语句
+    @SubhutiRule
+    ForIteration() {
+        let inPossible = false;
+        this.tokenConsumer.ForTok();
+        this.tokenConsumer.LParen();
+        this.Or([
+            {
+                alt: () => {
+                    this.tokenConsumer.VarTok();
+                    const numOfVars = this.VariableDeclarationListNoIn();
+                    inPossible = numOfVars === 1;
+                    this.ForHeaderParts(inPossible);
+                },
+            },
+            {
+                alt: () => {
+                    this.ForHeaderParts(inPossible);
+                },
+            },
+        ]);
+        this.tokenConsumer.RParen();
+        this.Statement();
+    }
+
+    // 12.6.3 for 语句头部
+    @SubhutiRule
+    ForHeaderParts(inPossible) {
+        this.Or([
+            {
+                alt: () => {
+                    this.tokenConsumer.Semicolon();
+                    this.Option(() => {
+                        this.Expression();
+                    });
+                    this.tokenConsumer.Semicolon();
+                    this.Option(() => {
+                        this.Expression();
+                    });
+                },
+            },
+            {
+                alt: () => {
+                    this.tokenConsumer.InTok();
+                    this.Expression();
+                },
+            },
+        ]);
+    }
+
+    // 14 源元素
+    @SubhutiRule
+    SourceElements() {
+        this.SourceElement()
+    }
+
+    @SubhutiRule
+    SourceElement() {
+        this.Or([
+            {
+                alt: () => this.FunctionDeclaration(),
+            },
+            {alt: () => this.Statement()},
+        ]);
     }
 }
 
