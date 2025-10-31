@@ -1711,4 +1711,55 @@ npx tsx test-mapping-issues.ts     # 完整测试
 
 ---
 
-**OVS 项目完整文档 | 最后更�? 2025-10-30**
+# IIFE判断逻辑优化（2025-10-31）
+
+## 问题：实现细节耦合
+原IIFE判断逻辑依赖 `children.push()` 这个具体函数名：
+- 如果改成 `child.push()`，判断逻辑失效
+- 判断条件繁琐，需要列举所有"复杂"情况
+
+## 优化方案：基于来源标记
+**核心规则：** 只要是**非ExpressionStatement** 或 **来自#{} 块**，就需要IIFE
+
+### 实现步骤
+
+**1. 标记 #{} 源（createStatementListItemAst）**
+```typescript
+// 在 #{} 块处理时，对内部语句标记来源
+innerStatements.forEach(stmt => {
+  (stmt as any).__fromNoRenderBlock = true
+})
+```
+
+**2. IIFE决策逻辑（createOvsRenderDomViewDeclarationAst）**
+```typescript
+const hasComplexStatements = bodyStatements.some(stmt => {
+  // 情况1: 非 ExpressionStatement（声明/控制流）
+  if (stmt.type !== SlimeAstType.ExpressionStatement) {
+    return true
+  }
+  // 情况2: 来自 #{} 不渲染块
+  if ((stmt as any).__fromNoRenderBlock) {
+    return true
+  }
+  return false
+})
+
+const isSimple = !hasComplexStatements
+```
+
+### 优势
+- ✅ **完全解耦**：不依赖children命名
+- ✅ **语义清晰**：直接表达"有复杂内容→用IIFE"
+- ✅ **高度稳定**：未来改渲染方式无需改此逻辑
+- ✅ **易于理解**：新人一眼看出判断规则
+- ✅ **可维护性**：判断逻辑集中统一
+
+### 改动文件
+- `ovs/src/factory/OvsCstToSlimeAstUtil.ts`
+  - 第278-283行：添加__fromNoRenderBlock标记
+  - 第512-531行：简化IIFE判断逻辑
+
+---
+
+**OVS 项目完整文档 | 最后更新: 2025-10-31**

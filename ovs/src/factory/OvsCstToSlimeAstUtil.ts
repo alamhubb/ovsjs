@@ -277,6 +277,11 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
           if (innerList) {
             // 递归处理内部语句，直接展开
             const innerStatements = this.createStatementListAst(innerList)
+            // ✨ 标记这些语句来自 #{} 块
+            // 后续 IIFE 决策会根据此标记判断是否需要复杂模式
+            innerStatements.forEach(stmt => {
+              (stmt as any).__fromNoRenderBlock = true
+            })
             return innerStatements  // 返回数组（会被展开）
           }
           
@@ -442,6 +447,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     id.loc = idCst.loc
 
     // 查找 Arguments 节点（组件调用参数）
+    // 简化逻辑：直接使用参数，不需要特殊的 attrs 提取
     const argumentsCst = cst.children?.find(child => child.name === 'Arguments')
     let componentProps: SlimeExpression | null = null
 
@@ -449,29 +455,9 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
       // 提取 Arguments 内的参数
       // Arguments 结构：LParen, ArgumentList?, RParen
       const argListCst = argumentsCst.children.find(child => child.name === 'ArgumentList')
-      if (argListCst && argListCst.children) {
-        // ArgumentList 第一个元素
-        const firstArgCst = argListCst.children[0]
-        if (firstArgCst && firstArgCst.children?.[0]) {
-          const argExpr = this.createExpressionAst(firstArgCst.children[0])
-          
-          // 如果参数是 {attrs: {...}}，提取 attrs 的值
-          if (argExpr.type === 'ObjectExpression' && argExpr.properties) {
-            const attrsProperty = argExpr.properties.find((prop: any) => 
-              prop.key?.name === 'attrs' || prop.key?.value === 'attrs'
-            )
-            if (attrsProperty && 'value' in attrsProperty && attrsProperty.value) {
-              // 提取 attrs 的值作为 componentProps
-              componentProps = (attrsProperty.value as any) as SlimeExpression | null
-            } else {
-              // 没有 attrs 属性，直接使用整个对象
-              componentProps = argExpr as any as SlimeExpression | null
-            }
-          } else {
-            // 不是对象表达式，直接使用
-            componentProps = (argExpr as any) as SlimeExpression | null
-          }
-        }
+      if (argListCst && argListCst.children?.[0]?.children?.[0]) {
+        // 直接使用第一个参数作为 componentProps
+        componentProps = this.createExpressionAst(argListCst.children[0].children[0])
       }
     }
 
@@ -509,40 +495,32 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
         }
       }
 
-      // 判断是否有非渲染语句（需要 IIFE）
-      const hasNonRenderStatements = bodyStatements.some(stmt => {
-        // Declaration（如 const x = 1）→ 复杂
-        if (stmt.type === SlimeAstType.VariableDeclaration || 
-            stmt.type === SlimeAstType.FunctionDeclaration ||
-            stmt.type === SlimeAstType.ClassDeclaration) {
+      // 判断是否有复杂语句（需要 IIFE）
+      // 
+      // IIFE 判断规则（v0.2.1 优化）：
+      // 只要满足以下任一条件，就需要复杂模式（IIFE）：
+      // 1. 有非 ExpressionStatement（声明/控制流）
+      // 2. 有来自 #{} 不渲染块的语句
+      // 
+      // 好处：
+      // - 与实现解耦：不依赖 children.push() 这个具体函数名
+      // - 语义清晰：直接表达"有复杂内容就用IIFE"
+      // - 高度稳定：未来改变渲染方式时，此逻辑无需改动
+      const hasComplexStatements = bodyStatements.some(stmt => {
+        // 情况1: 非 ExpressionStatement（声明/控制流）
+        if (stmt.type !== SlimeAstType.ExpressionStatement) {
           return true
         }
         
-        // IfStatement、ForStatement 等 → 复杂
-        if (stmt.type === SlimeAstType.IfStatement ||
-            stmt.type === SlimeAstType.ForStatement ||
-            stmt.type === SlimeAstType.WhileStatement) {
-          return true
-        }
-        
-        // ExpressionStatement 但不是 children.push → 复杂
-        if (stmt.type === SlimeAstType.ExpressionStatement) {
-          const exprStmt = stmt as SlimeExpressionStatement
-          if (exprStmt.expression.type !== SlimeAstType.CallExpression) {
-            return true
-          }
-          const callExpr = exprStmt.expression as SlimeCallExpression
-          if (callExpr.callee.type === 'MemberExpression') {
-            const memberExpr = callExpr.callee as any
-            return !(memberExpr.object?.name === 'children' && memberExpr.property?.name === 'push')
-          }
+        // 情况2: 来自 #{} 不渲染块的语句
+        if ((stmt as any).__fromNoRenderBlock) {
           return true
         }
         
         return false
       })
       
-      const isSimple = !hasNonRenderStatements
+      const isSimple = !hasComplexStatements
       const currentAttrsVarName = this.attrsVarNameStack[this.attrsVarNameStack.length - 1]
 
       if (isSimple) {
