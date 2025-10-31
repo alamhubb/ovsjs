@@ -110,11 +110,6 @@ export default class OvsParser extends Es6Parser<OvsTokenConsumer> {
     this.Or([
       {
         alt: () => {
-          this.OvsRenderFunction()
-        }
-      },
-      {
-        alt: () => {
           this.YieldExpression()
         }
       },
@@ -136,6 +131,13 @@ export default class OvsParser extends Es6Parser<OvsTokenConsumer> {
       {
         alt: () => {
           this.ConditionalExpression()
+        }
+      },
+      // OvsRenderFunction 移到最后 - 避免与普通函数调用冲突
+      // 只有其他所有规则都失败后，才尝试解析为 OVS 特殊语法
+      {
+        alt: () => {
+          this.OvsRenderFunction()
         }
       }
     ])

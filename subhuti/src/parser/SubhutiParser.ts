@@ -5,6 +5,7 @@ import {SubhutiCreateToken} from "../struct/SubhutiCreateToken.ts"
 import SubhutiTokenConsumer from "./SubhutiTokenConsumer.ts"
 import QqqqUtil from "../utils/qqqqUtil.ts"
 import Es5TokenConsumer from "slime-parser/src/language/es5/Es5TokenConsume.ts";
+import {LogUtil} from "./logutil.ts";
 
 export class SubhutiParserOr {
   alt: Function
@@ -231,6 +232,8 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         return
       }
     }
+    // console.log(ruleName)
+    // console.log(new Date().getUTCSeconds())
     // console.log(ruleName)
     const initFlag = this.initFlag
     if (initFlag) {
@@ -582,13 +585,15 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
       // Packrat: 生成当前分支的缓存key
       // 包含：token位置 + 调用栈路径 + 分支索引
-      const position = this.tokens.length
+      const position = this.tokenIndex  // ← 修复：使用当前读取位置,而不是总长度!
       const stackPath = this.ruleExecErrorStack.join('>')  // 完整调用路径
       const altIndex = index - 1  // 分支索引
       const failureKey = `Or:${position}:${stackPath}:${altIndex}`
 
       // Packrat: 如果这个分支之前尝试过并失败，跳过
       if (this.failureCache.has(failureKey)) {
+        const currentRule = this.ruleExecErrorStack[this.ruleExecErrorStack.length - 1]
+        console.log(`缓存命中: ${currentRule} 分支${altIndex} at position ${position}`)
         continue  // 跳过这个分支，尝试下一个
       }
 

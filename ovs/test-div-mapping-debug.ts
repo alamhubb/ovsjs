@@ -17,3 +17,6 @@ result.mapping.forEach((m, i) => {
   console.log(`    生成: ${m.generate.index} (长${m.generate.length})`)
   console.log('')
 })
+
+
+

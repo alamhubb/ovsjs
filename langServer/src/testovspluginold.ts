@@ -3,7 +3,11 @@ import {ovsTransform, vitePluginOvsTransform} from "ovsjs/src";
 const code = `
 export default (function(){
   const children = [];
-  children.push(createComponentVNode(div,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]))
+  const appName = 'Simple Test';
+  const version = '1.0';
+  children.push(console.log('Starting simple test...'));
+  children.push(createComponentVNode(div,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
   return children})()
 `
 
