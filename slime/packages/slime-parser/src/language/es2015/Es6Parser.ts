@@ -206,20 +206,29 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
   @SubhutiRule
   ArrayLiteral() {
     this.tokenConsumer.LBracket()
-    this.Many(() => {
-      this.Or([
-        {
-          alt: () => {
-            this.ElementList()
-          }
-        },
-        {
-          alt: () => {
-            this.Elision()
-          }
+    // 按照ES6规范，ArrayLiteral有3种形式，必须用Or明确区分，不能用Many
+    this.Or([
+      // 长规则优先：[ ElementList , Elision(opt) ] - 尾逗号数组
+      {
+        alt: () => {
+          this.ElementList()
+          this.tokenConsumer.Comma()
+          this.Option(() => this.Elision())  // 支持 [a,] 和 [a,,,]
         }
-      ])
-    })
+      },
+      // 中规则：[ ElementList ] - 普通数组
+      {
+        alt: () => {
+          this.ElementList()
+        }
+      },
+      // 短规则：[ Elision(opt) ] - 空数组或仅逗号数组
+      {
+        alt: () => {
+          this.Option(() => this.Elision())  // 支持 [] 和 [,,]
+        }
+      }
+    ])
     this.tokenConsumer.RBracket()
   }
 
