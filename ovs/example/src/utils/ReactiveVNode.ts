@@ -9,7 +9,7 @@ export interface ReactiveVNodeApi {
 }
 
 export interface ReactiveVNodeState {
-  type: string | OvsFunctionComponent | Component
+  type: string | OvsComponent | Component
   props: Record<string, any>
   children: ReactiveVNodeApi | ReactiveVNodeApi[] | null | any
 }
@@ -20,7 +20,7 @@ export interface ReactiveVNodeState {
  * 函数组件类型
  * 接收 state，返回 ReactiveVNodeApi
  */
-export type OvsFunctionComponent = (state: ReactiveVNodeState) => ReactiveVNodeApi
+export type OvsComponent = (state: ReactiveVNodeState) => ReactiveVNodeApi
 
 
 function ensureReactiveProps<T extends object>(obj: T): T {
@@ -64,7 +64,7 @@ class ReactiveVNode implements ReactiveVNodeApi {
   toVnode(): VNode {
     // 如果 type 是函数，说明是组件
     if (typeof this.state.type === 'function') {
-      const result = (this.state.type as OvsFunctionComponent)(this.state)
+      const result = (this.state.type as OvsComponent)(this.state)
       
       // 如果返回 ReactiveVNodeApi，递归调用 toVnode
       if (isReactiveVNodeApi(result)) {
@@ -105,7 +105,7 @@ class ReactiveVNode implements ReactiveVNodeApi {
 // ==================== 工厂函数 ====================
 
 export function createComponentVNode(
-  componentFn: OvsFunctionComponent | Component,
+  componentFn: OvsComponent | Component,
   props: Record<string, any> = {},
   children: any = null
 ): ReactiveVNodeApi {
