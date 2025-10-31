@@ -4,6 +4,7 @@ import JsonUtil from "../utils/JsonUtil.ts"
 import {SubhutiCreateToken} from "../struct/SubhutiCreateToken.ts"
 import SubhutiTokenConsumer from "./SubhutiTokenConsumer.ts"
 import QqqqUtil from "../utils/qqqqUtil.ts"
+import {LogUtil} from "./logutil.ts";
 
 export class SubhutiParserOr {
     alt: Function
@@ -230,9 +231,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
                 return
             }
         }
-        // console.log(ruleName)
-        // console.log(new Date().getUTCSeconds())
-        // console.log(ruleName)
         const initFlag = this.initFlag
         if (initFlag) {
             this.initFlag = false
@@ -247,6 +245,8 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
                 return
             }
         }
+        LogUtil.log(this.cstStack.map(item=>item.name).join('-->'))
+        LogUtil.log('tokenIndex: ' + this.tokenIndex)
         let cst = this.processCst(ruleName, targetFun)
         if (initFlag) {
             //执行完毕，改为true

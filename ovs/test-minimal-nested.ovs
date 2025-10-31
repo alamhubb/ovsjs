@@ -1,0 +1,3 @@
+createComponentVNode(div,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),])
+
+
