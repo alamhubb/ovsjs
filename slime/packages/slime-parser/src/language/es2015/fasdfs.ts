@@ -1,13 +1,12 @@
 import Es6TokenConsumer from "./Es6Tokens.ts"
 import SubhutiMatchToken from "subhuti/src/struct/SubhutiMatchToken.ts"
 import {Subhuti, SubhutiRule, type SubhutiTokenConsumerConstructor} from "subhuti/src/parser/SubhutiParser.ts"
-import Es5TokenConsumer from "../es5/Es5TokenConsume.ts";
 import Es5Parser from "../es5/Es5Parser.ts";
 import {Es5TokensName} from "../es5/Es5Tokens.ts";
 
 @Subhuti
 export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> {
-    constructor(tokens?: SubhutiMatchToken[], TokenConsumerClass: SubhutiTokenConsumerConstructor<T> = Es6TokenConsumer as any) {
+    constructor(tokens?: SubhutiMatchToken[], TokenConsumerClass: SubhutiTokenConsumerConstructor<T> = Es6TokenConsumer as SubhutiTokenConsumerConstructor<T>) {
         // 预处理tokens：根据上下文将SetTok/GetTok转换为Identifier
         if (tokens) {
             tokens = Es6Parser.preprocessSetGetTokens(tokens);
@@ -121,68 +120,30 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
     PrimaryExpression() {
         this.Or([
             {alt: () => this.tokenConsumer.ThisTok()},
-            {
-                alt: () => {
-                    this.IdentifierReference()
-                }
-            },
-            {
-                alt: () => {
-                    this.Literal()
-                }
-            },
-            {
-                alt: () => {
-                    this.ArrayLiteral()
-                }
-            },
+            {alt: () => this.IdentifierReference()},
+            {alt: () => this.Literal()},
+            {alt: () => this.ArrayLiteral()},
             {alt: () => this.ObjectLiteral()},
             {alt: () => this.FunctionExpression()},
             {alt: () => this.ClassExpression()},
             {alt: () => this.GeneratorExpression()},
             {alt: () => this.tokenConsumer.RegularExpressionLiteral()},
             {alt: () => this.TemplateLiteral()},
-            // 【重要】括号表达式支持
-            // 处理：(expression) 和箭头函数参数的歧义
+            // ✅ 先处理普通括号表达式：(expr)
+            {alt: () => this.ParenthesizedExpression()},
+            // ✅ 最后处理箭头函数参数Cover - 仅在箭头函数上下文中有效
             {alt: () => this.CoverParenthesizedExpressionAndArrowParameterList()}
         ])
     }
 
     @SubhutiRule
     CoverParenthesizedExpressionAndArrowParameterList() {
-        this.Or([
-            {
-                alt: () => {
-                    this.tokenConsumer.LParen()
-                    this.Expression()
-                    this.tokenConsumer.RParen()
-                }
-            },
-            {
-                alt: () => {
-                    this.tokenConsumer.LParen()
-                    this.tokenConsumer.RParen()
-                }
-            },
-            {
-                alt: () => {
-                    this.tokenConsumer.LParen()
-                    this.tokenConsumer.Ellipsis()
-                    this.BindingIdentifier()
-                    this.tokenConsumer.RParen()
-                }
-            },
-            {
-                alt: () => {
-                    this.tokenConsumer.LParen()
-                    this.Expression()
-                    this.tokenConsumer.Comma()
-                    this.tokenConsumer.Ellipsis()
-                    this.BindingIdentifier()
-                    this.tokenConsumer.RParen()
-                }
-            }
-        ])
+        // Cover Grammar: 保持模糊状态，不在此阶段决定是参数还是表达式
+        // 只有在 ArrowFunction 中遇到 => 时才解释为参数列表
+        // 否则会被作为普通表达式处理
+        this.tokenConsumer.LParen()
+        this.Option(() => this.FormalParameterList())
+        this.tokenConsumer.RParen()
     }
 
     @SubhutiRule
@@ -206,54 +167,41 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
     @SubhutiRule
     ArrayLiteral() {
         this.tokenConsumer.LBracket()
-        this.Many(() => {
-            this.Or([
-                {
-                    alt: () => {
-                        this.ElementList()
-                    }
-                },
-                {
-                    alt: () => {
-                        this.Elision()
-                    }
-                }
-            ])
-        })
-        this.tokenConsumer.RBracket()
-    }
 
-    @SubhutiRule
-    ElementList() {
         this.Or([
+            // [ a, b, ]
             {
                 alt: () => {
+                    this.ElementList()
+                    this.tokenConsumer.Comma()
                     this.Option(() => this.Elision())
-                    this.AssignmentExpression()
                 }
             },
+            // [ a, b ]
             {
-                alt: () => {
-                    this.Option(() => this.Elision())
-                    this.SpreadElement()
-                }
+                alt: () => this.ElementList()
+            },
+            // [], [,,,]
+            {
+                alt: () => this.Option(() => this.Elision())
             }
+        ])
+
+        this.tokenConsumer.RBracket()
+    }
+    @SubhutiRule
+    ElementList() {
+        this.Option(() => this.Elision())
+        this.Or([
+            {alt: () => this.SpreadElement()},
+            {alt: () => this.AssignmentExpression()}
         ])
         this.Many(() => {
             this.tokenConsumer.Comma()
+            this.Option(() => this.Elision())
             this.Or([
-                {
-                    alt: () => {
-                        this.Option(() => this.Elision())
-                        this.AssignmentExpression()
-                    }
-                },
-                {
-                    alt: () => {
-                        this.Option(() => this.Elision())
-                        this.SpreadElement()
-                    }
-                }
+                {alt: () => this.SpreadElement()},
+                {alt: () => this.AssignmentExpression()}
             ])
         })
     }
@@ -645,7 +593,9 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
     @SubhutiRule
     Arguments() {
         this.tokenConsumer.LParen()
-        this.Option(() => this.ArgumentList())
+        this.Option(() => {
+            this.ArgumentList()
+        })
         this.tokenConsumer.RParen()
     }
 
@@ -658,15 +608,14 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
     @SubhutiRule
     ArgumentList() {
         this.Or([
-            {alt: () => this.AssignmentExpression()},
-            {alt: () => this.EllipsisAssignmentExpression()}
+            {alt: () => this.SpreadElement()},
+            {alt: () => this.AssignmentExpression()}
         ])
-        // throw new Error('cjvla')
         this.Many(() => {
             this.tokenConsumer.Comma()
             this.Or([
-                {alt: () => this.AssignmentExpression()},
-                {alt: () => this.EllipsisAssignmentExpression()}
+                {alt: () => this.SpreadElement()},
+                {alt: () => this.AssignmentExpression()}
             ])
         })
     }
@@ -1017,12 +966,8 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
     @SubhutiRule
     AssignmentExpression() {
         this.Or([
-            {
-                alt: () => {
-                    this.YieldExpression()
-                }
-            },
-            {alt: () => this.ArrowFunction()},
+            {alt: () => this.YieldExpression()},
+            {alt: () => this.ConditionalExpression()},  // ← moved forward
             {
                 alt: () => {
                     this.LeftHandSideExpression()
@@ -1037,7 +982,7 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
                     this.AssignmentExpression()
                 }
             },
-            {alt: () => this.ConditionalExpression()}
+            {alt: () => this.ArrowFunction()},
         ])
     }
 
@@ -1527,25 +1472,45 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
     }
 
     @SubhutiRule
+    FunctionFormalParameters() {
+        this.tokenConsumer.LParen()
+        this.Option(() => {
+            this.FormalParameterList()
+        })
+        this.tokenConsumer.RParen()
+    }
+
+    @SubhutiRule
     FormalParameterList() {
         this.Or([
-            {alt: () => this.FunctionRestParameter()},
+            // 情况1: ( ...rest )
+            { alt: () => this.RestParameter() },
+
+            // 情况2: ( a, b, c, [ ...rest ] )
             {
                 alt: () => {
-                    this.FormalParameterListFormalsList()
+                    this.FormalParameter()
+                    this.Many(() => {
+                        this.tokenConsumer.Comma()
+                        this.FormalParameter()
+                    })
+                    this.Option(() => {
+                        this.tokenConsumer.Comma()
+                        this.RestParameter()
+                    })
                 }
             }
         ])
     }
 
     @SubhutiRule
-    FormalParameterListFormalsList() {
-        this.FormalsList()
-        this.Option(() => {
-            this.CommaFunctionRestParameter()
-        })
+    RestParameter() {
+        this.tokenConsumer.Ellipsis()
+        this.Or([
+            { alt: () => this.BindingIdentifier() },  // ...args
+            { alt: () => this.BindingPattern() }      // ...[a,b] or ...{a,b}
+        ])
     }
-
 
     @SubhutiRule
     CommaFunctionRestParameter() {
@@ -1585,10 +1550,22 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
     @SubhutiRule
     ArrowFunction() {
         this.Option(() => this.tokenConsumer.AsyncTok())
-        this.ArrowParameters()
-        // TODO: Implement [no LineTerminator here] check
-        this.tokenConsumer.Arrow()
-        this.ConciseBody()
+        this.Or([
+            {
+                alt: () => {
+                    this.BindingIdentifier()
+                    this.tokenConsumer.Arrow()
+                    this.ConciseBody()
+                }
+            },
+            {
+                alt: () => {
+                    this.CoverParenthesizedExpressionAndArrowParameterList()
+                    this.tokenConsumer.Arrow()
+                    this.ConciseBody()
+                }
+            }
+        ])
     }
 
     @SubhutiRule
@@ -1676,15 +1653,6 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
                 }
             }
         ])
-    }
-
-    @SubhutiRule
-    FunctionFormalParameters() {
-        this.tokenConsumer.LParen()
-        this.Option(() => {
-            this.FormalParameterList()
-        })
-        this.tokenConsumer.RParen()
     }
 
     @SubhutiRule
@@ -2109,5 +2077,4 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
         })
     }
 }
-
 
