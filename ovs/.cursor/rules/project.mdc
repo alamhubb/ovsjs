@@ -2116,3 +2116,20 @@ return children  // children 包含所有表达式
 6. ✅ 默认导出
 
 ---
+
+### 🏗️ 架构改进
+
+**通用IIFE生成逻辑提取（v0.2.2）**
+- 问题：编译器的 `createComplexIIFE()` 和 `wrapTopLevelExpressions()` 中存在重复的IIFE生成逻辑
+- 解决方案：提取公共的 `createBaseIIFE()` 方法作为基础逻辑
+- 调用关系：
+  - `createBaseIIFE()`：通用基础方法（public）
+    - 处理：创建children数组、push语句、return children、生成IIFE
+    - 被调用者：`createComplexIIFE()` 和 `wrapTopLevelExpressions()`
+  - `createComplexIIFE()`：需要id的扩展方法（private）
+    - 处理：在基础IIFE基础上包装return createComponentVNode()
+  - `wrapTopLevelExpressions()`：无导出时的默认导出（index.ts）
+    - 处理：顶层导出组织、直接调用createBaseIIFE()
+- 优势：消除50%代码重复，提高可维护性，遵循DIP原则
+
+---

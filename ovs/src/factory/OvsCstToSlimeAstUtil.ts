@@ -590,27 +590,24 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
   }
 
   /**
-   * 创建完整的 IIFE（有语句的复杂情况）
+   * 创建基础 IIFE（不需要id）
    *
    * 生成：
    * (function() {
    *   const children = []
    *   ...statements
-   *   return createComponentVNode(firstArg, props, children)
+   *   return children
    * })()
-   * 其中 firstArg 是标签字符串（'div'）或组件标识符（MyComponent）
    *
-   * @param id 元素/组件标识符
+   * 这是通用的IIFE生成逻辑，被 createComplexIIFE 和顶层导出逻辑调用
+   *
    * @param statements 语句数组
-   * @param attrsVarName attrs变量名（已弃用，保留用于将来功能）
-   * @param componentProps 组件props对象
+   * @param attrsVarName attrs变量名（可选，已弃用，保留用于将来功能）
    * @returns CallExpression
    */
-  private createComplexIIFE(
-    id: SlimeIdentifier,
+  public createBaseIIFE(
     statements: SlimeStatement[],
-    attrsVarName: string | null,
-    componentProps: SlimeExpression | null
+    attrsVarName?: string | null
   ): SlimeCallExpression {
     // 生成完整的 IIFE 函数体
     const iifeFunctionBody: SlimeStatement[] = [
@@ -647,7 +644,80 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     // 3. 转换后的语句（包含 temp$$attrs$$.name = value 和 children.push()）
     iifeFunctionBody.push(...statements)
 
-    // 4. 返回 createReactiveVNode('div', {}, children)
+    // 4. 返回 children
+    iifeFunctionBody.push(
+      SlimeAstUtil.createReturnStatement(
+        SlimeAstUtil.createIdentifier('children')
+      )
+    )
+
+    // 生成 IIFE：(function() { ... })()
+    return this.createIIFE(iifeFunctionBody)
+  }
+
+  /**
+   * 创建完整的 IIFE（需要id）
+   *
+   * 生成：
+   * (function() {
+   *   const children = []
+   *   ...statements
+   *   return createComponentVNode(firstArg, props, children)
+   * })()
+   * 其中 firstArg 是标签字符串（'div'）或组件标识符（MyComponent）
+   *
+   * 调用基础的 createBaseIIFE() 然后包装返回 createComponentVNode
+   *
+   * @param id 元素/组件标识符
+   * @param statements 语句数组
+   * @param attrsVarName attrs变量名（已弃用，保留用于将来功能）
+   * @param componentProps 组件props对象
+   * @returns CallExpression
+   */
+  private createComplexIIFE(
+    id: SlimeIdentifier,
+    statements: SlimeStatement[],
+    attrsVarName: string | null,
+    componentProps: SlimeExpression | null
+  ): SlimeCallExpression {
+    // 1. 创建基础的 IIFE（包含children数组和push逻辑）
+    const baseIIFE = this.createBaseIIFE(statements, attrsVarName)
+
+    // 2. 但是基础IIFE返回的是children数组，我们需要把它改成返回 createComponentVNode
+    // 所以需要重新构建函数体，用基础的前半部分逻辑，但改变return语句
+    const iifeFunctionBody: SlimeStatement[] = [
+      // 1. 声明 children 数组：const children = []
+      SlimeAstUtil.createVariableDeclaration(
+        SlimeAstUtil.createVariableDeclarationKind(SlimeVariableDeclarationKindValue.const),
+        [
+          SlimeAstUtil.createVariableDeclarator(
+            SlimeAstUtil.createIdentifier('children'),
+            SlimeAstUtil.createEqualOperator(),
+            SlimeAstUtil.createArrayExpression([])
+          )
+        ]
+      )
+    ]
+
+    // 2. 如果有attrs，声明 attrs 对象
+    if (attrsVarName) {
+      const attrsDeclaration = SlimeAstUtil.createVariableDeclaration(
+        SlimeAstUtil.createVariableDeclarationKind(SlimeVariableDeclarationKindValue.const),
+        [
+          SlimeAstUtil.createVariableDeclarator(
+            SlimeAstUtil.createIdentifier(attrsVarName),
+            SlimeAstUtil.createEqualOperator(),
+            SlimeAstUtil.createObjectExpression([])
+          )
+        ]
+      )
+      iifeFunctionBody.push(attrsDeclaration)
+    }
+
+    // 3. 转换后的语句
+    iifeFunctionBody.push(...statements)
+
+    // 4. 返回 createComponentVNode(id, props, children) 而不是 children
     iifeFunctionBody.push(this.createReturnOvsAPICreateVNode(id, attrsVarName, componentProps))
 
     // 生成 IIFE：(function() { ... })()

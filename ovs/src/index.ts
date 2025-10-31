@@ -225,10 +225,10 @@ function wrapTopLevelExpressions(ast: SlimeProgram): SlimeProgram {
   const ovsViews = expressions.filter(e => isOvsRenderDomView(e))
   
   // 合并所有语句用于判断
-  const allStatements = [...declarations, ...expressions]
+  const checkStatements = [...declarations, ...expressions]
   
   // 简单条件：只有一个 view，且没有其他非渲染语句
-  if (ovsViews.length === 1 && expressions.length === 1 && !hasNonRenderStatements(allStatements)) {
+  if (ovsViews.length === 1 && expressions.length === 1 && !hasNonRenderStatements(checkStatements)) {
     // 简单情况：直接导出这个 view
     const viewExpr = (ovsViews[0] as SlimeExpressionStatement).expression
     const exportDefault = SlimeAstUtil.createExportDefaultDeclaration(viewExpr)
@@ -240,29 +240,10 @@ function wrapTopLevelExpressions(ast: SlimeProgram): SlimeProgram {
   }
 
   // 5. 复杂情况：用 IIFE 包裹所有内容（declarations + expressions）
-  const iifeBody: SlimeStatement[] = []
+  // 先构建 expressions 对应的语句列表（包含 push 逻辑）
+  const expressionStatements: SlimeStatement[] = []
   
-  // 先添加所有 declarations（const、function 等）
-  iifeBody.push(...declarations)
-  
-  // 添加 const children = []
-  iifeBody.push(
-    SlimeAstUtil.createVariableDeclaration(
-      SlimeAstUtil.createVariableDeclarationKind(
-        SlimeVariableDeclarationKindValue.const,
-        undefined
-      ),
-      [
-        SlimeAstUtil.createVariableDeclarator(
-          SlimeAstUtil.createIdentifier('children'),
-          SlimeAstUtil.createEqualOperator(),
-          SlimeAstUtil.createArrayExpression([])
-        )
-      ]
-    )
-  )
-
-  // 处理所有 expressions
+  // 处理所有 expressions，生成 children.push(...) 语句
   for (const expr of expressions) {
     if (isOvsRenderDomView(expr)) {
       // OVS 视图（简单或复杂）→ children.push(vnode)
@@ -275,7 +256,7 @@ function wrapTopLevelExpressions(ast: SlimeProgram): SlimeProgram {
         ),
         [vnodeExpr]
       )
-      iifeBody.push({
+      expressionStatements.push({
         type: SlimeAstType.ExpressionStatement,
         expression: pushCall
       } as SlimeExpressionStatement)
@@ -292,42 +273,23 @@ function wrapTopLevelExpressions(ast: SlimeProgram): SlimeProgram {
           ),
           [exprStmt.expression]
         )
-        iifeBody.push({
+        expressionStatements.push({
           type: SlimeAstType.ExpressionStatement,
           expression: pushCall
         } as SlimeExpressionStatement)
       } else {
         // 其他语句（if、for 等）保持原样，不 push
-        iifeBody.push(expr)
+        expressionStatements.push(expr)
       }
     }
   }
 
-  // return children
-  const returnStatement = SlimeAstUtil.createReturnStatement(
-    SlimeAstUtil.createIdentifier('children')
-  )
-  iifeBody.push(returnStatement)
-
-  // 创建 IIFE
-  const functionBody = SlimeAstUtil.createBlockStatement(
-    SlimeAstUtil.creatLBrace(),
-    SlimeAstUtil.createRBrace(),
-    iifeBody
-  )
-
-  const functionParams = SlimeAstUtil.createFunctionParams(
-    SlimeAstUtil.createLParen(),
-    SlimeAstUtil.createRParen()
-  )
-
-  const functionExpression = SlimeAstUtil.createFunctionExpression(
-    functionBody,
-    null,  // 匿名函数
-    functionParams
-  )
-
-  const iife = SlimeAstUtil.createCallExpression(functionExpression, [])
+  // 合并 declarations + expressions
+  const allStatements = [...declarations, ...expressionStatements]
+  
+  // 调用 OvsCstToSlimeAstUtil 的 createBaseIIFE 方法生成 IIFE
+  // 这样就能复用 OVS 核心编译的 IIFE 生成逻辑
+  const iife = OvsCstToSlimeAstUtil.createBaseIIFE(allStatements)
 
   const exportDefault = SlimeAstUtil.createExportDefaultDeclaration(iife)
 
@@ -344,34 +306,44 @@ function wrapTopLevelExpressions(ast: SlimeProgram): SlimeProgram {
  * @returns 添加了 import 的 Program AST
  */
 function ensureOvsAPIImport(ast: SlimeProgram): SlimeProgram {
-  // 检查是否已经导入了 createReactiveVNode 函数
   let hasImport = false
-
+  
+  // 检查是否已经有了所需的导入
   for (const statement of ast.body) {
     if (statement.type === SlimeAstType.ImportDeclaration) {
       const importDecl = statement as SlimeImportDeclaration
-      const namedSpecifiers = importDecl.specifiers.filter(
-        spec => spec.type === SlimeAstType.ImportSpecifier
-      ) as SlimeImportSpecifier[]
-
-      hasImport = namedSpecifiers.some(spec => 
-        spec.imported.type === SlimeAstType.Identifier && spec.imported.name === 'createReactiveVNode'
-      )
-      if (hasImport) break
+      if (importDecl.source.value === '../utils/ReactiveVNode') {
+        // 检查是否已导入 createComponentVNode
+        const specs = importDecl.specifiers || []
+        const hasCreateComponentVNode = specs.some(spec => 
+          spec.type === SlimeAstType.ImportSpecifier &&
+          spec.imported.name === 'createComponentVNode'
+        )
+        if (hasCreateComponentVNode) {
+          hasImport = true
+          break
+        }
+      }
     }
   }
 
-  // 如果没有导入，添加 import { createReactiveVNode } from '../utils/ReactiveVNode'
+  // 如果没有导入，添加 import { createComponentVNode, createElementVNode } from '../utils/ReactiveVNode'
   if (!hasImport) {
     // 手动创建 ImportSpecifier
-    const specifier: SlimeImportSpecifier = {
+    const specifier1: SlimeImportSpecifier = {
       type: SlimeAstType.ImportSpecifier,
-      local: SlimeAstUtil.createIdentifier('createReactiveVNode'),
-      imported: SlimeAstUtil.createIdentifier('createReactiveVNode')
+      local: SlimeAstUtil.createIdentifier('createComponentVNode'),
+      imported: SlimeAstUtil.createIdentifier('createComponentVNode')
+    }
+    
+    const specifier2: SlimeImportSpecifier = {
+      type: SlimeAstType.ImportSpecifier,
+      local: SlimeAstUtil.createIdentifier('createElementVNode'),
+      imported: SlimeAstUtil.createIdentifier('createElementVNode')
     }
     
     const importDecl = SlimeAstUtil.createImportDeclaration(
-      [specifier],
+      [specifier1, specifier2],
       SlimeAstUtil.createFromKeyword(),
       SlimeAstUtil.createStringLiteral('../utils/ReactiveVNode')
     )

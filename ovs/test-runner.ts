@@ -38,8 +38,8 @@ async function runTests() {
       const code = readFileSync(testCase, 'utf-8')
       const result = await vitePluginOvsTransform(code, fileName, false)
       
-      // 基本验证
-      if (result.code && result.code.includes('OvsAPI.createVNode')) {
+      // 基本验证 - 检查是否包含新的编译API
+      if (result.code && (result.code.includes('createComponentVNode') || result.code.includes('createReactiveVNode'))) {
         console.log(`✅ 编译成功 - ${fileName}`)
         passCount++
       } else {
