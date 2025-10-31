@@ -63,7 +63,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
    *
    * 职责：纯语法转换（OVS 语法 → JavaScript AST）
    * 不包含：
-   * - import 添加（移到外层 ensureOvsAPIImport - 导入 createReactiveVNode）
+   * - import 添加（移到外层 ensureOvsAPIImport - 导入 createComponentVNode）
    * - 组件包装（移到外层 wrapAsVueComponent）
    *
    * @param cst Program CST 节点
@@ -110,7 +110,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
    * 转换 OvsViewDeclaration 为函数声明
    *
    * 输入：ovsView ComponentName (state) : div { ... }
-   * 输出：function ComponentName(state) { return createReactiveVNode('div', ...) }
+   * 输出：function ComponentName(state) { return createComponentVNode('div', ...) }
    * 
    * 返回类型：ReactiveVNodeApi
    */
@@ -412,14 +412,14 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
    * 1. 进入时计数器 +1，生成唯一的attrs变量名并入栈
    * 2. 转换 StatementList（赋值表达式转为三条语句，其他表达式转为 children.push()）
    * 3. 判断是简单还是复杂情况：
-   *    - 简单（只有表达式）：createReactiveVNode('div', {}, [children])  ⭐ 无 IIFE
+   *    - 简单（只有表达式）：createComponentVNode('div', {}, [children])  ⭐ 无 IIFE
    *    - 复杂（有语句）：IIFE包裹
    * 4. 退出时计数器 -1，弹出栈（用 try-finally 保证）
    *
    * 示例（简单）：
    * 输入：div { h1 { greeting } }
-   * 输出：createReactiveVNode('div', {}, [
-   *   createReactiveVNode('h1', {}, [greeting])
+   * 输出：createComponentVNode('div', {}, [
+   *   createComponentVNode('h1', {}, [greeting])
    * ])
    *
    * 示例（复杂，带attrs）：
@@ -432,7 +432,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
    *   temp$$attrs$$uuid.name = name
    *   children.push(temp$$attrs$$uuid.name)
    *   children.push(123)
-   *   return createReactiveVNode('div', {attrs: temp$$attrs$$uuid}, children)
+   *   return createComponentVNode('div', {attrs: temp$$attrs$$uuid}, children)
    * })()
    */
   createOvsRenderDomViewDeclarationAst(cst: SubhutiCst): SlimeExpression {
@@ -540,15 +540,16 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
   }
 
   /**
-   * 创建简单视图（直接返回 createReactiveVNode 调用，无 IIFE）
+   * 创建简单视图（直接返回 createComponentVNode 调用，无 IIFE）
    *
    * 生成：
-   * createReactiveVNode('div', {}, [child1, child2])
+   * createComponentVNode(firstArg, props, children)
+   * 其中 firstArg 是标签字符串（'div'）或组件标识符（MyComponent）
    *
-   * @param id 元素标识符
+   * @param id 元素/组件标识符
    * @param statements 语句数组（只包含 ExpressionStatement）
-   * @param attrsVarName attrs变量名（简单视图通常为null）
-   * @returns CallExpression - createReactiveVNode 调用
+   * @param attrsVarName attrs变量名（已弃用，保留用于将来功能）
+   * @returns CallExpression - createComponentVNode 调用
    */
   private createSimpleView(
     id: SlimeIdentifier,
@@ -575,9 +576,9 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     // 创建第一个参数：组件用 Identifier，标签用 StringLiteral
     const firstArg = id  // MyComponent（不加引号）
 
-    // 创建 createReactiveVNode(Component, props, children) 或 createReactiveVNode('div', {}, children) 调用
+    // 创建 createComponentVNode(firstArg, props, children) 调用
     const vNodeCall = SlimeAstUtil.createCallExpression(
-      SlimeAstUtil.createIdentifier('createReactiveVNode'),
+      SlimeAstUtil.createIdentifier('createComponentVNode'),
       [
         firstArg,         // 第一个参数：组件标识符或标签字符串
         propsObject,      // 第二个参数：props
@@ -594,17 +595,15 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
    * 生成：
    * (function() {
    *   const children = []
-   *   const temp$$attrs$$uuid = {}
    *   ...statements
-   *   return createReactiveVNode('div', {ovsAttr: temp$$attrs$$uuid}, children)
+   *   return createComponentVNode(firstArg, props, children)
    * })()
+   * 其中 firstArg 是标签字符串（'div'）或组件标识符（MyComponent）
    *
    * @param id 元素/组件标识符
    * @param statements 语句数组
-   * @param attrsVarName attrs变量名
-   * @param isComponent 是否是组件
-   * @param componentProps 组件props
-   * @param loc 位置信息
+   * @param attrsVarName attrs变量名（已弃用，保留用于将来功能）
+   * @param componentProps 组件props对象
    * @returns CallExpression
    */
   private createComplexIIFE(
@@ -648,7 +647,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     // 3. 转换后的语句（包含 temp$$attrs$$.name = value 和 children.push()）
     iifeFunctionBody.push(...statements)
 
-    // 4. 返回 createReactiveVNode('div', {ovsAttr: temp$$attrs$$uuid}, children)
+    // 4. 返回 createReactiveVNode('div', {}, children)
     iifeFunctionBody.push(this.createReturnOvsAPICreateVNode(id, attrsVarName, componentProps))
 
     // 生成 IIFE：(function() { ... })()
@@ -656,15 +655,15 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
   }
 
   /**
-   * 创建 return createReactiveVNode(...) 语句
+   * 创建 return createComponentVNode(...) 语句
    *
    * 生成：
-   * return createReactiveVNode('div', {ovsAttr: temp$$attrs$$}, children) 或
-   * return createReactiveVNode(MyComponent, props, children)
+   * return createComponentVNode(firstArg, props, children)
+   * 其中 firstArg 是标签字符串（'div'）或组件标识符（MyComponent）
+   *       props 是自定义参数对象或空对象
    *
    * @param id 元素/组件标识符
-   * @param attrsVarName attrs变量名
-   * @param isComponent 是否是组件
+   * @param attrsVarName attrs变量名（已弃用，保留用于将来功能）
    * @param componentProps 组件props对象
    * @returns ReturnStatement
    */
@@ -675,30 +674,23 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
   ): SlimeStatement {
 
     // 创建 createReactiveVNode 函数标识符
-    const createReactiveVNodeIdentifier = SlimeAstUtil.createIdentifier('createReactiveVNode')
+    const createReactiveVNodeIdentifier = SlimeAstUtil.createIdentifier('createComponentVNode')
 
     // 创建 props 对象
     let propsObject
     if (componentProps) {
       // 组件调用：使用 componentProps
       propsObject = componentProps
-    } else if (attrsVarName) {
-      // 普通元素有attrs：{ovsAttr: temp$$attrs$$uuid}
-      propsObject = SlimeAstUtil.createObjectExpression([
-        SlimeAstUtil.createPropertyAst(
-          SlimeAstUtil.createIdentifier('ovsAttr'),
-          SlimeAstUtil.createIdentifier(attrsVarName)
-        )
-      ])
     } else {
-      // 普通元素无attrs：{}
+      // 普通元素无自定义props：{}
+      // 注：attrsVarName 保留用于将来的属性赋值功能
       propsObject = SlimeAstUtil.createObjectExpression([])
     }
 
     // 创建第一个参数：组件用 Identifier，标签用 StringLiteral
     const firstArg = id  // MyComponent（不加引号）
 
-    // 创建函数调用：createReactiveVNode(Component, props, children) 或 createReactiveVNode('div', props, children)
+    // 创建函数调用：createComponentVNode(firstArg, props, children)
     const callExpression = SlimeAstUtil.createCallExpression(
       createReactiveVNodeIdentifier,
       [

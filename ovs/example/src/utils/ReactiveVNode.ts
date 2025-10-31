@@ -16,6 +16,20 @@ export interface ReactiveVNodeState {
   children: ReactiveVNodeApi | ReactiveVNodeApi[] | null | any
 }
 
+// ==================== 组件类型定义 ====================
+
+/**
+ * 函数组件类型
+ * 接收 state，返回 ReactiveVNodeApi
+ */
+export type FunctionComponent = (state: ReactiveVNodeState) => ReactiveVNodeApi
+
+/**
+ * HTML 元素类型
+ * HTML 标签的字符串名称
+ */
+export type HtmlElementType = string
+
 function ensureReactiveProps<T extends object>(obj: T): T {
   return (isReactive(obj) ? obj : reactive(obj)) as T
 }
@@ -39,19 +53,15 @@ function mapChildrenToVNodes(children: unknown): VNode | VNode[] | unknown {
   return children
 }
 
-export function createReactiveVNode(
-  type: ReactiveVNodeType,
+export function createComponentVNode(
+  componentFn: FunctionComponent,
   props: Record<string, any> = {},
   children: any = null
 ): ReactiveVNodeApi {
-  const normalizedChildren = Array.isArray(children)
-    ? ((isReactive(children) ? children : reactive(children)) as any[])
-    : children
-
   const state: ReactiveVNodeState = reactive({
-    type,
+    type: componentFn,
     props: ensureReactiveProps(props),
-    children: normalizedChildren
+    children: children
   }) as ReactiveVNodeState
 
   let stopEffect: (() => void) | null = null
@@ -59,32 +69,67 @@ export function createReactiveVNode(
 
   const api: ReactiveVNodeApi = {
     toVnode(): VNode {
-      // 智能组件处理：如果 type 是函数，先调用它
-      if (typeof state.type === 'function') {
-        try {
-          // 类型断言为通用函数，避免 Vue Component 类型冲突
-          const componentFn = state.type as any
-          
-          // 调用组件函数，传入 props 和 child（注意：参数名是 child 不是 children）
-          const result = componentFn(state)
-          
-          // 如果返回 ReactiveVNodeApi，递归调用 toVnode
-          if (isReactiveVNodeApi(result)) {
-            return result.toVnode()
-          }
-          
-          // 如果返回 VNode，直接使用（兼容普通 Vue 组件）
-          if (result && typeof result === 'object' && 'type' in result) {
-            return result as VNode
-          }
-          
-          // 其他情况，fallback 到原有逻辑
-        } catch (e) {
-          // 如果调用失败，fallback 到 Vue 的 h() 函数处理
-          console.warn('Component function call failed, falling back to Vue h():', e)
-        }
+      // 调用组件函数，传入 props 和 child（注意：参数名是 child 不是 children）
+      const result = componentFn(state)
+      
+      // 如果返回 ReactiveVNodeApi，递归调用 toVnode
+      if (isReactiveVNodeApi(result)) {
+        return result.toVnode()
       }
       
+      // 如果返回 VNode，直接使用（兼容普通 Vue 组件）
+      if (result && typeof result === 'object' && 'type' in result) {
+        return result as VNode
+      }
+      
+      // 其他情况，fallback 到原有逻辑
+      const vnodeChildren = mapChildrenToVNodes(state.children)
+      return h(state.type as any, state.props, vnodeChildren as any)
+    },
+
+    mount(container: Element): void {
+      mountedContainer = container
+      if (stopEffect) stopEffect()
+      stopEffect = watchEffect(() => {
+        render(api.toVnode(), container)
+      })
+    },
+
+    unmount(): void {
+      if (stopEffect) {
+        stopEffect()
+        stopEffect = null
+      }
+      if (mountedContainer) {
+        render(null, mountedContainer)
+        mountedContainer = null
+      }
+    },
+
+    get state(): ReactiveVNodeState {
+      return state
+    }
+  }
+
+  return api
+}
+
+export function createElementVNode(
+  type: ReactiveVNodeType,
+  props: Record<string, any> = {},
+  children: any = null
+): ReactiveVNodeApi {
+  const state: ReactiveVNodeState = reactive({
+    type,
+    props: ensureReactiveProps(props),
+    children: children
+  }) as ReactiveVNodeState
+
+  let stopEffect: (() => void) | null = null
+  let mountedContainer: Element | null = null
+
+  const api: ReactiveVNodeApi = {
+    toVnode(): VNode {
       // 原有逻辑：普通 HTML 元素或 Vue 内置组件
       const vnodeChildren = mapChildrenToVNodes(state.children)
       return h(state.type as any, state.props, vnodeChildren as any)

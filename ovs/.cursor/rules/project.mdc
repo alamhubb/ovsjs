@@ -479,24 +479,17 @@ Copy-Item tests\cases\08-class.ovs example\src\views\hello.ovs
 
 **作用：** 基于 Vue 3 的响应式系统封装的响应式 VNode 库，OVS 编译后的代码依赖此库。
 
-**核心 API：**
+**核心 API（v0.2.1 拆分后）：**
 ```typescript
-// 创建响应式 VNode
-createReactiveVNode(type: string | Component, props?: Record<string, any>, children?: any): ReactiveVNodeApi
+// 用于 OVS 编译器生成的代码
+createComponentVNode(componentFn: FunctionComponent, props?: Record<string, any>, children?: any): ReactiveVNodeApi
 
-// ReactiveVNodeApi 接口
-interface ReactiveVNodeApi {
-  toVnode(): VNode           // 转换为 Vue VNode
-  mount(container: Element): void  // 挂载到 DOM
-  unmount(): void            // 卸载
-  get state(): ReactiveVNodeState  // 响应式状态
-}
+// 用于 HTML 元素库（htmlElements.ts）
+createElementVNode(type: string, props?: Record<string, any>, children?: any): ReactiveVNodeApi
 
-interface ReactiveVNodeState {
-  type: ReactiveVNodeType
-  props: Record<string, any>
-  children: ReactiveVNodeApi | ReactiveVNodeApi[] | null | any
-}
+// 类型定义
+export type FunctionComponent = (state: ReactiveVNodeState) => ReactiveVNodeApi
+export type HtmlElementType = string
 ```
 
 **组件函数调用机制：**
@@ -513,7 +506,7 @@ interface ReactiveVNodeState {
 
 **位置：** `example/src/utils/htmlElements.ts`
 
-**作用：** 提供所有常用 HTML 标签的类型安全辅助函数，解决 `createReactiveVNode('div', ...)` 缺少智能提示的问题。
+**作用：** 提供所有常用 HTML 标签的类型安全辅助函数，使用 `createElementVNode()` 实现类型安全的 HTML 元素创建。
 
 **使用方式：**
 ```typescript
@@ -569,10 +562,14 @@ function ComponentName(state) {
 
 **说明：**
 - 组件函数接收 `state` 参数（包含 `state.props` 和 `state.children`）
-- 组件函数返回 `ReactiveVNodeApi` 类型（`createReactiveVNode()` 的调用结果）
+- 组件函数返回 `ReactiveVNodeApi` 类型（`createComponentVNode()` 的调用结果）
 - `rootElement` 指定组件的根元素类型（如 `div`、`span` 等）
+- `createComponentVNode(firstArg, props, children)` 中：
+  - `firstArg`：标签字符串（如 `'div'`）或组件标识符（如 `MyComponent`）
+  - `props`：元素/组件的属性对象（如 `{}`、`state.props` 等）
+  - `children`：子节点数组或单个子节点
 
-**组件调用�?*
+**组件调用?*
 ```javascript
 div {
   MyCard({attrs: {title: "Hello", content: "World"}}) {
@@ -1759,6 +1756,328 @@ const isSimple = !hasComplexStatements
 - `ovs/src/factory/OvsCstToSlimeAstUtil.ts`
   - 第278-283行：添加__fromNoRenderBlock标记
   - 第512-531行：简化IIFE判断逻辑
+
+---
+
+# Arguments处理逻辑精简（2025-10-31）
+
+## 问题：多余的attrs提取逻辑
+原来的Arguments处理包含复杂的attrs提取逻辑：
+- 检查参数中是否有 `attrs` 属性
+- 如果有就提取 `attrs` 的值
+- 如果没有才使用整个对象
+- 代码行数多，条件判断复杂
+
+## 根本原因分析
+1. **用户从不写这种形式** - 用户写的是 `MyCard({title: "Hello"})`，不是 `MyCard({attrs: {...}})`
+2. **命名不一致** - 代码生成的是 `ovsAttr`，但提取检查的是 `attrs`
+3. **设计遗留** - 这个逻辑是早期设计的残留，后来被 ReactiveVNode 的 state 机制替代了
+
+## 优化方案：直接使用参数
+```typescript
+// 简化前（15行，包含复杂判断）：
+if (argListCst && argListCst.children) {
+  const firstArgCst = argListCst.children[0]
+  if (firstArgCst && firstArgCst.children?.[0]) {
+    const argExpr = this.createExpressionAst(firstArgCst.children[0])
+    if (argExpr.type === 'ObjectExpression' && argExpr.properties) {
+      const attrsProperty = argExpr.properties.find((prop: any) => 
+        prop.key?.name === 'attrs' || prop.key?.value === 'attrs'
+      )
+      if (attrsProperty && 'value' in attrsProperty && attrsProperty.value) {
+        componentProps = attrsProperty.value
+      } else {
+        componentProps = argExpr
+      }
+    } else {
+      componentProps = argExpr
+    }
+  }
+}
+
+// 简化后（3行，逻辑清晰）：
+if (argListCst && argListCst.children?.[0]?.children?.[0]) {
+  componentProps = this.createExpressionAst(argListCst.children[0].children[0])
+}
+```
+
+## 工作流程验证
+```javascript
+// 用户代码
+MyCard({title: "Hello"}) { p { "content" } }
+
+// 编译结果
+createReactiveVNode(MyCard, {title: "Hello"}, [children...])
+
+// 运行时（ReactiveVNode中）
+toVnode() {
+  if (typeof state.type === 'function') {
+    const result = componentFn(state)  // ← 传递完整的state
+    // state = { type: MyCard, props: {title: "Hello"}, children: [...] }
+  }
+}
+
+// 组件函数
+function MyCard(state) {
+  const title = state.props.title  // ← 正确获取
+  const slots = state.children
+  return ...
+}
+```
+
+## 改动文件
+- `ovs/src/factory/OvsCstToSlimeAstUtil.ts`
+  - 第449-468行：删除复杂的attrs提取逻辑，简化为直接使用参数
+
+## 优势对比
+| 维度 | 简化前 | 简化后 |
+|-----|-------|-------|
+| **代码行数** | 45行 | 3行 |
+| **条件判断** | 5层嵌套 | 1层检查 |
+| **属性查找** | 5次 | 0次 |
+| **逻辑清晰度** | 难理解 | 极清晰 |
+| **性能** | 较差 | 无开销 |
+| **维护成本** | 高 | 极低 |
+
+---
+
+# ovsAttr代码移除（2025-10-31）
+
+## 问题：无用的属性对象生成
+代码一直在生成 `{ovsAttr: temp$$attrs$$uuid}` props对象：
+- 这个特性从未被实现过（只有文档和基础设施，没有属性赋值转换逻辑）
+- 运行时完全没有使用这个 ovsAttr 属性
+- 属性赋值功能已被 ReactiveVNode 的 state 机制替代
+
+## 根本原因
+1. **属性赋值逻辑从未实现** - project.mdc 中有详细文档（第1160-1230行），但代码中没有对应实现
+2. **设计已更新** - ReactiveVNode 通过 state.props 传递所有参数，不需要 ovsAttr 这个中间层
+3. **运行时不使用** - 组件函数接收的 state 对象中根本不会用到 ovsAttr 属性
+
+## 优化方案：删除生成逻辑，保留基础设施
+
+**删除的代码（createReturnOvsAPICreateVNode中）：**
+```typescript
+// ❌ 删除了这个分支
+} else if (attrsVarName) {
+  propsObject = SlimeAstUtil.createObjectExpression([
+    SlimeAstUtil.createPropertyAst(
+      SlimeAstUtil.createIdentifier('ovsAttr'),
+      SlimeAstUtil.createIdentifier(attrsVarName)
+    )
+  ])
+}
+
+// ✅ 改为直接使用空对象
+} else {
+  propsObject = SlimeAstUtil.createObjectExpression([])
+}
+```
+
+**保留的基础设施：**
+```typescript
+// ✅ 保留供将来使用
+private attrsVarNameStack: Array<string | null> = []
+const attrsVarName = `temp$$attrs$$${uuid}`
+this.attrsVarNameStack.push(attrsVarName)
+this.attrsVarNameStack.pop()
+// 这些代码保留，但不实际生成 ovsAttr props
+```
+
+## 生成代码变化
+```javascript
+// 简化前
+return createReactiveVNode('div', {ovsAttr: temp$$attrs$$abc}, children)
+
+// 简化后
+return createReactiveVNode('div', {}, children)
+```
+
+## 改动文件
+- `ovs/src/factory/OvsCstToSlimeAstUtil.ts`
+  - 第685-692行：删除ovsAttr生成逻辑
+  - 第599, 651, 662行：更新相关注释
+  - 第550, 604行：标记attrsVarName为"已弃用"
+
+## 为什么保留基础设施？
+1. **将来可能恢复** - 如果后期决定实现属性赋值功能
+2. **低成本保留** - 几行代码的成本，完全不影响性能
+3. **向前兼容** - 已有的栈管理逻辑可直接扩展
+
+## 结论
+这次优化移除了一个已过时但仍占用代码的特性，同时保留了基础架构便于将来扩展。代码更清晰，逻辑更直接。
+
+---
+
+# createReactiveVNode 调用约定规范（2025-10-31）
+
+## 统一的调用形式
+所有编译器生成的代码都遵循同一种调用方式：
+```typescript
+createReactiveVNode(firstArg, props, children)
+```
+
+## 参数说明
+
+### 第1个参数：firstArg（元素/组件标识）
+**两种形式：**
+1. **HTML标签（字符串）** - `'div'`, `'p'`, `'h1'` 等
+   ```javascript
+   createReactiveVNode('div', {}, children)
+   ```
+
+2. **组件标识符（Identifier）** - 组件名或组件引用
+   ```javascript
+   createReactiveVNode(MyComponent, props, children)
+   ```
+
+### 第2个参数：props（属性对象）
+**可能的值：**
+1. **空对象** - 当没有传递参数时
+   ```javascript
+   createReactiveVNode('div', {}, children)
+   ```
+
+2. **自定义参数** - 来自用户的 Arguments
+   ```javascript
+   div({style: style}) { ... }
+   // 编译为
+   createReactiveVNode('div', {style: style}, children)
+   ```
+
+3. **组件 props** - 来自组件调用
+   ```javascript
+   MyCard({title: "Hello"}) { ... }
+   // 编译为
+   createReactiveVNode(MyCard, {title: "Hello"}, children)
+   ```
+
+### 第3个参数：children（子节点）
+**内容：**
+- 元素内部生成的所有表达式的数组
+- 数组名称固定为 `children`
+
+## 代码生成流程
+
+```typescript
+// 从用户代码
+div({style: style}) {
+  h1 { "title" }
+  p { "content" }
+}
+
+// 编译生成
+(function() {
+  const children = []
+  children.push(createReactiveVNode('h1', {}, ["title"]))
+  children.push(createReactiveVNode('p', {}, ["content"]))
+  return createReactiveVNode('div', {style: style}, children)
+})()
+```
+
+## 设计原则
+
+1. **一致性** - 所有调用都遵循同样的 `(firstArg, props, children)` 签名
+2. **简洁性** - 不使用具体的 `ovsAttr` 或其他中间属性名
+3. **灵活性** - props 可以是任意对象表达式（`{}`、`state.props`、组件参数等）
+4. **可读性** - 生成的代码易于理解，直接映射到用户源码
+
+---
+
+# ReactiveVNode API 拆分（2025-10-31）
+
+## 问题：职责混淆
+原来的 `createReactiveVNode()` 同时处理两种类型：
+- HTML标签（字符串类型）- 用于htmlElements.ts
+- 函数组件（Component类型）- 用于OVS编译器
+
+虽然可以工作，但职责不清晰，容易误解。
+
+## 解决方案：拆分为两个方法
+
+### 1️⃣ createComponentVNode（用于OVS编译器）
+
+```typescript
+export type FunctionComponent = (state: ReactiveVNodeState) => ReactiveVNodeApi
+
+export function createComponentVNode(
+  componentFn: FunctionComponent,
+  props: Record<string, any> = {},
+  children: any = null
+): ReactiveVNodeApi
+```
+
+**使用场景：**
+- OVS编译器生成的所有代码
+- 函数组件的直接调用
+
+**生成的代码示例：**
+```javascript
+// OVS编译结果
+return createComponentVNode(MyComponent, props, children)
+```
+
+### 2️⃣ createElementVNode（用于HTML元素）
+
+```typescript
+export type HtmlElementType = string
+
+export function createElementVNode(
+  type: string,
+  props: Record<string, any> = {},
+  children: any = null
+): ReactiveVNodeApi
+```
+
+**使用场景：**
+- htmlElements.ts 中的所有HTML标签
+- 直接创建HTML元素时
+
+**使用示例：**
+```typescript
+// htmlElements.ts
+export const div = (props?, children?) => createElementVNode('div', props, children)
+export const p = (props?, children?) => createElementVNode('p', props, children)
+
+// 用户代码
+import { div, p } from './htmlElements'
+div({ class: 'container' }, [
+  p({}, 'Hello World')
+])
+```
+
+## 设计对比
+
+| 维度 | createComponentVNode | createElementVNode |
+|-----|-------------------|------------------|
+| **参数1** | FunctionComponent（函数） | HtmlElementType（字符串） |
+| **参数2** | props对象 | props对象 |
+| **参数3** | children数组 | children数组 |
+| **返回** | ReactiveVNodeApi | ReactiveVNodeApi |
+| **使用场景** | OVS编译结果、函数组件 | HTML标签、元素库 |
+| **toVnode()内部** | 调用组件函数，执行OVS逻辑 | 直接调用Vue的h()函数 |
+
+## 改动位置
+
+**文件：`ReactiveVNode.ts`**
+- 新增类型定义：`FunctionComponent`、`HtmlElementType`
+- 新增方法：`createComponentVNode()`、`createElementVNode()`
+- 删除：原有的 `createReactiveVNode()` 
+
+**文件：`htmlElements.ts`**
+- 导入改为：`createElementVNode`
+- 所有标签函数改为调用 `createElementVNode()`
+
+**文件：`OvsCstToSlimeAstUtil.ts`**
+- 编译器生成代码改为调用 `createComponentVNode()`
+
+## 优势
+
+1. ✅ **职责清晰** - 一个方法对应一种使用场景
+2. ✅ **类型安全** - TypeScript 可以准确推断参数类型
+3. ✅ **易于理解** - 代码意图一目了然
+4. ✅ **便于维护** - 修改时不会影响另一种使用场景
+5. ✅ **错误检查** - IDE 能提供更精确的错误提示
 
 ---
 
