@@ -245,7 +245,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
                 return
             }
         }
-        LogUtil.log(this.cstStack.map(item=>item.name).join('-->'))
+        // LogUtil.log(this.cstStack.map(item=>item.name).join('-->'))
         // LogUtil.log('tokenIndex: ' + this.tokenIndex)
         let cst = this.processCst(ruleName, targetFun)
         if (initFlag) {
