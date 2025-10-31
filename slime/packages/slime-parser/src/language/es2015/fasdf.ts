@@ -121,32 +121,20 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
     PrimaryExpression() {
         this.Or([
             {alt: () => this.tokenConsumer.ThisTok()},
-            {
-                alt: () => {
-                    this.IdentifierReference()
-                }
-            },
-            {
-                alt: () => {
-                    this.Literal()
-                }
-            },
-            {
-                alt: () => {
-                    this.ArrayLiteral()
-                }
-            },
+            {alt: () => this.IdentifierReference()},
+            {alt: () => this.Literal()},
+            {alt: () => this.ArrayLiteral()},
             {alt: () => this.ObjectLiteral()},
             {alt: () => this.FunctionExpression()},
             {alt: () => this.ClassExpression()},
             {alt: () => this.GeneratorExpression()},
             {alt: () => this.tokenConsumer.RegularExpressionLiteral()},
             {alt: () => this.TemplateLiteral()},
-            // 【重要】括号表达式支持
-            // 处理：(expression) 和箭头函数参数的歧义
+            // ✅ 恢复为 Cover，不是 ParenthesizedExpression
             {alt: () => this.CoverParenthesizedExpressionAndArrowParameterList()}
         ])
     }
+
 
     @SubhutiRule
     CoverParenthesizedExpressionAndArrowParameterList() {
@@ -206,63 +194,41 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
     @SubhutiRule
     ArrayLiteral() {
         this.tokenConsumer.LBracket()
-        // 按照ES6规范，ArrayLiteral有3种形式，必须用Or明确区分，不能用Many
+
         this.Or([
-            // 长规则优先：[ ElementList , Elision(opt) ] - 尾逗号数组
+            // [ a, b, ]
             {
                 alt: () => {
                     this.ElementList()
                     this.tokenConsumer.Comma()
-                    this.Option(() => this.Elision())  // 支持 [a,] 和 [a,,,]
+                    this.Option(() => this.Elision())
                 }
             },
-            // 中规则：[ ElementList ] - 普通数组
+            // [ a, b ]
             {
-                alt: () => {
-                    this.ElementList()
-                }
+                alt: () => this.ElementList()
             },
-            // 短规则：[ Elision(opt) ] - 空数组或仅逗号数组
+            // [], [,,,]
             {
-                alt: () => {
-                    this.Option(() => this.Elision())  // 支持 [] 和 [,,]
-                }
+                alt: () => this.Option(() => this.Elision())
             }
         ])
+
         this.tokenConsumer.RBracket()
     }
-
     @SubhutiRule
     ElementList() {
+        this.Option(() => this.Elision())
         this.Or([
-            {
-                alt: () => {
-                    this.Option(() => this.Elision())
-                    this.AssignmentExpression()
-                }
-            },
-            {
-                alt: () => {
-                    this.Option(() => this.Elision())
-                    this.SpreadElement()
-                }
-            }
+            {alt: () => this.SpreadElement()},
+            {alt: () => this.AssignmentExpression()}
         ])
         this.Many(() => {
             this.tokenConsumer.Comma()
+            this.Option(() => this.Elision())
             this.Or([
-                {
-                    alt: () => {
-                        this.Option(() => this.Elision())
-                        this.AssignmentExpression()
-                    }
-                },
-                {
-                    alt: () => {
-                        this.Option(() => this.Elision())
-                        this.SpreadElement()
-                    }
-                }
+                {alt: () => this.SpreadElement()},
+                {alt: () => this.AssignmentExpression()}
             ])
         })
     }
@@ -654,7 +620,9 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
     @SubhutiRule
     Arguments() {
         this.tokenConsumer.LParen()
-        this.Option(() => this.ArgumentList())
+        this.Option(() => {
+            this.ArgumentList()
+        })
         this.tokenConsumer.RParen()
     }
 
@@ -667,15 +635,14 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
     @SubhutiRule
     ArgumentList() {
         this.Or([
-            {alt: () => this.AssignmentExpression()},
-            {alt: () => this.EllipsisAssignmentExpression()}
+            {alt: () => this.SpreadElement()},
+            {alt: () => this.AssignmentExpression()}
         ])
-        // throw new Error('cjvla')
         this.Many(() => {
             this.tokenConsumer.Comma()
             this.Or([
-                {alt: () => this.AssignmentExpression()},
-                {alt: () => this.EllipsisAssignmentExpression()}
+                {alt: () => this.SpreadElement()},
+                {alt: () => this.AssignmentExpression()}
             ])
         })
     }
@@ -1026,12 +993,9 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
     @SubhutiRule
     AssignmentExpression() {
         this.Or([
-            {
-                alt: () => {
-                    this.YieldExpression()
-                }
-            },
+            {alt: () => this.YieldExpression()},
             {alt: () => this.ArrowFunction()},
+            {alt: () => this.ConditionalExpression()},  // ← moved forward
             {
                 alt: () => {
                     this.LeftHandSideExpression()
@@ -1045,10 +1009,10 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
                     this.AssignmentOperator()
                     this.AssignmentExpression()
                 }
-            },
-            {alt: () => this.ConditionalExpression()}
+            }
         ])
     }
+
 
     @SubhutiRule
     HoistableDeclaration() {
@@ -1594,10 +1558,22 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
     @SubhutiRule
     ArrowFunction() {
         this.Option(() => this.tokenConsumer.AsyncTok())
-        this.ArrowParameters()
-        // TODO: Implement [no LineTerminator here] check
-        this.tokenConsumer.Arrow()
-        this.ConciseBody()
+        this.Or([
+            {
+                alt: () => {
+                    this.BindingIdentifier()
+                    this.tokenConsumer.Arrow()
+                    this.ConciseBody()
+                }
+            },
+            {
+                alt: () => {
+                    this.CoverParenthesizedExpressionAndArrowParameterList()
+                    this.tokenConsumer.Arrow()
+                    this.ConciseBody()
+                }
+            }
+        ])
     }
 
     @SubhutiRule
