@@ -155,7 +155,9 @@ npx tsx test-mapping-conditional-debug.ts
 # 【核心需求层�?
 ## 核心功能（用户能做什么）
 - **声明式UI编写**：用简洁的语法编写复杂UI
-- **组件系统**：使�?`ovsView` 声明可复用组�?- **属性传�?*：通过 attrs 对象传递组件属�?- **完整JavaScript支持**：函数、循环、面向对象、运算符、控制流
+- **组件系统**：使用 `ovsView` 声明可复用组件
+- **属性传递**：通过 state.props 对象传递组件属性
+- **完整JavaScript支持**：函数、循环、面向对象、运算符、控制流
 - **智能导出系统**：自动识别导出方式（默认、命名、自动包裹）
 - **实时开发体�?*：热更新、即时编译预�?- **类型安全开�?*：完整TypeScript支持
 
@@ -164,7 +166,7 @@ npx tsx test-mapping-conditional-debug.ts
 1. 编写.ovs文件 �?2. 自动编译为Vue代码 �?3. 浏览器实时预�?
 **语法接口�?*
 - OVS元素：`div { "content" }` 
-- 组件声明：`ovsView ComponentName ({attrs}) : rootElement { ... }`
+- 组件声明：`ovsView ComponentName (state) : rootElement { ... }`
 - 属性赋值：`name = value` （自动收集到 attrs�?- 条件渲染：`if (condition) { element }`
 - 循环渲染：`for (item of list) { element }`
 - 导出接口：`export const/default`
@@ -456,12 +458,84 @@ Copy-Item tests\cases\08-class.ovs example\src\views\hello.ovs
 
 ## 文档体系
 - **.cursor/rules/guidebot.mdc**：通用AI协作规则和方法论
-- **.cursor/rules/project.mdc**：OVS项目完整文档（本文件�?  - 包含：项目定位、核心功能、语法参考、实现原理、代码示例、最佳实�?  - 作用：AI理解项目的单一信息源，所有项目信息都在这�?  - 成果：整合了14个分散文档，信息密度提升700%，实�?单一信息�?
+- **.cursor/rules/project.mdc**：OVS项目完整文档（本文件）
+  - 包含：项目定位、核心功能、语法参考、实现原理、代码示例、最佳实践、运行时工具说明
+  - 作用：AI理解项目的单一信息源，所有项目信息都在这
+  - 成果：整合了所有分散文档，实现单一信息源
+- **tests/cases/mapping/README.md**：源码映射测试用例说明（测试专用）
+- **tests/TEST_PLAN_50.md**：测试计划文档（测试专用）
 
 ## 依赖项目
 - **Subhuti 0.1.3**：Parser框架（词法分析）
 - **Slime系列**：AST工具链（语法树处理）
-- **Vue 3.5.12**：渲染引擎（目标框架�?- **Vite 7.1.7**：构建工具（开发体验）
+- **Vue 3.5.12**：渲染引擎（目标框架）
+- **Vite 7.1.7**：构建工具（开发体验）
+
+## 运行时依赖工具
+
+### ReactiveVNode（响应式 VNode 封装库）
+
+**位置：** `example/src/utils/ReactiveVNode.ts`
+
+**作用：** 基于 Vue 3 的响应式系统封装的响应式 VNode 库，OVS 编译后的代码依赖此库。
+
+**核心 API：**
+```typescript
+// 创建响应式 VNode
+createReactiveVNode(type: string | Component, props?: Record<string, any>, children?: any): ReactiveVNodeApi
+
+// ReactiveVNodeApi 接口
+interface ReactiveVNodeApi {
+  toVnode(): VNode           // 转换为 Vue VNode
+  mount(container: Element): void  // 挂载到 DOM
+  unmount(): void            // 卸载
+  get state(): ReactiveVNodeState  // 响应式状态
+}
+
+interface ReactiveVNodeState {
+  type: ReactiveVNodeType
+  props: Record<string, any>
+  children: ReactiveVNodeApi | ReactiveVNodeApi[] | null | any
+}
+```
+
+**组件函数调用机制：**
+- 当 `type` 是函数时，`toVnode()` 会调用 `componentFn(state)` 传入整个 `state` 对象
+- 组件函数应返回 `ReactiveVNodeApi` 类型
+- 支持递归渲染：子节点可以是 `ReactiveVNodeApi` 对象，自动调用 `toVnode()` 转换
+
+**响应式更新：**
+- `state.props` 和 `state.children` 自动包装为响应式
+- 修改 `state.props` 或 `state.children` 会触发自动重渲染
+- 支持 `ref`、`computed`、`reactive` 等 Vue 响应式 API
+
+### htmlElements（HTML 元素辅助函数）
+
+**位置：** `example/src/utils/htmlElements.ts`
+
+**作用：** 提供所有常用 HTML 标签的类型安全辅助函数，解决 `createReactiveVNode('div', ...)` 缺少智能提示的问题。
+
+**使用方式：**
+```typescript
+import { div, p, span, button } from './utils/htmlElements'
+
+// 完整的类型提示和智能补全
+const view = div({ class: 'container' }, [
+  p({}, 'Hello'),
+  span({ style: { color: 'red' } }, 'World'),
+  button({ onClick: () => console.log('clicked') }, 'Click me')
+])
+```
+
+**优势：**
+- ✅ 类型安全：完整的 TypeScript 类型定义
+- ✅ 智能提示：IDE 自动补全和类型检查
+- ✅ 避免拼写错误：编译时检查标签名
+
+**OVS 编译器集成：**
+- OVS 编译器自动将 `div {}` 转换为 `div({}, [...])` 调用
+- 自动添加 `import { div, p, ... } from '../utils/htmlElements'`
+- 无需手动导入，编译时自动处理
 
 ---
 
@@ -471,24 +545,32 @@ Copy-Item tests\cases\08-class.ovs example\src\views\hello.ovs
 ### 组件系统（NEW�?
 **组件声明�?*
 ```javascript
-ovsView ComponentName ({attrs}) : rootElement {
+ovsView ComponentName (state) : rootElement {
   // 组件内部逻辑
-  let data = attrs.value
+  let data = state.props.value
   
-  h1 { attrs.title }
-  slot{}  // 插槽
+  h1 { state.props.title }
   p { data }
+  
+  // 访问子节点
+  div { state.children }
 }
 
-// 编译�?�?function ComponentName({attrs}, {slots}) {
-  let data = attrs.value
-  return h('div', {}, [
-    h('h1', {}, [attrs.title]),
-    slots.default(),  // 渲染插槽
-    h('p', {}, [data])
-  ])
+// 编译后（返回 ReactiveVNodeApi 类型）：
+function ComponentName(state) {
+  const children = []
+  let data = state.props.value
+  children.push(createReactiveVNode('h1', {}, [state.props.title]))
+  children.push(createReactiveVNode('p', {}, [data]))
+  children.push(createReactiveVNode('div', {}, [state.children]))
+  return createReactiveVNode('div', {}, children)  // 返回 ReactiveVNodeApi
 }
 ```
+
+**说明：**
+- 组件函数接收 `state` 参数（包含 `state.props` 和 `state.children`）
+- 组件函数返回 `ReactiveVNodeApi` 类型（`createReactiveVNode()` 的调用结果）
+- `rootElement` 指定组件的根元素类型（如 `div`、`span` 等）
 
 **组件调用�?*
 ```javascript
@@ -1170,43 +1252,46 @@ ovsRenderDomClassDeclaration() {
 
 ### IIFE 展开机制
 
-**简单组件（无语句）�?*
+**简单组件（无语句）：**
 ```javascript
-ovsView MyCard ({attrs}) : div {
-  h1 { attrs.title }
+ovsView MyCard (state) : div {
+  h1 { state.props.title }
 }
 
-// 视图转换�?�?h('div', {}, [h('h1', {}, [attrs.title])])
+// 视图转换为：createReactiveVNode('div', {}, [createReactiveVNode('h1', {}, [state.props.title])])
 
-// 最终函�?�?function MyCard({attrs}) {
-  return h('div', {}, [h('h1', {}, [attrs.title])])
+// 最终函数（返回 ReactiveVNodeApi）：
+function MyCard(state) {
+  return createReactiveVNode('div', {}, [
+    createReactiveVNode('h1', {}, [state.props.title])
+  ])
 }
 ```
 
 **复杂组件（有语句）：**
 ```javascript
-ovsView ProductCard ({attrs}) : div {
-  let price = attrs.price
+ovsView ProductCard (state) : div {
+  let price = state.props.price
   let discount = price * 0.8
   p { discount }
 }
 
-// 视图转换�?IIFE �?(function() {
+// 视图转换为 IIFE：
+(function() {
   const children = []
-  const temp$$attrs$$uuid = {}
-  let price = attrs.price
+  let price = state.props.price
   let discount = price * 0.8
-  children.push(h('p', {}, [discount]))
-  return h('div', {ovsAttr: temp$$attrs$$uuid}, children)
+  children.push(createReactiveVNode('p', {}, [discount]))
+  return createReactiveVNode('div', {}, children)
 })()
 
-// 展开IIFE内容到函数体 �?function ProductCard({attrs}) {
+// 展开IIFE内容到函数体（返回 ReactiveVNodeApi）：
+function ProductCard(state) {
   const children = []
-  const temp$$attrs$$uuid = {}
-  let price = attrs.price
+  let price = state.props.price
   let discount = price * 0.8
-  children.push(h('p', {}, [discount]))
-  return h('div', {ovsAttr: temp$$attrs$$uuid}, children)
+  children.push(createReactiveVNode('p', {}, [discount]))
+  return createReactiveVNode('div', {}, children)  // 返回 ReactiveVNodeApi
 }
 ```
 
@@ -1237,10 +1322,10 @@ createOvsViewDeclarationAst(cst) {
 
 ## 4. 完整编译流程示例
 
-**输入代码�?*
+**输入代码：**
 ```javascript
-ovsView MyButton ({attrs}) : div {
-  let text = attrs.label || "Click"
+ovsView MyButton (state) : div {
+  let text = state.props.label || "Click"
   button { text }
 }
 
@@ -1257,21 +1342,20 @@ div {
    - `createOvsRenderDomViewDeclarationAst` �?视图IIFE
 4. **IIFE展开** �?提取函数体内�?5. **智能识别** �?`MyButton` 首字母大写，识别为组�?6. **代码生成** �?最终JavaScript
 
-**输出代码�?*
+**输出代码：**
 ```javascript
-import { h } from 'vue'
+import { createReactiveVNode } from '../utils/ReactiveVNode'
 
-function MyButton({ attrs }) {
+function MyButton(state) {
   const children = []
-  const temp$$attrs$$xyz = {}
-  let text = attrs.label || 'Click'
-  children.push(h('button', {}, [text]))
-  return h('div', { ovsAttr: temp$$attrs$$xyz }, children)
+  let text = state.props.label || 'Click'
+  children.push(createReactiveVNode('button', {}, [text]))
+  return createReactiveVNode('div', {}, children)
 }
 
 export default (function () {
   const children = []
-  children.push(h(MyButton, { attrs: { label: '提交' } }, []))
+  children.push(createReactiveVNode(MyButton, { attrs: { label: '提交' } }, []))
   return children
 })()
 ```

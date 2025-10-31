@@ -109,8 +109,10 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
   /**
    * 转换 OvsViewDeclaration 为函数声明
    *
-   * 输入：ovsView parent1 ({attrs}) : div { ... }
-   * 输出：function parent1({attrs}) { return h('div', ...) }
+   * 输入：ovsView ComponentName (state) : div { ... }
+   * 输出：function ComponentName(state) { return createReactiveVNode('div', ...) }
+   * 
+   * 返回类型：ReactiveVNodeApi
    */
   createOvsViewDeclarationAst(cst: SubhutiCst): any {
     checkCstName(cst, OvsParser.prototype.OvsViewDeclaration.name)
@@ -143,7 +145,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
       params = this.createFunctionFormalParametersAst(formalParamsCst)
     } else {
       // 用户没有声明参数，抛出错误提示必须声明
-      throw new Error('ovsView 组件必须声明参数，格式: ovsView ComponentName ({props, child}) : rootElement { ... }')
+      throw new Error('ovsView 组件必须声明参数，格式: ovsView ComponentName (state) : rootElement { ... }')
     }
 
     // 2. 视图内容（第3个：OvsRenderDomViewDeclaration）
