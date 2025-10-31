@@ -1,8 +1,6 @@
 import { h, reactive, isReactive, watchEffect, render, isRef, unref } from 'vue'
 import type { Component, VNode } from 'vue'
 
-export type ReactiveVNodeType = string | Component
-
 export interface ReactiveVNodeApi {
   toVnode(): VNode
   mount(container: Element): void
@@ -11,7 +9,7 @@ export interface ReactiveVNodeApi {
 }
 
 export interface ReactiveVNodeState {
-  type: ReactiveVNodeType
+  type: string | OvsFunctionComponent | Component
   props: Record<string, any>
   children: ReactiveVNodeApi | ReactiveVNodeApi[] | null | any
 }
@@ -24,11 +22,6 @@ export interface ReactiveVNodeState {
  */
 export type OvsFunctionComponent = (state: ReactiveVNodeState) => ReactiveVNodeApi
 
-/**
- * HTML 元素类型
- * HTML 标签的字符串名称
- */
-export type HtmlElementType = string
 
 function ensureReactiveProps<T extends object>(obj: T): T {
   return (isReactive(obj) ? obj : reactive(obj)) as T
@@ -112,7 +105,7 @@ class ReactiveVNode implements ReactiveVNodeApi {
 // ==================== 工厂函数 ====================
 
 export function createComponentVNode(
-  componentFn: OvsFunctionComponent,
+  componentFn: OvsFunctionComponent | Component,
   props: Record<string, any> = {},
   children: any = null
 ): ReactiveVNodeApi {
@@ -126,7 +119,7 @@ export function createComponentVNode(
 }
 
 export function createElementVNode(
-  type: ReactiveVNodeType,
+  type: string,
   props: Record<string, any> = {},
   children: any = null
 ): ReactiveVNodeApi {
