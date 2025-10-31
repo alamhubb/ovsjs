@@ -441,9 +441,6 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     const id = this.createIdentifierAst(idCst)
     id.loc = idCst.loc
 
-    // 检查是否是组件（首字母大写）
-    const isComponent = id.name[0] === id.name[0].toUpperCase()
-
     // 查找 Arguments 节点（组件调用参数）
     const argumentsCst = cst.children?.find(child => child.name === 'Arguments')
     let componentProps: SlimeExpression | null = null
@@ -550,10 +547,10 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
 
       if (isSimple) {
         // 简单情况：直接返回 h 调用，无 IIFE
-        return this.createSimpleView(id, bodyStatements, currentAttrsVarName, isComponent, componentProps)
+        return this.createSimpleView(id, bodyStatements, currentAttrsVarName, componentProps)
       } else {
         // 复杂情况：生成完整 IIFE
-        return this.createComplexIIFE(id, bodyStatements, currentAttrsVarName, isComponent, componentProps)
+        return this.createComplexIIFE(id, bodyStatements, currentAttrsVarName, componentProps)
       }
     } finally {
       // 退出 OvsRenderDomViewDeclaration，计数器 -1 并弹出栈
@@ -579,7 +576,6 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     id: SlimeIdentifier,
     statements: SlimeStatement[],
     _attrsVarName: string | null,
-    isComponent: boolean,
     componentProps: SlimeExpression | null
   ): SlimeCallExpression {
     // 从 ExpressionStatement 中提取表达式
@@ -599,9 +595,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     const propsObject = componentProps || SlimeAstUtil.createObjectExpression([])
 
     // 创建第一个参数：组件用 Identifier，标签用 StringLiteral
-    const firstArg = isComponent
-      ? id  // MyComponent（不加引号）
-      : SlimeAstUtil.createStringLiteral(id.name)  // 'div'（加引号），不传递loc（避免重复映射）
+    const firstArg = id  // MyComponent（不加引号）
 
     // 创建 createReactiveVNode(Component, props, children) 或 createReactiveVNode('div', {}, children) 调用
     const vNodeCall = SlimeAstUtil.createCallExpression(
@@ -639,7 +633,6 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     id: SlimeIdentifier,
     statements: SlimeStatement[],
     attrsVarName: string | null,
-    isComponent: boolean,
     componentProps: SlimeExpression | null
   ): SlimeCallExpression {
     // 生成完整的 IIFE 函数体
@@ -678,7 +671,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     iifeFunctionBody.push(...statements)
 
     // 4. 返回 createReactiveVNode('div', {ovsAttr: temp$$attrs$$uuid}, children)
-    iifeFunctionBody.push(this.createReturnOvsAPICreateVNode(id, attrsVarName, isComponent, componentProps))
+    iifeFunctionBody.push(this.createReturnOvsAPICreateVNode(id, attrsVarName, componentProps))
 
     // 生成 IIFE：(function() { ... })()
     return this.createIIFE(iifeFunctionBody)
@@ -700,7 +693,6 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
   private createReturnOvsAPICreateVNode(
     id: SlimeIdentifier,
     attrsVarName: string | null,
-    isComponent: boolean,
     componentProps: SlimeExpression | null
   ): SlimeStatement {
 
@@ -709,7 +701,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
 
     // 创建 props 对象
     let propsObject
-    if (isComponent && componentProps) {
+    if (componentProps) {
       // 组件调用：使用 componentProps
       propsObject = componentProps
     } else if (attrsVarName) {
@@ -726,9 +718,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     }
 
     // 创建第一个参数：组件用 Identifier，标签用 StringLiteral
-    const firstArg = isComponent
-      ? id  // MyComponent（不加引号）
-      : SlimeAstUtil.createStringLiteral(id.name)  // 'div'（加引号），不传递loc（避免重复映射）
+    const firstArg = id  // MyComponent（不加引号）
 
     // 创建函数调用：createReactiveVNode(Component, props, children) 或 createReactiveVNode('div', props, children)
     const callExpression = SlimeAstUtil.createCallExpression(
