@@ -453,12 +453,9 @@ export interface ovsTransformBaseResult {
 export function ovsTransformBase(
     code: string
 ): ovsTransformBaseResult {
-    console.log('=== 1. START COMPILE ===')
-
     // 1. 词法分析
     const lexer = new SubhutiLexer(ovs6Tokens)
     const tokens = lexer.lexer(code)
-    console.log('=== 2. LEXER DONE ===', tokens.length, 'tokens')
 
     if (!tokens.length) {
         return {ast: null, tokens: tokens}
@@ -467,24 +464,20 @@ export function ovsTransformBase(
     // 2. 语法分析
     const parser = new OvsParser(tokens, OvsTokenConsumer)
     let curCst = parser.Program()
-    console.log('=== 3. PARSER DONE ===')
 
     // 3. 语法转换
-    console.log('=== 4. START toProgram ===')
     let ast = OvsCstToSlimeAstUtil.toProgram(curCst)
 
     return {ast, tokens}
 }
 
+//纯测试代码编译，不包含插件导出ovs文件的功能
 export function ovsTransform(
     code: string
 ): SlimeGeneratorResult {
     let codeResult: ovsTransformBaseResult = ovsTransformBase(code)
-    console.log('=== 5. toProgram DONE ===')
 
-    console.log('=== 10. START SlimeGenerator ===')
     const result = SlimeGenerator.generator(codeResult.ast, codeResult.tokens)
-    console.log('=== 11. SlimeGenerator DONE ===')
 
     return result
 }
@@ -494,33 +487,23 @@ export function vitePluginOvsTransform(
 ): SlimeGeneratorResult {
     let codeResult = ovsTransformBase(code)
     let ast = codeResult.ast
-    console.log('=== 5. toProgram DONE ===')
 
     // 4. 添加 import
-    console.log('=== 6. START ensureOvsAPIImport ===')
     ast = ensureOvsAPIImport(ast)
-    console.log('=== 7. ensureOvsAPIImport DONE ===')
 
     // 5. 包裹顶层表达式
-    console.log('=== 8. START wrapTopLevelExpressions ===')
     ast = wrapTopLevelExpressions(ast)
-    console.log('=== 9. wrapTopLevelExpressions DONE ===')
 
     // 6. 代码生成
-    console.log('=== 10. START SlimeGenerator ===')
     const result = SlimeGenerator.generator(ast, codeResult.tokens)
-    console.log('=== 11. SlimeGenerator DONE ===')
 
     // 7. 过滤映射
-    console.log('=== 12. START filter mapping ===')
     result.mapping = result.mapping.filter(m =>
         m.source &&
         m.source.value &&
         m.source.value !== '' &&
         m.source.length > 0
     )
-    console.log('=== 13. DONE ===')
-
     return result
 }
 

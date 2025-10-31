@@ -1,11 +1,8 @@
-import {vitePluginOvsTransform} from "ovsjs/src";
-import {MappingConverter} from "./OvsLanguagePlugin.ts";
-import {LogUtil} from "./logutil.ts";
-import { SourceMap } from '@volar/source-map';
+import {ovsTransform} from "ovsjs/src";
 
 const code = `createComponentVNode(div,{},[createComponentVNode(...)])
 `
 
-const res = vitePluginOvsTransform(code)
+const res = ovsTransform(code)
 
 console.log(res.code)
