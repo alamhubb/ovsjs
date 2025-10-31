@@ -518,13 +518,11 @@ export function vitePluginOvsTransformWithBeautify(
 /**
  * OVS 代码转换主函数（异步，支持 Prettier）
  * @param code OVS 源代码
- * @param _filename 文件名（保留用于将来）
  * @param prettify 是否使用 Prettier 格式化（异步）
  * @returns 转换结果（包含代码和 source map）
  */
 export async function vitePluginOvsTransformAsync(
   code: string,
-  _filename?: string,
   prettify: boolean = true
 ): Promise<SlimeGeneratorResult> {
   // 调用同步方法（无格式化）
@@ -546,18 +544,6 @@ export async function vitePluginOvsTransformAsync(
   }
 
   return result
-}
-
-/**
- * @deprecated 使用 vitePluginOvsTransformAsync 代替
- * 向后兼容的异步方法
- */
-export async function vitePluginOvsTransformSync(
-  code: string,
-  filename?: string,
-  prettify: boolean = true
-): Promise<SlimeGeneratorResult> {
-  return vitePluginOvsTransformAsync(code, filename, prettify);
 }
 
 /**
