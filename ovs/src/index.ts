@@ -280,8 +280,26 @@ function wrapTopLevelExpressions(ast: SlimeProgram): SlimeProgram {
         expression: pushCall
       } as SlimeExpressionStatement)
     } else {
-      // 其他表达式保持原样
-      iifeBody.push(expr)
+      // 其他表达式：也应该 push 到 children（规则4的完整实现）
+      // 如果是 ExpressionStatement，提取 expression 并 push
+      if (expr.type === SlimeAstType.ExpressionStatement) {
+        const exprStmt = expr as SlimeExpressionStatement
+        const pushCall = SlimeAstUtil.createCallExpression(
+          SlimeAstUtil.createMemberExpression(
+            SlimeAstUtil.createIdentifier('children'),
+            SlimeAstUtil.createDotOperator(),
+            SlimeAstUtil.createIdentifier('push')
+          ),
+          [exprStmt.expression]
+        )
+        iifeBody.push({
+          type: SlimeAstType.ExpressionStatement,
+          expression: pushCall
+        } as SlimeExpressionStatement)
+      } else {
+        // 其他语句（if、for 等）保持原样，不 push
+        iifeBody.push(expr)
+      }
     }
   }
 

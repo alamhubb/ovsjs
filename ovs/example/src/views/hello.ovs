@@ -1,6 +1,11 @@
 const a = 123
 
-export const App = div {
+div{
     a
     div{ 456 }
+}
+
+div{
+    a
+    div{ 789 }
 }

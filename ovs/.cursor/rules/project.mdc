@@ -14,13 +14,16 @@ description: OVS项目信息 - 声明式UI框架项目规范与开发指�?alwa
 ## 当前阶段
 STAGE_4_OPTIMIZATION
 
-## 当前状�?
+## 当前状态
 ### ✅ 已完成功能
-- �?**核心编译器**：100% 完成
-- �?**智能IIFE优化**：完成（简单视图零开销�?- �?**组件系统**：完成（ovsView组件声明、props/child属性传递）
-- �?**`#{}` 不渲染块**：完成（代码隔离�?- �?**源码映射（Source Map）**：100% 准确率（51/51测试通过）
-- �?**Language Server框架**：完成（基于Volar，已集成源码映射）
-- 版本�?.2.1
+- ✅ **核心编译器**：100% 完成
+- ✅ **智能IIFE优化**：完成（简单视图零开销）
+- ✅ **组件系统**：完成（ovsView组件声明、props/child属性传递）
+- ✅ **`#{}` 不渲染块**：完成（代码隔离）
+- ✅ **源码映射（Source Map）**：100% 准确率（51/51测试通过）
+- ✅ **Language Server框架**：完成（基于Volar，已集成源码映射）
+- ✅ **编译规则完整实现**：完成（规则4无导出IIFE包裹的完整实现 - v0.2.2）
+- 版本：v0.2.2
 - 开发服务器：http://localhost:5175
 
 ### ⚠️ 未完成功能（阻塞生产使用）
@@ -1974,7 +1977,7 @@ export default (function(){
   const a = 123;
   const children = [];
   
-  // 所有表达式被收集
+  // ✅ 所有表达式都被正确 push 到 children
   children.push(createComponentVNode(div, {}, [a, createComponentVNode(div, {}, [456])]));
   children.push(createComponentVNode(div, {}, [a, createComponentVNode(div, {}, [789])]));
   
@@ -1985,6 +1988,7 @@ export default (function(){
 **特点：**
 - ✅ 自动创建 IIFE 包裹
 - ✅ 创建 `children` 数组收集所有表达式
+- ✅ ✨ **所有顶层表达式都被 push 到 children（v0.2.2 修复）**
 - ✅ 自动添加 `export default`
 - ✅ 返回 `children` 数组
 - ✅ 声明保持顶层（在 IIFE 外）
@@ -1993,6 +1997,10 @@ export default (function(){
 - 文件中没有任何导出语句
 - 包含多个顶层表达式
 - 应该作为整体组件导出
+
+**修复历史：**
+- v0.2.1：实现了规则但有bug - 表达式返回值没有被push
+- v0.2.2：✅ 修复 - 所有表达式现在都被正确push到children数组
 
 ---
 
@@ -2065,3 +2073,46 @@ export const Footer = div { p { "Footer" } }
 ---
 
 **OVS 项目完整文档 | 最后更新: 2025-10-31**
+
+---
+
+# 📝 变更日志
+
+## v0.2.2 (2025-10-31) - 编译规则完整实现修复
+
+### 🐛 Bug 修复
+
+**【重要】规则4无导出表达式编译bug**
+- 问题：当 .ovs 文件无任何导出语句时，顶层表达式的返回值没有被 push 到 children 数组
+- 影响：导致编译后的组件无法渲染这些表达式
+- 修复：`ovs/src/index.ts` 中的 `wrapTopLevelExpressions` 函数
+- 修复内容：添加逻辑，将所有 ExpressionStatement 类型的表达式都 push 到 children 数组
+
+**修复前：**
+```javascript
+// ❌ 错误 - 表达式返回值被丢弃
+createComponentVNode(div,{},[...])  
+return children  // children 为空！
+```
+
+**修复后：**
+```javascript
+// ✅ 正确 - 表达式返回值被 push
+children.push(createComponentVNode(div,{},[...]))
+return children  // children 包含所有表达式
+```
+
+### 📋 变更清单
+- ✅ 修复 `src/index.ts` 第265-286行的表达式处理逻辑
+- ✅ 更新编译规则4文档，标记为已修复
+- ✅ 验证修复有效性（2个div都正确渲染）
+
+### ✨ 现在支持的6种导出方式
+1. ✅ 箭头函数组件
+2. ✅ ovsView 组件  
+3. ✅ 函数声明组件
+4. ✅ 函数表达式组件
+5. ✅ 命名导出视图
+6. ✅ 默认导出
+
+---
