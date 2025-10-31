@@ -1,4 +1,4 @@
-import Es5TokenConsumer from "../es5/Es5TokenConsume.ts";
+import Es5TokenConsumer from "../es5/Es5TokenConsumer.ts";
 import {Es5TokensName, es5TokensObj} from "../es5/Es5Tokens.ts";
 import {
   createEmptyValueRegToken,

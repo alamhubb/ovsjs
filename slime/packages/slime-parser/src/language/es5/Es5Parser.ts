@@ -3,14 +3,14 @@ import SubhutiParser, {
   SubhutiRule,
   type SubhutiTokenConsumerConstructor
 } from "subhuti/src/parser/SubhutiParser.ts";
-import Es5TokenConsumer from "./Es5TokenConsume.ts";
+import Es5TokenConsumer from "./Es5TokenConsumer.ts";
 import SubhutiMatchToken from 'subhuti/src/struct/SubhutiMatchToken.ts'
 import Es6TokenConsumer from "../es2015/Es6Tokens.ts";
 
 
 @Subhuti
 export default class Es5Parser<T extends Es5TokenConsumer> extends SubhutiParser<T> {
-  constructor(tokens?: SubhutiMatchToken[], TokenConsumerClass: SubhutiTokenConsumerConstructor<T> = Es5TokenConsumer as any) {
+  constructor(tokens?: SubhutiMatchToken[], TokenConsumerClass: SubhutiTokenConsumerConstructor<T> = Es5TokenConsumer as SubhutiTokenConsumerConstructor<T>) {
     super(tokens, TokenConsumerClass);
   }
 
