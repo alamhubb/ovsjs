@@ -109,21 +109,21 @@
     "number": "16",
     "success": true,
     "input": "// 默认参数\r\nfunction greet(name = \"Guest\") {\r\n  return \"Hello \" + name\r\n}\r\n\r\nconst add = (a, b = 0) => a + b\r\n\r\nfunction multi(x = 1, y = 2, z = 3) {\r\n  return x + y + z\r\n}\r\n\r\n",
-    "output": "function greet(name = 'Guest'){\n  return 'Hello ' + name}\nconst add ;\n"
+    "output": "function greet(name = 'Guest'){\n  return 'Hello ' + name}\nconst add = (a,b = 0);\n"
   },
   {
     "name": "17-rest-parameters",
     "number": "17",
     "success": true,
     "input": "// Rest参数\r\nfunction sum(...numbers) {\r\n  let total = 0\r\n  for (let n of numbers) {\r\n    total += n\r\n  }\r\n  return total\r\n}\r\n\r\nconst log = (first, ...rest) => {\r\n  console.log(first, rest)\r\n}\r\n\r\n",
-    "output": "function sum(...numbers){\n  let total = 0;\n  for (let n of numbers){\n    total;\n     += n;\n  }\n  return total}\nconst log ;\n"
+    "output": "function sum(...numbers){\n  let total = 0;\n  for (let n of numbers){\n    total;\n     += n;\n  }\n  return total}\nconst log = (first,...rest);\n"
   },
   {
     "name": "18-arrow-rest",
     "number": "18",
     "success": true,
     "input": "// 箭头函数 + Rest\r\nconst sum = (...args) => args.reduce((a, b) => a + b, 0)\r\nconst first = (x, ...rest) => x\r\nconst all = (...items) => items\r\n\r\n",
-    "output": "const sum ;\n"
+    "output": "const sum = undefined;\n"
   },
   {
     "name": "19-array-destructuring-basic",
@@ -158,7 +158,7 @@
     "number": "23",
     "success": true,
     "input": "// 基础对象解构\r\nconst {name, age} = {name: \"Alice\", age: 25}\r\nconst {x, y} = {x: 10, y: 20}\r\nlet {a, b}\r\n;({a, b} = {a: 1, b: 2})\r\n\r\n",
-    "output": "const {name,age} = {name:'Alice',age:25,};\nconst {x,y} = {x:10,y:20,};\nlet {a,b} ;\n"
+    "output": "const {name,age} = {name:'Alice',age:25,};\nconst {x,y} = {x:10,y:20,};\nlet {a,b} ;\nundefined;\n"
   },
   {
     "name": "24-object-destructuring-rename",
@@ -207,14 +207,14 @@
     "number": "30",
     "success": true,
     "input": "// 复杂spread\r\nconst arr = [1, 2]\r\nconst nested = [[...arr], [...arr, 3]]\r\nconst func = (...args) => [...args, ...args]\r\n\r\n",
-    "output": "const arr = [1,2,];\nconst nested = [[...arr,],[...arr,3,],];\nconst func ;\n"
+    "output": "const arr = [1,2,];\nconst nested = [[...arr,],[...arr,3,],];\nconst func = undefined;\n"
   },
   {
     "name": "31-rest-parameters-advanced",
     "number": "31",
     "success": true,
     "input": "// 高级Rest参数\r\nfunction combine(first, second, ...rest) {\r\n  return [first, second, ...rest]\r\n}\r\n\r\nconst spread = (...items) => {\r\n  return [...items, ...items]\r\n}\r\n\r\n",
-    "output": "function combine(first,second,...rest){\n  return [first,second,...rest,]}\nconst spread ;\n"
+    "output": "function combine(first,second,...rest){\n  return [first,second,...rest,]}\nconst spread = undefined;\n"
   },
   {
     "name": "32-spread-rest-mixed",

@@ -2709,36 +2709,57 @@ export class SlimeCstToAst {
       // 处理 function* 表达式，降级为普通函数表达式
       return this.createGeneratorExpressionAst(first)
     } else if (first.name === Es6Parser.prototype.CoverParenthesizedExpressionAndArrowParameterList.name) {
-      // 处理括号表达式：( Expression ) 或箭头函数参数（但这里只处理表达式）
-      // 结构：children[0]=LParen, children[1]=Expression|FormalParameterList, children[2]=RParen
+      // Cover Grammar在非箭头函数上下文中，尝试解释为括号表达式
+      // children: [LParen, FormalParameterList?, RParen]
       
-      // 如果是空括号 ()，返回undefined表达式
+      // 如果只有2个children（空括号），返回undefined
       if (first.children.length === 2) {
         return SlimeAstUtil.createIdentifier('undefined', first.loc)
       }
       
-      const middleCst = first.children[1]
-      
-      // 如果是FormalParameterList，说明这是箭头函数参数，不是表达式
-      // 这种情况不应该在PrimaryExpression中出现，抛出错误
-      if (middleCst.name === Es6Parser.prototype.FormalParameterList.name) {
-        // 这是箭头函数参数，不应该在这里处理
-        // 直接返回一个占位符（实际应该由箭头函数处理）
-        throw new Error('CoverParenthesizedExpressionAndArrowParameterList with FormalParameterList should be handled in ArrowFunction context')
+      // 如果有3个children，中间是FormalParameterList
+      if (first.children.length === 3 && first.children[1]) {
+        const middleCst = first.children[1]
+        
+        // 如果是FormalParameterList，尝试转换为表达式
+        if (middleCst.name === Es6Parser.prototype.FormalParameterList.name) {
+          // 在非箭头函数上下文中，FormalParameterList应该被解释为括号表达式
+          // 例如：(a, b) 应该是逗号表达式，(a) 应该是括号表达式
+          
+          // 提取参数并转换为表达式
+          const params = this.createFormalParameterListAst(middleCst)
+          
+          // 如果只有一个参数，返回该参数作为括号表达式
+          if (params.length === 1 && params[0].type === SlimeAstType.Identifier) {
+            return SlimeAstUtil.createParenthesizedExpression(params[0] as any, first.loc)
+          }
+          
+          // 如果有多个参数，创建逗号表达式
+          if (params.length > 1) {
+            // 将参数列表转换为逗号表达式：(a, b) → SequenceExpression
+            const expressions = params.map(p => p as any)
+            return SlimeAstUtil.createParenthesizedExpression({
+              type: 'SequenceExpression',
+              expressions: expressions
+            } as any, first.loc)
+          }
+          
+          // 其他情况，返回undefined
+          return SlimeAstUtil.createIdentifier('undefined', first.loc)
+        }
       }
       
-      // 正常情况：括号表达式 (x + y)
-      if (middleCst.name === Es6Parser.prototype.Expression.name) {
-        const innerExpression = this.createExpressionAst(middleCst)
-        // 创建 ParenthesizedExpression 节点，保留括号信息
-        return SlimeAstUtil.createParenthesizedExpression(innerExpression, first.loc)
-      }
-      
-      // 其他情况：可能是单个BindingIdentifier等
-      throw new Error(`Unexpected child in CoverParenthesizedExpressionAndArrowParameterList: ${middleCst.name}`)
+      // 其他情况
+      throw new Error(`Unexpected CoverParenthesizedExpressionAndArrowParameterList structure`)
     } else if (first.name === Es6Parser.prototype.TemplateLiteral.name) {
       // 处理模板字符串
       return this.createTemplateLiteralAst(first)
+    } else if (first.name === Es6Parser.prototype.ParenthesizedExpression.name) {
+      // 处理普通括号表达式：( Expression )
+      // children[0]=LParen, children[1]=Expression, children[2]=RParen
+      const expressionCst = first.children[1]
+      const innerExpression = this.createExpressionAst(expressionCst)
+      return SlimeAstUtil.createParenthesizedExpression(innerExpression, first.loc)
     } else {
       throw new Error('未知的createPrimaryExpressionAst：' + first.name)
     }

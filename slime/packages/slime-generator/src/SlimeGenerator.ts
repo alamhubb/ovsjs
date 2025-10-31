@@ -494,6 +494,18 @@ export default class SlimeGenerator {
     this.addRParen()
   }
 
+  private static generatorSequenceExpression(node: any) {
+    // 逗号表达式：a, b, c
+    if (node.expressions && Array.isArray(node.expressions)) {
+      for (let i = 0; i < node.expressions.length; i++) {
+        if (i > 0) {
+          this.addComma()
+        }
+        this.generatorNode(node.expressions[i])
+      }
+    }
+  }
+
   private static generatorPrivateIdentifier(node: SlimePrivateIdentifier) {
     // 使用 addString() 输出私有标识符名称（如 #privateField）
     // 原因：标识符名称是动态的，不需要单独的 source map 映射
@@ -787,6 +799,8 @@ export default class SlimeGenerator {
       this.generatorObjectExpression(node as SlimeObjectExpression)
     } else if (node.type === SlimeAstType.ParenthesizedExpression) {
       this.generatorParenthesizedExpression(node as any)
+    } else if (node.type === 'SequenceExpression') {
+      this.generatorSequenceExpression(node as any)
     } else if (node.type === SlimeAstType.Property) {
       this.generatorProperty(node as SlimeProperty)
 

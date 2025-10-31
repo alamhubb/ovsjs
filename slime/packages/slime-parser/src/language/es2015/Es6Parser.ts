@@ -129,16 +129,20 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
             {alt: () => this.GeneratorExpression()},
             {alt: () => this.tokenConsumer.RegularExpressionLiteral()},
             {alt: () => this.TemplateLiteral()},
-            // 【重要】括号表达式支持
-            // 处理：(expression) 和箭头函数参数的歧义
+            // ✅ 先处理普通括号表达式：(expr)
+            {alt: () => this.ParenthesizedExpression()},
+            // ✅ 最后处理箭头函数参数Cover - 仅在箭头函数上下文中有效
             {alt: () => this.CoverParenthesizedExpressionAndArrowParameterList()}
         ])
     }
 
     @SubhutiRule
     CoverParenthesizedExpressionAndArrowParameterList() {
+        // Cover Grammar: 保持模糊状态，不在此阶段决定是参数还是表达式
+        // 只有在 ArrowFunction 中遇到 => 时才解释为参数列表
+        // 否则会被作为普通表达式处理
         this.tokenConsumer.LParen()
-        this.Option(() => this.FormalParameterList())   // ✅ 关键
+        this.Option(() => this.FormalParameterList())
         this.tokenConsumer.RParen()
     }
 
