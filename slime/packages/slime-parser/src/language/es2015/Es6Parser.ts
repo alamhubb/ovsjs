@@ -137,39 +137,9 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
 
     @SubhutiRule
     CoverParenthesizedExpressionAndArrowParameterList() {
-        this.Or([
-            {
-                alt: () => {
-                    this.tokenConsumer.LParen()
-                    this.Expression()
-                    this.tokenConsumer.RParen()
-                }
-            },
-            {
-                alt: () => {
-                    this.tokenConsumer.LParen()
-                    this.tokenConsumer.RParen()
-                }
-            },
-            {
-                alt: () => {
-                    this.tokenConsumer.LParen()
-                    this.tokenConsumer.Ellipsis()
-                    this.BindingIdentifier()
-                    this.tokenConsumer.RParen()
-                }
-            },
-            {
-                alt: () => {
-                    this.tokenConsumer.LParen()
-                    this.Expression()
-                    this.tokenConsumer.Comma()
-                    this.tokenConsumer.Ellipsis()
-                    this.BindingIdentifier()
-                    this.tokenConsumer.RParen()
-                }
-            }
-        ])
+        this.tokenConsumer.LParen()
+        this.Option(() => this.FormalParameterList())   // ✅ 关键
+        this.tokenConsumer.RParen()
     }
 
     @SubhutiRule
@@ -1498,25 +1468,45 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
     }
 
     @SubhutiRule
+    FunctionFormalParameters() {
+        this.tokenConsumer.LParen()
+        this.Option(() => {
+            this.FormalParameterList()
+        })
+        this.tokenConsumer.RParen()
+    }
+
+    @SubhutiRule
     FormalParameterList() {
         this.Or([
-            {alt: () => this.FunctionRestParameter()},
+            // 情况1: ( ...rest )
+            { alt: () => this.RestParameter() },
+
+            // 情况2: ( a, b, c, [ ...rest ] )
             {
                 alt: () => {
-                    this.FormalParameterListFormalsList()
+                    this.FormalParameter()
+                    this.Many(() => {
+                        this.tokenConsumer.Comma()
+                        this.FormalParameter()
+                    })
+                    this.Option(() => {
+                        this.tokenConsumer.Comma()
+                        this.RestParameter()
+                    })
                 }
             }
         ])
     }
 
     @SubhutiRule
-    FormalParameterListFormalsList() {
-        this.FormalsList()
-        this.Option(() => {
-            this.CommaFunctionRestParameter()
-        })
+    RestParameter() {
+        this.tokenConsumer.Ellipsis()
+        this.Or([
+            { alt: () => this.BindingIdentifier() },  // ...args
+            { alt: () => this.BindingPattern() }      // ...[a,b] or ...{a,b}
+        ])
     }
-
 
     @SubhutiRule
     CommaFunctionRestParameter() {
@@ -1659,15 +1649,6 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
                 }
             }
         ])
-    }
-
-    @SubhutiRule
-    FunctionFormalParameters() {
-        this.tokenConsumer.LParen()
-        this.Option(() => {
-            this.FormalParameterList()
-        })
-        this.tokenConsumer.RParen()
     }
 
     @SubhutiRule

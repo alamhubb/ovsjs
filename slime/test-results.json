@@ -93,16 +93,16 @@
   {
     "name": "14-arrow-basic",
     "number": "14",
-    "success": false,
-    "error": "CoverParenthesizedExpressionAndArrowParameterList",
-    "input": "// 基础箭头函数\r\nconst add = (a, b) => a + b\r\nconst square = x => x * x\r\nconst greet = () => \"Hello\"\r\nconst identity = x => x\r\n\r\n"
+    "success": true,
+    "input": "// 基础箭头函数\r\nconst add = (a, b) => a + b\r\nconst square = x => x * x\r\nconst greet = () => \"Hello\"\r\nconst identity = x => x\r\n\r\n",
+    "output": "const add = (a);\n"
   },
   {
     "name": "15-arrow-body",
     "number": "15",
-    "success": false,
-    "error": "CoverParenthesizedExpressionAndArrowParameterList",
-    "input": "// 箭头函数体\r\nconst add = (a, b) => {\r\n  return a + b\r\n}\r\n\r\nconst complex = x => {\r\n  const result = x * 2\r\n  return result + 1\r\n}\r\n\r\n"
+    "success": true,
+    "input": "// 箭头函数体\r\nconst add = (a, b) => {\r\n  return a + b\r\n}\r\n\r\nconst complex = x => {\r\n  const result = x * 2\r\n  return result + 1\r\n}\r\n\r\n",
+    "output": "const add = (a);\n"
   },
   {
     "name": "16-default-parameters",
@@ -121,9 +121,9 @@
   {
     "name": "18-arrow-rest",
     "number": "18",
-    "success": false,
-    "error": "CoverParenthesizedExpressionAndArrowParameterList",
-    "input": "// 箭头函数 + Rest\r\nconst sum = (...args) => args.reduce((a, b) => a + b, 0)\r\nconst first = (x, ...rest) => x\r\nconst all = (...items) => items\r\n\r\n"
+    "success": true,
+    "input": "// 箭头函数 + Rest\r\nconst sum = (...args) => args.reduce((a, b) => a + b, 0)\r\nconst first = (x, ...rest) => x\r\nconst all = (...items) => items\r\n\r\n",
+    "output": "const sum ;\n"
   },
   {
     "name": "19-array-destructuring-basic",
@@ -205,16 +205,16 @@
   {
     "name": "30-spread-complex",
     "number": "30",
-    "success": false,
-    "error": "CoverParenthesizedExpressionAndArrowParameterList",
-    "input": "// 复杂spread\r\nconst arr = [1, 2]\r\nconst nested = [[...arr], [...arr, 3]]\r\nconst func = (...args) => [...args, ...args]\r\n\r\n"
+    "success": true,
+    "input": "// 复杂spread\r\nconst arr = [1, 2]\r\nconst nested = [[...arr], [...arr, 3]]\r\nconst func = (...args) => [...args, ...args]\r\n\r\n",
+    "output": "const arr = [1,2,];\nconst nested = [[...arr,],[...arr,3,],];\nconst func ;\n"
   },
   {
     "name": "31-rest-parameters-advanced",
     "number": "31",
-    "success": false,
-    "error": "CoverParenthesizedExpressionAndArrowParameterList",
-    "input": "// 高级Rest参数\r\nfunction combine(first, second, ...rest) {\r\n  return [first, second, ...rest]\r\n}\r\n\r\nconst spread = (...items) => {\r\n  return [...items, ...items]\r\n}\r\n\r\n"
+    "success": true,
+    "input": "// 高级Rest参数\r\nfunction combine(first, second, ...rest) {\r\n  return [first, second, ...rest]\r\n}\r\n\r\nconst spread = (...items) => {\r\n  return [...items, ...items]\r\n}\r\n\r\n",
+    "output": "function combine(first,second,...rest){\n  return [first,second,...rest,]}\nconst spread ;\n"
   },
   {
     "name": "32-spread-rest-mixed",
@@ -317,15 +317,15 @@
   {
     "name": "46-async-await",
     "number": "46",
-    "success": false,
-    "error": "CoverParenthesizedExpressionAndArrowParameterList",
-    "input": "// Async/Await\r\nasync function fetchData() {\r\n  const response = await fetch('/api')\r\n  const data = await response.json()\r\n  return data\r\n}\r\n\r\nconst getData = async () => {\r\n  try {\r\n    const result = await fetchData()\r\n    return result\r\n  } catch (e) {\r\n    console.error(e)\r\n  }\r\n}\r\n\r\n"
+    "success": true,
+    "input": "// Async/Await\r\nasync function fetchData() {\r\n  const response = await fetch('/api')\r\n  const data = await response.json()\r\n  return data\r\n}\r\n\r\nconst getData = async () => {\r\n  try {\r\n    const result = await fetchData()\r\n    return result\r\n  } catch (e) {\r\n    console.error(e)\r\n  }\r\n}\r\n\r\n",
+    "output": "async function fetchData(){\n  const response = await fetch('/api');\n  const data = await response.json();\n  return data}\nconst getData = async () => {\n  try {\n    const result = await fetchData();\n    return result  }catch (e){\n    console.error(e);\n  }\n};\n"
   },
   {
     "name": "47-promises",
     "number": "47",
     "success": false,
-    "error": "CoverParenthesizedExpressionAndArrowParameterList",
+    "error": "暂不支持的类型：NewTok",
     "input": "// Promises\r\nconst promise1 = new Promise((resolve, reject) => {\r\n  setTimeout(() => resolve(\"done\"), 1000)\r\n})\r\n\r\nconst promise2 = Promise.resolve(42)\r\nconst promise3 = Promise.reject(\"error\")\r\n\r\nPromise.all([promise1, promise2])\r\n  .then(results => console.log(results))\r\n  .catch(err => console.error(err))\r\n\r\n"
   },
   {
@@ -338,9 +338,9 @@
   {
     "name": "49-tagged-templates",
     "number": "49",
-    "success": false,
-    "error": "CoverParenthesizedExpressionAndArrowParameterList",
-    "input": "// Tagged模板字符串\r\nfunction tag(strings, ...values) {\r\n  return strings[0] + values[0] + strings[1]\r\n}\r\n\r\nconst name = \"Alice\"\r\nconst age = 25\r\nconst result = tag`Name: ${name}, Age: ${age}`\r\n\r\nfunction html(strings, ...values) {\r\n  return strings.reduce((acc, str, i) => {\r\n    return acc + str + (values[i] || '')\r\n  }, '')\r\n}\r\n\r\n"
+    "success": true,
+    "input": "// Tagged模板字符串\r\nfunction tag(strings, ...values) {\r\n  return strings[0] + values[0] + strings[1]\r\n}\r\n\r\nconst name = \"Alice\"\r\nconst age = 25\r\nconst result = tag`Name: ${name}, Age: ${age}`\r\n\r\nfunction html(strings, ...values) {\r\n  return strings.reduce((acc, str, i) => {\r\n    return acc + str + (values[i] || '')\r\n  }, '')\r\n}\r\n\r\n",
+    "output": "function tag(strings,...values){\n  return strings[0] + values[0] + strings[1]}\nconst name = 'Alice';\nconst age = 25;\nconst result = tag`Name: ${name}, Age: ${age}`;\n"
   },
   {
     "name": "50-comprehensive",
@@ -353,21 +353,21 @@
     "name": "51-labeled-break",
     "number": "51",
     "success": true,
-    "input": "outer: for (let i = 0; i < 3; i++) {\r\n  if (i === 1) {\r\n    break outer;\r\n  }\r\n}\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n",
+    "input": "outer: for (let i = 0; i < 3; i++) {\r\n  if (i === 1) {\r\n    break outer;\r\n  }\r\n}\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n",
     "output": "outer;\n"
   },
   {
     "name": "52-labeled-continue",
     "number": "52",
     "success": true,
-    "input": "outer: for (let i = 0; i < 3; i++) {\r\n  inner: for (let j = 0; j < 3; j++) {\r\n    if (j === 1) {\r\n      continue inner;\r\n    }\r\n    if (i === 2 && j === 2) {\r\n      break outer;\r\n    }\r\n  }\r\n}\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n",
+    "input": "outer: for (let i = 0; i < 3; i++) {\r\n  inner: for (let j = 0; j < 3; j++) {\r\n    if (j === 1) {\r\n      continue inner;\r\n    }\r\n    if (i === 2 && j === 2) {\r\n      break outer;\r\n    }\r\n  }\r\n}\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n",
     "output": "outer;\n"
   },
   {
     "name": "53-nested-labels",
     "number": "53",
     "success": true,
-    "input": "outer: while (true) {\r\n  inner: while (true) {\r\n    break inner;\r\n  }\r\n  break outer;\r\n}\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n",
+    "input": "outer: while (true) {\r\n  inner: while (true) {\r\n    break inner;\r\n  }\r\n  break outer;\r\n}\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n",
     "output": "outer;\n"
   }
 ]

@@ -803,13 +803,76 @@ export class SlimeCstToAst {
 
   createFormalParameterListAst(cst: SubhutiCst): SlimePattern[] {
     const astName = checkCstName(cst, Es6Parser.prototype.FormalParameterList.name);
-    const first = cst.children[0]
-    if (first.name === Es6Parser.prototype.FunctionRestParameter.name) {
-      return [this.createFunctionRestParameterAst(first)]
-    } else if (first.name === Es6Parser.prototype.FormalParameterListFormalsList.name) {
-      return this.createFormalParameterListFormalsListAst(first)
+    
+    if (!cst.children || cst.children.length === 0) {
+      return []
+    }
+    
+    const params: SlimePattern[] = []
+    
+    // 遍历所有children，提取FormalParameter和RestParameter
+    for (const child of cst.children) {
+      if (child.name === Es6Parser.prototype.FormalParameter.name) {
+        // 普通参数
+        params.push(this.createFormalParameterAst(child))
+      } else if (child.name === Es6Parser.prototype.RestParameter.name) {
+        // Rest参数：...args
+        params.push(this.createRestParameterAst(child))
+      }
+      // 忽略 Comma 等其他节点
+    }
+    
+    return params
+  }
+
+  /**
+   * 创建 RestParameter AST（新规则）
+   */
+  createRestParameterAst(cst: SubhutiCst): SlimeRestElement {
+    checkCstName(cst, Es6Parser.prototype.RestParameter.name);
+    
+    // RestParameter: Ellipsis + (BindingIdentifier | BindingPattern)
+    // children[0]: Ellipsis
+    // children[1]: BindingIdentifier 或 BindingPattern
+    
+    const argumentCst = cst.children[1]
+    let argument: SlimePattern
+    
+    if (argumentCst.name === Es6Parser.prototype.BindingIdentifier.name) {
+      argument = this.createBindingIdentifierAst(argumentCst)
+    } else if (argumentCst.name === Es6Parser.prototype.BindingPattern.name) {
+      argument = this.createBindingPatternAst(argumentCst)
     } else {
-      throw new Error('不支持的类型')
+      throw new Error(`Unexpected RestParameter argument: ${argumentCst.name}`)
+    }
+    
+    return {
+      type: SlimeAstType.RestElement,
+      argument: argument,
+      loc: cst.loc
+    } as any
+  }
+
+  /**
+   * 创建 FormalParameter AST（新规则）
+   */
+  createFormalParameterAst(cst: SubhutiCst): SlimePattern {
+    checkCstName(cst, Es6Parser.prototype.FormalParameter.name);
+    
+    // FormalParameter 可能是：
+    // 1. BindingElement (普通参数或带默认值)
+    // 2. 其他形式
+    
+    if (!cst.children || cst.children.length === 0) {
+      throw new Error('FormalParameter has no children')
+    }
+    
+    const first = cst.children[0]
+    
+    if (first.name === Es6Parser.prototype.BindingElement.name) {
+      return this.createBindingElementAst(first)
+    } else {
+      throw new Error(`Unexpected FormalParameter child: ${first.name}`)
     }
   }
 
@@ -2646,12 +2709,33 @@ export class SlimeCstToAst {
       // 处理 function* 表达式，降级为普通函数表达式
       return this.createGeneratorExpressionAst(first)
     } else if (first.name === Es6Parser.prototype.CoverParenthesizedExpressionAndArrowParameterList.name) {
-      // 处理括号表达式：( Expression )
-      // 结构：children[0]=LParen, children[1]=Expression, children[2]=RParen
-      const expressionCst = first.children[1]
-      const innerExpression = this.createExpressionAst(expressionCst)
-      // 创建 ParenthesizedExpression 节点，保留括号信息
-      return SlimeAstUtil.createParenthesizedExpression(innerExpression, first.loc)
+      // 处理括号表达式：( Expression ) 或箭头函数参数（但这里只处理表达式）
+      // 结构：children[0]=LParen, children[1]=Expression|FormalParameterList, children[2]=RParen
+      
+      // 如果是空括号 ()，返回undefined表达式
+      if (first.children.length === 2) {
+        return SlimeAstUtil.createIdentifier('undefined', first.loc)
+      }
+      
+      const middleCst = first.children[1]
+      
+      // 如果是FormalParameterList，说明这是箭头函数参数，不是表达式
+      // 这种情况不应该在PrimaryExpression中出现，抛出错误
+      if (middleCst.name === Es6Parser.prototype.FormalParameterList.name) {
+        // 这是箭头函数参数，不应该在这里处理
+        // 直接返回一个占位符（实际应该由箭头函数处理）
+        throw new Error('CoverParenthesizedExpressionAndArrowParameterList with FormalParameterList should be handled in ArrowFunction context')
+      }
+      
+      // 正常情况：括号表达式 (x + y)
+      if (middleCst.name === Es6Parser.prototype.Expression.name) {
+        const innerExpression = this.createExpressionAst(middleCst)
+        // 创建 ParenthesizedExpression 节点，保留括号信息
+        return SlimeAstUtil.createParenthesizedExpression(innerExpression, first.loc)
+      }
+      
+      // 其他情况：可能是单个BindingIdentifier等
+      throw new Error(`Unexpected child in CoverParenthesizedExpressionAndArrowParameterList: ${middleCst.name}`)
     } else if (first.name === Es6Parser.prototype.TemplateLiteral.name) {
       // 处理模板字符串
       return this.createTemplateLiteralAst(first)
@@ -3051,7 +3135,7 @@ export class SlimeCstToAst {
     checkCstName(cst, Es6Parser.prototype.ArrowFunction.name);
     // ArrowFunction 结构（带async）：
     // children[0]: AsyncTok (可选)
-    // children[1]: ArrowParameters (参数)
+    // children[1]: BindingIdentifier 或 CoverParenthesizedExpressionAndArrowParameterList (参数)
     // children[2]: Arrow (=>)
     // children[3]: ConciseBody (函数体)
     
@@ -3071,8 +3155,20 @@ export class SlimeCstToAst {
     const arrowParametersCst = cst.children[0 + offset]
     const conciseBodyCst = cst.children[2 + offset]
     
-    // 解析参数
-    const params = this.createArrowParametersAst(arrowParametersCst)
+    // 解析参数 - 根据节点类型分别处理
+    let params: SlimePattern[];
+    if (arrowParametersCst.name === Es6Parser.prototype.BindingIdentifier.name) {
+      // 单个参数：x => x * 2
+      params = [this.createBindingIdentifierAst(arrowParametersCst)]
+    } else if (arrowParametersCst.name === Es6Parser.prototype.CoverParenthesizedExpressionAndArrowParameterList.name) {
+      // 括号参数：(a, b) => a + b 或 () => 42
+      params = this.createArrowParametersFromCoverGrammar(arrowParametersCst)
+    } else if (arrowParametersCst.name === Es6Parser.prototype.ArrowParameters.name) {
+      // 旧版：使用ArrowParameters规则
+      params = this.createArrowParametersAst(arrowParametersCst)
+    } else {
+      throw new Error(`createArrowFunctionAst: 不支持的参数类型 ${arrowParametersCst.name}`)
+    }
     
     // 解析函数体
     const body = this.createConciseBodyAst(conciseBodyCst)
@@ -3087,6 +3183,149 @@ export class SlimeCstToAst {
       expression: body.type !== SlimeAstType.BlockStatement,
       loc: cst.loc
     } as any
+  }
+
+  /**
+   * 从CoverParenthesizedExpressionAndArrowParameterList提取箭头函数参数
+   */
+  createArrowParametersFromCoverGrammar(cst: SubhutiCst): SlimePattern[] {
+    checkCstName(cst, Es6Parser.prototype.CoverParenthesizedExpressionAndArrowParameterList.name);
+    
+    // CoverParenthesizedExpressionAndArrowParameterList 的children结构：
+    // LParen + (FormalParameterList | Expression | ...) + RParen
+    
+    if (cst.children.length === 0) {
+      return []
+    }
+    
+    // () - 空参数
+    if (cst.children.length === 2) {
+      return []
+    }
+    
+    // 查找FormalParameterList
+    const formalParameterListCst = cst.children.find(
+      child => child.name === Es6Parser.prototype.FormalParameterList.name
+    )
+    if (formalParameterListCst) {
+      return this.createFormalParameterListAst(formalParameterListCst)
+    }
+    
+    // 查找Expression（可能是逗号表达式，如 (a, b) 或单个参数 (x)）
+    const expressionCst = cst.children.find(
+      child => child.name === Es6Parser.prototype.Expression.name
+    )
+    if (expressionCst) {
+      // 从Expression中提取参数列表
+      return this.extractParametersFromExpression(expressionCst)
+    }
+    
+    // 查找BindingIdentifier（单个rest参数，如 (...args)）
+    const bindingIdentifierCst = cst.children.find(
+      child => child.name === Es6Parser.prototype.BindingIdentifier.name
+    )
+    if (bindingIdentifierCst) {
+      // 检查是否有Ellipsis
+      const hasEllipsis = cst.children.some(
+        child => child.name === 'EllipsisTok'
+      )
+      if (hasEllipsis) {
+        // Rest参数
+        return [{
+          type: SlimeAstType.RestElement,
+          argument: this.createBindingIdentifierAst(bindingIdentifierCst)
+        } as any]
+      }
+      return [this.createBindingIdentifierAst(bindingIdentifierCst)]
+    }
+    
+    return []
+  }
+
+  /**
+   * 从Expression中提取箭头函数参数
+   * 处理逗号表达式 (a, b) 或单个参数 (x)
+   */
+  extractParametersFromExpression(expressionCst: SubhutiCst): SlimePattern[] {
+    // Expression可能是：
+    // 1. 单个Identifier: x
+    // 2. 逗号表达式: a, b 或 a, b, c
+    // 3. 赋值表达式（默认参数）: a = 1
+    
+    // 检查是否是AssignmentExpression
+    if (expressionCst.name === Es6Parser.prototype.AssignmentExpression.name) {
+      const assignmentAst = this.createAssignmentExpressionAst(expressionCst)
+      // 如果是简单的identifier，返回它
+      if (assignmentAst.type === SlimeAstType.Identifier) {
+        return [assignmentAst as any]
+      }
+      // 如果是赋值（默认参数），返回AssignmentPattern
+      if (assignmentAst.type === SlimeAstType.AssignmentExpression) {
+        return [{
+          type: 'AssignmentPattern',
+          left: assignmentAst.left,
+          right: assignmentAst.right
+        } as any]
+      }
+      return [assignmentAst as any]
+    }
+    
+    // 如果是Expression，检查children
+    if (expressionCst.children && expressionCst.children.length > 0) {
+      const params: SlimePattern[] = []
+      
+      // 遍历children，查找所有AssignmentExpression（用逗号分隔）
+      for (const child of expressionCst.children) {
+        if (child.name === Es6Parser.prototype.AssignmentExpression.name) {
+          const assignmentAst = this.createAssignmentExpressionAst(child)
+          // 转换为参数
+          if (assignmentAst.type === SlimeAstType.Identifier) {
+            params.push(assignmentAst as any)
+          } else if (assignmentAst.type === SlimeAstType.AssignmentExpression) {
+            // 默认参数
+            params.push({
+              type: 'AssignmentPattern',
+              left: assignmentAst.left,
+              right: assignmentAst.right
+            } as any)
+          } else {
+            // 其他复杂情况，尝试提取identifier
+            const identifier = this.findFirstIdentifierInExpression(child)
+            if (identifier) {
+              params.push(this.createIdentifierAst(identifier) as any)
+            }
+          }
+        }
+      }
+      
+      if (params.length > 0) {
+        return params
+      }
+    }
+    
+    // 回退：尝试查找第一个identifier
+    const identifierCst = this.findFirstIdentifierInExpression(expressionCst)
+    if (identifierCst) {
+      return [this.createIdentifierAst(identifierCst) as any]
+    }
+    
+    return []
+  }
+
+  /**
+   * 在Expression中查找第一个Identifier（辅助方法）
+   */
+  findFirstIdentifierInExpression(cst: SubhutiCst): SubhutiCst | null {
+    if (cst.name === Es6TokenConsumer.prototype.Identifier.name) {
+      return cst
+    }
+    if (cst.children) {
+      for (const child of cst.children) {
+        const found = this.findFirstIdentifierInExpression(child)
+        if (found) return found
+      }
+    }
+    return null
   }
 
   /**
