@@ -993,7 +993,6 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
     AssignmentExpression() {
         this.Or([
             {alt: () => this.YieldExpression()},
-            {alt: () => this.ArrowFunction()},
             {alt: () => this.ConditionalExpression()},  // ← moved forward
             {
                 alt: () => {
@@ -1008,7 +1007,8 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends Es5Parser<T> 
                     this.AssignmentOperator()
                     this.AssignmentExpression()
                 }
-            }
+            },
+            {alt: () => this.ArrowFunction()},
         ])
     }
 
