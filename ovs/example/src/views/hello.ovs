@@ -1,18 +1,10 @@
-// Case 1: 简单场景 - 基础声明和表达式
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
 
-const appName = "Simple Test"
-const version = "1.0"
-
-console.log("Starting simple test...")
-
-function div1(){
-  console.log(123)
-}
-
-div {
-  h1 { appName }
-  p { version }
-}
-
-console.log("Simple test complete!")
-
+export default (function(){
+  const children = [];
+  const appName = 'Simple Test';
+  const version = '1.0';
+  children.push(console.log('Starting simple test...'));
+  children.push(createComponentVNode(div,{},[createComponentVNode(h1,{},[appName,]),createComponentVNode(p,{},[version,]),]));
+  children.push(console.log('Simple test complete!'));
+  return children})()
