@@ -49,6 +49,11 @@ sourceSets {
 }
 
 tasks {
+    runIde {
+        jvmArgs("-Dfile.encoding=UTF-8")
+        jvmArgs("-Dstdout.encoding=UTF-8")
+        jvmArgs("-Dstderr.encoding=UTF-8")
+    }
     generateLexer {
         sourceFile.set(file("src/main/grammar/Es6.flex"))
         targetOutputDir.set(file("src/main/gen/com/alamhubb/ovs/testovs/lexer"))
