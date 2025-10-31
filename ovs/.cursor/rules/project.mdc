@@ -683,249 +683,376 @@ div {
 
 ## 导出方式
 
-### 方式1: 命名导出（推荐）
+### ✅ 方式1: 箭头函数组件（推荐简单场景）
+
+**OVS 代码：**
 ```javascript
-export const myComponent = div {
-  "content"
+export const MyCard = (state) => div {
+  h2 { state.props.title }
+  p { state.props.content }
 }
-
-// 使用
-import {myComponent} from './component.ovs'
 ```
 
-### 方式2: 默认导出
+**编译结果：**
 ```javascript
-export default div {
-  "content"
-}
-
-// 使用
-import MyComponent from './component.ovs'
+export const MyCard = state => createComponentVNode(div, {}, [
+  createComponentVNode(h2, {}, [state.props.title]),
+  createComponentVNode(p, {}, [state.props.content])
+])
 ```
 
-### 方式3: 自动默认导出
+**使用方式：**
 ```javascript
-// 只有声明和表达式，没�?export default
-const data = 100
-
-div{456}
-div{789}
-
-// 自动生成 export default 包裹所有表达式
-```
-
-### 方式4: 多个导出
-```javascript
-export const header = div { "Header" }
-export const footer = div { "Footer" }
-export const sidebar = div { "Sidebar" }
-
-// 使用
-import {header, footer, sidebar} from './components.ovs'
-```
-
-## 代码示例
-
-### 示例1: `#{}` 不渲染块使用（NEW - v0.2.0�?```javascript
-#{
-  // 顶层数据初始化（不渲染）
-  const userName = "Alice"
-  const userScore = 95
-  
-  // 工具函数（不渲染�?  function formatScore(score) {
-    return score >= 90 ? "优秀" : "良好"
-  }
-  
-  console.log("页面初始�?)
-}
+import { MyCard } from './components.ovs'
 
 div {
-  h1 { "用户信息" }
-  
-  // 普通调用会被渲�?  p { formatScore(userScore) }
-  
-  // #{} 隔离纯逻辑
-  #{
-    const temp = getData()
-    console.log("调试信息", temp)  // 不会显示在页�?  }
-  
-  // #{} 内的元素仍然渲染
-  #{
-    const msg = "计算结果"
-    p { msg }                     // �?仍然显示
-  }
-  
-  // 控制�?  #{
-    let i = 0
-  }
-  
-  p { items[0] }
-  
-  #{
-    i = i + 1
-  }
-  
-  p { items[1] }
+  MyCard({ props: { title: "Hello", content: "World" } })
 }
 ```
 
-### 示例2: 个人信息卡片
+**特点：**
+- ✅ 语法最简洁
+- ✅ 编译代码最精简（无 IIFE）
+- ✅ 适合简单组件
+- ❌ 无类型标注
+- ❌ 参数名固定为 state
+
+---
+
+### ✅ 方式2: ovsView 组件（推荐正式组件）
+
+**OVS 代码：**
 ```javascript
-const userName = "Alice"
-const userAge = 25
-const userRole = "Developer"
-const isActive = true
+export ovsView MyCard(state) : div {
+  const { title, content } = state.props
+  
+  h2 { title }
+  p { content }
+}
+```
 
-div {
-  h1 { userName }
+**编译结果：**
+```javascript
+export function MyCard(state) {
+  const { title, content } = state.props
+  return createComponentVNode(div, {}, [
+    createComponentVNode(h2, {}, [title]),
+    createComponentVNode(p, {}, [content])
+  ])
+}
+```
+
+**使用方式：**
+```javascript
+import { MyCard } from './components.ovs'
+
+export ovsView App(state) : div {
+  MyCard({ props: { title: "Hello", content: "World" } })
+}
+```
+
+**特点：**
+- ✅ 正式的函数声明
+- ✅ 支持复杂逻辑
+- ✅ 代码组织清晰
+- ✅ 类型标注友好
+- ❌ 比箭头函数多一层函数包裹
+
+---
+
+### ✅ 方式2.5: 函数声明（完全灵活的正式组件）
+
+**OVS 代码：**
+```javascript
+export function MyCard(state) {
+  const { title, content } = state.props
+  
+  // 可以在函数体内自由编程
+  let display = title.toUpperCase()
   
   div {
-    p { "Age: " }
-    p { userAge }
-  }
-  
-  div {
-    p { "Role: " }
-    p { userRole }
-  }
-  
-  if (isActive) {
-    div {
-      p { "Status: Active" }
-    }
+    h2 { display }
+    p { content }
   }
 }
 ```
 
-### 示例2: 函数与循环结�?```javascript
-function calculateSum(numbers) {
-  let total = 0
-  for (let i = 0; i < numbers.length; i++) {
-    total = total + numbers[i]
-  }
-  return total
+**编译结果：**
+```javascript
+export function MyCard(state) {
+  const { title, content } = state.props
+  
+  let display = title.toUpperCase()
+  
+  createComponentVNode(div, {}, [
+    createComponentVNode(h2, {}, [display]),
+    createComponentVNode(p, {}, [content])
+  ])
 }
+```
 
-const double = (x) => x * 2
+**特点：**
+- ✅ 普通 JavaScript 函数声明
+- ✅ 完全的代码灵活性（任意 JavaScript）
+- ✅ 函数体内只有 `div{}` 等元素会被编译
+- ✅ 可以自由组织逻辑（计算、条件、循环等）
+- ✅ 适合复杂组件
+- **使用场景：** 需要完全代码控制的组件
 
-const items = [10, 20, 30]
-const sum = calculateSum(items)
-const doubled = double(sum)
+---
 
-div {
-  h1 { "Calculation Results" }
+### ✅ 方式2.6: 函数表达式（另一种灵活的正式组件）
+
+**OVS 代码：**
+```javascript
+export const MyCard = function(state) {
+  const { title, content } = state.props
   
   div {
-    p { "Sum: " }
-    p { sum }
-  }
-  
-  div {
-    p { "Doubled: " }
-    p { doubled }
+    h2 { title }
+    p { content }
   }
 }
 ```
 
-### 示例3: 多视图组�?```javascript
-const appTitle = "My Dashboard"
+**编译结果：**
+```javascript
+export const MyCard = function(state) {
+  const { title, content } = state.props
+  
+  createComponentVNode(div, {}, [
+    createComponentVNode(h2, {}, [title]),
+    createComponentVNode(p, {}, [content])
+  ])
+}
+```
 
-export const HeaderView = div {
-  h1 { appTitle }
-  p { "Welcome" }
+**特点：**
+- ✅ 常规函数表达式
+- ✅ 完全的代码灵活性
+- ✅ 函数体内只有 `div{}` 等元素会被编译
+- ✅ 与函数声明功能相同
+- **使用场景：** 函数表达式风格的开发者
+
+---
+
+### ✅ 方式3: 命名导出视图（简单视图）
+
+**OVS 代码：**
+```javascript
+export const Header = div {
+  h1 { "Header" }
 }
 
-export const ContentView = div {
-  h2 { "Content" }
-  p { "Main content area" }
-}
-
-export const FooterView = div {
+export const Footer = div {
   p { "Footer" }
 }
 ```
 
-## 最佳实�?
-### �?推荐
-
+**编译结果：**
 ```javascript
-// 1. 使用 #{} 组织数据和工具函数（NEW - v0.2.0�?#{
-  const userName = "Alice"
-  const userAge = 25
-  
-  function formatAge(age) {
-    return age + " �?
-  }
-  
-  console.log("初始化完�?)
-}
+export const Header = createComponentVNode(div, {}, [
+  createComponentVNode(h1, {}, ["Header"])
+])
 
-// 2. �?div {} 内用 #{} 隔离纯逻辑
-div {
-  #{
-    const data = processData()
-    console.log("处理完成")
-  }
-  
-  p { data }
-}
-
-// 3. #{} 内的元素仍然渲染
-#{
-  const show = true
-  if (show) {
-    p { "条件渲染" }  // �?仍然显示
-  }
-}
-
-// 4. 组件内使�?#{} 计算局部数�?ovsView Card ({props}) : div {
-  #{
-    const user = props.user
-    const displayName = user.firstName + " " + user.lastName
-  }
-  
-  h2 { displayName }
-  p { user.email }
-}
+export const Footer = createComponentVNode(div, {}, [
+  createComponentVNode(p, {}, ["Footer"])
+])
 ```
 
-### �?避免
+**使用方式：**
 ```javascript
-// 不要使用注释（不稳定�?// const x = 100  // �?
-// 不要使用除法（Lexer 冲突�?const half = value / 2  // �?const half = value * 0.5  // �?
-// 不要过度嵌套
-div { div { div { div { div {  // �?太深
-```
+import { Header, Footer } from './layout.ovs'
 
-## 常见问题
-
-**Q: 如何调试�?*
-打开浏览器控制台（F12），查看Console输出、Elements查看DOM结构、Network查看编译后代�?
-**Q: 如何查看编译后的代码�?*
-运行 `npx tsx ovs/src/test-final.ts`
-
-**Q: 为什么不能使用除法？**
-Lexer�?`/` 当成注释开始，替代方案：用 `* 0.5`
-
-**Q: 如何实现列表渲染�?*
-使用for循环�?```javascript
-const items = ["A", "B", "C"]
-for (let i = 0; i < items.length; i++) {
-  div { p { items[i] } }
-}
-```
-
-**Q: 如何组合多个组件�?*
-使用命名导出�?```javascript
-// components.ovs
-export const Header = div { "Header" }
-export const Footer = div { "Footer" }
-
-// app.ovs
-import {Header, Footer} from './components.ovs'
 div {
   Header
+  p { "main content" }
   Footer
+}
+```
+
+**特点：**
+- ✅ 最简洁的语法
+- ✅ 直接导出 VNode
+- ✅ 适合纯展示性组件
+- ❌ 无法接收 state 参数
+- ❌ 无法处理动态内容
+
+---
+
+### ✅ 方式4: 默认导出
+
+**OVS 代码：**
+```javascript
+export default div {
+  "default component"
+}
+```
+
+**编译结果：**
+```javascript
+export default createComponentVNode(div, {}, ["default component"])
+```
+
+**使用方式：**
+```javascript
+import DefaultComponent from './component.ovs'
+```
+
+**特点：**
+- ✅ 模块化导出
+- ✅ 适合模块主组件
+- ❌ 每个文件只能有一个
+
+---
+
+### 🎯 组件方式对比表
+
+| 特性 | 箭头函数 | ovsView | 函数声明 | 函数表达式 | 命名导出 | 默认导出 |
+|------|---------|---------|---------|----------|---------|---------|
+| **语法简洁度** | ★★★★★ | ★★★★☆ | ★★★★☆ | ★★★★☆ | ★★★★★ | ★★★★☆ |
+| **接收参数** | ✅ state | ✅ state | ✅ state | ✅ state | ❌ | ❌ |
+| **代码灵活性** | 中等 | 中等 | ★★★★★ | ★★★★★ | 低 | 低 |
+| **无 IIFE 开销** | ✅ | ❌ | ❌ | ❌ | ✅ | ✅ |
+| **支持复杂逻辑** | ✅ | ✅ | ✅ | ✅ | ⚠️ 简单 | ⚠️ 简单 |
+| **类型标注友好** | ❌ | ✅ | ⚠️ 部分 | ⚠️ 部分 | - | - |
+| **多个导出** | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
+| **推荐场景** | 简单组件 | 正式组件 | 复杂组件 | 复杂组件 | 视图元素 | 模块入口 |
+
+---
+
+### 📦 完整编译示例（所有方式）
+
+**输入代码：**
+```javascript
+const a = 123
+
+export const mydiv = (state) => div {
+  a
+  div { 456 }
+}
+
+export ovsView dv2(state) : div {
+  a
+  div { 456 }
+}
+
+export function dv3(state) {
+  const b = 789
+  div { b }
+}
+
+export const dv4 = function(state) {
+  const c = 101112
+  div { c }
+}
+
+export const SimpleView = div {
+  "Simple"
+}
+
+export default div {
+  "Default"
+}
+```
+
+**编译输出：**
+```javascript
+import {createReactiveVNode} from '../utils/ReactiveVNode';
+
+const a = 123;
+
+// 方式1: 箭头函数
+export const mydiv = state => createComponentVNode(div, {}, [
+  a, 
+  createComponentVNode(div, {}, [456])
+]);
+
+// 方式2: ovsView
+export function dv2(state) {
+  return createComponentVNode(div, {}, [
+    a,
+    createComponentVNode(div, {}, [456])
+  ])
+}
+
+// 方式3: 函数声明
+export function dv3(state) {
+  const b = 789;
+  createComponentVNode(div, {}, [b])
+}
+
+// 方式4: 函数表达式
+export const dv4 = function(state) {
+  const c = 101112;
+  createComponentVNode(div, {}, [c])
+}
+
+// 方式5: 命名导出
+export const SimpleView = createComponentVNode(div, {}, ["Simple"]);
+
+// 方式6: 默认导出
+export default createComponentVNode(div, {}, ["Default"]);
+```
+
+---
+
+### 💡 最佳实践建议
+
+**1. 选择导出方式的决策树：**
+```
+需要动态内容？
+  ├─ YES: 需要接收 props？
+  │   ├─ YES: 是正式组件？
+  │   │   ├─ YES: 使用 ovsView ✅
+  │   │   └─ NO: 使用箭头函数 ✅
+  │   └─ NO: 使用命名导出 ✅
+  └─ NO: 使用默认导出或命名导出 ✅
+```
+
+**2. 组织大型组件库：**
+```javascript
+// atoms/Button.ovs - 简单组件
+export const Button = (state) => button {
+  state.props.text
+}
+
+// molecules/Card.ovs - 正式组件
+export ovsView Card(state) : div {
+  const { title, content } = state.props
+  h2 { title }
+  p { content }
+}
+
+// organisms/Layout.ovs - 布局组件
+export const Header = div { h1 { "Header" } }
+export const Footer = div { p { "Footer" } }
+
+// App.ovs - 应用入口
+import { Button } from './atoms/Button.ovs'
+import { Card } from './molecules/Card.ovs'
+import { Header, Footer } from './organisms/Layout.ovs'
+
+export default div {
+  Header
+  Card({ props: { title: "Welcome" } })
+  Button({ props: { text: "Click" } })
+  Footer
+}
+```
+
+**3. 跨文件导入和使用：**
+```javascript
+// 文件1: components.ovs
+export const Alert = (state) => div {
+  p { state.props.message }
+}
+
+// 文件2: app.ovs
+import { Alert } from './components.ovs'
+
+export ovsView App(state) : div {
+  Alert({ props: { message: "Hello!" } })
 }
 ```
 
@@ -1633,451 +1760,307 @@ div {
 - **旧设�?*：只有特定语法（`#{ expr }`）才渲染
 - **新设�?*：默认都渲染，使�?`#{}` 隔离不渲染的代码
 
-### �?新增功能
+### 🎯 核心设计变更
 
-#### 1. `#{}` 不渲染块
-- **语法**：`#{ statements }` - 可包含多个语�?- **作用**：隔离纯逻辑代码（数据处理、调试日志等�?- **位置**：Statement 层级（可出现在任何允�?Statement 的地方）
-- **特�?*�?  - 语句平铺（去�?`#{}` 包裹，内容直接插入）
-  - 支持嵌套
-  - 元素优先（`p {}` �?`#{}` 内仍然渲染）
-  - 作用域共享（可访问外层变量）
+**设计哲学转变：JavaScript 是主体，UI 是附�?*
 
-#### 2. 智能渲染判断系统
-- **优先级机�?*�?  1. `OvsRenderFunction` (`p {}`) �?永远渲染
-  2. `noRenderDepth > 0` (�?`#{}` �? �?不渲�?  3. `ovsRenderDomViewDepth > 0` (�?`div {}` �? �?渲染
-  4. 其他 �?不渲�?
-- **状态管�?*�?  - `noRenderDepth` 计数器（跟踪 `#{}` 嵌套�?  - 进入元素时重置（`#{}` 对元素内部不生效�?
-### 🔧 代码修改
+- **旧设�?*：只有特定语法（`#{ expr }`）才渲染
+- **新设�?*：默认都渲染，使�?`#{}` 隔离不渲染的代码
 
-**文件1：OvsParser.ts**
-- �?添加 `NoRenderBlock` 规则
-- �?Override `Statement` 规则（添�?NoRenderBlock 支持�?- �?删除旧的 `RenderExpression` 规则
+### 🎯 核心设计变更
 
-**文件2：OvsCstToSlimeAstUtil.ts**
-- �?添加 `noRenderDepth` 计数�?- �?Override `createStatementListItemAst`（展开 `#{}` 内的语句�?- �?修改 `createExpressionStatementAst`（新的渲染判断逻辑�?- �?修改 `createOvsRenderDomViewDeclarationAst`（进入元素时重置 noRenderDepth�?- �?删除 `createRenderExpressionAst` 方法
+**设计哲学转变：JavaScript 是主体，UI 是附�?*
 
-**文件3：index.ts**
-- �?修复 `isOvsRenderDomView` 识别 `h()` 函数调用
-- �?修复箭头函数 params 格式
+- **旧设�?*：只有特定语法（`#{ expr }`）才渲染
+- **新设�?*：默认都渲染，使�?`#{}` 隔离不渲染的代码
 
-### 📊 测试验证
+### ⚠️ 常见陷阱
 
-创建测试用例：`tests/cases/13-norender-block.ovs`
-
-**验证项目**�?1. �?顶层 `#{}` 代码平铺
-2. �?`#{}` 内的局部变量定�?3. �?`#{}` 内的函数调用不渲�?4. �?普通函数调用被渲染
-5. �?`#{}` 内的元素仍然渲染
-6. �?嵌套 `#{}` 正确展开
-7. �?控制流中�?`#{}` 正常工作
-8. �?无语法错�?
-### 🎨 示例代码
-
-详见 `example/src/views/hello.ovs`�?00行完整示例）
-
----
-
-# 源码映射修复案例�?025-10-30�?
-## 问题：无效映�?79%，LSP 不稳�?
-**现象�?* `div { name }` 生成 24 个映射，只有 5 个有�?
-**根因�?* `commonLocType` 自动添加 `{ value: null }` 默认 loc，凭空代码误创建映射
-
-## 修复�? 层防御）
-
-1. `slime/slime-ast/SlimeAst.ts:375` - 添加 loc 参数
-2. `ovs/factory/OvsCstToSlimeAstUtil.ts:602,729` - 传�?id.loc
-3. `slime/slime-generator/SlimeGenerator.ts:1131` - 验证 loc 有效�?4. `langServer/OvsLanguagePlugin.ts:70` - 过滤无效映射
-
-## 效果�?1% �?100%
-
-## 最佳实�?
-```typescript
-// �?凭空生成：不�?loc
-SlimeAstUtil.createIdentifier('children')
-
-// �?源码对应：传 loc
-SlimeAstUtil.createStringLiteral(id.name, id.loc)
-```
-
-## 诊断工具
-
-```bash
-npx tsx test-mapping-diagnosis.ts  # 检查有效率
-npx tsx test-mapping-issues.ts     # 完整测试
-```
-
-
----
-
-# IIFE判断逻辑优化（2025-10-31）
-
-## 问题：实现细节耦合
-原IIFE判断逻辑依赖 `children.push()` 这个具体函数名：
-- 如果改成 `child.push()`，判断逻辑失效
-- 判断条件繁琐，需要列举所有"复杂"情况
-
-## 优化方案：基于来源标记
-**核心规则：** 只要是**非ExpressionStatement** 或 **来自#{} 块**，就需要IIFE
-
-### 实现步骤
-
-**1. 标记 #{} 源（createStatementListItemAst）**
-```typescript
-// 在 #{} 块处理时，对内部语句标记来源
-innerStatements.forEach(stmt => {
-  (stmt as any).__fromNoRenderBlock = true
-})
-```
-
-**2. IIFE决策逻辑（createOvsRenderDomViewDeclarationAst）**
-```typescript
-const hasComplexStatements = bodyStatements.some(stmt => {
-  // 情况1: 非 ExpressionStatement（声明/控制流）
-  if (stmt.type !== SlimeAstType.ExpressionStatement) {
-    return true
-  }
-  // 情况2: 来自 #{} 不渲染块
-  if ((stmt as any).__fromNoRenderBlock) {
-    return true
-  }
-  return false
-})
-
-const isSimple = !hasComplexStatements
-```
-
-### 优势
-- ✅ **完全解耦**：不依赖children命名
-- ✅ **语义清晰**：直接表达"有复杂内容→用IIFE"
-- ✅ **高度稳定**：未来改渲染方式无需改此逻辑
-- ✅ **易于理解**：新人一眼看出判断规则
-- ✅ **可维护性**：判断逻辑集中统一
-
-### 改动文件
-- `ovs/src/factory/OvsCstToSlimeAstUtil.ts`
-  - 第278-283行：添加__fromNoRenderBlock标记
-  - 第512-531行：简化IIFE判断逻辑
-
----
-
-# Arguments处理逻辑精简（2025-10-31）
-
-## 问题：多余的attrs提取逻辑
-原来的Arguments处理包含复杂的attrs提取逻辑：
-- 检查参数中是否有 `attrs` 属性
-- 如果有就提取 `attrs` 的值
-- 如果没有才使用整个对象
-- 代码行数多，条件判断复杂
-
-## 根本原因分析
-1. **用户从不写这种形式** - 用户写的是 `MyCard({title: "Hello"})`，不是 `MyCard({attrs: {...}})`
-2. **命名不一致** - 代码生成的是 `ovsAttr`，但提取检查的是 `attrs`
-3. **设计遗留** - 这个逻辑是早期设计的残留，后来被 ReactiveVNode 的 state 机制替代了
-
-## 优化方案：直接使用参数
-```typescript
-// 简化前（15行，包含复杂判断）：
-if (argListCst && argListCst.children) {
-  const firstArgCst = argListCst.children[0]
-  if (firstArgCst && firstArgCst.children?.[0]) {
-    const argExpr = this.createExpressionAst(firstArgCst.children[0])
-    if (argExpr.type === 'ObjectExpression' && argExpr.properties) {
-      const attrsProperty = argExpr.properties.find((prop: any) => 
-        prop.key?.name === 'attrs' || prop.key?.value === 'attrs'
-      )
-      if (attrsProperty && 'value' in attrsProperty && attrsProperty.value) {
-        componentProps = attrsProperty.value
-      } else {
-        componentProps = argExpr
-      }
-    } else {
-      componentProps = argExpr
-    }
-  }
-}
-
-// 简化后（3行，逻辑清晰）：
-if (argListCst && argListCst.children?.[0]?.children?.[0]) {
-  componentProps = this.createExpressionAst(argListCst.children[0].children[0])
-}
-```
-
-## 工作流程验证
+**陷阱 1: 多个表达式无导出**
 ```javascript
-// 用户代码
-MyCard({title: "Hello"}) { p { "content" } }
+// ❌ 错误：两个 div 都不会渲染到页面
+div { "First" }
+div { "Second" }
 
-// 编译结果
-createReactiveVNode(MyCard, {title: "Hello"}, [children...])
+// ✅ 正确：用 export 包裹
+export const App = div {
+  div { "First" }
+  div { "Second" }
+}
+```
 
-// 运行时（ReactiveVNode中）
-toVnode() {
-  if (typeof state.type === 'function') {
-    const result = componentFn(state)  // ← 传递完整的state
-    // state = { type: MyCard, props: {title: "Hello"}, children: [...] }
+**陷阱 2: 混合导出和非导出**
+```javascript
+// ❌ 错误：div { a } 会被丢弃
+const a = 123
+div { a }
+export const MyView = div { "content" }
+
+// ✅ 正确：明确导出所有内容
+export const App = div {
+  div { a }
+  div { "content" }
+}
+```
+
+**陷阱 3: 忘记 export**
+```javascript
+// ❌ 错误：不会导出（如果这是你想要的话）
+const a = 123
+div { a }
+
+// ✅ 正确：显式导出或不写任何导出
+export const App = div { a }  // 或
+```
+
+## 编译规则（完整版）
+
+OVS 编译器采用**智能导出系统**，根据代码中是否存在导出语句来自动决定编译策略。
+
+### 📋 导出规则优先级
+
+编译器按以下优先级处理导出：
+
+**规则 1: 显式导出优先**
+- 如果代码中有 `export default`、`export const` 或 `export function`，则按用户意图处理
+- 保留用户的导出结构，不进行任何修改
+
+**规则 2: 无导出时自动包裹**
+- 如果代码中**没有任何导出语句**，自动用 IIFE 包裹所有顶层表达式
+- 作为整体组件导出
+
+**规则 3: 声明始终保持顶层**
+- 变量声明、函数声明总是保持在顶层
+- 不会被包裹在 IIFE 内
+
+---
+
+### 🎯 具体规则详解
+
+#### ✅ 规则 1: 有 `export default` 时
+
+**输入：**
+```javascript
+const a = 123
+
+export default div {
+  a
+  div { 456 }
+}
+```
+
+**编译输出：**
+```javascript
+const a = 123;
+export default createComponentVNode(div, {}, [a, createComponentVNode(div, {}, [456])])
+```
+
+**特点：**
+- ✅ 保持原样，无 IIFE 包裹
+- ✅ 直接返回导出内容
+
+---
+
+#### ✅ 规则 2: 有 `export const` 时
+
+**输入：**
+```javascript
+const a = 123
+
+export const MyView = div {
+  a
+  div { 456 }
+}
+```
+
+**编译输出：**
+```javascript
+const a = 123;
+export const MyView = createComponentVNode(div, {}, [a, createComponentVNode(div, {}, [456])])
+```
+
+**特点：**
+- ✅ 只转换 OVS 部分
+- ✅ 保持导出结构
+- ✅ 无 IIFE 包裹
+
+---
+
+#### ✅ 规则 3: 有 `export function` 或 `export ovsView` 时
+
+**输入 1 - ovsView：**
+```javascript
+const a = 123
+
+export ovsView MyCard(state) : div {
+  const { title } = state.props
+  a
+  div { 456 }
+}
+```
+
+**编译输出：**
+```javascript
+const a = 123;
+export function MyCard(state) {
+  const { title } = state.props
+  return createComponentVNode(div, {}, [a, createComponentVNode(div, {}, [456])])
+}
+```
+
+**输入 2 - 箭头函数：**
+```javascript
+export const MyCard = (state) => div {
+  a
+  div { 456 }
+}
+```
+
+**编译输出：**
+```javascript
+export const MyCard = state => createComponentVNode(div, {}, [a, createComponentVNode(div, {}, [456])])
+```
+
+**输入 3 - 函数声明：**
+```javascript
+export function MyCard(state) {
+  const { title } = state.props
+  div {
+    a
+    div { 456 }
   }
 }
-
-// 组件函数
-function MyCard(state) {
-  const title = state.props.title  // ← 正确获取
-  const slots = state.children
-  return ...
-}
 ```
 
-## 改动文件
-- `ovs/src/factory/OvsCstToSlimeAstUtil.ts`
-  - 第449-468行：删除复杂的attrs提取逻辑，简化为直接使用参数
-
-## 优势对比
-| 维度 | 简化前 | 简化后 |
-|-----|-------|-------|
-| **代码行数** | 45行 | 3行 |
-| **条件判断** | 5层嵌套 | 1层检查 |
-| **属性查找** | 5次 | 0次 |
-| **逻辑清晰度** | 难理解 | 极清晰 |
-| **性能** | 较差 | 无开销 |
-| **维护成本** | 高 | 极低 |
-
----
-
-# ovsAttr代码移除（2025-10-31）
-
-## 问题：无用的属性对象生成
-代码一直在生成 `{ovsAttr: temp$$attrs$$uuid}` props对象：
-- 这个特性从未被实现过（只有文档和基础设施，没有属性赋值转换逻辑）
-- 运行时完全没有使用这个 ovsAttr 属性
-- 属性赋值功能已被 ReactiveVNode 的 state 机制替代
-
-## 根本原因
-1. **属性赋值逻辑从未实现** - project.mdc 中有详细文档（第1160-1230行），但代码中没有对应实现
-2. **设计已更新** - ReactiveVNode 通过 state.props 传递所有参数，不需要 ovsAttr 这个中间层
-3. **运行时不使用** - 组件函数接收的 state 对象中根本不会用到 ovsAttr 属性
-
-## 优化方案：删除生成逻辑，保留基础设施
-
-**删除的代码（createReturnOvsAPICreateVNode中）：**
-```typescript
-// ❌ 删除了这个分支
-} else if (attrsVarName) {
-  propsObject = SlimeAstUtil.createObjectExpression([
-    SlimeAstUtil.createPropertyAst(
-      SlimeAstUtil.createIdentifier('ovsAttr'),
-      SlimeAstUtil.createIdentifier(attrsVarName)
-    )
-  ])
-}
-
-// ✅ 改为直接使用空对象
-} else {
-  propsObject = SlimeAstUtil.createObjectExpression([])
-}
-```
-
-**保留的基础设施：**
-```typescript
-// ✅ 保留供将来使用
-private attrsVarNameStack: Array<string | null> = []
-const attrsVarName = `temp$$attrs$$${uuid}`
-this.attrsVarNameStack.push(attrsVarName)
-this.attrsVarNameStack.pop()
-// 这些代码保留，但不实际生成 ovsAttr props
-```
-
-## 生成代码变化
+**编译输出：**
 ```javascript
-// 简化前
-return createReactiveVNode('div', {ovsAttr: temp$$attrs$$abc}, children)
-
-// 简化后
-return createReactiveVNode('div', {}, children)
+export function MyCard(state) {
+  const { title } = state.props
+  createComponentVNode(div, {}, [a, createComponentVNode(div, {}, [456])])
+}
 ```
 
-## 改动文件
-- `ovs/src/factory/OvsCstToSlimeAstUtil.ts`
-  - 第685-692行：删除ovsAttr生成逻辑
-  - 第599, 651, 662行：更新相关注释
-  - 第550, 604行：标记attrsVarName为"已弃用"
-
-## 为什么保留基础设施？
-1. **将来可能恢复** - 如果后期决定实现属性赋值功能
-2. **低成本保留** - 几行代码的成本，完全不影响性能
-3. **向前兼容** - 已有的栈管理逻辑可直接扩展
-
-## 结论
-这次优化移除了一个已过时但仍占用代码的特性，同时保留了基础架构便于将来扩展。代码更清晰，逻辑更直接。
+**特点：**
+- ✅ 函数体内保留所有 JavaScript 代码
+- ✅ 只编译元素部分
+- ✅ 支持完整的函数逻辑
 
 ---
 
-# createReactiveVNode 调用约定规范（2025-10-31）
+#### ✅ 规则 4: 无导出时 - 自动 IIFE 包裹 ✨ (重要)
 
-## 统一的调用形式
-所有编译器生成的代码都遵循同一种调用方式：
-```typescript
-createReactiveVNode(firstArg, props, children)
-```
+**这是最关键的规则！**
 
-## 参数说明
+**输入：**
+```javascript
+const a = 123
 
-### 第1个参数：firstArg（元素/组件标识）
-**两种形式：**
-1. **HTML标签（字符串）** - `'div'`, `'p'`, `'h1'` 等
-   ```javascript
-   createReactiveVNode('div', {}, children)
-   ```
-
-2. **组件标识符（Identifier）** - 组件名或组件引用
-   ```javascript
-   createReactiveVNode(MyComponent, props, children)
-   ```
-
-### 第2个参数：props（属性对象）
-**可能的值：**
-1. **空对象** - 当没有传递参数时
-   ```javascript
-   createReactiveVNode('div', {}, children)
-   ```
-
-2. **自定义参数** - 来自用户的 Arguments
-   ```javascript
-   div({style: style}) { ... }
-   // 编译为
-   createReactiveVNode('div', {style: style}, children)
-   ```
-
-3. **组件 props** - 来自组件调用
-   ```javascript
-   MyCard({title: "Hello"}) { ... }
-   // 编译为
-   createReactiveVNode(MyCard, {title: "Hello"}, children)
-   ```
-
-### 第3个参数：children（子节点）
-**内容：**
-- 元素内部生成的所有表达式的数组
-- 数组名称固定为 `children`
-
-## 代码生成流程
-
-```typescript
-// 从用户代码
-div({style: style}) {
-  h1 { "title" }
-  p { "content" }
+div {
+  a
+  div { 456 }
 }
 
-// 编译生成
-(function() {
-  const children = []
-  children.push(createReactiveVNode('h1', {}, ["title"]))
-  children.push(createReactiveVNode('p', {}, ["content"]))
-  return createReactiveVNode('div', {style: style}, children)
+div {
+  a
+  div { 789 }
+}
+```
+
+**编译输出：**
+```javascript
+import {createReactiveVNode} from '../utils/ReactiveVNode';
+
+export default (function(){
+  const a = 123;
+  const children = [];
+  
+  // 所有表达式被收集
+  children.push(createComponentVNode(div, {}, [a, createComponentVNode(div, {}, [456])]));
+  children.push(createComponentVNode(div, {}, [a, createComponentVNode(div, {}, [789])]));
+  
+  return children;
 })()
 ```
 
-## 设计原则
+**特点：**
+- ✅ 自动创建 IIFE 包裹
+- ✅ 创建 `children` 数组收集所有表达式
+- ✅ 自动添加 `export default`
+- ✅ 返回 `children` 数组
+- ✅ 声明保持顶层（在 IIFE 外）
 
-1. **一致性** - 所有调用都遵循同样的 `(firstArg, props, children)` 签名
-2. **简洁性** - 不使用具体的 `ovsAttr` 或其他中间属性名
-3. **灵活性** - props 可以是任意对象表达式（`{}`、`state.props`、组件参数等）
-4. **可读性** - 生成的代码易于理解，直接映射到用户源码
+**场景：**
+- 文件中没有任何导出语句
+- 包含多个顶层表达式
+- 应该作为整体组件导出
 
 ---
 
-# ReactiveVNode API 拆分（2025-10-31）
+#### ✅ 规则 5: 混合导出 + 非导出表达式
 
-## 问题：职责混淆
-原来的 `createReactiveVNode()` 同时处理两种类型：
-- HTML标签（字符串类型）- 用于htmlElements.ts
-- 函数组件（Component类型）- 用于OVS编译器
-
-虽然可以工作，但职责不清晰，容易误解。
-
-## 解决方案：拆分为两个方法
-
-### 1️⃣ createComponentVNode（用于OVS编译器）
-
-```typescript
-export type FunctionComponent = (state: ReactiveVNodeState) => ReactiveVNodeApi
-
-export function createComponentVNode(
-  componentFn: FunctionComponent,
-  props: Record<string, any> = {},
-  children: any = null
-): ReactiveVNodeApi
-```
-
-**使用场景：**
-- OVS编译器生成的所有代码
-- 函数组件的直接调用
-
-**生成的代码示例：**
+**输入：**
 ```javascript
-// OVS编译结果
-return createComponentVNode(MyComponent, props, children)
+const a = 123
+
+div { a }  // 非导出表达式
+
+export const MyView = div {
+  a
+  div { 456 }
+}
 ```
 
-### 2️⃣ createElementVNode（用于HTML元素）
+**编译行为：**
+- `export const MyView = div { ... }` 作为命名导出
+- 顶层的 `div { a }` 会被丢弃（不在导出中）
+- 只有显式导出的内容才会输出
 
-```typescript
-export type HtmlElementType = string
+**特点：**
+- ⚠️ 非导出的表达式被忽略
+- ✅ 只输出明确导出的内容
 
-export function createElementVNode(
-  type: string,
-  props: Record<string, any> = {},
-  children: any = null
-): ReactiveVNodeApi
+---
+
+### 📊 编译规则对比表
+
+| 场景 | 输入代码 | 编译结果 | IIFE | 导出 | 说明 |
+|------|---------|---------|------|------|------|
+| **规则1** | `export default div{}` | 直接编译 | ❌ | ✅ | 保持原样 |
+| **规则2** | `export const X = div{}` | 直接编译 | ❌ | ✅ | 保持原样 |
+| **规则3** | `export function/ovsView` | 直接编译 | ❌ | ✅ | 保持原样 |
+| **规则4** | `div{}` (无导出) | 自动包裹 | ✅ | ✅ | **自动处理** |
+| **规则5** | 混合导出 + 表达式 | 忽略表达式 | ❌ | ✅ | 只输出导出 |
+
+---
+
+### 🎯 使用建议
+
+**最佳实践：**
+
+1. **简单组件** → 使用命名导出
+```javascript
+export const Button = (state) => button { state.props.text }
 ```
 
-**使用场景：**
-- htmlElements.ts 中的所有HTML标签
-- 直接创建HTML元素时
-
-**使用示例：**
-```typescript
-// htmlElements.ts
-export const div = (props?, children?) => createElementVNode('div', props, children)
-export const p = (props?, children?) => createElementVNode('p', props, children)
-
-// 用户代码
-import { div, p } from './htmlElements'
-div({ class: 'container' }, [
-  p({}, 'Hello World')
-])
+2. **复杂组件** → 使用函数声明
+```javascript
+export function Complex(state) {
+  const data = process(state.props)
+  div { ... }
+}
 ```
 
-## 设计对比
+3. **整个文件作为一个组件** → 无导出语句
+```javascript
+const title = "My App"
+div { h1 { title } }
+```
 
-| 维度 | createComponentVNode | createElementVNode |
-|-----|-------------------|------------------|
-| **参数1** | FunctionComponent（函数） | HtmlElementType（字符串） |
-| **参数2** | props对象 | props对象 |
-| **参数3** | children数组 | children数组 |
-| **返回** | ReactiveVNodeApi | ReactiveVNodeApi |
-| **使用场景** | OVS编译结果、函数组件 | HTML标签、元素库 |
-| **toVnode()内部** | 调用组件函数，执行OVS逻辑 | 直接调用Vue的h()函数 |
-
-## 改动位置
-
-**文件：`ReactiveVNode.ts`**
-- 新增类型定义：`FunctionComponent`、`HtmlElementType`
-- 新增方法：`createComponentVNode()`、`createElementVNode()`
-- 删除：原有的 `createReactiveVNode()` 
-
-**文件：`htmlElements.ts`**
-- 导入改为：`createElementVNode`
-- 所有标签函数改为调用 `createElementVNode()`
-
-**文件：`OvsCstToSlimeAstUtil.ts`**
-- 编译器生成代码改为调用 `createComponentVNode()`
-
-## 优势
-
-1. ✅ **职责清晰** - 一个方法对应一种使用场景
-2. ✅ **类型安全** - TypeScript 可以准确推断参数类型
-3. ✅ **易于理解** - 代码意图一目了然
-4. ✅ **便于维护** - 修改时不会影响另一种使用场景
-5. ✅ **错误检查** - IDE 能提供更精确的错误提示
+4. **多个导出** → 每个都显式导出
+```javascript
+export const Header = div { h1 { "Header" } }
+export const Footer = div { p { "Footer" } }
+```
 
 ---
 
