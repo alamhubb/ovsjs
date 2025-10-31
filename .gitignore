@@ -11,3 +11,4 @@ packages/*/lib/**/*.d.ts
 packages/*/lib/**/*.js
 packages/*/lib/**/*.map
 /.idea
+/lsp-client-intellij/.idea/
