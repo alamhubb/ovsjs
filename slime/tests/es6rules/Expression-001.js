@@ -20,22 +20,22 @@
  * 状态：✅ 已完善
  */
 
-// ✅ 测试1：单个表达式
+// ✅ 测试1：单个表达式    Expression -> AssignmentExpression (无Many)
 const a = 1
 
-// ✅ 测试2：逗号运算符 - 2个表达式
+// ✅ 测试2：逗号运算符 - 2个表达式    Expression -> Many=1 (逗号分隔)
 let x, y
 x = 1, y = 2
 
-// ✅ 测试3：逗号运算符 - 多个表达式
+// ✅ 测试3：逗号运算符 - 多个表达式    Expression -> Many (多个AssignmentExpression)
 let result = (x = 1, y = 2, x + y)
 
-// ✅ 测试4：for循环中的逗号表达式
+// ✅ 测试4：for循环中的逗号表达式    Expression -> 初始化和更新表达式
 for (let i = 0, j = 10; i < j; i++, j--) {
     console.log(i, j)
 }
 
-// ✅ 测试5：函数调用中（非逗号运算符）
+// ✅ 测试5：函数调用中（非逗号运算符）    Expression -> 函数参数不是逗号运算符
 func(a, b, c)
 
 // ✅ 测试6：复杂表达式组合
@@ -359,7 +359,8 @@ async function async7() {
 // ✅ 测试8：await new Promise
 async function async8() {
     const result = await new Promise(resolve => {
-        resolve(42)}
+        resolve(42)
+}
 
 // ✅ 测试9：多个await
 async function async9() {
@@ -1085,7 +1086,8 @@ const result2 = (function(x) {
 
 // ✅ 测试11：函数表达式作为参数
 [1, 2, 3].map(function(x) {
-    return x * 2// ✅ 测试12：函数表达式作为对象属性
+    return x * 2
+// ✅ 测试12：函数表达式作为对象属性
 const obj = {
     method: function() { return 'method' },
     action: function(a, b) { return a + b }
@@ -1152,22 +1154,22 @@ setTimeout(function() {
  * 状态：✅ 已完善
  */
 
-// ✅ 测试1：单个表达式
+// ✅ 测试1：单个表达式    Expression -> AssignmentExpression (无Many)
 const a = 1
 
-// ✅ 测试2：逗号运算符 - 2个表达式
+// ✅ 测试2：逗号运算符 - 2个表达式    Expression -> Many=1 (逗号分隔)
 let x, y
 x = 1, y = 2
 
-// ✅ 测试3：逗号运算符 - 多个表达式
+// ✅ 测试3：逗号运算符 - 多个表达式    Expression -> Many (多个AssignmentExpression)
 let result = (x = 1, y = 2, x + y)
 
-// ✅ 测试4：for循环中的逗号表达式
+// ✅ 测试4：for循环中的逗号表达式    Expression -> 初始化和更新表达式
 for (let i = 0, j = 10; i < j; i++, j--) {
     console.log(i, j)
 }
 
-// ✅ 测试5：函数调用中（非逗号运算符）
+// ✅ 测试5：函数调用中（非逗号运算符）    Expression -> 函数参数不是逗号运算符
 func(a, b, c)
 
 // ✅ 测试6：复杂表达式组合

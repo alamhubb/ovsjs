@@ -19,23 +19,23 @@
  * 状态：✅ 已完善（8个测试用例）
  */
 
-// ✅ 测试1：简单字段初始化
+// ✅ 测试1：简单字段初始化    FieldDefinition -> ClassElementName Initializer
 class C1 {
     field = 1
 }
 
-// ✅ 测试2：混合初始化和非初始化字段
+// ✅ 测试2：混合初始化和非初始化字段    FieldDefinition -> (无Initializer) vs (有Initializer)
 class C2 {
     x
     y = 2
 }
 
-// ✅ 测试3：静态字段
+// ✅ 测试3：静态字段    FieldDefinition -> static字段 + Initializer
 class C3 {
     static s = 1
 }
 
-// ✅ 测试4：混合静态和实例字段
+// ✅ 测试4：混合静态和实例字段    FieldDefinition -> static + 实例混合
 class C4 {
     static s1 = 1
     s2 = 2

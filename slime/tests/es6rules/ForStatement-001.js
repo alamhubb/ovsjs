@@ -1,7 +1,9 @@
 /**
  * 测试规则: ForStatement
  * 来源: 从 Statement 拆分
- *//**
+ */
+
+/**
  * 规则测试：ForStatement
  * 
  * 位置：Es6Parser.ts Line 1168
@@ -25,17 +27,17 @@
  * 状态：✅ 已完善
  */
 
-// ✅ 测试1：标准三部分for循环
+// ✅ 测试1：标准三部分for循环    ForStatement -> for (Init ; Test ; Update) Statement
 for (let i = 0; i < 10; i++) {
     console.log(i)
 }
 
-// ✅ 测试2：多个初始化变量
+// ✅ 测试2：多个初始化变量    ForStatement -> VariableDeclaration (多个)
 for (let a = 0, b = 10; a < b; a++, b--) {
     console.log(a, b)
 }
 
-// ✅ 测试3：复杂条件
+// ✅ 测试3：复杂条件    ForStatement -> 复杂Expression条件
 for (let x = 0; x < 100 && x !== 50; x += 2) {
     console.log(x)
 }

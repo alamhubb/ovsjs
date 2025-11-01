@@ -23,25 +23,25 @@
  * 状态：✅ 已完善（8个测试用例）
  */
 
-// ✅ 测试1：基本finally块
+// ✅ 测试1：基本finally块    Finally -> finally Block
 try {
     operation()
 } finally {
     cleanup()
 }
 
-// ✅ 测试2：try-finally（无catch）
+// ✅ 测试2：try-finally（无catch）    Finally -> TryStatement + Finally (无Catch)
 try {
     acquireResource()
 } finally {
     releaseResource()
 }
 
-// ✅ 测试3：try-catch-finally
+// ✅ 测试3：try-catch-finally    Finally -> 完整try-catch-finally
 try {
     riskyOp()
 } catch (e) {
-    handleError(e)
+    handle(e)
 } finally {
     cleanup()
 }

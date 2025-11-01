@@ -80,12 +80,26 @@
 
 **小计：** 10文件 × 54个测试
 
+### 第6组（52-61文件）：✅ 全部完成 ✅
+- EqualityExpression-001.js (6个测试)
+- Expression-001.js (5个测试)
+- ExpressionStatement-001.js (3个测试)
+- ExportClause-001.js (3个测试)
+- ExportDeclaration-001.js (8个测试)
+- ExportSpecifier-001.js (16个测试)
+- FieldDefinition-001.js (4个测试)
+- Finally-001.js (3个测试)
+- ForBinding-001.js (4个测试)
+- ForStatement-001.js (3个测试)
+
+**小计：** 10文件 × 55个测试
+
 ---
 
 ## 📊 累计统计
-- **已完成：** 51/152 文件
-- **已添加注释：** 403个测试
-- **进度：** 33.6%
+- **已完成：** 61/152 文件
+- **已添加注释：** 458个测试
+- **进度：** 40.1%
 
 ---
 

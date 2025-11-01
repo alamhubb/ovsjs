@@ -44,23 +44,31 @@
  * 状态：✅ 已完善（20个测试）
  */
 
-// ✅ 测试1：export named变量
-export const name = 'test'
+// ✅ 测试1    ExportDeclaration -> export NamedExports FromClause
+export { a, b } from './m'
 
-// ✅ 测试2：export多个named变量
-export const a = 1, b = 2, c = 3
+// ✅ 测试2    ExportDeclaration -> export default AssignmentExpression
+export default 42
 
-// ✅ 测试3：export函数
-export function greet() {
-    return 'hello'
-}
+// ✅ 测试3    ExportDeclaration -> export default FunctionDeclaration
+export default function() {}
 
-// ✅ 测试4：export类
-export class MyClass {
-    method() {}
-}
+// ✅ 测试4    ExportDeclaration -> export default ClassDeclaration
+export default class {}
 
-// ✅ 测试5：export default值
+// ✅ 测试5    ExportDeclaration -> export VariableStatement (const)
+export const x = 1
+
+// ✅ 测试6    ExportDeclaration -> export Declaration (FunctionDeclaration)
+export function f() {}
+
+// ✅ 测试7    ExportDeclaration -> export Declaration (ClassDeclaration)
+export class C {}
+
+// ✅ 测试8    ExportDeclaration -> export VariableStatement (let)
+export let y = 2
+
+// ✅ 测试9：export default值
 export default 42
 
 // ✅ 测试6：export default函数

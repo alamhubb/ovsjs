@@ -22,22 +22,22 @@
  * 状态：✅ 已完善
  */
 
-// ✅ 测试1：基本相等（==）
+// ✅ 测试1：基本相等（==）    EqualityExpression -> Or分支2 (==)
 1 == 1
 
-// ✅ 测试2：基本不相等（!=）
+// ✅ 测试2：基本不相等（!=）    EqualityExpression -> Or分支3 (!=)
 1 != 2
 
-// ✅ 测试3：严格相等（===）
+// ✅ 测试3：严格相等（===）    EqualityExpression -> Or分支4 (===)
 1 === 1
 
-// ✅ 测试4：严格不相等（!==）
+// ✅ 测试4：严格不相等（!==）    EqualityExpression -> Or分支5 (!==)
 1 !== '1'
 
-// ✅ 测试5：字符串比较
+// ✅ 测试5：字符串比较    EqualityExpression -> StringLiteral比较
 'hello' === 'hello'
 
-// ✅ 测试6：类型转换（==）
+// ✅ 测试6：类型转换（==）    EqualityExpression -> 类型转换相等
 1 == '1'
 
 // ✅ 测试7：null比较

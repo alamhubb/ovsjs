@@ -1,7 +1,9 @@
 /**
  * 测试规则: ExpressionStatement
  * 来源: 从 Expression 拆分
- *//* Es6Parser.ts: Expression ; */
+ */
+
+/* Es6Parser.ts: Expression ; */
 
 /**
  * 规则测试：ExpressionStatement
@@ -27,13 +29,13 @@
  * 状态：✅ 已完善
  */
 
-// ✅ 测试1：算术表达式语句
+// ✅ 测试1：算术表达式语句    ExpressionStatement -> Expression (算术表达式)
 1 + 2
 
-// ✅ 测试2：函数调用表达式语句
+// ✅ 测试2：函数调用表达式语句    ExpressionStatement -> CallExpression
 console.log('test')
 
-// ✅ 测试3：方法调用表达式语句
+// ✅ 测试3：方法调用表达式语句    ExpressionStatement -> MemberExpression + CallExpression
 const obj = { method: function() {} }
 obj.method()
 

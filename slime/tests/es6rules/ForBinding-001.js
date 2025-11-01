@@ -22,22 +22,22 @@
  * 状态：✅ 已完善
  */
 
-// ✅ 测试1：Or分支1 - BindingIdentifier (for-of)
+// ✅ 测试1：Or分支1 - BindingIdentifier (for-of)    ForBinding -> BindingIdentifier
 for (const item of arr) {
     console.log(item)
 }
 
-// ✅ 测试2：Or分支1 - BindingIdentifier (for-in)
+// ✅ 测试2：Or分支1 - BindingIdentifier (for-in)    ForBinding -> for-in循环
 for (const key in obj) {
     console.log(key)
 }
 
-// ✅ 测试3：Or分支1 - BindingIdentifier (let)
+// ✅ 测试3：Or分支1 - BindingIdentifier (let)    ForBinding -> let + BindingIdentifier
 for (let i of numbers) {
     console.log(i)
 }
 
-// ✅ 测试4：Or分支2 - ObjectBindingPattern
+// ✅ 测试4：Or分支2 - ObjectBindingPattern    ForBinding -> BindingPattern (Object)
 for (const {x, y} of points) {
     console.log(x, y)
 }

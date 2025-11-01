@@ -26,7 +26,13 @@ interface TestResult {
  * 从测试文件中提取规则名
  */
 function extractRuleName(filename: string): string {
-  const match = filename.match(/^\d{3}-(.+)\.js$/)
+  // 支持两种格式：
+  // 1. RuleName-001.js
+  // 2. 001-RuleName.js
+  let match = filename.match(/^(.+)-\d{3}\.js$/)
+  if (match) return match[1]
+  
+  match = filename.match(/^\d{3}-(.+)\.js$/)
   return match ? match[1] : 'Unknown'
 }
 
@@ -185,7 +191,7 @@ function findAllTestFiles(dir: string): string[] {
     
     if (stat.isDirectory()) {
       files.push(...findAllTestFiles(fullPath))
-    } else if (item.endsWith('.js') && /^\d{3}-/.test(item)) {
+    } else if (item.endsWith('.js') && (/-\d{3}\.js$/.test(item) || /^\d{3}-/.test(item))) {
       files.push(fullPath)
     }
   }

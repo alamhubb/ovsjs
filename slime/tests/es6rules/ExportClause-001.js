@@ -18,9 +18,9 @@
  * 状态：✅ 已完善（基础测试）
  */
 
-export {}
-export {name}
-export {a, b, c}
+export {}    // ExportClause -> 空导出
+export {name}    // ExportClause -> 单个导出
+export {a, b, c}    // ExportClause -> 多个导出
 
 /* Es6Parser.ts: ExportClause */
 
