@@ -587,12 +587,6 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
     }
 
     @SubhutiRule
-    EllipsisAssignmentExpression() {
-        this.tokenConsumer.Ellipsis()
-        this.AssignmentExpression()
-    }
-
-    @SubhutiRule
     ArgumentList() {
         this.Or([
             {alt: () => this.SpreadElement()},
@@ -606,31 +600,6 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
             ])
         })
     }
-
-    /*
-
-    @SubhutiRule
-    ArgumentList() {
-        this.Or([
-            {
-                alt: () => {
-                    this.AssignmentExpression()
-                }
-            },
-            {
-                alt: () => {
-                    this.EllipsisAssignmentExpression()
-                }
-            }
-        ]);
-        this.Many(() => {
-            this.tokenConsumer.Comma();
-            this.Or([
-                {alt: () => this.AssignmentExpression()},
-                {alt: () => this.EllipsisAssignmentExpression()}
-            ]);
-        });
-    }*/
 
     @SubhutiRule
     LeftHandSideExpression() {
@@ -1507,11 +1476,6 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
     }
 
     @SubhutiRule
-    FunctionStatementList() {
-        this.Option(() => this.StatementList())
-    }
-
-    @SubhutiRule
     ArrowFunction() {
         this.Option(() => this.tokenConsumer.AsyncTok())
 
@@ -1833,7 +1797,7 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
     ImportedDefaultBindingCommaNamedImports() {
         this.ImportedDefaultBinding()
         this.tokenConsumer.Comma()
-        this.NameSpaceImport()
+        this.NamedImports()  // ✅ 修复：改为NamedImports
     }
 
     @SubhutiRule
@@ -2024,25 +1988,5 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
         })
     }
 
-    // 7.8 字面量
-    @SubhutiRule
-    AbsLiteral() {
-        this.Or([
-            {alt: () => this.tokenConsumer.NullLiteral()},
-            {alt: () => this.tokenConsumer.TrueTok()},
-            {alt: () => this.tokenConsumer.FalseTok()},
-            {alt: () => this.tokenConsumer.NumericLiteral()},
-            {alt: () => this.tokenConsumer.StringLiteral()},
-            {alt: () => this.tokenConsumer.RegularExpressionLiteral()},
-        ]);
-    }
-
-    // 11.2.1 属性访问表达式
-    @SubhutiRule
-    BoxMemberExpression() {
-        this.tokenConsumer.LBracket();
-        this.Expression();
-        this.tokenConsumer.RBracket();
-    }
 }
 

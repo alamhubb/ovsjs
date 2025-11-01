@@ -2046,3 +2046,82 @@ grep查调用 → 无调用 → 删除 → 测试通过 → 完成
 - 代码减少比例：约14.6%
 
 下一步：检查是否还有其他未解决的问题
+
+**【进度】2025/11/01 19:12:05**
+【2025-11-01】问题#2修复完成 - 删除注释代码和未使用规则
+
+## 删除的内容（4项，43行）
+1. 注释代码块（Line 610-633，24行）- ArgumentList旧版实现
+2. EllipsisAssignmentExpression() - Line 590（4行）- 只在注释中被调用
+3. AbsLiteral() - Line 2029（10行）- 与Literal()重复，0个调用
+4. BoxMemberExpression() - Line 2042（5行）- 与BracketExpression()重复，0个调用
+
+## 问题分析
+1. **注释代码：** 应通过Git历史查看，不应留在源码中
+2. **EllipsisAssignmentExpression：** 与SpreadElement()功能完全相同，只在注释代码中被调用
+3. **AbsLiteral：** ES5遗留规则，与Literal()功能重复
+4. **BoxMemberExpression：** ES5命名方式，与BracketExpression()完全相同
+
+## 对比分析
+- EllipsisAssignmentExpression vs SpreadElement - 完全相同（均为 Ellipsis + AssignmentExpression）
+- AbsLiteral vs Literal - AbsLiteral多了RegularExpressionLiteral（但从未使用）
+- BoxMemberExpression vs BracketExpression - 100%相同（LBracket + Expression + RBracket）
+
+## 测试结果
+✅ CST测试：53/53全部通过
+✅ CST结构完整：无null/undefined节点
+✅ Token值100%保留
+✅ 节点类型正确
+
+## 优化成果累计
+- 问题#1（FormalParameter系列）：删除4个规则，24行代码
+- 问题#2（注释代码+未使用规则）：删除4项，43行代码
+- **总计本次：** 删除8项，67行代码
+- **总计累积：** 删除39项（31+4+4），408行代码（341+24+43）
+- **代码减少比例：** 约16.3%（从2500行 → 2092行）
+
+下一步：检查是否还有其他不优雅的问题
+
+**【进度】2025/11/01 19:14:24**
+【2025-11-01】问题#3修复完成 - 删除FunctionStatementList未使用规则
+
+## 删除的规则（1个，4行）
+- FunctionStatementList() - Line 1479-1481（4行）
+
+## 问题分析
+**功能重复：**
+- FunctionStatementList() 与 FunctionBody() 完全相同
+- 都是：Option(() => this.StatementList())
+- 0个外部调用
+
+**对比：**
+```typescript
+// ✅ FunctionBody() - 正在使用
+FunctionBody() {
+    this.Option(() => this.StatementList())
+}
+
+// ❌ FunctionStatementList() - 未使用（完全相同）
+FunctionStatementList() {
+    this.Option(() => this.StatementList())
+}
+```
+
+**调用情况：**
+- FunctionBody() - 被多处调用（FunctionBodyDefine、GetMethodDefinition、Finally等）
+- FunctionStatementList() - 0个调用
+
+## 测试结果
+✅ CST测试：53/53全部通过
+✅ CST结构完整：无null/undefined节点
+✅ Token值100%保留
+
+## 优化成果累计
+- 问题#1（FormalParameter系列）：删除4个规则，24行代码
+- 问题#2（注释代码+未使用规则）：删除4项，43行代码
+- 问题#3（FunctionStatementList）：删除1个规则，4行代码
+- **总计本次：** 删除9项，71行代码
+- **总计累积：** 删除40项，412行代码
+- **代码减少比例：** 约16.5%（从2500行 → 2088行）
+
+下一步：处理问题#4（ImportedDefaultBindingCommaNamedImports的Bug）
