@@ -1575,22 +1575,6 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
     }
 
     @SubhutiRule
-    ArrowParameters() {
-        this.Or([
-            {alt: () => this.BindingIdentifier()},
-            {
-                alt: () => {
-                    this.tokenConsumer.LParen()
-                    this.Option(() => {
-                        this.FormalParameterList()
-                    })
-                    this.tokenConsumer.RParen()
-                }
-            }
-        ])
-    }
-
-    @SubhutiRule
     ConciseBody() {
         this.Or([
             {
@@ -1606,12 +1590,6 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
             }
         ])
     }
-
-    @SubhutiRule
-    ArrowFormalParameters() {
-        this.FunctionFormalParameters()
-    }
-
 
     @SubhutiRule
     PropertyNameMethodDefinition() {
