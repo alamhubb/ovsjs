@@ -2082,84 +2082,6 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
         this.tokenConsumer.RParen();
     }
 
-    // 11.1.4 数组初始化器
-    @SubhutiRule
-    Array() {
-        this.tokenConsumer.LBracket();
-        this.Many(() => {
-            this.Or([
-                {alt: () => this.ElementList()},
-                {alt: () => this.Elision()},
-            ]);
-        });
-        this.tokenConsumer.RBracket();
-    }
-
-    // 11.1.5 对象初始化器
-    @SubhutiRule
-    Object() {
-        this.tokenConsumer.LBrace();
-        this.Option(() => {
-            this.PropertyNameAndValueList()
-        });
-        this.tokenConsumer.RBrace();
-    }
-
-    @SubhutiRule
-    PropertyNameAndValueList() {
-        this.PropertyAssignment();
-        this.Many(() => {
-            this.tokenConsumer.Comma();
-            this.PropertyAssignment();
-        });
-        this.Option(() => {
-            this.tokenConsumer.Comma();
-        });
-    }
-
-    // 11.1.5 属性赋值
-    @SubhutiRule
-    PropertyAssignment() {
-        this.Or([
-            {alt: () => this.RegularPropertyAssignment()},
-            {alt: () => this.GetPropertyAssignment()},
-            {alt: () => this.SetPropertyAssignment()},
-        ]);
-    }
-
-    // 11.1.5 常规属性赋值
-    @SubhutiRule
-    RegularPropertyAssignment() {
-        this.PropertyName();
-        this.tokenConsumer.Colon();
-        this.AssignmentExpression();
-    }
-
-    // 11.1.5 getter 属性赋值
-    @SubhutiRule
-    GetPropertyAssignment() {
-        this.tokenConsumer.GetTok();
-        this.PropertyName();
-        this.tokenConsumer.LParen();
-        this.tokenConsumer.RParen();
-        this.tokenConsumer.LBrace();
-        this.SourceElements();
-        this.tokenConsumer.RBrace();
-    }
-
-    // 11.1.5 setter 属性赋值
-    @SubhutiRule
-    SetPropertyAssignment() {
-        this.tokenConsumer.SetTok();
-        this.PropertyName();
-        this.tokenConsumer.LParen();
-        this.tokenConsumer.Identifier();
-        this.tokenConsumer.RParen();
-        this.tokenConsumer.LBrace();
-        this.SourceElements();
-        this.tokenConsumer.RBrace();
-    }
-
     // 11.2 左值表达式
     @SubhutiRule
     MemberCallNewExpression() {
@@ -2437,22 +2359,6 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
                     this.Expression();
                 },
             },
-        ]);
-    }
-
-    // 14 源元素
-    @SubhutiRule
-    SourceElements() {
-        this.SourceElement()
-    }
-
-    @SubhutiRule
-    SourceElement() {
-        this.Or([
-            {
-                alt: () => this.FunctionDeclaration(),
-            },
-            {alt: () => this.Statement()},
         ]);
     }
 }
