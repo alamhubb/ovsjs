@@ -128,21 +128,9 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
             {alt: () => this.GeneratorExpression()},
             {alt: () => this.tokenConsumer.RegularExpressionLiteral()},
             {alt: () => this.TemplateLiteral()},
-            // ✅ 最后处理箭头函数参数Cover - 仅在箭头函数上下文中有效
-            // {alt: () => this.CoverParenthesizedExpressionAndArrowParameterList()},
-            // ✅ 先处理普通括号表达式：(expr)
+            // ✅ 普通括号表达式：(expr)
             {alt: () => this.ParenthesizedExpression()},
         ])
-    }
-
-    @SubhutiRule
-    CoverParenthesizedExpressionAndArrowParameterList() {
-        // Cover Grammar: 保持模糊状态，不在此阶段决定是参数还是表达式
-        // 只有在 ArrowFunction 中遇到 => 时才解释为参数列表
-        // 否则会被作为普通表达式处理
-        this.tokenConsumer.LParen()
-        this.Option(() => this.FormalParameterList())
-        this.tokenConsumer.RParen()
     }
 
     @SubhutiRule
@@ -2072,14 +2060,6 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
             {alt: () => this.tokenConsumer.StringLiteral()},
             {alt: () => this.tokenConsumer.RegularExpressionLiteral()},
         ]);
-    }
-
-    // 11.1.6 括号表达式
-    @SubhutiRule
-    ParenthesisExpression() {
-        this.tokenConsumer.LParen();
-        this.Expression();
-        this.tokenConsumer.RParen();
     }
 
     // 11.2 左值表达式
