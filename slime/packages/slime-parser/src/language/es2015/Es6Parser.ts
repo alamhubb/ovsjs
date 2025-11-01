@@ -2062,25 +2062,6 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
         ]);
     }
 
-    // 11.2 左值表达式
-    @SubhutiRule
-    MemberCallNewExpression() {
-        this.Many(() => {
-            this.tokenConsumer.NewTok();
-        });
-        this.Or([
-            {alt: () => this.PrimaryExpression()},
-            {alt: () => this.FunctionExpression()},
-        ]);
-        this.Many(() => {
-            this.Or([
-                {alt: () => this.BoxMemberExpression()},
-                {alt: () => this.DotMemberExpression()},
-                {alt: () => this.Arguments()},
-            ]);
-        });
-    }
-
     // 11.2.1 属性访问表达式
     @SubhutiRule
     BoxMemberExpression() {

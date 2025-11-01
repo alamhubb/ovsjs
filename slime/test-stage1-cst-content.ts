@@ -68,6 +68,124 @@ function findNodes(node: any, targetName: string): any[] {
   return results
 }
 
+// ============ 完整CST结构验证 ============
+
+interface CSTValidationError {
+  path: string
+  issue: string
+  node?: any
+}
+
+// 验证CST结构完整性
+function validateCSTStructure(node: any, path: string = 'root'): CSTValidationError[] {
+  const errors: CSTValidationError[] = []
+  
+  // 1. 检查节点本身不为null/undefined
+  if (node === null) {
+    errors.push({ path, issue: 'Node is null' })
+    return errors
+  }
+  
+  if (node === undefined) {
+    errors.push({ path, issue: 'Node is undefined' })
+    return errors
+  }
+  
+  // 2. 检查节点必须有name或value（至少一个）
+  if (!node.name && node.value === undefined) {
+    errors.push({ 
+      path, 
+      issue: 'Node has neither name nor value',
+      node: { ...node, children: node.children ? `[${node.children.length} children]` : undefined }
+    })
+  }
+  
+  // 3. 检查children结构
+  if (node.children !== undefined) {
+    // children必须是数组
+    if (!Array.isArray(node.children)) {
+      errors.push({ 
+        path, 
+        issue: `children is not an array (type: ${typeof node.children})`,
+        node: { name: node.name, childrenType: typeof node.children }
+      })
+      return errors // 无法继续验证children
+    }
+    
+    // 检查children中的每个元素
+    node.children.forEach((child: any, index: number) => {
+      const childPath = `${path}.children[${index}]`
+      
+      // children不能包含null/undefined
+      if (child === null) {
+        errors.push({ path: childPath, issue: 'Child is null' })
+        return
+      }
+      
+      if (child === undefined) {
+        errors.push({ path: childPath, issue: 'Child is undefined' })
+        return
+      }
+      
+      // 递归验证子节点
+      const childErrors = validateCSTStructure(child, childPath)
+      errors.push(...childErrors)
+    })
+  }
+  
+  // 4. 叶子节点验证：有value就不应该有children（或children为空）
+  if (node.value !== undefined && node.children && node.children.length > 0) {
+    errors.push({
+      path,
+      issue: `Leaf node has both value and non-empty children`,
+      node: { name: node.name, value: node.value, childrenCount: node.children.length }
+    })
+  }
+  
+  return errors
+}
+
+// 统计CST节点信息
+function getCSTStatistics(node: any): {
+  totalNodes: number
+  leafNodes: number
+  maxDepth: number
+  nodeTypes: Map<string, number>
+} {
+  const stats = {
+    totalNodes: 0,
+    leafNodes: 0,
+    maxDepth: 0,
+    nodeTypes: new Map<string, number>()
+  }
+  
+  function traverse(node: any, depth: number) {
+    if (!node) return
+    
+    stats.totalNodes++
+    stats.maxDepth = Math.max(stats.maxDepth, depth)
+    
+    // 统计节点类型
+    if (node.name) {
+      stats.nodeTypes.set(node.name, (stats.nodeTypes.get(node.name) || 0) + 1)
+    }
+    
+    // 判断是否为叶子节点
+    if (!node.children || node.children.length === 0) {
+      stats.leafNodes++
+    } else {
+      for (const child of node.children) {
+        traverse(child, depth + 1)
+      }
+    }
+  }
+  
+  traverse(node, 0)
+  return stats
+}
+
+// ============ 结束 ============
+
 for (let i = 0; i < files.length; i++) {
   const file = files[i]
   const testName = file.replace('.js', '')
@@ -91,6 +209,28 @@ for (let i = 0; i < files.length; i++) {
     const parser = new Es6Parser(tokens)
     const cst = parser.Program()
     console.log(`✅ 语法: CST生成`)
+    
+    // ========== 新增：完整CST结构验证 ==========
+    const structureErrors = validateCSTStructure(cst)
+    if (structureErrors.length > 0) {
+      console.log(`\n❌ CST结构错误 (${structureErrors.length}个):`)
+      structureErrors.slice(0, 5).forEach(err => {
+        console.log(`  - ${err.path}: ${err.issue}`)
+        if (err.node) {
+          console.log(`    节点信息:`, JSON.stringify(err.node, null, 2))
+        }
+      })
+      if (structureErrors.length > 5) {
+        console.log(`  ... 还有 ${structureErrors.length - 5} 个错误`)
+      }
+      throw new Error(`CST结构验证失败: ${structureErrors.length}个错误`)
+    }
+    console.log(`✅ CST结构: 无null/undefined节点，结构完整`)
+    
+    // CST统计信息
+    const stats = getCSTStatistics(cst)
+    console.log(`📊 CST统计: ${stats.totalNodes}个节点 (叶子:${stats.leafNodes}, 深度:${stats.maxDepth})`)
+    // ========================================
     
     // 验证1: CST中是否保留了所有token值
     const cstTokens = collectTokenValues(cst)
@@ -159,6 +299,9 @@ for (let i = 0; i < files.length; i++) {
 }
 
 console.log('\n' + '='.repeat(60))
-console.log(`🎉 阶段1内容验证全部通过: ${files.length}/${files.length}`)
-console.log('✅ 所有CST的token值、节点类型、语法结构均正确')
+console.log(`🎉 阶段1完整验证全部通过: ${files.length}/${files.length}`)
+console.log('✅ CST结构完整性：无null/undefined节点，children结构正确')
+console.log('✅ Token值100%保留：所有输入token在CST中均可找到')
+console.log('✅ 节点类型正确：关键语法节点（函数、类、模块等）存在')
+console.log('✅ 语法结构统计：函数数、类数等符合预期')
 

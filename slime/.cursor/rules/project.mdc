@@ -1912,3 +1912,30 @@ function* numbers() {
 - ✅ 第5步已完成：删除CoverGrammar（8行）
 - ✅ 第6步已完成：删除ParenthesisExpression（5行）
 - ⏳ 第7步待确认：检查MemberCallNewExpression是否需要删除
+
+**【进度】2025/11/01 18:22:05**
+【2025-11-01】第7步完成 + CST验证升级
+
+## Parser优化第7步完成
+- ✅ 删除 MemberCallNewExpression() 方法（18行）- ES5遗留，未被调用
+- ✅ CST测试 53/53 全部通过
+
+## 累计优化成果
+- 已删除规则：31个
+- 已删除代码：341行（约13.6%）
+- 第1-4步：308行（29个规则）
+- 第5-6步：15行（CoverGrammar相关）
+- 第7步：18行（MemberCallNewExpression）
+
+## CST验证工具升级完成
+应用户要求，实现了完整的CST结构验证：
+1. ✅ 节点完整性检查 - 无null/undefined
+2. ✅ Children结构验证 - 必须是数组，元素不为空
+3. ✅ 节点属性验证 - 必须有name或value
+4. ✅ 递归深度检查 - 遍历整个CST树
+5. ✅ 叶子节点验证 - 有value不应有children
+6. ✅ 统计信息输出 - 节点数、叶子数、树深度
+
+验证结果：53/53测试通过，0个结构错误
+
+下一步：等待用户确认是否继续优化或开始AST测试
