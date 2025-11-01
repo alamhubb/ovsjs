@@ -23,21 +23,21 @@
  * 状态：✅ 已完善（8个测试用例）
  */
 
-// ✅ 测试1：基本catch
+// ✅ 测试1：基本catch    Catch -> catch CatchParameter (BindingIdentifier) Block
 try {
     riskyOperation()
 } catch (e) {
     console.log(e)
 }
 
-// ✅ 测试2：catch参数解构（对象）
+// ✅ 测试2：catch参数解构（对象）    Catch -> catch CatchParameter (BindingPattern: ObjectBindingPattern) Block
 try {
     api()
 } catch ({message, code}) {
     console.error(message, code)
 }
 
-// ✅ 测试3：catch中的多条语句
+// ✅ 测试3：catch中的多条语句    Catch -> catch参数 + 多语句Block
 try {
     doSomething()
 } catch (error) {
@@ -46,14 +46,14 @@ try {
     notify(error)
 }
 
-// ✅ 测试4：catch参数解构（数组）
+// ✅ 测试4：catch参数解构（数组）    Catch -> catch CatchParameter (BindingPattern: ArrayBindingPattern) Block
 try {
     parse()
 } catch ([status, reason]) {
     console.log(status, reason)
 }
 
-// ✅ 测试5：嵌套try-catch
+// ✅ 测试5：嵌套try-catch    Catch -> 在嵌套的TryStatement中的Catch
 try {
     try {
         inner()
@@ -65,7 +65,7 @@ try {
     console.log('Outer:', outerError)
 }
 
-// ✅ 测试6：catch中的条件语句
+// ✅ 测试6：catch中的条件语句    Catch -> 包含IfStatement的Block
 try {
     execute()
 } catch (err) {
@@ -78,7 +78,7 @@ try {
     }
 }
 
-// ✅ 测试7：catch中的循环和控制流
+// ✅ 测试7：catch中的循环和控制流    Catch -> 包含ForStatement的Block
 try {
     process()
 } catch (e) {
@@ -89,7 +89,7 @@ try {
     }
 }
 
-// ✅ 测试8：异常重新抛出
+// ✅ 测试8：异常重新抛出    Catch -> 包含ThrowStatement的Block
 try {
     critical()
 } catch (e) {

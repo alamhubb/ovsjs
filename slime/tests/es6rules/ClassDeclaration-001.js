@@ -1,7 +1,9 @@
 /**
  * 测试规则: ClassDeclaration
  * 来源: 从 Declaration 拆分
- *//* Es6Parser.ts: class Identifier (extends Expression)? { ClassBody } */
+ */
+
+/* Es6Parser.ts: class Identifier (extends Expression)? { ClassBody } */
 
 /**
  * 规则测试：ClassDeclaration
@@ -23,7 +25,7 @@
  * 状态：✅ 已完善
  */
 
-// ✅ 测试1：基本类声明
+// ✅ 测试1：基本类声明    ClassDeclaration -> class Identifier (无extends) ClassBody (constructor)
 class Point {
     constructor(x, y) {
         this.x = x
@@ -31,7 +33,7 @@ class Point {
     }
 }
 
-// ✅ 测试2：带方法的类
+// ✅ 测试2：带方法的类    ClassDeclaration -> ClassBody (MethodDefinition)
 class Rectangle {
     constructor(width, height) {
         this.width = width
@@ -43,14 +45,14 @@ class Rectangle {
     }
 }
 
-// ✅ 测试3：静态方法
+// ✅ 测试3：静态方法    ClassDeclaration -> ClassBody (static MethodDefinition)
 class Math2D {
     static distance(p1, p2) {
         return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2))
     }
 }
 
-// ✅ 测试4：Getter和Setter
+// ✅ 测试4：Getter和Setter    ClassDeclaration -> ClassBody (GetMethodDefinition/SetMethodDefinition)
 class Circle {
     constructor(radius) {
         this._radius = radius
@@ -65,7 +67,7 @@ class Circle {
     }
 }
 
-// ✅ 测试5：基本继承
+// ✅ 测试5：基本继承    ClassDeclaration -> ClassHeritage (extends) 基类
 class Animal {
     speak() {
         return 'sound'
@@ -78,7 +80,7 @@ class Dog extends Animal {
     }
 }
 
-// ✅ 测试6：继承中的super调用
+// ✅ 测试6：继承中的super调用    ClassDeclaration -> extends + constructor中super()
 class Vehicle {
     constructor(name) {
         this.name = name
@@ -92,14 +94,14 @@ class Car extends Vehicle {
     }
 }
 
-// ✅ 测试7：计算属性名
+// ✅ 测试7：计算属性名    ClassDeclaration -> ClassBody (ComputedPropertyName的MethodDefinition)
 class Dynamic {
     ['method_' + 'one']() {
         return 'one'
     }
 }
 
-// ✅ 测试8：多个方法
+// ✅ 测试8：多个方法    ClassDeclaration -> ClassBody (Multiple MethodDefinition)
 class Utils {
     add(a, b) {
         return a + b
@@ -114,7 +116,7 @@ class Utils {
     }
 }
 
-// ✅ 测试9：混合静态和实例方法
+// ✅ 测试9：混合静态和实例方法    ClassDeclaration -> ClassBody (混合static和实例MethodDefinition)
 class Counter {
     static total = 0
     
@@ -132,7 +134,7 @@ class Counter {
     }
 }
 
-// ✅ 测试10：多层继承
+// ✅ 测试10：多层继承    ClassDeclaration -> 多级extends (Polygon extends Shape, Triangle extends Polygon)
 class Shape {
     area() {
         return 0
@@ -151,7 +153,7 @@ class Triangle extends Polygon {
     }
 }
 
-// ✅ 测试11：类中的try-catch
+// ✅ 测试11：类中的try-catch    ClassDeclaration -> ClassBody (MethodDefinition内包含TryStatement)
 class Processor {
     process(data) {
         try {
@@ -162,7 +164,7 @@ class Processor {
     }
 }
 
-// ✅ 测试12：类中的for循环
+// ✅ 测试12：类中的for循环    ClassDeclaration -> ClassBody (MethodDefinition内包含ForStatement)
 class Collection {
     constructor(items) {
         this.items = items
@@ -177,7 +179,7 @@ class Collection {
     }
 }
 
-// ✅ 测试13：继承中的super属性访问
+// ✅ 测试13：继承中的super属性访问    ClassDeclaration -> extends + super.propertyAccess
 class Base {
     getValue() {
         return 42
@@ -190,7 +192,7 @@ class Derived extends Base {
     }
 }
 
-// ✅ 测试14：包含多个成员的复杂类
+// ✅ 测试14：包含多个成员的复杂类    ClassDeclaration -> 复杂ClassBody (static, getter, private)
 class User {
     #password
     
@@ -216,7 +218,7 @@ class User {
     }
 }
 
-// ✅ 测试15：类的实际使用场景
+// ✅ 测试15：类的实际使用场景    ClassDeclaration -> 实际应用（继承+多层+ super）
 class Employee {
     constructor(id, name, salary) {
         this.id = id

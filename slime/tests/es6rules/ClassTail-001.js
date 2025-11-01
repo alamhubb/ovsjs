@@ -23,32 +23,32 @@
  * 状态：✅ 已完善（8个测试用例）
  */
 
-// ✅ 测试1：空类
+// ✅ 测试1：空类    ClassTail -> (无ClassHeritage) { (无ClassBody?) }
 class Empty {}
 
-// ✅ 测试2：有内容无继承的类
+// ✅ 测试2：有内容无继承的类    ClassTail -> (无ClassHeritage) { ClassBody (MethodDefinition) }
 class WithMethod {
     method() {}
 }
 
-// ✅ 测试3：有继承无内容的类
+// ✅ 测试3：有继承无内容的类    ClassTail -> ClassHeritage { (无ClassBody?) }
 class Extends extends Base {}
 
-// ✅ 测试4：有继承有内容的类
+// ✅ 测试4：有继承有内容的类    ClassTail -> ClassHeritage { ClassBody (constructor + MethodDefinition) }
 class ExtendsWithContent extends Base {
     constructor() {
         super()
     }
 }
 
-// ✅ 测试5：多个方法的类
+// ✅ 测试5：多个方法的类    ClassTail -> (无ClassHeritage) { ClassBody (Multiple MethodDefinition) }
 class MultiMethod {
     method1() {}
     method2() {}
     method3() {}
 }
 
-// ✅ 测试6：constructor和方法混合
+// ✅ 测试6：constructor和方法混合    ClassTail -> { ClassBody (constructor + MethodDefinition) }
 class WithConstructor {
     constructor(name) {
         this.name = name
@@ -58,14 +58,14 @@ class WithConstructor {
     }
 }
 
-// ✅ 测试7：静态成员的类
+// ✅ 测试7：静态成员的类    ClassTail -> { ClassBody (static MethodDefinition + FieldDefinition + instanceMethod) }
 class WithStatic {
     static staticMethod() {}
     static VERSION = '1.0.0'
     instanceMethod() {}
 }
 
-// ✅ 测试8：getter/setter的类
+// ✅ 测试8：getter/setter的类    ClassTail -> { ClassBody (GetMethodDefinition + SetMethodDefinition + MethodDefinition) }
 class WithGetterSetter {
     get value() { return this._v }
     set value(v) { this._v = v }

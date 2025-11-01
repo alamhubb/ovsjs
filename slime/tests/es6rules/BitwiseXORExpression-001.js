@@ -21,35 +21,35 @@
  * 状态：✅ 已完善
  */
 
-// ✅ 测试1：Many=0 - 无异或
+// ✅ 测试1：Many=0 - 无异或    BitwiseXORExpression -> BitwiseANDExpression (无^ 操作)
 const single = a
 
-// ✅ 测试2：Many=1 - 两个操作数
+// ✅ 测试2：Many=1 - 两个操作数    BitwiseXORExpression -> BitwiseANDExpression ^ BitwiseANDExpression (1个^)
 const xor = a ^ b
 const toggle = flags ^ 0x01
 
-// ✅ 测试3：Many=2 - 三个操作数
+// ✅ 测试3：Many=2 - 三个操作数    BitwiseXORExpression -> Many (2个^)
 const xor3 = x ^ y ^ z
 const chain = a ^ b ^ c
 
-// ✅ 测试4：Many=3 - 四个操作数
+// ✅ 测试4：Many=3 - 四个操作数    BitwiseXORExpression -> Many (3个^)
 const xor4 = w ^ x ^ y ^ z
 
-// ✅ 测试5：实际应用 - 位翻转
+// ✅ 测试5：实际应用 - 位翻转    BitwiseXORExpression -> 实际位翻转操作
 const flipped = value ^ 0xFF
 const inverted = byte ^ 0xFFFF
 
-// ✅ 测试6：实际应用 - 交换
+// ✅ 测试6：实际应用 - 交换    BitwiseXORExpression -> 使用异或交换变量
 let temp = a
 a = a ^ b
 b = a ^ b
 a = a ^ b
 
-// ✅ 测试7：与其他位运算组合
+// ✅ 测试7：与其他位运算组合    BitwiseXORExpression -> 与BitwiseANDExpression结合
 const result = (a & 0xFF) ^ (b & 0xFF)
 const calc = x ^ y & z
 
-// ✅ 测试8：加密/校验场景
+// ✅ 测试8：加密/校验场景    BitwiseXORExpression -> 在加密校验中使用
 const checksum = data[0] ^ data[1] ^ data[2]
 const encrypted = plaintext ^ key
 /* Es6Parser.ts: BitwiseANDExpression (^ BitwiseANDExpression)* */

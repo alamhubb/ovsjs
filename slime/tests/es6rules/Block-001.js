@@ -23,23 +23,23 @@
  * 状态：✅ 已完善（8个测试用例）
  */
 
-// ✅ 测试1：空块
+// ✅ 测试1：空块    Block -> { (无StatementList?) }
 {
 }
 
-// ✅ 测试2：单语句块
+// ✅ 测试2：单语句块    Block -> { StatementList (1个语句) }
 {
     let x = 1
 }
 
-// ✅ 测试3：多语句块
+// ✅ 测试3：多语句块    Block -> { StatementList (多个语句) }
 {
     let x = 1
     const y = 2
     var z = x + y
 }
 
-// ✅ 测试4：嵌套块
+// ✅ 测试4：嵌套块    Block -> { StatementList (包含嵌套Block) }
 {
     let a = 1
     {
@@ -50,7 +50,7 @@
     }
 }
 
-// ✅ 测试5：块级作用域隔离
+// ✅ 测试5：块级作用域隔离    Block -> { StatementList (作用域隔离) }
 {
     let x = 'outer'
     {
@@ -58,17 +58,17 @@
     }
 }
 
-// ✅ 测试6：if语句块
+// ✅ 测试6：if语句块    Block -> IfStatement的Block
 if (true) {
     console.log('in block')
 }
 
-// ✅ 测试7：for循环块
+// ✅ 测试7：for循环块    Block -> ForStatement的Block
 for (let i = 0; i < 10; i++) {
     console.log(i)
 }
 
-// ✅ 测试8：复杂块结构（多层控制流）
+// ✅ 测试8：复杂块结构（多层控制流）    Block -> 复杂嵌套 (if + while + block)
 {
     let counter = 0
     if (counter === 0) {

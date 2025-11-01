@@ -19,38 +19,38 @@
  * 状态：✅ 已完善
  */
 
-// ✅ 测试1：基本三元表达式
+// ✅ 测试1：基本三元表达式    ConditionalExpression -> Or分支2 (LogicalORExpression ? AssignmentExpression : AssignmentExpression)
 true ? 'yes' : 'no'
 
-// ✅ 测试2：数值条件
+// ✅ 测试2：数值条件    ConditionalExpression -> 数值比较 ? 结果1 : 结果2
 1 > 0 ? 'positive' : 'non-positive'
 
-// ✅ 测试3：变量条件
+// ✅ 测试3：变量条件    ConditionalExpression -> IdentifierReference ? 结果 : 结果
 const x = 10
 x > 5 ? 'big' : 'small'
 
-// ✅ 测试4：布尔条件
+// ✅ 测试4：布尔条件    ConditionalExpression -> BooleanLiteral ? 结果 : 结果
 const isValid = true
 isValid ? 'valid' : 'invalid'
 
-// ✅ 测试5：表达式作为结果
+// ✅ 测试5：表达式作为结果    ConditionalExpression -> ? (表达式) : (表达式)
 10 > 5 ? 10 + 5 : 10 - 5
 
-// ✅ 测试6：函数调用条件
+// ✅ 测试6：函数调用条件    ConditionalExpression -> CallExpression ? 结果 : 结果
 Math.random() > 0.5 ? 'heads' : 'tails'
 
-// ✅ 测试7：嵌套三元表达式
+// ✅ 测试7：嵌套三元表达式    ConditionalExpression -> 嵌套ConditionalExpression
 const age = 30
 age > 65 ? 'elderly' : age > 18 ? 'adult' : 'minor'
 
-// ✅ 测试8：对象作为结果
+// ✅ 测试8：对象作为结果    ConditionalExpression -> ? ObjectLiteral : ObjectLiteral
 true ? { x: 1 } : { y: 2 }
 
-// ✅ 测试9：数组作为结果
+// ✅ 测试9：数组作为结果    ConditionalExpression -> ? ArrayLiteral : ArrayLiteral
 false ? [1, 2, 3] : [4, 5, 6]
 
-// ✅ 测试10：字符串条件
-'hello' === 'hello' ? 'match' : 'no match'
+// ✅ 测试10：函数作为结果    ConditionalExpression -> ? FunctionExpression : FunctionExpression
+true ? function() { return 1 } : function() { return 2 }
 
 // ✅ 测试11：逻辑AND条件
 x > 0 && x < 100 ? 'in range' : 'out of range'

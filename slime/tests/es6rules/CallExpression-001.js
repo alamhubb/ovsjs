@@ -29,61 +29,61 @@
  * 状态：✅ 已完善
  */
 
-// ✅ 测试1：Or分支1 - MemberExpression Arguments（基础函数调用）
+// ✅ 测试1：Or分支1 - MemberExpression Arguments（基础函数调用）    CallExpression -> Or分支1 (MemberExpression Arguments)
 function foo(a, b) {
     return a + b
 }
 const result1 = foo(1, 2)
 
-// ✅ 测试2：Or分支1 - 无参数调用
+// ✅ 测试2：Or分支1 - 无参数调用    CallExpression -> MemberExpression + Arguments (空参数)
 function bar() {
     return 42
 }
 const result2 = bar()
 
-// ✅ 测试3：Or分支1 - 多个参数
+// ✅ 测试3：Or分支1 - 多个参数    CallExpression -> MemberExpression + ArgumentList (多参数)
 const result3 = foo(1, 2, 3, 4, 5)
 
-// ✅ 测试4：Or分支1 - 嵌套函数调用
+// ✅ 测试4：Or分支1 - 嵌套函数调用    CallExpression -> 递归嵌套的CallExpression
 function add(a, b) { return a + b }
 const result4 = add(1, add(2, 3))
 
-// ✅ 测试5：Many=1（第一次链式）- Arguments
+// ✅ 测试5：Many=1（第一次链式）- Arguments    CallExpression -> Many内Or分支1 (Arguments)
 const result5 = foo(1, 2)
 
-// ✅ 测试6：Many=1 - DotMemberExpression（链式方法调用）
+// ✅ 测试6：Many=1 - DotMemberExpression（链式方法调用）    CallExpression -> Many内Or分支3 (DotMemberExpression)
 const str = 'hello'
 const result6 = str.toUpperCase()
 
-// ✅ 测试7：Many=1 - BracketExpression（方括号访问）
+// ✅ 测试7：Many=1 - BracketExpression（方括号访问）    CallExpression -> Many内Or分支2 (BracketExpression)
 const obj = { method: function() { return 42 } }
 const result7 = obj['method']()
 
-// ✅ 测试8：Many=1 - TemplateLiteral（标签模板）
+// ✅ 测试8：Many=1 - TemplateLiteral（标签模板）    CallExpression -> Many内Or分支4 (TemplateLiteral)
 function tag(strings, ...values) {
     return strings[0]
 }
 const result8 = tag`hello`
 
-// ✅ 测试9：Many=2 - 方法调用链
+// ✅ 测试9：Many=2 - 方法调用链    CallExpression -> Many (2次链式，点号)
 const arr = [1, 2, 3]
 const result9 = arr.map(function(x) { return x * 2 }).filter(function(x) { return x > 2 })
 
-// ✅ 测试10：Many=2 - 混合链式（点号 + 参数）
+// ✅ 测试10：Many=2 - 混合链式（点号 + 参数）    CallExpression -> Many (交替的点号和参数)
 const result10 = str.toUpperCase().toLowerCase()
 
-// ✅ 测试11：Many=3 - 三层链式调用
+// ✅ 测试11：Many=3 - 三层链式调用    CallExpression -> Many (3次链式)
 const result11 = foo(1).method().property
 
-// ✅ 测试12：Many混合 - 参数 + 方括号 + 点号
+// ✅ 测试12：Many混合 - 参数 + 方括号 + 点号    CallExpression -> Many (混合多种链式方式)
 const calc = { add: function(a, b) { return a + b } }
 const result12 = calc['add'](1, 2)
 
-// ✅ 测试13：Many混合 - 复杂链式
+// ✅ 测试13：Many混合 - 复杂链式    CallExpression -> 实际Promise链式调用
 const promise = Promise.resolve(42)
 const result13 = promise.then(function(v) { return v }).catch(function(e) { return e })
 
-// ✅ 测试14：或分支2 - super 调用（在类中）
+// ✅ 测试14：或分支2 - super 调用（在类中）    CallExpression -> Or分支2 (SuperCall)
 class Base {
     constructor(a) {
         this.a = a
@@ -103,7 +103,7 @@ class Child extends Base {
     }
 }
 
-// ✅ 测试15：链式调用在实际场景中
+// ✅ 测试15：链式调用在实际场景中    CallExpression -> 实际应用场景（数组方法链）
 const users = [
     { name: 'Alice', age: 30 },
     { name: 'Bob', age: 25 }

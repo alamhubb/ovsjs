@@ -37,18 +37,47 @@
 
 **小计：** 10文件 × 46个测试
 
+### 第3组（21-31文件）：✅ 全部完成 ✅
+- BitwiseORExpression-001.js (8个测试)
+- BitwiseXORExpression-001.js (8个测试)
+- BlockStatement-001.js (15个测试)
+- BreakStatement-001.js (15个测试)
+- CallExpression-001.js (15个测试)
+- Catch-001.js (8个测试)
+- ClassDeclaration-001.js (15个测试)
+- ClassExpression-001.js (15个测试)
+- ClassTail-001.js (8个测试)
+- Block-001.js (8个测试)
+- BracketExpression-001.js (4个测试)
+
+**小计：** 11文件 × 117个测试
+
+### 第4组（32-41文件）：✅ 全部完成 ✅
+- BreakableStatement-001.js (3个测试)
+- CaseBlock-001.js (8个测试)
+- CaseClause-001.js (8个测试)
+- CaseClauses-001.js (8个测试)
+- CatchParameter-001.js (8个测试)
+- ClassBody-001.js (8个测试)
+- ClassElement-001.js (8个测试)
+- ClassElementList-001.js (6个测试)
+- ComputedPropertyName-001.js (8个测试)
+- ConditionalExpression-001.js (10个测试)
+
+**小计：** 10文件 × 87个测试
+
 ---
 
 ## 📊 累计统计
-- **已完成：** 20/152 文件
-- **已添加注释：** 145个测试
-- **进度：** 13.2%
+- **已完成：** 41/152 文件
+- **已添加注释：** 349个测试
+- **进度：** 27.0%
 
 ---
 
 ## ⏳ 待处理列表
 
-### 第3组（21-30文件）：⏳ 待处理
+### 第3组（21-31文件）：⏳ 待处理
 21. BitwiseORExpression-001.js
 22. BitwiseXORExpression-001.js
 23. BlockStatement-001.js
@@ -62,6 +91,18 @@
 
 ### 第4-16组（31-152文件）：⏳ 待处理
 ...（其他122个文件）
+
+### 第4组（32-41文件）：⏳ 待处理
+- BreakableStatement-001.js
+- CaseBlock-001.js
+- CaseClause-001.js
+- CaseClauses-001.js
+- CatchParameter-001.js
+- ClassBody-001.js
+- ClassElement-001.js
+- ClassElementList-001.js
+- ComputedPropertyName-001.js
+- ConditionalExpression-001.js
 
 ---
 

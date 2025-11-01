@@ -4,42 +4,42 @@
  * 状态：✅ 已完善（8个测试用例）
  */
 
-// ✅ 测试1
+// ✅ 测试1    ClassElement -> MethodDefinition
 class C1 {
     m() {}
 }
 
-// ✅ 测试2
+// ✅ 测试2    ClassElement -> constructor
 class C2 {
     constructor() {}
 }
 
-// ✅ 测试3
+// ✅ 测试3    ClassElement -> GeneratorMethod
 class C3 {
     *gen() {}
 }
 
-// ✅ 测试4
+// ✅ 测试4    ClassElement -> GetMethodDefinition
 class C4 {
     get x() {}
 }
 
-// ✅ 测试5
+// ✅ 测试5    ClassElement -> SetMethodDefinition
 class C5 {
     set x(v) {}
 }
 
-// ✅ 测试6
+// ✅ 测试6    ClassElement -> static MethodDefinition
 class C6 {
     static s() {}
 }
 
-// ✅ 测试7
+// ✅ 测试7    ClassElement -> FieldDefinition
 class C7 {
     field = 1
 }
 
-// ✅ 测试8
+// ✅ 测试8    ClassElement -> 混合多种元素类型
 class C8 {
     constructor() {}
     *gen() {}

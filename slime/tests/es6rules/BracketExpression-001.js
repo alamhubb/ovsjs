@@ -21,21 +21,21 @@
  * 状态：✅ 已完善
  */
 
-// ✅ 测试1：数组索引访问 - 数字
+// ✅ 测试1：数组索引访问 - 数字    BracketExpression -> [ NumericLiteral ]
 arr[0]
 arr[1]
 arr[10]
 
-// ✅ 测试2：对象属性访问 - 字符串
+// ✅ 测试2：对象属性访问 - 字符串    BracketExpression -> [ StringLiteral ]
 obj['key']
 obj['propertyName']
 
-// ✅ 测试3：对象属性访问 - 变量
+// ✅ 测试3：对象属性访问 - 变量    BracketExpression -> [ IdentifierReference 或 BinaryExpression ]
 const key = 'dynamic'
 obj[key]
 obj[key + 'Suffix']
 
-// ✅ 测试4：链式方括号访问
+// ✅ 测试4：链式方括号访问    BracketExpression -> 嵌套的BracketExpression [ Expression ]
 matrix[i][j]
 /* Es6Parser.ts: [ Expression ] */
 

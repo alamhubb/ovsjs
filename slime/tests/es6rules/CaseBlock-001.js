@@ -1,7 +1,9 @@
 /**
  * 测试规则: CaseBlock
  * 来源: 从 Block 拆分
- *//**
+ */
+
+/**
  * 规则测试：CaseBlock
  * 
  * 位置：Es6Parser.ts Line 1309
@@ -26,21 +28,21 @@
  * 状态：✅ 已完善（8个测试用例）
  */
 
-// ✅ 测试1：基本case块
+// ✅ 测试1：基本case块    CaseBlock -> { CaseClauses DefaultClause CaseClauses }
 switch (x) {
     case 1: break
     case 2: break
     default: break
 }
 
-// ✅ 测试2：仅case子句
+// ✅ 测试2：仅case子句    CaseBlock -> { CaseClauses (无DefaultClause) }
 switch (value) {
     case 'a': break
     case 'b': break
     case 'c': break
 }
 
-// ✅ 测试3：case和default
+// ✅ 测试3：case和default    CaseBlock -> { CaseClauses DefaultClause (无后续CaseClauses) }
 switch (n) {
     case 0:
         console.log('zero')
@@ -49,7 +51,7 @@ switch (n) {
         console.log('other')
 }
 
-// ✅ 测试4：fall-through
+// ✅ 测试4：fall-through    CaseBlock -> 多个CaseClause (无break分支)
 switch (code) {
     case 1:
     case 2:
@@ -60,7 +62,7 @@ switch (code) {
         break
 }
 
-// ✅ 测试5：多个case
+// ✅ 测试5：多个case    CaseBlock -> 多个CaseClauses
 switch (status) {
     case 'pending':
         handle()
@@ -73,7 +75,7 @@ switch (status) {
         break
 }
 
-// ✅ 测试6：case块中的复杂语句
+// ✅ 测试6：case块中的复杂语句    CaseBlock -> CaseClause内包含多个Statement
 switch (type) {
     case 1:
         let x = 1
@@ -86,7 +88,7 @@ switch (type) {
         return y
 }
 
-// ✅ 测试7：default在中间位置
+// ✅ 测试7：default在中间位置    CaseBlock -> DefaultClause在中间 + 后续CaseClauses
 switch (key) {
     case 'first':
         console.log('1')
@@ -99,7 +101,7 @@ switch (key) {
         break
 }
 
-// ✅ 测试8：空case块
+// ✅ 测试8：空case块    CaseBlock -> { (无任何内容或仅break) }
 switch (val) {
     case 1:
         break

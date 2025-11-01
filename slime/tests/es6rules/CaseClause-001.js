@@ -16,40 +16,40 @@
  * 状态：✅ 已完善（16个测试）
  */
 
-// ✅ 测试1：基本case子句
+// ✅ 测试1：基本case子句    CaseClause -> case Expression : (无StatementList)
 switch (1) {
     case 1: break
 }
 
-// ✅ 测试2：多个case子句
+// ✅ 测试2：多个case子句    CaseClause -> 多个case子句组合
 switch (1) {
     case 1: console.log(1); break
     case 2: console.log(2); break
 }
 
-// ✅ 测试3：default子句
+// ✅ 测试3：default子句    CaseClause -> default (特殊的case, 无Expression)
 switch (1) {
     default: console.log('default')
 }
 
-// ✅ 测试4：case + default组合
+// ✅ 测试4：case + default组合    CaseClause -> Or分支1 (case) + Or分支2 (default)
 switch (1) {
     case 1: console.log(1); break
     default: console.log('default')
 }
 
-// ✅ 测试5：case - StatementList为空（fall-through）
+// ✅ 测试5：case - StatementList为空（fall-through）    CaseClause -> case Expression : (StatementList?)
 switch (1) {
     case 1:
     case 2: console.log('1 or 2'); break
 }
 
-// ✅ 测试6：case - 单个语句
+// ✅ 测试6：case - 单个语句    CaseClause -> case Expression : StatementList (1个语句)
 switch ('a') {
     case 'a': return 'letter a'
 }
 
-// ✅ 测试7：case - 多个语句
+// ✅ 测试7：case - 多个语句    CaseClause -> case Expression : StatementList (多个语句)
 switch (1) {
     case 1:
         const x = 1
@@ -58,7 +58,7 @@ switch (1) {
         break
 }
 
-// ✅ 测试8：case - 表达式求值
+// ✅ 测试8：case - 表达式求值    CaseClause -> case (复杂Expression) : StatementList
 const value = 2
 switch (value) {
     case 1 + 1: console.log('two'); break

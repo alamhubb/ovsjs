@@ -23,13 +23,13 @@
  * 状态：✅ 已完善（8个测试用例）
  */
 
-// ✅ 测试1：单个case子句
+// ✅ 测试1：单个case子句    CaseClauses -> CaseClause (1个)
 switch (x) {
     case 1:
         doA()
 }
 
-// ✅ 测试2：多个case子句
+// ✅ 测试2：多个case子句    CaseClauses -> Many (多个CaseClause)
 switch (x) {
     case 1:
         doA()
@@ -37,7 +37,7 @@ switch (x) {
         doB()
 }
 
-// ✅ 测试3：case中的多个语句
+// ✅ 测试3：case中的多个语句    CaseClauses -> CaseClause (StatementList)
 switch (code) {
     case 1:
         let x = 1
@@ -49,7 +49,7 @@ switch (code) {
         return y
 }
 
-// ✅ 测试4：fall-through（无break）
+// ✅ 测试4：fall-through（无break）    CaseClauses -> 连续多个case (无break分支)
 switch (value) {
     case 'a':
         doA()
@@ -59,7 +59,7 @@ switch (value) {
         doC()
 }
 
-// ✅ 测试5：case中的条件语句
+// ✅ 测试5：case中的条件语句    CaseClauses -> CaseClause (IfStatement)
 switch (status) {
     case 'active':
         if (isValid()) {
@@ -71,7 +71,7 @@ switch (status) {
         }
 }
 
-// ✅ 测试6：case中的循环
+// ✅ 测试6：case中的循环    CaseClauses -> CaseClause (ForStatement)
 switch (type) {
     case 1:
         for (let i = 0; i < 10; i++) {

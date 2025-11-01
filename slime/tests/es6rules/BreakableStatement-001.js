@@ -1,7 +1,9 @@
 /**
  * 测试规则: BreakableStatement
  * 来源: 从 Statement 拆分
- *//**
+ */
+
+/**
  * 规则测试：BreakableStatement
  * 
  * 位置：Es6Parser.ts Line 955
@@ -21,8 +23,8 @@
  * 状态：✅ 已完善（基础测试）
  */
 
-for (;;) { break }
-while (true) { break }
-switch (x) { case 1: break }
+for (;;) { break }    // BreakableStatement -> Or分支1 (IterationStatement)
+while (true) { break }    // BreakableStatement -> Or分支1 (IterationStatement)
+switch (x) { case 1: break }    // BreakableStatement -> Or分支2 (SwitchStatement)
 
 /* Es6Parser.ts: Or[IterationStatement, SwitchStatement] */

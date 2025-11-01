@@ -4,21 +4,21 @@
  * 状态：✅ 已完善（8个测试用例）
  */
 
-// ✅ 测试1
+// ✅ 测试1    ClassBody -> (无ClassElementList)
 class Empty {}
 
-// ✅ 测试2
+// ✅ 测试2    ClassBody -> ClassElementList (1个MethodDefinition)
 class One {
     m() {}
 }
 
-// ✅ 测试3
+// ✅ 测试3    ClassBody -> ClassElementList (2个MethodDefinition)
 class Two {
     m1() {}
     m2() {}
 }
 
-// ✅ 测试4
+// ✅ 测试4    ClassBody -> ClassElementList (constructor + 2个MethodDefinition)
 class Multi {
     constructor() {}
     m1() {}
@@ -26,24 +26,24 @@ class Multi {
     m3() {}
 }
 
-// ✅ 测试5
+// ✅ 测试5    ClassBody -> ClassElementList (静态方法 + 实例方法)
 class Static {
     static s() {}
     i() {}
 }
 
-// ✅ 测试6
+// ✅ 测试6    ClassBody -> ClassElementList (GetMethodDefinition + SetMethodDefinition)
 class GetSet {
     get x() {}
     set x(v) {}
 }
 
-// ✅ 测试7
+// ✅ 测试7    ClassBody -> ClassElementList (GeneratorMethod)
 class Gen {
     *g() { yield 1 }
 }
 
-// ✅ 测试8
+// ✅ 测试8    ClassBody -> ClassElementList (混合所有类型)
 class All {
     constructor() {}
     static s() {}

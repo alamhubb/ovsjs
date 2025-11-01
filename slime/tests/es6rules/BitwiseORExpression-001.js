@@ -21,33 +21,33 @@
  * 状态：✅ 已完善
  */
 
-// ✅ 测试1：Many=0 - 无位或
+// ✅ 测试1：Many=0 - 无位或    BitwiseORExpression -> BitwiseXORExpression (无| 操作)
 const single = a
 
-// ✅ 测试2：Many=1 - 两个操作数
+// ✅ 测试2：Many=1 - 两个操作数    BitwiseORExpression -> BitwiseXORExpression | BitwiseXORExpression (1个|)
 const or = a | b
 const combine = flags | NEW_FLAG
 
-// ✅ 测试3：Many=2 - 三个操作数
+// ✅ 测试3：Many=2 - 三个操作数    BitwiseORExpression -> Many (2个|)
 const or3 = x | y | z
 const multi = flag1 | flag2 | flag3
 
-// ✅ 测试4：Many=3 - 四个操作数
+// ✅ 测试4：Many=3 - 四个操作数    BitwiseORExpression -> Many (3个|)
 const or4 = a | b | c | d
 
-// ✅ 测试5：实际应用 - 设置标志位
+// ✅ 测试5：实际应用 - 设置标志位    BitwiseORExpression -> 实际位标志位操作
 const flags = READ_FLAG | WRITE_FLAG | EXECUTE_FLAG
 const permissions = USER | ADMIN | GUEST
 
-// ✅ 测试6：实际应用 - 合并颜色
+// ✅ 测试6：实际应用 - 合并颜色    BitwiseORExpression -> 与移位运算结合
 const color = (r << 16) | (g << 8) | b
 const rgba = (a << 24) | (r << 16) | (g << 8) | b
 
-// ✅ 测试7：与其他位运算组合
+// ✅ 测试7：与其他位运算组合    BitwiseORExpression -> 与BitwiseANDExpression结合
 const result = (a & 0xFF) | (b & 0xFF00)
 const mixed = x | y & z
 
-// ✅ 测试8：在条件中
+// ✅ 测试8：在条件中    BitwiseORExpression -> 在条件判断中
 if ((status | ERROR_FLAG) === status) {}
 const enabled = (config | DEFAULT_CONFIG) !== 0
 /* Es6Parser.ts: BitwiseXORExpression (| BitwiseXORExpression)* */
