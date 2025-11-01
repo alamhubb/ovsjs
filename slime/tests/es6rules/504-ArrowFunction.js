@@ -1,0 +1,97 @@
+/**
+ * 规则测试：ArrowFunction
+ * 
+ * 位置：Es6Parser.ts Line 1484
+ * 分类：functions
+ * 编号：504
+ * 
+ * 规则特征：
+ * ✓ 包含Option（1处）- async
+ * ✓ 包含Or规则（1处）- 2个分支
+ * 
+ * 规则语法：
+ *   ArrowFunction:
+ *     async? BindingIdentifier => ConciseBody
+ *     async? ( FormalParameterList? ) => ConciseBody
+ * 
+ * 测试目标：
+ * - 测试单参数（无括号）
+ * - 测试多参数（有括号）
+ * - 测试无参数
+ * - 测试async箭头函数
+ * - 测试表达式body vs 块语句body
+ * 
+ * 创建时间：2025-11-01
+ * 状态：✅ 已完善
+ */
+
+// ✅ 测试1：单参数 - 表达式body
+const square = x => x * x
+const double = n => n * 2
+
+// ✅ 测试2：单参数 - 块语句body
+const log = x => {
+    console.log(x)
+    return x
+}
+
+// ✅ 测试3：多参数 - 表达式body
+const add = (a, b) => a + b
+const multiply = (x, y, z) => x * y * z
+
+// ✅ 测试4：多参数 - 块语句body
+const complex = (a, b) => {
+    const sum = a + b
+    return sum * 2
+}
+
+// ✅ 测试5：无参数
+const noop = () => {}
+const random = () => Math.random()
+
+// ✅ 测试6：Rest参数
+const sum = (...numbers) => numbers.reduce((a, b) => a + b, 0)
+
+// ✅ 测试7：默认参数
+const greet = (name = 'Guest') => `Hello ${name}`
+const calc = (a, b = 10, c = 20) => a + b + c
+
+// ✅ 测试8：解构参数
+const getName = ({name}) => name
+const getFirst = ([first]) => first
+const destructure = ({x, y}, [a, b]) => x + y + a + b
+
+// ✅ 测试9：async箭头函数
+const fetchData = async () => {
+    const data = await fetch('/api')
+    return data
+}
+
+const asyncProcess = async (id) => await loadUser(id)
+
+// ✅ 测试10：async + Rest参数
+const asyncAll = async (...ids) => {
+    return Promise.all(ids.map(id => fetchUser(id)))
+}
+
+// ✅ 测试11：返回对象（需要括号）
+const makeObject = (name, age) => ({name, age})
+const create = () => ({x: 1, y: 2})
+
+// ✅ 测试12：嵌套箭头函数
+const curry = a => b => a + b
+const compose = f => g => x => f(g(x))
+
+// ✅ 测试13：箭头函数作为回调
+const arr = [1, 2, 3, 4, 5]
+const doubled = arr.map(x => x * 2)
+const evens = arr.filter(x => x % 2 === 0)
+const total = arr.reduce((sum, n) => sum + n, 0)
+
+// ✅ 测试14：async + 解构
+const loadUser = async ({id, cache = true}) => {
+    if (cache) return getCached(id)
+    return await fetch(`/user/${id}`)
+}
+
+/* Es6Parser.ts: ArrowFunction */
