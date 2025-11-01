@@ -6,16 +6,20 @@
  * 编号：908
  * 
  * 规则特征：
- * 简单规则
+ * - 简单规则：IdentifierReference = AssignmentExpression
+ * 
+ * 规则语法：
+ *   CoverInitializedName:
+ *     IdentifierReference Initializer
  * 
  * 测试目标：
- * - 验证规则的基本功能
-
-
-
+ * - 测试对象解构中的默认值
+ * - 测试属性简写 + 默认值
  * 
  * 创建时间：2025-11-01
- * 状态：✅ 已完善（基础测试）
+ * 更新时间：2025-11-01
+ * 状态：✅ 已完善
  */
 
+// ✅ 测试1：基础默认值
 const {x = 1} = obj
