@@ -24,27 +24,27 @@
  * 状态：✅ 已完善
  */
 
-// ✅ 测试1：Or分支2 - AssignmentExpression only
+// ✅ 测试1：Or分支2 - AssignmentExpression only    ElementList -> Many=0 (单元素)
 const arr1 = [1, 2, 3]
 
-// ✅ 测试2：Or分支1 - SpreadElement
+// ✅ 测试2：Or分支1 - SpreadElement    ElementList -> SpreadElement
 const arr2 = [...original]
 
-// ✅ 测试3：混合Spread和Assignment
+// ✅ 测试3：混合Spread和Assignment    ElementList -> Or分支混合 + Many
 const arr3 = [...arr1, 4, 5]
 const mixed = [1, ...arr2, 2, 3]
 
-// ✅ 测试4：Option有 - 前导省略（Elision）
+// ✅ 测试4：Option有 - 前导省略（Elision）    ElementList -> Elision + Element
 const sparse1 = [, , 1, 2]
 
-// ✅ 测试5：Option有 - 中间省略
+// ✅ 测试5：Option有 - 中间省略    ElementList -> Element + Elision + Element
 const sparse2 = [1, , , 3]
 
-// ✅ 测试6：Many=0 - 单个元素
+// ✅ 测试6：Many=0 - 单个元素    ElementList -> 单个(单一)
 const single = [1]
 const single2 = [...arr]
 
-// ✅ 测试7：Many=1 - 两个元素
+// ✅ 测试7：Many=1 - 两个元素    ElementList -> Many (2个元素)
 const two = [1, 2]
 const two2 = [...arr, 3]
 

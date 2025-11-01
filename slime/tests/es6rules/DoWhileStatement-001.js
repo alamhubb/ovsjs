@@ -1,7 +1,9 @@
 /**
  * 测试规则: DoWhileStatement
  * 来源: 从 Statement 拆分
- *//**
+ */
+
+/**
  * 规则测试：DoWhileStatement
  * 
  * 位置：Es6Parser.ts Line 1158
@@ -21,25 +23,25 @@
  * 状态：✅ 已完善
  */
 
-// ✅ 测试1：基本do-while
+// ✅ 测试1：基本do-while    DoWhileStatement -> do Statement while (Expression)
 let i = 0
 do {
     i++
 } while (i < 5)
 
-// ✅ 测试2：条件为false（仍执行一次）
+// ✅ 测试2：条件为false（仍执行一次）    DoWhileStatement -> 至少执行一次的特性
 let j = 10
 do {
     console.log('execute once')
 } while (false)
 
-// ✅ 测试3：复杂条件
+// ✅ 测试3：复杂条件    DoWhileStatement -> 复杂的Expression条件
 let count = 0
 do {
     count++
 } while (count < 100 && count !== 50)
 
-// ✅ 测试4：单行语句
+// ✅ 测试4：单行语句    DoWhileStatement -> do (单个语句, 无Block)
 let x = 0
 do x++
 while (x < 5)

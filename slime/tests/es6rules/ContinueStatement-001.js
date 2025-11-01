@@ -1,7 +1,9 @@
 /**
  * 测试规则: ContinueStatement
  * 来源: 从 Statement 拆分
- *//* Es6Parser.ts: continue Label? */
+ */
+
+/* Es6Parser.ts: continue Label? */
 
 /**
  * 规则测试：ContinueStatement
@@ -26,13 +28,13 @@
  * 状态：✅ 已完善
  */
 
-// ✅ 测试1：Option无 - for循环中的continue
+// ✅ 测试1：Option无 - for循环中的continue    ContinueStatement -> continue (无Label)
 for (let i = 0; i < 10; i++) {
     if (i % 2 === 0) continue
     console.log(i)
 }
 
-// ✅ 测试2：Option无 - while循环中
+// ✅ 测试2：Option无 - while循环中    ContinueStatement -> continue在WhileStatement中
 let n = 0
 while (n < 10) {
     n++
@@ -40,7 +42,7 @@ while (n < 10) {
     console.log(n)
 }
 
-// ✅ 测试3：Option无 - do-while循环中
+// ✅ 测试3：Option无 - do-while循环中    ContinueStatement -> continue在DoWhileStatement中
 let i = 0
 do {
     i++

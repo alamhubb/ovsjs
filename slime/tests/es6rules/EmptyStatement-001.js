@@ -1,7 +1,9 @@
 /**
  * 测试规则: EmptyStatement
  * 来源: 从 Statement 拆分
- *//* Es6Parser.ts: ; */
+ */
+
+/* Es6Parser.ts: ; */
 
 
 /* Es6Parser.ts: ; */
@@ -29,9 +31,9 @@
  * 状态：✅ 已完善
  */
 
-// ✅ 测试1：单个分号
+// ✅ 测试1：单个分号    EmptyStatement -> ; (单个空语句)
 ;
 
-// ✅ 测试2：多个分号
+// ✅ 测试2：多个分号    EmptyStatement -> ; ; (多个连续空语句)
 ;;
 /* Es6Parser.ts: EmptyStatement */

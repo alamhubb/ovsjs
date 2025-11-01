@@ -21,17 +21,17 @@
  * 状态：✅ 已完善
  */
 
-// ✅ 测试1：访问普通属性
+// ✅ 测试1：访问普通属性    DotIdentifier -> . IdentifierName (property)
 obj.property
 obj.value
 obj.data
 
-// ✅ 测试2：访问数组属性
+// ✅ 测试2：访问数组属性    DotIdentifier -> . IdentifierName (length/push/slice)
 arr.length
 arr.push
 arr.slice
 
-// ✅ 测试3：访问函数属性
+// ✅ 测试3：访问函数属性    DotIdentifier -> . IdentifierName (call)
 func.call
 /* Es6Parser.ts: . IdentifierName */
 

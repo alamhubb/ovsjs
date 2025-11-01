@@ -1,7 +1,9 @@
 /**
  * 测试规则: DebuggerStatement
  * 来源: 从 Statement 拆分
- *//**
+ */
+
+/**
  * 规则测试：DebuggerStatement
  * 
  * 位置：Es6Parser.ts Line 1401
@@ -24,22 +26,22 @@
  * 状态：✅ 已完善
  */
 
-// ✅ 测试1：顶层debugger
+// ✅ 测试1：顶层debugger    DebuggerStatement -> debugger关键字
 debugger
 
-// ✅ 测试2：函数中
+// ✅ 测试2：函数中    DebuggerStatement -> 在FunctionDeclaration中
 function test() {
     debugger
 }
 
-// ✅ 测试3：条件debugger
+// ✅ 测试3：条件debugger    DebuggerStatement -> 在IfStatement中
 function debug(enabled) {
     if (enabled) {
         debugger
     }
 }
 
-// ✅ 测试4：循环中
+// ✅ 测试4：循环中    DebuggerStatement -> 在ForStatement中
 for (let i = 0; i < 10; i++) {
     if (i === 5) debugger
 }

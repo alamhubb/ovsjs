@@ -23,24 +23,24 @@
  * 状态：✅ 已完善（8个测试用例）
  */
 
-// ✅ 测试1：基本default
+// ✅ 测试1：基本default    DefaultClause -> default : StatementList (1个语句)
 switch (x) {
     default:
         console.log('default')
 }
 
-// ✅ 测试2：无语句的default
+// ✅ 测试2：无语句的default    DefaultClause -> default : (无StatementList)
 switch (x) {
     case 1: break
     default:
 }
 
-// ✅ 测试3：单语句default
+// ✅ 测试3：单语句default    DefaultClause -> default : (单个Statement)
 switch (status) {
     default: return 'unknown'
 }
 
-// ✅ 测试4：多语句default
+// ✅ 测试4：多语句default    DefaultClause -> default : (多个Statement)
 switch (value) {
     default:
         let result = 0

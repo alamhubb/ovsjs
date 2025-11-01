@@ -22,30 +22,30 @@
  * 状态：✅ 已完善（15个测试）
  */
 
-// ✅ 测试1：FunctionDeclaration
+// ✅ 测试1：FunctionDeclaration    Declaration -> Or分支1 (FunctionDeclaration)
 function func1() {
     return 1
 }
 
-// ✅ 测试2：GeneratorDeclaration
+// ✅ 测试2：GeneratorDeclaration    Declaration -> Or分支2 (GeneratorDeclaration)
 function* gen1() {
     yield 1
 }
 
-// ✅ 测试3：AsyncFunctionDeclaration
+// ✅ 测试3：AsyncFunctionDeclaration    Declaration -> Or分支3 (AsyncFunctionDeclaration)
 async function asyncFunc1() {
     return await Promise.resolve(1)
 }
 
-// ✅ 测试4：ClassDeclaration
+// ✅ 测试4：ClassDeclaration    Declaration -> Or分支4 (ClassDeclaration)
 class Class1 {
     method() {}
 }
 
-// ✅ 测试5：LexicalDeclaration - let单个
+// ✅ 测试5：LexicalDeclaration - let单个    Declaration -> Or分支5 (let BindingList)
 let a = 1
 
-// ✅ 测试6：LexicalDeclaration - let多个
+// ✅ 测试6：LexicalDeclaration - let多个    Declaration -> let (Multiple Binding)
 let b = 2, c = 3
 
 // ✅ 测试7：LexicalDeclaration - const单个
