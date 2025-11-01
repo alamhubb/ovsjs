@@ -2,63 +2,71 @@
  * 规则测试：Literal
  * 
  * 位置：Es6Parser.ts Line 144
- * 分类：literals
- * 编号：001
- * 
- * 规则特征：
- * ✓ 包含Or规则（1处）- 5个分支
+ * 规则结构：Literal -> this.Or -> [NullLiteral, TrueTok, FalseTok, NumericLiteral, StringLiteral]
  * 
  * 规则语法：
  *   Literal:
- *     NullLiteral
- *     TrueTok
- *     FalseTok
- *     NumericLiteral
- *     StringLiteral
+ *     this.Or([
+ *       {alt: () => this.tokenConsumer.NullLiteral()},
+ *       {alt: () => this.tokenConsumer.TrueTok()},
+ *       {alt: () => this.tokenConsumer.FalseTok()},
+ *       {alt: () => this.tokenConsumer.NumericLiteral()},
+ *       {alt: () => this.tokenConsumer.StringLiteral()}
+ *     ])
  * 
- * 测试目标：
- * - 覆盖所有5种字面量类型
+ * 测试覆盖：
+ * - ✅ Or分支1：NullLiteral（测试1）
+ * - ✅ Or分支2：TrueTok（测试2）
+ * - ✅ Or分支3：FalseTok（测试3）
+ * - ✅ Or分支4：NumericLiteral（测试4-6）
+ * - ✅ Or分支5：StringLiteral（测试7-9）
+ * - ✅ 综合场景（测试10）
  * 
  * 创建时间：2025-11-01
  * 状态：✅ 已完善
  */
 
-// ✅ 测试1：NullLiteral    Literal -> this.Or -> this.tokenConsumer.NullLiteral
+// ✅ 测试1：NullLiteral    Literal -> this.Or (分支1) -> this.tokenConsumer.NullLiteral()
 const nullValue = null
 
-// ✅ 测试2：TrueTok
+// ✅ 测试2：TrueTok    Literal -> this.Or (分支2) -> this.tokenConsumer.TrueTok()
 const trueValue = true
 
-// ✅ 测试3：FalseTok
+// ✅ 测试3：FalseTok    Literal -> this.Or (分支3) -> this.tokenConsumer.FalseTok()
 const falseValue = false
 
-// ✅ 测试4：NumericLiteral - 整数
+// ✅ 测试4：NumericLiteral整数    Literal -> this.Or (分支4) -> this.tokenConsumer.NumericLiteral()
 const integer = 42
 const zero = 0
 const negative = -100
 
-// ✅ 测试5：NumericLiteral - 浮点数
+// ✅ 测试5：NumericLiteral浮点数    Literal -> this.Or (分支4) -> this.tokenConsumer.NumericLiteral()
 const float = 3.14
 const scientific = 1.23e-4
 
-// ✅ 测试6：NumericLiteral - 二进制/八进制/十六进制
+// ✅ 测试6：NumericLiteral进制    Literal -> this.Or (分支4) -> this.tokenConsumer.NumericLiteral()
 const binary = 0b1010
 const octal = 0o755
 const hex = 0xFF
 
-// ✅ 测试7：StringLiteral - 单引号
+// ✅ 测试7：StringLiteral单引号    Literal -> this.Or (分支5) -> this.tokenConsumer.StringLiteral()
 const singleQuote = 'hello'
 
-// ✅ 测试8：StringLiteral - 双引号
+// ✅ 测试8：StringLiteral双引号    Literal -> this.Or (分支5) -> this.tokenConsumer.StringLiteral()
 const doubleQuote = "world"
 
-// ✅ 测试9：StringLiteral - 转义字符
+// ✅ 测试9：StringLiteral转义字符    Literal -> this.Or (分支5) -> this.tokenConsumer.StringLiteral()
 const escaped = 'line1\nline2\ttab'
 
-// ✅ 测试10：组合使用
+// ✅ 测试10：综合所有分支    Literal -> this.Or (所有5个分支)
 const mixed = [null, true, false, 42, "text"]
 
-/* Es6Parser.ts: Or[null, true, false, NumericLiteral, StringLiteral] */
+/* 
+ * 规则验证小结：
+ * - Literal规则包含5个Or分支
+ * - 所有分支都有对应的测试用例
+ * - Or结构已完整覆盖
+ */
 
 
 // ============================================
