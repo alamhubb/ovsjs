@@ -17,11 +17,11 @@ for (let bindFor of []) {}
 for (const [bindDestr] of [[]]) {}
 const arrow = (bindParam) => bindParam
 async function asyncBind() {}
-function* genBind() { yield 1 }
-async function* asyncGenBind() { yield 1 }
-const [bindRest, ...bindSpread] = [1, 2]
-import { bindImport } from './m'
-export const bindExport = 1
+function* genBind() { yield 1 }    // BindingIdentifier -> Identifier (function*声明中)
+async function* asyncGenBind() { yield 1 }    // BindingIdentifier -> Identifier (async function*声明中)
+const [bindRest, ...bindSpread] = [1, 2]    // BindingIdentifier -> Identifier (数组解构中)
+import { bindImport } from './m'    // BindingIdentifier -> Identifier (import中)
+export const bindExport = 1    // BindingIdentifier -> Identifier (export const中)
 
 /* Es6Parser.ts: BindingIdentifier */
 

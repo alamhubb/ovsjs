@@ -22,10 +22,10 @@
  * 状态：✅ 已完善（全覆盖Many=1和Many≥2 + 扩展测试）
  */
 
-// ✅ 测试1：Many=1 - 单个属性解构
+// ✅ 测试1：Many=1 - 单个属性解构    BindingPropertyList -> Many (BindingProperty 只有1个)
 const {a} = obj
 
-// ✅ 测试2：Many≥2（2个） - 两个属性解构
+// ✅ 测试2：Many≥2（2个） - 两个属性解构    BindingPropertyList -> Many (逗号分隔的多个属性)
 const {a, b} = obj
 const {x, y} = point
 

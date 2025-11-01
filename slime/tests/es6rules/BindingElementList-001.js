@@ -1,7 +1,9 @@
 /**
  * 测试规则: BindingElementList
  * 来源: 从 ElementList 拆分
- *//**
+ */
+
+/**
  * 规则测试：BindingElementList
  * 
  * 位置：Es6Parser.ts Line 1058
@@ -25,10 +27,10 @@
  * 状态：✅ 已完善（全覆盖Many=1和Many≥2 + 扩展测试）
  */
 
-// ✅ 测试1：Many=1 - 单个元素
+// ✅ 测试1：Many=1 - 单个元素    BindingElementList -> Many (BindingElisionElement只有1个)
 const [a] = arr
 
-// ✅ 测试2：Many≥2（2个） - 两个元素
+// ✅ 测试2：Many≥2（2个） - 两个元素    BindingElementList -> Many (Comma + BindingElisionElement 1次)
 const [a, b] = pair
 const [x, y] = pair
 

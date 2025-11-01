@@ -49,9 +49,9 @@ const { prop: { nested } } = { prop: { nested: 1 } }
  * 状态：✅ 已完善（基础测试）
  */
 
-const {x} = obj
-const {x = 0} = obj
-const {x: y} = obj
+const {x} = obj    // BindingElement -> Or (分支1: SingleNameBinding)
+const {x = 0} = obj    // BindingElement -> SingleNameBinding with Initializer
+const {x: y} = obj    // BindingElement -> Or (分支2: BindingPattern)
 
 /* Es6Parser.ts: Or[SingleNameBinding, BindingPattern] */
 

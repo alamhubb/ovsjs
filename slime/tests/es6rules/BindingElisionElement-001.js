@@ -1,7 +1,9 @@
 /**
  * 测试规则: BindingElisionElement
  * 来源: 从 Elision 拆分
- *//**
+ */
+
+/**
  * 规则测试：BindingElisionElement
  * 
  * 位置：Es6Parser.ts Line 1067
@@ -21,7 +23,7 @@
  * 状态：✅ 已完善（基础测试）
  */
 
-const [a, , b] = arr
-const [, x] = arr
+const [a, , b] = arr    // BindingElisionElement -> Elision? Or[BindingElement, Elision]
+const [, x] = arr    // BindingElisionElement -> Elision (前导空位)
 
 /* Es6Parser.ts: Elision? Or[BindingElement, Elision] */

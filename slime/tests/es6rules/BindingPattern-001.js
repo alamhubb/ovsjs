@@ -21,35 +21,35 @@
  * 状态：✅ 已完善
  */
 
-// ✅ 测试1：ObjectBindingPattern - 基础
+// ✅ 测试1：ObjectBindingPattern - 基础    BindingPattern -> Or (分支2: ObjectBindingPattern)
 const {name, age} = person
 
-// ✅ 测试2：ObjectBindingPattern - 重命名
+// ✅ 测试2：ObjectBindingPattern - 重命名    BindingPattern -> ObjectBindingPattern (重命名)
 const {name: userName} = user
 
-// ✅ 测试3：ObjectBindingPattern - 嵌套
+// ✅ 测试3：ObjectBindingPattern - 嵌套    BindingPattern -> ObjectBindingPattern (嵌套)
 const {user: {name, profile: {age}}} = data
 
-// ✅ 测试4：ObjectBindingPattern - Rest
+// ✅ 测试4：ObjectBindingPattern - Rest    BindingPattern -> ObjectBindingPattern (Rest)
 const {a, ...rest} = obj
 
-// ✅ 测试5：ArrayBindingPattern - 基础
+// ✅ 测试5：ArrayBindingPattern - 基础    BindingPattern -> Or (分支1: ArrayBindingPattern)
 const [first, second] = arr
 
-// ✅ 测试6：ArrayBindingPattern - 跳过元素
+// ✅ 测试6：ArrayBindingPattern - 跳过元素    BindingPattern -> ArrayBindingPattern (Elision)
 const [, , third] = arr
 
-// ✅ 测试7：ArrayBindingPattern - Rest
+// ✅ 测试7：ArrayBindingPattern - Rest    BindingPattern -> ArrayBindingPattern (Rest)
 const [head, ...tail] = arr
 
-// ✅ 测试8：ArrayBindingPattern - 嵌套
+// ✅ 测试8：ArrayBindingPattern - 嵌套    BindingPattern -> ArrayBindingPattern (嵌套)
 const [x, [y, z]] = [1, [2, 3]]
 
-// ✅ 测试9：在函数参数中
+// ✅ 测试9：在函数参数中    BindingPattern -> 函数参数中的解构
 function objectParam({name, age}) { return name }
 function arrayParam([first, second]) { return first }
 
-// ✅ 测试10：在for循环中
+// ✅ 测试10：在for循环中    BindingPattern -> for-of循环中的解构
 for (const {key, value} of entries) {}
 for (const [index, item] of indexed) {}
 

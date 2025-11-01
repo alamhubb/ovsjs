@@ -1,7 +1,9 @@
 /**
  * 测试规则: AwaitExpression
  * 来源: 从 Expression 拆分
- *//**
+ */
+
+/**
  * 规则测试：AwaitExpression
  * 
  * 位置：Es6Parser.ts Line 690
@@ -26,48 +28,48 @@
  * 状态：✅ 已完善（8个测试用例）
  */
 
-// ✅ 测试1：简单await表达式
+// ✅ 测试1：简单await表达式    AwaitExpression -> await UnaryExpression (IdentifierReference)
 async function simple() {
   await promise
 }
 
-// ✅ 测试2：await函数调用
+// ✅ 测试2：await函数调用    AwaitExpression -> await (CallExpression)
 async function awaitCall() {
   await fetch(url)
 }
 
-// ✅ 测试3：await赋值
+// ✅ 测试3：await赋值    AwaitExpression -> await (在赋值中)
 async function awaitAssign() {
   const result = await getData()
 }
 
-// ✅ 测试4：await在条件表达式中
+// ✅ 测试4：await在条件表达式中    AwaitExpression -> await (在if条件中)
 async function awaitCondition() {
   if (await isReady()) {
     console.log('ready')
   }
 }
 
-// ✅ 测试5：多个await顺序执行
+// ✅ 测试5：多个await顺序执行    AwaitExpression -> 多个await表达式
 async function awaitSequence() {
   const a = await getA()
   const b = await getB()
   return a + b
 }
 
-// ✅ 测试6：await promise链
+// ✅ 测试6：await promise链    AwaitExpression -> await (MemberCallExpression)
 async function awaitChain() {
   const data = await fetch(url).then(r => r.json())
 }
 
-// ✅ 测试7：await在循环中
+// ✅ 测试7：await在循环中    AwaitExpression -> await (循环体内)
 async function awaitLoop() {
   for (const item of items) {
     await process(item)
   }
 }
 
-// ✅ 测试8：await一元表达式
+// ✅ 测试8：await一元表达式    AwaitExpression -> await UnaryExpression (+/! 一元表达式)
 async function awaitUnary() {
   const value = +await getNumber()
   const negated = !await isReady()
@@ -145,7 +147,8 @@ async function async7() {
 // ✅ 测试8：await new Promise
 async function async8() {
     const result = await new Promise(resolve => {
-        resolve(42)}
+        resolve(42)
+}
 
 // ✅ 测试9：多个await
 async function async9() {

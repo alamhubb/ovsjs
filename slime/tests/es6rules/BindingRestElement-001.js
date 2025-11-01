@@ -30,15 +30,15 @@
  * 状态：✅ 已完善
  */
 
-// ✅ 测试1：数组rest - BindingIdentifier
+// ✅ 测试1：数组rest - BindingIdentifier    BindingRestElement -> ... BindingIdentifier
 const [first, ...rest] = arr
 const [a, b, ...others] = list
 
-// ✅ 测试2：只有rest，没有前置元素
+// ✅ 测试2：只有rest，没有前置元素    BindingRestElement -> ... BindingIdentifier (sole rest)
 const [...all] = array
 const [...items] = data
 
-// ✅ 测试3：函数参数rest
+// ✅ 测试3：函数参数rest    BindingRestElement -> ... BindingIdentifier (function params)
 function test(first, ...args) {
     return args
 }
@@ -91,15 +91,15 @@ const fn2 = (a, b, ...rest) => rest
  * 状态：✅ 已完善
  */
 
-// ✅ 测试1：数组rest - BindingIdentifier
+// ✅ 测试1：数组rest - BindingIdentifier    BindingRestElement -> ... BindingIdentifier
 const [first, ...rest] = arr
 const [a, b, ...others] = list
 
-// ✅ 测试2：只有rest，没有前置元素
+// ✅ 测试2：只有rest，没有前置元素    BindingRestElement -> ... BindingIdentifier (sole rest)
 const [...all] = array
 const [...items] = data
 
-// ✅ 测试3：函数参数rest
+// ✅ 测试3：函数参数rest    BindingRestElement -> ... BindingIdentifier (function params)
 function test(first, ...args) {
     return args
 }

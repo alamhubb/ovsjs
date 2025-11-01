@@ -26,9 +26,9 @@
  * 状态：✅ 已完善（基础测试）
  */
 
-const {name} = obj
-const {name: userName} = obj
-const {x, y} = point
+const {name} = obj    // BindingProperty -> BindingIdentifier (简写形式)
+const {name: userName} = obj    // BindingProperty -> PropertyName : BindingElement (重命名)
+const {x, y} = point    // BindingProperty -> 多个属性
 
 /* Es6Parser.ts: MethodDefinition | PropertyName : BindingElement | BindingIdentifier */
 

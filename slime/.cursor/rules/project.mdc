@@ -2745,3 +2745,27 @@ npx tsx verify-rule-test.ts  # 运行验证
 - ✅ SESSION_LOG.md - 已更新
 - ✅ CURRENT_STATUS.md - 已创建
 - ✅ 进度已保存到project.mdc
+【2025/11/2 01:56:13】
+【ES6规则测试注释添加任务】
+
+当前进度：第2组完成（20/152文件）
+完成的文件：1-20
+已添加注释的测试：145个
+
+下一步：处理第3组（文件21-30）
+- 21. BitwiseORExpression-001.js
+- 22. BitwiseXORExpression-001.js
+- 23. BlockStatement-001.js
+- 24. BreakStatement-001.js
+- 25. CallExpression-001.js
+- 26. CatchClause-001.js
+- 27. ClassDeclaration-001.js
+- 28. ClassExpression-001.js
+- 29. ClassTail-001.js
+- 30. CommaOperator-001.js
+
+关键方法：只追加注释，不删除代码。格式 "规则名 -> 规则结构"
+
+待继续处理：132个文件（第3-16组）
+
+
