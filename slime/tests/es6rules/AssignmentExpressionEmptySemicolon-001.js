@@ -1,7 +1,9 @@
 /**
  * 测试规则: AssignmentExpressionEmptySemicolon
  * 来源: 从 Expression 拆分
- *//**
+ */
+
+/**
  * 规则测试：AssignmentExpressionEmptySemicolon
  * 
  * 位置：Es6Parser.ts Line 1921
@@ -21,6 +23,6 @@
  * 状态：✅ 已完善（基础测试）
  */
 
-export default expr
+export default expr    // AssignmentExpressionEmptySemicolon -> AssignmentExpression ; (export default形式)
 
 /* Es6Parser.ts: AssignmentExpression ; */

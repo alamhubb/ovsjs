@@ -18,49 +18,49 @@
  * 状态：✅ 已完善
  */
 
-// ✅ 测试1：无参数箭头函数
+// ✅ 测试1：无参数箭头函数    ArrowFunction -> () => 表达式
 const fn1 = () => 42
 
-// ✅ 测试2：单参数（无括号）
+// ✅ 测试2：单参数（无括号）    ArrowFunction -> 标识符 => 表达式
 const double = x => x * 2
 
-// ✅ 测试3：单参数（有括号）
+// ✅ 测试3：单参数（有括号）    ArrowFunction -> (参数) => 表达式
 const triple = (x) => x * 3
 
-// ✅ 测试4：多参数
+// ✅ 测试4：多参数    ArrowFunction -> (多个参数) => 表达式
 const add = (a, b) => a + b
 
-// ✅ 测试5：对象返回
+// ✅ 测试5：对象返回    ArrowFunction -> 返回ObjectLiteral
 const makeObj = (x) => ({ value: x })
 
-// ✅ 测试6：块体函数
+// ✅ 测试6：块体函数    ArrowFunction -> 参数 => { 块体 }
 const compute = (x) => {
     const result = x * 2
     return result
 }
 
-// ✅ 测试7：默认参数
+// ✅ 测试7：默认参数    ArrowFunction -> (参数默认值) => 表达式
 const withDefault = (x = 10) => x * 2
 
-// ✅ 测试8：Rest参数
+// ✅ 测试8：Rest参数    ArrowFunction -> (...rest) => 表达式
 const variadic = (...args) => args.length
 
-// ✅ 测试9：解构参数
+// ✅ 测试9：解构参数    ArrowFunction -> 解构参数 => 表达式
 const destructured = ({ x, y }) => x + y
 
-// ✅ 测试10：复杂参数组合
+// ✅ 测试10：复杂参数组合    ArrowFunction -> (参数、默认值、rest混合) => 表达式
 const complex = (a, b = 2, ...rest) => a + b + rest.length
 
-// ✅ 测试11：嵌套箭头函数
+// ✅ 测试11：嵌套箭头函数    ArrowFunction -> 箭头函数返回箭头函数
 const curry = (a) => (b) => (c) => a + b + c
 
-// ✅ 测试12：数组方法中使用
+// ✅ 测试12：数组方法中使用    ArrowFunction -> 作为回调函数
 [1, 2, 3].map(x => x * 2)
 
-// ✅ 测试13：条件表达式
+// ✅ 测试13：条件表达式    ArrowFunction -> 返回条件表达式
 const conditionalArrow = (x) => x > 0 ? 'positive' : 'negative'
 
-// ✅ 测试14：对象方法（不应该用this）
+// ✅ 测试14：对象方法（不应该用this）    ArrowFunction -> 对象中嵌套的箭头函数
 const obj = {
     items: [1, 2, 3],
     process: function() {
@@ -68,7 +68,7 @@ const obj = {
     }
 }
 
-// ✅ 测试15：Promise链式
+// ✅ 测试15：Promise链式    ArrowFunction -> 异步场景中的箭头函数
 const asyncChain = (promise) =>
     promise
         .then(data => ({ data }))
@@ -215,49 +215,49 @@ const loadUser = async ({id, cache = true}) => {
  * 状态：✅ 已完善
  */
 
-// ✅ 测试1：无参数箭头函数
+// ✅ 测试1：无参数箭头函数    ArrowFunction -> () => 表达式
 const fn1 = () => 42
 
-// ✅ 测试2：单参数（无括号）
+// ✅ 测试2：单参数（无括号）    ArrowFunction -> 标识符 => 表达式
 const double = x => x * 2
 
-// ✅ 测试3：单参数（有括号）
+// ✅ 测试3：单参数（有括号）    ArrowFunction -> (参数) => 表达式
 const triple = (x) => x * 3
 
-// ✅ 测试4：多参数
+// ✅ 测试4：多参数    ArrowFunction -> (多个参数) => 表达式
 const add = (a, b) => a + b
 
-// ✅ 测试5：对象返回
+// ✅ 测试5：对象返回    ArrowFunction -> 返回ObjectLiteral
 const makeObj = (x) => ({ value: x })
 
-// ✅ 测试6：块体函数
+// ✅ 测试6：块体函数    ArrowFunction -> 参数 => { 块体 }
 const compute = (x) => {
     const result = x * 2
     return result
 }
 
-// ✅ 测试7：默认参数
+// ✅ 测试7：默认参数    ArrowFunction -> (参数默认值) => 表达式
 const withDefault = (x = 10) => x * 2
 
-// ✅ 测试8：Rest参数
+// ✅ 测试8：Rest参数    ArrowFunction -> (...rest) => 表达式
 const variadic = (...args) => args.length
 
-// ✅ 测试9：解构参数
+// ✅ 测试9：解构参数    ArrowFunction -> 解构参数 => 表达式
 const destructured = ({ x, y }) => x + y
 
-// ✅ 测试10：复杂参数组合
+// ✅ 测试10：复杂参数组合    ArrowFunction -> (参数、默认值、rest混合) => 表达式
 const complex = (a, b = 2, ...rest) => a + b + rest.length
 
-// ✅ 测试11：嵌套箭头函数
+// ✅ 测试11：嵌套箭头函数    ArrowFunction -> 箭头函数返回箭头函数
 const curry = (a) => (b) => (c) => a + b + c
 
-// ✅ 测试12：数组方法中使用
+// ✅ 测试12：数组方法中使用    ArrowFunction -> 作为回调函数
 [1, 2, 3].map(x => x * 2)
 
-// ✅ 测试13：条件表达式
+// ✅ 测试13：条件表达式    ArrowFunction -> 返回条件表达式
 const conditionalArrow = (x) => x > 0 ? 'positive' : 'negative'
 
-// ✅ 测试14：对象方法（不应该用this）
+// ✅ 测试14：对象方法（不应该用this）    ArrowFunction -> 对象中嵌套的箭头函数
 const obj = {
     items: [1, 2, 3],
     process: function() {
@@ -265,7 +265,7 @@ const obj = {
     }
 }
 
-// ✅ 测试15：Promise链式
+// ✅ 测试15：Promise链式    ArrowFunction -> 异步场景中的箭头函数
 const asyncChain = (promise) =>
     promise
         .then(data => ({ data }))

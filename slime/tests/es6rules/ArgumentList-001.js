@@ -23,25 +23,25 @@
 // ✅ 测试1：单参数
 f(a)
 
-// ✅ 测试2：双参数
+// ✅ 测试2：双参数    ArgumentList -> this.Or (分支2: AssignmentExpression) -> this.Many() (Comma分隔)
 f(a, b)
 
-// ✅ 测试3：三参数
+// ✅ 测试3：三参数    ArgumentList -> this.Many() (多个Comma)
 f(a, b, c)
 
-// ✅ 测试4：四参数
+// ✅ 测试4：四参数    ArgumentList -> this.Many() (多个Comma)
 f(a, b, c, d)
 
-// ✅ 测试5：单spread
+// ✅ 测试5：单spread    ArgumentList -> this.Or (分支1: SpreadElement)
 f(...a)
 
-// ✅ 测试6：参数后跟spread
+// ✅ 测试6：参数后跟spread    ArgumentList -> this.Many() (Comma + SpreadElement)
 f(a, ...b)
 
-// ✅ 测试7：多参数后跟spread
+// ✅ 测试7：多参数后跟spread    ArgumentList -> this.Many() (多个Comma + SpreadElement)
 f(a, b, ...c)
 
-// ✅ 测试8：多个spread
+// ✅ 测试8：多个spread    ArgumentList -> this.Many() (Comma + SpreadElement 多次)
 f(...a, ...b)
 
 /* Es6Parser.ts: ArgumentList */
@@ -71,25 +71,25 @@ f(...a, ...b)
 // ✅ 测试1：单参数
 f(a)
 
-// ✅ 测试2：双参数
+// ✅ 测试2：双参数    ArgumentList -> this.Or (分支2: AssignmentExpression) -> this.Many() (Comma分隔)
 f(a, b)
 
-// ✅ 测试3：三参数
+// ✅ 测试3：三参数    ArgumentList -> this.Many() (多个Comma)
 f(a, b, c)
 
-// ✅ 测试4：四参数
+// ✅ 测试4：四参数    ArgumentList -> this.Many() (多个Comma)
 f(a, b, c, d)
 
-// ✅ 测试5：单spread
+// ✅ 测试5：单spread    ArgumentList -> this.Or (分支1: SpreadElement)
 f(...a)
 
-// ✅ 测试6：参数后跟spread
+// ✅ 测试6：参数后跟spread    ArgumentList -> this.Many() (Comma + SpreadElement)
 f(a, ...b)
 
-// ✅ 测试7：多参数后跟spread
+// ✅ 测试7：多参数后跟spread    ArgumentList -> this.Many() (多个Comma + SpreadElement)
 f(a, b, ...c)
 
-// ✅ 测试8：多个spread
+// ✅ 测试8：多个spread    ArgumentList -> this.Many() (Comma + SpreadElement 多次)
 f(...a, ...b)
 
 /* Es6Parser.ts: ArgumentList */

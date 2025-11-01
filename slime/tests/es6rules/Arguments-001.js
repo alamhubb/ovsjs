@@ -19,28 +19,28 @@
  * 状态：✅ 已完善（8个测试用例）
  */
 
-// ✅ 测试1：无参数调用
+// ✅ 测试1：无参数调用    Arguments -> ( ) (无ArgumentList)
 func()
 
-// ✅ 测试2：单参数
+// ✅ 测试2：单参数    Arguments -> ( ArgumentList ) (有Option)
 func(a)
 
-// ✅ 测试3：双参数
+// ✅ 测试3：双参数    Arguments -> ( ArgumentList ) (Option with Comma)
 func(a, b)
 
-// ✅ 测试4：多参数
+// ✅ 测试4：多参数    Arguments -> ( ArgumentList )
 func(a, b, c)
 
-// ✅ 测试5：spread参数
+// ✅ 测试5：spread参数    Arguments -> ( ArgumentList ) (SpreadElement)
 func(...args)
 
-// ✅ 测试6：混合参数和spread
+// ✅ 测试6：混合参数和spread    Arguments -> ( ArgumentList ) (混合形式)
 func(a, ...rest)
 
-// ✅ 测试7：多spread和普通参数混合
+// ✅ 测试7：多spread和普通参数混合    Arguments -> ( ArgumentList ) (复杂混合)
 func(a, b, ...rest, d)
 
-// ✅ 测试8：多个数字参数
+// ✅ 测试8：多个数字参数    Arguments -> ( ArgumentList ) (多个数字)
 func(1, 2, 3, 4, 5)
 
 /* Es6Parser.ts: Arguments */

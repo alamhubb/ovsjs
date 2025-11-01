@@ -1,7 +1,9 @@
 /**
  * 测试规则: AsteriskFromClauseEmptySemicolon
  * 来源: 从 FromClause 拆分
- *//**
+ */
+
+/**
  * 规则测试：AsteriskFromClauseEmptySemicolon
  * 
  * 位置：Es6Parser.ts Line 1885
@@ -21,6 +23,6 @@
  * 状态：✅ 已完善（基础测试）
  */
 
-export * from './module.js'
+export * from './module.js'    // AsteriskFromClauseEmptySemicolon -> * from ModuleSpecifier ;
 
 /* Es6Parser.ts: AsteriskFromClauseEmptySemicolon */
