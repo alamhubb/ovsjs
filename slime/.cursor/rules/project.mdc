@@ -1847,3 +1847,32 @@ function* numbers() {
 ```
 
 **下一步：** 需要诊断Generator函数的解析/生成问题
+
+**【进度】2025/11/01 13:43:34**
+【2025-11-01】测试45诊断结果
+
+**问题根源：** 
+在数组字面量中,`a + b`被Parser错误解析为`a * (+b)`(乘法表达式):
+- `a`是左操作数
+- MultiplicativeOperator (值为undefined)  
+- `+b`是右操作数(UnaryExpression)
+
+**具体表现:**
+1. BinaryExpression的operator为undefined
+2. right变成了UnaryExpression而不是Identifier
+3. 导致代码生成失败
+
+**已尝试修复:**
+1. ✅ 修复createMultiplicativeExpressionAst - 添加防御性检查
+2. ✅ 修复createAdditiveExpressionAst - 添加防御性检查
+3. ❌ 但问题根源在Parser层面,CST结构本身就是错误的
+
+**深层问题:**
+- 所有tokens的type和value都显示为undefined
+- MultiplicativeOperator节点的value也是undefined
+- 这可能是词法分析或CST结构的系统性问题
+
+**下一步建议:**
+1. 检查为什么tokens的type和value为undefined
+2. 或者绕过这个问题,使用其他方式修复
+3. 等待用户决定是否继续深入修复
