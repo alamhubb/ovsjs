@@ -203,14 +203,12 @@ export default {name: 'config', value: 100}
 
 /* Es6Parser.ts: ExportDeclaration */
 
-
 // ============================================
 // 合并来自: ExportDefault-001.js
 // ============================================
 
 
 /* Es6Parser.ts: export default AssignmentExpression */
-
 
 // ============================================
 // 合并来自: ExportNamed-001.js

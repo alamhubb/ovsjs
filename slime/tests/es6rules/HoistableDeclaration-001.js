@@ -9,10 +9,7 @@
 const assert = require('assert');
 const { parse } = require('../../packages/slime-parser');
 
-describe('HoistableDeclaration', () => {
-  it('should parse HoistableDeclaration', () => {
-    // TODO: 补充实现测试
-  });
+
 });
 
 /**
@@ -63,14 +60,12 @@ async function* ag2(x) { yield await x }
 
 /* Es6Parser.ts: HoistableDeclaration */
 
-
 // ============================================
 // 合并来自: GeneratorFunction-001.js
 // ============================================
 
 
 /* Es6Parser.ts: function* Identifier? (FormalParameters) { GeneratorBody } */
-
 
 // ============================================
 // 合并来自: AsyncGeneratorFunction-001.js

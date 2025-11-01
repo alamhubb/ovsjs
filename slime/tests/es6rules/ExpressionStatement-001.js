@@ -9,10 +9,7 @@
 const assert = require('assert');
 const { parse } = require('../../packages/slime-parser');
 
-describe('ExpressionStatement', () => {
-  it('should parse ExpressionStatement', () => {
-    // TODO: 补充实现测试
-  });
+
 });
 
 

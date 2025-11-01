@@ -160,7 +160,6 @@ const {username = 'guest', email = ''} = user
 
 /* Es6Parser.ts: VariableDeclaration */
 
-
 // ============================================
 // 合并来自: VariableStatement-001.js
 // ============================================

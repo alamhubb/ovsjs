@@ -9,10 +9,7 @@
 const assert = require('assert');
 const { parse } = require('../../packages/slime-parser');
 
-describe('PropertyNameMethodDefinition', () => {
-  it('should parse PropertyNameMethodDefinition', () => {
-    // TODO: 补充实现测试
-  });
+
 });
 
 /**

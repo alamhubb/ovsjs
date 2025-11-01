@@ -9,10 +9,7 @@
 const assert = require('assert');
 const { parse } = require('../../packages/slime-parser');
 
-describe('AssignmentExpressionEmptySemicolon', () => {
-  it('should parse AssignmentExpressionEmptySemicolon', () => {
-    // TODO: 补充实现测试
-  });
+
 });
 
 /**

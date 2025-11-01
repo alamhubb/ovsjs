@@ -9,10 +9,7 @@
 const assert = require('assert');
 const { parse } = require('../../packages/slime-parser');
 
-describe('FunctionDeclaration', () => {
-  it('should parse FunctionDeclaration', () => {
-    // TODO: 补充实现测试
-  });
+
 });
 
 
@@ -148,7 +145,6 @@ function processArray(items, filter = true) {
 }
 
 /* Es6Parser.ts: FunctionDeclaration: function Identifier ( FormalParameters ) { FunctionBody } */
-
 
 // ============================================
 // 合并来自: AsyncFunctionDeclaration-001.js

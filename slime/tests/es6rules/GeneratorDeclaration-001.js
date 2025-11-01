@@ -449,7 +449,6 @@ function* complexGen(max) {
 
 /* Es6Parser.ts: GeneratorDeclaration: function* Identifier ( FormalParameters ) { GeneratorBody } */
 
-
 // ============================================
 // 合并来自: AsyncGeneratorDeclaration-001.js
 // ============================================

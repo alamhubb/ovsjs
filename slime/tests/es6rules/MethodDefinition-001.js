@@ -209,14 +209,12 @@ class Test8 {
 
 /* Es6Parser.ts: MethodDefinition */
 
-
 // ============================================
 // 合并来自: StaticMethod-001.js
 // ============================================
 
 
 /* Es6Parser.ts: static MethodDefinition */
-
 
 // ============================================
 // 合并来自: ConstructorMethod-001.js

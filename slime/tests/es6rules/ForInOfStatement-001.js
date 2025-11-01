@@ -9,10 +9,7 @@
 const assert = require('assert');
 const { parse } = require('../../packages/slime-parser');
 
-describe('ForInOfStatement', () => {
-  it('should parse ForInOfStatement', () => {
-    // TODO: 补充实现测试
-  });
+
 });
 
 /**

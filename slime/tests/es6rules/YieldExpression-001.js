@@ -157,7 +157,6 @@ function* gen20() {
 
 /* Es6Parser.ts: YieldExpression: yield [AssignmentExpression | *AssignmentExpression] */
 
-
 // ============================================
 // 合并来自: Yield-001.js
 // ============================================

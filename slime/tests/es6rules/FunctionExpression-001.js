@@ -8,10 +8,7 @@
 const assert = require('assert');
 const { parse } = require('../../packages/slime-parser');
 
-describe('FunctionExpression', () => {
-  it('should parse FunctionExpression', () => {
-    // TODO: 补充实现测试
-  });
+
 });
 
 /**
@@ -115,7 +112,6 @@ setTimeout(function() {
 
 
 /* Es6Parser.ts: function Identifier? (FormalParameters) { FunctionBody } */
-
 
 // ============================================
 // 合并来自: AsyncFunctionExpression-001.js
