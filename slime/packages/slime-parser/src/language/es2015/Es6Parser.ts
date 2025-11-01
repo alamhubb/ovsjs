@@ -1770,9 +1770,7 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
     @SubhutiRule
     ImportClause() {
         this.Or([
-            {alt: () => this.ImportedDefaultBinding()},
-            {alt: () => this.NameSpaceImport()},
-            {alt: () => this.NamedImports()},
+            // ✅ 长规则优先：混合导入必须在单独导入之前
             {
                 alt: () => {
                     this.ImportedDefaultBindingCommaNameSpaceImport()
@@ -1782,7 +1780,11 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
                 alt: () => {
                     this.ImportedDefaultBindingCommaNamedImports()
                 }
-            }
+            },
+            // 短规则在后：
+            {alt: () => this.ImportedDefaultBinding()},
+            {alt: () => this.NameSpaceImport()},
+            {alt: () => this.NamedImports()},
         ])
     }
 
