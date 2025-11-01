@@ -1502,31 +1502,6 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
     }
 
     @SubhutiRule
-    CommaFunctionRestParameter() {
-        this.tokenConsumer.Comma()
-        this.FunctionRestParameter()
-    }
-
-    @SubhutiRule
-    FormalsList() {
-        this.FormalParameter()
-        this.Many(() => {
-            this.tokenConsumer.Comma()
-            this.FormalParameter()
-        })
-    }
-
-    @SubhutiRule
-    FunctionRestParameter() {
-        this.BindingRestElement()
-    }
-
-    @SubhutiRule
-    FormalParameter() {
-        this.BindingElement()
-    }
-
-    @SubhutiRule
     FunctionBody() {
         this.Option(() => this.StatementList())
     }

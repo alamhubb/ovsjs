@@ -2018,3 +2018,31 @@ grep查调用 → 无调用 → 删除 → 测试通过 → 完成
 5. ✅ 已完成项：添加"ES5规则残留检查：0个残留"
 
 状态：Parser优化完全完成，准备开始AST测试
+
+**【进度】2025/11/01 19:06:17**
+【2025-11-01】问题#1修复完成 - 删除FormalParameter系列透传规则
+
+## 删除的规则（4个，24行）
+1. CommaFunctionRestParameter() - Line 1505（未被外部调用）
+2. FormalsList() - Line 1511（未被外部调用）
+3. FunctionRestParameter() - Line 1520（只被规则1调用）
+4. FormalParameter() - Line 1525（只被规则2调用）
+
+## 问题分析
+- 这4个规则形成封闭调用链，外部无任何调用
+- 完全是ES5/早期ES6的遗留透传包装
+- 新版FormalParameterList()(Line 1472)直接使用BindingElement()和RestParameter()
+- Line 1478的注释明确说明"避免通过 FormalParameter 中间层"
+
+## 测试结果
+✅ CST测试：53/53全部通过
+✅ CST结构完整：无null/undefined节点
+✅ Token值100%保留
+✅ 节点类型正确
+
+## 优化成果累计
+- 已删除规则：35个（31个旧+4个新）
+- 已删除代码：365行（341行旧+24行新）
+- 代码减少比例：约14.6%
+
+下一步：检查是否还有其他未解决的问题
