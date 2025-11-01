@@ -1,19 +1,7 @@
 /**
  * 测试规则: ComputedPropertyName
  * 来源: 从 PropertyName 拆分
- */
-
-// TODO: 添加 ComputedPropertyName 的完整测试用例
-// 当前从 PropertyName 的内容中提取
-
-const assert = require('assert');
-const { parse } = require('../../packages/slime-parser');
-
-
-});
-
-
-/* Es6Parser.ts: [Expression] */
+ *//* Es6Parser.ts: [Expression] */
 
 /**
  * 规则测试：ComputedPropertyName

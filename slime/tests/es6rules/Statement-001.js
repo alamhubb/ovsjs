@@ -1588,9 +1588,7 @@ const iterable = {
         return {
             next: () => ({
                 value: count++,
-                done: count > 3
-            })
-        }
+                done: count > 3        }
     }
 }
 for (let val of iterable) {

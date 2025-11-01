@@ -1,19 +1,7 @@
 /**
  * 测试规则: SwitchStatement
  * 来源: 从 Statement 拆分
- */
-
-// TODO: 添加 SwitchStatement 的完整测试用例
-// 当前从 Statement 的内容中提取
-
-const assert = require('assert');
-const { parse } = require('../../packages/slime-parser');
-
-
-});
-
-
-/* Es6Parser.ts: switch (Expression) CaseBlock */
+ *//* Es6Parser.ts: switch (Expression) CaseBlock */
 
 /**
  * 规则测试：SwitchStatement

@@ -359,9 +359,7 @@ async function async7() {
 // ✅ 测试8：await new Promise
 async function async8() {
     const result = await new Promise(resolve => {
-        resolve(42)
-    })
-}
+        resolve(42)}
 
 // ✅ 测试9：多个await
 async function async9() {
@@ -1087,10 +1085,7 @@ const result2 = (function(x) {
 
 // ✅ 测试11：函数表达式作为参数
 [1, 2, 3].map(function(x) {
-    return x * 2
-})
-
-// ✅ 测试12：函数表达式作为对象属性
+    return x * 2// ✅ 测试12：函数表达式作为对象属性
 const obj = {
     method: function() { return 'method' },
     action: function(a, b) { return a + b }

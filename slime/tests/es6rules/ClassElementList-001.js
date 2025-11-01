@@ -1,17 +1,7 @@
 /**
  * 测试规则: ClassElementList
  * 来源: 从 ClassElement 拆分
- */
-
-// TODO: 添加 ClassElementList 的完整测试用例
-
-const assert = require('assert');
-const { parse } = require('../../packages/slime-parser');
-
-
-});
-
-/**
+ *//**
  * 规则测试：ClassElementList
  * 编号：609
  * 状态：✅ 已完善（8个测试用例）

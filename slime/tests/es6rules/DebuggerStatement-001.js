@@ -1,18 +1,7 @@
 /**
  * 测试规则: DebuggerStatement
  * 来源: 从 Statement 拆分
- */
-
-// TODO: 添加 DebuggerStatement 的完整测试用例
-// 当前从 Statement 的内容中提取
-
-const assert = require('assert');
-const { parse } = require('../../packages/slime-parser');
-
-
-});
-
-/**
+ *//**
  * 规则测试：DebuggerStatement
  * 
  * 位置：Es6Parser.ts Line 1401

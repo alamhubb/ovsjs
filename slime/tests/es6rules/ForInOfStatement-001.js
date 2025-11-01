@@ -1,18 +1,7 @@
 /**
  * 测试规则: ForInOfStatement
  * 来源: 从 Statement 拆分
- */
-
-// TODO: 添加 ForInOfStatement 的完整测试用例
-// 当前从 Statement 的内容中提取
-
-const assert = require('assert');
-const { parse } = require('../../packages/slime-parser');
-
-
-});
-
-/**
+ *//**
  * 规则测试：ForInOfStatement
  * 
  * 位置：Es6Parser.ts Line 1179
@@ -112,9 +101,7 @@ const iterable = {
         return {
             next: () => ({
                 value: count++,
-                done: count > 3
-            })
-        }
+                done: count > 3        }
     }
 }
 for (let val of iterable) {

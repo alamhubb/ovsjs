@@ -1,18 +1,7 @@
 /**
  * 测试规则: DotMemberExpression
  * 来源: 从 MemberExpression 拆分
- */
-
-// TODO: 添加 DotMemberExpression 的完整测试用例
-// 当前从 MemberExpression 的内容中提取
-
-const assert = require('assert');
-const { parse } = require('../../packages/slime-parser');
-
-
-});
-
-/**
+ *//**
  * 规则测试：DotMemberExpression
  * 
  * 位置：Es6Parser.ts Line 420

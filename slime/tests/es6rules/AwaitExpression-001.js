@@ -1,18 +1,7 @@
 /**
  * 测试规则: AwaitExpression
  * 来源: 从 Expression 拆分
- */
-
-// TODO: 添加 AwaitExpression 的完整测试用例
-// 当前从 Expression 的内容中提取
-
-const assert = require('assert');
-const { parse } = require('../../packages/slime-parser');
-
-
-});
-
-/**
+ *//**
  * 规则测试：AwaitExpression
  * 
  * 位置：Es6Parser.ts Line 690
@@ -156,9 +145,7 @@ async function async7() {
 // ✅ 测试8：await new Promise
 async function async8() {
     const result = await new Promise(resolve => {
-        resolve(42)
-    })
-}
+        resolve(42)}
 
 // ✅ 测试9：多个await
 async function async9() {
