@@ -20,3 +20,5 @@
 
 const obj = new MyClass(arg1, arg2)
 const date = new Date()
+
+/* Es6Parser.ts: new MemberExpression Arguments */

@@ -68,3 +68,5 @@ function abs(n) {
 function test() { return 42 }
 function none() { return }
 function complex() { return {a: 1, b: 2} }
+
+/* Es6Parser.ts: ReturnStatement */

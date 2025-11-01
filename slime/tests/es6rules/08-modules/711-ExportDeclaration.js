@@ -65,3 +65,5 @@ export default class {
 
 // ✅ 测试10：export default - expression
 export default {name: 'config', value: 100}
+
+/* Es6Parser.ts: ExportDeclaration */

@@ -70,3 +70,4 @@ function process(data) {
     debugger
     return result
 }
+/* Es6Parser.ts: DebuggerStatement */

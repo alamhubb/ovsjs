@@ -27,3 +27,4 @@ const {age} = person
 
 // ✅ 测试2：Option有 - 带默认值
 const {value = 0} = obj
+/* Es6Parser.ts: BindingIdentifier Initializer? */

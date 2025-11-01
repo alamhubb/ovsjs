@@ -51,3 +51,11 @@ const complex = ((a + b) * (c - d)) / (e + f)
 if ((a && b) || (c && d)) {}
 for (let i = (start); i < (end); i++) {}
 return (value)
+/* 
+ * 规则补充信息�?025-11-01�? * 
+ * Es6Parser.ts 实际规则定义�? *   ParenthesizedExpression: ( Expression )
+ * 
+ * 规则特征：无Or/Option/Many分支
+ */
+
+/* Es6Parser.ts: ( Expression ) */

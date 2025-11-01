@@ -20,3 +20,5 @@
 
 import {name} from './module.js'
 import {name as alias} from './module.js'
+
+/* Es6Parser.ts: ImportSpecifier */

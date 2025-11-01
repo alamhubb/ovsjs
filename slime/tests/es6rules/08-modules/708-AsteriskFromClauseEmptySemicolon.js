@@ -19,3 +19,5 @@
  */
 
 export * from './module.js'
+
+/* Es6Parser.ts: AsteriskFromClauseEmptySemicolon */

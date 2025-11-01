@@ -34,3 +34,4 @@ var oldVar = 4
 
 // ✅ 测试4：函数名声明
 function funcName() {}
+/* Es6Parser.ts: Identifier (not reserved word in binding context) */

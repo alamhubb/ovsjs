@@ -19,3 +19,5 @@
  */
 
 export default expr
+
+/* Es6Parser.ts: AssignmentExpression ; */

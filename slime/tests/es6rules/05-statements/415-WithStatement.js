@@ -19,3 +19,5 @@
  */
 
 with (Math) { const x = PI }
+
+/* Es6Parser.ts: WithStatement */

@@ -20,3 +20,5 @@
 
 for (let x of arr) {}
 for (const {a, b} in obj) {}
+
+/* Es6Parser.ts: ForDeclaration */

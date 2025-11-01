@@ -93,3 +93,5 @@ const loadUser = async ({id, cache = true}) => {
     if (cache) return getCached(id)
     return await fetch(`/user/${id}`)
 }
+
+/* Es6Parser.ts: ArrowFunction */

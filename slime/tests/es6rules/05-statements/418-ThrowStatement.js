@@ -25,3 +25,5 @@
 function error1() {
     throw new Error('test')
 }
+
+/* Es6Parser.ts: ThrowStatement */

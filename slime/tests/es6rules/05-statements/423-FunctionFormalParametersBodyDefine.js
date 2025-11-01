@@ -19,3 +19,5 @@
  */
 
 function test(a, b) { return a + b }
+
+/* Es6Parser.ts: FunctionFormalParametersBodyDefine */

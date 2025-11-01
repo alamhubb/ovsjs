@@ -22,3 +22,5 @@
     let x = 1
     const y = 2
 }
+
+/* Es6Parser.ts: BlockStatement */

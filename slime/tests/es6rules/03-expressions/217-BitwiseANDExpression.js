@@ -49,3 +49,4 @@ if ((flags & READ_FLAG) !== 0) {}
 // ✅ 测试8：复杂位运算
 const extracted = (value >> 8) & 0xFF
 const combined = (r & 0xFF) << 16
+/* Es6Parser.ts: EqualityExpression (& EqualityExpression)* */

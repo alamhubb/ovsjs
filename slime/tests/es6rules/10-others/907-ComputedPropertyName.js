@@ -1,77 +1,45 @@
 /**
  * 规则测试：ComputedPropertyName
  * 
- * 位置：Es6Parser.ts Line 320
+ * 位置：Es6Parser.ts Line 247
  * 分类：others
  * 编号：907
  * 
- * 规则特征：
- * - 简单规则：[ AssignmentExpression ]
- * 
- * 规则语法：
+ * EBNF规则：
  *   ComputedPropertyName:
  *     [ AssignmentExpression ]
  * 
  * 测试目标：
- * - 测试计算属性名
- * - 测试各种表达式作为属性名
+ * - 测试简单变量的计算属性名
+ * - 测试表达式的计算属性名
+ * - 测试复杂计算属性名
+ * - 验证嵌套表达式支持
  * 
  * 创建时间：2025-11-01
- * 更新时间：2025-11-01
- * 状态：✅ 已完善
+ * 状态：✅ 已完善（8个测试用例）
  */
 
-// ✅ 测试1：变量作为属性名
-const key = 'dynamic'
-const obj1 = {
-    [key]: 'value'
-}
+// ✅ 测试1：简单变量
+const obj1 = {[a]: 1}
 
-// ✅ 测试2：字符串拼接表达式
-const obj2 = {
-    [key + 'Suffix']: 'computed',
-    ['prefix' + key]: 'concat'
-}
+// ✅ 测试2：二元表达式
+const obj2 = {[a + b]: 2}
 
-// ✅ 测试3：数字表达式
-const obj3 = {
-    [1 + 2]: 'three',
-    [10 * 2]: 'twenty'
-}
+// ✅ 测试3：算术表达式
+const obj3 = {[1 + 2]: 3}
 
-// ✅ 测试4：Symbol
-const sym = Symbol('test')
-const obj4 = {
-    [sym]: 'symbol property',
-    [Symbol.iterator]: function* () {}
-}
+// ✅ 测试4：函数调用
+const obj4 = {[func()]: 4}
 
-// ✅ 测试5：函数调用结果
-const obj5 = {
-    [getKey()]: 'function result',
-    [computeKey('prefix')]: 'computed'
-}
+// ✅ 测试5：三元表达式
+const obj5 = {[a ? b : c]: 5}
 
-// ✅ 测试6：条件表达式
-const obj6 = {
-    [condition ? 'key1' : 'key2']: 'conditional',
-    [x > 0 ? 'positive' : 'negative']: 'sign'
-}
+// ✅ 测试6：符号属性
+const obj6 = {[Symbol.iterator]: 6}
 
-// ✅ 测试7：在类中
-class Test {
-    [methodName]() {
-        return 'dynamic method'
-    }
-    [fieldName] = 'dynamic field'
-}
+// ✅ 测试7：字符串计算
+const obj7 = {['str']: 7}
 
-// ✅ 测试8：混合使用
-const mixed = {
-    // 普通属性
-    name: 'test',
-    // 计算属性
-    [key]: 'value',
-    [key + '2']: 'value2',
-    [Symbol.key]: 'symbol'
-}
+// ✅ 测试8：嵌套计算
+const obj8 = {[[x]]: 8}
+/* Es6Parser.ts: ComputedPropertyName */

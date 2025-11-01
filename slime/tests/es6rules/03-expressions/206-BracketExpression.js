@@ -37,3 +37,4 @@ obj[key + 'Suffix']
 
 // ✅ 测试4：链式方括号访问
 matrix[i][j]
+/* Es6Parser.ts: [ Expression ] */

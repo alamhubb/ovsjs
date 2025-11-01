@@ -20,3 +20,5 @@
 
 import x from './module.js'
 import y from '../parent.js'
+
+/* Es6Parser.ts: ModuleSpecifier */

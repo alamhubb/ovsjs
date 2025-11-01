@@ -50,3 +50,4 @@ const mixed = x | y & z
 // ✅ 测试8：在条件中
 if ((status | ERROR_FLAG) === status) {}
 const enabled = (config | DEFAULT_CONFIG) !== 0
+/* Es6Parser.ts: BitwiseXORExpression (| BitwiseXORExpression)* */

@@ -1,58 +1,74 @@
 /**
  * 规则测试：AdditiveExpression
  * 
- * 位置：Es6Parser.ts Line 679
+ * 位置：Es6Parser.ts Line 1016
  * 分类：expressions
  * 编号：213
  * 
  * 规则特征：
- * ✓ 包含Many（1处）
- * ✓ Many内包含Or（2个分支）- + 或 -
+ * ✓ 包含Or规则（1处）- 加法、减法、字符串连接
  * 
  * 规则语法：
  *   AdditiveExpression:
- *     MultiplicativeExpression ((+ | -) MultiplicativeExpression)*
+ *     MultiplicativeExpression
+ *     AdditiveExpression + MultiplicativeExpression
+ *     AdditiveExpression - MultiplicativeExpression
  * 
  * 测试目标：
- * - 测试Many=0/1/多
- * - 覆盖Or的两个分支（+和-）
+ * - 覆盖Or分支：加法、减法、字符串连接
+ * - 验证各种操作数类型
+ * - 覆盖嵌套和复杂表达式
  * 
  * 创建时间：2025-11-01
- * 更新时间：2025-11-01
  * 状态：✅ 已完善
  */
 
-// ✅ 测试1：Many=0 - 单个操作数
-const single = a
+// ✅ 测试1：基本加法
+1 + 2
 
-// ✅ 测试2：Many=1，Or分支1 - + 运算符
-const sum = a + b
-const total = x + y
+// ✅ 测试2：基本减法
+10 - 3
 
-// ✅ 测试3：Many=1，Or分支2 - - 运算符
-const diff = c - d
-const delta = max - min
+// ✅ 测试3：字符串连接
+'hello' + 'world'
 
-// ✅ 测试4：Many=2 - 三个操作数（+）
-const sum3 = a + b + c
-const total3 = x + y + z
+// ✅ 测试4：数字和字符串混合
+42 + 'answer'
 
-// ✅ 测试5：Many=2 - 混合+和-
-const calc = a + b - c
-const result = x - y + z
+// ✅ 测试5：多个加法
+1 + 2 + 3
 
-// ✅ 测试6：Many>=3 - 多个操作数
-const long = a + b + c + d + e
-const chain = x - y - z - w
+// ✅ 测试6：多个减法
+100 - 20 - 10
 
-// ✅ 测试7：与乘法混合（优先级）
-const mixed = a + b * c
-const complex = x * y + z / w
+// ✅ 测试7：混合加减
+10 + 5 - 3
 
-// ✅ 测试8：字符串拼接
-const str = 'hello' + ' ' + 'world'
-const concat = prefix + value + suffix
+// ✅ 测试8：加法链式
+1 + 2 + 3 + 4 + 5
 
+// ✅ 测试9：复杂操作数
+(10 + 5) + (20 - 3)
+
+// ✅ 测试10：变量运算
+const a = 10
+const b = 20
 a + b
-c - d
-a + b + c
+
+// ✅ 测试11：函数调用加法
+Math.max(1, 2) + Math.min(5, 3)
+
+// ✅ 测试12：字符串多次连接
+'a' + 'b' + 'c' + 'd'
+
+// ✅ 测试13：表达式中的加法
+const result = (a + b) * 2
+
+// ✅ 测试14：条件表达式加法
+const x = true ? 1 + 2 : 3 + 4
+
+// ✅ 测试15：对象/数组中的加法
+const arr = [1 + 2, 3 + 4]
+const obj = { sum: 5 + 6 }
+
+/* Es6Parser.ts: AdditiveExpression: AddOp[+|-] */

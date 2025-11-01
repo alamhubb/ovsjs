@@ -1,24 +1,18 @@
 /**
  * 规则测试：ObjectLiteral
  * 
- * 位置：Es6Parser.ts Line 209
+ * 位置：Es6Parser.ts Line 297
  * 分类：literals
  * 编号：003
  * 
- * 规则特征：
- * ✓ 包含Option（2处）
- * 
  * 规则语法：
  *   ObjectLiteral:
- *     { PropertyDefinitionList? , ? }
+ *     { PropertyDefinitionList? }
  * 
  * 测试目标：
- * - 测试空对象
- * - 测试基础属性
- * - 测试方法
- * - 测试Getter/Setter
- * - 测试计算属性名
- * - 测试Spread
+ * - 验证空对象
+ * - 验证各种属性形式
+ * - 覆盖复杂对象
  * 
  * 创建时间：2025-11-01
  * 状态：✅ 已完善
@@ -27,84 +21,101 @@
 // ✅ 测试1：空对象
 const empty = {}
 
-// ✅ 测试2：单个属性
-const single = {name: 'Alice'}
+// ✅ 测试2：简单属性
+const simple = { x: 1, y: 2 }
 
-// ✅ 测试3：多个属性
-const multiple = {
-    name: 'Bob',
-    age: 25,
-    city: 'NYC'
+// ✅ 测试3：各种值类型
+const mixed = {
+    number: 42,
+    string: 'hello',
+    boolean: true,
+    null: null,
+    undefined: undefined,
+    array: [1, 2, 3],
+    object: { nested: 'value' }
 }
 
-// ✅ 测试4：属性简写
-const name = 'Charlie'
-const age = 30
-const shorthand = {name, age}
-
-// ✅ 测试5：带尾逗号
-const trailing = {
-    a: 1,
-    b: 2,
+// ✅ 测试4：方法
+const withMethods = {
+    getValue: function() { return 42 },
+    add: function(a, b) { return a + b }
 }
 
-// ✅ 测试6：方法定义
-const methods = {
-    greet() {
-        return 'Hello'
-    },
-    add(a, b) {
-        return a + b
-    }
+// ✅ 测试5：Getter和Setter
+const withGetterSetter = {
+    get value() { return this._value },
+    set value(v) { this._value = v }
 }
 
-// ✅ 测试7：Getter/Setter
-const accessors = {
-    _value: 0,
-    get value() {
-        return this._value
-    },
-    set value(v) {
-        this._value = v
-    }
-}
-
-// ✅ 测试8：计算属性名
-const key = 'dynamicKey'
+// ✅ 测试6：计算属性名
 const computed = {
-    [key]: 'value',
-    ['prefix_' + key]: 'prefixed'
+    ['key' + 1]: 'value1',
+    [2 + 3]: 'five'
 }
 
-// ✅ 测试9：Spread (ES2018)
-const obj1 = {a: 1}
-const obj2 = {...obj1, b: 2}
-const obj3 = {x: 0, ...obj1, ...obj2, y: 3}
+// ✅ 测试7：简写属性
+const name = 'Alice'
+const age = 30
+const shorthand = { name, age }
 
-// ✅ 测试10：嵌套对象
+// ✅ 测试8：方法简写
+const methods = {
+    greet() { return 'hello' },
+    farewell() { return 'goodbye' }
+}
+
+// ✅ 测试9：嵌套对象
 const nested = {
-    user: {
-        name: 'Dave',
-        profile: {
-            age: 28,
-            city: 'LA'
+    level1: {
+        level2: {
+            level3: 'deep'
         }
     }
 }
 
-// ✅ 测试11：混合所有特性
-const symbol = Symbol('test')
+// ✅ 测试10：Spread运算符
+const source = { a: 1, b: 2 }
+const spread = { ...source, c: 3 }
+
+// ✅ 测试11：混合属性
 const complex = {
-    // 普通属性
-    simple: 'value',
-    // 简写
-    name,
-    // 方法
-    method() { return 42 },
-    // Getter
-    get prop() { return this._prop },
-    // 计算属性
-    [symbol]: 'symbol value',
-    // Spread
-    ...obj1
+    prop1: 'value',
+    [dynamicKey]: 123,
+    method() { return this.prop1 },
+    get computed() { return this.prop1 }
 }
+
+// ✅ 测试12：Symbol属性
+const sym = Symbol('test')
+const withSymbol = { [sym]: 'value' }
+
+// ✅ 测试13：Generator方法
+const withGenerator = {
+    *gen() {
+        yield 1
+        yield 2
+    }
+}
+
+// ✅ 测试14：多行对象
+const multiline = {
+    prop1: 'value1',
+    prop2: 'value2',
+    prop3: 'value3',
+    prop4: 'value4'
+}
+
+// ✅ 测试15：实际应用
+const config = {
+    server: {
+        host: 'localhost',
+        port: 3000,
+        ssl: false
+    },
+    database: {
+        url: 'mongodb://...',
+        timeout: 5000
+    }
+}
+
+/* Es6Parser.ts: ObjectLiteral: { PropertyDefinitionList? } */

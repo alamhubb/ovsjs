@@ -19,3 +19,5 @@
  */
 
 import {a, b, c} from './module.js'
+
+/* Es6Parser.ts: ImportsList */

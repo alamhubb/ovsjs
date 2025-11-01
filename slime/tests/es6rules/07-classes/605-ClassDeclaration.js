@@ -1,98 +1,244 @@
 /**
  * 规则测试：ClassDeclaration
  * 
- * 位置：Es6Parser.ts Line 1694
+ * 位置：Es6Parser.ts Line 247
  * 分类：classes
  * 编号：605
  * 
  * 规则语法：
  *   ClassDeclaration:
- *     class BindingIdentifier ClassTail
+ *     class Identifier ClassHeritage? { ClassBody }
  * 
  * 测试目标：
- * - 测试基础类
- * - 测试带继承的类
- * - 测试带方法的类
+ * - 验证基本类声明
+ * - 验证继承关系（extends）
+ * - 覆盖构造函数、方法、属性
  * 
  * 创建时间：2025-11-01
  * 状态：✅ 已完善
  */
 
-// ✅ 测试1：空类
-class Empty {}
-
-// ✅ 测试2：带constructor
-class Person {
-    constructor(name, age) {
-        this.name = name
-        this.age = age
+// ✅ 测试1：基本类声明
+class Point {
+    constructor(x, y) {
+        this.x = x
+        this.y = y
     }
 }
 
-// ✅ 测试3：带方法
-class Calculator {
-    add(a, b) {
-        return a + b
+// ✅ 测试2：带方法的类
+class Rectangle {
+    constructor(width, height) {
+        this.width = width
+        this.height = height
     }
-    subtract(a, b) {
-        return a - b
+    
+    area() {
+        return this.width * this.height
     }
 }
 
-// ✅ 测试4：继承
+// ✅ 测试3：静态方法
+class Math2D {
+    static distance(p1, p2) {
+        return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2))
+    }
+}
+
+// ✅ 测试4：Getter和Setter
+class Circle {
+    constructor(radius) {
+        this._radius = radius
+    }
+    
+    get radius() {
+        return this._radius
+    }
+    
+    set radius(value) {
+        this._radius = value
+    }
+}
+
+// ✅ 测试5：基本继承
 class Animal {
-    constructor(name) {
-        this.name = name
-    }
     speak() {
-        console.log(this.name)
+        return 'sound'
     }
 }
 
 class Dog extends Animal {
-    constructor(name, breed) {
-        super(name)
-        this.breed = breed
-    }
-    bark() {
-        console.log('Woof!')
+    speak() {
+        return 'bark'
     }
 }
 
-// ✅ 测试5：静态方法
-class Math2 {
-    static add(a, b) {
+// ✅ 测试6：继承中的super调用
+class Vehicle {
+    constructor(name) {
+        this.name = name
+    }
+}
+
+class Car extends Vehicle {
+    constructor(name, wheels) {
+        super(name)
+        this.wheels = wheels
+    }
+}
+
+// ✅ 测试7：计算属性名
+class Dynamic {
+    ['method_' + 'one']() {
+        return 'one'
+    }
+}
+
+// ✅ 测试8：多个方法
+class Utils {
+    add(a, b) {
         return a + b
     }
-    static PI = 3.14
-}
-
-// ✅ 测试6：Getter/Setter
-class Rectangle {
-    constructor(width, height) {
-        this._width = width
-        this._height = height
+    
+    multiply(a, b) {
+        return a * b
     }
-    get area() {
-        return this._width * this._height
-    }
-    set width(w) {
-        this._width = w
+    
+    divide(a, b) {
+        return a / b
     }
 }
 
-// ✅ 测试7：Generator方法
-class Iterator {
-    *gen() {
-        yield 1
-        yield 2
+// ✅ 测试9：混合静态和实例方法
+class Counter {
+    static total = 0
+    
+    constructor() {
+        this.count = 0
+        Counter.total++
+    }
+    
+    increment() {
+        this.count++
+    }
+    
+    static reset() {
+        Counter.total = 0
     }
 }
 
-// ✅ 测试8：计算属性名
-const methodName = 'greet'
-class Dynamic {
-    [methodName]() {
-        return 'Hi'
+// ✅ 测试10：多层继承
+class Shape {
+    area() {
+        return 0
     }
 }
+
+class Polygon extends Shape {
+    sides() {
+        return 0
+    }
+}
+
+class Triangle extends Polygon {
+    sides() {
+        return 3
+    }
+}
+
+// ✅ 测试11：类中的try-catch
+class Processor {
+    process(data) {
+        try {
+            return JSON.parse(data)
+        } catch (e) {
+            return null
+        }
+    }
+}
+
+// ✅ 测试12：类中的for循环
+class Collection {
+    constructor(items) {
+        this.items = items
+    }
+    
+    double() {
+        let result = []
+        for (let item of this.items) {
+            result.push(item * 2)
+        }
+        return result
+    }
+}
+
+// ✅ 测试13：继承中的super属性访问
+class Base {
+    getValue() {
+        return 42
+    }
+}
+
+class Derived extends Base {
+    getValue() {
+        return super.getValue() + 1
+    }
+}
+
+// ✅ 测试14：包含多个成员的复杂类
+class User {
+    #password
+    
+    constructor(name, password) {
+        this.name = name
+        this.#password = password
+    }
+    
+    static create(data) {
+        return new User(data.name, data.pass)
+    }
+    
+    getName() {
+        return this.name
+    }
+    
+    verify(pwd) {
+        return this.#password === pwd
+    }
+    
+    get type() {
+        return 'user'
+    }
+}
+
+// ✅ 测试15：类的实际使用场景
+class Employee {
+    constructor(id, name, salary) {
+        this.id = id
+        this.name = name
+        this.salary = salary
+    }
+    
+    giveRaise(amount) {
+        this.salary += amount
+        return this.salary
+    }
+    
+    getInfo() {
+        return `${this.name} (ID: ${this.id}): $${this.salary}`
+    }
+}
+
+class Manager extends Employee {
+    constructor(id, name, salary, department) {
+        super(id, name, salary)
+        this.department = department
+    }
+    
+    getInfo() {
+        return super.getInfo() + ` - Department: ${this.department}`
+    }
+}
+
+/* Es6Parser.ts: ClassDeclaration: class Identifier ClassHeritage? { ClassBody } */
+

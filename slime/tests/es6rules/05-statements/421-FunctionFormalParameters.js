@@ -21,3 +21,5 @@
 function test() {}
 function params(a, b, c) {}
 function rest(...args) {}
+
+/* Es6Parser.ts: FunctionFormalParameters */

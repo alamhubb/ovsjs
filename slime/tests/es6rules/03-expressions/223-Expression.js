@@ -40,3 +40,5 @@ func(a, b, c)
 
 // ✅ 测试6：复杂表达式组合
 const value = (console.log('start'), compute(), console.log('end'), 42)
+
+/* Es6Parser.ts: AssignmentExpression (Comma AssignmentExpression)* */

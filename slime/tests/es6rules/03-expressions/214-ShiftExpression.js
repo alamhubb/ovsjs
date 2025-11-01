@@ -57,3 +57,5 @@ const unpacked = color >> 16
 a << 1
 b >> 2
 c >>> 1
+
+/* Es6Parser.ts: AdditiveExpression ((<< | >> | >>>) AdditiveExpression)* */

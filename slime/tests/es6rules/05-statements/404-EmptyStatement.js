@@ -26,3 +26,4 @@
 
 // ✅ 测试2：多个分号
 ;;
+/* Es6Parser.ts: EmptyStatement */

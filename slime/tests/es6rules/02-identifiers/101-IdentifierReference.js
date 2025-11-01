@@ -1,58 +1,97 @@
 /**
  * 规则测试：IdentifierReference
  * 
- * 位置：Es6Parser.ts Line 61
+ * 位置：Es6Parser.ts Line 198
  * 分类：identifiers
  * 编号：101
  * 
- * 规则特征：
- * ✓ 包含Or规则（1处）- Identifier
- * 
  * 规则语法：
  *   IdentifierReference:
- *     Identifier
+ *     Identifier but not ReservedWord
  * 
  * 测试目标：
- * - 测试标识符引用（读取变量值）
- * - 在各种上下文中使用标识符引用
+ * - 验证标识符引用
+ * - 覆盖各种使用场景
+ * - 验证作用域
  * 
  * 创建时间：2025-11-01
- * 更新时间：2025-11-01
  * 状态：✅ 已完善
  */
 
-// ✅ 测试1：变量声明中引用
+// ✅ 测试1：简单标识符引用
+const x = 5
+
+// ✅ 测试2：标识符使用
+console.log(x)
+
+// ✅ 测试3：多个标识符
 const a = 1
-const b = a
-const c = b
+const b = 2
+const c = a + b
 
-// ✅ 测试2：函数返回值
-function test() {
-    return x
+// ✅ 测试4：函数调用
+function test() { return 42 }
+test()
+
+// ✅ 测试5：对象属性引用
+const obj = { name: 'test' }
+obj.name
+
+// ✅ 测试6：数组元素引用
+const arr = [1, 2, 3]
+arr[0]
+
+// ✅ 测试7：函数参数
+function greet(name) {
+    console.log(name)
 }
 
-// ✅ 测试3：表达式中引用
-const sum = a + b
-const product = x * y
-
-// ✅ 测试4：函数参数中引用
-function add(num1, num2) {
-    return num1 + num2
+// ✅ 测试8：循环变量
+for (let i = 0; i < 10; i++) {
+    console.log(i)
 }
 
-// ✅ 测试5：对象属性值
-const obj = {
-    value: a,
-    data: b
-}
-
-// ✅ 测试6：数组元素
-const arr = [a, b, c]
-
-// ✅ 测试7：条件表达式
+// ✅ 测试9：条件中的标识符
 if (x > 0) {
-    console.log(y)
+    console.log('positive')
 }
 
-// ✅ 测试8：赋值右侧
-let result = value
+// ✅ 测试10：作用域引用
+{
+    let localVar = 'local'
+    console.log(localVar)
+}
+
+// ✅ 测试11：嵌套作用域
+function outer() {
+    const outerVar = 'outer'
+    function inner() {
+        console.log(outerVar)
+    }
+    inner()
+}
+
+// ✅ 测试12：对象方法
+const person = {
+    name: 'Alice',
+    getName: function() {
+        return this.name
+    }
+}
+person.getName()
+
+// ✅ 测试13：解构中的标识符
+const { x: xVal, y: yVal } = { x: 1, y: 2 }
+
+// ✅ 测试14：类成员引用
+class MyClass {
+    method() {
+        return this.value
+    }
+}
+
+// ✅ 测试15：导入标识符
+import { someFunction } from './module.js'
+someFunction()
+
+/* Es6Parser.ts: IdentifierReference: Identifier */

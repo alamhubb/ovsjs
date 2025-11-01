@@ -22,3 +22,5 @@ async function test() {
     const result = await fetch()
     return await process(result)
 }
+
+/* Es6Parser.ts: await UnaryExpression */

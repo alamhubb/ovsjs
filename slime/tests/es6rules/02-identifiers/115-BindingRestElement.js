@@ -54,3 +54,4 @@ function sum(initial = 0, ...nums) {
 // ✅ 测试8：多个函数使用rest
 const fn1 = (...args) => args.length
 const fn2 = (a, b, ...rest) => rest
+/* Es6Parser.ts: ... BindingIdentifier */

@@ -21,3 +21,5 @@
 import x from './a.js'
 export const y = 2
 const z = 3
+
+/* Es6Parser.ts: ModuleItemList */

@@ -21,3 +21,5 @@
 const x = 1
 function test() {}
 class MyClass {}
+
+/* Es6Parser.ts: StatementListItem */

@@ -55,3 +55,5 @@ const long = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 const arr = [1, 2, 3]
 const spread = [...arr, 4]
 const mixed = [1, ...arr, 2]
+
+/* Es6Parser.ts: ElementList */

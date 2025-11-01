@@ -20,3 +20,5 @@
 
 export {a, b, c}
 export {x as y, z}
+
+/* Es6Parser.ts: ExportsList */

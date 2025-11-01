@@ -20,3 +20,5 @@
 
 const g = function*() { yield 1 }
 const named = function* gen() { yield 2 }
+
+/* Es6Parser.ts: function* Identifier? (FormalParameters) { GeneratorBody } */

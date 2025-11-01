@@ -22,3 +22,5 @@ for (let i = 0; i < 10; i++) {}
 while (true) { break }
 do {} while (false)
 for (const x of arr) {}
+
+/* Es6Parser.ts: IterationStatement */

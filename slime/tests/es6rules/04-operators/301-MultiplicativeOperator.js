@@ -41,3 +41,4 @@ const ratio = width / height
 
 // ✅ 测试5：% 运算符 - 基础
 const c = 10 % 3
+/* Es6Parser.ts: * | / | % */

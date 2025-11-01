@@ -121,3 +121,5 @@ try {
 
 // ✅ 测试16：DebuggerStatement
 debugger
+
+/* Es6Parser.ts: Or[BlockStatement, VariableStatement, ...] */

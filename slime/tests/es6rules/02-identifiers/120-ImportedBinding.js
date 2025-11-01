@@ -46,3 +46,4 @@ import lodash, * as _ from 'lodash'
 import fs from 'fs'
 import path from 'path'
 import {readFile, writeFile} from 'fs/promises'
+/* Es6Parser.ts: IdentifierName */

@@ -1,22 +1,32 @@
 /**
  * 规则测试：ClassHeritage
- * 
  * 位置：Es6Parser.ts Line 1655
- * 分类：classes
  * 编号：607
- * 
- * 规则特征：
- * 简单规则
- * 
- * 测试目标：
- * - 验证规则的基本功能
-
-
-
- * 
- * 创建时间：2025-11-01
- * 状态：✅ 已完善（基础测试）
+ * 状态：✅ 已完善（8个测试用例）
  */
 
+// ✅ 测试1
 class Child extends Parent {}
+
+// ✅ 测试2
 class Sub extends Base.Nested {}
+
+// ✅ 测试3
+class A extends (x > 0 ? BaseA : BaseB) {}
+
+// ✅ 测试4
+class Multi extends super.call({}) {}
+
+// ✅ 测试5
+class Generic extends Array {}
+
+// ✅ 测试6
+class Deep extends Very.Deep.Nested.Class {}
+
+// ✅ 测试7
+class Expr extends getBase() {}
+
+// ✅ 测试8
+class Complex extends obj[method]() {}
+
+/* Es6Parser.ts: ClassHeritage */

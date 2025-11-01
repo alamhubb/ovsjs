@@ -1,25 +1,19 @@
 /**
  * 规则测试：ArrayLiteral
  * 
- * 位置：Es6Parser.ts Line 155
+ * 位置：Es6Parser.ts Line 285
  * 分类：literals
  * 编号：002
  * 
- * 规则特征：
- * ✓ 包含Or规则（1处）- 3个分支
- * 
  * 规则语法：
  *   ArrayLiteral:
- *     [ ElementList , Elision? ]
- *     [ ElementList ]
- *     [ Elision? ]
+ *     [ ElementList? ]
+ *     [ ElementList , ]
  * 
  * 测试目标：
- * - 测试空数组
- * - 测试基础数组
- * - 测试带尾逗号
- * - 测试Elision（空元素）
- * - 测试Spread
+ * - 验证空数组
+ * - 验证各种元素类型
+ * - 覆盖复杂数组
  * 
  * 创建时间：2025-11-01
  * 状态：✅ 已完善
@@ -28,33 +22,73 @@
 // ✅ 测试1：空数组
 const empty = []
 
-// ✅ 测试2：单元素数组
-const single = [1]
+// ✅ 测试2：单个元素
+const single = [42]
 
-// ✅ 测试3：多元素数组
-const multiple = [1, 2, 3, 4, 5]
+// ✅ 测试3：多个元素
+const multi = [1, 2, 3, 4, 5]
 
-// ✅ 测试4：带尾逗号
-const withTrailing = [1, 2, 3,]
+// ✅ 测试4：各种类型混合
+const mixed = [1, 'string', true, null, undefined, {}, []]
 
-// ✅ 测试5：Elision - 跳过元素
-const sparse1 = [1, , 3]
-const sparse2 = [, , 3]
-const sparse3 = [1, 2, ,]
-
-// ✅ 测试6：嵌套数组
+// ✅ 测试5：嵌套数组
 const nested = [[1, 2], [3, 4], [5, 6]]
 
-// ✅ 测试7：混合类型
-const mixed = [1, 'text', true, null, {key: 'value'}]
+// ✅ 测试6：数组中的对象
+const arrayOfObjects = [
+    { id: 1, name: 'Alice' },
+    { id: 2, name: 'Bob' },
+    { id: 3, name: 'Charlie' }
+]
 
-// ✅ 测试8：Spread元素
-const arr1 = [1, 2]
-const arr2 = [...arr1, 3, 4]
-const arr3 = [0, ...arr1, ...arr2]
+// ✅ 测试7：数组中的函数
+const arrayOfFunctions = [
+    () => 1,
+    function() { return 2 },
+    x => x * 3
+]
 
-// ✅ 测试9：复杂表达式作为元素
-const complex = [1 + 2, func(), obj.prop, arr[0]]
+// ✅ 测试8：数组中的表达式
+const expressions = [1 + 2, 3 * 4, 5 - 1]
 
-// ✅ 测试10：空数组的Elision
-const onlyCommas = [,,,]
+// ✅ 测试9：尾逗号数组
+const trailing = [1, 2, 3,]
+
+// ✅ 测试10：稀疏数组（元素缺失）
+const sparse = [1, , , 4]
+
+// ✅ 测试11：Spread运算符
+const arr = [1, 2, 3]
+const spread = [...arr, 4, 5]
+
+// ✅ 测试12：多行数组
+const multiline = [
+    'a',
+    'b',
+    'c',
+    'd',
+    'e'
+]
+
+// ✅ 测试13：复杂嵌套
+const complex = [
+    [1, [2, [3, [4]]]],
+    { key: 'value' },
+    () => 'function'
+]
+
+// ✅ 测试14：数组中的Promise
+const promises = [
+    Promise.resolve(1),
+    Promise.reject(2),
+    new Promise(r => r(3))
+]
+
+// ✅ 测试15：实际应用
+const data = [
+    { id: 1, values: [10, 20, 30] },
+    { id: 2, values: [40, 50, 60] },
+    { id: 3, values: [70, 80, 90] }
+]
+
+/* Es6Parser.ts: ArrayLiteral: [ ElementList? ] */

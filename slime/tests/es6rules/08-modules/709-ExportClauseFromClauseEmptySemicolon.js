@@ -20,3 +20,5 @@
 
 export {name} from './module.js'
 export {a, b} from './other.js'
+
+/* Es6Parser.ts: ExportClauseFromClauseEmptySemicolon */

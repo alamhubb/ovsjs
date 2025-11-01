@@ -1,25 +1,65 @@
 /**
  * 规则测试：ClassElementList
- * 
- * 位置：Es6Parser.ts Line 1666
- * 分类：classes
  * 编号：609
- * 
- * 规则特征：
- * ✓ 包含Many（1处）
- * 
- * 测试目标：
- * - 验证规则的基本功能
-
-
- * - 测试Many的0/1/多种情况
- * 
- * 创建时间：2025-11-01
- * 状态：✅ 已完善（基础测试）
+ * 状态：✅ 已完善（8个测试用例）
  */
 
-class Test {
-    method1() {}
-    method2() {}
-    static method3() {}
+// ✅ 测试1
+class One {
+    m() {}
 }
+
+// ✅ 测试2
+class Two {
+    m1() {}
+    m2() {}
+}
+
+// ✅ 测试3
+class Three {
+    m1() {}
+    m2() {}
+    m3() {}
+}
+
+// ✅ 测试4
+class Mixed {
+    constructor() {}
+    method() {}
+    static s() {}
+}
+
+// ✅ 测试5
+class Complex {
+    a() {}
+    b() {}
+    c() {}
+    d() {}
+}
+
+// ✅ 测试6
+class WithGS {
+    get x() {}
+    set x(v) {}
+    method() {}
+}
+
+// ✅ 测试7
+class WithGen {
+    *g1() {}
+    *g2() {}
+}
+
+// ✅ 测试8
+class Full {
+    constructor() {}
+    static s1() {}
+    static s2() {}
+    get x() {}
+    set x(v) {}
+    *gen() {}
+    m1() {}
+    m2() {}
+}
+
+/* Es6Parser.ts: ClassElementList */

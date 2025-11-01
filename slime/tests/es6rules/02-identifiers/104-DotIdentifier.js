@@ -33,3 +33,4 @@ arr.slice
 
 // ✅ 测试3：访问函数属性
 func.call
+/* Es6Parser.ts: . IdentifierName */

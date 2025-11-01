@@ -20,3 +20,5 @@
 
 label1: for (;;) { break label1 }
 outer: while (true) { break outer }
+
+/* Es6Parser.ts: LabelledStatement */

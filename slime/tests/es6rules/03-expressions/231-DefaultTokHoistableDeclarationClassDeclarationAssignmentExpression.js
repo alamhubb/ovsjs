@@ -21,3 +21,5 @@
 export default function() {}
 export default class {}
 export default {value: 42}
+
+/* Es6Parser.ts: Or[Declaration, Statement] */

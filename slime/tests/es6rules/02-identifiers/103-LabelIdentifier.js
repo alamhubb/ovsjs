@@ -72,3 +72,4 @@ switchLabel: switch (x) {
     default:
         break
 }
+/* Es6Parser.ts: Identifier (not reserved word in label context) */

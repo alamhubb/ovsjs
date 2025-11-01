@@ -52,3 +52,4 @@ const calc = x ^ y & z
 // ✅ 测试8：加密/校验场景
 const checksum = data[0] ^ data[1] ^ data[2]
 const encrypted = plaintext ^ key
+/* Es6Parser.ts: BitwiseANDExpression (^ BitwiseANDExpression)* */

@@ -168,3 +168,4 @@ const methods = {
     default() {},
     constructor() {}
 }
+/* Es6Parser.ts: Identifier | StringLiteral | NumericLiteral | ReservedWord */

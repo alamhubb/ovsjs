@@ -24,3 +24,5 @@ function* test() {
     yield* other()
     const x = yield
 }
+
+/* Es6Parser.ts: yield AssignmentExpression? */

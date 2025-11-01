@@ -1,24 +1,56 @@
 /**
  * 规则测试：ClassBody
- * 
- * 位置：Es6Parser.ts Line 1661
- * 分类：classes
  * 编号：608
- * 
- * 规则特征：
- * 简单规则
- * 
- * 测试目标：
- * - 验证规则的基本功能
-
-
-
- * 
- * 创建时间：2025-11-01
- * 状态：✅ 已完善（基础测试）
+ * 状态：✅ 已完善（8个测试用例）
  */
 
-class Test {
-    method() {}
-    static prop = 1
+// ✅ 测试1
+class Empty {}
+
+// ✅ 测试2
+class One {
+    m() {}
 }
+
+// ✅ 测试3
+class Two {
+    m1() {}
+    m2() {}
+}
+
+// ✅ 测试4
+class Multi {
+    constructor() {}
+    m1() {}
+    m2() {}
+    m3() {}
+}
+
+// ✅ 测试5
+class Static {
+    static s() {}
+    i() {}
+}
+
+// ✅ 测试6
+class GetSet {
+    get x() {}
+    set x(v) {}
+}
+
+// ✅ 测试7
+class Gen {
+    *g() { yield 1 }
+}
+
+// ✅ 测试8
+class All {
+    constructor() {}
+    static s() {}
+    get x() {}
+    set x(v) {}
+    *g() {}
+    m() {}
+}
+
+/* Es6Parser.ts: ClassBody */

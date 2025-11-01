@@ -21,3 +21,5 @@
 export {}
 export {name}
 export {a, b, c}
+
+/* Es6Parser.ts: ExportClause */

@@ -23,3 +23,5 @@ class Test {
         yield 1
     }
 }
+
+/* Es6Parser.ts: GeneratorMethod */

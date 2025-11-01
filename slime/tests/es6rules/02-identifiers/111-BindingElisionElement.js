@@ -20,3 +20,5 @@
 
 const [a, , b] = arr
 const [, x] = arr
+
+/* Es6Parser.ts: Elision? Or[BindingElement, Elision] */

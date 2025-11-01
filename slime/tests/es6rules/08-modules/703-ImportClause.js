@@ -53,3 +53,5 @@ import lodash, * as _ from 'lodash'
 import axios, {get, post, put, delete as del} from 'axios'
 import Vue, * as VueAll from 'vue'
 import {debounce, throttle} from 'lodash-es'
+
+/* Es6Parser.ts: ImportClause */

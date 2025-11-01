@@ -52,3 +52,5 @@ function arrayParam([first, second]) { return first }
 // ✅ 测试10：在for循环中
 for (const {key, value} of entries) {}
 for (const [index, item] of indexed) {}
+
+/* Es6Parser.ts: Or[ArrayBindingPattern, ObjectBindingPattern] */

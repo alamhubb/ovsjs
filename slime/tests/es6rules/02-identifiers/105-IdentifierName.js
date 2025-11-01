@@ -138,3 +138,5 @@ obj.of
 const obj = {name: 'test', for: 1, if: 2, class: 3}
 obj.catch()
 obj.then()
+
+/* Es6Parser.ts: Identifier | ReservedWords */

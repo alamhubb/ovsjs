@@ -57,3 +57,5 @@ const escaped = 'line1\nline2\ttab'
 
 // ✅ 测试10：组合使用
 const mixed = [null, true, false, 42, "text"]
+
+/* Es6Parser.ts: Or[null, true, false, NumericLiteral, StringLiteral] */

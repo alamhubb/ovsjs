@@ -1,61 +1,74 @@
 /**
  * 规则测试：EqualityExpression
  * 
- * 位置：Es6Parser.ts Line 724
+ * 位置：Es6Parser.ts Line 1032
  * 分类：expressions
  * 编号：216
  * 
- * 规则特征：
- * ✓ 包含Many（1处）
- * ✓ Many内包含Or（4个分支）- == != === !==
- * 
  * 规则语法：
  *   EqualityExpression:
- *     RelationalExpression ((== | != | === | !==) RelationalExpression)*
+ *     RelationalExpression
+ *     EqualityExpression == RelationalExpression
+ *     EqualityExpression != RelationalExpression
+ *     EqualityExpression === RelationalExpression
+ *     EqualityExpression !== RelationalExpression
  * 
  * 测试目标：
- * - 测试Many=0/1/多
- * - 覆盖Or的全部4个分支
+ * - 覆盖四个相等性运算符
+ * - 验证各种类型比较
+ * - 覆盖嵌套比较
  * 
  * 创建时间：2025-11-01
- * 更新时间：2025-11-01
  * 状态：✅ 已完善
  */
 
-// ✅ 测试1：Many=0 - 无比较
-const value = x
+// ✅ 测试1：基本相等（==）
+1 == 1
 
-// ✅ 测试2：Or分支1 - == 运算符
-const equal = a == b
-if (x == 10) {}
+// ✅ 测试2：基本不相等（!=）
+1 != 2
 
-// ✅ 测试3：Or分支2 - != 运算符
-const notEqual = c != d
-if (y != 0) {}
+// ✅ 测试3：严格相等（===）
+1 === 1
 
-// ✅ 测试4：Or分支3 - === 运算符（严格相等）
-const strictEqual = e === f
-if (type === 'string') {}
+// ✅ 测试4：严格不相等（!==）
+1 !== '1'
 
-// ✅ 测试5：Or分支4 - !== 运算符（严格不等）
-const strictNotEqual = g !== h
-if (value !== null) {}
+// ✅ 测试5：字符串比较
+'hello' === 'hello'
 
-// ✅ 测试6：Many=2 - 多个比较
-const chain = a == b == c
-const multi = x !== y !== z
+// ✅ 测试6：类型转换（==）
+1 == '1'
 
-// ✅ 测试7：实际应用
-if (name === 'admin' && password !== '') {}
-const isValid = input !== null && input !== undefined
+// ✅ 测试7：null比较
+null == undefined
 
-// ✅ 测试8：== vs ===
-const loose = null == undefined
-const strict = null === undefined
-const diff = 0 == false
-const strictDiff = 0 === false
+// ✅ 测试8：严格null比较
+null === null
 
-a == b
-c != d
-e === f
-g !== h
+// ✅ 测试9：布尔值比较
+true === true
+
+// ✅ 测试10：多个相等性运算
+1 === 1 && 2 === 2
+
+// ✅ 测试11：比较变量
+const a = 10
+const b = 10
+a === b
+
+// ✅ 测试12：函数调用比较
+Math.max(1, 2) === 2
+
+// ✅ 测试13：对象比较
+const obj1 = {}
+const obj2 = obj1
+obj1 === obj2
+
+// ✅ 测试14：数组比较
+[1, 2] === [1, 2]
+
+// ✅ 测试15：复杂表达式
+(a + 5) === (b + 5)
+
+/* Es6Parser.ts: EqualityExpression: EqOp[==|!=|===|!==] */

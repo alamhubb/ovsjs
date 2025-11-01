@@ -21,3 +21,5 @@
 obj.property
 promise.then()
 arr.map()
+
+/* Es6Parser.ts: . IdentifierName */

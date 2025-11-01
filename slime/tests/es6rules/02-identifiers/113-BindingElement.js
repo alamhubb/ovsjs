@@ -22,3 +22,5 @@
 const {x} = obj
 const {x = 0} = obj
 const {x: y} = obj
+
+/* Es6Parser.ts: Or[SingleNameBinding, BindingPattern] */

@@ -65,3 +65,5 @@ for (const {user: {name}} of data) {
 for (const item of arr) {}
 for (let {x, y} of points) {}
 for (const [a, b] of pairs) {}
+
+/* Es6Parser.ts: BindingPattern | BindingIdentifier */

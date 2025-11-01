@@ -80,3 +80,5 @@ function complex(a, b = 2, {x, y} = {}, ...rest) {
 const arrow1 = (a, b) => a + b
 const arrow2 = (...args) => args.length
 const arrow3 = ({name}) => name
+
+/* Es6Parser.ts: FormalParameterList */

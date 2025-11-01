@@ -21,3 +21,5 @@
 for (;;) { break }
 while (true) { break }
 switch (x) { case 1: break }
+
+/* Es6Parser.ts: Or[IterationStatement, SwitchStatement] */

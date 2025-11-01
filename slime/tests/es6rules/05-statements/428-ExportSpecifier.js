@@ -20,3 +20,5 @@
 
 export {name}
 export {name as alias}
+
+/* Es6Parser.ts: ExportSpecifier */

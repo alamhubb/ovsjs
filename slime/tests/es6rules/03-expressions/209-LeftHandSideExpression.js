@@ -36,3 +36,4 @@ obj.getData().process()
 
 // ✅ 测试4：Or分支2 - NewExpression（new构造）
 new Cls()
+/* Es6Parser.ts: Or[CallExpression, NewExpression] */

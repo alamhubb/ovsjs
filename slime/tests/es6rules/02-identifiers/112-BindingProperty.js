@@ -21,3 +21,5 @@
 const {name} = obj
 const {name: userName} = obj
 const {x, y} = point
+
+/* Es6Parser.ts: MethodDefinition | PropertyName : BindingElement | BindingIdentifier */
