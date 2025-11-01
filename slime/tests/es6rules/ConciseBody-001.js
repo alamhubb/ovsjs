@@ -115,3 +115,11 @@ const complex = (x, y) => {
 }
 
 /* Es6Parser.ts: ConciseBody */
+
+
+// ============================================
+// 合并来自: AsyncArrowFunctionBody-001.js
+// ============================================
+
+
+/* Es6Parser.ts: async ArrowFunction with async body */

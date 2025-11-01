@@ -45,3 +45,11 @@ import {a, b, c} from './module.js'
 import {a, b, c} from './module.js'
 
 /* Es6Parser.ts: ImportsList */
+
+
+// ============================================
+// 合并来自: ImportList-001.js
+// ============================================
+
+
+/* Es6Parser.ts: ImportSpecifier (Comma ImportSpecifier)* */

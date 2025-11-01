@@ -62,3 +62,19 @@ async function af2(x) { return await x }
 async function* ag2(x) { yield await x }
 
 /* Es6Parser.ts: HoistableDeclaration */
+
+
+// ============================================
+// 合并来自: GeneratorFunction-001.js
+// ============================================
+
+
+/* Es6Parser.ts: function* Identifier? (FormalParameters) { GeneratorBody } */
+
+
+// ============================================
+// 合并来自: AsyncGeneratorFunction-001.js
+// ============================================
+
+
+/* Es6Parser.ts: async function* Identifier? (FormalParameters) { FunctionBody } */

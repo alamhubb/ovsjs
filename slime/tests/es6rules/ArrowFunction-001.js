@@ -373,3 +373,11 @@ const loadUser = async ({id, cache = true}) => {
 }
 
 /* Es6Parser.ts: ArrowFunction */
+
+
+// ============================================
+// 合并来自: AsyncArrowFunction-001.js
+// ============================================
+
+
+/* Es6Parser.ts: async ArrowFunction */

@@ -115,3 +115,11 @@ setTimeout(function() {
 
 
 /* Es6Parser.ts: function Identifier? (FormalParameters) { FunctionBody } */
+
+
+// ============================================
+// 合并来自: AsyncFunctionExpression-001.js
+// ============================================
+
+
+/* Es6Parser.ts: async function Identifier? (FormalParameters) { FunctionBody } */

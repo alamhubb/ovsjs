@@ -183,3 +183,11 @@ class Test8 {
 }
 
 /* Es6Parser.ts: SetMethodDefinition */
+
+
+// ============================================
+// 合并来自: SetAccessor-001.js
+// ============================================
+
+
+/* Es6Parser.ts: set PropertyName(Identifier) { Body } */

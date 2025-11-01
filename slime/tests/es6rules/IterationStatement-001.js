@@ -41,3 +41,43 @@ do {} while (false)
 for (const x of arr) {}
 
 /* Es6Parser.ts: IterationStatement */
+
+
+// ============================================
+// 合并来自: IterationStatementWhile-001.js
+// ============================================
+
+
+/* Es6Parser.ts: while (Expression) Statement */
+
+
+// ============================================
+// 合并来自: IterationStatementDoWhile-001.js
+// ============================================
+
+
+/* Es6Parser.ts: do Statement while (Expression) */
+
+
+// ============================================
+// 合并来自: IterationStatementFor-001.js
+// ============================================
+
+
+/* Es6Parser.ts: for (VariableDeclaration? Expression? Expression?) Statement */
+
+
+// ============================================
+// 合并来自: IterationStatementForIn-001.js
+// ============================================
+
+
+/* Es6Parser.ts: for (VariableDeclaration in Expression) Statement */
+
+
+// ============================================
+// 合并来自: IterationStatementForOf-001.js
+// ============================================
+
+
+/* Es6Parser.ts: for (VariableDeclaration of Expression) Statement */

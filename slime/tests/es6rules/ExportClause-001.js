@@ -49,3 +49,11 @@ export {name}
 export {a, b, c}
 
 /* Es6Parser.ts: ExportClause */
+
+
+// ============================================
+// 合并来自: ExportList-001.js
+// ============================================
+
+
+/* Es6Parser.ts: export { ExportSpecifier (Comma ExportSpecifier)* } */

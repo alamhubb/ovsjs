@@ -187,3 +187,11 @@ class Test8 {
 }
 
 /* Es6Parser.ts: GetMethodDefinition */
+
+
+// ============================================
+// 合并来自: GetAccessor-001.js
+// ============================================
+
+
+/* Es6Parser.ts: get PropertyName() { Body } */

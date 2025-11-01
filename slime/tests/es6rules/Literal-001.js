@@ -602,3 +602,27 @@ const config = {
 const arrow = `result: ${((x) => x * 2)(21)}`
 
 /* Es6Parser.ts: TemplateLiteral: NoSubstitutionTemplate | TemplateHead (Expression TemplateMiddle)* Expression TemplateTail */
+
+
+// ============================================
+// 合并来自: NumericLiteral-001.js
+// ============================================
+
+
+/* Es6Parser.ts: DecimalLiteral | HexIntegerLiteral | OctalLiteral | BinaryLiteral | LegacyOctal */
+
+
+// ============================================
+// 合并来自: StringLiteral-001.js
+// ============================================
+
+
+/* Es6Parser.ts: DoubleStringCharacters | SingleStringCharacters */
+
+
+// ============================================
+// 合并来自: RegularExpressionLiteral-001.js
+// ============================================
+
+
+/* Es6Parser.ts: / RegularExpressionBody / RegularExpressionFlags */
