@@ -1073,9 +1073,20 @@ export class SlimeCstToAst {
       const methodDef = SlimeAstUtil.createMethodDefinition(key, SlimeFunctionExpression)
       methodDef.computed = computed
 
+      // ✅ 关键修复点：识别 constructor
+      const isConstructor =
+        key.type === "Identifier" &&
+        key.name === "constructor" &&
+        !(staticCst && staticCst.name === Es6TokenConsumer.prototype.StaticTok.name)
+
       // 如果有 static 修饰符
       if (staticCst && staticCst.name === Es6TokenConsumer.prototype.StaticTok.name) {
         methodDef.static = true
+      }
+
+      // 正确标记 kind
+      if (isConstructor) {
+        methodDef.kind = "constructor"
       }
 
       return methodDef

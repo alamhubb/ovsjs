@@ -237,6 +237,8 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
     @SubhutiRule
     PropertyDefinition() {
         this.Or([
+            //顺序问题MethodDefinition 需要在 IdentifierReference 之上，否则会触发IdentifierReference ，而 不执行MethodDefinition，应该执行最长匹配
+            {alt: () => this.MethodDefinition()},
             // ES2018: 对象spread语法 {...obj}
             {
                 alt: () => {
@@ -252,8 +254,6 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
                     this.AssignmentExpression()
                 }
             },
-            //顺序问题MethodDefinition 需要在 IdentifierReference 之上，否则会触发IdentifierReference ，而 不执行MethodDefinition，应该执行最长匹配
-            {alt: () => this.MethodDefinition()},
             {
                 alt: () => {
                     this.IdentifierReference()
@@ -966,7 +966,6 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
     AssignmentExpression() {
         this.Or([
             {alt: () => this.YieldExpression()},
-            {alt: () => this.ConditionalExpression()},  // ← moved forward
             {
                 alt: () => {
                     this.LeftHandSideExpression()
@@ -981,6 +980,7 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
                     this.AssignmentExpression()
                 }
             },
+            {alt: () => this.ConditionalExpression()},  // ← moved forward
             {alt: () => this.ArrowFunction()},
         ])
     }
@@ -1485,13 +1485,14 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
             // 情况1: ( ...rest )
             { alt: () => this.RestParameter() },
 
-            // 情况2: ( a, b, c, [ ...rest ] )
+            // 情况2: ( a, b, c, [ ...rest ] ) 或 ( a, b, c )
+            // ✅ 直接使用 BindingElement，避免通过 FormalParameter 中间层
             {
                 alt: () => {
-                    this.FormalParameter()
+                    this.BindingElement()
                     this.Many(() => {
                         this.tokenConsumer.Comma()
-                        this.FormalParameter()
+                        this.BindingElement()
                     })
                     this.Option(() => {
                         this.tokenConsumer.Comma()
