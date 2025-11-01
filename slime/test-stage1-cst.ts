@@ -52,3 +52,4 @@ for (let i = 0; i < files.length; i++) {
 console.log('\n' + '='.repeat(60))
 console.log(`🎉 阶段1全部通过: ${files.length}/${files.length}`)
 
+

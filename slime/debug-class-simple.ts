@@ -66,3 +66,4 @@ testCode('测试4: constructor with 赋值', test4)
 
 
 
+
