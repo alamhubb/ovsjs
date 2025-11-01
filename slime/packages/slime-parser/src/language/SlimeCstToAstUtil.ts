@@ -809,17 +809,49 @@ export class SlimeCstToAst {
     }
     
     const params: SlimePattern[] = []
+    const firstChild = cst.children[0]
     
-    // 遍历所有children，提取FormalParameter和RestParameter
-    for (const child of cst.children) {
-      if (child.name === Es6Parser.prototype.FormalParameter.name) {
-        // 普通参数
-        params.push(this.createFormalParameterAst(child))
-      } else if (child.name === Es6Parser.prototype.RestParameter.name) {
-        // Rest参数：...args
-        params.push(this.createRestParameterAst(child))
+    // FormalParameterList有两种情况：
+    // 1. FunctionRestParameter - 只有rest参数
+    // 2. FormalParameterListFormalsList - 包含普通参数列表和可选rest参数
+    
+    if (firstChild.name === 'FunctionRestParameter') {
+      // 情况1: 只有rest参数 (...args)
+      const restElement = this.createBindingRestElementAst(firstChild.children[0])
+      params.push(restElement)
+    } else if (firstChild.name === 'FormalParameterListFormalsList') {
+      // 情况2: 普通参数列表 + 可选rest参数
+      // FormalParameterListFormalsList包含: FormalsList [, FunctionRestParameter]
+      for (const child of firstChild.children) {
+        if (child.name === 'FormalsList') {
+          // 处理普通参数列表
+          params.push(...this.createFormalsListAst(child))
+        } else if (child.name === 'CommaFunctionRestParameter') {
+          // 处理结尾的rest参数
+          const functionRestParam = child.children.find((c: any) => c.name === 'FunctionRestParameter')
+          if (functionRestParam) {
+            const restElement = this.createBindingRestElementAst(functionRestParam.children[0])
+            params.push(restElement)
+          }
+        }
       }
-      // 忽略 Comma 等其他节点
+    }
+    
+    return params
+  }
+  
+  /**
+   * 创建 FormalsList AST
+   * FormalsList: FormalParameter (, FormalParameter)*
+   */
+  createFormalsListAst(cst: SubhutiCst): SlimePattern[] {
+    const params: SlimePattern[] = []
+    
+    for (const child of cst.children) {
+      if (child.name === 'FormalParameter') {
+        params.push(this.createFormalParameterAst(child))
+      }
+      // 忽略 Comma
     }
     
     return params
@@ -2551,7 +2583,10 @@ export class SlimeCstToAst {
       // 循环处理剩余的 (operator, operand) 对
       // CST结构: [operand, operator, operand, operator, operand, ...]
       for (let i = 1; i < cst.children.length; i += 2) {
-        const operator = cst.children[i].value as any  // +/- 运算符
+        // 获取运算符 - 可能是token也可能是CST节点
+        const operatorNode = cst.children[i]
+        const operator = operatorNode.children ? operatorNode.children[0].value : operatorNode.value
+        
         const right = this.createExpressionAst(cst.children[i + 1])
         
         left = {
@@ -2577,7 +2612,10 @@ export class SlimeCstToAst {
       
       // 循环处理剩余的 (operator, operand) 对
       for (let i = 1; i < cst.children.length; i += 2) {
-        const operator = cst.children[i].children[0].value as any  // */% 运算符
+        // 获取运算符 - 可能是token也可能是CST节点
+        const operatorNode = cst.children[i]
+        const operator = operatorNode.children ? operatorNode.children[0].value : operatorNode.value
+        
         const right = this.createExpressionAst(cst.children[i + 1])
         
         left = {
