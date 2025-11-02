@@ -6,7 +6,7 @@ import {es2020Tokens} from "../../packages/slime-parser/src/language/es2020/Es20
 import Es2020Parser from "../../packages/slime-parser/src/language/es2020/Es2020Parser";
 
 const code = `
-1 + 2
+Math.max(1, 2) + Math.min(5, 3)
 `
 
 const lexer = new SubhutiLexer(es2020Tokens)
