@@ -1179,6 +1179,7 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
         this.tokenConsumer.LParen()
         // TODO: Implement lookahead check for 'let ['
         this.Or([
+            //VariableDeclaration需要在前面
             {
                 alt: () => {
                     this.VariableDeclaration()
@@ -1206,6 +1207,7 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
     ForInOfStatement() {
         this.tokenConsumer.ForTok()
         this.tokenConsumer.LParen()
+        //todo 待确认ForDeclaration 是不是应该放前面
         this.Or([
             {
                 alt: () => {
