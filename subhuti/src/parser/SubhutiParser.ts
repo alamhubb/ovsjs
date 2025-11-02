@@ -138,35 +138,12 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         this._ruleMatchSuccess = flag
     }
 
-    printCst() {
-        JsonUtil.log(this.getCurCst())
-    }
-
-    printMatchState() {
-        QqqqUtil.log("continueMatch:" + this.ruleMatchSuccess)
-    }
-
-    getCstStacksNames() {
-        return this.cstStack.map(item => item.name).join('->')
-    }
-
-    getTokensNames() {
-        return this.tokens.map(item => item.tokenName).join('->')
-    }
-
-
     setCurCst(curCst: SubhutiCst) {
         this.curCst = curCst
     }
 
     getCurCst() {
         return this.curCst
-    }
-
-    // 方案B：返回"剩余tokens"的虚拟视图（从tokenIndex开始）
-    // 性能：slice()会拷贝数组，但比深拷贝整个backData快得多
-    public get tokens() {
-        return this._tokens.slice(this.tokenIndex)
     }
 
     setTokens(tokens?: SubhutiMatchToken[]) {
@@ -467,7 +444,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             }
 
             // 抛出语法错误
-            this.printTokens()
             if (popToken) {
                 throw new Error('syntax error expect：' + popToken.tokenValue)
             } else {
