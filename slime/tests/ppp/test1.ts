@@ -5,8 +5,19 @@ import JsonUtil from "subhuti/src/utils/JsonUtil";
 import {traverseClearLoc, traverseClearTokens} from "../utils/parserTestUtils";
 
 const code = `
-1+2
-3+4
+class Person {
+  constructor(name, age) {
+    this.name = name
+    this.age = age
+  }
+  
+  greet() {
+    return "Hello " + this.name
+  }
+}
+
+const alice = new Person("Alice", 25)
+
 `
 
 const lexer = new SubhutiLexer(es6Tokens)
@@ -14,7 +25,7 @@ const tokens = lexer.lexer(code)
 console.log(tokens)
 
 const parser = new Es6Parser(tokens)
-const curCst = parser.ModuleItemList()
+const curCst = parser.Program()
 
 const outCst = JsonUtil.cloneDeep(curCst)
 let cstForAst = traverseClearTokens(outCst)

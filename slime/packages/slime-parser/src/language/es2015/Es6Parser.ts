@@ -860,6 +860,7 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
         ])
     }
 
+    @SubhutiRule
     EmptySemicolon() {
         this.Option(() => {
             this.tokenConsumer.Semicolon()
@@ -1110,7 +1111,13 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
         this.BindingIdentifier()
     }
 
-    EmptyStatement() {
+    @SubhutiRule
+    EmptyStatement(){
+        this.NotEmptySemicolon()
+    }
+
+    @SubhutiRule
+    NotEmptySemicolon() {
         // EmptyStatement 必须是一个分号（不能为空）
         // 避免在 Many 循环中无限匹配空语句
         this.tokenConsumer.Semicolon()
@@ -1690,7 +1697,7 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
                     this.FieldDefinition()
                 }
             },
-            {alt: () => this.EmptySemicolon()}
+            {alt: () => this.NotEmptySemicolon()}
         ])
     }
 
@@ -1698,7 +1705,7 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
     FieldDefinition() {
         this.PropertyName()
         this.Option(() => this.Initializer())
-        this.Option(() => this.EmptySemicolon())
+        this.EmptySemicolon()
     }
 
     @SubhutiRule

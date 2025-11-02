@@ -425,6 +425,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         let i = 0
         while (this.loopBranchAndRuleSuccess) {
             i++
+            // console.log(i)
             // console.log(this.tokensName)
             // console.log(this.ruleStackNames)
             // 每次循环开始前重置loopMatchSuccess=false

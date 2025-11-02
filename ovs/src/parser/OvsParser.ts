@@ -64,7 +64,7 @@ export default class OvsParser extends Es6Parser<OvsTokenConsumer> {
       { alt: () => this.NoRenderBlock() },        // 新增：#{}块优先
       { alt: () => this.BlockStatement() },
       { alt: () => this.VariableDeclaration() },
-      { alt: () => this.EmptyStatement() },
+      { alt: () => this.NotEmptySemicolon() },
       { alt: () => this.ExpressionStatement() },
       { alt: () => this.IfStatement() },
       { alt: () => this.BreakableStatement() },

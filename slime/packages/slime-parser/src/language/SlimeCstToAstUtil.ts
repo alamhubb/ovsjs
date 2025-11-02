@@ -501,7 +501,7 @@ export class SlimeCstToAst {
       return this.createDebuggerStatementAst(cst)
     }
     // 空语句
-    else if (cst.name === Es6Parser.prototype.EmptyStatement.name) {
+    else if (cst.name === Es6Parser.prototype.NotEmptySemicolon.name) {
       return this.createEmptyStatementAst(cst)
     }
     // 函数声明
@@ -2040,7 +2040,7 @@ export class SlimeCstToAst {
    * 创建空语句 AST
    */
   createEmptyStatementAst(cst: SubhutiCst): any {
-    checkCstName(cst, Es6Parser.prototype.EmptyStatement.name);
+    checkCstName(cst, Es6Parser.prototype.NotEmptySemicolon.name);
     return {
       type: SlimeAstType.EmptyStatement,
       loc: cst.loc
