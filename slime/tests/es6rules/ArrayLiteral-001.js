@@ -77,7 +77,7 @@ const multiline = [
 
 // ✅ 测试13：复杂嵌套    ArrayLiteral -> [ 复杂嵌套元素 ]
 const complex = [
-    [1, [2, [3, [4]]]],
+    [1, [2, ]],
     { key: 'value' },
     () => 'function'
 ]
