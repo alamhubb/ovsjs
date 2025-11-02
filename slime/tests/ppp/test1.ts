@@ -6,7 +6,7 @@ import {traverseClearLoc, traverseClearTokens} from "../utils/parserTestUtils";
 import {LogUtil} from "../../src/logutil";
 
 const code = `
-async function* asyncGenBind() { yield 1 }
+const {first1, ...remaining,} = {first1: 1, second: 2, third: 3}
 `
 
 const lexer = new SubhutiLexer(es6Tokens)

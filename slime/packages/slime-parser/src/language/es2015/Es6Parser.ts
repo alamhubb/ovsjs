@@ -985,9 +985,21 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
     ObjectBindingPattern() {
         this.tokenConsumer.LBrace()
         this.Or([
-            // 空对象：{}
+            // 1. 空对象：{}
             {alt: () => this.tokenConsumer.RBrace()},
-            // ES2018: 对象rest语法 {a, ...rest}（长规则优先）
+
+            // 2. ES2018: 对象rest + 尾逗号 {a, ...rest,}（最长规则，最优先）
+            {
+                alt: () => {
+                    this.BindingPropertyList()
+                    this.tokenConsumer.Comma()
+                    this.BindingRestElement()
+                    this.tokenConsumer.Comma()
+                    this.tokenConsumer.RBrace()
+                }
+            },
+
+            // 3. ES2018: 对象rest {a, ...rest}
             {
                 alt: () => {
                     this.BindingPropertyList()
@@ -996,7 +1008,8 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
                     this.tokenConsumer.RBrace()
                 }
             },
-            // 带尾逗号：{a, b, }
+
+            // 4. 带尾逗号：{a, b,}
             {
                 alt: () => {
                     this.BindingPropertyList()
@@ -1004,7 +1017,8 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
                     this.tokenConsumer.RBrace()
                 }
             },
-            // 基础形式：{a, b}
+
+            // 5. 基础形式：{a, b}
             {
                 alt: () => {
                     this.BindingPropertyList()
