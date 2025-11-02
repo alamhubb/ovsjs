@@ -428,9 +428,12 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         // - 如果外层在Or中（outerLoopMatchSuccess=true），保持true
         // - 或者内部规则成功了（loopMatchSuccess=true），设为true
         // - 这样可以让Or正确跳出
-        if (outerLoopMatchSuccess || this.loopMatchSuccess) {
-            this.setLoopMatchSuccess(true)
-        }
+        // if (outerLoopMatchSuccess || this.loopMatchSuccess) {
+        //     this.setLoopMatchSuccess(true)
+        // }
+        // ✅ 修改：Option总是成功，无论内部是否匹配
+        // 0次匹配也是成功的，必须向Or传播成功信号， 只要option执行完毕，就应该算执行成功了
+        this.setLoopMatchSuccess(true)
 
         this.allowErrorStackPopAndReset()
 
@@ -481,15 +484,11 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             matchCount++
         }
 
-        if (outerLoopMatchSuccess || matchCount || this.loopMatchSuccess) {
-            this.setLoopMatchSuccess(true)
-        }
+        // ✅ 修改：Many总是成功，无论匹配几次
+        // 0次匹配也是成功的，必须向Or传播成功信号
+        this.setLoopMatchSuccess(true)
 
         this.allowErrorStackPopAndReset()
-
-        if (!matchCount) {
-            return
-        }
 
         return this.getCurCst()
     }
