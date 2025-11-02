@@ -8,7 +8,8 @@ import SubhutiLexer from '../subhuti/src/parser/SubhutiLexer.ts'
 import * as fs from 'fs'
 import * as path from 'path'
 
-const casesDir = path.join(__dirname, 'tests/es6rules')
+// const casesDir = path.join(__dirname, 'tests/es6rules')
+const casesDir = path.join(__dirname, 'tests/cases')
 const files = fs.readdirSync(casesDir)
   .filter(f => f.endsWith('.js'))
   // 排除工具脚本
