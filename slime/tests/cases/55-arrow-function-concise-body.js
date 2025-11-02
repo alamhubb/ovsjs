@@ -123,3 +123,5 @@ const criticalTest3 = x => ({ return: 1 })
 console.log('All arrow function concise body tests defined');
 
 
+
+
