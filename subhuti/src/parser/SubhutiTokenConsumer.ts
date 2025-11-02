@@ -9,7 +9,7 @@ export default class SubhutiTokenConsumer {
     }
 
     consume(token: SubhutiCreateToken) {
-        this.instance.consume(token)
+        this.instance.consume(token.name)
     }
 
     //因为存在缓存问题，这里需要特殊处理，简化，直接不再使用
