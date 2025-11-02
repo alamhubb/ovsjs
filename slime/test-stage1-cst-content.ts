@@ -205,9 +205,18 @@ for (let i = 0; i < files.length; i++) {
     const lexer = new SubhutiLexer(es6Tokens)
     const tokens = lexer.lexer(code)
     
-    // 收集输入代码中的所有token值
-    const inputTokens = tokens.map((t: any) => t.tokenValue).filter((v: any) => v !== undefined)
-    console.log(`✅ 词法: ${tokens.length} tokens`)
+    // 收集输入代码中的所有token值（排除注释、空白、换行）
+    const inputTokens = tokens
+      .filter((t: any) => {
+        const tokenName = t.tokenType?.name || ''
+        return tokenName !== 'SingleLineComment' && 
+               tokenName !== 'MultiLineComment' &&
+               tokenName !== 'Spacing' &&
+               tokenName !== 'LineBreak'
+      })
+      .map((t: any) => t.tokenValue)
+      .filter((v: any) => v !== undefined)
+    console.log(`✅ 词法: ${tokens.length} tokens (有效token: ${inputTokens.length})`)
 
     // 语法分析
     const parser = new Es6Parser(tokens)
