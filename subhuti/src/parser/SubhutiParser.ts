@@ -1,3 +1,39 @@
+/**
+ * Subhuti Parser - 无前瞻的递归下降Parser框架
+ * 
+ * 核心设计原则：
+ * 
+ * 1. ❌ 不支持前瞻检查 (No Lookahead)
+ *    - 不支持 [lookahead ≠ token]
+ *    - 不支持 [lookahead ∉ { token1, token2, ... }]
+ *    - 不支持 [no LineTerminator here]
+ * 
+ * 2. ✅ 通过Or规则顺序解决歧义
+ *    - PEG风格：顺序选择（Ordered Choice）
+ *    - 第一个成功的分支立即返回
+ *    - 规则顺序至关重要：长规则必须在前，短规则在后
+ * 
+ * 3. ✅ 支持回溯（Backtracking）
+ *    - Or分支失败时自动回溯
+ *    - 通过快照索引优化，O(1)时间复杂度
+ * 
+ * 设计限制的影响：
+ * 
+ * - ASI（自动分号插入）无法完全符合ES规范
+ *   例如：return后换行无法检测，会被解析为 return; 而不是 return expression;
+ * 
+ * - 部分语法歧义需通过Or顺序手动解决
+ *   例如：ExpressionStatement vs BlockStatement
+ *        必须确保BlockStatement在ExpressionStatement之前尝试
+ * 
+ * - Cover Grammar需要特殊处理
+ *   例如：(a, b) 既可能是表达式，也可能是箭头函数参数
+ *        需要在更高层级的Or规则中确定优先级
+ * 
+ * @see Or() - 顺序选择的核心实现
+ * @see setBackDataAndRuleMatchSuccess() - 回溯机制
+ */
+
 import SubhutiMatchToken from "../struct/SubhutiMatchToken.ts"
 import SubhutiCst from "../struct/SubhutiCst.ts"
 import JsonUtil from "../utils/JsonUtil.ts"

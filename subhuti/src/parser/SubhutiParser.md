@@ -22,6 +22,45 @@ SubhutiParser 是一个基于 **PEG（Parsing Expression Grammar）** 风格的�
 - **回溯支持（Backtracking）**：分支失败时可以回退状态，尝试其他分支
 - **CST生成（Concrete Syntax Tree）**：保留完整的语法结构，包括所有token
 - **装饰器驱动**：使用 `@SubhutiRule` 装饰器定义规则
+- **❌ 无前瞻支持（No Lookahead）**：不支持前瞻检查，通过Or规则顺序解决歧义
+
+### ⚠️ 核心设计限制
+
+SubhutiParser **不支持前瞻检查（Lookahead）**，这是一个重要的设计约束：
+
+**不支持的特性：**
+- `[lookahead ≠ token]` - 检查下一个token不是某个特定值
+- `[lookahead ∉ { token1, token2, ... }]` - 检查下一个token不在集合中
+- `[no LineTerminator here]` - 检查当前位置后没有换行符
+
+**影响和应对策略：**
+
+1. **ASI（自动分号插入）无法完全符合ES规范**
+   ```javascript
+   // ES规范：return后换行应解析为 return;
+   return
+     x + 1
+   
+   // SubhutiParser：会解析为 return (x + 1)
+   // 因为无法检测换行符
+   ```
+
+2. **语法歧义需通过Or顺序手动解决**
+   ```javascript
+   // { x: 1 } 既可能是BlockStatement，也可能是ObjectLiteral
+   // 必须在Statement规则中，确保BlockStatement在ExpressionStatement之前
+   ```
+
+3. **Cover Grammar需要特殊处理**
+   ```javascript
+   // (a, b) 既可能是表达式，也可能是箭头函数参数
+   // 需要在AssignmentExpression层级通过Or顺序决定优先级
+   ```
+
+**设计哲学：**
+- **优势**：简单、快速、易于理解和调试
+- **劣势**：某些ES规范特性无法100%实现
+- **权衡**：接受规范不完全符合，换取实现的简洁性
 
 ### 核心架构
 
@@ -1317,9 +1356,12 @@ ComplexNestingTest() {
 
 ---
 
-**文档版本：** 2.1.0  
-**最后更新：** 2025-01-08  
+**文档版本：** 2.2.0  
+**最后更新：** 2025-11-02  
 **主要变更：**
+- ✅ **新增**：核心设计限制章节（无前瞻约束说明）
+- ✅ **新增**：不支持前瞻的影响和应对策略
+- ✅ **新增**：SubhutiParser.ts 文件头部文档注释
 - 删除 AT_LEAST_ONE 规则（ES6 语法不需要）
 - 合并 TWO_FLAGS_OPTIMIZATION 文档内容
 - 添加"核心规则逻辑验证"章节（完整的场景模拟和边界情况检查）
@@ -1327,4 +1369,7 @@ ComplexNestingTest() {
 - 完善所有规则的执行流程说明
 
 **维护者：** AI 辅助开发
+
+**相关文档：**
+- `es6parser_no_lookahead_analysis.md` - ES6Parser无前瞻约束详细分析
 
