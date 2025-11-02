@@ -82,19 +82,19 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
     /**
      * 两个核心标识的职责划分：
-     * 
+     *
      * 1. continueMatch - 全局匹配状态标识
      *    - 语义：当前匹配是否成功
      *    - 作用域：全局
      *    - 用途：控制整个解析流程是否继续执行
      *    - 检查点：几乎所有规则入口都检查 continueMatchIsTrue
-     * 
+     *
      * 2. loopMatchSuccess - 循环跳出控制标识
      *    - 语义：Or/Many规则是否应该跳出循环
      *    - 作用域：Or/Many规则内部
      *    - 用途：Or规则找到成功分支后立即跳出，不尝试后续分支
      *    - 特性：Or规则每次尝试分支前重置为false，Many规则需要保存/恢复外层状态
-     * 
+     *
      * 为什么需要两个标识？
      * - Or规则每次尝试新分支前需要重置loopMatchSuccess=false
      * - 如果只用continueMatch，重置为false会导致分支内部无法执行
@@ -196,7 +196,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
     /**
      * 规则执行入口（由@SubhutiRule装饰器生成）
-     * 
+     *
      * 初始化阶段：
      * - 重置continueMatch=true（允许开始解析）
      * - loopMatchSuccess保持默认值false
@@ -208,9 +208,9 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
                 return
             }
         }
-        
+
         const initFlag = this.initFlag
-        
+
         if (initFlag) {
             // 初始化：首次执行规则
             this.initFlag = false
@@ -224,9 +224,9 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
                 return
             }
         }
-        
+
         const cst = this.processCst(ruleName, targetFun)
-        
+
         if (initFlag) {
             // 执行完毕，恢复initFlag
             this.initFlag = true
@@ -243,7 +243,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             }
             this.setCurCst(parentCst)
         }
-        
+
         if (cst) {
             return cst
         }
@@ -252,7 +252,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
     /**
      * 处理CST节点：执行规则，构建CST树
-     * 
+     *
      * 成功/失败判断：
      * - continueMatch=true：规则匹配成功，保留CST节点
      * - continueMatch=false：规则匹配失败，删除CST节点
@@ -262,25 +262,25 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         cst.name = ruleName
         cst.children = []
         cst.tokens = []
-        
+
         let parentCst: SubhutiCst
         if (!this.initFlag && this.cstStack.length) {
             parentCst = this.cstStack[this.cstStack.length - 1]
             parentCst.children.push(cst)
         }
-        
+
         const oldTokensLength = this.tokens.length
-        
+
         this.setCurCst(cst)
         this.cstStack.push(cst)
         this.ruleExecErrorStack.push(ruleName)
-        
+
         // 执行规则函数
         const res: SubhutiCst = targetFun.apply(this)
-        
+
         this.cstStack.pop()
         this.ruleExecErrorStack.pop()
-        
+
         // 判断规则是否成功
         if (this.ruleMatchSuccess) {
             // 成功：保留CST节点
@@ -288,7 +288,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
                 if (!cst.children[0].loc) {
                     return cst
                 }
-                
+
                 // 设置CST的位置信息
                 const lastChild = cst.children[cst.children.length - 1]
                 if (!lastChild || !lastChild.loc) {
@@ -307,7 +307,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             }
             return cst
         }
-        
+
         // 失败：从父节点删除此CST节点
         if (parentCst) {
             parentCst.children.pop()
@@ -317,12 +317,12 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
     /**
      * AT_LEAST_ONE规则：匹配1次或多次（至少成功1次）
-     * 
+     *
      * 核心逻辑：
      * 1. 第一次必须成功，否则整个规则失败
      * 2. 后续循环允许失败（类似Many）
      * 3. 第一次失败会向外传播失败状态（continueMatch=false）
-     * 
+     *
      * 与Many的区别：
      * - Many：0次成功也算成功
      * - AT_LEAST_ONE：至少1次成功才算成功
@@ -331,17 +331,17 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         if (!this.ruleMatchSuccess) {
             return
         }
-        
+
         let index = 0
-        
+
         while (this.ruleMatchSuccess) {
             if (index > 0) {
                 // 第2次及以后：允许失败（类似Many）
                 this.setAllowErrorNewState()
                 const backData = this.backData
-                
+
                 fun()
-                
+
                 this.allowErrorStackPopAndReset()
 
                 if (!this.ruleMatchSuccess) {
@@ -398,6 +398,32 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             this.setBackDataAndRuleMatchSuccess(backData)  // 这会设置 continueMatch = true
         }
 
+        /**
+         *   // ① Or设置 loopMatchSuccess = false（第572行）
+         *
+         *     this.Option(() => {
+         *       // ② Option保存外层状态
+         *       // outerLoopMatchSuccess = false（此时this.loopMatchSuccess的值）
+         *
+         *       this.Identifier()  // ③ 成功！
+         *       // Identifier内部调用consumeToken → setContinueMatchAndNoBreak(true)
+         *       // 设置 this.loopMatchSuccess = true（第625行）
+         *     })
+         *
+         *     // ④ fun()执行完毕，此时：
+         *     // - outerLoopMatchSuccess = false（快照，没变）
+         *     // - this.loopMatchSuccess = true（被Identifier改了！）
+         *
+         *     // ⑤ 如果直接用 outerLoopMatchSuccess：
+         *     this.setLoopMatchSuccess(outerLoopMatchSuccess)  // = false ❌
+         *     // 结果：丢失了Identifier设置的true！
+         *
+         *     // ⑥ 使用OR逻辑：
+         *     if (outerLoopMatchSuccess || this.loopMatchSuccess) {
+         *       // false || true → 结果是true ✅
+         *       this.setLoopMatchSuccess(true)
+         *     }
+         */
         // loopMatchSuccess传播逻辑：
         // - 如果外层在Or中（outerLoopMatchSuccess=true），保持true
         // - 或者内部规则成功了（loopMatchSuccess=true），设为true
@@ -412,6 +438,61 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         return this.getCurCst()
     }
 
+
+    /**
+     * Many规则：匹配0次或多次
+     *
+     * 核心机制：
+     * 1. 循环执行fun()，直到匹配失败或token用完
+     * 2. 每次循环前重置loopMatchSuccess=false（表示"在循环中"）
+     * 3. 退出时恢复外层的loopMatchSuccess状态
+     *
+     * loopMatchSuccess的保存/恢复：
+     * - Many内部会修改loopMatchSuccess（每次循环重置为false）
+     * - 但外层可能在Or中（loopMatchSuccess=true/false）
+     * - 退出时需要恢复外层状态，让外层Or正确工作
+     */
+    Many(fun: Function) {
+        if (!this.ruleMatchSuccess) {
+            return
+        }
+
+        this.setAllowErrorNewState()
+
+        // 保存外层的loopMatchSuccess状态（可能来自外层Or）
+        const outerLoopMatchSuccess = this.loopMatchSuccess
+
+        let backData = this.backData
+        let matchCount = 0
+
+        while (this.loopBranchAndRuleSuccess) {
+            // 每次循环开始前重置loopMatchSuccess
+            this.setLoopMatchSuccess(false)
+            backData = this.backData
+
+            fun()
+
+            // 如果匹配失败，回退并退出循环
+            if (!this.ruleMatchSuccess) {
+                this.setBackDataAndRuleMatchSuccess(backData)
+                break
+            }
+
+            matchCount++
+        }
+
+        if (outerLoopMatchSuccess || matchCount || this.loopMatchSuccess) {
+            this.setLoopMatchSuccess(true)
+        }
+
+        this.allowErrorStackPopAndReset()
+
+        if (!matchCount) {
+            return
+        }
+
+        return this.getCurCst()
+    }
 
     consume(tokenName: SubhutiCreateToken) {
         if (!this.ruleMatchSuccess) {
@@ -574,11 +655,11 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             subhutiParserOr.alt()  // 尝试执行当前分支
 
             // 检查分支是否成功
-            if (this.loopMatchSuccess && this.ruleMatchSuccess) {
+            if (this.loopBranchAndRuleSuccess) {
                 // 成功：两个标识都为true
                 hasSuccess = true
                 break
-            } else if (!this.isBranchSuccess) {
+            } else if (!this.loopBranchAndRuleSuccess) {
                 // 失败：回退状态
                 if (index !== funLength) {
                     // 不是最后一个分支：回退并继续尝试
@@ -609,7 +690,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      *
      * 两个标识同时为true，表示分支成功并通知外层Or跳出
      */
-    get isBranchSuccess() {
+    get loopBranchAndRuleSuccess() {
         return this.loopMatchSuccess && this.ruleMatchSuccess
     }
 
@@ -664,61 +745,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     // 逻辑已内联到setBackDataNoContinueMatch中
     // private setTokensAndParentChildren() - 已删除
 
-
-    /**
-     * Many规则：匹配0次或多次
-     *
-     * 核心机制：
-     * 1. 循环执行fun()，直到匹配失败或token用完
-     * 2. 每次循环前重置loopMatchSuccess=false（表示"在循环中"）
-     * 3. 退出时恢复外层的loopMatchSuccess状态
-     *
-     * loopMatchSuccess的保存/恢复：
-     * - Many内部会修改loopMatchSuccess（每次循环重置为false）
-     * - 但外层可能在Or中（loopMatchSuccess=true/false）
-     * - 退出时需要恢复外层状态，让外层Or正确工作
-     */
-    Many(fun: Function) {
-        if (!this.ruleMatchSuccess) {
-            return
-        }
-
-        this.setAllowErrorNewState()
-
-        // 保存外层的loopMatchSuccess状态（可能来自外层Or）
-        const outerLoopMatchSuccess = this.loopMatchSuccess
-
-        let backData = this.backData
-        let matchCount = 0
-
-        while (this.ruleMatchSuccess && this.tokens.length) {
-            // 每次循环开始前重置loopMatchSuccess
-            this.setLoopMatchSuccess(false)
-            backData = this.backData
-
-            fun()
-
-            // 如果匹配失败，回退并退出循环
-            if (!this.ruleMatchSuccess) {
-                this.setBackDataAndRuleMatchSuccess(backData)
-                break
-            }
-
-            matchCount++
-        }
-
-        // 恢复外层的loopMatchSuccess状态
-        // 这样外层Or可以正确判断是否跳出
-        this.setLoopMatchSuccess(outerLoopMatchSuccess)
-
-        this.allowErrorStackPopAndReset()
-        
-        if (!matchCount) {
-            return
-        }
-        
-        return this.getCurCst()
-    }
 
     generateCst(cst: SubhutiCst) {
         return cst
