@@ -29,3 +29,4 @@ const t15 = delete a.b ** 2 // delete(a.b ** 2)
 console.log('✅ UpdateExpression 测试完成')
 
 
+

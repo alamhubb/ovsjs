@@ -372,10 +372,19 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * Packrat Parsing: 应用缓存结果
      * 
      * 根据缓存的结果恢复解析状态：
-     * - 成功：恢复 tokenIndex、ruleMatchSuccess，返回缓存的 CST
+     * - 成功：恢复 tokenIndex、ruleMatchSuccess、loopMatchSuccess，将缓存的 CST 添加到父节点，返回 CST
      * - 失败：设置 ruleMatchSuccess = false，返回 undefined
      * 
      * 关键：CST 节点直接复用，无需深拷贝（CST 是不可变的）
+     * 
+     * ⚠️ 重要：必须将缓存的 CST 添加到当前父节点的 children
+     * - 缓存的 CST 是之前解析时的节点
+     * - 现在要复用它，但父节点上下文已经不同了
+     * - 必须手动添加到当前的 parentCst.children
+     * 
+     * ⚠️ 重要：必须设置 loopMatchSuccess = true（成功时）
+     * - Or 规则依赖 loopMatchSuccess 判断分支是否成功
+     * - 如果不设置，Or 会认为分支失败，继续尝试下一个分支
      * 
      * @param cached 缓存的结果
      * @returns CST 节点或 undefined
@@ -388,12 +397,27 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         this.setRuleMatchSuccess(cached.ruleMatchSuccess)
         
         if (cached.success && cached.cst) {
+            // ========================================
+            // 关键修复1：将缓存的 CST 添加到当前父节点
+            // ========================================
+            // 缓存命中时跳过了 processCst，所以需要手动处理父子关系
+            const parentCst = this.cstStack[this.cstStack.length - 1]
+            if (parentCst) {
+                parentCst.children.push(cached.cst)
+            }
+            
+            // ========================================
+            // 关键修复2：设置 loopMatchSuccess = true
+            // ========================================
+            // Or 规则依赖这个标志判断分支是否成功
+            this.setLoopMatchSuccess(true)
+            
             // 成功：返回缓存的 CST
             // 注意：直接复用 CST，不需要深拷贝（CST 是不可变的）
-            // 父节点会通过 parentCst.children.push(cst) 引用它
             return cached.cst
         } else {
             // 失败：返回 undefined
+            // loopMatchSuccess 保持为 false（Or 规则会继续尝试下一个分支）
             return undefined
         }
     }
