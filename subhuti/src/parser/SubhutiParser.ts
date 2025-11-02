@@ -438,10 +438,10 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * - 即使0次匹配，也返回空CST节点（children为空数组）
      *
      * 关键点3：while条件为什么是 loopBranchAndRuleSuccess？
-     * - 第一次进入前，loopMatchSuccess默认为false，所以条件为false，不会进入
-     * - 但每次循环开始会重置为false，然后执行fun()
-     * - 如果fun()成功，会设置loopMatchSuccess=true，下次循环继续
-     * - 实际上第一次循环是靠前面的逻辑进入的（需要检查）
+     * - 第一次进入前：手动设置 loopMatchSuccess = true，让条件为true，可以进入
+     * - 每次循环开始：重置 loopMatchSuccess = false，清空状态
+     * - 执行fun()：如果成功，内部会设置 loopMatchSuccess = true
+     * - 下次循环判断：两个标识都为true，继续循环；任一为false，退出
      *
      * 示例场景：
      * this.Or([
@@ -461,6 +461,9 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         let backData = this.backData
         let matchCount = 0
 
+        // 关键：初始化loopMatchSuccess=true，让while条件第一次为true，可以进入循环
+        // 否则默认值为false，while条件永远为false，无法进入循环
+        this.setLoopMatchSuccess(true)
         while (this.loopBranchAndRuleSuccess) {
             // 每次循环开始前重置loopMatchSuccess=false
             // 让内部规则重新设置（如果成功会设为true）
@@ -689,17 +692,17 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
                 // 后续只有 allowErrorStackPopAndReset()，不会修改这两个标识
                 // 所以最后判断时 loopBranchAndRuleSuccess 仍为 true
                 break
+            }
+
+            // 失败：回退状态
+            if (index !== funLength) {
+                // 不是最后一个分支：回退并继续尝试
+                // 设置 ruleMatchSuccess = true，允许继续执行
+                this.setBackDataAndRuleMatchSuccess(backData)
             } else {
-                // 失败：回退状态
-                if (index !== funLength) {
-                    // 不是最后一个分支：回退并继续尝试
-                    // 设置 ruleMatchSuccess = true，允许继续执行
-                    this.setBackDataAndRuleMatchSuccess(backData)
-                } else {
-                    // 最后一个分支也失败：只回退数据
-                    // 不修改 ruleMatchSuccess（保持为false），向外传播失败
-                    this.setBackDataNoContinueMatch(backData)
-                }
+                // 最后一个分支也失败：只回退数据
+                // 不修改 ruleMatchSuccess（保持为false），向外传播失败
+                this.setBackDataNoContinueMatch(backData)
             }
         }
 
