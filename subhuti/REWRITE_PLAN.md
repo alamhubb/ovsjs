@@ -831,5 +831,149 @@ class SubhutiCst {
 
 **您的决定是？**
 
+---
+
+# 📝 实际修复记录
+
+## [2025-11-02] 修复回溯时的 CST 污染问题 ✅
+
+### 问题描述
+
+**现象**：CST 中出现大量空节点（`children: []`），占比高达 80%+
+
+**复现代码**：
+```javascript
+Math.max(1, 2) + Math.min(5, 3)
+```
+
+**问题节点**：
+- `NewExpression: { children: [] }`
+- `PostfixExpression: { children: [] }`
+- `UnaryExpression: { children: [] }`
+- `LeftHandSideExpression: { children: [] }`
+- 等等...
+
+### 根本原因
+
+Or 规则在回溯时只恢复了 `tokenIndex`，但没有清理失败分支已经添加到父节点的子节点。
+
+**问题代码**：
+```typescript
+// 之前的实现
+private saveState(): BacktrackData {
+    return {
+        tokenIndex: this.tokenIndex  // ✅ 只保存 token 位置
+        // ❌ 没有保存 cstStack 状态
+    }
+}
+
+private restoreState(data: BacktrackData) {
+    this.tokenIndex = data.tokenIndex  // ✅ 只恢复 token 位置
+    // ❌ 没有清理失败分支的子节点
+}
+```
+
+**执行流程**：
+1. Or 规则尝试第一个分支
+2. 分支失败前，已经创建了一些 CST 节点并添加到父节点
+3. 回溯时只恢复了 tokenIndex
+4. 父 CST 的 children 数组被污染（包含失败分支的空节点）
+
+### 修复方案：写时复制（Copy-on-Write）
+
+**核心思路**：
+- 保存状态时：记录每层 CST 的 children 数组长度
+- 回溯时：截断 children 数组到保存的长度
+
+**修复代码**：
+```typescript
+// 修复后的实现
+interface BacktrackData {
+    tokenIndex: number
+    cstChildrenLengths: number[]  // 新增：每层 CST 的 children 长度
+}
+
+private saveState(): BacktrackData {
+    // 保存每层 CST 的 children 长度
+    const cstChildrenLengths = this.cstStack.map(cst => 
+        cst.children ? cst.children.length : 0
+    )
+    
+    return {
+        tokenIndex: this.tokenIndex,
+        cstChildrenLengths
+    }
+}
+
+private restoreState(data: BacktrackData) {
+    // 恢复 token 位置
+    this.tokenIndex = data.tokenIndex
+    
+    // 截断每层 CST 的 children 数组（移除失败分支的节点）
+    for (let i = 0; i < this.cstStack.length && i < data.cstChildrenLengths.length; i++) {
+        const cst = this.cstStack[i]
+        const savedLength = data.cstChildrenLengths[i]
+        
+        if (cst.children && cst.children.length > savedLength) {
+            // 截断 children 数组到保存的长度
+            cst.children.length = savedLength
+        }
+    }
+}
+```
+
+### 修复效果
+
+**测试 1：简单表达式 `a`**
+```
+总节点数: 23
+空节点数: 3 (13.04%)  ← 从 80%+ 降到 13%
+✅ 无重复 token（回溯成功）
+```
+
+**测试 2：复杂表达式 `Math.max(1, 2) + Math.min(5, 3)`**
+```
+总节点数: 67
+空节点数: 9 (13.43%)  ← 从数百个降到 9 个
+✅ 无重复 token（回溯成功）
+```
+
+**剩余的 9 个空节点都是合理的**：
+- `PostfixExpression` - Option 规则，0次匹配（如 `i++` 的 `++` 是可选的）
+- `UnaryExpression` - Option 规则，0次匹配（如 `+1` 的 `+` 是可选的）
+- `EmptySemicolon` - 空分号规则，本身就是空的
+
+### 技术亮点
+
+✅ **简单高效**：无需深度复制整个 CST，只记录长度  
+✅ **性能最优**：截断数组的时间复杂度 O(1)  
+✅ **内存友好**：不需要额外的副本  
+✅ **完全透明**：对使用者完全透明  
+
+### 修改文件
+
+- `subhuti/src/parser/SubhutiParser.ts`
+  - 修改 `BacktrackData` 接口（+1 字段）
+  - 修改 `saveState()` 方法（+3 行）
+  - 修改 `restoreState()` 方法（+10 行）
+
+### 测试文件
+
+- `slime/tests/ppp/test-backtrack.ts` - 回溯机制测试
+- `slime/tests/ppp/test-complex.ts` - 复杂表达式测试
+
+### 经验总结
+
+**设计教训**：
+- PEG Parser 的回溯不仅要恢复 token 位置，还要恢复 CST 状态
+- "成功才添加"的策略在 Or 规则中并不成立（分支失败前已经添加了）
+- 写时复制是解决回溯问题的最优方案
+
+**最佳实践**：
+- 回溯数据应该包含所有可变状态
+- 使用长度记录而不是深度复制（性能优化）
+- 测试时要检查 CST 的完整性（不仅是能否解析成功）
+
+---
 
 

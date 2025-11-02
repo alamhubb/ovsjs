@@ -23,17 +23,22 @@ import SubhutiTokenConsumer from "./SubhutiTokenConsumer.ts"
 // ============================================
 
 /**
- * 回溯数据 - 只需要 token 位置
+ * 回溯数据 - token 位置 + CST 状态
  * 
- * 参考：PEG.js 的极简设计
+ * 参考：PEG.js 的极简设计 + 写时复制优化
  * 
- * 为什么只需要 tokenIndex？
- * - CST 采用"成功才添加"模式
- * - 失败时 CST 从未被添加，无需回退
- * - 只需要恢复 token 读取位置即可
+ * 包含内容：
+ * - tokenIndex: token 读取位置
+ * - cstChildrenLengths: 每个 CST 节点的 children 数组长度
+ * 
+ * 写时复制策略：
+ * - 保存时：记录每个 CST 的 children.length
+ * - 回溯时：截断 children 数组到保存的长度
+ * - 优点：无需深度复制，性能最优
  */
 interface BacktrackData {
     tokenIndex: number
+    cstChildrenLengths: number[]  // 每层 CST 的 children 长度
 }
 
 /**
@@ -456,23 +461,45 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     /**
      * 保存状态（创建快照）
      * 
-     * 参考：PEG.js 的极简设计
-     * 
-     * 只需要保存 token 位置！
-     * - CST 采用"成功才添加"，失败时没有添加过，无需回退
-     * - 栈操作由 try-finally 保证，无需快照
+     * 写时复制策略：
+     * - 保存 token 位置
+     * - 保存每层 CST 的 children 数组长度
+     * - 回溯时截断到保存的长度（丢弃失败分支添加的节点）
      */
     private saveState(): BacktrackData {
+        // 保存每层 CST 的 children 长度
+        const cstChildrenLengths = this.cstStack.map(cst => 
+            cst.children ? cst.children.length : 0
+        )
+        
         return {
-            tokenIndex: this.tokenIndex
+            tokenIndex: this.tokenIndex,
+            cstChildrenLengths
         }
     }
     
     /**
      * 恢复状态（回溯）
+     * 
+     * 写时复制策略：
+     * - 恢复 token 位置
+     * - 截断每层 CST 的 children 数组（丢弃失败分支的节点）
      */
     private restoreState(data: BacktrackData) {
+        // 恢复 token 位置
         this.tokenIndex = data.tokenIndex
+        
+        // 截断每层 CST 的 children 数组
+        // 这样就移除了失败分支添加的所有子节点
+        for (let i = 0; i < this.cstStack.length && i < data.cstChildrenLengths.length; i++) {
+            const cst = this.cstStack[i]
+            const savedLength = data.cstChildrenLengths[i]
+            
+            if (cst.children && cst.children.length > savedLength) {
+                // 截断 children 数组到保存的长度
+                cst.children.length = savedLength
+            }
+        }
     }
     
     // ========================================
