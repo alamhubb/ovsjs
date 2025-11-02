@@ -1752,7 +1752,7 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
                 }
             },
         ])
-        return this.getCurCst()
+        return this.curCst
     }
 
     @SubhutiRule
