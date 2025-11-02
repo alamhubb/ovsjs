@@ -1713,12 +1713,13 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
 
     @SubhutiRule
     ModuleItemList() {
-        this.FaultToleranceMany(() => {
-            this.Or([
-                {alt: () => this.ImportDeclaration()},
-                {alt: () => this.ExportDeclaration()},
+        this.Many(() => {
+            this.StatementListItem()
+            /*this.Or([
+                // {alt: () => this.ImportDeclaration()},
+                // {alt: () => this.ExportDeclaration()},
                 {alt: () => this.StatementListItem()},
-            ])
+            ])*/
         })
     }
 

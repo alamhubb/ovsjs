@@ -70,88 +70,60 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         this.uuid = SubhutiUtil.generateUUID()
     }
 
-    faultTolerance = false
     tokenConsumer: T
     _tokens: SubhutiMatchToken[] = []
     private tokenIndex: number = 0  // 方案B：tokens读取索引（替代shift）
     initFlag = true
     curCst: SubhutiCst
     cstStack: SubhutiCst[] = []
-    private _continueMatch = true
+    private _ruleMatchSuccess = true
     thisClassName: string
     uuid: string
 
-    // Packrat Parsing: 失败缓存表（只缓存失败，不缓存成功）
-    // 成功的情况有副作用（CST构建），不能简单缓存
-    // 失败的情况无副作用，可以安全缓存
-    // key: "ruleName:position:stackDepth"
-    // value: true（表示这个位置这个规则已经尝试过并失败）
-    private failureCache = new Map<string, boolean>()
+    /**
+     * 两个核心标识的职责划分：
+     * 
+     * 1. continueMatch - 全局匹配状态标识
+     *    - 语义：当前匹配是否成功
+     *    - 作用域：全局
+     *    - 用途：控制整个解析流程是否继续执行
+     *    - 检查点：几乎所有规则入口都检查 continueMatchIsTrue
+     * 
+     * 2. loopMatchSuccess - 循环跳出控制标识
+     *    - 语义：Or/Many规则是否应该跳出循环
+     *    - 作用域：Or/Many规则内部
+     *    - 用途：Or规则找到成功分支后立即跳出，不尝试后续分支
+     *    - 特性：Or规则每次尝试分支前重置为false，Many规则需要保存/恢复外层状态
+     * 
+     * 为什么需要两个标识？
+     * - Or规则每次尝试新分支前需要重置loopMatchSuccess=false
+     * - 如果只用continueMatch，重置为false会导致分支内部无法执行
+     * - Many规则需要保存/恢复loopMatchSuccess，但不需要对continueMatch这样做
+     */
+    private _loopMatchSuccess = false
 
-    //只针对or，特殊，many有可能没匹配就触发true导致不执行下面的，避免这种情况
-    //记录是否匹配成功，用来未匹配成功则pop子节点的记录
-    private _orBreakFlag = false
-
-    get orBreakFlag(): boolean {
-        return this._orBreakFlag
+    get loopMatchSuccess(): boolean {
+        return this._loopMatchSuccess
     }
 
-    setOrBreakFlag(flag: boolean) {
-        this._orBreakFlag = flag
+    setLoopMatchSuccess(flag: boolean) {
+        this._loopMatchSuccess = flag
     }
 
-    get continueMatch() {
-        return this._continueMatch
+    get ruleMatchSuccess() {
+        return this._ruleMatchSuccess
     }
 
-    printOrBreakFlag() {
-        QqqqUtil.log("printOrBreakFlag:" + this.orBreakFlag)
+    setRuleMatchSuccess(flag: boolean) {
+        this._ruleMatchSuccess = flag
     }
-
-    printStateAndBreak() {
-        this.printMatchState()
-        this.printOrBreakFlag()
-    }
-
-    setContinueMatch(flag: boolean) {
-        this._continueMatch = flag
-    }
-
-//必须两个一个不够用，
-    // 一个是判断是否存在错误，就不继续执行了的，
-    // 另一个是判断是否跳出循环的，只有匹配成功才跳出循环 , 只用一个的问题就是 or的时候，
-    //
-    // 一个就够了，最新
-    // 如果你进入之后改为了false，里面的匹配就无法执行了，如果你不改代表着true进入，里面应该有给改为false的呀
-    //many呢，many这种出去的时候，他又会给改成true了，进入改为true，while，改为false，执行完毕改为如果为false改为ture，等于没执行，只有true才能进入，出去也是true
-    //or，ture进入，执行完是true就跳出，执行完是false就重新执行，改为true，肯定有地方会改为false的呀
-    //是否继续匹配
-    //是否有错误
-    // 最新问题，如果一个or里面只有一个many，
-
-
-    /*  private _continueExec = true
-
-      setContinueExec(value: boolean) {
-          this._continueExec = value;
-      }
-
-      get continueExec(): boolean {
-          return this._continueExec;
-      }
-  */
-    //一个是标识many这种
-    //一个是标识token匹配失败了
-
-
-//many中，无线循环，什么时候终止呢， 执行时有个flag，  执行前改为false，如果 执行成功变为true了则可以再次进去，再次进入后将他改为false
 
     printCst() {
         JsonUtil.log(this.getCurCst())
     }
 
     printMatchState() {
-        QqqqUtil.log("continueMatch:" + this.continueMatch)
+        QqqqUtil.log("continueMatch:" + this.ruleMatchSuccess)
     }
 
     printTokens() {
@@ -160,8 +132,12 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         // console.log('tokens:' + this.tokens.map(item => item.tokenName).join(','))
     }
 
-    printCstStacks() {
-        QqqqUtil.log(this.cstStack.map(item => item.name).join(','))
+    getCstStacksNames() {
+        return this.cstStack.map(item => item.name).join('->')
+    }
+
+    getTokensNames() {
+        return this.tokens.map(item => item.tokenName).join('->')
     }
 
 
@@ -213,113 +189,113 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         this._allowError = allowError
     }
 
-    get continueMatchIsTrue() {
-        //如果不能匹配，测判断允许错误，则直接返回，无法继续匹配只能返回，避免递归
-        return (this.continueMatch)
-    }
-
     // 方案B：检查是否已读取完所有tokens
     public get tokenIsEmpty() {
         return !this._tokens || this.tokenIndex >= this._tokens.length
     }
 
-    //首次执行，则初始化语法栈，执行语法，将语法入栈，执行语法，语法执行完毕，语法出栈，加入父语法子节点
+    /**
+     * 规则执行入口（由@SubhutiRule装饰器生成）
+     * 
+     * 初始化阶段：
+     * - 重置continueMatch=true（允许开始解析）
+     * - loopMatchSuccess保持默认值false
+     */
     subhutiRule(targetFun: any, ruleName: string, className: string) {
-        //确定是本类的方法
+        // 确定是本类的方法
         if (this.hasOwnProperty(ruleName)) {
             if (className !== this.thisClassName) {
                 return
             }
         }
+        
         const initFlag = this.initFlag
+        
         if (initFlag) {
+            // 初始化：首次执行规则
             this.initFlag = false
             this.allowErrorStack = []
-            this.setContinueMatch(true)
+            this.setRuleMatchSuccess(true)  // 初始化continueMatch为true
             this.cstStack = []
             this.ruleExecErrorStack = []
-            // Packrat: 每次新的parse开始时，清空失败缓存
-            this.failureCache.clear()
         } else {
-            if (!this.continueMatchIsTrue) {
+            // 非初始化：检查是否可以继续执行
+            if (!this.ruleMatchSuccess) {
                 return
             }
         }
-        // LogUtil.log(this.cstStack.map(item=>item.name).join('-->'))
-        // LogUtil.log('tokenIndex: ' + this.tokenIndex)
-        let cst = this.processCst(ruleName, targetFun)
+        
+        const cst = this.processCst(ruleName, targetFun)
+        
         if (initFlag) {
-            //执行完毕，改为true
+            // 执行完毕，恢复initFlag
             this.initFlag = true
         } else {
             const parentCst = this.cstStack[this.cstStack.length - 1]
             if (cst) {
-                //优化cst展示
+                // 优化CST展示：删除空数组
                 if (!cst.children?.length) {
                     cst.children = undefined
                 }
                 if (!cst.tokens?.length) {
                     cst.tokens = undefined
-                } else {
-                    // parentCst.tokens.push(...cst.tokens);
                 }
-                // parentCst.children.push(cst)
             }
             this.setCurCst(parentCst)
         }
+        
         if (cst) {
             return cst
         }
         return
     }
 
-    //记录失败的匹配
-    failMatchList: SubhutiCst[] = []
-
-    //执行语法，将语法入栈，执行语法，语法执行完毕，语法出栈
+    /**
+     * 处理CST节点：执行规则，构建CST树
+     * 
+     * 成功/失败判断：
+     * - continueMatch=true：规则匹配成功，保留CST节点
+     * - continueMatch=false：规则匹配失败，删除CST节点
+     */
     processCst(ruleName: string, targetFun: Function): SubhutiCst {
-
-        let cst = new SubhutiCst()
+        const cst = new SubhutiCst()
         cst.name = ruleName
-        // if (this.curCst) {
-        //     cst.pathName = this.curCst.pathName + pathNameSymbol + cst.name
-        // } else {
-        //     cst.pathName = ruleName
-        // }
         cst.children = []
         cst.tokens = []
+        
         let parentCst: SubhutiCst
         if (!this.initFlag && this.cstStack.length) {
             parentCst = this.cstStack[this.cstStack.length - 1]
             parentCst.children.push(cst)
         }
+        
         const oldTokensLength = this.tokens.length
+        
         this.setCurCst(cst)
         this.cstStack.push(cst)
         this.ruleExecErrorStack.push(ruleName)
-        // 调试日志：增加越界保护
-        // console.log(this.cstStack.map(item => item.name).join('->'))
-        // console.log('正在解析的tokenIndex是：' + this.tokenIndex)
-        // console.log('正在解析的token是：' + (this.tokens[0] ? this.tokens[0].tokenValue : 'EOF'))
-        // 规则解析，如果自定义了返回内容，则有返回，则用自定义返回覆盖默认节点
-        let res: SubhutiCst = targetFun.apply(this)
+        
+        // 执行规则函数
+        const res: SubhutiCst = targetFun.apply(this)
+        
         this.cstStack.pop()
         this.ruleExecErrorStack.pop()
-        //如果匹配成功，保留子节点，失败删除
-        if (this.continueMatch || (this.faultTolerance && this.tokens.length < oldTokensLength)) {
+        
+        // 判断规则是否成功
+        if (this.ruleMatchSuccess) {
+            // 成功：保留CST节点
             if (cst.children[0]) {
                 if (!cst.children[0].loc) {
-                    // console.log(cst.children[0])
                     return cst
                 }
-                // 防御性检查：确保最后一个子节点也有loc
+                
+                // 设置CST的位置信息
                 const lastChild = cst.children[cst.children.length - 1]
                 if (!lastChild || !lastChild.loc) {
-                    // 最后一个子节点缺少loc，使用第一个子节点的loc
                     cst.loc = {
                         type: cst.name,
                         start: cst.children[0].loc.start,
-                        end: cst.children[0].loc.end,  // 降级：使用第一个子节点的end
+                        end: cst.children[0].loc.end,
                     }
                 } else {
                     cst.loc = {
@@ -331,136 +307,145 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             }
             return cst
         }
-        //代表成功触发了一个
+        
+        // 失败：从父节点删除此CST节点
         if (parentCst) {
             parentCst.children.pop()
         }
         return
     }
 
-    //匹配1次或者N次
+    /**
+     * AT_LEAST_ONE规则：匹配1次或多次（至少成功1次）
+     * 
+     * 核心逻辑：
+     * 1. 第一次必须成功，否则整个规则失败
+     * 2. 后续循环允许失败（类似Many）
+     * 3. 第一次失败会向外传播失败状态（continueMatch=false）
+     * 
+     * 与Many的区别：
+     * - Many：0次成功也算成功
+     * - AT_LEAST_ONE：至少1次成功才算成功
+     */
     AT_LEAST_ONE(fun: Function) {
-        if (!this.continueMatchIsTrue) {
+        if (!this.ruleMatchSuccess) {
             return
         }
+        
         let index = 0
-        while (this.continueMatch) {
+        
+        while (this.ruleMatchSuccess) {
             if (index > 0) {
+                // 第2次及以后：允许失败（类似Many）
                 this.setAllowErrorNewState()
-                let backData = this.backData  // 方案B：只拷贝3个数字
+                const backData = this.backData
+                
                 fun()
-                //必须放这里，会循环push，所以需要循环pop
-                this.setAllowErrorLastStateAndPop()
-                //If the match fails, the tokens are reset.
-                if (!this.continueMatch) {
-                    this.setBackData(backData)
+                
+                this.allowErrorStackPopAndReset()
+
+                if (!this.ruleMatchSuccess) {
+                    // 失败：回退并退出循环
+                    this.setBackDataAndRuleMatchSuccess(backData)
                     break
-                } else if (this.continueMatch) {
-                    //校验可执行没问题，因为肯定是可执行
-                    if (!this.tokens.length) {
-                        //如果token执行完毕，则跳出
-                        break
-                    }
+                } else if (!this.tokens.length) {
+                    // 成功但token用完：退出循环
+                    break
                 }
             } else {
+                // 第1次：必须成功
                 fun()
-                //肯定是continueExec，tokens才会为空
-                //校验可执行没问题，因为肯定是可执行
-                //只有没token才可能是continueExec=true，如果有token，有可能匹配了，也可能没匹配
+
                 if (!this.tokens.length) {
-                    if (this.continueMatch) {
+                    if (this.ruleMatchSuccess) {
+                        // 成功且token用完
                         break
-                    } else if (!this.continueMatch) {
-                        throw new Error('不可能的情况')
+                    } else {
+                        // 第1次就失败且token用完（不可能的情况）
+                        throw new Error('AT_LEAST_ONE: 第一次匹配失败且token为空')
                     }
                 }
             }
             index++
         }
-        //放循环里面了，逻辑更清晰,不放循环里，还需要判断index > 0
-        /*if (index > 0) {
-            //只有index>0 了才需要重置回去状态，放循环里多余，没必要
-            this.setAllowError(!!this.allowErrorStack.length);
-        }*/
+
         return this.getCurCst()
     }
 
-    //匹配0次或者1次
+    /**
+     * Option规则：匹配0次或1次（总是成功）
+     *
+     * 核心逻辑：
+     * 1. Option本身总是成功的（匹配0次也是成功）
+     * 2. 如果内部规则失败，回退状态（但Option仍然成功）
+     * 3. loopMatchSuccess传播：外层Or状态 OR 内部是否成功
+     */
     Option(fun: Function): SubhutiCst {
-        if (!this.continueMatchIsTrue) {
+        if (!this.ruleMatchSuccess) {
             return
         }
-        let lastBreakFlag = this.orBreakFlag
-        this.setAllowErrorNewState()
-        let backData = this.backData  // 方案B：快照索引
-        fun()
-        //If the match fails, the tokens are reset.
-        let thisBackData: SubhutiBackData
-        if (!this.continueMatch) {
-            if (this.tokenIndex > backData.tokenIndex) {  // 方案B：比较索引
-                thisBackData = this.backData  // 方案B：快照索引
-            }
-            this.setBackData(backData)
-        }
-        let curFlag = this.orBreakFlag
-        if (this.orBreakFlag || lastBreakFlag) {
-            this.setOrBreakFlag(true)
-        }
-        this.setAllowErrorLastStateAndPop()
 
-        // 容错模式：保留部分成功
-        //
-        // 【设计意图】
-        //   Option是可选项（0或1次），失败也是正常的
-        //   但如果部分成功（消费了部分tokens），保留这个状态
-        //   让上层可以基于部分成功继续处理
-        //
-        // 【应用场景】
-        //   语法错误的代码，如：var x =  （缺少初始化值）
-        //   Initializer = Eq + AssignmentExpression
-        //   - Eq成功，消费'='
-        //   - AssignmentExpression失败（没有值）
-        //   保留只有'='的Initializer（部分成功）
-        //
-        // 【核心价值】
-        //   IDE场景下，提供更精确的错误提示：
-        //   - "变量x缺少初始化值"（知道有'='）
-        //   vs "语法错误"（完全失败，不知道用户意图）
-        //
-        // 【理论风险】
-        //   部分成功破坏了Option的"0或1"语义
-        //   CST可能不完整，需要AST转换和上层容错处理
-        if (this.faultTolerance && thisBackData) {
-            this.setBackDataNoContinueMatch(thisBackData)
-            return this.getCurCst()
+        // 保存外层的loopMatchSuccess状态（可能来自外层Or）
+        const outerLoopMatchSuccess = this.loopMatchSuccess
+
+        this.setAllowErrorNewState()
+        const backData = this.backData
+
+        fun()  // 执行可选规则
+
+        // 如果匹配失败，回退状态（但Option本身不失败）
+        if (!this.ruleMatchSuccess) {
+            this.setBackDataAndRuleMatchSuccess(backData)  // 这会设置 continueMatch = true
         }
-        if (!curFlag) {
-            return
+
+        // loopMatchSuccess传播逻辑：
+        // - 如果外层在Or中（outerLoopMatchSuccess=true），保持true
+        // - 或者内部规则成功了（loopMatchSuccess=true），设为true
+        // - 这样可以让Or正确跳出
+        if (outerLoopMatchSuccess || this.loopMatchSuccess) {
+            this.setLoopMatchSuccess(true)
         }
+
+        this.allowErrorStackPopAndReset()
+
+        // Option总是返回CST（因为0次匹配也是成功）
         return this.getCurCst()
     }
 
 
     consume(tokenName: SubhutiCreateToken) {
-        if (!this.continueMatchIsTrue) {
+        if (!this.ruleMatchSuccess) {
             return
         }
         return this.consumeToken(tokenName.name)
     }
 
-    //消耗token，将token加入父语法
+    /**
+     * 消耗token，将token加入当前CST节点
+     *
+     * 两个标识的使用：
+     * - 匹配成功：setContinueMatchAndNoBreak(true)
+     *   → continueMatch=true（继续执行后续规则）
+     *   → loopMatchSuccess=true（通知Or规则跳出）
+     *
+     * - 匹配失败：setContinueMatchAndNoBreak(false)
+     *   → continueMatch=false（停止执行）
+     *   → loopMatchSuccess=false（让Or规则尝试下一个分支）
+     */
     consumeToken(tokenName: string) {
-        let popToken = this.getMatchToken(tokenName)
-        //容错代码
+        const popToken = this.getMatchToken(tokenName)
+
+        // Token不匹配
         if (!popToken || popToken.tokenName !== tokenName) {
-            //因为CheckMethodCanExec 中组织了空token，所以这里不会触发
-            //内部consume,也需要把标识设为false，有可能深层子设为了true，但是后来又改为了false，如果不同步改就会没同步
+            // 设置两个标识为false（匹配失败）
             this.setContinueMatchAndNoBreak(false)
-            // this.setContinueFor(false)
-            if (this.faultTolerance || this.outerHasAllowError || this.allowError) {
-            // if (this.faultTolerance || this.outerHasAllowError || (this.allowError && !this.optionAndOrAllowErrorMatchOnce)) {
+
+            // 允许失败，返回而不抛错
+            if (this.outerHasAllowError || this.allowError) {
                 return
             }
+
+            // 抛出语法错误
             this.printTokens()
             if (popToken) {
                 throw new Error('syntax error expect：' + popToken.tokenValue)
@@ -468,13 +453,13 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
                 throw new Error('syntax error expect：' + tokenName)
             }
         }
+
+        // Token匹配成功
         this.setContinueMatchAndNoBreak(true)
-        // this.optionAndOrAllowErrorMatchOnce = true
-        //性能优化先不管
-        // this.setAllowError(this.allowErrorStack.length > 1)
-        //如果成功匹配了一个，则将允许错误状态，改为上一个
-        popToken = this.consumeMatchToken(tokenName)
-        return this.generateCstByToken(popToken)
+
+        // 消耗token并生成CST节点
+        const token = this.consumeMatchToken(tokenName)
+        return this.generateCstByToken(token)
     }
 
     //获取token
@@ -521,7 +506,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     allowErrorStack = []
     ruleExecErrorStack = []
 
-    setAllowErrorLastStateAndPop() {
+    allowErrorStackPopAndReset() {
         this.allowErrorStack.pop()
         this.onlySetAllowErrorLastState()
     }
@@ -550,199 +535,117 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      *
      * 核心机制：
      * 1. 依次尝试每个分支（alt函数）
-     * 2. 任一分支成功 → 跳出循环
-     * 3. 所有分支都失败：
-     *    - 非容错模式 → 返回失败
-     *    - 容错模式 → 选择"消费token最多"的分支（最接近成功）
+     * 2. 任一分支成功（loopMatchSuccess && continueMatch）→ 跳出循环
+     * 3. 所有分支都失败 → 返回undefined
      *
-     * 容错处理的关键逻辑：
-     * - 如果所有Or分支都失败，说明当前tokens无法匹配任何一个规则分支
-     * - thisBackAry记录了每个分支的"部分成功"状态
-     * - 策略：选择消费token最多的分支（getTokensLengthMin）
-     * - 原理：消费token越多，说明越接近正确的语法，保留这个结果继续
+     * 两个标识的协同工作：
+     * - continueMatch：当前分支是否匹配成功
+     * - loopMatchSuccess：是否应该跳出Or循环（向外传播成功信号）
      *
-     * 与FaultToleranceMany的区别：
-     * - FaultToleranceMany：循环尝试同一个规则（Many语法）
-     * - Or：尝试多个不同规则分支（Or语法）
-     *
-     * Packrat优化：
-     * - 只缓存失败的尝试（避免重复失败）
-     * - 成功的情况有CST构建副作用，不能简单缓存
-     * - 失败的情况无副作用，可以安全跳过
+     * 每次尝试分支前重置loopMatchSuccess=false，避免上一个分支的状态影响
      */
     Or(subhutiParserOrs: SubhutiParserOr[]): SubhutiCst {
-        if (!this.continueMatchIsTrue) {
+        if (!this.ruleMatchSuccess) {
             return
         }
 
         this.setAllowErrorNewState()
+
         const funLength = subhutiParserOrs.length
         let index = 0
-
-        let lastBreakFlag = this.orBreakFlag
-
-        const thisBackAry: SubhutiBackData[] = []  // 保存每个分支的部分成功状态
+        let hasSuccess = false  // 记录是否有分支成功
 
         for (const subhutiParserOr of subhutiParserOrs) {
             index++
 
-            // Packrat: 生成当前分支的缓存key
-            // 包含：token位置 + 调用栈路径 + 分支索引
-            const position = this.tokenIndex  // ← 修复：使用当前读取位置,而不是总长度!
-            const stackPath = this.ruleExecErrorStack.join('>')  // 完整调用路径
-            const altIndex = index - 1  // 分支索引
-            const failureKey = `Or:${position}:${stackPath}:${altIndex}`
-
-            // Packrat: 如果这个分支之前尝试过并失败，跳过
-            if (this.failureCache.has(failureKey)) {
-                const currentRule = this.ruleExecErrorStack[this.ruleExecErrorStack.length - 1]
-                continue  // 跳过这个分支，尝试下一个
-            }
-
-            // 如果是最后一个分支，失败时报错
+            // 最后一个分支失败时报错，其他分支允许错误
             if (index === funLength) {
-                this.setAllowError(false)   // 最后一次尝试，不允许错误
+                this.setAllowError(false)
             } else {
-                this.setAllowError(true)   // 允许错误，继续尝试下一个分支
+                this.setAllowError(true)
             }
-            let backData = this.backData  // 方案B：快照索引，只拷贝3个数字
 
-            // 考虑到执行空元素的情况，如果执行了空元素，应该是跳出的
-            this.setOrBreakFlag(false)
+            const backData = this.backData
+
+            // 关键：每次尝试新分支前重置loopMatchSuccess=false
+            // 这样分支内部才能通过设置loopMatchSuccess=true来表示"我成功了"
+            this.setLoopMatchSuccess(false)
+
             subhutiParserOr.alt()  // 尝试执行当前分支
 
-            // 如果匹配成功，跳出循环
-            if (this.continueForAndNoBreak) {
-                // 容错模式：贪婪匹配优化
-                //
-                // 【设计意图】
-                //   在"成功但消费少"和"失败但消费多"之间，选择消费更多的
-                //   原理：消费更多tokens = 更接近完整的语法匹配
-                //
-                // 【触发条件】
-                //   1. 当前分支成功（continueForAndNoBreak = true）
-                //   2. 之前有失败分支部分成功（thisBackAry有记录）
-                //   3. 失败分支剩余tokens < 成功分支剩余tokens（失败分支消费更多）
-                //
-                // 【实际效果】
-                //   在JavaScript语法下很少触发，因为：
-                //   - JavaScript语法设计良好，Or分支优先级明确
-                //   - 失败分支通常消费很少就失败
-                //   - 成功分支通常消费完整语法
-                //
-                // 【理论风险】
-                //   失败分支的CST可能不完整，但依赖容错假设：
-                //   "消费更多 = 更接近正确"，在实践中通常成立
-                if (this.faultTolerance) {
-                    // 获取消费最多的失败分支
-                    const res = this.getTokensLengthMin(thisBackAry)
-                    if (res) {
-                        if (res.tokenIndex > this.tokenIndex) {  // 方案B：比较索引
-                            // 失败分支消费更多，选择失败分支
-                            this.setBackDataNoContinueMatch(res)
-                        }
-                    }
-                }
-                // Or语法只要有一个分支成功就必须break，无论还有没有tokens
+            // 检查分支是否成功
+            if (this.loopMatchSuccess && this.ruleMatchSuccess) {
+                // 成功：两个标识都为true
+                hasSuccess = true
                 break
-            } else if (!this.continueForAndNoBreak) {
-                // 当前分支失败
-
-                // Packrat: 记录这个分支在这个位置失败了
-                this.failureCache.set(failureKey, true)
-
-                if (this.tokenIndex > backData.tokenIndex) {  // 方案B：比较索引
-                    // 有部分token被消费（部分匹配成功）
-                    const thisBackData = this.backData  // 方案B：快照索引
-                    thisBackAry.push(thisBackData)  // 记录这个"部分成功"的状态
-                }
-
-                // 匹配失败的处理
+            } else if (!this.isBranchSuccess) {
+                // 失败：回退状态
                 if (index !== funLength) {
-                    // 不是最后一个分支：重置状态，尝试下一个分支
-                    this.setBackData(backData)
+                    // 不是最后一个分支：回退并继续尝试
+                    this.setBackDataAndRuleMatchSuccess(backData)
                 } else {
-                    // 最后一个分支也失败了：所有分支都失败
+                    // 最后一个分支也失败：设置continueMatch=false
                     this.setBackDataNoContinueMatch(backData)
                 }
             }
         }
 
-        let curFlag = this.orBreakFlag
+        this.allowErrorStackPopAndReset()
 
-        // 必须放这里，不能放在其他位置（会导致重复执行或不执行）
-        this.setAllowErrorLastStateAndPop()
-
-        if (curFlag) {
-            // 有分支成功
+        if (hasSuccess) {
             return this.getCurCst()
         }
 
-        // 容错模式：所有分支都失败，但有部分成功
-        //
-        // 【设计意图】
-        //   选择失败分支中消费最多的（最接近正确的语法）
-        //   保留部分匹配结果，让上层（FaultToleranceMany）可以继续处理
-        //
-        // 【应用场景】
-        //   语法错误的代码，如：var x = (1 + 2  （缺少右括号）
-        //   - LParen成功，消费'('
-        //   - Expression成功，消费'1 + 2'
-        //   - RParen失败，期望')'但遇到EOF
-        //   保留部分成功（有LParen和Expression），继续解析后续代码
-        //
-        // 【核心价值】
-        //   IDE场景下，用户输入不完整代码时：
-        //   - 保留部分AST，提供语法提示
-        //   - 不因为一个错误就完全失败
-        //   - 继续解析后续代码，提供更多错误信息
-        //
-        // 【理论风险】
-        //   部分成功的CST不完整，依赖上层容错机制和AST转换的容错处理
-        if (this.faultTolerance && thisBackAry.length) {
-            // 选择"消费token最多"的分支（最接近正确的语法）
-            const res = this.getTokensLengthMin(thisBackAry)
-            this.setBackDataNoContinueMatch(res)
-            return this.getCurCst()
-        }
-
-        // 完全失败，无任何匹配
+        // 所有分支都失败
         return
     }
 
-    // 方案B：查找消费最多（tokenIndex最大）的快照
-    getTokensLengthMin(thisBackAry: SubhutiBackData[]) {
-        const res = thisBackAry.sort((a, b) => {
-            return b.tokenIndex - a.tokenIndex  // 方案B：tokenIndex越大，消费越多
-        })[0]
-        return res
+    /**
+     * 检查当前分支是否成功
+     *
+     * 分支成功的条件：
+     * - continueMatch = true（当前匹配成功）
+     * - loopMatchSuccess = true（应该跳出Or循环）
+     *
+     * 两个标识同时为true，表示分支成功并通知外层Or跳出
+     */
+    get isBranchSuccess() {
+        return this.loopMatchSuccess && this.ruleMatchSuccess
     }
 
-    get continueForAndNoBreak() {
-        return this.orBreakFlag && this.continueMatch
-    }
-
+    /**
+     * 同时设置两个核心标识
+     *
+     * 使用场景：consume() token时，匹配成功/失败需要同时更新两个状态
+     * - true: token匹配成功，继续执行，通知Or跳出
+     * - false: token匹配失败，停止执行，通知Or尝试下一个分支
+     */
     setContinueMatchAndNoBreak(value: boolean) {
-        //一个控制是否继续匹配
-        this.setContinueMatch(value)
-        //一个控制是否跳出循环，while，or
-        this.setOrBreakFlag(value)
-        //为什么需要两个，因为or进入时会把跳出标识设为false，为ture跳出，否则继续下一次
-        //如果用一个标识，设为false，之后匹配就不执行了
+        this.setRuleMatchSuccess(value)
+        this.setLoopMatchSuccess(value)
     }
 
-    // backData: any
-
-    setBackData(backData: SubhutiBackData) {
-        this.setContinueMatch(true)
+    /**
+     * 回退到快照状态，并设置continueMatch=true（表示可以继续尝试）
+     *
+     * 使用场景：Or/Many/Option规则失败后，回退状态并尝试下一个分支
+     *
+     * 重要：只恢复continueMatch，不恢复loopMatchSuccess
+     * - continueMatch=true：允许继续尝试
+     * - loopMatchSuccess保持当前值（由Or规则控制）
+     */
+    setBackDataAndRuleMatchSuccess(backData: SubhutiBackData) {
+        this.setRuleMatchSuccess(true)
         this.setBackDataNoContinueMatch(backData)
     }
 
-    // 方案B：回退状态，所有操作都是O(1)
-    // 核心优化：回退tokenIndex而非恢复数组内容
+    /**
+     * 回退到快照状态，不修改continueMatch
+     *
+     * 使用场景：Or规则最后一个分支失败，需要保持continueMatch=false
+     */
     setBackDataNoContinueMatch(backData: SubhutiBackData) {
-        this.tokenIndex = backData.tokenIndex  // 快照索引：回退读取位置
-        // 快照索引：直接截断数组，删除多余元素
+        this.tokenIndex = backData.tokenIndex
         this.curCst.children.length = backData.curCstChildrenLength
         this.curCst.tokens.length = backData.curCstTokensLength
     }
@@ -763,124 +666,57 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
 
     /**
-     * 容错版的Many循环
+     * Many规则：匹配0次或多次
      *
      * 核心机制：
-     * 1. 循环尝试执行fun()，直到匹配失败或没有更多tokens
-     * 2. 如果匹配失败，根据容错策略处理：
-     *    - 有部分成功（thisBackData存在）→ 保留部分结果
-     *    - 完全失败 → 跳过当前token，继续尝试剩余tokens
+     * 1. 循环执行fun()，直到匹配失败或token用完
+     * 2. 每次循环前重置loopMatchSuccess=false（表示"在循环中"）
+     * 3. 退出时恢复外层的loopMatchSuccess状态
      *
-     * 容错处理的关键逻辑：
-     * - 当所有规则分支都匹配失败时，说明当前第一个token无法匹配任何规则
-     * - 这证明当前token是"非法语句的开始"或"错误的token"
-     * - 策略：跳过这个token（consumeMatchToken），从下一个token重新尝试
-     * - 这样可以在遇到局部语法错误时继续解析剩余代码，而不是整体失败
+     * loopMatchSuccess的保存/恢复：
+     * - Many内部会修改loopMatchSuccess（每次循环重置为false）
+     * - 但外层可能在Or中（loopMatchSuccess=true/false）
+     * - 退出时需要恢复外层状态，让外层Or正确工作
      */
-    FaultToleranceMany(fun: Function) {
-        if (!this.continueMatchIsTrue) {
-            return
-        }
-        // 不需要在循环内部修改allowError，因为如果子节点改了，退出子节点时也会重置回来的
-        this.setAllowErrorNewState()
-
-        let lastBreakFlag = this.orBreakFlag
-
-        let backData = this.backData  // 方案B：快照索引
-
-        let matchCount = 0
-
-        this.setContinueMatchAndNoBreak(true)
-        // 循环条件：继续匹配 或 (容错模式 且 还有tokens)
-        while (this.continueForAndNoBreak || (this.faultTolerance && this.tokens.length)) {
-            const continueState = this.continueForAndNoBreak
-            this.setOrBreakFlag(false)
-            backData = this.backData  // 方案B：快照索引，只拷贝3个数字
-            fun()  // 尝试执行匹配规则
-
-            // 如果匹配失败，tokens会被重置
-            if (!this.continueForAndNoBreak) {
-                let thisBackData
-                // 判断：是否有部分token被消费（部分匹配成功）
-                if (this.tokenIndex > backData.tokenIndex) {  // 方案B：比较索引
-                    thisBackData = this.backData  // 方案B：快照索引
-                }
-                this.setBackData(backData)  // 先回退到尝试前的状态
-
-                if (this.faultTolerance) {
-                    if (thisBackData) {
-                        // 情况1：有部分匹配成功
-                        // 说明：某个规则分支匹配了部分token（如 var a = 1 缺分号）
-                        // 策略：保留部分结果，继续解析剩余tokens
-                        // 【ASI扩展点】这里可以尝试插入分号后重新解析
-                        this.setBackDataNoContinueMatch(thisBackData)
-                    } else if (!continueState) {
-                        // 情况2：完全失败，且是首次尝试
-                        // 说明：当前第一个token匹配所有规则分支都失败
-                        // 原因：这个token是"非法语句的开始"或"错误的token"
-                        // 策略：跳过当前token，从下一个token重新开始尝试
-                        // 【ASI扩展点】这里也可以尝试插入分号后重新解析
-                        this.consumeMatchToken()
-                    }
-                    continue  // 继续循环，尝试剩余tokens
-                } else {
-                    // 非容错模式：直接退出
-                    break
-                }
-                // 注：如果匹配失败则跳出循环
-                // orBreakFlag为false则continueMatch也肯定为false，肯定会触发这里的逻辑
-            }
-            matchCount++  // 成功匹配计数
-        }
-
-        if (matchCount || this.orBreakFlag || lastBreakFlag) {
-            this.setOrBreakFlag(true)
-        }
-        // 必须放这里，不能放循环里会重复pop
-        // many允许多次执行，如果放循环内，第一次执行后有tokens就会触发，会有问题
-        this.setAllowErrorLastStateAndPop()
-        if (!matchCount) {
-            return
-        }
-        return this.getCurCst()
-    }
-
     Many(fun: Function) {
-        if (!this.continueMatchIsTrue) {
+        if (!this.ruleMatchSuccess) {
             return
         }
-        //只要进入了many，就把允许错误设为true，没问题
+
         this.setAllowErrorNewState()
 
-        //记录是否在or节点中,因为内部执行规则，会修改orBreakFlag的状态，要做到退出时，可以恢复or的状态
-        let lastBreakFlag = this.orBreakFlag
+        // 保存外层的loopMatchSuccess状态（可能来自外层Or）
+        const outerLoopMatchSuccess = this.loopMatchSuccess
 
-        let backData = this.backData  // 方案B：快照索引
-
+        let backData = this.backData
         let matchCount = 0
 
-        //设置允许继续匹配，为什么要设置在or分支为true，我不理解,外层设置为了true
-        this.setContinueMatchAndNoBreak(true)
-        while (this.continueForAndNoBreak) {
-            //内层一进来就又设置为了false，这样的操作有点多余，没有意义啊，就是要说明，我们现在不是在or分支当中额，现在我的理解这个标识只有or分支才有用
-            this.setOrBreakFlag(false)
-            backData = this.backData  // 方案B：快照索引
+        while (this.ruleMatchSuccess && this.tokens.length) {
+            // 每次循环开始前重置loopMatchSuccess
+            this.setLoopMatchSuccess(false)
+            backData = this.backData
+
             fun()
-            //如果匹配失败的话，需要退出many
-            if (!this.continueMatchIsTrue) {
-                this.setBackData(backData)
+
+            // 如果匹配失败，回退并退出循环
+            if (!this.ruleMatchSuccess) {
+                this.setBackDataAndRuleMatchSuccess(backData)
                 break
             }
+
             matchCount++
         }
-        if (matchCount || lastBreakFlag) {
-            this.setOrBreakFlag(lastBreakFlag)
-        }
-        //只能放这里，放循环里会重复pop，，many允许多次 if (this.continueExec)，第一次执行后有tokens，就会触发了，会有问题
-        this.setAllowErrorLastStateAndPop()
+
+        // 恢复外层的loopMatchSuccess状态
+        // 这样外层Or可以正确判断是否跳出
+        this.setLoopMatchSuccess(outerLoopMatchSuccess)
+
+        this.allowErrorStackPopAndReset()
+        
         if (!matchCount) {
             return
         }
+        
         return this.getCurCst()
     }
 
@@ -908,3 +744,4 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         return code.trim()
     }
 }
+
