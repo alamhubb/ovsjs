@@ -8,6 +8,7 @@
 4. [执行流程模拟](#执行流程模拟)
 5. [常见问题和调试](#常见问题和调试)
 6. [设计哲学](#设计哲学)
+7. [测试建议](#测试建议)
 
 ---
 
@@ -872,6 +873,117 @@ ComplexRule() {
 
 ---
 
+## 🧪 测试建议
+
+### 1. 嵌套 Or 规则测试
+
+验证内外层 Or 的状态传播是否正确：
+
+```typescript
+@SubhutiRule
+NestedOrTest() {
+    this.Or([
+        {alt: () => {
+            // 内层 Or
+            this.Or([
+                {alt: () => this.A()},
+                {alt: () => this.B()}
+            ])
+        }},
+        {alt: () => this.C()}
+    ])
+}
+```
+
+**测试场景：**
+- ✅ 内层 Or 第一个分支成功 → 外层 Or 应该跳出
+- ✅ 内层 Or 第二个分支成功 → 外层 Or 应该跳出
+- ✅ 内层 Or 失败 → 外层 Or 应该尝试下一个分支（C）
+
+**验证点：**
+- 内层 Or 成功后，外层 Or 是否正确跳出？
+- 内层 Or 失败后，外层 Or 是否尝试下一个分支？
+- `loopMatchSuccess` 的传播是否正确？
+
+### 2. Many 嵌套 Or 测试
+
+验证循环中的状态管理：
+
+```typescript
+@SubhutiRule
+ManyOrTest() {
+    this.Many(() => {
+        this.Or([
+            {alt: () => this.A()},
+            {alt: () => this.B()}
+        ])
+    })
+}
+```
+
+**测试场景：**
+- ✅ 多次循环，Or 每次都选择不同分支
+- ✅ 循环结束后，状态是否正确恢复
+
+**验证点：**
+- Many 循环多次后，Or 的状态是否正确？
+- Many 退出时，`loopMatchSuccess` 是否恢复？
+- 循环计数是否正确？
+
+### 3. Option 嵌套测试
+
+验证可选规则的状态传播：
+
+```typescript
+@SubhutiRule
+OptionInOrTest() {
+    this.Or([
+        {alt: () => {
+            this.A()
+            this.Option(() => this.B())  // 可选
+            this.C()
+        }},
+        {alt: () => this.D()}
+    ])
+}
+```
+
+**测试场景：**
+- ✅ Option 0次匹配，整个分支成功
+- ✅ Option 1次匹配，整个分支成功
+- ✅ A 成功，B 失败（Option 0次），C 成功
+
+**验证点：**
+- Option 失败时，是否影响外层 Or 的判断？
+- Option 成功时，`loopMatchSuccess` 是否正确传播？
+- Option 总是成功，Or 应该跳出
+
+### 4. 复杂嵌套测试
+
+```typescript
+@SubhutiRule
+ComplexNestingTest() {
+    this.Or([
+        {alt: () => {
+            this.Many(() => {
+                this.Or([
+                    {alt: () => this.Option(() => this.A())},
+                    {alt: () => this.B()}
+                ])
+            })
+        }},
+        {alt: () => this.C()}
+    ])
+}
+```
+
+**验证点：**
+- 多层嵌套的状态传播
+- 各层的 `loopMatchSuccess` 是否正确
+- 回退机制是否正常工作
+
+---
+
 ## 📚 参考资源
 
 - [PEG - Wikipedia](https://en.wikipedia.org/wiki/Parsing_expression_grammar)
@@ -880,7 +992,12 @@ ComplexRule() {
 
 ---
 
-**文档版本：** 1.0.0  
+**文档版本：** 2.0.0  
 **最后更新：** 2025-01-08  
+**主要变更：**
+- 删除 AT_LEAST_ONE 规则（ES6 语法不需要）
+- 合并优化文档，添加测试建议
+- 完善所有规则的执行流程说明
+
 **维护者：** AI 辅助开发
 
