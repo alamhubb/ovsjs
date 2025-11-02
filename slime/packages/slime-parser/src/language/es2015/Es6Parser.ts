@@ -940,7 +940,7 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
                 }
             },
             //这个位置调整到赋值表达式之前，会导致失去x=1失去=1的内容，因为有一个成功的就成功匹配了，应该长匹配在前面
-            {alt: () => this.ConditionalExpression()},  // ← moved forward
+            {alt: () => this.ConditionalExpression()},
         ])
     }
 
@@ -1181,7 +1181,7 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
         this.Or([
             {
                 alt: () => {
-                    this.Option(() => this.Expression())
+                    this.VariableDeclaration()
                     this.EmptySemicolon()
                     this.Option(() => this.Expression())
                     this.EmptySemicolon()
@@ -1190,7 +1190,7 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
             },
             {
                 alt: () => {
-                    this.VariableDeclaration()
+                    this.Option(() => this.Expression())
                     this.EmptySemicolon()
                     this.Option(() => this.Expression())
                     this.EmptySemicolon()
