@@ -330,9 +330,9 @@ export default class Es2020Parser<T extends Es2020TokenConsumer> extends Es6Pars
     @SubhutiRule
     LeftHandSideExpression() {
         this.Or([
-            {alt: () => this.OptionalExpression()},  // 新增：优先尝试可选链
-            {alt: () => this.CallExpression()},
-            {alt: () => this.NewExpression()}
+            {alt: () => this.OptionalExpression()},  // 优先：最长规则（包含可选链）
+            {alt: () => this.CallExpression()},      // 次之：中等规则（包含调用）
+            {alt: () => this.NewExpression()}        // 最后：最短规则（成员访问）
         ])
     }
 
