@@ -1009,7 +1009,24 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
                 }
             },
 
-            // 4. 带尾逗号：{a, b,}
+            // 4. ES2018: 只有 rest + 尾逗号 {...rest,}
+            {
+                alt: () => {
+                    this.BindingRestElement()
+                    this.tokenConsumer.Comma()
+                    this.tokenConsumer.RBrace()
+                }
+            },
+
+            // 5. ES2018: 只有 rest {...rest}
+            {
+                alt: () => {
+                    this.BindingRestElement()
+                    this.tokenConsumer.RBrace()
+                }
+            },
+
+            // 6. 带尾逗号：{a, b,}
             {
                 alt: () => {
                     this.BindingPropertyList()
@@ -1018,7 +1035,7 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
                 }
             },
 
-            // 5. 基础形式：{a, b}
+            // 7. 基础形式：{a, b}
             {
                 alt: () => {
                     this.BindingPropertyList()

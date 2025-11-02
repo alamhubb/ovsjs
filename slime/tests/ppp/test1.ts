@@ -6,7 +6,12 @@ import {traverseClearLoc, traverseClearTokens} from "../utils/parserTestUtils";
 import {LogUtil} from "../../src/logutil";
 
 const code = `
-const {first1, ...remaining,} = {first1: 1, second: 2, third: 3}
+function complex({ 
+    user: { name = 'Guest', profile: { age = 0 } = {} } = {},
+    options: { ...opts } = {}
+}) {
+    return { name, age, opts }
+}
 `
 
 const lexer = new SubhutiLexer(es6Tokens)
