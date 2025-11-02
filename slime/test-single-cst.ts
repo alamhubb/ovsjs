@@ -152,7 +152,7 @@ function getCSTStatistics(node: any): {
 // 主程序
 // const code = process.argv[2]
 const code = `
-const [[[deep]]] = [[[1]]]
+1 + 2
 `
 
 if (!code) {
