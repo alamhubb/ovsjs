@@ -310,63 +310,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     }
 
     /**
-     * AT_LEAST_ONE规则：匹配1次或多次（至少成功1次）
-     *
-     * 核心逻辑：
-     * 1. 第一次必须成功，否则整个规则失败
-     * 2. 后续循环允许失败（类似Many）
-     * 3. 第一次失败会向外传播失败状态（continueMatch=false）
-     *
-     * 与Many的区别：
-     * - Many：0次成功也算成功
-     * - AT_LEAST_ONE：至少1次成功才算成功
-     */
-    AT_LEAST_ONE(fun: Function) {
-        if (!this.ruleMatchSuccess) {
-            return
-        }
-
-        let index = 0
-
-        while (this.ruleMatchSuccess) {
-            if (index > 0) {
-                // 第2次及以后：允许失败（类似Many）
-                this.setAllowErrorNewState()
-                const backData = this.backData
-
-                fun()
-
-                this.allowErrorStackPopAndReset()
-
-                if (!this.ruleMatchSuccess) {
-                    // 失败：回退并退出循环
-                    this.setBackDataAndRuleMatchSuccess(backData)
-                    break
-                } else if (!this.tokens.length) {
-                    // 成功但token用完：退出循环
-                    break
-                }
-            } else {
-                // 第1次：必须成功
-                fun()
-
-                if (!this.tokens.length) {
-                    if (this.ruleMatchSuccess) {
-                        // 成功且token用完
-                        break
-                    } else {
-                        // 第1次就失败且token用完（不可能的情况）
-                        throw new Error('AT_LEAST_ONE: 第一次匹配失败且token为空')
-                    }
-                }
-            }
-            index++
-        }
-
-        return this.getCurCst()
-    }
-
-    /**
      * Option规则：匹配0次或1次（总是成功）
      *
      * 语义：Option(A) 表示 A 可以出现0次或1次

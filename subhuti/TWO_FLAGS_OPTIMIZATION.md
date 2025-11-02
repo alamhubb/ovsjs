@@ -243,10 +243,17 @@ setBackDataNoContinueMatch(backData: SubhutiBackData) {
 
 #### AT_LEAST_ONE规则（337-380行）
 
-**优化：**
+**历史记录：** ⚠️ 此方法已于 2025-01-08 删除（ES6 语法中未使用）
+
+**曾经的优化：**
 - 添加清晰的注释说明与Many的区别
 - 优化变量命名
 - 删除过时注释
+
+**删除原因：**
+- 在 Slime ES6 Parser 的 152 个规则中完全未使用
+- ES6 语法中所有列表都允许为空（0个元素）
+- 必须至少一个的场景可用 `Rule() + Many()` 组合实现
 
 #### subhutiRule方法（217-264行）
 
