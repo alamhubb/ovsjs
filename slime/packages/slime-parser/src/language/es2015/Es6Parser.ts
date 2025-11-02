@@ -1504,15 +1504,16 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
     @SubhutiRule
     ConciseBody() {
         this.Or([
-            {
-                alt: () => {
-                    // TODO: Implement lookahead check
-                    this.AssignmentExpression()
-                }
-            },
+            // 长规则在前：函数体 { FunctionBody }
             {
                 alt: () => {
                     this.FunctionBodyDefine()
+                }
+            },
+            // 短规则在后：表达式（包括对象字面量、普通表达式等）
+            {
+                alt: () => {
+                    this.AssignmentExpression()
                 }
             }
         ])
