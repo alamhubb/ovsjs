@@ -7,6 +7,8 @@ import {es6Tokens} from './packages/slime-parser/src/language/es2015/Es6Tokens.t
 import SubhutiLexer from '../subhuti/src/parser/SubhutiLexer.ts'
 import * as fs from 'fs'
 import * as path from 'path'
+import {es2020Tokens} from "./packages/slime-parser/src/language/es2020/Es2020Tokens";
+import Es2020Parser from "./packages/slime-parser/src/language/es2020/Es2020Parser";
 
 const casesDir = path.join(__dirname, 'tests/es6rules')
 // const casesDir = path.join(__dirname, 'tests/cases')
@@ -203,7 +205,7 @@ for (let i = 0; i < files.length; i++) {
 
     try {
         // 词法分析
-        const lexer = new SubhutiLexer(es6Tokens)
+        const lexer = new SubhutiLexer(es2020Tokens)
         const tokens = lexer.lexer(code)
 
         // 收集输入代码中的所有token值（排除注释、空白、换行）
@@ -220,7 +222,7 @@ for (let i = 0; i < files.length; i++) {
         console.log(`✅ 词法: ${tokens.length} tokens (有效token: ${inputTokens.length})`)
 
         // 语法分析
-        const parser = new Es6Parser(tokens)
+        const parser = new Es2020Parser(tokens)
         const cst = parser.Program()
         console.log(`✅ 语法: CST生成`)
 
