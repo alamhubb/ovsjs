@@ -10,14 +10,6 @@ export class SubhutiParserOr {
     alt: Function
 }
 
-enum LogicType {
-    consume = 'consume',
-    or = 'or',
-    many = 'many',
-    option = 'option'
-}
-
-
 export function Subhuti<E extends SubhutiTokenConsumer, T extends new (...args: any[]) => SubhutiParser<E>>(
     target: T,
     context: ClassDecoratorContext
@@ -154,12 +146,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         QqqqUtil.log("continueMatch:" + this.ruleMatchSuccess)
     }
 
-    printTokens() {
-        // this.printStateAndBreak()
-        // this.printCst()
-        // console.log('tokens:' + this.tokens.map(item => item.tokenName).join(','))
-    }
-
     getCstStacksNames() {
         return this.cstStack.map(item => item.name).join('->')
     }
@@ -186,25 +172,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     setTokens(tokens?: SubhutiMatchToken[]) {
         this._tokens = tokens
         this.tokenIndex = 0  // 方案B：重置索引
-        //这考虑的是什么情况，option、many，都有可能token处理完了，执行option、many，设置token时，需要为可匹配状态
-        //如果可以匹配，
-        //如果可以匹配，
-        // this.checkTokensOnly()
     }
-
-    checkTokensOnly() {
-        if (this.tokenIsEmpty) {
-            if (!this.allowError) {
-                throw new Error('tokens is empty, please set tokens')
-            }
-        }
-    }
-
-    reSetParentChildren(parentTokensBackup: SubhutiMatchToken[], children: SubhutiCst[]) {
-        this.curCst.tokens = parentTokensBackup
-        this.curCst.children = children
-    }
-
 
     get allowError() {
         return this._allowError
@@ -297,14 +265,12 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             parentCst.children.push(cst)
         }
 
-        const oldTokensLength = this.tokens.length
-
         this.setCurCst(cst)
         this.cstStack.push(cst)
         this.ruleExecErrorStack.push(ruleName)
 
         // 执行规则函数
-        const res: SubhutiCst = targetFun.apply(this)
+        targetFun.apply(this)
 
         this.cstStack.pop()
         this.ruleExecErrorStack.pop()
@@ -542,7 +508,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      *   → loopMatchSuccess=false（让Or规则尝试下一个分支）
      */
     consumeToken(tokenName: string) {
-        const popToken = this.getMatchToken(tokenName)
+        const popToken = this.getMatchToken()
 
         // Token不匹配
         if (!popToken || popToken.tokenName !== tokenName) {
@@ -567,14 +533,9 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         this.setContinueMatchAndNoBreak(true)
 
         // 消耗token并生成CST节点
-        const token = this.consumeMatchToken(tokenName)
+        const token = this.consumeMatchToken()
         return this.generateCstByToken(token)
     }
-
-    //获取token
-    //如果token不匹配
-    //则返回
-    //token匹配则消除
 
     generateCstByToken(popToken: SubhutiMatchToken) {
         const cst = new SubhutiCst()
@@ -602,12 +563,12 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     }
 
     // 方案B：通过索引获取当前token（不修改数组）
-    getMatchToken(tokenName: string) {
+    getMatchToken() {
         return this._tokens[this.tokenIndex]
     }
 
     // 方案B：移动索引而非删除元素（性能提升关键）
-    consumeMatchToken(tokenName?: string) {
+    consumeMatchToken() {
         const token = this._tokens[this.tokenIndex++]
         return token
     }
@@ -873,16 +834,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     // 已废弃：快照索引优化后不再需要此方法
     // 逻辑已内联到setBackDataNoContinueMatch中
     // private setTokensAndParentChildren() - 已删除
-
-
-    generateCst(cst: SubhutiCst) {
-        return cst
-    }
-
-    toAst(cst: SubhutiCst = this.getCurCst(), code = '') {
-        cst.name
-
-    }
 
     //默认就是遍历生成
     exec(cst: SubhutiCst = this.getCurCst(), code = ''): string {
