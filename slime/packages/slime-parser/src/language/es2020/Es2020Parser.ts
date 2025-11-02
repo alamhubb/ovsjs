@@ -99,8 +99,19 @@ export default class Es2020Parser<T extends Es2020TokenConsumer> extends Es6Pars
      *     ++ UnaryExpression[?Yield, ?Await]
      *     -- UnaryExpression[?Yield, ?Await]
      * 
-     * 注意：ES2020 规范使用 UpdateExpression 而非 PostfixExpression
-     * 这里保持与 Es6Parser 的 PostfixExpression 一致
+     * 实现说明：
+     * - 规范的 UpdateExpression 包含前缀和后缀运算符
+     * - Es6Parser 的设计将它们分离：
+     *   * PostfixExpression：后缀 ++ 和 --
+     *   * UnaryExpression：前缀 ++、-- 以及其他一元运算符
+     * - 这里的 UpdateExpression 复用 PostfixExpression（仅后缀）
+     * - 前缀运算符在 UnaryExpression 中处理（继承自 Es6Parser）
+     * 
+     * ExponentiationExpression 的两个分支正确处理：
+     * - 第一分支：UpdateExpression ** ...（后缀运算符）
+     * - 第二分支：UnaryExpression（包含前缀运算符）
+     * 
+     * 功能验证：✅ 已通过测试（tests/es2020/quick-test-p1-1.js）
      */
     @SubhutiRule
     UpdateExpression() {
@@ -134,39 +145,55 @@ export default class Es2020Parser<T extends Es2020TokenConsumer> extends Es6Pars
 
     /**
      * CoalesceExpression[In, Yield, Await] ::
-     *     CoalesceExpressionHead[?In, ?Yield, ?Await] ?? BitwiseORExpression[?In, ?Yield, ?Await]
+     *     BitwiseORExpression[?In, ?Yield, ?Await]
+     *     CoalesceExpression[?In, ?Yield, ?Await] ?? BitwiseORExpression[?In, ?Yield, ?Await]
      * 
-     * 注意：?? 不能与 && 或 || 直接混用，需要加括号
+     * 无前瞻实现：消除左递归，使用 Many 循环
+     * 
+     * 等价转换：
+     *     BitwiseORExpression ( ?? BitwiseORExpression )*
+     * 
+     * 注意：
+     * - ?? 不能与 && 或 || 直接混用，需要加括号
+     * - 左结合：a ?? b ?? c 解析为 (a ?? b) ?? c
      */
     @SubhutiRule
     CoalesceExpression() {
-        this.CoalesceExpressionHead()
-        this.tokenConsumer.NullishCoalescing()
+        // 先解析第一个操作数
         this.BitwiseORExpression()
-    }
-
-    /**
-     * CoalesceExpressionHead[In, Yield, Await] ::
-     *     CoalesceExpression[?In, ?Yield, ?Await]
-     *     BitwiseORExpression[?In, ?Yield, ?Await]
-     */
-    @SubhutiRule
-    CoalesceExpressionHead() {
-        this.Or([
-            {alt: () => this.CoalesceExpression()},
-            {alt: () => this.BitwiseORExpression()}
-        ])
+        
+        // 然后循环解析 ?? 和后续操作数（左结合）
+        this.Many(() => {
+            this.tokenConsumer.NullishCoalescing()
+            this.BitwiseORExpression()
+        })
     }
 
     /**
      * ShortCircuitExpression[In, Yield, Await] ::
      *     LogicalORExpression[?In, ?Yield, ?Await]
      *     CoalesceExpression[?In, ?Yield, ?Await]
+     * 
+     * 无前瞻实现：通过 Or 分支顺序 + 回溯解决歧义
+     * 
+     * 规范约束：?? 不能与 && 或 || 直接混用（需要括号）
+     * - 这意味着表达式中要么只有 ??，要么只有 && 或 ||
+     * 
+     * 分支顺序说明：
+     * - LogicalORExpression 优先（使用频率高，减少回溯）
+     * - 如果表达式包含 && 或 ||，第一个分支完全匹配
+     * - 如果表达式只包含 ??，第一个分支部分匹配，后续解析失败，回溯到 CoalesceExpression
+     * 
+     * 回溯机制保证正确性：
+     * - 对于 `a && b`：LogicalORExpression 完全匹配 ✅
+     * - 对于 `a ?? b`：LogicalORExpression 部分匹配 → 回溯 → CoalesceExpression 完全匹配 ✅
      */
     @SubhutiRule
     ShortCircuitExpression() {
         this.Or([
+            // 优先尝试 LogicalORExpression（&& 或 ||）
             {alt: () => this.LogicalORExpression()},
+            // 回溯后尝试 CoalesceExpression（??）
             {alt: () => this.CoalesceExpression()}
         ])
     }
@@ -415,6 +442,22 @@ export default class Es2020Parser<T extends Es2020TokenConsumer> extends Es6Pars
      *     for await ( [lookahead ≠ let] LeftHandSideExpression of AssignmentExpression ) Statement
      *     for await ( var ForBinding of AssignmentExpression ) Statement
      *     for await ( ForDeclaration of AssignmentExpression ) Statement
+     * 
+     * 无前瞻实现：通过 Or 分支顺序解决 let 歧义
+     * 
+     * 分支顺序优化（从最具体到最通用）：
+     * 1. ForDeclaration（let/const）- 优先匹配
+     * 2. var ForBinding - 次优先
+     * 3. LeftHandSideExpression - 最后兜底
+     * 
+     * 歧义处理示例：
+     * - `for await (let x of items)` → 第1分支成功（ForDeclaration）
+     * - `for await (var x of items)` → 第2分支成功（var）
+     * - `for await (let of items)` → 第1分支失败（let 不是关键字），回溯到第3分支成功
+     * 
+     * 性能优化：
+     * - 大多数情况使用 let/const，第1分支直接命中
+     * - 减少不必要的回溯
      */
     @SubhutiRule
     ForAwaitOfStatement() {
@@ -423,14 +466,17 @@ export default class Es2020Parser<T extends Es2020TokenConsumer> extends Es6Pars
         this.tokenConsumer.LParen()
         
         this.Or([
+            // ✅ 分支 1：ForDeclaration（let/const 声明）
+            // 最具体：以 let/const 关键字开头
             {
                 alt: () => {
-                    // TODO: Implement lookahead check for 'let'
-                    this.LeftHandSideExpression()
+                    this.ForDeclaration()
                     this.tokenConsumer.OfTok()
                     this.AssignmentExpression()
                 }
             },
+            // ✅ 分支 2：var ForBinding
+            // 较具体：以 var 关键字开头
             {
                 alt: () => {
                     this.tokenConsumer.VarTok()
@@ -439,9 +485,11 @@ export default class Es2020Parser<T extends Es2020TokenConsumer> extends Es6Pars
                     this.AssignmentExpression()
                 }
             },
+            // ✅ 分支 3：LeftHandSideExpression
+            // 最通用：兜底分支，匹配任何表达式（包括 let 作为变量名）
             {
                 alt: () => {
-                    this.ForDeclaration()
+                    this.LeftHandSideExpression()
                     this.tokenConsumer.OfTok()
                     this.AssignmentExpression()
                 }

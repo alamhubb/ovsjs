@@ -132,8 +132,33 @@ export const es2020TokensObj = {
 /**
  * ES2020 Tokens 数组
  * 用于词法分析器
+ * 
+ * ⚠️ 重要：Token 顺序影响匹配优先级
+ * - 复合运算符必须在单个运算符之前
+ * - OptionalChaining (?.) 必须在 Question (?) 之前
+ * - Exponentiation (**) 必须在 Asterisk (*) 之前
+ * - NullishCoalescing (??) 必须在 Question (?) 之前
  */
-export const es2020Tokens = Object.values(es2020TokensObj);
+export const es2020Tokens = [
+  // ============================================
+  // 优先级最高：ES2020 复合运算符（必须在前）
+  // ============================================
+  es2020TokensObj.ExponentiationAssign,   // **= (必须在 ** 之前)
+  es2020TokensObj.Exponentiation,         // ** (必须在 * 之前)
+  es2020TokensObj.NullishCoalescing,      // ?? (必须在 ? 之前)
+  es2020TokensObj.OptionalChaining,       // ?. (必须在 ? 和 . 之前)
+  
+  // ============================================
+  // 其他 ES6/ES5 tokens
+  // ============================================
+  ...Object.values(es6TokensObj),
+  
+  // ============================================
+  // ES2020 其他新增 tokens
+  // ============================================
+  es2020TokensObj.MetaTok,                // meta 关键字
+  es2020TokensObj.BigIntLiteral,          // BigInt 字面量
+];
 
 /**
  * ES2020 Token Map
