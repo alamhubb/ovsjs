@@ -593,7 +593,7 @@ export class SlimeCstToAst {
     const first = cst.children[0]
     if (first.name === Es6Parser.prototype.FunctionDeclaration.name) {
       return this.createFunctionDeclarationAst(first)
-    } else if (first.name === Es6Parser.prototype.GeneratorDeclaration.name) {
+    } else if (first.name === Es6Parser.prototype.AsyncGeneratorDeclaration.name) {
       // GeneratorDeclaration -> 类似FunctionDeclaration但有*号
       return this.createGeneratorDeclarationAst(first)
     } else {
@@ -2754,7 +2754,7 @@ export class SlimeCstToAst {
     } else if (first.name === Es6TokenConsumer.prototype.RegularExpressionLiteral.name) {
       // 处理正则表达式字面量
       return SlimeAstUtil.createStringLiteral(first.value)  // 暂时处理为字符串
-    } else if (first.name === Es6Parser.prototype.GeneratorExpression.name) {
+    } else if (first.name === Es6Parser.prototype.AsyncGeneratorExpression.name) {
       // 处理 function* 表达式，降级为普通函数表达式
       return this.createGeneratorExpressionAst(first)
     } else if (first.name === Es6Parser.prototype.CoverParenthesizedExpressionAndArrowParameterList.name) {

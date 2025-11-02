@@ -125,7 +125,7 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
             {alt: () => this.ObjectLiteral()},
             {alt: () => this.FunctionExpression()},
             {alt: () => this.ClassExpression()},
-            {alt: () => this.GeneratorExpression()},
+            {alt: () => this.AsyncGeneratorExpression()},
             {alt: () => this.tokenConsumer.RegularExpressionLiteral()},
             {alt: () => this.TemplateLiteral()},
             // ✅ 普通括号表达式：(expr)
@@ -948,7 +948,7 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
     HoistableDeclaration() {
         this.Or([
             {alt: () => this.FunctionDeclaration()},
-            {alt: () => this.GeneratorDeclaration()}
+            {alt: () => this.AsyncGeneratorDeclaration()}
         ])
     }
 
@@ -1592,7 +1592,8 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
     }
 
     @SubhutiRule
-    GeneratorDeclaration() {
+    AsyncGeneratorDeclaration() {
+        this.Option(() => this.tokenConsumer.AsyncTok())
         this.tokenConsumer.FunctionTok()
         this.tokenConsumer.Asterisk()
         this.BindingIdentifier()
@@ -1605,7 +1606,8 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
     }
 
     @SubhutiRule
-    GeneratorExpression() {
+    AsyncGeneratorExpression() {
+        this.Option(() => this.tokenConsumer.AsyncTok())
         this.tokenConsumer.FunctionTok()
         this.tokenConsumer.Asterisk()
         this.Option(() => this.BindingIdentifier())
