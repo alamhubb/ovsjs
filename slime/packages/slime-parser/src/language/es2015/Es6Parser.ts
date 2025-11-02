@@ -1110,9 +1110,10 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
         this.BindingIdentifier()
     }
 
-    @SubhutiRule
     EmptyStatement() {
-        this.EmptySemicolon()
+        // EmptyStatement 必须是一个分号（不能为空）
+        // 避免在 Many 循环中无限匹配空语句
+        this.tokenConsumer.Semicolon()
     }
 
     @SubhutiRule
@@ -1715,12 +1716,11 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
     @SubhutiRule
     ModuleItemList() {
         this.Many(() => {
-            this.StatementListItem()
-            /*this.Or([
-                // {alt: () => this.ImportDeclaration()},
-                // {alt: () => this.ExportDeclaration()},
+            this.Or([
+                {alt: () => this.ImportDeclaration()},
+                {alt: () => this.ExportDeclaration()},
                 {alt: () => this.StatementListItem()},
-            ])*/
+            ])
         })
     }
 

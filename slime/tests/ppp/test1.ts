@@ -14,7 +14,7 @@ const tokens = lexer.lexer(code)
 console.log(tokens)
 
 const parser = new Es6Parser(tokens)
-const curCst = parser.Program()
+const curCst = parser.ModuleItemList()
 
 const outCst = JsonUtil.cloneDeep(curCst)
 let cstForAst = traverseClearTokens(outCst)
