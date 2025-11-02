@@ -9,7 +9,7 @@ export class LogUtil {
     // 获取当前文件的目录
     const __filename = fileURLToPath(import.meta.url)
     const __dirname = path.dirname(__filename)
-    this.logFilePath = path.join(__dirname, 'templog11.json')
+    this.logFilePath = path.join(__dirname, 'templog.txt')
 
     // 确保文件存在
     if (!fs.existsSync(this.logFilePath)) {
