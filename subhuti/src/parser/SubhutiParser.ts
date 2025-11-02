@@ -213,7 +213,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         this._allowError = allowError
     }
 
-    get checkMethodCanExec() {
+    get continueMatchIsTrue() {
         //如果不能匹配，测判断允许错误，则直接返回，无法继续匹配只能返回，避免递归
         return (this.continueMatch)
     }
@@ -241,7 +241,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             // Packrat: 每次新的parse开始时，清空失败缓存
             this.failureCache.clear()
         } else {
-            if (!this.checkMethodCanExec) {
+            if (!this.continueMatchIsTrue) {
                 return
             }
         }
@@ -340,7 +340,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
     //匹配1次或者N次
     AT_LEAST_ONE(fun: Function) {
-        if (!this.checkMethodCanExec) {
+        if (!this.continueMatchIsTrue) {
             return
         }
         let index = 0
@@ -387,7 +387,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
     //匹配0次或者1次
     Option(fun: Function): SubhutiCst {
-        if (!this.checkMethodCanExec) {
+        if (!this.continueMatchIsTrue) {
             return
         }
         let lastBreakFlag = this.orBreakFlag
@@ -442,7 +442,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
 
     consume(tokenName: SubhutiCreateToken) {
-        if (!this.checkMethodCanExec) {
+        if (!this.continueMatchIsTrue) {
             return
         }
         return this.consumeToken(tokenName.name)
@@ -539,6 +539,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
     setAllowErrorNewState() {
         this.setAllowError(true)
+        //只要 有一次失败，就不再允许失败了
         this.optionAndOrAllowErrorMatchOnce = false
         this.allowErrorStack.push(this.curCst.name)
     }
@@ -569,7 +570,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * - 失败的情况无副作用，可以安全跳过
      */
     Or(subhutiParserOrs: SubhutiParserOr[]): SubhutiCst {
-        if (!this.checkMethodCanExec) {
+        if (!this.continueMatchIsTrue) {
             return
         }
 
@@ -722,8 +723,8 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
     setContinueMatchAndNoBreak(value: boolean) {
         //一个控制是否继续匹配
-        //一个控制是否跳出循环，while，or
         this.setContinueMatch(value)
+        //一个控制是否跳出循环，while，or
         this.setOrBreakFlag(value)
         //为什么需要两个，因为or进入时会把跳出标识设为false，为ture跳出，否则继续下一次
         //如果用一个标识，设为false，之后匹配就不执行了
@@ -776,7 +777,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * - 这样可以在遇到局部语法错误时继续解析剩余代码，而不是整体失败
      */
     FaultToleranceMany(fun: Function) {
-        if (!this.checkMethodCanExec) {
+        if (!this.continueMatchIsTrue) {
             return
         }
         // 不需要在循环内部修改allowError，因为如果子节点改了，退出子节点时也会重置回来的
@@ -844,20 +845,23 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     }
 
     Many(fun: Function) {
-        if (!this.checkMethodCanExec) {
+        if (!this.continueMatchIsTrue) {
             return
         }
-        //不需要 再循环内部修改，因为如果子节点改了，退出子节点时也会重置回来的
+        //只要进入了many，就把允许错误设为true，没问题
         this.setAllowErrorNewState()
 
+        //记录是否在or节点中,因为内部执行规则，会修改orBreakFlag的状态，要做到退出时，可以恢复or的状态
         let lastBreakFlag = this.orBreakFlag
 
         let backData = this.backData  // 方案B：快照索引
 
         let matchCount = 0
 
+        //设置允许继续匹配，为什么要设置在or分支为true，我不理解,外层设置为了true
         this.setContinueMatchAndNoBreak(true)
         while (this.continueForAndNoBreak) {
+            //内层一进来就又设置为了false，这样的操作有点多余，没有意义啊，就是要说明，我们现在不是在or分支当中额，现在我的理解这个标识只有or分支才有用
             this.setOrBreakFlag(false)
             backData = this.backData  // 方案B：快照索引
             fun()
