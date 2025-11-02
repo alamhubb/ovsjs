@@ -83,22 +83,50 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     /**
      * 两个核心标识的职责划分：
      *
-     * 1. continueMatch - 全局匹配状态标识
-     *    - 语义：当前匹配是否成功
-     *    - 作用域：全局
+     * 1. ruleMatchSuccess - 全局匹配状态标识
+     *    - 语义：当前规则是否可以继续执行
+     *    - 作用域：全局（影响所有规则）
      *    - 用途：控制整个解析流程是否继续执行
-     *    - 检查点：几乎所有规则入口都检查 continueMatchIsTrue
+     *    - 检查点：几乎所有规则入口都检查 if (!this.ruleMatchSuccess) return
+     *    - 失败时：后续规则不再执行，直接返回
      *
      * 2. loopMatchSuccess - 循环跳出控制标识
-     *    - 语义：Or/Many规则是否应该跳出循环
-     *    - 作用域：Or/Many规则内部
-     *    - 用途：Or规则找到成功分支后立即跳出，不尝试后续分支
-     *    - 特性：Or规则每次尝试分支前重置为false，Many规则需要保存/恢复外层状态
+     *    - 语义：是否应该跳出Or循环（分支成功信号）
+     *    - 作用域：Or/Many/Option规则内部
+     *    - 用途：
+     *      * Or：判断分支是否成功，决定是break还是继续尝试
+     *      * Many：控制循环是否继续（但退出时总是设为true）
+     *      * Option：向外传播成功信号（总是设为true）
+     *    - 特性：Or规则每次尝试分支前重置为false
      *
      * 为什么需要两个标识？
-     * - Or规则每次尝试新分支前需要重置loopMatchSuccess=false
-     * - 如果只用continueMatch，重置为false会导致分支内部无法执行
-     * - Many规则需要保存/恢复loopMatchSuccess，但不需要对continueMatch这样做
+     *
+     * 问题场景：Or规则需要"尝试失败后继续"的能力
+     * - Or的第一个分支失败 → 需要回退状态 → 尝试第二个分支
+     * - 如果只有一个标识，失败后设为false，第二个分支就无法执行了
+     *
+     * 解决方案：分离两个职责
+     * - ruleMatchSuccess：控制"是否可以执行"（回退时设为true，允许继续）
+     * - loopMatchSuccess：控制"是否应该跳出"（每次尝试前重置，分支内部设置）
+     *
+     * 协同工作示例（Or规则）：
+     * 1. 尝试分支A前：
+     *    - setLoopMatchSuccess(false)  // 重置跳出标识
+     *    - ruleMatchSuccess保持为true  // 允许执行
+     * 2. 分支A失败：
+     *    - ruleMatchSuccess = false, loopMatchSuccess = false
+     *    - 判断 loopBranchAndRuleSuccess = false → 继续循环
+     *    - 回退：setBackDataAndRuleMatchSuccess → ruleMatchSuccess = true
+     * 3. 尝试分支B前：
+     *    - setLoopMatchSuccess(false)  // 重新重置
+     *    - ruleMatchSuccess已是true  // 可以执行
+     * 4. 分支B成功：
+     *    - ruleMatchSuccess = true, loopMatchSuccess = true
+     *    - 判断 loopBranchAndRuleSuccess = true → break
+     *
+     * 关键insight：
+     * - 如果只有一个标识，Or的"每次尝试前重置"会破坏"允许继续执行"的状态
+     * - 两个标识分离了"能否执行"和"是否成功"两个不同的概念
      */
     private _loopMatchSuccess = false
 
@@ -375,18 +403,31 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     /**
      * Option规则：匹配0次或1次（总是成功）
      *
-     * 核心逻辑：
-     * 1. Option本身总是成功的（匹配0次也是成功）
-     * 2. 如果内部规则失败，回退状态（但Option仍然成功）
-     * 3. loopMatchSuccess传播：外层Or状态 OR 内部是否成功
+     * 语义：Option(A) 表示 A 可以出现0次或1次
+     * - 0次匹配（内部规则失败）：Option成功，返回空CST
+     * - 1次匹配（内部规则成功）：Option成功，返回带内容的CST
+     *
+     * 关键点1：为什么无条件设置 loopMatchSuccess = true？
+     * - Option的语义是"0次或1次都算成功"
+     * - 必须向外层Or传播"成功信号"，让Or知道可以跳出了
+     * - 即使内部规则失败（0次匹配），Option本身也是成功的
+     *
+     * 关键点2：为什么总是返回 getCurCst()？
+     * - 保持CST结构完整性（即使0次匹配，也应该有Option节点）
+     * - 方便AST转换器统一处理（不需要到处判断undefined）
+     *
+     * 示例场景：
+     * this.Or([
+     *   {alt: () => this.Option(() => this.Export())},  // 0次匹配
+     *   {alt: () => this.Other()}
+     * ])
+     * // Option虽然0次匹配，但设置了loopMatchSuccess=true
+     * // Or会判断第一个分支成功，直接跳出，不会尝试第二个分支
      */
     Option(fun: Function): SubhutiCst {
         if (!this.ruleMatchSuccess) {
             return
         }
-
-        // 保存外层的loopMatchSuccess状态（可能来自外层Or）
-        const outerLoopMatchSuccess = this.loopMatchSuccess
 
         this.setAllowErrorNewState()
         const backData = this.backData
@@ -395,65 +436,54 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
         // 如果匹配失败，回退状态（但Option本身不失败）
         if (!this.ruleMatchSuccess) {
-            this.setBackDataAndRuleMatchSuccess(backData)  // 这会设置 continueMatch = true
+            this.setBackDataAndRuleMatchSuccess(backData)  // 恢复ruleMatchSuccess=true
         }
 
-        /**
-         *   // ① Or设置 loopMatchSuccess = false（第572行）
-         *
-         *     this.Option(() => {
-         *       // ② Option保存外层状态
-         *       // outerLoopMatchSuccess = false（此时this.loopMatchSuccess的值）
-         *
-         *       this.Identifier()  // ③ 成功！
-         *       // Identifier内部调用consumeToken → setContinueMatchAndNoBreak(true)
-         *       // 设置 this.loopMatchSuccess = true（第625行）
-         *     })
-         *
-         *     // ④ fun()执行完毕，此时：
-         *     // - outerLoopMatchSuccess = false（快照，没变）
-         *     // - this.loopMatchSuccess = true（被Identifier改了！）
-         *
-         *     // ⑤ 如果直接用 outerLoopMatchSuccess：
-         *     this.setLoopMatchSuccess(outerLoopMatchSuccess)  // = false ❌
-         *     // 结果：丢失了Identifier设置的true！
-         *
-         *     // ⑥ 使用OR逻辑：
-         *     if (outerLoopMatchSuccess || this.loopMatchSuccess) {
-         *       // false || true → 结果是true ✅
-         *       this.setLoopMatchSuccess(true)
-         *     }
-         */
-        // loopMatchSuccess传播逻辑：
-        // - 如果外层在Or中（outerLoopMatchSuccess=true），保持true
-        // - 或者内部规则成功了（loopMatchSuccess=true），设为true
-        // - 这样可以让Or正确跳出
-        // if (outerLoopMatchSuccess || this.loopMatchSuccess) {
-        //     this.setLoopMatchSuccess(true)
-        // }
-        // ✅ 修改：Option总是成功，无论内部是否匹配
-        // 0次匹配也是成功的，必须向Or传播成功信号， 只要option执行完毕，就应该算执行成功了
+        // 核心：Option总是成功，无条件向Or传播成功信号
+        // 无论内部是否匹配（0次或1次），Option都算成功
         this.setLoopMatchSuccess(true)
 
         this.allowErrorStackPopAndReset()
 
-        // Option总是返回CST（因为0次匹配也是成功）
+        // 总是返回CST（保持结构完整性）
         return this.getCurCst()
     }
 
 
     /**
-     * Many规则：匹配0次或多次
+     * Many规则：匹配0次或多次（总是成功）
+     *
+     * 语义：Many(A) 表示 A 可以出现0次或多次
+     * - 0次匹配（第一次就失败）：Many成功，返回空CST
+     * - N次匹配（匹配N次后失败）：Many成功，返回带N个子节点的CST
      *
      * 核心机制：
      * 1. 循环执行fun()，直到匹配失败或token用完
-     * 2. 每次循环前重置loopMatchSuccess=false（表示"在循环中"）
-     * 3. 退出时恢复外层的loopMatchSuccess状态
+     * 2. 每次循环前重置loopMatchSuccess=false（让内部规则重新设置）
+     * 3. 匹配失败时回退状态，退出循环
      *
-     * loopMatchSuccess的保存/恢复：
-     * - Many内部会修改loopMatchSuccess（每次循环重置为false）
-     * - 但外层可能在Or中（loopMatchSuccess=true/false）
-     * - 退出时需要恢复外层状态，让外层Or正确工作
+     * 关键点1：为什么无条件设置 loopMatchSuccess = true？
+     * - Many的语义是"0次或多次都算成功"
+     * - 必须向外层Or传播"成功信号"，让Or知道可以跳出了
+     * - 即使0次匹配，Many本身也是成功的
+     *
+     * 关键点2：为什么总是返回 getCurCst()？
+     * - 与Option保持一致，保持CST结构完整性
+     * - 即使0次匹配，也返回空CST节点（children为空数组）
+     *
+     * 关键点3：while条件为什么是 loopBranchAndRuleSuccess？
+     * - 第一次进入前，loopMatchSuccess默认为false，所以条件为false，不会进入
+     * - 但每次循环开始会重置为false，然后执行fun()
+     * - 如果fun()成功，会设置loopMatchSuccess=true，下次循环继续
+     * - 实际上第一次循环是靠前面的逻辑进入的（需要检查）
+     *
+     * 示例场景：
+     * this.Or([
+     *   {alt: () => this.Many(() => this.Statement())},  // 0次匹配
+     *   {alt: () => this.Other()}
+     * ])
+     * // Many虽然0次匹配，但设置了loopMatchSuccess=true
+     * // Or会判断第一个分支成功，直接跳出
      */
     Many(fun: Function) {
         if (!this.ruleMatchSuccess) {
@@ -462,14 +492,12 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
         this.setAllowErrorNewState()
 
-        // 保存外层的loopMatchSuccess状态（可能来自外层Or）
-        const outerLoopMatchSuccess = this.loopMatchSuccess
-
         let backData = this.backData
         let matchCount = 0
 
         while (this.loopBranchAndRuleSuccess) {
-            // 每次循环开始前重置loopMatchSuccess
+            // 每次循环开始前重置loopMatchSuccess=false
+            // 让内部规则重新设置（如果成功会设为true）
             this.setLoopMatchSuccess(false)
             backData = this.backData
 
@@ -484,12 +512,13 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             matchCount++
         }
 
-        // ✅ 修改：Many总是成功，无论匹配几次
-        // 0次匹配也是成功的，必须向Or传播成功信号
+        // 核心：Many总是成功，无条件向Or传播成功信号
+        // 无论匹配几次（0次或N次），Many都算成功
         this.setLoopMatchSuccess(true)
 
         this.allowErrorStackPopAndReset()
 
+        // 总是返回CST（保持结构完整性）
         return this.getCurCst()
     }
 
@@ -611,18 +640,60 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     }
 
     /**
-     * Or语法：遍历所有规则分支，任一分支匹配成功则跳出
+     * Or规则：尝试多个分支，任一成功则跳出（顺序选择，第一个成功即返回）
+     *
+     * 语义：Or([A, B, C]) 表示按顺序尝试 A、B、C，第一个成功的立即返回
+     * - 不是贪婪匹配（不会尝试所有分支选最长）
+     * - 不是并行尝试（按顺序尝试，成功即停止）
+     * - 顺序很重要：长规则必须在前，短规则在后
      *
      * 核心机制：
-     * 1. 依次尝试每个分支（alt函数）
-     * 2. 任一分支成功（loopMatchSuccess && continueMatch）→ 跳出循环
-     * 3. 所有分支都失败 → 返回undefined
+     * 1. 依次尝试每个分支
+     * 2. 每次尝试前重置 loopMatchSuccess = false（清除上一个分支的状态）
+     * 3. 分支成功 → break → 返回CST
+     * 4. 分支失败 → 回退状态 → 尝试下一个
+     * 5. 所有分支都失败 → 返回undefined
      *
-     * 两个标识的协同工作：
-     * - continueMatch：当前分支是否匹配成功
-     * - loopMatchSuccess：是否应该跳出Or循环（向外传播成功信号）
+     * 关键点1：为什么不需要 hasSuccess 变量？
+     * - 曾经的代码：let hasSuccess = false; 在break时设为true，最后判断hasSuccess
+     * - 现在直接用 loopBranchAndRuleSuccess：break时为true，最后判断时仍为true
+     * - 原因：break和最后判断之间，只有allowErrorStackPopAndReset()，不会修改两个标识
+     * - 因此 hasSuccess 和 loopBranchAndRuleSuccess 在最后判断时总是一致的
      *
-     * 每次尝试分支前重置loopMatchSuccess=false，避免上一个分支的状态影响
+     * 关键点2：两个标识的协同工作
+     * - ruleMatchSuccess：当前规则是否可以继续执行（全局状态）
+     * - loopMatchSuccess：是否应该跳出Or循环（分支成功信号）
+     * - loopBranchAndRuleSuccess = ruleMatchSuccess && loopMatchSuccess
+     * - 分支成功的条件：两个标识都为true
+     *
+     * 关键点3：为什么每次尝试前重置 loopMatchSuccess = false？
+     * - 清除上一个分支的状态（无论成功还是失败）
+     * - 让当前分支"重新开始"（内部规则可以通过设置loopMatchSuccess=true表示成功）
+     * - 防止上一个分支的成功状态影响当前分支的判断
+     *
+     * 关键点4：回退逻辑的区别
+     * - 非最后分支失败：setBackDataAndRuleMatchSuccess(backData)
+     *   → 回退数据 + 设置 ruleMatchSuccess = true（允许继续尝试下一个分支）
+     * - 最后分支失败：setBackDataNoContinueMatch(backData)
+     *   → 只回退数据，不修改 ruleMatchSuccess（保持为false，向外传播失败）
+     *
+     * 示例场景1：第一个分支成功
+     * this.Or([
+     *   {alt: () => this.A()},  // ✅ 成功
+     *   {alt: () => this.B()}
+     * ])
+     * // A成功 → loopMatchSuccess=true, ruleMatchSuccess=true
+     * // 判断 loopBranchAndRuleSuccess = true → break
+     * // 最后判断 loopBranchAndRuleSuccess = true → 返回CST
+     *
+     * 示例场景2：所有分支失败
+     * this.Or([
+     *   {alt: () => this.A()},  // ❌ 失败
+     *   {alt: () => this.B()}   // ❌ 失败
+     * ])
+     * // A失败 → 回退 → ruleMatchSuccess=true（继续）
+     * // B失败（最后） → 回退 → ruleMatchSuccess=false（不改）
+     * // 最后判断 loopBranchAndRuleSuccess = false → 返回undefined
      */
     Or(subhutiParserOrs: SubhutiParserOr[]): SubhutiCst {
         if (!this.ruleMatchSuccess) {
@@ -633,7 +704,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
         const funLength = subhutiParserOrs.length
         let index = 0
-        let hasSuccess = false  // 记录是否有分支成功
 
         for (const subhutiParserOr of subhutiParserOrs) {
             index++
@@ -641,8 +711,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             // 最后一个分支失败时报错，其他分支允许错误
             if (index === funLength) {
                 this.setAllowError(false)
-            } else {
-                this.setAllowError(true)
             }
 
             const backData = this.backData
@@ -653,18 +721,22 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
             subhutiParserOr.alt()  // 尝试执行当前分支
 
-            // 检查分支是否成功
+            // 检查分支是否成功（两个标识都为true）
             if (this.loopBranchAndRuleSuccess) {
-                // 成功：两个标识都为true
-                hasSuccess = true
+                // 成功：跳出循环
+                // 注意：此时 loopBranchAndRuleSuccess = true
+                // 后续只有 allowErrorStackPopAndReset()，不会修改这两个标识
+                // 所以最后判断时 loopBranchAndRuleSuccess 仍为 true
                 break
-            } else if (!this.loopBranchAndRuleSuccess) {
+            } else {
                 // 失败：回退状态
                 if (index !== funLength) {
                     // 不是最后一个分支：回退并继续尝试
+                    // 设置 ruleMatchSuccess = true，允许继续执行
                     this.setBackDataAndRuleMatchSuccess(backData)
                 } else {
-                    // 最后一个分支也失败：设置continueMatch=false
+                    // 最后一个分支也失败：只回退数据
+                    // 不修改 ruleMatchSuccess（保持为false），向外传播失败
                     this.setBackDataNoContinueMatch(backData)
                 }
             }
@@ -672,7 +744,10 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
         this.allowErrorStackPopAndReset()
 
-        if (hasSuccess) {
+        // 直接判断 loopBranchAndRuleSuccess（不需要额外的hasSuccess变量）
+        // 如果break了，loopBranchAndRuleSuccess=true
+        // 如果循环结束，loopMatchSuccess=false（每次都重置），loopBranchAndRuleSuccess=false
+        if (this.loopBranchAndRuleSuccess) {
             return this.getCurCst()
         }
 
@@ -681,13 +756,28 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     }
 
     /**
-     * 检查当前分支是否成功
+     * 检查当前分支是否成功（两个标识的组合判断）
      *
-     * 分支成功的条件：
-     * - continueMatch = true（当前匹配成功）
-     * - loopMatchSuccess = true（应该跳出Or循环）
+     * 返回值：ruleMatchSuccess && loopMatchSuccess
      *
-     * 两个标识同时为true，表示分支成功并通知外层Or跳出
+     * 语义：同时满足两个条件才算"分支成功"
+     * - ruleMatchSuccess = true：规则可以继续执行（没有遇到致命错误）
+     * - loopMatchSuccess = true：分支匹配成功（需要跳出Or循环）
+     *
+     * 使用场景：
+     * 1. Or规则：判断分支是否成功，决定是break还是继续尝试
+     * 2. Many规则：判断是否继续循环（while条件）
+     *
+     * 为什么需要两个都为true？
+     * - 只有ruleMatchSuccess=true：可以执行，但不一定成功（比如Or回退后）
+     * - 只有loopMatchSuccess=true：不可能（ruleMatchSuccess=false时规则不执行）
+     * - 两个都true：规则执行了，并且成功了
+     *
+     * 示例：
+     * Or尝试分支A失败后回退：
+     * - ruleMatchSuccess = true（回退时设置，允许继续）
+     * - loopMatchSuccess = false（失败时设置）
+     * - loopBranchAndRuleSuccess = false（继续尝试下一个分支）
      */
     get loopBranchAndRuleSuccess() {
         return this.loopMatchSuccess && this.ruleMatchSuccess
@@ -696,9 +786,20 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     /**
      * 同时设置两个核心标识
      *
-     * 使用场景：consume() token时，匹配成功/失败需要同时更新两个状态
-     * - true: token匹配成功，继续执行，通知Or跳出
-     * - false: token匹配失败，停止执行，通知Or尝试下一个分支
+     * 语义：将两个标识设为相同的值（都true或都false）
+     *
+     * 使用场景：consumeToken 匹配token时
+     * - value = true：token匹配成功
+     *   → ruleMatchSuccess = true（继续执行后续规则）
+     *   → loopMatchSuccess = true（通知Or可以跳出了）
+     * - value = false：token匹配失败
+     *   → ruleMatchSuccess = false（停止执行）
+     *   → loopMatchSuccess = false（通知Or尝试下一个分支）
+     *
+     * 为什么要同时设置？
+     * - consumeToken是"原子操作"：要么成功（两个都true），要么失败（两个都false）
+     * - 不存在"token匹配了但不算成功"的中间状态
+     * - 简化调用方的逻辑（一次调用搞定两个标识）
      */
     setContinueMatchAndNoBreak(value: boolean) {
         this.setRuleMatchSuccess(value)
@@ -706,13 +807,28 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     }
 
     /**
-     * 回退到快照状态，并设置continueMatch=true（表示可以继续尝试）
+     * 回退到快照状态，并设置 ruleMatchSuccess = true（允许继续执行）
      *
-     * 使用场景：Or/Many/Option规则失败后，回退状态并尝试下一个分支
+     * 语义：撤销刚才的尝试，恢复到尝试前的状态，并允许继续执行
      *
-     * 重要：只恢复continueMatch，不恢复loopMatchSuccess
-     * - continueMatch=true：允许继续尝试
-     * - loopMatchSuccess保持当前值（由Or规则控制）
+     * 使用场景：
+     * 1. Or规则：非最后分支失败，回退后继续尝试下一个分支
+     * 2. Many规则：某次循环失败，回退后退出循环（循环前的状态）
+     * 3. Option规则：内部规则失败，回退后继续（Option本身不失败）
+     *
+     * 为什么设置 ruleMatchSuccess = true？
+     * - 分支失败时，ruleMatchSuccess 被设为 false
+     * - 但Or需要"继续尝试下一个分支"，不能让false阻止执行
+     * - 所以回退时重置为true，表示"这次失败不影响继续尝试"
+     *
+     * 为什么不恢复 loopMatchSuccess？
+     * - loopMatchSuccess 由Or规则控制（每次尝试前重置为false）
+     * - 不需要恢复，保持当前值即可
+     *
+     * 回退内容：
+     * - tokenIndex：恢复到尝试前的位置
+     * - curCst.children：删除这次尝试添加的子节点
+     * - curCst.tokens：删除这次尝试添加的token
      */
     setBackDataAndRuleMatchSuccess(backData: SubhutiBackData) {
         this.setRuleMatchSuccess(true)
@@ -720,9 +836,23 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     }
 
     /**
-     * 回退到快照状态，不修改continueMatch
+     * 回退到快照状态，不修改 ruleMatchSuccess（保持当前值）
      *
-     * 使用场景：Or规则最后一个分支失败，需要保持continueMatch=false
+     * 语义：只撤销数据，不改变执行状态
+     *
+     * 使用场景：Or规则最后一个分支失败
+     * - 不需要设置 ruleMatchSuccess = true（没有下一个分支了）
+     * - 保持 ruleMatchSuccess = false，向外传播失败信号
+     *
+     * 为什么不修改 ruleMatchSuccess？
+     * - 最后一个分支失败，意味着整个Or失败
+     * - 需要保持 ruleMatchSuccess = false，让外层规则知道Or失败了
+     * - 如果设为true，外层规则会误以为Or成功了
+     *
+     * 回退内容：
+     * - tokenIndex：恢复到尝试前的位置
+     * - curCst.children：删除这次尝试添加的子节点
+     * - curCst.tokens：删除这次尝试添加的token
      */
     setBackDataNoContinueMatch(backData: SubhutiBackData) {
         this.tokenIndex = backData.tokenIndex
