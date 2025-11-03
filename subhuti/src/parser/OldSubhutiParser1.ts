@@ -75,18 +75,6 @@ export class SubhutiBackData {
     curCstTokensLength: number            // 快照索引：tokens长度
 }
 
-/**
- * Memoization 缓存结果
- *
- * 用于 Packrat Parsing 优化，缓存每个规则在每个 token 位置的解析结果
- */
-export class SubhutiMemoResult {
-    success: boolean                      // 解析是否成功
-    endTokenIndex: number                 // 解析结束后的 token 位置
-    cst?: SubhutiCst                      // 解析成功时的 CST 节点
-    ruleMatchSuccess: boolean             // 解析后的 ruleMatchSuccess 状态
-}
-
 export class SubhutiUtil {
     static generateUUID() {
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
@@ -119,21 +107,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     private _ruleMatchSuccess = true
     thisClassName: string
     uuid: string
-
-    /**
-     * Memoization 缓存配置和数据
-     *
-     * enableMemoization: 是否启用缓存（默认 true）
-     * memoCache: 缓存存储 Map<ruleName, Map<tokenIndex, result>>
-     * memoStats: 缓存统计（用于性能分析）
-     */
-    enableMemoization: boolean = true
-    private memoCache = new Map<string, Map<number, SubhutiMemoResult>>()
-    memoStats = {
-        hits: 0,        // 缓存命中次数
-        misses: 0,      // 缓存未命中次数
-        stores: 0       // 缓存存储次数
-    }
 
     /**
      * 两个核心标识的职责划分：
@@ -212,43 +185,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     setTokens(tokens?: SubhutiMatchToken[]) {
         this._tokens = tokens
         this.tokenIndex = 0  // 方案B：重置索引
-        // Memoization：解析新的源代码时清空缓存
-        this.clearMemoCache()
-    }
-
-    /**
-     * 清空 Memoization 缓存和统计
-     *
-     * 使用场景：
-     * - 解析新的源代码时（setTokens）
-     * - 手动重置缓存（用于测试）
-     */
-    clearMemoCache() {
-        this.memoCache.clear()
-        this.memoStats = {
-            hits: 0,
-            misses: 0,
-            stores: 0
-        }
-    }
-
-    /**
-     * 获取 Memoization 统计信息（用于性能分析）
-     *
-     * @returns 缓存统计和性能指标
-     */
-    getMemoStats() {
-        const total = this.memoStats.hits + this.memoStats.misses
-        const hitRate = total > 0 ? (this.memoStats.hits / total * 100).toFixed(1) : '0.0'
-
-        return {
-            ...this.memoStats,
-            total,
-            hitRate: `${hitRate}%`,
-            cacheSize: this.memoCache.size,
-            totalEntries: Array.from(this.memoCache.values())
-                .reduce((sum, map) => sum + map.size, 0)
-        }
     }
 
     get allowError() {
@@ -270,11 +206,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     /**
      * 规则执行入口（由@SubhutiRule装饰器生成）
      *
-     * Packrat Parsing 优化：
-     * - 在非初始化模式下，查询缓存
-     * - 缓存命中：直接返回结果，避免重复解析
-     * - 缓存未命中：执行规则，缓存结果
-     *
      * 初始化阶段：
      * - 重置continueMatch=true（允许开始解析）
      * - loopMatchSuccess保持默认值false
@@ -286,6 +217,8 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
                 return
             }
         }
+
+        // console.log(ruleName)
 
         const initFlag = this.initFlag
 
@@ -301,39 +234,14 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             if (!this.ruleMatchSuccess) {
                 return
             }
-
-            // ========================================
-            // Packrat Parsing: 查询缓存
-            // ========================================
-            if (this.enableMemoization) {
-                const cached = this.getMemoized(ruleName, this.tokenIndex)
-                if (cached !== undefined) {
-                    // 缓存命中！
-                    this.memoStats.hits++
-                    return this.applyMemoizedResult(cached)
-                }
-                // 缓存未命中
-                this.memoStats.misses++
-            }
         }
 
-        // ========================================
-        // 执行规则（缓存未命中或初始化）
-        // ========================================
-        const startTokenIndex = this.tokenIndex
         const cst = this.processCst(ruleName, targetFun)
 
         if (initFlag) {
             // 执行完毕，恢复initFlag
             this.initFlag = true
         } else {
-            // ========================================
-            // Packrat Parsing: 缓存结果
-            // ========================================
-            if (this.enableMemoization) {
-                this.storeMemoized(ruleName, startTokenIndex, cst, this.tokenIndex, this.ruleMatchSuccess)
-            }
-
             const parentCst = this.cstStack[this.cstStack.length - 1]
             if (cst) {
                 // 优化CST展示：删除空数组
@@ -351,115 +259,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             return cst
         }
         return
-    }
-
-    /**
-     * Packrat Parsing: 查询缓存
-     *
-     * @param ruleName 规则名称
-     * @param tokenIndex token 位置
-     * @returns 缓存结果（undefined 表示未命中）
-     */
-    private getMemoized(ruleName: string, tokenIndex: number): SubhutiMemoResult | undefined {
-        const ruleCache = this.memoCache.get(ruleName)
-        if (!ruleCache) {
-            return undefined
-        }
-        return ruleCache.get(tokenIndex)
-    }
-
-    /**
-     * Packrat Parsing: 应用缓存结果
-     *
-     * 根据缓存的结果恢复解析状态：
-     * - 成功：恢复 tokenIndex、ruleMatchSuccess、loopMatchSuccess，将缓存的 CST 添加到父节点，返回 CST
-     * - 失败：设置 ruleMatchSuccess = false，返回 undefined
-     *
-     * 关键：CST 节点直接复用，无需深拷贝（CST 是不可变的）
-     *
-     * ⚠️ 重要：必须将缓存的 CST 添加到当前父节点的 children
-     * - 缓存的 CST 是之前解析时的节点
-     * - 现在要复用它，但父节点上下文已经不同了
-     * - 必须手动添加到当前的 parentCst.children
-     *
-     * ⚠️ 重要：必须设置 loopMatchSuccess = true（成功时）
-     * - Or 规则依赖 loopMatchSuccess 判断分支是否成功
-     * - 如果不设置，Or 会认为分支失败，继续尝试下一个分支
-     *
-     * @param cached 缓存的结果
-     * @returns CST 节点或 undefined
-     */
-    private applyMemoizedResult(cached: SubhutiMemoResult): SubhutiCst | undefined {
-        // 恢复 token 位置
-        this.tokenIndex = cached.endTokenIndex
-
-        // 恢复 ruleMatchSuccess 状态
-        this.setRuleMatchSuccess(cached.ruleMatchSuccess)
-
-        if (cached.success && cached.cst) {
-            // ========================================
-            // 关键修复1：将缓存的 CST 添加到当前父节点
-            // ========================================
-            // 缓存命中时跳过了 processCst，所以需要手动处理父子关系
-            const parentCst = this.cstStack[this.cstStack.length - 1]
-            if (parentCst) {
-                parentCst.children.push(cached.cst)
-            }
-
-            // ========================================
-            // 关键修复2：设置 loopMatchSuccess = true
-            // ========================================
-            // Or 规则依赖这个标志判断分支是否成功
-            this.setLoopMatchSuccess(true)
-
-            // 成功：返回缓存的 CST
-            // 注意：直接复用 CST，不需要深拷贝（CST 是不可变的）
-            return cached.cst
-        } else {
-            // 失败：返回 undefined
-            // loopMatchSuccess 保持为 false（Or 规则会继续尝试下一个分支）
-            return undefined
-        }
-    }
-
-    /**
-     * Packrat Parsing: 存储缓存
-     *
-     * 缓存规则执行结果，包括：
-     * - 成功/失败标志
-     * - 结束位置
-     * - CST 节点（成功时）
-     * - ruleMatchSuccess 状态
-     *
-     * @param ruleName 规则名称
-     * @param startTokenIndex 开始位置
-     * @param cst 解析结果
-     * @param endTokenIndex 结束位置
-     * @param ruleMatchSuccess 解析后的状态
-     */
-    private storeMemoized(
-        ruleName: string,
-        startTokenIndex: number,
-        cst: SubhutiCst | undefined,
-        endTokenIndex: number,
-        ruleMatchSuccess: boolean
-    ) {
-        // 获取或创建规则的缓存 Map
-        let ruleCache = this.memoCache.get(ruleName)
-        if (!ruleCache) {
-            ruleCache = new Map<number, SubhutiMemoResult>()
-            this.memoCache.set(ruleName, ruleCache)
-        }
-
-        // 存储结果
-        ruleCache.set(startTokenIndex, {
-            success: cst !== undefined,
-            endTokenIndex: endTokenIndex,
-            cst: cst,
-            ruleMatchSuccess: ruleMatchSuccess
-        })
-
-        this.memoStats.stores++
     }
 
     /**
