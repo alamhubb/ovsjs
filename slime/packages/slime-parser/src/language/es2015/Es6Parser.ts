@@ -61,6 +61,15 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
     IdentifierReference() {
         this.Or([
             {alt: () => this.tokenConsumer.Identifier()},
+            // 上下文关键字：只在特定语法位置有特殊含义，其他地方可作为标识符
+            {alt: () => this.tokenConsumer.AsyncTok()},
+            {alt: () => this.tokenConsumer.AwaitTok()},
+            {alt: () => this.tokenConsumer.YieldTok()},
+            {alt: () => this.tokenConsumer.TargetTok()},
+            {alt: () => this.tokenConsumer.OfTok()},
+            {alt: () => this.tokenConsumer.AsTok()},
+            {alt: () => this.tokenConsumer.FromTok()},
+            {alt: () => this.tokenConsumer.StaticTok()},
         ])
     }
 
@@ -126,6 +135,15 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
     LabelIdentifier() {
         this.Or([
             {alt: () => this.tokenConsumer.Identifier()},
+            // 上下文关键字：只在特定语法位置有特殊含义，其他地方可作为标识符
+            {alt: () => this.tokenConsumer.AsyncTok()},
+            {alt: () => this.tokenConsumer.AwaitTok()},
+            {alt: () => this.tokenConsumer.YieldTok()},
+            {alt: () => this.tokenConsumer.TargetTok()},
+            {alt: () => this.tokenConsumer.OfTok()},
+            {alt: () => this.tokenConsumer.AsTok()},
+            {alt: () => this.tokenConsumer.FromTok()},
+            {alt: () => this.tokenConsumer.StaticTok()},
         ])
     }
 
