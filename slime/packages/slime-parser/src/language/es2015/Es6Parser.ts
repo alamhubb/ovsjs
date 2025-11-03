@@ -77,7 +77,12 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
      *      Identifier
      *      yield    (在非生成器上下文中可作为变量名)
      *      await    (在非async上下文中可作为变量名)
-     *    当前简化实现只支持Identifier，未来需要添加上下文检查分支
+     *      async    (上下文关键字，可作为变量名)
+     *      target   (上下文关键字，仅在new.target中有特殊含义)
+     *      of       (上下文关键字，仅在for-of中有特殊含义)
+     *      as       (上下文关键字，仅在import/export中有特殊含义)
+     *      from     (上下文关键字，仅在import/export中有特殊含义)
+     *      static   (上下文关键字，仅在class中有特殊含义)
      *
      * 3. Or的副作用机制：
      *    - Or会重置optionAndOrAllowErrorMatchOnce标志
@@ -87,6 +92,15 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
     BindingIdentifier() {
         this.Or([
             {alt: () => this.tokenConsumer.Identifier()},
+            // 上下文关键字：只在特定语法位置有特殊含义，其他地方可作为标识符
+            {alt: () => this.tokenConsumer.AsyncTok()},
+            {alt: () => this.tokenConsumer.AwaitTok()},
+            {alt: () => this.tokenConsumer.YieldTok()},
+            {alt: () => this.tokenConsumer.TargetTok()},
+            {alt: () => this.tokenConsumer.OfTok()},
+            {alt: () => this.tokenConsumer.AsTok()},
+            {alt: () => this.tokenConsumer.FromTok()},
+            {alt: () => this.tokenConsumer.StaticTok()},
         ])
     }
 

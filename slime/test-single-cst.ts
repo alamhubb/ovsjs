@@ -151,16 +151,9 @@ function getCSTStatistics(node: any): {
 
 // 主程序
 // const code = process.argv[2]
-const code = `
-function searchArray(arr, target) {
-    for (let i = 0; i < arr.length; i++) {
-        if (arr[i] === target) {
-            console.log('found')
-            break
-        }
-    }
-}
-`
+const code = `function foo(target) {
+    console.log(target)
+}`
 
 if (!code) {
     console.log('❌ 错误：请提供要测试的代码')
