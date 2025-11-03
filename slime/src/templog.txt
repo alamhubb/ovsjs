@@ -9719,3 +9719,1512 @@
   ]
 }
 ================================================================================
+
+[2025-11-03T09:37:24.284Z]
+{
+  "name": "Program",
+  "children": [
+    {
+      "name": "ModuleItemList",
+      "children": [
+        {
+          "name": "StatementListItem",
+          "children": [
+            {
+              "name": "Declaration",
+              "children": [
+                {
+                  "name": "VariableDeclaration",
+                  "children": [
+                    {
+                      "name": "VariableLetOrConst",
+                      "children": [
+                        {
+                          "name": "ConstTok",
+                          "value": "const"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "VariableDeclarationList",
+                      "children": [
+                        {
+                          "name": "VariableDeclarator",
+                          "children": [
+                            {
+                              "name": "BindingPattern",
+                              "children": [
+                                {
+                                  "name": "ArrayBindingPattern",
+                                  "children": [
+                                    {
+                                      "name": "LBracket",
+                                      "value": "["
+                                    },
+                                    {
+                                      "name": "BindingElementList",
+                                      "children": [
+                                        {
+                                          "name": "BindingElisionElement",
+                                          "children": [
+                                            {
+                                              "name": "BindingElement",
+                                              "children": [
+                                                {
+                                                  "name": "SingleNameBinding",
+                                                  "children": [
+                                                    {
+                                                      "name": "BindingIdentifier",
+                                                      "children": [
+                                                        {
+                                                          "name": "Identifier",
+                                                          "value": "first"
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "name": "Comma",
+                                      "value": ","
+                                    },
+                                    {
+                                      "name": "BindingRestElement",
+                                      "children": [
+                                        {
+                                          "name": "EllipsisTok",
+                                          "value": "..."
+                                        },
+                                        {
+                                          "name": "BindingIdentifier",
+                                          "children": [
+                                            {
+                                              "name": "Identifier",
+                                              "value": "rest"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "name": "RBracket",
+                                      "value": "]"
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Initializer",
+                              "children": [
+                                {
+                                  "name": "Eq",
+                                  "value": "="
+                                },
+                                {
+                                  "name": "AssignmentExpression",
+                                  "children": [
+                                    {
+                                      "name": "ConditionalExpression",
+                                      "children": [
+                                        {
+                                          "name": "LogicalORExpression",
+                                          "children": [
+                                            {
+                                              "name": "LogicalANDExpression",
+                                              "children": [
+                                                {
+                                                  "name": "BitwiseORExpression",
+                                                  "children": [
+                                                    {
+                                                      "name": "BitwiseXORExpression",
+                                                      "children": [
+                                                        {
+                                                          "name": "BitwiseANDExpression",
+                                                          "children": [
+                                                            {
+                                                              "name": "EqualityExpression",
+                                                              "children": [
+                                                                {
+                                                                  "name": "RelationalExpression",
+                                                                  "children": [
+                                                                    {
+                                                                      "name": "ShiftExpression",
+                                                                      "children": [
+                                                                        {
+                                                                          "name": "AdditiveExpression",
+                                                                          "children": [
+                                                                            {
+                                                                              "name": "MultiplicativeExpression",
+                                                                              "children": [
+                                                                                {
+                                                                                  "name": "UnaryExpression",
+                                                                                  "children": [
+                                                                                    {
+                                                                                      "name": "PostfixExpression",
+                                                                                      "children": [
+                                                                                        {
+                                                                                          "name": "LeftHandSideExpression",
+                                                                                          "children": [
+                                                                                            {
+                                                                                              "name": "NewExpression",
+                                                                                              "children": [
+                                                                                                {
+                                                                                                  "name": "MemberExpression",
+                                                                                                  "children": [
+                                                                                                    {
+                                                                                                      "name": "PrimaryExpression",
+                                                                                                      "children": [
+                                                                                                        {
+                                                                                                          "name": "IdentifierReference",
+                                                                                                          "children": [
+                                                                                                            {
+                                                                                                              "name": "Identifier",
+                                                                                                              "value": "arr"
+                                                                                                            }
+                                                                                                          ]
+                                                                                                        }
+                                                                                                      ]
+                                                                                                    }
+                                                                                                  ]
+                                                                                                }
+                                                                                              ]
+                                                                                            }
+                                                                                          ]
+                                                                                        }
+                                                                                      ]
+                                                                                    }
+                                                                                  ]
+                                                                                }
+                                                                              ]
+                                                                            }
+                                                                          ]
+                                                                        }
+                                                                      ]
+                                                                    }
+                                                                  ]
+                                                                }
+                                                              ]
+                                                            }
+                                                          ]
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "EmptySemicolon"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "StatementListItem",
+          "children": [
+            {
+              "name": "Declaration",
+              "children": [
+                {
+                  "name": "VariableDeclaration",
+                  "children": [
+                    {
+                      "name": "VariableLetOrConst",
+                      "children": [
+                        {
+                          "name": "ConstTok",
+                          "value": "const"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "VariableDeclarationList",
+                      "children": [
+                        {
+                          "name": "VariableDeclarator",
+                          "children": [
+                            {
+                              "name": "BindingPattern",
+                              "children": [
+                                {
+                                  "name": "ArrayBindingPattern",
+                                  "children": [
+                                    {
+                                      "name": "LBracket",
+                                      "value": "["
+                                    },
+                                    {
+                                      "name": "BindingElementList",
+                                      "children": [
+                                        {
+                                          "name": "BindingElisionElement",
+                                          "children": [
+                                            {
+                                              "name": "BindingElement",
+                                              "children": [
+                                                {
+                                                  "name": "SingleNameBinding",
+                                                  "children": [
+                                                    {
+                                                      "name": "BindingIdentifier",
+                                                      "children": [
+                                                        {
+                                                          "name": "Identifier",
+                                                          "value": "a"
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "name": "Comma",
+                                          "value": ","
+                                        },
+                                        {
+                                          "name": "BindingElisionElement",
+                                          "children": [
+                                            {
+                                              "name": "BindingElement",
+                                              "children": [
+                                                {
+                                                  "name": "SingleNameBinding",
+                                                  "children": [
+                                                    {
+                                                      "name": "BindingIdentifier",
+                                                      "children": [
+                                                        {
+                                                          "name": "Identifier",
+                                                          "value": "b"
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "name": "Comma",
+                                      "value": ","
+                                    },
+                                    {
+                                      "name": "BindingRestElement",
+                                      "children": [
+                                        {
+                                          "name": "EllipsisTok",
+                                          "value": "..."
+                                        },
+                                        {
+                                          "name": "BindingIdentifier",
+                                          "children": [
+                                            {
+                                              "name": "Identifier",
+                                              "value": "others"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "name": "RBracket",
+                                      "value": "]"
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Initializer",
+                              "children": [
+                                {
+                                  "name": "Eq",
+                                  "value": "="
+                                },
+                                {
+                                  "name": "AssignmentExpression",
+                                  "children": [
+                                    {
+                                      "name": "ConditionalExpression",
+                                      "children": [
+                                        {
+                                          "name": "LogicalORExpression",
+                                          "children": [
+                                            {
+                                              "name": "LogicalANDExpression",
+                                              "children": [
+                                                {
+                                                  "name": "BitwiseORExpression",
+                                                  "children": [
+                                                    {
+                                                      "name": "BitwiseXORExpression",
+                                                      "children": [
+                                                        {
+                                                          "name": "BitwiseANDExpression",
+                                                          "children": [
+                                                            {
+                                                              "name": "EqualityExpression",
+                                                              "children": [
+                                                                {
+                                                                  "name": "RelationalExpression",
+                                                                  "children": [
+                                                                    {
+                                                                      "name": "ShiftExpression",
+                                                                      "children": [
+                                                                        {
+                                                                          "name": "AdditiveExpression",
+                                                                          "children": [
+                                                                            {
+                                                                              "name": "MultiplicativeExpression",
+                                                                              "children": [
+                                                                                {
+                                                                                  "name": "UnaryExpression",
+                                                                                  "children": [
+                                                                                    {
+                                                                                      "name": "PostfixExpression",
+                                                                                      "children": [
+                                                                                        {
+                                                                                          "name": "LeftHandSideExpression",
+                                                                                          "children": [
+                                                                                            {
+                                                                                              "name": "NewExpression",
+                                                                                              "children": [
+                                                                                                {
+                                                                                                  "name": "MemberExpression",
+                                                                                                  "children": [
+                                                                                                    {
+                                                                                                      "name": "PrimaryExpression",
+                                                                                                      "children": [
+                                                                                                        {
+                                                                                                          "name": "IdentifierReference",
+                                                                                                          "children": [
+                                                                                                            {
+                                                                                                              "name": "Identifier",
+                                                                                                              "value": "list"
+                                                                                                            }
+                                                                                                          ]
+                                                                                                        }
+                                                                                                      ]
+                                                                                                    }
+                                                                                                  ]
+                                                                                                }
+                                                                                              ]
+                                                                                            }
+                                                                                          ]
+                                                                                        }
+                                                                                      ]
+                                                                                    }
+                                                                                  ]
+                                                                                }
+                                                                              ]
+                                                                            }
+                                                                          ]
+                                                                        }
+                                                                      ]
+                                                                    }
+                                                                  ]
+                                                                }
+                                                              ]
+                                                            }
+                                                          ]
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "EmptySemicolon"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "StatementListItem",
+          "children": [
+            {
+              "name": "Declaration",
+              "children": [
+                {
+                  "name": "VariableDeclaration",
+                  "children": [
+                    {
+                      "name": "VariableLetOrConst",
+                      "children": [
+                        {
+                          "name": "ConstTok",
+                          "value": "const"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "VariableDeclarationList",
+                      "children": [
+                        {
+                          "name": "VariableDeclarator",
+                          "children": [
+                            {
+                              "name": "BindingPattern",
+                              "children": [
+                                {
+                                  "name": "ArrayBindingPattern",
+                                  "children": [
+                                    {
+                                      "name": "LBracket",
+                                      "value": "["
+                                    },
+                                    {
+                                      "name": "BindingRestElement",
+                                      "children": [
+                                        {
+                                          "name": "EllipsisTok",
+                                          "value": "..."
+                                        },
+                                        {
+                                          "name": "BindingIdentifier",
+                                          "children": [
+                                            {
+                                              "name": "Identifier",
+                                              "value": "all"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "name": "RBracket",
+                                      "value": "]"
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Initializer",
+                              "children": [
+                                {
+                                  "name": "Eq",
+                                  "value": "="
+                                },
+                                {
+                                  "name": "AssignmentExpression",
+                                  "children": [
+                                    {
+                                      "name": "ConditionalExpression",
+                                      "children": [
+                                        {
+                                          "name": "LogicalORExpression",
+                                          "children": [
+                                            {
+                                              "name": "LogicalANDExpression",
+                                              "children": [
+                                                {
+                                                  "name": "BitwiseORExpression",
+                                                  "children": [
+                                                    {
+                                                      "name": "BitwiseXORExpression",
+                                                      "children": [
+                                                        {
+                                                          "name": "BitwiseANDExpression",
+                                                          "children": [
+                                                            {
+                                                              "name": "EqualityExpression",
+                                                              "children": [
+                                                                {
+                                                                  "name": "RelationalExpression",
+                                                                  "children": [
+                                                                    {
+                                                                      "name": "ShiftExpression",
+                                                                      "children": [
+                                                                        {
+                                                                          "name": "AdditiveExpression",
+                                                                          "children": [
+                                                                            {
+                                                                              "name": "MultiplicativeExpression",
+                                                                              "children": [
+                                                                                {
+                                                                                  "name": "UnaryExpression",
+                                                                                  "children": [
+                                                                                    {
+                                                                                      "name": "PostfixExpression",
+                                                                                      "children": [
+                                                                                        {
+                                                                                          "name": "LeftHandSideExpression",
+                                                                                          "children": [
+                                                                                            {
+                                                                                              "name": "NewExpression",
+                                                                                              "children": [
+                                                                                                {
+                                                                                                  "name": "MemberExpression",
+                                                                                                  "children": [
+                                                                                                    {
+                                                                                                      "name": "PrimaryExpression",
+                                                                                                      "children": [
+                                                                                                        {
+                                                                                                          "name": "IdentifierReference",
+                                                                                                          "children": [
+                                                                                                            {
+                                                                                                              "name": "Identifier",
+                                                                                                              "value": "array"
+                                                                                                            }
+                                                                                                          ]
+                                                                                                        }
+                                                                                                      ]
+                                                                                                    }
+                                                                                                  ]
+                                                                                                }
+                                                                                              ]
+                                                                                            }
+                                                                                          ]
+                                                                                        }
+                                                                                      ]
+                                                                                    }
+                                                                                  ]
+                                                                                }
+                                                                              ]
+                                                                            }
+                                                                          ]
+                                                                        }
+                                                                      ]
+                                                                    }
+                                                                  ]
+                                                                }
+                                                              ]
+                                                            }
+                                                          ]
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "EmptySemicolon"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "StatementListItem",
+          "children": [
+            {
+              "name": "Declaration",
+              "children": [
+                {
+                  "name": "VariableDeclaration",
+                  "children": [
+                    {
+                      "name": "VariableLetOrConst",
+                      "children": [
+                        {
+                          "name": "ConstTok",
+                          "value": "const"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "VariableDeclarationList",
+                      "children": [
+                        {
+                          "name": "VariableDeclarator",
+                          "children": [
+                            {
+                              "name": "BindingPattern",
+                              "children": [
+                                {
+                                  "name": "ArrayBindingPattern",
+                                  "children": [
+                                    {
+                                      "name": "LBracket",
+                                      "value": "["
+                                    },
+                                    {
+                                      "name": "BindingRestElement",
+                                      "children": [
+                                        {
+                                          "name": "EllipsisTok",
+                                          "value": "..."
+                                        },
+                                        {
+                                          "name": "BindingIdentifier",
+                                          "children": [
+                                            {
+                                              "name": "Identifier",
+                                              "value": "items"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "name": "RBracket",
+                                      "value": "]"
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Initializer",
+                              "children": [
+                                {
+                                  "name": "Eq",
+                                  "value": "="
+                                },
+                                {
+                                  "name": "AssignmentExpression",
+                                  "children": [
+                                    {
+                                      "name": "ConditionalExpression",
+                                      "children": [
+                                        {
+                                          "name": "LogicalORExpression",
+                                          "children": [
+                                            {
+                                              "name": "LogicalANDExpression",
+                                              "children": [
+                                                {
+                                                  "name": "BitwiseORExpression",
+                                                  "children": [
+                                                    {
+                                                      "name": "BitwiseXORExpression",
+                                                      "children": [
+                                                        {
+                                                          "name": "BitwiseANDExpression",
+                                                          "children": [
+                                                            {
+                                                              "name": "EqualityExpression",
+                                                              "children": [
+                                                                {
+                                                                  "name": "RelationalExpression",
+                                                                  "children": [
+                                                                    {
+                                                                      "name": "ShiftExpression",
+                                                                      "children": [
+                                                                        {
+                                                                          "name": "AdditiveExpression",
+                                                                          "children": [
+                                                                            {
+                                                                              "name": "MultiplicativeExpression",
+                                                                              "children": [
+                                                                                {
+                                                                                  "name": "UnaryExpression",
+                                                                                  "children": [
+                                                                                    {
+                                                                                      "name": "PostfixExpression",
+                                                                                      "children": [
+                                                                                        {
+                                                                                          "name": "LeftHandSideExpression",
+                                                                                          "children": [
+                                                                                            {
+                                                                                              "name": "NewExpression",
+                                                                                              "children": [
+                                                                                                {
+                                                                                                  "name": "MemberExpression",
+                                                                                                  "children": [
+                                                                                                    {
+                                                                                                      "name": "PrimaryExpression",
+                                                                                                      "children": [
+                                                                                                        {
+                                                                                                          "name": "IdentifierReference",
+                                                                                                          "children": [
+                                                                                                            {
+                                                                                                              "name": "Identifier",
+                                                                                                              "value": "data"
+                                                                                                            }
+                                                                                                          ]
+                                                                                                        }
+                                                                                                      ]
+                                                                                                    }
+                                                                                                  ]
+                                                                                                }
+                                                                                              ]
+                                                                                            }
+                                                                                          ]
+                                                                                        }
+                                                                                      ]
+                                                                                    }
+                                                                                  ]
+                                                                                }
+                                                                              ]
+                                                                            }
+                                                                          ]
+                                                                        }
+                                                                      ]
+                                                                    }
+                                                                  ]
+                                                                }
+                                                              ]
+                                                            }
+                                                          ]
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "EmptySemicolon"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "StatementListItem",
+          "children": [
+            {
+              "name": "Declaration",
+              "children": [
+                {
+                  "name": "HoistableDeclaration",
+                  "children": [
+                    {
+                      "name": "FunctionDeclaration",
+                      "children": [
+                        {
+                          "name": "FunctionTok",
+                          "value": "function"
+                        },
+                        {
+                          "name": "BindingIdentifier",
+                          "children": [
+                            {
+                              "name": "Identifier",
+                              "value": "test"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "FunctionFormalParametersBodyDefine",
+                          "children": [
+                            {
+                              "name": "FunctionFormalParameters",
+                              "children": [
+                                {
+                                  "name": "LParen",
+                                  "value": "("
+                                },
+                                {
+                                  "name": "FormalParameterList",
+                                  "children": [
+                                    {
+                                      "name": "BindingElement",
+                                      "children": [
+                                        {
+                                          "name": "SingleNameBinding",
+                                          "children": [
+                                            {
+                                              "name": "BindingIdentifier",
+                                              "children": [
+                                                {
+                                                  "name": "Identifier",
+                                                  "value": "first"
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "name": "Comma",
+                                      "value": ","
+                                    },
+                                    {
+                                      "name": "RestParameter",
+                                      "children": [
+                                        {
+                                          "name": "EllipsisTok",
+                                          "value": "..."
+                                        },
+                                        {
+                                          "name": "BindingIdentifier",
+                                          "children": [
+                                            {
+                                              "name": "Identifier",
+                                              "value": "args"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "RParen",
+                                  "value": ")"
+                                }
+                              ]
+                            },
+                            {
+                              "name": "FunctionBodyDefine",
+                              "children": [
+                                {
+                                  "name": "LBrace",
+                                  "value": "{"
+                                },
+                                {
+                                  "name": "FunctionBody",
+                                  "children": [
+                                    {
+                                      "name": "StatementList",
+                                      "children": [
+                                        {
+                                          "name": "StatementListItem",
+                                          "children": [
+                                            {
+                                              "name": "Statement",
+                                              "children": [
+                                                {
+                                                  "name": "ReturnStatement",
+                                                  "children": [
+                                                    {
+                                                      "name": "ReturnTok",
+                                                      "value": "return"
+                                                    },
+                                                    {
+                                                      "name": "Expression",
+                                                      "children": [
+                                                        {
+                                                          "name": "AssignmentExpression",
+                                                          "children": [
+                                                            {
+                                                              "name": "ConditionalExpression",
+                                                              "children": [
+                                                                {
+                                                                  "name": "LogicalORExpression",
+                                                                  "children": [
+                                                                    {
+                                                                      "name": "LogicalANDExpression",
+                                                                      "children": [
+                                                                        {
+                                                                          "name": "BitwiseORExpression",
+                                                                          "children": [
+                                                                            {
+                                                                              "name": "BitwiseXORExpression",
+                                                                              "children": [
+                                                                                {
+                                                                                  "name": "BitwiseANDExpression",
+                                                                                  "children": [
+                                                                                    {
+                                                                                      "name": "EqualityExpression",
+                                                                                      "children": [
+                                                                                        {
+                                                                                          "name": "RelationalExpression",
+                                                                                          "children": [
+                                                                                            {
+                                                                                              "name": "ShiftExpression",
+                                                                                              "children": [
+                                                                                                {
+                                                                                                  "name": "AdditiveExpression",
+                                                                                                  "children": [
+                                                                                                    {
+                                                                                                      "name": "MultiplicativeExpression",
+                                                                                                      "children": [
+                                                                                                        {
+                                                                                                          "name": "UnaryExpression",
+                                                                                                          "children": [
+                                                                                                            {
+                                                                                                              "name": "PostfixExpression",
+                                                                                                              "children": [
+                                                                                                                {
+                                                                                                                  "name": "LeftHandSideExpression",
+                                                                                                                  "children": [
+                                                                                                                    {
+                                                                                                                      "name": "NewExpression",
+                                                                                                                      "children": [
+                                                                                                                        {
+                                                                                                                          "name": "MemberExpression",
+                                                                                                                          "children": [
+                                                                                                                            {
+                                                                                                                              "name": "PrimaryExpression",
+                                                                                                                              "children": [
+                                                                                                                                {
+                                                                                                                                  "name": "IdentifierReference",
+                                                                                                                                  "children": [
+                                                                                                                                    {
+                                                                                                                                      "name": "Identifier",
+                                                                                                                                      "value": "args"
+                                                                                                                                    }
+                                                                                                                                  ]
+                                                                                                                                }
+                                                                                                                              ]
+                                                                                                                            }
+                                                                                                                          ]
+                                                                                                                        }
+                                                                                                                      ]
+                                                                                                                    }
+                                                                                                                  ]
+                                                                                                                }
+                                                                                                              ]
+                                                                                                            }
+                                                                                                          ]
+                                                                                                        }
+                                                                                                      ]
+                                                                                                    }
+                                                                                                  ]
+                                                                                                }
+                                                                                              ]
+                                                                                            }
+                                                                                          ]
+                                                                                        }
+                                                                                      ]
+                                                                                    }
+                                                                                  ]
+                                                                                }
+                                                                              ]
+                                                                            }
+                                                                          ]
+                                                                        }
+                                                                      ]
+                                                                    }
+                                                                  ]
+                                                                }
+                                                              ]
+                                                            }
+                                                          ]
+                                                        }
+                                                      ]
+                                                    },
+                                                    {
+                                                      "name": "EmptySemicolon"
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "RBrace",
+                                  "value": "}"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "StatementListItem",
+          "children": [
+            {
+              "name": "Declaration",
+              "children": [
+                {
+                  "name": "HoistableDeclaration",
+                  "children": [
+                    {
+                      "name": "FunctionDeclaration",
+                      "children": [
+                        {
+                          "name": "FunctionTok",
+                          "value": "function"
+                        },
+                        {
+                          "name": "BindingIdentifier",
+                          "children": [
+                            {
+                              "name": "Identifier",
+                              "value": "collect"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "FunctionFormalParametersBodyDefine",
+                          "children": [
+                            {
+                              "name": "FunctionFormalParameters",
+                              "children": [
+                                {
+                                  "name": "LParen",
+                                  "value": "("
+                                },
+                                {
+                                  "name": "FormalParameterList",
+                                  "children": [
+                                    {
+                                      "name": "RestParameter",
+                                      "children": [
+                                        {
+                                          "name": "EllipsisTok",
+                                          "value": "..."
+                                        },
+                                        {
+                                          "name": "BindingIdentifier",
+                                          "children": [
+                                            {
+                                              "name": "Identifier",
+                                              "value": "items"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "RParen",
+                                  "value": ")"
+                                }
+                              ]
+                            },
+                            {
+                              "name": "FunctionBodyDefine",
+                              "children": [
+                                {
+                                  "name": "LBrace",
+                                  "value": "{"
+                                },
+                                {
+                                  "name": "FunctionBody",
+                                  "children": [
+                                    {
+                                      "name": "StatementList",
+                                      "children": [
+                                        {
+                                          "name": "StatementListItem",
+                                          "children": [
+                                            {
+                                              "name": "Statement",
+                                              "children": [
+                                                {
+                                                  "name": "ReturnStatement",
+                                                  "children": [
+                                                    {
+                                                      "name": "ReturnTok",
+                                                      "value": "return"
+                                                    },
+                                                    {
+                                                      "name": "Expression",
+                                                      "children": [
+                                                        {
+                                                          "name": "AssignmentExpression",
+                                                          "children": [
+                                                            {
+                                                              "name": "ConditionalExpression",
+                                                              "children": [
+                                                                {
+                                                                  "name": "LogicalORExpression",
+                                                                  "children": [
+                                                                    {
+                                                                      "name": "LogicalANDExpression",
+                                                                      "children": [
+                                                                        {
+                                                                          "name": "BitwiseORExpression",
+                                                                          "children": [
+                                                                            {
+                                                                              "name": "BitwiseXORExpression",
+                                                                              "children": [
+                                                                                {
+                                                                                  "name": "BitwiseANDExpression",
+                                                                                  "children": [
+                                                                                    {
+                                                                                      "name": "EqualityExpression",
+                                                                                      "children": [
+                                                                                        {
+                                                                                          "name": "RelationalExpression",
+                                                                                          "children": [
+                                                                                            {
+                                                                                              "name": "ShiftExpression",
+                                                                                              "children": [
+                                                                                                {
+                                                                                                  "name": "AdditiveExpression",
+                                                                                                  "children": [
+                                                                                                    {
+                                                                                                      "name": "MultiplicativeExpression",
+                                                                                                      "children": [
+                                                                                                        {
+                                                                                                          "name": "UnaryExpression",
+                                                                                                          "children": [
+                                                                                                            {
+                                                                                                              "name": "PostfixExpression",
+                                                                                                              "children": [
+                                                                                                                {
+                                                                                                                  "name": "LeftHandSideExpression",
+                                                                                                                  "children": [
+                                                                                                                    {
+                                                                                                                      "name": "NewExpression",
+                                                                                                                      "children": [
+                                                                                                                        {
+                                                                                                                          "name": "MemberExpression",
+                                                                                                                          "children": [
+                                                                                                                            {
+                                                                                                                              "name": "PrimaryExpression",
+                                                                                                                              "children": [
+                                                                                                                                {
+                                                                                                                                  "name": "IdentifierReference",
+                                                                                                                                  "children": [
+                                                                                                                                    {
+                                                                                                                                      "name": "Identifier",
+                                                                                                                                      "value": "items"
+                                                                                                                                    }
+                                                                                                                                  ]
+                                                                                                                                }
+                                                                                                                              ]
+                                                                                                                            }
+                                                                                                                          ]
+                                                                                                                        }
+                                                                                                                      ]
+                                                                                                                    }
+                                                                                                                  ]
+                                                                                                                }
+                                                                                                              ]
+                                                                                                            }
+                                                                                                          ]
+                                                                                                        }
+                                                                                                      ]
+                                                                                                    }
+                                                                                                  ]
+                                                                                                }
+                                                                                              ]
+                                                                                            }
+                                                                                          ]
+                                                                                        }
+                                                                                      ]
+                                                                                    }
+                                                                                  ]
+                                                                                }
+                                                                              ]
+                                                                            }
+                                                                          ]
+                                                                        }
+                                                                      ]
+                                                                    }
+                                                                  ]
+                                                                }
+                                                              ]
+                                                            }
+                                                          ]
+                                                        }
+                                                      ]
+                                                    },
+                                                    {
+                                                      "name": "EmptySemicolon"
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "RBrace",
+                                  "value": "}"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "StatementListItem",
+          "children": [
+            {
+              "name": "Declaration",
+              "children": [
+                {
+                  "name": "VariableDeclaration",
+                  "children": [
+                    {
+                      "name": "VariableLetOrConst",
+                      "children": [
+                        {
+                          "name": "ConstTok",
+                          "value": "const"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "VariableDeclarationList",
+                      "children": [
+                        {
+                          "name": "VariableDeclarator",
+                          "children": [
+                            {
+                              "name": "BindingPattern",
+                              "children": [
+                                {
+                                  "name": "ObjectBindingPattern",
+                                  "children": [
+                                    {
+                                      "name": "LBrace",
+                                      "value": "{"
+                                    },
+                                    {
+                                      "name": "BindingPropertyList",
+                                      "children": [
+                                        {
+                                          "name": "BindingProperty",
+                                          "children": [
+                                            {
+                                              "name": "SingleNameBinding",
+                                              "children": [
+                                                {
+                                                  "name": "BindingIdentifier",
+                                                  "children": [
+                                                    {
+                                                      "name": "Identifier",
+                                                      "value": "name"
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "name": "Comma",
+                                      "value": ","
+                                    },
+                                    {
+                                      "name": "BindingRestElement",
+                                      "children": [
+                                        {
+                                          "name": "EllipsisTok",
+                                          "value": "..."
+                                        },
+                                        {
+                                          "name": "BindingIdentifier",
+                                          "children": [
+                                            {
+                                              "name": "Identifier",
+                                              "value": "otherProps"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "name": "RBrace",
+                                      "value": "}"
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Initializer",
+                              "children": [
+                                {
+                                  "name": "Eq",
+                                  "value": "="
+                                },
+                                {
+                                  "name": "AssignmentExpression",
+                                  "children": [
+                                    {
+                                      "name": "ConditionalExpression",
+                                      "children": [
+                                        {
+                                          "name": "LogicalORExpression",
+                                          "children": [
+                                            {
+                                              "name": "LogicalANDExpression",
+                                              "children": [
+                                                {
+                                                  "name": "BitwiseORExpression",
+                                                  "children": [
+                                                    {
+                                                      "name": "BitwiseXORExpression",
+                                                      "children": [
+                                                        {
+                                                          "name": "BitwiseANDExpression",
+                                                          "children": [
+                                                            {
+                                                              "name": "EqualityExpression",
+                                                              "children": [
+                                                                {
+                                                                  "name": "RelationalExpression",
+                                                                  "children": [
+                                                                    {
+                                                                      "name": "ShiftExpression",
+                                                                      "children": [
+                                                                        {
+                                                                          "name": "AdditiveExpression",
+                                                                          "children": [
+                                                                            {
+                                                                              "name": "MultiplicativeExpression",
+                                                                              "children": [
+                                                                                {
+                                                                                  "name": "UnaryExpression",
+                                                                                  "children": [
+                                                                                    {
+                                                                                      "name": "PostfixExpression",
+                                                                                      "children": [
+                                                                                        {
+                                                                                          "name": "LeftHandSideExpression",
+                                                                                          "children": [
+                                                                                            {
+                                                                                              "name": "NewExpression",
+                                                                                              "children": [
+                                                                                                {
+                                                                                                  "name": "MemberExpression",
+                                                                                                  "children": [
+                                                                                                    {
+                                                                                                      "name": "PrimaryExpression",
+                                                                                                      "children": [
+                                                                                                        {
+                                                                                                          "name": "IdentifierReference",
+                                                                                                          "children": [
+                                                                                                            {
+                                                                                                              "name": "Identifier",
+                                                                                                              "value": "obj"
+                                                                                                            }
+                                                                                                          ]
+                                                                                                        }
+                                                                                                      ]
+                                                                                                    }
+                                                                                                  ]
+                                                                                                }
+                                                                                              ]
+                                                                                            }
+                                                                                          ]
+                                                                                        }
+                                                                                      ]
+                                                                                    }
+                                                                                  ]
+                                                                                }
+                                                                              ]
+                                                                            }
+                                                                          ]
+                                                                        }
+                                                                      ]
+                                                                    }
+                                                                  ]
+                                                                }
+                                                              ]
+                                                            }
+                                                          ]
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "EmptySemicolon"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+================================================================================

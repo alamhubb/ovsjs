@@ -153,7 +153,37 @@ function getCSTStatistics(node: any): {
 // const code = process.argv[2]
 const code = `
 // ✅ 测试11：函数调用加法
-Math.max(1, 2) + Math.min(5, 3)
+const [first, ...rest] = arr
+const [a, b, ...others] = list
+
+// ✅ 测试2：只有rest，没有前置元素    BindingRestElement -> ... BindingIdentifier (sole rest)
+const [...all] = array
+const [...items] = data
+
+// ✅ 测试3：函数参数rest    BindingRestElement -> ... BindingIdentifier (function params)
+function test(first, ...args) {
+    return args
+}
+
+// ✅ 测试4：函数参数只有rest
+function collect(...items) {
+    return items
+}
+
+// ✅ 测试5：对象rest（ES2018 - 可能不支持）
+const {name, ...otherProps} = obj
+
+// ✅ 测试6：嵌套解构中的rest
+const [first, ...[second, third]] = arr
+
+// ✅ 测试7：rest配合默认值
+function sum(initial = 0, ...nums) {
+    return nums.reduce((a, b) => a + b, initial)
+}
+
+// ✅ 测试8：多个函数使用rest
+const fn1 = (...args) => args.length
+const fn2 = (a, b, ...rest) => rest
 `
 
 if (!code) {
