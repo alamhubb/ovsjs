@@ -10,7 +10,7 @@
 import SubhutiLexer from "../src/parser/SubhutiLexer"
 import SubhutiParser, { Subhuti, SubhutiRule } from "../src/parser/SubhutiParser"
 import SubhutiTokenConsumer from "../src/parser/SubhutiTokenConsumer"
-import { createKeywordToken, createRegToken } from "../src/struct/SubhutiCreateToken"
+import { createKeywordToken, createRegToken, createValueRegToken, SubhutiCreateTokenGroupType } from "../src/struct/SubhutiCreateToken"
 import type { SubhutiTokenConsumerConstructor } from "../src/parser/SubhutiParser"
 import SubhutiMatchToken from "../src/struct/SubhutiMatchToken"
 
@@ -23,6 +23,7 @@ const testTokensObj = {
   VarTok: createKeywordToken('VarTok', 'var'),
   ConstTok: createKeywordToken('ConstTok', 'const'),
   Identifier: createRegToken('Identifier', /[a-zA-Z_][a-zA-Z0-9_]*/),
+  WhiteSpace: createValueRegToken('WhiteSpace', /[ \t\r\n]+/, '', SubhutiCreateTokenGroupType.skip),
 }
 
 const testTokens = Object.values(testTokensObj)

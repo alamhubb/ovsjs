@@ -189,7 +189,7 @@ try {
     console.log(`✅ 词法分析: ${tokens.length} tokens (有效token: ${inputTokens.length})`)
     
     // 语法分析
-    const parser = new Es2020Parser(tokens)
+    const parser = new Es6Parser(tokens)
     const cst = parser.Program()
     console.log(`✅ 语法分析: CST生成成功`)
     

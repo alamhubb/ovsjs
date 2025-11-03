@@ -2233,30 +2233,13 @@ export class SlimeCstToAst {
       if (child.name === Es6Parser.prototype.AssignmentExpression.name) {
         const res = this.createAssignmentExpressionAst(child)
         ArgumentList.push(res)
-      } else if (child.name === Es6Parser.prototype.EllipsisAssignmentExpression.name) {
+      } else if (child.name === Es6Parser.prototype.SpreadElement.name) {
         // 处理 spread 参数：...args
-        const res = this.createEllipsisAssignmentExpressionAst(child)
+        const res = this.createSpreadElementAst(child)
         ArgumentList.push(res)
       }
     }
     return ArgumentList
-  }
-
-  createEllipsisAssignmentExpressionAst(cst: SubhutiCst): SlimeSpreadElement {
-    const astName = checkCstName(cst, Es6Parser.prototype.EllipsisAssignmentExpression.name);
-    // EllipsisAssignmentExpression: [Ellipsis, AssignmentExpression]
-    const expression = cst.children.find(ch => 
-      ch.name === Es6Parser.prototype.AssignmentExpression.name
-    )
-    if (!expression) {
-      throw new Error('EllipsisAssignmentExpression missing AssignmentExpression')
-    }
-    
-    return {
-      type: 'SpreadElement',
-      argument: this.createAssignmentExpressionAst(expression),
-      loc: cst.loc
-    }
   }
 
   createMemberExpressionFirstOr(cst: SubhutiCst): SlimeExpression | SlimeSuper {

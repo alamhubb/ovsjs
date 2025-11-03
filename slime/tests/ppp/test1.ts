@@ -4,6 +4,7 @@ import {traverseClearLoc, traverseClearTokens} from "../utils/parserTestUtils";
 import {LogUtil} from "../../src/logutil";
 import {es2020Tokens} from "../../packages/slime-parser/src/language/es2020/Es2020Tokens";
 import Es2020Parser from "../../packages/slime-parser/src/language/es2020/Es2020Parser";
+import Es6Parser from "slime-parser/src/language/es2015/Es6Parser";
 
 const code = `
 Math.max(1, 2) + Math.min(5, 3)
@@ -13,7 +14,7 @@ const lexer = new SubhutiLexer(es2020Tokens)
 const tokens = lexer.lexer(code)
 console.log(tokens)
 
-const parser = new Es2020Parser(tokens)
+const parser = new Es6Parser(tokens)
 const curCst = parser.Program()
 
 const outCst = JsonUtil.cloneDeep(curCst)
