@@ -153,11 +153,7 @@ function getCSTStatistics(node: any): {
 // const code = process.argv[2]
 // MWE Step 1: 最简单的 try-catch
 const code = `
-try {
-    throw new Error('test')
-} catch (e) {
-    console.log('first catch')
-}
+class WithAsyncGen { async *gen() { yield 1 } }
 `
 
 if (!code) {

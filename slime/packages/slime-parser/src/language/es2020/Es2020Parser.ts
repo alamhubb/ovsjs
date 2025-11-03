@@ -59,6 +59,59 @@ export default class Es2020Parser<T extends Es2020TokenConsumer> extends Es6Pars
     }
 
     // ============================================
+    // ES2018: 异步生成器方法
+    // 规范 §4.4
+    // ============================================
+
+    /**
+     * AsyncGeneratorMethod[Yield, Await] ::
+     *     async [no LineTerminator here] * PropertyName[?Yield, ?Await] ( UniqueFormalParameters[+Yield, +Await] ) { AsyncGeneratorBody }
+     * 
+     * 实现说明：
+     * - async 和 * 之间不能有换行（规范要求）
+     * - 复用 FunctionFormalParametersBodyDefine 处理参数和函数体
+     */
+    @SubhutiRule
+    AsyncGeneratorMethod() {
+        this.tokenConsumer.AsyncTok()
+        this.tokenConsumer.Asterisk()
+        this.PropertyName()
+        this.FunctionFormalParametersBodyDefine()
+    }
+
+    /**
+     * Override: MethodDefinition
+     * 规范 §4.4
+     * 
+     * ES2018 新增：AsyncGeneratorMethod
+     * 
+     * MethodDefinition[Yield, Await] ::
+     *     PropertyName[?Yield, ?Await] ( UniqueFormalParameters[~Yield, ~Await] ) { FunctionBody[~Yield, ~Await] }
+     *     GeneratorMethod[?Yield, ?Await]
+     *     AsyncMethod[?Yield, ?Await]
+     *     AsyncGeneratorMethod[?Yield, ?Await]
+     *     get PropertyName[?Yield, ?Await] ( ) { FunctionBody[~Yield, ~Await] }
+     *     set PropertyName[?Yield, ?Await] ( PropertySetParameterList ) { FunctionBody[~Yield, ~Await] }
+     * 
+     * Or规则顺序（长规则优先）：
+     * 1. AsyncGeneratorMethod - async * (最长)
+     * 2. GeneratorMethod - * (较长)
+     * 3. GetMethodDefinition - get
+     * 4. SetMethodDefinition - set  
+     * 5. PropertyNameMethodDefinition - async 或普通方法 (最短)
+     */
+    @SubhutiRule
+    MethodDefinition() {
+        this.Or([
+            {alt: () => this.AsyncGeneratorMethod()},  // 最长：async *
+            {alt: () => this.GeneratorMethod()},       // 较长：*
+            {alt: () => this.GetMethodDefinition()},   // get
+            {alt: () => this.SetMethodDefinition()},   // set
+            {alt: () => this.PropertyNameMethodDefinition()}  // 普通/async方法
+        ])
+    }
+
+    // ============================================
     // ES2016: 幂运算表达式 (Exponentiation)
     // 规范 §2.14
     // ============================================
