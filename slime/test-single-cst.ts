@@ -152,8 +152,14 @@ function getCSTStatistics(node: any): {
 // 主程序
 // const code = process.argv[2]
 const code = `
-// ✅ 测试6：嵌套解构中的rest
-const [first, ...[second, third]] = arr
+function searchArray(arr, target) {
+    for (let i = 0; i < arr.length; i++) {
+        if (arr[i] === target) {
+            console.log('found')
+            break
+        }
+    }
+}
 `
 
 if (!code) {
@@ -172,7 +178,7 @@ console.log('='.repeat(60))
 
 try {
     // 词法分析
-    const lexer = new SubhutiLexer(es2020Tokens)
+    const lexer = new SubhutiLexer(es6Tokens)
     const tokens = lexer.lexer(code)
     
     const inputTokens = tokens
