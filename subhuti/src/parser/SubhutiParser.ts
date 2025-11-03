@@ -598,6 +598,33 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     }
     
     /**
+     * 检查当前 token 前是否有换行符
+     * 用于实现 ECMAScript [no LineTerminator here] 限制
+     * 
+     * 应用场景：
+     * - ContinueStatement: continue [no LineTerminator here] LabelIdentifier?
+     * - BreakStatement: break [no LineTerminator here] LabelIdentifier?
+     * - ReturnStatement: return [no LineTerminator here] Expression?
+     * - ThrowStatement: throw [no LineTerminator here] Expression
+     * - PostfixExpression: LeftHandSideExpression [no LineTerminator here] ++/--
+     */
+    hasLineTerminatorBefore(): boolean {
+        if (this.tokenIndex === 0) return false
+        
+        const currentToken = this._tokens[this.tokenIndex]
+        const prevToken = this._tokens[this.tokenIndex - 1]
+        
+        if (!currentToken || !prevToken) return false
+        
+        // 检查两个 token 之间是否有换行符（通过行号）
+        if (currentToken.rowNum === undefined || prevToken.rowNum === undefined) {
+            return false
+        }
+        
+        return currentToken.rowNum > prevToken.rowNum
+    }
+    
+    /**
      * 规则成功状态（只读，兼容性）
      */
     get ruleSuccess(): boolean {

@@ -1339,30 +1339,36 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
     @SubhutiRule
     ContinueStatement() {
         this.tokenConsumer.ContinueTok()
-        this.Option(() => {
-            // TODO: Implement [no LineTerminator here] check
-            this.LabelIdentifier()
-        })
+        // [no LineTerminator here] 检查：如果有换行符，不解析 label
+        if (!this.hasLineTerminatorBefore()) {
+            this.Option(() => {
+                this.LabelIdentifier()
+            })
+        }
         this.EmptySemicolon()
     }
 
     @SubhutiRule
     BreakStatement() {
         this.tokenConsumer.BreakTok()
-        this.Option(() => {
-            // TODO: Implement [no LineTerminator here] check
-            this.LabelIdentifier()
-        })
+        // [no LineTerminator here] 检查：如果有换行符，不解析 label
+        if (!this.hasLineTerminatorBefore()) {
+            this.Option(() => {
+                this.LabelIdentifier()
+            })
+        }
         this.EmptySemicolon()
     }
 
     @SubhutiRule
     ReturnStatement() {
         this.tokenConsumer.ReturnTok()
-        this.Option(() => {
-            // TODO: Implement [no LineTerminator here] check
-            this.Expression()
-        })
+        // [no LineTerminator here] 检查：如果有换行符，不解析 Expression
+        if (!this.hasLineTerminatorBefore()) {
+            this.Option(() => {
+                this.Expression()
+            })
+        }
         this.EmptySemicolon()
     }
 
@@ -1790,7 +1796,7 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
                 }
             },
         ])
-        return this.curCst
+        // ⚠️ 不需要手动 return，@SubhutiRule 装饰器会自动处理
     }
 
     @SubhutiRule

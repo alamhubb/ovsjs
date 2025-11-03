@@ -731,15 +731,18 @@ export default class Es2020Parser<T extends Es2020TokenConsumer> extends Es6Pars
      * 规范 §3.8
      * 
      * ES2018 新增：for await...of
+     * 
+     * 注意：ForAwaitOfStatement、ForInOfStatement、ForStatement 都以 'for' 开头
+     * 长规则优先：ForAwaitOfStatement（for await）> ForInOfStatement（for...in/of）> ForStatement（for）
      */
     @SubhutiRule
     IterationStatement() {
         this.Or([
-            {alt: () => this.ForAwaitOfStatement()},  // 新增
+            {alt: () => this.ForAwaitOfStatement()},  // 最长：for await...of
             {alt: () => this.DoWhileStatement()},
             {alt: () => this.WhileStatement()},
-            {alt: () => this.ForStatement()},
-            {alt: () => this.ForInOfStatement()}
+            {alt: () => this.ForInOfStatement()},      // 较长：for...in/of
+            {alt: () => this.ForStatement()}           // 最短：for
         ])
     }
 

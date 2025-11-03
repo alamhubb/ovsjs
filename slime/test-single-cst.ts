@@ -151,34 +151,13 @@ function getCSTStatistics(node: any): {
 
 // 主程序
 // const code = process.argv[2]
-// MWE Step 1: 最简单的 try-catch
-const code = `
-
-class User {
-    #password
-    
-    constructor(name, password) {
-        this.name = name
-        this.#password = password
-    }
-    
-    static create(data) {
-        return new User(data.name, data.pass)
-    }
-    
-    getName() {
-        return this.name
-    }
-    
-    verify(pwd) {
-        return this.#password === pwd
-    }
-    
-    get type() {
-        return 'user'
-    }
-}
-`
+// MWE 最终测试: 原始完整代码
+const code = `let k = 0
+do {
+    k++
+    if (k === 5) continue
+    console.log(k)
+} while (k < 10)`
 
 if (!code) {
     console.log('❌ 错误：请提供要测试的代码')
@@ -212,7 +191,7 @@ try {
     
     console.log(`✅ 词法分析: ${tokens.length} tokens (有效token: ${inputTokens.length})`)
     
-    // 语法分析
+    // 语法分析（使用 Es2020Parser）
     const parser = new Es2020Parser(tokens)
     const cst = parser.Program()
     console.log(`✅ 语法分析: CST生成成功`)
@@ -237,6 +216,12 @@ try {
     console.log(`  - 总节点数: ${stats.totalNodes}`)
     console.log(`  - 叶子节点: ${stats.leafNodes}`)
     console.log(`  - 最大深度: ${stats.maxDepth}`)
+    
+    // 输出完整CST（用于调试）
+    if (process.argv.includes('--full')) {
+        console.log('\n🌳 完整CST结构:')
+        console.log(JSON.stringify(cst, null, 2))
+    }
     
     // Token值验证
     const cstTokens = collectTokenValues(cst)
