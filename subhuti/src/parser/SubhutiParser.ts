@@ -836,13 +836,13 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             }
             
             // 尝试分支
-            const result = alt.alt()
+            alt.alt()
             
-            // 判断成功（返回值 + 状态标志，负逻辑）
-            if (result !== undefined && !this._parseFailed) {
-                // ✅ 成功：退出 allowError 上下文，返回结果
+            // ⭐ 修复：只根据 _parseFailed 判断，不依赖返回值
+            if (!this._parseFailed) {
+                // ✅ 成功：退出 allowError 上下文，返回当前CST
                 this.allowErrorStackPopAndReset()
-                return result
+                return this.curCst
             }
             
             // ❌ 失败：回溯到 Or 进入时的状态
@@ -884,9 +884,10 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         
         while (true) {
             const savedState = this.saveState()
-            const result = fn()
+            fn()  // 执行函数
             
-            if (!result || this._parseFailed) {
+            // ⭐ 修复：只根据 _parseFailed 判断，不依赖返回值
+            if (this._parseFailed) {
                 // 失败：回溯，退出循环
                 this.restoreState(savedState)
                 this.resetFailure()  // Many 总是成功
@@ -916,9 +917,10 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         this.setAllowErrorNewState()
         
         const savedState = this.saveState()
-        const result = fn()
+        fn()  // 执行函数
         
-        if (!result || this._parseFailed) {
+        // ⭐ 修复：只根据 _parseFailed 判断，不依赖返回值
+        if (this._parseFailed) {
             // 失败：回溯，重置状态
             this.restoreState(savedState)
             this.resetFailure()  // Option 总是成功
@@ -945,8 +947,8 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         }
         
         // 第一次必须成功（不进入 allowError 上下文）
-        const firstResult = fn()
-        if (!firstResult || this._parseFailed) {
+        fn()  // 执行函数
+        if (this._parseFailed) {
             // 第一次失败：整个规则失败
             return undefined
         }
@@ -956,9 +958,10 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         
         while (true) {
             const savedState = this.saveState()
-            const result = fn()
+            fn()  // 执行函数
             
-            if (!result || this._parseFailed) {
+            // ⭐ 修复：只根据 _parseFailed 判断，不依赖返回值
+            if (this._parseFailed) {
                 // 失败：回溯，退出循环
                 this.restoreState(savedState)
                 this.resetFailure()  // 至少成功1次，整体成功
