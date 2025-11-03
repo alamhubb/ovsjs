@@ -153,6 +153,7 @@ function getCSTStatistics(node: any): {
 // const code = process.argv[2]
 // MWE Step 1: 最简单的 try-catch
 const code = `
+
 class User {
     #password
     

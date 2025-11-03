@@ -244,7 +244,7 @@ export default class Es2020Parser<T extends Es2020TokenConsumer> extends Es6Pars
     }
 
     /**
-     * Override: DotMemberExpression (ES2022)
+     * Override: DotIdentifier (ES2022)
      * 规范 §12.3.2
      * 
      * ES2022 改动：
@@ -254,6 +254,26 @@ export default class Es2020Parser<T extends Es2020TokenConsumer> extends Es6Pars
      *     ...
      *     MemberExpression[?Yield, ?Await] . IdentifierName
      *     MemberExpression[?Yield, ?Await] . PrivateIdentifier
+     * 
+     * 注意：MemberExpression 的 Many 循环中调用的是 DotIdentifier
+     */
+    @SubhutiRule
+    DotIdentifier() {
+        this.tokenConsumer.Dot()
+        this.Or([
+            {alt: () => this.PrivateIdentifier()},  // ES2022: 私有属性访问
+            {alt: () => this.IdentifierName()}      // 普通属性访问
+        ])
+    }
+
+    /**
+     * Override: DotMemberExpression (ES2022)
+     * 规范 §12.3.2
+     * 
+     * ES2022 改动：
+     * - 支持私有标识符访问：obj.#privateField
+     * 
+     * 注意：CallExpression 的 Many 循环中调用的是 DotMemberExpression
      */
     @SubhutiRule
     DotMemberExpression() {
