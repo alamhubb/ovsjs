@@ -77,3 +77,4 @@ testParser('ES2020Parser', tokens2020, Es2020Parser)
 
 console.log('\n' + '='.repeat(60))
 
+

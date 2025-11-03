@@ -251,3 +251,6 @@ private restoreState(data: BacktrackData) {
 ❌ 每次saveState都要复制数组（性能小幅下降）
 ❌ 不够优雅
 
+
+
+

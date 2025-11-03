@@ -731,3 +731,6 @@ private buildCst(ruleName: string, ruleFn: Function): SubhutiCst | undefined {
 ❌ 需要额外的Builder对象（内存开销）
 ❌ 稍微增加GC压力
 
+
+
+
