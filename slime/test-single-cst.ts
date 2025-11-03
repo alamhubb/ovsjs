@@ -152,13 +152,12 @@ function getCSTStatistics(node: any): {
 // 主程序
 // const code = process.argv[2]
 const code = `
-function searchArray(arr, target) {
-    for (let i = 0; i < arr.length; i++) {
-        if (arr[i] === target) {
-            console.log('found')
-            break
-        }
-    }
+try {
+    throw new Error('test')
+} catch (e) {
+    console.log('first catch')
+} catch (e2) {
+    console.log('second catch')
 }
 `
 
@@ -195,7 +194,7 @@ try {
     console.log(`✅ 词法分析: ${tokens.length} tokens (有效token: ${inputTokens.length})`)
     
     // 语法分析
-    const parser = new Es6Parser(tokens)
+    const parser = new Es2020Parser(tokens)
     const cst = parser.Program()
     console.log(`✅ 语法分析: CST生成成功`)
     
