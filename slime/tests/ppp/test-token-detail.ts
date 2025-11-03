@@ -24,3 +24,4 @@ console.log('token[0].tokenName === LetTok.name:', tokens[0].tokenName === es6To
 console.log('token[0].tokenName === LetTok.type:', tokens[0].tokenName === es6TokensObj.LetTok.type)
 
 
+

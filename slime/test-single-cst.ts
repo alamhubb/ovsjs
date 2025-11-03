@@ -151,13 +151,12 @@ function getCSTStatistics(node: any): {
 
 // 主程序
 // const code = process.argv[2]
+// MWE Step 1: 最简单的 try-catch
 const code = `
 try {
     throw new Error('test')
 } catch (e) {
     console.log('first catch')
-} catch (e2) {
-    console.log('second catch')
 }
 `
 

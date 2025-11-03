@@ -208,8 +208,6 @@ try {
     throw new Error('test')
 } catch (e) {
     console.log('first catch')
-} catch (e2) {
-    console.log('second catch')
 }
 
 // ✅ 测试12：catch + finally
