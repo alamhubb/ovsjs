@@ -360,6 +360,7 @@ async function async7() {
 async function async8() {
     const result = await new Promise(resolve => {
         resolve(42)
+    })
 }
 
 // ✅ 测试9：多个await
@@ -1087,6 +1088,7 @@ const result2 = (function(x) {
 // ✅ 测试11：函数表达式作为参数
 [1, 2, 3].map(function(x) {
     return x * 2
+})
 // ✅ 测试12：函数表达式作为对象属性
 const obj = {
     method: function() { return 'method' },

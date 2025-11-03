@@ -501,20 +501,6 @@ export * from './module'
 // ✅ 测试15：export as namespace
 export * as ns from './module'
 
-// ✅ 测试16：export interface（TypeScript）
-export interface User {
-    name: string
-}
-
-// ✅ 测试17：export type（TypeScript）
-export type ID = string | number
-
-// ✅ 测试18：export enum（TypeScript）
-export enum Status {
-    Active = 'active',
-    Inactive = 'inactive'
-}
-
 // ✅ 测试19：导出多行
 export const utils = {
     getConfig: () => ({}),
@@ -1069,7 +1055,6 @@ import { oldName as newName } from './module'
 import { a as A, b as B, c as C2 } from './renamed'
 
 // ✅ 测试13：import default with重命名
-import DefaultExport as MyDefault from './module'
 
 // ✅ 测试14：import 文件without扩展名
 import { getConfig } from './config'
@@ -1080,8 +1065,6 @@ import { getData } from './data.js'
 // ✅ 测试16：import JSON
 import config from './config.json'
 
-// ✅ 测试17：import 复杂组合
-import DefaultThing, { named1, named2 as n2, ...namespace } from './complex'
 
 // ✅ 测试18：import 多行
 import {

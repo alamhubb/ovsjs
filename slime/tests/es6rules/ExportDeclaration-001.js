@@ -109,20 +109,6 @@ export * from './module'
 // ✅ 测试15：export as namespace
 export * as ns from './module'
 
-// ✅ 测试16：export interface（TypeScript）
-export interface User {
-    name: string
-}
-
-// ✅ 测试17：export type（TypeScript）
-export type ID = string | number
-
-// ✅ 测试18：export enum（TypeScript）
-export enum Status {
-    Active = 'active',
-    Inactive = 'inactive'
-}
-
 // ✅ 测试19：导出多行
 export const utils = {
     getConfig: () => ({}),

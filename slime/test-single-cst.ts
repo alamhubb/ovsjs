@@ -151,13 +151,13 @@ function getCSTStatistics(node: any): {
 
 // 主程序
 // const code = process.argv[2]
-// MWE 最终测试: 原始完整代码
-const code = `let k = 0
-do {
-    k++
-    if (k === 5) continue
-    console.log(k)
-} while (k < 10)`
+// MWE Step 4: 验证正确语法 - 命名导入+as重命名
+const code = `
+const obj = {
+    method: function() { return 'method' },
+    action: function(a, b) { return a + b }
+}
+`
 
 if (!code) {
     console.log('❌ 错误：请提供要测试的代码')
