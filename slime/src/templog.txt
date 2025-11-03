@@ -7344,3 +7344,394 @@
   ]
 }
 ================================================================================
+
+[2025-11-03T02:52:08.359Z]
+{
+  "name": "Program",
+  "children": [
+    {
+      "name": "ModuleItemList",
+      "children": [
+        {
+          "name": "StatementListItem",
+          "children": [
+            {
+              "name": "Statement",
+              "children": [
+                {
+                  "name": "ExpressionStatement",
+                  "children": [
+                    {
+                      "name": "Expression",
+                      "children": [
+                        {
+                          "name": "LeftHandSideExpression",
+                          "children": []
+                        },
+                        {
+                          "name": "AssignmentExpression",
+                          "children": [
+                            {
+                              "name": "ConditionalExpression",
+                              "children": [
+                                {
+                                  "name": "ShortCircuitExpression",
+                                  "children": [
+                                    {
+                                      "name": "LogicalORExpression",
+                                      "children": [
+                                        {
+                                          "name": "LogicalANDExpression",
+                                          "children": [
+                                            {
+                                              "name": "BitwiseORExpression",
+                                              "children": [
+                                                {
+                                                  "name": "BitwiseXORExpression",
+                                                  "children": [
+                                                    {
+                                                      "name": "BitwiseANDExpression",
+                                                      "children": [
+                                                        {
+                                                          "name": "EqualityExpression",
+                                                          "children": [
+                                                            {
+                                                              "name": "RelationalExpression",
+                                                              "children": [
+                                                                {
+                                                                  "name": "ShiftExpression",
+                                                                  "children": [
+                                                                    {
+                                                                      "name": "AdditiveExpression",
+                                                                      "children": [
+                                                                        {
+                                                                          "name": "MultiplicativeExpression",
+                                                                          "children": [
+                                                                            {
+                                                                              "name": "ExponentiationExpression",
+                                                                              "children": [
+                                                                                {
+                                                                                  "name": "PostfixExpression",
+                                                                                  "children": []
+                                                                                },
+                                                                                {
+                                                                                  "name": "UnaryExpression",
+                                                                                  "children": []
+                                                                                }
+                                                                              ]
+                                                                            }
+                                                                          ]
+                                                                        },
+                                                                        {
+                                                                          "name": "Plus",
+                                                                          "children": [],
+                                                                          "value": "+"
+                                                                        },
+                                                                        {
+                                                                          "name": "MultiplicativeExpression",
+                                                                          "children": [
+                                                                            {
+                                                                              "name": "ExponentiationExpression",
+                                                                              "children": [
+                                                                                {
+                                                                                  "name": "PostfixExpression",
+                                                                                  "children": [
+                                                                                    {
+                                                                                      "name": "CallExpression",
+                                                                                      "children": [
+                                                                                        {
+                                                                                          "name": "Arguments",
+                                                                                          "children": [
+                                                                                            {
+                                                                                              "name": "LParen",
+                                                                                              "children": [],
+                                                                                              "value": "("
+                                                                                            },
+                                                                                            {
+                                                                                              "name": "ArgumentList",
+                                                                                              "children": [
+                                                                                                {
+                                                                                                  "name": "LeftHandSideExpression",
+                                                                                                  "children": [
+                                                                                                    {
+                                                                                                      "name": "MemberExpression",
+                                                                                                      "children": [
+                                                                                                        {
+                                                                                                          "name": "PrimaryExpression",
+                                                                                                          "children": [
+                                                                                                            {
+                                                                                                              "name": "Literal",
+                                                                                                              "children": [
+                                                                                                                {
+                                                                                                                  "name": "NumericLiteral",
+                                                                                                                  "children": [],
+                                                                                                                  "value": "5"
+                                                                                                                }
+                                                                                                              ]
+                                                                                                            }
+                                                                                                          ]
+                                                                                                        }
+                                                                                                      ]
+                                                                                                    },
+                                                                                                    {
+                                                                                                      "name": "NewExpression",
+                                                                                                      "children": []
+                                                                                                    }
+                                                                                                  ]
+                                                                                                },
+                                                                                                {
+                                                                                                  "name": "AssignmentExpression",
+                                                                                                  "children": [
+                                                                                                    {
+                                                                                                      "name": "ConditionalExpression",
+                                                                                                      "children": [
+                                                                                                        {
+                                                                                                          "name": "ShortCircuitExpression",
+                                                                                                          "children": [
+                                                                                                            {
+                                                                                                              "name": "LogicalORExpression",
+                                                                                                              "children": [
+                                                                                                                {
+                                                                                                                  "name": "LogicalANDExpression",
+                                                                                                                  "children": [
+                                                                                                                    {
+                                                                                                                      "name": "BitwiseORExpression",
+                                                                                                                      "children": [
+                                                                                                                        {
+                                                                                                                          "name": "BitwiseXORExpression",
+                                                                                                                          "children": [
+                                                                                                                            {
+                                                                                                                              "name": "BitwiseANDExpression",
+                                                                                                                              "children": [
+                                                                                                                                {
+                                                                                                                                  "name": "EqualityExpression",
+                                                                                                                                  "children": [
+                                                                                                                                    {
+                                                                                                                                      "name": "RelationalExpression",
+                                                                                                                                      "children": [
+                                                                                                                                        {
+                                                                                                                                          "name": "ShiftExpression",
+                                                                                                                                          "children": [
+                                                                                                                                            {
+                                                                                                                                              "name": "AdditiveExpression",
+                                                                                                                                              "children": [
+                                                                                                                                                {
+                                                                                                                                                  "name": "MultiplicativeExpression",
+                                                                                                                                                  "children": [
+                                                                                                                                                    {
+                                                                                                                                                      "name": "ExponentiationExpression",
+                                                                                                                                                      "children": [
+                                                                                                                                                        {
+                                                                                                                                                          "name": "PostfixExpression",
+                                                                                                                                                          "children": []
+                                                                                                                                                        },
+                                                                                                                                                        {
+                                                                                                                                                          "name": "UnaryExpression",
+                                                                                                                                                          "children": []
+                                                                                                                                                        }
+                                                                                                                                                      ]
+                                                                                                                                                    }
+                                                                                                                                                  ]
+                                                                                                                                                }
+                                                                                                                                              ]
+                                                                                                                                            }
+                                                                                                                                          ]
+                                                                                                                                        }
+                                                                                                                                      ]
+                                                                                                                                    }
+                                                                                                                                  ]
+                                                                                                                                }
+                                                                                                                              ]
+                                                                                                                            }
+                                                                                                                          ]
+                                                                                                                        }
+                                                                                                                      ]
+                                                                                                                    }
+                                                                                                                  ]
+                                                                                                                }
+                                                                                                              ]
+                                                                                                            }
+                                                                                                          ]
+                                                                                                        }
+                                                                                                      ]
+                                                                                                    }
+                                                                                                  ]
+                                                                                                },
+                                                                                                {
+                                                                                                  "name": "Comma",
+                                                                                                  "children": [],
+                                                                                                  "value": ","
+                                                                                                },
+                                                                                                {
+                                                                                                  "name": "LeftHandSideExpression",
+                                                                                                  "children": [
+                                                                                                    {
+                                                                                                      "name": "MemberExpression",
+                                                                                                      "children": [
+                                                                                                        {
+                                                                                                          "name": "PrimaryExpression",
+                                                                                                          "children": [
+                                                                                                            {
+                                                                                                              "name": "Literal",
+                                                                                                              "children": [
+                                                                                                                {
+                                                                                                                  "name": "NumericLiteral",
+                                                                                                                  "children": [],
+                                                                                                                  "value": "3"
+                                                                                                                }
+                                                                                                              ]
+                                                                                                            }
+                                                                                                          ]
+                                                                                                        }
+                                                                                                      ]
+                                                                                                    },
+                                                                                                    {
+                                                                                                      "name": "NewExpression",
+                                                                                                      "children": []
+                                                                                                    }
+                                                                                                  ]
+                                                                                                },
+                                                                                                {
+                                                                                                  "name": "AssignmentExpression",
+                                                                                                  "children": [
+                                                                                                    {
+                                                                                                      "name": "ConditionalExpression",
+                                                                                                      "children": [
+                                                                                                        {
+                                                                                                          "name": "ShortCircuitExpression",
+                                                                                                          "children": [
+                                                                                                            {
+                                                                                                              "name": "LogicalORExpression",
+                                                                                                              "children": [
+                                                                                                                {
+                                                                                                                  "name": "LogicalANDExpression",
+                                                                                                                  "children": [
+                                                                                                                    {
+                                                                                                                      "name": "BitwiseORExpression",
+                                                                                                                      "children": [
+                                                                                                                        {
+                                                                                                                          "name": "BitwiseXORExpression",
+                                                                                                                          "children": [
+                                                                                                                            {
+                                                                                                                              "name": "BitwiseANDExpression",
+                                                                                                                              "children": [
+                                                                                                                                {
+                                                                                                                                  "name": "EqualityExpression",
+                                                                                                                                  "children": [
+                                                                                                                                    {
+                                                                                                                                      "name": "RelationalExpression",
+                                                                                                                                      "children": [
+                                                                                                                                        {
+                                                                                                                                          "name": "ShiftExpression",
+                                                                                                                                          "children": [
+                                                                                                                                            {
+                                                                                                                                              "name": "AdditiveExpression",
+                                                                                                                                              "children": [
+                                                                                                                                                {
+                                                                                                                                                  "name": "MultiplicativeExpression",
+                                                                                                                                                  "children": [
+                                                                                                                                                    {
+                                                                                                                                                      "name": "ExponentiationExpression",
+                                                                                                                                                      "children": [
+                                                                                                                                                        {
+                                                                                                                                                          "name": "PostfixExpression",
+                                                                                                                                                          "children": []
+                                                                                                                                                        },
+                                                                                                                                                        {
+                                                                                                                                                          "name": "UnaryExpression",
+                                                                                                                                                          "children": []
+                                                                                                                                                        }
+                                                                                                                                                      ]
+                                                                                                                                                    }
+                                                                                                                                                  ]
+                                                                                                                                                }
+                                                                                                                                              ]
+                                                                                                                                            }
+                                                                                                                                          ]
+                                                                                                                                        }
+                                                                                                                                      ]
+                                                                                                                                    }
+                                                                                                                                  ]
+                                                                                                                                }
+                                                                                                                              ]
+                                                                                                                            }
+                                                                                                                          ]
+                                                                                                                        }
+                                                                                                                      ]
+                                                                                                                    }
+                                                                                                                  ]
+                                                                                                                }
+                                                                                                              ]
+                                                                                                            }
+                                                                                                          ]
+                                                                                                        }
+                                                                                                      ]
+                                                                                                    }
+                                                                                                  ]
+                                                                                                }
+                                                                                              ]
+                                                                                            },
+                                                                                            {
+                                                                                              "name": "RParen",
+                                                                                              "children": [],
+                                                                                              "value": ")"
+                                                                                            }
+                                                                                          ]
+                                                                                        }
+                                                                                      ]
+                                                                                    },
+                                                                                    {
+                                                                                      "name": "LeftHandSideExpression",
+                                                                                      "children": []
+                                                                                    }
+                                                                                  ]
+                                                                                },
+                                                                                {
+                                                                                  "name": "UnaryExpression",
+                                                                                  "children": []
+                                                                                }
+                                                                              ]
+                                                                            }
+                                                                          ]
+                                                                        }
+                                                                      ]
+                                                                    }
+                                                                  ]
+                                                                }
+                                                              ]
+                                                            }
+                                                          ]
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "EmptySemicolon",
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+================================================================================
