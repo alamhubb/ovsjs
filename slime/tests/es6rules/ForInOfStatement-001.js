@@ -1,7 +1,9 @@
 /**
  * 测试规则: ForInOfStatement
  * 来源: 从 Statement 拆分
- *//**
+ */
+
+/**
  * 规则测试：ForInOfStatement
  * 
  * 位置：Es6Parser.ts Line 1179
@@ -101,7 +103,8 @@ const iterable = {
         return {
             next: () => ({
                 value: count++,
-                done: count > 3        }
+                done: count > 3
+        })}
     }
 }
 for (let val of iterable) {
