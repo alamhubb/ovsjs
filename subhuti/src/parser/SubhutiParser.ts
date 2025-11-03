@@ -875,27 +875,84 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     }
     
     /**
-     * 获取 Packrat Parsing 统计信息
+     * 获取 Packrat Parsing 详细统计信息
      * 
      * 用途：
      * - 评估缓存效率（命中率）
-     * - 监控内存使用（条目数）
-     * - 性能调优依据
+     * - 监控内存使用（估算）
+     * - 性能调优依据（智能建议）
      * 
-     * @returns 详细的缓存统计
+     * 返回信息：
+     * - 基础统计：hits、misses、命中率
+     * - 缓存信息：规则数、总条目、平均条目
+     * - 内存估算：字节、KB、MB
+     * - 性能建议：根据数据自动生成
+     * 
+     * @returns 详细的缓存统计和性能建议
      */
     getMemoStats() {
         const total = this.memoStats.hits + this.memoStats.misses
         const hitRate = total > 0 ? (this.memoStats.hits / total * 100).toFixed(1) : '0.0'
+        const hitRateNum = parseFloat(hitRate)
+        
+        const cacheSize = this.memoCache.size
+        const totalEntries = this.memoCache.getTotalEntries()
+        const avgEntriesPerRule = cacheSize > 0 ? (totalEntries / cacheSize).toFixed(1) : '0'
+        
+        // ✅ 内存估算
+        // 假设：每个缓存条目平均占用 150 字节
+        // - SubhutiMemoResult 结构：~50 字节
+        // - CST 引用：~100 字节（平均）
+        const estimatedBytes = totalEntries * 150
+        const estimatedKB = (estimatedBytes / 1024).toFixed(2)
+        const estimatedMB = (estimatedBytes / 1024 / 1024).toFixed(2)
+        
+        // ✅ 性能建议（智能分析）
+        const suggestions: string[] = []
+        
+        if (hitRateNum >= 70) {
+            suggestions.push('✅ 缓存命中率优秀（≥ 70%）')
+        } else if (hitRateNum >= 50) {
+            suggestions.push('✅ 缓存命中率良好（50-70%）')
+        } else if (hitRateNum >= 30) {
+            suggestions.push('⚠️ 缓存命中率偏低（30-50%），可能语法复杂')
+        } else {
+            suggestions.push('❌ 缓存命中率低（< 30%），建议检查语法规则')
+        }
+        
+        // 检查缓存使用率（假设 LRU 默认 10000）
+        if (totalEntries > 9000) {
+            suggestions.push('⚠️ 缓存使用率高（> 90%），建议增加 maxSize')
+        } else if (totalEntries > 7000) {
+            suggestions.push('⚠️ 缓存使用率较高（70-90%），可考虑增加 maxSize')
+        }
+        
+        if (totalEntries < 1000 && total > 10000) {
+            suggestions.push('💡 缓存使用率低，可考虑减小 maxSize 节省内存')
+        }
         
         return {
+            // 基础统计
             hits: this.memoStats.hits,
             misses: this.memoStats.misses,
             stores: this.memoStats.stores,
             total,
             hitRate: `${hitRate}%`,
-            cacheSize: this.memoCache.size,
-            totalEntries: this.memoCache.getTotalEntries()
+            
+            // 缓存信息
+            cacheSize,
+            totalEntries,
+            avgEntriesPerRule,
+            
+            // ✅ 新增：内存估算
+            estimatedMemory: {
+                bytes: estimatedBytes,
+                kb: estimatedKB,
+                mb: estimatedMB
+            },
+            
+            // ✅ 新增：性能建议
+            suggestions
         }
     }
     
