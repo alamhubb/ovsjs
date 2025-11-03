@@ -757,9 +757,10 @@ export class SlimeCstToAst {
   createFieldDefinitionAst(staticCst: SubhutiCst | null, cst: SubhutiCst): SlimePropertyDefinition {
     const astName = checkCstName(cst, Es6Parser.prototype.FieldDefinition.name);
 
-    // FieldDefinition -> PropertyName + Initializer?
-    const propertyNameCst = cst.children[0]
-    const key = this.createPropertyNameAst(propertyNameCst)
+    // FieldDefinition -> (ClassElementName | PropertyName) + Initializer?
+    // ES2022: ClassElementName = PrivateIdentifier | PropertyName
+    const elementNameCst = cst.children[0]
+    const key = this.createClassElementNameOrPropertyNameAst(elementNameCst)
 
     // 检查是否有初始化器
     let value: SlimeExpression | null = null
@@ -774,6 +775,53 @@ export class SlimeCstToAst {
     const isStatic = staticCst && staticCst.name === Es6TokenConsumer.prototype.StaticTok.name
 
     return SlimeAstUtil.createPropertyDefinition(key, value, isStatic || false)
+  }
+
+  /**
+   * 处理 ClassElementName（ES2022）或 PropertyName（ES6）
+   * 
+   * ClassElementName (ES2022) ::
+   *     PrivateIdentifier
+   *     PropertyName
+   * 
+   * 兼容性：自动识别并处理两种情况
+   */
+  createClassElementNameOrPropertyNameAst(cst: SubhutiCst): SlimeIdentifier | SlimeLiteral | SlimeExpression {
+    // ES2022: ClassElementName
+    if (cst.name === 'ClassElementName') {
+      const first = cst.children[0]
+      if (first.name === 'PrivateIdentifier') {
+        return this.createPrivateIdentifierAst(first)
+      } else if (first.name === Es6Parser.prototype.PropertyName.name) {
+        return this.createPropertyNameAst(first)
+      }
+      // 回退：尝试直接作为PropertyName处理
+      return this.createPropertyNameAst(cst)
+    }
+    // ES6: PropertyName
+    else if (cst.name === Es6Parser.prototype.PropertyName.name) {
+      return this.createPropertyNameAst(cst)
+    }
+    // 未知情况：尝试作为PropertyName处理
+    return this.createPropertyNameAst(cst)
+  }
+
+  /**
+   * 创建 PrivateIdentifier 的AST节点（ES2022）
+   * 
+   * PrivateIdentifier :: # IdentifierName
+   * 
+   * AST表示：Identifier节点，name以#开头
+   * 例如：{ type: "Identifier", name: "#count" }
+   */
+  createPrivateIdentifierAst(cst: SubhutiCst): SlimeIdentifier {
+    // PrivateIdentifier -> HashTok + IdentifierName
+    const identifierNameCst = cst.children[1]
+    const identifierCst = identifierNameCst.children[0]
+    const name = identifierCst.value as string
+    
+    // 创建Identifier，name以#开头表示私有
+    return SlimeAstUtil.createIdentifier('#' + name)
   }
 
   createClassBodyAst(cst: SubhutiCst): SlimeClassBody {
@@ -1103,16 +1151,25 @@ export class SlimeCstToAst {
         offset = 1;
       }
       
-      const PropertyName = first.children[0 + offset]
+      const elementNameCst = first.children[0 + offset]  // PropertyName or ClassElementName (ES2022)
       const SlimeFunctionExpression = this.createPropertyNameMethodDefinitionAst(first)
       
-      // 获取key：如果是计算属性，从PropertyName提取
+      // 获取key：支持 PropertyName 和 ClassElementName（含 PrivateIdentifier）
       let key: any = SlimeFunctionExpression.id
       let computed = false
-      if (PropertyName.children[0].name === Es6Parser.prototype.ComputedPropertyName.name) {
-        // 计算属性名
-        key = this.createAssignmentExpressionAst(PropertyName.children[0].children[1])
-        computed = true
+      
+      // ES2022: 支持 ClassElementName（包含PrivateIdentifier）
+      if (elementNameCst.name === 'ClassElementName') {
+        key = this.createClassElementNameOrPropertyNameAst(elementNameCst)
+        // PrivateIdentifier不支持计算属性
+      }
+      // ES6: 支持 PropertyName（包含ComputedPropertyName）
+      else if (elementNameCst.name === Es6Parser.prototype.PropertyName.name) {
+        if (elementNameCst.children[0].name === Es6Parser.prototype.ComputedPropertyName.name) {
+          // 计算属性名
+          key = this.createAssignmentExpressionAst(elementNameCst.children[0].children[1])
+          computed = true
+        }
       }
       
       const methodDef = SlimeAstUtil.createMethodDefinition(key, SlimeFunctionExpression)
@@ -1137,8 +1194,8 @@ export class SlimeCstToAst {
       return methodDef
     } else if (first.name === Es6Parser.prototype.GetMethodDefinition.name) {
       // getter方法
-      const propertyNameCst = first.children[1] // GetTok后是PropertyName
-      const key = this.createPropertyNameAst(propertyNameCst)
+      const elementNameCst = first.children[1] // GetTok后是PropertyName or ClassElementName (ES2022)
+      const key = this.createClassElementNameOrPropertyNameAst(elementNameCst)
       const functionBodyCst = first.children[4] // PropertyName后是LParen、RParen、FunctionBodyDefine
       const body = this.createFunctionBodyDefineAst(functionBodyCst)
       
@@ -2468,10 +2525,67 @@ export class SlimeCstToAst {
       left = this.createSuperPropertyAst(cst)
     } else if (astName === Es6Parser.prototype.MetaProperty.name) {
       left = this.createMetaPropertyAst(cst)
+    } else if (astName === 'ShortCircuitExpression') {
+      // ES2020: ShortCircuitExpression = LogicalORExpression | CoalesceExpression
+      // 递归处理第一个child
+      left = this.createExpressionAst(cst.children[0])
+    } else if (astName === 'CoalesceExpression') {
+      // ES2020: CoalesceExpression (处理 ?? 运算符)
+      left = this.createCoalesceExpressionAst(cst)
+    } else if (astName === 'ExponentiationExpression') {
+      // ES2016: ExponentiationExpression (处理 ** 运算符)
+      left = this.createExponentiationExpressionAst(cst)
     } else {
       throw new Error('暂不支持的类型：' + cst.name)
     }
     return left
+  }
+
+  /**
+   * 创建 CoalesceExpression AST（ES2020）
+   * 处理 ?? 空值合并运算符
+   */
+  createCoalesceExpressionAst(cst: SubhutiCst): SlimeExpression {
+    // CoalesceExpression -> BitwiseORExpression ( ?? BitwiseORExpression )*
+    if (cst.children.length === 1) {
+      return this.createExpressionAst(cst.children[0])
+    }
+    
+    // 有多个子节点，构建左结合的逻辑表达式
+    let left = this.createExpressionAst(cst.children[0])
+    for (let i = 1; i < cst.children.length; i += 2) {
+      const operator = cst.children[i]  // ?? token
+      const right = this.createExpressionAst(cst.children[i + 1])
+      left = {
+        type: SlimeAstType.LogicalExpression,
+        operator: '??',
+        left: left,
+        right: right
+      } as any
+    }
+    return left
+  }
+
+  /**
+   * 创建 ExponentiationExpression AST（ES2016）
+   * 处理 ** 幂运算符
+   */
+  createExponentiationExpressionAst(cst: SubhutiCst): SlimeExpression {
+    // ExponentiationExpression -> UnaryExpression | UpdateExpression ** ExponentiationExpression
+    if (cst.children.length === 1) {
+      return this.createExpressionAst(cst.children[0])
+    }
+    
+    // 有多个子节点，右结合：a ** b ** c = a ** (b ** c)
+    const left = this.createExpressionAst(cst.children[0])
+    const operator = cst.children[1]  // ** token
+    const right = this.createExponentiationExpressionAst(cst.children[2])  // 递归处理右侧
+    return {
+      type: SlimeAstType.BinaryExpression,
+      operator: '**',
+      left: left,
+      right: right
+    } as any
   }
 
   createLogicalORExpressionAst(cst: SubhutiCst): SlimeExpression {

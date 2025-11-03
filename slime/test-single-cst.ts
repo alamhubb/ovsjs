@@ -8,8 +8,8 @@
 import Es6Parser from './packages/slime-parser/src/language/es2015/Es6Parser.ts'
 import {es6Tokens} from './packages/slime-parser/src/language/es2015/Es6Tokens.ts'
 import SubhutiLexer from '../subhuti/src/parser/SubhutiLexer.ts'
-import Es2020Parser from "./packages/slime-parser/src/language/es2020/Es2020Parser";
-import {es2020Tokens} from "./packages/slime-parser/src/language/es2020/Es2020Tokens";
+import Es2020Parser from "./packages/slime-parser/src/language/es2020/Es2020Parser.ts"
+import {es2020Tokens} from "./packages/slime-parser/src/language/es2020/Es2020Tokens.ts"
 
 // 收集CST中的所有token值
 function collectTokenValues(node: any): string[] {
@@ -153,7 +153,6 @@ function getCSTStatistics(node: any): {
 // const code = process.argv[2]
 // MWE Step 1: 最简单的 try-catch
 const code = `
-
 class User {
     #password
     
@@ -195,8 +194,8 @@ console.log('输入代码:', code)
 console.log('='.repeat(60))
 
 try {
-    // 词法分析
-    const lexer = new SubhutiLexer(es6Tokens)
+    // 词法分析（使用ES2020 tokens以支持私有属性）
+    const lexer = new SubhutiLexer(es2020Tokens)
     const tokens = lexer.lexer(code)
     
     const inputTokens = tokens

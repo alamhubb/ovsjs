@@ -5,26 +5,6 @@
 
 /* Es6Parser.ts: class Identifier (extends Expression)? { ClassBody } */
 
-/**
- * 规则测试：ClassDeclaration
- * 
- * 位置：Es6Parser.ts Line 247
- * 分类：classes
- * 编号：605
- * 
- * 规则语法：
- *   ClassDeclaration:
- *     class Identifier ClassHeritage? { ClassBody }
- * 
- * 测试目标：
- * - 验证基本类声明
- * - 验证继承关系（extends）
- * - 覆盖构造函数、方法、属性
- * 
- * 创建时间：2025-11-01
- * 状态：✅ 已完善
- */
-
 // ✅ 测试1：基本类声明    ClassDeclaration -> class Identifier (无extends) ClassBody (constructor)
 class Point {
     constructor(x, y) {
