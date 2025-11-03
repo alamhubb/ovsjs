@@ -1,5 +1,5 @@
 /**
- * Subhuti Parser - 高性能 PEG Parser 框架
+ * Subhuti Parser - 高性能 PEG Parser 框架（完美融合版）
  * 
  * 设计参考：
  * - Chevrotain: 模块化架构、清晰的 API
@@ -9,6 +9,7 @@
  * 
  * 核心特性：
  * - ✅ 标志驱动（性能优先，避免异常开销）
+ * - ✅ allowError 机制（智能错误管理）⭐ 核心创新
  * - ✅ 返回值语义（成功返回 CST，失败返回 undefined）
  * - ✅ 成功才添加 CST（清晰的生命周期）
  * - ✅ 双数组结构（children + tokens 分离，O(1) 访问）
@@ -16,7 +17,7 @@
  * - ✅ 极简回溯（O(1) 快照索引）
  * - ✅ 类型安全（严格的类型约束）
  * 
- * @version 3.1.0 - 行业标准版
+ * @version 4.0.0 - 完美融合版（保留 allowError 精髓）
  * @date 2025-11-03
  */
 
@@ -34,7 +35,7 @@ import SubhutiTokenConsumer from "./SubhutiTokenConsumer.ts"
 export type RuleFunction = () => SubhutiCst | undefined
 
 /**
- * Or 规则参数类型（改进：具体的函数签名）
+ * Or 规则参数类型
  */
 export interface SubhutiParserOr {
     alt: RuleFunction
@@ -162,6 +163,71 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     private readonly className: string
     
     // ========================================
+    // allowError 机制（⭐ 核心创新 - 智能错误管理）
+    // ========================================
+    
+    /**
+     * 当前是否允许错误
+     * 
+     * 用途：
+     * - Or 规则：前 N-1 个分支允许失败（不抛异常）
+     * - 最后分支：不允许失败（抛出详细错误）
+     * - Many/Option：总是允许失败（0次匹配合法）
+     */
+    private _allowError = false
+    
+    /**
+     * allowError 栈（支持嵌套）
+     * 
+     * 场景：嵌套 Or 规则
+     * - 外层 Or：允许错误
+     * - 内层 Or：也允许错误
+     * - 栈式管理，自动恢复
+     */
+    private readonly allowErrorStack: string[] = []
+    
+    get allowError(): boolean {
+        return this._allowError
+    }
+    
+    setAllowError(flag: boolean): void {
+        this._allowError = flag
+    }
+    
+    /**
+     * 是否有外层允许错误的上下文
+     * 
+     * 用途：嵌套场景判断
+     * - 长度 > 1：有外层上下文
+     * - 长度 = 1：当前层
+     * - 长度 = 0：顶层
+     */
+    get outerHasAllowError(): boolean {
+        return this.allowErrorStack.length > 1
+    }
+    
+    /**
+     * 进入新的 allowError 上下文
+     * 
+     * 调用时机：Or/Many/Option 入口
+     */
+    private setAllowErrorNewState(): void {
+        this.setAllowError(true)
+        const currentCst = this.curCst
+        this.allowErrorStack.push(currentCst?.name || 'unknown')
+    }
+    
+    /**
+     * 退出 allowError 上下文，恢复上一层状态
+     * 
+     * 调用时机：Or/Many/Option 出口
+     */
+    private allowErrorStackPopAndReset(): void {
+        this.allowErrorStack.pop()
+        this.setAllowError(this.allowErrorStack.length > 0)
+    }
+    
+    // ========================================
     // Packrat Parsing（两层 Map - 便于管理）
     // ========================================
     
@@ -233,7 +299,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * 设置 tokens（用于复用 Parser 实例）
      */
     setTokens(tokens: SubhutiMatchToken[]): void {
-        // 类型安全：不可变赋值
         (this._tokens as SubhutiMatchToken[]).length = 0
         ;(this._tokens as SubhutiMatchToken[]).push(...tokens)
         this.tokenIndex = 0
@@ -266,6 +331,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             this._ruleSuccess = true
             this.cstStack.length = 0
             this.ruleStack.length = 0
+            this.allowErrorStack.length = 0
         } else {
             // 失败检查（快速返回）
             if (!this._ruleSuccess) {
@@ -365,18 +431,18 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     }
     
     // ========================================
-    // Or 规则（标志驱动 + 返回值语义）
+    // Or 规则（标志驱动 + allowError 管理）
     // ========================================
     
     /**
-     * Or 规则 - 顺序选择（PEG 风格）
+     * Or 规则 - 顺序选择（PEG 风格 + 智能错误管理）
      * 
      * 语义：按顺序尝试每个分支，第一个成功的立即返回
      * 
-     * 标准 PEG 实现：
-     * - 所有分支都回溯到 Or 进入时的快照
-     * - 第一个成功的分支立即返回
-     * - 所有分支都失败时返回 undefined
+     * 核心创新：自动管理 allowError
+     * - 前 N-1 个分支：allowError = true（失败不抛异常）
+     * - 最后分支：allowError = false（失败抛详细错误）
+     * - 用户无需关心，自动优化性能
      * 
      * 参考：Bryan Ford (2004) "Parsing Expression Grammars"
      */
@@ -385,19 +451,29 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             return undefined
         }
         
+        // 进入 allowError 上下文
+        this.setAllowErrorNewState()
+        
         // 保存 Or 进入时的状态（标准 PEG 做法）
         const savedState = this.saveState()
+        const totalCount = alternatives.length
         
-        for (let i = 0; i < alternatives.length; i++) {
+        for (let i = 0; i < totalCount; i++) {
             const alt = alternatives[i]
-            const isLast = i === alternatives.length - 1
+            const isLast = i === totalCount - 1
+            
+            // ⭐ 核心：最后一个分支不允许错误
+            if (isLast) {
+                this.setAllowError(false)
+            }
             
             // 尝试分支
             const result = alt.alt()
             
             // 判断成功（返回值 + 状态标志）
             if (result !== undefined && this._ruleSuccess) {
-                // ✅ 成功：保持当前状态，返回结果
+                // ✅ 成功：退出 allowError 上下文，返回结果
+                this.allowErrorStackPopAndReset()
                 return result
             }
             
@@ -412,16 +488,21 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             }
         }
         
+        // 退出 allowError 上下文
+        this.allowErrorStackPopAndReset()
+        
         // 所有分支都失败
         return undefined
     }
     
     // ========================================
-    // Many/Option/AtLeastOne 规则（完整实现）
+    // Many/Option/AtLeastOne 规则（完整实现 + allowError）
     // ========================================
     
     /**
      * Many 规则 - 0次或多次（总是成功）
+     * 
+     * 核心：允许错误（0次匹配合法）
      * 
      * 参考：EBNF { ... }
      */
@@ -429,6 +510,9 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         if (!this._ruleSuccess) {
             return undefined
         }
+        
+        // 进入 allowError 上下文
+        this.setAllowErrorNewState()
         
         while (true) {
             const savedState = this.saveState()
@@ -442,11 +526,16 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             }
         }
         
+        // 退出 allowError 上下文
+        this.allowErrorStackPopAndReset()
+        
         return this.curCst
     }
     
     /**
      * Option 规则 - 0次或1次（总是成功）
+     * 
+     * 核心：允许错误（0次匹配合法）
      * 
      * 参考：EBNF [ ... ]
      */
@@ -454,6 +543,9 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         if (!this._ruleSuccess) {
             return undefined
         }
+        
+        // 进入 allowError 上下文
+        this.setAllowErrorNewState()
         
         const savedState = this.saveState()
         const result = fn()
@@ -464,11 +556,18 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             this._ruleSuccess = true  // Option 总是成功
         }
         
+        // 退出 allowError 上下文
+        this.allowErrorStackPopAndReset()
+        
         return this.curCst
     }
     
     /**
      * AtLeastOne 规则 - 1次或多次
+     * 
+     * 核心：
+     * - 第一次：不允许错误（必须成功）
+     * - 后续：允许错误（0次也可以）
      * 
      * 参考：Chevrotain AT_LEAST_ONE、EBNF { ... }+
      */
@@ -477,14 +576,16 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             return undefined
         }
         
-        // 第一次必须成功
+        // 第一次必须成功（不进入 allowError 上下文）
         const firstResult = fn()
         if (!firstResult || !this._ruleSuccess) {
             // 第一次失败：整个规则失败
             return undefined
         }
         
-        // 后续：0次或多次
+        // 后续：0次或多次（进入 allowError 上下文）
+        this.setAllowErrorNewState()
+        
         while (true) {
             const savedState = this.saveState()
             const result = fn()
@@ -497,46 +598,35 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             }
         }
         
+        // 退出 allowError 上下文
+        this.allowErrorStackPopAndReset()
+        
         return this.curCst
     }
     
     // ========================================
-    // Token 消费（标志驱动 - 统一策略）
+    // Token 消费（⭐ 智能错误管理）
     // ========================================
     
     /**
-     * 消费 token（标志驱动，不抛异常）
+     * 消费 token（智能错误管理）
      * 
-     * 设计理念：
-     * - 成功：返回 CST，设置 ruleSuccess = true
-     * - 失败：返回 undefined，设置 ruleSuccess = false
-     * - 不抛异常（性能优先）
+     * 核心创新：根据 allowError 自动决定行为
      * 
-     * 参考：Chevrotain CONSUME
-     */
-    consume(tokenName: string): SubhutiCst | undefined {
-        if (!this._ruleSuccess) {
-            return undefined
-        }
-        
-        const token = this.currentToken
-        
-        if (!token || token.tokenName !== tokenName) {
-            // 失败：设置标志，返回 undefined
-            this._ruleSuccess = false
-            return undefined
-        }
-        
-        // 成功：消费 token
-        this._ruleSuccess = true
-        this.tokenIndex++
-        return this.generateCstByToken(token)
-    }
-    
-    /**
-     * 消费 token（旧版兼容，抛出详细错误）
+     * 行为：
+     * - allowError = true（Or/Many/Option 内部）
+     *   → 失败：设置标志，返回 undefined（不抛异常）✅ 性能
      * 
-     * 用途：当需要详细错误信息时使用
+     * - allowError = false（最后分支/顶层）
+     *   → 失败：设置标志，抛出详细错误 ✅ 错误信息
+     * 
+     * 优势：
+     * - ✅ 单一方法（API 简洁）
+     * - ✅ 自动优化（用户无需关心）
+     * - ✅ 性能优秀（Or 内部不抛异常）
+     * - ✅ 错误详细（最后分支抛异常）
+     * 
+     * 参考：旧版 OldSubhutiParser1.ts 的精妙设计
      */
     consumeToken(tokenName: string): SubhutiCst | undefined {
         if (!this._ruleSuccess) {
@@ -546,8 +636,16 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         const token = this.currentToken
         
         if (!token || token.tokenName !== tokenName) {
-            // 失败：抛出详细错误
+            // 失败：设置标志
             this._ruleSuccess = false
+            
+            // ⭐ 核心：根据 allowError 决定行为
+            if (this.outerHasAllowError || this.allowError) {
+                // 允许失败：返回 undefined（不抛异常）
+                return undefined
+            }
+            
+            // 不允许失败：抛出详细错误
             throw new ParsingError(
                 `Expected ${tokenName}`,
                 {
@@ -571,6 +669,13 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         this._ruleSuccess = true
         this.tokenIndex++
         return this.generateCstByToken(token)
+    }
+    
+    /**
+     * 简洁别名（兼容性）
+     */
+    consume(tokenName: string): SubhutiCst | undefined {
+        return this.consumeToken(tokenName)
     }
     
     private generateCstByToken(token: SubhutiMatchToken): SubhutiCst {
