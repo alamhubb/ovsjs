@@ -112,22 +112,6 @@ export default class SubhutiCst {
   }
   
   /**
-   * 获取所有 token 节点
-   * 
-   * @returns 所有有 value 的子节点（即 token）
-   * 
-   * 用法：
-   * ```typescript
-   * const tokens = cst.getAllTokens()
-   * ```
-   */
-  getAllTokens(): SubhutiCst[] {
-    if (!this.children) return []
-    
-    return this.children.filter(c => c.value !== undefined)
-  }
-  
-  /**
    * 获取子节点数量
    */
   get childCount(): number {

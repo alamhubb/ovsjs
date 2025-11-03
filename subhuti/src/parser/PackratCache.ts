@@ -1,10 +1,11 @@
 /**
- * Packrat 缓存（统一实现）
+ * Packrat 缓存（高性能双向链表实现）⭐⭐⭐
  * 
  * 设计理念：
  * - 单一实现：通过配置控制行为
  * - 默认最优：LRU(10000) 生产级配置
  * - 零配置：开箱即用
+ * - 高性能：双向链表 + Map，所有操作 O(1)
  * 
  * 配置方式：
  * ```typescript
@@ -18,11 +19,17 @@
  * new PackratCache({ maxSize: Infinity })  → Unlimited
  * ```
  * 
- * 算法：
+ * 算法：标准 LRU（Map + 双向链表）
  * - maxSize < Infinity：LRU 淘汰策略
  * - maxSize = Infinity：无限缓存
  * 
- * @version 1.0.0
+ * 性能：
+ * - get: O(1) 常数时间
+ * - set: O(1) 常数时间
+ * - 旧实现：O(n) → 10000条时平均5000次操作
+ * - 新实现：O(1) → 提升5000倍 ⭐
+ * 
+ * @version 2.0.0 - 双向链表优化
  * @date 2025-11-03
  */
 
@@ -45,28 +52,67 @@ export interface PackratCacheConfig {
     maxSize?: number
 }
 
+/**
+ * LRU 双向链表节点
+ * 
+ * 结构：
+ * - key: 缓存键（ruleName:tokenIndex）
+ * - value: 缓存值（SubhutiMemoResult）
+ * - prev: 前一个节点（更旧）
+ * - next: 后一个节点（更新）
+ * 
+ * 链表顺序：
+ * - head（最新访问） ← ... ← tail（最久未访问）
+ * - 新节点总是添加到 head
+ * - 访问的节点移动到 head
+ * - 淘汰时删除 tail
+ */
+class LRUNode {
+    key: string
+    value: any
+    prev: LRUNode | null = null
+    next: LRUNode | null = null
+    
+    constructor(key: string, value: any) {
+        this.key = key
+        this.value = value
+    }
+}
+
 export class PackratCache {
     /**
-     * 缓存结构（两层 Map）
+     * 缓存主存储（Map: key → LRUNode）⭐⭐ 双向链表优化
      * 
-     * 外层 Map：ruleName → 内层 Map
-     * 内层 Map：tokenIndex → result
+     * 结构：Map<"ruleName:tokenIndex", LRUNode>
      * 
-     * 为什么用两层？
-     * - 按规则分组，逻辑清晰
-     * - size 返回规则数（而非条目数）
-     * - 便于理解和调试
+     * 优势：
+     * - Map: O(1) 查找
+     * - LRUNode: 包含 prev/next 指针，支持 O(1) 移动
+     * - 复合键：单层查找（键值优化）
+     * 
+     * 复合键格式：`${ruleName}:${tokenIndex}`
+     * 示例："Expression:42" → 规则Expression在位置42的缓存节点
      */
-    private cache = new Map<string, Map<number, any>>()
+    private cache = new Map<string, LRUNode>()
     
     /**
-     * 访问顺序记录（LRU 使用）
+     * 双向链表头部（最新访问）
      * 
-     * 结构：[{ruleName, tokenIndex}, ...]
-     * - 最前面 = 最久未使用
-     * - 最后面 = 最近使用
+     * 链表顺序：head → ... → tail
+     * - head: 最近访问的节点
+     * - tail: 最久未访问的节点（优先淘汰）
      */
-    private accessOrder: Array<{ruleName: string, tokenIndex: number}> = []
+    private head: LRUNode | null = null
+    
+    /**
+     * 双向链表尾部（最久未访问）
+     */
+    private tail: LRUNode | null = null
+    
+    /**
+     * 当前缓存条目数
+     */
+    private currentSize = 0
     
     /**
      * 最大容量
@@ -83,52 +129,73 @@ export class PackratCache {
     }
     
     /**
-     * 获取缓存结果
+     * 获取缓存结果 - O(1) ⭐⭐⭐
+     * 
+     * 步骤：
+     * 1. Map查找节点：O(1)
+     * 2. 移动到链表头部：O(1)（双向链表优势）
+     * 3. 返回值：O(1)
+     * 
+     * 总复杂度：O(1) 常数时间
      */
     get(ruleName: string, tokenIndex: number): any | undefined {
-        const ruleCache = this.cache.get(ruleName)
-        if (!ruleCache) {
+        const key = `${ruleName}:${tokenIndex}`
+        const node = this.cache.get(key)
+        
+        if (!node) {
             return undefined
         }
         
-        const result = ruleCache.get(tokenIndex)
-        if (result === undefined) {
-            return undefined
-        }
-        
-        // ⭐ LRU 更新访问顺序（仅当启用 LRU 时）
+        // ⭐ LRU：移到链表头部（最近访问）- O(1)
         if (this.maxSize < Infinity) {
-            this.updateAccessOrder(ruleName, tokenIndex)
+            this.moveToHead(node)
         }
         
-        return result
+        return node.value
     }
     
     /**
-     * 存储缓存结果
+     * 存储缓存结果 - O(1) ⭐⭐⭐
+     * 
+     * 步骤：
+     * 1. 检查是否已存在：O(1)
+     * 2. 如已存在：更新值并移到头部 O(1)
+     * 3. 如不存在：
+     *    - 创建新节点：O(1)
+     *    - 添加到Map：O(1)
+     *    - 添加到链表头部：O(1)
+     *    - 检查容量并淘汰：O(1)
+     * 
+     * 总复杂度：O(1) 常数时间
      */
     set(ruleName: string, tokenIndex: number, result: any): void {
-        // ⭐ 容量检查（仅当启用 LRU 时）
-        if (this.maxSize < Infinity) {
-            const currentSize = this.getTotalEntries()
-            if (currentSize >= this.maxSize) {
-                this.evictOldest()
+        const key = `${ruleName}:${tokenIndex}`
+        const existingNode = this.cache.get(key)
+        
+        if (existingNode) {
+            // 已存在：更新值并移到头部
+            existingNode.value = result
+            if (this.maxSize < Infinity) {
+                this.moveToHead(existingNode)
             }
+            return
         }
         
-        // 获取或创建规则的缓存 Map
-        let ruleCache = this.cache.get(ruleName)
-        if (!ruleCache) {
-            ruleCache = new Map<number, any>()
-            this.cache.set(ruleName, ruleCache)
-        }
+        // 新节点：创建并添加
+        const newNode = new LRUNode(key, result)
+        this.cache.set(key, newNode)
         
-        // 存储结果
-        ruleCache.set(tokenIndex, result)
-        
-        // 记录访问顺序（仅当启用 LRU 时）
         if (this.maxSize < Infinity) {
-            this.accessOrder.push({ ruleName, tokenIndex })
+            this.addToHead(newNode)
+            this.currentSize++
+            
+            // 超过容量：删除尾节点 - O(1)
+            if (this.currentSize > this.maxSize) {
+                this.removeTail()
+            }
+        } else {
+            // 无限缓存：不需要链表
+            this.currentSize++
         }
     }
     
@@ -137,71 +204,130 @@ export class PackratCache {
      */
     clear(): void {
         this.cache.clear()
-        this.accessOrder = []
-    }
-    
-    /**
-     * 获取缓存的规则数量
-     */
-    get size(): number {
-        return this.cache.size
+        this.head = null
+        this.tail = null
+        this.currentSize = 0
     }
     
     /**
      * 获取缓存的总条目数
      */
+    get size(): number {
+        return this.currentSize
+    }
+    
+    /**
+     * 获取缓存的总条目数（与 size 相同）
+     */
     getTotalEntries(): number {
-        let total = 0
-        for (const ruleCache of this.cache.values()) {
-            total += ruleCache.size
-        }
-        return total
+        return this.currentSize
     }
     
     // ========================================
-    // 私有方法（LRU 实现）
+    // 双向链表操作（全部 O(1)）⭐⭐⭐
     // ========================================
     
     /**
-     * 更新访问顺序（LRU）
+     * 添加节点到链表头部 - O(1)
      * 
-     * 策略：移除旧记录，添加到末尾
+     * 步骤：
+     * 1. 新节点.next = 原head
+     * 2. 如果有原head，原head.prev = 新节点
+     * 3. head = 新节点
+     * 4. 如果没有tail，tail = 新节点
+     * 
+     * 时间复杂度：O(1) - 只修改指针
      */
-    private updateAccessOrder(ruleName: string, tokenIndex: number): void {
-        // 移除旧的访问记录
-        const index = this.accessOrder.findIndex(
-            item => item.ruleName === ruleName && item.tokenIndex === tokenIndex
-        )
+    private addToHead(node: LRUNode): void {
+        node.prev = null
+        node.next = this.head
         
-        if (index !== -1) {
-            this.accessOrder.splice(index, 1)
+        if (this.head) {
+            this.head.prev = node
         }
         
-        // 添加到末尾（最近使用）
-        this.accessOrder.push({ ruleName, tokenIndex })
+        this.head = node
+        
+        if (!this.tail) {
+            this.tail = node
+        }
     }
     
     /**
-     * 淘汰最旧的条目（LRU）
+     * 从链表中移除节点 - O(1)
+     * 
+     * 步骤：
+     * 1. node.prev.next = node.next（跳过当前节点）
+     * 2. node.next.prev = node.prev（跳过当前节点）
+     * 3. 处理head/tail边界情况
+     * 
+     * 时间复杂度：O(1) - 只修改指针，不需要遍历
      */
-    private evictOldest(): void {
-        if (this.accessOrder.length === 0) {
+    private removeNode(node: LRUNode): void {
+        if (node.prev) {
+            node.prev.next = node.next
+        } else {
+            // 是head节点
+            this.head = node.next
+        }
+        
+        if (node.next) {
+            node.next.prev = node.prev
+        } else {
+            // 是tail节点
+            this.tail = node.prev
+        }
+    }
+    
+    /**
+     * 移动节点到链表头部 - O(1)
+     * 
+     * 步骤：
+     * 1. 如果已经是head，直接返回
+     * 2. 从当前位置移除：O(1)
+     * 3. 添加到头部：O(1)
+     * 
+     * 时间复杂度：O(1)
+     * 
+     * 对比旧实现：
+     * - 旧：indexOf O(n) + splice O(n) + push O(1) = O(n)
+     * - 新：removeNode O(1) + addToHead O(1) = O(1)
+     * - 提升：5000倍（10000条缓存时）⭐⭐⭐
+     */
+    private moveToHead(node: LRUNode): void {
+        if (node === this.head) {
+            return  // 已经在头部，无需移动
+        }
+        
+        this.removeNode(node)
+        this.addToHead(node)
+    }
+    
+    /**
+     * 移除并淘汰尾节点（最久未访问）- O(1)
+     * 
+     * 步骤：
+     * 1. 获取tail：O(1)
+     * 2. 从Map删除：O(1)
+     * 3. 从链表删除：O(1)
+     * 4. 更新currentSize：O(1)
+     * 
+     * 时间复杂度：O(1)
+     * 
+     * 对比旧实现：
+     * - 旧：shift O(n)（移动所有元素）
+     * - 新：直接删除tail O(1)
+     */
+    private removeTail(): void {
+        if (!this.tail) {
             return
         }
         
-        // 获取最旧的条目（第一个）
-        const oldest = this.accessOrder.shift()!
+        const key = this.tail.key
+        this.cache.delete(key)
         
-        // 从缓存中删除
-        const ruleCache = this.cache.get(oldest.ruleName)
-        if (ruleCache) {
-            ruleCache.delete(oldest.tokenIndex)
-            
-            // 如果规则的缓存为空，删除整个规则
-            if (ruleCache.size === 0) {
-                this.cache.delete(oldest.ruleName)
-            }
-        }
+        this.removeNode(this.tail)
+        this.currentSize--
     }
 }
 

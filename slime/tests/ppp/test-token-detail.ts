@@ -23,3 +23,4 @@ console.log('\n=== 对比 ===')
 console.log('token[0].tokenName === LetTok.name:', tokens[0].tokenName === es6TokensObj.LetTok.name)
 console.log('token[0].tokenName === LetTok.type:', tokens[0].tokenName === es6TokensObj.LetTok.type)
 
+

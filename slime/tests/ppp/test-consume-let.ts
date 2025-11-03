@@ -28,3 +28,4 @@ try {
 console.log('\n=== 检查 es6TokensObj.LetTok ===')
 console.log('es6TokensObj.LetTok:', es6TokensObj.LetTok.name)
 
+

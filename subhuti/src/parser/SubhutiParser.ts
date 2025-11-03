@@ -46,6 +46,7 @@ import SubhutiCst from "../struct/SubhutiCst.ts"
 import SubhutiTokenConsumer from "./SubhutiTokenConsumer.ts"
 import { PackratCache } from "./PackratCache.ts"
 import type { PackratCacheConfig } from "./PackratCache.ts"
+import { SubhutiProfiler } from "./SubhutiProfiler.ts"
 
 // ============================================
 // [1] 类型定义（类型安全）
@@ -101,6 +102,16 @@ export class ParsingError extends Error {
     }
     readonly ruleStack: readonly string[]
     
+    /**
+     * ⭐ 智能修复建议（新增）
+     * 
+     * 根据错误上下文自动生成的修复建议
+     * - 基于期望/实际token
+     * - 基于规则栈
+     * - 基于常见错误模式
+     */
+    readonly suggestions: readonly string[]
+    
     constructor(message: string, details: {
         expected: string
         found?: SubhutiMatchToken
@@ -113,10 +124,138 @@ export class ParsingError extends Error {
         this.found = details.found
         this.position = details.position
         this.ruleStack = Object.freeze([...details.ruleStack])
+        
+        // ⭐ 自动生成智能建议
+        this.suggestions = Object.freeze(this.generateSuggestions())
     }
     
     /**
-     * 格式化错误信息（Rust 风格）
+     * 智能修复建议生成器 ⭐⭐⭐
+     * 
+     * 根据以下信息生成建议：
+     * 1. expected vs found（期望vs实际）
+     * 2. ruleStack（解析上下文）
+     * 3. 常见错误模式
+     * 
+     * 设计理念：
+     * - 优先最可能的原因
+     * - 提供具体的修复方法
+     * - 最多3-5条建议（避免信息过载）
+     */
+    private generateSuggestions(): string[] {
+        const suggestions: string[] = []
+        const { expected, found, ruleStack } = this
+        
+        // ========================================
+        // 规则1：闭合符号缺失
+        // ========================================
+        if (expected === 'RBrace') {
+            if (found?.tokenName === 'Semicolon') {
+                suggestions.push('💡 可能缺少闭合花括号 }')
+                suggestions.push('   → 检查是否有未闭合的代码块或对象字面量')
+            } else {
+                suggestions.push('💡 可能缺少 }')
+                suggestions.push('   → 检查对应的 { 位置')
+            }
+        }
+        
+        if (expected === 'RParen') {
+            suggestions.push('💡 可能缺少闭合括号 )')
+            suggestions.push('   → 检查函数调用或表达式的括号是否匹配')
+        }
+        
+        if (expected === 'RBracket') {
+            suggestions.push('💡 可能缺少闭合方括号 ]')
+            suggestions.push('   → 检查数组字面量或下标访问的括号')
+        }
+        
+        // ========================================
+        // 规则2：分号问题
+        // ========================================
+        if (expected === 'Semicolon') {
+            suggestions.push('💡 可能缺少分号 ;')
+            suggestions.push('   → 或者上一行语句未正确结束')
+        }
+        
+        if (found?.tokenName === 'Semicolon' && expected !== 'Semicolon') {
+            suggestions.push('💡 意外的分号')
+            suggestions.push('   → 检查是否多余，或上一行语法错误')
+        }
+        
+        // ========================================
+        // 规则3：关键字拼写错误
+        // ========================================
+        if (expected.endsWith('Tok') && found?.tokenName === 'Identifier') {
+            const keyword = expected.replace('Tok', '').toLowerCase()
+            const foundValue = found.tokenValue
+            suggestions.push(`💡 期望关键字 "${keyword}"，但发现标识符 "${foundValue}"`)
+            suggestions.push(`   → 检查是否拼写错误或使用了保留字`)
+        }
+        
+        // ========================================
+        // 规则4：根据规则栈推断上下文
+        // ========================================
+        const lastRule = ruleStack[ruleStack.length - 1]
+        
+        if (lastRule === 'ImportDeclaration' || ruleStack.includes('ImportDeclaration')) {
+            suggestions.push('💡 Import语句语法：')
+            suggestions.push('   → import { name } from "module"')
+            suggestions.push('   → import name from "module"')
+            suggestions.push('   → import * as name from "module"')
+        }
+        
+        if (lastRule === 'FunctionDeclaration' || ruleStack.includes('FunctionDeclaration')) {
+            suggestions.push('💡 函数声明语法：')
+            suggestions.push('   → function name(params) { body }')
+        }
+        
+        if (lastRule === 'ArrowFunction' || ruleStack.includes('ArrowFunction')) {
+            suggestions.push('💡 箭头函数语法：')
+            suggestions.push('   → (params) => expression')
+            suggestions.push('   → (params) => { statements }')
+        }
+        
+        // ========================================
+        // 规则5：对象/数组字面量
+        // ========================================
+        if (expected === 'Colon' && ruleStack.some(r => r.includes('Object') || r.includes('Property'))) {
+            suggestions.push('💡 对象属性语法：{ key: value }')
+            suggestions.push('   → 检查属性名和值之间是否缺少冒号')
+        }
+        
+        if (expected === 'Comma' && ruleStack.some(r => r.includes('Array') || r.includes('Object'))) {
+            suggestions.push('💡 多个元素/属性之间需要逗号分隔')
+            suggestions.push('   → 或者可能是多余的逗号（尾随逗号）')
+        }
+        
+        // ========================================
+        // 规则6：常见语法错误
+        // ========================================
+        if (expected === 'Identifier' && found?.tokenName === 'Number') {
+            suggestions.push('💡 期望标识符，但发现数字')
+            suggestions.push('   → 变量名不能以数字开头')
+        }
+        
+        if (expected === 'Identifier' && found?.tokenName?.endsWith('Tok')) {
+            const keyword = found.tokenName.replace('Tok', '').toLowerCase()
+            suggestions.push(`💡 "${keyword}" 是保留关键字，不能用作标识符`)
+        }
+        
+        // ========================================
+        // 规则7：EOF（文件结束）
+        // ========================================
+        if (!found || found.tokenName === 'EOF') {
+            suggestions.push('💡 代码意外结束')
+            suggestions.push('   → 检查是否有未闭合的括号、花括号或引号')
+            suggestions.push('   → 文件可能被意外截断')
+        }
+        
+        // 限制建议数量（避免信息过载）
+        return suggestions.slice(0, 5)
+    }
+    
+    /**
+     * 格式化错误信息（Rust 风格 + 智能建议）⭐
      * 
      * 格式：
      * ```
@@ -132,6 +271,11 @@ export class ParsingError extends Error {
      *   ├─> Statement
      *   ├─> BlockStatement
      *   └─> Block
+     * 
+     * Suggestions:
+     *   💡 可能缺少闭合花括号 }
+     *      → 检查是否有未闭合的代码块或对象字面量
+     *   💡 检查对应的 { 位置
      * ```
      */
     toString(): string {
@@ -166,6 +310,15 @@ export class ParsingError extends Error {
                 const isLast = i === visible.length - 1
                 const prefix = isLast ? '└─>' : '├─>'
                 lines.push(`  ${prefix} ${rule}`)
+            })
+        }
+        
+        // ⭐ 智能修复建议（新增）
+        if (this.suggestions.length > 0) {
+            lines.push('')
+            lines.push('Suggestions:')
+            this.suggestions.forEach(suggestion => {
+                lines.push(`  ${suggestion}`)
             })
         }
         
@@ -349,6 +502,23 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         misses: 0,
         stores: 0
     }
+    
+    /**
+     * 性能分析器（可选）⭐
+     * 
+     * 用途：
+     * - 调试：找出性能瓶颈
+     * - 调优：评估优化效果
+     * - 监控：生产环境性能监控
+     * 
+     * 使用方式：
+     * ```typescript
+     * parser.enableProfiling()
+     * const cst = parser.Program()
+     * console.log(parser.getProfilingReport())
+     * ```
+     */
+    private profiler?: SubhutiProfiler
     
     // ========================================
     // 构造函数
@@ -544,9 +714,17 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             }
         }
         
-        // 执行规则
+        // 执行规则（⭐ 添加性能记录）
         const startTokenIndex = this.tokenIndex
+        const startTime = this.profiler ? performance.now() : 0
+        
         const cst = this.processCst(ruleName, targetFun)
+        
+        // ⭐ 性能分析：记录规则执行时间
+        if (this.profiler && !isTopLevel) {
+            const duration = performance.now() - startTime
+            this.profiler.recordRule(ruleName, duration)
+        }
         
         // 嵌套调用：存储缓存和清理
         if (!isTopLevel) {
@@ -1057,6 +1235,79 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     
     get ruleStackNames(): string {
         return this.ruleStack.join('->')
+    }
+    
+    // ========================================
+    // 性能分析 API（⭐ 新增）
+    // ========================================
+    
+    /**
+     * 启用性能分析
+     * 
+     * 调用后，Parser会记录每个规则的执行时间
+     * 
+     * 使用示例：
+     * ```typescript
+     * const parser = new MyParser(tokens)
+     * parser.enableProfiling()  // ← 启用分析
+     * 
+     * const cst = parser.Program()
+     * 
+     * console.log(parser.getProfilingReport())  // 查看报告
+     * ```
+     */
+    enableProfiling(): void {
+        if (!this.profiler) {
+            this.profiler = new SubhutiProfiler()
+        }
+        this.profiler.start()
+    }
+    
+    /**
+     * 停止性能分析
+     */
+    stopProfiling(): void {
+        this.profiler?.stop()
+    }
+    
+    /**
+     * 获取性能分析报告（详细版）
+     * 
+     * 包含：
+     * - 总时间
+     * - Top 10 慢规则
+     * - 性能建议
+     * 
+     * @returns 格式化的性能报告
+     */
+    getProfilingReport(): string {
+        if (!this.profiler) {
+            return '⚠️  性能分析未启用\n   → 请先调用 enableProfiling()'
+        }
+        
+        return this.profiler.getReport()
+    }
+    
+    /**
+     * 获取简洁报告（单行）
+     * 
+     * @returns 例如："⏱️  245.32ms | 42 rules | 15,234 calls"
+     */
+    getProfilingShortReport(): string {
+        if (!this.profiler) {
+            return '⚠️  Profiling not enabled'
+        }
+        
+        return this.profiler.getShortReport()
+    }
+    
+    /**
+     * 获取规则统计数据（原始数据）
+     * 
+     * 用于自定义分析或可视化
+     */
+    getProfilingStats(): Map<string, import('./SubhutiProfiler.ts').RuleStats> | null {
+        return this.profiler?.getRuleStats() || null
     }
 }
 
