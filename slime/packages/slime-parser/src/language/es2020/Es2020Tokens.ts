@@ -25,6 +25,9 @@ export const Es2020TokenName = {
   
   // ES2020 BigInt 字面量
   BigIntLiteral: 'BigIntLiteralTok',            // 123n, 0b1010n, 0o777n, 0xFFn
+  
+  // ES2022 私有标识符符号
+  Hash: 'HashTok',                              // # (用于私有属性)
 }
 
 /**
@@ -127,6 +130,25 @@ export const es2020TokensObj = {
     // 组合正则：十进制 | 二进制 | 八进制 | 十六进制 + n 后缀
     /(?:0[bB][01]+|0[oO][0-7]+|0[xX][0-9a-fA-F]+|0|[1-9][0-9]*)n/
   ),
+  
+  /**
+   * Hash: # 符号（ES2022）
+   * 规范 §1.5.2: PrivateIdentifier :: # IdentifierName
+   * 
+   * 用于：
+   * - 私有字段: #count
+   * - 私有方法: #privateMethod()
+   * 
+   * 设计说明：
+   * - 词法层只识别 # 符号
+   * - 语法层组合 # + IdentifierName 形成 PrivateIdentifier
+   * - 符合"词法分析识别token，语法分析负责组合"的原则
+   */
+  Hash: createValueRegToken(
+    Es2020TokenName.Hash,
+    /#/,
+    '#'
+  ),
 };
 
 /**
@@ -158,6 +180,7 @@ export const es2020Tokens = [
   // ============================================
   es2020TokensObj.MetaTok,                // meta 关键字
   es2020TokensObj.BigIntLiteral,          // BigInt 字面量
+  es2020TokensObj.Hash,                   // # 符号（ES2022 私有标识符）
 ];
 
 /**
@@ -238,6 +261,23 @@ export default class Es2020TokenConsumer extends Es6TokenConsumer {
    */
   BigIntLiteral() {
     return this.consume(es2020TokensObj.BigIntLiteral);
+  }
+  
+  // ============================================
+  // ES2022 私有标识符符号消费方法
+  // ============================================
+  
+  /**
+   * 消费 # 符号（ES2022）
+   * 
+   * 用于私有标识符：
+   * - #count
+   * - #privateMethod
+   * 
+   * 注意：# 和标识符的组合在 Parser 层实现
+   */
+  Hash() {
+    return this.consume(es2020TokensObj.Hash);
   }
 }
 

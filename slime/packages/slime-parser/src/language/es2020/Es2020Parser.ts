@@ -112,6 +112,138 @@ export default class Es2020Parser<T extends Es2020TokenConsumer> extends Es6Pars
     }
 
     // ============================================
+    // ES2022: 私有标识符支持
+    // 规范 §14.3, §14.6
+    // ============================================
+
+    /**
+     * PrivateIdentifier (ES2022)
+     * 规范 §14.3.2: PrivateIdentifier :: # IdentifierName
+     * 
+     * 语法组合：
+     * - # 符号（词法层）
+     * - IdentifierName（语法层）
+     * 
+     * 用于：
+     * - 私有字段声明: #count = 0
+     * - 私有方法声明: #privateMethod() {}
+     * - 私有字段访问: this.#count
+     * - 私有方法调用: this.#privateMethod()
+     */
+    @SubhutiRule
+    PrivateIdentifier() {
+        this.tokenConsumer.Hash()
+        this.IdentifierName()
+    }
+
+    /**
+     * ClassElementName (ES2022)
+     * 规范 §14.6.1
+     * 
+     * ClassElementName[Yield, Await] ::
+     *     PropertyName[?Yield, ?Await]
+     *     PrivateIdentifier
+     * 
+     * 用于：
+     * - 类字段: #count = 0 或 name = "default"
+     * - 类方法: #privateMethod() {} 或 publicMethod() {}
+     */
+    @SubhutiRule
+    ClassElementName() {
+        this.Or([
+            {alt: () => this.PrivateIdentifier()},
+            {alt: () => this.PropertyName()}
+        ])
+    }
+
+    /**
+     * Override: FieldDefinition (ES2022)
+     * 规范 §14.6.2
+     * 
+     * FieldDefinition[Yield, Await] ::
+     *     ClassElementName[?Yield, ?Await] Initializer[+In, ?Yield, ?Await]opt
+     * 
+     * ES2022 改动：
+     * - 使用 ClassElementName 替代 PropertyName（支持私有字段 #field）
+     */
+    @SubhutiRule
+    FieldDefinition() {
+        this.ClassElementName()
+        this.Option(() => this.Initializer())
+        this.EmptySemicolon()
+    }
+
+    /**
+     * Override: PropertyNameMethodDefinition (ES2022)
+     * 
+     * ES2022 改动：
+     * - 使用 ClassElementName 替代 PropertyName（支持私有方法 #method）
+     */
+    @SubhutiRule
+    PropertyNameMethodDefinition() {
+        this.Option(() => this.tokenConsumer.AsyncTok())
+        this.ClassElementName()
+        this.FunctionFormalParametersBodyDefine()
+    }
+
+    /**
+     * Override: GetMethodDefinition (ES2022)
+     * 
+     * ES2022 改动：
+     * - 使用 ClassElementName 替代 PropertyName（支持私有getter）
+     */
+    @SubhutiRule
+    GetMethodDefinition() {
+        this.tokenConsumer.GetTok()
+        this.ClassElementName()
+        this.tokenConsumer.LParen()
+        this.tokenConsumer.RParen()
+        this.FunctionBodyDefine()
+    }
+
+    /**
+     * Override: SetMethodDefinition (ES2022)
+     * 
+     * ES2022 改动：
+     * - 使用 ClassElementName 替代 PropertyName（支持私有setter）
+     * 
+     * 注意：SetMethodDefinition 复用 PropertyNameMethodDefinition，
+     * 后者已经在上面被 override 为使用 ClassElementName
+     */
+    @SubhutiRule
+    SetMethodDefinition() {
+        this.tokenConsumer.SetTok()
+        this.PropertyNameMethodDefinition()
+    }
+
+    /**
+     * Override: GeneratorMethod (ES2022)
+     * 
+     * ES2022 改动：
+     * - 使用 ClassElementName 替代 PropertyName（支持私有generator）
+     */
+    @SubhutiRule
+    GeneratorMethod() {
+        this.tokenConsumer.Asterisk()
+        this.ClassElementName()
+        this.FunctionFormalParametersBodyDefine()
+    }
+
+    /**
+     * Override: AsyncGeneratorMethod (ES2022)
+     * 
+     * ES2022 改动：
+     * - 使用 ClassElementName 替代 PropertyName（支持私有async generator）
+     */
+    @SubhutiRule
+    AsyncGeneratorMethod() {
+        this.tokenConsumer.AsyncTok()
+        this.tokenConsumer.Asterisk()
+        this.ClassElementName()
+        this.FunctionFormalParametersBodyDefine()
+    }
+
+    // ============================================
     // ES2016: 幂运算表达式 (Exponentiation)
     // 规范 §2.14
     // ============================================

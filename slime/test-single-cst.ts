@@ -155,8 +155,11 @@ function getCSTStatistics(node: any): {
 const code = `
 
 class User {
+    #password
+    
     constructor(name, password) {
         this.name = name
+        this.#password = password
     }
     
     static create(data) {
@@ -168,6 +171,7 @@ class User {
     }
     
     verify(pwd) {
+        return this.#password === pwd
     }
     
     get type() {
