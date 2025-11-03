@@ -83,7 +83,14 @@ export interface SubhutiMemoResult {
 }
 
 /**
- * 解析错误类（详细错误信息）
+ * 解析错误类（Rust 风格格式化）
+ * 
+ * 设计理念：
+ * - 清晰的视觉层次
+ * - 关键信息突出显示
+ * - 便于快速定位问题
+ * 
+ * 参考：Rust compiler error messages
  */
 export class ParsingError extends Error {
     readonly expected: string
@@ -109,12 +116,68 @@ export class ParsingError extends Error {
         this.ruleStack = Object.freeze([...details.ruleStack])
     }
     
+    /**
+     * 格式化错误信息（Rust 风格）
+     * 
+     * 格式：
+     * ```
+     * ❌ Parsing Error
+     * 
+     *   --> line 23, column 15
+     * 
+     * Expected: RBrace
+     * Found:    Semicolon
+     * 
+     * Rule stack:
+     *   ... (5 more)
+     *   ├─> Statement
+     *   ├─> BlockStatement
+     *   └─> Block
+     * ```
+     */
     toString(): string {
-        const location = `line ${this.position.line}, column ${this.position.column}`
-        const expected = `Expected: ${this.expected}`
-        const found = `Found: ${this.found?.tokenName || 'EOF'}`
-        const context = `Context: ${this.ruleStack.join(' → ')}`
-        return `Parsing Error at ${location}\n${expected}\n${found}\n${context}`
+        const lines: string[] = []
+        
+        // 标题
+        lines.push('❌ Parsing Error')
+        lines.push('')
+        
+        // 位置信息
+        lines.push(`  --> line ${this.position.line}, column ${this.position.column}`)
+        lines.push('')
+        
+        // 期望和实际
+        lines.push(`Expected: ${this.expected}`)
+        lines.push(`Found:    ${this.found?.tokenName || 'EOF'}`)
+        
+        // 规则栈（简化显示）
+        if (this.ruleStack.length > 0) {
+            lines.push('')
+            lines.push('Rule stack:')
+            
+            const maxDisplay = 5  // 最多显示 5 个规则
+            const visible = this.ruleStack.slice(-maxDisplay)
+            const hidden = this.ruleStack.length - visible.length
+            
+            if (hidden > 0) {
+                lines.push(`  ... (${hidden} more)`)
+            }
+            
+            visible.forEach((rule, i) => {
+                const isLast = i === visible.length - 1
+                const prefix = isLast ? '└─>' : '├─>'
+                lines.push(`  ${prefix} ${rule}`)
+            })
+        }
+        
+        return lines.join('\n')
+    }
+    
+    /**
+     * 简洁格式（用于日志）
+     */
+    toShortString(): string {
+        return `Parsing Error at line ${this.position.line}:${this.position.column}: Expected ${this.expected}, found ${this.found?.tokenName || 'EOF'}`
     }
 }
 
