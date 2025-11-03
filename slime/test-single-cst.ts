@@ -152,9 +152,7 @@ function getCSTStatistics(node: any): {
 // 主程序
 // const code = process.argv[2]
 // MWE Step 1: 最简单的 try-catch
-const code = `
-class WithAsyncGen { async *gen() { yield 1 } }
-`
+const code = `\`${this.name} (ID: ${this.id}): $${this.salary}\``
 
 if (!code) {
     console.log('❌ 错误：请提供要测试的代码')
