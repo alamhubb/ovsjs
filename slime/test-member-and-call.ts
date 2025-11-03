@@ -65,3 +65,4 @@ testWithBothParsers(`import('./module.js')`, 'import调用')
 console.log(`\n${'='.repeat(60)}`)
 
 
+
