@@ -1138,8 +1138,14 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
 
     @SubhutiRule
     BindingRestElement() {
+        // BindingRestElement: ... BindingIdentifier | ... BindingPattern
         this.tokenConsumer.Ellipsis()
-        this.BindingIdentifier()
+        this.Or([
+            // 嵌套解构：...[a, b] 或 ...{x, y}
+            {alt: () => this.BindingPattern()},
+            // 简单标识符：...rest
+            {alt: () => this.BindingIdentifier()}
+        ])
     }
 
     @SubhutiRule

@@ -994,9 +994,22 @@ export class SlimeCstToAst {
 
   createBindingRestElementAst(cst: SubhutiCst): SlimeRestElement {
     const astName = checkCstName(cst, Es6Parser.prototype.BindingRestElement.name);
-    const first1 = cst.children[1]
-    const id = this.createIdentifierAst(first1.children[0])
-    return SlimeAstUtil.createRestElement(id)
+    // BindingRestElement: ... BindingIdentifier | ... BindingPattern
+    const argumentCst = cst.children[1]
+    
+    let argument: SlimeIdentifier | SlimePattern
+    
+    if (argumentCst.name === Es6Parser.prototype.BindingIdentifier.name) {
+      // 简单情况：...rest
+      argument = this.createBindingIdentifierAst(argumentCst)
+    } else if (argumentCst.name === Es6Parser.prototype.BindingPattern.name) {
+      // 嵌套解构：...[a, b] 或 ...{x, y}
+      argument = this.createBindingPatternAst(argumentCst)
+    } else {
+      throw new Error(`BindingRestElement: 不支持的类型 ${argumentCst.name}`)
+    }
+    
+    return SlimeAstUtil.createRestElement(argument)
   }
 
   createPropertyNameMethodDefinitionAst(cst: SubhutiCst): SlimeFunctionExpression {
@@ -1226,21 +1239,12 @@ export class SlimeCstToAst {
       }
     }
     
-    // 检查是否有BindingRestElement（...rest）
+    // 检查是否有BindingRestElement（...rest 或 ...[a, b]）
     const restElement = cst.children.find(ch => ch.name === Es6Parser.prototype.BindingRestElement.name)
     if (restElement) {
-      // BindingRestElement -> Ellipsis + BindingIdentifier
-      const identifier = restElement.children.find((ch: any) => 
-        ch.name === Es6Parser.prototype.BindingIdentifier.name)
-      if (identifier) {
-        const restId = this.createBindingIdentifierAst(identifier)
-        const restNode = {
-          type: SlimeAstType.RestElement,
-          argument: restId,
-          loc: restElement.loc
-        }
-        elements.push(restNode as any)
-      }
+      // 使用统一的方法处理，支持 BindingIdentifier 和 BindingPattern
+      const restNode = this.createBindingRestElementAst(restElement)
+      elements.push(restNode as any)
     }
     
     return {
