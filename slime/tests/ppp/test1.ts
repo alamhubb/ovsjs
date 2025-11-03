@@ -3,6 +3,7 @@ import JsonUtil from "subhuti/src/utils/JsonUtil";
 import {traverseClearLoc, traverseClearTokens} from "../utils/parserTestUtils";
 import {LogUtil} from "../../src/logutil";
 import {es2020Tokens} from "../../packages/slime-parser/src/language/es2020/Es2020Tokens";
+import Es6Parser from "slime-parser/src/language/es2015/Es6Parser";
 
 const code = `const [first, ...[second, third]] = arr
 `
