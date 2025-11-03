@@ -152,7 +152,24 @@ function getCSTStatistics(node: any): {
 // 主程序
 // const code = process.argv[2]
 // MWE Step 1: 最简单的 try-catch
-const code = `\`${this.name} (ID: ${this.id}): $${this.salary}\``
+const code = `
+class Employee {
+    constructor(id, name, salary) {
+        this.id = id
+        this.name = name
+        this.salary = salary
+    }
+    
+    giveRaise(amount) {
+        this.salary += amount
+        return this.salary
+    }
+    
+    getInfo() {
+        return \`\${this.name} (ID: \${this.id}): $\${this.salary}\`
+    }
+}
+`
 
 if (!code) {
     console.log('❌ 错误：请提供要测试的代码')
