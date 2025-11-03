@@ -22,7 +22,6 @@ export default class SubhutiCst {
   name: string;
   children?: SubhutiCst[]
   loc: SubhutiSourceLocation
-  tokens?: SubhutiMatchToken[]
   value?: string;
 
   constructor(cst?: SubhutiCst) {
@@ -32,10 +31,6 @@ export default class SubhutiCst {
       this.children = cst.children;
       this.value = cst.value;
     }
-  }
-
-  pushCstToken?(popToken: SubhutiMatchToken) {
-    this.tokens.push(popToken);
   }
   
   // ========================================

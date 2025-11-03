@@ -12,7 +12,7 @@
  * - ✅ allowError 机制（智能错误管理）⭐ 核心创新
  * - ✅ 返回值语义（成功返回 CST，失败返回 undefined）
  * - ✅ 成功才添加 CST（清晰的生命周期）
- * - ✅ 双数组结构（children + tokens 分离，O(1) 访问）
+ * - ✅ 紧凑 CST 结构（单数组 children，内存优化）
  * - ✅ LRU Packrat 缓存（防止内存溢出）⭐ 生产级
  * - ✅ 可插拔缓存（支持自定义策略）
  * - ✅ 极简回溯（O(1) 快照索引）
@@ -64,12 +64,11 @@ export interface SubhutiParserOr {
 }
 
 /**
- * 回溯数据（支持双数组结构）
+ * 回溯数据
  */
 export interface SubhutiBackData {
     tokenIndex: number                    // tokens 读取位置
     curCstChildrenLength: number          // children 数组长度
-    curCstTokensLength: number            // tokens 数组长度
 }
 
 /**
@@ -79,7 +78,7 @@ export interface SubhutiMemoResult {
     success: boolean                      // 解析是否成功
     endTokenIndex: number                 // 解析结束位置
     cst?: SubhutiCst                      // 成功时的 CST 节点
-    ruleSuccess: boolean                  // ruleSuccess 状态（必须缓存）
+    parseFailed: boolean                  // parseFailed 状态（必须缓存）
 }
 
 /**
@@ -219,13 +218,17 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     private tokenIndex: number = 0
     
     /**
-     * 核心状态标志：ruleSuccess
+     * 核心状态标志：parseFailed（负逻辑）
      * 
-     * 语义：当前规则是否成功
-     * - true: 可以继续执行后续规则
-     * - false: 停止执行，返回失败
+     * 语义：当前规则是否失败
+     * - false: 成功，可以继续执行后续规则
+     * - true: 失败，停止执行并返回失败
+     * 
+     * 优势：
+     * - 默认值为 false（成功），成功路径无需设置
+     * - 只在失败时设置，减少约44%的状态同步点
      */
-    private _ruleSuccess = true
+    private _parseFailed = false
     
     /**
      * CST 构建栈（私有，通过 getter 访问）
@@ -426,10 +429,44 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     }
     
     /**
-     * 规则成功状态（只读）
+     * 规则成功状态（只读，兼容性）
      */
     get ruleSuccess(): boolean {
-        return this._ruleSuccess
+        return !this._parseFailed
+    }
+    
+    // ========================================
+    // 状态管理封装方法（优化版）
+    // ========================================
+    
+    /**
+     * 标记当前规则失败
+     * 
+     * 用途：在规则执行失败时调用
+     * - consumeToken 失败
+     * - 手动失败处理
+     */
+    private markFailure(): void {
+        this._parseFailed = true
+    }
+    
+    /**
+     * 重置失败状态（恢复成功）
+     * 
+     * 用途：
+     * - Or 规则尝试下一个分支前
+     * - Many/Option 规则回溯后
+     * - 初始化时
+     */
+    private resetFailure(): void {
+        this._parseFailed = false
+    }
+    
+    /**
+     * 检查是否成功（便捷方法）
+     */
+    private get isSuccess(): boolean {
+        return !this._parseFailed
     }
     
     // ========================================
@@ -469,13 +506,13 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         // 初始化检查
         if (this.isFirstRule) {
             this.isFirstRule = false
-            this._ruleSuccess = true
+            this.resetFailure()  // 重置为成功状态
             this.cstStack.length = 0
             this.ruleStack.length = 0
             this.allowErrorStack.length = 0
         } else {
             // 失败检查（快速返回）
-            if (!this._ruleSuccess) {
+            if (this._parseFailed) {
                 return undefined
             }
             
@@ -501,13 +538,12 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         } else {
             // Packrat: 存储缓存
             if (this.enableMemoization) {
-                this.storeMemoized(ruleName, startTokenIndex, cst, this.tokenIndex, this._ruleSuccess)
+                this.storeMemoized(ruleName, startTokenIndex, cst, this.tokenIndex, this._parseFailed)
             }
             
             // 清理空数组（优化）
             if (cst) {
                 if (!cst.children?.length) cst.children = undefined
-                if (!cst.tokens?.length) cst.tokens = undefined
             }
         }
         
@@ -530,7 +566,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         const cst = new SubhutiCst()
         cst.name = ruleName
         cst.children = []
-        cst.tokens = []  // 双数组结构（快速访问）
         
         // 进入上下文
         this.cstStack.push(cst)
@@ -543,8 +578,8 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         this.cstStack.pop()
         this.ruleStack.pop()
         
-        // 判断成功/失败
-        if (this._ruleSuccess) {
+        // 判断成功/失败（负逻辑）
+        if (!this._parseFailed) {
             // ✅ 成功：添加到父节点
             const parentCst = this.cstStack[this.cstStack.length - 1]
             if (parentCst) {
@@ -588,7 +623,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * 参考：Bryan Ford (2004) "Parsing Expression Grammars"
      */
     Or(alternatives: SubhutiParserOr[]): SubhutiCst | undefined {
-        if (!this._ruleSuccess) {
+        if (this._parseFailed) {
             return undefined
         }
         
@@ -611,8 +646,8 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             // 尝试分支
             const result = alt.alt()
             
-            // 判断成功（返回值 + 状态标志）
-            if (result !== undefined && this._ruleSuccess) {
+            // 判断成功（返回值 + 状态标志，负逻辑）
+            if (result !== undefined && !this._parseFailed) {
                 // ✅ 成功：退出 allowError 上下文，返回结果
                 this.allowErrorStackPopAndReset()
                 return result
@@ -622,7 +657,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             if (!isLast) {
                 // 非最后分支：回溯 + 重置状态，继续尝试
                 this.restoreState(savedState)
-                this._ruleSuccess = true
+                this.resetFailure()  // 重置失败状态
             } else {
                 // 最后分支：回溯，保持失败状态
                 this.restoreState(savedState)
@@ -648,7 +683,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * 参考：EBNF { ... }
      */
     Many(fn: RuleFunction): SubhutiCst | undefined {
-        if (!this._ruleSuccess) {
+        if (this._parseFailed) {
             return undefined
         }
         
@@ -659,10 +694,10 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             const savedState = this.saveState()
             const result = fn()
             
-            if (!result || !this._ruleSuccess) {
+            if (!result || this._parseFailed) {
                 // 失败：回溯，退出循环
                 this.restoreState(savedState)
-                this._ruleSuccess = true  // Many 总是成功
+                this.resetFailure()  // Many 总是成功
                 break
             }
         }
@@ -681,7 +716,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * 参考：EBNF [ ... ]
      */
     Option(fn: RuleFunction): SubhutiCst | undefined {
-        if (!this._ruleSuccess) {
+        if (this._parseFailed) {
             return undefined
         }
         
@@ -691,10 +726,10 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         const savedState = this.saveState()
         const result = fn()
         
-        if (!result || !this._ruleSuccess) {
+        if (!result || this._parseFailed) {
             // 失败：回溯，重置状态
             this.restoreState(savedState)
-            this._ruleSuccess = true  // Option 总是成功
+            this.resetFailure()  // Option 总是成功
         }
         
         // 退出 allowError 上下文
@@ -713,13 +748,13 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * 参考：Chevrotain AT_LEAST_ONE、EBNF { ... }+
      */
     AtLeastOne(fn: RuleFunction): SubhutiCst | undefined {
-        if (!this._ruleSuccess) {
+        if (this._parseFailed) {
             return undefined
         }
         
         // 第一次必须成功（不进入 allowError 上下文）
         const firstResult = fn()
-        if (!firstResult || !this._ruleSuccess) {
+        if (!firstResult || this._parseFailed) {
             // 第一次失败：整个规则失败
             return undefined
         }
@@ -731,10 +766,10 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             const savedState = this.saveState()
             const result = fn()
             
-            if (!result || !this._ruleSuccess) {
+            if (!result || this._parseFailed) {
                 // 失败：回溯，退出循环
                 this.restoreState(savedState)
-                this._ruleSuccess = true  // 至少成功1次，整体成功
+                this.resetFailure()  // 至少成功1次，整体成功
                 break
             }
         }
@@ -770,15 +805,15 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * 参考：旧版 OldSubhutiParser1.ts 的精妙设计
      */
     consumeToken(tokenName: string): SubhutiCst | undefined {
-        if (!this._ruleSuccess) {
+        if (this._parseFailed) {
             return undefined
         }
         
         const token = this.currentToken
         
         if (!token || token.tokenName !== tokenName) {
-            // 失败：设置标志
-            this._ruleSuccess = false
+            // 失败：标记失败状态
+            this.markFailure()
             
             // ⭐ 核心：根据 allowError 决定行为
             if (this.outerHasAllowError || this.allowError) {
@@ -806,8 +841,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             )
         }
         
-        // 成功：消费 token
-        this._ruleSuccess = true
+        // ✅ 成功：消费 token（不需要设置标志！）
         this.tokenIndex++
         return this.generateCstByToken(token)
     }
@@ -838,11 +872,10 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             }
         }
         
-        // 添加到当前 CST（双数组）
+        // 添加到当前 CST
         const currentCst = this.curCst
         if (currentCst) {
             currentCst.children.push(cst)
-            currentCst.pushCstToken(token)
         }
         
         return cst
@@ -856,8 +889,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         const currentCst = this.curCst
         return {
             tokenIndex: this.tokenIndex,
-            curCstChildrenLength: currentCst?.children?.length || 0,
-            curCstTokensLength: currentCst?.tokens?.length || 0
+            curCstChildrenLength: currentCst?.children?.length || 0
         }
     }
     
@@ -866,7 +898,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         const currentCst = this.curCst
         if (currentCst) {
             currentCst.children.length = backData.curCstChildrenLength
-            currentCst.tokens.length = backData.curCstTokensLength
         }
     }
     
@@ -881,14 +912,14 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     /**
      * 应用缓存结果（完整状态恢复）
      * 
-     * 关键：必须恢复 ruleSuccess 状态
+     * 关键：必须恢复 parseFailed 状态
      */
     private applyMemoizedResult(cached: SubhutiMemoResult): SubhutiCst | undefined {
         // 恢复 token 位置
         this.tokenIndex = cached.endTokenIndex
         
-        // 恢复 ruleSuccess 状态（关键！）
-        this._ruleSuccess = cached.ruleSuccess
+        // 恢复 parseFailed 状态（关键！）
+        this._parseFailed = cached.parseFailed
         
         if (cached.success && cached.cst) {
             // 添加到父节点
@@ -905,20 +936,20 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     /**
      * 存储缓存（完整状态）
      * 
-     * 关键：必须缓存 ruleSuccess 状态
+     * 关键：必须缓存 parseFailed 状态
      */
     private storeMemoized(
         ruleName: string,
         startTokenIndex: number,
         cst: SubhutiCst | undefined,
         endTokenIndex: number,
-        ruleSuccess: boolean
+        parseFailed: boolean
     ): void {
         this.memoCache.set(ruleName, startTokenIndex, {
             success: cst !== undefined,
             endTokenIndex: endTokenIndex,
             cst: cst,
-            ruleSuccess: ruleSuccess  // 缓存状态标志
+            parseFailed: parseFailed  // 缓存状态标志
         })
         
         this.memoStats.stores++
