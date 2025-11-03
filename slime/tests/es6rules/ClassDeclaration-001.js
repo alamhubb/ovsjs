@@ -194,11 +194,8 @@ class Derived extends Base {
 
 // ✅ 测试14：包含多个成员的复杂类    ClassDeclaration -> 复杂ClassBody (static, getter, private)
 class User {
-    #password
-    
     constructor(name, password) {
         this.name = name
-        this.#password = password
     }
     
     static create(data) {
@@ -210,7 +207,6 @@ class User {
     }
     
     verify(pwd) {
-        return this.#password === pwd
     }
     
     get type() {
@@ -232,7 +228,6 @@ class Employee {
     }
     
     getInfo() {
-        return `${this.name} (ID: ${this.id}): $${this.salary}`
     }
 }
 

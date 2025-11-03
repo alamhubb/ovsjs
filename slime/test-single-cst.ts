@@ -153,20 +153,25 @@ function getCSTStatistics(node: any): {
 // const code = process.argv[2]
 // MWE Step 1: 最简单的 try-catch
 const code = `
-class Employee {
-    constructor(id, name, salary) {
-        this.id = id
+
+class User {
+    constructor(name, password) {
         this.name = name
-        this.salary = salary
     }
     
-    giveRaise(amount) {
-        this.salary += amount
-        return this.salary
+    static create(data) {
+        return new User(data.name, data.pass)
     }
     
-    getInfo() {
-        return \`\${this.name} (ID: \${this.id}): $\${this.salary}\`
+    getName() {
+        return this.name
+    }
+    
+    verify(pwd) {
+    }
+    
+    get type() {
+        return 'user'
     }
 }
 `
