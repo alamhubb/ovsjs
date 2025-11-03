@@ -241,11 +241,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     private readonly ruleStack: string[] = []
     
     /**
-     * 初始化标志（用于第一次调用规则）
-     */
-    private isFirstRule = true
-    
-    /**
      * 类名（用于装饰器）
      */
     private readonly className: string
@@ -265,14 +260,19 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     private _allowError = false
     
     /**
-     * allowError 栈（支持嵌套）
+     * allowError 深度计数器（支持嵌套）
      * 
      * 场景：嵌套 Or 规则
      * - 外层 Or：允许错误
      * - 内层 Or：也允许错误
-     * - 栈式管理，自动恢复
+     * - 计数管理，自动恢复
+     * 
+     * 优势：
+     * - 无内存分配（整数 vs 数组）
+     * - 语义更清晰（深度 vs 栈）
+     * - 性能更优（++ vs push/pop）
      */
-    private readonly allowErrorStack: string[] = []
+    private allowErrorDepth = 0
     
     get allowError(): boolean {
         return this._allowError
@@ -286,12 +286,12 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * 是否有外层允许错误的上下文
      * 
      * 用途：嵌套场景判断
-     * - 长度 > 1：有外层上下文
-     * - 长度 = 1：当前层
-     * - 长度 = 0：顶层
+     * - 深度 > 1：有外层上下文
+     * - 深度 = 1：当前层
+     * - 深度 = 0：顶层
      */
     get outerHasAllowError(): boolean {
-        return this.allowErrorStack.length > 1
+        return this.allowErrorDepth > 1
     }
     
     /**
@@ -301,8 +301,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      */
     private setAllowErrorNewState(): void {
         this.setAllowError(true)
-        const currentCst = this.curCst
-        this.allowErrorStack.push(currentCst?.name || 'unknown')
+        this.allowErrorDepth++  // 深度+1
     }
     
     /**
@@ -311,8 +310,8 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * 调用时机：Or/Many/Option 出口
      */
     private allowErrorStackPopAndReset(): void {
-        this.allowErrorStack.pop()
-        this.setAllowError(this.allowErrorStack.length > 0)
+        this.allowErrorDepth--  // 深度-1
+        this.setAllowError(this.allowErrorDepth > 0)  // 根据深度设置状态
     }
     
     // ========================================
@@ -417,7 +416,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     /**
      * 当前 token
      */
-    get currentToken(): SubhutiMatchToken | undefined {
+    get curToken(): SubhutiMatchToken | undefined {
         return this._tokens[this.tokenIndex]
     }
     
@@ -469,6 +468,22 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         return !this._parseFailed
     }
     
+    /**
+     * 判断是否是顶层规则调用
+     * 
+     * 用途：替代 isFirstRule 标志
+     * - true: 第一次调用规则，需要初始化
+     * - false: 嵌套调用规则，不需要初始化
+     * 
+     * 优势：
+     * - 无需额外状态（利用已有的栈）
+     * - 自动管理（栈的push/pop自动维护）
+     * - 语义准确（栈为空 = 顶层调用）
+     */
+    private get isTopLevelCall(): boolean {
+        return this.cstStack.length === 0 && this.ruleStack.length === 0
+    }
+    
     // ========================================
     // 公开方法
     // ========================================
@@ -503,15 +518,17 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             }
         }
         
-        // 初始化检查
-        if (this.isFirstRule) {
-            this.isFirstRule = false
+        // 判断是否顶层调用（在 processCst 之前判断）
+        const isTopLevel = this.isTopLevelCall
+        
+        // 顶层调用：初始化
+        if (isTopLevel) {
             this.resetFailure()  // 重置为成功状态
             this.cstStack.length = 0
             this.ruleStack.length = 0
-            this.allowErrorStack.length = 0
+            this.allowErrorDepth = 0  // 重置深度
         } else {
-            // 失败检查（快速返回）
+            // 嵌套调用：失败检查（快速返回）
             if (this._parseFailed) {
                 return undefined
             }
@@ -529,13 +546,10 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         
         // 执行规则
         const startTokenIndex = this.tokenIndex
-        const wasFirstRule = this.isFirstRule
         const cst = this.processCst(ruleName, targetFun)
         
-        // 恢复初始化标志
-        if (wasFirstRule) {
-            this.isFirstRule = true
-        } else {
+        // 嵌套调用：存储缓存和清理
+        if (!isTopLevel) {
             // Packrat: 存储缓存
             if (this.enableMemoization) {
                 this.storeMemoized(ruleName, startTokenIndex, cst, this.tokenIndex, this._parseFailed)
@@ -809,7 +823,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             return undefined
         }
         
-        const token = this.currentToken
+        const token = this.curToken
         
         if (!token || token.tokenName !== tokenName) {
             // 失败：标记失败状态
@@ -973,13 +987,11 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * 
      * 用途：
      * - 评估缓存效率（命中率）
-     * - 监控内存使用（估算）
      * - 性能调优依据（智能建议）
      * 
      * 返回信息：
      * - 基础统计：hits、misses、命中率
      * - 缓存信息：规则数、总条目、平均条目
-     * - 内存估算：字节、KB、MB
      * - 性能建议：根据数据自动生成
      * 
      * @returns 详细的缓存统计和性能建议
@@ -993,15 +1005,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         const totalEntries = this.memoCache.getTotalEntries()
         const avgEntriesPerRule = cacheSize > 0 ? (totalEntries / cacheSize).toFixed(1) : '0'
         
-        // ✅ 内存估算
-        // 假设：每个缓存条目平均占用 150 字节
-        // - SubhutiMemoResult 结构：~50 字节
-        // - CST 引用：~100 字节（平均）
-        const estimatedBytes = totalEntries * 150
-        const estimatedKB = (estimatedBytes / 1024).toFixed(2)
-        const estimatedMB = (estimatedBytes / 1024 / 1024).toFixed(2)
-        
-        // ✅ 性能建议（智能分析）
+        // 性能建议（智能分析）
         const suggestions: string[] = []
         
         if (hitRateNum >= 70) {
@@ -1038,14 +1042,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             totalEntries,
             avgEntriesPerRule,
             
-            // ✅ 新增：内存估算
-            estimatedMemory: {
-                bytes: estimatedBytes,
-                kb: estimatedKB,
-                mb: estimatedMB
-            },
-            
-            // ✅ 新增：性能建议
+            // 性能建议
             suggestions
         }
     }
@@ -1060,25 +1057,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     
     get ruleStackNames(): string {
         return this.ruleStack.join('->')
-    }
-    
-    /**
-     * 代码生成（遍历 CST）
-     */
-    exec(cst: SubhutiCst | undefined = this.curCst, code = ''): string {
-        if (!cst) return code.trim()
-        
-        if (cst.value) {
-            code = (' ' + code + ' ' + cst.value)
-        } else {
-            if (cst.children) {
-                const childrenCode = cst.children
-                    .map(child => this.exec(child, code))
-                    .join(' ')
-                code = (code + ' ' + childrenCode)
-            }
-        }
-        return code.trim()
     }
 }
 
