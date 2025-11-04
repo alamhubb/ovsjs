@@ -175,7 +175,7 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
     @SubhutiRule
     Literal() {
         this.Or([
-            {alt: () => this.tokenConsumer.NullLiteral()},
+            {alt: () => this.tokenConsumer.NullTok()},
             {alt: () => this.tokenConsumer.TrueTok()},
             {alt: () => this.tokenConsumer.FalseTok()},
             {alt: () => this.tokenConsumer.NumericLiteral()},
@@ -257,16 +257,13 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
     @SubhutiRule
     PropertyDefinition() {
         this.Or([
-            //顺序问题MethodDefinition 需要在 IdentifierReference 之上，否则会触发IdentifierReference ，而 不执行MethodDefinition，应该执行最长匹配
-            {alt: () => this.MethodDefinition()},
-            // ES2018: 对象spread语法 {...obj}
-            {
-                alt: () => {
-                    this.tokenConsumer.Ellipsis()
-                    this.AssignmentExpression()
-                }
-            },
-            //顺序前置，优先匹配
+            // 规则顺序优化（2025-11-03）：
+            // 1. PropertyName:Value（最具体，需要冒号）- 优先级最高
+            //    - 修复：{async: 37} 被误识别为async方法的问题
+            // 2. MethodDefinition（需要在IdentifierReference之前）
+            // 3. Spread、简写属性、默认值
+            
+            // 第1优先级：属性名:值 - 最具体的规则
             {
                 alt: () => {
                     this.PropertyName()
@@ -274,11 +271,22 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
                     this.AssignmentExpression()
                 }
             },
+            // 第2优先级：方法定义（method() {}, async method() {}, *gen() {}）
+            {alt: () => this.MethodDefinition()},
+            // 第3优先级：对象spread语法 {...obj} (ES2018)
+            {
+                alt: () => {
+                    this.tokenConsumer.Ellipsis()
+                    this.AssignmentExpression()
+                }
+            },
+            // 第4优先级：简写属性 {name} → {name: name}
             {
                 alt: () => {
                     this.IdentifierReference()
                 }
             },
+            // 第5优先级：默认值 {name = defaultValue}
             {
                 alt: () => {
                     this.CoverInitializedName()
@@ -335,6 +343,8 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
             {alt: () => this.tokenConsumer.StaticTok()},
             {alt: () => this.tokenConsumer.YieldTok()},
             {alt: () => this.tokenConsumer.SuperTok()},
+            {alt: () => this.tokenConsumer.AsyncTok()},  // ES2017: async关键字可作为属性名
+            {alt: () => this.tokenConsumer.AwaitTok()},  // ES2017: await关键字可作为属性名
             {alt: () => this.tokenConsumer.GetTok()},
             {alt: () => this.tokenConsumer.SetTok()},
             {alt: () => this.tokenConsumer.TypeofTok()},
@@ -345,6 +355,7 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
             {alt: () => this.tokenConsumer.DebuggerTok()},
             {alt: () => this.tokenConsumer.TrueTok()},
             {alt: () => this.tokenConsumer.FalseTok()},
+            {alt: () => this.tokenConsumer.NullTok()},  // 修复：添加null支持
         ])
     }
 
@@ -507,7 +518,7 @@ export default class Es6Parser<T extends Es6TokenConsumer> extends SubhutiParser
             {alt: () => this.tokenConsumer.GetTok()},
             {alt: () => this.tokenConsumer.SetTok()},
             // 值字面量关键字
-            {alt: () => this.tokenConsumer.NullLiteral()},
+            {alt: () => this.tokenConsumer.NullTok()},
             {alt: () => this.tokenConsumer.TrueTok()},
             {alt: () => this.tokenConsumer.FalseTok()},
         ])

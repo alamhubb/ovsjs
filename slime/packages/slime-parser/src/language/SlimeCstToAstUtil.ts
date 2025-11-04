@@ -3179,7 +3179,7 @@ export class SlimeCstToAst {
 
   createLiteralFromToken(token: any): SlimeExpression {
     const tokenName = token.tokenName
-    if (tokenName === Es6TokenConsumer.prototype.NullLiteral.name) {
+    if (tokenName === Es6TokenConsumer.prototype.NullTok.name) {
       return SlimeAstUtil.createNullLiteralToken()
     } else if (tokenName === Es6TokenConsumer.prototype.TrueTok.name) {
       return SlimeAstUtil.createBooleanLiteral(true)
@@ -3255,7 +3255,7 @@ export class SlimeCstToAst {
       value = SlimeAstUtil.createBooleanLiteral(true)
     } else if (firstChild.name === Es6TokenConsumer.prototype.FalseTok.name) {
       value = SlimeAstUtil.createBooleanLiteral(false)
-    } else if (firstChild.name === Es6TokenConsumer.prototype.NullLiteral.name) {
+    } else if (firstChild.name === Es6TokenConsumer.prototype.NullTok.name) {
       value = SlimeAstUtil.createNullLiteralToken()
     } else {
       value = SlimeAstUtil.createStringLiteral(firstValue)

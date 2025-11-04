@@ -1,7 +1,9 @@
 /**
  * 测试规则: FunctionExpression
  * 来源: 从 Expression 拆分
- *//**
+ */
+
+/**
  * 规则测试：FunctionExpression
  * 
  * 位置：Es6Parser.ts Line 219
@@ -76,7 +78,9 @@ const result2 = (function(x) {
 
 // ✅ 测试11：函数表达式作为参数
 [1, 2, 3].map(function(x) {
-    return x * 2// ✅ 测试12：函数表达式作为对象属性
+    return x * 2
+})
+// ✅ 测试12：函数表达式作为对象属性
 const obj = {
     method: function() { return 'method' },
     action: function(a, b) { return a + b }

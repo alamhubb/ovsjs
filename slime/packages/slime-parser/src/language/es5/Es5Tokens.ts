@@ -132,7 +132,7 @@ export const es5TokensObj = {
     InTok: createKeywordToken(Es5TokensName.InTok, "in"),
     TryTok: createKeywordToken(Es5TokensName.TryTok, "try"),
     SuperTok: createKeywordToken(Es5TokensName.SuperTok, "super"),
-    NullLiteral: createKeywordToken(Es5TokensName.NullLiteral, "null"),
+    NullTok: createKeywordToken(Es5TokensName.NullLiteral, "null"),
     TrueTok: createKeywordToken(Es5TokensName.TrueTok, "true"),
     FalseTok: createKeywordToken(Es5TokensName.FalseTok, "false"),
     SetTok: createKeywordToken(Es5TokensName.SetTok, "set"),

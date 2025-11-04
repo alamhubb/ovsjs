@@ -50,7 +50,7 @@ export default class Es2020Parser<T extends Es2020TokenConsumer> extends Es6Pars
     Literal() {
         this.Or([
             {alt: () => this.tokenConsumer.BigIntLiteral()},  // 新增：必须在 NumericLiteral 之前
-            {alt: () => this.tokenConsumer.NullLiteral()},
+            {alt: () => this.tokenConsumer.NullTok()},
             {alt: () => this.tokenConsumer.TrueTok()},
             {alt: () => this.tokenConsumer.FalseTok()},
             {alt: () => this.tokenConsumer.NumericLiteral()},

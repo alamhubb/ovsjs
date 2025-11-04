@@ -151,125 +151,164 @@ function getCSTStatistics(node: any): {
 
 // 主程序
 // const code = process.argv[2]
-// MWE Step 4: 验证正确语法 - 命名导入+as重命名
-const code = `
-const obj = {
-    method: function() { return 'method' },
-    action: function(a, b) { return a + b }
-}
-`
 
-if (!code) {
-    console.log('❌ 错误：请提供要测试的代码')
-    console.log('\n用法示例：')
-    console.log('  npx tsx test-single-cst.ts "let a = 1"')
-    console.log('  npx tsx test-single-cst.ts "const [a, b] = arr"')
-    console.log('  npx tsx test-single-cst.ts "class Test { method() {} }"')
-    process.exit(1)
-}
+// MWE + 二分增量调试法 - 第4轮：验证修复 + 扩展测试
+const testCases = [
+    // 原始问题代码
+    { code: `const a = {null: 41}`, desc: '原始问题代码', fullCst: false },
+    
+    // 更多null场景
+    { code: `const obj = {null: 1, true: 2, false: 3}`, desc: '多个literal关键字属性', fullCst: false },
+    { code: `const obj = {a: 1, null: 2, b: 3}`, desc: '混合属性', fullCst: false },
+    { code: `const obj = {null: null}`, desc: 'null作为属性名和值', fullCst: false },
+    
+    // 嵌套对象
+    { code: `const obj = {null: {null: 1}}`, desc: '嵌套对象中的null属性', fullCst: false },
+]
 
-console.log('🧪 单个CST测试工具')
-console.log('='.repeat(60))
-console.log('输入代码:', code)
-console.log('='.repeat(60))
+console.log('🔍 MWE + 二分增量调试法')
+console.log('='.repeat(80))
 
-try {
-    // 词法分析（使用ES2020 tokens以支持私有属性）
-    const lexer = new SubhutiLexer(es2020Tokens)
-    const tokens = lexer.lexer(code)
+let firstFailure = -1
+
+for (let i = 0; i < testCases.length; i++) {
+    const testCase = testCases[i]
+    const code = testCase.code
     
-    const inputTokens = tokens
-        .filter((t: any) => {
-            const tokenName = t.tokenType?.name || ''
-            return tokenName !== 'SingleLineComment' &&
-                tokenName !== 'MultiLineComment' &&
-                tokenName !== 'Spacing' &&
-                tokenName !== 'LineBreak'
-        })
-        .map((t: any) => t.tokenValue)
-        .filter((v: any) => v !== undefined)
+    console.log(`\n[${i + 1}/${testCases.length}] 测试: ${testCase.desc}`)
+    console.log(`代码: ${code}`)
+    console.log('-'.repeat(80))
     
-    console.log(`✅ 词法分析: ${tokens.length} tokens (有效token: ${inputTokens.length})`)
-    
-    // 语法分析（使用 Es2020Parser）
-    const parser = new Es2020Parser(tokens)
-    const cst = parser.Program()
-    console.log(`✅ 语法分析: CST生成成功`)
-    
-    // CST结构验证
-    const structureErrors = validateCSTStructure(cst)
-    if (structureErrors.length > 0) {
-        console.log(`\n❌ CST结构错误 (${structureErrors.length}个):`)
-        structureErrors.forEach(err => {
-            console.log(`  - ${err.path}: ${err.issue}`)
-            if (err.node) {
-                console.log(`    节点信息:`, JSON.stringify(err.node, null, 2))
+    try {
+        // 词法分析
+        const lexer = new SubhutiLexer(es2020Tokens)
+        const tokens = lexer.lexer(code)
+        
+        const inputTokens = tokens
+            .filter((t: any) => {
+                const tokenName = t.tokenType?.name || ''
+                return tokenName !== 'SingleLineComment' &&
+                    tokenName !== 'MultiLineComment' &&
+                    tokenName !== 'Spacing' &&
+                    tokenName !== 'LineBreak'
+            })
+            .map((t: any) => t.tokenValue)
+            .filter((v: any) => v !== undefined)
+        
+        console.log(`  ✅ 词法分析: ${tokens.length} tokens (有效: ${inputTokens.length})`)
+        
+        // 语法分析
+        const parser = new Es2020Parser(tokens)
+        const cst = parser.Program()
+        console.log(`  ✅ 语法分析: CST生成成功`)
+        
+        // CST结构验证
+        const structureErrors = validateCSTStructure(cst)
+        if (structureErrors.length > 0) {
+            throw new Error(`CST结构验证失败: ${structureErrors.length}个错误`)
+        }
+        console.log(`  ✅ CST结构完整`)
+        
+        // Token值验证
+        const cstTokens = collectTokenValues(cst)
+        const missingTokens: string[] = []
+        
+        for (const inputToken of inputTokens) {
+            if (!cstTokens.includes(inputToken)) {
+                missingTokens.push(inputToken)
             }
-        })
-        throw new Error(`CST结构验证失败: ${structureErrors.length}个错误`)
+        }
+        
+        if (missingTokens.length > 0) {
+            throw new Error(`Token值未完整保留: ${missingTokens.join(', ')}`)
+        }
+        console.log(`  ✅ Token值完整保留`)
+        
+        console.log(`  🎉 通过！`)
+        
+        // 输出完整CST（如果指定）
+        if (testCase.fullCst) {
+            console.log('\n🌳 完整CST结构:')
+            console.log(JSON.stringify(cst, null, 2))
+        }
+        
+    } catch (error: any) {
+        console.log(`  ❌ 失败: ${error.message}`)
+        
+        if (firstFailure === -1) {
+            firstFailure = i
+            console.log(`  ⚠️  这是第一个失败的测试！`)
+            
+            // 输出详细错误信息
+            if (error.stack) {
+                console.log(`\n  详细堆栈:`)
+                const stackLines = error.stack.split('\n').slice(0, 10)
+                stackLines.forEach((line: string) => console.log(`    ${line}`))
+            }
+            
+            // 如果指定输出完整CST，即使失败也输出
+            if (testCase.fullCst) {
+                try {
+                    const lexer = new SubhutiLexer(es2020Tokens)
+                    const tokens = lexer.lexer(testCase.code)
+                    const parser = new Es2020Parser(tokens)
+                    const cst = parser.Program()
+                    
+                    console.log('\n🌳 完整CST结构（失败的测试）:')
+                    console.log(JSON.stringify(cst, null, 2))
+                } catch (e: any) {
+                    console.log('\n⚠️  无法生成CST:', e.message)
+                }
+            }
+        }
+        
+        // 如果不是最后一个测试，继续下一个
+        if (i < testCases.length - 1) {
+            continue
+        }
     }
-    console.log(`✅ CST结构: 无null/undefined节点，结构完整`)
+}
+
+// 总结报告
+console.log('\n' + '='.repeat(80))
+console.log('📊 测试总结')
+console.log('='.repeat(80))
+
+if (firstFailure === -1) {
+    console.log('✅ 所有测试都通过了！')
+} else {
+    console.log(`❌ 从第 ${firstFailure + 1} 个测试开始失败`)
+    console.log(`失败的测试: ${testCases[firstFailure].desc}`)
+    console.log(`失败的代码: ${testCases[firstFailure].code}`)
     
-    // CST统计信息
-    const stats = getCSTStatistics(cst)
-    console.log(`\n📊 CST统计:`)
-    console.log(`  - 总节点数: ${stats.totalNodes}`)
-    console.log(`  - 叶子节点: ${stats.leafNodes}`)
-    console.log(`  - 最大深度: ${stats.maxDepth}`)
-    
-    // 输出完整CST（用于调试）
-    if (process.argv.includes('--full')) {
-        console.log('\n🌳 完整CST结构:')
-        console.log(JSON.stringify(cst, null, 2))
-    }
-    
-    // Token值验证
-    const cstTokens = collectTokenValues(cst)
-    const missingTokens: string[] = []
-    
-    for (const inputToken of inputTokens) {
-        if (!cstTokens.includes(inputToken)) {
-            missingTokens.push(inputToken)
+    if (firstFailure > 0) {
+        console.log(`\n✅ 成功的测试 (1-${firstFailure}):`)
+        for (let i = 0; i < firstFailure; i++) {
+            console.log(`  ${i + 1}. ${testCases[i].desc}`)
         }
     }
     
-    if (missingTokens.length > 0) {
-        console.log(`\n❌ CST丢失了${missingTokens.length}个token值:`, missingTokens)
-        throw new Error('Token值未完整保留')
-    }
-    console.log(`✅ Token值: ${cstTokens.length}个token值完整保留`)
+    console.log(`\n🔍 问题边界已定位！`)
+    console.log(`问题出现在: ${testCases[firstFailure].desc}`)
     
-    // 节点类型统计
-    const nodeNames = collectNodeNames(cst)
-    const uniqueNodeTypes = Array.from(stats.nodeTypes.entries())
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 10)
+    // 分析问题
+    console.log('\n💡 问题分析:')
+    const failedCode = testCases[firstFailure].code
     
-    console.log(`\n📋 主要节点类型 (Top 10):`)
-    uniqueNodeTypes.forEach(([name, count]) => {
-        console.log(`  - ${name}: ${count}次`)
-    })
-    
-    // 输出完整CST（可选，默认不输出以保持简洁）
-    if (process.argv.includes('--full')) {
-        console.log('\n🌳 完整CST结构:')
-        console.log(JSON.stringify(cst, null, 2))
-    } else {
-        console.log('\n💡 提示：添加 --full 参数可查看完整CST结构')
-        console.log('   例如：npx tsx test-single-cst.ts "let a = 1" --full')
+    if (failedCode.includes('null:')) {
+        console.log('  - 问题：null 关键字不能作为对象属性名')
+        console.log('  - 原因：LiteralPropertyName 或 PropertyName 规则未支持 null')
+        console.log('  - 建议：检查 Es2020Parser 或 Es6Parser 中的 LiteralPropertyName 规则')
+        console.log('  - 规范：ES6 允许所有 IdentifierName（包括关键字）作为属性名')
+    } else if (failedCode.match(/\b(true|false|if|class|for|while|return|function)\s*:/)) {
+        console.log('  - 问题：其他关键字不能作为对象属性名')
+        console.log('  - 原因：IdentifierName 规则未包含该关键字')
     }
     
-    console.log('\n' + '='.repeat(60))
-    console.log('🎉 测试通过！')
-    
-} catch (error: any) {
-    console.log(`\n❌ 测试失败: ${error.message}`)
-    if (error.stack) {
-        console.log('\n堆栈信息:')
-        console.log(error.stack)
-    }
     process.exit(1)
 }
+
+console.log('\n💡 下一步：所有基础测试已通过，可以测试更复杂的场景')
 
 
 
