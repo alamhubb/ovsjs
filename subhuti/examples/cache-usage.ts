@@ -4,7 +4,7 @@
  * 展示统一缓存系统的使用方式
  */
 
-import SubhutiParser, { PackratCacheConfig } from "../src/SubhutiParser.ts"
+import SubhutiParser, { SubhutiPackratCacheConfig } from "../src/SubhutiParser.ts"
 import SubhutiMatchToken from "../src/struct/SubhutiMatchToken.ts"
 
 // ============================================

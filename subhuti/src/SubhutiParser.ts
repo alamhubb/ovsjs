@@ -5,7 +5,7 @@
  * - Chevrotain: 模块化架构、清晰的 API
  * - PEG.js: 极简设计、返回值语义
  * - ANTLR: 成熟的错误处理
- * - Bryan Ford (2002): Packrat Parsing 标准实现
+ * - Bryan Ford (2002): SubhutiPackratCache Parsing 标准实现
  * 
  * 核心特性：
  * - ✅ 标志驱动（性能优先，避免异常开销）
@@ -13,13 +13,13 @@
  * - ✅ 返回值语义（成功返回 CST，失败返回 undefined）
  * - ✅ 成功才添加 CST（清晰的生命周期）
  * - ✅ 紧凑 CST 结构（单数组 children，内存优化）
- * - ✅ LRU Packrat 缓存（防止内存溢出）⭐ 生产级
+ * - ✅ LRU SubhutiPackratCache 缓存（防止内存溢出）⭐ 生产级
  * - ✅ 可插拔缓存（支持自定义策略）
  * - ✅ 极简回溯（O(1) 快照索引）
  * - ✅ 类型安全（严格的 TypeScript 约束）
  * 
  * 默认配置（开箱即用）：
- * - Packrat Parsing: 启用（线性时间复杂度）
+ * - SubhutiPackratCache Parsing: 启用（线性时间复杂度）
  * - 缓存策略: LRU（最近最少使用）
  * - 缓存大小: 10000 条（99% 场景足够）
  * - 内存安全: 自动淘汰旧缓存
@@ -47,7 +47,7 @@ import type SubhutiCst from "./struct/SubhutiCst.ts";
 import type SubhutiMatchToken from "./struct/SubhutiMatchToken.ts";
 import {SubhutiErrorHandler} from "./SubhutiError.ts";
 import {type SubhutiDebugger, SubhutiTraceDebugger} from "./SubhutiDebug.ts";
-import type {PackratCacheConfig, SubhutiPackratCache, PackratCacheResult} from "./SubhutiPackratCache.ts";
+import type {SubhutiSubhutiPackratCacheConfig, SubhutiSubhutiPackratCache, SubhutiPackratCacheResult} from "./SubhutiSubhutiPackratCache.ts";
 
 // ============================================
 // [1] 类型定义（类型安全）
@@ -73,7 +73,7 @@ export interface SubhutiBackData {
     curCstChildrenLength: number          // children 数组长度
 }
 
-// PackratCacheResult 已移至 SubhutiPackratCache.ts
+// SubhutiPackratCacheResult 已移至 SubhutiSubhutiPackratCache.ts
 
 
 // ============================================
@@ -245,11 +245,11 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     }
     
     // ========================================
-    // Packrat Parsing（可插拔缓存 - 默认 LRU）⭐
+    // SubhutiPackratCache Parsing（可插拔缓存 - 默认 LRU）⭐
     // ========================================
     
     /**
-     * 是否启用 Packrat Parsing（默认启用）
+     * 是否启用 SubhutiPackratCache Parsing（默认启用）
      * 
      * 关闭场景：
      * - 调试时需要完整的规则执行轨迹
@@ -262,7 +262,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     enableMemoization: boolean = true
     
     /**
-     * Packrat Cache 实例（可插拔缓存管理器）⭐
+     * SubhutiPackratCache Cache 实例（可插拔缓存管理器）⭐
      * 
      * 职责：
      * - 管理缓存存储（LRU算法）
@@ -275,7 +275,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * - 高性能：10000 条足够大多数文件
      * - 长时间运行：内存不会无限增长
      */
-    private readonly _cache: SubhutiPackratCache
+    private readonly _cache: SubhutiSubhutiPackratCache
     
     /**
      * 性能分析器（可选）⭐
@@ -308,7 +308,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * 零配置使用（推荐 99%）：
      * ```typescript
      * new MyParser(tokens)
-     * // → Packrat 启用
+     * // → SubhutiPackratCache 启用
      * // → LRU(10000) 自动淘汰
      * // → 内存安全 + 高性能
      * ```
@@ -329,14 +329,14 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     constructor(
         tokens: SubhutiMatchToken[] = [],
         TokenConsumerClass?: SubhutiTokenConsumerConstructor<T>,
-        cacheConfig?: PackratCacheConfig
+        cacheConfig?: SubhutiSubhutiPackratCacheConfig
     ) {
         this._tokens = tokens
         this.tokenIndex = 0
         this.className = this.constructor.name
         
-        // ⭐ 初始化 Packrat Cache（默认 LRU 10000）
-        this._cache = new SubhutiPackratCache(cacheConfig)
+        // ⭐ 初始化 SubhutiPackratCache Cache（默认 LRU 10000）
+        this._cache = new SubhutiSubhutiPackratCache(cacheConfig)
         
         // 创建 TokenConsumer 实例
         if (TokenConsumerClass) {
@@ -583,13 +583,13 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     }
     
     // ========================================
-    // 规则执行入口（Packrat 集成）
+    // 规则执行入口（SubhutiPackratCache 集成）
     // ========================================
     
     /**
      * 规则执行入口（由 @SubhutiRule 装饰器调用）
      * 
-     * 标准 Packrat Parsing 实现：
+     * 标准 SubhutiPackratCache Parsing 实现：
      * 1. 查询缓存
      * 2. 缓存命中：恢复状态，返回结果
      * 3. 缓存未命中：执行规则，存储结果
@@ -1057,7 +1057,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     }
     
     // ========================================
-    // Packrat Parsing（委托给 PackratCache）⭐
+    // SubhutiPackratCache Parsing（委托给 SubhutiPackratCache）⭐
     // ========================================
     
     /**
@@ -1065,14 +1065,14 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * 
      * 关键：必须恢复 parseFailed 状态
      */
-    private applyCachedResult(cached: PackratCacheResult): SubhutiCst | undefined {
+    private applyCachedResult(cached: SubhutiPackratCacheResult): SubhutiCst | undefined {
         // 恢复 token 位置
         this.tokenIndex = cached.endTokenIndex
         
         // 恢复 parseFailed 状态（关键！）
         this._parseFailed = cached.parseFailed
         
-        // 应用 CST（委托给 PackratCache）
+        // 应用 CST（委托给 SubhutiPackratCache）
         const parentCst = this.cstStack[this.cstStack.length - 1]
         return this._cache.apply(cached, parentCst)
     }
@@ -1090,7 +1090,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     }
     
     /**
-     * 获取 Packrat Parsing 详细统计信息（委托给 PackratCache）
+     * 获取 SubhutiPackratCache Parsing 详细统计信息（委托给 SubhutiPackratCache）
      * 
      * 用途：
      * - 评估缓存效率（命中率）
@@ -1177,8 +1177,8 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
  * 
  * 示例：
  * ```typescript
- * import type { PackratCacheConfig } from './SubhutiParser.ts'
- * const config: PackratCacheConfig = { maxSize: 50000 }
+ * import type { SubhutiPackratCacheConfig } from './SubhutiParser.ts'
+ * const config: SubhutiPackratCacheConfig = { maxSize: 50000 }
  * ```
  */
 
@@ -1246,17 +1246,17 @@ export { SubhutiProfiler } from "./SubhutiProfiler.ts"
 export type { RuleStats } from "./SubhutiProfiler.ts"
 
 /**
- * 导出 Packrat Cache（缓存管理器）和相关类型（v4.2 新增）⭐⭐
+ * 导出 SubhutiPackratCache Cache（缓存管理器）和相关类型（v4.2 新增）⭐⭐
  * 
  * 用途：
- * - 管理 Packrat Parsing 缓存（LRU算法）
+ * - 管理 SubhutiPackratCache Parsing 缓存（LRU算法）
  * - 统计缓存命中率
  * - 提供性能建议
  * 
  * 使用方式：
  * ```typescript
- * import { SubhutiPackratCache } from './SubhutiParser.ts'
- * import type { PackratCacheResult, PackratStats } from './SubhutiParser.ts'
+ * import { SubhutiSubhutiPackratCache } from './SubhutiParser.ts'
+ * import type { SubhutiPackratCacheResult, SubhutiPackratCacheStats } from './SubhutiParser.ts'
  * 
  * // 默认使用（Parser 自动创建）
  * const parser = new MyParser(tokens)

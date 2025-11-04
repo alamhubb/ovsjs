@@ -1,10 +1,10 @@
 /**
- * Subhuti Packrat Cache - 高性能 Packrat Parsing 缓存系统
+ * Subhuti SubhutiPackratCache Cache - 高性能 SubhutiPackratCache Parsing 缓存系统
  * 
  * 包含：
- * - SubhutiPackratCache: 集成 LRU 缓存 + 统计 + 分析
+ * - SubhutiSubhutiPackratCache: 集成 LRU 缓存 + 统计 + 分析
  * 
- * @version 3.0.0 - 架构简化（统一命名为 PackratCache）
+ * @version 3.0.0 - 架构简化（统一命名为 SubhutiPackratCache）
  * @date 2025-11-04
  */
 
@@ -13,7 +13,7 @@ import type SubhutiCst from "./struct/SubhutiCst.ts";
 /**
  * 缓存配置
  */
-export interface PackratCacheConfig {
+export interface SubhutiSubhutiPackratCacheConfig {
     /**
      * 最大缓存条目数
      * 
@@ -34,7 +34,7 @@ export interface PackratCacheConfig {
  * 
  * 结构：
  * - key: 缓存键（ruleName:tokenIndex）
- * - value: 缓存值（PackratCacheResult）
+ * - value: 缓存值（SubhutiPackratCacheResult）
  * - prev: 前一个节点（更旧）
  * - next: 后一个节点（更新）
  * 
@@ -57,11 +57,11 @@ class LRUNode {
 }
 
 // ============================================
-// [1] SubhutiPackratCache - Packrat Parsing缓存管理器（集成LRU）
+// [1] SubhutiSubhutiPackratCache - SubhutiPackratCache Parsing缓存管理器（集成LRU）
 // ============================================
 
 /**
- * Packrat Parsing 缓存结果（完整状态）
+ * SubhutiPackratCache Parsing 缓存结果（完整状态）
  * 
  * 关键字段：
  * - success: 解析是否成功
@@ -69,7 +69,7 @@ class LRUNode {
  * - cst: 成功时的 CST 节点
  * - parseFailed: parseFailed 状态（必须缓存）
  */
-export interface PackratCacheResult {
+export interface SubhutiPackratCacheResult {
     success: boolean                      // 解析是否成功
     endTokenIndex: number                 // 解析结束位置
     cst?: SubhutiCst                      // 成功时的 CST 节点
@@ -77,18 +77,18 @@ export interface PackratCacheResult {
 }
 
 /**
- * Packrat 缓存统计信息
+ * SubhutiPackratCache 缓存统计信息
  */
-export interface PackratStats {
+export interface SubhutiPackratCacheStats {
     hits: number        // 缓存命中次数
     misses: number      // 缓存未命中次数
     stores: number      // 缓存存储次数
 }
 
 /**
- * Packrat 缓存统计报告（详细版）
+ * SubhutiPackratCache 缓存统计报告（详细版）
  */
-export interface PackratStatsReport {
+export interface SubhutiPackratCacheStatsReport {
     // 基础统计
     hits: number
     misses: number
@@ -106,7 +106,7 @@ export interface PackratStatsReport {
 }
 
 /**
- * Subhuti Packrat Cache - 集成 LRU 缓存 + 统计的 Packrat Parsing 管理器 ⭐⭐⭐
+ * Subhuti SubhutiPackratCache Cache - 集成 LRU 缓存 + 统计的 SubhutiPackratCache Parsing 管理器 ⭐⭐⭐
  * 
  * 职责：
  * - LRU 缓存实现（高性能双向链表）
@@ -142,7 +142,7 @@ export interface PackratStatsReport {
  * - set: O(1) 常数时间
  * - 统计集成：零额外开销
  */
-export class SubhutiPackratCache {
+export class SubhutiSubhutiPackratCache {
     // ========================================
     // LRU 缓存实现
     // ========================================
@@ -193,7 +193,7 @@ export class SubhutiPackratCache {
     /**
      * 缓存统计信息
      */
-    private stats: PackratStats = {
+    private stats: SubhutiPackratCacheStats = {
         hits: 0,
         misses: 0,
         stores: 0
@@ -204,23 +204,23 @@ export class SubhutiPackratCache {
     // ========================================
     
     /**
-     * 构造 Packrat Cache
+     * 构造 SubhutiPackratCache Cache
      * 
      * @param config 缓存配置（可选）
      * 
      * 配置方式：
      * ```typescript
      * // 默认（推荐 99%）
-     * new SubhutiPackratCache()  → LRU(10000)
+     * new SubhutiSubhutiPackratCache()  → LRU(10000)
      * 
      * // 大文件
-     * new SubhutiPackratCache({ maxSize: 50000 })  → LRU(50000)
+     * new SubhutiSubhutiPackratCache({ maxSize: 50000 })  → LRU(50000)
      * 
      * // 无限缓存（小文件 + 内存充足）
-     * new SubhutiPackratCache({ maxSize: Infinity })  → Unlimited
+     * new SubhutiSubhutiPackratCache({ maxSize: Infinity })  → Unlimited
      * ```
      */
-    constructor(config?: PackratCacheConfig) {
+    constructor(config?: SubhutiSubhutiPackratCacheConfig) {
         this.maxSize = config?.maxSize ?? 10000  // 默认 10000
     }
     
@@ -240,7 +240,7 @@ export class SubhutiPackratCache {
      * @param tokenIndex Token 位置
      * @returns 缓存结果，未命中返回 undefined
      */
-    get(ruleName: string, tokenIndex: number): PackratCacheResult | undefined {
+    get(ruleName: string, tokenIndex: number): SubhutiPackratCacheResult | undefined {
         const key = `${ruleName}:${tokenIndex}`
         const node = this.cache.get(key)
         
@@ -272,7 +272,7 @@ export class SubhutiPackratCache {
      * @param tokenIndex Token 位置
      * @param result 缓存结果
      */
-    set(ruleName: string, tokenIndex: number, result: PackratCacheResult): void {
+    set(ruleName: string, tokenIndex: number, result: SubhutiPackratCacheResult): void {
         const key = `${ruleName}:${tokenIndex}`
         const existingNode = this.cache.get(key)
         
@@ -341,7 +341,7 @@ export class SubhutiPackratCache {
      * @param parentCst 父 CST 节点
      * @returns CST 节点或 undefined
      */
-    apply(cached: PackratCacheResult, parentCst?: SubhutiCst): SubhutiCst | undefined {
+    apply(cached: SubhutiPackratCacheResult, parentCst?: SubhutiCst): SubhutiCst | undefined {
         if (cached.success && cached.cst && parentCst) {
             parentCst.children.push(cached.cst)
             return cached.cst
@@ -357,7 +357,7 @@ export class SubhutiPackratCache {
     /**
      * 获取简单统计信息
      */
-    getStats(): PackratStats {
+    getStats(): SubhutiPackratCacheStats {
         return { ...this.stats }
     }
     
@@ -369,7 +369,7 @@ export class SubhutiPackratCache {
      * - 缓存信息：规则数、总条目、平均条目
      * - 性能建议：根据数据自动生成
      */
-    getStatsReport(): PackratStatsReport {
+    getStatsReport(): SubhutiPackratCacheStatsReport {
         const total = this.stats.hits + this.stats.misses
         const hitRate = total > 0 ? (this.stats.hits / total * 100).toFixed(1) : '0.0'
         const hitRateNum = parseFloat(hitRate)
