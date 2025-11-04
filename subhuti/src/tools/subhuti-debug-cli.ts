@@ -24,7 +24,7 @@ import { ErrorFormatter } from "../error/ErrorFormatter.ts"
 // 导入实际的 Parser（这里需要根据项目调整）
 import Es2020Parser from "../../../slime/packages/slime-parser/src/language/es2020/Es2020Parser.ts"
 import { es2020Tokens } from "../../../slime/packages/slime-parser/src/language/es2020/Es2020Tokens.ts"
-import SubhutiLexer from "../parser/SubhutiLexer.ts"
+import SubhutiLexer from "../SubhutiLexer.ts"
 
 /**
  * 命令行参数

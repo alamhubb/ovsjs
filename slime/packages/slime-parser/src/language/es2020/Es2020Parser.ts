@@ -1,7 +1,7 @@
 import Es6Parser from "../es2015/Es6Parser.ts"
 import Es2020TokenConsumer from "./Es2020Tokens.ts"
 import SubhutiMatchToken from "subhuti/src/struct/SubhutiMatchToken.ts"
-import {Subhuti, SubhutiRule, type SubhutiTokenConsumerConstructor} from "subhuti/src/parser/SubhutiParser.ts"
+import {Subhuti, SubhutiRule, type SubhutiTokenConsumerConstructor} from "subhuti/src/SubhutiParser.ts"
 
 /**
  * ES2020 (ES11) Parser

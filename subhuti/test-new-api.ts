@@ -8,10 +8,10 @@
  * - errorHandler() - 错误处理
  */
 
-import SubhutiLexer from './src/parser/SubhutiLexer.ts'
+import SubhutiLexer from './src/SubhutiLexer.ts'
 import { createKeywordToken, createRegToken, createValueRegToken } from './src/struct/SubhutiCreateToken.ts'
-import SubhutiParser, { Subhuti, SubhutiRule } from './src/parser/SubhutiParser.ts'
-import SubhutiTokenConsumer from './src/parser/SubhutiTokenConsumer.ts'
+import SubhutiParser, { Subhuti, SubhutiRule } from './src/SubhutiParser.ts'
+import SubhutiTokenConsumer from './src/SubhutiTokenConsumer.ts'
 
 // ============================================
 // 1. 定义 Tokens

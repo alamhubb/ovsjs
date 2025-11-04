@@ -4,7 +4,7 @@
  * 展示如何使用增强的 getMemoStats() 进行性能分析和调优
  */
 
-import SubhutiParser from "../src/parser/SubhutiParser.ts"
+import SubhutiParser from "../src/SubhutiParser.ts"
 import SubhutiMatchToken from "../src/struct/SubhutiMatchToken.ts"
 
 // ============================================

@@ -53,7 +53,7 @@ import Es6TokenConsumer from "./es2015/Es6Tokens.ts";
 import SlimeAstUtil from "slime-ast/src/SlimeAst.ts";
 import {SlimeAstType} from "slime-ast/src/SlimeAstType.ts";
 import type {SubhutiHighlithSourceLocation} from "slime-ast/src/fsadfasast.ts";
-import {SubhutiRule} from "subhuti/src/parser/SubhutiParser.ts";
+import {SubhutiRule} from "subhuti/src/SubhutiParser.ts";
 
 
 export function checkCstName(cst: SubhutiCst, cstName: string) {

@@ -7,11 +7,11 @@
  * 3. 这是导致 Slime Parser 失败的根本原因
  */
 
-import SubhutiLexer from "../src/parser/SubhutiLexer"
-import SubhutiParser, { Subhuti, SubhutiRule } from "../src/parser/SubhutiParser"
-import SubhutiTokenConsumer from "../src/parser/SubhutiTokenConsumer"
+import SubhutiLexer from "../src/SubhutiLexer.ts"
+import SubhutiParser, { Subhuti, SubhutiRule } from "../src/SubhutiParser.ts"
+import SubhutiTokenConsumer from "../src/SubhutiTokenConsumer.ts"
 import { createKeywordToken, createRegToken, createValueRegToken, SubhutiCreateTokenGroupType } from "../src/struct/SubhutiCreateToken"
-import type { SubhutiTokenConsumerConstructor } from "../src/parser/SubhutiParser"
+import type { SubhutiTokenConsumerConstructor } from "../src/SubhutiParser.ts"
 import SubhutiMatchToken from "../src/struct/SubhutiMatchToken"
 
 // ============================================

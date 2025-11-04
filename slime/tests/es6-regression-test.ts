@@ -2,7 +2,7 @@
  * Es6Parser 回归测试 - 验证 Packrat Parsing 没有破坏 Es6Parser
  */
 import Es6Parser from '../packages/slime-parser/src/language/es2015/Es6Parser.ts'
-import SubhutiLexer from '../../subhuti/src/parser/SubhutiLexer.ts'
+import SubhutiLexer from 'subhuti/src/SubhutiLexer.ts'
 import { es6Tokens } from '../packages/slime-parser/src/language/es2015/Es6Tokens.ts'
 
 function test(name: string, code: string): boolean {

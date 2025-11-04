@@ -1,4 +1,4 @@
-import SubhutiLexer from "subhuti/src/parser/SubhutiLexer";
+import SubhutiLexer from "subhuti/src/SubhutiLexer";
 import JsonUtil from "subhuti/src/utils/JsonUtil";
 import {traverseClearLoc, traverseClearTokens} from "../utils/parserTestUtils";
 import {LogUtil} from "../../src/logutil";

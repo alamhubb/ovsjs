@@ -1,6 +1,6 @@
 import {ovsTransform, vitePluginOvsTransform} from "ovsjs/src";
 import OvsTokenConsumer, {ovs6Tokens} from "ovsjs/src/parser/OvsConsumer.ts";
-import SubhutiLexer from "subhuti/src/parser/SubhutiLexer.ts";
+import SubhutiLexer from "subhuti/src/SubhutiLexer.ts";
 import OvsParser from "ovsjs/src/parser/OvsParser.ts";
 import {LogUtil} from "./logutil.ts";
 

@@ -9,7 +9,7 @@
 
 import Es2020Parser from "../slime/packages/slime-parser/src/language/es2020/Es2020Parser.ts"
 import { es2020Tokens } from "../slime/packages/slime-parser/src/language/es2020/Es2020Tokens.ts"
-import SubhutiLexer from "./src/parser/SubhutiLexer.ts"
+import SubhutiLexer from "./src/SubhutiLexer.ts"
 import { SubhutiVisualizer } from "./src/debugger/SubhutiVisualizer.ts"
 
 // 解析命令行参数

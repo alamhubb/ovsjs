@@ -1,5 +1,5 @@
 import { readFileSync } from 'fs'
-import SubhutiLexer from './src/parser/SubhutiLexer.ts'
+import SubhutiLexer from './src/SubhutiLexer.ts'
 import MinimalParser from './tests/fixtures/MinimalParser.ts'
 import { minimalTokens } from './tests/fixtures/MinimalTokens.ts'
 

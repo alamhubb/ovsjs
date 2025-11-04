@@ -2,9 +2,9 @@
  * 快速测试新的 SubhutiParser
  */
 
-import SubhutiParser, { Subhuti, SubhutiRule } from '../src/parser/SubhutiParser.ts'
-import SubhutiLexer from '../src/parser/SubhutiLexer.ts'
-import SubhutiTokenConsumer from '../src/parser/SubhutiTokenConsumer.ts'
+import SubhutiParser, { Subhuti, SubhutiRule } from '../src/SubhutiParser.ts'
+import SubhutiLexer from '../src/SubhutiLexer.ts'
+import SubhutiTokenConsumer from '../src/SubhutiTokenConsumer.ts'
 import { createKeywordToken, createRegToken } from '../src/struct/SubhutiCreateToken.ts'
 
 // 定义简单的 Token

@@ -1,6 +1,6 @@
 import Es6TokenConsumer from "./Es6Tokens.ts"
 import SubhutiMatchToken from "subhuti/src/struct/SubhutiMatchToken.ts"
-import SubhutiParser, {Subhuti, SubhutiRule, type SubhutiTokenConsumerConstructor} from "subhuti/src/parser/SubhutiParser.ts"
+import SubhutiParser, {Subhuti, SubhutiRule, type SubhutiTokenConsumerConstructor} from "subhuti/src/SubhutiParser.ts"
 import {Es5TokensName} from "../es5/Es5Tokens.ts";
 
 @Subhuti

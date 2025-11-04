@@ -1,5 +1,5 @@
 import {Es5TokensName, es5TokensObj} from "./Es5Tokens.ts";
-import SubhutiTokenConsumer from "subhuti/src/parser/SubhutiTokenConsumer.ts";
+import SubhutiTokenConsumer from "subhuti/src/SubhutiTokenConsumer.ts";
 
 //想让他单例，那他就不能有属性。不能有状态。，有状态对象做不了多例
 export default class Es5TokenConsumer extends SubhutiTokenConsumer {

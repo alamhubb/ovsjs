@@ -7,7 +7,7 @@
  */
 import Es6Parser from './packages/slime-parser/src/language/es2015/Es6Parser.ts'
 import {es6Tokens} from './packages/slime-parser/src/language/es2015/Es6Tokens.ts'
-import SubhutiLexer from '../subhuti/src/parser/SubhutiLexer.ts'
+import SubhutiLexer from 'subhuti/src/SubhutiLexer.ts'
 import Es2020Parser from "./packages/slime-parser/src/language/es2020/Es2020Parser.ts"
 import {es2020Tokens} from "./packages/slime-parser/src/language/es2020/Es2020Tokens.ts"
 

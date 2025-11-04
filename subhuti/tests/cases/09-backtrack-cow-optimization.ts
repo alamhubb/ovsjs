@@ -8,10 +8,10 @@
  * 4. 不影响父/子规则的 CST
  */
 
-import SubhutiParser, { Subhuti, SubhutiRule } from "../../src/parser/SubhutiParser.ts"
-import SubhutiLexer from "../../src/parser/SubhutiLexer.ts"
+import SubhutiParser, { Subhuti, SubhutiRule } from "../../src/SubhutiParser.ts"
+import SubhutiLexer from "../../src/SubhutiLexer.ts"
 import {createKeywordToken, createRegToken} from "../../src/struct/SubhutiCreateToken.ts"
-import SubhutiTokenConsumer from "../../src/parser/SubhutiTokenConsumer.ts"
+import SubhutiTokenConsumer from "../../src/SubhutiTokenConsumer.ts"
 
 // ============================================
 // 简单语法：a | b | c

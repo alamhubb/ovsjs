@@ -22,7 +22,7 @@ import {
   SemanticTokenTypes,
   TextDocumentIdentifier
 } from 'vscode-languageserver'
-import SubhutiLexer from 'subhuti/src/parser/SubhutiLexer.ts'
+import SubhutiLexer from 'subhuti/src/SubhutiLexer.ts'
 import {es6Tokens, es6TokensObj} from 'subhuti-ts/src/language/es2015/Es6Tokens.ts'
 import JsonUtil from 'subhuti/src/utils/JsonUtil.ts'
 import {TokenProvider, tokenTypesObj} from "./IntellijTokenUtil.ts";

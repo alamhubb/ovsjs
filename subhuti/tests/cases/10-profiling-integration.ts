@@ -8,10 +8,10 @@
  * 4. 观测层不影响解析结果
  */
 
-import SubhutiParser, { Subhuti, SubhutiRule } from "../../src/parser/SubhutiParser.ts"
-import SubhutiLexer from "../../src/parser/SubhutiLexer.ts"
+import SubhutiParser, { Subhuti, SubhutiRule } from "../../src/SubhutiParser.ts"
+import SubhutiLexer from "../../src/SubhutiLexer.ts"
 import {createKeywordToken, createRegToken} from "../../src/struct/SubhutiCreateToken.ts"
-import SubhutiTokenConsumer from "../../src/parser/SubhutiTokenConsumer.ts"
+import SubhutiTokenConsumer from "../../src/SubhutiTokenConsumer.ts"
 
 // ============================================
 // 简单语法：if (x) { y }
