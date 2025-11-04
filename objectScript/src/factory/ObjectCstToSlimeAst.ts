@@ -1,5 +1,5 @@
 import {SlimeCstToAst} from "slime-parser/src/language/SlimeCstToAstUtil.ts";
-import SubhutiCst from "subhuti/src/struct/SubhutiCst.ts.";
+import SubhutiCst from "subhuti/src/struct/SubhutiCst.ts";
 import {
   type SlimeClassDeclaration,
   type SlimeClassBody,

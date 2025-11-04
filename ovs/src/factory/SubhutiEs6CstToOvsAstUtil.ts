@@ -1,4 +1,4 @@
-import type SubhutiCst from "subhuti/src/struct/SubhutiCst.ts.";
+import type SubhutiCst from "subhuti/src/struct/SubhutiCst.ts";
 import type {
     OvsAstAssignmentExpression,
     OvsAstAssignmentOperator,
