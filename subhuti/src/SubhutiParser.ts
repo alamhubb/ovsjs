@@ -43,7 +43,7 @@
 
 import SubhutiTokenConsumer from "./SubhutiTokenConsumer.ts"
 import { SubhutiProfiler } from "./SubhutiProfiler.ts"
-import type SubhutiCst from "./struct/SubhutiCst.ts";
+import SubhutiCst from "./struct/SubhutiCst.ts";
 import type SubhutiMatchToken from "./struct/SubhutiMatchToken.ts";
 import {SubhutiErrorHandler} from "./SubhutiError.ts";
 import {type SubhutiDebugger, SubhutiTraceDebugger} from "./SubhutiDebug.ts";
@@ -776,6 +776,9 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             const alt = alternatives[i]
             const isLast = i === totalCount - 1
             
+            // ⭐ 调试：记录 Or 分支尝试
+            this._debugger?.onOrBranch?.(i, totalCount, this.tokenIndex)
+            
             // ⭐ 核心：最后一个分支不允许错误
             if (isLast) {
                 this.setAllowError(false)
@@ -794,11 +797,11 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             // ❌ 失败：回溯到 Or 进入时的状态
             if (!isLast) {
                 // 非最后分支：回溯 + 重置状态，继续尝试
-                this.restoreState(savedState)
+                this.restoreState(savedState, 'Or branch failed')
                 this.resetFailure()  // 重置失败状态
             } else {
                 // 最后分支：回溯，保持失败状态
-                this.restoreState(savedState)
+                this.restoreState(savedState, 'Or all branches failed')
             }
         }
         
@@ -835,7 +838,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             // ⭐ 修复：只根据 _parseFailed 判断，不依赖返回值
             if (this._parseFailed) {
                 // 失败：回溯，退出循环
-                this.restoreState(savedState)
+                this.restoreState(savedState, 'Many iteration failed')
                 this.resetFailure()  // Many 总是成功
                 break
             }
@@ -868,7 +871,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         // ⭐ 修复：只根据 _parseFailed 判断，不依赖返回值
         if (this._parseFailed) {
             // 失败：回溯，重置状态
-            this.restoreState(savedState)
+            this.restoreState(savedState, 'Option failed')
             this.resetFailure()  // Option 总是成功
         }
         
@@ -909,7 +912,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             // ⭐ 修复：只根据 _parseFailed 判断，不依赖返回值
             if (this._parseFailed) {
                 // 失败：回溯，退出循环
-                this.restoreState(savedState)
+                this.restoreState(savedState, 'AtLeastOne iteration failed')
                 this.resetFailure()  // 至少成功1次，整体成功
                 break
             }
@@ -1047,7 +1050,15 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         }
     }
     
-    private restoreState(backData: SubhutiBackData): void {
+    private restoreState(backData: SubhutiBackData, reason: string = 'backtrack'): void {
+        const fromIndex = this.tokenIndex
+        const toIndex = backData.tokenIndex
+        
+        // ⭐ 调试：记录回溯
+        if (fromIndex !== toIndex) {
+            this._debugger?.onBacktrack?.(fromIndex, toIndex, reason)
+        }
+        
         this.tokenIndex = backData.tokenIndex
         const currentCst = this.curCst
         if (currentCst) {
