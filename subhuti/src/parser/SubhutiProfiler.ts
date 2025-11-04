@@ -8,8 +8,7 @@
  * 
  * 使用方式：
  * ```typescript
- * const parser = new MyParser(tokens)
- * parser.enableProfiling()
+ * const parser = new MyParser(tokens).profiling()
  * 
  * const cst = parser.Program()
  * 

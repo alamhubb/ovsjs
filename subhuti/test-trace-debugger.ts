@@ -101,8 +101,8 @@ console.log()
 const parser = new ImportParser(tokenStream).debug()  // 使用默认调试器
 const cst = parser.ImportDeclaration()
 
-// 输出调试轨迹
-console.log(parser.debuggerInstance!.getTrace())
+// 输出调试轨迹（使用便捷方法）
+console.log(parser.getDebugTrace())
 
 console.log()
 console.log('✅ Test completed')

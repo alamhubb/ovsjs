@@ -49,6 +49,7 @@ import type { PackratCacheConfig } from "./PackratCache.ts"
 import { SubhutiProfiler } from "./SubhutiProfiler.ts"
 import type { SubhutiDebugger } from "../debugger/SubhutiDebugger.ts"
 import { SubhutiTraceDebugger } from "../debugger/SubhutiTraceDebugger.ts"
+import { SubhutiErrorHandler, ParsingError } from "./SubhutiErrorHandler.ts"
 
 // ============================================
 // [1] 类型定义（类型安全）
@@ -84,256 +85,6 @@ export interface SubhutiMemoResult {
     parseFailed: boolean                  // parseFailed 状态（必须缓存）
 }
 
-/**
- * 解析错误类（Rust 风格格式化）
- * 
- * 设计理念：
- * - 清晰的视觉层次
- * - 关键信息突出显示
- * - 便于快速定位问题
- * 
- * 参考：Rust compiler error messages
- */
-export class ParsingError extends Error {
-    readonly expected: string
-    readonly found?: SubhutiMatchToken
-    readonly position: {
-        readonly index: number
-        readonly line: number
-        readonly column: number
-    }
-    readonly ruleStack: readonly string[]
-    
-    /**
-     * ⭐ 智能修复建议（新增）
-     * 
-     * 根据错误上下文自动生成的修复建议
-     * - 基于期望/实际token
-     * - 基于规则栈
-     * - 基于常见错误模式
-     */
-    readonly suggestions: readonly string[]
-    
-    constructor(message: string, details: {
-        expected: string
-        found?: SubhutiMatchToken
-        position: { index: number, line: number, column: number }
-        ruleStack: string[]
-    }) {
-        super(message)
-        this.name = 'ParsingError'
-        this.expected = details.expected
-        this.found = details.found
-        this.position = details.position
-        this.ruleStack = Object.freeze([...details.ruleStack])
-        
-        // ⭐ 自动生成智能建议
-        this.suggestions = Object.freeze(this.generateSuggestions())
-    }
-    
-    /**
-     * 智能修复建议生成器 ⭐⭐⭐
-     * 
-     * 根据以下信息生成建议：
-     * 1. expected vs found（期望vs实际）
-     * 2. ruleStack（解析上下文）
-     * 3. 常见错误模式
-     * 
-     * 设计理念：
-     * - 优先最可能的原因
-     * - 提供具体的修复方法
-     * - 最多3-5条建议（避免信息过载）
-     */
-    private generateSuggestions(): string[] {
-        const suggestions: string[] = []
-        const { expected, found, ruleStack } = this
-        
-        // ========================================
-        // 规则1：闭合符号缺失
-        // ========================================
-        if (expected === 'RBrace') {
-            if (found?.tokenName === 'Semicolon') {
-                suggestions.push('💡 可能缺少闭合花括号 }')
-                suggestions.push('   → 检查是否有未闭合的代码块或对象字面量')
-            } else {
-                suggestions.push('💡 可能缺少 }')
-                suggestions.push('   → 检查对应的 { 位置')
-            }
-        }
-        
-        if (expected === 'RParen') {
-            suggestions.push('💡 可能缺少闭合括号 )')
-            suggestions.push('   → 检查函数调用或表达式的括号是否匹配')
-        }
-        
-        if (expected === 'RBracket') {
-            suggestions.push('💡 可能缺少闭合方括号 ]')
-            suggestions.push('   → 检查数组字面量或下标访问的括号')
-        }
-        
-        // ========================================
-        // 规则2：分号问题
-        // ========================================
-        if (expected === 'Semicolon') {
-            suggestions.push('💡 可能缺少分号 ;')
-            suggestions.push('   → 或者上一行语句未正确结束')
-        }
-        
-        if (found?.tokenName === 'Semicolon' && expected !== 'Semicolon') {
-            suggestions.push('💡 意外的分号')
-            suggestions.push('   → 检查是否多余，或上一行语法错误')
-        }
-        
-        // ========================================
-        // 规则3：关键字拼写错误
-        // ========================================
-        if (expected.endsWith('Tok') && found?.tokenName === 'Identifier') {
-            const keyword = expected.replace('Tok', '').toLowerCase()
-            const foundValue = found.tokenValue
-            suggestions.push(`💡 期望关键字 "${keyword}"，但发现标识符 "${foundValue}"`)
-            suggestions.push(`   → 检查是否拼写错误或使用了保留字`)
-        }
-        
-        // ========================================
-        // 规则4：根据规则栈推断上下文
-        // ========================================
-        const lastRule = ruleStack[ruleStack.length - 1]
-        
-        if (lastRule === 'ImportDeclaration' || ruleStack.includes('ImportDeclaration')) {
-            suggestions.push('💡 Import语句语法：')
-            suggestions.push('   → import { name } from "module"')
-            suggestions.push('   → import name from "module"')
-            suggestions.push('   → import * as name from "module"')
-        }
-        
-        if (lastRule === 'FunctionDeclaration' || ruleStack.includes('FunctionDeclaration')) {
-            suggestions.push('💡 函数声明语法：')
-            suggestions.push('   → function name(params) { body }')
-        }
-        
-        if (lastRule === 'ArrowFunction' || ruleStack.includes('ArrowFunction')) {
-            suggestions.push('💡 箭头函数语法：')
-            suggestions.push('   → (params) => expression')
-            suggestions.push('   → (params) => { statements }')
-        }
-        
-        // ========================================
-        // 规则5：对象/数组字面量
-        // ========================================
-        if (expected === 'Colon' && ruleStack.some(r => r.includes('Object') || r.includes('Property'))) {
-            suggestions.push('💡 对象属性语法：{ key: value }')
-            suggestions.push('   → 检查属性名和值之间是否缺少冒号')
-        }
-        
-        if (expected === 'Comma' && ruleStack.some(r => r.includes('Array') || r.includes('Object'))) {
-            suggestions.push('💡 多个元素/属性之间需要逗号分隔')
-            suggestions.push('   → 或者可能是多余的逗号（尾随逗号）')
-        }
-        
-        // ========================================
-        // 规则6：常见语法错误
-        // ========================================
-        if (expected === 'Identifier' && found?.tokenName === 'Number') {
-            suggestions.push('💡 期望标识符，但发现数字')
-            suggestions.push('   → 变量名不能以数字开头')
-        }
-        
-        if (expected === 'Identifier' && found?.tokenName?.endsWith('Tok')) {
-            const keyword = found.tokenName.replace('Tok', '').toLowerCase()
-            suggestions.push(`💡 "${keyword}" 是保留关键字，不能用作标识符`)
-        }
-        
-        // ========================================
-        // 规则7：EOF（文件结束）
-        // ========================================
-        if (!found || found.tokenName === 'EOF') {
-            suggestions.push('💡 代码意外结束')
-            suggestions.push('   → 检查是否有未闭合的括号、花括号或引号')
-            suggestions.push('   → 文件可能被意外截断')
-        }
-        
-        // 限制建议数量（避免信息过载）
-        return suggestions.slice(0, 5)
-    }
-    
-    /**
-     * 格式化错误信息（Rust 风格 + 智能建议）⭐
-     * 
-     * 格式：
-     * ```
-     * ❌ Parsing Error
-     * 
-     *   --> line 23, column 15
-     * 
-     * Expected: RBrace
-     * Found:    Semicolon
-     * 
-     * Rule stack:
-     *   ... (5 more)
-     *   ├─> Statement
-     *   ├─> BlockStatement
-     *   └─> Block
-     * 
-     * Suggestions:
-     *   💡 可能缺少闭合花括号 }
-     *      → 检查是否有未闭合的代码块或对象字面量
-     *   💡 检查对应的 { 位置
-     * ```
-     */
-    toString(): string {
-        const lines: string[] = []
-        
-        // 标题
-        lines.push('❌ Parsing Error')
-        lines.push('')
-        
-        // 位置信息
-        lines.push(`  --> line ${this.position.line}, column ${this.position.column}`)
-        lines.push('')
-        
-        // 期望和实际
-        lines.push(`Expected: ${this.expected}`)
-        lines.push(`Found:    ${this.found?.tokenName || 'EOF'}`)
-        
-        // 规则栈（简化显示）
-        if (this.ruleStack.length > 0) {
-            lines.push('')
-            lines.push('Rule stack:')
-            
-            const maxDisplay = 5  // 最多显示 5 个规则
-            const visible = this.ruleStack.slice(-maxDisplay)
-            const hidden = this.ruleStack.length - visible.length
-            
-            if (hidden > 0) {
-                lines.push(`  ... (${hidden} more)`)
-            }
-            
-            visible.forEach((rule, i) => {
-                const isLast = i === visible.length - 1
-                const prefix = isLast ? '└─>' : '├─>'
-                lines.push(`  ${prefix} ${rule}`)
-            })
-        }
-        
-        // ⭐ 智能修复建议（新增）
-        if (this.suggestions.length > 0) {
-            lines.push('')
-            lines.push('Suggestions:')
-            this.suggestions.forEach(suggestion => {
-                lines.push(`  ${suggestion}`)
-            })
-        }
-        
-        return lines.join('\n')
-    }
-    
-    /**
-     * 简洁格式（用于日志）
-     */
-    toShortString(): string {
-        return `Parsing Error at line ${this.position.line}:${this.position.column}: Expected ${this.expected}, found ${this.found?.tokenName || 'EOF'}`
-    }
-}
 
 // ============================================
 // [2] 装饰器系统
@@ -421,6 +172,18 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * 注意：使用 _debugger 而不是 debugger（后者是保留字）
      */
     private _debugger?: SubhutiDebugger
+    
+    /**
+     * 错误处理器（⭐ 新增）
+     * 
+     * 用途：
+     * - 创建详细或简单的错误信息
+     * - 生成智能修复建议
+     * - 支持开关控制（详细/简单模式）
+     * 
+     * 默认：详细模式（Rust风格 + 智能建议）
+     */
+    private readonly _errorHandler = new SubhutiErrorHandler()
     
     // ========================================
     // allowError 机制（⭐ 核心创新 - 智能错误管理）
@@ -719,33 +482,114 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         this.clearMemoCache()
     }
     
+    // ========================================
+    // 功能开关方法（链式调用）⭐
+    // ========================================
+    
     /**
-     * 开启调试模式（链式调用）⭐
+     * 开启/关闭缓存
      * 
      * 使用示例：
      * ```typescript
-     * // 使用默认调试器
-     * const parser = new Es2020Parser(tokens).debug()
-     * const cst = parser.Program()
-     * console.log(parser.debugger.getTrace())
-     * 
-     * // 使用自定义调试器
-     * const customDebugger = new MyDebugger()
-     * const parser = new Es2020Parser(tokens).debug(customDebugger)
+     * parser.cache()       // 开启缓存（默认）
+     * parser.cache(false)  // 关闭缓存
      * ```
      * 
-     * @param debuggerInstance - 调试器实例（可选），默认使用 SubhutiTraceDebugger
+     * @param enable - 是否启用缓存（默认true）
      * @returns this（链式调用）
      */
-    debug(debuggerInstance?: SubhutiDebugger): this {
-        this._debugger = debuggerInstance || new SubhutiTraceDebugger()
+    cache(enable: boolean = true): this {
+        this.enableMemoization = enable
         return this
     }
     
     /**
-     * 获取调试器实例
+     * 开启/关闭调试模式
      * 
-     * 用于获取调试轨迹等信息
+     * 使用示例：
+     * ```typescript
+     * parser.debug()       // 开启调试（默认）
+     * parser.debug(false)  // 关闭调试
+     * ```
+     * 
+     * @param enable - 是否启用调试（默认true）
+     * @returns this（链式调用）
+     */
+    debug(enable: boolean = true): this {
+        if (enable) {
+            this._debugger = new SubhutiTraceDebugger()
+        } else {
+            this._debugger = undefined
+        }
+        return this
+    }
+    
+    /**
+     * 开启/关闭性能分析
+     * 
+     * 使用示例：
+     * ```typescript
+     * parser.profiling()       // 开启性能分析（默认）
+     * parser.profiling(false)  // 关闭性能分析
+     * ```
+     * 
+     * @param enable - 是否启用性能分析（默认true）
+     * @returns this（链式调用）
+     */
+    profiling(enable: boolean = true): this {
+        if (enable) {
+            if (!this.profiler) {
+                this.profiler = new SubhutiProfiler()
+            }
+            this.profiler.start()
+        } else {
+            this.profiler?.stop()
+        }
+        return this
+    }
+    
+    /**
+     * 开启/关闭详细错误信息
+     * 
+     * 开启：Rust风格格式 + 智能修复建议（适合开发）
+     * 关闭：简单错误信息（适合生产环境）
+     * 
+     * 使用示例：
+     * ```typescript
+     * parser.errorHandler()       // 开启详细错误（默认）
+     * parser.errorHandler(false)  // 使用简单错误
+     * ```
+     * 
+     * @param enable - 是否启用详细错误（默认true）
+     * @returns this（链式调用）
+     */
+    errorHandler(enable: boolean = true): this {
+        this._errorHandler.setDetailed(enable)
+        return this
+    }
+    
+    // ========================================
+    // 便捷获取方法
+    // ========================================
+    
+    /**
+     * 获取调试轨迹（便捷方法）
+     * 
+     * 使用示例：
+     * ```typescript
+     * const parser = new MyParser(tokens).debug()
+     * const cst = parser.Program()
+     * console.log(parser.getDebugTrace())
+     * ```
+     * 
+     * @returns 调试轨迹字符串，如果未启用调试则返回undefined
+     */
+    getDebugTrace(): string | undefined {
+        return this._debugger?.getTrace?.()
+    }
+    
+    /**
+     * 获取调试器实例（向后兼容）
      */
     get debuggerInstance(): SubhutiDebugger | undefined {
         return this._debugger
@@ -1103,24 +947,21 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
                 return undefined
             }
             
-            // 不允许失败：抛出详细错误
-            throw new ParsingError(
-                `Expected ${tokenName}`,
-                {
-                    expected: tokenName,
-                    found: token,
-                    position: token ? {
-                        index: token.index || 0,
-                        line: token.rowNum || 0,
-                        column: token.columnStartNum || 0
-                    } : {
-                        index: this._tokens[this._tokens.length - 1]?.index || 0,
-                        line: this._tokens[this._tokens.length - 1]?.rowNum || 0,
-                        column: this._tokens[this._tokens.length - 1]?.columnEndNum || 0
-                    },
-                    ruleStack: [...this.ruleStack]
-                }
-            )
+            // 不允许失败：抛出详细错误（使用错误处理器）
+            throw this._errorHandler.createError({
+                expected: tokenName,
+                found: token,
+                position: token ? {
+                    index: token.index || 0,
+                    line: token.rowNum || 0,
+                    column: token.columnStartNum || 0
+                } : {
+                    index: this._tokens[this._tokens.length - 1]?.index || 0,
+                    line: this._tokens[this._tokens.length - 1]?.rowNum || 0,
+                    column: this._tokens[this._tokens.length - 1]?.columnEndNum || 0
+                },
+                ruleStack: [...this.ruleStack]
+            })
         }
         
         // ✅ 成功：消费 token（不需要设置标志！）
@@ -1339,34 +1180,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     // 性能分析 API（⭐ 新增）
     // ========================================
     
-    /**
-     * 启用性能分析
-     * 
-     * 调用后，Parser会记录每个规则的执行时间
-     * 
-     * 使用示例：
-     * ```typescript
-     * const parser = new MyParser(tokens)
-     * parser.enableProfiling()  // ← 启用分析
-     * 
-     * const cst = parser.Program()
-     * 
-     * console.log(parser.getProfilingReport())  // 查看报告
-     * ```
-     */
-    enableProfiling(): void {
-        if (!this.profiler) {
-            this.profiler = new SubhutiProfiler()
-        }
-        this.profiler.start()
-    }
-    
-    /**
-     * 停止性能分析
-     */
-    stopProfiling(): void {
-        this.profiler?.stop()
-    }
     
     /**
      * 获取性能分析报告（详细版）
@@ -1380,7 +1193,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      */
     getProfilingReport(): string {
         if (!this.profiler) {
-            return '⚠️  性能分析未启用\n   → 请先调用 enableProfiling()'
+            return '⚠️  性能分析未启用\n   → 请先调用 profiling()'
         }
         
         return this.profiler.getReport()
@@ -1445,3 +1258,25 @@ export type { PackratCacheConfig } from "./PackratCache.ts"
  */
 export type { SubhutiDebugger } from "../debugger/SubhutiDebugger.ts"
 export { SubhutiTraceDebugger } from "../debugger/SubhutiTraceDebugger.ts"
+
+/**
+ * 导出错误处理器和错误类
+ * 
+ * 使用方式：
+ * ```typescript
+ * import { SubhutiErrorHandler, ParsingError } from './SubhutiParser.ts'
+ * 
+ * // 创建错误处理器
+ * const errorHandler = new SubhutiErrorHandler()
+ * 
+ * // 捕获解析错误
+ * try {
+ *   parser.Program()
+ * } catch (e) {
+ *   if (e instanceof ParsingError) {
+ *     console.log(e.toString())  // 详细错误
+ *   }
+ * }
+ * ```
+ */
+export { SubhutiErrorHandler, ParsingError } from "./SubhutiErrorHandler.ts"
