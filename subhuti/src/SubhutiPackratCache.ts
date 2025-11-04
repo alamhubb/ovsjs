@@ -58,39 +58,14 @@ export interface SubhutiPackratCacheResult {
 }
 
 /**
- * SubhutiPackratCache 基础统计数据（字段定义）
+ * SubhutiPackratCache 基础统计字段
  * 
- * 包含三个核心统计字段，被以下类型复用：
- * - SubhutiPackratCacheStats: 内部存储类
- * - SubhutiPackratCacheStatsReport: 对外报告接口
+ * 用于 SubhutiPackratCacheStatsReport 接口的字段定义
  */
 interface SubhutiPackratCacheStatsBase {
     hits: number       // 缓存命中次数
     misses: number     // 缓存未命中次数
     stores: number     // 缓存存储次数
-}
-
-/**
- * SubhutiPackratCache 内部统计存储（仅内部使用）
- * 
- * 职责：
- * - 存储原始统计数据（实现 SubhutiPackratCacheStatsBase）
- * - 提供 reset() 方法用于清空
- * 
- * 注意：
- * - 这是内部类，不对外暴露
- * - 对外请使用 getStatsReport() 获取完整分析
- */
-class SubhutiPackratCacheStats implements SubhutiPackratCacheStatsBase {
-    hits: number = 0
-    misses: number = 0
-    stores: number = 0
-
-    reset(): void {
-        this.hits = 0
-        this.misses = 0
-        this.stores = 0
-    }
 }
 
 /**
@@ -211,9 +186,15 @@ export class SubhutiPackratCache {
     // ========================================
 
     /**
-     * 缓存统计信息
+     * 缓存统计信息（内部存储）
+     * 
+     * 简单对象存储三个计数器，无需额外封装
      */
-    private stats: SubhutiPackratCacheStats = new SubhutiPackratCacheStats()
+    private stats = {
+        hits: 0,
+        misses: 0,
+        stores: 0
+    }
 
     // ========================================
     // 构造函数
@@ -343,8 +324,10 @@ export class SubhutiPackratCache {
         this.tail = null
         this.currentSize = 0
 
-        // 保持对象引用，只修改属性
-        this.stats.reset()
+        // 重置统计
+        this.stats.hits = 0
+        this.stats.misses = 0
+        this.stats.stores = 0
     }
 
     /**
