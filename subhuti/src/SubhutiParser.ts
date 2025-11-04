@@ -7,8 +7,14 @@
  * - 返回值语义（成功返回 CST，失败返回 undefined）
  * - 类型安全（严格的 TypeScript 约束）
  * 
- * @version 4.1.0
- * @date 2025-11-03
+ * @version 4.2.0
+ * @date 2025-11-04
+ * 
+ * v4.2.0 更新（架构优化）：
+ * - 删除 _executeRule 过度抽象层（YAGNI原则）
+ * - 缓存逻辑内联到 subhutiRule（简单优于复杂）
+ * - 重命名 processCst → executeRuleCore（准确语义）
+ * - 优化架构：3层 → 2层（编排层 + 执行层）
  */
 
 import SubhutiTokenConsumer from "./SubhutiTokenConsumer.ts"
@@ -534,7 +540,14 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     /**
      * 规则执行入口（由 @SubhutiRule 装饰器调用）
      * 
-     * 标准 SubhutiPackratCache Parsing 实现：
+     * 职责（编排层）：
+     * - 前置检查（类检查 + 初始化 + 快速失败）
+     * - Packrat Parsing 缓存（查询 + 存储）
+     * - 核心执行（调用 executeRuleCore）
+     * - 后置处理（清理 + 调试输出）
+     * - 调试通知（进入/退出规则）
+     * 
+     * 标准 SubhutiPackratCache Parsing 流程：
      * 1. 查询缓存
      * 2. 缓存命中：恢复状态，返回结果
      * 3. 缓存未命中：执行规则，存储结果
@@ -546,13 +559,39 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             return undefined
         }
         
-        // 2. 观测入口
+        // 2. 调试入口
         const observeContext = this._debugger?.onRuleEnter(ruleName, this.tokenIndex)
         
-        // 3. 执行规则（缓存 + 核心执行 + 存储）
-        const cst = this._executeRule(ruleName, targetFun, isTopLevel, observeContext)
+        // 3. Packrat Parsing 缓存查询
+        if (!isTopLevel && this.enableMemoization) {
+            const cached = this._cache.get(ruleName, this.tokenIndex)
+            if (cached !== undefined) {
+                // 缓存命中：恢复状态 + 调试通知
+                this._debugger?.onRuleExit(ruleName, cached.endTokenIndex, true, observeContext)
+                const result = this.applyCachedResult(cached)
+                // 清理 CST
+                if (result && !result.children?.length) {
+                    result.children = undefined
+                }
+                return result
+            }
+        }
         
-        // 4. 后置处理（清理 + 调试输出）
+        // 4. 核心执行
+        const startTokenIndex = this.tokenIndex
+        const cst = this.executeRuleCore(ruleName, targetFun)
+        
+        // 5. Packrat Parsing 缓存存储
+        if (!isTopLevel && this.enableMemoization) {
+            this._cache.set(ruleName, startTokenIndex, {
+                success: cst !== undefined,
+                endTokenIndex: this.tokenIndex,
+                cst: cst,
+                parseSuccess: this._parseSuccess
+            })
+        }
+        
+        // 6. 后置处理（清理 + 调试输出）
         this._postProcessRule(ruleName, cst, isTopLevel, observeContext)
         
         return cst
@@ -588,47 +627,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     }
     
     /**
-     * 执行规则（私有方法）
-     * 
-     * 职责：
-     * 1. 缓存检查
-     * 2. 核心执行
-     * 3. 缓存存储
-     */
-    private _executeRule(
-        ruleName: string, 
-        targetFun: Function, 
-        isTopLevel: boolean,
-        observeContext: any
-    ): SubhutiCst | undefined {
-        // 缓存检查
-        if (!isTopLevel && this.enableMemoization) {
-            const cached = this._cache.get(ruleName, this.tokenIndex)
-            if (cached !== undefined) {
-                // 缓存命中：通知观测层
-                this._debugger?.onRuleExit(ruleName, cached.endTokenIndex, true, observeContext)
-                return this.applyCachedResult(cached)
-            }
-        }
-        
-        // 核心执行
-        const startTokenIndex = this.tokenIndex
-        const cst = this.processCst(ruleName, targetFun)
-        
-        // 缓存存储
-        if (!isTopLevel && this.enableMemoization) {
-            this._cache.set(ruleName, startTokenIndex, {
-                success: cst !== undefined,
-                endTokenIndex: this.tokenIndex,
-                cst: cst,
-                parseSuccess: this._parseSuccess
-            })
-        }
-        
-        return cst
-    }
-    
-    /**
      * 后置处理（私有方法）
      * 
      * 职责：
@@ -655,18 +653,32 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     }
     
     // ========================================
-    // CST 构建（成功才添加）
+    // 核心执行层（CST 构建 + 规则执行）
     // ========================================
     
     /**
-     * 处理 CST 节点
+     * 执行规则函数核心逻辑（执行层）
+     * 
+     * 职责：
+     * - 创建 CST 节点
+     * - 管理上下文栈（cstStack/ruleStack）
+     * - 执行规则函数（targetFun.apply - 核心职责）
+     * - 判断成功/失败
+     * - 添加到父节点
+     * - 设置位置信息
+     * 
+     * 命名理由：
+     * - executeRuleCore：强调"核心执行逻辑"
+     * - 与 subhutiRule（编排层）形成清晰对比
+     * - processCst 过于模糊，暗示"处理CST"而非"执行规则"
      * 
      * 设计理念：成功才添加（Chevrotain 风格）
      * - 执行前：创建 CST，push 到栈
      * - 执行中：规则函数修改状态
      * - 执行后：成功才添加到父节点
      */
-    private processCst(ruleName: string, targetFun: Function): SubhutiCst | undefined {
+    private executeRuleCore(ruleName: string, targetFun: Function): SubhutiCst | undefined {
+        // 创建 CST 节点
         const cst = new SubhutiCst()
         cst.name = ruleName
         cst.children = []
@@ -675,14 +687,14 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         this.cstStack.push(cst)
         this.ruleStack.push(ruleName)
         
-        // 执行规则函数
+        // ⭐ 核心：执行规则函数
         targetFun.apply(this)
         
         // 退出上下文
         this.cstStack.pop()
         this.ruleStack.pop()
         
-        // 判断成功/失败（负逻辑）
+        // 判断成功/失败
         if (this._parseSuccess) {
             // ✅ 成功：添加到父节点
             const parentCst = this.cstStack[this.cstStack.length - 1]
