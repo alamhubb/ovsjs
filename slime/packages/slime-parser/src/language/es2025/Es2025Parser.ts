@@ -11,10 +11,11 @@
  * @version 1.0.0
  */
 
-import SubhutiParser, { Subhuti, SubhutiRule } from 'subhuti/src/parser/SubhutiParser.ts'
 import SubhutiCst from 'subhuti/src/struct/SubhutiCst.ts'
 import SubhutiMatchToken from 'subhuti/src/struct/SubhutiMatchToken.ts'
 import Es2025TokenConsumer from './Es2025Tokens.ts'
+import SubhutiParser, { Subhuti, SubhutiRule } from "subhuti/src/SubhutiParser.ts"
+
 
 /**
  * 参数化规则的参数类型
