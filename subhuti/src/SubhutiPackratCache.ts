@@ -62,7 +62,7 @@ export interface SubhutiPackratCacheResult {
  * 
  * 用于 SubhutiPackratCacheStatsReport 接口的字段定义
  */
-interface SubhutiPackratCacheStatsBase {
+interface SubhutiPackratCacheStats {
     hits: number       // 缓存命中次数
     misses: number     // 缓存未命中次数
     stores: number     // 缓存存储次数
@@ -73,7 +73,7 @@ interface SubhutiPackratCacheStatsBase {
  * 
  * 通过 getStatsReport() 获取，包含完整的缓存分析数据：
  * 
- * 基础统计（继承自 SubhutiPackratCacheStatsBase）：
+ * 基础统计（继承自 SubhutiPackratCacheStats）：
  * - hits: 缓存命中次数
  * - misses: 缓存未命中次数
  * - stores: 缓存存储次数
@@ -90,7 +90,7 @@ interface SubhutiPackratCacheStatsBase {
  * 性能建议：
  * - suggestions: 根据统计数据自动生成的优化建议
  */
-export interface SubhutiPackratCacheStatsReport extends SubhutiPackratCacheStatsBase {
+export interface SubhutiPackratCacheStatsReport extends SubhutiPackratCacheStats {
     // 计算字段
     total: number
     hitRate: string
