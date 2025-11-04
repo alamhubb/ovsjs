@@ -38,7 +38,7 @@ true && true && true
 false && (1 / 0)
 
 // ✅ 测试7：对象真值
-{} && true
+    ({} && true)
 
 // ✅ 测试8：null/undefined
 null && true
@@ -106,7 +106,6 @@ true && true && true
 false && (1 / 0)
 
 // ✅ 测试7：对象真值
-{} && true
 
 // ✅ 测试8：null/undefined
 null && true
