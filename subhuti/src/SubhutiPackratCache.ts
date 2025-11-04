@@ -264,40 +264,31 @@ export class SubhutiPackratCache {
      */
     set(ruleName: string, tokenIndex: number, result: SubhutiPackratCacheResult): void {
         const key = `${ruleName}:${tokenIndex}`
-        this.stats.stores++  // 👈 统计：存储次数
+        this.stats.stores++
 
-        // ⭐ 无限缓存模式（maxSize=0）：只用 Map，不维护链表
-        if (this.maxSize === 0) {
-            const existingNode = this.cache.get(key)
-            if (existingNode) {
-                existingNode.value = result
-            } else {
-                const newNode = new LRUNode(key, result)
-                this.cache.set(key, newNode)
-                this.currentSize++
+        const existingNode = this.cache.get(key)
+
+        if (existingNode) {
+            // ✅ 统一处理：更新值
+            existingNode.value = result
+            // LRU模式：额外移到头部
+            if (this.maxSize > 0) {
+                this.moveToHead(existingNode)
             }
             return
         }
 
-        // ⭐ LRU 模式（maxSize>0）：维护链表
-        const existingNode = this.cache.get(key)
-
-        if (existingNode) {
-            // 已存在：更新值并移到头部
-            existingNode.value = result
-            this.moveToHead(existingNode)
-            return
-        }
-
-        // 新节点：创建并添加到链表头部
+        // ✅ 统一处理：创建新节点
         const newNode = new LRUNode(key, result)
         this.cache.set(key, newNode)
-        this.addToHead(newNode)
         this.currentSize++
 
-        // 超过容量：删除尾节点 - O(1)
-        if (this.currentSize > this.maxSize) {
-            this.removeTail()
+        // LRU模式：维护链表和容量
+        if (this.maxSize > 0) {
+            this.addToHead(newNode)
+            if (this.currentSize > this.maxSize) {
+                this.removeTail()
+            }
         }
     }
 
