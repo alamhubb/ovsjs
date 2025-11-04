@@ -1,7 +1,9 @@
 /**
  * 测试规则: ImportDeclaration
  * 来源: 从 Declaration 拆分
- *//**
+ */
+
+/**
  * 规则测试：ImportDeclaration
  * 
  * 位置：Es6Parser.ts（import语句）
@@ -61,7 +63,6 @@ import { oldName as newName } from './module'
 import { a as A, b as B, c as C2 } from './renamed'
 
 // ✅ 测试13：import default with重命名
-import DefaultExport as MyDefault from './module'
 
 // ✅ 测试14：import 文件without扩展名
 import { getConfig } from './config'
@@ -73,7 +74,6 @@ import { getData } from './data.js'
 import config from './config.json'
 
 // ✅ 测试17：import 复杂组合
-import DefaultThing, { named1, named2 as n2, ...namespace } from './complex'
 
 // ✅ 测试18：import 多行
 import {
