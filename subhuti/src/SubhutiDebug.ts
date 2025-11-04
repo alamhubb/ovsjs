@@ -108,24 +108,32 @@ export interface SubhutiDebugger {
 // ============================================
 
 /**
- * Subhuti 轨迹调试器（v3.0 增强版）
+ * Subhuti 轨迹调试器（v3.1 实时输出版）
  * 
  * 整合功能：
- * - 过程追踪（Debug）
+ * - 过程追踪（Debug）- **实时输出**
  * - 性能统计（Profiler）
+ * 
+ * 输出模式：**实时输出**
+ * - 规则进入/退出时立即输出到控制台
+ * - Token 消费时立即输出
+ * - Or 分支/回溯时立即输出
+ * - 解析完成后输出性能摘要
  * 
  * 输出示例：
  * 
- * 1. 过程追踪：
+ * 1. 过程追踪（实时输出）：
  * ```
- * ➡️  ImportDeclaration    ⚡CACHED  (1ms)
+ * ➡️  ImportDeclaration  @token[0]
  *   🔹 Consume  token[0] - import - <ImportTok>  ✅
- *   ➡️  ImportClause  (0ms)
+ *   ➡️  ImportClause  @token[1]
  *     🔀 Or[2 branches]  trying #0  @token[1]
  *     ⏪ Backtrack  token[5] → token[2]
+ *   ⬅️  ImportClause (0.12ms)
+ * ⬅️  ImportDeclaration ⚡CACHED (1.23ms)
  * ```
  * 
- * 2. 性能摘要：
+ * 2. 性能摘要（解析完成后输出）：
  * ```
  * ⏱️  性能摘要
  * ────────────────────────────────────────
@@ -143,9 +151,8 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
     // ========================================
     // 过程追踪数据
     // ========================================
-    private output: string[] = []
     private depth = 0
-    private lineMap = new Map<string, number>()  // 规则名 -> 输出行号
+    private ruleStack: Array<{ruleName: string, startTime: number}> = []
     
     // ========================================
     // 性能统计数据
@@ -157,13 +164,16 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
     // ========================================
     
     onRuleEnter(ruleName: string, tokenIndex: number): number {
-        // 1. 过程追踪：记录规则进入
-        const line = `${'  '.repeat(this.depth)}➡️  ${ruleName}`
-        this.output.push(line)
-        this.lineMap.set(ruleName, this.output.length - 1)
+        // 1. 过程追踪：立即输出规则进入
+        const indent = '  '.repeat(this.depth)
+        console.log(`${indent}➡️  ${ruleName}  @token[${tokenIndex}]`)
+        
+        // 2. 记录规则栈（用于 onRuleExit 时匹配）
+        const startTime = performance.now()
+        this.ruleStack.push({ruleName, startTime})
         this.depth++
         
-        // 2. 性能统计：初始化统计数据
+        // 3. 性能统计：初始化统计数据
         let stat = this.stats.get(ruleName)
         if (!stat) {
             stat = {
@@ -180,7 +190,7 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
         stat.totalCalls++
         
         // 返回开始时间（用于计算耗时）
-        return performance.now()
+        return startTime
     }
     
     onRuleExit(
@@ -197,16 +207,16 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
             duration = performance.now() - context
         }
         
-        // 1. 过程追踪：更新输出行
-        const lineIndex = this.lineMap.get(ruleName)
-        if (lineIndex !== undefined) {
-            const cacheTag = cacheHit ? '  ⚡CACHED' : ''
-            const timeTag = `  (${duration.toFixed(0)}ms)`
-            this.output[lineIndex] += cacheTag + timeTag
-            this.lineMap.delete(ruleName)
-        }
+        // 1. 过程追踪：立即输出规则退出
+        const indent = '  '.repeat(this.depth)
+        const cacheTag = cacheHit ? ' ⚡CACHED' : ''
+        const timeTag = duration > 0 ? ` (${duration.toFixed(2)}ms)` : ''
+        console.log(`${indent}⬅️  ${ruleName}${cacheTag}${timeTag}`)
         
-        // 2. 性能统计：更新统计数据
+        // 2. 弹出规则栈
+        this.ruleStack.pop()
+        
+        // 3. 性能统计：更新统计数据
         const stat = this.stats.get(ruleName)
         if (stat) {
             stat.totalTime += duration
@@ -235,7 +245,7 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
         const status = success ? '✅' : '❌'
         const value = tokenValue.length > 20 ? tokenValue.slice(0, 20) + '...' : tokenValue
         
-        this.output.push(
+        console.log(
             `${indent}🔹 Consume  token[${tokenIndex}] - ${value} - <${tokenName}>  ${status}`
         )
     }
@@ -246,7 +256,7 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
         tokenIndex: number
     ): void {
         const indent = '  '.repeat(this.depth)
-        this.output.push(
+        console.log(
             `${indent}🔀 Or[${totalBranches} branches]  trying #${branchIndex}  @token[${tokenIndex}]`
         )
     }
@@ -257,7 +267,7 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
         reason: string
     ): void {
         const indent = '  '.repeat(this.depth)
-        this.output.push(
+        console.log(
             `${indent}⏪ Backtrack  token[${fromTokenIndex}] → token[${toTokenIndex}]  (${reason})`
         )
     }
@@ -267,10 +277,10 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
     // ========================================
     
     /**
-     * 获取执行轨迹（过程追踪）
+     * 获取执行轨迹（实时输出模式下无需此方法）
      */
     getTrace(): string {
-        return this.output.join('\n')
+        return '（实时输出模式：规则执行过程已直接输出到控制台）'
     }
     
     // ========================================
@@ -378,9 +388,8 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
      */
     clear(): void {
         // 清空过程追踪
-        this.output = []
         this.depth = 0
-        this.lineMap.clear()
+        this.ruleStack = []
         
         // 清空性能统计
         this.stats.clear()
@@ -393,24 +402,14 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
     /**
      * 自动输出调试报告
      * 
-     * 输出内容：
-     * 1. 性能摘要
-     * 2. 规则执行追踪
+     * 实时输出模式下：
+     * - 规则执行过程已在执行时输出
+     * - 此处仅输出性能摘要
      */
     autoOutput(): void {
-        const lines: string[] = []
-        
-        // 1. 性能摘要
-        lines.push(this.getSummary())
-        lines.push('')  // 空行分隔
-        
-        // 2. 规则执行追踪
-        lines.push('📋 规则执行追踪')
-        lines.push('─'.repeat(40))
-        lines.push(this.getTrace())
-        
-        // 输出到控制台
-        console.log('\n' + lines.join('\n'))
+        console.log('\n' + '='.repeat(50))
+        console.log(this.getSummary())
+        console.log('='.repeat(50))
     }
 }
 
