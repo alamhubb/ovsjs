@@ -47,6 +47,8 @@ import SubhutiTokenConsumer from "./SubhutiTokenConsumer.ts"
 import { PackratCache } from "./PackratCache.ts"
 import type { PackratCacheConfig } from "./PackratCache.ts"
 import { SubhutiProfiler } from "./SubhutiProfiler.ts"
+import type { SubhutiDebugger } from "../debugger/SubhutiDebugger.ts"
+import { SubhutiTraceDebugger } from "../debugger/SubhutiTraceDebugger.ts"
 
 // ============================================
 // [1] 类型定义（类型安全）
@@ -399,39 +401,26 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     private readonly className: string
     
     // ========================================
-    // 调试支持（极简方案）⭐
+    // 调试支持（接口化设计）⭐
     // ========================================
     
     /**
-     * 调试模式标志
+     * 调试器接口（可选）
+     * 
+     * 用途：
+     * - 记录规则执行轨迹
+     * - 记录 Token 消费过程
+     * - 零开销（不使用时只有一次属性检查）
+     * 
+     * 使用方式：
+     * ```typescript
+     * const parser = new MyParser(tokens).debug()  // 使用默认调试器
+     * const parser = new MyParser(tokens).debug(customDebugger)  // 自定义
+     * ```
+     * 
+     * 注意：使用 _debugger 而不是 debugger（后者是保留字）
      */
-    private _debugMode: boolean = false
-    
-    /**
-     * 调试数据（简单对象）
-     */
-    private debugData = {
-        ruleExecutions: [] as Array<{
-            type: 'enter' | 'exit'
-            ruleName: string
-            tokenIndex: number
-            timestamp: number
-            success?: boolean
-        }>,
-        orBranches: [] as Array<{
-            ruleName: string
-            totalBranches: number
-            successBranch?: number
-            tokenIndex: number
-        }>,
-        tokenConsumes: [] as Array<{
-            tokenName: string
-            tokenIndex: number
-            success: boolean
-        }>,
-        startTime: 0,
-        endTime: 0
-    }
+    private _debugger?: SubhutiDebugger
     
     // ========================================
     // allowError 机制（⭐ 核心创新 - 智能错误管理）
@@ -735,27 +724,31 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * 
      * 使用示例：
      * ```typescript
+     * // 使用默认调试器
      * const parser = new Es2020Parser(tokens).debug()
      * const cst = parser.Program()
-     * const data = parser.getDebugData()
-     * console.log(data)
+     * console.log(parser.debugger.getTrace())
+     * 
+     * // 使用自定义调试器
+     * const customDebugger = new MyDebugger()
+     * const parser = new Es2020Parser(tokens).debug(customDebugger)
      * ```
+     * 
+     * @param debuggerInstance - 调试器实例（可选），默认使用 SubhutiTraceDebugger
+     * @returns this（链式调用）
      */
-    debug(): this {
-        this._debugMode = true
-        this.debugData.startTime = performance.now()
+    debug(debuggerInstance?: SubhutiDebugger): this {
+        this._debugger = debuggerInstance || new SubhutiTraceDebugger()
         return this
     }
     
     /**
-     * 获取调试数据
+     * 获取调试器实例
      * 
-     * @returns 调试数据对象，如果未开启调试则返回 null
+     * 用于获取调试轨迹等信息
      */
-    getDebugData() {
-        if (!this._debugMode) return null
-        this.debugData.endTime = performance.now()
-        return this.debugData
+    get debuggerInstance(): SubhutiDebugger | undefined {
+        return this._debugger
     }
     
     // ========================================
@@ -808,27 +801,9 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         const startTokenIndex = this.tokenIndex
         
         // ⭐ 调试：记录规则进入
-        if (this._debugMode) {
-            this.debugData.ruleExecutions.push({
-                type: 'enter',
-                ruleName,
-                tokenIndex: this.tokenIndex,
-                timestamp: performance.now()
-            })
-        }
+        this._debugger?.onRuleEnter(ruleName)
         
         const cst = this.processCst(ruleName, targetFun)
-        
-        // ⭐ 调试：记录规则退出
-        if (this._debugMode) {
-            this.debugData.ruleExecutions.push({
-                type: 'exit',
-                ruleName,
-                tokenIndex: this.tokenIndex,
-                timestamp: performance.now(),
-                success: cst !== undefined
-            })
-        }
         
         // 嵌套调用：存储缓存和清理
         if (!isTopLevel) {
@@ -930,17 +905,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         const savedState = this.saveState()
         const totalCount = alternatives.length
         
-        // ⭐ 调试：记录 Or 进入
-        const currentRule = this.ruleStack[this.ruleStack.length - 1] || 'unknown'
-        if (this._debugMode) {
-            this.debugData.orBranches.push({
-                ruleName: currentRule,
-                totalBranches: totalCount,
-                successBranch: undefined,
-                tokenIndex: this.tokenIndex
-            })
-        }
-        
         for (let i = 0; i < totalCount; i++) {
             const alt = alternatives[i]
             const isLast = i === totalCount - 1
@@ -957,12 +921,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             if (!this._parseFailed) {
                 // ✅ 成功：退出 allowError 上下文，返回当前CST
                 this.allowErrorStackPopAndReset()
-                
-                // ⭐ 调试：记录成功分支
-                if (this._debugMode && this.debugData.orBranches.length > 0) {
-                    this.debugData.orBranches[this.debugData.orBranches.length - 1].successBranch = i
-                }
-                
                 return this.curCst
             }
             
@@ -1132,13 +1090,12 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             this.markFailure()
             
             // ⭐ 调试：记录消费失败
-            if (this._debugMode) {
-                this.debugData.tokenConsumes.push({
-                    tokenName,
-                    tokenIndex: this.tokenIndex,
-                    success: false
-                })
-            }
+            this._debugger?.onTokenConsume(
+                this.tokenIndex,
+                token?.tokenValue || 'EOF',
+                token?.tokenName || 'EOF',
+                false
+            )
             
             // ⭐ 核心：根据 allowError 决定行为
             if (this.outerHasAllowError || this.allowError) {
@@ -1168,13 +1125,12 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         
         // ✅ 成功：消费 token（不需要设置标志！）
         // ⭐ 调试：记录消费成功
-        if (this._debugMode) {
-            this.debugData.tokenConsumes.push({
-                tokenName,
-                tokenIndex: this.tokenIndex,
-                success: true
-            })
-        }
+        this._debugger?.onTokenConsume(
+            this.tokenIndex,
+            token.tokenValue,
+            token.tokenName,
+            true
+        )
         
         this.tokenIndex++
         return this.generateCstByToken(token)
@@ -1454,7 +1410,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 }
 
 // ============================================
-// [4] 导出配置类型（供高级用户使用）
+// [4] 导出类型和类（供用户使用）
 // ============================================
 
 /**
@@ -1470,3 +1426,22 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
  * ```
  */
 export type { PackratCacheConfig } from "./PackratCache.ts"
+
+/**
+ * 导出调试器接口和默认实现
+ * 
+ * 使用方式：
+ * ```typescript
+ * import { SubhutiTraceDebugger } from './SubhutiParser.ts'
+ * import type { SubhutiDebugger } from './SubhutiParser.ts'
+ * 
+ * // 使用默认调试器
+ * const parser = new MyParser(tokens).debug()
+ * 
+ * // 自定义调试器
+ * class MyDebugger implements SubhutiDebugger { ... }
+ * const parser = new MyParser(tokens).debug(new MyDebugger())
+ * ```
+ */
+export type { SubhutiDebugger } from "../debugger/SubhutiDebugger.ts"
+export { SubhutiTraceDebugger } from "../debugger/SubhutiTraceDebugger.ts"
