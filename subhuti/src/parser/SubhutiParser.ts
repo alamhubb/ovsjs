@@ -947,7 +947,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * - ✅ 性能优秀（Or 内部不抛异常）
      * - ✅ 错误详细（最后分支抛异常）
      * 
-     * 参考：旧版 OldSubhutiParser1.ts 的精妙设计
+     * 参考：旧版 copyolddata.ts 的精妙设计
      */
     consumeToken(tokenName: string): SubhutiCst | undefined {
         if (this._parseFailed) {
