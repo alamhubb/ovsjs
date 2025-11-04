@@ -1002,19 +1002,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         
         return undefined
     }
-    
-    
-    // ========================================
-    // 辅助方法
-    // ========================================
-    
-    get tokensName(): string {
-        return this._tokens.map(item => item.tokenName).join('->')
-    }
-    
-    get ruleStackNames(): string {
-        return this.ruleStack.join('->')
-    }
 }
 
 // ============================================
