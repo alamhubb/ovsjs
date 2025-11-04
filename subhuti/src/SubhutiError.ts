@@ -15,6 +15,8 @@
 // [1] SubhutiErrorHandler + ParsingError - 核心错误处理
 // ============================================
 
+import type SubhutiMatchToken from "./struct/SubhutiMatchToken.ts";
+
 /**
  * 错误详情
  */

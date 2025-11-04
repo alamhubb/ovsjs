@@ -46,7 +46,7 @@ import { SubhutiProfiler } from "./SubhutiProfiler.ts"
 import type SubhutiCst from "./struct/SubhutiCst.ts";
 import type SubhutiMatchToken from "./struct/SubhutiMatchToken.ts";
 import {SubhutiErrorHandler} from "./SubhutiError.ts";
-import type {SubhutiDebugger} from "./SubhutiDebug.ts";
+import {type SubhutiDebugger, SubhutiTraceDebugger} from "./SubhutiDebug.ts";
 import type {PackratCacheConfig, SubhutiMemoizer, SubhutiMemoResult} from "./SubhutiPackratCache.ts";
 
 // ============================================
