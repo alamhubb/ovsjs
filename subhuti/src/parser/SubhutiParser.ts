@@ -608,58 +608,96 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * 3. 缓存未命中：执行规则，存储结果
      */
     subhutiRule(targetFun: Function, ruleName: string, className: string): SubhutiCst | undefined {
-        // 确定是本类的方法
+        // ============================================
+        // Layer 0: 类检查（编译期优化）
+        // ============================================
         if (this.hasOwnProperty(ruleName)) {
             if (className !== this.className) {
                 return undefined
             }
         }
         
-        // 判断是否顶层调用（在 processCst 之前判断）
+        // 判断是否顶层调用
         const isTopLevel = this.isTopLevelCall
         
-        // 顶层调用：初始化
+        // ============================================
+        // Layer 1: 初始化/快速失败
+        // ============================================
         if (isTopLevel) {
-            this.resetFailure()  // 重置为成功状态
+            // 顶层调用：初始化所有状态
+            this.resetFailure()
             this.cstStack.length = 0
             this.ruleStack.length = 0
-            this.allowErrorDepth = 0  // 重置深度
+            this.allowErrorDepth = 0
         } else {
-            // 嵌套调用：失败检查（快速返回）
+            // 嵌套调用：失败快速返回
             if (this._parseFailed) {
-                return undefined
-            }
-            
-            // Packrat: 查询缓存
-            if (this.enableMemoization) {
-                const cached = this.getMemoized(ruleName, this.tokenIndex)
-                if (cached !== undefined) {
-                    this.memoStats.hits++
-                    return this.applyMemoizedResult(cached)
-                }
-                this.memoStats.misses++
+                return undefined  // 🚀 最快路径
             }
         }
         
-        // 执行规则
+        // ============================================
+        // Layer 2: 观测层入口（轻量级，缓存前）⭐
+        // ============================================
+        // 
+        // 设计理念：先记录"规则被调用"，再判断是否需要执行
+        // 
+        // 优势：
+        // - 调试轨迹完整（包含缓存命中）
+        // - 性能分析准确（区分总调用/实际执行）
+        // - 开销极小（可选链 + 未启用时立即返回 undefined）
+        //
+        const observeContext = this._debugger?.onRuleEnter(ruleName, this.tokenIndex)
+        const perfContext = this.profiler?.startRule(ruleName)
+        
+        // ============================================
+        // Layer 3: 缓存层（性能优化）
+        // ============================================
+        if (!isTopLevel && this.enableMemoization) {
+            const cached = this.getMemoized(ruleName, this.tokenIndex)
+            if (cached !== undefined) {
+                // 🎯 缓存命中
+                
+                // 统计
+                this.memoStats.hits++
+                
+                // ⭐ 关键改进：通知观测层（缓存命中）
+                this._debugger?.onRuleExit(ruleName, cached.endTokenIndex, true, observeContext)
+                this.profiler?.endRule(ruleName, perfContext, true)
+                
+                // 快速返回
+                return this.applyMemoizedResult(cached)
+            }
+            
+            // 缓存未命中
+            this.memoStats.misses++
+        }
+        
+        // ============================================
+        // Layer 4: 核心执行层
+        // ============================================
         const startTokenIndex = this.tokenIndex
-        
-        // ⭐ 调试：记录规则进入
-        this._debugger?.onRuleEnter(ruleName)
-        
         const cst = this.processCst(ruleName, targetFun)
         
-        // 嵌套调用：存储缓存和清理
+        // ============================================
+        // Layer 5: 结果处理层
+        // ============================================
         if (!isTopLevel) {
-            // Packrat: 存储缓存
+            // 缓存存储
             if (this.enableMemoization) {
                 this.storeMemoized(ruleName, startTokenIndex, cst, this.tokenIndex, this._parseFailed)
             }
             
-            // 清理空数组（优化）
-            if (cst) {
-                if (!cst.children?.length) cst.children = undefined
+            // 清理优化
+            if (cst && !cst.children?.length) {
+                cst.children = undefined
             }
+            
+            // ============================================
+            // Layer 6: 观测层退出（实际执行）⭐
+            // ============================================
+            this._debugger?.onRuleExit(ruleName, this.tokenIndex, false, observeContext)
+            this.profiler?.endRule(ruleName, perfContext, false)
         }
         
         return cst
@@ -1280,3 +1318,28 @@ export { SubhutiTraceDebugger } from "../debugger/SubhutiTraceDebugger.ts"
  * ```
  */
 export { SubhutiErrorHandler, ParsingError } from "./SubhutiErrorHandler.ts"
+
+/**
+ * 导出性能分析器和统计类型（v2.0 新增）⭐
+ * 
+ * 使用方式：
+ * ```typescript
+ * import { SubhutiProfiler } from './SubhutiParser.ts'
+ * import type { RuleStats } from './SubhutiParser.ts'
+ * 
+ * // 启用性能分析
+ * const parser = new MyParser(tokens).profiling()
+ * const cst = parser.Program()
+ * 
+ * // 获取格式化报告
+ * console.log(parser.getProfilingReport())
+ * 
+ * // 获取原始数据
+ * const stats: Map<string, RuleStats> = parser.getProfilingStats()
+ * for (const [ruleName, stat] of stats) {
+ *   console.log(`${ruleName}: ${stat.totalCalls} calls, ${stat.cacheHits} cached`)
+ * }
+ * ```
+ */
+export { SubhutiProfiler } from "./SubhutiProfiler.ts"
+export type { RuleStats } from "./SubhutiProfiler.ts"

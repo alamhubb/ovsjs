@@ -1,5 +1,5 @@
 /**
- * Subhuti Trace Debugger - 默认实现
+ * Subhuti Trace Debugger - 默认实现（v2.0）
  * 
  * 功能：记录规则执行路径和 Token 消费轨迹
  * 
@@ -7,13 +7,27 @@
  * ```
  * 📋 Rule Execution Trace
  * 
- *   1. ➡️  ImportDeclaration
- *   2.   🔹 Consume                token[0] - import - <ImportTok>  ✅
- *   3.   ➡️  ImportClause
- *   4.     🔹 Consume              token[1] - { - <LBrace>  ✅
+ * → Program @0
+ *   → Statement @0
+ *     → IfStatement @0
+ *       ✓ IfTok="if" @0
+ *       → Expression @1
+ *         → Identifier @1
+ *         ← Identifier @2 ⚡CACHED (0ms)
+ *       ← Expression @2 (5ms)
+ *     ← IfStatement @10 (12ms)
+ *   ← Statement @10 (15ms)
+ * ← Program @15 (20ms)
  * ```
  * 
- * @version 1.0.0
+ * 新特性（v2.0）：
+ * - 记录规则完整生命周期（Enter + Exit）
+ * - 显示 token 位置（@N）
+ * - 标记缓存命中（⚡CACHED）
+ * - 显示耗时（毫秒）
+ * - 嵌套缩进可视化
+ * 
+ * @version 2.0.0
  * @date 2025-11-04
  */
 
@@ -22,7 +36,7 @@ import type { SubhutiDebugger } from './SubhutiDebugger.ts'
 /**
  * 轨迹条目类型
  */
-type TraceEntryType = 'rule-enter' | 'token-consume'
+type TraceEntryType = 'rule-enter' | 'rule-exit' | 'token-consume'
 
 /**
  * 轨迹条目基础接口
@@ -38,6 +52,18 @@ interface TraceEntryBase {
 interface RuleEnterEntry extends TraceEntryBase {
     type: 'rule-enter'
     ruleName: string
+    tokenIndex: number
+}
+
+/**
+ * 规则退出条目（v2.0 新增）
+ */
+interface RuleExitEntry extends TraceEntryBase {
+    type: 'rule-exit'
+    ruleName: string
+    tokenIndex: number
+    cacheHit: boolean
+    duration?: number  // 耗时（毫秒）
 }
 
 /**
@@ -54,38 +80,63 @@ interface TokenConsumeEntry extends TraceEntryBase {
 /**
  * 轨迹条目联合类型
  */
-type TraceEntry = RuleEnterEntry | TokenConsumeEntry
+type TraceEntry = RuleEnterEntry | RuleExitEntry | TokenConsumeEntry
 
 /**
- * Subhuti Trace Debugger 默认实现
+ * Subhuti Trace Debugger 默认实现（v2.0）
  */
 export class SubhutiTraceDebugger implements SubhutiDebugger {
     private trace: TraceEntry[] = []
     private depth = 0  // 当前嵌套深度
     
     /**
-     * 规则进入
+     * 规则进入（v2.0 更新：返回时间戳上下文）
+     * 
+     * @param ruleName - 规则名称
+     * @param tokenIndex - 当前 token 位置
+     * @returns 时间戳（用于计算耗时）
      */
-    onRuleEnter(ruleName: string): void {
+    onRuleEnter(ruleName: string, tokenIndex: number): number {
         this.trace.push({
             type: 'rule-enter',
             ruleName,
+            tokenIndex,
             depth: this.depth
         })
         this.depth++
+        return performance.now()  // 返回高精度时间戳
     }
     
     /**
-     * 规则退出（内部使用，用于维护深度）
+     * 规则退出（v2.0 新增）⭐
      * 
-     * 注意：Parser 不会调用此方法，我们在 onTokenConsume 或下一个 onRuleEnter 时自动调整深度
-     * 
-     * 问题：如何知道规则何时退出？
-     * 方案：通过深度栈来推断
+     * @param ruleName - 规则名称
+     * @param tokenIndex - 结束时的 token 位置
+     * @param cacheHit - 是否缓存命中
+     * @param context - onRuleEnter 返回的时间戳
      */
-    private adjustDepth(): void {
-        // 简化方案：Token 消费后深度不变
-        // 下一个规则进入时，如果深度相同或更浅，说明上一个规则已退出
+    onRuleExit(
+        ruleName: string, 
+        tokenIndex: number, 
+        cacheHit: boolean,
+        context?: unknown
+    ): void {
+        this.depth--
+        
+        // 计算耗时
+        let duration: number | undefined
+        if (context !== undefined && typeof context === 'number') {
+            duration = performance.now() - context
+        }
+        
+        this.trace.push({
+            type: 'rule-exit',
+            ruleName,
+            tokenIndex,
+            cacheHit,
+            duration,
+            depth: this.depth
+        })
     }
     
     /**
@@ -97,39 +148,50 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
         tokenName: string,
         success: boolean
     ): void {
-        // Token 消费与规则同深度
+        // Token 消费在当前规则内部，深度与当前规则相同
         this.trace.push({
             type: 'token-consume',
             tokenIndex,
             tokenValue,
             tokenName,
             success,
-            depth: this.depth - 1  // Token 消费在规则内部，所以深度 -1
+            depth: this.depth
         })
     }
     
     /**
-     * 获取格式化的执行轨迹
+     * 获取格式化的执行轨迹（v2.0 增强）
      */
     getTrace(): string {
         const lines: string[] = []
         lines.push('📋 Rule Execution Trace')
         lines.push('')
         
-        let lineNum = 1
-        
         for (const entry of this.trace) {
             const indent = '  '.repeat(entry.depth)
-            const num = `${lineNum++}.`.padStart(4)
-
+            
             if (entry.type === 'rule-enter') {
-                lines.push(`${num} ${indent}➡️  ${entry.ruleName}`)
+                lines.push(`${indent}→ ${entry.ruleName} @${entry.tokenIndex}`)
+            } else if (entry.type === 'rule-exit') {
+                // 构建退出信息
+                let exitInfo = `${indent}← ${entry.ruleName} @${entry.tokenIndex}`
+                
+                // 缓存标记
+                if (entry.cacheHit) {
+                    exitInfo += ' ⚡CACHED'
+                }
+                
+                // 耗时信息
+                if (entry.duration !== undefined) {
+                    exitInfo += ` (${entry.duration.toFixed(2)}ms)`
+                }
+                
+                lines.push(exitInfo)
             } else if (entry.type === 'token-consume') {
-                if (entry.success){
-                    // 格式：token[0] - import - <ImportTok>  ✅
-                    const status = entry.success ? '✅' : '❌'
-                    const tokenInfo = `token[${entry.tokenIndex}] - ${entry.tokenValue} - <${entry.tokenName}>`
-                    lines.push(`${num} ${indent}🔹 Consume                ${tokenInfo}  ${status}`)
+                // 只显示成功的 token 消费
+                if (entry.success) {
+                    const status = '✓'
+                    lines.push(`${indent}  ${status} ${entry.tokenName}="${entry.tokenValue}" @${entry.tokenIndex}`)
                 }
             }
         }
