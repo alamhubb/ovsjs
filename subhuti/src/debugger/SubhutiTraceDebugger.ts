@@ -8,9 +8,9 @@
  * 📋 Rule Execution Trace
  * 
  *   1. ➡️  ImportDeclaration
- *   2.   🔹 Consume                token[0] - [import] - <ImportTok>  ✅
+ *   2.   🔹 Consume                token[0] - import - <ImportTok>  ✅
  *   3.   ➡️  ImportClause
- *   4.     🔹 Consume              token[1] - [{] - <LBrace>  ✅
+ *   4.     🔹 Consume              token[1] - { - <LBrace>  ✅
  * ```
  * 
  * @version 1.0.0
@@ -121,14 +121,16 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
         for (const entry of this.trace) {
             const indent = '  '.repeat(entry.depth)
             const num = `${lineNum++}.`.padStart(4)
-            
+
             if (entry.type === 'rule-enter') {
                 lines.push(`${num} ${indent}➡️  ${entry.ruleName}`)
             } else if (entry.type === 'token-consume') {
-                // 格式：token[0] - [import] - <ImportTok>  ✅
-                const status = entry.success ? '✅' : '❌'
-                const tokenInfo = `token[${entry.tokenIndex}] - [${entry.tokenValue}] - <${entry.tokenName}>`
-                lines.push(`${num} ${indent}🔹 Consume                ${tokenInfo}  ${status}`)
+                if (entry.success){
+                    // 格式：token[0] - import - <ImportTok>  ✅
+                    const status = entry.success ? '✅' : '❌'
+                    const tokenInfo = `token[${entry.tokenIndex}] - ${entry.tokenValue} - <${entry.tokenName}>`
+                    lines.push(`${num} ${indent}🔹 Consume                ${tokenInfo}  ${status}`)
+                }
             }
         }
         
