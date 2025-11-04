@@ -13,7 +13,8 @@
 
 import SubhutiParser from "./SubhutiParser.ts"
 import type { SubhutiParserOr, RuleFunction } from "./SubhutiParser.ts"
-import type SubhutiCst from "./struct/SubhutiTypes.ts"
+import type SubhutiMatchToken from "./struct/SubhutiMatchToken.ts";
+import type SubhutiCst from "./struct/SubhutiCst.ts";
 
 // ============================================
 // [1] SubhutiDebugger - 调试器接口
@@ -452,9 +453,9 @@ export class SubhutiParserDebugger<T extends SubhutiParser = SubhutiParser> {
         tokens: SubhutiMatchToken[],
         ...args: any[]
     ): T & SubhutiParserDebugger<T> {
-        const debugger = new SubhutiParserDebugger(ParserClass, tokens, ...args)
+        const debug = new SubhutiParserDebugger(ParserClass, tokens, ...args)
         
-        return new Proxy(debugger, {
+        return new Proxy(debug, {
             get(target, prop) {
                 if (prop in target) {
                     return (target as any)[prop]
