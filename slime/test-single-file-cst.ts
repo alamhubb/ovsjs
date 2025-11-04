@@ -1,9 +1,9 @@
 /**
  * 文件CST测试工具
  * 用法：
- *   npx tsx test-file-cst.ts tests/cases/01-literals-basic.js
- *   npx tsx test-file-cst.ts tests/cases/19-destructuring-array-basic.js
- *   npx tsx test-file-cst.ts tests/cases/33-class-basic.js
+ *   npx tsx test-single-file-cst.ts tests/cases/01-literals-basic.js
+ *   npx tsx test-single-file-cst.ts tests/cases/19-destructuring-array-basic.js
+ *   npx tsx test-single-file-cst.ts tests/cases/33-class-basic.js
  */
 import * as fs from 'fs'
 import * as path from 'path'
@@ -152,17 +152,17 @@ function getCSTStatistics(node: any): {
 }
 
 // 主程序
-const filePath = process.argv[2] || 'tests/es6rules/IdentifierName-001.js'
+const filePath = process.argv[2] || 'tests/es6rules/PropertyDefinition-001.js'
 
 if (!filePath) {
     console.log('❌ 错误：请提供要测试的文件路径')
     console.log('\n用法示例：')
-    console.log('  npx tsx test-file-cst.ts tests/cases/01-literals-basic.js')
-    console.log('  npx tsx test-file-cst.ts tests/cases/19-destructuring-array-basic.js')
-    console.log('  npx tsx test-file-cst.ts tests/cases/33-class-basic.js')
+    console.log('  npx tsx test-single-file-cst.ts tests/cases/01-literals-basic.js')
+    console.log('  npx tsx test-single-file-cst.ts tests/cases/19-destructuring-array-basic.js')
+    console.log('  npx tsx test-single-file-cst.ts tests/cases/33-class-basic.js')
     console.log('\n提示：')
     console.log('  - 添加 --full 参数可查看完整CST结构')
-    console.log('  - 例如：npx tsx test-file-cst.ts tests/cases/01-literals-basic.js --full')
+    console.log('  - 例如：npx tsx test-single-file-cst.ts tests/cases/01-literals-basic.js --full')
     process.exit(1)
 }
 

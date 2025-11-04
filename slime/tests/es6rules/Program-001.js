@@ -92,7 +92,6 @@ debugger
 // ✅ 测试15：SourceElement - 顶级表达式
 1 + 2
 "string"
-function() {}
 
 /* Es6Parser.ts: Program
  * 规则：
@@ -219,7 +218,6 @@ export * from './utils'
 // ✅ 测试7：导入和导出混合
 import { useState } from 'react'
 export function MyComponent() {
-    return <div>Component</div>
 }
 
 // ✅ 测试8：模块中的语句
@@ -262,7 +260,6 @@ import { Component } from 'react'
 export { Component }
 export default class App extends Component {
     render() {
-        return <div>App</div>
     }
 }
 

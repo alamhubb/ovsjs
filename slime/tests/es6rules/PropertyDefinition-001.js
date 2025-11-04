@@ -15,7 +15,7 @@ const obj7 = { set x(v) { } }
 const obj8 = { [key]: 'value' }
 const obj9 = { ...other }
 const obj10 = { a, b, c }
-const obj11 = { name, age = 0 }
+const obj11 = { name, age : 0 }
 const obj12 = { 'prop-name': 'value' }
 const obj13 = { 123: 'numeric' }
 const obj14 = { [Symbol.iterator]: function() {} }
