@@ -125,13 +125,12 @@ console.log()
 
 console.log('━'.repeat(60))
 console.log('📍 场景2：开发模式（链式调用 - 全开）')
-console.log('   cache: 开启 | debug: 开启 | profiling: 开启 | errorHandler: 开启')
+console.log('   cache: 开启 | debug: 开启 | errorHandler: 开启')
 console.log('━'.repeat(60))
 
 const parser2 = new ImportParser(tokenStream)
     .cache()        // 开启缓存（默认true，可省略）
     .debug()        // 开启调试
-    .profiling()    // 开启性能分析
 
 const cst2 = parser2.ImportDeclaration()
 

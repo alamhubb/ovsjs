@@ -130,24 +130,5 @@ try {
     console.log('❌ 解析失败:', error.message)
 }
 
-// 测试3：Packrat Parsing 统计
-console.log('\n测试3：Packrat Parsing 统计')
-const code3 = 'x = 1; y = 2; z = 3;'
-const lexer3 = new SubhutiLexer(tokens)
-const tokenStream3 = lexer3.tokenize(code3)
-const parser3 = new TestParser(tokenStream3)
-
-try {
-    const cst3 = parser3.Program()
-    const stats = parser3.getMemoStats()
-    console.log('✅ 解析成功')
-    console.log('缓存命中:', stats.hits)
-    console.log('缓存未命中:', stats.misses)
-    console.log('缓存大小:', stats.cacheSize)
-    console.log('命中率:', stats.hitRate)
-} catch (error) {
-    console.log('❌ 解析失败:', error.message)
-}
-
 console.log('\n🎉 所有测试完成')
 

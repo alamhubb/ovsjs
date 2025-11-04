@@ -7,8 +7,18 @@
  * - 返回值语义（成功返回 CST，失败返回 undefined）
  * - 类型安全（严格的 TypeScript 约束）
  * 
- * @version 4.2.0
+ * 设计原则：
+ * - YAGNI：只实现实际需要的功能
+ * - 单一职责：Parser 只负责解析，调试/错误格式化委托给专门模块
+ * - 简单优于复杂：避免过度抽象
+ * 
+ * @version 4.3.0
  * @date 2025-11-04
+ * 
+ * v4.3.0 更新（单一职责）：
+ * - 删除 _autoOutputDebugReport()（违反单一职责）
+ * - 调试输出完全委托给 SubhutiDebugger.autoOutput()
+ * - Parser 只负责通知调试器，不负责格式化输出
  * 
  * v4.2.0 更新（架构优化）：
  * - 删除 _executeRule 过度抽象层（YAGNI原则）
@@ -274,14 +284,13 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     private readonly _cache: SubhutiPackratCache
     
     /**
-     * 性能分析功能已合并到调试器中（v3.0）
+     * 调试功能已完全委托给调试器（v3.0+）
      * 
      * 使用方式：
      * ```typescript
      * const parser = new MyParser(tokens).debug()
      * const cst = parser.Program()
-     * console.log(parser.getDebugSummary())  // 性能摘要
-     * console.log(parser.getDebugStats())    // 原始数据
+     * // 自动输出性能摘要 + 规则执行追踪
      * ```
      */
     
@@ -583,8 +592,9 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         // 调试输出
         if (!isTopLevel) {
             this._debugger?.onRuleExit(ruleName, this.tokenIndex, false, observeContext)
-        } else if (this._debugger) {
-            this._autoOutputDebugReport()
+        } else {
+            // 顶层规则完成：通知 debugger 自动输出报告
+            (this._debugger as any)?.autoOutput?.()
         }
     }
     
@@ -1004,42 +1014,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     
     get ruleStackNames(): string {
         return this.ruleStack.join('->')
-    }
-    
-    // ========================================
-    // 调试自动输出（⭐ 私有方法）
-    // ========================================
-    
-    /**
-     * 自动输出调试报告（私有方法）
-     * 
-     * 在顶层规则执行完成后自动调用
-     * 输出内容：
-     * 1. 性能摘要（总耗时、缓存命中率、Top 5 慢规则）
-     * 2. 规则执行追踪（完整的执行过程）
-     */
-    private _autoOutputDebugReport(): void {
-        if (!this._debugger) return
-        
-        const lines: string[] = []
-        
-        // 1. 性能摘要
-        if ('getSummary' in this._debugger && typeof this._debugger.getSummary === 'function') {
-            const summary = (this._debugger as any).getSummary()
-            lines.push(summary)
-            lines.push('')  // 空行分隔
-        }
-        
-        // 2. 规则执行追踪
-        if ('getTrace' in this._debugger && typeof this._debugger.getTrace === 'function') {
-            lines.push('📋 规则执行追踪')
-            lines.push('─'.repeat(40))
-            const trace = (this._debugger as any).getTrace()
-            lines.push(trace)
-        }
-        
-        // 输出到控制台
-        console.log('\n' + lines.join('\n'))
     }
 }
 
