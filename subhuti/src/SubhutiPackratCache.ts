@@ -356,7 +356,7 @@ export class SubhutiPackratCache {
      * 获取简单统计信息
      */
     getStats(): SubhutiPackratCacheStats {
-        return {...this.stats}
+        return ({...this.stats}) as SubhutiPackratCacheStats
     }
 
     /**
