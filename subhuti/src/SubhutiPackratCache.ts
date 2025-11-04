@@ -11,25 +11,6 @@
 import type SubhutiCst from "./struct/SubhutiCst.ts";
 
 /**
- * 缓存配置
- */
-export interface SubhutiPackratCacheConfig {
-    /**
-     * 最大缓存条目数
-     * 
-     * - 数字：启用 LRU，达到上限自动淘汰最旧条目
-     * - Infinity：无限缓存，永不淘汰
-     * 
-     * 推荐值：
-     * - 默认：10000（99% 场景）
-     * - 大文件：50000
-     * - 超大文件：100000
-     * - 小文件 + 内存充足：Infinity
-     */
-    maxSize?: number
-}
-
-/**
  * LRU 双向链表节点
  * 
  * 结构：
@@ -205,23 +186,36 @@ export class SubhutiPackratCache {
     
     /**
      * 构造 SubhutiPackratCache Cache
-     * 
-     * @param config 缓存配置（可选）
-     * 
+     *
+     *
      * 配置方式：
      * ```typescript
      * // 默认（推荐 99%）
      * new SubhutiPackratCache()  → LRU(10000)
-     * 
+     *
      * // 大文件
      * new SubhutiPackratCache({ maxSize: 50000 })  → LRU(50000)
-     * 
+     *
      * // 无限缓存（小文件 + 内存充足）
      * new SubhutiPackratCache({ maxSize: Infinity })  → Unlimited
-     * ```
+     *
+     *
+     *
+     *
+     * 最大缓存条目数
+     *
+     * - 数字：启用 LRU，达到上限自动淘汰最旧条目
+     * - Infinity：无限缓存，永不淘汰
+     *
+     * 推荐值：
+     * - 默认：10000（99% 场景）
+     * - 大文件：50000
+     * - 超大文件：100000
+     * - 小文件 + 内存充足：Infinity
+     * @param maxSize
      */
-    constructor(config?: SubhutiPackratCacheConfig) {
-        this.maxSize = config?.maxSize ?? 10000  // 默认 10000
+    constructor(maxSize = 10000) {
+        this.maxSize = maxSize  // 默认 10000
     }
     
     // ========================================

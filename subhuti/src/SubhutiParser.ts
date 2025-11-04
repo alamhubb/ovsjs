@@ -47,7 +47,7 @@ import type SubhutiCst from "./struct/SubhutiCst.ts";
 import type SubhutiMatchToken from "./struct/SubhutiMatchToken.ts";
 import {SubhutiErrorHandler} from "./SubhutiError.ts";
 import {type SubhutiDebugger, SubhutiTraceDebugger} from "./SubhutiDebug.ts";
-import type {SubhutiPackratCacheConfig, SubhutiPackratCache, SubhutiPackratCacheResult} from "./SubhutiPackratCache.ts";
+import {SubhutiPackratCache, type SubhutiPackratCacheResult} from "./SubhutiPackratCache.ts";
 
 // ============================================
 // [1] 类型定义（类型安全）
@@ -329,14 +329,13 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     constructor(
         tokens: SubhutiMatchToken[] = [],
         TokenConsumerClass?: SubhutiTokenConsumerConstructor<T>,
-        cacheConfig?: SubhutiPackratCacheConfig
     ) {
         this._tokens = tokens
         this.tokenIndex = 0
         this.className = this.constructor.name
         
         // ⭐ 初始化 SubhutiPackratCache Cache（默认 LRU 10000）
-        this._cache = new SubhutiPackratCache(cacheConfig)
+        this._cache = new SubhutiPackratCache()
         
         // 创建 TokenConsumer 实例
         if (TokenConsumerClass) {
