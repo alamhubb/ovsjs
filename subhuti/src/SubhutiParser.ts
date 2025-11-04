@@ -1071,9 +1071,14 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         // 恢复 parseFailed 状态（关键！）
         this._parseFailed = cached.parseFailed
         
-        // 应用 CST（委托给 SubhutiPackratCache）
+        // 应用 CST 到父节点
         const parentCst = this.cstStack[this.cstStack.length - 1]
-        return this._cache.apply(cached, parentCst)
+        if (cached.success && cached.cst && parentCst) {
+            parentCst.children.push(cached.cst)
+            return cached.cst
+        }
+        
+        return undefined
     }
     
     /**

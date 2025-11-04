@@ -318,28 +318,6 @@ export class SubhutiPackratCache {
     }
 
     // ========================================
-    // 应用缓存结果（辅助方法）
-    // ========================================
-
-    /**
-     * 应用缓存结果到 CST 栈
-     *
-     * 用途：将缓存的 CST 节点添加到父节点
-     *
-     * @param cached 缓存结果
-     * @param parentCst 父 CST 节点
-     * @returns CST 节点或 undefined
-     */
-    apply(cached: SubhutiPackratCacheResult, parentCst?: SubhutiCst): SubhutiCst | undefined {
-        if (cached.success && cached.cst && parentCst) {
-            parentCst.children.push(cached.cst)
-            return cached.cst
-        }
-
-        return undefined
-    }
-
-    // ========================================
     // 统计和分析
     // ========================================
 
