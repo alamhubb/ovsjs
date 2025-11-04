@@ -13,8 +13,8 @@
 
 import SubhutiParser from "./SubhutiParser.ts"
 import type { SubhutiParserOr, RuleFunction } from "./SubhutiParser.ts"
-import type { SubhutiMatchToken } from "./SubhutiTypes.ts"
-import type SubhutiCst from "./SubhutiTypes.ts"
+import type { SubhutiMatchToken } from "./struct/SubhutiTypes.ts"
+import type SubhutiCst from "./struct/SubhutiTypes.ts"
 
 // ============================================
 // [1] SubhutiDebugger - 调试器接口

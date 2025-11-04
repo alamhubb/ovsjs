@@ -3,7 +3,7 @@ import {
     type SubhutiCreateToken,
     SubhutiCreateTokenGroupType,
     SubhutiMatchToken
-} from "./SubhutiTypes.ts";
+} from "./struct/SubhutiTypes.ts";
 
 export default class SubhutiLexer {
   constructor(tokens: SubhutiCreateToken[]) {

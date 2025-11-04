@@ -10,7 +10,7 @@
  * @date 2025-11-04
  */
 
-import { SubhutiMatchToken } from "./SubhutiTypes.ts"
+import { SubhutiMatchToken } from "./struct/SubhutiTypes.ts"
 
 // ============================================
 // [1] SubhutiErrorHandler + ParsingError - 核心错误处理

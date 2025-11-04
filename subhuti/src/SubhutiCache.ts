@@ -10,7 +10,7 @@
  * @date 2025-11-04
  */
 
-import SubhutiCst from "./SubhutiTypes.ts"
+import SubhutiCst from "./struct/SubhutiTypes.ts"
 
 // ============================================
 // [1] PackratCache - 高性能LRU缓存

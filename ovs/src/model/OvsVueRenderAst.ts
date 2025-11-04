@@ -1,4 +1,4 @@
-import SubhutiCst from "subhuti/src/struct/SubhutiCst.ts";
+import SubhutiCst from "subhuti/src/struct/SubhutiCst.ts.ts";
 
 export default class OvsVueRenderAst {
     slotName: string

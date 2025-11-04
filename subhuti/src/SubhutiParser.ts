@@ -42,7 +42,7 @@
  */
 
 import SubhutiMatchToken from "../struct/SubhutiMatchToken.ts"
-import SubhutiCst from "../struct/SubhutiCst.ts"
+import SubhutiCst from "../struct/SubhutiCst.ts.ts"
 import SubhutiTokenConsumer from "./SubhutiTokenConsumer.ts"
 import type { PackratCacheConfig } from "./PackratCache.ts"
 import { SubhutiMemoizer } from "./SubhutiMemoizer.ts"

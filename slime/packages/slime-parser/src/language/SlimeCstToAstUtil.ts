@@ -47,7 +47,7 @@ import {
   SlimeVariableDeclarationKindValue,
   type SlimeVariableDeclarationKind, type SlimeClassExpression
 } from "slime-ast/src/SlimeAstInterface.ts";
-import SubhutiCst, {type SubhutiSourceLocation} from "subhuti/src/struct/SubhutiCst.ts";
+import SubhutiCst, {type SubhutiSourceLocation} from "subhuti/src/struct/SubhutiCst.ts.ts";
 import Es6Parser from "./es2015/Es6Parser.ts";
 import Es6TokenConsumer from "./es2015/Es6Tokens.ts";
 import SlimeAstUtil from "slime-ast/src/SlimeAst.ts";
@@ -336,7 +336,7 @@ export class SlimeCstToAst {
   }
 
 
-  /*createImportClauseAst(cst: SubhutiCst):Array<SlimeImportSpecifier | SlimeImportDefaultSpecifier | SlimeImportNamespaceSpecifier>{
+  /*createImportClauseAst(cst: SubhutiCst.ts):Array<SlimeImportSpecifier | SlimeImportDefaultSpecifier | SlimeImportNamespaceSpecifier>{
     let astName = checkCstName(cst, Es6Parser.prototype.ImportClause.name);
 
 

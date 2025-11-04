@@ -1,4 +1,4 @@
-import SubhutiCst from "subhuti/src/struct/SubhutiCst.ts"
+import SubhutiCst from "subhuti/src/struct/SubhutiCst.ts.ts"
 import { ovsTokenName, ovsTokensObj } from "../parser/OvsConsumer.ts"
 import OvsParser, { ovsParserInstance } from "../parser/OvsParser.ts"
 import Es6Parser from "slime-parser/src/language/es2015/Es6Parser.ts";
