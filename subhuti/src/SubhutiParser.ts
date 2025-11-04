@@ -26,15 +26,15 @@
  * 
  * 使用示例：
  * ```typescript
- * // 基础使用（默认最佳配置）
+ * // 基础使用（默认最佳配置 - LRU 10000）
  * const parser = new MyParser(tokens)
  * const cst = parser.Program()
  * 
  * // 自定义缓存大小（大文件）
- * const parser = new MyParser(tokens, undefined, new LRUCache(50000))
+ * const parser = new MyParser(tokens, undefined, { maxSize: 50000 })
  * 
  * // 无限缓存（小文件 + 内存充足）
- * const parser = new MyParser(tokens, undefined, new UnlimitedCache())
+ * const parser = new MyParser(tokens, undefined, { maxSize: Infinity })
  * ```
  * 
  * @version 4.1.0 - 生产级实现（默认 LRU 缓存）
