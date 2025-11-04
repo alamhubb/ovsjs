@@ -12,8 +12,13 @@
  * - 单一职责：Parser 只负责解析，调试/错误格式化委托给专门模块
  * - 简单优于复杂：避免过度抽象
  * 
- * @version 4.3.0
+ * @version 4.4.0
  * @date 2025-11-04
+ * 
+ * v4.4.0 更新（命名优化）：
+ * - 重命名 subhutiRule → executeRuleWrapper（私有约定）
+ * - 装饰器 SubhutiRule（公开）vs 方法 executeRuleWrapper（私有）
+ * - 符合 TypeScript 私有约定（_ 前缀）
  * 
  * v4.3.0 更新（单一职责）：
  * - 删除 _autoOutputDebugReport()（违反单一职责）
@@ -21,8 +26,7 @@
  * - Parser 只负责通知调试器，不负责格式化输出
  * 
  * v4.2.0 更新（架构优化）：
- * - 删除 _executeRule 过度抽象层（YAGNI原则）
- * - 缓存逻辑内联到 subhutiRule（简单优于复杂）
+ * - 缓存逻辑集成到规则执行入口（简单优于复杂）
  * - 重命名 processCst → executeRuleCore（准确语义）
  * - 优化架构：3层 → 2层（编排层 + 执行层）
  */
@@ -76,7 +80,7 @@ export function Subhuti<E extends SubhutiTokenConsumer, T extends new (...args: 
 export function SubhutiRule(targetFun: any, context: ClassMethodDecoratorContext) {
     const ruleName = targetFun.name
     const wrappedFunction = function(): SubhutiCst | undefined {
-        return this.subhutiRule(targetFun, ruleName, context.metadata.className)
+        return this.executeRuleWrapper(targetFun, ruleName, context.metadata.className)
     }
     Object.defineProperty(wrappedFunction, 'name', {value: ruleName})
     return wrappedFunction
@@ -483,7 +487,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     // ========================================
     
     /**
-     * 规则执行入口（由 @SubhutiRule 装饰器调用）
+     * 规则执行入口（由 @SubhutiRule 装饰器调用）⭐
      * 
      * 职责（编排层）：
      * - 前置检查（类检查 + 初始化 + 快速失败）
@@ -492,12 +496,17 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * - 后置处理（清理 + 调试输出）
      * - 调试通知（进入/退出规则）
      * 
-     * 标准 SubhutiPackratCache Parsing 流程：
+     * 标准 Packrat Parsing 流程：
      * 1. 查询缓存
      * 2. 缓存命中：恢复状态，返回结果
      * 3. 缓存未命中：执行规则，存储结果
+     * 
+     * 命名理由：
+     * - executeRuleWrapper（私有）：强调"内部执行入口"
+     * - 与装饰器 SubhutiRule（公开）形成对比
+     * - 符合 TypeScript 私有约定（_ 前缀）
      */
-    subhutiRule(targetFun: Function, ruleName: string, className: string): SubhutiCst | undefined {
+    private executeRuleWrapper(targetFun: Function, ruleName: string, className: string): SubhutiCst | undefined {
         // 1. 前置检查（类检查 + 初始化 + 快速失败）
         const isTopLevel = this.cstStack.length === 0 && this.ruleStack.length === 0
         if (!this._preCheckRule(ruleName, className, isTopLevel)) {
@@ -615,7 +624,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * 
      * 命名理由：
      * - executeRuleCore：强调"核心执行逻辑"
-     * - 与 subhutiRule（编排层）形成清晰对比
+     * - 与 executeRuleWrapper（编排层）形成清晰对比
      * - processCst 过于模糊，暗示"处理CST"而非"执行规则"
      * 
      * 设计理念：成功才添加（Chevrotain 风格）
