@@ -152,7 +152,7 @@ function getCSTStatistics(node: any): {
 }
 
 // 主程序
-const filePath = process.argv[2] || 'tests/es6rules/PropertyDefinition-001.js'
+const filePath = process.argv[2] || 'tests/es6rules/Statement-001.js'
 
 if (!filePath) {
     console.log('❌ 错误：请提供要测试的文件路径')

@@ -1455,7 +1455,7 @@ try {
 // ✅ 测试12：finally中的空语句
 try {
     console.log('try')
-} finally ;
+} finally {};
 
 // ✅ 测试13：switch中的空语句
 switch (1) {
@@ -1588,7 +1588,9 @@ const iterable = {
         return {
             next: () => ({
                 value: count++,
-                done: count > 3        }
+                done: count > 3
+            })
+        }
     }
 }
 for (let val of iterable) {
