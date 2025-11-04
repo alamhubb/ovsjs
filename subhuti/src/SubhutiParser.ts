@@ -79,9 +79,12 @@ export function Subhuti<E extends SubhutiTokenConsumer, T extends new (...args: 
 
 export function SubhutiRule(targetFun: any, context: ClassMethodDecoratorContext) {
     const ruleName = targetFun.name
+    const className = context.metadata.className
+
     const wrappedFunction = function(): SubhutiCst | undefined {
-        return this.executeRuleWrapper(targetFun, ruleName, context.metadata.className)
+        return this.executeRuleWrapper(targetFun, ruleName, className)
     }
+
     Object.defineProperty(wrappedFunction, 'name', {value: ruleName})
     return wrappedFunction
 }
