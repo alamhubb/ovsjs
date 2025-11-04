@@ -484,12 +484,17 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     }
     
     /**
-     * 开启/关闭调试模式
+     * 开启/关闭调试模式（执行完成后自动输出）
+     * 
+     * 自动输出内容：
+     * 1. 性能摘要（总耗时、缓存命中率、Top 5 慢规则）
+     * 2. 规则执行追踪（完整的执行过程）
      * 
      * 使用示例：
      * ```typescript
-     * parser.debug()       // 开启调试（默认）
-     * parser.debug(false)  // 关闭调试
+     * parser.debug()
+     * const cst = parser.Program()
+     * // 自动输出调试信息，无需手动调用任何方法
      * ```
      * 
      * @param enable - 是否启用调试（默认true）
@@ -502,23 +507,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             this._debugger = undefined
         }
         return this
-    }
-    
-    /**
-     * 开启/关闭性能分析（v3.0 已合并到 debug）
-     * 
-     * 使用示例：
-     * ```typescript
-     * parser.profiling()       // 等同于 debug()
-     * parser.profiling(false)  // 等同于 debug(false)
-     * ```
-     * 
-     * @deprecated 请使用 debug() 代替，性能统计已集成
-     * @param enable - 是否启用（默认true）
-     * @returns this（链式调用）
-     */
-    profiling(enable: boolean = true): this {
-        return this.debug(enable)
     }
     
     /**
@@ -541,30 +529,17 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         return this
     }
     
-    // ========================================
-    // 便捷获取方法
-    // ========================================
-    
     /**
-     * 获取调试轨迹（便捷方法）
+     * 调试器实例（只读）
      * 
-     * 使用示例：
+     * 高级用户可以通过此属性访问原始数据：
      * ```typescript
-     * const parser = new MyParser(tokens).debug()
-     * const cst = parser.Program()
-     * console.log(parser.getDebugTrace())
+     * const rawStats = parser.debugger?.getStats()
+     * const rawTrace = parser.debugger?.getTrace()
+     * const rawSummary = parser.debugger?.getSummary()
      * ```
-     * 
-     * @returns 调试轨迹字符串，如果未启用调试则返回undefined
      */
-    getDebugTrace(): string | undefined {
-        return this._debugger?.getTrace?.()
-    }
-    
-    /**
-     * 获取调试器实例（向后兼容）
-     */
-    get debuggerInstance(): SubhutiDebugger | undefined {
+    get debugger(): SubhutiDebugger | undefined {
         return this._debugger
     }
     
@@ -667,6 +642,13 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             // Layer 6: 观测层退出（实际执行）⭐
             // ============================================
             this._debugger?.onRuleExit(ruleName, this.tokenIndex, false, observeContext)
+        }
+        
+        // ============================================
+        // Layer 7: 顶层调试输出（自动输出）⭐
+        // ============================================
+        if (isTopLevel && this._debugger) {
+            this._autoOutputDebugReport()
         }
         
         return cst
@@ -1119,63 +1101,39 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     }
     
     // ========================================
-    // 性能分析 API（⭐ 新增）
+    // 调试自动输出（⭐ 私有方法）
     // ========================================
     
-    
     /**
-     * 获取性能分析报告（v3.0 已合并到 debug）
+     * 自动输出调试报告（私有方法）
      * 
-     * 包含：
-     * - 总耗时、总调用、缓存命中率
-     * - Top 5 慢规则
-     * 
-     * @returns 格式化的性能报告
+     * 在顶层规则执行完成后自动调用
+     * 输出内容：
+     * 1. 性能摘要（总耗时、缓存命中率、Top 5 慢规则）
+     * 2. 规则执行追踪（完整的执行过程）
      */
-    getProfilingReport(): string {
-        if (!this._debugger) {
-            return '⚠️  性能分析未启用\n   → 请先调用 debug()'
-        }
+    private _autoOutputDebugReport(): void {
+        if (!this._debugger) return
         
+        const lines: string[] = []
+        
+        // 1. 性能摘要
         if ('getSummary' in this._debugger && typeof this._debugger.getSummary === 'function') {
-            return (this._debugger as any).getSummary()
+            const summary = (this._debugger as any).getSummary()
+            lines.push(summary)
+            lines.push('')  // 空行分隔
         }
         
-        return '⚠️  当前调试器不支持性能统计'
-    }
-    
-    /**
-     * 获取简洁报告（单行）
-     * 
-     * @returns 例如："⏱️ 12.45ms | 8 rules | 133 calls | 68.5% cached"
-     */
-    getProfilingShortReport(): string {
-        if (!this._debugger) {
-            return '⚠️  Profiling not enabled'
+        // 2. 规则执行追踪
+        if ('getTrace' in this._debugger && typeof this._debugger.getTrace === 'function') {
+            lines.push('📋 规则执行追踪')
+            lines.push('─'.repeat(40))
+            const trace = (this._debugger as any).getTrace()
+            lines.push(trace)
         }
         
-        if ('getShortSummary' in this._debugger && typeof this._debugger.getShortSummary === 'function') {
-            return (this._debugger as any).getShortSummary()
-        }
-        
-        return '⚠️  当前调试器不支持性能统计'
-    }
-    
-    /**
-     * 获取规则统计数据（v3.0 已合并到 debug）
-     * 
-     * 用于自定义分析或可视化
-     */
-    getProfilingStats(): Map<string, RuleStats> | null {
-        if (!this._debugger) {
-            return null
-        }
-        
-        if ('getStats' in this._debugger && typeof this._debugger.getStats === 'function') {
-            return (this._debugger as any).getStats()
-        }
-        
-        return null
+        // 输出到控制台
+        console.log('\n' + lines.join('\n'))
     }
 }
 
@@ -1241,17 +1199,17 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
  * ```typescript
  * import type { RuleStats } from './SubhutiParser.ts'
  * 
- * // 启用调试（包含性能统计）
+ * // 启用调试（自动输出性能摘要 + 执行追踪）
  * const parser = new MyParser(tokens).debug()
  * const cst = parser.Program()
+ * // 执行完成后自动输出调试信息
  * 
- * // 获取性能摘要
- * console.log(parser.getProfilingReport())
- * 
- * // 获取原始数据
- * const stats: Map<string, RuleStats> = parser.getProfilingStats()
- * for (const [ruleName, stat] of stats) {
- *   console.log(`${ruleName}: ${stat.totalCalls} calls, ${stat.cacheHits} cached`)
+ * // 高级用户：访问原始数据
+ * const stats: Map<string, RuleStats> = parser.debugger?.getStats()
+ * if (stats) {
+ *   for (const [ruleName, stat] of stats) {
+ *     console.log(`${ruleName}: ${stat.totalCalls} calls, ${stat.cacheHits} cached`)
+ *   }
  * }
  * ```
  */
