@@ -1,26 +1,45 @@
 /**
- * Subhuti Debug - 简化调试系统（v3.0）
+ * Subhuti Debug - 统一调试和性能分析系统（v3.0）
  * 
  * 设计理念：
  * - YAGNI：只实现实际需要的功能
- * - 简单优于复杂：单一类，清晰的输出
- * - 基于实际需求：规则追踪 + Token消费 + Or分支 + 回溯
+ * - 简单优于复杂：统一入口，清晰的输出
+ * - 基于实际需求：过程追踪 + 性能统计
  * 
  * 功能：
- * - ✅ 规则执行（进入/退出）
- * - ✅ Token 消费（成功/失败）
- * - ✅ 缓存命中标识
+ * - ✅ 规则执行追踪（进入/退出）
+ * - ✅ Token 消费显示（成功/失败）
+ * - ✅ 缓存命中标识（⚡CACHED）
  * - ✅ 耗时信息
  * - ✅ 嵌套层级（缩进）
  * - ✅ Or 分支选择
  * - ✅ 回溯标识
+ * - ✅ 性能统计（totalCalls, avgTime, cacheHits）
+ * - ✅ Top N 慢规则（简化输出）
  * 
- * @version 3.0.0 - 极简重构
+ * @version 3.0.0 - 合并 Debug + Profiler
  * @date 2025-11-04
  */
 
 // ============================================
-// SubhutiDebugger - 统一调试器
+// 类型定义
+// ============================================
+
+/**
+ * 规则性能统计
+ */
+export interface RuleStats {
+    ruleName: string
+    totalCalls: number          // 总调用次数（含缓存命中）
+    actualExecutions: number    // 实际执行次数（不含缓存）
+    cacheHits: number          // 缓存命中次数
+    totalTime: number          // 总耗时（含缓存查询）
+    executionTime: number      // 实际执行耗时（不含缓存）
+    avgTime: number            // 平均耗时（仅实际执行）
+}
+
+// ============================================
+// SubhutiDebugger - 调试器接口
 // ============================================
 
 /**
@@ -85,32 +104,82 @@ export interface SubhutiDebugger {
 }
 
 // ============================================
-// SubhutiTraceDebugger - 默认实现
+// SubhutiTraceDebugger - 统一调试器（v3.0）
 // ============================================
 
 /**
- * Subhuti 轨迹调试器（v3.0 简化版）
+ * Subhuti 轨迹调试器（v3.0 增强版）
+ * 
+ * 整合功能：
+ * - 过程追踪（Debug）
+ * - 性能统计（Profiler）
  * 
  * 输出示例：
+ * 
+ * 1. 过程追踪：
  * ```
- * ➡️  ImportDeclaration    ⚡CACHED  (0ms)
- *   🔹 Consume  token[0] - import - <ImportTok>  ✅  ⚡CACHED  (0ms)
- *   ➡️  ImportClause
- *     🔹 Consume  token[1] - { - <LBrace>  ✅
- *     🔀 Or[3 branches]  trying #1  ✅
+ * ➡️  ImportDeclaration    ⚡CACHED  (1ms)
+ *   🔹 Consume  token[0] - import - <ImportTok>  ✅
+ *   ➡️  ImportClause  (0ms)
+ *     🔀 Or[2 branches]  trying #0  @token[1]
  *     ⏪ Backtrack  token[5] → token[2]
+ * ```
+ * 
+ * 2. 性能摘要：
+ * ```
+ * ⏱️  性能摘要
+ * ────────────────────────────────────────
+ * 总耗时: 12.45ms
+ * 总调用: 133 次
+ * 实际执行: 42 次
+ * 缓存命中: 91 次 (68.5%)
+ * 
+ * Top 5 慢规则:
+ *   1. Expression: 5.23ms (45次, 平均116μs)
+ *   2. Statement: 3.12ms (28次, 平均111μs)
  * ```
  */
 export class SubhutiTraceDebugger implements SubhutiDebugger {
+    // ========================================
+    // 过程追踪数据
+    // ========================================
     private output: string[] = []
     private depth = 0
     private lineMap = new Map<string, number>()  // 规则名 -> 输出行号
     
+    // ========================================
+    // 性能统计数据
+    // ========================================
+    private stats = new Map<string, RuleStats>()
+    
+    // ========================================
+    // 过程追踪方法
+    // ========================================
+    
     onRuleEnter(ruleName: string, tokenIndex: number): number {
+        // 1. 过程追踪：记录规则进入
         const line = `${'  '.repeat(this.depth)}➡️  ${ruleName}`
         this.output.push(line)
         this.lineMap.set(ruleName, this.output.length - 1)
         this.depth++
+        
+        // 2. 性能统计：初始化统计数据
+        let stat = this.stats.get(ruleName)
+        if (!stat) {
+            stat = {
+                ruleName,
+                totalCalls: 0,
+                actualExecutions: 0,
+                cacheHits: 0,
+                totalTime: 0,
+                executionTime: 0,
+                avgTime: 0
+            }
+            this.stats.set(ruleName, stat)
+        }
+        stat.totalCalls++
+        
+        // 返回开始时间（用于计算耗时）
         return performance.now()
     }
     
@@ -128,13 +197,31 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
             duration = performance.now() - context
         }
         
-        // 更新对应的进入行，添加状态信息
+        // 1. 过程追踪：更新输出行
         const lineIndex = this.lineMap.get(ruleName)
         if (lineIndex !== undefined) {
             const cacheTag = cacheHit ? '  ⚡CACHED' : ''
             const timeTag = `  (${duration.toFixed(0)}ms)`
             this.output[lineIndex] += cacheTag + timeTag
             this.lineMap.delete(ruleName)
+        }
+        
+        // 2. 性能统计：更新统计数据
+        const stat = this.stats.get(ruleName)
+        if (stat) {
+            stat.totalTime += duration
+            
+            if (cacheHit) {
+                stat.cacheHits++
+            } else {
+                stat.actualExecutions++
+                stat.executionTime += duration
+                
+                // 更新平均耗时
+                if (stat.actualExecutions > 0) {
+                    stat.avgTime = stat.executionTime / stat.actualExecutions
+                }
+            }
         }
     }
     
@@ -175,14 +262,128 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
         )
     }
     
+    // ========================================
+    // 过程追踪输出
+    // ========================================
+    
+    /**
+     * 获取执行轨迹（过程追踪）
+     */
     getTrace(): string {
         return this.output.join('\n')
     }
     
+    // ========================================
+    // 性能统计输出
+    // ========================================
+    
+    /**
+     * 获取性能摘要（简化版）
+     * 
+     * 输出示例：
+     * ```
+     * ⏱️  性能摘要
+     * ────────────────────────────────────────
+     * 总耗时: 12.45ms
+     * 总调用: 133 次
+     * 实际执行: 42 次
+     * 缓存命中: 91 次 (68.5%)
+     * 
+     * Top 5 慢规则:
+     *   1. Expression: 5.23ms (45次, 平均116μs)
+     *   2. Statement: 3.12ms (28次, 平均111μs)
+     * ```
+     */
+    getSummary(): string {
+        const allStats = Array.from(this.stats.values())
+        
+        if (allStats.length === 0) {
+            return '📊 性能摘要：无数据'
+        }
+        
+        // 计算总计
+        const totalCalls = allStats.reduce((sum, s) => sum + s.totalCalls, 0)
+        const totalExecutions = allStats.reduce((sum, s) => sum + s.actualExecutions, 0)
+        const totalCacheHits = allStats.reduce((sum, s) => sum + s.cacheHits, 0)
+        const totalTime = allStats.reduce((sum, s) => sum + s.totalTime, 0)
+        const cacheHitRate = totalCalls > 0 ? (totalCacheHits / totalCalls * 100).toFixed(1) : '0.0'
+        
+        const lines: string[] = []
+        lines.push('⏱️  性能摘要')
+        lines.push('─'.repeat(40))
+        lines.push(`总耗时: ${totalTime.toFixed(2)}ms`)
+        lines.push(`总调用: ${totalCalls.toLocaleString()} 次`)
+        lines.push(`实际执行: ${totalExecutions.toLocaleString()} 次`)
+        lines.push(`缓存命中: ${totalCacheHits.toLocaleString()} 次 (${cacheHitRate}%)`)
+        lines.push('')
+        
+        // Top 5 慢规则（简化版，无表格边框）
+        const top5 = allStats
+            .filter(s => s.actualExecutions > 0)
+            .sort((a, b) => b.executionTime - a.executionTime)
+            .slice(0, 5)
+        
+        if (top5.length > 0) {
+            lines.push('Top 5 慢规则:')
+            top5.forEach((stat, i) => {
+                const avgUs = (stat.avgTime * 1000).toFixed(1)
+                lines.push(
+                    `  ${i + 1}. ${stat.ruleName}: ${stat.executionTime.toFixed(2)}ms ` +
+                    `(${stat.totalCalls}次, 平均${avgUs}μs)`
+                )
+            })
+        }
+        
+        return lines.join('\n')
+    }
+    
+    /**
+     * 获取简洁摘要（单行）
+     * 
+     * 输出示例：
+     * `⏱️ 12.45ms | 8 rules | 133 calls | 68.5% cached`
+     */
+    getShortSummary(): string {
+        const allStats = Array.from(this.stats.values())
+        const totalCalls = allStats.reduce((sum, s) => sum + s.totalCalls, 0)
+        const totalCacheHits = allStats.reduce((sum, s) => sum + s.cacheHits, 0)
+        const totalTime = allStats.reduce((sum, s) => sum + s.totalTime, 0)
+        const ruleCount = allStats.length
+        const cacheHitRate = totalCalls > 0 ? (totalCacheHits / totalCalls * 100).toFixed(1) : '0.0'
+        
+        return `⏱️  ${totalTime.toFixed(2)}ms | ${ruleCount} rules | ${totalCalls.toLocaleString()} calls | ${cacheHitRate}% cached`
+    }
+    
+    /**
+     * 获取原始统计数据（供高级用户使用）
+     * 
+     * 使用示例：
+     * ```typescript
+     * const stats = debugger.getStats()
+     * for (const [ruleName, stat] of stats) {
+     *   console.log(`${ruleName}: ${stat.avgTime}ms`)
+     * }
+     * ```
+     */
+    getStats(): Map<string, RuleStats> {
+        return this.stats
+    }
+    
+    // ========================================
+    // 清空方法
+    // ========================================
+    
+    /**
+     * 清空所有记录（追踪 + 统计）
+     */
     clear(): void {
+        // 清空过程追踪
         this.output = []
         this.depth = 0
         this.lineMap.clear()
+        
+        // 清空性能统计
+        this.stats.clear()
     }
 }
 

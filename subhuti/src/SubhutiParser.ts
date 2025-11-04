@@ -42,11 +42,10 @@
  */
 
 import SubhutiTokenConsumer from "./SubhutiTokenConsumer.ts"
-import { SubhutiProfiler } from "./SubhutiProfiler.ts"
 import SubhutiCst from "./struct/SubhutiCst.ts";
 import type SubhutiMatchToken from "./struct/SubhutiMatchToken.ts";
 import {SubhutiErrorHandler} from "./SubhutiError.ts";
-import {type SubhutiDebugger, SubhutiTraceDebugger} from "./SubhutiDebug.ts";
+import {type SubhutiDebugger, SubhutiTraceDebugger, type RuleStats} from "./SubhutiDebug.ts";
 import {SubhutiPackratCache, type SubhutiPackratCacheResult} from "./SubhutiPackratCache.ts";
 
 // ============================================
@@ -278,21 +277,16 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     private readonly _cache: SubhutiPackratCache
     
     /**
-     * 性能分析器（可选）⭐
-     * 
-     * 用途：
-     * - 调试：找出性能瓶颈
-     * - 调优：评估优化效果
-     * - 监控：生产环境性能监控
+     * 性能分析功能已合并到调试器中（v3.0）
      * 
      * 使用方式：
      * ```typescript
-     * parser.enableProfiling()
+     * const parser = new MyParser(tokens).debug()
      * const cst = parser.Program()
-     * console.log(parser.getProfilingReport())
+     * console.log(parser.getDebugSummary())  // 性能摘要
+     * console.log(parser.getDebugStats())    // 原始数据
      * ```
      */
-    private profiler?: SubhutiProfiler
     
     // ========================================
     // 构造函数
@@ -511,27 +505,20 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     }
     
     /**
-     * 开启/关闭性能分析
+     * 开启/关闭性能分析（v3.0 已合并到 debug）
      * 
      * 使用示例：
      * ```typescript
-     * parser.profiling()       // 开启性能分析（默认）
-     * parser.profiling(false)  // 关闭性能分析
+     * parser.profiling()       // 等同于 debug()
+     * parser.profiling(false)  // 等同于 debug(false)
      * ```
      * 
-     * @param enable - 是否启用性能分析（默认true）
+     * @deprecated 请使用 debug() 代替，性能统计已集成
+     * @param enable - 是否启用（默认true）
      * @returns this（链式调用）
      */
     profiling(enable: boolean = true): this {
-        if (enable) {
-            if (!this.profiler) {
-                this.profiler = new SubhutiProfiler()
-            }
-            this.profiler.start()
-        } else {
-            this.profiler?.stop()
-        }
-        return this
+        return this.debug(enable)
     }
     
     /**
@@ -634,7 +621,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         // - 开销极小（可选链 + 未启用时立即返回 undefined）
         //
         const observeContext = this._debugger?.onRuleEnter(ruleName, this.tokenIndex)
-        const perfContext = this.profiler?.startRule(ruleName)
         
         // ============================================
         // Layer 3: 缓存层（性能优化）
@@ -646,7 +632,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
                 
                 // ⭐ 关键改进：通知观测层（缓存命中）
                 this._debugger?.onRuleExit(ruleName, cached.endTokenIndex, true, observeContext)
-                this.profiler?.endRule(ruleName, perfContext, true)
                 
                 // 快速返回
                 return this.applyCachedResult(cached)
@@ -682,7 +667,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             // Layer 6: 观测层退出（实际执行）⭐
             // ============================================
             this._debugger?.onRuleExit(ruleName, this.tokenIndex, false, observeContext)
-            this.profiler?.endRule(ruleName, perfContext, false)
         }
         
         return cst
@@ -1140,43 +1124,58 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     
     
     /**
-     * 获取性能分析报告（详细版）
+     * 获取性能分析报告（v3.0 已合并到 debug）
      * 
      * 包含：
-     * - 总时间
-     * - Top 10 慢规则
-     * - 性能建议
+     * - 总耗时、总调用、缓存命中率
+     * - Top 5 慢规则
      * 
      * @returns 格式化的性能报告
      */
     getProfilingReport(): string {
-        if (!this.profiler) {
-            return '⚠️  性能分析未启用\n   → 请先调用 profiling()'
+        if (!this._debugger) {
+            return '⚠️  性能分析未启用\n   → 请先调用 debug()'
         }
         
-        return this.profiler.getReport()
+        if ('getSummary' in this._debugger && typeof this._debugger.getSummary === 'function') {
+            return (this._debugger as any).getSummary()
+        }
+        
+        return '⚠️  当前调试器不支持性能统计'
     }
     
     /**
      * 获取简洁报告（单行）
      * 
-     * @returns 例如："⏱️  245.32ms | 42 rules | 15,234 calls"
+     * @returns 例如："⏱️ 12.45ms | 8 rules | 133 calls | 68.5% cached"
      */
     getProfilingShortReport(): string {
-        if (!this.profiler) {
+        if (!this._debugger) {
             return '⚠️  Profiling not enabled'
         }
         
-        return this.profiler.getShortReport()
+        if ('getShortSummary' in this._debugger && typeof this._debugger.getShortSummary === 'function') {
+            return (this._debugger as any).getShortSummary()
+        }
+        
+        return '⚠️  当前调试器不支持性能统计'
     }
     
     /**
-     * 获取规则统计数据（原始数据）
+     * 获取规则统计数据（v3.0 已合并到 debug）
      * 
      * 用于自定义分析或可视化
      */
-    getProfilingStats(): Map<string, import('./SubhutiProfiler.ts').RuleStats> | null {
-        return this.profiler?.getRuleStats() || null
+    getProfilingStats(): Map<string, RuleStats> | null {
+        if (!this._debugger) {
+            return null
+        }
+        
+        if ('getStats' in this._debugger && typeof this._debugger.getStats === 'function') {
+            return (this._debugger as any).getStats()
+        }
+        
+        return null
     }
 }
 
@@ -1236,18 +1235,17 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
  */
 
 /**
- * 导出性能分析器和统计类型（v2.0 新增）⭐
+ * 导出性能统计类型（v3.0 已合并到 Debug）⭐
  * 
  * 使用方式：
  * ```typescript
- * import { SubhutiProfiler } from './SubhutiParser.ts'
  * import type { RuleStats } from './SubhutiParser.ts'
  * 
- * // 启用性能分析
- * const parser = new MyParser(tokens).profiling()
+ * // 启用调试（包含性能统计）
+ * const parser = new MyParser(tokens).debug()
  * const cst = parser.Program()
  * 
- * // 获取格式化报告
+ * // 获取性能摘要
  * console.log(parser.getProfilingReport())
  * 
  * // 获取原始数据
@@ -1257,8 +1255,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
  * }
  * ```
  */
-export { SubhutiProfiler } from "./SubhutiProfiler.ts"
-export type { RuleStats } from "./SubhutiProfiler.ts"
+export type { RuleStats } from "./SubhutiDebug.ts"
 
 /**
  * 导出 SubhutiPackratCache Cache（缓存管理器）和相关类型（v4.2 新增）⭐⭐
