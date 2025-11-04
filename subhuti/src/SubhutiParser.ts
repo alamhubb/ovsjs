@@ -47,7 +47,7 @@ import type SubhutiCst from "./struct/SubhutiCst.ts";
 import type SubhutiMatchToken from "./struct/SubhutiMatchToken.ts";
 import {SubhutiErrorHandler} from "./SubhutiError.ts";
 import type {SubhutiDebugger} from "./SubhutiDebug.ts";
-import type {PackratCacheConfig, SubhutiMemoizer, SubhutiMemoResult} from "./SubhutiCache.ts";
+import type {PackratCacheConfig, SubhutiMemoizer, SubhutiMemoResult} from "./SubhutiPackratCache.ts";
 
 // ============================================
 // [1] 类型定义（类型安全）
