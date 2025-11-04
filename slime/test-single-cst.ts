@@ -198,7 +198,7 @@ for (let i = 0; i < testCases.length; i++) {
         console.log(`  ✅ 词法分析: ${tokens.length} tokens (有效: ${inputTokens.length})`)
         
         // 语法分析
-        const parser = new Es2020Parser(tokens)
+        const parser = new Es2020Parser(tokens).debug()
         const cst = parser.Program()
         console.log(`  ✅ 语法分析: CST生成成功`)
         

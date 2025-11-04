@@ -399,41 +399,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     private readonly className: string
     
     // ========================================
-    // 调试支持（极简方案）⭐
-    // ========================================
-    
-    /**
-     * 调试模式标志
-     */
-    private _debugMode: boolean = false
-    
-    /**
-     * 调试数据（简单对象）
-     */
-    private debugData = {
-        ruleExecutions: [] as Array<{
-            type: 'enter' | 'exit'
-            ruleName: string
-            tokenIndex: number
-            timestamp: number
-            success?: boolean
-        }>,
-        orBranches: [] as Array<{
-            ruleName: string
-            totalBranches: number
-            successBranch?: number
-            tokenIndex: number
-        }>,
-        tokenConsumes: [] as Array<{
-            tokenName: string
-            tokenIndex: number
-            success: boolean
-        }>,
-        startTime: 0,
-        endTime: 0
-    }
-    
-    // ========================================
     // allowError 机制（⭐ 核心创新 - 智能错误管理）
     // ========================================
     
@@ -730,34 +695,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         this.clearMemoCache()
     }
     
-    /**
-     * 开启调试模式（链式调用）⭐
-     * 
-     * 使用示例：
-     * ```typescript
-     * const parser = new Es2020Parser(tokens).debug()
-     * const cst = parser.Program()
-     * const data = parser.getDebugData()
-     * console.log(data)
-     * ```
-     */
-    debug(): this {
-        this._debugMode = true
-        this.debugData.startTime = performance.now()
-        return this
-    }
-    
-    /**
-     * 获取调试数据
-     * 
-     * @returns 调试数据对象，如果未开启调试则返回 null
-     */
-    getDebugData() {
-        if (!this._debugMode) return null
-        this.debugData.endTime = performance.now()
-        return this.debugData
-    }
-    
     // ========================================
     // 规则执行入口（Packrat 集成）
     // ========================================
@@ -804,30 +741,33 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             }
         }
         
-        // 执行规则
+        // 执行规则（⭐ 添加性能记录）
         const startTokenIndex = this.tokenIndex
-        
-        // ⭐ 调试：记录规则进入
-        if (this._debugMode) {
-            this.debugData.ruleExecutions.push({
-                type: 'enter',
-                ruleName,
-                tokenIndex: this.tokenIndex,
-                timestamp: performance.now()
-            })
+        const startTime = this.profiler ? performance.now() : 0
+
+        if(debug){
+
+        }
+        if (cache){
+
         }
         
         const cst = this.processCst(ruleName, targetFun)
+
+        if(debug){
+
+        }
+        if (cache){
+
+        }
+
+
+
         
-        // ⭐ 调试：记录规则退出
-        if (this._debugMode) {
-            this.debugData.ruleExecutions.push({
-                type: 'exit',
-                ruleName,
-                tokenIndex: this.tokenIndex,
-                timestamp: performance.now(),
-                success: cst !== undefined
-            })
+        // ⭐ 性能分析：记录规则执行时间
+        if (this.profiler && !isTopLevel) {
+            const duration = performance.now() - startTime
+            this.profiler.recordRule(ruleName, duration)
         }
         
         // 嵌套调用：存储缓存和清理
@@ -930,17 +870,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         const savedState = this.saveState()
         const totalCount = alternatives.length
         
-        // ⭐ 调试：记录 Or 进入
-        const currentRule = this.ruleStack[this.ruleStack.length - 1] || 'unknown'
-        if (this._debugMode) {
-            this.debugData.orBranches.push({
-                ruleName: currentRule,
-                totalBranches: totalCount,
-                successBranch: undefined,
-                tokenIndex: this.tokenIndex
-            })
-        }
-        
         for (let i = 0; i < totalCount; i++) {
             const alt = alternatives[i]
             const isLast = i === totalCount - 1
@@ -957,12 +886,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             if (!this._parseFailed) {
                 // ✅ 成功：退出 allowError 上下文，返回当前CST
                 this.allowErrorStackPopAndReset()
-                
-                // ⭐ 调试：记录成功分支
-                if (this._debugMode && this.debugData.orBranches.length > 0) {
-                    this.debugData.orBranches[this.debugData.orBranches.length - 1].successBranch = i
-                }
-                
                 return this.curCst
             }
             
@@ -1131,15 +1054,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             // 失败：标记失败状态
             this.markFailure()
             
-            // ⭐ 调试：记录消费失败
-            if (this._debugMode) {
-                this.debugData.tokenConsumes.push({
-                    tokenName,
-                    tokenIndex: this.tokenIndex,
-                    success: false
-                })
-            }
-            
             // ⭐ 核心：根据 allowError 决定行为
             if (this.outerHasAllowError || this.allowError) {
                 // 允许失败：返回 undefined（不抛异常）
@@ -1167,15 +1081,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         }
         
         // ✅ 成功：消费 token（不需要设置标志！）
-        // ⭐ 调试：记录消费成功
-        if (this._debugMode) {
-            this.debugData.tokenConsumes.push({
-                tokenName,
-                tokenIndex: this.tokenIndex,
-                success: true
-            })
-        }
-        
         this.tokenIndex++
         return this.generateCstByToken(token)
     }
