@@ -58,20 +58,33 @@ export interface SubhutiPackratCacheResult {
 }
 
 /**
+ * SubhutiPackratCache 基础统计数据（字段定义）
+ * 
+ * 包含三个核心统计字段，被以下类型复用：
+ * - SubhutiPackratCacheStats: 内部存储类
+ * - SubhutiPackratCacheStatsReport: 对外报告接口
+ */
+interface SubhutiPackratCacheStatsBase {
+    hits: number       // 缓存命中次数
+    misses: number     // 缓存未命中次数
+    stores: number     // 缓存存储次数
+}
+
+/**
  * SubhutiPackratCache 内部统计存储（仅内部使用）
  * 
  * 职责：
- * - 存储原始统计数据（hits, misses, stores）
+ * - 存储原始统计数据（实现 SubhutiPackratCacheStatsBase）
  * - 提供 reset() 方法用于清空
  * 
  * 注意：
  * - 这是内部类，不对外暴露
  * - 对外请使用 getStatsReport() 获取完整分析
  */
-class SubhutiPackratCacheStats {
-    hits: number = 0       // 缓存命中次数
-    misses: number = 0     // 缓存未命中次数
-    stores: number = 0     // 缓存存储次数
+class SubhutiPackratCacheStats implements SubhutiPackratCacheStatsBase {
+    hits: number = 0
+    misses: number = 0
+    stores: number = 0
 
     reset(): void {
         this.hits = 0
@@ -85,10 +98,12 @@ class SubhutiPackratCacheStats {
  * 
  * 通过 getStatsReport() 获取，包含完整的缓存分析数据：
  * 
- * 基础统计：
+ * 基础统计（继承自 SubhutiPackratCacheStatsBase）：
  * - hits: 缓存命中次数
  * - misses: 缓存未命中次数
  * - stores: 缓存存储次数
+ * 
+ * 计算字段：
  * - total: 总查询次数（hits + misses）
  * - hitRate: 命中率（如："68.5%"）
  * 
@@ -100,11 +115,8 @@ class SubhutiPackratCacheStats {
  * 性能建议：
  * - suggestions: 根据统计数据自动生成的优化建议
  */
-export interface SubhutiPackratCacheStatsReport {
-    // 基础统计
-    hits: number
-    misses: number
-    stores: number
+export interface SubhutiPackratCacheStatsReport extends SubhutiPackratCacheStatsBase {
+    // 计算字段
     total: number
     hitRate: string
 
