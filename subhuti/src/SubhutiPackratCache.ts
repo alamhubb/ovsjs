@@ -2,7 +2,7 @@
  * Subhuti SubhutiPackratCache Cache - 高性能 SubhutiPackratCache Parsing 缓存系统
  * 
  * 包含：
- * - SubhutiSubhutiPackratCache: 集成 LRU 缓存 + 统计 + 分析
+ * - SubhutiPackratCache: 集成 LRU 缓存 + 统计 + 分析
  * 
  * @version 3.0.0 - 架构简化（统一命名为 SubhutiPackratCache）
  * @date 2025-11-04
@@ -13,7 +13,7 @@ import type SubhutiCst from "./struct/SubhutiCst.ts";
 /**
  * 缓存配置
  */
-export interface SubhutiSubhutiPackratCacheConfig {
+export interface SubhutiPackratCacheConfig {
     /**
      * 最大缓存条目数
      * 
@@ -57,7 +57,7 @@ class LRUNode {
 }
 
 // ============================================
-// [1] SubhutiSubhutiPackratCache - SubhutiPackratCache Parsing缓存管理器（集成LRU）
+// [1] SubhutiPackratCache - SubhutiPackratCache Parsing缓存管理器（集成LRU）
 // ============================================
 
 /**
@@ -142,7 +142,7 @@ export interface SubhutiPackratCacheStatsReport {
  * - set: O(1) 常数时间
  * - 统计集成：零额外开销
  */
-export class SubhutiSubhutiPackratCache {
+export class SubhutiPackratCache {
     // ========================================
     // LRU 缓存实现
     // ========================================
@@ -211,16 +211,16 @@ export class SubhutiSubhutiPackratCache {
      * 配置方式：
      * ```typescript
      * // 默认（推荐 99%）
-     * new SubhutiSubhutiPackratCache()  → LRU(10000)
+     * new SubhutiPackratCache()  → LRU(10000)
      * 
      * // 大文件
-     * new SubhutiSubhutiPackratCache({ maxSize: 50000 })  → LRU(50000)
+     * new SubhutiPackratCache({ maxSize: 50000 })  → LRU(50000)
      * 
      * // 无限缓存（小文件 + 内存充足）
-     * new SubhutiSubhutiPackratCache({ maxSize: Infinity })  → Unlimited
+     * new SubhutiPackratCache({ maxSize: Infinity })  → Unlimited
      * ```
      */
-    constructor(config?: SubhutiSubhutiPackratCacheConfig) {
+    constructor(config?: SubhutiPackratCacheConfig) {
         this.maxSize = config?.maxSize ?? 10000  // 默认 10000
     }
     

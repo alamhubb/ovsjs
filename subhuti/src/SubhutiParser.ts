@@ -47,7 +47,7 @@ import type SubhutiCst from "./struct/SubhutiCst.ts";
 import type SubhutiMatchToken from "./struct/SubhutiMatchToken.ts";
 import {SubhutiErrorHandler} from "./SubhutiError.ts";
 import {type SubhutiDebugger, SubhutiTraceDebugger} from "./SubhutiDebug.ts";
-import type {SubhutiSubhutiPackratCacheConfig, SubhutiSubhutiPackratCache, SubhutiPackratCacheResult} from "./SubhutiSubhutiPackratCache.ts";
+import type {SubhutiPackratCacheConfig, SubhutiPackratCache, SubhutiPackratCacheResult} from "./SubhutiPackratCache.ts";
 
 // ============================================
 // [1] 类型定义（类型安全）
@@ -73,7 +73,7 @@ export interface SubhutiBackData {
     curCstChildrenLength: number          // children 数组长度
 }
 
-// SubhutiPackratCacheResult 已移至 SubhutiSubhutiPackratCache.ts
+// SubhutiPackratCacheResult 已移至 SubhutiPackratCache.ts
 
 
 // ============================================
@@ -275,7 +275,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * - 高性能：10000 条足够大多数文件
      * - 长时间运行：内存不会无限增长
      */
-    private readonly _cache: SubhutiSubhutiPackratCache
+    private readonly _cache: SubhutiPackratCache
     
     /**
      * 性能分析器（可选）⭐
@@ -329,14 +329,14 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     constructor(
         tokens: SubhutiMatchToken[] = [],
         TokenConsumerClass?: SubhutiTokenConsumerConstructor<T>,
-        cacheConfig?: SubhutiSubhutiPackratCacheConfig
+        cacheConfig?: SubhutiPackratCacheConfig
     ) {
         this._tokens = tokens
         this.tokenIndex = 0
         this.className = this.constructor.name
         
         // ⭐ 初始化 SubhutiPackratCache Cache（默认 LRU 10000）
-        this._cache = new SubhutiSubhutiPackratCache(cacheConfig)
+        this._cache = new SubhutiPackratCache(cacheConfig)
         
         // 创建 TokenConsumer 实例
         if (TokenConsumerClass) {
@@ -1255,7 +1255,7 @@ export type { RuleStats } from "./SubhutiProfiler.ts"
  * 
  * 使用方式：
  * ```typescript
- * import { SubhutiSubhutiPackratCache } from './SubhutiParser.ts'
+ * import { SubhutiPackratCache } from './SubhutiParser.ts'
  * import type { SubhutiPackratCacheResult, SubhutiPackratCacheStats } from './SubhutiParser.ts'
  * 
  * // 默认使用（Parser 自动创建）
