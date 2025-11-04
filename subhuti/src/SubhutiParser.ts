@@ -15,7 +15,7 @@ import SubhutiTokenConsumer from "./SubhutiTokenConsumer.ts"
 import SubhutiCst from "./struct/SubhutiCst.ts";
 import type SubhutiMatchToken from "./struct/SubhutiMatchToken.ts";
 import {SubhutiErrorHandler} from "./SubhutiError.ts";
-import {type SubhutiDebugger, SubhutiTraceDebugger, type RuleStats} from "./SubhutiDebug.ts";
+import {type SubhutiDebugger, SubhutiTraceDebugger} from "./SubhutiDebug.ts";
 import {SubhutiPackratCache, type SubhutiPackratCacheResult} from "./SubhutiPackratCache.ts";
 
 // ============================================
@@ -1251,7 +1251,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
  * }
  * ```
  */
-export type { RuleStats } from "./SubhutiDebug.ts"
 
 /**
  * 导出 SubhutiPackratCache Cache（缓存管理器）和相关类型（v4.2 新增）⭐⭐
