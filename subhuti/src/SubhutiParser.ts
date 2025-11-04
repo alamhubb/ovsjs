@@ -388,56 +388,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         return currentToken.rowNum > prevToken.rowNum
     }
     
-    /**
-     * 规则成功状态（只读，兼容性）
-     */
-    get ruleSuccess(): boolean {
-        return this._parseSuccess
-    }
-    
-    // ========================================
-    // 状态管理封装方法（优化版）
-    // ========================================
-    
-    /**
-     * 标记当前规则失败
-     * 
-     * 用途：在规则执行失败时调用
-     * - consumeToken 失败
-     * - 手动失败处理
-     */
-    private markFailure(): void {
-        this._parseSuccess = false
-    }
-    
-    /**
-     * 重置为成功状态
-     * 
-     * 用途：
-     * - Or 规则尝试下一个分支前
-     * - Many/Option 规则回溯后
-     * - 初始化时
-     */
-    private resetFailure(): void {
-        this._parseSuccess = true
-    }
-    
-    /**
-     * 判断是否是顶层规则调用
-     * 
-     * 用途：替代 isFirstRule 标志
-     * - true: 第一次调用规则，需要初始化
-     * - false: 嵌套调用规则，不需要初始化
-     * 
-     * 优势：
-     * - 无需额外状态（利用已有的栈）
-     * - 自动管理（栈的push/pop自动维护）
-     * - 语义准确（栈为空 = 顶层调用）
-     */
-    private get isTopLevelCall(): boolean {
-        return this.cstStack.length === 0 && this.ruleStack.length === 0
-    }
-    
     // ========================================
     // 公开方法
     // ========================================
@@ -519,20 +469,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         return this
     }
     
-    /**
-     * 调试器实例（只读）
-     * 
-     * 高级用户可以通过此属性访问原始数据：
-     * ```typescript
-     * const rawStats = parser.debugger?.getStats()
-     * const rawTrace = parser.debugger?.getTrace()
-     * const rawSummary = parser.debugger?.getSummary()
-     * ```
-     */
-    get debugger(): SubhutiDebugger | undefined {
-        return this._debugger
-    }
-    
     // ========================================
     // 规则执行入口（SubhutiPackratCache 集成）
     // ========================================
@@ -554,7 +490,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      */
     subhutiRule(targetFun: Function, ruleName: string, className: string): SubhutiCst | undefined {
         // 1. 前置检查（类检查 + 初始化 + 快速失败）
-        const isTopLevel = this.isTopLevelCall
+        const isTopLevel = this.cstStack.length === 0 && this.ruleStack.length === 0
         if (!this._preCheckRule(ruleName, className, isTopLevel)) {
             return undefined
         }
@@ -779,7 +715,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
                 if (!isLast) {
                     // 非最后分支：回溯 + 重置状态，继续尝试
                     this.restoreState(savedState, 'Or branch failed')
-                    this.resetFailure()  // 重置失败状态
+                    this._parseSuccess = true  // 重置失败状态
                 } else {
                     // 最后分支：回溯，保持失败状态
                     this.restoreState(savedState, 'Or all branches failed')
@@ -892,7 +828,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * 
      * 参考：旧版 copyolddata.ts 的精妙设计
      */
-    consumeToken(tokenName: string): SubhutiCst | undefined {
+    consume(tokenName: string): SubhutiCst | undefined {
         if (!this._parseSuccess) {
             return undefined
         }
@@ -901,7 +837,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         
         if (!token || token.tokenName !== tokenName) {
             // 失败：标记失败状态
-            this.markFailure()
+            this._parseSuccess = false
             
             // ⭐ 调试：记录消费失败
             this._debugger?.onTokenConsume(
@@ -945,13 +881,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         
         this.tokenIndex++
         return this.generateCstByToken(token)
-    }
-    
-    /**
-     * 简洁别名（兼容性）
-     */
-    consume(tokenName: string): SubhutiCst | undefined {
-        return this.consumeToken(tokenName)
     }
     
     private generateCstByToken(token: SubhutiMatchToken): SubhutiCst {
@@ -1034,52 +963,8 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         
         // 失败：回溯 + 重置
         this.restoreState(savedState, reason)
-        this.resetFailure()
+        this._parseSuccess = true
         return false
-    }
-    
-    /**
-     * 尝试执行函数，失败时自动回溯（RAII 模式）⭐
-     * 
-     * 设计理念：
-     * - 执行前自动保存状态
-     * - 失败时自动恢复状态
-     * - 成功时重置失败状态
-     * 
-     * 性能：
-     * - 不涉及 try-catch，性能优秀
-     * - 简单的状态检查和恢复
-     * 
-     * 优势：
-     * - ✅ 自动回溯：失败时一定会恢复状态
-     * - ✅ 代码简洁：不需要手动 saveState/restoreState
-     * - ✅ 易于使用：返回结构化结果
-     * 
-     * 使用示例：
-     * ```typescript
-     * const { success, result } = this.tryWithBacktrack(() => {
-     *   this.someRule()
-     *   return this.curCst
-     * })
-     * if (success) return result
-     * ```
-     * 
-     * @param fn - 要执行的函数
-     * @returns { success: boolean, result?: T }
-     */
-    private tryWithBacktrack<T>(fn: () => T): { success: boolean, result?: T } {
-        const savedState = this.saveState()
-        
-        const result = fn()
-        
-        if (this._parseSuccess) {
-            return { success: true, result }
-        }
-        
-        // 失败：自动恢复
-        this.restoreState(savedState, 'Backtrack on failure')
-        this._parseSuccess = true  // 重置成功状态
-        return { success: false }
     }
     
     // ========================================
@@ -1108,35 +993,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         return undefined
     }
     
-    /**
-     * 清空所有缓存（向后兼容）
-     * 
-     * 使用场景：
-     * - 解析新文件前（通过 setTokens 自动调用）
-     * - 手动清理内存
-     * - 测试重置
-     */
-    clearCache(): void {
-        this._cache.clear()
-    }
-    
-    /**
-     * 获取 SubhutiPackratCache Parsing 详细统计信息（委托给 SubhutiPackratCache）
-     * 
-     * 用途：
-     * - 评估缓存效率（命中率）
-     * - 性能调优依据（智能建议）
-     * 
-     * 返回信息：
-     * - 基础统计：hits、misses、命中率
-     * - 缓存信息：规则数、总条目、平均条目
-     * - 性能建议：根据数据自动生成
-     * 
-     * @returns 详细的缓存统计和性能建议
-     */
-    getCacheStats() {
-        return this._cache.getStatsReport()
-    }
     
     // ========================================
     // 辅助方法
@@ -1191,100 +1047,3 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 // [4] 导出类型和类（供用户使用）
 // ============================================
 
-/**
- * 导出缓存配置类型
- * 
- * 99% 用户不需要导入此类型（使用默认配置即可）
- * 1% 用户需要自定义缓存大小时使用
- * 
- * 示例：
- * ```typescript
- * import type { SubhutiPackratCacheConfig } from './SubhutiParser.ts'
- * const config: SubhutiPackratCacheConfig = { maxSize: 50000 }
- * ```
- */
-
-/**
- * 导出调试器接口和默认实现
- * 
- * 使用方式：
- * ```typescript
- * import { SubhutiTraceDebugger } from './SubhutiParser.ts'
- * import type { SubhutiDebugger } from './SubhutiParser.ts'
- * 
- * // 使用默认调试器
- * const parser = new MyParser(tokens).debug()
- * 
- * // 自定义调试器
- * class MyDebugger implements SubhutiDebugger { ... }
- * const parser = new MyParser(tokens).debug(new MyDebugger())
- * ```
- */
-
-/**
- * 导出错误处理器和错误类
- * 
- * 使用方式：
- * ```typescript
- * import { SubhutiErrorHandler, ParsingError } from './SubhutiParser.ts'
- * 
- * // 创建错误处理器
- * const errorHandler = new SubhutiErrorHandler()
- * 
- * // 捕获解析错误
- * try {
- *   parser.Program()
- * } catch (e) {
- *   if (e instanceof ParsingError) {
- *     console.log(e.toString())  // 详细错误
- *   }
- * }
- * ```
- */
-
-/**
- * 导出性能统计类型（v3.0 已合并到 Debug）⭐
- * 
- * 使用方式：
- * ```typescript
- * import type { RuleStats } from './SubhutiParser.ts'
- * 
- * // 启用调试（自动输出性能摘要 + 执行追踪）
- * const parser = new MyParser(tokens).debug()
- * const cst = parser.Program()
- * // 执行完成后自动输出调试信息
- * 
- * // 高级用户：访问原始数据
- * const stats: Map<string, RuleStats> = parser.debugger?.getStats()
- * if (stats) {
- *   for (const [ruleName, stat] of stats) {
- *     console.log(`${ruleName}: ${stat.totalCalls} calls, ${stat.cacheHits} cached`)
- *   }
- * }
- * ```
- */
-
-/**
- * 导出 SubhutiPackratCache Cache（缓存管理器）和相关类型（v4.2 新增）⭐⭐
- * 
- * 用途：
- * - 管理 SubhutiPackratCache Parsing 缓存（LRU算法）
- * - 统计缓存命中率
- * - 提供性能建议
- * 
- * 使用方式：
- * ```typescript
- * import { SubhutiPackratCache } from './SubhutiParser.ts'
- * import type { SubhutiPackratCacheResult, SubhutiPackratCacheStats } from './SubhutiParser.ts'
- * 
- * // 默认使用（Parser 自动创建）
- * const parser = new MyParser(tokens)
- * console.log(parser.getCacheStats())
- * 
- * // 自定义缓存大小
- * const parser = new MyParser(tokens, undefined, { maxSize: 50000 })
- * 
- * // 禁用缓存
- * parser.cache(false)
- * ```
- */

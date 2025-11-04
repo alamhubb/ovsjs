@@ -33,13 +33,13 @@ const tokens = [
 // ============================================
 
 class ImportTokenConsumer extends SubhutiTokenConsumer {
-    ImportTok = () => this.instance.consumeToken('ImportTok')
-    FromTok = () => this.instance.consumeToken('FromTok')
-    LBrace = () => this.instance.consumeToken('LBrace')
-    RBrace = () => this.instance.consumeToken('RBrace')
-    Comma = () => this.instance.consumeToken('Comma')
-    Identifier = () => this.instance.consumeToken('Identifier')
-    StringLiteral = () => this.instance.consumeToken('StringLiteral')
+    ImportTok = () => this.instance.consume('ImportTok')
+    FromTok = () => this.instance.consume('FromTok')
+    LBrace = () => this.instance.consume('LBrace')
+    RBrace = () => this.instance.consume('RBrace')
+    Comma = () => this.instance.consume('Comma')
+    Identifier = () => this.instance.consume('Identifier')
+    StringLiteral = () => this.instance.consume('StringLiteral')
 }
 
 @Subhuti
