@@ -797,19 +797,10 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         
         // ⭐ 使用 withAllowError 自动管理状态
         return this.withAllowError(() => {
-            while (true) {
-                const savedState = this.saveState()
-                fn()  // 执行函数
-                
-                // ⭐ 修复：只根据 _parseSuccess 判断，不依赖返回值
-                if (!this._parseSuccess) {
-                    // 失败：回溯，退出循环
-                    this.restoreState(savedState, 'Many iteration failed')
-                    this.resetFailure()  // Many 总是成功
-                    break
-                }
+            // 循环尝试，直到失败
+            while (this.tryAndRestore(fn, 'Many iteration failed')) {
+                // 继续循环
             }
-            
             return this.curCst
         })
     }
@@ -828,16 +819,8 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         
         // ⭐ 使用 withAllowError 自动管理状态
         return this.withAllowError(() => {
-            const savedState = this.saveState()
-            fn()  // 执行函数
-            
-            // ⭐ 修复：只根据 _parseFailed 判断，不依赖返回值
-            if (!this._parseSuccess) {
-                // 失败：回溯，重置状态
-                this.restoreState(savedState, 'Option failed')
-                this.resetFailure()  // Option 总是成功
-            }
-            
+            // 尝试一次（成功或失败都继续）
+            this.tryAndRestore(fn, 'Option failed')
             return this.curCst
         })
     }
@@ -865,19 +848,10 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         
         // 后续：0次或多次（使用 withAllowError 自动管理状态）
         return this.withAllowError(() => {
-            while (true) {
-                const savedState = this.saveState()
-                fn()  // 执行函数
-                
-                // ⭐ 修复：只根据 _parseSuccess 判断，不依赖返回值
-                if (!this._parseSuccess) {
-                    // 失败：回溯，退出循环
-                    this.restoreState(savedState, 'AtLeastOne iteration failed')
-                    this.resetFailure()  // 至少成功1次，整体成功
-                    break
-                }
+            // 循环尝试，直到失败
+            while (this.tryAndRestore(fn, 'AtLeastOne iteration failed')) {
+                // 继续循环
             }
-            
             return this.curCst
         })
     }
@@ -1022,6 +996,34 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         if (currentCst) {
             currentCst.children.length = backData.curCstChildrenLength
         }
+    }
+    
+    /**
+     * 尝试执行函数，失败时自动回溯并重置失败状态
+     * 
+     * 设计理念：
+     * - 保存状态 → 执行函数 → 判断成功
+     * - 失败时：回溯 + 重置失败状态
+     * - 成功时：保持状态
+     * 
+     * 用途：简化 Many/Option/AtLeastOne 中的重复代码
+     * 
+     * @param fn - 要执行的函数
+     * @param reason - 回溯原因（用于调试）
+     * @returns 是否成功
+     */
+    private tryAndRestore(fn: () => void, reason: string = 'Try failed'): boolean {
+        const savedState = this.saveState()
+        fn()
+        
+        if (this._parseSuccess) {
+            return true  // 成功
+        }
+        
+        // 失败：回溯 + 重置
+        this.restoreState(savedState, reason)
+        this.resetFailure()
+        return false
     }
     
     /**
