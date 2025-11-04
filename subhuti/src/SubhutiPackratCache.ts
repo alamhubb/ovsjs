@@ -25,13 +25,13 @@ import type SubhutiCst from "./struct/SubhutiCst.ts";
  * - 访问的节点移动到 head
  * - 淘汰时删除 tail
  */
-class LRUNode {
+class LRUNode<T> {
     key: string
-    value: any
-    prev: LRUNode | null = null
-    next: LRUNode | null = null
+    value: T
+    prev: LRUNode<T> | null = null
+    next: LRUNode<T> | null = null
     
-    constructor(key: string, value: any) {
+    constructor(key: string, value: T) {
         this.key = key
         this.value = value
     }
@@ -78,9 +78,9 @@ export interface SubhutiPackratCacheStatsReport {
     hitRate: string
     
     // 缓存信息
-    cacheSize: number
-    totalEntries: number
-    avgEntriesPerRule: string
+    maxCacheSize: number        // 最大容量
+    currentSize: number         // 当前大小
+    usageRate: string           // 使用率（如："45.2%" 或 "unlimited"）
     
     // 性能建议
     suggestions: string[]
@@ -105,17 +105,13 @@ export interface SubhutiPackratCacheStatsReport {
  * 使用示例：
  * ```typescript
  * // 默认配置（推荐 99%）- LRU(10000)
- * const parser = new MyParser(tokens)
- * console.log(parser.getCacheStats())
+ * const cache = new SubhutiPackratCache()
  * 
  * // 自定义缓存大小（大文件）- LRU(50000)
- * const parser = new MyParser(tokens, undefined, { maxSize: 50000 })
+ * const cache = new SubhutiPackratCache(50000)
  * 
  * // 无限缓存（小文件 + 内存充足）
- * const parser = new MyParser(tokens, undefined, { maxSize: Infinity })
- * 
- * // 禁用缓存
- * parser.cache(false)
+ * const cache = new SubhutiPackratCache(0)
  * ```
  * 
  * 性能：
@@ -129,19 +125,19 @@ export class SubhutiPackratCache {
     // ========================================
     
     /**
-     * 缓存主存储（Map: key → LRUNode）⭐⭐ 双向链表优化
+     * 缓存主存储（Map: key → LRUNode<SubhutiPackratCacheResult>）⭐⭐ 双向链表优化
      * 
-     * 结构：Map<"ruleName:tokenIndex", LRUNode>
+     * 结构：Map<"ruleName:tokenIndex", LRUNode<SubhutiPackratCacheResult>>
      * 
      * 优势：
      * - Map: O(1) 查找
-     * - LRUNode: 包含 prev/next 指针，支持 O(1) 移动
+     * - LRUNode<SubhutiPackratCacheResult>: 包含 prev/next 指针，支持 O(1) 移动
      * - 复合键：单层查找（键值优化）
      * 
      * 复合键格式：`${ruleName}:${tokenIndex}`
      * 示例："Expression:42" → 规则Expression在位置42的缓存节点
      */
-    private cache = new Map<string, LRUNode>()
+    private cache = new Map<string, LRUNode<SubhutiPackratCacheResult>>()
     
     /**
      * 双向链表头部（最新访问）
@@ -150,12 +146,12 @@ export class SubhutiPackratCache {
      * - head: 最近访问的节点
      * - tail: 最久未访问的节点（优先淘汰）
      */
-    private head: LRUNode | null = null
+    private head: LRUNode<SubhutiPackratCacheResult> | null = null
     
     /**
      * 双向链表尾部（最久未访问）
      */
-    private tail: LRUNode | null = null
+    private tail: LRUNode<SubhutiPackratCacheResult> | null = null
     
     /**
      * 当前缓存条目数
@@ -186,36 +182,29 @@ export class SubhutiPackratCache {
     
     /**
      * 构造 SubhutiPackratCache Cache
-     *
-     *
-     * 配置方式：
+     * 
+     * 使用示例：
      * ```typescript
-     * // 默认（推荐 99%）
-     * new SubhutiPackratCache()  → LRU(10000)
-     *
+     * // 默认配置（推荐 99%）
+     * new SubhutiPackratCache()          → LRU(10000)
+     * 
      * // 大文件
-     * new SubhutiPackratCache({ maxSize: 50000 })  → LRU(50000)
-     *
+     * new SubhutiPackratCache(50000)     → LRU(50000)
+     * 
+     * // 超大文件
+     * new SubhutiPackratCache(100000)    → LRU(100000)
+     * 
      * // 无限缓存（小文件 + 内存充足）
-     * new SubhutiPackratCache({ maxSize: Infinity })  → Unlimited
-     *
-     *
-     *
-     *
-     * 最大缓存条目数
-     *
-     * - 数字：启用 LRU，达到上限自动淘汰最旧条目
-     * - Infinity：无限缓存，永不淘汰
-     *
-     * 推荐值：
-     * - 默认：10000（99% 场景）
-     * - 大文件：50000
-     * - 超大文件：100000
-     * - 小文件 + 内存充足：Infinity
-     * @param maxSize
+     * new SubhutiPackratCache(0)         → Unlimited
+     * ```
+     * 
+     * @param maxSize 最大缓存条目数
+     *                - 0：无限缓存，永不淘汰（仅用Map，不维护链表）
+     *                - >0：启用 LRU，达到上限自动淘汰最旧条目
+     *                - 默认：10000（适用 99% 场景）
      */
     constructor(maxSize = 10000) {
-        this.maxSize = maxSize  // 默认 10000
+        this.maxSize = maxSize
     }
     
     // ========================================
@@ -228,7 +217,7 @@ export class SubhutiPackratCache {
      * 集成功能：
      * - LRU 查找（Map + 双向链表）
      * - 统计记录（hits / misses）
-     * - 自动更新访问顺序
+     * - 自动更新访问顺序（仅 LRU 模式）
      * 
      * @param ruleName 规则名称
      * @param tokenIndex Token 位置
@@ -246,8 +235,9 @@ export class SubhutiPackratCache {
         // ✅ 命中
         this.stats.hits++  // 👈 统计：命中
         
-        // ⭐ LRU：移到链表头部（最近访问）- O(1)
-        if (this.maxSize < Infinity) {
+        // ⭐ LRU 模式：移到链表头部（最近访问）- O(1)
+        // ⭐ 无限模式（maxSize=0）：不维护链表
+        if (this.maxSize > 0) {
             this.moveToHead(node)
         }
         
@@ -260,7 +250,11 @@ export class SubhutiPackratCache {
      * 集成功能：
      * - LRU 存储（Map + 双向链表）
      * - 统计记录（stores）
-     * - 自动淘汰旧条目
+     * - 自动淘汰旧条目（仅 LRU 模式）
+     * 
+     * 模式：
+     * - maxSize=0（无限）：只用 Map，不维护链表
+     * - maxSize>0（LRU）：Map + 双向链表，自动淘汰
      * 
      * @param ruleName 规则名称
      * @param tokenIndex Token 位置
@@ -268,34 +262,40 @@ export class SubhutiPackratCache {
      */
     set(ruleName: string, tokenIndex: number, result: SubhutiPackratCacheResult): void {
         const key = `${ruleName}:${tokenIndex}`
-        const existingNode = this.cache.get(key)
-        
         this.stats.stores++  // 👈 统计：存储次数
         
-        if (existingNode) {
-            // 已存在：更新值并移到头部
-            existingNode.value = result
-            if (this.maxSize < Infinity) {
-                this.moveToHead(existingNode)
+        // ⭐ 无限缓存模式（maxSize=0）：只用 Map，不维护链表
+        if (this.maxSize === 0) {
+            const existingNode = this.cache.get(key)
+            if (existingNode) {
+                existingNode.value = result
+            } else {
+                const newNode = new LRUNode(key, result)
+                this.cache.set(key, newNode)
+                this.currentSize++
             }
             return
         }
         
-        // 新节点：创建并添加
+        // ⭐ LRU 模式（maxSize>0）：维护链表
+        const existingNode = this.cache.get(key)
+        
+        if (existingNode) {
+            // 已存在：更新值并移到头部
+            existingNode.value = result
+            this.moveToHead(existingNode)
+            return
+        }
+        
+        // 新节点：创建并添加到链表头部
         const newNode = new LRUNode(key, result)
         this.cache.set(key, newNode)
+        this.addToHead(newNode)
+        this.currentSize++
         
-        if (this.maxSize < Infinity) {
-            this.addToHead(newNode)
-            this.currentSize++
-            
-            // 超过容量：删除尾节点 - O(1)
-            if (this.currentSize > this.maxSize) {
-                this.removeTail()
-            }
-        } else {
-            // 无限缓存：不需要链表
-            this.currentSize++
+        // 超过容量：删除尾节点 - O(1)
+        if (this.currentSize > this.maxSize) {
+            this.removeTail()
         }
     }
     
@@ -312,7 +312,11 @@ export class SubhutiPackratCache {
         this.head = null
         this.tail = null
         this.currentSize = 0
-        this.stats = { hits: 0, misses: 0, stores: 0 }
+        
+        // 保持对象引用，只修改属性
+        this.stats.hits = 0
+        this.stats.misses = 0
+        this.stats.stores = 0
     }
     
     /**
@@ -360,7 +364,7 @@ export class SubhutiPackratCache {
      * 
      * 包含：
      * - 基础统计：hits、misses、命中率
-     * - 缓存信息：规则数、总条目、平均条目
+     * - 缓存信息：最大容量、当前大小、使用率
      * - 性能建议：根据数据自动生成
      */
     getStatsReport(): SubhutiPackratCacheStatsReport {
@@ -368,9 +372,10 @@ export class SubhutiPackratCache {
         const hitRate = total > 0 ? (this.stats.hits / total * 100).toFixed(1) : '0.0'
         const hitRateNum = parseFloat(hitRate)
         
-        const cacheSize = this.size
-        const totalEntries = this.size
-        const avgEntriesPerRule = cacheSize > 0 ? (totalEntries / cacheSize).toFixed(1) : '0'
+        // 计算使用率
+        const usageRate = this.maxSize > 0
+            ? ((this.size / this.maxSize) * 100).toFixed(1) + '%'
+            : 'unlimited'
         
         // 性能建议（智能分析）
         const suggestions: string[] = []
@@ -385,15 +390,20 @@ export class SubhutiPackratCache {
             suggestions.push('❌ 缓存命中率低（< 30%），建议检查语法规则')
         }
         
-        // 检查缓存使用率（假设 LRU 默认 10000）
-        if (totalEntries > 9000) {
-            suggestions.push('⚠️ 缓存使用率高（> 90%），建议增加 maxSize')
-        } else if (totalEntries > 7000) {
-            suggestions.push('⚠️ 缓存使用率较高（70-90%），可考虑增加 maxSize')
-        }
-        
-        if (totalEntries < 1000 && total > 10000) {
-            suggestions.push('💡 缓存使用率低，可考虑减小 maxSize 节省内存')
+        // 检查缓存使用率（动态阈值，仅 LRU 模式）
+        if (this.maxSize > 0) {
+            const usageRatio = this.size / this.maxSize
+            
+            if (usageRatio > 0.9) {
+                suggestions.push('⚠️ 缓存使用率高（> 90%），建议增加 maxSize')
+            } else if (usageRatio > 0.7) {
+                suggestions.push('⚠️ 缓存使用率较高（70-90%），可考虑增加 maxSize')
+            }
+            
+            // 缓存使用率低 且 总请求数多（说明缓存分配过大）
+            if (usageRatio < 0.1 && total > 10000) {
+                suggestions.push('💡 缓存使用率低（< 10%），可考虑减小 maxSize 节省内存')
+            }
         }
         
         return {
@@ -405,9 +415,9 @@ export class SubhutiPackratCache {
             hitRate: `${hitRate}%`,
             
             // 缓存信息
-            cacheSize,
-            totalEntries,
-            avgEntriesPerRule,
+            maxCacheSize: this.maxSize,
+            currentSize: this.size,
+            usageRate,
             
             // 性能建议
             suggestions
@@ -429,7 +439,7 @@ export class SubhutiPackratCache {
      * 
      * 时间复杂度：O(1) - 只修改指针
      */
-    private addToHead(node: LRUNode): void {
+    private addToHead(node: LRUNode<SubhutiPackratCacheResult>): void {
         node.prev = null
         node.next = this.head
         
@@ -454,7 +464,7 @@ export class SubhutiPackratCache {
      * 
      * 时间复杂度：O(1) - 只修改指针，不需要遍历
      */
-    private removeNode(node: LRUNode): void {
+    private removeNode(node: LRUNode<SubhutiPackratCacheResult>): void {
         if (node.prev) {
             node.prev.next = node.next
         } else {
@@ -485,7 +495,7 @@ export class SubhutiPackratCache {
      * - 新：removeNode O(1) + addToHead O(1) = O(1)
      * - 提升：5000倍（10000条缓存时）⭐⭐⭐
      */
-    private moveToHead(node: LRUNode): void {
+    private moveToHead(node: LRUNode<SubhutiPackratCacheResult>): void {
         if (node === this.head) {
             return  // 已经在头部，无需移动
         }
