@@ -47,7 +47,7 @@ import type SubhutiCst from "./struct/SubhutiCst.ts";
 import type SubhutiMatchToken from "./struct/SubhutiMatchToken.ts";
 import {SubhutiErrorHandler} from "./SubhutiError.ts";
 import {type SubhutiDebugger, SubhutiTraceDebugger} from "./SubhutiDebug.ts";
-import type {PackratCacheConfig, SubhutiMemoizer, SubhutiMemoResult} from "./SubhutiPackratCache.ts";
+import type {PackratCacheConfig, SubhutiPackratCache, PackratCacheResult} from "./SubhutiPackratCache.ts";
 
 // ============================================
 // [1] 类型定义（类型安全）
@@ -73,7 +73,7 @@ export interface SubhutiBackData {
     curCstChildrenLength: number          // children 数组长度
 }
 
-// SubhutiMemoResult 已移至 SubhutiMemoizer.ts
+// PackratCacheResult 已移至 SubhutiPackratCache.ts
 
 
 // ============================================
@@ -262,10 +262,10 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     enableMemoization: boolean = true
     
     /**
-     * Memoizer 实例（可插拔缓存管理器）⭐
+     * Packrat Cache 实例（可插拔缓存管理器）⭐
      * 
      * 职责：
-     * - 管理缓存存储
+     * - 管理缓存存储（LRU算法）
      * - 统计命中率
      * - 应用缓存结果
      * - 提供性能建议
@@ -275,7 +275,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * - 高性能：10000 条足够大多数文件
      * - 长时间运行：内存不会无限增长
      */
-    private readonly _memoizer: SubhutiMemoizer
+    private readonly _cache: SubhutiPackratCache
     
     /**
      * 性能分析器（可选）⭐
@@ -335,8 +335,8 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         this.tokenIndex = 0
         this.className = this.constructor.name
         
-        // ⭐ 初始化 Memoizer（默认 LRU 10000）
-        this._memoizer = new SubhutiMemoizer(cacheConfig)
+        // ⭐ 初始化 Packrat Cache（默认 LRU 10000）
+        this._cache = new SubhutiPackratCache(cacheConfig)
         
         // 创建 TokenConsumer 实例
         if (TokenConsumerClass) {
@@ -466,7 +466,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         (this._tokens as SubhutiMatchToken[]).length = 0
         ;(this._tokens as SubhutiMatchToken[]).push(...tokens)
         this.tokenIndex = 0
-        this._memoizer.clear()
+        this._cache.clear()
     }
     
     // ========================================
@@ -641,7 +641,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         // Layer 3: 缓存层（性能优化）
         // ============================================
         if (!isTopLevel && this.enableMemoization) {
-            const cached = this._memoizer.get(ruleName, this.tokenIndex)
+            const cached = this._cache.get(ruleName, this.tokenIndex)
             if (cached !== undefined) {
                 // 🎯 缓存命中
                 
@@ -650,7 +650,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
                 this.profiler?.endRule(ruleName, perfContext, true)
                 
                 // 快速返回
-                return this.applyMemoizedResult(cached)
+                return this.applyCachedResult(cached)
             }
         }
         
@@ -666,7 +666,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         if (!isTopLevel) {
             // 缓存存储
             if (this.enableMemoization) {
-                this._memoizer.set(ruleName, startTokenIndex, {
+                this._cache.set(ruleName, startTokenIndex, {
                     success: cst !== undefined,
                     endTokenIndex: this.tokenIndex,
                     cst: cst,
@@ -1057,7 +1057,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     }
     
     // ========================================
-    // Packrat Parsing（委托给 Memoizer）⭐
+    // Packrat Parsing（委托给 PackratCache）⭐
     // ========================================
     
     /**
@@ -1065,16 +1065,16 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * 
      * 关键：必须恢复 parseFailed 状态
      */
-    private applyMemoizedResult(cached: SubhutiMemoResult): SubhutiCst | undefined {
+    private applyCachedResult(cached: PackratCacheResult): SubhutiCst | undefined {
         // 恢复 token 位置
         this.tokenIndex = cached.endTokenIndex
         
         // 恢复 parseFailed 状态（关键！）
         this._parseFailed = cached.parseFailed
         
-        // 应用 CST（委托给 Memoizer）
+        // 应用 CST（委托给 PackratCache）
         const parentCst = this.cstStack[this.cstStack.length - 1]
-        return this._memoizer.apply(cached, parentCst)
+        return this._cache.apply(cached, parentCst)
     }
     
     /**
@@ -1085,12 +1085,12 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * - 手动清理内存
      * - 测试重置
      */
-    clearMemoCache(): void {
-        this._memoizer.clear()
+    clearCache(): void {
+        this._cache.clear()
     }
     
     /**
-     * 获取 Packrat Parsing 详细统计信息（委托给 Memoizer）
+     * 获取 Packrat Parsing 详细统计信息（委托给 PackratCache）
      * 
      * 用途：
      * - 评估缓存效率（命中率）
@@ -1103,8 +1103,8 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * 
      * @returns 详细的缓存统计和性能建议
      */
-    getMemoStats() {
-        return this._memoizer.getStatsReport()
+    getCacheStats() {
+        return this._cache.getStatsReport()
     }
     
     // ========================================
@@ -1246,21 +1246,21 @@ export { SubhutiProfiler } from "./SubhutiProfiler.ts"
 export type { RuleStats } from "./SubhutiProfiler.ts"
 
 /**
- * 导出 Memoizer（缓存管理器）和相关类型（v4.2 新增）⭐⭐
+ * 导出 Packrat Cache（缓存管理器）和相关类型（v4.2 新增）⭐⭐
  * 
  * 用途：
- * - 管理 Packrat Parsing 缓存
+ * - 管理 Packrat Parsing 缓存（LRU算法）
  * - 统计缓存命中率
  * - 提供性能建议
  * 
  * 使用方式：
  * ```typescript
- * import { SubhutiMemoizer } from './SubhutiParser.ts'
- * import type { SubhutiMemoResult, MemoStats } from './SubhutiParser.ts'
+ * import { SubhutiPackratCache } from './SubhutiParser.ts'
+ * import type { PackratCacheResult, PackratStats } from './SubhutiParser.ts'
  * 
  * // 默认使用（Parser 自动创建）
  * const parser = new MyParser(tokens)
- * console.log(parser.getMemoStats())
+ * console.log(parser.getCacheStats())
  * 
  * // 自定义缓存大小
  * const parser = new MyParser(tokens, undefined, { maxSize: 50000 })
