@@ -39,7 +39,7 @@ for (const testCase of testCases) {
     
     // 1. 词法分析
     const lexer = new SubhutiLexer(minimalTokens)
-    const tokens = lexer.lexer(code)
+    const tokens = lexer.tokenize(code)
     console.log(`✅ Lexer成功: ${tokens.length}个tokens`)
     console.log(`   Tokens: ${tokens.map(t => t.type).join(', ')}`)
     

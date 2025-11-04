@@ -91,7 +91,7 @@ console.log('\n[测试1] 消费单个token: "let"')
 try {
   const code1 = 'let'
   const lexer1 = new SubhutiLexer(testTokens)
-  const tokens1 = lexer1.lexer(code1)
+  const tokens1 = lexer1.tokenize(code1)
   
   console.log('  Token数量:', tokens1.length)
   console.log('  Token内容:', tokens1.map(t => `${t.tokenName}:${t.tokenValue}`).join(', '))
@@ -118,7 +118,7 @@ console.log('\n[测试2] 消费两个连续token: "let x"')
 try {
   const code2 = 'let x'
   const lexer2 = new SubhutiLexer(testTokens)
-  const tokens2 = lexer2.lexer(code2)
+  const tokens2 = lexer2.tokenize(code2)
   
   console.log('  Token数量:', tokens2.length)
   console.log('  Token内容:', tokens2.map(t => `${t.tokenName}:${t.tokenValue}`).join(', '))
@@ -145,7 +145,7 @@ console.log('\n[测试3] Token不匹配应该抛出异常: "var" (期望let)')
 try {
   const code3 = 'var'
   const lexer3 = new SubhutiLexer(testTokens)
-  const tokens3 = lexer3.lexer(code3)
+  const tokens3 = lexer3.tokenize(code3)
   
   console.log('  Token数量:', tokens3.length)
   console.log('  Token内容:', tokens3.map(t => `${t.tokenName}:${t.tokenValue}`).join(', '))
@@ -171,7 +171,7 @@ console.log('\n[测试4] Token不足应该抛出异常: "let" (期望let + Ident
 try {
   const code4 = 'let'
   const lexer4 = new SubhutiLexer(testTokens)
-  const tokens4 = lexer4.lexer(code4)
+  const tokens4 = lexer4.tokenize(code4)
   
   console.log('  Token数量:', tokens4.length)
   console.log('  Token内容:', tokens4.map(t => `${t.tokenName}:${t.tokenValue}`).join(', '))

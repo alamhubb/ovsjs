@@ -93,7 +93,7 @@ function main() {
     try {
         // 词法分析
         const lexer = new SubhutiLexer(es2020Tokens)
-        const tokens = lexer.lexer(args.code)
+        const tokens = lexer.tokenize(args.code)
         
         console.log(`✅ 词法分析成功: ${tokens.length} tokens`)
         console.log('')

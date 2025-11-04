@@ -104,7 +104,7 @@ console.log('🧪 测试新的 SubhutiParser\n')
 console.log('测试1：简单赋值')
 const code1 = 'x = 5;'
 const lexer1 = new SubhutiLexer(tokens)
-const tokenStream1 = lexer1.lexer(code1)
+const tokenStream1 = lexer1.tokenize(code1)
 const parser1 = new TestParser(tokenStream1)
 
 try {
@@ -119,7 +119,7 @@ try {
 console.log('\n测试2：if语句')
 const code2 = 'if (x) { y = 1; }'
 const lexer2 = new SubhutiLexer(tokens)
-const tokenStream2 = lexer2.lexer(code2)
+const tokenStream2 = lexer2.tokenize(code2)
 const parser2 = new TestParser(tokenStream2)
 
 try {
@@ -134,7 +134,7 @@ try {
 console.log('\n测试3：Packrat Parsing 统计')
 const code3 = 'x = 1; y = 2; z = 3;'
 const lexer3 = new SubhutiLexer(tokens)
-const tokenStream3 = lexer3.lexer(code3)
+const tokenStream3 = lexer3.tokenize(code3)
 const parser3 = new TestParser(tokenStream3)
 
 try {

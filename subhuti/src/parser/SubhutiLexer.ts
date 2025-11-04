@@ -48,7 +48,7 @@ export default class SubhutiLexer {
     return unclosedCount > 0
   }
 
-  lexer(input: string): SubhutiMatchToken[] {
+  tokenize(input: string): SubhutiMatchToken[] {
     const resTokens: SubhutiMatchToken[] = [] // 初始化结果token数组
     let lineNum = 0
     let columnStartNum = 0

@@ -11,7 +11,7 @@ const code = `
 
 // 1. 词法分析
 const lexer = new SubhutiLexer(ovs6Tokens)
-const tokens = lexer.lexer(code)
+const tokens = lexer.tokenize(code)
 
 // 2. 语法分析
 const parser = new OvsParser(tokens, OvsTokenConsumer)

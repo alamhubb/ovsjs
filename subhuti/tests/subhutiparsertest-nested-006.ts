@@ -139,7 +139,7 @@ console.log('\n[测试1] 简单变量声明: "let x ;"')
 try {
   const code1 = 'let x ;'
   const lexer1 = new SubhutiLexer(testTokens)
-  const tokens1 = lexer1.lexer(code1)
+  const tokens1 = lexer1.tokenize(code1)
   
   console.log('  Token:', tokens1.map(t => t.tokenValue).join(' '))
   
@@ -165,7 +165,7 @@ console.log('\n[测试2] 带初始化: "var x = 10 ;"')
 try {
   const code2 = 'var x = 10 ;'
   const lexer2 = new SubhutiLexer(testTokens)
-  const tokens2 = lexer2.lexer(code2)
+  const tokens2 = lexer2.tokenize(code2)
   
   console.log('  Token:', tokens2.map(t => t.tokenValue).join(' '))
   
@@ -189,7 +189,7 @@ console.log('\n[测试3] 多个变量: "const a = 1 , b = 2 , c ;"')
 try {
   const code3 = 'const a = 1 , b = 2 , c ;'
   const lexer3 = new SubhutiLexer(testTokens)
-  const tokens3 = lexer3.lexer(code3)
+  const tokens3 = lexer3.tokenize(code3)
   
   console.log('  Token:', tokens3.map(t => t.tokenValue).join(' '))
   console.log('  Token数量:', tokens3.length)
@@ -215,7 +215,7 @@ console.log('\n[测试4] CST结构验证: "let x = 5 , y ;"')
 try {
   const code4 = 'let x = 5 , y ;'
   const lexer4 = new SubhutiLexer(testTokens)
-  const tokens4 = lexer4.lexer(code4)
+  const tokens4 = lexer4.tokenize(code4)
   
   console.log('  Token:', tokens4.map(t => t.tokenValue).join(' '))
   
@@ -257,7 +257,7 @@ console.log('\n[测试5] 复杂嵌套: "var a , b = 2 , c = 3 , d ;"')
 try {
   const code5 = 'var a , b = 2 , c = 3 , d ;'
   const lexer5 = new SubhutiLexer(testTokens)
-  const tokens5 = lexer5.lexer(code5)
+  const tokens5 = lexer5.tokenize(code5)
   
   console.log('  Token:', tokens5.map(t => t.tokenValue).join(' '))
   console.log('  Token数量:', tokens5.length)

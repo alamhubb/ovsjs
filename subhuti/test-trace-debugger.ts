@@ -89,7 +89,7 @@ console.log()
 
 // Lexer
 const lexer = new SubhutiLexer(tokens)
-const tokenStream = lexer.lexer(sourceCode)
+const tokenStream = lexer.tokenize(sourceCode)
 
 console.log('🔤 Tokens:')
 tokenStream.forEach((token, i) => {

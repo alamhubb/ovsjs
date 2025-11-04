@@ -110,7 +110,7 @@ console.log('\n[测试1] Or规则匹配第一个分支: "var"')
 try {
   const code1 = 'var'
   const lexer1 = new SubhutiLexer(testTokens)
-  const tokens1 = lexer1.lexer(code1)
+  const tokens1 = lexer1.tokenize(code1)
   
   console.log('  Token:', tokens1[0].tokenName)
   
@@ -134,7 +134,7 @@ console.log('\n[测试2] Or规则匹配第二个分支: "let"')
 try {
   const code2 = 'let'
   const lexer2 = new SubhutiLexer(testTokens)
-  const tokens2 = lexer2.lexer(code2)
+  const tokens2 = lexer2.tokenize(code2)
   
   console.log('  Token:', tokens2[0].tokenName)
   
@@ -158,7 +158,7 @@ console.log('\n[测试3] Or规则匹配第三个分支: "const"')
 try {
   const code3 = 'const'
   const lexer3 = new SubhutiLexer(testTokens)
-  const tokens3 = lexer3.lexer(code3)
+  const tokens3 = lexer3.tokenize(code3)
   
   console.log('  Token:', tokens3[0].tokenName)
   
@@ -182,7 +182,7 @@ console.log('\n[测试4] Or规则所有分支都失败: "unknown"')
 try {
   const code4 = 'unknown'
   const lexer4 = new SubhutiLexer(testTokens)
-  const tokens4 = lexer4.lexer(code4)
+  const tokens4 = lexer4.tokenize(code4)
   
   console.log('  Token:', tokens4[0].tokenName)
   
@@ -207,7 +207,7 @@ console.log('\n[测试5] Or规则回溯测试: "let" (第一个分支失败，�
 try {
   const code5 = 'let'
   const lexer5 = new SubhutiLexer(testTokens)
-  const tokens5 = lexer5.lexer(code5)
+  const tokens5 = lexer5.tokenize(code5)
   
   console.log('  Token:', tokens5[0].tokenName)
   console.log('  第一个分支尝试: LetTok + VarTok → 会失败并回溯')

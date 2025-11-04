@@ -108,7 +108,7 @@ console.log('\n[测试1] Many匹配0次: "" (空输入)')
 try {
   const code1 = ''
   const lexer1 = new SubhutiLexer(testTokens)
-  const tokens1 = lexer1.lexer(code1)
+  const tokens1 = lexer1.tokenize(code1)
   
   console.log('  Token数量:', tokens1.length)
   
@@ -133,7 +133,7 @@ console.log('\n[测试2] Many匹配1次: "123"')
 try {
   const code2 = '123'
   const lexer2 = new SubhutiLexer(testTokens)
-  const tokens2 = lexer2.lexer(code2)
+  const tokens2 = lexer2.tokenize(code2)
   
   console.log('  Token:', tokens2.map(t => t.tokenValue).join(' '))
   
@@ -158,7 +158,7 @@ console.log('\n[测试3] Many匹配多次: "123 456 789"')
 try {
   const code3 = '123 456 789'
   const lexer3 = new SubhutiLexer(testTokens)
-  const tokens3 = lexer3.lexer(code3)
+  const tokens3 = lexer3.tokenize(code3)
   
   console.log('  Token:', tokens3.map(t => t.tokenValue).join(' '))
   console.log('  Token数量:', tokens3.length)
@@ -184,7 +184,7 @@ console.log('\n[测试4] Many的终止条件: "123 abc" (遇到非Number终止)'
 try {
   const code4 = '123 abc'
   const lexer4 = new SubhutiLexer(testTokens)
-  const tokens4 = lexer4.lexer(code4)
+  const tokens4 = lexer4.tokenize(code4)
   
   console.log('  Token:', tokens4.map(t => `${t.tokenName}:${t.tokenValue}`).join(' '))
   
@@ -210,7 +210,7 @@ console.log('\n[测试5] 逗号分隔列表: "1,2,3"')
 try {
   const code5 = '1,2,3'
   const lexer5 = new SubhutiLexer(testTokens)
-  const tokens5 = lexer5.lexer(code5)
+  const tokens5 = lexer5.tokenize(code5)
   
   console.log('  Token:', tokens5.map(t => t.tokenValue).join(' '))
   console.log('  Token数量:', tokens5.length)
@@ -236,7 +236,7 @@ console.log('\n[测试6] Many后跟固定token: "a b c ;" (Identifier* Semicolon
 try {
   const code6 = 'a b c ;'
   const lexer6 = new SubhutiLexer(testTokens)
-  const tokens6 = lexer6.lexer(code6)
+  const tokens6 = lexer6.tokenize(code6)
   
   console.log('  Token:', tokens6.map(t => t.tokenValue).join(' '))
   console.log('  Token数量:', tokens6.length)
@@ -262,7 +262,7 @@ console.log('\n[测试7] Many匹配0次后跟固定token: ";" (只有分号)')
 try {
   const code7 = ';'
   const lexer7 = new SubhutiLexer(testTokens)
-  const tokens7 = lexer7.lexer(code7)
+  const tokens7 = lexer7.tokenize(code7)
   
   console.log('  Token:', tokens7.map(t => t.tokenValue).join(' '))
   

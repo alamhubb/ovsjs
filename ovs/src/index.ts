@@ -409,7 +409,7 @@ export function ovsTransformBase(
 ): ovsTransformBaseResult {
     // 1. 词法分析
     const lexer = new SubhutiLexer(ovs6Tokens)
-    const tokens = lexer.lexer(code)
+    const tokens = lexer.tokenize(code)
 
     if (!tokens.length) {
         return {ast: null, tokens: tokens}

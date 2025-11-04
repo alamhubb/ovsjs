@@ -116,7 +116,7 @@ console.log('\n[测试1] Option匹配成功: "name as userName"')
 try {
   const code1 = 'name as userName'
   const lexer1 = new SubhutiLexer(testTokens)
-  const tokens1 = lexer1.lexer(code1)
+  const tokens1 = lexer1.tokenize(code1)
   
   console.log('  Token:', tokens1.map(t => t.tokenValue).join(' '))
   
@@ -140,7 +140,7 @@ console.log('\n[测试2] Option匹配失败: "name" (没有as部分)')
 try {
   const code2 = 'name'
   const lexer2 = new SubhutiLexer(testTokens)
-  const tokens2 = lexer2.lexer(code2)
+  const tokens2 = lexer2.tokenize(code2)
   
   console.log('  Token:', tokens2.map(t => t.tokenValue).join(' '))
   
@@ -165,7 +165,7 @@ console.log('\n[测试3] Option后跟固定token: "x = 10 ;"')
 try {
   const code3 = 'x = 10 ;'
   const lexer3 = new SubhutiLexer(testTokens)
-  const tokens3 = lexer3.lexer(code3)
+  const tokens3 = lexer3.tokenize(code3)
   
   console.log('  Token:', tokens3.map(t => t.tokenValue).join(' '))
   console.log('  Token数量:', tokens3.length)
@@ -190,7 +190,7 @@ console.log('\n[测试4] Option后跟固定token: "x ;" (没有初始化)')
 try {
   const code4 = 'x ;'
   const lexer4 = new SubhutiLexer(testTokens)
-  const tokens4 = lexer4.lexer(code4)
+  const tokens4 = lexer4.tokenize(code4)
   
   console.log('  Token:', tokens4.map(t => t.tokenValue).join(' '))
   
@@ -215,7 +215,7 @@ console.log('\n[测试5] Option部分匹配失败: "x = abc" (期望Number)')
 try {
   const code5 = 'x = abc'
   const lexer5 = new SubhutiLexer(testTokens)
-  const tokens5 = lexer5.lexer(code5)
+  const tokens5 = lexer5.tokenize(code5)
   
   console.log('  Token:', tokens5.map(t => `${t.tokenName}:${t.tokenValue}`).join(' '))
   console.log('  Option尝试：Eq (✅) + Number (❌ 实际是Identifier)')

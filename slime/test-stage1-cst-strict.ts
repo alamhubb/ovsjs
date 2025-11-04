@@ -95,7 +95,7 @@ for (let i = 0; i < files.length; i++) {
   try {
     // 词法分析
     const lexer = new SubhutiLexer(es6Tokens)
-    const tokens = lexer.lexer(code)
+    const tokens = lexer.tokenize(code)
     console.log(`✅ 词法分析: ${tokens.length} tokens`)
     
     // 验证tokens完整性

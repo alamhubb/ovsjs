@@ -141,7 +141,7 @@ console.log('\n[测试1] 短规则在前 - 匹配短形式: "name"')
 try {
   const code1 = 'name'
   const lexer1 = new SubhutiLexer(testTokens)
-  const tokens1 = lexer1.lexer(code1)
+  const tokens1 = lexer1.tokenize(code1)
   
   console.log('  Token:', tokens1.map(t => t.tokenValue).join(' '))
   
@@ -167,7 +167,7 @@ console.log('  预期：第一个分支匹配 "name"，剩余 "as userName" 无�
 try {
   const code2 = 'name as userName'
   const lexer2 = new SubhutiLexer(testTokens)
-  const tokens2 = lexer2.lexer(code2)
+  const tokens2 = lexer2.tokenize(code2)
   
   console.log('  Token:', tokens2.map(t => t.tokenValue).join(' '))
   console.log('  Token数量:', tokens2.length)
@@ -196,7 +196,7 @@ console.log('\n[测试3] 长规则在前 - 匹配短形式: "name"')
 try {
   const code3 = 'name'
   const lexer3 = new SubhutiLexer(testTokens)
-  const tokens3 = lexer3.lexer(code3)
+  const tokens3 = lexer3.tokenize(code3)
   
   console.log('  Token:', tokens3.map(t => t.tokenValue).join(' '))
   
@@ -221,7 +221,7 @@ console.log('\n[测试4] ✅ 长规则在前 - 匹配长形式: "name as userNam
 try {
   const code4 = 'name as userName'
   const lexer4 = new SubhutiLexer(testTokens)
-  const tokens4 = lexer4.lexer(code4)
+  const tokens4 = lexer4.tokenize(code4)
   
   console.log('  Token:', tokens4.map(t => t.tokenValue).join(' '))
   console.log('  Token数量:', tokens4.length)

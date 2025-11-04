@@ -111,7 +111,7 @@ connection.languages.semanticTokens.on(params => {
     const text = document.getText()
 
     const lexer = new SubhutiLexer(es6Tokens)
-    let tokens = lexer.lexer(text)
+    let tokens = lexer.tokenize(text)
     const parser = new OvsParser(tokens)
     let curCst = parser.Program()
     const ast = ovsToAstUtil.createProgramAst(curCst)

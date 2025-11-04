@@ -31,7 +31,7 @@ for (let i = 0; i < files.length; i++) {
   try {
     // 阶段1-2: 生成AST（假设已通过）
     const lexer = new SubhutiLexer(es6Tokens)
-    const tokens = lexer.lexer(code)
+    const tokens = lexer.tokenize(code)
     const parser = new Es6Parser(tokens)
     const cst = parser.Program()
     const slimeCstToAst = new SlimeCstToAst()

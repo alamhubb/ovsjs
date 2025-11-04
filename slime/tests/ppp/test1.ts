@@ -9,7 +9,7 @@ const code = `const [first, ...[second, third]] = arr
 `
 
 const lexer = new SubhutiLexer(es2020Tokens)
-const tokens = lexer.lexer(code)
+const tokens = lexer.tokenize(code)
 console.log(tokens)
 
 const parser = new Es6Parser(tokens)

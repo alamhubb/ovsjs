@@ -84,7 +84,7 @@ function verifyTestCase(code: string, ruleName: string): { success: boolean; err
   try {
     // 1. 词法分析
     const lexer = new SubhutiLexer(es6Tokens)
-    const tokens = lexer.lexer(code)
+    const tokens = lexer.tokenize(code)
     
     if (tokens.length === 0) {
       return { success: false, error: '词法分析失败：无token生成' }

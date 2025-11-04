@@ -31,7 +31,7 @@ for (const testCase of testCases) {
     try {
         // 词法分析
         const lexer = new SubhutiLexer(es2020Tokens)
-        const tokens = lexer.lexer(testCase.code)
+        const tokens = lexer.tokenize(testCase.code)
         
         // 方式1：不调试（正常模式）
         console.log('\n🔹 正常模式（不调试）:')

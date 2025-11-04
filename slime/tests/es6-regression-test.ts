@@ -8,7 +8,7 @@ import { es6Tokens } from '../packages/slime-parser/src/language/es2015/Es6Token
 function test(name: string, code: string): boolean {
     try {
         const lexer = new SubhutiLexer(es6Tokens)
-        const tokens = lexer.lexer(code)
+        const tokens = lexer.tokenize(code)
         const parser = new Es6Parser(tokens)
         const cst = parser.Program()
         

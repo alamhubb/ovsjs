@@ -68,7 +68,7 @@ console.log('='.repeat(60))
 console.log('\n【测试1】基础回溯 - token: c')
 {
     const lexer = new SubhutiLexer(tokens)
-    const tokenStream = lexer.lexer('c')
+    const tokenStream = lexer.tokenize('c')
     const parser = new TestParser(tokenStream, TestTokenConsumer)
     const cst = parser.Start()
     
@@ -114,7 +114,7 @@ console.log('\n【测试2】嵌套回溯 - token: b')
     }
     
     const lexer = new SubhutiLexer(tokens)
-    const tokenStream = lexer.lexer('b')
+    const tokenStream = lexer.tokenize('b')
     const parser = new NestedParser(tokenStream, TestTokenConsumer)
     const cst = parser.Start()
     
@@ -197,7 +197,7 @@ console.log('\n【测试3】性能对比 - 深度嵌套场景')
     }
     
     const lexer = new SubhutiLexer(deepTokens)
-    const tokenStream = lexer.lexer('l5')
+    const tokenStream = lexer.tokenize('l5')
     
     const startTime = performance.now()
     const parser = new DeepParser(tokenStream, DeepTokenConsumer)
@@ -247,7 +247,7 @@ console.log('\n【测试4】CST独立性 - 回溯不影响其他规则')
     }
     
     const lexer = new SubhutiLexer(tokens)
-    const tokenStream = lexer.lexer('abc')
+    const tokenStream = lexer.tokenize('abc')
     const parser = new IsolationParser(tokenStream, TestTokenConsumer)
     const cst = parser.Start()
     

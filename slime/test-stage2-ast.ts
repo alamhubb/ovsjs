@@ -30,7 +30,7 @@ for (let i = 0; i < files.length; i++) {
   try {
     // 阶段1: 生成CST（假设已通过）
     const lexer = new SubhutiLexer(es6Tokens)
-    const tokens = lexer.lexer(code)
+    const tokens = lexer.tokenize(code)
     const parser = new Es6Parser(tokens)
     const cst = parser.Program()
     console.log(`✅ CST生成: ${cst.children?.length || 0} 个子节点`)

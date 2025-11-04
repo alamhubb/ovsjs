@@ -182,7 +182,7 @@ for (let i = 0; i < testCases.length; i++) {
     try {
         // 词法分析
         const lexer = new SubhutiLexer(es2020Tokens)
-        const tokens = lexer.lexer(code)
+        const tokens = lexer.tokenize(code)
         
         const inputTokens = tokens
             .filter((t: any) => {
@@ -250,7 +250,7 @@ for (let i = 0; i < testCases.length; i++) {
             if (testCase.fullCst) {
                 try {
                     const lexer = new SubhutiLexer(es2020Tokens)
-                    const tokens = lexer.lexer(testCase.code)
+                    const tokens = lexer.tokenize(testCase.code)
                     const parser = new Es2020Parser(tokens)
                     const cst = parser.Program()
                     

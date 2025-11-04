@@ -33,7 +33,7 @@ console.log('')
 try {
     // 词法分析
     const lexer = new SubhutiLexer(es2020Tokens)
-    const tokens = lexer.lexer(code)
+    const tokens = lexer.tokenize(code)
     
     // 调试模式解析
     const parser = new Es2020Parser(tokens).debug()

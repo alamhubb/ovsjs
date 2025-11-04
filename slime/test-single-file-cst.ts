@@ -200,7 +200,7 @@ if (code.length <= 500) {
 try {
     // 词法分析（使用ES2020 tokens以支持私有属性）
     const lexer = new SubhutiLexer(es2020Tokens)
-    const tokens = lexer.lexer(code)
+    const tokens = lexer.tokenize(code)
     
     const inputTokens = tokens
         .filter((t: any) => {

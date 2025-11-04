@@ -204,7 +204,7 @@ for (let i = 0; i < files.length; i++) {
     try {
         // 词法分析
         const lexer = new SubhutiLexer(es2020Tokens)
-        const tokens = lexer.lexer(code)
+        const tokens = lexer.tokenize(code)
 
         // 收集输入代码中的所有token值（排除注释、空白、换行）
         const inputTokens = tokens
