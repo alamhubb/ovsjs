@@ -22,13 +22,13 @@ import { LRUCache } from "lru-cache";
  * - success: 解析是否成功
  * - endTokenIndex: 解析结束位置
  * - cst: 成功时的 CST 节点
- * - parseFailed: parseFailed 状态（必须缓存）
+ * - parseSuccess: parseSuccess 状态（必须缓存）
  */
 export interface SubhutiPackratCacheResult {
     success: boolean                      // 解析是否成功
     endTokenIndex: number                 // 解析结束位置
     cst?: SubhutiCst                      // 成功时的 CST 节点
-    parseFailed: boolean                  // parseFailed 状态（必须缓存）
+    parseSuccess: boolean                 // parseSuccess 状态（必须缓存）
 }
 
 /**
