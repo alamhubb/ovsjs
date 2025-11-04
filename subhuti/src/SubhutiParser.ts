@@ -41,16 +41,13 @@
  * @date 2025-11-03
  */
 
-import SubhutiMatchToken from "../struct/SubhutiMatchToken.ts"
-import SubhutiCst from "../struct/SubhutiCst.ts.ts"
 import SubhutiTokenConsumer from "./SubhutiTokenConsumer.ts"
-import type { PackratCacheConfig } from "./PackratCache.ts"
-import { SubhutiMemoizer } from "./SubhutiMemoizer.ts"
-import type { SubhutiMemoResult } from "./SubhutiMemoizer.ts"
 import { SubhutiProfiler } from "./SubhutiProfiler.ts"
-import type { SubhutiDebugger } from "../debugger/SubhutiDebugger.ts"
-import { SubhutiTraceDebugger } from "../debugger/SubhutiTraceDebugger.ts"
-import { SubhutiErrorHandler, ParsingError } from "./SubhutiErrorHandler.ts"
+import type SubhutiCst from "./struct/SubhutiCst.ts";
+import type SubhutiMatchToken from "./struct/SubhutiMatchToken.ts";
+import {SubhutiErrorHandler} from "./SubhutiError.ts";
+import type {SubhutiDebugger} from "./SubhutiDebug.ts";
+import type {PackratCacheConfig, SubhutiMemoizer, SubhutiMemoResult} from "./SubhutiCache.ts";
 
 // ============================================
 // [1] 类型定义（类型安全）
@@ -1184,7 +1181,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
  * const config: PackratCacheConfig = { maxSize: 50000 }
  * ```
  */
-export type { PackratCacheConfig } from "./PackratCache.ts"
 
 /**
  * 导出调试器接口和默认实现
@@ -1202,8 +1198,6 @@ export type { PackratCacheConfig } from "./PackratCache.ts"
  * const parser = new MyParser(tokens).debug(new MyDebugger())
  * ```
  */
-export type { SubhutiDebugger } from "../debugger/SubhutiDebugger.ts"
-export { SubhutiTraceDebugger } from "../debugger/SubhutiTraceDebugger.ts"
 
 /**
  * 导出错误处理器和错误类
@@ -1225,7 +1219,6 @@ export { SubhutiTraceDebugger } from "../debugger/SubhutiTraceDebugger.ts"
  * }
  * ```
  */
-export { SubhutiErrorHandler, ParsingError } from "./SubhutiErrorHandler.ts"
 
 /**
  * 导出性能分析器和统计类型（v2.0 新增）⭐
@@ -1276,5 +1269,3 @@ export type { RuleStats } from "./SubhutiProfiler.ts"
  * parser.cache(false)
  * ```
  */
-export { SubhutiMemoizer } from "./SubhutiMemoizer.ts"
-export type { SubhutiMemoResult, MemoStats, MemoStatsReport } from "./SubhutiMemoizer.ts"

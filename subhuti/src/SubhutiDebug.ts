@@ -13,7 +13,6 @@
 
 import SubhutiParser from "./SubhutiParser.ts"
 import type { SubhutiParserOr, RuleFunction } from "./SubhutiParser.ts"
-import type { SubhutiMatchToken } from "./struct/SubhutiTypes.ts"
 import type SubhutiCst from "./struct/SubhutiTypes.ts"
 
 // ============================================

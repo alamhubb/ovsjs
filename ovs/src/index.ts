@@ -1,7 +1,7 @@
 // Vite 插件
 import {createFilter, type Plugin} from "vite"
 import SubhutiLexer from 'subhuti/src/SubhutiLexer.ts'
-import SubhutiCst from "subhuti/src/struct/SubhutiCst.ts.ts";
+import SubhutiCst from "subhuti/src/struct/SubhutiCst.ts.";
 import SlimeGenerator from "slime-generator/src/SlimeGenerator.ts";
 import {ovs6Tokens} from "./parser/OvsConsumer.ts";
 import OvsTokenConsumer from "./parser/OvsConsumer.ts";
