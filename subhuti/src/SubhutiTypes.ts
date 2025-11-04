@@ -267,9 +267,7 @@ export function createKeywordToken(name: string, pattern: string): SubhutiCreate
  * 
  * 用法：
  * ```typescript
- * const identifierToken = createRegToken('Identifier', /[a-zA-Z_][a-zA-Z0-9_]*/)
- * ```
- */
+ **/
 export function createRegToken(name: string, pattern: RegExp) {
   const token = new SubhutiCreateToken({name: name, pattern: pattern, value: pattern.source});
   return token;
