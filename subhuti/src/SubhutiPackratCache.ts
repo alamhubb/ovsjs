@@ -58,14 +58,22 @@ export interface SubhutiPackratCacheResult {
 }
 
 /**
- * SubhutiPackratCache 缓存统计信息
+ * SubhutiPackratCache 内部统计存储（仅内部使用）
+ * 
+ * 职责：
+ * - 存储原始统计数据（hits, misses, stores）
+ * - 提供 reset() 方法用于清空
+ * 
+ * 注意：
+ * - 这是内部类，不对外暴露
+ * - 对外请使用 getStatsReport() 获取完整分析
  */
-export class SubhutiPackratCacheStats {
+class SubhutiPackratCacheStats {
     hits: number = 0       // 缓存命中次数
-    misses: number = 0   // 缓存未命中次数
-    stores: number = 0   // 缓存存储次数
+    misses: number = 0     // 缓存未命中次数
+    stores: number = 0     // 缓存存储次数
 
-    reset(){
+    reset(): void {
         this.hits = 0
         this.misses = 0
         this.stores = 0
@@ -73,7 +81,24 @@ export class SubhutiPackratCacheStats {
 }
 
 /**
- * SubhutiPackratCache 缓存统计报告（详细版）
+ * SubhutiPackratCache 缓存统计报告（唯一对外接口）⭐
+ * 
+ * 通过 getStatsReport() 获取，包含完整的缓存分析数据：
+ * 
+ * 基础统计：
+ * - hits: 缓存命中次数
+ * - misses: 缓存未命中次数
+ * - stores: 缓存存储次数
+ * - total: 总查询次数（hits + misses）
+ * - hitRate: 命中率（如："68.5%"）
+ * 
+ * 缓存信息：
+ * - maxCacheSize: 最大容量
+ * - currentSize: 当前大小
+ * - usageRate: 使用率（如："45.2%" 或 "unlimited"）
+ * 
+ * 性能建议：
+ * - suggestions: 根据统计数据自动生成的优化建议
  */
 export interface SubhutiPackratCacheStatsReport {
     // 基础统计
@@ -322,19 +347,19 @@ export class SubhutiPackratCache {
     // ========================================
 
     /**
-     * 获取简单统计信息
-     */
-    getStats(): SubhutiPackratCacheStats {
-        return ({...this.stats}) as SubhutiPackratCacheStats
-    }
-
-    /**
-     * 获取详细统计报告
+     * 获取缓存统计报告（唯一对外API）⭐
      *
-     * 包含：
-     * - 基础统计：hits、misses、命中率
+     * 这是获取统计信息的唯一方法，包含完整的分析数据：
+     * - 基础统计：hits、misses、stores、total、命中率
      * - 缓存信息：最大容量、当前大小、使用率
      * - 性能建议：根据数据自动生成
+     *
+     * 使用示例：
+     * ```typescript
+     * const report = cache.getStatsReport()
+     * console.log(`命中率: ${report.hitRate}`)
+     * console.log(`建议: ${report.suggestions.join(', ')}`)
+     * ```
      */
     getStatsReport(): SubhutiPackratCacheStatsReport {
         const total = this.stats.hits + this.stats.misses
