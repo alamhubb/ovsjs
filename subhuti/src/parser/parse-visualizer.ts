@@ -21,9 +21,9 @@
  *   debug   - 调试模式（解析过程跟踪 + CST树 + 诊断）
  */
 
-import Es2020Parser from "./packages/slime-parser/src/language/es2020/Es2020Parser.ts"
-import {es2020Tokens} from "./packages/slime-parser/src/language/es2020/Es2020Tokens.ts"
-import SubhutiLexer from '../subhuti/src/parser/SubhutiLexer.ts'
+import Es2020Parser from "slime/packages/slime-parser/src/language/es2020/Es2020Parser.ts"
+import {es2020Tokens} from "slime/packages/slime-parser/src/language/es2020/Es2020Tokens.ts"
+import SubhutiLexer from 'src/parser/SubhutiLexer.ts'
 
 // ============================================
 // 类型定义
