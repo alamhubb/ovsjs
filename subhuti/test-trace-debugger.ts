@@ -93,7 +93,7 @@ const tokenStream = lexer.lexer(sourceCode)
 
 console.log('🔤 Tokens:')
 tokenStream.forEach((token, i) => {
-    console.log(`  [${i}] ${token.tokenName.padEnd(15)} "${token.tokenValue}"`)
+    console.log(`  [${i}] ${token.tokenName.padEnd(15)} ${token.tokenValue}`)
 })
 console.log()
 
