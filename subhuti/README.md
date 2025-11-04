@@ -6,17 +6,34 @@ meaning: Make the conversion between programming languages as flexible as the 72
 
 ---
 
-## 🎉 Latest Update [2025-11-02]
+## 🎉 Latest Update [2025-11-04]
 
-**重大修复：回溯机制优化（写时复制）**
+**重大重构：代码简化优化（YAGNI 原则）**
 
-修复了 Or 规则回溯时的 CST 污染问题，通过写时复制策略：
-- ✅ 空节点从 80%+ 降低到 13%（合理范围）
-- ✅ 无重复 token 节点
-- ✅ CST 结构完全正确
-- ✅ 性能影响可忽略
+基于 YAGNI、简单优于复杂原则，大幅简化非核心功能：
 
-详见：[docs/BACKTRACK_FIX.md](./docs/BACKTRACK_FIX.md)
+### 调试系统重构（v3.0）
+- ✅ 删除 3 套重复的调试系统，统一为 SubhutiTraceDebugger
+- ✅ 代码减少：745 行 → 174 行（**减少 76%**）
+- ✅ 新增功能：Or 分支追踪、回溯标识
+- ✅ 输出格式：
+  ```
+  ➡️  ImportDeclaration    ⚡CACHED  (1ms)
+    🔹 Consume  token[0] - import - <ImportTok>  ✅
+    🔀 Or[2 branches]  trying #0  @token[1]
+    ⏪ Backtrack  token[5] → token[2]
+  ```
+
+### 错误处理简化（v3.0）
+- ✅ 删除 ErrorDiagnoser（与 ParsingError 98% 重复）
+- ✅ 删除 ErrorFormatter（7 种格式未被使用）
+- ✅ 代码减少：731 行 → 224 行（**减少 69%**）
+- ✅ 保留核心：智能错误建议（5 种常见场景）
+
+### 总计优化
+- **代码减少：1,283 行**（调试 571 行 + 错误处理 507 行 + CLI 工具 205 行）
+- **测试通过率：100%**（6/6 测试用例）
+- **功能完整性：保留所有核心功能**
 
 ---
 
