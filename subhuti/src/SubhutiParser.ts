@@ -1,43 +1,13 @@
 /**
- * Subhuti Parser - 高性能 PEG Parser 框架（生产级实现）
- * 
- * 设计参考：
- * - Chevrotain: 模块化架构、清晰的 API
- * - PEG.js: 极简设计、返回值语义
- * - ANTLR: 成熟的错误处理
- * - Bryan Ford (2002): SubhutiPackratCache Parsing 标准实现
+ * Subhuti Parser - 高性能 PEG Parser 框架
  * 
  * 核心特性：
- * - ✅ 标志驱动（性能优先，避免异常开销）
- * - ✅ allowError 机制（智能错误管理）⭐ 核心创新
- * - ✅ 返回值语义（成功返回 CST，失败返回 undefined）
- * - ✅ 成功才添加 CST（清晰的生命周期）
- * - ✅ 紧凑 CST 结构（单数组 children，内存优化）
- * - ✅ LRU SubhutiPackratCache 缓存（防止内存溢出）⭐ 生产级
- * - ✅ 可插拔缓存（支持自定义策略）
- * - ✅ 极简回溯（O(1) 快照索引）
- * - ✅ 类型安全（严格的 TypeScript 约束）
+ * - Packrat Parsing（线性时间复杂度，LRU 缓存）
+ * - allowError 机制（智能错误管理）
+ * - 返回值语义（成功返回 CST，失败返回 undefined）
+ * - 类型安全（严格的 TypeScript 约束）
  * 
- * 默认配置（开箱即用）：
- * - SubhutiPackratCache Parsing: 启用（线性时间复杂度）
- * - 缓存策略: LRU（最近最少使用）
- * - 缓存大小: 10000 条（99% 场景足够）
- * - 内存安全: 自动淘汰旧缓存
- * 
- * 使用示例：
- * ```typescript
- * // 基础使用（默认最佳配置 - LRU 10000）
- * const parser = new MyParser(tokens)
- * const cst = parser.Program()
- * 
- * // 自定义缓存大小（大文件）
- * const parser = new MyParser(tokens, undefined, { maxSize: 50000 })
- * 
- * // 无限缓存（小文件 + 内存充足）
- * const parser = new MyParser(tokens, undefined, { maxSize: Infinity })
- * ```
- * 
- * @version 4.1.0 - 生产级实现（默认 LRU 缓存）
+ * @version 4.1.0
  * @date 2025-11-03
  */
 
@@ -557,8 +527,22 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      */
     subhutiRule(targetFun: Function, ruleName: string, className: string): SubhutiCst | undefined {
         // ============================================
-        // Layer 0: 类检查（编译期优化）
+        // Layer 0: 类检查（防止子类继承时规则冲突）
         // ============================================
+        /**
+         * 防止子类继承时规则冲突
+         * 
+         * 场景：SubParser extends MyParser
+         * - MyParser 定义了 Statement 规则
+         * - SubParser 也定义了 Statement 规则
+         * - 调用时应该使用 SubParser 的 Statement（而非 MyParser 的）
+         * 
+         * 检查逻辑：
+         * - 如果当前规则是实例自己的属性（不是原型链继承的）
+         * - 且装饰器记录的类名与当前类名不同
+         * - 说明这是父类的规则，应该跳过（返回 undefined）
+         * - 让子类的同名规则继续执行
+         */
         if (this.hasOwnProperty(ruleName)) {
             if (className !== this.className) {
                 return undefined
