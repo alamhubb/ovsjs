@@ -454,7 +454,11 @@ importers:
 
   slime/packages/slime-token: {}
 
-  subhuti: {}
+  subhuti:
+    dependencies:
+      lru-cache:
+        specifier: ^11.0.0
+        version: 11.2.2
 
 packages:
 

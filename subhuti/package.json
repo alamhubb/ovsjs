@@ -29,5 +29,8 @@
     "auto-transfomer"
   ],
   "author": "alamhubb",
-  "description": "Automatic conversion between two different programming languages through two grammar files that define the same grammar structure and grammar name"
+  "description": "Automatic conversion between two different programming languages through two grammar files that define the same grammar structure and grammar name",
+  "dependencies": {
+    "lru-cache": "^11.0.0"
+  }
 }
