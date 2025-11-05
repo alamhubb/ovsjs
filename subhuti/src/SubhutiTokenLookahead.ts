@@ -1,22 +1,42 @@
 /**
- * Subhuti Token Helper - 统一的 Token 访问入口
+ * Subhuti Token Lookahead - Token 前瞻基础类（抽象）
  * 
  * 职责：
- * 1. Token 消费（修改状态）
- * 2. Token 前瞻（只读查询）
- * 3. 行终止符检查
+ * 1. Token 前瞻（只读查询）
+ * 2. 行终止符检查
+ * 3. 对应 ECMAScript® 2025 规范中的所有 [lookahead ...] 约束
  * 
- * 对应 ECMAScript® 2025 规范中的所有 [lookahead ...] 约束
+ * 设计模式：
+ * - 抽象类，定义访问接口（tokens, currentIndex, curToken）
+ * - 子类（SubhutiParser）实现具体访问逻辑
+ * - 避免循环依赖，实现依赖倒置
+ * 
  * 规范地址：https://tc39.es/ecma262/2025/#sec-grammar-summary
  * 
- * @version 2.0.0
+ * @version 3.0.0
  */
 
-import type SubhutiParser from "./SubhutiParser.ts"
-import type {SubhutiCreateToken} from "./struct/SubhutiCreateToken.ts"
 import type SubhutiMatchToken from "./struct/SubhutiMatchToken.ts"
 
-export default class SubhutiTokenLookahead {
+export default abstract class SubhutiTokenLookahead {
+    // ============================================
+    // 抽象接口（子类必须实现）
+    // ============================================
+    
+    /**
+     * 获取 token 数组（只读访问）
+     */
+    protected abstract get tokens(): SubhutiMatchToken[]
+    
+    /**
+     * 获取当前 token 索引（只读访问）
+     */
+    protected abstract get currentIndex(): number
+    
+    /**
+     * 获取当前 token（只读访问）
+     */
+    abstract get curToken(): SubhutiMatchToken | undefined
     // ============================================
     // 行终止符检查（从 SubhutiParser 移入）
     // ============================================
