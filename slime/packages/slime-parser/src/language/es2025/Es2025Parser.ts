@@ -263,11 +263,17 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
    *   ImportedDefaultBinding , NamedImports
    * 
    * Import 子句
+   * 
+   * 注意：虽然规范中短规则在前，但 PEG 的 Or 是有序选择：
+   * - 短规则（如 default）会匹配 `import React, {...}` 的 `React` 部分
+   * - 然后剩下 `, {...}` 无法继续，导致解析失败
+   * - 因此混合形式（长规则）必须先尝试
+   * - 这是 PEG vs CFG 的本质区别，与前瞻功能无关
    */
   @SubhutiRule
   ImportClause(): SubhutiCst | undefined {
     return this.Or([
-      // default, * as ns
+      // default, * as ns（长规则先）
       {
         alt: () => {
           this.ImportedDefaultBinding()
@@ -275,7 +281,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
           this.NameSpaceImport()
         }
       },
-      // default, { named }
+      // default, { named }（长规则先）
       {
         alt: () => {
           this.ImportedDefaultBinding()
@@ -283,7 +289,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
           this.NamedImports()
         }
       },
-      // default
+      // default（短规则后）
       { alt: () => this.ImportedDefaultBinding() },
       // * as ns
       { alt: () => this.NameSpaceImport() },
@@ -2218,10 +2224,11 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
    * 
    * 短路表达式（|| 或 ??）
    * 
-   * 注意：Or 顺序很重要
-   * - CoalesceExpression 必须包含 ??，如果不匹配会失败
-   * - LogicalORExpression 可以是单个表达式（没有 ||），总能成功
-   * - 因此 CoalesceExpression 必须在前面尝试
+   * 注意：虽然规范中 LogicalOR 在前，但 PEG 的 Or 是有序选择：
+   * - LogicalOR 可以匹配单个表达式（没有 ||），总会成功
+   * - Coalesce 必须包含 ??，不匹配会失败
+   * - 因此 Coalesce 必须先尝试，否则永远匹配不到
+   * - 这是 PEG vs CFG 的本质区别，与前瞻功能无关
    */
   @SubhutiRule
   ShortCircuitExpression(params: ParseParams = {}): SubhutiCst | undefined {
@@ -4460,20 +4467,27 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
  * 已修复的问题（2025-11-05）
  * ============================================
  * 
- * 1. ✅ ShortCircuitExpression 的 Or 顺序错误
- *    问题：LogicalORExpression 在前导致 ?? 无法匹配
- *    修复：CoalesceExpression 优先尝试
- * 
- * 2. ✅ Cover Grammar 规则缺少说明
+ * 1. ✅ Cover Grammar 规则缺少说明
  *    问题：简化实现没有注释说明
  *    修复：添加详细注释和规范引用
  * 
- * 3. ✅ 辅助方法职责划分
+ * 2. ✅ 辅助方法职责划分
  *    问题：基类包含特定语法方法
  *    修复：通用能力在基类，特定语法在 Es2025Parser
  *    - 基类添加：matchSequenceWithoutLineTerminator()
  *    - 基类删除：isAsyncFunctionWithoutLineTerminator(), isLetBracket()
  *    - Es2025Parser 实现自己的语法检查方法
+ * 
+ * 2025-11-06:
+ * 3. ✅ 澄清 PEG vs CFG 的本质区别
+ *    问题：误认为前瞻功能可以让规则顺序与规范一致
+ *    澄清：PEG 的 Or 是"有序选择"，CFG 是"无序选择" - 这是本质区别
+ *    结论：
+ *    - 前瞻功能只能实现 [lookahead ≠ {...}] 等否定前瞻
+ *    - 前瞻功能**不能**改变 Or 的有序选择特性
+ *    - 某些规则的顺序**必须**与规范不同（如 ShortCircuitExpression、ImportClause）
+ *    - 添加详细注释说明为什么顺序必须不同
+ *    见 Line 2221-2225 (ShortCircuitExpression) 和 Line 267-271 (ImportClause)
  */
 
 

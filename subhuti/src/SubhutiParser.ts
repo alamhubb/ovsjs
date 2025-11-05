@@ -87,6 +87,18 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     // 调试和错误处理
     private _debugger?: SubhutiDebugger
     private readonly _errorHandler = new SubhutiErrorHandler()
+    
+    // 左递归检测
+    /**
+     * 左递归检测栈：记录 (ruleName:tokenIndex)
+     * 用于检测在同一token位置重复调用同一规则
+     */
+    private readonly leftRecursionStack: Set<string> = new Set()
+    
+    /**
+     * 是否启用左递归检测（默认启用）
+     */
+    enableLeftRecursionDetection: boolean = true
 
     // allowError 机制（智能错误管理）
     /**
@@ -189,6 +201,11 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         this._errorHandler.setDetailed(enable)
         return this
     }
+    
+    leftRecursionDetection(enable: boolean = true): this {
+        this.enableLeftRecursionDetection = enable
+        return this
+    }
 
     /**
      * 规则执行入口（由 @SubhutiRule 装饰器调用）
@@ -198,6 +215,25 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         const isTopLevel = this.cstStack.length === 0 && this.ruleStack.length === 0
         if (!this._preCheckRule(ruleName, className, isTopLevel)) {
             return undefined
+        }
+        
+        // 左递归检测
+        if (this.enableLeftRecursionDetection && !isTopLevel) {
+            const key = `${ruleName}:${this.tokenIndex}`
+            if (this.leftRecursionStack.has(key)) {
+                throw new Error(
+                    `Left recursion detected in rule "${ruleName}" at token position ${this.tokenIndex}\n` +
+                    `Rule stack: ${this.ruleStack.join(' -> ')} -> ${ruleName}\n` +
+                    `\n` +
+                    `PEG parsers cannot handle left recursion directly.\n` +
+                    `Please refactor your grammar to eliminate left recursion.\n` +
+                    `\n` +
+                    `Example:\n` +
+                    `  Bad:  A -> A 'x' | 'y'\n` +
+                    `  Good: A -> 'y' ('x')*`
+                )
+            }
+            this.leftRecursionStack.add(key)
         }
 
         const observeContext = this._debugger?.onRuleEnter(ruleName, this.tokenIndex)
@@ -210,6 +246,10 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
                 const result = this.applyCachedResult(cached)
                 if (result && !result.children?.length) {
                     result.children = undefined
+                }
+                // 清理左递归检测栈
+                if (this.enableLeftRecursionDetection && !isTopLevel) {
+                    this.leftRecursionStack.delete(`${ruleName}:${this.tokenIndex}`)
                 }
                 return result
             }
@@ -230,6 +270,11 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         }
 
         this._postProcessRule(ruleName, cst, isTopLevel, observeContext)
+        
+        // 清理左递归检测栈
+        if (this.enableLeftRecursionDetection && !isTopLevel) {
+            this.leftRecursionStack.delete(`${ruleName}:${startTokenIndex}`)
+        }
 
         return cst
     }
@@ -246,6 +291,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             this.cstStack.length = 0
             this.ruleStack.length = 0
             this.allowErrorDepth = 0
+            this.leftRecursionStack.clear()
             return true
         }
 
