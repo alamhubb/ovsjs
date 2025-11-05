@@ -173,8 +173,8 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
     // 过程追踪数据
     // ========================================
     private depth = 0
-    private ruleStack: Array<{ruleName: string, startTime: number}> = []
-    
+    public ruleStack: Array<{ruleName: string, startTime: number}> = []
+
     // ========================================
     // 性能统计数据
     // ========================================

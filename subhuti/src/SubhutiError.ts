@@ -17,13 +17,27 @@ import type SubhutiMatchToken from "./struct/SubhutiMatchToken.ts";
 // ============================================
 
 /**
- * 错误详情
+ * 错误详情（平铺结构）
  */
 export interface ErrorDetails {
+    // 通用字段
     expected: string
     found?: SubhutiMatchToken
     position: { index: number, line: number, column: number }
     ruleStack: string[]
+    type?: 'parsing' | 'loop'             // 默认 'parsing'
+    
+    // Loop 错误专用字段（平铺）
+    loopRuleName?: string                 // 循环的规则名
+    loopDetectionSet?: string[]           // 循环检测点列表
+    loopCstDepth?: number                 // CST 栈深度
+    loopCacheStats?: {                    // 缓存统计
+        hits: number
+        misses: number
+        hitRate: string
+        currentSize: number
+    }
+    loopTokenContext?: SubhutiMatchToken[] // Token 上下文
 }
 
 /**
@@ -47,6 +61,16 @@ export class ParsingError extends Error {
     readonly ruleStack: readonly string[]
     
     /**
+     * 错误类型
+     */
+    readonly type: 'parsing' | 'loop'
+    
+    /**
+     * 循环错误专用信息
+     */
+    readonly loopInfo?: Readonly<LoopErrorInfo>
+    
+    /**
      * ⭐ 智能修复建议（简化版）
      * 
      * 只覆盖最常见的 8 种错误场景
@@ -65,10 +89,12 @@ export class ParsingError extends Error {
     ) {
         super(message)
         this.name = 'ParsingError'
+        this.type = details.type || 'parsing'
         this.expected = details.expected
         this.found = details.found
         this.position = details.position
         this.ruleStack = Object.freeze([...details.ruleStack])
+        this.loopInfo = details.loopInfo
         this.useDetailed = useDetailed
         
         // 详细模式才生成智能建议
@@ -133,9 +159,15 @@ export class ParsingError extends Error {
     }
     
     /**
-     * 格式化错误信息（根据模式选择详细或简单）⭐
+     * 格式化错误信息（根据类型和模式选择）⭐
      */
     toString(): string {
+        // 循环错误专用格式化
+        if (this.type === 'loop') {
+            return this.useDetailed ? this.toLoopDetailedString() : this.toLoopSimpleString()
+        }
+        
+        // 解析错误格式化
         if (this.useDetailed) {
             return this.toDetailedString()
         } else {
@@ -205,6 +237,107 @@ export class ParsingError extends Error {
      */
     toShortString(): string {
         return this.toSimpleString()
+    }
+    
+    /**
+     * 循环错误详细格式⭐
+     * 
+     * 展示信息：
+     * - 循环规则名和位置
+     * - 当前 token 信息
+     * - 完整规则调用栈
+     * - 循环检测集合内容
+     * - CST 栈深度
+     * - 缓存统计（可选）
+     * - Token 上下文（可选）
+     * - 修复建议
+     */
+    private toLoopDetailedString(): string {
+        const lines: string[] = []
+        const loopInfo = this.loopInfo!
+        
+        // 标题
+        lines.push('❌ 检测到无限循环（左递归或循环依赖）')
+        lines.push('')
+        
+        // 核心信息
+        lines.push(`规则 "${loopInfo.ruleName}" 在 token 位置 ${this.position.index} 处重复调用自己`)
+        lines.push(`当前 token: ${this.found?.tokenName || 'EOF'}("${this.found?.tokenValue || ''}")`)
+        lines.push(`  --> line ${this.position.line}, column ${this.position.column}`)
+        lines.push('')
+        
+        // 规则调用栈
+        if (this.ruleStack.length > 0) {
+            lines.push('规则调用栈:')
+            const maxDisplay = 8
+            const visible = this.ruleStack.slice(-maxDisplay)
+            const hidden = this.ruleStack.length - visible.length
+            
+            if (hidden > 0) {
+                lines.push(`  ... (隐藏 ${hidden} 层)`)
+            }
+            
+            visible.forEach((rule, i) => {
+                const isLast = i === visible.length - 1
+                const prefix = '  ' + '  '.repeat(i) + (isLast ? '└─>' : '├─>')
+                lines.push(`${prefix} ${rule}`)
+            })
+            lines.push(`  ${'  '.repeat(visible.length)}└─> ${loopInfo.ruleName} ⚠️ 循环点`)
+            lines.push('')
+        }
+        
+        // 诊断信息
+        lines.push('诊断信息:')
+        lines.push(`  • CST 栈深度: ${loopInfo.cstDepth}`)
+        lines.push(`  • 循环检测点: ${loopInfo.detectionSet.length} 个`)
+        
+        if (loopInfo.detectionSet.length > 0 && loopInfo.detectionSet.length <= 10) {
+            lines.push(`    ${loopInfo.detectionSet.join(', ')}`)
+        } else if (loopInfo.detectionSet.length > 10) {
+            lines.push(`    ${loopInfo.detectionSet.slice(0, 10).join(', ')} ...`)
+        }
+        
+        // 缓存统计（可选）
+        if (loopInfo.cacheStats) {
+            lines.push(`  • 缓存命中率: ${loopInfo.cacheStats.hitRate} (${loopInfo.cacheStats.hits} hits / ${loopInfo.cacheStats.misses} misses)`)
+            lines.push(`  • 缓存大小: ${loopInfo.cacheStats.currentSize}`)
+        }
+        
+        // Token 上下文（可选）
+        if (loopInfo.tokenContext && loopInfo.tokenContext.length > 0) {
+            lines.push('')
+            lines.push('Token 上下文:')
+            loopInfo.tokenContext.forEach((token, i) => {
+                const isCurrent = token === this.found
+                const marker = isCurrent ? ' <-- 当前位置' : ''
+                lines.push(`  ${token.tokenName}("${token.tokenValue}")${marker}`)
+            })
+        }
+        
+        lines.push('')
+        
+        // 修复建议
+        lines.push('⚠️ PEG 解析器无法直接处理左递归。')
+        lines.push('请重构语法以消除左递归。')
+        lines.push('')
+        lines.push('示例:')
+        lines.push('  ❌ 错误:  Expression → Expression \'+\' Term | Term')
+        lines.push('  ✅ 正确:  Expression → Term (\'+\' Term)*')
+        lines.push('')
+        lines.push('常见模式:')
+        lines.push('  • 左递归:       A → A \'x\' | \'y\'          →  改为: A → \'y\' (\'x\')*')
+        lines.push('  • 间接左递归:   A → B, B → C, C → A      →  需要手动展开或重构')
+        lines.push('  • 循环依赖:     A → B, B → A             →  检查是否有空匹配分支')
+        
+        return lines.join('\n')
+    }
+    
+    /**
+     * 循环错误简单格式
+     */
+    private toLoopSimpleString(): string {
+        const loopInfo = this.loopInfo!
+        return `Loop Detection Error: Rule "${loopInfo.ruleName}" at position ${this.position.index} (line ${this.position.line}:${this.position.column})`
     }
 }
 

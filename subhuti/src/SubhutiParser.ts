@@ -197,31 +197,49 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     private throwLoopError(ruleName: string): never {
         // 获取当前 token 信息
         const currentToken = this.curToken
-        const tokenInfo = currentToken
-            ? `${currentToken.tokenName}("${currentToken.tokenValue}")`
-            : 'EOF'
-
-        throw new Error(
-            `❌ 检测到无限循环（左递归或循环依赖）\n` +
-            `\n` +
-            `规则 "${ruleName}" 在 token 位置 ${this.tokenIndex} 处重复调用自己\n` +
-            `当前 token: ${tokenInfo}\n` +
-            `规则栈: ${this.ruleStack.join(' → ')} → ${ruleName}\n` +
-            `\n` +
-            `⚠️ PEG 解析器无法直接处理左递归。\n` +
-            `请重构语法以消除左递归。\n` +
-            `\n` +
-            `示例:\n` +
-            `  ❌ 错误:  Expression → Expression '+' Term | Term\n` +
-            `  ✅ 正确:  Expression → Term ('+' Term)*\n` +
-            `\n` +
-            `常见模式:\n` +
-            `  • 左递归:       A → A 'x' | 'y'          →  改为: A → 'y' ('x')*\n` +
-            `  • 间接左递归:   A → B, B → C, C → A      →  需要手动展开或重构\n` +
-            `  • 循环依赖:     A → B, B → A             →  检查是否有空匹配分支\n` +
-            `\n` +
-            `💡 提示: 可以使用 .loopDetection(false) 临时禁用此检测（不推荐）`
-        )
+        
+        // 获取 token 上下文（前后各 2 个）
+        const tokenContext: SubhutiMatchToken[] = []
+        const contextRange = 2
+        for (let i = Math.max(0, this.tokenIndex - contextRange); 
+             i <= Math.min(this._tokens.length - 1, this.tokenIndex + contextRange); 
+             i++) {
+            if (this._tokens[i]) {
+                tokenContext.push(this._tokens[i])
+            }
+        }
+        
+        // 获取缓存统计
+        const cacheStatsReport = this._cache.getStatsReport()
+        
+        // 创建错误详情
+        throw this._errorHandler.createError({
+            type: 'loop',
+            expected: '', // 循环错误不需要 expected
+            found: currentToken,
+            position: currentToken ? {
+                index: currentToken.index || 0,
+                line: currentToken.rowNum || 0,
+                column: currentToken.columnStartNum || 0
+            } : {
+                index: this._tokens[this._tokens.length - 1]?.index || 0,
+                line: this._tokens[this._tokens.length - 1]?.rowNum || 0,
+                column: this._tokens[this._tokens.length - 1]?.columnEndNum || 0
+            },
+            ruleStack: [...this.ruleStack],
+            loopInfo: {
+                ruleName,
+                detectionSet: Array.from(this.loopDetectionSet),
+                cstDepth: this.cstStack.length,
+                cacheStats: {
+                    hits: cacheStatsReport.hits,
+                    misses: cacheStatsReport.misses,
+                    hitRate: cacheStatsReport.hitRate,
+                    currentSize: cacheStatsReport.currentSize
+                },
+                tokenContext
+            }
+        })
     }
 
     /**
