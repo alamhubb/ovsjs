@@ -1,7 +1,7 @@
 /**
  * 规则测试：Statement
  * 
- * 位置：Es6Parser.ts Line 855
+ * 位置：Es2025Parser.ts Line 855
  * 分类：statements
  * 编号：401
  * 
@@ -122,7 +122,7 @@ try {
 // ✅ 测试16：DebuggerStatement
 debugger
 
-/* Es6Parser.ts: Or[BlockStatement, VariableStatement, ...] */
+/* Es2025Parser.ts: Or[BlockStatement, VariableStatement, ...] */
 
 
 // ============================================
@@ -152,7 +152,7 @@ continue
 throw new Error()
 debugger
 
-/* Es6Parser.ts: Statement */
+/* Es2025Parser.ts: Statement */
 
 
 // ============================================
@@ -160,7 +160,7 @@ debugger
 // ============================================
 
 
-/* Es6Parser.ts: Expression ; */
+/* Es2025Parser.ts: Expression ; */
 
 
 // ============================================
@@ -170,7 +170,7 @@ debugger
 /**
  * 规则测试：ExpressionStatement
  * 
- * 位置：Es6Parser.ts Line 1119
+ * 位置：Es2025Parser.ts Line 1119
  * 分类：expressions
  * 编号：225
  * 
@@ -242,7 +242,7 @@ x > 0 && console.log('positive')
 // ✅ 测试15：条件表达式语句
 true ? console.log('yes') : console.log('no')
 
-/* Es6Parser.ts: ExpressionStatement: Expression ; */
+/* Es2025Parser.ts: ExpressionStatement: Expression ; */
 
 
 // ============================================
@@ -250,7 +250,7 @@ true ? console.log('yes') : console.log('no')
 // ============================================
 
 
-/* Es6Parser.ts: Expression ; */
+/* Es2025Parser.ts: Expression ; */
 
 
 // ============================================
@@ -260,7 +260,7 @@ true ? console.log('yes') : console.log('no')
 /**
  * 规则测试：BlockStatement
  * 
- * 位置：Es6Parser.ts Line 1127
+ * 位置：Es2025Parser.ts Line 1127
  * 分类：statements
  * 编号：301
  * 
@@ -390,7 +390,7 @@ for (let i = 0; i < 10; i++) {
     }
 }
 
-/* Es6Parser.ts: BlockStatement: { StatementList? } */
+/* Es2025Parser.ts: BlockStatement: { StatementList? } */
 
 
 // ============================================
@@ -400,7 +400,7 @@ for (let i = 0; i < 10; i++) {
 /**
  * 规则测试：BlockStatement
  * 
- * 位置：Es6Parser.ts Line 963
+ * 位置：Es2025Parser.ts Line 963
  * 分类：statements
  * 编号：403
  * 
@@ -422,7 +422,7 @@ for (let i = 0; i < 10; i++) {
     const y = 2
 }
 
-/* Es6Parser.ts: BlockStatement */
+/* Es2025Parser.ts: BlockStatement */
 
 
 // ============================================
@@ -433,7 +433,7 @@ for (let i = 0; i < 10; i++) {
  * 规则测试：BlockStatement
  * 分类：others | 编号：707
  * 
- * 规则定义（Es6Parser.ts）：
+ * 规则定义（Es2025Parser.ts）：
  * BlockStatement:
  *   Block
  * 
@@ -561,7 +561,7 @@ function test() {
     }
 }
 
-/* Es6Parser.ts: BlockStatement
+/* Es2025Parser.ts: BlockStatement
  * 规则：
  * BlockStatement:
  *   Block
@@ -578,7 +578,7 @@ function test() {
 /**
  * 规则测试：BreakableStatement
  * 
- * 位置：Es6Parser.ts Line 955
+ * 位置：Es2025Parser.ts Line 955
  * 分类：statements
  * 编号：402
  * 
@@ -599,7 +599,7 @@ for (;;) { break }
 while (true) { break }
 switch (x) { case 1: break }
 
-/* Es6Parser.ts: Or[IterationStatement, SwitchStatement] */
+/* Es2025Parser.ts: Or[IterationStatement, SwitchStatement] */
 
 
 // ============================================
@@ -607,7 +607,7 @@ switch (x) { case 1: break }
 // ============================================
 
 
-/* Es6Parser.ts: break Label? */
+/* Es2025Parser.ts: break Label? */
 
 
 // ============================================
@@ -617,7 +617,7 @@ switch (x) { case 1: break }
 /**
  * 规则测试：BreakStatement
  * 
- * 位置：Es6Parser.ts Line 1258
+ * 位置：Es2025Parser.ts Line 1258
  * 分类：statements
  * 编号：413
  * 
@@ -741,7 +741,7 @@ function searchArray(arr, target) {
     }
 }
 
-/* Es6Parser.ts: BreakStatement: break ; */
+/* Es2025Parser.ts: BreakStatement: break ; */
 
 
 // ============================================
@@ -749,7 +749,7 @@ function searchArray(arr, target) {
 // ============================================
 
 
-/* Es6Parser.ts: continue Label? */
+/* Es2025Parser.ts: continue Label? */
 
 
 // ============================================
@@ -759,7 +759,7 @@ function searchArray(arr, target) {
 /**
  * 规则测试：ContinueStatement
  * 
- * 位置：Es6Parser.ts Line 1261
+ * 位置：Es2025Parser.ts Line 1261
  * 分类：statements
  * 编号：412
  * 
@@ -832,7 +832,7 @@ for (let i = 0; i < 100; i++) {
     if (i % 5 === 0) continue
     console.log(i)
 }
-/* Es6Parser.ts: ContinueStatement */
+/* Es2025Parser.ts: ContinueStatement */
 
 
 // ============================================
@@ -842,7 +842,7 @@ for (let i = 0; i < 100; i++) {
 /**
  * 规则测试：ContinueStatement
  * 
- * 位置：Es6Parser.ts Line 1266
+ * 位置：Es2025Parser.ts Line 1266
  * 分类：statements
  * 编号：414
  * 
@@ -970,7 +970,7 @@ function processItems(items) {
     }
 }
 
-/* Es6Parser.ts: ContinueStatement: continue ; */
+/* Es2025Parser.ts: ContinueStatement: continue ; */
 
 
 // ============================================
@@ -980,7 +980,7 @@ function processItems(items) {
 /**
  * 规则测试：DebuggerStatement
  * 
- * 位置：Es6Parser.ts Line 1401
+ * 位置：Es2025Parser.ts Line 1401
  * 分类：statements
  * 编号：420
  * 
@@ -1049,7 +1049,7 @@ function process(data) {
     debugger
     return result
 }
-/* Es6Parser.ts: DebuggerStatement */
+/* Es2025Parser.ts: DebuggerStatement */
 
 
 // ============================================
@@ -1060,7 +1060,7 @@ function process(data) {
  * 规则测试：DebuggerStatement
  * 分类：statements | 编号：423
  * 
- * 规则定义（Es6Parser.ts）：
+ * 规则定义（Es2025Parser.ts）：
  * DebuggerStatement:
  *   debugger
  * 
@@ -1174,7 +1174,7 @@ const obj = {
     }
 }
 
-/* Es6Parser.ts: DebuggerStatement
+/* Es2025Parser.ts: DebuggerStatement
  * 规则：
  * DebuggerStatement:
  *   debugger
@@ -1188,7 +1188,7 @@ const obj = {
 /**
  * 规则测试：DoWhileStatement
  * 
- * 位置：Es6Parser.ts Line 1158
+ * 位置：Es2025Parser.ts Line 1158
  * 分类：statements
  * 编号：407
  * 
@@ -1331,7 +1331,7 @@ do {
     total++
 } while (total < 5)
 
-/* Es6Parser.ts: DoWhileStatement: do Statement while ( Expression ) */
+/* Es2025Parser.ts: DoWhileStatement: do Statement while ( Expression ) */
 
 
 // ============================================
@@ -1339,7 +1339,7 @@ do {
 // ============================================
 
 
-/* Es6Parser.ts: ; */
+/* Es2025Parser.ts: ; */
 
 
 // ============================================
@@ -1347,7 +1347,7 @@ do {
 // ============================================
 
 
-/* Es6Parser.ts: ; */
+/* Es2025Parser.ts: ; */
 
 
 // ============================================
@@ -1357,7 +1357,7 @@ do {
 /**
  * 规则测试：EmptyStatement
  * 
- * 位置：Es6Parser.ts Line 1114
+ * 位置：Es2025Parser.ts Line 1114
  * 分类：statements
  * 编号：404
  * 
@@ -1382,7 +1382,7 @@ do {
 
 // ✅ 测试2：多个分号
 ;;
-/* Es6Parser.ts: EmptyStatement */
+/* Es2025Parser.ts: EmptyStatement */
 
 
 // ============================================
@@ -1393,7 +1393,7 @@ do {
  * 规则测试：EmptyStatement
  * 分类：others | 编号：708
  * 
- * 规则定义（Es6Parser.ts）：
+ * 规则定义（Es2025Parser.ts）：
  * EmptyStatement:
  *   ;
  * 
@@ -1477,7 +1477,7 @@ for (let i = 0; i < 2; i++) {
     ;
 }
 
-/* Es6Parser.ts: EmptyStatement
+/* Es2025Parser.ts: EmptyStatement
  * 规则：
  * EmptyStatement:
  *   ;
@@ -1491,7 +1491,7 @@ for (let i = 0; i < 2; i++) {
 /**
  * 规则测试：ForInOfStatement
  * 
- * 位置：Es6Parser.ts Line 1179
+ * 位置：Es2025Parser.ts Line 1179
  * 分类：statements
  * 编号：410
  * 
@@ -1623,7 +1623,7 @@ for (let [num, letter] of pairs) {
     console.log(`${num}: ${letter}`)
 }
 
-/* Es6Parser.ts: ForInOfStatement: for ( LeftHandSideExpression in|of Expression ) Statement */
+/* Es2025Parser.ts: ForInOfStatement: for ( LeftHandSideExpression in|of Expression ) Statement */
 
 
 // ============================================
@@ -1633,7 +1633,7 @@ for (let [num, letter] of pairs) {
 /**
  * 规则测试：ForStatement
  * 
- * 位置：Es6Parser.ts Line 1168
+ * 位置：Es2025Parser.ts Line 1168
  * 分类：statements
  * 编号：409
  * 
@@ -1751,7 +1751,7 @@ for (let i = 0; i < 2; i++) {
     }
 }
 
-/* Es6Parser.ts: ForStatement: for ( VariableDeclaration? ; Expression? ; Expression? ) Statement */
+/* Es2025Parser.ts: ForStatement: for ( VariableDeclaration? ; Expression? ; Expression? ) Statement */
 
 
 // ============================================
@@ -1759,7 +1759,7 @@ for (let i = 0; i < 2; i++) {
 // ============================================
 
 
-/* Es6Parser.ts: if (Expression) Statement (else Statement)? */
+/* Es2025Parser.ts: if (Expression) Statement (else Statement)? */
 
 
 // ============================================
@@ -1769,7 +1769,7 @@ for (let i = 0; i < 2; i++) {
 /**
  * 规则测试：IfStatement
  * 
- * 位置：Es6Parser.ts Line 1126
+ * 位置：Es2025Parser.ts Line 1126
  * 分类：statements
  * 编号：405
  * 
@@ -1896,7 +1896,7 @@ if (str.length > 0) {
     console.log('not empty')
 }
 
-/* Es6Parser.ts: IfStatement: if ( Expression ) Statement else? Statement */
+/* Es2025Parser.ts: IfStatement: if ( Expression ) Statement else? Statement */
 
 
 // ============================================
@@ -1906,7 +1906,7 @@ if (str.length > 0) {
 /**
  * 规则测试：IterationStatement
  * 
- * 位置：Es6Parser.ts Line 1139
+ * 位置：Es2025Parser.ts Line 1139
  * 分类：statements
  * 编号：406
  * 
@@ -1928,7 +1928,7 @@ while (true) { break }
 do {} while (false)
 for (const x of arr) {}
 
-/* Es6Parser.ts: IterationStatement */
+/* Es2025Parser.ts: IterationStatement */
 
 
 // ============================================
@@ -1936,7 +1936,7 @@ for (const x of arr) {}
 // ============================================
 
 
-/* Es6Parser.ts: do Statement while (Expression) */
+/* Es2025Parser.ts: do Statement while (Expression) */
 
 
 // ============================================
@@ -1944,7 +1944,7 @@ for (const x of arr) {}
 // ============================================
 
 
-/* Es6Parser.ts: for (VariableDeclaration? Expression? Expression?) Statement */
+/* Es2025Parser.ts: for (VariableDeclaration? Expression? Expression?) Statement */
 
 
 // ============================================
@@ -1952,7 +1952,7 @@ for (const x of arr) {}
 // ============================================
 
 
-/* Es6Parser.ts: for (VariableDeclaration in Expression) Statement */
+/* Es2025Parser.ts: for (VariableDeclaration in Expression) Statement */
 
 
 // ============================================
@@ -1960,7 +1960,7 @@ for (const x of arr) {}
 // ============================================
 
 
-/* Es6Parser.ts: for (VariableDeclaration of Expression) Statement */
+/* Es2025Parser.ts: for (VariableDeclaration of Expression) Statement */
 
 
 // ============================================
@@ -1968,7 +1968,7 @@ for (const x of arr) {}
 // ============================================
 
 
-/* Es6Parser.ts: while (Expression) Statement */
+/* Es2025Parser.ts: while (Expression) Statement */
 
 
 // ============================================
@@ -1979,7 +1979,7 @@ for (const x of arr) {}
  * 规则测试：LabeledStatement
  * 分类：statements | 编号：422
  * 
- * 规则定义（Es6Parser.ts - 直接来自Parser）：
+ * 规则定义（Es2025Parser.ts - 直接来自Parser）：
  * LabeledStatement:
  *   LabelIdentifier : LabelledItem
  * 
@@ -2101,7 +2101,7 @@ blockLabel: {
     break blockLabel
 }
 
-/* Es6Parser.ts: LabeledStatement
+/* Es2025Parser.ts: LabeledStatement
  * 规则：
  * LabeledStatement:
  *   LabelIdentifier : LabelledItem
@@ -2118,7 +2118,7 @@ blockLabel: {
 // ============================================
 
 
-/* Es6Parser.ts: Label : Statement */
+/* Es2025Parser.ts: Label : Statement */
 
 
 // ============================================
@@ -2128,7 +2128,7 @@ blockLabel: {
 /**
  * 规则测试：LabelledStatement
  * 
- * 位置：Es6Parser.ts Line 1340
+ * 位置：Es2025Parser.ts Line 1340
  * 分类：statements
  * 编号：417
  * 
@@ -2148,7 +2148,7 @@ blockLabel: {
 label1: for (;;) { break label1 }
 outer: while (true) { break outer }
 
-/* Es6Parser.ts: LabelledStatement */
+/* Es2025Parser.ts: LabelledStatement */
 
 
 // ============================================
@@ -2156,7 +2156,7 @@ outer: while (true) { break outer }
 // ============================================
 
 
-/* Es6Parser.ts: return Expression? */
+/* Es2025Parser.ts: return Expression? */
 
 
 // ============================================
@@ -2166,7 +2166,7 @@ outer: while (true) { break outer }
 /**
  * 规则测试：ReturnStatement
  * 
- * 位置：Es6Parser.ts Line 1244
+ * 位置：Es2025Parser.ts Line 1244
  * 分类：statements
  * 编号：402
  * 
@@ -2267,7 +2267,7 @@ function test15(x) {
     if (x > 0) return 'positive'
 }
 
-/* Es6Parser.ts: ReturnStatement: return Expression? ; */
+/* Es2025Parser.ts: ReturnStatement: return Expression? ; */
 
 
 // ============================================
@@ -2277,7 +2277,7 @@ function test15(x) {
 /**
  * 规则测试：ReturnStatement
  * 
- * 位置：Es6Parser.ts Line 1281
+ * 位置：Es2025Parser.ts Line 1281
  * 分类：statements
  * 编号：414
  * 
@@ -2345,7 +2345,7 @@ function test() { return 42 }
 function none() { return }
 function complex() { return {a: 1, b: 2} }
 
-/* Es6Parser.ts: ReturnStatement */
+/* Es2025Parser.ts: ReturnStatement */
 
 
 // ============================================
@@ -2355,7 +2355,7 @@ function complex() { return {a: 1, b: 2} }
 /**
  * 规则测试：StatementList
  * 
- * 位置：Es6Parser.ts Line 1726
+ * 位置：Es2025Parser.ts Line 1726
  * 分类：statements
  * 编号：424
  * 
@@ -2376,7 +2376,7 @@ const x = 1
 const y = 2
 console.log(x + y)
 
-/* Es6Parser.ts: StatementList */
+/* Es2025Parser.ts: StatementList */
 
 
 // ============================================
@@ -2386,7 +2386,7 @@ console.log(x + y)
 /**
  * 规则测试：StatementListItem
  * 
- * 位置：Es6Parser.ts Line 1733
+ * 位置：Es2025Parser.ts Line 1733
  * 分类：statements
  * 编号：425
  * 
@@ -2407,7 +2407,7 @@ const x = 1
 function test() {}
 class MyClass {}
 
-/* Es6Parser.ts: StatementListItem */
+/* Es2025Parser.ts: StatementListItem */
 
 
 // ============================================
@@ -2415,7 +2415,7 @@ class MyClass {}
 // ============================================
 
 
-/* Es6Parser.ts: switch (Expression) CaseBlock */
+/* Es2025Parser.ts: switch (Expression) CaseBlock */
 
 
 // ============================================
@@ -2425,7 +2425,7 @@ class MyClass {}
 /**
  * 规则测试：SwitchStatement
  * 
- * 位置：Es6Parser.ts Line 1300
+ * 位置：Es2025Parser.ts Line 1300
  * 分类：statements
  * 编号：416
  * 
@@ -2641,7 +2641,7 @@ switch (code) {
         }
 }
 
-/* Es6Parser.ts: SwitchStatement: switch ( Expression ) CaseBlock */
+/* Es2025Parser.ts: SwitchStatement: switch ( Expression ) CaseBlock */
 
 
 // ============================================
@@ -2649,7 +2649,7 @@ switch (code) {
 // ============================================
 
 
-/* Es6Parser.ts: throw Expression */
+/* Es2025Parser.ts: throw Expression */
 
 
 // ============================================
@@ -2659,7 +2659,7 @@ switch (code) {
 /**
  * 规则测试：ThrowStatement
  * 
- * 位置：Es6Parser.ts Line 1355
+ * 位置：Es2025Parser.ts Line 1355
  * 分类：statements
  * 编号：418
  * 
@@ -2684,7 +2684,7 @@ function error1() {
     throw new Error('test')
 }
 
-/* Es6Parser.ts: ThrowStatement */
+/* Es2025Parser.ts: ThrowStatement */
 
 
 // ============================================
@@ -2695,7 +2695,7 @@ function error1() {
  * 规则测试：ThrowStatement
  * 分类：statements | 编号：421
  * 
- * 规则定义（Es6Parser.ts）：
+ * 规则定义（Es2025Parser.ts）：
  * ThrowStatement:
  *   throw Expression
  * 
@@ -2826,7 +2826,7 @@ try {
     console.log(e.message)
 }
 
-/* Es6Parser.ts: ThrowStatement
+/* Es2025Parser.ts: ThrowStatement
  * 规则形式：throw Expression
  * 表达式可以是：
  *   - 字面量（字符串、数字等）
@@ -2844,7 +2844,7 @@ try {
 // ============================================
 
 
-/* Es6Parser.ts: try Block (Catch | Finally | Catch Finally) */
+/* Es2025Parser.ts: try Block (Catch | Finally | Catch Finally) */
 
 
 // ============================================
@@ -2854,7 +2854,7 @@ try {
 /**
  * 规则测试：TryStatement
  * 
- * 位置：Es6Parser.ts Line 1288
+ * 位置：Es2025Parser.ts Line 1288
  * 分类：statements
  * 编号：419
  * 
@@ -3018,7 +3018,7 @@ function processData(data) {
     }
 }
 
-/* Es6Parser.ts: TryStatement: try Block (Catch | Finally | Catch Finally) */
+/* Es2025Parser.ts: TryStatement: try Block (Catch | Finally | Catch Finally) */
 
 
 // ============================================
@@ -3028,7 +3028,7 @@ function processData(data) {
 /**
  * 规则测试：VariableStatement
  * 
- * 位置：Es6Parser.ts Line 1135
+ * 位置：Es2025Parser.ts Line 1135
  * 分类：statements
  * 编号：302
  * 
@@ -3102,7 +3102,7 @@ var func = function() {
 // ✅ 测试15：复杂var声明组合
 var p = 10, q = function() {}, r = { x: 1 }, s, t = [1, 2]
 
-/* Es6Parser.ts: VariableStatement: var VariableDeclarationList ; */
+/* Es2025Parser.ts: VariableStatement: var VariableDeclarationList ; */
 
 
 // ============================================
@@ -3112,7 +3112,7 @@ var p = 10, q = function() {}, r = { x: 1 }, s, t = [1, 2]
 /**
  * 规则测试：WhileStatement
  * 
- * 位置：Es6Parser.ts Line 1160
+ * 位置：Es2025Parser.ts Line 1160
  * 分类：statements
  * 编号：408
  * 
@@ -3254,7 +3254,7 @@ function processLoop() {
     }
 }
 
-/* Es6Parser.ts: WhileStatement: while ( Expression ) Statement */
+/* Es2025Parser.ts: WhileStatement: while ( Expression ) Statement */
 
 
 // ============================================
@@ -3264,7 +3264,7 @@ function processLoop() {
 /**
  * 规则测试：WithStatement
  * 
- * 位置：Es6Parser.ts Line 1291
+ * 位置：Es2025Parser.ts Line 1291
  * 分类：statements
  * 编号：415
  * 
@@ -3283,7 +3283,7 @@ function processLoop() {
 
 with (Math) { const x = PI }
 
-/* Es6Parser.ts: WithStatement */
+/* Es2025Parser.ts: WithStatement */
 
 
 // ============================================
@@ -3294,7 +3294,7 @@ with (Math) { const x = PI }
  * 规则测试：WithStatement
  * 分类：others | 编号：709
  * 
- * 规则定义（Es6Parser.ts）：
+ * 规则定义（Es2025Parser.ts）：
  * WithStatement:
  *   with ( Expression ) Statement
  * 
@@ -3419,7 +3419,7 @@ with (obj15) {
     }
 }
 
-/* Es6Parser.ts: WithStatement
+/* Es2025Parser.ts: WithStatement
  * 规则：
  * WithStatement:
  *   with ( Expression ) Statement
@@ -3428,7 +3428,7 @@ with (obj15) {
 /**
  * 规则测试：Statement
  * 
- * 位置：Es6Parser.ts Line 855
+ * 位置：Es2025Parser.ts Line 855
  * 分类：statements
  * 编号：401
  * 
@@ -3549,4 +3549,4 @@ try {
 // ✅ 测试16：DebuggerStatement
 debugger
 
-/* Es6Parser.ts: Or[BlockStatement, VariableStatement, ...] */
+/* Es2025Parser.ts: Or[BlockStatement, VariableStatement, ...] */

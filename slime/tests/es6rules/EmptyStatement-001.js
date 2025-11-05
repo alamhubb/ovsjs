@@ -3,15 +3,15 @@
  * 来源: 从 Statement 拆分
  */
 
-/* Es6Parser.ts: ; */
+/* Es2025Parser.ts: ; */
 
 
-/* Es6Parser.ts: ; */
+/* Es2025Parser.ts: ; */
 
 /**
  * 规则测试：EmptyStatement
  * 
- * 位置：Es6Parser.ts Line 1114
+ * 位置：Es2025Parser.ts Line 1114
  * 分类：statements
  * 编号：404
  * 
@@ -36,4 +36,4 @@
 
 // ✅ 测试2：多个分号    EmptyStatement -> ; ; (多个连续空语句)
 ;;
-/* Es6Parser.ts: EmptyStatement */
+/* Es2025Parser.ts: EmptyStatement */

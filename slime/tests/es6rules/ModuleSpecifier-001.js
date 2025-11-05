@@ -1,7 +1,7 @@
 /**
  * 规则测试：ModuleSpecifier
  * 
- * 位置：Es6Parser.ts Line 1875
+ * 位置：Es2025Parser.ts Line 1875
  * 分类：statements
  * 编号：427
  * 
@@ -21,12 +21,12 @@
 import x from './module.js'
 import y from '../parent.js'
 
-/* Es6Parser.ts: ModuleSpecifier */
+/* Es2025Parser.ts: ModuleSpecifier */
 
 /**
  * 规则测试：ModuleSpecifier
  * 
- * 位置：Es6Parser.ts Line 1875
+ * 位置：Es2025Parser.ts Line 1875
  * 分类：statements
  * 编号：427
  * 
@@ -46,4 +46,4 @@ import y from '../parent.js'
 import x from './module.js'
 import y from '../parent.js'
 
-/* Es6Parser.ts: ModuleSpecifier */
+/* Es2025Parser.ts: ModuleSpecifier */

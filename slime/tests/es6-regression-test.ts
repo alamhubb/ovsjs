@@ -1,7 +1,7 @@
 /**
- * Es6Parser 回归测试 - 验证 Packrat Parsing 没有破坏 Es6Parser
+ * Es2025Parser 回归测试 - 验证 Packrat Parsing 没有破坏 Es2025Parser
  */
-import Es6Parser from '../packages/slime-parser/src/language/es2015/Es6Parser.ts'
+import Es2025Parser from '../packages/slime-parser/src/language/es2015/Es2025Parser.ts'
 import SubhutiLexer from 'subhuti/src/SubhutiLexer.ts'
 import { es6Tokens } from '../packages/slime-parser/src/language/es2015/Es6Tokens.ts'
 
@@ -9,7 +9,7 @@ function test(name: string, code: string): boolean {
     try {
         const lexer = new SubhutiLexer(es6Tokens)
         const tokens = lexer.tokenize(code)
-        const parser = new Es6Parser(tokens)
+        const parser = new Es2025Parser(tokens)
         const cst = parser.Program()
         
         if (!cst || !cst.children || cst.children.length === 0) {
@@ -25,7 +25,7 @@ function test(name: string, code: string): boolean {
     }
 }
 
-console.log("🧪 Es6Parser 回归测试（验证 Packrat Parsing）\n")
+console.log("🧪 Es2025Parser 回归测试（验证 Packrat Parsing）\n")
 
 const tests = [
     ["基础声明", "const x = 1"],
@@ -48,7 +48,7 @@ for (const [name, code] of tests) {
 console.log(`\n📊 测试结果: ${passed}/${tests.length} 通过`)
 
 if (passed === tests.length) {
-    console.log(`\n🎉 Es6Parser 回归测试全部通过！`)
+    console.log(`\n🎉 Es2025Parser 回归测试全部通过！`)
 } else {
     console.log(`\n⚠️  有测试失败`)
 }

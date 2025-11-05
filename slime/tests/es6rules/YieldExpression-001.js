@@ -1,10 +1,10 @@
 
-/* Es6Parser.ts: yield AssignmentExpression? */
+/* Es2025Parser.ts: yield AssignmentExpression? */
 
 /**
  * 规则测试：YieldExpression
  * 
- * 位置：Es6Parser.ts Line 1610
+ * 位置：Es2025Parser.ts Line 1610
  * 分类：expressions
  * 编号：228
  * 
@@ -155,11 +155,11 @@ function* gen20() {
     }
 }
 
-/* Es6Parser.ts: YieldExpression: yield [AssignmentExpression | *AssignmentExpression] */
+/* Es2025Parser.ts: YieldExpression: yield [AssignmentExpression | *AssignmentExpression] */
 
 // ============================================
 // 合并来自: Yield-001.js
 // ============================================
 
 
-/* Es6Parser.ts: yield AssignmentExpression? */
+/* Es2025Parser.ts: yield AssignmentExpression? */

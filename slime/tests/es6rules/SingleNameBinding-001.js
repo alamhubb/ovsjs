@@ -1,5 +1,5 @@
 
-/* Es6Parser.ts: BindingIdentifier Initializer? */
+/* Es2025Parser.ts: BindingIdentifier Initializer? */
 
 
 // ============================================
@@ -9,7 +9,7 @@
 /**
  * 规则测试：SingleNameBinding
  * 
- * 位置：Es6Parser.ts Line 1102
+ * 位置：Es2025Parser.ts Line 1102
  * 分类：identifiers
  * 编号：114
  * 
@@ -35,15 +35,15 @@ const {age} = person
 
 // ✅ 测试2：Option有 - 带默认值
 const {value = 0} = obj
-/* Es6Parser.ts: BindingIdentifier Initializer? */
+/* Es2025Parser.ts: BindingIdentifier Initializer? */
 
 
-/* Es6Parser.ts: BindingIdentifier Initializer? */
+/* Es2025Parser.ts: BindingIdentifier Initializer? */
 
 /**
  * 规则测试：SingleNameBinding
  * 
- * 位置：Es6Parser.ts Line 1102
+ * 位置：Es2025Parser.ts Line 1102
  * 分类：identifiers
  * 编号：114
  * 
@@ -69,4 +69,4 @@ const {age} = person
 
 // ✅ 测试2：Option有 - 带默认值
 const {value = 0} = obj
-/* Es6Parser.ts: BindingIdentifier Initializer? */
+/* Es2025Parser.ts: BindingIdentifier Initializer? */

@@ -25,7 +25,7 @@ STAGE_3_CODING
   - 方法转换：`getName() { }` → MethodDefinition
 - ✅ 代码生成：100% 完成（SlimeGenerator成功生成代码）
 - 版本：0.1.0（功能完整，可用于基础场景）
-- 技术栈：Subhuti + Slime + Es6Parser
+- 技术栈：Subhuti + Slime + Es2025Parser
 
 ## 测试结果
 **输入：**
@@ -147,7 +147,7 @@ Person.age = 26
 
 ## 技术栈详情
 - **词法分析**：Subhuti（自定义Token系统）
-- **语法解析**：继承Es6Parser（复用ES6语法规则）
+- **语法解析**：继承es2025Parser（复用es2025语法规则）
 - **AST处理**：Slime系列工具（slime-ast、slime-generator）
 - **代码生成**：SlimeGenerator（生成标准ES6代码）
 
@@ -454,7 +454,7 @@ a.y = 3
 ## 依赖项目
 - **Subhuti**：Parser框架（词法分析、Token系统）
 - **Slime**：AST工具链（slime-ast、slime-generator、slime-parser）
-- **Es6Parser**：ES6语法解析器（继承基础）
+- **es2025**：es2025语法解析器（继承基础）
 
 ## 与相关项目对比
 

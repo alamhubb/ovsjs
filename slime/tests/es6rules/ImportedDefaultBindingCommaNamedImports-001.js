@@ -1,7 +1,7 @@
 /**
  * 规则测试：ImportedDefaultBindingCommaNamedImports
  * 
- * 位置：Es6Parser.ts Line 1799
+ * 位置：Es2025Parser.ts Line 1799
  * 分类：identifiers
  * 编号：118
  * 
@@ -46,12 +46,12 @@ import service, {query, update, delete as remove} from '../../services/api.js'
 import lodash, {map, filter} from 'lodash'
 import jquery, {ajax, get} from 'jquery'
 
-/* Es6Parser.ts: ImportedDefaultBinding , NamedImports */
+/* Es2025Parser.ts: ImportedDefaultBinding , NamedImports */
 
 /**
  * 规则测试：ImportedDefaultBindingCommaNamedImports
  * 
- * 位置：Es6Parser.ts Line 1799
+ * 位置：Es2025Parser.ts Line 1799
  * 分类：identifiers
  * 编号：118
  * 
@@ -96,4 +96,4 @@ import service, {query, update, delete as remove} from '../../services/api.js'
 import lodash, {map, filter} from 'lodash'
 import jquery, {ajax, get} from 'jquery'
 
-/* Es6Parser.ts: ImportedDefaultBinding , NamedImports */
+/* Es2025Parser.ts: ImportedDefaultBinding , NamedImports */

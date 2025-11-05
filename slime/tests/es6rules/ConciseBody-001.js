@@ -1,7 +1,7 @@
 /**
  * 规则测试：ConciseBody
  * 
- * 位置：Es6Parser.ts Line 1505
+ * 位置：Es2025Parser.ts Line 1505
  * 分类：others
  * 编号：932
  * 
@@ -55,12 +55,12 @@ const complex = (x, y) => {
     }
 }
 
-/* Es6Parser.ts: ConciseBody */
+/* Es2025Parser.ts: ConciseBody */
 
 /**
  * 规则测试：ConciseBody
  * 
- * 位置：Es6Parser.ts Line 1505
+ * 位置：Es2025Parser.ts Line 1505
  * 分类：others
  * 编号：932
  * 
@@ -114,11 +114,11 @@ const complex = (x, y) => {
     }
 }
 
-/* Es6Parser.ts: ConciseBody */
+/* Es2025Parser.ts: ConciseBody */
 
 // ============================================
 // 合并来自: AsyncArrowFunctionBody-001.js
 // ============================================
 
 
-/* Es6Parser.ts: async ArrowFunction with async body */
+/* Es2025Parser.ts: async ArrowFunction with async body */

@@ -1,10 +1,12 @@
 /**
  * 测试规则: PropertyNameMethodDefinition
  * 来源: 从 PropertyName 拆分
- *//**
+ */
+
+/**
  * 规则测试：PropertyNameMethodDefinition
  * 
- * 位置：Es6Parser.ts Line 1522
+ * 位置：Es2025Parser.ts Line 1522
  * 分类：classes
  * 编号：601
  * 
@@ -79,4 +81,4 @@ class Test8 {
     static staticMethod() {}
 }
 
-/* Es6Parser.ts: PropertyNameMethodDefinition */
+/* Es2025Parser.ts: PropertyNameMethodDefinition */

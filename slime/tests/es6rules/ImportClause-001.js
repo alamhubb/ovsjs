@@ -1,5 +1,5 @@
 
-/* Es6Parser.ts: Or[NameSpaceImport, NamedImports, DefaultBinding, DefaultBinding NameSpaceImport, DefaultBinding NamedImports] */
+/* Es2025Parser.ts: Or[NameSpaceImport, NamedImports, DefaultBinding, DefaultBinding NameSpaceImport, DefaultBinding NamedImports] */
 
 
 // ============================================
@@ -9,7 +9,7 @@
 /**
  * 规则测试：ImportClause
  * 
- * 位置：Es6Parser.ts Line 1771
+ * 位置：Es2025Parser.ts Line 1771
  * 分类：modules
  * 编号：703
  * 
@@ -62,7 +62,7 @@ import axios, {get, post, put, delete as del} from 'axios'
 import Vue, * as VueAll from 'vue'
 import {debounce, throttle} from 'lodash-es'
 
-/* Es6Parser.ts: ImportClause */
+/* Es2025Parser.ts: ImportClause */
 
 
 // ============================================
@@ -70,15 +70,15 @@ import {debounce, throttle} from 'lodash-es'
 // ============================================
 
 
-/* Es6Parser.ts: ImportSpecifier (Comma ImportSpecifier)* */
+/* Es2025Parser.ts: ImportSpecifier (Comma ImportSpecifier)* */
 
 
-/* Es6Parser.ts: Or[NameSpaceImport, NamedImports, DefaultBinding, DefaultBinding NameSpaceImport, DefaultBinding NamedImports] */
+/* Es2025Parser.ts: Or[NameSpaceImport, NamedImports, DefaultBinding, DefaultBinding NameSpaceImport, DefaultBinding NamedImports] */
 
 /**
  * 规则测试：ImportClause
  * 
- * 位置：Es6Parser.ts Line 1771
+ * 位置：Es2025Parser.ts Line 1771
  * 分类：modules
  * 编号：703
  * 
@@ -131,4 +131,4 @@ import axios, {get, post, put, delete as del} from 'axios'
 import Vue, * as VueAll from 'vue'
 import {debounce, throttle} from 'lodash-es'
 
-/* Es6Parser.ts: ImportClause */
+/* Es2025Parser.ts: ImportClause */

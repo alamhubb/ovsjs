@@ -2,7 +2,7 @@
 
 ## 目的
 
-为Es6Parser的每个规则建立独立的测试用例，确保完整覆盖所有语法分支。
+为Es2025Parser的每个规则建立独立的测试用例，确保完整覆盖所有语法分支。
 
 ## 设计原则
 
@@ -40,7 +40,7 @@ es6rules/
 ```javascript
 /**
  * 规则：RuleName
- * 位置：Es6Parser.ts Line XXX
+ * 位置：Es2025Parser.ts Line XXX
  * 
  * 语法：ES6规范的EBNF语法
  * 

@@ -1,7 +1,7 @@
 /**
  * 规则测试：StatementList
  * 
- * 位置：Es6Parser.ts Line 1325
+ * 位置：Es2025Parser.ts Line 1325
  * 规则结构：StatementList -> this.Many(() => this.StatementListItem())
  * 
  * 规则语法：
@@ -124,7 +124,7 @@
 /**
  * 规则测试：StatementList
  * 
- * 位置：Es6Parser.ts Line 1726
+ * 位置：Es2025Parser.ts Line 1726
  * 分类：statements
  * 编号：424
  * 
@@ -145,4 +145,4 @@ const x = 1
 const y = 2
 console.log(x + y)
 
-/* Es6Parser.ts: StatementList */
+/* Es2025Parser.ts: StatementList */

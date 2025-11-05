@@ -62,7 +62,7 @@ const arr7 = [...(true ? [1, 2] : [3, 4])]
 const getArray = () => [5, 6, 7]
 const arr8 = [...getArray()]
 
-/* Es6Parser.ts: SpreadElement: ... AssignmentExpression */
+/* Es2025Parser.ts: SpreadElement: ... AssignmentExpression */
 
 
 // ============================================
@@ -72,7 +72,7 @@ const arr8 = [...getArray()]
 /**
  * 规则测试：SpreadElement
  * 
- * 位置：Es6Parser.ts Line 203
+ * 位置：Es2025Parser.ts Line 203
  * 分类：others
  * 编号：903
  * 
@@ -113,12 +113,12 @@ const result = f(...args)
 
 // ✅ 测试8：多个spread连续
 const arr8 = [...a, ...b, ...c]
-/* Es6Parser.ts: SpreadElement */
+/* Es2025Parser.ts: SpreadElement */
 
 /**
  * 规则测试：SpreadElement
  * 
- * 位置：Es6Parser.ts Line 203
+ * 位置：Es2025Parser.ts Line 203
  * 分类：others
  * 编号：903
  * 
@@ -159,4 +159,4 @@ const result = f(...args)
 
 // ✅ 测试8：多个spread连续
 const arr8 = [...a, ...b, ...c]
-/* Es6Parser.ts: SpreadElement */
+/* Es2025Parser.ts: SpreadElement */

@@ -1,7 +1,7 @@
 /**
  * 规则测试：BindingPropertyList
  * 
- * 位置：Es6Parser.ts Line 1049
+ * 位置：Es2025Parser.ts Line 1049
  * 分类：identifiers
  * 编号：109
  * 
@@ -38,12 +38,12 @@ const {first, second, third, fourth} = data
 // ✅ 测试5：Many≥2 - 带重命名的属性列表
 const {a: aa, b: bb, c: cc} = source
 
-/* Es6Parser.ts: BindingProperty (Comma BindingProperty)* */
+/* Es2025Parser.ts: BindingProperty (Comma BindingProperty)* */
 
 /**
  * 规则测试：BindingPropertyList
  * 
- * 位置：Es6Parser.ts Line 1049
+ * 位置：Es2025Parser.ts Line 1049
  * 分类：identifiers
  * 编号：109
  * 
@@ -80,4 +80,4 @@ const {first, second, third, fourth} = data
 // ✅ 测试5：Many≥2 - 带重命名的属性列表
 const {a: aa, b: bb, c: cc} = source
 
-/* Es6Parser.ts: BindingProperty (Comma BindingProperty)* */
+/* Es2025Parser.ts: BindingProperty (Comma BindingProperty)* */

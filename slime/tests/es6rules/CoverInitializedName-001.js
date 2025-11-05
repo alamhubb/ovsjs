@@ -1,7 +1,7 @@
 /**
  * 规则测试：CoverInitializedName
  * 
- * 位置：Es6Parser.ts Line 251
+ * 位置：Es2025Parser.ts Line 251
  * 分类：others
  * 编号：908
  * 
@@ -41,12 +41,12 @@ const {r = () => {}} = {}
 
 // ✅ 测试8：null默认值    CoverInitializedName -> IdentifierReference = NullLiteral
 const {s = null} = {}
-/* Es6Parser.ts: CoverInitializedName */
+/* Es2025Parser.ts: CoverInitializedName */
 
 /**
  * 规则测试：CoverInitializedName
  * 
- * 位置：Es6Parser.ts Line 251
+ * 位置：Es2025Parser.ts Line 251
  * 分类：others
  * 编号：908
  * 
@@ -86,4 +86,4 @@ const {r = () => {}} = {}
 
 // ✅ 测试8：null默认值
 const {s = null} = {}
-/* Es6Parser.ts: CoverInitializedName */
+/* Es2025Parser.ts: CoverInitializedName */

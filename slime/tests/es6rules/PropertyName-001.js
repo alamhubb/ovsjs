@@ -1,7 +1,7 @@
 /**
  * 规则测试：PropertyName
  * 
- * 位置：Es6Parser.ts Line 237
+ * 位置：Es2025Parser.ts Line 237
  * 分类：others
  * 编号：906
  * 
@@ -44,7 +44,7 @@ const obj7 = {'_name': 'under', '$value': 'dollar', 'a-b': 'dash'}
 
 // ✅ 测试8：计算属性名
 const obj8 = {[expr]: 'computed', [a + b]: 'computed_expr'}
-/* Es6Parser.ts: PropertyName */
+/* Es2025Parser.ts: PropertyName */
 
 
 // ============================================
@@ -52,7 +52,7 @@ const obj8 = {[expr]: 'computed', [a + b]: 'computed_expr'}
 // ============================================
 
 
-/* Es6Parser.ts: [Expression] */
+/* Es2025Parser.ts: [Expression] */
 
 
 // ============================================
@@ -62,7 +62,7 @@ const obj8 = {[expr]: 'computed', [a + b]: 'computed_expr'}
 /**
  * 规则测试：ComputedPropertyName
  * 
- * 位置：Es6Parser.ts Line 247
+ * 位置：Es2025Parser.ts Line 247
  * 分类：others
  * 编号：907
  * 
@@ -103,7 +103,7 @@ const obj7 = {['str']: 7}
 
 // ✅ 测试8：嵌套计算
 const obj8 = {[[x]]: 8}
-/* Es6Parser.ts: ComputedPropertyName */
+/* Es2025Parser.ts: ComputedPropertyName */
 
 
 // ============================================
@@ -113,7 +113,7 @@ const obj8 = {[[x]]: 8}
 /**
  * 规则测试：PropertyNameMethodDefinition
  * 
- * 位置：Es6Parser.ts Line 1522
+ * 位置：Es2025Parser.ts Line 1522
  * 分类：classes
  * 编号：601
  * 
@@ -188,12 +188,12 @@ class Test8 {
     static staticMethod() {}
 }
 
-/* Es6Parser.ts: PropertyNameMethodDefinition */
+/* Es2025Parser.ts: PropertyNameMethodDefinition */
 
 /**
  * 规则测试：PropertyName
  * 
- * 位置：Es6Parser.ts Line 237
+ * 位置：Es2025Parser.ts Line 237
  * 分类：others
  * 编号：906
  * 
@@ -236,4 +236,4 @@ const obj7 = {'_name': 'under', '$value': 'dollar', 'a-b': 'dash'}
 
 // ✅ 测试8：计算属性名
 const obj8 = {[expr]: 'computed', [a + b]: 'computed_expr'}
-/* Es6Parser.ts: PropertyName */
+/* Es2025Parser.ts: PropertyName */

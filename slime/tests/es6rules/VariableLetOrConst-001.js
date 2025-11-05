@@ -1,7 +1,7 @@
 /**
  * 规则测试：VariableLetOrConst
  * 
- * 位置：Es6Parser.ts Line 871
+ * 位置：Es2025Parser.ts Line 871
  * 分类：others
  * 编号：916
  * 
@@ -42,12 +42,12 @@ let {p: {q}} = {p: {q: 9}}
 // ✅ 测试8：const默认值解构
 const [z = 10] = []
 
-/* Es6Parser.ts: VariableLetOrConst */
+/* Es2025Parser.ts: VariableLetOrConst */
 
 /**
  * 规则测试：VariableLetOrConst
  * 
- * 位置：Es6Parser.ts Line 871
+ * 位置：Es2025Parser.ts Line 871
  * 分类：others
  * 编号：916
  * 
@@ -88,4 +88,4 @@ let {p: {q}} = {p: {q: 9}}
 // ✅ 测试8：const默认值解构
 const [z = 10] = []
 
-/* Es6Parser.ts: VariableLetOrConst */
+/* Es2025Parser.ts: VariableLetOrConst */

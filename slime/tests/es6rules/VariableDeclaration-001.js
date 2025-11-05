@@ -1,7 +1,7 @@
 /**
  * 规则测试：VariableDeclaration
  * 
- * 位置：Es6Parser.ts Line 890
+ * 位置：Es2025Parser.ts Line 890
  * 分类：others
  * 编号：918
  * 
@@ -51,7 +51,7 @@ let {name, age} = {name: 'John', age: 30}
 const [p = 0, q = 0] = arr
 const {username = 'guest', email = ''} = user
 
-/* Es6Parser.ts: VariableDeclaration */
+/* Es2025Parser.ts: VariableDeclaration */
 
 
 // ============================================
@@ -61,7 +61,7 @@ const {username = 'guest', email = ''} = user
 /**
  * 规则测试：VariableDeclarationList
  * 
- * 位置：Es6Parser.ts Line 863
+ * 位置：Es2025Parser.ts Line 863
  * 分类：others
  * 编号：917
  * 
@@ -103,12 +103,12 @@ const {p, q} = {p: 14, q: 15}, r = 16
 // ✅ 测试8：复杂混合
 let {s: {t}} = {s: {t: 17}}, u = 18, [v] = [19]
 
-/* Es6Parser.ts: VariableDeclarationList */
+/* Es2025Parser.ts: VariableDeclarationList */
 
 /**
  * 规则测试：VariableDeclaration
  * 
- * 位置：Es6Parser.ts Line 890
+ * 位置：Es2025Parser.ts Line 890
  * 分类：others
  * 编号：918
  * 
@@ -158,7 +158,7 @@ let {name, age} = {name: 'John', age: 30}
 const [p = 0, q = 0] = arr
 const {username = 'guest', email = ''} = user
 
-/* Es6Parser.ts: VariableDeclaration */
+/* Es2025Parser.ts: VariableDeclaration */
 
 // ============================================
 // 合并来自: VariableStatement-001.js
@@ -167,7 +167,7 @@ const {username = 'guest', email = ''} = user
 /**
  * 规则测试：VariableStatement
  * 
- * 位置：Es6Parser.ts Line 1135
+ * 位置：Es2025Parser.ts Line 1135
  * 分类：statements
  * 编号：302
  * 
@@ -241,4 +241,4 @@ var func = function() {
 // ✅ 测试15：复杂var声明组合
 var p = 10, q = function() {}, r = { x: 1 }, s, t = [1, 2]
 
-/* Es6Parser.ts: VariableStatement: var VariableDeclarationList ; */
+/* Es2025Parser.ts: VariableStatement: var VariableDeclarationList ; */

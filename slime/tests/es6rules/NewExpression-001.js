@@ -1,7 +1,7 @@
 /**
  * 规则测试：NewExpression
  * 
- * 位置：Es6Parser.ts Line 417
+ * 位置：Es2025Parser.ts Line 417
  * 分类：expressions
  * 编号：207
  * 
@@ -91,12 +91,12 @@ class User {
 }
 const user = new User('Alice')
 
-/* Es6Parser.ts: NewExpression: Or[MemberExpression, new NewExpression] */
+/* Es2025Parser.ts: NewExpression: Or[MemberExpression, new NewExpression] */
 
 /**
  * 规则测试：NewExpression
  * 
- * 位置：Es6Parser.ts Line 417
+ * 位置：Es2025Parser.ts Line 417
  * 分类：expressions
  * 编号：207
  * 
@@ -186,4 +186,4 @@ class User {
 }
 const user = new User('Alice')
 
-/* Es6Parser.ts: NewExpression: Or[MemberExpression, new NewExpression] */
+/* Es2025Parser.ts: NewExpression: Or[MemberExpression, new NewExpression] */

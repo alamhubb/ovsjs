@@ -1,7 +1,7 @@
 /**
  * 规则测试：RestParameter
  * 
- * 位置：Es6Parser.ts Line 1465
+ * 位置：Es2025Parser.ts Line 1465
  * 分类：others
  * 编号：931
  * 
@@ -72,12 +72,12 @@ const complexArrow = (first, second = 0, ...rest) => {
     }
 }
 
-/* Es6Parser.ts: RestParameter */
+/* Es2025Parser.ts: RestParameter */
 
 /**
  * 规则测试：RestParameter
  * 
- * 位置：Es6Parser.ts Line 1465
+ * 位置：Es2025Parser.ts Line 1465
  * 分类：others
  * 编号：931
  * 
@@ -148,4 +148,4 @@ const complexArrow = (first, second = 0, ...rest) => {
     }
 }
 
-/* Es6Parser.ts: RestParameter */
+/* Es2025Parser.ts: RestParameter */

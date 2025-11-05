@@ -6,7 +6,7 @@
 /**
  * 规则测试：BindingElisionElement
  * 
- * 位置：Es6Parser.ts Line 1067
+ * 位置：Es2025Parser.ts Line 1067
  * 分类：identifiers
  * 编号：111
  * 
@@ -26,4 +26,4 @@
 const [a, , b] = arr    // BindingElisionElement -> Elision? Or[BindingElement, Elision]
 const [, x] = arr    // BindingElisionElement -> Elision (前导空位)
 
-/* Es6Parser.ts: Elision? Or[BindingElement, Elision] */
+/* Es2025Parser.ts: Elision? Or[BindingElement, Elision] */

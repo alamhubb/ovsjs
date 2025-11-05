@@ -6,7 +6,7 @@
 /**
  * 规则测试：DebuggerStatement
  * 
- * 位置：Es6Parser.ts Line 1401
+ * 位置：Es2025Parser.ts Line 1401
  * 分类：statements
  * 编号：420
  * 
@@ -75,4 +75,4 @@ function process(data) {
     debugger
     return result
 }
-/* Es6Parser.ts: DebuggerStatement */
+/* Es2025Parser.ts: DebuggerStatement */

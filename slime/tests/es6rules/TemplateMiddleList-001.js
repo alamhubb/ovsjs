@@ -1,7 +1,7 @@
 /**
  * 规则测试：TemplateMiddleList
  * 
- * 位置：Es6Parser.ts Line 360
+ * 位置：Es2025Parser.ts Line 360
  * 分类：literals
  * 编号：007
  * 
@@ -48,12 +48,12 @@ const calls = `first: ${fn1()} second: ${fn2()} third: ${fn3()}`
 const nested = `user: ${user.name} age: ${user.age} active: ${user.active ? 'yes' : 'no'}`
 
 
-/* Es6Parser.ts: TemplateMiddle Expression (TemplateMiddle Expression)* */
+/* Es2025Parser.ts: TemplateMiddle Expression (TemplateMiddle Expression)* */
 
 /**
  * 规则测试：TemplateMiddleList
  * 
- * 位置：Es6Parser.ts Line 360
+ * 位置：Es2025Parser.ts Line 360
  * 分类：literals
  * 编号：007
  * 
@@ -100,4 +100,4 @@ const calls = `first: ${fn1()} second: ${fn2()} third: ${fn3()}`
 const nested = `user: ${user.name} age: ${user.age} active: ${user.active ? 'yes' : 'no'}`
 
 
-/* Es6Parser.ts: TemplateMiddle Expression (TemplateMiddle Expression)* */
+/* Es2025Parser.ts: TemplateMiddle Expression (TemplateMiddle Expression)* */

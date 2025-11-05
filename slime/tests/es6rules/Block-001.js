@@ -1,7 +1,7 @@
 /**
  * 规则测试：Block
  * 
- * 位置：Es6Parser.ts Line 968
+ * 位置：Es2025Parser.ts Line 968
  * 分类：others
  * 编号：922
  * 
@@ -84,7 +84,7 @@ for (let i = 0; i < 10; i++) {
     }
 }
 
-/* Es6Parser.ts: Block */
+/* Es2025Parser.ts: Block */
 
 
 // ============================================
@@ -94,7 +94,7 @@ for (let i = 0; i < 10; i++) {
 /**
  * 规则测试：CaseBlock
  * 
- * 位置：Es6Parser.ts Line 1309
+ * 位置：Es2025Parser.ts Line 1309
  * 分类：others
  * 编号：923
  * 
@@ -197,12 +197,12 @@ switch (val) {
         break
 }
 
-/* Es6Parser.ts: CaseBlock */
+/* Es2025Parser.ts: CaseBlock */
 
 /**
  * 规则测试：Block
  * 
- * 位置：Es6Parser.ts Line 968
+ * 位置：Es2025Parser.ts Line 968
  * 分类：others
  * 编号：922
  * 
@@ -285,4 +285,4 @@ for (let i = 0; i < 10; i++) {
     }
 }
 
-/* Es6Parser.ts: Block */
+/* Es2025Parser.ts: Block */

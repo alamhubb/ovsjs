@@ -1,5 +1,5 @@
 
-/* Es6Parser.ts: Or[PropertyName(Params){Body}, get PropertyName(){Body}, set PropertyName(Param){Body}, *Identifier(Params){Body}] */
+/* Es2025Parser.ts: Or[PropertyName(Params){Body}, get PropertyName(){Body}, set PropertyName(Param){Body}, *Identifier(Params){Body}] */
 
 
 // ============================================
@@ -9,7 +9,7 @@
 /**
  * 规则测试：MethodDefinition
  * 
- * 位置：Es6Parser.ts Line 1544
+ * 位置：Es2025Parser.ts Line 1544
  * 分类：classes
  * 编号：604
  * 
@@ -70,7 +70,7 @@ class Test8 {
     async async() {}
 }
 
-/* Es6Parser.ts: MethodDefinition */
+/* Es2025Parser.ts: MethodDefinition */
 
 
 // ============================================
@@ -106,7 +106,7 @@ class C16 {
     *gen() { yield 1 }
 }
 
-/* Es6Parser.ts: MethodDefinition */
+/* Es2025Parser.ts: MethodDefinition */
 
 
 // ============================================
@@ -114,7 +114,7 @@ class C16 {
 // ============================================
 
 
-/* Es6Parser.ts: constructor(Params) { Body } */
+/* Es2025Parser.ts: constructor(Params) { Body } */
 
 
 // ============================================
@@ -122,7 +122,7 @@ class C16 {
 // ============================================
 
 
-/* Es6Parser.ts: get PropertyName() { Body } */
+/* Es2025Parser.ts: get PropertyName() { Body } */
 
 
 // ============================================
@@ -130,7 +130,7 @@ class C16 {
 // ============================================
 
 
-/* Es6Parser.ts: set PropertyName(Identifier) { Body } */
+/* Es2025Parser.ts: set PropertyName(Identifier) { Body } */
 
 
 // ============================================
@@ -138,15 +138,15 @@ class C16 {
 // ============================================
 
 
-/* Es6Parser.ts: static MethodDefinition */
+/* Es2025Parser.ts: static MethodDefinition */
 
 
-/* Es6Parser.ts: Or[PropertyName(Params){Body}, get PropertyName(){Body}, set PropertyName(Param){Body}, *Identifier(Params){Body}] */
+/* Es2025Parser.ts: Or[PropertyName(Params){Body}, get PropertyName(){Body}, set PropertyName(Param){Body}, *Identifier(Params){Body}] */
 
 /**
  * 规则测试：MethodDefinition
  * 
- * 位置：Es6Parser.ts Line 1544
+ * 位置：Es2025Parser.ts Line 1544
  * 分类：classes
  * 编号：604
  * 
@@ -207,18 +207,18 @@ class Test8 {
     async async() {}
 }
 
-/* Es6Parser.ts: MethodDefinition */
+/* Es2025Parser.ts: MethodDefinition */
 
 // ============================================
 // 合并来自: StaticMethod-001.js
 // ============================================
 
 
-/* Es6Parser.ts: static MethodDefinition */
+/* Es2025Parser.ts: static MethodDefinition */
 
 // ============================================
 // 合并来自: ConstructorMethod-001.js
 // ============================================
 
 
-/* Es6Parser.ts: constructor(Params) { Body } */
+/* Es2025Parser.ts: constructor(Params) { Body } */

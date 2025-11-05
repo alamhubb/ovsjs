@@ -1,7 +1,7 @@
 /**
  * 规则测试：ImportsList
  * 
- * 位置：Es6Parser.ts Line 1850
+ * 位置：Es2025Parser.ts Line 1850
  * 分类：modules
  * 编号：707
  * 
@@ -20,12 +20,12 @@
 
 import {a, b, c} from './module.js'
 
-/* Es6Parser.ts: ImportsList */
+/* Es2025Parser.ts: ImportsList */
 
 /**
  * 规则测试：ImportsList
  * 
- * 位置：Es6Parser.ts Line 1850
+ * 位置：Es2025Parser.ts Line 1850
  * 分类：modules
  * 编号：707
  * 
@@ -44,11 +44,11 @@ import {a, b, c} from './module.js'
 
 import {a, b, c} from './module.js'
 
-/* Es6Parser.ts: ImportsList */
+/* Es2025Parser.ts: ImportsList */
 
 // ============================================
 // 合并来自: ImportList-001.js
 // ============================================
 
 
-/* Es6Parser.ts: ImportSpecifier (Comma ImportSpecifier)* */
+/* Es2025Parser.ts: ImportSpecifier (Comma ImportSpecifier)* */

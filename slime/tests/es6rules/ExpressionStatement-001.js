@@ -3,12 +3,12 @@
  * 来源: 从 Expression 拆分
  */
 
-/* Es6Parser.ts: Expression ; */
+/* Es2025Parser.ts: Expression ; */
 
 /**
  * 规则测试：ExpressionStatement
  * 
- * 位置：Es6Parser.ts Line 1119
+ * 位置：Es2025Parser.ts Line 1119
  * 分类：expressions
  * 编号：225
  * 
@@ -80,7 +80,7 @@ x > 0 && console.log('positive')
 // ✅ 测试15：条件表达式语句
 true ? console.log('yes') : console.log('no')
 
-/* Es6Parser.ts: ExpressionStatement: Expression ; */
+/* Es2025Parser.ts: ExpressionStatement: Expression ; */
 
 
-/* Es6Parser.ts: Expression ; */
+/* Es2025Parser.ts: Expression ; */

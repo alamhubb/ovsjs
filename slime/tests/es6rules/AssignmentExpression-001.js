@@ -6,7 +6,7 @@
 /**
  * 规则测试：AssignmentExpression
  * 
- * 位置：Es6Parser.ts Line 1048
+ * 位置：Es2025Parser.ts Line 1048
  * 分类：expressions
  * 编号：224
  * 
@@ -75,4 +75,4 @@ obj.count += 1
 // ✅ 测试15：数组元素复合赋值    AssignmentExpression -> 数组元素复合赋值
 arr[1] += 10
 
-/* Es6Parser.ts: AssignmentExpression: = or CompoundAssignmentOp */
+/* Es2025Parser.ts: AssignmentExpression: = or CompoundAssignmentOp */

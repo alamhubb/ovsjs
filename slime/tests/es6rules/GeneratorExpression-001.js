@@ -1,10 +1,12 @@
 /**
  * 测试规则: GeneratorExpression
  * 来源: 从 Expression 拆分
- *//**
+ */
+
+/**
  * 规则测试：GeneratorExpression
  * 
- * 位置：Es6Parser.ts Line 1597
+ * 位置：Es2025Parser.ts Line 1597
  * 分类：expressions
  * 编号：227
  * 
@@ -24,4 +26,4 @@
 const g = function*() { yield 1 }
 const named = function* gen() { yield 2 }
 
-/* Es6Parser.ts: function* Identifier? (FormalParameters) { GeneratorBody } */
+/* Es2025Parser.ts: function* Identifier? (FormalParameters) { GeneratorBody } */

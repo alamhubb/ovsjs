@@ -1,10 +1,12 @@
 /**
  * 测试规则: TemplateLiteral
  * 来源: 从 Literal 拆分
- *//**
+ */
+
+/**
  * 规则测试：TemplateLiteral
  * 
- * 位置：Es6Parser.ts（模板字符串处理）
+ * 位置：Es2025Parser.ts（模板字符串处理）
  * 分类：literals
  * 编号：005
  * 
@@ -101,4 +103,4 @@ const config = {
 // ✅ 测试20：模板字符串插值箭头函数
 const arrow = `result: ${((x) => x * 2)(21)}`
 
-/* Es6Parser.ts: TemplateLiteral: NoSubstitutionTemplate | TemplateHead (Expression TemplateMiddle)* Expression TemplateTail */
+/* Es2025Parser.ts: TemplateLiteral: NoSubstitutionTemplate | TemplateHead (Expression TemplateMiddle)* Expression TemplateTail */

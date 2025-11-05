@@ -23,7 +23,7 @@ const obj15 = { *gen() { yield 1 } }
 const obj16 = { async method() { await Promise.resolve() } }
 const obj17 = { async *gen() { yield 1 } }
 
-/* Es6Parser.ts: PropertyDefinition */
+/* Es2025Parser.ts: PropertyDefinition */
 
 
 // ============================================
@@ -33,7 +33,7 @@ const obj17 = { async *gen() { yield 1 } }
 /**
  * 规则测试：PropertyDefinition
  * 
- * 位置：Es6Parser.ts Line 226
+ * 位置：Es2025Parser.ts Line 226
  * 分类：others
  * 编号：905
  * 
@@ -76,7 +76,7 @@ const obj7 = {...obj}
 
 // ✅ 测试8：混合各种形式
 const obj8 = {x, y: 2, [z]: 3}
-/* Es6Parser.ts: PropertyDefinition */
+/* Es2025Parser.ts: PropertyDefinition */
 
 
 // ============================================
@@ -87,7 +87,7 @@ const obj8 = {x, y: 2, [z]: 3}
  * 规则测试：ObjectProperty
  * 分类：others | 编号：703
  * 
- * 规则定义（Es6Parser.ts）：
+ * 规则定义（Es2025Parser.ts）：
  * ObjectProperty:
  *   PropertyName : AssignmentExpression
  * 
@@ -166,7 +166,7 @@ const obj15 = { prop: (x = 10, x + 1) }
 // ✅ 测试16：属性值是函数表达式
 const obj16 = { method: function() { return 'test' } }
 
-/* Es6Parser.ts: ObjectProperty
+/* Es2025Parser.ts: ObjectProperty
  * 规则：
  * ObjectProperty:
  *   PropertyName : AssignmentExpression
@@ -181,7 +181,7 @@ const obj16 = { method: function() { return 'test' } }
 /**
  * 规则测试：PropertyDefinition
  * 
- * 位置：Es6Parser.ts Line 226
+ * 位置：Es2025Parser.ts Line 226
  * 分类：others
  * 编号：905
  * 
@@ -224,4 +224,4 @@ const obj7 = {...obj}
 
 // ✅ 测试8：混合各种形式
 const obj8 = {x, y: 2, [z]: 3}
-/* Es6Parser.ts: PropertyDefinition */
+/* Es2025Parser.ts: PropertyDefinition */

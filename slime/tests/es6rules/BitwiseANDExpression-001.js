@@ -1,7 +1,7 @@
 /**
  * 规则测试：BitwiseANDExpression
  * 
- * 位置：Es6Parser.ts Line 738
+ * 位置：Es2025Parser.ts Line 738
  * 分类：expressions
  * 编号：217
  * 
@@ -49,7 +49,7 @@ if ((flags & READ_FLAG) !== 0) {}
 // ✅ 测试8：复杂位运算    BitwiseANDExpression -> 与移位运算结合
 const extracted = (value >> 8) & 0xFF
 const combined = (r & 0xFF) << 16
-/* Es6Parser.ts: EqualityExpression (& EqualityExpression)* */
+/* Es2025Parser.ts: EqualityExpression (& EqualityExpression)* */
 
 
 // ============================================
@@ -123,12 +123,12 @@ for (let i = 0; i < 10; i++) {
     const mask = i & 7
 }
 
-/* Es6Parser.ts: BitwiseANDExpression: BitwiseANDExpression & BitwiseXORExpression | BitwiseXORExpression */
+/* Es2025Parser.ts: BitwiseANDExpression: BitwiseANDExpression & BitwiseXORExpression | BitwiseXORExpression */
 
 /**
  * 规则测试：BitwiseANDExpression
  * 
- * 位置：Es6Parser.ts Line 738
+ * 位置：Es2025Parser.ts Line 738
  * 分类：expressions
  * 编号：217
  * 
@@ -176,4 +176,4 @@ if ((flags & READ_FLAG) !== 0) {}
 // ✅ 测试8：复杂位运算    BitwiseANDExpression -> 与移位运算结合
 const extracted = (value >> 8) & 0xFF
 const combined = (r & 0xFF) << 16
-/* Es6Parser.ts: EqualityExpression (& EqualityExpression)* */
+/* Es2025Parser.ts: EqualityExpression (& EqualityExpression)* */

@@ -21,7 +21,7 @@ const { x: renamed } = { x: 1 }
 const { a, b, c } = { a: 1, b: 2, c: 3 }
 const { prop: { nested } } = { prop: { nested: 1 } }
 
-/* Es6Parser.ts: BindingElement */
+/* Es2025Parser.ts: BindingElement */
 
 
 // ============================================
@@ -31,7 +31,7 @@ const { prop: { nested } } = { prop: { nested: 1 } }
 /**
  * 规则测试：BindingElement
  * 
- * 位置：Es6Parser.ts Line 1089
+ * 位置：Es2025Parser.ts Line 1089
  * 分类：identifiers
  * 编号：113
  * 
@@ -53,15 +53,15 @@ const {x} = obj    // BindingElement -> Or (分支1: SingleNameBinding)
 const {x = 0} = obj    // BindingElement -> SingleNameBinding with Initializer
 const {x: y} = obj    // BindingElement -> Or (分支2: BindingPattern)
 
-/* Es6Parser.ts: Or[SingleNameBinding, BindingPattern] */
+/* Es2025Parser.ts: Or[SingleNameBinding, BindingPattern] */
 
 
-/* Es6Parser.ts: Or[SingleNameBinding, BindingPattern] */
+/* Es2025Parser.ts: Or[SingleNameBinding, BindingPattern] */
 
 /**
  * 规则测试：BindingElement
  * 
- * 位置：Es6Parser.ts Line 1089
+ * 位置：Es2025Parser.ts Line 1089
  * 分类：identifiers
  * 编号：113
  * 
@@ -83,4 +83,4 @@ const {x} = obj
 const {x = 0} = obj
 const {x: y} = obj
 
-/* Es6Parser.ts: Or[SingleNameBinding, BindingPattern] */
+/* Es2025Parser.ts: Or[SingleNameBinding, BindingPattern] */

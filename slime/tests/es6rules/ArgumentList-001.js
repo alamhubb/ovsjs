@@ -1,7 +1,7 @@
 /**
  * 规则测试：ArgumentList
  * 
- * 位置：Es6Parser.ts Line 279
+ * 位置：Es2025Parser.ts Line 279
  * 分类：others
  * 编号：914
  * 
@@ -44,12 +44,12 @@ f(a, b, ...c)
 // ✅ 测试8：多个spread    ArgumentList -> this.Many() (Comma + SpreadElement 多次)
 f(...a, ...b)
 
-/* Es6Parser.ts: ArgumentList */
+/* Es2025Parser.ts: ArgumentList */
 
 /**
  * 规则测试：ArgumentList
  * 
- * 位置：Es6Parser.ts Line 279
+ * 位置：Es2025Parser.ts Line 279
  * 分类：others
  * 编号：914
  * 
@@ -92,4 +92,4 @@ f(a, b, ...c)
 // ✅ 测试8：多个spread    ArgumentList -> this.Many() (Comma + SpreadElement 多次)
 f(...a, ...b)
 
-/* Es6Parser.ts: ArgumentList */
+/* Es2025Parser.ts: ArgumentList */

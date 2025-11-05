@@ -1,7 +1,7 @@
 /**
  * 规则测试：Arguments
  * 
- * 位置：Es6Parser.ts Line 275
+ * 位置：Es2025Parser.ts Line 275
  * 分类：others
  * 编号：913
  * 
@@ -43,12 +43,12 @@ func(a, b, ...rest, d)
 // ✅ 测试8：多个数字参数    Arguments -> ( ArgumentList ) (多个数字)
 func(1, 2, 3, 4, 5)
 
-/* Es6Parser.ts: Arguments */
+/* Es2025Parser.ts: Arguments */
 
 /**
  * 规则测试：Arguments
  * 
- * 位置：Es6Parser.ts Line 275
+ * 位置：Es2025Parser.ts Line 275
  * 分类：others
  * 编号：913
  * 
@@ -90,4 +90,4 @@ func(a, b, ...rest, d)
 // ✅ 测试8：多个数字参数
 func(1, 2, 3, 4, 5)
 
-/* Es6Parser.ts: Arguments */
+/* Es2025Parser.ts: Arguments */

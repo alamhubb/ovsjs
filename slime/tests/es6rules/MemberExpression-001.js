@@ -1,7 +1,7 @@
 /**
  * 规则测试：MemberExpression
  * 
- * 位置：Es6Parser.ts Line 378
+ * 位置：Es2025Parser.ts Line 378
  * 分类：expressions
  * 编号：204
  * 
@@ -100,7 +100,7 @@ const value9 = obj4.props.values[0].name
 const element = { parentElement: { children: [{ id: 'first' }] } }
 const elemId = element.parentElement.children[0].id
 
-/* Es6Parser.ts: MemberExpression: Or[PrimaryExpression, SuperProperty, MetaProperty, new MemberExpression Arguments], Many: [Expression] | .IdentifierName | TemplateLiteral */
+/* Es2025Parser.ts: MemberExpression: Or[PrimaryExpression, SuperProperty, MetaProperty, new MemberExpression Arguments], Many: [Expression] | .IdentifierName | TemplateLiteral */
 
 
 // ============================================
@@ -110,7 +110,7 @@ const elemId = element.parentElement.children[0].id
 /**
  * 规则测试：DotMemberExpression
  * 
- * 位置：Es6Parser.ts Line 420
+ * 位置：Es2025Parser.ts Line 420
  * 分类：expressions
  * 编号：205
  * 
@@ -131,12 +131,12 @@ obj.property
 promise.then()
 arr.map()
 
-/* Es6Parser.ts: . IdentifierName */
+/* Es2025Parser.ts: . IdentifierName */
 
 /**
  * 规则测试：MemberExpression
  * 
- * 位置：Es6Parser.ts Line 378
+ * 位置：Es2025Parser.ts Line 378
  * 分类：expressions
  * 编号：204
  * 
@@ -235,4 +235,4 @@ const value9 = obj4.props.values[0].name
 const element = { parentElement: { children: [{ id: 'first' }] } }
 const elemId = element.parentElement.children[0].id
 
-/* Es6Parser.ts: MemberExpression: Or[PrimaryExpression, SuperProperty, MetaProperty, new MemberExpression Arguments], Many: [Expression] | .IdentifierName | TemplateLiteral */
+/* Es2025Parser.ts: MemberExpression: Or[PrimaryExpression, SuperProperty, MetaProperty, new MemberExpression Arguments], Many: [Expression] | .IdentifierName | TemplateLiteral */

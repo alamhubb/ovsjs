@@ -53,7 +53,7 @@ class All {
     m() {}
 }
 
-/* Es6Parser.ts: ClassBody */
+/* Es2025Parser.ts: ClassBody */
 
 
 // ============================================
@@ -89,7 +89,7 @@ class WithSuper {
     method() { return super.method() }
 }
 
-/* Es6Parser.ts: ClassBody */
+/* Es2025Parser.ts: ClassBody */
 
 /**
  * 规则测试：ClassBody
@@ -146,4 +146,4 @@ class All {
     m() {}
 }
 
-/* Es6Parser.ts: ClassBody */
+/* Es2025Parser.ts: ClassBody */

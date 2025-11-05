@@ -1,7 +1,7 @@
 /**
  * 规则测试：ImportedBinding
  * 
- * 位置：Es6Parser.ts Line 1880
+ * 位置：Es2025Parser.ts Line 1880
  * 分类：identifiers
  * 编号：120
  * 
@@ -46,12 +46,12 @@ import lodash, * as _ from 'lodash'
 import fs from 'fs'
 import path from 'path'
 import {readFile, writeFile} from 'fs/promises'
-/* Es6Parser.ts: IdentifierName */
+/* Es2025Parser.ts: IdentifierName */
 
 /**
  * 规则测试：ImportedBinding
  * 
- * 位置：Es6Parser.ts Line 1880
+ * 位置：Es2025Parser.ts Line 1880
  * 分类：identifiers
  * 编号：120
  * 
@@ -96,4 +96,4 @@ import lodash, * as _ from 'lodash'
 import fs from 'fs'
 import path from 'path'
 import {readFile, writeFile} from 'fs/promises'
-/* Es6Parser.ts: IdentifierName */
+/* Es2025Parser.ts: IdentifierName */

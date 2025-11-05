@@ -3,7 +3,7 @@
  * 来源: 从 Declaration 拆分
  */
 
-/* Es6Parser.ts: class Identifier (extends Expression)? { ClassBody } */
+/* Es2025Parser.ts: class Identifier (extends Expression)? { ClassBody } */
 
 // ✅ 测试1：基本类声明    ClassDeclaration -> class Identifier (无extends) ClassBody (constructor)
 class Point {
@@ -226,5 +226,5 @@ class Manager extends Employee {
     }
 }
 
-/* Es6Parser.ts: ClassDeclaration: class Identifier ClassHeritage? { ClassBody } */
+/* Es2025Parser.ts: ClassDeclaration: class Identifier ClassHeritage? { ClassBody } */
 

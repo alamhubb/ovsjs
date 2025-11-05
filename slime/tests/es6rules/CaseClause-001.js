@@ -2,7 +2,7 @@
  * 规则测试：CaseClause
  * 分类：others | 编号：704
  * 
- * 规则定义（Es6Parser.ts）：
+ * 规则定义（Es2025Parser.ts）：
  * CaseClause:
  *   case Expression : StatementList?
  *   default : StatementList?
@@ -123,7 +123,7 @@ switch (1) {
     case 2: console.log(2)
 }
 
-/* Es6Parser.ts: CaseClause
+/* Es2025Parser.ts: CaseClause
  * 规则：
  * CaseClause:
  *   case Expression : StatementList?
@@ -138,7 +138,7 @@ switch (1) {
 /**
  * 规则测试：CaseClause
  * 
- * 位置：Es6Parser.ts Line 1325
+ * 位置：Es2025Parser.ts Line 1325
  * 分类：others
  * 编号：925
  * 
@@ -221,12 +221,12 @@ switch (action) {
         break
 }
 
-/* Es6Parser.ts: CaseClause */
+/* Es2025Parser.ts: CaseClause */
 
 /**
  * 规则测试：CaseClause
  * 
- * 位置：Es6Parser.ts Line 1325
+ * 位置：Es2025Parser.ts Line 1325
  * 分类：others
  * 编号：925
  * 
@@ -309,4 +309,4 @@ switch (action) {
         break
 }
 
-/* Es6Parser.ts: CaseClause */
+/* Es2025Parser.ts: CaseClause */

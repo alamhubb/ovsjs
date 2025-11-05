@@ -1,7 +1,7 @@
 /**
  * 规则测试：DotIdentifier
  * 
- * 位置：Es6Parser.ts Line 412
+ * 位置：Es2025Parser.ts Line 412
  * 分类：identifiers
  * 编号：104
  * 
@@ -33,12 +33,12 @@ arr.slice
 
 // ✅ 测试3：访问函数属性    DotIdentifier -> . IdentifierName (call)
 func.call
-/* Es6Parser.ts: . IdentifierName */
+/* Es2025Parser.ts: . IdentifierName */
 
 /**
  * 规则测试：DotIdentifier
  * 
- * 位置：Es6Parser.ts Line 412
+ * 位置：Es2025Parser.ts Line 412
  * 分类：identifiers
  * 编号：104
  * 
@@ -70,4 +70,4 @@ arr.slice
 
 // ✅ 测试3：访问函数属性
 func.call
-/* Es6Parser.ts: . IdentifierName */
+/* Es2025Parser.ts: . IdentifierName */

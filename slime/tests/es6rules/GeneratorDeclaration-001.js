@@ -1,7 +1,7 @@
 /**
  * 规则测试：GeneratorDeclaration
  * 
- * 位置：Es6Parser.ts Line 1584
+ * 位置：Es2025Parser.ts Line 1584
  * 分类：functions
  * 编号：506
  * 
@@ -138,7 +138,7 @@ function* complexGen(max) {
     }
 }
 
-/* Es6Parser.ts: GeneratorDeclaration: function* Identifier ( FormalParameters ) { GeneratorBody } */
+/* Es2025Parser.ts: GeneratorDeclaration: function* Identifier ( FormalParameters ) { GeneratorBody } */
 
 
 // ============================================
@@ -148,7 +148,7 @@ function* complexGen(max) {
 /**
  * 规则测试：AsyncGeneratorDeclaration
  * 
- * 位置：Es6Parser.ts（async function*处理）
+ * 位置：Es2025Parser.ts（async function*处理）
  * 分类：functions
  * 编号：508
  * 
@@ -305,12 +305,12 @@ async function* asyncGen20() {
     yield await Promise.resolve(3)
 }
 
-/* Es6Parser.ts: AsyncGeneratorDeclaration: async function* Identifier ( FormalParameters ) { AsyncGeneratorBody } */
+/* Es2025Parser.ts: AsyncGeneratorDeclaration: async function* Identifier ( FormalParameters ) { AsyncGeneratorBody } */
 
 /**
  * 规则测试：GeneratorDeclaration
  * 
- * 位置：Es6Parser.ts Line 1584
+ * 位置：Es2025Parser.ts Line 1584
  * 分类：functions
  * 编号：506
  * 
@@ -447,7 +447,7 @@ function* complexGen(max) {
     }
 }
 
-/* Es6Parser.ts: GeneratorDeclaration: function* Identifier ( FormalParameters ) { GeneratorBody } */
+/* Es2025Parser.ts: GeneratorDeclaration: function* Identifier ( FormalParameters ) { GeneratorBody } */
 
 // ============================================
 // 合并来自: AsyncGeneratorDeclaration-001.js
@@ -456,7 +456,7 @@ function* complexGen(max) {
 /**
  * 规则测试：AsyncGeneratorDeclaration
  * 
- * 位置：Es6Parser.ts（async function*处理）
+ * 位置：Es2025Parser.ts（async function*处理）
  * 分类：functions
  * 编号：508
  * 
@@ -613,4 +613,4 @@ async function* asyncGen20() {
     yield await Promise.resolve(3)
 }
 
-/* Es6Parser.ts: AsyncGeneratorDeclaration: async function* Identifier ( FormalParameters ) { AsyncGeneratorBody } */
+/* Es2025Parser.ts: AsyncGeneratorDeclaration: async function* Identifier ( FormalParameters ) { AsyncGeneratorBody } */

@@ -1,12 +1,14 @@
 /**
  * 测试规则: FunctionDeclaration
  * 来源: 从 Declaration 拆分
- *//* Es6Parser.ts: function Identifier (FormalParameters) { FunctionBody } */
+ */
+
+/* Es2025Parser.ts: function Identifier (FormalParameters) { FunctionBody } */
 
 /**
  * 规则测试：FunctionDeclaration
  * 
- * 位置：Es6Parser.ts Line 210
+ * 位置：Es2025Parser.ts Line 210
  * 分类：functions
  * 编号：501
  * 
@@ -132,19 +134,19 @@ function processArray(items, filter = true) {
     return result.length > 0 ? result : null
 }
 
-/* Es6Parser.ts: FunctionDeclaration: function Identifier ( FormalParameters ) { FunctionBody } */
+/* Es2025Parser.ts: FunctionDeclaration: function Identifier ( FormalParameters ) { FunctionBody } */
 
 // ============================================
 // 合并来自: AsyncFunctionDeclaration-001.js
 // ============================================
 
 
-/* Es6Parser.ts: async function Identifier (FormalParameters) { FunctionBody } */
+/* Es2025Parser.ts: async function Identifier (FormalParameters) { FunctionBody } */
 
 /**
  * 规则测试：AsyncFunctionDeclaration
  * 
- * 位置：Es6Parser.ts（async关键字处理）
+ * 位置：Es2025Parser.ts（async关键字处理）
  * 分类：functions
  * 编号：507
  * 
@@ -290,4 +292,4 @@ async function withOptional() {
     return await obj?.method?.()
 }
 
-/* Es6Parser.ts: AsyncFunctionDeclaration: async function Identifier ( FormalParameters ) { AsyncFunctionBody } */
+/* Es2025Parser.ts: AsyncFunctionDeclaration: async function Identifier ( FormalParameters ) { AsyncFunctionBody } */

@@ -1,12 +1,14 @@
 /**
  * 测试规则: ReturnStatement
  * 来源: 从 Statement 拆分
- *//* Es6Parser.ts: return Expression? */
+ */
+
+/* Es2025Parser.ts: return Expression? */
 
 /**
  * 规则测试：ReturnStatement
  * 
- * 位置：Es6Parser.ts Line 1244
+ * 位置：Es2025Parser.ts Line 1244
  * 分类：statements
  * 编号：402
  * 
@@ -107,12 +109,12 @@ function test15(x) {
     if (x > 0) return 'positive'
 }
 
-/* Es6Parser.ts: ReturnStatement: return Expression? ; */
+/* Es2025Parser.ts: ReturnStatement: return Expression? ; */
 
 /**
  * 规则测试：ReturnStatement
  * 
- * 位置：Es6Parser.ts Line 1281
+ * 位置：Es2025Parser.ts Line 1281
  * 分类：statements
  * 编号：414
  * 
@@ -180,4 +182,4 @@ function test() { return 42 }
 function none() { return }
 function complex() { return {a: 1, b: 2} }
 
-/* Es6Parser.ts: ReturnStatement */
+/* Es2025Parser.ts: ReturnStatement */

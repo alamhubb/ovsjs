@@ -1,7 +1,7 @@
 /**
  * 规则测试：BindingPattern
  * 
- * 位置：Es6Parser.ts Line 1007
+ * 位置：Es2025Parser.ts Line 1007
  * 分类：identifiers
  * 编号：106
  * 
@@ -53,7 +53,7 @@ function arrayParam([first, second]) { return first }
 for (const {key, value} of entries) {}
 for (const [index, item] of indexed) {}
 
-/* Es6Parser.ts: Or[ArrayBindingPattern, ObjectBindingPattern] */
+/* Es2025Parser.ts: Or[ArrayBindingPattern, ObjectBindingPattern] */
 
 
 // ============================================
@@ -63,7 +63,7 @@ for (const [index, item] of indexed) {}
 /**
  * 规则测试：ArrayBindingPattern
  * 
- * 位置：Es6Parser.ts（数组解构处理）
+ * 位置：Es2025Parser.ts（数组解构处理）
  * 分类：identifiers
  * 编号：108
  * 
@@ -156,7 +156,7 @@ const result = [
 ]
 const [{ data: [val1, val2] }] = result
 
-/* Es6Parser.ts: ArrayBindingPattern: [ BindingElementList? ] */
+/* Es2025Parser.ts: ArrayBindingPattern: [ BindingElementList? ] */
 
 
 // ============================================
@@ -166,7 +166,7 @@ const [{ data: [val1, val2] }] = result
 /**
  * 规则测试：ObjectBindingPattern
  * 
- * 位置：Es6Parser.ts Line 1015
+ * 位置：Es2025Parser.ts Line 1015
  * 分类：identifiers
  * 编号：107
  * 
@@ -236,7 +236,7 @@ const withDefaults = ({x = 0, y = 0} = {}) => x + y
 // ✅ 测试11：Rest + 带尾逗号
 const {first1, ...remaining,} = {first1: 1, second: 2, third: 3}
 
-/* Es6Parser.ts: { BindingPropertyList? TrailingComma? } */
+/* Es2025Parser.ts: { BindingPropertyList? TrailingComma? } */
 
 
 // ============================================
@@ -246,7 +246,7 @@ const {first1, ...remaining,} = {first1: 1, second: 2, third: 3}
 /**
  * 规则测试：ObjectBindingPattern
  * 
- * 位置：Es6Parser.ts（对象解构处理）
+ * 位置：Es2025Parser.ts（对象解构处理）
  * 分类：identifiers
  * 编号：109
  * 
@@ -360,12 +360,12 @@ function complex({
     return { name, age, opts }
 }
 
-/* Es6Parser.ts: ObjectBindingPattern: { BindingPropertyList? } */
+/* Es2025Parser.ts: ObjectBindingPattern: { BindingPropertyList? } */
 
 /**
  * 规则测试：BindingPattern
  * 
- * 位置：Es6Parser.ts Line 1007
+ * 位置：Es2025Parser.ts Line 1007
  * 分类：identifiers
  * 编号：106
  * 
@@ -417,4 +417,4 @@ function arrayParam([first, second]) { return first }
 for (const {key, value} of entries) {}
 for (const [index, item] of indexed) {}
 
-/* Es6Parser.ts: Or[ArrayBindingPattern, ObjectBindingPattern] */
+/* Es2025Parser.ts: Or[ArrayBindingPattern, ObjectBindingPattern] */

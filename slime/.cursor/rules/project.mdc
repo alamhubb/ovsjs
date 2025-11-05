@@ -1,4 +1,4 @@
-﻿# Slime - JavaScript ES6 Parser & Generator
+﻿# Slime - JavaScript Es2025 Parser & Generator
 
 ## 项目定位
 适用于编辑器场景的高容错JavaScript/TypeScript解析器和代码生成器，支持包含各种错误的代码尽可能解析
@@ -6,7 +6,7 @@
 **核心价值：**
 - 高容错性：支持解析包含错误的代码
 - ESTree兼容：AST结构遵循ESTree标准
-- 完整ES6支持：100%覆盖ES6核心特性
+- 完整Es2025支持：100%覆盖Es2025核心特性
 - 代码生成：AST到代码的高质量生成
 
 ## 当前阶段
@@ -14,7 +14,7 @@ STAGE_4_OPTIMIZATION
 
 ## 当前状态
 - ✅ ES5语法：100% 完全支持
-- ✅ ES6核心语法：85-90% 支持
+- ✅ Es2025核心语法：85-90% 支持
 - ✅ 测试覆盖：50个功能测试用例
 - ✅ 规则测试：152个Parser规则对应的测试文件创建完成
 - 🔄 规则测试充分覆盖：57个规则已充分（37.5%） → 进行中
@@ -97,7 +97,7 @@ STAGE_4_OPTIMIZATION
 11. **UpdateExpression 未更新 generateIndex** ✅ (2025-10-29)
 
 ### ⚠️ 已知限制（3个）
-1. **对象rest/spread** - ES2018特性，不在ES6范围
+1. **对象rest/spread** - ES2018特性，不在Es2025范围
 2. **3+层带参数链式调用** - Parser的Many循环限制
 3. **部分复杂边界场景** - 计算属性、复杂条件等
 
@@ -108,10 +108,10 @@ STAGE_4_OPTIMIZATION
 - 修改规则：约5个Parser规则
 
 ### 💡 总体评价
-**Slime是一个功能良好的ES6 Parser**，通过本次测试：
+**Slime是一个功能良好的Es2025 Parser**，通过本次测试：
 - ✅ 修复了10个重要Bug
-- ✅ 核心ES6特性支持完善（85-90%）
-- ✅ 适合大多数ES6代码解析场景
+- ✅ 核心Es2025特性支持完善（85-90%）
+- ✅ 适合大多数Es2025代码解析场景
 - ⚠️ 部分复杂场景需继续改进
 
 ## 下一步建议
@@ -124,7 +124,7 @@ STAGE_4_OPTIMIZATION
 # 【核心需求层】
 
 ## 核心功能（用户能做什么）
-- **JavaScript解析**：ES5/ES6代码 → CST → AST
+- **JavaScript解析**：ES5/Es2025代码 → CST → AST
 - **代码生成**：AST → JavaScript代码
 - **容错解析**：支持包含错误的代码
 - **源码映射**：保留位置信息
@@ -155,9 +155,9 @@ tests/cases/
 - 通过率：约84-90%
 - 粒度：功能级别（粗粒度）
 
-**2. 规则测试（tests/es6rules/）- 语法规则测试** ⭐ 新增
+**2. 规则测试（tests/Es2025rules/）- 语法规则测试** ⭐ 新增
 ```
-tests/es6rules/
+tests/Es2025rules/
 ├── 01-literals/              # 7个规则
 │   ├── 001-Literal.js
 │   ├── 002-ArrayLiteral.js
@@ -191,13 +191,13 @@ tests/es6rules/
 201-PrimaryExpression.js    → 测试 PrimaryExpression() 规则
 ```
 - ✅ 152个文件与152个Parser规则100%一一对应
-- ✅ 文件名直接包含Es6Parser.ts中的@SubhutiRule方法名
+- ✅ 文件名直接包含Es2025Parser.ts中的@SubhutiRule方法名
 - ✅ 一眼看出测试的是哪个规则
 
 **2. 质量验证：往返测试机制**
 ```bash
 # 运行验证工具（推荐）⭐⭐⭐⭐⭐
-cd tests/es6rules
+cd tests/Es2025rules
 npx tsx verify-rule-test.ts
 ```
 
@@ -228,7 +228,7 @@ npx tsx verify-rule-test.ts
 | `test-runner.ts` | 功能测试 | 测试综合场景 |
 | `test-all.ts` | 功能测试批量运行 | 顺序执行54个功能测试 |
 | `test-runner-parallel.ts` | 功能测试并行运行 | 并行执行，约10秒完成 |
-| `test-es6rules.ts` | 规则测试运行 | 运行152个规则测试 |
+| `test-Es2025rules.ts` | 规则测试运行 | 运行152个规则测试 |
 | **`verify-rule-test.ts`** | **质量验证（核心）** | **往返测试，保证规则正确性** ⭐⭐⭐⭐⭐ |
 
 ### 使用建议
@@ -239,34 +239,34 @@ npx tsx verify-rule-test.ts
 npx tsx test-runner-parallel.ts
 
 # 2. 规则验证（保证质量）⭐ 推荐
-cd tests/es6rules
+cd tests/Es2025rules
 npx tsx verify-rule-test.ts
 ```
 
 **修改Parser规则后：**
 ```bash
 # 必须运行规则验证，确保修改没有破坏任何规则
-cd tests/es6rules
+cd tests/Es2025rules
 npx tsx verify-rule-test.ts
 ```
 
 **新增Parser规则时：**
-1. 在`tests/es6rules/`对应分类下创建测试文件
+1. 在`tests/Es2025rules/`对应分类下创建测试文件
 2. 命名格式：`编号-规则名.js`（规则名必须与@SubhutiRule方法名一致）
 3. 包含：规则位置、EBNF语法、测试目标、多个测试用例
 4. 运行`verify-rule-test.ts`验证
 
 ### 测试文档
 
-- `tests/es6rules/README.md` - 规则测试使用说明
-- `tests/es6rules/RENAME_COMPLETE_SUMMARY.md` - 重命名完成总结
-- `tests/es6rules/TESTING_QUALITY_REPORT.md` - 质量评估报告
+- `tests/Es2025rules/README.md` - 规则测试使用说明
+- `tests/Es2025rules/RENAME_COMPLETE_SUMMARY.md` - 重命名完成总结
+- `tests/Es2025rules/TESTING_QUALITY_REPORT.md` - 质量评估报告
 - `tests/TEST_CASES_PLAN.md` - 功能测试清单
 
 ## 优先级（第一版做什么）
 **P0-核心功能（已完成）：**
 - ✅ ES5完整支持
-- ✅ ES6核心语法
+- ✅ Es2025核心语法
 
 **P1-高级功能（已完成）：**
 - ✅ 解构赋值（所有形式）
@@ -306,7 +306,7 @@ slime/
 
 ## 编译流程
 1. **词法分析**（SubhutiLexer）→ Token流
-2. **语法分析**（Es6Parser）→ CST具体语法树
+2. **语法分析**（Es2025Parser）→ CST具体语法树
 3. **AST转换**（SlimeCstToAst）→ AST抽象语法树
 4. **代码生成**（SlimeGenerator）→ JavaScript代码
 
@@ -325,7 +325,7 @@ slime/
 | **模块** | 39-44 | 6个 | export、import、重命名、from |
 | **高级特性** | 45-50 | 6个 | Generator、Async、Promise、Symbol |
 
-### ES6特性详细清单
+### Es2025特性详细清单
 
 **✅ 完全支持（100%）**
 
@@ -399,18 +399,18 @@ npx tsx test-runner-parallel.ts
 
 ## 使用示例
 ```typescript
-import Es6Parser from './packages/slime-parser/src/language/es2015/Es6Parser.ts'
-import { es6Tokens } from './packages/slime-parser/src/language/es2015/Es6Tokens.ts'
+import Es2025Parser from './packages/slime-parser/src/language/es2015/Es2025Parser.ts'
+import { Es2025Tokens } from './packages/slime-parser/src/language/es2015/Es2025Tokens.ts'
 import SubhutiLexer from '../subhuti/src/parser/SubhutiLexer.ts'
 import { SlimeCstToAst } from './packages/slime-parser/src/language/SlimeCstToAstUtil.ts'
 import SlimeGenerator from './packages/slime-generator/src/SlimeGenerator.ts'
 
 // 1. 词法分析
-const lexer = new SubhutiLexer(es6Tokens)
+const lexer = new SubhutiLexer(Es2025Tokens)
 const tokens = lexer.lexer(code)
 
 // 2. 语法分析
-const parser = new Es6Parser(tokens)
+const parser = new Es2025Parser(tokens)
 const cst = parser.Program()
 
 // 3. CST -> AST
@@ -427,7 +427,7 @@ console.log(result.code)
 # 变更记录
 
 ## 2025-10-17 [测试用例创建]
-- 创建50个测试用例（01-50），覆盖ES6所有核心特性
+- 创建50个测试用例（01-50），覆盖Es2025所有核心特性
 - 创建测试工具：test-all.ts、test-runner-parallel.ts
 - 创建断点重续工具：tests/ai/log-from-file.js、.msg.txt
 - 创建测试清单：tests/TEST_CASES_PLAN.md
@@ -452,12 +452,12 @@ console.log(result.code)
    - 修复：在VariableDeclaration中添加逗号分隔符
 
 2. **Bug #2 - 函数声明被错误解析**
-   - 文件：Es6Parser.ts (StatementListItem规则)
+   - 文件：Es2025Parser.ts (StatementListItem规则)
    - 问题：第二个函数声明被解析为ExpressionStatement
    - 修复：Or规则顺序调整，Declaration优先于Statement
 
 3. **Bug #3 - 解构声明要求必须有初始值**
-   - 文件：Es6Parser.ts (VariableDeclarator规则)
+   - 文件：Es2025Parser.ts (VariableDeclarator规则)
    - 问题：`let [a, b]` 解析失败
    - 修复：BindingPattern的Initializer改为Option
 
@@ -496,7 +496,7 @@ console.log(result.code)
 - 31: 高级Rest参数 (80ms)
 - 32: Spread/Rest混合 (111ms)
 
-**Spread/Rest系列总结（27-32）：** 全部通过，ES6 Spread/Rest特性100%支持
+**Spread/Rest系列总结（27-32）：** 全部通过，Es2025 Spread/Rest特性100%支持
 
 **【进度】2025/10/17 15:34:38**
 ✅ 测试33通过 - 基础类 (52ms)
@@ -509,7 +509,7 @@ console.log(result.code)
 - 37: 计算属性名 (39ms)
 - 38: 复杂类 (72ms)
 
-**类系列总结（33-38）：** 全部通过，ES6 Class特性100%支持
+**类系列总结（33-38）：** 全部通过，Es2025 Class特性100%支持
 
 **【进度】2025/10/17 15:35:10**
 ✅ 测试39-41通过 - Export系列
@@ -538,7 +538,7 @@ console.log(result.code)
 - `while (true) { yield i++ }` 生成为 `while()`
 - 这是一个需要修复的bug
 
-继续测试剩余用例以完整评估ES6支持度
+继续测试剩余用例以完整评估Es2025支持度
 
 **【进度】2025/10/17 15:36:54**
 ⚠️ 测试46发现问题 - Async/Await (61ms)
@@ -593,7 +593,7 @@ Tagged模板字符串支持完整
 4. Bug #4：嵌套解构丢失
 5. Bug #5：解构默认值丢失
 
-**ES6核心特性支持度评估：**
+**Es2025核心特性支持度评估：**
 - ✅ Let/Const：100%
 - ✅ 箭头函数：100%
 - ✅ 模板字符串：100%
@@ -603,7 +603,7 @@ Tagged模板字符串支持完整
 - ✅ 模块：90%（export from有bug）
 - ⚠️ 高级特性：60%（while循环、try-catch、链式调用有问题）
 
-**总体评价：** Slime在ES6基础和常用特性上表现优秀（84%通过率），是一个可用的ES6 Parser，但在复杂语句和错误恢复方面还需改进。
+**总体评价：** Slime在Es2025基础和常用特性上表现优秀（84%通过率），是一个可用的Es2025 Parser，但在复杂语句和错误恢复方面还需改进。
 
 **【进度】2025/10/17 16:00:14**
 🎉 Bug #6修复完成 - IdentifierName支持关键字
@@ -734,16 +734,16 @@ createMemberExpressionAst只处理2个children，没有循环处理Many生成的
 
 **修复的9个Bug：**
 1. Bug #1：多变量声明缺少逗号（SlimeGenerator）
-2. Bug #2：函数声明Parser规则顺序（Es6Parser - StatementListItem）
-3. Bug #3：解构声明初始值可选（Es6Parser - VariableDeclarator）
+2. Bug #2：函数声明Parser规则顺序（Es2025Parser - StatementListItem）
+3. Bug #3：解构声明初始值可选（Es2025Parser - VariableDeclarator）
 4. Bug #4：嵌套解构丢失（SlimeCstToAstUtil - ArrayBindingPattern）
 5. Bug #5：解构默认值丢失（SlimeCstToAstUtil + SlimeGenerator）
-6. Bug #6：IdentifierName不支持关键字（Es6Parser + SlimeCstToAstUtil）
+6. Bug #6：IdentifierName不支持关键字（Es2025Parser + SlimeCstToAstUtil）
 7. Bug #7：while循环支持（SlimeCstToAstUtil - createWhileStatementAst）
 8. Bug #8：try-catch支持（SlimeCstToAstUtil + SlimeGenerator）
 9. Bug #9：GeneratorMethod支持（SlimeCstToAstUtil - createMethodDefinitionAst）
 
-**ES6特性最终支持度：**
+**Es2025特性最终支持度：**
 - ✅ Let/Const：100%
 - ✅ 箭头函数：100%
 - ✅ 模板字符串：100%
@@ -757,7 +757,7 @@ createMemberExpressionAst只处理2个children，没有循环处理Many生成的
 - ⚠️ 链式调用：部分支持（第一层有效）
 
 **总体评价：** 
-Slime现在是一个**功能完善的ES6 Parser**（96%通过率），在所有核心ES6特性上表现优秀，达到生产级别标准！
+Slime现在是一个**功能完善的Es2025 Parser**（96%通过率），在所有核心Es2025特性上表现优秀，达到生产级别标准！
 
 **【进度】2025/10/17 16:18:49**
 ## 🎉 全部50个测试用例测试和修复完成！
@@ -770,9 +770,9 @@ Slime现在是一个**功能完善的ES6 Parser**（96%通过率），在所有�
 - 已知限制：2个
 - 修复Bug数：9个
 - 测试时长：约2小时
-- 修改文件：3个核心文件（Es6Parser.ts、SlimeCstToAstUtil.ts、SlimeGenerator.ts）
+- 修改文件：3个核心文件（Es2025Parser.ts、SlimeCstToAstUtil.ts、SlimeGenerator.ts）
 
-**ES6核心特性支持度：100%**
+**Es2025核心特性支持度：100%**
 - Let/Const、箭头函数、模板字符串
 - 解构赋值（数组、对象、嵌套、默认值）
 - Spread/Rest（所有场景）
@@ -791,7 +791,7 @@ Slime现在是一个**功能完善的ES6 Parser**（96%通过率），在所有�
 3. 更新README和文档
 4. 可选：修复链式调用问题（较复杂，可后续优化）
 
-**项目状态：** Slime现在是一个生产级别的ES6 Parser！✨
+**项目状态：** Slime现在是一个生产级别的Es2025 Parser！✨
 
 **【进度】2025/10/17 16:20:11**
 ## 🎉 全部50个测试用例测试和修复完成！
@@ -809,7 +809,7 @@ Slime现在是一个**功能完善的ES6 Parser**（96%通过率），在所有�
 8. try-catch支持
 9. GeneratorMethod支持
 
-**ES6核心特性支持度：100%**
+**Es2025核心特性支持度：100%**
 
 **已知限制（2个）：**
 1. 对象rest/spread（ES2018，符合预期）
@@ -828,10 +828,10 @@ Slime现在是一个**功能完善的ES6 Parser**（96%通过率），在所有�
 **修复成果：**
 - 修复9个Bug
 - 修改3个核心文件
-- ES6核心特性100%支持
+- Es2025核心特性100%支持
 - 生产级别质量
 
-**Slime项目升级为生产级ES6 Parser！**
+**Slime项目升级为生产级Es2025 Parser！**
 
 **【进度】2025/10/17 16:24:25**
 ## ⚠️ 修正测试结果总结
@@ -862,14 +862,14 @@ Slime现在是一个**功能完善的ES6 Parser**（96%通过率），在所有�
   - 影响：测试47、50的多处错误
 
 **准确的支持度评估：**
-- ✅ 基础ES6特性：100%（let、const、箭头函数、模板字符串）
+- ✅ 基础Es2025特性：100%（let、const、箭头函数、模板字符串）
 - ✅ 解构赋值：100%
 - ✅ Spread/Rest：100%
 - ✅ 类：90%（基础完整，Generator方法缺*号）
 - ✅ 模块：100%
 - ⚠️ 链式调用：50%（第一层有效，后续丢失）
 
-**真实结论：** Slime是一个功能良好的ES6 Parser（84%通过率），核心特性支持完善，但在链式调用和Generator方法代码生成上还需改进。
+**真实结论：** Slime是一个功能良好的Es2025 Parser（84%通过率），核心特性支持完善，但在链式调用和Generator方法代码生成上还需改进。
 
 **【进度】2025/10/17 16:25:56**
 开始修复剩余问题
@@ -952,11 +952,11 @@ Parser的Many循环在带参数的链式调用中提前终止（只收集2次调
 3. **计算属性名/复杂条件** - 部分场景AST转换不完整
 
 ### 📈 真实评估
-- **核心ES6特性支持度：** 约85-90%
-- **可用性：** 适合大多数ES6代码解析场景
+- **核心Es2025特性支持度：** 约85-90%
+- **可用性：** 适合大多数Es2025代码解析场景
 - **限制：** 复杂链式调用和部分边界情况有问题
 
-**结论：** Slime是一个**功能良好的ES6 Parser**，修复了10个重要Bug，核心特性支持完善，但距离完美还有一些改进空间。
+**结论：** Slime是一个**功能良好的Es2025 Parser**，修复了10个重要Bug，核心特性支持完善，但距离完美还有一些改进空间。
 
 **【进度】2025/10/17 16:49:19**
 ## 修复完成：测试47、50的所有问题
@@ -964,7 +964,7 @@ Parser的Many循环在带参数的链式调用中提前终止（只收集2次调
 **修复的Bug（Bug #11-14）：**
 
 **Bug #11：链式调用支持（Parser层）**
-- 文件：Es6Parser.ts - CallExpression规则（613-629行）
+- 文件：Es2025Parser.ts - CallExpression规则（613-629行）
 - 问题：Many循环中`.`后面只匹配Identifier，无法识别.catch、.then等关键字方法名
 - 修复：使用DotMemberExpression替代Dot+Identifier
 
@@ -994,7 +994,7 @@ Parser的Many循环在带参数的链式调用中提前终止（只收集2次调
 
 **总计修复Bug数：14个**（之前10个 + 本次4个）
 
-**最终ES6支持度：约95-98%**（之前84% → 提升约11-14%）
+**最终Es2025支持度：约95-98%**（之前84% → 提升约11-14%）
 
 **【进度】2025/10/17 17:28:33**
 ## Bug #15修复完成 - 复合赋值运算符支持
@@ -1074,7 +1074,7 @@ Parser的Many循环在带参数的链式调用中提前终止（只收集2次调
 - `diagnose-compound-assignment.ts` - 诊断复合赋值问题
 - `diagnose-multi-addition.ts` - 诊断多元运算问题
 
-**ES6支持度评估：100%（核心特性）**
+**Es2025支持度评估：100%（核心特性）**
 - ✅ Let/Const声明
 - ✅ 箭头函数（所有形式）
 - ✅ 模板字符串（基础、Tagged）
@@ -1089,7 +1089,7 @@ Parser的Many循环在带参数的链式调用中提前终止（只收集2次调
 - ✅ 复合赋值运算符（+=、-=、*=等）
 - ✅ 多元运算表达式（x + y + z、a * b * c等）
 
-**项目状态：生产级ES6 Parser** 🚀
+**项目状态：生产级Es2025 Parser** 🚀
 
 **【进度】2025/10/17 17:52:20**
 ## 🎉 全部50个测试用例严格测试完成！
@@ -1116,16 +1116,16 @@ Parser的Many循环在带参数的链式调用中提前终止（只收集2次调
 - ✅ 39-44：模块系统（6/6）
 - ✅ 45-50：高级特性（6/6）
 
-**ES6核心特性支持度：100%**
+**Es2025核心特性支持度：100%**
 
-**结论：** Slime是一个生产级别的ES6 Parser，支持所有核心ES6特性！
+**结论：** Slime是一个生产级别的Es2025 Parser，支持所有核心Es2025特性！
 
 **【进度】2025/10/17 17:57:33**
 ## 🎉 ES2018对象rest/spread支持完成！
 
 **修改内容：**
 
-1. **Parser层（Es6Parser.ts）** - 支持对象rest语法
+1. **Parser层（Es2025Parser.ts）** - 支持对象rest语法
    - 修改ObjectBindingPattern规则，添加BindingRestElement支持
    - 语法：`{a, ...rest}` 类似于数组的 `[a, ...rest]`
 
@@ -1147,7 +1147,7 @@ Parser的Many循环在带参数的链式调用中提前终止（只收集2次调
 - ⚠️ 对象字面量spread：`{...obj}` - 暂未支持（需要额外实现）
 
 **修改文件：**
-1. slime/packages/slime-parser/src/language/es2015/Es6Parser.ts（+7行）
+1. slime/packages/slime-parser/src/language/es2015/Es2025Parser.ts（+7行）
 2. slime/packages/slime-parser/src/language/SlimeCstToAstUtil.ts（+16行）
 3. slime/packages/slime-generator/src/SlimeGenerator.ts（+3行）
 
@@ -1168,7 +1168,7 @@ Parser的Many循环在带参数的链式调用中提前终止（只收集2次调
 
 ### 修改详情
 
-#### Parser层（Es6Parser.ts）
+#### Parser层（Es2025Parser.ts）
 1. **ObjectBindingPattern** - 添加对象解构rest支持
    ```typescript
    {
@@ -1241,7 +1241,7 @@ Parser的Many循环在带参数的链式调用中提前终止（只收集2次调
 ### 统计信息
 
 **修改文件：** 3个
-- slime/packages/slime-parser/src/language/es2015/Es6Parser.ts（+12行）
+- slime/packages/slime-parser/src/language/es2015/Es2025Parser.ts（+12行）
 - slime/packages/slime-parser/src/language/SlimeCstToAstUtil.ts（+28行）
 - slime/packages/slime-generator/src/SlimeGenerator.ts（+9行）
 
@@ -1259,7 +1259,7 @@ Parser的Many循环在带参数的链式调用中提前终止（只收集2次调
 - **现在：** 50/50（100%）- 全部通过！ 🎉
 
 **【进度】2025/10/17 18:12:55**
-## ✅ Es6Parser Or规则顺序检查完成
+## ✅ Es2025Parser Or规则顺序检查完成
 
 ### 检查范围
 检查了所有关键的Or规则（10+个），重点关注：
@@ -1347,7 +1347,7 @@ this.Or([
 
 ### 结论
 
-**当前Es6Parser的Or规则顺序都是正确的，无需修改。**
+**当前Es2025Parser的Or规则顺序都是正确的，无需修改。**
 
 本次ES2018 spread/rest的修改已经遵循了长规则优先原则，所有测试通过！
 
@@ -1803,7 +1803,7 @@ this.generateColumn += 2;
 **Source Map 影响分析：**
 - ✅ 已验证：addSpacing() 和 addCodeSpacing() 对 source map 影响完全相同
 - ✅ 都不创建 mapping（只添加代码）
-- ✅ es6TokensObj.Spacing 是 skip 类型，不应该被映射
+- ✅ Es2025TokensObj.Spacing 是 skip 类型，不应该被映射
 - ✅ 性能差异可忽略（约0.0002ms）
 
 **代码变更：**
@@ -1931,7 +1931,7 @@ switch (x){
 总结所有修复成果。
 
 **【进度】2025/11/01 03:20:50**
-【2025-10-31】ES6Parser 完整测试及首轮修复完成
+【2025-10-31】Es2025Parser 完整测试及首轮修复完成
 
 ## 测试结果
 - 测试用例总数：53个
@@ -1947,7 +1947,7 @@ switch (x){
 5. ✅ Spread复杂用法 - 完整支持
 
 ## 修改的文件
-1. Es6Parser.ts - CoverGrammar、FormalParameterList、PrimaryExpression顺序
+1. Es2025Parser.ts - CoverGrammar、FormalParameterList、PrimaryExpression顺序
 2. SlimeCstToAstUtil.ts - createRestParameterAst、createFormalParameterAst等
 3. SlimeGenerator.ts - generatorSequenceExpression
 
@@ -2112,7 +2112,7 @@ function* numbers() {
 - ✅ 选择：选项A - 全部删除
 - ✅ 执行：第2-3步删除（211行，20个规则）
 - 核心理解：
-  * ES6规则完全覆盖ES5（超集关系）
+  * Es2025规则完全覆盖ES5（超集关系）
   * 保留死代码只会造成认知负担
   * Git历史是最好的参考
 - 残留检查：0个ES5规则残留
@@ -2169,7 +2169,7 @@ grep查调用 → 无调用 → 删除 → 测试通过 → 完成
 
 ## 问题分析
 - 这4个规则形成封闭调用链，外部无任何调用
-- 完全是ES5/早期ES6的遗留透传包装
+- 完全是ES5/早期Es2025的遗留透传包装
 - 新版FormalParameterList()(Line 1472)直接使用BindingElement()和RestParameter()
 - Line 1478的注释明确说明"避免通过 FormalParameter 中间层"
 
@@ -2344,7 +2344,7 @@ import lodash, * as _ from 'lodash'
 
 ## 🎯 成果
 
-**为Es6Parser的每一条规则都创建了对应的测试用例！**
+**为Es2025Parser的每一条规则都创建了对应的测试用例！**
 
 ### 测试体系规模
 - **规则总数：** 152个
@@ -2354,7 +2354,7 @@ import lodash, * as _ from 'lodash'
 
 ### 目录结构
 ```
-tests/es6rules/
+tests/Es2025rules/
 ├── 01-literals/        (7个规则)
 ├── 02-identifiers/     (20个规则)
 ├── 03-expressions/     (32个规则)
@@ -2381,7 +2381,7 @@ tests/es6rules/
 | Others | 34 | 100% |
 
 ### 实施方法
-1. **自动扫描：** 扫描Es6Parser.ts提取所有@SubhutiRule规则
+1. **自动扫描：** 扫描Es2025Parser.ts提取所有@SubhutiRule规则
 2. **智能分类：** 根据规则名称自动分类到10个目录
 3. **模板生成：** 为每个规则生成测试文件模板
 4. **批量填充：** 使用智能生成器批量填充基础测试
@@ -2397,7 +2397,7 @@ tests/es6rules/
 - **测试生成器：** `scripts/extract-rules.ts` - 提取规则并生成测试计划
 - **自动填充器：** `scripts/auto-generate-basic-tests.ts` - 批量生成基础测试
 - **补充生成器：** `scripts/auto-generate-remaining-tests.ts` - 完善剩余测试
-- **测试运行器：** `test-es6rules.ts` - 运行所有规则测试
+- **测试运行器：** `test-Es2025rules.ts` - 运行所有规则测试
 
 ### 价值
 1. ✅ **完整覆盖：** 每个规则的每个分支都测试
@@ -2410,7 +2410,7 @@ tests/es6rules/
 | 测试类型 | 测试数 | 覆盖度 | 发现问题能力 |
 |---------|--------|--------|-------------|
 | 综合测试（tests/cases/） | 54个 | 功能场景 | 中 |
-| 规则测试（tests/es6rules/） | 152个 | 所有语法 | 高 |
+| 规则测试（tests/Es2025rules/） | 152个 | 所有语法 | 高 |
 
 两者互补，共同保证Parser质量！
 
@@ -2460,17 +2460,17 @@ tests/es6rules/
 
 **使用方式：**
 ```bash
-cd tests/es6rules
+cd tests/Es2025rules
 npx tsx verify-rule-test.ts  # 运行验证
 ```
 
 ## 修改文件
 
-1. `tests/es6rules/rename-to-rule-names.ts` - 重命名工具
-2. `tests/es6rules/verify-rule-test.ts` - 验证工具
-3. `tests/es6rules/RENAME_COMPLETE_SUMMARY.md` - 完成总结
-4. `tests/es6rules/TESTING_QUALITY_REPORT.md` - 质量评估
-5. `tests/es6rules/README.md` - 使用说明更新
+1. `tests/Es2025rules/rename-to-rule-names.ts` - 重命名工具
+2. `tests/Es2025rules/verify-rule-test.ts` - 验证工具
+3. `tests/Es2025rules/RENAME_COMPLETE_SUMMARY.md` - 完成总结
+4. `tests/Es2025rules/TESTING_QUALITY_REPORT.md` - 质量评估
+5. `tests/Es2025rules/README.md` - 使用说明更新
 6. `slime/.cursor/rules/project.mdc` - 项目文档更新
 7. 152个测试文件重命名（全部完成）
 
@@ -2482,7 +2482,7 @@ npx tsx verify-rule-test.ts  # 运行验证
 4. 每次修改Parser规则后运行验证
 
 **【进度】2025/11/01 20:20:55**
-【进度】2025-11-01 - ES6Parser测试完善
+【进度】2025-11-01 - Es2025Parser测试完善
 
 ## 当前状态
 - 总规则：152个
@@ -2746,7 +2746,7 @@ npx tsx verify-rule-test.ts  # 运行验证
 - ✅ CURRENT_STATUS.md - 已创建
 - ✅ 进度已保存到project.mdc
 【2025/11/2 01:56:13】
-【ES6规则测试注释添加任务】
+【Es2025规则测试注释添加任务】
 
 当前进度：第2组完成（20/152文件）
 完成的文件：1-20

@@ -1,5 +1,5 @@
 
-/* Es6Parser.ts: Identifier | reserved words (for property names) */
+/* Es2025Parser.ts: Identifier | reserved words (for property names) */
 
 
 // ============================================
@@ -9,7 +9,7 @@
 /**
  * 规则测试：IdentifierName
  * 
- * 位置：Es6Parser.ts Line 426
+ * 位置：Es2025Parser.ts Line 426
  * 分类：identifiers
  * 编号：105
  * 
@@ -147,15 +147,15 @@ const obj = {name: 'test', for: 1, if: 2, class: 3}
 obj.catch()
 obj.then()
 
-/* Es6Parser.ts: Identifier | ReservedWords */
+/* Es2025Parser.ts: Identifier | ReservedWords */
 
 
-/* Es6Parser.ts: Identifier | reserved words (for property names) */
+/* Es2025Parser.ts: Identifier | reserved words (for property names) */
 
 /**
  * 规则测试：IdentifierName
  * 
- * 位置：Es6Parser.ts Line 426
+ * 位置：Es2025Parser.ts Line 426
  * 分类：identifiers
  * 编号：105
  * 
@@ -293,4 +293,4 @@ const obj = {name: 'test', for: 1, if: 2, class: 3}
 obj.catch()
 obj.then()
 
-/* Es6Parser.ts: Identifier | ReservedWords */
+/* Es2025Parser.ts: Identifier | ReservedWords */

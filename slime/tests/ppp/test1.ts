@@ -2,17 +2,16 @@ import SubhutiLexer from "subhuti/src/SubhutiLexer";
 import JsonUtil from "subhuti/src/utils/JsonUtil";
 import {traverseClearLoc, traverseClearTokens} from "../utils/parserTestUtils";
 import {LogUtil} from "../../src/logutil";
-import {es2020Tokens} from "../../packages/slime-parser/src/language/es2020/Es2020Tokens";
-import Es6Parser from "slime-parser/src/language/es2015/Es6Parser";
+import {es2025Tokens} from "slime-parser/src/language/es2025/Es2025Tokens";
 
 const code = `const [first, ...[second, third]] = arr
 `
 
-const lexer = new SubhutiLexer(es2020Tokens)
+const lexer = new SubhutiLexer(es2025Tokens)
 const tokens = lexer.tokenize(code)
 console.log(tokens)
 
-const parser = new Es6Parser(tokens)
+const parser = new Es2025Parser(tokens)
 const curCst = parser.Program()
 
 const outCst = JsonUtil.cloneDeep(curCst)

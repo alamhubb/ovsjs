@@ -116,7 +116,7 @@ const template = {
 ### Step 1：查看Parser规则（2分钟）
 
 ```bash
-grep -A 30 "RuleName() {" Es6Parser.ts
+grep -A 30 "RuleName() {" Es2025Parser.ts
 ```
 
 识别：
@@ -249,11 +249,11 @@ npx tsx verify-rule-test.ts | grep "RuleName"
 ### 快速查看规则
 
 ```bash
-# 在Es6Parser.ts中查找规则
-grep -n "RuleName()" slime-parser/src/language/es2015/Es6Parser.ts
+# 在Es2025Parser.ts中查找规则
+grep -n "RuleName()" slime-parser/src/language/es2015/Es2025Parser.ts
 
 # 查看规则详情
-sed -n '行号,行号+30p' slime-parser/src/language/es2015/Es6Parser.ts
+sed -n '行号,行号+30p' slime-parser/src/language/es2015/Es2025Parser.ts
 ```
 
 ### 快速验证
@@ -295,7 +295,7 @@ npx tsx test-runner.ts tests/es6rules/05-statements/405-IfStatement.js
 ## 💡 遇到问题
 
 **问题：** 不知道规则有多少分支
-**解决：** `grep -A 50 "RuleName() {" Es6Parser.ts | grep -c "alt: ()"`
+**解决：** `grep -A 50 "RuleName() {" Es2025Parser.ts | grep -c "alt: ()"`
 
 **问题：** 测试写得不够全面
 **解决：** 参考已完善的规则，至少8-15个测试，覆盖所有分支

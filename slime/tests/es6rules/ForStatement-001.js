@@ -6,7 +6,7 @@
 /**
  * 规则测试：ForStatement
  * 
- * 位置：Es6Parser.ts Line 1168
+ * 位置：Es2025Parser.ts Line 1168
  * 分类：statements
  * 编号：409
  * 
@@ -124,4 +124,4 @@ for (let i = 0; i < 2; i++) {
     }
 }
 
-/* Es6Parser.ts: ForStatement: for ( VariableDeclaration? ; Expression? ; Expression? ) Statement */
+/* Es2025Parser.ts: ForStatement: for ( VariableDeclaration? ; Expression? ; Expression? ) Statement */

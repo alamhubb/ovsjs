@@ -22,7 +22,7 @@ export { helper1, helper2, helper3 } from '../utils'    // Multiple
 export { getConfig, setConfig, resetConfig } from './config'    // Functions
 export { one, two, three as THREE } from './numbers'    // Mixed
 
-/* Es6Parser.ts: ExportSpecifier */
+/* Es2025Parser.ts: ExportSpecifier */
 
 
 // ============================================
@@ -32,7 +32,7 @@ export { one, two, three as THREE } from './numbers'    // Mixed
 /**
  * 规则测试：ExportSpecifier
  * 
- * 位置：Es6Parser.ts Line 1985
+ * 位置：Es2025Parser.ts Line 1985
  * 分类：statements
  * 编号：428
  * 
@@ -52,7 +52,7 @@ export { one, two, three as THREE } from './numbers'    // Mixed
 export {name}
 export {name as alias}
 
-/* Es6Parser.ts: ExportSpecifier */
+/* Es2025Parser.ts: ExportSpecifier */
 
 
 // ============================================
@@ -60,7 +60,7 @@ export {name as alias}
 // ============================================
 
 
-/* Es6Parser.ts: IdentifierName (as IdentifierName)? */
+/* Es2025Parser.ts: IdentifierName (as IdentifierName)? */
 
 /**
  * 规则测试：ExportSpecifier
@@ -86,12 +86,12 @@ export { helper1, helper2, helper3 } from '../utils'
 export { getConfig, setConfig, resetConfig } from './config'
 export { one, two, three as THREE } from './numbers'
 
-/* Es6Parser.ts: ExportSpecifier */
+/* Es2025Parser.ts: ExportSpecifier */
 
 /**
  * 规则测试：ExportSpecifier
  * 
- * 位置：Es6Parser.ts Line 1985
+ * 位置：Es2025Parser.ts Line 1985
  * 分类：statements
  * 编号：428
  * 
@@ -111,7 +111,7 @@ export { one, two, three as THREE } from './numbers'
 export {name}
 export {name as alias}
 
-/* Es6Parser.ts: ExportSpecifier */
+/* Es2025Parser.ts: ExportSpecifier */
 
 
-/* Es6Parser.ts: IdentifierName (as IdentifierName)? */
+/* Es2025Parser.ts: IdentifierName (as IdentifierName)? */

@@ -1,12 +1,14 @@
 /**
  * 测试规则: SwitchStatement
  * 来源: 从 Statement 拆分
- *//* Es6Parser.ts: switch (Expression) CaseBlock */
+ */
+
+/* Es2025Parser.ts: switch (Expression) CaseBlock */
 
 /**
  * 规则测试：SwitchStatement
  * 
- * 位置：Es6Parser.ts Line 1300
+ * 位置：Es2025Parser.ts Line 1300
  * 分类：statements
  * 编号：416
  * 
@@ -222,4 +224,4 @@ switch (code) {
         }
 }
 
-/* Es6Parser.ts: SwitchStatement: switch ( Expression ) CaseBlock */
+/* Es2025Parser.ts: SwitchStatement: switch ( Expression ) CaseBlock */

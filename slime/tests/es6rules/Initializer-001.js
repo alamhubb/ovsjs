@@ -1,7 +1,7 @@
 /**
  * 规则测试：Initializer
  * 
- * 位置：Es6Parser.ts Line 916
+ * 位置：Es2025Parser.ts Line 916
  * 分类：others
  * 编号：920
  * 
@@ -51,12 +51,12 @@ const complex = arr.length * 2 + sum
 // ✅ 测试8：条件表达式初始化
 const conditional = num > 0 ? 'positive' : 'negative'
 
-/* Es6Parser.ts: Initializer */
+/* Es2025Parser.ts: Initializer */
 
 /**
  * 规则测试：Initializer
  * 
- * 位置：Es6Parser.ts Line 916
+ * 位置：Es2025Parser.ts Line 916
  * 分类：others
  * 编号：920
  * 
@@ -106,4 +106,4 @@ const complex = arr.length * 2 + sum
 // ✅ 测试8：条件表达式初始化
 const conditional = num > 0 ? 'positive' : 'negative'
 
-/* Es6Parser.ts: Initializer */
+/* Es2025Parser.ts: Initializer */

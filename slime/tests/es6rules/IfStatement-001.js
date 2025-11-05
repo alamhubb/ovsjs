@@ -1,7 +1,7 @@
 /**
  * 规则测试：IfStatement
  * 
- * 位置：Es6Parser.ts Line 1256
+ * 位置：Es2025Parser.ts Line 1256
  * 规则结构：IfStatement -> (tokens) + Expression + Statement + this.Option(ElseStatement)
  * 
  * 规则语法：
@@ -108,12 +108,12 @@ if (condition1 && (condition2 || condition3) && !condition4) {
  */
 
 
-/* Es6Parser.ts: if (Expression) Statement (else Statement)? */
+/* Es2025Parser.ts: if (Expression) Statement (else Statement)? */
 
 /**
  * 规则测试：IfStatement
  * 
- * 位置：Es6Parser.ts Line 1126
+ * 位置：Es2025Parser.ts Line 1126
  * 分类：statements
  * 编号：405
  * 
@@ -240,4 +240,4 @@ if (str.length > 0) {
     console.log('not empty')
 }
 
-/* Es6Parser.ts: IfStatement: if ( Expression ) Statement else? Statement */
+/* Es2025Parser.ts: IfStatement: if ( Expression ) Statement else? Statement */

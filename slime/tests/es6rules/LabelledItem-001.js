@@ -1,7 +1,7 @@
 /**
  * 规则测试：LabelledItem
  * 
- * 位置：Es6Parser.ts Line 850
+ * 位置：Es2025Parser.ts Line 850
  * 分类：others
  * 编号：927
  * 
@@ -43,12 +43,12 @@ label3: function f() {}
 // ✅ 测试8：嵌套标签与break
 label4: {label5: break label4}
 
-/* Es6Parser.ts: LabelledItem */
+/* Es2025Parser.ts: LabelledItem */
 
 /**
  * 规则测试：LabelledItem
  * 
- * 位置：Es6Parser.ts Line 850
+ * 位置：Es2025Parser.ts Line 850
  * 分类：others
  * 编号：927
  * 
@@ -90,4 +90,4 @@ label3: function f() {}
 // ✅ 测试8：嵌套标签与break
 label4: {label5: break label4}
 
-/* Es6Parser.ts: LabelledItem */
+/* Es2025Parser.ts: LabelledItem */

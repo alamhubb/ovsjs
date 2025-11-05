@@ -1,7 +1,7 @@
 /**
  * 规则测试：BitwiseXORExpression
  * 
- * 位置：Es6Parser.ts Line 747
+ * 位置：Es2025Parser.ts Line 747
  * 分类：expressions
  * 编号：218
  * 
@@ -52,7 +52,7 @@ const calc = x ^ y & z
 // ✅ 测试8：加密/校验场景    BitwiseXORExpression -> 在加密校验中使用
 const checksum = data[0] ^ data[1] ^ data[2]
 const encrypted = plaintext ^ key
-/* Es6Parser.ts: BitwiseANDExpression (^ BitwiseANDExpression)* */
+/* Es2025Parser.ts: BitwiseANDExpression (^ BitwiseANDExpression)* */
 
 
 // ============================================
@@ -126,12 +126,12 @@ if ((10 ^ 3) > 5) {
     console.log('xor result')
 }
 
-/* Es6Parser.ts: BitwiseXORExpression: BitwiseXORExpression ^ BitwiseORExpression | BitwiseORExpression */
+/* Es2025Parser.ts: BitwiseXORExpression: BitwiseXORExpression ^ BitwiseORExpression | BitwiseORExpression */
 
 /**
  * 规则测试：BitwiseXORExpression
  * 
- * 位置：Es6Parser.ts Line 747
+ * 位置：Es2025Parser.ts Line 747
  * 分类：expressions
  * 编号：218
  * 
@@ -182,4 +182,4 @@ const calc = x ^ y & z
 // ✅ 测试8：加密/校验场景
 const checksum = data[0] ^ data[1] ^ data[2]
 const encrypted = plaintext ^ key
-/* Es6Parser.ts: BitwiseANDExpression (^ BitwiseANDExpression)* */
+/* Es2025Parser.ts: BitwiseANDExpression (^ BitwiseANDExpression)* */

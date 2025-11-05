@@ -1,7 +1,7 @@
 /**
  * 规则测试：FunctionFormalParameters
  * 
- * 位置：Es6Parser.ts Line 1432
+ * 位置：Es2025Parser.ts Line 1432
  * 分类：statements
  * 编号：421
  * 
@@ -22,7 +22,7 @@ function test() {}
 function params(a, b, c) {}
 function rest(...args) {}
 
-/* Es6Parser.ts: FunctionFormalParameters */
+/* Es2025Parser.ts: FunctionFormalParameters */
 
 
 // ============================================
@@ -52,7 +52,7 @@ const a3 = (...args) => args
 const a4 = ([a, b]) => a + b
 const a5 = ({ x, y }) => x + y
 
-/* Es6Parser.ts: FormalParameter */
+/* Es2025Parser.ts: FormalParameter */
 
 
 // ============================================
@@ -62,7 +62,7 @@ const a5 = ({ x, y }) => x + y
 /**
  * 规则测试：FunctionFormalParametersBodyDefine
  * 
- * 位置：Es6Parser.ts Line 1578
+ * 位置：Es2025Parser.ts Line 1578
  * 分类：statements
  * 编号：423
  * 
@@ -81,12 +81,12 @@ const a5 = ({ x, y }) => x + y
 
 function test(a, b) { return a + b }
 
-/* Es6Parser.ts: FunctionFormalParametersBodyDefine */
+/* Es2025Parser.ts: FunctionFormalParametersBodyDefine */
 
 /**
  * 规则测试：FunctionFormalParameters
  * 
- * 位置：Es6Parser.ts Line 1432
+ * 位置：Es2025Parser.ts Line 1432
  * 分类：statements
  * 编号：421
  * 
@@ -107,4 +107,4 @@ function test() {}
 function params(a, b, c) {}
 function rest(...args) {}
 
-/* Es6Parser.ts: FunctionFormalParameters */
+/* Es2025Parser.ts: FunctionFormalParameters */

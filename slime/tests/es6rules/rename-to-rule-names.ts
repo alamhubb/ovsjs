@@ -7,7 +7,7 @@
 import * as fs from 'fs'
 import * as path from 'path'
 
-// 规则名映射表（从Es6Parser.ts提取的152个规则）
+// 规则名映射表（从Es2025Parser.ts提取的152个规则）
 const ruleMapping: Record<string, string> = {
   // Literals (001-007)
   '001': 'Literal',

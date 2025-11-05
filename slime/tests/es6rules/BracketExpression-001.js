@@ -1,7 +1,7 @@
 /**
  * 规则测试：BracketExpression
  * 
- * 位置：Es6Parser.ts Line 485
+ * 位置：Es2025Parser.ts Line 485
  * 分类：expressions
  * 编号：206
  * 
@@ -37,12 +37,12 @@ obj[key + 'Suffix']
 
 // ✅ 测试4：链式方括号访问    BracketExpression -> 嵌套的BracketExpression [ Expression ]
 matrix[i][j]
-/* Es6Parser.ts: [ Expression ] */
+/* Es2025Parser.ts: [ Expression ] */
 
 /**
  * 规则测试：BracketExpression
  * 
- * 位置：Es6Parser.ts Line 485
+ * 位置：Es2025Parser.ts Line 485
  * 分类：expressions
  * 编号：206
  * 
@@ -78,4 +78,4 @@ obj[key + 'Suffix']
 
 // ✅ 测试4：链式方括号访问
 matrix[i][j]
-/* Es6Parser.ts: [ Expression ] */
+/* Es2025Parser.ts: [ Expression ] */

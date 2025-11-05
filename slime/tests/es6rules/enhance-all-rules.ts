@@ -18,10 +18,10 @@ interface CommentInfo {
 }
 
 /**
- * 从Es6Parser.ts中提取所有规则定义
+ * 从Es2025Parser.ts中提取所有规则定义
  */
 function extractRulesFromParser(): Map<string, RuleInfo> {
-  const parserPath = path.join(__dirname, '../../packages/slime-parser/src/language/es2015/Es6Parser.ts');
+  const parserPath = path.join(__dirname, '../../packages/slime-parser/src/language/es2015/Es2025Parser.ts');
   const content = fs.readFileSync(parserPath, 'utf-8');
   const lines = content.split('\n');
   
@@ -213,7 +213,7 @@ function enhanceTestFile(filePath: string, rules: Map<string, RuleInfo>): boolea
  * 主函数：批量增强所有测试文件
  */
 async function main(): Promise<void> {
-  console.log('\n🔍 第一步：从Es6Parser.ts中提取规则定义...\n');
+  console.log('\n🔍 第一步：从Es2025Parser.ts中提取规则定义...\n');
   
   const rules = extractRulesFromParser();
   console.log(`✅ 成功提取 ${rules.size} 个规则\n`);

@@ -1,12 +1,14 @@
 /**
  * 测试规则: ThrowStatement
  * 来源: 从 Statement 拆分
- *//* Es6Parser.ts: throw Expression */
+ */
+
+/* Es2025Parser.ts: throw Expression */
 
 /**
  * 规则测试：ThrowStatement
  * 
- * 位置：Es6Parser.ts Line 1355
+ * 位置：Es2025Parser.ts Line 1355
  * 分类：statements
  * 编号：418
  * 
@@ -31,4 +33,4 @@ function error1() {
     throw new Error('test')
 }
 
-/* Es6Parser.ts: ThrowStatement */
+/* Es2025Parser.ts: ThrowStatement */

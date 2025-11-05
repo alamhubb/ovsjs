@@ -1,12 +1,14 @@
 /**
  * 测试规则: LabelledStatement
  * 来源: 从 Statement 拆分
- *//* Es6Parser.ts: Label : Statement */
+ */
+
+/* Es2025Parser.ts: Label : Statement */
 
 /**
  * 规则测试：LabelledStatement
  * 
- * 位置：Es6Parser.ts Line 1340
+ * 位置：Es2025Parser.ts Line 1340
  * 分类：statements
  * 编号：417
  * 
@@ -26,4 +28,4 @@
 label1: for (;;) { break label1 }
 outer: while (true) { break outer }
 
-/* Es6Parser.ts: LabelledStatement */
+/* Es2025Parser.ts: LabelledStatement */

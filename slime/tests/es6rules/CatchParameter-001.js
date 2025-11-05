@@ -6,7 +6,7 @@
 /**
  * 规则测试：CatchParameter
  * 
- * 位置：Es6Parser.ts Line 1393
+ * 位置：Es2025Parser.ts Line 1393
  * 分类：others
  * 编号：930
  * 
@@ -93,4 +93,4 @@ try {
     reportError(status, message, code, line, column)
 }
 
-/* Es6Parser.ts: CatchParameter */
+/* Es2025Parser.ts: CatchParameter */

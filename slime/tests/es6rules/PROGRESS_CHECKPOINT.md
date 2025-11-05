@@ -146,7 +146,7 @@ node quick-check.js
 ```javascript
 /**
  * 规则测试：RuleName
- * 位置：Es6Parser.ts Line XXX
+ * 位置：Es2025Parser.ts Line XXX
  * 规则语法：EBNF
  * 测试目标：简要说明
  */

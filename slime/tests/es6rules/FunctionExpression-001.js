@@ -6,7 +6,7 @@
 /**
  * 规则测试：FunctionExpression
  * 
- * 位置：Es6Parser.ts Line 219
+ * 位置：Es2025Parser.ts Line 219
  * 分类：expressions
  * 编号：226
  * 
@@ -99,14 +99,14 @@ setTimeout(function() {
     console.log('done')
 }, 1000)
 
-/* Es6Parser.ts: FunctionExpression: function Identifier? ( FormalParameters ) { FunctionBody } */
+/* Es2025Parser.ts: FunctionExpression: function Identifier? ( FormalParameters ) { FunctionBody } */
 
 
-/* Es6Parser.ts: function Identifier? (FormalParameters) { FunctionBody } */
+/* Es2025Parser.ts: function Identifier? (FormalParameters) { FunctionBody } */
 
 // ============================================
 // 合并来自: AsyncFunctionExpression-001.js
 // ============================================
 
 
-/* Es6Parser.ts: async function Identifier? (FormalParameters) { FunctionBody } */
+/* Es2025Parser.ts: async function Identifier? (FormalParameters) { FunctionBody } */

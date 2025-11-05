@@ -1,5 +1,5 @@
 
-/* Es6Parser.ts: super(Arguments) */
+/* Es2025Parser.ts: super(Arguments) */
 
 
 // ============================================
@@ -9,7 +9,7 @@
 /**
  * 规则测试：SuperCall
  * 
- * 位置：Es6Parser.ts Line 265
+ * 位置：Es2025Parser.ts Line 265
  * 分类：others
  * 编号：912
  * 
@@ -51,15 +51,15 @@ class C7 extends T { m() { if (condition) super() } }
 // ✅ 测试8：generator中的super()
 class C8 extends U { *gen() { yield super() } }
 
-/* Es6Parser.ts: SuperCall */
+/* Es2025Parser.ts: SuperCall */
 
 
-/* Es6Parser.ts: super(Arguments) */
+/* Es2025Parser.ts: super(Arguments) */
 
 /**
  * 规则测试：SuperCall
  * 
- * 位置：Es6Parser.ts Line 265
+ * 位置：Es2025Parser.ts Line 265
  * 分类：others
  * 编号：912
  * 
@@ -101,4 +101,4 @@ class C7 extends T { m() { if (condition) super() } }
 // ✅ 测试8：generator中的super()
 class C8 extends U { *gen() { yield super() } }
 
-/* Es6Parser.ts: SuperCall */
+/* Es2025Parser.ts: SuperCall */

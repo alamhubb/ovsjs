@@ -3,12 +3,12 @@
  * 来源: 从 Statement 拆分
  */
 
-/* Es6Parser.ts: break Label? */
+/* Es2025Parser.ts: break Label? */
 
 /**
  * 规则测试：BreakStatement
  * 
- * 位置：Es6Parser.ts Line 1258
+ * 位置：Es2025Parser.ts Line 1258
  * 分类：statements
  * 编号：413
  * 
@@ -132,4 +132,4 @@ function searchArray(arr, target) {
     }
 }
 
-/* Es6Parser.ts: BreakStatement: break ; */
+/* Es2025Parser.ts: BreakStatement: break ; */

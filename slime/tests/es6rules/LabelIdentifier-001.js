@@ -1,7 +1,7 @@
 /**
  * 规则测试：LabelIdentifier
  * 
- * 位置：Es6Parser.ts Line 112
+ * 位置：Es2025Parser.ts Line 112
  * 分类：identifiers
  * 编号：103
  * 
@@ -72,12 +72,12 @@ switchLabel: switch (x) {
     default:
         break
 }
-/* Es6Parser.ts: Identifier (not reserved word in label context) */
+/* Es2025Parser.ts: Identifier (not reserved word in label context) */
 
 /**
  * 规则测试：LabelIdentifier
  * 
- * 位置：Es6Parser.ts Line 112
+ * 位置：Es2025Parser.ts Line 112
  * 分类：identifiers
  * 编号：103
  * 
@@ -148,4 +148,4 @@ switchLabel: switch (x) {
     default:
         break
 }
-/* Es6Parser.ts: Identifier (not reserved word in label context) */
+/* Es2025Parser.ts: Identifier (not reserved word in label context) */

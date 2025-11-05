@@ -1,5 +1,5 @@
 
-/* Es6Parser.ts: from StringLiteral */
+/* Es2025Parser.ts: from StringLiteral */
 
 
 // ============================================
@@ -9,7 +9,7 @@
 /**
  * 规则测试：FromClause
  * 
- * 位置：Es6Parser.ts Line 1844
+ * 位置：Es2025Parser.ts Line 1844
  * 分类：modules
  * 编号：706
  * 
@@ -57,7 +57,7 @@ import z from './path/to/file.js'
 import axios from '@axios/core/dist/axios.js'
 export {default, named} from '../../lib/utils/index.js'
 
-/* Es6Parser.ts: FromClause */
+/* Es2025Parser.ts: FromClause */
 
 
 // ============================================
@@ -67,7 +67,7 @@ export {default, named} from '../../lib/utils/index.js'
 /**
  * 规则测试：AsteriskFromClauseEmptySemicolon
  * 
- * 位置：Es6Parser.ts Line 1885
+ * 位置：Es2025Parser.ts Line 1885
  * 分类：modules
  * 编号：708
  * 
@@ -86,7 +86,7 @@ export {default, named} from '../../lib/utils/index.js'
 
 export * from './module.js'
 
-/* Es6Parser.ts: AsteriskFromClauseEmptySemicolon */
+/* Es2025Parser.ts: AsteriskFromClauseEmptySemicolon */
 
 
 // ============================================
@@ -96,7 +96,7 @@ export * from './module.js'
 /**
  * 规则测试：ExportClauseFromClauseEmptySemicolon
  * 
- * 位置：Es6Parser.ts Line 1892
+ * 位置：Es2025Parser.ts Line 1892
  * 分类：modules
  * 编号：709
  * 
@@ -116,15 +116,15 @@ export * from './module.js'
 export {name} from './module.js'
 export {a, b} from './other.js'
 
-/* Es6Parser.ts: ExportClauseFromClauseEmptySemicolon */
+/* Es2025Parser.ts: ExportClauseFromClauseEmptySemicolon */
 
 
-/* Es6Parser.ts: from StringLiteral */
+/* Es2025Parser.ts: from StringLiteral */
 
 /**
  * 规则测试：FromClause
  * 
- * 位置：Es6Parser.ts Line 1844
+ * 位置：Es2025Parser.ts Line 1844
  * 分类：modules
  * 编号：706
  * 
@@ -172,4 +172,4 @@ import z from './path/to/file.js'
 import axios from '@axios/core/dist/axios.js'
 export {default, named} from '../../lib/utils/index.js'
 
-/* Es6Parser.ts: FromClause */
+/* Es2025Parser.ts: FromClause */

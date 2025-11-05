@@ -3,12 +3,12 @@
  * 来源: 从 PropertyName 拆分
  */
 
-/* Es6Parser.ts: [Expression] */
+/* Es2025Parser.ts: [Expression] */
 
 /**
  * 规则测试：ComputedPropertyName
  * 
- * 位置：Es6Parser.ts Line 247
+ * 位置：Es2025Parser.ts Line 247
  * 分类：others
  * 编号：907
  * 
@@ -49,4 +49,4 @@ const obj7 = {['str']: 7}
 
 // ✅ 测试8：嵌套计算    ComputedPropertyName -> [ 复杂AssignmentExpression ]
 const obj8 = {[[x]]: 8}
-/* Es6Parser.ts: ComputedPropertyName */
+/* Es2025Parser.ts: ComputedPropertyName */

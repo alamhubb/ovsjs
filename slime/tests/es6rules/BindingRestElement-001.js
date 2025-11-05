@@ -1,5 +1,5 @@
 
-/* Es6Parser.ts: ... BindingIdentifier */
+/* Es2025Parser.ts: ... BindingIdentifier */
 
 
 // ============================================
@@ -9,7 +9,7 @@
 /**
  * 规则测试：BindingRestElement
  * 
- * 位置：Es6Parser.ts Line 1108
+ * 位置：Es2025Parser.ts Line 1108
  * 分类：identifiers
  * 编号：115
  * 
@@ -62,15 +62,15 @@ function sum(initial = 0, ...nums) {
 // ✅ 测试8：多个函数使用rest
 const fn1 = (...args) => args.length
 const fn2 = (a, b, ...rest) => rest
-/* Es6Parser.ts: ... BindingIdentifier */
+/* Es2025Parser.ts: ... BindingIdentifier */
 
 
-/* Es6Parser.ts: ... BindingIdentifier */
+/* Es2025Parser.ts: ... BindingIdentifier */
 
 /**
  * 规则测试：BindingRestElement
  * 
- * 位置：Es6Parser.ts Line 1108
+ * 位置：Es2025Parser.ts Line 1108
  * 分类：identifiers
  * 编号：115
  * 
@@ -123,4 +123,4 @@ function sum(initial = 0, ...nums) {
 // ✅ 测试8：多个函数使用rest
 const fn1 = (...args) => args.length
 const fn2 = (a, b, ...rest) => rest
-/* Es6Parser.ts: ... BindingIdentifier */
+/* Es2025Parser.ts: ... BindingIdentifier */

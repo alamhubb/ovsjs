@@ -1,7 +1,7 @@
 /**
  * 规则测试：LeftHandSideExpression
  * 
- * 位置：Es6Parser.ts Line 605
+ * 位置：Es2025Parser.ts Line 605
  * 分类：expressions
  * 编号：209
  * 
@@ -36,12 +36,12 @@ obj.getData().process()
 
 // ✅ 测试4：Or分支2 - NewExpression（new构造）
 new Cls()
-/* Es6Parser.ts: Or[CallExpression, NewExpression] */
+/* Es2025Parser.ts: Or[CallExpression, NewExpression] */
 
 /**
  * 规则测试：LeftHandSideExpression
  * 
- * 位置：Es6Parser.ts Line 605
+ * 位置：Es2025Parser.ts Line 605
  * 分类：expressions
  * 编号：209
  * 
@@ -76,4 +76,4 @@ obj.getData().process()
 
 // ✅ 测试4：Or分支2 - NewExpression（new构造）
 new Cls()
-/* Es6Parser.ts: Or[CallExpression, NewExpression] */
+/* Es2025Parser.ts: Or[CallExpression, NewExpression] */

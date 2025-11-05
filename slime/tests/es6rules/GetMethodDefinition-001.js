@@ -1,7 +1,7 @@
 /**
  * 规则测试：GetMethodDefinition
  * 
- * 位置：Es6Parser.ts Line 1529
+ * 位置：Es2025Parser.ts Line 1529
  * 分类：classes
  * 编号：602
  * 
@@ -91,12 +91,12 @@ class Test8 {
     }
 }
 
-/* Es6Parser.ts: GetMethodDefinition */
+/* Es2025Parser.ts: GetMethodDefinition */
 
 /**
  * 规则测试：GetMethodDefinition
  * 
- * 位置：Es6Parser.ts Line 1529
+ * 位置：Es2025Parser.ts Line 1529
  * 分类：classes
  * 编号：602
  * 
@@ -186,11 +186,11 @@ class Test8 {
     }
 }
 
-/* Es6Parser.ts: GetMethodDefinition */
+/* Es2025Parser.ts: GetMethodDefinition */
 
 // ============================================
 // 合并来自: GetAccessor-001.js
 // ============================================
 
 
-/* Es6Parser.ts: get PropertyName() { Body } */
+/* Es2025Parser.ts: get PropertyName() { Body } */

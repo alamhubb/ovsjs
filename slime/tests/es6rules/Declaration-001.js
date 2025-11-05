@@ -2,7 +2,7 @@
  * 规则测试：Declaration
  * 分类：others | 编号：701
  * 
- * 规则定义（Es6Parser.ts）：
+ * 规则定义（Es2025Parser.ts）：
  * Declaration:
  *   FunctionDeclaration
  *   GeneratorDeclaration
@@ -103,7 +103,7 @@ function func2() {
     class LocalClass {}
 }
 
-/* Es6Parser.ts: Declaration
+/* Es2025Parser.ts: Declaration
  * 规则：
  * Declaration:
  *   FunctionDeclaration
@@ -152,7 +152,7 @@ var z = 3
 // ✅ 测试8
 export default function() {}
 
-/* Es6Parser.ts: Declaration */
+/* Es2025Parser.ts: Declaration */
 
 
 // ============================================
@@ -160,7 +160,7 @@ export default function() {}
 // ============================================
 
 
-/* Es6Parser.ts: class Identifier (extends Expression)? { ClassBody } */
+/* Es2025Parser.ts: class Identifier (extends Expression)? { ClassBody } */
 
 
 // ============================================
@@ -170,7 +170,7 @@ export default function() {}
 /**
  * 规则测试：ClassDeclaration
  * 
- * 位置：Es6Parser.ts Line 247
+ * 位置：Es2025Parser.ts Line 247
  * 分类：classes
  * 编号：605
  * 
@@ -409,7 +409,7 @@ class Manager extends Employee {
     }
 }
 
-/* Es6Parser.ts: ClassDeclaration: class Identifier ClassHeritage? { ClassBody } */
+/* Es2025Parser.ts: ClassDeclaration: class Identifier ClassHeritage? { ClassBody } */
 
 
 
@@ -420,7 +420,7 @@ class Manager extends Employee {
 /**
  * 规则测试：ExportDeclaration
  * 
- * 位置：Es6Parser.ts（export语句）
+ * 位置：Es2025Parser.ts（export语句）
  * 分类：modules
  * 编号：402
  * 
@@ -514,7 +514,7 @@ export default {
     config: {}
 }
 
-/* Es6Parser.ts: ExportDeclaration: export NamedExports FromClause | export default ... | export Declaration */
+/* Es2025Parser.ts: ExportDeclaration: export NamedExports FromClause | export default ... | export Declaration */
 
 
 // ============================================
@@ -522,7 +522,7 @@ export default {
 // ============================================
 
 
-/* Es6Parser.ts: Or[ExportDefault, ExportNamed, ExportList] */
+/* Es2025Parser.ts: Or[ExportDefault, ExportNamed, ExportList] */
 
 
 // ============================================
@@ -532,7 +532,7 @@ export default {
 /**
  * 规则测试：ExportDeclaration
  * 
- * 位置：Es6Parser.ts Line 1929
+ * 位置：Es2025Parser.ts Line 1929
  * 分类：modules
  * 编号：711
  * 
@@ -597,7 +597,7 @@ export default class {
 // ✅ 测试10：export default - expression
 export default {name: 'config', value: 100}
 
-/* Es6Parser.ts: ExportDeclaration */
+/* Es2025Parser.ts: ExportDeclaration */
 
 
 // ============================================
@@ -607,7 +607,7 @@ export default {name: 'config', value: 100}
 /**
  * 规则测试：ForDeclaration
  * 
- * 位置：Es6Parser.ts Line 1247
+ * 位置：Es2025Parser.ts Line 1247
  * 分类：statements
  * 编号：411
  * 
@@ -627,7 +627,7 @@ export default {name: 'config', value: 100}
 for (let x of arr) {}
 for (const {a, b} in obj) {}
 
-/* Es6Parser.ts: ForDeclaration */
+/* Es2025Parser.ts: ForDeclaration */
 
 
 // ============================================
@@ -635,7 +635,7 @@ for (const {a, b} in obj) {}
 // ============================================
 
 
-/* Es6Parser.ts: function Identifier (FormalParameters) { FunctionBody } */
+/* Es2025Parser.ts: function Identifier (FormalParameters) { FunctionBody } */
 
 
 // ============================================
@@ -645,7 +645,7 @@ for (const {a, b} in obj) {}
 /**
  * 规则测试：FunctionDeclaration
  * 
- * 位置：Es6Parser.ts Line 210
+ * 位置：Es2025Parser.ts Line 210
  * 分类：functions
  * 编号：501
  * 
@@ -771,7 +771,7 @@ function processArray(items, filter = true) {
     return result.length > 0 ? result : null
 }
 
-/* Es6Parser.ts: FunctionDeclaration: function Identifier ( FormalParameters ) { FunctionBody } */
+/* Es2025Parser.ts: FunctionDeclaration: function Identifier ( FormalParameters ) { FunctionBody } */
 
 
 // ============================================
@@ -779,7 +779,7 @@ function processArray(items, filter = true) {
 // ============================================
 
 
-/* Es6Parser.ts: async function Identifier (FormalParameters) { FunctionBody } */
+/* Es2025Parser.ts: async function Identifier (FormalParameters) { FunctionBody } */
 
 
 // ============================================
@@ -789,7 +789,7 @@ function processArray(items, filter = true) {
 /**
  * 规则测试：AsyncFunctionDeclaration
  * 
- * 位置：Es6Parser.ts（async关键字处理）
+ * 位置：Es2025Parser.ts（async关键字处理）
  * 分类：functions
  * 编号：507
  * 
@@ -935,7 +935,7 @@ async function withOptional() {
     return await obj?.method?.()
 }
 
-/* Es6Parser.ts: AsyncFunctionDeclaration: async function Identifier ( FormalParameters ) { AsyncFunctionBody } */
+/* Es2025Parser.ts: AsyncFunctionDeclaration: async function Identifier ( FormalParameters ) { AsyncFunctionBody } */
 
 
 // ============================================
@@ -945,7 +945,7 @@ async function withOptional() {
 /**
  * 规则测试：HoistableDeclaration
  * 
- * 位置：Es6Parser.ts Line 882
+ * 位置：Es2025Parser.ts Line 882
  * 分类：others
  * 编号：921
  * 
@@ -988,7 +988,7 @@ async function af2(x) { return await x }
 // ✅ 测试8：带参数的async generator
 async function* ag2(x) { yield await x }
 
-/* Es6Parser.ts: HoistableDeclaration */
+/* Es2025Parser.ts: HoistableDeclaration */
 
 
 // ============================================
@@ -998,7 +998,7 @@ async function* ag2(x) { yield await x }
 /**
  * 规则测试：ImportDeclaration
  * 
- * 位置：Es6Parser.ts（import语句）
+ * 位置：Es2025Parser.ts（import语句）
  * 分类：modules
  * 编号：401
  * 
@@ -1081,7 +1081,7 @@ import lodash from 'lodash'
 // ✅ 测试20：import scoped包
 import { something } from '@scope/package'
 
-/* Es6Parser.ts: ImportDeclaration: import ImportClause FromClause | import ModuleSpecifier */
+/* Es2025Parser.ts: ImportDeclaration: import ImportClause FromClause | import ModuleSpecifier */
 
 
 // ============================================
@@ -1089,7 +1089,7 @@ import { something } from '@scope/package'
 // ============================================
 
 
-/* Es6Parser.ts: import ImportClause FromClause */
+/* Es2025Parser.ts: import ImportClause FromClause */
 
 
 // ============================================
@@ -1099,7 +1099,7 @@ import { something } from '@scope/package'
 /**
  * 规则测试：ImportDeclaration
  * 
- * 位置：Es6Parser.ts Line 1752
+ * 位置：Es2025Parser.ts Line 1752
  * 分类：modules
  * 编号：702
  * 
@@ -1146,7 +1146,7 @@ import {a, b, c, d, e} from './constants.js'
 // ✅ 测试8：side-effect导入（无import子句）
 import './styles.css'
 
-/* Es6Parser.ts: ImportDeclaration */
+/* Es2025Parser.ts: ImportDeclaration */
 
 /**
  * 规则测试：Declaration
@@ -1178,4 +1178,4 @@ var z = 3
 // ✅ 测试8
 export default function() {}
 
-/* Es6Parser.ts: Declaration */
+/* Es2025Parser.ts: Declaration */

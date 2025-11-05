@@ -6,7 +6,7 @@
 /**
  * 规则测试：AssignmentExpressionEmptySemicolon
  * 
- * 位置：Es6Parser.ts Line 1921
+ * 位置：Es2025Parser.ts Line 1921
  * 分类：expressions
  * 编号：232
  * 
@@ -25,4 +25,4 @@
 
 export default expr    // AssignmentExpressionEmptySemicolon -> AssignmentExpression ; (export default形式)
 
-/* Es6Parser.ts: AssignmentExpression ; */
+/* Es2025Parser.ts: AssignmentExpression ; */

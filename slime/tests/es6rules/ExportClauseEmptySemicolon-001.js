@@ -1,7 +1,7 @@
 /**
  * 规则测试：ExportClauseEmptySemicolon
  * 
- * 位置：Es6Parser.ts Line 1900
+ * 位置：Es2025Parser.ts Line 1900
  * 分类：modules
  * 编号：710
  * 
@@ -21,12 +21,12 @@
 export {name}
 export {a, b, c}
 
-/* Es6Parser.ts: ExportClauseEmptySemicolon */
+/* Es2025Parser.ts: ExportClauseEmptySemicolon */
 
 /**
  * 规则测试：ExportClauseEmptySemicolon
  * 
- * 位置：Es6Parser.ts Line 1900
+ * 位置：Es2025Parser.ts Line 1900
  * 分类：modules
  * 编号：710
  * 
@@ -46,4 +46,4 @@ export {a, b, c}
 export {name}
 export {a, b, c}
 
-/* Es6Parser.ts: ExportClauseEmptySemicolon */
+/* Es2025Parser.ts: ExportClauseEmptySemicolon */

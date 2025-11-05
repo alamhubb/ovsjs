@@ -2,7 +2,7 @@
  * 规则测试：Program
  * 分类：others | 编号：702
  * 
- * 规则定义（Es6Parser.ts）：
+ * 规则定义（Es2025Parser.ts）：
  * Program:
  *   SourceElements?
  * 
@@ -93,7 +93,7 @@ debugger
 1 + 2
 "string"
 
-/* Es6Parser.ts: Program
+/* Es2025Parser.ts: Program
  * 规则：
  * Program:
  *   SourceElements?
@@ -117,7 +117,7 @@ debugger
 /**
  * 规则测试：Program
  * 
- * 位置：Es6Parser.ts Line 15
+ * 位置：Es2025Parser.ts Line 15
  * 分类：others
  * 编号：934
  * 
@@ -163,7 +163,7 @@ export const b = 4
 // ✅ 测试8：async函数声明
 async function af() {}
 
-/* Es6Parser.ts: Program */
+/* Es2025Parser.ts: Program */
 
 
 // ============================================
@@ -174,7 +174,7 @@ async function af() {}
  * 规则测试：Module
  * 分类：others | 编号：710
  * 
- * 规则定义（Es6Parser.ts）：
+ * 规则定义（Es2025Parser.ts）：
  * Module:
  *   ModuleBody?
  * 
@@ -263,7 +263,7 @@ export default class App extends Component {
     }
 }
 
-/* Es6Parser.ts: Module
+/* Es2025Parser.ts: Module
  * 规则：
  * Module:
  *   ModuleBody?
@@ -282,7 +282,7 @@ export default class App extends Component {
 /**
  * 规则测试：Program
  * 
- * 位置：Es6Parser.ts Line 15
+ * 位置：Es2025Parser.ts Line 15
  * 分类：others
  * 编号：934
  * 
@@ -328,4 +328,4 @@ export const b = 4
 // ✅ 测试8：async函数声明
 async function af() {}
 
-/* Es6Parser.ts: Program */
+/* Es2025Parser.ts: Program */

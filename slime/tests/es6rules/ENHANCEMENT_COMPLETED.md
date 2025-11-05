@@ -124,10 +124,10 @@ const integer = 42
 
 ### 分支号说明
 
-Or规则的分支号对应于Es6Parser.ts中的Or数组索引（从1开始）：
+Or规则的分支号对应于Es2025Parser.ts中的Or数组索引（从1开始）：
 
 ```typescript
-// Es6Parser.ts 中的 Literal 规则
+// Es2025Parser.ts 中的 Literal 规则
 @SubhutiRule
 Literal() {
     this.Or([
@@ -265,7 +265,7 @@ fs.writeFileSync(filePath, enhanced.join('\n'));
    ```javascript
    /**
     * 规则测试：Literal
-    * 位置：Es6Parser.ts Line 144
+    * 位置：Es2025Parser.ts Line 144
     * 规则结构：Literal -> this.Or -> [NullLiteral, TrueTok, FalseTok, NumericLiteral, StringLiteral]
     */
    ```
@@ -277,7 +277,7 @@ fs.writeFileSync(filePath, enhanced.join('\n'));
 
 3. **对照Parser代码** - 找到实际规则定义
    ```typescript
-   // slime/packages/slime-parser/src/language/es2015/Es6Parser.ts:144
+   // slime/packages/slime-parser/src/language/es2015/Es2025Parser.ts:144
    Literal() {
        this.Or([
            {alt: () => this.tokenConsumer.NullLiteral()},  // ← 对应分支1
@@ -294,7 +294,7 @@ fs.writeFileSync(filePath, enhanced.join('\n'));
 
 1. **更详细的分支描述** - 可在脚本中扩展 `targetDetail` 提取逻辑
 2. **规则分类标记** - 可添加 `#Or规则` 或 `#Option规则` 标记
-3. **自动链接** - 可生成指向Es6Parser.ts的链接
+3. **自动链接** - 可生成指向Es2025Parser.ts的链接
 
 ---
 

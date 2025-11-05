@@ -1,7 +1,7 @@
 /**
  * 规则测试：Finally
  * 
- * 位置：Es6Parser.ts Line 1387
+ * 位置：Es2025Parser.ts Line 1387
  * 分类：others
  * 编号：929
  * 
@@ -101,12 +101,12 @@ function withFinally() {
     }
 }
 
-/* Es6Parser.ts: Finally */
+/* Es2025Parser.ts: Finally */
 
 /**
  * 规则测试：Finally
  * 
- * 位置：Es6Parser.ts Line 1387
+ * 位置：Es2025Parser.ts Line 1387
  * 分类：others
  * 编号：929
  * 
@@ -206,4 +206,4 @@ function withFinally() {
     }
 }
 
-/* Es6Parser.ts: Finally */
+/* Es2025Parser.ts: Finally */

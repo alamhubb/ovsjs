@@ -1,7 +1,7 @@
 /**
  * 规则测试：SuperProperty
  * 
- * 位置：Es6Parser.ts Line 256
+ * 位置：Es2025Parser.ts Line 256
  * 分类：others
  * 编号：909
  * 
@@ -44,12 +44,12 @@ class C7 { m() { const x = super['y'] } }
 // ✅ 测试8：super属性删除
 class C8 { m() { delete super.z } }
 
-/* Es6Parser.ts: SuperProperty */
+/* Es2025Parser.ts: SuperProperty */
 
 /**
  * 规则测试：SuperProperty
  * 
- * 位置：Es6Parser.ts Line 256
+ * 位置：Es2025Parser.ts Line 256
  * 分类：others
  * 编号：909
  * 
@@ -92,4 +92,4 @@ class C7 { m() { const x = super['y'] } }
 // ✅ 测试8：super属性删除
 class C8 { m() { delete super.z } }
 
-/* Es6Parser.ts: SuperProperty */
+/* Es2025Parser.ts: SuperProperty */

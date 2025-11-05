@@ -3,12 +3,12 @@
  * 来源: 从 Statement 拆分
  */
 
-/* Es6Parser.ts: continue Label? */
+/* Es2025Parser.ts: continue Label? */
 
 /**
  * 规则测试：ContinueStatement
  * 
- * 位置：Es6Parser.ts Line 1261
+ * 位置：Es2025Parser.ts Line 1261
  * 分类：statements
  * 编号：412
  * 
@@ -81,12 +81,12 @@ for (let i = 0; i < 100; i++) {
     if (i % 5 === 0) continue
     console.log(i)
 }
-/* Es6Parser.ts: ContinueStatement */
+/* Es2025Parser.ts: ContinueStatement */
 
 /**
  * 规则测试：ContinueStatement
  * 
- * 位置：Es6Parser.ts Line 1266
+ * 位置：Es2025Parser.ts Line 1266
  * 分类：statements
  * 编号：414
  * 
@@ -214,4 +214,4 @@ function processItems(items) {
     }
 }
 
-/* Es6Parser.ts: ContinueStatement: continue ; */
+/* Es2025Parser.ts: ContinueStatement: continue ; */

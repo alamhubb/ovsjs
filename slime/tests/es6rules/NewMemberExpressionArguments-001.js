@@ -1,7 +1,7 @@
 /**
  * 规则测试：NewMemberExpressionArguments
  * 
- * 位置：Es6Parser.ts Line 371
+ * 位置：Es2025Parser.ts Line 371
  * 分类：expressions
  * 编号：203
  * 
@@ -21,12 +21,12 @@
 const obj = new MyClass(arg1, arg2)
 const date = new Date()
 
-/* Es6Parser.ts: new MemberExpression Arguments */
+/* Es2025Parser.ts: new MemberExpression Arguments */
 
 /**
  * 规则测试：NewMemberExpressionArguments
  * 
- * 位置：Es6Parser.ts Line 371
+ * 位置：Es2025Parser.ts Line 371
  * 分类：expressions
  * 编号：203
  * 
@@ -46,4 +46,4 @@ const date = new Date()
 const obj = new MyClass(arg1, arg2)
 const date = new Date()
 
-/* Es6Parser.ts: new MemberExpression Arguments */
+/* Es2025Parser.ts: new MemberExpression Arguments */

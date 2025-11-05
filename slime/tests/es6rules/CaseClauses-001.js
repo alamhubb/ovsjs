@@ -1,7 +1,7 @@
 /**
  * 规则测试：CaseClauses
  * 
- * 位置：Es6Parser.ts Line 1320
+ * 位置：Es2025Parser.ts Line 1320
  * 分类：others
  * 编号：924
  * 
@@ -109,12 +109,12 @@ switch (action) {
         skip()
 }
 
-/* Es6Parser.ts: CaseClauses */
+/* Es2025Parser.ts: CaseClauses */
 
 /**
  * 规则测试：CaseClauses
  * 
- * 位置：Es6Parser.ts Line 1320
+ * 位置：Es2025Parser.ts Line 1320
  * 分类：others
  * 编号：924
  * 
@@ -222,4 +222,4 @@ switch (action) {
         skip()
 }
 
-/* Es6Parser.ts: CaseClauses */
+/* Es2025Parser.ts: CaseClauses */

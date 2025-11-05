@@ -8,12 +8,12 @@
 /**
  * 规则测试：{RuleName}
  * 
- * 位置：Es6Parser.ts Line {LineNumber}
+ * 位置：Es2025Parser.ts Line {LineNumber}
  * 
  * 规则结构：{RuleName}() -> {规则完整结构说明}
  * 
  * 规则语法（EBNF）：
- *   {RuleName} ::= {直接从Es6Parser.ts复制的规则伪代码}
+ *   {RuleName} ::= {直接从Es2025Parser.ts复制的规则伪代码}
  * 
  * 测试覆盖：
  * - ✅ {Or/Option/Many分支说明}

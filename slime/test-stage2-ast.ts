@@ -3,7 +3,7 @@
  * 测试范围: CST → AST转换
  * 前提: 阶段1已通过（CST可以正常生成）
  */
-import Es6Parser from './packages/slime-parser/src/language/es2015/Es6Parser.ts'
+import Es2025Parser from './packages/slime-parser/src/language/es2015/Es2025Parser.ts'
 import { es6Tokens } from './packages/slime-parser/src/language/es2015/Es6Tokens.ts'
 import SubhutiLexer from 'subhuti/src/SubhutiLexer.ts'
 import { SlimeCstToAst } from './packages/slime-parser/src/language/SlimeCstToAstUtil.ts'
@@ -31,7 +31,7 @@ for (let i = 0; i < files.length; i++) {
     // 阶段1: 生成CST（假设已通过）
     const lexer = new SubhutiLexer(es6Tokens)
     const tokens = lexer.tokenize(code)
-    const parser = new Es6Parser(tokens)
+    const parser = new Es2025Parser(tokens)
     const cst = parser.Program()
     console.log(`✅ CST生成: ${cst.children?.length || 0} 个子节点`)
 

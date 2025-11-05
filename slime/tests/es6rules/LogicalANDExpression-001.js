@@ -1,7 +1,7 @@
 /**
  * 规则测试：LogicalANDExpression
  * 
- * 位置：Es6Parser.ts Line 1040
+ * 位置：Es2025Parser.ts Line 1040
  * 分类：expressions
  * 编号：220
  * 
@@ -64,12 +64,12 @@ x > 5 && y < 10 ? 'yes' : 'no'
 // ✅ 测试15：变量赋值AND
 const result = condition && getValue()
 
-/* Es6Parser.ts: LogicalANDExpression: && BitwiseORExpression */
+/* Es2025Parser.ts: LogicalANDExpression: && BitwiseORExpression */
 
 /**
  * 规则测试：LogicalANDExpression
  * 
- * 位置：Es6Parser.ts Line 1040
+ * 位置：Es2025Parser.ts Line 1040
  * 分类：expressions
  * 编号：220
  * 
@@ -131,4 +131,4 @@ x > 5 && y < 10 ? 'yes' : 'no'
 // ✅ 测试15：变量赋值AND
 const result = condition && getValue()
 
-/* Es6Parser.ts: LogicalANDExpression: && BitwiseORExpression */
+/* Es2025Parser.ts: LogicalANDExpression: && BitwiseORExpression */

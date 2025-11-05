@@ -21,7 +21,7 @@ import { helper1, helper2, helper3 } from '../utils'
 import { a, b, c, d, e } from './large'
 import { default as defaultExport } from './module'
 
-/* Es6Parser.ts: ImportSpecifier */
+/* Es2025Parser.ts: ImportSpecifier */
 
 
 // ============================================
@@ -31,7 +31,7 @@ import { default as defaultExport } from './module'
 /**
  * 规则测试：ImportSpecifier
  * 
- * 位置：Es6Parser.ts Line 1859
+ * 位置：Es2025Parser.ts Line 1859
  * 分类：statements
  * 编号：426
  * 
@@ -51,7 +51,7 @@ import { default as defaultExport } from './module'
 import {name} from './module.js'
 import {name as alias} from './module.js'
 
-/* Es6Parser.ts: ImportSpecifier */
+/* Es2025Parser.ts: ImportSpecifier */
 
 
 // ============================================
@@ -59,7 +59,7 @@ import {name as alias} from './module.js'
 // ============================================
 
 
-/* Es6Parser.ts: IdentifierName (as IdentifierName)? */
+/* Es2025Parser.ts: IdentifierName (as IdentifierName)? */
 
 /**
  * 规则测试：ImportSpecifier
@@ -84,12 +84,12 @@ import { helper1, helper2, helper3 } from '../utils'
 import { a, b, c, d, e } from './large'
 import { default as defaultExport } from './module'
 
-/* Es6Parser.ts: ImportSpecifier */
+/* Es2025Parser.ts: ImportSpecifier */
 
 /**
  * 规则测试：ImportSpecifier
  * 
- * 位置：Es6Parser.ts Line 1859
+ * 位置：Es2025Parser.ts Line 1859
  * 分类：statements
  * 编号：426
  * 
@@ -109,7 +109,7 @@ import { default as defaultExport } from './module'
 import {name} from './module.js'
 import {name as alias} from './module.js'
 
-/* Es6Parser.ts: ImportSpecifier */
+/* Es2025Parser.ts: ImportSpecifier */
 
 
-/* Es6Parser.ts: IdentifierName (as IdentifierName)? */
+/* Es2025Parser.ts: IdentifierName (as IdentifierName)? */

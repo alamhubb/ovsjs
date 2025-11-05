@@ -1,7 +1,7 @@
 /**
  * 规则测试：UnaryExpression
  * 
- * 位置：Es6Parser.ts Line 633
+ * 位置：Es2025Parser.ts Line 633
  * 分类：expressions
  * 编号：211
  * 
@@ -103,12 +103,12 @@ if (typeof value === 'undefined') {
     console.log('undefined')
 }
 
-/* Es6Parser.ts: UnaryExpression: Or[AwaitExpression, PostfixExpression, UnaryOperator UnaryExpression] where UnaryOperator: delete | void | typeof | ++ | -- | + | - | ~ | ! */
+/* Es2025Parser.ts: UnaryExpression: Or[AwaitExpression, PostfixExpression, UnaryOperator UnaryExpression] where UnaryOperator: delete | void | typeof | ++ | -- | + | - | ~ | ! */
 
 /**
  * 规则测试：UnaryExpression
  * 
- * 位置：Es6Parser.ts Line 633
+ * 位置：Es2025Parser.ts Line 633
  * 分类：expressions
  * 编号：211
  * 
@@ -210,4 +210,4 @@ if (typeof value === 'undefined') {
     console.log('undefined')
 }
 
-/* Es6Parser.ts: UnaryExpression: Or[AwaitExpression, PostfixExpression, UnaryOperator UnaryExpression] where UnaryOperator: delete | void | typeof | ++ | -- | + | - | ~ | ! */
+/* Es2025Parser.ts: UnaryExpression: Or[AwaitExpression, PostfixExpression, UnaryOperator UnaryExpression] where UnaryOperator: delete | void | typeof | ++ | -- | + | - | ~ | ! */

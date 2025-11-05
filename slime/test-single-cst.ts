@@ -247,7 +247,7 @@ for (let i = 0; i < testCases.length; i++) {
             // 如果指定输出完整CST，即使失败也输出
             if (testCase.fullCst) {
                 try {
-                    const lexer = new SubhutiLexer(es2020Tokens)
+                    const lexer = new SubhutiLexer(es2025Tokens)
                     const tokens = lexer.tokenize(testCase.code)
                     const parser = new Es2025Parser(tokens)
                     const cst = parser.Program()
@@ -296,7 +296,7 @@ if (firstFailure === -1) {
     if (failedCode.includes('null:')) {
         console.log('  - 问题：null 关键字不能作为对象属性名')
         console.log('  - 原因：LiteralPropertyName 或 PropertyName 规则未支持 null')
-        console.log('  - 建议：检查 Es2025Parser 或 Es6Parser 中的 LiteralPropertyName 规则')
+        console.log('  - 建议：检查 Es2025Parser 或 Es2025Parser 中的 LiteralPropertyName 规则')
         console.log('  - 规范：ES6 允许所有 IdentifierName（包括关键字）作为属性名')
     } else if (failedCode.match(/\b(true|false|if|class|for|while|return|function)\s*:/)) {
         console.log('  - 问题：其他关键字不能作为对象属性名')

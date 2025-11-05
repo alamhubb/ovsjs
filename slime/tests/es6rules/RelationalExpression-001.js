@@ -1,7 +1,7 @@
 /**
  * 规则测试：RelationalExpression
  * 
- * 位置：Es6Parser.ts Line 1024
+ * 位置：Es2025Parser.ts Line 1024
  * 分类：expressions
  * 编号：215
  * 
@@ -73,12 +73,12 @@ age >= 18 && age < 65
 // ✅ 测试15：条件表达式中的比较
 const result = x > 10 ? 'big' : 'small'
 
-/* Es6Parser.ts: RelationalExpression: RelOp[<|>|<=|>=|instanceof|in] */
+/* Es2025Parser.ts: RelationalExpression: RelOp[<|>|<=|>=|instanceof|in] */
 
 /**
  * 规则测试：RelationalExpression
  * 
- * 位置：Es6Parser.ts Line 1024
+ * 位置：Es2025Parser.ts Line 1024
  * 分类：expressions
  * 编号：215
  * 
@@ -150,4 +150,4 @@ age >= 18 && age < 65
 // ✅ 测试15：条件表达式中的比较
 const result = x > 10 ? 'big' : 'small'
 
-/* Es6Parser.ts: RelationalExpression: RelOp[<|>|<=|>=|instanceof|in] */
+/* Es2025Parser.ts: RelationalExpression: RelOp[<|>|<=|>=|instanceof|in] */

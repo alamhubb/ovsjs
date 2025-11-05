@@ -1,7 +1,7 @@
 /**
  * 规则测试：ConditionalExpression
  * 
- * 位置：Es6Parser.ts Line 1046
+ * 位置：Es2025Parser.ts Line 1046
  * 分类：expressions
  * 编号：222
  * 
@@ -68,12 +68,12 @@ const result = Math.max(5 > 3 ? 10 : 5, 20)
 const score = 85
 score >= 90 ? 'A' : score >= 80 ? 'B' : score >= 70 ? 'C' : 'F'
 
-/* Es6Parser.ts: ConditionalExpression: LogicalORExpression ? AssignmentExpression : AssignmentExpression */
+/* Es2025Parser.ts: ConditionalExpression: LogicalORExpression ? AssignmentExpression : AssignmentExpression */
 
 /**
  * 规则测试：ConditionalExpression
  * 
- * 位置：Es6Parser.ts Line 1046
+ * 位置：Es2025Parser.ts Line 1046
  * 分类：expressions
  * 编号：222
  * 
@@ -140,4 +140,4 @@ const result = Math.max(5 > 3 ? 10 : 5, 20)
 const score = 85
 score >= 90 ? 'A' : score >= 80 ? 'B' : score >= 70 ? 'C' : 'F'
 
-/* Es6Parser.ts: ConditionalExpression: LogicalORExpression ? AssignmentExpression : AssignmentExpression */
+/* Es2025Parser.ts: ConditionalExpression: LogicalORExpression ? AssignmentExpression : AssignmentExpression */

@@ -1,10 +1,12 @@
 /**
  * 测试规则: ForDeclaration
  * 来源: 从 Declaration 拆分
- *//**
+ */
+
+/**
  * 规则测试：ForDeclaration
  * 
- * 位置：Es6Parser.ts Line 1247
+ * 位置：Es2025Parser.ts Line 1247
  * 分类：statements
  * 编号：411
  * 
@@ -24,4 +26,4 @@
 for (let x of arr) {}
 for (const {a, b} in obj) {}
 
-/* Es6Parser.ts: ForDeclaration */
+/* Es2025Parser.ts: ForDeclaration */

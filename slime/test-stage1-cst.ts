@@ -2,7 +2,7 @@
  * 阶段1: CST生成测试
  * 测试范围: 词法分析 → 语法分析（生成CST）
  */
-import Es6Parser from './packages/slime-parser/src/language/es2015/Es6Parser.ts'
+import Es2025Parser from './packages/slime-parser/src/language/es2015/Es2025Parser.ts'
 import { es6Tokens } from './packages/slime-parser/src/language/es2015/Es6Tokens.ts'
 import SubhutiLexer from 'subhuti/src/SubhutiLexer.ts'
 import * as fs from 'fs'
@@ -32,7 +32,7 @@ for (let i = 0; i < files.length; i++) {
     console.log(`✅ 词法分析: ${tokens.length} tokens`)
 
     // 语法分析
-    const parser = new Es6Parser(tokens)
+    const parser = new Es2025Parser(tokens)
     const cst = parser.Program()
     console.log(`✅ 语法分析: CST生成成功`)
     console.log(`CST根节点children数: ${cst.children?.length || 0}`)

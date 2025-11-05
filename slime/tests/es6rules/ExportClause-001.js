@@ -1,7 +1,7 @@
 /**
  * 规则测试：ExportClause
  * 
- * 位置：Es6Parser.ts Line 1955
+ * 位置：Es2025Parser.ts Line 1955
  * 分类：modules
  * 编号：712
  * 
@@ -22,12 +22,12 @@ export {}    // ExportClause -> 空导出
 export {name}    // ExportClause -> 单个导出
 export {a, b, c}    // ExportClause -> 多个导出
 
-/* Es6Parser.ts: ExportClause */
+/* Es2025Parser.ts: ExportClause */
 
 /**
  * 规则测试：ExportClause
  * 
- * 位置：Es6Parser.ts Line 1955
+ * 位置：Es2025Parser.ts Line 1955
  * 分类：modules
  * 编号：712
  * 
@@ -48,11 +48,11 @@ export {}
 export {name}
 export {a, b, c}
 
-/* Es6Parser.ts: ExportClause */
+/* Es2025Parser.ts: ExportClause */
 
 // ============================================
 // 合并来自: ExportList-001.js
 // ============================================
 
 
-/* Es6Parser.ts: export { ExportSpecifier (Comma ExportSpecifier)* } */
+/* Es2025Parser.ts: export { ExportSpecifier (Comma ExportSpecifier)* } */

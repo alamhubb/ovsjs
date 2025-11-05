@@ -1,7 +1,7 @@
 /**
  * 规则测试：SetMethodDefinition
  * 
- * 位置：Es6Parser.ts Line 1538
+ * 位置：Es2025Parser.ts Line 1538
  * 分类：classes
  * 编号：603
  * 
@@ -89,12 +89,12 @@ class Test8 {
     }
 }
 
-/* Es6Parser.ts: SetMethodDefinition */
+/* Es2025Parser.ts: SetMethodDefinition */
 
 /**
  * 规则测试：SetMethodDefinition
  * 
- * 位置：Es6Parser.ts Line 1538
+ * 位置：Es2025Parser.ts Line 1538
  * 分类：classes
  * 编号：603
  * 
@@ -182,11 +182,11 @@ class Test8 {
     }
 }
 
-/* Es6Parser.ts: SetMethodDefinition */
+/* Es2025Parser.ts: SetMethodDefinition */
 
 // ============================================
 // 合并来自: SetAccessor-001.js
 // ============================================
 
 
-/* Es6Parser.ts: set PropertyName(Identifier) { Body } */
+/* Es2025Parser.ts: set PropertyName(Identifier) { Body } */

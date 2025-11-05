@@ -1,7 +1,7 @@
 /**
  * 规则测试：FormalParameterList
  * 
- * 位置：Es6Parser.ts Line 1472
+ * 位置：Es2025Parser.ts Line 1472
  * 分类：statements
  * 编号：422
  * 
@@ -81,12 +81,12 @@ const arrow1 = (a, b) => a + b
 const arrow2 = (...args) => args.length
 const arrow3 = ({name}) => name
 
-/* Es6Parser.ts: FormalParameterList */
+/* Es2025Parser.ts: FormalParameterList */
 
 /**
  * 规则测试：FormalParameterList
  * 
- * 位置：Es6Parser.ts Line 1472
+ * 位置：Es2025Parser.ts Line 1472
  * 分类：statements
  * 编号：422
  * 
@@ -166,4 +166,4 @@ const arrow1 = (a, b) => a + b
 const arrow2 = (...args) => args.length
 const arrow3 = ({name}) => name
 
-/* Es6Parser.ts: FormalParameterList */
+/* Es2025Parser.ts: FormalParameterList */

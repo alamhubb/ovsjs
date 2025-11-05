@@ -1,7 +1,7 @@
 /**
  * 规则测试：ArrowFunction
  * 
- * 位置：Es6Parser.ts Line 227
+ * 位置：Es2025Parser.ts Line 227
  * 分类：expressions
  * 编号：225
  * 
@@ -74,7 +74,7 @@ const asyncChain = (promise) =>
         .then(data => ({ data }))
         .catch(error => ({ error }))
 
-/* Es6Parser.ts: ArrowFunction: ArrowFormalParameters => ArrowFunctionBody */
+/* Es2025Parser.ts: ArrowFunction: ArrowFormalParameters => ArrowFunctionBody */
 
 
 // ============================================
@@ -82,7 +82,7 @@ const asyncChain = (promise) =>
 // ============================================
 
 
-/* Es6Parser.ts: ArrowParameters => ConciseBody */
+/* Es2025Parser.ts: ArrowParameters => ConciseBody */
 
 
 // ============================================
@@ -92,7 +92,7 @@ const asyncChain = (promise) =>
 /**
  * 规则测试：ArrowFunction
  * 
- * 位置：Es6Parser.ts Line 1484
+ * 位置：Es2025Parser.ts Line 1484
  * 分类：functions
  * 编号：504
  * 
@@ -185,7 +185,7 @@ const loadUser = async ({id, cache = true}) => {
     return await fetch(`/user/${id}`)
 }
 
-/* Es6Parser.ts: ArrowFunction */
+/* Es2025Parser.ts: ArrowFunction */
 
 
 // ============================================
@@ -193,12 +193,12 @@ const loadUser = async ({id, cache = true}) => {
 // ============================================
 
 
-/* Es6Parser.ts: async ArrowFunction */
+/* Es2025Parser.ts: async ArrowFunction */
 
 /**
  * 规则测试：ArrowFunction
  * 
- * 位置：Es6Parser.ts Line 227
+ * 位置：Es2025Parser.ts Line 227
  * 分类：expressions
  * 编号：225
  * 
@@ -271,15 +271,15 @@ const asyncChain = (promise) =>
         .then(data => ({ data }))
         .catch(error => ({ error }))
 
-/* Es6Parser.ts: ArrowFunction: ArrowFormalParameters => ArrowFunctionBody */
+/* Es2025Parser.ts: ArrowFunction: ArrowFormalParameters => ArrowFunctionBody */
 
 
-/* Es6Parser.ts: ArrowParameters => ConciseBody */
+/* Es2025Parser.ts: ArrowParameters => ConciseBody */
 
 /**
  * 规则测试：ArrowFunction
  * 
- * 位置：Es6Parser.ts Line 1484
+ * 位置：Es2025Parser.ts Line 1484
  * 分类：functions
  * 编号：504
  * 
@@ -372,11 +372,11 @@ const loadUser = async ({id, cache = true}) => {
     return await fetch(`/user/${id}`)
 }
 
-/* Es6Parser.ts: ArrowFunction */
+/* Es2025Parser.ts: ArrowFunction */
 
 // ============================================
 // 合并来自: AsyncArrowFunction-001.js
 // ============================================
 
 
-/* Es6Parser.ts: async ArrowFunction */
+/* Es2025Parser.ts: async ArrowFunction */

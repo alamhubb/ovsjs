@@ -6,7 +6,7 @@
 /**
  * 规则测试：BindingElementList
  * 
- * 位置：Es6Parser.ts Line 1058
+ * 位置：Es2025Parser.ts Line 1058
  * 分类：identifiers
  * 编号：110
  * 
@@ -43,4 +43,4 @@ const [, b, , d] = array
 // ✅ 测试5：Many≥2 - 多个元素的混合
 const [first, , third, , fifth] = values
 
-/* Es6Parser.ts: BindingElisionElement (Comma BindingElisionElement)* */
+/* Es2025Parser.ts: BindingElisionElement (Comma BindingElisionElement)* */

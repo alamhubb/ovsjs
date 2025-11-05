@@ -1,7 +1,7 @@
 /**
  * 规则测试：VariableDeclarator
  * 
- * 位置：Es6Parser.ts Line 874
+ * 位置：Es2025Parser.ts Line 874
  * 分类：others
  * 编号：919
  * 
@@ -45,12 +45,12 @@ let {a: {b}} = {a: {b: 30}}
 // ✅ 测试8：复杂解构混合
 let [arr, {obj, val = 40}] = [[1, 2], {obj: 5}]
 
-/* Es6Parser.ts: VariableDeclarator */
+/* Es2025Parser.ts: VariableDeclarator */
 
 /**
  * 规则测试：VariableDeclarator
  * 
- * 位置：Es6Parser.ts Line 874
+ * 位置：Es2025Parser.ts Line 874
  * 分类：others
  * 编号：919
  * 
@@ -94,4 +94,4 @@ let {a: {b}} = {a: {b: 30}}
 // ✅ 测试8：复杂解构混合
 let [arr, {obj, val = 40}] = [[1, 2], {obj: 5}]
 
-/* Es6Parser.ts: VariableDeclarator */
+/* Es2025Parser.ts: VariableDeclarator */

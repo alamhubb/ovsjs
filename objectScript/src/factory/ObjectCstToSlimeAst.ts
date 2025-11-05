@@ -16,7 +16,7 @@ import {
 import SlimeAstUtil from "slime-ast/src/SlimeAst.ts";
 import ObjectScriptParser from "../parser/ObjectScriptParser.ts";
 import {SubhutiUtil} from "subhuti/src/parser/SubhutiParser.ts";
-import Es6Parser from "slime-parser/src/language/es2015/Es6Parser.ts";
+import Es2025Parser from "slime-parser/src/language/es2015/Es2025Parser.ts";
 
 export function checkCstName(cst: SubhutiCst, cstName: string) {
   if (cst.name !== cstName) {
@@ -54,7 +54,7 @@ export class ObjectCstToSlimeAst extends SlimeCstToAst {
    * 所以需要在这里展平处理
    */
   toProgram(cst: SubhutiCst): SlimeProgram {
-    checkCstName(cst, Es6Parser.prototype.Program.name);
+    checkCstName(cst, Es2025Parser.prototype.Program.name);
     
     const first = cst.children?.[0]
     if (!first) {
@@ -63,9 +63,9 @@ export class ObjectCstToSlimeAst extends SlimeCstToAst {
     
     let bodyStatements: Array<SlimeStatement | SlimeModuleDeclaration> = []
     
-    if (first.name === Es6Parser.prototype.ModuleItemList.name) {
+    if (first.name === Es2025Parser.prototype.ModuleItemList.name) {
       bodyStatements = this.createModuleItemListAst(first)
-    } else if (first.name === Es6Parser.prototype.StatementList.name) {
+    } else if (first.name === Es2025Parser.prototype.StatementList.name) {
       bodyStatements = this.createStatementListAst(first)
     }
     

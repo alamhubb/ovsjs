@@ -6,7 +6,7 @@
 /**
  * 规则测试：DoWhileStatement
  * 
- * 位置：Es6Parser.ts Line 1158
+ * 位置：Es2025Parser.ts Line 1158
  * 分类：statements
  * 编号：407
  * 
@@ -149,4 +149,4 @@ do {
     total++
 } while (total < 5)
 
-/* Es6Parser.ts: DoWhileStatement: do Statement while ( Expression ) */
+/* Es2025Parser.ts: DoWhileStatement: do Statement while ( Expression ) */

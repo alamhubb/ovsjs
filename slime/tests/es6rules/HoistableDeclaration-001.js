@@ -1,10 +1,12 @@
 /**
  * 测试规则: HoistableDeclaration
  * 来源: 从 Declaration 拆分
- *//**
+ */
+
+/**
  * 规则测试：HoistableDeclaration
  * 
- * 位置：Es6Parser.ts Line 882
+ * 位置：Es2025Parser.ts Line 882
  * 分类：others
  * 编号：921
  * 
@@ -47,18 +49,18 @@ async function af2(x) { return await x }
 // ✅ 测试8：带参数的async generator
 async function* ag2(x) { yield await x }
 
-/* Es6Parser.ts: HoistableDeclaration */
+/* Es2025Parser.ts: HoistableDeclaration */
 
 // ============================================
 // 合并来自: GeneratorFunction-001.js
 // ============================================
 
 
-/* Es6Parser.ts: function* Identifier? (FormalParameters) { GeneratorBody } */
+/* Es2025Parser.ts: function* Identifier? (FormalParameters) { GeneratorBody } */
 
 // ============================================
 // 合并来自: AsyncGeneratorFunction-001.js
 // ============================================
 
 
-/* Es6Parser.ts: async function* Identifier? (FormalParameters) { FunctionBody } */
+/* Es2025Parser.ts: async function* Identifier? (FormalParameters) { FunctionBody } */

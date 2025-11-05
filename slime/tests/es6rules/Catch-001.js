@@ -1,7 +1,7 @@
 /**
  * 规则测试：Catch
  * 
- * 位置：Es6Parser.ts Line 1378
+ * 位置：Es2025Parser.ts Line 1378
  * 分类：others
  * 编号：928
  * 
@@ -99,7 +99,7 @@ try {
     }
 }
 
-/* Es6Parser.ts: Catch */
+/* Es2025Parser.ts: Catch */
 
 
 // ============================================
@@ -110,7 +110,7 @@ try {
  * 规则测试：CatchClause
  * 分类：others | 编号：705
  * 
- * 规则定义（Es6Parser.ts）：
+ * 规则定义（Es2025Parser.ts）：
  * CatchClause:
  *   catch ( CatchParameter ) Block
  *   catch Block
@@ -256,7 +256,7 @@ try {
     console.log(name)
 }
 
-/* Es6Parser.ts: CatchClause
+/* Es2025Parser.ts: CatchClause
  * 规则：
  * CatchClause:
  *   catch ( CatchParameter ) Block
@@ -275,7 +275,7 @@ try {
 /**
  * 规则测试：CatchParameter
  * 
- * 位置：Es6Parser.ts Line 1393
+ * 位置：Es2025Parser.ts Line 1393
  * 分类：others
  * 编号：930
  * 
@@ -362,12 +362,12 @@ try {
     reportError(status, message, code, line, column)
 }
 
-/* Es6Parser.ts: CatchParameter */
+/* Es2025Parser.ts: CatchParameter */
 
 /**
  * 规则测试：Catch
  * 
- * 位置：Es6Parser.ts Line 1378
+ * 位置：Es2025Parser.ts Line 1378
  * 分类：others
  * 编号：928
  * 
@@ -465,4 +465,4 @@ try {
     }
 }
 
-/* Es6Parser.ts: Catch */
+/* Es2025Parser.ts: Catch */

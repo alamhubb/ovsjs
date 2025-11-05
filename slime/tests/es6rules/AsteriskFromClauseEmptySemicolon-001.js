@@ -6,7 +6,7 @@
 /**
  * 规则测试：AsteriskFromClauseEmptySemicolon
  * 
- * 位置：Es6Parser.ts Line 1885
+ * 位置：Es2025Parser.ts Line 1885
  * 分类：modules
  * 编号：708
  * 
@@ -25,4 +25,4 @@
 
 export * from './module.js'    // AsteriskFromClauseEmptySemicolon -> * from ModuleSpecifier ;
 
-/* Es6Parser.ts: AsteriskFromClauseEmptySemicolon */
+/* Es2025Parser.ts: AsteriskFromClauseEmptySemicolon */

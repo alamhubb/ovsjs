@@ -1,7 +1,7 @@
 /**
  * 规则测试：IdentifierReference
  * 
- * 位置：Es6Parser.ts Line 198
+ * 位置：Es2025Parser.ts Line 198
  * 分类：identifiers
  * 编号：101
  * 
@@ -94,7 +94,7 @@ class MyClass {
 import { someFunction } from './module.js'
 someFunction()
 
-/* Es6Parser.ts: IdentifierReference: Identifier */
+/* Es2025Parser.ts: IdentifierReference: Identifier */
 
 
 // ============================================
@@ -102,12 +102,12 @@ someFunction()
 // ============================================
 
 
-/* Es6Parser.ts: u HexDigit{4} | u{ HexDigit+ } */
+/* Es2025Parser.ts: u HexDigit{4} | u{ HexDigit+ } */
 
 /**
  * 规则测试：IdentifierReference
  * 
- * 位置：Es6Parser.ts Line 198
+ * 位置：Es2025Parser.ts Line 198
  * 分类：identifiers
  * 编号：101
  * 
@@ -200,4 +200,4 @@ class MyClass {
 import { someFunction } from './module.js'
 someFunction()
 
-/* Es6Parser.ts: IdentifierReference: Identifier */
+/* Es2025Parser.ts: IdentifierReference: Identifier */

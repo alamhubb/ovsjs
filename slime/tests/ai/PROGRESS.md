@@ -142,7 +142,7 @@
 子项目路径：D:\project\qkyproject\test-volar\slime
 
 核心文件：
-- 规则定义：slime/packages/slime-parser/src/language/es2015/Es6Parser.ts
+- 规则定义：slime/packages/slime-parser/src/language/es2015/Es2025Parser.ts
 - 测试文件：slime/tests/es6rules/*.js
 - 编辑工具：使用 edit_file 工具（只修改注释行）
 ```
@@ -157,7 +157,7 @@
 ```
 
 ### 规则提取方法
-1. 在 Es6Parser.ts 中查找 `@SubhutiRule` 标记的方法
+1. 在 Es2025Parser.ts 中查找 `@SubhutiRule` 标记的方法
 2. 查看方法内的 `this.Or([...])` 分支结构
 3. 查看 `this.Many()`、`this.Option()` 的使用
 4. 在注释中描述该测试用例涉及的规则路径
@@ -169,7 +169,7 @@
 **对每个文件（以BindingPattern-001.js为例）：**
 
 1. **读取文件** - 查看现有测试代码和注释
-2. **提取规则** - 从Es6Parser.ts查找相应规则定义
+2. **提取规则** - 从Es2025Parser.ts查找相应规则定义
 3. **编写注释** - 为每个测试用例追加规则追溯信息
 4. **使用edit_file** - 只修改注释行，保留所有代码
 5. **验证** - 确认代码行未删除
@@ -177,7 +177,7 @@
 **关键点：**
 - ⚠️ **只追加注释，不删除代码**
 - ⚠️ **不修改文件头部的文档注释**
-- ⚠️ **不修改文件底部的 /* Es6Parser.ts: ... */ 注释**
+- ⚠️ **不修改文件底部的 /* Es2025Parser.ts: ... */ 注释**
 - ✅ 只修改每个测试前的 `// ✅ 测试X：...` 行
 
 ---

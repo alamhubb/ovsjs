@@ -1,7 +1,7 @@
 /**
  * 规则测试：GeneratorMethod
  * 
- * 位置：Es6Parser.ts Line 1570
+ * 位置：Es2025Parser.ts Line 1570
  * 分类：functions
  * 编号：505
  * 
@@ -24,12 +24,12 @@ class Test {
     }
 }
 
-/* Es6Parser.ts: GeneratorMethod */
+/* Es2025Parser.ts: GeneratorMethod */
 
 /**
  * 规则测试：GeneratorMethod
  * 
- * 位置：Es6Parser.ts Line 1570
+ * 位置：Es2025Parser.ts Line 1570
  * 分类：functions
  * 编号：505
  * 
@@ -52,4 +52,4 @@ class Test {
     }
 }
 
-/* Es6Parser.ts: GeneratorMethod */
+/* Es2025Parser.ts: GeneratorMethod */

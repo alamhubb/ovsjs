@@ -6,7 +6,7 @@
 /**
  * 规则测试：ArrayBindingPattern
  * 
- * 位置：Es6Parser.ts（数组解构处理）
+ * 位置：Es2025Parser.ts（数组解构处理）
  * 分类：identifiers
  * 编号：108
  * 
@@ -99,4 +99,4 @@ const result = [
 ]
 const [{ data: [val1, val2] }] = result
 
-/* Es6Parser.ts: ArrayBindingPattern: [ BindingElementList? ] */
+/* Es2025Parser.ts: ArrayBindingPattern: [ BindingElementList? ] */

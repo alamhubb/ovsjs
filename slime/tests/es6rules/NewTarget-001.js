@@ -1,7 +1,7 @@
 /**
  * 规则测试：NewTarget
  * 
- * 位置：Es6Parser.ts Line 271
+ * 位置：Es2025Parser.ts Line 271
  * 分类：others
  * 编号：911
  * 
@@ -43,12 +43,12 @@ function* g() { new.target }
 // ✅ 测试8：async函数中的new.target
 async function af() { new.target }
 
-/* Es6Parser.ts: NewTarget */
+/* Es2025Parser.ts: NewTarget */
 
 /**
  * 规则测试：NewTarget
  * 
- * 位置：Es6Parser.ts Line 271
+ * 位置：Es2025Parser.ts Line 271
  * 分类：others
  * 编号：911
  * 
@@ -90,4 +90,4 @@ function* g() { new.target }
 // ✅ 测试8：async函数中的new.target
 async function af() { new.target }
 
-/* Es6Parser.ts: NewTarget */
+/* Es2025Parser.ts: NewTarget */

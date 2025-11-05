@@ -1,7 +1,7 @@
 /**
  * 规则测试：LogicalORExpression
  * 
- * 位置：Es6Parser.ts Line 1042
+ * 位置：Es2025Parser.ts Line 1042
  * 分类：expressions
  * 编号：221
  * 
@@ -64,12 +64,12 @@ condition1 || condition2 ? 'yes' : 'no'
 // ✅ 测试15：实际应用
 const result = userInput || sessionValue || defaultValue
 
-/* Es6Parser.ts: LogicalORExpression: || LogicalANDExpression */
+/* Es2025Parser.ts: LogicalORExpression: || LogicalANDExpression */
 
 /**
  * 规则测试：LogicalORExpression
  * 
- * 位置：Es6Parser.ts Line 1042
+ * 位置：Es2025Parser.ts Line 1042
  * 分类：expressions
  * 编号：221
  * 
@@ -132,4 +132,4 @@ condition1 || condition2 ? 'yes' : 'no'
 // ✅ 测试15：实际应用
 const result = userInput || sessionValue || defaultValue
 
-/* Es6Parser.ts: LogicalORExpression: || LogicalANDExpression */
+/* Es2025Parser.ts: LogicalORExpression: || LogicalANDExpression */

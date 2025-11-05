@@ -1,10 +1,12 @@
 /**
  * 测试规则: LiteralPropertyName
  * 来源: 从 Literal 拆分
- *//**
+ */
+
+/**
  * 规则测试：LiteralPropertyName
  * 
- * 位置：Es6Parser.ts Line 267
+ * 位置：Es2025Parser.ts Line 267
  * 分类：literals
  * 编号：004
  * 
@@ -171,4 +173,4 @@ const methods = {
     default() {},
     constructor() {}
 }
-/* Es6Parser.ts: Identifier | StringLiteral | NumericLiteral | ReservedWord */
+/* Es2025Parser.ts: Identifier | StringLiteral | NumericLiteral | ReservedWord */

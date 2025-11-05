@@ -1,10 +1,12 @@
 /**
  * 测试规则: ObjectBindingPattern
  * 来源: 从 BindingPattern 拆分
- *//**
+ */
+
+/**
  * 规则测试：ObjectBindingPattern
  * 
- * 位置：Es6Parser.ts Line 1015
+ * 位置：Es2025Parser.ts Line 1015
  * 分类：identifiers
  * 编号：107
  * 
@@ -74,12 +76,12 @@ const withDefaults = ({x = 0, y = 0} = {}) => x + y
 // ✅ 测试11：Rest + 带尾逗号
 const {first1, ...remaining,} = {first1: 1, second: 2, third: 3}
 
-/* Es6Parser.ts: { BindingPropertyList? TrailingComma? } */
+/* Es2025Parser.ts: { BindingPropertyList? TrailingComma? } */
 
 /**
  * 规则测试：ObjectBindingPattern
  * 
- * 位置：Es6Parser.ts（对象解构处理）
+ * 位置：Es2025Parser.ts（对象解构处理）
  * 分类：identifiers
  * 编号：109
  * 
@@ -193,4 +195,4 @@ function complex({
     return { name, age, opts }
 }
 
-/* Es6Parser.ts: ObjectBindingPattern: { BindingPropertyList? } */
+/* Es2025Parser.ts: ObjectBindingPattern: { BindingPropertyList? } */

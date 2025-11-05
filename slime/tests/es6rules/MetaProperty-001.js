@@ -1,7 +1,7 @@
 /**
  * 规则测试：MetaProperty
  * 
- * 位置：Es6Parser.ts Line 260
+ * 位置：Es2025Parser.ts Line 260
  * 分类：others
  * 编号：910
  * 
@@ -43,12 +43,12 @@ const a = new.target
 // ✅ 测试8：import.meta.url赋值
 const b = import.meta.url
 
-/* Es6Parser.ts: MetaProperty */
+/* Es2025Parser.ts: MetaProperty */
 
 /**
  * 规则测试：MetaProperty
  * 
- * 位置：Es6Parser.ts Line 260
+ * 位置：Es2025Parser.ts Line 260
  * 分类：others
  * 编号：910
  * 
@@ -90,4 +90,4 @@ const a = new.target
 // ✅ 测试8：import.meta.url赋值
 const b = import.meta.url
 
-/* Es6Parser.ts: MetaProperty */
+/* Es2025Parser.ts: MetaProperty */

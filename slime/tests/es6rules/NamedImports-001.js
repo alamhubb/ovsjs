@@ -1,5 +1,5 @@
 
-/* Es6Parser.ts: { ImportList } */
+/* Es2025Parser.ts: { ImportList } */
 
 
 // ============================================
@@ -9,7 +9,7 @@
 /**
  * 规则测试：NamedImports
  * 
- * 位置：Es6Parser.ts Line 1818
+ * 位置：Es2025Parser.ts Line 1818
  * 分类：modules
  * 编号：705
  * 
@@ -72,15 +72,15 @@ import {
 // ✅ 测试8：导入关键字（使用as重命名）
 import {default as defaultExport, async as asyncUtil} from './special.js'
 
-/* Es6Parser.ts: NamedImports */
+/* Es2025Parser.ts: NamedImports */
 
 
-/* Es6Parser.ts: { ImportList } */
+/* Es2025Parser.ts: { ImportList } */
 
 /**
  * 规则测试：NamedImports
  * 
- * 位置：Es6Parser.ts Line 1818
+ * 位置：Es2025Parser.ts Line 1818
  * 分类：modules
  * 编号：705
  * 
@@ -143,4 +143,4 @@ import {
 // ✅ 测试8：导入关键字（使用as重命名）
 import {default as defaultExport, async as asyncUtil} from './special.js'
 
-/* Es6Parser.ts: NamedImports */
+/* Es2025Parser.ts: NamedImports */

@@ -1,12 +1,14 @@
 /**
  * 测试规则: TryStatement
  * 来源: 从 Statement 拆分
- *//* Es6Parser.ts: try Block (Catch | Finally | Catch Finally) */
+ */
+
+/* Es2025Parser.ts: try Block (Catch | Finally | Catch Finally) */
 
 /**
  * 规则测试：TryStatement
  * 
- * 位置：Es6Parser.ts Line 1288
+ * 位置：Es2025Parser.ts Line 1288
  * 分类：statements
  * 编号：419
  * 
@@ -170,4 +172,4 @@ function processData(data) {
     }
 }
 
-/* Es6Parser.ts: TryStatement: try Block (Catch | Finally | Catch Finally) */
+/* Es2025Parser.ts: TryStatement: try Block (Catch | Finally | Catch Finally) */

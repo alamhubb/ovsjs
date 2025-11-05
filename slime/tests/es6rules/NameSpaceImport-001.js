@@ -1,5 +1,5 @@
 
-/* Es6Parser.ts: * as ImportedBinding */
+/* Es2025Parser.ts: * as ImportedBinding */
 
 
 // ============================================
@@ -9,7 +9,7 @@
 /**
  * 规则测试：NameSpaceImport
  * 
- * 位置：Es6Parser.ts Line 1811
+ * 位置：Es2025Parser.ts Line 1811
  * 分类：modules
  * 编号：704
  * 
@@ -59,15 +59,15 @@ import * as sibling from './sibling.js'
 import * as parent from '../parent.js'
 import * as current from './current/index.js'
 
-/* Es6Parser.ts: NameSpaceImport */
+/* Es2025Parser.ts: NameSpaceImport */
 
 
-/* Es6Parser.ts: * as ImportedBinding */
+/* Es2025Parser.ts: * as ImportedBinding */
 
 /**
  * 规则测试：NameSpaceImport
  * 
- * 位置：Es6Parser.ts Line 1811
+ * 位置：Es2025Parser.ts Line 1811
  * 分类：modules
  * 编号：704
  * 
@@ -117,4 +117,4 @@ import * as sibling from './sibling.js'
 import * as parent from '../parent.js'
 import * as current from './current/index.js'
 
-/* Es6Parser.ts: NameSpaceImport */
+/* Es2025Parser.ts: NameSpaceImport */

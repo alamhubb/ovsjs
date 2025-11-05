@@ -1,10 +1,12 @@
 /**
  * 测试规则: WhileStatement
  * 来源: 从 Statement 拆分
- *//**
+ */
+
+/**
  * 规则测试：WhileStatement
  * 
- * 位置：Es6Parser.ts Line 1160
+ * 位置：Es2025Parser.ts Line 1160
  * 分类：statements
  * 编号：408
  * 
@@ -146,4 +148,4 @@ function processLoop() {
     }
 }
 
-/* Es6Parser.ts: WhileStatement: while ( Expression ) Statement */
+/* Es2025Parser.ts: WhileStatement: while ( Expression ) Statement */

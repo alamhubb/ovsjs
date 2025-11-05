@@ -1,7 +1,7 @@
 /**
  * 规则测试：ShiftExpression
  * 
- * 位置：Es6Parser.ts Line 691
+ * 位置：Es2025Parser.ts Line 691
  * 分类：expressions
  * 编号：214
  * 
@@ -58,7 +58,7 @@ a << 1
 b >> 2
 c >>> 1
 
-/* Es6Parser.ts: AdditiveExpression ((<< | >> | >>>) AdditiveExpression)* */
+/* Es2025Parser.ts: AdditiveExpression ((<< | >> | >>>) AdditiveExpression)* */
 
 
 // ============================================
@@ -127,12 +127,12 @@ if ((1 << 3) > 5) {
     console.log('shift result')
 }
 
-/* Es6Parser.ts: ShiftExpression: ShiftExpression << AdditiveExpression | ShiftExpression >> AdditiveExpression | ShiftExpression >>> AdditiveExpression | AdditiveExpression */
+/* Es2025Parser.ts: ShiftExpression: ShiftExpression << AdditiveExpression | ShiftExpression >> AdditiveExpression | ShiftExpression >>> AdditiveExpression | AdditiveExpression */
 
 /**
  * 规则测试：ShiftExpression
  * 
- * 位置：Es6Parser.ts Line 691
+ * 位置：Es2025Parser.ts Line 691
  * 分类：expressions
  * 编号：214
  * 
@@ -189,4 +189,4 @@ a << 1
 b >> 2
 c >>> 1
 
-/* Es6Parser.ts: AdditiveExpression ((<< | >> | >>>) AdditiveExpression)* */
+/* Es2025Parser.ts: AdditiveExpression ((<< | >> | >>>) AdditiveExpression)* */

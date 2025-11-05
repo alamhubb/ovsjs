@@ -1,7 +1,7 @@
 /**
  * 规则测试：EqualityExpression
  * 
- * 位置：Es6Parser.ts Line 1032
+ * 位置：Es2025Parser.ts Line 1032
  * 分类：expressions
  * 编号：216
  * 
@@ -71,12 +71,12 @@ obj1 === obj2
 // ✅ 测试15：复杂表达式
 (a + 5) === (b + 5)
 
-/* Es6Parser.ts: EqualityExpression: EqOp[==|!=|===|!==] */
+/* Es2025Parser.ts: EqualityExpression: EqOp[==|!=|===|!==] */
 
 /**
  * 规则测试：EqualityExpression
  * 
- * 位置：Es6Parser.ts Line 1032
+ * 位置：Es2025Parser.ts Line 1032
  * 分类：expressions
  * 编号：216
  * 
@@ -146,4 +146,4 @@ obj1 === obj2
 // ✅ 测试15：复杂表达式
 (a + 5) === (b + 5)
 
-/* Es6Parser.ts: EqualityExpression: EqOp[==|!=|===|!==] */
+/* Es2025Parser.ts: EqualityExpression: EqOp[==|!=|===|!==] */

@@ -1,10 +1,12 @@
 /**
  * 测试规则: DotMemberExpression
  * 来源: 从 MemberExpression 拆分
- *//**
+ */
+
+/**
  * 规则测试：DotMemberExpression
  * 
- * 位置：Es6Parser.ts Line 420
+ * 位置：Es2025Parser.ts Line 420
  * 分类：expressions
  * 编号：205
  * 
@@ -25,4 +27,4 @@ obj.property
 promise.then()
 arr.map()
 
-/* Es6Parser.ts: . IdentifierName */
+/* Es2025Parser.ts: . IdentifierName */

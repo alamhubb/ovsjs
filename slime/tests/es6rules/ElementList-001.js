@@ -1,7 +1,7 @@
 /**
  * 规则测试：ElementList
  * 
- * 位置：Es6Parser.ts Line 180
+ * 位置：Es2025Parser.ts Line 180
  * 分类：others
  * 编号：901
  * 
@@ -56,7 +56,7 @@ const arr = [1, 2, 3]
 const spread = [...arr, 4]
 const mixed = [1, ...arr, 2]
 
-/* Es6Parser.ts: ElementList */
+/* Es2025Parser.ts: ElementList */
 
 
 // ============================================
@@ -66,7 +66,7 @@ const mixed = [1, ...arr, 2]
 /**
  * 规则测试：BindingElementList
  * 
- * 位置：Es6Parser.ts Line 1058
+ * 位置：Es2025Parser.ts Line 1058
  * 分类：identifiers
  * 编号：110
  * 
@@ -103,7 +103,7 @@ const [, b, , d] = array
 // ✅ 测试5：Many≥2 - 多个元素的混合
 const [first, , third, , fifth] = values
 
-/* Es6Parser.ts: BindingElisionElement (Comma BindingElisionElement)* */
+/* Es2025Parser.ts: BindingElisionElement (Comma BindingElisionElement)* */
 
 
 // ============================================
@@ -174,12 +174,12 @@ class Full {
     m2() {}
 }
 
-/* Es6Parser.ts: ClassElementList */
+/* Es2025Parser.ts: ClassElementList */
 
 /**
  * 规则测试：ElementList
  * 
- * 位置：Es6Parser.ts Line 180
+ * 位置：Es2025Parser.ts Line 180
  * 分类：others
  * 编号：901
  * 
@@ -234,4 +234,4 @@ const arr = [1, 2, 3]
 const spread = [...arr, 4]
 const mixed = [1, ...arr, 2]
 
-/* Es6Parser.ts: ElementList */
+/* Es2025Parser.ts: ElementList */

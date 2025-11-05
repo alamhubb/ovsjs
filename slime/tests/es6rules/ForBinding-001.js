@@ -1,7 +1,7 @@
 /**
  * 规则测试：ForBinding
  * 
- * 位置：Es6Parser.ts Line 1253
+ * 位置：Es2025Parser.ts Line 1253
  * 分类：identifiers
  * 编号：116
  * 
@@ -66,7 +66,7 @@ for (const item of arr) {}
 for (let {x, y} of points) {}
 for (const [a, b] of pairs) {}
 
-/* Es6Parser.ts: BindingPattern | BindingIdentifier */
+/* Es2025Parser.ts: BindingPattern | BindingIdentifier */
 
 
 // ============================================
@@ -77,7 +77,7 @@ for (const [a, b] of pairs) {}
  * 规则测试：ForBinding
  * 分类：others | 编号：706
  * 
- * 规则定义（Es6Parser.ts）：
+ * 规则定义（Es2025Parser.ts）：
  * ForBinding:
  *   BindingIdentifier
  *   BindingPattern
@@ -166,7 +166,7 @@ for (const [{ id }, value] of [[{id: 1}, 'a'], [{id: 2}, 'b']]) {
     console.log(id, value)
 }
 
-/* Es6Parser.ts: ForBinding
+/* Es2025Parser.ts: ForBinding
  * 规则：
  * ForBinding:
  *   BindingIdentifier
@@ -176,7 +176,7 @@ for (const [{ id }, value] of [[{id: 1}, 'a'], [{id: 2}, 'b']]) {
 /**
  * 规则测试：ForBinding
  * 
- * 位置：Es6Parser.ts Line 1253
+ * 位置：Es2025Parser.ts Line 1253
  * 分类：identifiers
  * 编号：116
  * 
@@ -241,4 +241,4 @@ for (const item of arr) {}
 for (let {x, y} of points) {}
 for (const [a, b] of pairs) {}
 
-/* Es6Parser.ts: BindingPattern | BindingIdentifier */
+/* Es2025Parser.ts: BindingPattern | BindingIdentifier */

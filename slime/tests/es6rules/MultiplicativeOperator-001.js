@@ -1,7 +1,7 @@
 /**
  * 规则测试：MultiplicativeOperator
  * 
- * 位置：Es6Parser.ts Line 670
+ * 位置：Es2025Parser.ts Line 670
  * 分类：operators
  * 编号：301
  * 
@@ -41,12 +41,12 @@ const ratio = width / height
 
 // ✅ 测试5：% 运算符 - 基础
 const c = 10 % 3
-/* Es6Parser.ts: * | / | % */
+/* Es2025Parser.ts: * | / | % */
 
 /**
  * 规则测试：MultiplicativeOperator
  * 
- * 位置：Es6Parser.ts Line 670
+ * 位置：Es2025Parser.ts Line 670
  * 分类：operators
  * 编号：301
  * 
@@ -86,4 +86,4 @@ const ratio = width / height
 
 // ✅ 测试5：% 运算符 - 基础
 const c = 10 % 3
-/* Es6Parser.ts: * | / | % */
+/* Es2025Parser.ts: * | / | % */

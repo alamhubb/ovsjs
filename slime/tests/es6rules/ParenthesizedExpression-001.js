@@ -1,7 +1,7 @@
 /**
  * 规则测试：ParenthesizedExpression
  * 
- * 位置：Es6Parser.ts Line 137
+ * 位置：Es2025Parser.ts Line 137
  * 分类：expressions
  * 编号：202
  * 
@@ -53,17 +53,17 @@ for (let i = (start); i < (end); i++) {}
 return (value)
 /* 
  * 规则补充信息�?025-11-01�? * 
- * Es6Parser.ts 实际规则定义�? *   ParenthesizedExpression: ( Expression )
+ * Es2025Parser.ts 实际规则定义�? *   ParenthesizedExpression: ( Expression )
  * 
  * 规则特征：无Or/Option/Many分支
  */
 
-/* Es6Parser.ts: ( Expression ) */
+/* Es2025Parser.ts: ( Expression ) */
 
 /**
  * 规则测试：ParenthesizedExpression
  * 
- * 位置：Es6Parser.ts Line 137
+ * 位置：Es2025Parser.ts Line 137
  * 分类：expressions
  * 编号：202
  * 
@@ -115,9 +115,9 @@ for (let i = (start); i < (end); i++) {}
 return (value)
 /* 
  * 规则补充信息�?025-11-01�? * 
- * Es6Parser.ts 实际规则定义�? *   ParenthesizedExpression: ( Expression )
+ * Es2025Parser.ts 实际规则定义�? *   ParenthesizedExpression: ( Expression )
  * 
  * 规则特征：无Or/Option/Many分支
  */
 
-/* Es6Parser.ts: ( Expression ) */
+/* Es2025Parser.ts: ( Expression ) */

@@ -1,7 +1,7 @@
 /**
  * 规则测试：FunctionBody
  * 
- * 位置：Es6Parser.ts Line 1474
+ * 位置：Es2025Parser.ts Line 1474
  * 分类：functions
  * 编号：503
  * 
@@ -97,7 +97,7 @@ function test8() {
     }
 }
 
-/* Es6Parser.ts: FunctionBody */
+/* Es2025Parser.ts: FunctionBody */
 
 
 // ============================================
@@ -108,7 +108,7 @@ function test8() {
  * 规则测试：FunctionBody
  * 分类：functions | 编号：510
  * 
- * 规则定义（Es6Parser.ts）：
+ * 规则定义（Es2025Parser.ts）：
  * FunctionBody:
  *   { StatementList? }
  * 
@@ -250,7 +250,7 @@ function withThrow() {
     return "success"
 }
 
-/* Es6Parser.ts: FunctionBody
+/* Es2025Parser.ts: FunctionBody
  * 规则：
  * FunctionBody:
  *   { StatementList? }
@@ -266,12 +266,12 @@ function withThrow() {
 // ============================================
 
 
-/* Es6Parser.ts: async ArrowFunction with async body */
+/* Es2025Parser.ts: async ArrowFunction with async body */
 
 /**
  * 规则测试：FunctionBody
  * 
- * 位置：Es6Parser.ts Line 1474
+ * 位置：Es2025Parser.ts Line 1474
  * 分类：functions
  * 编号：503
  * 
@@ -367,4 +367,4 @@ function test8() {
     }
 }
 
-/* Es6Parser.ts: FunctionBody */
+/* Es2025Parser.ts: FunctionBody */

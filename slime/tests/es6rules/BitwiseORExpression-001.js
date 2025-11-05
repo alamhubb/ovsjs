@@ -1,7 +1,7 @@
 /**
  * 规则测试：BitwiseORExpression
  * 
- * 位置：Es6Parser.ts Line 756
+ * 位置：Es2025Parser.ts Line 756
  * 分类：expressions
  * 编号：219
  * 
@@ -50,7 +50,7 @@ const mixed = x | y & z
 // ✅ 测试8：在条件中    BitwiseORExpression -> 在条件判断中
 if ((status | ERROR_FLAG) === status) {}
 const enabled = (config | DEFAULT_CONFIG) !== 0
-/* Es6Parser.ts: BitwiseXORExpression (| BitwiseXORExpression)* */
+/* Es2025Parser.ts: BitwiseXORExpression (| BitwiseXORExpression)* */
 
 
 // ============================================
@@ -124,12 +124,12 @@ const o = obj2.flags.mask | 1
 const READ = 4, WRITE = 2, EXECUTE = 1
 const permissions = READ | WRITE | EXECUTE
 
-/* Es6Parser.ts: BitwiseORExpression: BitwiseORExpression | EqualityExpression | EqualityExpression */
+/* Es2025Parser.ts: BitwiseORExpression: BitwiseORExpression | EqualityExpression | EqualityExpression */
 
 /**
  * 规则测试：BitwiseORExpression
  * 
- * 位置：Es6Parser.ts Line 756
+ * 位置：Es2025Parser.ts Line 756
  * 分类：expressions
  * 编号：219
  * 
@@ -178,4 +178,4 @@ const mixed = x | y & z
 // ✅ 测试8：在条件中
 if ((status | ERROR_FLAG) === status) {}
 const enabled = (config | DEFAULT_CONFIG) !== 0
-/* Es6Parser.ts: BitwiseXORExpression (| BitwiseXORExpression)* */
+/* Es2025Parser.ts: BitwiseXORExpression (| BitwiseXORExpression)* */

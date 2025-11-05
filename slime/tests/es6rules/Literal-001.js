@@ -1,7 +1,7 @@
 /**
  * 规则测试：Literal
  * 
- * 位置：Es6Parser.ts Line 144
+ * 位置：Es2025Parser.ts Line 144
  * 规则结构：Literal -> this.Or -> [NullLiteral, TrueTok, FalseTok, NumericLiteral, StringLiteral]
  * 
  * 规则语法：
@@ -76,7 +76,7 @@ const mixed = [null, true, false, 42, "text"]
 /**
  * 规则测试：ArrayLiteral
  * 
- * 位置：Es6Parser.ts Line 285
+ * 位置：Es2025Parser.ts Line 285
  * 分类：literals
  * 编号：002
  * 
@@ -166,7 +166,7 @@ const data = [
     { id: 3, values: [70, 80, 90] }
 ]
 
-/* Es6Parser.ts: ArrayLiteral: [ ElementList? ] */
+/* Es2025Parser.ts: ArrayLiteral: [ ElementList? ] */
 
 
 // ============================================
@@ -176,7 +176,7 @@ const data = [
 /**
  * 规则测试：LiteralPropertyName
  * 
- * 位置：Es6Parser.ts Line 267
+ * 位置：Es2025Parser.ts Line 267
  * 分类：literals
  * 编号：004
  * 
@@ -343,7 +343,7 @@ const methods = {
     default() {},
     constructor() {}
 }
-/* Es6Parser.ts: Identifier | StringLiteral | NumericLiteral | ReservedWord */
+/* Es2025Parser.ts: Identifier | StringLiteral | NumericLiteral | ReservedWord */
 
 
 // ============================================
@@ -351,7 +351,7 @@ const methods = {
 // ============================================
 
 
-/* Es6Parser.ts: DecimalLiteral | HexIntegerLiteral | OctalLiteral | BinaryLiteral | LegacyOctal */
+/* Es2025Parser.ts: DecimalLiteral | HexIntegerLiteral | OctalLiteral | BinaryLiteral | LegacyOctal */
 
 
 // ============================================
@@ -361,7 +361,7 @@ const methods = {
 /**
  * 规则测试：ObjectLiteral
  * 
- * 位置：Es6Parser.ts Line 297
+ * 位置：Es2025Parser.ts Line 297
  * 分类：literals
  * 编号：003
  * 
@@ -478,7 +478,7 @@ const config = {
     }
 }
 
-/* Es6Parser.ts: ObjectLiteral: { PropertyDefinitionList? } */
+/* Es2025Parser.ts: ObjectLiteral: { PropertyDefinitionList? } */
 
 
 // ============================================
@@ -486,7 +486,7 @@ const config = {
 // ============================================
 
 
-/* Es6Parser.ts: / RegularExpressionBody / RegularExpressionFlags */
+/* Es2025Parser.ts: / RegularExpressionBody / RegularExpressionFlags */
 
 
 // ============================================
@@ -494,7 +494,7 @@ const config = {
 // ============================================
 
 
-/* Es6Parser.ts: DoubleStringCharacters | SingleStringCharacters */
+/* Es2025Parser.ts: DoubleStringCharacters | SingleStringCharacters */
 
 
 // ============================================
@@ -504,7 +504,7 @@ const config = {
 /**
  * 规则测试：TemplateLiteral
  * 
- * 位置：Es6Parser.ts（模板字符串处理）
+ * 位置：Es2025Parser.ts（模板字符串处理）
  * 分类：literals
  * 编号：005
  * 
@@ -601,25 +601,25 @@ const config = {
 // ✅ 测试20：模板字符串插值箭头函数
 const arrow = `result: ${((x) => x * 2)(21)}`
 
-/* Es6Parser.ts: TemplateLiteral: NoSubstitutionTemplate | TemplateHead (Expression TemplateMiddle)* Expression TemplateTail */
+/* Es2025Parser.ts: TemplateLiteral: NoSubstitutionTemplate | TemplateHead (Expression TemplateMiddle)* Expression TemplateTail */
 
 // ============================================
 // 合并来自: NumericLiteral-001.js
 // ============================================
 
 
-/* Es6Parser.ts: DecimalLiteral | HexIntegerLiteral | OctalLiteral | BinaryLiteral | LegacyOctal */
+/* Es2025Parser.ts: DecimalLiteral | HexIntegerLiteral | OctalLiteral | BinaryLiteral | LegacyOctal */
 
 // ============================================
 // 合并来自: StringLiteral-001.js
 // ============================================
 
 
-/* Es6Parser.ts: DoubleStringCharacters | SingleStringCharacters */
+/* Es2025Parser.ts: DoubleStringCharacters | SingleStringCharacters */
 
 // ============================================
 // 合并来自: RegularExpressionLiteral-001.js
 // ============================================
 
 
-/* Es6Parser.ts: / RegularExpressionBody / RegularExpressionFlags */
+/* Es2025Parser.ts: / RegularExpressionBody / RegularExpressionFlags */

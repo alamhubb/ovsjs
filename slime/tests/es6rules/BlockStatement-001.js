@@ -6,7 +6,7 @@
 /**
  * 规则测试：BlockStatement
  * 
- * 位置：Es6Parser.ts Line 1127
+ * 位置：Es2025Parser.ts Line 1127
  * 分类：statements
  * 编号：301
  * 
@@ -136,12 +136,12 @@ for (let i = 0; i < 10; i++) {
     }
 }
 
-/* Es6Parser.ts: BlockStatement: { StatementList? } */
+/* Es2025Parser.ts: BlockStatement: { StatementList? } */
 
 /**
  * 规则测试：BlockStatement
  * 
- * 位置：Es6Parser.ts Line 963
+ * 位置：Es2025Parser.ts Line 963
  * 分类：statements
  * 编号：403
  * 
@@ -163,4 +163,4 @@ for (let i = 0; i < 10; i++) {
     const y = 2
 }
 
-/* Es6Parser.ts: BlockStatement */
+/* Es2025Parser.ts: BlockStatement */

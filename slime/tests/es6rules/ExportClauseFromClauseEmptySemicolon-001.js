@@ -1,10 +1,12 @@
 /**
  * 测试规则: ExportClauseFromClauseEmptySemicolon
  * 来源: 从 FromClause 拆分
- *//**
+ */
+
+/**
  * 规则测试：ExportClauseFromClauseEmptySemicolon
  * 
- * 位置：Es6Parser.ts Line 1892
+ * 位置：Es2025Parser.ts Line 1892
  * 分类：modules
  * 编号：709
  * 
@@ -24,4 +26,4 @@
 export {name} from './module.js'
 export {a, b} from './other.js'
 
-/* Es6Parser.ts: ExportClauseFromClauseEmptySemicolon */
+/* Es2025Parser.ts: ExportClauseFromClauseEmptySemicolon */

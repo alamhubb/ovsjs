@@ -1,10 +1,12 @@
 /**
  * 测试规则: VariableDeclarationList
  * 来源: 从 VariableDeclaration 拆分
- *//**
+ */
+
+/**
  * 规则测试：VariableDeclarationList
  * 
- * 位置：Es6Parser.ts Line 863
+ * 位置：Es2025Parser.ts Line 863
  * 分类：others
  * 编号：917
  * 
@@ -46,4 +48,4 @@ const {p, q} = {p: 14, q: 15}, r = 16
 // ✅ 测试8：复杂混合
 let {s: {t}} = {s: {t: 17}}, u = 18, [v] = [19]
 
-/* Es6Parser.ts: VariableDeclarationList */
+/* Es2025Parser.ts: VariableDeclarationList */

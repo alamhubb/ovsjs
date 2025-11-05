@@ -1,7 +1,7 @@
 /**
  * 规则测试：TemplateSpans
  * 
- * 位置：Es6Parser.ts Line 347
+ * 位置：Es2025Parser.ts Line 347
  * 分类：literals
  * 编号：006
  * 
@@ -52,12 +52,12 @@ const t6 = `a=${a} b=${b} c=${c} d=${a + b + c}`
 const t7 = `result: ${calculate()} length: ${arr.length}`
 
 
-/* Es6Parser.ts: Or[TemplateTail, TemplateMiddleList TemplateTail] */
+/* Es2025Parser.ts: Or[TemplateTail, TemplateMiddleList TemplateTail] */
 
 /**
  * 规则测试：TemplateSpans
  * 
- * 位置：Es6Parser.ts Line 347
+ * 位置：Es2025Parser.ts Line 347
  * 分类：literals
  * 编号：006
  * 
@@ -108,4 +108,4 @@ const t6 = `a=${a} b=${b} c=${c} d=${a + b + c}`
 const t7 = `result: ${calculate()} length: ${arr.length}`
 
 
-/* Es6Parser.ts: Or[TemplateTail, TemplateMiddleList TemplateTail] */
+/* Es2025Parser.ts: Or[TemplateTail, TemplateMiddleList TemplateTail] */

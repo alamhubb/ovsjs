@@ -117,7 +117,7 @@
 /**
  * 规则测试：RuleName
  * 
- * 位置：Es6Parser.ts Line XXX
+ * 位置：Es2025Parser.ts Line XXX
  * 分类：expressions/statements/functions/etc
  * 编号：编号
  * 
@@ -149,14 +149,14 @@
 
 // ... 更多测试（共8-15个）
 
-/* Es6Parser.ts: 规则语法 EBNF */
+/* Es2025Parser.ts: 规则语法 EBNF */
 ```
 
 ### 完善的4步流程
 
 1. **查看规则定义**（2分钟）
    ```bash
-   grep -A 30 "RuleName() {" slime-parser/src/language/es2015/Es6Parser.ts
+   grep -A 30 "RuleName() {" slime-parser/src/language/es2015/Es2025Parser.ts
    ```
 
 2. **识别规则特征**（1分钟）

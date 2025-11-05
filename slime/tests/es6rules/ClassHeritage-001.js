@@ -1,6 +1,6 @@
 /**
  * 规则测试：ClassHeritage
- * 位置：Es6Parser.ts Line 1655
+ * 位置：Es2025Parser.ts Line 1655
  * 编号：607
  * 状态：✅ 已完善（8个测试用例）
  */
@@ -29,11 +29,11 @@ class Expr extends getBase() {}
 // ✅ 测试8
 class Complex extends obj[method]() {}
 
-/* Es6Parser.ts: ClassHeritage */
+/* Es2025Parser.ts: ClassHeritage */
 
 /**
  * 规则测试：ClassHeritage
- * 位置：Es6Parser.ts Line 1655
+ * 位置：Es2025Parser.ts Line 1655
  * 编号：607
  * 状态：✅ 已完善（8个测试用例）
  */
@@ -62,4 +62,4 @@ class Expr extends getBase() {}
 // ✅ 测试8
 class Complex extends obj[method]() {}
 
-/* Es6Parser.ts: ClassHeritage */
+/* Es2025Parser.ts: ClassHeritage */

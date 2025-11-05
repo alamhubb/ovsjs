@@ -1,10 +1,12 @@
 /**
  * 测试规则: FunctionFormalParametersBodyDefine
  * 来源: 从 FunctionFormalParameters 拆分
- *//**
+ */
+
+/**
  * 规则测试：FunctionFormalParametersBodyDefine
  * 
- * 位置：Es6Parser.ts Line 1578
+ * 位置：Es2025Parser.ts Line 1578
  * 分类：statements
  * 编号：423
  * 
@@ -23,4 +25,4 @@
 
 function test(a, b) { return a + b }
 
-/* Es6Parser.ts: FunctionFormalParametersBodyDefine */
+/* Es2025Parser.ts: FunctionFormalParametersBodyDefine */

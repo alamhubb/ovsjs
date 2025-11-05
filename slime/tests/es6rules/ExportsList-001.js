@@ -1,7 +1,7 @@
 /**
  * 规则测试：ExportsList
  * 
- * 位置：Es6Parser.ts Line 1976
+ * 位置：Es2025Parser.ts Line 1976
  * 分类：modules
  * 编号：713
  * 
@@ -21,12 +21,12 @@
 export {a, b, c}
 export {x as y, z}
 
-/* Es6Parser.ts: ExportsList */
+/* Es2025Parser.ts: ExportsList */
 
 /**
  * 规则测试：ExportsList
  * 
- * 位置：Es6Parser.ts Line 1976
+ * 位置：Es2025Parser.ts Line 1976
  * 分类：modules
  * 编号：713
  * 
@@ -46,4 +46,4 @@ export {x as y, z}
 export {a, b, c}
 export {x as y, z}
 
-/* Es6Parser.ts: ExportsList */
+/* Es2025Parser.ts: ExportsList */

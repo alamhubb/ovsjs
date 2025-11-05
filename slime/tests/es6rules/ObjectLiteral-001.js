@@ -1,10 +1,12 @@
 /**
  * 测试规则: ObjectLiteral
  * 来源: 从 Literal 拆分
- *//**
+ */
+
+/**
  * 规则测试：ObjectLiteral
  * 
- * 位置：Es6Parser.ts Line 297
+ * 位置：Es2025Parser.ts Line 297
  * 分类：literals
  * 编号：003
  * 
@@ -121,4 +123,4 @@ const config = {
     }
 }
 
-/* Es6Parser.ts: ObjectLiteral: { PropertyDefinitionList? } */
+/* Es2025Parser.ts: ObjectLiteral: { PropertyDefinitionList? } */

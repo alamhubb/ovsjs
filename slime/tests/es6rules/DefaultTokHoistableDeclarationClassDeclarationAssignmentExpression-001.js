@@ -1,10 +1,12 @@
 /**
  * 测试规则: DefaultTokHoistableDeclarationClassDeclarationAssignmentExpression
  * 来源: 从 Expression 拆分
- *//**
+ */
+
+/**
  * 规则测试：DefaultTokHoistableDeclarationClassDeclarationAssignmentExpression
  * 
- * 位置：Es6Parser.ts Line 1906
+ * 位置：Es2025Parser.ts Line 1906
  * 分类：expressions
  * 编号：231
  * 
@@ -25,4 +27,4 @@ export default function() {}
 export default class {}
 export default {value: 42}
 
-/* Es6Parser.ts: Or[Declaration, Statement] */
+/* Es2025Parser.ts: Or[Declaration, Statement] */

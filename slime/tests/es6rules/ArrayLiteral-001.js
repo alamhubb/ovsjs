@@ -6,7 +6,7 @@
 /**
  * 规则测试：ArrayLiteral
  * 
- * 位置：Es6Parser.ts Line 285
+ * 位置：Es2025Parser.ts Line 285
  * 分类：literals
  * 编号：002
  * 
@@ -96,4 +96,4 @@ const data = [
     { id: 3, values: [70, 80, 90] }
 ]
 
-/* Es6Parser.ts: ArrayLiteral: [ ElementList? ] */
+/* Es2025Parser.ts: ArrayLiteral: [ ElementList? ] */

@@ -1,7 +1,7 @@
 /**
  * 规则测试：PostfixExpression
  * 
- * 位置：Es6Parser.ts Line 1006
+ * 位置：Es2025Parser.ts Line 1006
  * 分类：expressions
  * 编号：210
  * 
@@ -79,12 +79,12 @@ for (let i = 0, j = 10; i < j; i++, j--) {
     console.log(i, j)
 }
 
-/* Es6Parser.ts: PostfixExpression: ++ or -- */
+/* Es2025Parser.ts: PostfixExpression: ++ or -- */
 
 /**
  * 规则测试：PostfixExpression
  * 
- * 位置：Es6Parser.ts Line 1006
+ * 位置：Es2025Parser.ts Line 1006
  * 分类：expressions
  * 编号：210
  * 
@@ -162,4 +162,4 @@ for (let i = 0, j = 10; i < j; i++, j--) {
     console.log(i, j)
 }
 
-/* Es6Parser.ts: PostfixExpression: ++ or -- */
+/* Es2025Parser.ts: PostfixExpression: ++ or -- */

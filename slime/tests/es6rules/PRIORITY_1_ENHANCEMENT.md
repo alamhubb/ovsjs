@@ -9,7 +9,7 @@
 ## 📋 待完善规则清单（13个）
 
 ### 1. Program-001.js ⭐⭐⭐
-**位置：** Es6Parser.ts Line XXX  
+**位置：** Es2025Parser.ts Line XXX  
 **规则结构：** `Program -> SourceElements | ModuleItems`  
 **Or分支：** 2个（SourceElements, ModuleItems）  
 **Many分支：** 1个（多个项目）  
@@ -24,7 +24,7 @@
 ---
 
 ### 2. Declaration-001.js ⭐⭐⭐
-**位置：** Es6Parser.ts Line XXX  
+**位置：** Es2025Parser.ts Line XXX  
 **规则结构：** `Declaration -> Or(5个)`  
 **Or分支：** 5个（FunctionDeclaration, GeneratorDeclaration, AsyncFunctionDeclaration, ClassDeclaration, LexicalDeclaration）  
 **完善要点：**
@@ -38,7 +38,7 @@
 ---
 
 ### 3. Statement-001.js ⭐⭐⭐
-**位置：** Es6Parser.ts Line XXX  
+**位置：** Es2025Parser.ts Line XXX  
 **规则结构：** `Statement -> Or(多个语句类型)`  
 **Or分支：** 多个（BlockStatement, VariableStatement, ExpressionStatement等）  
 **完善要点：**
@@ -52,7 +52,7 @@
 ---
 
 ### 4. PropertyDefinition-001.js ⭐⭐⭐
-**位置：** Es6Parser.ts Line XXX  
+**位置：** Es2025Parser.ts Line XXX  
 **规则结构：** `PropertyDefinition -> Or(5+个)`  
 **Or分支：** 多个（SpreadElement, shorthand, PropertyName: value, MethodDefinition等）  
 **完善要点：**
@@ -65,7 +65,7 @@
 ---
 
 ### 5. ImportDeclaration-001.js ⭐⭐
-**位置：** Es6Parser.ts Line XXX  
+**位置：** Es2025Parser.ts Line XXX  
 **规则结构：** `ImportDeclaration -> import ImportClause FromClause ;`  
 **Option分支：** 1个（ImportClause可选）  
 **完善要点：**
@@ -78,7 +78,7 @@
 ---
 
 ### 6. ExportDeclaration-001.js ⭐⭐
-**位置：** Es6Parser.ts Line XXX  
+**位置：** Es2025Parser.ts Line XXX  
 **规则结构：** `ExportDeclaration -> Or(...)`  
 **Or分支：** 多个（export default, export named, export from等）  
 **完善要点：**
@@ -91,7 +91,7 @@
 ---
 
 ### 7. ClassDeclaration-001.js ⭐⭐
-**位置：** Es6Parser.ts Line XXX  
+**位置：** Es2025Parser.ts Line XXX  
 **规则结构：** `ClassDeclaration -> class Identifier [extends Expression] { ClassBody }`  
 **Option分支：** 2个（类名、extends）  
 **完善要点：**
@@ -103,7 +103,7 @@
 ---
 
 ### 8. FunctionDeclaration-001.js ⭐⭐
-**位置：** Es6Parser.ts Line XXX  
+**位置：** Es2025Parser.ts Line XXX  
 **规则结构：** `FunctionDeclaration -> function Identifier(Params) { Body }`  
 **完善要点：**
 - [ ] 测试覆盖：无参、单参、多参、default参数、rest参数、解构参数
@@ -114,7 +114,7 @@
 ---
 
 ### 9. GeneratorDeclaration-001.js ⭐⭐
-**位置：** Es6Parser.ts Line XXX  
+**位置：** Es2025Parser.ts Line XXX  
 **规则结构：** `GeneratorDeclaration -> function* Identifier(...)`  
 **Option分支：** 可能有async修饰符  
 **完善要点：**
@@ -126,7 +126,7 @@
 ---
 
 ### 10. ArrowFunction-001.js ⭐⭐
-**位置：** Es6Parser.ts Line XXX  
+**位置：** Es2025Parser.ts Line XXX  
 **规则结构：** `ArrowFunction -> [async] (params) => body`  
 **Or分支：** 参数形式的多个分支（单参、多参、解构等）  
 **完善要点：**
@@ -139,7 +139,7 @@
 ---
 
 ### 11. BindingPattern-001.js ⭐⭐
-**位置：** Es6Parser.ts Line XXX  
+**位置：** Es2025Parser.ts Line XXX  
 **规则结构：** `BindingPattern -> ObjectBindingPattern | ArrayBindingPattern`  
 **Or分支：** 2个  
 **完善要点：**
@@ -151,7 +151,7 @@
 ---
 
 ### 12. Expression-001.js ⭐⭐
-**位置：** Es6Parser.ts Line XXX  
+**位置：** Es2025Parser.ts Line XXX  
 **规则结构：** `Expression -> Many(逗号分隔AssignmentExpression)`  
 **Many分支：** 1个  
 **状态：** ✅ 已完善（查看文件可参考格式）  
@@ -159,7 +159,7 @@
 ---
 
 ### 13. AssignmentExpression-001.js ⭐⭐
-**位置：** Es6Parser.ts Line XXX  
+**位置：** Es2025Parser.ts Line XXX  
 **规则结构：** `AssignmentExpression -> ConditionalExpression | LeftHandSideExpression = AssignmentExpression | ...`  
 **Or分支：** 多个赋值操作符  
 **完善要点：**
@@ -184,7 +184,7 @@ head -20 RuleName-001.js
 - 是否有尾部验证
 
 **Step 2: 提取规则信息（3分钟）**
-- 从Es6Parser.ts查找规则定义
+- 从Es2025Parser.ts查找规则定义
 - 记下规则位置（Line号）
 - 列出所有Or/Option/Many分支
 

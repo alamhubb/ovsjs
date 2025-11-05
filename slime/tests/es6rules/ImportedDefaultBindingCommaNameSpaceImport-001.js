@@ -1,7 +1,7 @@
 /**
  * 规则测试：ImportedDefaultBindingCommaNameSpaceImport
  * 
- * 位置：Es6Parser.ts Line 1792
+ * 位置：Es2025Parser.ts Line 1792
  * 分类：identifiers
  * 编号：117
  * 
@@ -47,12 +47,12 @@ import module2, * as m2 from './m2.js'
 import lodash, * as _ from 'lodash'
 import moment, * as m from 'moment'
 
-/* Es6Parser.ts: ImportedDefaultBinding , NameSpaceImport */
+/* Es2025Parser.ts: ImportedDefaultBinding , NameSpaceImport */
 
 /**
  * 规则测试：ImportedDefaultBindingCommaNameSpaceImport
  * 
- * 位置：Es6Parser.ts Line 1792
+ * 位置：Es2025Parser.ts Line 1792
  * 分类：identifiers
  * 编号：117
  * 
@@ -98,4 +98,4 @@ import module2, * as m2 from './m2.js'
 import lodash, * as _ from 'lodash'
 import moment, * as m from 'moment'
 
-/* Es6Parser.ts: ImportedDefaultBinding , NameSpaceImport */
+/* Es2025Parser.ts: ImportedDefaultBinding , NameSpaceImport */

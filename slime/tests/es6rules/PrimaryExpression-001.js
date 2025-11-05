@@ -1,7 +1,7 @@
 /**
  * 规则测试：PrimaryExpression
  * 
- * 位置：Es6Parser.ts Line 451
+ * 位置：Es2025Parser.ts Line 451
  * 分类：expressions
  * 编号：201
  * 
@@ -87,12 +87,12 @@ const complex = {
     str: `value: ${(1 + 2)}`
 }
 
-/* Es6Parser.ts: PrimaryExpression: this|Identifier|Literal|ArrayLiteral|ObjectLiteral|FunctionExpression|ClassExpression|GeneratorExpression|RegularExpressionLiteral|TemplateLiteral|ParenthesizedExpression */
+/* Es2025Parser.ts: PrimaryExpression: this|Identifier|Literal|ArrayLiteral|ObjectLiteral|FunctionExpression|ClassExpression|GeneratorExpression|RegularExpressionLiteral|TemplateLiteral|ParenthesizedExpression */
 
 /**
  * 规则测试：PrimaryExpression
  * 
- * 位置：Es6Parser.ts Line 451
+ * 位置：Es2025Parser.ts Line 451
  * 分类：expressions
  * 编号：201
  * 
@@ -178,4 +178,4 @@ const complex = {
     str: `value: ${(1 + 2)}`
 }
 
-/* Es6Parser.ts: PrimaryExpression: this|Identifier|Literal|ArrayLiteral|ObjectLiteral|FunctionExpression|ClassExpression|GeneratorExpression|RegularExpressionLiteral|TemplateLiteral|ParenthesizedExpression */
+/* Es2025Parser.ts: PrimaryExpression: this|Identifier|Literal|ArrayLiteral|ObjectLiteral|FunctionExpression|ClassExpression|GeneratorExpression|RegularExpressionLiteral|TemplateLiteral|ParenthesizedExpression */

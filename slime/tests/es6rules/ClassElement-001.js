@@ -49,7 +49,7 @@ class C8 {
     field = 1
     m() {}
 }
-/* Es6Parser.ts: ClassElement */
+/* Es2025Parser.ts: ClassElement */
 
 
 // ============================================
@@ -60,7 +60,7 @@ class C8 {
  * 规则测试：ClassElement
  * 分类：classes | 编号：613
  * 
- * 规则定义（Es6Parser.ts）：
+ * 规则定义（Es2025Parser.ts）：
  * ClassElement:
  *   MethodDefinition
  *   static MethodDefinition
@@ -195,7 +195,7 @@ class Test15 {
     }
 }
 
-/* Es6Parser.ts: ClassElement
+/* Es2025Parser.ts: ClassElement
  * 规则：
  * ClassElement:
  *   MethodDefinition
@@ -255,4 +255,4 @@ class C8 {
     field = 1
     m() {}
 }
-/* Es6Parser.ts: ClassElement */
+/* Es2025Parser.ts: ClassElement */

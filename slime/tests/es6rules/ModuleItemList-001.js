@@ -1,7 +1,7 @@
 /**
  * 规则测试：ModuleItemList
  * 
- * 位置：Es6Parser.ts Line 1715
+ * 位置：Es2025Parser.ts Line 1715
  * 分类：modules
  * 编号：701
  * 
@@ -22,12 +22,12 @@ import x from './a.js'
 export const y = 2
 const z = 3
 
-/* Es6Parser.ts: ModuleItemList */
+/* Es2025Parser.ts: ModuleItemList */
 
 /**
  * 规则测试：ModuleItemList
  * 
- * 位置：Es6Parser.ts Line 1715
+ * 位置：Es2025Parser.ts Line 1715
  * 分类：modules
  * 编号：701
  * 
@@ -48,4 +48,4 @@ import x from './a.js'
 export const y = 2
 const z = 3
 
-/* Es6Parser.ts: ModuleItemList */
+/* Es2025Parser.ts: ModuleItemList */

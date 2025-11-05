@@ -1,7 +1,7 @@
 /**
  * 规则测试：Expression
  * 
- * 位置：Es6Parser.ts Line 846
+ * 位置：Es2025Parser.ts Line 846
  * 分类：expressions
  * 编号：223
  * 
@@ -41,7 +41,7 @@ func(a, b, c)
 // ✅ 测试6：复杂表达式组合
 const value = (console.log('start'), compute(), console.log('end'), 42)
 
-/* Es6Parser.ts: AssignmentExpression (Comma AssignmentExpression)* */
+/* Es2025Parser.ts: AssignmentExpression (Comma AssignmentExpression)* */
 
 
 // ============================================
@@ -51,7 +51,7 @@ const value = (console.log('start'), compute(), console.log('end'), 42)
 /**
  * 规则测试：ClassExpression
  * 
- * 位置：Es6Parser.ts Line 268
+ * 位置：Es2025Parser.ts Line 268
  * 分类：expressions
  * 编号：230
  * 
@@ -195,7 +195,7 @@ const ComplexClass = class extends Array {
     }
 }
 
-/* Es6Parser.ts: ClassExpression: class Identifier? extends Expression? { ClassBody } */
+/* Es2025Parser.ts: ClassExpression: class Identifier? extends Expression? { ClassBody } */
 
 
 // ============================================
@@ -203,7 +203,7 @@ const ComplexClass = class extends Array {
 // ============================================
 
 
-/* Es6Parser.ts: class Identifier? (extends Expression)? { ClassBody } */
+/* Es2025Parser.ts: class Identifier? (extends Expression)? { ClassBody } */
 
 
 // ============================================
@@ -213,7 +213,7 @@ const ComplexClass = class extends Array {
 /**
  * 规则测试：AwaitExpression
  * 
- * 位置：Es6Parser.ts Line 690
+ * 位置：Es2025Parser.ts Line 690
  * 分类：expressions
  * 编号：228
  * 
@@ -282,7 +282,7 @@ async function awaitUnary() {
   const negated = !await isReady()
 }
 
-/* Es6Parser.ts: await UnaryExpression */
+/* Es2025Parser.ts: await UnaryExpression */
 
 
 // ============================================
@@ -292,7 +292,7 @@ async function awaitUnary() {
 /**
  * 规则测试：AwaitExpression
  * 
- * 位置：Es6Parser.ts Line 1627
+ * 位置：Es2025Parser.ts Line 1627
  * 分类：expressions
  * 编号：229
  * 
@@ -421,7 +421,7 @@ async function async18() {
     await delete obj.x
 }
 
-/* Es6Parser.ts: AwaitExpression: await UnaryExpression */
+/* Es2025Parser.ts: AwaitExpression: await UnaryExpression */
 
 
 // ============================================
@@ -491,7 +491,7 @@ const m = ~0
 // ✅ 测试15：~操作 - 负数
 const n = ~(-1)
 
-/* Es6Parser.ts: BitwiseNOTExpression: ~ UnaryExpression | UnaryExpression */
+/* Es2025Parser.ts: BitwiseNOTExpression: ~ UnaryExpression | UnaryExpression */
 
 
 // ============================================
@@ -563,7 +563,7 @@ const w = (true && false, false || true)
 // ✅ 测试15：逗号操作 - 三元表达式
 const ternary = (5 > 3, true) ? 'yes' : 'no'
 
-/* Es6Parser.ts: CommaExpression: Expression , AssignmentExpression | AssignmentExpression */
+/* Es2025Parser.ts: CommaExpression: Expression , AssignmentExpression | AssignmentExpression */
 
 
 // ============================================
@@ -573,7 +573,7 @@ const ternary = (5 > 3, true) ? 'yes' : 'no'
 /**
  * 规则测试：GeneratorExpression
  * 
- * 位置：Es6Parser.ts Line 1597
+ * 位置：Es2025Parser.ts Line 1597
  * 分类：expressions
  * 编号：227
  * 
@@ -593,7 +593,7 @@ const ternary = (5 > 3, true) ? 'yes' : 'no'
 const g = function*() { yield 1 }
 const named = function* gen() { yield 2 }
 
-/* Es6Parser.ts: function* Identifier? (FormalParameters) { GeneratorBody } */
+/* Es2025Parser.ts: function* Identifier? (FormalParameters) { GeneratorBody } */
 
 
 // ============================================
@@ -601,7 +601,7 @@ const named = function* gen() { yield 2 }
 // ============================================
 
 
-/* Es6Parser.ts: async function* Identifier? (FormalParameters) { FunctionBody } */
+/* Es2025Parser.ts: async function* Identifier? (FormalParameters) { FunctionBody } */
 
 
 // ============================================
@@ -612,7 +612,7 @@ const named = function* gen() { yield 2 }
  * 规则测试：UpdateExpression
  * 分类：expressions | 编号：234
  * 
- * 规则定义（Es6Parser.ts）：
+ * 规则定义（Es2025Parser.ts）：
  * UpdateExpression:
  *   ++ LeftHandSideExpression
  *   -- LeftHandSideExpression
@@ -699,7 +699,7 @@ let y = 0
 const pre = ++y
 const post = y++
 
-/* Es6Parser.ts: UpdateExpression
+/* Es2025Parser.ts: UpdateExpression
  * Or分支1: ++ LeftHandSideExpression
  * Or分支2: -- LeftHandSideExpression
  * Or分支3: LeftHandSideExpression ++
@@ -715,7 +715,7 @@ const post = y++
 /**
  * 规则测试：YieldExpression
  * 
- * 位置：Es6Parser.ts Line 1610
+ * 位置：Es2025Parser.ts Line 1610
  * 分类：expressions
  * 编号：228
  * 
@@ -866,7 +866,7 @@ function* gen20() {
     }
 }
 
-/* Es6Parser.ts: YieldExpression: yield [AssignmentExpression | *AssignmentExpression] */
+/* Es2025Parser.ts: YieldExpression: yield [AssignmentExpression | *AssignmentExpression] */
 
 
 // ============================================
@@ -876,7 +876,7 @@ function* gen20() {
 /**
  * 规则测试：AssignmentExpression
  * 
- * 位置：Es6Parser.ts Line 1048
+ * 位置：Es2025Parser.ts Line 1048
  * 分类：expressions
  * 编号：224
  * 
@@ -945,7 +945,7 @@ obj.count += 1
 // ✅ 测试15：数组元素复合赋值
 arr[1] += 10
 
-/* Es6Parser.ts: AssignmentExpression: = or CompoundAssignmentOp */
+/* Es2025Parser.ts: AssignmentExpression: = or CompoundAssignmentOp */
 
 
 // ============================================
@@ -955,7 +955,7 @@ arr[1] += 10
 /**
  * 规则测试：AssignmentExpressionEmptySemicolon
  * 
- * 位置：Es6Parser.ts Line 1921
+ * 位置：Es2025Parser.ts Line 1921
  * 分类：expressions
  * 编号：232
  * 
@@ -974,7 +974,7 @@ arr[1] += 10
 
 export default expr
 
-/* Es6Parser.ts: AssignmentExpression ; */
+/* Es2025Parser.ts: AssignmentExpression ; */
 
 
 // ============================================
@@ -984,7 +984,7 @@ export default expr
 /**
  * 规则测试：DefaultTokHoistableDeclarationClassDeclarationAssignmentExpression
  * 
- * 位置：Es6Parser.ts Line 1906
+ * 位置：Es2025Parser.ts Line 1906
  * 分类：expressions
  * 编号：231
  * 
@@ -1005,7 +1005,7 @@ export default function() {}
 export default class {}
 export default {value: 42}
 
-/* Es6Parser.ts: Or[Declaration, Statement] */
+/* Es2025Parser.ts: Or[Declaration, Statement] */
 
 
 // ============================================
@@ -1015,7 +1015,7 @@ export default {value: 42}
 /**
  * 规则测试：FunctionExpression
  * 
- * 位置：Es6Parser.ts Line 219
+ * 位置：Es2025Parser.ts Line 219
  * 分类：expressions
  * 编号：226
  * 
@@ -1108,7 +1108,7 @@ setTimeout(function() {
     console.log('done')
 }, 1000)
 
-/* Es6Parser.ts: FunctionExpression: function Identifier? ( FormalParameters ) { FunctionBody } */
+/* Es2025Parser.ts: FunctionExpression: function Identifier? ( FormalParameters ) { FunctionBody } */
 
 
 // ============================================
@@ -1116,7 +1116,7 @@ setTimeout(function() {
 // ============================================
 
 
-/* Es6Parser.ts: function Identifier? (FormalParameters) { FunctionBody } */
+/* Es2025Parser.ts: function Identifier? (FormalParameters) { FunctionBody } */
 
 
 // ============================================
@@ -1124,7 +1124,7 @@ setTimeout(function() {
 // ============================================
 
 
-/* Es6Parser.ts: async function Identifier? (FormalParameters) { FunctionBody } */
+/* Es2025Parser.ts: async function Identifier? (FormalParameters) { FunctionBody } */
 
 
 // ============================================
@@ -1132,12 +1132,12 @@ setTimeout(function() {
 // ============================================
 
 
-/* Es6Parser.ts: function* Identifier? (FormalParameters) { GeneratorBody } */
+/* Es2025Parser.ts: function* Identifier? (FormalParameters) { GeneratorBody } */
 
 /**
  * 规则测试：Expression
  * 
- * 位置：Es6Parser.ts Line 846
+ * 位置：Es2025Parser.ts Line 846
  * 分类：expressions
  * 编号：223
  * 
@@ -1177,4 +1177,4 @@ func(a, b, c)
 // ✅ 测试6：复杂表达式组合
 const value = (console.log('start'), compute(), console.log('end'), 42)
 
-/* Es6Parser.ts: AssignmentExpression (Comma AssignmentExpression)* */
+/* Es2025Parser.ts: AssignmentExpression (Comma AssignmentExpression)* */

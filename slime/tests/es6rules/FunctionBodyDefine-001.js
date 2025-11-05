@@ -1,7 +1,7 @@
 /**
  * 规则测试：FunctionBodyDefine
  * 
- * 位置：Es6Parser.ts Line 1425
+ * 位置：Es2025Parser.ts Line 1425
  * 分类：functions
  * 编号：502
  * 
@@ -94,12 +94,12 @@ function complex(x, y) {
     }
 }
 
-/* Es6Parser.ts: FunctionBodyDefine */
+/* Es2025Parser.ts: FunctionBodyDefine */
 
 /**
  * 规则测试：FunctionBodyDefine
  * 
- * 位置：Es6Parser.ts Line 1425
+ * 位置：Es2025Parser.ts Line 1425
  * 分类：functions
  * 编号：502
  * 
@@ -192,4 +192,4 @@ function complex(x, y) {
     }
 }
 
-/* Es6Parser.ts: FunctionBodyDefine */
+/* Es2025Parser.ts: FunctionBodyDefine */

@@ -1,7 +1,7 @@
 /**
  * 规则测试：ClassTail
  * 
- * 位置：Es6Parser.ts Line 1647
+ * 位置：Es2025Parser.ts Line 1647
  * 分类：classes
  * 编号：606
  * 
@@ -72,12 +72,12 @@ class WithGetterSetter {
     compute() { return this._v * 2 }
 }
 
-/* Es6Parser.ts: ClassTail */
+/* Es2025Parser.ts: ClassTail */
 
 /**
  * 规则测试：ClassTail
  * 
- * 位置：Es6Parser.ts Line 1647
+ * 位置：Es2025Parser.ts Line 1647
  * 分类：classes
  * 编号：606
  * 
@@ -148,4 +148,4 @@ class WithGetterSetter {
     compute() { return this._v * 2 }
 }
 
-/* Es6Parser.ts: ClassTail */
+/* Es2025Parser.ts: ClassTail */

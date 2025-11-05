@@ -1,7 +1,7 @@
 /**
  * 规则测试：AssignmentOperator
  * 
- * 位置：Es6Parser.ts Line 798
+ * 位置：Es2025Parser.ts Line 798
  * 分类：operators
  * 编号：302
  * 
@@ -27,12 +27,12 @@ x *= 2
 x /= 4
 x %= 3
 
-/* Es6Parser.ts: = | += | -= | *= | /= | %= | **= | &= | |= | ^= | <<= | >>= | >>>= */
+/* Es2025Parser.ts: = | += | -= | *= | /= | %= | **= | &= | |= | ^= | <<= | >>= | >>>= */
 
 /**
  * 规则测试：AssignmentOperator
  * 
- * 位置：Es6Parser.ts Line 798
+ * 位置：Es2025Parser.ts Line 798
  * 分类：operators
  * 编号：302
  * 
@@ -58,4 +58,4 @@ x *= 2
 x /= 4
 x %= 3
 
-/* Es6Parser.ts: = | += | -= | *= | /= | %= | **= | &= | |= | ^= | <<= | >>= | >>>= */
+/* Es2025Parser.ts: = | += | -= | *= | /= | %= | **= | &= | |= | ^= | <<= | >>= | >>>= */

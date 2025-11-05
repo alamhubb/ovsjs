@@ -6,7 +6,7 @@
 /**
  * 规则测试：AwaitExpression
  *
- * 位置：Es6Parser.ts Line 690
+ * 位置：Es2025Parser.ts Line 690
  * 分类：expressions
  * 编号：228
  *
@@ -75,12 +75,12 @@ async function awaitUnary() {
     const negated = !await isReady()
 }
 
-/* Es6Parser.ts: await UnaryExpression */
+/* Es2025Parser.ts: await UnaryExpression */
 
 /**
  * 规则测试：AwaitExpression
  *
- * 位置：Es6Parser.ts Line 1627
+ * 位置：Es2025Parser.ts Line 1627
  * 分类：expressions
  * 编号：229
  *
@@ -211,4 +211,4 @@ async function async18() {
     await delete obj.x
 }
 
-/* Es6Parser.ts: AwaitExpression: await UnaryExpression */
+/* Es2025Parser.ts: AwaitExpression: await UnaryExpression */

@@ -191,7 +191,7 @@
 /**
  * 规则测试：RuleName
  * 
- * 位置：Es6Parser.ts Line XXX
+ * 位置：Es2025Parser.ts Line XXX
  * 分类：expressions
  * 编号：XXX
  * 

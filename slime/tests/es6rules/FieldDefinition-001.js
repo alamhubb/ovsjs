@@ -1,7 +1,7 @@
 /**
  * 规则测试：FieldDefinition
  * 
- * 位置：Es6Parser.ts Line 765
+ * 位置：Es2025Parser.ts Line 765
  * 分类：others
  * 编号：933
  * 
@@ -59,12 +59,12 @@ class C7 {
     [m] = 2
 }
 
-/* Es6Parser.ts: FieldDefinition */
+/* Es2025Parser.ts: FieldDefinition */
 
 /**
  * 规则测试：FieldDefinition
  * 
- * 位置：Es6Parser.ts Line 765
+ * 位置：Es2025Parser.ts Line 765
  * 分类：others
  * 编号：933
  * 
@@ -122,4 +122,4 @@ class C7 {
     [m] = 2
 }
 
-/* Es6Parser.ts: FieldDefinition */
+/* Es2025Parser.ts: FieldDefinition */

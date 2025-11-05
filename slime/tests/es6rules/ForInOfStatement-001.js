@@ -6,7 +6,7 @@
 /**
  * 规则测试：ForInOfStatement
  * 
- * 位置：Es6Parser.ts Line 1179
+ * 位置：Es2025Parser.ts Line 1179
  * 分类：statements
  * 编号：410
  * 
@@ -137,4 +137,4 @@ for (let [num, letter] of pairs) {
     console.log(`${num}: ${letter}`)
 }
 
-/* Es6Parser.ts: ForInOfStatement: for ( LeftHandSideExpression in|of Expression ) Statement */
+/* Es2025Parser.ts: ForInOfStatement: for ( LeftHandSideExpression in|of Expression ) Statement */

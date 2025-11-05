@@ -1,7 +1,7 @@
 /**
  * 规则测试：PropertyDefinitionList
  * 
- * 位置：Es6Parser.ts Line 217
+ * 位置：Es2025Parser.ts Line 217
  * 分类：others
  * 编号：904
  * 
@@ -43,12 +43,12 @@ const obj7 = {x: 1, [y]: 2, z: 3}
 // ✅ 测试8：尾部逗号
 const obj8 = {a, b, get x() {}, set y(v) {}, [k]: 1,}
 
-/* Es6Parser.ts: PropertyDefinitionList */
+/* Es2025Parser.ts: PropertyDefinitionList */
 
 /**
  * 规则测试：PropertyDefinitionList
  * 
- * 位置：Es6Parser.ts Line 217
+ * 位置：Es2025Parser.ts Line 217
  * 分类：others
  * 编号：904
  * 
@@ -90,4 +90,4 @@ const obj7 = {x: 1, [y]: 2, z: 3}
 // ✅ 测试8：尾部逗号
 const obj8 = {a, b, get x() {}, set y(v) {}, [k]: 1,}
 
-/* Es6Parser.ts: PropertyDefinitionList */
+/* Es2025Parser.ts: PropertyDefinitionList */

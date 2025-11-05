@@ -1,7 +1,7 @@
 /**
  * 规则测试：Elision
  * 
- * 位置：Es6Parser.ts Line 197
+ * 位置：Es2025Parser.ts Line 197
  * 分类：others
  * 编号：902
  * 
@@ -44,7 +44,7 @@ const arr7 = [, , , , , ]
 
 // ✅ 测试8：复杂混合省略    Elision -> 混合各种Many
 const arr8 = [, 1, , 2, , , 3, , ]
-/* Es6Parser.ts: Elision */
+/* Es2025Parser.ts: Elision */
 
 
 // ============================================
@@ -54,7 +54,7 @@ const arr8 = [, 1, , 2, , , 3, , ]
 /**
  * 规则测试：BindingElisionElement
  * 
- * 位置：Es6Parser.ts Line 1067
+ * 位置：Es2025Parser.ts Line 1067
  * 分类：identifiers
  * 编号：111
  * 
@@ -74,12 +74,12 @@ const arr8 = [, 1, , 2, , , 3, , ]
 const [a, , b] = arr
 const [, x] = arr
 
-/* Es6Parser.ts: Elision? Or[BindingElement, Elision] */
+/* Es2025Parser.ts: Elision? Or[BindingElement, Elision] */
 
 /**
  * 规则测试：Elision
  * 
- * 位置：Es6Parser.ts Line 197
+ * 位置：Es2025Parser.ts Line 197
  * 分类：others
  * 编号：902
  * 
@@ -122,4 +122,4 @@ const arr7 = [, , , , , ]
 
 // ✅ 测试8：复杂混合省略
 const arr8 = [, 1, , 2, , , 3, , ]
-/* Es6Parser.ts: Elision */
+/* Es2025Parser.ts: Elision */

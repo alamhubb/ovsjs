@@ -6,7 +6,7 @@
 /**
  * 规则测试：ClassExpression
  * 
- * 位置：Es6Parser.ts Line 268
+ * 位置：Es2025Parser.ts Line 268
  * 分类：expressions
  * 编号：230
  * 
@@ -150,7 +150,7 @@ const ComplexClass = class extends Array {
     }
 }
 
-/* Es6Parser.ts: ClassExpression: class Identifier? extends Expression? { ClassBody } */
+/* Es2025Parser.ts: ClassExpression: class Identifier? extends Expression? { ClassBody } */
 
 
-/* Es6Parser.ts: class Identifier? (extends Expression)? { ClassBody } */
+/* Es2025Parser.ts: class Identifier? (extends Expression)? { ClassBody } */

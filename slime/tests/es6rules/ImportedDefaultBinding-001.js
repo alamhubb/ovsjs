@@ -1,7 +1,7 @@
 /**
  * 规则测试：ImportedDefaultBinding
  * 
- * 位置：Es6Parser.ts Line 1806
+ * 位置：Es2025Parser.ts Line 1806
  * 分类：identifiers
  * 编号：119
  * 
@@ -47,12 +47,12 @@ import App from './App.js'
 import Router from './Router.js'
 import Store from './Store.js'
 
-/* Es6Parser.ts: ImportedDefaultBinding */
+/* Es2025Parser.ts: ImportedDefaultBinding */
 
 /**
  * 规则测试：ImportedDefaultBinding
  * 
- * 位置：Es6Parser.ts Line 1806
+ * 位置：Es2025Parser.ts Line 1806
  * 分类：identifiers
  * 编号：119
  * 
@@ -98,4 +98,4 @@ import App from './App.js'
 import Router from './Router.js'
 import Store from './Store.js'
 
-/* Es6Parser.ts: ImportedDefaultBinding */
+/* Es2025Parser.ts: ImportedDefaultBinding */

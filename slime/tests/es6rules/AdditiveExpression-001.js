@@ -1,7 +1,7 @@
 /**
  * 规则测试：AdditiveExpression
  * 
- * 位置：Es6Parser.ts Line 1016
+ * 位置：Es2025Parser.ts Line 1016
  * 分类：expressions
  * 编号：213
  * 
@@ -71,12 +71,12 @@ const x = true ? 1 + 2 : 3 + 4
 const arr = [1 + 2, 3 + 4]
 const obj = { sum: 5 + 6 }
 
-/* Es6Parser.ts: AdditiveExpression: AddOp[+|-] */
+/* Es2025Parser.ts: AdditiveExpression: AddOp[+|-] */
 
 /**
  * 规则测试：AdditiveExpression
  * 
- * 位置：Es6Parser.ts Line 1016
+ * 位置：Es2025Parser.ts Line 1016
  * 分类：expressions
  * 编号：213
  * 
@@ -146,4 +146,4 @@ const x = true ? 1 + 2 : 3 + 4
 const arr = [1 + 2, 3 + 4]
 const obj = { sum: 5 + 6 }
 
-/* Es6Parser.ts: AdditiveExpression: AddOp[+|-] */
+/* Es2025Parser.ts: AdditiveExpression: AddOp[+|-] */

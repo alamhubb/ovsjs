@@ -1,7 +1,7 @@
 /**
  * 规则测试：MultiplicativeExpression
  * 
- * 位置：Es6Parser.ts Line 1008
+ * 位置：Es2025Parser.ts Line 1008
  * 分类：expressions
  * 编号：212
  * 
@@ -68,7 +68,7 @@ const result = (a * b) + 10
 // ✅ 测试15：复杂表达式
 const total = 10 * 5 / 2 % 7
 
-/* Es6Parser.ts: MultiplicativeExpression: MulOp[*|/|%] */
+/* Es2025Parser.ts: MultiplicativeExpression: MulOp[*|/|%] */
 
 
 // ============================================
@@ -139,12 +139,12 @@ const o = 16 ** 0.5
 // ✅ 测试15：**操作 - 在赋值中
 const p = 5 ** 2 + 3 ** 2
 
-/* Es6Parser.ts: ExponentiationExpression: UpdateExpression ** ExponentiationExpression | UpdateExpression */
+/* Es2025Parser.ts: ExponentiationExpression: UpdateExpression ** ExponentiationExpression | UpdateExpression */
 
 /**
  * 规则测试：MultiplicativeExpression
  * 
- * 位置：Es6Parser.ts Line 1008
+ * 位置：Es2025Parser.ts Line 1008
  * 分类：expressions
  * 编号：212
  * 
@@ -211,4 +211,4 @@ const result = (a * b) + 10
 // ✅ 测试15：复杂表达式
 const total = 10 * 5 / 2 % 7
 
-/* Es6Parser.ts: MultiplicativeExpression: MulOp[*|/|%] */
+/* Es2025Parser.ts: MultiplicativeExpression: MulOp[*|/|%] */

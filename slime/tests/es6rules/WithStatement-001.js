@@ -1,10 +1,12 @@
 /**
  * 测试规则: WithStatement
  * 来源: 从 Statement 拆分
- *//**
+ */
+
+/**
  * 规则测试：WithStatement
  * 
- * 位置：Es6Parser.ts Line 1291
+ * 位置：Es2025Parser.ts Line 1291
  * 分类：statements
  * 编号：415
  * 
@@ -23,4 +25,4 @@
 
 with (Math) { const x = PI }
 
-/* Es6Parser.ts: WithStatement */
+/* Es2025Parser.ts: WithStatement */

@@ -6,7 +6,7 @@
 /**
  * 规则测试：BreakableStatement
  * 
- * 位置：Es6Parser.ts Line 955
+ * 位置：Es2025Parser.ts Line 955
  * 分类：statements
  * 编号：402
  * 
@@ -27,4 +27,4 @@ for (;;) { break }    // BreakableStatement -> Or分支1 (IterationStatement)
 while (true) { break }    // BreakableStatement -> Or分支1 (IterationStatement)
 switch (x) { case 1: break }    // BreakableStatement -> Or分支2 (SwitchStatement)
 
-/* Es6Parser.ts: Or[IterationStatement, SwitchStatement] */
+/* Es2025Parser.ts: Or[IterationStatement, SwitchStatement] */

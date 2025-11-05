@@ -1,7 +1,7 @@
 /**
  * 规则测试：DefaultClause
  * 
- * 位置：Es6Parser.ts Line 1333
+ * 位置：Es2025Parser.ts Line 1333
  * 分类：others
  * 编号：926
  * 
@@ -84,7 +84,7 @@ switch (action) {
         doDefault()
 }
 
-/* Es6Parser.ts: DefaultClause */
+/* Es2025Parser.ts: DefaultClause */
 
 
 // ============================================
@@ -92,12 +92,12 @@ switch (action) {
 // ============================================
 
 
-/* Es6Parser.ts: ImportedDefaultBinding */
+/* Es2025Parser.ts: ImportedDefaultBinding */
 
 /**
  * 规则测试：DefaultClause
  * 
- * 位置：Es6Parser.ts Line 1333
+ * 位置：Es2025Parser.ts Line 1333
  * 分类：others
  * 编号：926
  * 
@@ -180,4 +180,4 @@ switch (action) {
         doDefault()
 }
 
-/* Es6Parser.ts: DefaultClause */
+/* Es2025Parser.ts: DefaultClause */

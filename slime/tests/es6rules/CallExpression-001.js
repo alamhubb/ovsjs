@@ -1,7 +1,7 @@
 /**
  * 规则测试：CallExpression
  * 
- * 位置：Es6Parser.ts Line 541
+ * 位置：Es2025Parser.ts Line 541
  * 分类：expressions
  * 编号：208
  * 
@@ -112,12 +112,12 @@ const result15 = users
     .filter(function(u) { return u.age > 26 })
     .map(function(u) { return u.name })
 
-/* Es6Parser.ts: CallExpression: Or[MemberExpression Arguments, SuperCall], Many: Arguments | BracketExpression | DotMemberExpression | TemplateLiteral */
+/* Es2025Parser.ts: CallExpression: Or[MemberExpression Arguments, SuperCall], Many: Arguments | BracketExpression | DotMemberExpression | TemplateLiteral */
 
 /**
  * 规则测试：CallExpression
  * 
- * 位置：Es6Parser.ts Line 541
+ * 位置：Es2025Parser.ts Line 541
  * 分类：expressions
  * 编号：208
  * 
@@ -228,4 +228,4 @@ const result15 = users
     .filter(function(u) { return u.age > 26 })
     .map(function(u) { return u.name })
 
-/* Es6Parser.ts: CallExpression: Or[MemberExpression Arguments, SuperCall], Many: Arguments | BracketExpression | DotMemberExpression | TemplateLiteral */
+/* Es2025Parser.ts: CallExpression: Or[MemberExpression Arguments, SuperCall], Many: Arguments | BracketExpression | DotMemberExpression | TemplateLiteral */

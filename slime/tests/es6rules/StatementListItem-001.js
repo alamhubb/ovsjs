@@ -1,10 +1,12 @@
 /**
  * 测试规则: StatementListItem
  * 来源: 从 Statement 拆分
- *//**
+ */
+
+/**
  * 规则测试：StatementListItem
  * 
- * 位置：Es6Parser.ts Line 1733
+ * 位置：Es2025Parser.ts Line 1733
  * 分类：statements
  * 编号：425
  * 
@@ -25,4 +27,4 @@ const x = 1
 function test() {}
 class MyClass {}
 
-/* Es6Parser.ts: StatementListItem */
+/* Es2025Parser.ts: StatementListItem */

@@ -6,7 +6,7 @@
 /**
  * 规则测试：ImportDeclaration
  * 
- * 位置：Es6Parser.ts（import语句）
+ * 位置：Es2025Parser.ts（import语句）
  * 分类：modules
  * 编号：401
  * 
@@ -90,15 +90,15 @@ import lodash from 'lodash'
 // ✅ 测试20：import scoped包
 import { something } from '@scope/package'
 
-/* Es6Parser.ts: ImportDeclaration: import ImportClause FromClause | import ModuleSpecifier */
+/* Es2025Parser.ts: ImportDeclaration: import ImportClause FromClause | import ModuleSpecifier */
 
 
-/* Es6Parser.ts: import ImportClause FromClause */
+/* Es2025Parser.ts: import ImportClause FromClause */
 
 /**
  * 规则测试：ImportDeclaration
  * 
- * 位置：Es6Parser.ts Line 1752
+ * 位置：Es2025Parser.ts Line 1752
  * 分类：modules
  * 编号：702
  * 
@@ -145,4 +145,4 @@ import {a, b, c, d, e} from './constants.js'
 // ✅ 测试8：side-effect导入（无import子句）
 import './styles.css'
 
-/* Es6Parser.ts: ImportDeclaration */
+/* Es2025Parser.ts: ImportDeclaration */

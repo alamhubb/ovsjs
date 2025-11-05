@@ -1,5 +1,5 @@
 
-/* Es6Parser.ts: export default AssignmentExpression */
+/* Es2025Parser.ts: export default AssignmentExpression */
 
 
 // ============================================
@@ -7,7 +7,7 @@
 // ============================================
 
 
-/* Es6Parser.ts: export { ExportSpecifier (Comma ExportSpecifier)* } */
+/* Es2025Parser.ts: export { ExportSpecifier (Comma ExportSpecifier)* } */
 
 
 // ============================================
@@ -15,12 +15,12 @@
 // ============================================
 
 
-/* Es6Parser.ts: export VariableStatement | export Declaration */
+/* Es2025Parser.ts: export VariableStatement | export Declaration */
 
 /**
  * 规则测试：ExportDeclaration
  * 
- * 位置：Es6Parser.ts（export语句）
+ * 位置：Es2025Parser.ts（export语句）
  * 分类：modules
  * 编号：402
  * 
@@ -122,15 +122,15 @@ export default {
     config: {}
 }
 
-/* Es6Parser.ts: ExportDeclaration: export NamedExports FromClause | export default ... | export Declaration */
+/* Es2025Parser.ts: ExportDeclaration: export NamedExports FromClause | export default ... | export Declaration */
 
 
-/* Es6Parser.ts: Or[ExportDefault, ExportNamed, ExportList] */
+/* Es2025Parser.ts: Or[ExportDefault, ExportNamed, ExportList] */
 
 /**
  * 规则测试：ExportDeclaration
  * 
- * 位置：Es6Parser.ts Line 1929
+ * 位置：Es2025Parser.ts Line 1929
  * 分类：modules
  * 编号：711
  * 
@@ -195,18 +195,18 @@ export default class {
 // ✅ 测试10：export default - expression
 export default {name: 'config', value: 100}
 
-/* Es6Parser.ts: ExportDeclaration */
+/* Es2025Parser.ts: ExportDeclaration */
 
 // ============================================
 // 合并来自: ExportDefault-001.js
 // ============================================
 
 
-/* Es6Parser.ts: export default AssignmentExpression */
+/* Es2025Parser.ts: export default AssignmentExpression */
 
 // ============================================
 // 合并来自: ExportNamed-001.js
 // ============================================
 
 
-/* Es6Parser.ts: export VariableStatement | export Declaration */
+/* Es2025Parser.ts: export VariableStatement | export Declaration */

@@ -67,4 +67,4 @@ class Full {
     m2() {}
 }
 
-/* Es6Parser.ts: ClassElementList */
+/* Es2025Parser.ts: ClassElementList */
