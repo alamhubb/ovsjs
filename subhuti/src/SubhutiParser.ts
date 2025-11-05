@@ -148,19 +148,13 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     
     /**
      * 检查当前 token 前是否有换行符（用于 ECMAScript [no LineTerminator here] 限制）
+     * 
+     * 实现方式：直接读取 Lexer 在词法阶段计算好的 hasLineBreakBefore 属性（Babel 风格）
+     * - 性能优势：词法阶段计算一次，语法阶段直接读取
+     * - 代码简洁：一行代码，无需边界检查
      */
     hasLineTerminatorBefore(): boolean {
-        if (this.tokenIndex === 0) return false
-        
-        const currentToken = this._tokens[this.tokenIndex]
-        const prevToken = this._tokens[this.tokenIndex - 1]
-        
-        if (!currentToken || !prevToken) return false
-        if (currentToken.rowNum === undefined || prevToken.rowNum === undefined) {
-            return false
-        }
-        
-        return currentToken.rowNum > prevToken.rowNum
+        return this.curToken?.hasLineBreakBefore ?? false
     }
     
     // 公开方法

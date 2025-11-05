@@ -21,22 +21,9 @@ export default class SubhutiLexer {
   private readonly _allTokens: SubhutiCreateToken[]
   private readonly _tokensOutsideTemplate: SubhutiCreateToken[]
   private _templateDepth = 0
-  
-  // Token 名称常量（从外部传入）
-  private readonly _templateHeadName: string
-  private readonly _templateMiddleName: string
-  private readonly _templateTailName: string
+  private _lastRowNum = 1  // 记录上一个 token 的行号（用于计算 hasLineBreakBefore）
 
-  constructor(
-    tokens: SubhutiCreateToken[], 
-    templateHeadName: string = 'TemplateHead',
-    templateMiddleName: string = 'TemplateMiddle',
-    templateTailName: string = 'TemplateTail'
-  ) {
-    this._templateHeadName = templateHeadName
-    this._templateMiddleName = templateMiddleName
-    this._templateTailName = templateTailName
-    
+  constructor(tokens: SubhutiCreateToken[]) {
     // 预编译：给所有正则加 ^ 锚点，并保留原有 flags
     this._allTokens = tokens.map(token => {
       if (!token.pattern) return token
@@ -48,8 +35,10 @@ export default class SubhutiLexer {
     })
     
     // 预过滤：只过滤一次，构建模板外部使用的 token 集合
+    // 使用硬编码常量（符合 ECMAScript 规范和行业标准）
     this._tokensOutsideTemplate = this._allTokens.filter(
-      t => t.name !== this._templateMiddleName && t.name !== this._templateTailName
+      t => t.name !== SubhutiLexerTokenNames.TemplateMiddle && 
+           t.name !== SubhutiLexerTokenNames.TemplateTail
     )
   }
 
@@ -63,6 +52,7 @@ export default class SubhutiLexer {
     let index = 0
     let rowNum = 1
     let columnNum = 1
+    this._lastRowNum = 1  // 重置上一个 token 的行号
 
     while (index < code.length) {
       const matched = this._matchToken(code, index, rowNum, columnNum)
@@ -77,6 +67,8 @@ export default class SubhutiLexer {
       // skip 类型的 token 不加入结果
       if (!matched.skip) {
         result.push(matched.token)
+        // 只在非 skip token 时更新行号（用于下一个 token 计算 hasLineBreakBefore）
+        this._lastRowNum = rowNum
       }
 
       // 更新位置
@@ -140,7 +132,8 @@ export default class SubhutiLexer {
       index: index,
       rowNum: rowNum,
       columnStartNum: columnNum,
-      columnEndNum: columnNum + value.length - 1
+      columnEndNum: columnNum + value.length - 1,
+      hasLineBreakBefore: rowNum > this._lastRowNum  // 计算是否有换行（Babel 风格）
     }
   }
 
@@ -160,14 +153,19 @@ export default class SubhutiLexer {
 
   /**
    * 更新模板字符串嵌套深度
-   * TemplateHead: 进入模板（深度 +1）
-   * TemplateTail: 退出模板（深度 -1）
-   * TemplateMiddle: 保持深度
+   * 
+   * 实现 ECMAScript 规范的 InputElement 切换机制：
+   * - TemplateHead (`${`) 进入模板上下文（深度 +1）
+   * - TemplateTail (}`) 退出模板上下文（深度 -1）
+   * - TemplateMiddle: 保持深度不变
+   * 
+   * 参考实现：Babel、Acorn、TypeScript Scanner
+   * 行业标准做法：直接硬编码 token 名称，无需配置
    */
   private _updateTemplateDepth(tokenName: string): void {
-    if (tokenName === this._templateHeadName) {
+    if (tokenName === SubhutiLexerTokenNames.TemplateHead) {
       this._templateDepth++
-    } else if (tokenName === this._templateTailName) {
+    } else if (tokenName === SubhutiLexerTokenNames.TemplateTail) {
       this._templateDepth--
     }
   }

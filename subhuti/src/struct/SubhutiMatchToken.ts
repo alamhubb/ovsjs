@@ -7,6 +7,7 @@ export default class SubhutiMatchToken {
     columnEndNum?: number;
     index?: number
     // length?: number
+    hasLineBreakBefore?: boolean;  // 此 token 前是否有换行（Babel 风格）
 
     constructor(osvToken: SubhutiMatchToken) {
         this.tokenName = osvToken.tokenName;
@@ -16,6 +17,7 @@ export default class SubhutiMatchToken {
         this.columnEndNum = osvToken.columnEndNum;
         // this.length = osvToken.length;
         this.index = osvToken.index;
+        this.hasLineBreakBefore = osvToken.hasLineBreakBefore;
     }
 }
 
