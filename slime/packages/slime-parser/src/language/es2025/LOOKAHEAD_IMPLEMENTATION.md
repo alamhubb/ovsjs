@@ -318,3 +318,6 @@ if (SubhutiLookahead.isLetBracket(this._tokens, this.tokenIndex)) return undefin
 - **Parser 实现**: `Es2025Parser.ts`
 - **规范地址**: https://tc39.es/ecma262/2025/#sec-grammar-summary
 
+
+
+

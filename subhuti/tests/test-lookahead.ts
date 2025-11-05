@@ -203,3 +203,6 @@ console.log('  peekSequence(10) 长度 =', seq10.length, '(期望: 3)', seq10.le
 console.log('\n✅ 所有测试完成！')
 console.log('执行命令：npx tsx subhuti/tests/test-lookahead.ts')
 
+
+
+

@@ -25,13 +25,13 @@ export const es2025Tokens: SubhutiCreateToken[] = [
   // ============================================
   
   // Hashbang 注释（必须在文件开头）
-  createValueRegToken('HashbangComment', /#![^\n\r]*/, '', 'skip'),
+  createValueRegToken('HashbangComment', /#![^\n\r]*/, '', true),
   
   // 多行注释
-  createValueRegToken('MultiLineComment', /\/\*[\s\S]*?\*\//, '', 'skip'),
+  createValueRegToken('MultiLineComment', /\/\*[\s\S]*?\*\//, '', true),
   
   // 单行注释
-  createValueRegToken('SingleLineComment', /\/\/[^\n\r]*/, '', 'skip'),
+  createValueRegToken('SingleLineComment', /\/\/[^\n\r]*/, '', true),
   
   // ============================================
   // A.1.1 空白符和换行符
@@ -39,13 +39,13 @@ export const es2025Tokens: SubhutiCreateToken[] = [
   // ============================================
   
   // 空白符（跳过）
-  createValueRegToken('WhiteSpace', /[\t\v\f \u00A0\uFEFF]+/, '', 'skip'),
+  createValueRegToken('WhiteSpace', /[\t\v\f \u00A0\uFEFF]+/, '', true),
   
   // 换行符：\r\n 必须整体匹配（优先）
-  createValueRegToken('LineTerminator', /\r\n/, '', 'skip'),
+  createValueRegToken('LineTerminator', /\r\n/, '', true),
   
   // 换行符：其他形式
-  createValueRegToken('LineTerminator', /[\n\r\u2028\u2029]/, '', 'skip'),
+  createValueRegToken('LineTerminator', /[\n\r\u2028\u2029]/, '', true),
   
   // ============================================
   // A.1.5 关键字和保留字
@@ -212,7 +212,7 @@ export const es2025Tokens: SubhutiCreateToken[] = [
     'OptionalChaining',
     /\?\./,
     '?.',
-    undefined,
+    false,  // 不跳过
     { not: /^\d/ }  // 后面不能是数字
   ),
   

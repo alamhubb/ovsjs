@@ -1,7 +1,3 @@
-export enum SubhutiCreateTokenGroupType {
-    skip = 'skip'
-}
-
 /**
  * 词法前瞻配置
  */
@@ -17,10 +13,10 @@ export class SubhutiCreateToken {
     type: string;  // 添加 type 属性
     pattern?: RegExp;
     isKeyword?: boolean;
-    group?: string;
+    skip?: boolean;  // 是否跳过此 token（不加入结果）
     value?: string;
     categories?: any;
-    lookahead?: SubhutiTokenLookahead;  // 新增：前瞻配置
+    lookaheadAfter?: SubhutiTokenLookahead;  // 新增：前瞻配置
 
     constructor(ovsToken: SubhutiCreateToken) {
         this.name = ovsToken.name;
@@ -32,8 +28,8 @@ export class SubhutiCreateToken {
             this.value = emptyValue
         }
         this.isKeyword = false;
-        this.group = ovsToken.group;
-        this.lookahead = ovsToken.lookahead;  // 复制前瞻配置
+        this.skip = ovsToken.skip;
+        this.lookaheadAfter = ovsToken.lookaheadAfter;  // 复制前瞻配置
     }
 }
 
@@ -58,15 +54,15 @@ export function createValueRegToken(
     name: string, 
     pattern: RegExp, 
     value: string, 
-    group?: string,
+    skip?: boolean,
     lookahead?: SubhutiTokenLookahead
 ) {
     const token = new SubhutiCreateToken({
         name: name, 
         pattern: pattern, 
         value: value, 
-        group: group,
-        lookahead: lookahead
+        skip: skip,
+        lookaheadAfter: lookahead
     });
     return token;
 }
