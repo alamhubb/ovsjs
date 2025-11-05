@@ -3,11 +3,11 @@
  */
 import Es2025Parser from '../packages/slime-parser/src/language/es2015/Es2025Parser.ts'
 import SubhutiLexer from 'subhuti/src/SubhutiLexer.ts'
-import { es6Tokens } from '../packages/slime-parser/src/language/es2015/Es6Tokens.ts'
+import { es2025Tokens } from '../packages/slime-parser/src/language/es2015/Es6Tokens.ts'
 
 function test(name: string, code: string): boolean {
     try {
-        const lexer = new SubhutiLexer(es6Tokens)
+        const lexer = new SubhutiLexer(es2025Tokens)
         const tokens = lexer.tokenize(code)
         const parser = new Es2025Parser(tokens)
         const cst = parser.Program()

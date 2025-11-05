@@ -8,7 +8,7 @@
 import * as fs from 'fs'
 import * as path from 'path'
 import Es2025Parser from '../../packages/slime-parser/src/language/es2015/Es2025Parser.ts'
-import { es6Tokens } from '../../packages/slime-parser/src/language/es2015/Es6Tokens.ts'
+import { es2025Tokens } from '../../packages/slime-parser/src/language/es2015/Es6Tokens.ts'
 import SubhutiLexer from 'subhuti/src/SubhutiLexer.ts'
 import { SlimeCstToAst } from '../../packages/slime-parser/src/language/SlimeCstToAstUtil.ts'
 import SlimeGenerator from '../../packages/slime-generator/src/SlimeGenerator.ts'
@@ -83,7 +83,7 @@ function extractTestCases(fileContent: string): string[] {
 function verifyTestCase(code: string, ruleName: string): { success: boolean; error?: string } {
   try {
     // 1. 词法分析
-    const lexer = new SubhutiLexer(es6Tokens)
+    const lexer = new SubhutiLexer(es2025Tokens)
     const tokens = lexer.tokenize(code)
     
     if (tokens.length === 0) {
