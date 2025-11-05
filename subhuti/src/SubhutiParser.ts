@@ -172,11 +172,15 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         return this
     }
 
-    debug(enable: boolean = true): this {
-        if (enable) {
-            this._debugger = new SubhutiTraceDebugger()
-        } else {
+    debug(mode: boolean | 'cst' = false): this {
+        if (mode === false) {
             this._debugger = undefined
+        } else if (mode === 'cst') {
+            // CST 模式：只输出 CST 结构
+            this._debugger = new SubhutiTraceDebugger(true)
+        } else {
+            // mode === true：普通调试模式（追踪 + 性能）
+            this._debugger = new SubhutiTraceDebugger(false)
         }
         return this
     }
@@ -261,7 +265,15 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         if (!isTopLevel) {
             this._debugger?.onRuleExit(ruleName, this.tokenIndex, false, observeContext)
         } else {
-            (this._debugger as any)?.autoOutput?.()
+            // 顶层规则完成，输出调试信息
+            if (this._debugger) {
+                // 如果是 CST 调试器，设置 CST
+                if ('setCst' in this._debugger) {
+                    (this._debugger as any).setCst(cst)
+                }
+                // 调用自动输出
+                (this._debugger as any)?.autoOutput?.()
+            }
         }
     }
 

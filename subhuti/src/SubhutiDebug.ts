@@ -108,17 +108,19 @@ export interface SubhutiDebugger {
 // ============================================
 
 /**
- * Subhuti 轨迹调试器（v3.1 实时输出版）
+ * Subhuti 轨迹调试器（v3.2 支持 CST 输出）
  * 
  * 整合功能：
  * - 过程追踪（Debug）- **实时输出**
  * - 性能统计（Profiler）
+ * - CST 结构可视化（可选）
  * 
  * 输出模式：**实时输出**
  * - 规则进入/退出时立即输出到控制台
  * - Token 消费时立即输出
  * - Or 分支/回溯时立即输出
  * - 解析完成后输出性能摘要
+ * - 解析完成后可选输出 CST 结构
  * 
  * 输出示例：
  * 
@@ -146,8 +148,27 @@ export interface SubhutiDebugger {
  *   1. Expression: 5.23ms (45次, 平均116μs)
  *   2. Statement: 3.12ms (28次, 平均111μs)
  * ```
+ * 
+ * 3. CST 结构（可选输出）：
+ * ```
+ * 📊 CST 结构
+ * └─VariableDeclaration [1:1-21]
+ *    ├─LetTok: "let" [1:1-3]
+ *    ├─Identifier: "sum" [1:5-7]
+ *    └─Expression [1:11-19]
+ *       ├─Number: "1" [1:11-11]
+ *       └─Plus: "+" [1:13-13]
+ * ```
  */
+
+import type SubhutiCst from "./struct/SubhutiCst.ts"
+
 export class SubhutiTraceDebugger implements SubhutiDebugger {
+    // ========================================
+    // 配置标志
+    // ========================================
+    private cstMode: boolean = false  // 是否为 CST 模式
+    
     // ========================================
     // 过程追踪数据
     // ========================================
@@ -160,16 +181,46 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
     private stats = new Map<string, RuleStats>()
     
     // ========================================
+    // CST 数据
+    // ========================================
+    private topLevelCst: SubhutiCst | null = null
+    
+    /**
+     * 构造函数
+     * 
+     * @param mode - 调试模式：
+     *   - `undefined`（默认）：普通模式（过程追踪 + 性能统计）
+     *   - `'cst'`：CST 模式（只输出 CST 结构）
+     * 
+     * 使用示例：
+     * ```typescript
+     * const parser = new MyParser(tokens)
+     * 
+     * // 普通调试
+     * parser.debug()
+     * 
+     * // CST 调试
+     * parser.debug('cst')
+     * ```
+     */
+    constructor(mode?: 'cst') {
+        this.cstMode = mode === 'cst'
+    }
+    
+    // ========================================
     // 过程追踪方法
     // ========================================
     
     onRuleEnter(ruleName: string, tokenIndex: number): number {
-        // 1. 过程追踪：立即输出规则进入
-        const indent = '  '.repeat(this.depth)
-        console.log(`${indent}➡️  ${ruleName}  @token[${tokenIndex}]`)
+        const startTime = performance.now()
+        
+        // 1. 过程追踪：立即输出规则进入（非 CST 模式才输出）
+        if (!this.cstMode) {
+            const indent = '  '.repeat(this.depth)
+            console.log(`${indent}➡️  ${ruleName}  @token[${tokenIndex}]`)
+        }
         
         // 2. 记录规则栈（用于 onRuleExit 时匹配）
-        const startTime = performance.now()
         this.ruleStack.push({ruleName, startTime})
         this.depth++
         
@@ -207,11 +258,13 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
             duration = performance.now() - context
         }
         
-        // 1. 过程追踪：立即输出规则退出
-        const indent = '  '.repeat(this.depth)
-        const cacheTag = cacheHit ? ' ⚡CACHED' : ''
-        const timeTag = duration > 0 ? ` (${duration.toFixed(2)}ms)` : ''
-        console.log(`${indent}⬅️  ${ruleName}${cacheTag}${timeTag}`)
+        // 1. 过程追踪：立即输出规则退出（非 CST 模式才输出）
+        if (!this.cstMode) {
+            const indent = '  '.repeat(this.depth)
+            const cacheTag = cacheHit ? ' ⚡CACHED' : ''
+            const timeTag = duration > 0 ? ` (${duration.toFixed(2)}ms)` : ''
+            console.log(`${indent}⬅️  ${ruleName}${cacheTag}${timeTag}`)
+        }
         
         // 2. 弹出规则栈
         this.ruleStack.pop()
@@ -241,13 +294,15 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
         tokenName: string,
         success: boolean
     ): void {
-        const indent = '  '.repeat(this.depth)
-        const status = success ? '✅' : '❌'
-        const value = tokenValue.length > 20 ? tokenValue.slice(0, 20) + '...' : tokenValue
-        
-        console.log(
-            `${indent}🔹 Consume  token[${tokenIndex}] - ${value} - <${tokenName}>  ${status}`
-        )
+        if (!this.cstMode) {
+            const indent = '  '.repeat(this.depth)
+            const status = success ? '✅' : '❌'
+            const value = tokenValue.length > 20 ? tokenValue.slice(0, 20) + '...' : tokenValue
+            
+            console.log(
+                `${indent}🔹 Consume  token[${tokenIndex}] - ${value} - <${tokenName}>  ${status}`
+            )
+        }
     }
     
     onOrBranch(
@@ -255,10 +310,12 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
         totalBranches: number,
         tokenIndex: number
     ): void {
-        const indent = '  '.repeat(this.depth)
-        console.log(
-            `${indent}🔀 Or[${totalBranches} branches]  trying #${branchIndex}  @token[${tokenIndex}]`
-        )
+        if (!this.cstMode) {
+            const indent = '  '.repeat(this.depth)
+            console.log(
+                `${indent}🔀 Or[${totalBranches} branches]  trying #${branchIndex}  @token[${tokenIndex}]`
+            )
+        }
     }
     
     onBacktrack(
@@ -266,10 +323,12 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
         toTokenIndex: number,
         reason: string
     ): void {
-        const indent = '  '.repeat(this.depth)
-        console.log(
-            `${indent}⏪ Backtrack  token[${fromTokenIndex}] → token[${toTokenIndex}]  (${reason})`
-        )
+        if (!this.cstMode) {
+            const indent = '  '.repeat(this.depth)
+            console.log(
+                `${indent}⏪ Backtrack  token[${fromTokenIndex}] → token[${toTokenIndex}]  (${reason})`
+            )
+        }
     }
     
     // ========================================
@@ -384,7 +443,7 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
     // ========================================
     
     /**
-     * 清空所有记录（追踪 + 统计）
+     * 清空所有记录（追踪 + 统计 + CST）
      */
     clear(): void {
         // 清空过程追踪
@@ -393,6 +452,20 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
         
         // 清空性能统计
         this.stats.clear()
+        
+        // 清空 CST
+        this.topLevelCst = null
+    }
+    
+    // ========================================
+    // CST 相关方法
+    // ========================================
+    
+    /**
+     * 设置要展示的 CST（由 Parser 在解析完成后调用）
+     */
+    setCst(cst: SubhutiCst | undefined): void {
+        this.topLevelCst = cst || null
     }
     
     // ========================================
@@ -402,16 +475,130 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
     /**
      * 自动输出调试报告
      * 
-     * 实时输出模式下：
-     * - 规则执行过程已在执行时输出
-     * - 此处仅输出性能摘要
+     * - CST 模式：只输出 CST 结构
+     * - 普通模式：输出性能摘要
      */
     autoOutput(): void {
-        console.log('\n' + '='.repeat(50))
-        console.log(this.getSummary())
-        console.log('='.repeat(50))
+        if (this.cstMode) {
+            // CST 模式：只输出 CST
+            this.outputCst()
+        } else {
+            // 普通模式：输出性能摘要
+            console.log('\n' + '='.repeat(50))
+            console.log(this.getSummary())
+            console.log('='.repeat(50))
+        }
+    }
+    
+    /**
+     * 输出 CST 结构
+     */
+    private outputCst(): void {
+        if (!this.topLevelCst) {
+            console.log('\n📊 CST 结构: (empty)')
+            return
+        }
+        
+        console.log('\n' + '='.repeat(60))
+        console.log('📊 CST 结构')
+        console.log('='.repeat(60))
+        console.log(this.formatCst(this.topLevelCst))
+        console.log('='.repeat(60))
+    }
+    
+    /**
+     * 格式化 CST 为树形结构字符串
+     */
+    private formatCst(cst: SubhutiCst, prefix: string = '', isLast: boolean = true): string {
+        const lines: string[] = []
+        
+        // 当前节点行
+        const connector = isLast ? '└─' : '├─'
+        const nodeLine = this.formatNode(cst, prefix, connector)
+        lines.push(nodeLine)
+        
+        // 子节点
+        if (cst.children && cst.children.length > 0) {
+            const childPrefix = prefix + (isLast ? '   ' : '│  ')
+            
+            cst.children.forEach((child, index) => {
+                const isLastChild = index === cst.children!.length - 1
+                lines.push(this.formatCst(child, childPrefix, isLastChild))
+            })
+        }
+        
+        return lines.join('\n')
+    }
+    
+    /**
+     * 格式化单个节点
+     */
+    private formatNode(cst: SubhutiCst, prefix: string, connector: string): string {
+        const isToken = cst.value !== undefined
+        const parts: string[] = []
+        
+        // 连接符 + 节点名称
+        parts.push(`${prefix}${connector}`)
+        
+        if (isToken) {
+            // Token 节点：显示名称和值
+            const valueStr = this.formatValue(cst.value)
+            parts.push(`${cst.name}: ${valueStr}`)
+        } else {
+            // Rule 节点：只显示名称
+            parts.push(`${cst.name}`)
+        }
+        
+        // 位置信息（Token节点始终显示）
+        if (isToken && cst.loc) {
+            const locStr = this.formatLocation(cst.loc)
+            parts.push(` ${locStr}`)
+        }
+        
+        return parts.join('')
+    }
+    
+    /**
+     * 格式化值（处理特殊字符和长度）
+     */
+    private formatValue(value: string): string {
+        // 转义特殊字符
+        let escaped = value
+            .replace(/\\/g, '\\\\')
+            .replace(/\n/g, '\\n')
+            .replace(/\r/g, '\\r')
+            .replace(/\t/g, '\\t')
+        
+        // 限制长度
+        const maxLength = 40
+        if (escaped.length > maxLength) {
+            escaped = escaped.slice(0, maxLength) + '...'
+        }
+        
+        return `"${escaped}"`
+    }
+    
+    /**
+     * 格式化位置信息
+     */
+    private formatLocation(loc: any): string {
+        if (!loc.start || !loc.end) {
+            return ''
+        }
+        
+        const startLine = loc.start.line
+        const startCol = loc.start.column
+        const endLine = loc.end.line
+        const endCol = loc.end.column
+        
+        if (startLine === endLine) {
+            return `[${startLine}:${startCol}-${endCol}]`
+        } else {
+            return `[${startLine}:${startCol}-${endLine}:${endCol}]`
+        }
     }
 }
+
 
 // ============================================
 // 导出

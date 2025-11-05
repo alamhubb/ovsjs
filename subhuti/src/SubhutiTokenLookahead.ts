@@ -216,97 +216,40 @@ export default class SubhutiTokenLookahead {
         return !this.matchSequence(tokenNames)
     }
     
-    // ============================================
-    // 层级 2：高频组合（3 个）
-    // 对应规范中出现 3+ 次的模式
-    // ============================================
     
     /**
-     * 检查：async [no LineTerminator here] function
+     * 检查：token 序列匹配且中间无换行符
      * 
-     * 规范中的使用案例（出现 8 次）：
-     * - Line 1087: ExpressionStatement          - [lookahead ∉ {async [no LT] function}]
-     * - Line 1371: AsyncGeneratorDeclaration    - async [no LT] function *
-     * - Line 1375: AsyncGeneratorExpression     - async [no LT] function *
-     * - Line 1378: AsyncGeneratorMethod         - async [no LT] *
-     * - Line 1388: AsyncFunctionDeclaration     - async [no LT] function
-     * - Line 1392: AsyncFunctionExpression      - async [no LT] function
-     * - Line 1395: AsyncMethod                  - async [no LT] ClassElementName
-     * - Line 1558: export default               - [lookahead ∉ {async [no LT] function}]
+     * 通用能力：可用于任何需要序列+换行符约束的语言
      * 
-     * @returns true = 是 async function（无换行符）
+     * @param tokenNames token 名称序列
+     * @returns true = 序列匹配且中间都在同一行
      * 
      * @example
-     * // ExpressionStatement: 排除 async function
-     * if (!this.tokenHelper.isAsyncFunctionWithoutLineTerminator()) {
-     *   this.AssignmentExpression()
+     * // 检查 async function 且中间无换行
+     * if (this.matchSequenceWithoutLineTerminator(['AsyncTok', 'FunctionTok'])) {
+     *   // 是 async function（同一行）
      * }
      */
-    isAsyncFunctionWithoutLineTerminator(): boolean {
-        const t1 = this.peek(1)
-        if (t1?.tokenName !== 'AsyncTok') {
+    matchSequenceWithoutLineTerminator(tokenNames: string[]): boolean {
+        const peeked = this.peekSequence(tokenNames.length)
+        if (peeked.length !== tokenNames.length) {
             return false
         }
         
-        const t2 = this.peek(2)
-        if (t2?.tokenName !== 'FunctionTok') {
-            return false
+        // 检查每个 token 的名称匹配
+        for (let i = 0; i < tokenNames.length; i++) {
+            if (peeked[i].tokenName !== tokenNames[i]) {
+                return false
+            }
+            
+            // 检查第二个及之后的 token 前面没有换行符
+            if (i > 0 && peeked[i].hasLineBreakBefore) {
+                return false
+            }
         }
         
-        // 检查 async 和 function 之间没有换行符（同一行）
-        return t2.rowNum === t1.rowNum
-    }
-    
-    /**
-     * 检查：async [no LineTerminator here] *
-     * 
-     * 规范中的使用案例（出现 3 次）：
-     * - Line 1371: AsyncGeneratorDeclaration    - async [no LT] function *
-     * - Line 1375: AsyncGeneratorExpression     - async [no LT] function *
-     * - Line 1378: AsyncGeneratorMethod         - async [no LT] *
-     * 
-     * @returns true = 是 async *（无换行符）
-     * 
-     * @example
-     * // AsyncGeneratorMethod: async [no LT] *
-     * if (this.tokenHelper.isAsyncGeneratorWithoutLineTerminator()) {
-     *   // 这是 async generator
-     * }
-     */
-    isAsyncGeneratorWithoutLineTerminator(): boolean {
-        const t1 = this.peek(1)
-        if (t1?.tokenName !== 'AsyncTok') {
-            return false
-        }
-        
-        const t2 = this.peek(2)
-        if (t2?.tokenName !== 'Asterisk') {
-            return false
-        }
-        
-        // 检查 async 和 * 之间没有换行符（同一行）
-        return t2.rowNum === t1.rowNum
-    }
-    
-    /**
-     * 检查：let [
-     * 
-     * 规范中的使用案例（出现 4 次）：
-     * - Line 1087: ExpressionStatement          - [lookahead ∉ {let [}]
-     * - Line 1115: ForStatement                 - [lookahead ≠ let []
-     * - Line 1120: ForInOfStatement (in)        - [lookahead ≠ let []
-     * - Line 1123: ForInOfStatement (of)        - [lookahead ∉ {let}]（隐含 let [）
-     * 
-     * @returns true = 是 let [ 序列
-     * 
-     * @example
-     * // ForStatement: [lookahead ≠ let []
-     * if (!this.tokenHelper.isLetBracket()) {
-     *   this.Expression({ In: false })
-     * }
-     */
-    isLetBracket(): boolean {
-        return this.matchSequence(['LetTok', 'LBracket'])
+        return true
     }
     
     // ============================================

@@ -1,26 +1,24 @@
 /**
  * SubhutiParser 测试运行器
  * 
- * 依次运行所有测试用例
+ * 自动扫描 cases/ 目录下的所有测试文件并运行
  */
 
 import { execSync } from 'child_process'
 import * as path from 'path'
+import * as fs from 'fs'
 
-const tests = [
-  'subhutiparsertest-token-001.ts',
-  'subhutiparsertest-or-002.ts',
-  'subhutiparsertest-or-order-003.ts',
-  'subhutiparsertest-many-004.ts',
-  'subhutiparsertest-option-005.ts',
-  'subhutiparsertest-nested-006.ts',
-  'subhutiparsertest-atleastone-007.ts',
-  'subhutiparsertest-lookahead-008.ts',
-]
+// 扫描 cases/ 目录下的所有 .ts 和 .js 文件
+const casesDir = path.join(__dirname, 'cases')
+const allFiles = fs.readdirSync(casesDir)
+const tests = allFiles
+  .filter(file => file.endsWith('.ts') || file.endsWith('.js'))
+  .sort() // 按文件名排序
 
 console.log('='.repeat(70))
 console.log('SubhutiParser 测试套件')
 console.log('='.repeat(70))
+console.log(`扫描目录: ${casesDir}`)
 console.log(`共 ${tests.length} 个测试用例\n`)
 
 let totalPassed = 0
@@ -31,11 +29,11 @@ for (let i = 0; i < tests.length; i++) {
   const testFile = tests[i]
   const testNum = i + 1
   
-  console.log(`\n[${ testNum}/${tests.length}] 运行: ${testFile}`)
+  console.log(`\n[${testNum}/${tests.length}] 运行: ${testFile}`)
   console.log('-'.repeat(70))
   
   try {
-    const testPath = path.join(__dirname, testFile)
+    const testPath = path.join(casesDir, testFile)
     execSync(`npx tsx ${testPath}`, {
       stdio: 'inherit',
       cwd: path.dirname(testPath)
