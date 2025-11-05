@@ -68,7 +68,7 @@ export type SubhutiTokenConsumerConstructor<T extends SubhutiTokenConsumer> =
 // SubhutiParser 核心类
 // ============================================
 
-export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiTokenConsumer> 
+export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiTokenConsumer>
     extends SubhutiTokenLookahead {
     // 核心字段
     readonly tokenConsumer: T
@@ -87,14 +87,14 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     // 调试和错误处理
     private _debugger?: SubhutiDebugger
     private readonly _errorHandler = new SubhutiErrorHandler()
-    
+
     // 无限循环检测（调用栈状态检测）
     /**
      * 循环检测集合：O(1) 检测 (rule, position) 是否重复
      * 格式: "ruleName:position"
      */
     private readonly loopDetectionSet: Set<string> = new Set()
-    
+
     // allowError 机制（智能错误管理）
     /**
      * allowError 深度计数器
@@ -149,7 +149,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     // ============================================
     // 公开给 TokenConsumer 使用的方法
     // ============================================
-    
+
     /**
      * 供 TokenConsumer 使用的 consume 方法
      */
@@ -160,7 +160,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     // ============================================
     // Parser 内部 Getter
     // ============================================
-    
+
     get curCst(): SubhutiCst | undefined {
         return this.cstStack[this.cstStack.length - 1]
     }
@@ -179,16 +179,8 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         return this
     }
 
-    debug(mode: boolean | 'cst' = false): this {
-        if (mode === false) {
-            this._debugger = undefined
-        } else if (mode === 'cst') {
-            // CST 模式：只输出 CST 结构
-            this._debugger = new SubhutiTraceDebugger(true)
-        } else {
-            // mode === true：普通调试模式（追踪 + 性能）
-            this._debugger = new SubhutiTraceDebugger(false)
-        }
+    debug(mode?: 'cst'): this {
+        this._debugger = new SubhutiTraceDebugger(mode)
         return this
     }
 
@@ -199,16 +191,16 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
     /**
      * 抛出循环错误信息
-     * 
+     *
      * @param ruleName 当前规则名称
      */
     private throwLoopError(ruleName: string): never {
         // 获取当前 token 信息
         const currentToken = this.curToken
-        const tokenInfo = currentToken 
+        const tokenInfo = currentToken
             ? `${currentToken.tokenName}("${currentToken.tokenValue}")`
             : 'EOF'
-        
+
         throw new Error(
             `❌ 检测到无限循环（左递归或循环依赖）\n` +
             `\n` +
@@ -241,7 +233,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         if (!this._preCheckRule(ruleName, className, isTopLevel)) {
             return undefined
         }
-        
+
         // 顶层规则：直接执行（无需缓存和循环检测）
         if (isTopLevel) {
             const observeContext = this._debugger?.onRuleEnter(ruleName, this.tokenIndex)
@@ -249,7 +241,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             this._postProcessRule(ruleName, cst, isTopLevel, observeContext)
             return cst
         }
-        
+
         // 非顶层规则：缓存 + 循环检测
         return this.executeRuleWithCacheAndLoopDetection(ruleName, targetFun)
     }
@@ -257,21 +249,21 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     /**
      * 非顶层规则执行（带缓存和循环检测）
      * 职责：循环检测 → Packrat 缓存查询 → 核心执行 → 缓存存储
-     * 
+     *
      * ✅ RAII 模式：自动管理循环检测（进入检测、执行、退出清理）
      */
     private executeRuleWithCacheAndLoopDetection(ruleName: string, targetFun: Function): SubhutiCst | undefined {
         const key = `${ruleName}:${this.tokenIndex}`
-        
+
         // O(1) 快速检测是否重复
         if (this.loopDetectionSet.has(key)) {
             // 发现循环！抛出错误
             this.throwLoopError(ruleName)
         }
-        
+
         // 入栈
         this.loopDetectionSet.add(key)
-        
+
         try {
             const observeContext = this._debugger?.onRuleEnter(ruleName, this.tokenIndex)
 
@@ -303,7 +295,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             }
 
             this._postProcessRule(ruleName, cst, false, observeContext)
-            
+
             return cst
         } finally {
             // 出栈（无论成功、return、异常都会执行）
