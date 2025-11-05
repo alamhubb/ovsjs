@@ -275,6 +275,12 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     /**
      * ParenthesizedExpression[Yield, Await] :
      *     ( Expression[+In, ?Yield, ?Await] )
+     * 
+     * Supplemental Syntax:
+     * When processing PrimaryExpression : CoverParenthesizedExpressionAndArrowParameterList,
+     * the interpretation is refined using this rule.
+     * 
+     * 注意：此方法是 Cover Grammar 的精化版本，与规范完全对应。
      */
     @SubhutiRule
     ParenthesizedExpression(params: ExpressionParams = {}): SubhutiCst | undefined {
@@ -799,6 +805,10 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     /**
      * CoverCallExpressionAndAsyncArrowHead[Yield, Await] :
      *     MemberExpression[?Yield, ?Await] Arguments[?Yield, ?Await]
+     * 
+     * 这是一个 Cover Grammar，用于覆盖：
+     * 1. 函数调用：func(args)
+     * 2. Async 箭头函数头：async (args) => {}
      */
     @SubhutiRule
     CoverCallExpressionAndAsyncArrowHead(params: ExpressionParams = {}): SubhutiCst | undefined {
@@ -813,6 +823,10 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      * Supplemental Syntax:
      * When processing CallExpression : CoverCallExpressionAndAsyncArrowHead,
      * the interpretation is refined using this rule.
+     * 
+     * 注意：虽然此方法与 CoverCallExpressionAndAsyncArrowHead 实现完全相同，
+     * 但为了与 ES2025 规范完全一致，保留此方法。
+     * 规范中 CallMemberExpression 是 Supplemental Syntax，用于语义分析时精化 Cover Grammar。
      */
     @SubhutiRule
     CallMemberExpression(params: ExpressionParams = {}): SubhutiCst | undefined {
@@ -1073,22 +1087,22 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             {
                 alt: () => {
                     this.LeftHandSideExpression(params)
-                    if (!this.hasLineTerminatorBefore()) {
-                        this.tokenConsumer.Increment()
+                    if (this.hasLineTerminatorBefore()) {
+                        return undefined  // 有换行，此分支失败
                     }
+                    this.tokenConsumer.Increment()
                 }
             },
             // LeftHandSideExpression[?Yield, ?Await] [no LineTerminator here] --
             {
                 alt: () => {
                     this.LeftHandSideExpression(params)
-                    if (!this.hasLineTerminatorBefore()) {
-                        this.tokenConsumer.Decrement()
+                    if (this.hasLineTerminatorBefore()) {
+                        return undefined  // 有换行，此分支失败
                     }
+                    this.tokenConsumer.Decrement()
                 }
             },
-            // LeftHandSideExpression[?Yield, ?Await]
-            {alt: () => this.LeftHandSideExpression(params)},
             // ++ UnaryExpression[?Yield, ?Await]
             {
                 alt: () => {
@@ -1102,7 +1116,9 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                     this.tokenConsumer.Decrement()
                     this.UnaryExpression(params)
                 }
-            }
+            },
+            // LeftHandSideExpression[?Yield, ?Await]
+            {alt: () => this.LeftHandSideExpression(params)}
         ])
     }
 
@@ -2162,8 +2178,8 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                     this.tokenConsumer.RParen()
                     this.Statement(params)
                     // [lookahead ≠ else]
-                    if (this.tokenNotIs('ElseTok', 1)) {
-                        // 成功，没有 else
+                    if (this.tokenIs('ElseTok', 1)) {
+                        return undefined  // 下一个是 else，此分支失败
                     }
                 }
             }
@@ -2459,9 +2475,10 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             {
                 alt: () => {
                     this.tokenConsumer.ContinueTok()
-                    if (!this.hasLineTerminatorBefore()) {
-                        this.LabelIdentifier(params)
+                    if (this.hasLineTerminatorBefore()) {
+                        return undefined  // 有换行，此分支失败
                     }
+                    this.LabelIdentifier(params)
                     this.tokenConsumer.Semicolon()
                 }
             },
@@ -2485,9 +2502,10 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             {
                 alt: () => {
                     this.tokenConsumer.BreakTok()
-                    if (!this.hasLineTerminatorBefore()) {
-                        this.LabelIdentifier(params)
+                    if (this.hasLineTerminatorBefore()) {
+                        return undefined  // 有换行，此分支失败
                     }
+                    this.LabelIdentifier(params)
                     this.tokenConsumer.Semicolon()
                 }
             },
@@ -2511,9 +2529,10 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             {
                 alt: () => {
                     this.tokenConsumer.ReturnTok()
-                    if (!this.hasLineTerminatorBefore()) {
-                        this.Expression({...params, In: true})
+                    if (this.hasLineTerminatorBefore()) {
+                        return undefined  // 有换行，此分支失败
                     }
+                    this.Expression({...params, In: true})
                     this.tokenConsumer.Semicolon()
                 }
             },
@@ -2662,9 +2681,10 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     @SubhutiRule
     ThrowStatement(params: StatementParams = {}): SubhutiCst | undefined {
         this.tokenConsumer.ThrowTok()
-        if (!this.hasLineTerminatorBefore()) {
-            this.Expression({...params, In: true})
+        if (this.hasLineTerminatorBefore()) {
+            return undefined  // 有换行，语法错误
         }
+        this.Expression({...params, In: true})
         return this.tokenConsumer.Semicolon()
     }
 
@@ -2786,19 +2806,21 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             {
                 alt: () => {
                     this.tokenConsumer.YieldTok()
-                    if (!this.hasLineTerminatorBefore()) {
-                        this.tokenConsumer.Asterisk()
-                        this.AssignmentExpression({...params, Yield: true})
+                    if (this.hasLineTerminatorBefore()) {
+                        return undefined  // 有换行，此分支失败
                     }
+                    this.tokenConsumer.Asterisk()
+                    this.AssignmentExpression({...params, Yield: true})
                 }
             },
             // yield [no LineTerminator here] AssignmentExpression[?In, +Yield, ?Await]
             {
                 alt: () => {
                     this.tokenConsumer.YieldTok()
-                    if (!this.hasLineTerminatorBefore()) {
-                        this.AssignmentExpression({...params, Yield: true})
+                    if (this.hasLineTerminatorBefore()) {
+                        return undefined  // 有换行，此分支失败
                     }
+                    this.AssignmentExpression({...params, Yield: true})
                 }
             },
             // yield
@@ -2813,10 +2835,11 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     @SubhutiRule
     ArrowFunction(params: ExpressionParams = {}): SubhutiCst | undefined {
         this.ArrowParameters(params)
-        if (!this.hasLineTerminatorBefore()) {
-            this.tokenConsumer.Arrow()
-            this.ConciseBody(params)
+        if (this.hasLineTerminatorBefore()) {
+            return undefined  // 有换行，整个规则失败
         }
+        this.tokenConsumer.Arrow()
+        this.ConciseBody(params)
         return this.curCst
     }
 
@@ -2836,6 +2859,12 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     /**
      * ArrowFormalParameters[Yield, Await] :
      *     ( UniqueFormalParameters[?Yield, ?Await] )
+     * 
+     * Supplemental Syntax:
+     * When processing ArrowParameters : CoverParenthesizedExpressionAndArrowParameterList,
+     * the interpretation is refined using this rule.
+     * 
+     * 注意：此方法是 Cover Grammar 的精化版本，与规范完全对应。
      */
     @SubhutiRule
     ArrowFormalParameters(params: ExpressionParams = {}): SubhutiCst | undefined {
@@ -2890,23 +2919,26 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             {
                 alt: () => {
                     this.tokenConsumer.AsyncTok()
-                    if (!this.hasLineTerminatorBefore()) {
-                        this.AsyncArrowBindingIdentifier(params)
-                        if (!this.hasLineTerminatorBefore()) {
-                            this.tokenConsumer.Arrow()
-                            this.AsyncConciseBody(params)
-                        }
+                    if (this.hasLineTerminatorBefore()) {
+                        return undefined  // 第一个换行检查失败
                     }
+                    this.AsyncArrowBindingIdentifier(params)
+                    if (this.hasLineTerminatorBefore()) {
+                        return undefined  // 第二个换行检查失败
+                    }
+                    this.tokenConsumer.Arrow()
+                    this.AsyncConciseBody(params)
                 }
             },
             // CoverCallExpressionAndAsyncArrowHead[?Yield, ?Await] [no LineTerminator here] => AsyncConciseBody[?In]
             {
                 alt: () => {
                     this.CoverCallExpressionAndAsyncArrowHead(params)
-                    if (!this.hasLineTerminatorBefore()) {
-                        this.tokenConsumer.Arrow()
-                        this.AsyncConciseBody(params)
+                    if (this.hasLineTerminatorBefore()) {
+                        return undefined  // 换行检查失败
                     }
+                    this.tokenConsumer.Arrow()
+                    this.AsyncConciseBody(params)
                 }
             }
         ])
@@ -2949,13 +2981,20 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     /**
      * AsyncArrowHead :
      *     async [no LineTerminator here] ArrowFormalParameters[~Yield, +Await]
+     * 
+     * Supplemental Syntax:
+     * When processing AsyncArrowFunction : CoverCallExpressionAndAsyncArrowHead [no LineTerminator here] => AsyncConciseBody,
+     * the interpretation is refined using this rule.
+     * 
+     * 注意：此方法是 Cover Grammar 的精化版本，与规范完全对应。
      */
     @SubhutiRule
     AsyncArrowHead(): SubhutiCst | undefined {
         this.tokenConsumer.AsyncTok()
-        if (!this.hasLineTerminatorBefore()) {
-            this.ArrowFormalParameters({Yield: false, Await: true})
+        if (this.hasLineTerminatorBefore()) {
+            return undefined  // 有换行，整个规则失败
         }
+        this.ArrowFormalParameters({Yield: false, Await: true})
         return this.curCst
     }
 
@@ -3225,33 +3264,36 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             {
                 alt: () => {
                     this.tokenConsumer.AsyncTok()
-                    if (!this.hasLineTerminatorBefore()) {
-                        this.tokenConsumer.FunctionTok()
-                        this.BindingIdentifier(params)
-                        this.tokenConsumer.LParen()
-                        this.FormalParameters({Yield: false, Await: true})
-                        this.tokenConsumer.RParen()
-                        this.tokenConsumer.LBrace()
-                        this.AsyncFunctionBody()
-                        this.tokenConsumer.RBrace()
+                    if (this.hasLineTerminatorBefore()) {
+                        return undefined  // 有换行，此分支失败
                     }
+                    this.tokenConsumer.FunctionTok()
+                    this.BindingIdentifier(params)
+                    this.tokenConsumer.LParen()
+                    this.FormalParameters({Yield: false, Await: true})
+                    this.tokenConsumer.RParen()
+                    this.tokenConsumer.LBrace()
+                    this.AsyncFunctionBody()
+                    this.tokenConsumer.RBrace()
                 }
             },
             // [+Default] async [no LineTerminator here] function ( FormalParameters[~Yield, +Await] ) { AsyncFunctionBody }
             {
                 alt: () => {
-                    if (Default) {
-                        this.tokenConsumer.AsyncTok()
-                        if (!this.hasLineTerminatorBefore()) {
-                            this.tokenConsumer.FunctionTok()
-                            this.tokenConsumer.LParen()
-                            this.FormalParameters({Yield: false, Await: true})
-                            this.tokenConsumer.RParen()
-                            this.tokenConsumer.LBrace()
-                            this.AsyncFunctionBody()
-                            this.tokenConsumer.RBrace()
-                        }
+                    if (!Default) {
+                        return undefined  // Default 参数不符合，此分支失败
                     }
+                    this.tokenConsumer.AsyncTok()
+                    if (this.hasLineTerminatorBefore()) {
+                        return undefined  // 有换行，此分支失败
+                    }
+                    this.tokenConsumer.FunctionTok()
+                    this.tokenConsumer.LParen()
+                    this.FormalParameters({Yield: false, Await: true})
+                    this.tokenConsumer.RParen()
+                    this.tokenConsumer.LBrace()
+                    this.AsyncFunctionBody()
+                    this.tokenConsumer.RBrace()
                 }
             }
         ])
@@ -3264,16 +3306,17 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     @SubhutiRule
     AsyncFunctionExpression(): SubhutiCst | undefined {
         this.tokenConsumer.AsyncTok()
-        if (!this.hasLineTerminatorBefore()) {
-            this.tokenConsumer.FunctionTok()
-            this.Option(() => this.BindingIdentifier({Yield: false, Await: true}))
-            this.tokenConsumer.LParen()
-            this.FormalParameters({Yield: false, Await: true})
-            this.tokenConsumer.RParen()
-            this.tokenConsumer.LBrace()
-            this.AsyncFunctionBody()
-            this.tokenConsumer.RBrace()
+        if (this.hasLineTerminatorBefore()) {
+            return undefined  // 有换行，整个规则失败
         }
+        this.tokenConsumer.FunctionTok()
+        this.Option(() => this.BindingIdentifier({Yield: false, Await: true}))
+        this.tokenConsumer.LParen()
+        this.FormalParameters({Yield: false, Await: true})
+        this.tokenConsumer.RParen()
+        this.tokenConsumer.LBrace()
+        this.AsyncFunctionBody()
+        this.tokenConsumer.RBrace()
         return this.curCst
     }
 
@@ -3284,15 +3327,16 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     @SubhutiRule
     AsyncMethod(params: ExpressionParams = {}): SubhutiCst | undefined {
         this.tokenConsumer.AsyncTok()
-        if (!this.hasLineTerminatorBefore()) {
-            this.ClassElementName(params)
-            this.tokenConsumer.LParen()
-            this.UniqueFormalParameters({Yield: false, Await: true})
-            this.tokenConsumer.RParen()
-            this.tokenConsumer.LBrace()
-            this.AsyncFunctionBody()
-            this.tokenConsumer.RBrace()
+        if (this.hasLineTerminatorBefore()) {
+            return undefined  // 有换行，整个规则失败
         }
+        this.ClassElementName(params)
+        this.tokenConsumer.LParen()
+        this.UniqueFormalParameters({Yield: false, Await: true})
+        this.tokenConsumer.RParen()
+        this.tokenConsumer.LBrace()
+        this.AsyncFunctionBody()
+        this.tokenConsumer.RBrace()
         return this.curCst
     }
 
@@ -3323,35 +3367,38 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             {
                 alt: () => {
                     this.tokenConsumer.AsyncTok()
-                    if (!this.hasLineTerminatorBefore()) {
-                        this.tokenConsumer.FunctionTok()
-                        this.tokenConsumer.Asterisk()
-                        this.BindingIdentifier(params)
-                        this.tokenConsumer.LParen()
-                        this.FormalParameters({Yield: true, Await: true})
-                        this.tokenConsumer.RParen()
-                        this.tokenConsumer.LBrace()
-                        this.AsyncGeneratorBody()
-                        this.tokenConsumer.RBrace()
+                    if (this.hasLineTerminatorBefore()) {
+                        return undefined  // 有换行，此分支失败
                     }
+                    this.tokenConsumer.FunctionTok()
+                    this.tokenConsumer.Asterisk()
+                    this.BindingIdentifier(params)
+                    this.tokenConsumer.LParen()
+                    this.FormalParameters({Yield: true, Await: true})
+                    this.tokenConsumer.RParen()
+                    this.tokenConsumer.LBrace()
+                    this.AsyncGeneratorBody()
+                    this.tokenConsumer.RBrace()
                 }
             },
             // [+Default] async [no LineTerminator here] function * ( FormalParameters[+Yield, +Await] ) { AsyncGeneratorBody }
             {
                 alt: () => {
-                    if (Default) {
-                        this.tokenConsumer.AsyncTok()
-                        if (!this.hasLineTerminatorBefore()) {
-                            this.tokenConsumer.FunctionTok()
-                            this.tokenConsumer.Asterisk()
-                            this.tokenConsumer.LParen()
-                            this.FormalParameters({Yield: true, Await: true})
-                            this.tokenConsumer.RParen()
-                            this.tokenConsumer.LBrace()
-                            this.AsyncGeneratorBody()
-                            this.tokenConsumer.RBrace()
-                        }
+                    if (!Default) {
+                        return undefined  // Default 参数不符合，此分支失败
                     }
+                    this.tokenConsumer.AsyncTok()
+                    if (this.hasLineTerminatorBefore()) {
+                        return undefined  // 有换行，此分支失败
+                    }
+                    this.tokenConsumer.FunctionTok()
+                    this.tokenConsumer.Asterisk()
+                    this.tokenConsumer.LParen()
+                    this.FormalParameters({Yield: true, Await: true})
+                    this.tokenConsumer.RParen()
+                    this.tokenConsumer.LBrace()
+                    this.AsyncGeneratorBody()
+                    this.tokenConsumer.RBrace()
                 }
             }
         ])
@@ -3364,17 +3411,18 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     @SubhutiRule
     AsyncGeneratorExpression(): SubhutiCst | undefined {
         this.tokenConsumer.AsyncTok()
-        if (!this.hasLineTerminatorBefore()) {
-            this.tokenConsumer.FunctionTok()
-            this.tokenConsumer.Asterisk()
-            this.Option(() => this.BindingIdentifier({Yield: true, Await: true}))
-            this.tokenConsumer.LParen()
-            this.FormalParameters({Yield: true, Await: true})
-            this.tokenConsumer.RParen()
-            this.tokenConsumer.LBrace()
-            this.AsyncGeneratorBody()
-            this.tokenConsumer.RBrace()
+        if (this.hasLineTerminatorBefore()) {
+            return undefined  // 有换行，整个规则失败
         }
+        this.tokenConsumer.FunctionTok()
+        this.tokenConsumer.Asterisk()
+        this.Option(() => this.BindingIdentifier({Yield: true, Await: true}))
+        this.tokenConsumer.LParen()
+        this.FormalParameters({Yield: true, Await: true})
+        this.tokenConsumer.RParen()
+        this.tokenConsumer.LBrace()
+        this.AsyncGeneratorBody()
+        this.tokenConsumer.RBrace()
         return this.curCst
     }
 
@@ -3385,16 +3433,17 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     @SubhutiRule
     AsyncGeneratorMethod(params: ExpressionParams = {}): SubhutiCst | undefined {
         this.tokenConsumer.AsyncTok()
-        if (!this.hasLineTerminatorBefore()) {
-            this.tokenConsumer.Asterisk()
-            this.ClassElementName(params)
-            this.tokenConsumer.LParen()
-            this.UniqueFormalParameters({Yield: true, Await: true})
-            this.tokenConsumer.RParen()
-            this.tokenConsumer.LBrace()
-            this.AsyncGeneratorBody()
-            this.tokenConsumer.RBrace()
+        if (this.hasLineTerminatorBefore()) {
+            return undefined  // 有换行，整个规则失败
         }
+        this.tokenConsumer.Asterisk()
+        this.ClassElementName(params)
+        this.tokenConsumer.LParen()
+        this.UniqueFormalParameters({Yield: true, Await: true})
+        this.tokenConsumer.RParen()
+        this.tokenConsumer.LBrace()
+        this.AsyncGeneratorBody()
+        this.tokenConsumer.RBrace()
         return this.curCst
     }
 
