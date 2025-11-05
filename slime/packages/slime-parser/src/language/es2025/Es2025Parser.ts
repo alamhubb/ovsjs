@@ -13,9 +13,8 @@
 
 import SubhutiCst from 'subhuti/src/struct/SubhutiCst.ts'
 import SubhutiMatchToken from 'subhuti/src/struct/SubhutiMatchToken.ts'
-import Es2025TokenConsumer from './Es2025Tokens.ts'
+import Es2025TokenConsumer from './Es2025TokenConsumer.ts'
 import SubhutiParser, { Subhuti, SubhutiRule } from "subhuti/src/SubhutiParser.ts"
-import SubhutiLookahead from 'subhuti/src/SubhutiLookahead.ts'
 
 
 /**
@@ -523,13 +522,13 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             {
               alt: () => {
                 // 检查前瞻约束
-                if (SubhutiLookahead.is(this._tokens, this.tokenIndex, 'FunctionTok')) {
+                if (this.is('FunctionTok')) {
                   return undefined
                 }
-                if (SubhutiLookahead.is(this._tokens, this.tokenIndex, 'ClassTok')) {
+                if (this.is('ClassTok')) {
                   return undefined
                 }
-                if (SubhutiLookahead.isAsyncFunctionWithoutLineTerminator(this._tokens, this.tokenIndex)) {
+                if (this.isAsyncFunctionWithoutLineTerminator()) {
                   return undefined
                 }
                 
@@ -863,19 +862,19 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
   ExpressionStatement(params: ParseParams = {}): SubhutiCst | undefined {
     // 规范 Line 1087: [lookahead ∉ {{, function, async function, class, let [}]
     // 检查前瞻约束
-    if (SubhutiLookahead.is(this._tokens, this.tokenIndex, 'LBrace')) {
+    if (this.is('LBrace')) {
       return undefined
     }
-    if (SubhutiLookahead.is(this._tokens, this.tokenIndex, 'FunctionTok')) {
+    if (this.is('FunctionTok')) {
       return undefined
     }
-    if (SubhutiLookahead.is(this._tokens, this.tokenIndex, 'ClassTok')) {
+    if (this.is('ClassTok')) {
       return undefined
     }
-    if (SubhutiLookahead.isAsyncFunctionWithoutLineTerminator(this._tokens, this.tokenIndex)) {
+    if (this.isAsyncFunctionWithoutLineTerminator()) {
       return undefined
     }
-    if (SubhutiLookahead.isLetBracket(this._tokens, this.tokenIndex)) {
+    if (this.isLetBracket()) {
       return undefined
     }
     
@@ -1007,7 +1006,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
       {
         alt: () => {
           // 检查不能是 let [
-          if (SubhutiLookahead.isLetBracket(this._tokens, this.tokenIndex)) {
+          if (this.isLetBracket()) {
             return undefined
           }
           this.Expression({ In: false, Yield: params.Yield, Await: params.Await })
@@ -1070,13 +1069,13 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
           // 规范 Line 1120: [lookahead ≠ let [] (for...in)
           // 规范 Line 1123: [lookahead ∉ {let, async of}] (for...of)
           // 检查不能是 let [ 或 let 或 async of
-          if (SubhutiLookahead.isLetBracket(this._tokens, this.tokenIndex)) {
+          if (this.isLetBracket()) {
             return undefined
           }
-          if (SubhutiLookahead.is(this._tokens, this.tokenIndex, 'LetTok')) {
+          if (this.is('LetTok')) {
             return undefined
           }
-          if (SubhutiLookahead.matchSequence(this._tokens, this.tokenIndex, ['AsyncTok', 'OfTok'])) {
+          if (this.matchSequence(['AsyncTok', 'OfTok'])) {
             return undefined
           }
           
@@ -4098,7 +4097,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
       {
         alt: () => {
           // 检查不能是 {
-          if (SubhutiLookahead.is(this._tokens, this.tokenIndex, 'LBrace')) {
+          if (this.is('LBrace')) {
             return undefined
           }
           this.ExpressionBody({ In: params.In, Await: true })
@@ -4115,14 +4114,10 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
    * 
    * 注：正则表达式的完整解析非常复杂（A.8 Regular Expressions）
    * 这里简化实现，直接从 token 消费
-   * 
-   * TODO: 需要在词法分析器中根据上下文正确识别正则表达式
    */
   @SubhutiRule
   RegularExpressionLiteral(): SubhutiCst | undefined {
-    // TODO: 从 tokenConsumer 消费 RegExp token
-    // 当前简化实现，假设词法分析器已正确识别
-    throw new Error('RegularExpressionLiteral requires lexer context support')
+    return this.tokenConsumer.RegularExpression()
   }
   
   /**
@@ -4312,7 +4307,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
       {
         alt: () => {
           // 检查不能是 {
-          if (SubhutiLookahead.is(this._tokens, this.tokenIndex, 'LBrace')) {
+          if (this.is('LBrace')) {
             return undefined
           }
           this.ExpressionBody({ In: params.In, Await: false })
