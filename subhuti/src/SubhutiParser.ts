@@ -9,7 +9,7 @@
  * @version 4.4.0
  */
 
-import SubhutiTokenHelper from "./SubhutiTokenHelper.ts"
+import SubhutiTokenLookahead from "./SubhutiTokenLookahead.ts"
 import SubhutiCst from "./struct/SubhutiCst.ts";
 import type SubhutiMatchToken from "./struct/SubhutiMatchToken.ts";
 import {SubhutiErrorHandler} from "./SubhutiError.ts";
@@ -36,7 +36,7 @@ export interface SubhutiBackData {
 // 装饰器系统
 // ============================================
 
-export function Subhuti<E extends SubhutiTokenHelper, T extends new (...args: any[]) => SubhutiParser<E>>(
+export function Subhuti<E extends SubhutiTokenLookahead, T extends new (...args: any[]) => SubhutiParser<E>>(
     target: T,
     context: ClassDecoratorContext
 ) {
@@ -63,7 +63,7 @@ export type SubhutiTokenConsumerConstructor<T extends SubhutiTokenConsumer> =
 // SubhutiParser 核心类
 // ============================================
 
-export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiTokenConsumer> extends SubhutiTokenHelper {
+export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiTokenConsumer> extends SubhutiTokenLookahead {
     // 核心字段
     readonly tokenConsumer: T
     private readonly _tokens: SubhutiMatchToken[]
@@ -130,7 +130,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         if (SubhutiTokenConsumerClass) {
             this.tokenConsumer = new SubhutiTokenConsumerClass(this)
         } else {
-            this.tokenConsumer = new SubhutiTokenHelper(this) as T
+            this.tokenConsumer = new SubhutiTokenLookahead(this) as T
         }
     }
 

@@ -16,7 +16,7 @@ import type SubhutiParser from "./SubhutiParser.ts"
 import type {SubhutiCreateToken} from "./struct/SubhutiCreateToken.ts"
 import type SubhutiMatchToken from "./struct/SubhutiMatchToken.ts"
 
-export default class SubhutiTokenHelper {
+export default class SubhutiTokenLookahead {
     instance: SubhutiParser
 
     constructor(instance: SubhutiParser) {
