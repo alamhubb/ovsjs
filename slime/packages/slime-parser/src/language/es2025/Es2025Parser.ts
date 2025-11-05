@@ -15,6 +15,7 @@ import SubhutiCst from 'subhuti/src/struct/SubhutiCst.ts'
 import SubhutiMatchToken from 'subhuti/src/struct/SubhutiMatchToken.ts'
 import Es2025TokenConsumer from './Es2025Tokens.ts'
 import SubhutiParser, { Subhuti, SubhutiRule } from "subhuti/src/SubhutiParser.ts"
+import SubhutiLookahead from 'subhuti/src/SubhutiLookahead.ts'
 
 
 /**
@@ -217,13 +218,8 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
   }
   
   // ============================================
-  // Placeholder Methods (待实现的规则)
+  // Import/Export (导入导出规则)
   // ============================================
-  
-  // 以下方法是占位符，将在后续步骤中逐一实现
-  // 每个方法对应 es2025-grammar.md 中的一个规则
-  
-  // --- Import/Export ---
   
   /**
    * ImportDeclaration :
@@ -522,9 +518,21 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             { alt: () => this.HoistableDeclaration({ Yield: false, Await: true, Default: true }) },
             // export default class
             { alt: () => this.ClassDeclaration({ Yield: false, Await: true, Default: true }) },
-            // export default expr; (TODO: 检查 lookahead)
+            // export default expr;
+            // 规范 Line 1558: [lookahead ∉ {function, async [no LT] function, class}]
             {
               alt: () => {
+                // 检查前瞻约束
+                if (SubhutiLookahead.is(this._tokens, this.tokenIndex, 'FunctionTok')) {
+                  return undefined
+                }
+                if (SubhutiLookahead.is(this._tokens, this.tokenIndex, 'ClassTok')) {
+                  return undefined
+                }
+                if (SubhutiLookahead.isAsyncFunctionWithoutLineTerminator(this._tokens, this.tokenIndex)) {
+                  return undefined
+                }
+                
                 this.AssignmentExpression({ In: true, Yield: false, Await: true })
                 this.tokenConsumer.Semicolon()
               }
@@ -850,12 +858,27 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
    *   Expression[+In, ?Yield, ?Await] ;
    * 
    * 表达式语句
-   * 
-   * TODO: 实现 lookahead 检查
    */
   @SubhutiRule
   ExpressionStatement(params: ParseParams = {}): SubhutiCst | undefined {
-    // TODO: 检查 lookahead 约束
+    // 规范 Line 1087: [lookahead ∉ {{, function, async function, class, let [}]
+    // 检查前瞻约束
+    if (SubhutiLookahead.is(this._tokens, this.tokenIndex, 'LBrace')) {
+      return undefined
+    }
+    if (SubhutiLookahead.is(this._tokens, this.tokenIndex, 'FunctionTok')) {
+      return undefined
+    }
+    if (SubhutiLookahead.is(this._tokens, this.tokenIndex, 'ClassTok')) {
+      return undefined
+    }
+    if (SubhutiLookahead.isAsyncFunctionWithoutLineTerminator(this._tokens, this.tokenIndex)) {
+      return undefined
+    }
+    if (SubhutiLookahead.isLetBracket(this._tokens, this.tokenIndex)) {
+      return undefined
+    }
+    
     this.Expression({ In: true, Yield: params.Yield, Await: params.Await })
     this.tokenConsumer.Semicolon()
     return this.curCst
@@ -968,7 +991,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     
     // 初始化部分（3种形式）
     this.Or([
-      // for ( ; ; )
+      // for ( ; ; ) - 空初始化
       { alt: () => {} },
       // for ( var ... ; ; )
       {
@@ -980,7 +1003,16 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
       // for ( let/const ... ; ; )
       { alt: () => this.LexicalDeclaration({ In: false, Yield: params.Yield, Await: params.Await }) },
       // for ( expr ; ; )
-      { alt: () => this.Expression({ In: false, Yield: params.Yield, Await: params.Await }) }
+      // 规范 Line 1115: [lookahead ≠ let []
+      {
+        alt: () => {
+          // 检查不能是 let [
+          if (SubhutiLookahead.isLetBracket(this._tokens, this.tokenIndex)) {
+            return undefined
+          }
+          this.Expression({ In: false, Yield: params.Yield, Await: params.Await })
+        }
+      }
     ])
     
     this.tokenConsumer.Semicolon()
@@ -1033,7 +1065,24 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
       // let/const binding
       { alt: () => this.ForDeclaration(params) },
       // LeftHandSideExpression
-      { alt: () => this.LeftHandSideExpression(params) }
+      {
+        alt: () => {
+          // 规范 Line 1120: [lookahead ≠ let [] (for...in)
+          // 规范 Line 1123: [lookahead ∉ {let, async of}] (for...of)
+          // 检查不能是 let [ 或 let 或 async of
+          if (SubhutiLookahead.isLetBracket(this._tokens, this.tokenIndex)) {
+            return undefined
+          }
+          if (SubhutiLookahead.is(this._tokens, this.tokenIndex, 'LetTok')) {
+            return undefined
+          }
+          if (SubhutiLookahead.matchSequence(this._tokens, this.tokenIndex, ['AsyncTok', 'OfTok'])) {
+            return undefined
+          }
+          
+          this.LeftHandSideExpression(params)
+        }
+      }
     ])
     
     // in 或 of
@@ -2688,10 +2737,8 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
   }
   
   // ============================================
-  // Placeholder Methods for Complex Rules
+  // Advanced Expression Rules (高级表达式规则)
   // ============================================
-  
-  // 以下是复杂规则的占位符，将在后续实现
   
   /**
    * CoalesceExpression[In, Yield, Await] :
@@ -4046,8 +4093,17 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
           this.tokenConsumer.RBrace()
         }
       },
-      // expression (TODO: 检查 lookahead ≠ {)
-      { alt: () => this.ExpressionBody({ In: params.In, Await: true }) }
+      // expression
+      // 规范 Line 1311: [lookahead ≠ {]
+      {
+        alt: () => {
+          // 检查不能是 {
+          if (SubhutiLookahead.is(this._tokens, this.tokenIndex, 'LBrace')) {
+            return undefined
+          }
+          this.ExpressionBody({ In: params.In, Await: true })
+        }
+      }
     ])
   }
   
@@ -4251,8 +4307,17 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
           this.tokenConsumer.RBrace()
         }
       },
-      // expression (TODO: 检查 lookahead ≠ {)
-      { alt: () => this.ExpressionBody({ In: params.In, Await: false }) }
+      // expression
+      // 规范 Line 1296: [lookahead ≠ {]
+      {
+        alt: () => {
+          // 检查不能是 {
+          if (SubhutiLookahead.is(this._tokens, this.tokenIndex, 'LBrace')) {
+            return undefined
+          }
+          this.ExpressionBody({ In: params.In, Await: false })
+        }
+      }
     ])
   }
   
