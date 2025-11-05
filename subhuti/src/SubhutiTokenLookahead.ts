@@ -17,23 +17,6 @@ import type {SubhutiCreateToken} from "./struct/SubhutiCreateToken.ts"
 import type SubhutiMatchToken from "./struct/SubhutiMatchToken.ts"
 
 export default class SubhutiTokenLookahead {
-    instance: SubhutiParser
-
-    constructor(instance: SubhutiParser) {
-        this.instance = instance
-    }
-
-    // ============================================
-    // Token 消费功能（修改状态）
-    // ============================================
-    
-    /**
-     * 消费一个 token（修改 Parser 状态）
-     */
-    consume(token: SubhutiCreateToken) {
-        this.instance.consume(token.name)
-    }
-
     // ============================================
     // 行终止符检查（从 SubhutiParser 移入）
     // ============================================
@@ -46,7 +29,7 @@ export default class SubhutiTokenLookahead {
      * - 代码简洁：一行代码，无需边界检查
      */
     hasLineTerminatorBefore(): boolean {
-        return this.instance.curToken?.hasLineBreakBefore ?? false
+        return this.curToken?.hasLineBreakBefore ?? false
     }
 
     // ============================================
@@ -64,8 +47,8 @@ export default class SubhutiTokenLookahead {
      * const next2 = this.tokenHelper.peek(2) // 下下个 token
      */
     peek(offset: number = 1): SubhutiMatchToken | undefined {
-        const tokens = this.instance.tokens
-        const currentIndex = this.instance.currentIndex
+        const tokens = this.tokens
+        const currentIndex = this.currentIndex
         const index = currentIndex + offset - 1
         return index >= 0 && index < tokens.length 
             ? tokens[index] 
