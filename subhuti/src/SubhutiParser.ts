@@ -439,10 +439,10 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
                 }
 
                 if (!isLast) {
-                    this.restoreState(savedState, 'Or branch failed')
+                    this.restoreState(savedState)
                     this._parseSuccess = true
                 } else {
-                    this.restoreState(savedState, 'Or all branches failed')
+                    this.restoreState(savedState)
                 }
             }
 
@@ -452,6 +452,8 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
     /**
      * Many 规则 - 0次或多次（EBNF { ... }）
+     * 
+     * ⚠️ 使用默认 checkLoop: true，自动检测循环
      */
     Many(fn: RuleFunction): SubhutiCst | undefined {
         if (!this._parseSuccess) {
@@ -459,7 +461,8 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         }
 
         return this.withAllowError(() => {
-            while (this.tryAndRestore(fn, 'Many iteration failed')) {
+            while (this.tryAndRestore(fn)) {
+                // 使用默认 checkLoop: true，自动检测循环
             }
             return this.curCst
         })
@@ -467,6 +470,8 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
     /**
      * Option 规则 - 0次或1次（EBNF [ ... ]）
+     * 
+     * ⚠️ 注意：Option 允许成功但不消费 token（匹配 0 次），不检测循环
      */
     Option(fn: RuleFunction): SubhutiCst | undefined {
         if (!this._parseSuccess) {
@@ -474,13 +479,16 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         }
 
         return this.withAllowError(() => {
-            this.tryAndRestore(fn, 'Option failed')
+            // checkLoop: false - Option 允许匹配 0 次（不消费 token）
+            this.tryAndRestore(fn, false)
             return this.curCst
         })
     }
 
     /**
      * AtLeastOne 规则 - 1次或多次（第一次必须成功）
+     * 
+     * ⚠️ 使用默认 checkLoop: true，自动检测循环
      */
     AtLeastOne(fn: RuleFunction): SubhutiCst | undefined {
         if (!this._parseSuccess) {
@@ -493,7 +501,8 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         }
 
         return this.withAllowError(() => {
-            while (this.tryAndRestore(fn, 'AtLeastOne iteration failed')) {
+            while (this.tryAndRestore(fn)) {
+                // 使用默认 checkLoop: true，自动检测循环
             }
             return this.curCst
         })
@@ -589,12 +598,12 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         }
     }
 
-    private restoreState(backData: SubhutiBackData, reason: string = 'backtrack'): void {
+    private restoreState(backData: SubhutiBackData): void {
         const fromIndex = this.tokenIndex
         const toIndex = backData.tokenIndex
 
         if (fromIndex !== toIndex) {
-            this._debugger?.onBacktrack?.(fromIndex, toIndex, reason)
+            this._debugger?.onBacktrack?.(fromIndex, toIndex)
         }
 
         this.tokenIndex = backData.tokenIndex
@@ -606,16 +615,54 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
     /**
      * 尝试执行函数，失败时自动回溯并重置状态
+     * 
+     * @param fn 要执行的函数
+     * @param checkLoop 是否检测循环（成功但不消费 token）
+     *                  - true: 检测循环，用于 Many/AtLeastOne（防止无限循环）
+     *                  - false: 不检测，用于 Option（允许匹配 0 次）
      */
-    private tryAndRestore(fn: () => void, reason: string = 'Try failed'): boolean {
+    private tryAndRestore(fn: () => void, checkLoop: boolean = true): boolean {
         const savedState = this.saveState()
+        const startTokenIndex = this.tokenIndex
+        
         fn()
 
         if (this._parseSuccess) {
+            // ✅ 成功：检查是否需要验证循环
+            if (checkLoop && this.tokenIndex === startTokenIndex) {
+                // ❌ 成功但没消费 token → 在 Many/AtLeastOne 中会无限循环
+                const currentRuleName = this.ruleStack[this.ruleStack.length - 1] || 'Unknown'
+                throw this._errorHandler.createError({
+                    type: 'loop',
+                    expected: '',
+                    found: this.curToken,
+                    position: this.curToken ? {
+                        index: this.curToken.index || 0,
+                        line: this.curToken.rowNum || 0,
+                        column: this.curToken.columnStartNum || 0
+                    } : {
+                        index: this._tokens[this._tokens.length - 1]?.index || 0,
+                        line: this._tokens[this._tokens.length - 1]?.rowNum || 0,
+                        column: this._tokens[this._tokens.length - 1]?.columnEndNum || 0
+                    },
+                    ruleStack: [...this.ruleStack],
+                    loopRuleName: currentRuleName,
+                    loopDetectionSet: Array.from(this.loopDetectionSet),
+                    loopCstDepth: this.cstStack.length,
+                    loopCacheStats: {
+                        hits: 0,
+                        misses: 0,
+                        hitRate: '0%',
+                        currentSize: 0
+                    },
+                    loopTokenContext: []
+                })
+            }
             return true
         }
 
-        this.restoreState(savedState, reason)
+        // ❌ 失败：回溯
+        this.restoreState(savedState)
         this._parseSuccess = true
         return false
     }

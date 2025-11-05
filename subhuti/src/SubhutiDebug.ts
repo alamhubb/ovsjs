@@ -88,8 +88,7 @@ export interface SubhutiDebugger {
      */
     onBacktrack?(
         fromTokenIndex: number,
-        toTokenIndex: number,
-        reason: string
+        toTokenIndex: number
     ): void
     
     /**
@@ -320,13 +319,12 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
     
     onBacktrack(
         fromTokenIndex: number,
-        toTokenIndex: number,
-        reason: string
+        toTokenIndex: number
     ): void {
         if (!this.cstMode) {
             const indent = '  '.repeat(this.depth)
             console.log(
-                `${indent}⏪ Backtrack  token[${fromTokenIndex}] → token[${toTokenIndex}]  (${reason})`
+                `${indent}⏪ Backtrack  token[${fromTokenIndex}] → token[${toTokenIndex}]`
             )
         }
     }
