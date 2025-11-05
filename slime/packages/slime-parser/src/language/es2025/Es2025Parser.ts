@@ -1769,7 +1769,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     LexicalDeclaration(params: ExpressionParams = {}): SubhutiCst | undefined {
         this.LetOrConst()
         this.BindingList(params)
-        return this.tokenConsumer.Semicolon()
+        return this.SemicolonASI()
     }
 
     /**
@@ -1831,7 +1831,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     VariableStatement(params: ExpressionParams = {}): SubhutiCst | undefined {
         this.tokenConsumer.VarTok()
         this.VariableDeclarationList({...params, In: true})
-        return this.tokenConsumer.Semicolon()
+        return this.SemicolonASI()
     }
 
     /**
@@ -2094,6 +2094,27 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     // ----------------------------------------
 
     /**
+     * Automatic Semicolon Insertion (ASI)
+     * 
+     * ECMAScript 规范 11.9: Automatic Semicolon Insertion
+     * 
+     * 在以下情况下允许省略分号（自动插入）：
+     * 1. 遇到换行符（Line Terminator）
+     * 2. 遇到文件结束符（EOF）
+     * 3. 遇到右大括号 }
+     * 4. 特定关键字后（continue, break, return, throw, yield）
+     * 
+     * 实现方式：使用 Option() 使分号变为可选
+     * 
+     * 注意：这是简化实现，完整的 ASI 还需要检查上下文
+     */
+    @SubhutiRule
+    SemicolonASI(): SubhutiCst | undefined {
+        this.Option(() => this.tokenConsumer.Semicolon())
+        return this.curCst
+    }
+
+    /**
      * EmptyStatement :
      *     ;
      */
@@ -2132,7 +2153,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
         }
 
         this.Expression({...params, In: true})
-        return this.tokenConsumer.Semicolon()
+        return this.SemicolonASI()
     }
 
     // ----------------------------------------
@@ -2207,7 +2228,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
         this.tokenConsumer.LParen()
         this.Expression({...params, In: true})
         this.tokenConsumer.RParen()
-        return this.tokenConsumer.Semicolon()
+        return this.SemicolonASI()
     }
 
     /**
@@ -2461,13 +2482,13 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                         return undefined  // 有换行，此分支失败
                     }
                     this.LabelIdentifier(params)
-                    this.tokenConsumer.Semicolon()
+                    this.SemicolonASI()
                 }
             },
             {
                 alt: () => {
                     this.tokenConsumer.ContinueTok()
-                    this.tokenConsumer.Semicolon()
+                    this.SemicolonASI()
                 }
             }
         ])
@@ -2488,13 +2509,13 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                         return undefined  // 有换行，此分支失败
                     }
                     this.LabelIdentifier(params)
-                    this.tokenConsumer.Semicolon()
+                    this.SemicolonASI()
                 }
             },
             {
                 alt: () => {
                     this.tokenConsumer.BreakTok()
-                    this.tokenConsumer.Semicolon()
+                    this.SemicolonASI()
                 }
             }
         ])
@@ -2515,13 +2536,13 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                         return undefined  // 有换行，此分支失败
                     }
                     this.Expression({...params, In: true})
-                    this.tokenConsumer.Semicolon()
+                    this.SemicolonASI()
                 }
             },
             {
                 alt: () => {
                     this.tokenConsumer.ReturnTok()
-                    this.tokenConsumer.Semicolon()
+                    this.SemicolonASI()
                 }
             }
         ])
@@ -2667,7 +2688,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             return undefined  // 有换行，语法错误
         }
         this.Expression({...params, In: true})
-        return this.tokenConsumer.Semicolon()
+        return this.SemicolonASI()
     }
 
     // ----------------------------------------
@@ -2768,7 +2789,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     @SubhutiRule
     DebuggerStatement(): SubhutiCst | undefined {
         this.tokenConsumer.DebuggerTok()
-        return this.tokenConsumer.Semicolon()
+        return this.SemicolonASI()
     }
 
     // ============================================
@@ -3757,7 +3778,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                     this.ImportClause()
                     this.FromClause()
                     this.Option(() => this.WithClause())
-                    this.tokenConsumer.Semicolon()
+                    this.SemicolonASI()
                 }
             },
             // import ModuleSpecifier WithClause_opt ;
@@ -3766,7 +3787,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                     this.tokenConsumer.ImportTok()
                     this.ModuleSpecifier()
                     this.Option(() => this.WithClause())
-                    this.tokenConsumer.Semicolon()
+                    this.SemicolonASI()
                 }
             }
         ])
@@ -4015,7 +4036,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                     this.ExportFromClause()
                     this.FromClause()
                     this.Option(() => this.WithClause())
-                    this.tokenConsumer.Semicolon()
+                    this.SemicolonASI()
                 }
             },
             // export NamedExports ;
@@ -4023,7 +4044,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                 alt: () => {
                     this.tokenConsumer.ExportTok()
                     this.NamedExports()
-                    this.tokenConsumer.Semicolon()
+                    this.SemicolonASI()
                 }
             },
             // export VariableStatement[~Yield, +Await]
@@ -4065,7 +4086,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                     if (this.tokenNotIn(['FunctionTok', 'ClassTok'], 1) &&
                         !this.matchSequenceWithoutLineTerminator(['AsyncTok', 'FunctionTok'])) {
                         this.AssignmentExpression({In: true, Yield: false, Await: true})
-                        this.tokenConsumer.Semicolon()
+                        this.SemicolonASI()
                     }
                 }
             }
