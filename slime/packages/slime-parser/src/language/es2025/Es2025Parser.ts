@@ -522,10 +522,10 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             {
               alt: () => {
                 // 检查前瞻约束
-                if (this.is('FunctionTok')) {
+                if (this.tokenIs('FunctionTok')) {
                   return undefined
                 }
-                if (this.is('ClassTok')) {
+                if (this.tokenIs('ClassTok')) {
                   return undefined
                 }
                 if (this.isAsyncFunctionWithoutLineTerminator()) {
@@ -862,13 +862,13 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
   ExpressionStatement(params: ParseParams = {}): SubhutiCst | undefined {
     // 规范 Line 1087: [lookahead ∉ {{, function, async function, class, let [}]
     // 检查前瞻约束
-    if (this.is('LBrace')) {
+    if (this.tokenIs('LBrace')) {
       return undefined
     }
-    if (this.is('FunctionTok')) {
+    if (this.tokenIs('FunctionTok')) {
       return undefined
     }
-    if (this.is('ClassTok')) {
+    if (this.tokenIs('ClassTok')) {
       return undefined
     }
     if (this.isAsyncFunctionWithoutLineTerminator()) {
@@ -1072,7 +1072,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
           if (this.isLetBracket()) {
             return undefined
           }
-          if (this.is('LetTok')) {
+          if (this.tokenIs('LetTok')) {
             return undefined
           }
           if (this.matchSequence(['AsyncTok', 'OfTok'])) {
@@ -4097,7 +4097,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
       {
         alt: () => {
           // 检查不能是 {
-          if (this.is('LBrace')) {
+          if (this.tokenIs('LBrace')) {
             return undefined
           }
           this.ExpressionBody({ In: params.In, Await: true })
@@ -4307,7 +4307,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
       {
         alt: () => {
           // 检查不能是 {
-          if (this.is('LBrace')) {
+          if (this.tokenIs('LBrace')) {
             return undefined
           }
           this.ExpressionBody({ In: params.In, Await: false })

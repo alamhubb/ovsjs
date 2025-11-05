@@ -105,7 +105,7 @@ export default abstract class SubhutiTokenLookahead {
      * // 检查下一个是否是 else
      * if (this.tokenHelper.is('ElseTok')) { ... }
      */
-    is(tokenName: string, offset: number = 1): boolean {
+    tokenIs(tokenName: string, offset: number = 1): boolean {
         return this.peek(offset)?.tokenName === tokenName
     }
     
@@ -129,7 +129,7 @@ export default abstract class SubhutiTokenLookahead {
      *   this.ExpressionBody()
      * }
      */
-    isNot(tokenName: string, offset: number = 1): boolean {
+    tokenNotIs(tokenName: string, offset: number = 1): boolean {
         const token = this.peek(offset)
         // EOF 时返回 true（认为"不是任何具体 token"）
         return token ? token.tokenName !== tokenName : true
@@ -146,7 +146,7 @@ export default abstract class SubhutiTokenLookahead {
      * // 检查是否是 8 或 9
      * if (this.tokenHelper.isIn(['DecimalDigit8', 'DecimalDigit9'])) { ... }
      */
-    isIn(tokenNames: string[], offset: number = 1): boolean {
+    tokenIn(tokenNames: string[], offset: number = 1): boolean {
         const token = this.peek(offset)
         return token ? tokenNames.includes(token.tokenName) : false
     }
@@ -174,7 +174,7 @@ export default abstract class SubhutiTokenLookahead {
      *   this.Expression()
      * }
      */
-    isNotIn(tokenNames: string[], offset: number = 1): boolean {
+    tokenNotIn(tokenNames: string[], offset: number = 1): boolean {
         const token = this.peek(offset)
         // EOF 时返回 true（认为"不在任何集合中"）
         return token ? !tokenNames.includes(token.tokenName) : true
