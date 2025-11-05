@@ -1,11 +1,11 @@
 /**
  * Subhuti Parser - 高性能 PEG Parser 框架
- * 
+ *
  * 核心特性：
  * - Packrat Parsing（线性时间复杂度，LRU 缓存）
  * - allowError 机制（Or 前 N-1 分支允许失败，最后分支抛详细错误）
  * - 返回值语义（成功返回 CST，失败返回 undefined）
- * 
+ *
  * @version 4.4.0
  */
 
@@ -15,6 +15,7 @@ import type SubhutiMatchToken from "./struct/SubhutiMatchToken.ts";
 import {SubhutiErrorHandler} from "./SubhutiError.ts";
 import {type SubhutiDebugger, SubhutiTraceDebugger} from "./SubhutiDebug.ts";
 import {SubhutiPackratCache, type SubhutiPackratCacheResult} from "./SubhutiPackratCache.ts";
+import SubhutiTokenConsumer from "./SubhutiTokenConsumer.ts";
 
 // ============================================
 // 类型定义
@@ -47,7 +48,7 @@ export function SubhutiRule(targetFun: any, context: ClassMethodDecoratorContext
     const ruleName = targetFun.name
     const className = context.metadata.className
 
-    const wrappedFunction = function(): SubhutiCst | undefined {
+    const wrappedFunction = function (): SubhutiCst | undefined {
         return this.executeRuleWrapper(targetFun, ruleName, className)
     }
 
@@ -55,34 +56,34 @@ export function SubhutiRule(targetFun: any, context: ClassMethodDecoratorContext
     return wrappedFunction
 }
 
-export type SubhutiTokenHelperConstructor<T extends SubhutiTokenHelper> = 
+export type SubhutiTokenConsumerConstructor<T extends SubhutiTokenConsumer> =
     new (parser: SubhutiParser<T>) => T
 
 // ============================================
 // SubhutiParser 核心类
 // ============================================
 
-export default class SubhutiParser<T extends SubhutiTokenHelper = SubhutiTokenHelper> {
+export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiTokenConsumer> extends SubhutiTokenHelper {
     // 核心字段
-    readonly tokenHelper: T
+    readonly tokenConsumer: T
     private readonly _tokens: SubhutiMatchToken[]
     private tokenIndex: number = 0
-    
+
     /**
      * 核心状态：当前规则是否成功
      * - true: 成功，继续执行
      * - false: 失败，停止并返回 undefined
      */
     private _parseSuccess = true
-    
+
     private readonly cstStack: SubhutiCst[] = []
     private readonly ruleStack: string[] = []
     private readonly className: string
-    
+
     // 调试和错误处理
     private _debugger?: SubhutiDebugger
     private readonly _errorHandler = new SubhutiErrorHandler()
-    
+
     // allowError 机制（智能错误管理）
     /**
      * allowError 深度计数器
@@ -90,15 +91,15 @@ export default class SubhutiParser<T extends SubhutiTokenHelper = SubhutiTokenHe
      * - 深度 = 0：不允许错误（最后分支抛详细错误）
      */
     private allowErrorDepth = 0
-    
+
     get allowError(): boolean {
         return this.allowErrorDepth > 0
     }
-    
+
     get outerHasAllowError(): boolean {
         return this.allowErrorDepth > 1
     }
-    
+
     /**
      * RAII 模式：自动管理 allowError 状态
      * - 进入时 allowErrorDepth++
@@ -112,54 +113,54 @@ export default class SubhutiParser<T extends SubhutiTokenHelper = SubhutiTokenHe
             this.allowErrorDepth--
         }
     }
-    
+
     // Packrat Parsing（默认 LRU 缓存）
     enableMemoization: boolean = true
     private readonly _cache: SubhutiPackratCache
-    
+
     constructor(
         tokens: SubhutiMatchToken[] = [],
-        TokenHelperClass?: SubhutiTokenHelperConstructor<T>,
+        SubhutiTokenConsumerClass?: SubhutiTokenConsumerConstructor<T>,
     ) {
         this._tokens = tokens
         this.tokenIndex = 0
         this.className = this.constructor.name
         this._cache = new SubhutiPackratCache()
-        
-        if (TokenHelperClass) {
-            this.tokenHelper = new TokenHelperClass(this)
+
+        if (SubhutiTokenConsumerClass) {
+            this.tokenConsumer = new SubhutiTokenConsumerClass(this)
         } else {
-            this.tokenHelper = new SubhutiTokenHelper(this) as T
+            this.tokenConsumer = new SubhutiTokenHelper(this) as T
         }
     }
-    
+
     // Getter
     get curCst(): SubhutiCst | undefined {
         return this.cstStack[this.cstStack.length - 1]
     }
-    
+
     get curToken(): SubhutiMatchToken | undefined {
         return this._tokens[this.tokenIndex]
     }
-    
+
     get isAtEnd(): boolean {
         return this.tokenIndex >= this._tokens.length
     }
-    
+
     /**
      * 暴露 tokens 给 SubhutiTokenHelper（只读访问）
      */
     get tokens(): SubhutiMatchToken[] {
         return this._tokens
     }
-    
+
     /**
      * 暴露 currentIndex 给 SubhutiTokenHelper（只读访问）
      */
     get currentIndex(): number {
         return this.tokenIndex
     }
-    
+
     // 公开方法
     setTokens(tokens: SubhutiMatchToken[]): void {
         (this._tokens as SubhutiMatchToken[]).length = 0
@@ -167,13 +168,13 @@ export default class SubhutiParser<T extends SubhutiTokenHelper = SubhutiTokenHe
         this.tokenIndex = 0
         this._cache.clear()
     }
-    
+
     // 功能开关（链式调用）
     cache(enable: boolean = true): this {
         this.enableMemoization = enable
         return this
     }
-    
+
     debug(enable: boolean = true): this {
         if (enable) {
             this._debugger = new SubhutiTraceDebugger()
@@ -182,12 +183,12 @@ export default class SubhutiParser<T extends SubhutiTokenHelper = SubhutiTokenHe
         }
         return this
     }
-    
+
     errorHandler(enable: boolean = true): this {
         this._errorHandler.setDetailed(enable)
         return this
     }
-    
+
     /**
      * 规则执行入口（由 @SubhutiRule 装饰器调用）
      * 职责：前置检查 → Packrat 缓存 → 核心执行 → 后置处理
@@ -197,9 +198,9 @@ export default class SubhutiParser<T extends SubhutiTokenHelper = SubhutiTokenHe
         if (!this._preCheckRule(ruleName, className, isTopLevel)) {
             return undefined
         }
-        
+
         const observeContext = this._debugger?.onRuleEnter(ruleName, this.tokenIndex)
-        
+
         // Packrat Parsing 缓存查询
         if (!isTopLevel && this.enableMemoization) {
             const cached = this._cache.get(ruleName, this.tokenIndex)
@@ -212,11 +213,11 @@ export default class SubhutiParser<T extends SubhutiTokenHelper = SubhutiTokenHe
                 return result
             }
         }
-        
+
         // 核心执行
         const startTokenIndex = this.tokenIndex
         const cst = this.executeRuleCore(ruleName, targetFun)
-        
+
         // 缓存存储
         if (!isTopLevel && this.enableMemoization) {
             this._cache.set(ruleName, startTokenIndex, {
@@ -226,19 +227,19 @@ export default class SubhutiParser<T extends SubhutiTokenHelper = SubhutiTokenHe
                 parseSuccess: this._parseSuccess
             })
         }
-        
+
         this._postProcessRule(ruleName, cst, isTopLevel, observeContext)
-        
+
         return cst
     }
-    
+
     private _preCheckRule(ruleName: string, className: string, isTopLevel: boolean): boolean {
         if (this.hasOwnProperty(ruleName)) {
             if (className !== this.className) {
                 return false
             }
         }
-        
+
         if (isTopLevel) {
             this._parseSuccess = true
             this.cstStack.length = 0
@@ -246,10 +247,10 @@ export default class SubhutiParser<T extends SubhutiTokenHelper = SubhutiTokenHe
             this.allowErrorDepth = 0
             return true
         }
-        
+
         return this._parseSuccess
     }
-    
+
     private _postProcessRule(
         ruleName: string,
         cst: SubhutiCst | undefined,
@@ -259,14 +260,14 @@ export default class SubhutiParser<T extends SubhutiTokenHelper = SubhutiTokenHe
         if (cst && !cst.children?.length) {
             cst.children = undefined
         }
-        
+
         if (!isTopLevel) {
             this._debugger?.onRuleExit(ruleName, this.tokenIndex, false, observeContext)
         } else {
             (this._debugger as any)?.autoOutput?.()
         }
     }
-    
+
     /**
      * 执行规则函数核心逻辑
      * 职责：创建 CST → 执行规则 → 成功则添加到父节点
@@ -275,28 +276,28 @@ export default class SubhutiParser<T extends SubhutiTokenHelper = SubhutiTokenHe
         const cst = new SubhutiCst()
         cst.name = ruleName
         cst.children = []
-        
+
         this.cstStack.push(cst)
         this.ruleStack.push(ruleName)
-        
+
         targetFun.apply(this)
-        
+
         this.cstStack.pop()
         this.ruleStack.pop()
-        
+
         if (this._parseSuccess) {
             const parentCst = this.cstStack[this.cstStack.length - 1]
             if (parentCst) {
                 parentCst.children.push(cst)
             }
-            
+
             this.setLocation(cst)
             return cst
         }
-        
+
         return undefined
     }
-    
+
     private setLocation(cst: SubhutiCst): void {
         if (cst.children && cst.children[0]?.loc) {
             const lastChild = cst.children[cst.children.length - 1]
@@ -307,7 +308,7 @@ export default class SubhutiParser<T extends SubhutiTokenHelper = SubhutiTokenHe
             }
         }
     }
-    
+
     /**
      * Or 规则 - 顺序选择（PEG 风格）
      * 核心：前 N-1 分支允许失败，最后分支抛详细错误
@@ -316,31 +317,31 @@ export default class SubhutiParser<T extends SubhutiTokenHelper = SubhutiTokenHe
         if (!this._parseSuccess) {
             return undefined
         }
-        
+
         return this.withAllowError(() => {
             const savedState = this.saveState()
             const totalCount = alternatives.length
-            
+
             for (let i = 0; i < totalCount; i++) {
                 const alt = alternatives[i]
                 const isLast = i === totalCount - 1
-                
+
                 this._debugger?.onOrBranch?.(i, totalCount, this.tokenIndex)
-                
+
                 if (isLast) {
                     this.allowErrorDepth--
                 }
-                
+
                 alt.alt()
-                
+
                 if (isLast) {
                     this.allowErrorDepth++
                 }
-                
+
                 if (this._parseSuccess) {
                     return this.curCst
                 }
-                
+
                 if (!isLast) {
                     this.restoreState(savedState, 'Or branch failed')
                     this._parseSuccess = true
@@ -348,11 +349,11 @@ export default class SubhutiParser<T extends SubhutiTokenHelper = SubhutiTokenHe
                     this.restoreState(savedState, 'Or all branches failed')
                 }
             }
-            
+
             return undefined
         })
     }
-    
+
     /**
      * Many 规则 - 0次或多次（EBNF { ... }）
      */
@@ -360,14 +361,14 @@ export default class SubhutiParser<T extends SubhutiTokenHelper = SubhutiTokenHe
         if (!this._parseSuccess) {
             return undefined
         }
-        
+
         return this.withAllowError(() => {
             while (this.tryAndRestore(fn, 'Many iteration failed')) {
             }
             return this.curCst
         })
     }
-    
+
     /**
      * Option 规则 - 0次或1次（EBNF [ ... ]）
      */
@@ -375,13 +376,13 @@ export default class SubhutiParser<T extends SubhutiTokenHelper = SubhutiTokenHe
         if (!this._parseSuccess) {
             return undefined
         }
-        
+
         return this.withAllowError(() => {
             this.tryAndRestore(fn, 'Option failed')
             return this.curCst
         })
     }
-    
+
     /**
      * AtLeastOne 规则 - 1次或多次（第一次必须成功）
      */
@@ -389,19 +390,19 @@ export default class SubhutiParser<T extends SubhutiTokenHelper = SubhutiTokenHe
         if (!this._parseSuccess) {
             return undefined
         }
-        
+
         fn()
         if (!this._parseSuccess) {
             return undefined
         }
-        
+
         return this.withAllowError(() => {
             while (this.tryAndRestore(fn, 'AtLeastOne iteration failed')) {
             }
             return this.curCst
         })
     }
-    
+
     /**
      * 消费 token（智能错误管理）
      * - allowError=true: 失败返回 undefined
@@ -411,23 +412,23 @@ export default class SubhutiParser<T extends SubhutiTokenHelper = SubhutiTokenHe
         if (!this._parseSuccess) {
             return undefined
         }
-        
+
         const token = this.curToken
-        
+
         if (!token || token.tokenName !== tokenName) {
             this._parseSuccess = false
-            
+
             this._debugger?.onTokenConsume(
                 this.tokenIndex,
                 token?.tokenValue || 'EOF',
                 token?.tokenName || 'EOF',
                 false
             )
-            
+
             if (this.outerHasAllowError || this.allowError) {
                 return undefined
             }
-            
+
             throw this._errorHandler.createError({
                 expected: tokenName,
                 found: token,
@@ -443,18 +444,18 @@ export default class SubhutiParser<T extends SubhutiTokenHelper = SubhutiTokenHe
                 ruleStack: [...this.ruleStack]
             })
         }
-        
+
         this._debugger?.onTokenConsume(
             this.tokenIndex,
             token.tokenValue,
             token.tokenName,
             true
         )
-        
+
         this.tokenIndex++
         return this.generateCstByToken(token)
     }
-    
+
     private generateCstByToken(token: SubhutiMatchToken): SubhutiCst {
         const cst = new SubhutiCst()
         cst.name = token.tokenName
@@ -473,16 +474,16 @@ export default class SubhutiParser<T extends SubhutiTokenHelper = SubhutiTokenHe
                 column: token.columnEndNum || 0
             }
         }
-        
+
         // 添加到当前 CST
         const currentCst = this.curCst
         if (currentCst) {
             currentCst.children.push(cst)
         }
-        
+
         return cst
     }
-    
+
     // 回溯机制
     private saveState(): SubhutiBackData {
         const currentCst = this.curCst
@@ -491,51 +492,51 @@ export default class SubhutiParser<T extends SubhutiTokenHelper = SubhutiTokenHe
             curCstChildrenLength: currentCst?.children?.length || 0
         }
     }
-    
+
     private restoreState(backData: SubhutiBackData, reason: string = 'backtrack'): void {
         const fromIndex = this.tokenIndex
         const toIndex = backData.tokenIndex
-        
+
         if (fromIndex !== toIndex) {
             this._debugger?.onBacktrack?.(fromIndex, toIndex, reason)
         }
-        
+
         this.tokenIndex = backData.tokenIndex
         const currentCst = this.curCst
         if (currentCst) {
             currentCst.children.length = backData.curCstChildrenLength
         }
     }
-    
+
     /**
      * 尝试执行函数，失败时自动回溯并重置状态
      */
     private tryAndRestore(fn: () => void, reason: string = 'Try failed'): boolean {
         const savedState = this.saveState()
         fn()
-        
+
         if (this._parseSuccess) {
             return true
         }
-        
+
         this.restoreState(savedState, reason)
         this._parseSuccess = true
         return false
     }
-    
+
     /**
      * 应用缓存结果（恢复状态）
      */
     private applyCachedResult(cached: SubhutiPackratCacheResult): SubhutiCst | undefined {
         this.tokenIndex = cached.endTokenIndex
         this._parseSuccess = cached.parseSuccess
-        
+
         const parentCst = this.cstStack[this.cstStack.length - 1]
         if (cached.success && cached.cst && parentCst) {
             parentCst.children.push(cached.cst)
             return cached.cst
         }
-        
+
         return undefined
     }
 }
