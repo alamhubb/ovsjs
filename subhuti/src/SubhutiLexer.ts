@@ -47,7 +47,7 @@ export default class SubhutiLexer {
    * @param code 源代码
    * @returns Token 流
    */
-  lexer(code: string): SubhutiMatchToken[] {
+  tokenize(code: string): SubhutiMatchToken[] {
     const result: SubhutiMatchToken[] = []
     let index = 0
     let rowNum = 1
