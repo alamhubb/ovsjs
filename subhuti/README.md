@@ -78,7 +78,6 @@ const tokenStream = lexer.tokenize(sourceCode)
 
 ```typescript
 import { SubhutiParser, SubhutiRule, Subhuti } from 'subhuti'
-import { SubhutiTokenConsumer } from 'subhuti'
 
 @Subhuti
 class MyParser extends SubhutiParser {
@@ -93,39 +92,39 @@ class MyParser extends SubhutiParser {
   
   @SubhutiRule
   IfStatement() {
-    this.tokenConsumer.IfTok()
-    this.tokenConsumer.LParen()
+    this.consume('IfTok')
+    this.consume('LParen')
     this.Expression()
-    this.tokenConsumer.RParen()
+    this.consume('RParen')
     this.Statement()
     
     // 可选的 else 分支
     this.Option(() => {
-      this.tokenConsumer.ElseTok()
+      this.consume('ElseTok')
       this.Statement()
     })
   }
   
   @SubhutiRule
   ReturnStatement() {
-    this.tokenConsumer.ReturnTok()
+    this.consume('ReturnTok')
     this.Expression()
-    this.tokenConsumer.Semicolon()
+    this.consume('Semicolon')
   }
   
   @SubhutiRule
   Expression() {
     // 简化示例
     this.Or([
-      { alt: () => this.tokenConsumer.Identifier() },
-      { alt: () => this.tokenConsumer.Number() }
+      { alt: () => this.consume('Identifier') },
+      { alt: () => this.consume('Number') }
     ])
   }
   
   @SubhutiRule
   ExpressionStatement() {
     this.Expression()
-    this.tokenConsumer.Semicolon()
+    this.consume('Semicolon')
   }
 }
 ```

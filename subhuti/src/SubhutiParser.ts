@@ -9,7 +9,7 @@
  * @version 4.4.0
  */
 
-import SubhutiTokenConsumer from "./SubhutiTokenConsumer.ts"
+import SubhutiTokenHelper from "./SubhutiTokenHelper.ts"
 import SubhutiCst from "./struct/SubhutiCst.ts";
 import type SubhutiMatchToken from "./struct/SubhutiMatchToken.ts";
 import {SubhutiErrorHandler} from "./SubhutiError.ts";
@@ -35,7 +35,7 @@ export interface SubhutiBackData {
 // 装饰器系统
 // ============================================
 
-export function Subhuti<E extends SubhutiTokenConsumer, T extends new (...args: any[]) => SubhutiParser<E>>(
+export function Subhuti<E extends SubhutiTokenHelper, T extends new (...args: any[]) => SubhutiParser<E>>(
     target: T,
     context: ClassDecoratorContext
 ) {
@@ -55,16 +55,16 @@ export function SubhutiRule(targetFun: any, context: ClassMethodDecoratorContext
     return wrappedFunction
 }
 
-export type SubhutiTokenConsumerConstructor<T extends SubhutiTokenConsumer> = 
+export type SubhutiTokenHelperConstructor<T extends SubhutiTokenHelper> = 
     new (parser: SubhutiParser<T>) => T
 
 // ============================================
 // SubhutiParser 核心类
 // ============================================
 
-export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiTokenConsumer> {
+export default class SubhutiParser<T extends SubhutiTokenHelper = SubhutiTokenHelper> {
     // 核心字段
-    readonly tokenConsumer: T
+    readonly tokenHelper: T
     private readonly _tokens: SubhutiMatchToken[]
     private tokenIndex: number = 0
     
@@ -119,17 +119,17 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     
     constructor(
         tokens: SubhutiMatchToken[] = [],
-        TokenConsumerClass?: SubhutiTokenConsumerConstructor<T>,
+        TokenHelperClass?: SubhutiTokenHelperConstructor<T>,
     ) {
         this._tokens = tokens
         this.tokenIndex = 0
         this.className = this.constructor.name
         this._cache = new SubhutiPackratCache()
         
-        if (TokenConsumerClass) {
-            this.tokenConsumer = new TokenConsumerClass(this)
+        if (TokenHelperClass) {
+            this.tokenHelper = new TokenHelperClass(this)
         } else {
-            this.tokenConsumer = new SubhutiTokenConsumer(this) as T
+            this.tokenHelper = new SubhutiTokenHelper(this) as T
         }
     }
     
@@ -147,14 +147,17 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     }
     
     /**
-     * 检查当前 token 前是否有换行符（用于 ECMAScript [no LineTerminator here] 限制）
-     * 
-     * 实现方式：直接读取 Lexer 在词法阶段计算好的 hasLineBreakBefore 属性（Babel 风格）
-     * - 性能优势：词法阶段计算一次，语法阶段直接读取
-     * - 代码简洁：一行代码，无需边界检查
+     * 暴露 tokens 给 SubhutiTokenHelper（只读访问）
      */
-    hasLineTerminatorBefore(): boolean {
-        return this.curToken?.hasLineBreakBefore ?? false
+    get tokens(): SubhutiMatchToken[] {
+        return this._tokens
+    }
+    
+    /**
+     * 暴露 currentIndex 给 SubhutiTokenHelper（只读访问）
+     */
+    get currentIndex(): number {
+        return this.tokenIndex
     }
     
     // 公开方法

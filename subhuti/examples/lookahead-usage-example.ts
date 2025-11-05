@@ -1,11 +1,10 @@
 /**
- * SubhutiLookahead 使用示例
+ * SubhutiTokenHelper 使用示例
  * 
- * 展示如何在 Es2025Parser 中使用静态前瞻方法
+ * 展示如何在 Parser 中使用 tokenHelper 的前瞻方法
  */
 
-import SubhutiLookahead from '../src/SubhutiLookahead.ts'
-import type SubhutiMatchToken from '../src/struct/SubhutiMatchToken.ts'
+import SubhutiParser from '../src/SubhutiParser.ts'
 
 // ============================================
 // 使用方式 1：简单否定前瞻
@@ -18,26 +17,23 @@ import type SubhutiMatchToken from '../src/struct/SubhutiMatchToken.ts'
  * 
  * 对应规范：Line 1296
  */
-class Example1_SimpleLookahead {
-  private _tokens: SubhutiMatchToken[]
-  private tokenIndex: number
-  
+class Example1_SimpleLookahead extends SubhutiParser {
   ConciseBody(params: any) {
     return this.Or([
       // { statements }
       {
         alt: () => {
-          this.tokenConsumer.LBrace()
+          this.tokenHelper.consume({ name: 'LBrace' } as any)
           this.FunctionBody({ Yield: false, Await: false })
-          this.tokenConsumer.RBrace()
+          this.tokenHelper.consume({ name: 'RBrace' } as any)
         }
       },
       // expression - 需要前瞻约束
       {
         alt: () => {
           // 规范：[lookahead ≠ {]
-          // 使用 SubhutiLookahead 静态方法
-          if (SubhutiLookahead.isNot(this._tokens, this.tokenIndex, 'LBrace')) {
+          // 使用 tokenHelper 实例方法
+          if (this.tokenHelper.isNot('LBrace')) {
             this.ExpressionBody({ In: params.In, Await: false })
           }
         }
@@ -57,20 +53,13 @@ class Example1_SimpleLookahead {
  * 
  * 对应规范：Line 1087（简化版，暂不处理 async function 和 let [）
  */
-class Example2_SetLookahead {
-  private _tokens: SubhutiMatchToken[]
-  private tokenIndex: number
-  
+class Example2_SetLookahead extends SubhutiParser {
   ExpressionStatement(params: any) {
     // 规范：[lookahead ∉ {{, function, class}]（简化版）
-    // 使用 SubhutiLookahead.isNotIn 静态方法
-    if (SubhutiLookahead.isNotIn(
-      this._tokens, 
-      this.tokenIndex, 
-      ['LBrace', 'FunctionTok', 'ClassTok']
-    )) {
+    // 使用 tokenHelper.isNotIn 实例方法
+    if (this.tokenHelper.isNotIn(['LBrace', 'FunctionTok', 'ClassTok'])) {
       this.Expression({ In: true, Yield: params.Yield, Await: params.Await })
-      this.tokenConsumer.Semicolon()
+      this.tokenHelper.consume({ name: 'Semicolon' } as any)
       return this.curCst
     }
   }
@@ -86,13 +75,10 @@ class Example2_SetLookahead {
  * 
  * 对应规范：Line 1115
  */
-class Example3_SequenceLookahead {
-  private _tokens: SubhutiMatchToken[]
-  private tokenIndex: number
-  
+class Example3_SequenceLookahead extends SubhutiParser {
   ForStatement(params: any) {
-    this.tokenConsumer.ForTok()
-    this.tokenConsumer.LParen()
+    this.tokenHelper.consume({ name: 'ForTok' } as any)
+    this.tokenHelper.consume({ name: 'LParen' } as any)
     
     // 初始化部分
     this.Or([
@@ -106,19 +92,15 @@ class Example3_SequenceLookahead {
       {
         alt: () => {
           // 规范：[lookahead ≠ let []
-          // 使用 SubhutiLookahead.notMatchSequence 静态方法
-          if (SubhutiLookahead.notMatchSequence(
-            this._tokens, 
-            this.tokenIndex, 
-            ['LetTok', 'LBracket']
-          )) {
+          // 使用 tokenHelper.notMatchSequence 实例方法
+          if (this.tokenHelper.notMatchSequence(['LetTok', 'LBracket'])) {
             this.Expression({ In: false, Yield: params.Yield, Await: params.Await })
           }
         }
       }
     ])
     
-    this.tokenConsumer.Semicolon()
+    this.tokenHelper.consume({ name: 'Semicolon' } as any)
     // ...
   }
 }
@@ -134,28 +116,18 @@ class Example3_SequenceLookahead {
  * 
  * 对应规范：Line 1087（完整版）
  */
-class Example4_HighFrequency {
-  private _tokens: SubhutiMatchToken[]
-  private tokenIndex: number
-  
+class Example4_HighFrequency extends SubhutiParser {
   ExpressionStatement(params: any) {
     // 规范：[lookahead ∉ {{, function, async [no LT] function, class, let [}]
     
     // 方式 1：组合基础方法 + 高频方法
-    const isAsyncFunc = SubhutiLookahead.isAsyncFunctionWithoutLineTerminator(
-      this._tokens, 
-      this.tokenIndex
-    )
-    const isLetBracket = SubhutiLookahead.isLetBracket(this._tokens, this.tokenIndex)
-    const isOther = SubhutiLookahead.isIn(
-      this._tokens, 
-      this.tokenIndex, 
-      ['LBrace', 'FunctionTok', 'ClassTok']
-    )
+    const isAsyncFunc = this.tokenHelper.isAsyncFunctionWithoutLineTerminator()
+    const isLetBracket = this.tokenHelper.isLetBracket()
+    const isOther = this.tokenHelper.isIn(['LBrace', 'FunctionTok', 'ClassTok'])
     
     if (!isAsyncFunc && !isLetBracket && !isOther) {
       this.Expression({ In: true, Yield: params.Yield, Await: params.Await })
-      this.tokenConsumer.Semicolon()
+      this.tokenHelper.consume({ name: 'Semicolon' } as any)
       return this.curCst
     }
   }
@@ -172,13 +144,10 @@ class Example4_HighFrequency {
  * 
  * 对应规范：Line 1120, 1123
  */
-class Example5_ComplexConstraints {
-  private _tokens: SubhutiMatchToken[]
-  private tokenIndex: number
-  
+class Example5_ComplexConstraints extends SubhutiParser {
   ForInOfStatement(params: any) {
-    this.tokenConsumer.ForTok()
-    this.tokenConsumer.LParen()
+    this.tokenHelper.consume({ name: 'ForTok' } as any)
+    this.tokenHelper.consume({ name: 'LParen' } as any)
     
     // 左侧（变量声明或左值表达式）
     this.Or([
@@ -194,12 +163,8 @@ class Example5_ComplexConstraints {
           // 2. for...of: [lookahead ∉ {let, async of}]
           
           // 先检查通用约束（let 和 async of 都不行）
-          const isLet = SubhutiLookahead.is(this._tokens, this.tokenIndex, 'LetTok')
-          const isAsyncOf = SubhutiLookahead.matchSequence(
-            this._tokens, 
-            this.tokenIndex, 
-            ['AsyncTok', 'OfTok']
-          )
+          const isLet = this.tokenHelper.is('LetTok')
+          const isAsyncOf = this.tokenHelper.matchSequence(['AsyncTok', 'OfTok'])
           
           if (!isLet && !isAsyncOf) {
             this.LeftHandSideExpression(params)
@@ -222,18 +187,15 @@ class Example5_ComplexConstraints {
  * 
  * 对应规范：Line 1558
  */
-class Example6_ExportDefault {
-  private _tokens: SubhutiMatchToken[]
-  private tokenIndex: number
-  
+class Example6_ExportDefault extends SubhutiParser {
   ExportDeclaration() {
-    this.tokenConsumer.ExportTok()
+    this.tokenHelper.consume({ name: 'ExportTok' } as any)
     
     return this.Or([
       // export default ...
       {
         alt: () => {
-          this.tokenConsumer.DefaultTok()
+          this.tokenHelper.consume({ name: 'DefaultTok' } as any)
           
           this.Or([
             // export default function/generator/async
@@ -244,19 +206,12 @@ class Example6_ExportDefault {
             {
               alt: () => {
                 // 规范：[lookahead ∉ {function, async [no LT] function, class}]
-                const isAsyncFunc = SubhutiLookahead.isAsyncFunctionWithoutLineTerminator(
-                  this._tokens, 
-                  this.tokenIndex
-                )
-                const isOther = SubhutiLookahead.isIn(
-                  this._tokens, 
-                  this.tokenIndex, 
-                  ['FunctionTok', 'ClassTok']
-                )
+                const isAsyncFunc = this.tokenHelper.isAsyncFunctionWithoutLineTerminator()
+                const isOther = this.tokenHelper.isIn(['FunctionTok', 'ClassTok'])
                 
                 if (!isAsyncFunc && !isOther) {
                   this.AssignmentExpression({ In: true, Yield: false, Await: true })
-                  this.tokenConsumer.Semicolon()
+                  this.tokenHelper.consume({ name: 'Semicolon' } as any)
                 }
               }
             }
@@ -269,19 +224,43 @@ class Example6_ExportDefault {
 }
 
 // ============================================
+// 使用方式 7：hasLineTerminatorBefore（[no LineTerminator here]）
+// ============================================
+
+/**
+ * 检查当前 token 前是否有换行符
+ * 用于 ECMAScript [no LineTerminator here] 限制
+ */
+class Example7_LineTerminator extends SubhutiParser {
+  PostfixExpression(params: any) {
+    const lhs = this.LeftHandSideExpression(params)
+    
+    // [no LineTerminator here] ++
+    // [no LineTerminator here] --
+    if (!this.tokenHelper.hasLineTerminatorBefore()) {
+      this.Option(() => {
+        this.Or([
+          { alt: () => this.consume('PlusPlus') },
+          { alt: () => this.consume('MinusMinus') }
+        ])
+      })
+    }
+    
+    return lhs
+  }
+}
+
+// ============================================
 // 代码简洁性对比
 // ============================================
 
 /**
- * 如果没有前瞻类，Parser 中需要这样写：
+ * ❌ 如果没有 tokenHelper，Parser 中需要这样写：
  */
-class WithoutLookaheadClass {
-  private _tokens: SubhutiMatchToken[]
-  private tokenIndex: number
-  
+class WithoutTokenHelper extends SubhutiParser {
   ExpressionStatement() {
-    // ❌ 代码在 Parser 里（啰嗦、重复）
-    const token = this._tokens[this.tokenIndex]
+    // 代码在 Parser 里（啰嗦、重复）
+    const token = this.curToken
     
     if (token?.tokenName === 'LBrace') return
     if (token?.tokenName === 'FunctionTok') return
@@ -289,7 +268,7 @@ class WithoutLookaheadClass {
     
     // 检查 async function
     if (token?.tokenName === 'AsyncTok') {
-      const next = this._tokens[this.tokenIndex + 1]
+      const next = this.tokens[this.currentIndex + 1]
       if (next?.tokenName === 'FunctionTok' && next.rowNum === token.rowNum) {
         return
       }
@@ -297,7 +276,7 @@ class WithoutLookaheadClass {
     
     // 检查 let [
     if (token?.tokenName === 'LetTok') {
-      const next = this._tokens[this.tokenIndex + 1]
+      const next = this.tokens[this.currentIndex + 1]
       if (next?.tokenName === 'LBracket') {
         return
       }
@@ -308,47 +287,37 @@ class WithoutLookaheadClass {
 }
 
 /**
- * 有前瞻类后：
+ * ✅ 有 tokenHelper 后：
  */
-class WithLookaheadClass {
-  private _tokens: SubhutiMatchToken[]
-  private tokenIndex: number
-  
+class WithTokenHelper extends SubhutiParser {
   ExpressionStatement() {
-    // ✅ 代码简洁、清晰
-    const isAsyncFunc = SubhutiLookahead.isAsyncFunctionWithoutLineTerminator(
-      this._tokens, 
-      this.tokenIndex
-    )
-    const isLetBracket = SubhutiLookahead.isLetBracket(this._tokens, this.tokenIndex)
-    const isOther = SubhutiLookahead.isIn(
-      this._tokens, 
-      this.tokenIndex, 
-      ['LBrace', 'FunctionTok', 'ClassTok']
-    )
+    // 代码简洁、清晰
+    const isAsyncFunc = this.tokenHelper.isAsyncFunctionWithoutLineTerminator()
+    const isLetBracket = this.tokenHelper.isLetBracket()
+    const isOther = this.tokenHelper.isIn(['LBrace', 'FunctionTok', 'ClassTok'])
     
     if (!isAsyncFunc && !isLetBracket && !isOther) {
       this.Expression()
-      this.tokenConsumer.Semicolon()
+      this.tokenHelper.consume({ name: 'Semicolon' } as any)
     }
   }
 }
 
 /**
  * 代码量对比：
- * - 没有前瞻类：25 行（在 Parser 里）
- * - 有前瞻类：Parser 12 行 + 前瞻类 10 行
+ * - 没有 tokenHelper：25 行（在 Parser 里）
+ * - 有 tokenHelper：Parser 12 行 + TokenHelper 封装（复用）
  * 
  * 复用性对比：
- * - 没有前瞻类：每个规则都要重复写
- * - 有前瞻类：高频逻辑（async function）复用 8 次
+ * - 没有 tokenHelper：每个规则都要重复写
+ * - 有 tokenHelper：高频逻辑（async function）复用 8 次
  * 
  * 可维护性：
- * - 没有前瞻类：修改逻辑要改多处
- * - 有前瞻类：只改一处（前瞻类）
+ * - 没有 tokenHelper：修改逻辑要改多处
+ * - 有 tokenHelper：只改一处（tokenHelper）
+ * 
+ * API 设计优势：
+ * - 统一入口：this.tokenHelper.xxx()
+ * - 无需传参：自动访问 tokens 和 currentIndex
+ * - 语义清晰：方法名直接对应规范术语
  */
-
-
-
-
-
