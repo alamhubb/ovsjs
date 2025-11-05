@@ -88,17 +88,17 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     private _debugger?: SubhutiDebugger
     private readonly _errorHandler = new SubhutiErrorHandler()
     
-    // 左递归检测
+    // 无限循环检测（调用栈状态检测）
     /**
-     * 左递归检测栈：记录 (ruleName:tokenIndex)
-     * 用于检测在同一token位置重复调用同一规则
+     * 循环检测集合：O(1) 检测 (rule, position) 是否重复
+     * 格式: "ruleName:position"
      */
-    private readonly leftRecursionStack: Set<string> = new Set()
+    private readonly loopDetectionSet: Set<string> = new Set()
     
     /**
-     * 是否启用左递归检测（默认启用）
+     * 是否启用循环检测（默认启用）
      */
-    enableLeftRecursionDetection: boolean = true
+    enableLoopDetection: boolean = true
 
     // allowError 机制（智能错误管理）
     /**
@@ -202,9 +202,87 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         return this
     }
     
-    leftRecursionDetection(enable: boolean = true): this {
-        this.enableLeftRecursionDetection = enable
+    loopDetection(enable: boolean = true): this {
+        this.enableLoopDetection = enable
         return this
+    }
+
+    /**
+     * RAII 模式：自动管理循环检测状态
+     * 
+     * 原理：检测 (rule, position) 在调用栈中是否重复
+     * - 如果重复 → 100% 确定是循环（左递归或循环依赖）
+     * - 不会误报
+     * 
+     * 设计：
+     * - 进入时自动检测并入栈
+     * - 退出时自动出栈（try-finally 保证）
+     * - 闭包自动捕获 key，无需手动管理
+     * 
+     * @param ruleName 规则名称
+     * @param isTopLevel 是否是顶层规则
+     * @param fn 要执行的函数
+     * @returns 函数执行结果
+     */
+    private withLoopDetection<T>(ruleName: string, isTopLevel: boolean, fn: () => T): T {
+        // 顶层规则或检测已禁用，直接执行
+        if (!this.enableLoopDetection || isTopLevel) {
+            return fn()
+        }
+        
+        const key = `${ruleName}:${this.tokenIndex}`
+        
+        // O(1) 快速检测是否重复
+        if (this.loopDetectionSet.has(key)) {
+            // 发现循环！抛出错误
+            this.throwLoopError(ruleName)
+        }
+        
+        // 入栈
+        this.loopDetectionSet.add(key)
+        
+        try {
+            // 执行函数
+            return fn()
+        } finally {
+            // 出栈（无论成功、return、异常都会执行）
+            this.loopDetectionSet.delete(key)
+        }
+    }
+    
+    /**
+     * 抛出循环错误信息
+     * 
+     * @param ruleName 当前规则名称
+     */
+    private throwLoopError(ruleName: string): never {
+        // 获取当前 token 信息
+        const currentToken = this.curToken
+        const tokenInfo = currentToken 
+            ? `${currentToken.tokenName}("${currentToken.tokenValue}")`
+            : 'EOF'
+        
+        throw new Error(
+            `❌ 检测到无限循环（左递归或循环依赖）\n` +
+            `\n` +
+            `规则 "${ruleName}" 在 token 位置 ${this.tokenIndex} 处重复调用自己\n` +
+            `当前 token: ${tokenInfo}\n` +
+            `规则栈: ${this.ruleStack.join(' → ')} → ${ruleName}\n` +
+            `\n` +
+            `⚠️ PEG 解析器无法直接处理左递归。\n` +
+            `请重构语法以消除左递归。\n` +
+            `\n` +
+            `示例:\n` +
+            `  ❌ 错误:  Expression → Expression '+' Term | Term\n` +
+            `  ✅ 正确:  Expression → Term ('+' Term)*\n` +
+            `\n` +
+            `常见模式:\n` +
+            `  • 左递归:       A → A 'x' | 'y'          →  改为: A → 'y' ('x')*\n` +
+            `  • 间接左递归:   A → B, B → C, C → A      →  需要手动展开或重构\n` +
+            `  • 循环依赖:     A → B, B → A             →  检查是否有空匹配分支\n` +
+            `\n` +
+            `💡 提示: 可以使用 .loopDetection(false) 临时禁用此检测（不推荐）`
+        )
     }
 
     /**
@@ -217,66 +295,41 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             return undefined
         }
         
-        // 左递归检测
-        if (this.enableLeftRecursionDetection && !isTopLevel) {
-            const key = `${ruleName}:${this.tokenIndex}`
-            if (this.leftRecursionStack.has(key)) {
-                throw new Error(
-                    `Left recursion detected in rule "${ruleName}" at token position ${this.tokenIndex}\n` +
-                    `Rule stack: ${this.ruleStack.join(' -> ')} -> ${ruleName}\n` +
-                    `\n` +
-                    `PEG parsers cannot handle left recursion directly.\n` +
-                    `Please refactor your grammar to eliminate left recursion.\n` +
-                    `\n` +
-                    `Example:\n` +
-                    `  Bad:  A -> A 'x' | 'y'\n` +
-                    `  Good: A -> 'y' ('x')*`
-                )
-            }
-            this.leftRecursionStack.add(key)
-        }
+        // ✅ RAII 模式：自动管理循环检测（进入检测、执行、退出清理）
+        return this.withLoopDetection(ruleName, isTopLevel, () => {
+            const observeContext = this._debugger?.onRuleEnter(ruleName, this.tokenIndex)
 
-        const observeContext = this._debugger?.onRuleEnter(ruleName, this.tokenIndex)
-
-        // Packrat Parsing 缓存查询
-        if (!isTopLevel && this.enableMemoization) {
-            const cached = this._cache.get(ruleName, this.tokenIndex)
-            if (cached !== undefined) {
-                this._debugger?.onRuleExit(ruleName, cached.endTokenIndex, true, observeContext)
-                const result = this.applyCachedResult(cached)
-                if (result && !result.children?.length) {
-                    result.children = undefined
+            // Packrat Parsing 缓存查询
+            if (!isTopLevel && this.enableMemoization) {
+                const cached = this._cache.get(ruleName, this.tokenIndex)
+                if (cached !== undefined) {
+                    this._debugger?.onRuleExit(ruleName, cached.endTokenIndex, true, observeContext)
+                    const result = this.applyCachedResult(cached)
+                    if (result && !result.children?.length) {
+                        result.children = undefined
+                    }
+                    return result
                 }
-                // 清理左递归检测栈
-                if (this.enableLeftRecursionDetection && !isTopLevel) {
-                    this.leftRecursionStack.delete(`${ruleName}:${this.tokenIndex}`)
-                }
-                return result
             }
-        }
 
-        // 核心执行
-        const startTokenIndex = this.tokenIndex
-        const cst = this.executeRuleCore(ruleName, targetFun)
+            // 核心执行
+            const startTokenIndex = this.tokenIndex
+            const cst = this.executeRuleCore(ruleName, targetFun)
 
-        // 缓存存储
-        if (!isTopLevel && this.enableMemoization) {
-            this._cache.set(ruleName, startTokenIndex, {
-                success: cst !== undefined,
-                endTokenIndex: this.tokenIndex,
-                cst: cst,
-                parseSuccess: this._parseSuccess
-            })
-        }
+            // 缓存存储
+            if (!isTopLevel && this.enableMemoization) {
+                this._cache.set(ruleName, startTokenIndex, {
+                    success: cst !== undefined,
+                    endTokenIndex: this.tokenIndex,
+                    cst: cst,
+                    parseSuccess: this._parseSuccess
+                })
+            }
 
-        this._postProcessRule(ruleName, cst, isTopLevel, observeContext)
-        
-        // 清理左递归检测栈
-        if (this.enableLeftRecursionDetection && !isTopLevel) {
-            this.leftRecursionStack.delete(`${ruleName}:${startTokenIndex}`)
-        }
-
-        return cst
+            this._postProcessRule(ruleName, cst, isTopLevel, observeContext)
+            
+            return cst
+        })
     }
 
     private _preCheckRule(ruleName: string, className: string, isTopLevel: boolean): boolean {
@@ -291,7 +344,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             this.cstStack.length = 0
             this.ruleStack.length = 0
             this.allowErrorDepth = 0
-            this.leftRecursionStack.clear()
+            this.loopDetectionSet.clear()
             return true
         }
 
