@@ -179,8 +179,8 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         return this
     }
 
-    debug(mode?: 'cst'): this {
-        this._debugger = new SubhutiTraceDebugger(mode)
+    debug(): this {
+        this._debugger = new SubhutiTraceDebugger(this._tokens)
         return this
     }
 

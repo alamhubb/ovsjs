@@ -90,16 +90,6 @@ export interface SubhutiDebugger {
         fromTokenIndex: number,
         toTokenIndex: number
     ): void
-    
-    /**
-     * 获取格式化的执行轨迹
-     */
-    getTrace(): string
-    
-    /**
-     * 清空记录
-     */
-    clear(): void
 }
 
 // ============================================
@@ -107,67 +97,167 @@ export interface SubhutiDebugger {
 // ============================================
 
 /**
- * Subhuti 轨迹调试器（v3.2 支持 CST 输出）
+ * Subhuti 轨迹调试器（v4.0 - 极简版）
+ * 
+ * 设计原则：
+ * - 调用 debug() = 输出所有诊断信息
+ * - 不调用 = 无输出
+ * - 无参数，无多余方法
  * 
  * 整合功能：
- * - 过程追踪（Debug）- **实时输出**
- * - 性能统计（Profiler）
- * - CST 结构可视化（可选）
+ * - 过程追踪（规则进入/退出、Token 消费、Or 分支、回溯）
+ * - 性能统计（调用次数、耗时、缓存命中率）
+ * - CST 结构验证（null/undefined/children 检测）
+ * - Token 完整性检查（输入 vs CST 对比）
+ * - CST 统计分析（节点数、深度、类型分布）
+ * - CST 可视化（树形结构展示）
  * 
- * 输出模式：**实时输出**
- * - 规则进入/退出时立即输出到控制台
- * - Token 消费时立即输出
- * - Or 分支/回溯时立即输出
- * - 解析完成后输出性能摘要
- * - 解析完成后可选输出 CST 结构
- * 
- * 输出示例：
- * 
- * 1. 过程追踪（实时输出）：
- * ```
- * ➡️  ImportDeclaration  @token[0]
- *   🔹 Consume  token[0] - import - <ImportTok>  ✅
- *   ➡️  ImportClause  @token[1]
- *     🔀 Or[2 branches]  trying #0  @token[1]
- *     ⏪ Backtrack  token[5] → token[2]
- *   ⬅️  ImportClause (0.12ms)
- * ⬅️  ImportDeclaration ⚡CACHED (1.23ms)
+ * 使用示例：
+ * ```typescript
+ * const parser = new MyParser(tokens)
+ * parser.debug()  // 开启调试，输出所有信息
+ * const cst = parser.Script()
  * ```
  * 
- * 2. 性能摘要（解析完成后输出）：
- * ```
+ * ============================================================
+ * 输出格式示例（代码：let count = 1）
+ * ============================================================
+ * 
+ * 【解析过程 - 实时输出】
+ * ──────────────────────────────────────
+ * ➡️  Script  @token[0]
+ *   ➡️  StatementList  @token[0]
+ *     🔀 Or[2 branches]  trying #0  @token[0]
+ *     ➡️  Statement  @token[0]
+ *       ➡️  VariableStatement  @token[0]
+ *         ➡️  VariableDeclaration  @token[0]
+ *           ➡️  LetDeclaration  @token[0]
+ *             🔹 Consume  token[0] - let - <LetTok>  ✅
+ *             ➡️  BindingList  @token[1]
+ *               ➡️  LexicalBinding  @token[1]
+ *                 ➡️  BindingIdentifier  @token[1]
+ *                   🔹 Consume  token[1] - count - <Identifier>  ✅
+ *                 ⬅️  BindingIdentifier (0.05ms)
+ *                 ➡️  Initializer  @token[2]
+ *                   🔹 Consume  token[2] - = - <Assign>  ✅
+ *                   ➡️  AssignmentExpression  @token[3]
+ *                     ➡️  ConditionalExpression  @token[3]
+ *                       ➡️  PrimaryExpression  @token[3]
+ *                         ➡️  Literal  @token[3]
+ *                           🔹 Consume  token[3] - 1 - <DecimalLiteral>  ✅
+ *                         ⬅️  Literal (0.02ms)
+ *                       ⬅️  PrimaryExpression (0.08ms)
+ *                     ⬅️  ConditionalExpression (0.15ms)
+ *                   ⬅️  AssignmentExpression (0.18ms)
+ *                 ⬅️  Initializer (0.22ms)
+ *               ⬅️  LexicalBinding (0.35ms)
+ *             ⬅️  BindingList (0.38ms)
+ *           ⬅️  LetDeclaration (0.45ms)
+ *         ⬅️  VariableDeclaration (0.48ms)
+ *       ⬅️  VariableStatement (0.52ms)
+ *     ⬅️  Statement (0.55ms)
+ *     ⏪ Backtrack  token[4] → token[4]
+ *   ⬅️  StatementList (0.68ms)
+ * ⬅️  Script (0.75ms)
+ * 
+ * ============================================================
+ * 
+ * 【第一部分：性能摘要】
+ * ──────────────────────────────────────
+ * 
  * ⏱️  性能摘要
  * ────────────────────────────────────────
- * 总耗时: 12.45ms
- * 总调用: 133 次
- * 实际执行: 42 次
- * 缓存命中: 91 次 (68.5%)
+ * 总耗时: 0.75ms
+ * 总调用: 25 次
+ * 实际执行: 25 次
+ * 缓存命中: 0 次 (0.0%)
  * 
  * Top 5 慢规则:
- *   1. Expression: 5.23ms (45次, 平均116μs)
- *   2. Statement: 3.12ms (28次, 平均111μs)
- * ```
+ *   1. Script: 0.75ms (1次, 平均750.0μs)
+ *   2. StatementList: 0.68ms (1次, 平均680.0μs)
+ *   3. Statement: 0.55ms (1次, 平均550.0μs)
+ *   4. VariableStatement: 0.52ms (1次, 平均520.0μs)
+ *   5. VariableDeclaration: 0.48ms (1次, 平均480.0μs)
  * 
- * 3. CST 结构（可选输出）：
- * ```
+ * 📋 所有规则详细统计:
+ *   Script: 1次 | 执行1次 | 耗时0.75ms | 缓存0%
+ *   StatementList: 1次 | 执行1次 | 耗时0.68ms | 缓存0%
+ *   Statement: 1次 | 执行1次 | 耗时0.55ms | 缓存0%
+ *   VariableStatement: 1次 | 执行1次 | 耗时0.52ms | 缓存0%
+ *   VariableDeclaration: 1次 | 执行1次 | 耗时0.48ms | 缓存0%
+ *   ... (更多规则)
+ * 
+ * ============================================================
+ * 
+ * 【第二部分：CST 验证报告】
+ * ──────────────────────────────────────
+ * 
+ * 🔍 CST 验证报告
+ * ────────────────────────────────────────
+ * 
+ * 📌 结构完整性: ✅
+ *    无结构错误
+ * 
+ * 📌 Token 完整性: ✅
+ *    输入 tokens: 4 个
+ *    CST tokens:  4 个
+ *    输入列表: [let, count, =, 1]
+ *    CST列表:  [let, count, =, 1]
+ *    ✅ 完整保留
+ * 
+ * 📌 CST 统计:
+ *    总节点数: 28
+ *    叶子节点: 4
+ *    最大深度: 13
+ *    节点类型: 14 种
+ * 
+ *    节点类型分布:
+ *      Script: 1
+ *      StatementList: 1
+ *      Statement: 1
+ *      VariableStatement: 1
+ *      VariableDeclaration: 1
+ *      ... (更多类型)
+ * 
+ * ────────────────────────────────────────
+ * 
+ * 【第三部分：CST 可视化】
+ * ──────────────────────────────────────
+ * 
  * 📊 CST 结构
- * └─VariableDeclaration [1:1-21]
- *    ├─LetTok: "let" [1:1-3]
- *    ├─Identifier: "sum" [1:5-7]
- *    └─Expression [1:11-19]
- *       ├─Number: "1" [1:11-11]
- *       └─Plus: "+" [1:13-13]
- * ```
+ * ────────────────────────────────────────
+ * └─Script [1:1-12]
+ *    └─StatementList [1:1-12]
+ *       └─Statement [1:1-12]
+ *          └─VariableStatement [1:1-12]
+ *             └─VariableDeclaration [1:1-12]
+ *                └─LetDeclaration [1:1-12]
+ *                   ├─LetTok: "let" [1:1-3]
+ *                   └─BindingList [1:5-12]
+ *                      └─LexicalBinding [1:5-12]
+ *                         ├─BindingIdentifier [1:5-9]
+ *                         │  └─Identifier: "count" [1:5-9]
+ *                         └─Initializer [1:11-12]
+ *                            ├─Assign: "=" [1:11-11]
+ *                            └─AssignmentExpression [1:13-13]
+ *                               └─ConditionalExpression [1:13-13]
+ *                                  └─PrimaryExpression [1:13-13]
+ *                                     └─Literal [1:13-13]
+ *                                        └─DecimalLiteral: "1" [1:13-13]
+ * ────────────────────────────────────────
+ * 
+ * ============================================================
+ * 🎉 Debug 输出完成
+ * ============================================================
+ * 
+ * 注意：
+ * - 此输出格式可能随版本更新而调整
+ * - 如需修改格式，请同步更新此注释中的示例
  */
 
 import type SubhutiCst from "./struct/SubhutiCst.ts"
 
 export class SubhutiTraceDebugger implements SubhutiDebugger {
-    // ========================================
-    // 配置标志
-    // ========================================
-    private cstMode: boolean = false  // 是否为 CST 模式
-    
     // ========================================
     // 过程追踪数据
     // ========================================
@@ -180,6 +270,11 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
     private stats = new Map<string, RuleStats>()
     
     // ========================================
+    // Token 数据
+    // ========================================
+    private inputTokens: string[] = []
+    
+    // ========================================
     // CST 数据
     // ========================================
     private topLevelCst: SubhutiCst | null = null
@@ -187,23 +282,23 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
     /**
      * 构造函数
      * 
-     * @param mode - 调试模式：
-     *   - `undefined`（默认）：普通模式（过程追踪 + 性能统计）
-     *   - `'cst'`：CST 模式（只输出 CST 结构）
-     * 
-     * 使用示例：
-     * ```typescript
-     * const parser = new MyParser(tokens)
-     * 
-     * // 普通调试
-     * parser.debug()
-     * 
-     * // CST 调试
-     * parser.debug('cst')
-     * ```
+     * @param tokens - 输入 token 流（用于完整性检查）
      */
-    constructor(mode?: 'cst') {
-        this.cstMode = mode === 'cst'
+    constructor(tokens?: any[]) {
+        this.inputTokens = this.extractValidTokens(tokens || [])
+    }
+    
+    /**
+     * 从 token 流中提取有效 token（排除注释、空格等）
+     */
+    private extractValidTokens(tokens: any[]): string[] {
+        return tokens
+            .filter(t => {
+                const name = t.tokenType?.name || ''
+                return !['SingleLineComment', 'MultiLineComment', 'Spacing', 'LineBreak'].includes(name)
+            })
+            .map(t => t.tokenValue)
+            .filter(v => v !== undefined)
     }
     
     // ========================================
@@ -213,11 +308,9 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
     onRuleEnter(ruleName: string, tokenIndex: number): number {
         const startTime = performance.now()
         
-        // 1. 过程追踪：立即输出规则进入（非 CST 模式才输出）
-        if (!this.cstMode) {
-            const indent = '  '.repeat(this.depth)
-            console.log(`${indent}➡️  ${ruleName}  @token[${tokenIndex}]`)
-        }
+        // 1. 过程追踪：立即输出规则进入
+        const indent = '  '.repeat(this.depth)
+        console.log(`${indent}➡️  ${ruleName}  @token[${tokenIndex}]`)
         
         // 2. 记录规则栈（用于 onRuleExit 时匹配）
         this.ruleStack.push({ruleName, startTime})
@@ -257,13 +350,11 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
             duration = performance.now() - context
         }
         
-        // 1. 过程追踪：立即输出规则退出（非 CST 模式才输出）
-        if (!this.cstMode) {
-            const indent = '  '.repeat(this.depth)
-            const cacheTag = cacheHit ? ' ⚡CACHED' : ''
-            const timeTag = duration > 0 ? ` (${duration.toFixed(2)}ms)` : ''
-            console.log(`${indent}⬅️  ${ruleName}${cacheTag}${timeTag}`)
-        }
+        // 1. 过程追踪：立即输出规则退出
+        const indent = '  '.repeat(this.depth)
+        const cacheTag = cacheHit ? ' ⚡CACHED' : ''
+        const timeTag = duration > 0 ? ` (${duration.toFixed(2)}ms)` : ''
+        console.log(`${indent}⬅️  ${ruleName}${cacheTag}${timeTag}`)
         
         // 2. 弹出规则栈
         this.ruleStack.pop()
@@ -293,15 +384,13 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
         tokenName: string,
         success: boolean
     ): void {
-        if (!this.cstMode) {
-            const indent = '  '.repeat(this.depth)
-            const status = success ? '✅' : '❌'
-            const value = tokenValue.length > 20 ? tokenValue.slice(0, 20) + '...' : tokenValue
-            
-            console.log(
-                `${indent}🔹 Consume  token[${tokenIndex}] - ${value} - <${tokenName}>  ${status}`
-            )
-        }
+        const indent = '  '.repeat(this.depth)
+        const status = success ? '✅' : '❌'
+        const value = tokenValue.length > 20 ? tokenValue.slice(0, 20) + '...' : tokenValue
+        
+        console.log(
+            `${indent}🔹 Consume  token[${tokenIndex}] - ${value} - <${tokenName}>  ${status}`
+        )
     }
     
     onOrBranch(
@@ -309,35 +398,163 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
         totalBranches: number,
         tokenIndex: number
     ): void {
-        if (!this.cstMode) {
-            const indent = '  '.repeat(this.depth)
-            console.log(
-                `${indent}🔀 Or[${totalBranches} branches]  trying #${branchIndex}  @token[${tokenIndex}]`
-            )
-        }
+        const indent = '  '.repeat(this.depth)
+        console.log(
+            `${indent}🔀 Or[${totalBranches} branches]  trying #${branchIndex}  @token[${tokenIndex}]`
+        )
     }
     
     onBacktrack(
         fromTokenIndex: number,
         toTokenIndex: number
     ): void {
-        if (!this.cstMode) {
-            const indent = '  '.repeat(this.depth)
-            console.log(
-                `${indent}⏪ Backtrack  token[${fromTokenIndex}] → token[${toTokenIndex}]`
-            )
-        }
+        const indent = '  '.repeat(this.depth)
+        console.log(
+            `${indent}⏪ Backtrack  token[${fromTokenIndex}] → token[${toTokenIndex}]`
+        )
     }
     
     // ========================================
-    // 过程追踪输出
+    // CST 验证方法
     // ========================================
     
     /**
-     * 获取执行轨迹（实时输出模式下无需此方法）
+     * 验证 CST 结构完整性
      */
-    getTrace(): string {
-        return '（实时输出模式：规则执行过程已直接输出到控制台）'
+    private validateStructure(node: any, path: string = 'root'): Array<{path: string, issue: string, node?: any}> {
+        const errors: Array<{path: string, issue: string, node?: any}> = []
+
+        if (node === null) {
+            errors.push({ path, issue: 'Node is null' })
+            return errors
+        }
+
+        if (node === undefined) {
+            errors.push({ path, issue: 'Node is undefined' })
+            return errors
+        }
+
+        if (!node.name && node.value === undefined) {
+            errors.push({
+                path,
+                issue: 'Node has neither name nor value',
+                node: { ...node, children: node.children ? `[${node.children.length} children]` : undefined }
+            })
+        }
+
+        if (node.children !== undefined) {
+            if (!Array.isArray(node.children)) {
+                errors.push({
+                    path,
+                    issue: `children is not an array (type: ${typeof node.children})`,
+                    node: { name: node.name, childrenType: typeof node.children }
+                })
+                return errors
+            }
+
+            node.children.forEach((child: any, index: number) => {
+                const childPath = `${path}.children[${index}]`
+
+                if (child === null) {
+                    errors.push({ path: childPath, issue: 'Child is null' })
+                    return
+                }
+
+                if (child === undefined) {
+                    errors.push({ path: childPath, issue: 'Child is undefined' })
+                    return
+                }
+
+                const childErrors = this.validateStructure(child, childPath)
+                errors.push(...childErrors)
+            })
+        }
+
+        if (node.value !== undefined && node.children && node.children.length > 0) {
+            errors.push({
+                path,
+                issue: `Leaf node has both value and non-empty children`,
+                node: { name: node.name, value: node.value, childrenCount: node.children.length }
+            })
+        }
+
+        return errors
+    }
+    
+    /**
+     * 收集所有 token 值
+     */
+    private collectTokenValues(node: any): string[] {
+        const values: string[] = []
+
+        if (node.value !== undefined && (!node.children || node.children.length === 0)) {
+            values.push(node.value)
+        }
+
+        if (node.children) {
+            for (const child of node.children) {
+                values.push(...this.collectTokenValues(child))
+            }
+        }
+
+        return values
+    }
+    
+    /**
+     * 检查 Token 完整性
+     */
+    private checkTokenCompleteness(cst: SubhutiCst): {
+        input: string[]
+        cst: string[]
+        missing: string[]
+    } {
+        const cstTokens = this.collectTokenValues(cst)
+        const missing = this.inputTokens.filter(t => !cstTokens.includes(t))
+
+        return {
+            input: this.inputTokens,
+            cst: cstTokens,
+            missing
+        }
+    }
+    
+    /**
+     * 获取 CST 统计信息
+     */
+    private getCSTStatistics(node: any): {
+        totalNodes: number
+        leafNodes: number
+        maxDepth: number
+        nodeTypes: Map<string, number>
+    } {
+        const stats = {
+            totalNodes: 0,
+            leafNodes: 0,
+            maxDepth: 0,
+            nodeTypes: new Map<string, number>()
+        }
+
+        const traverse = (node: any, depth: number) => {
+            if (!node) return
+
+            stats.totalNodes++
+            stats.maxDepth = Math.max(stats.maxDepth, depth)
+
+            if (node.name) {
+                stats.nodeTypes.set(node.name, (stats.nodeTypes.get(node.name) || 0) + 1)
+            }
+
+            if (!node.children || node.children.length === 0) {
+                stats.leafNodes++
+            } else {
+                for (const child of node.children) {
+                    traverse(child, depth + 1)
+                }
+            }
+        }
+
+        traverse(node, 0)
+        return stats
     }
     
     // ========================================
@@ -345,23 +562,9 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
     // ========================================
     
     /**
-     * 获取性能摘要（简化版）
-     * 
-     * 输出示例：
-     * ```
-     * ⏱️  性能摘要
-     * ────────────────────────────────────────
-     * 总耗时: 12.45ms
-     * 总调用: 133 次
-     * 实际执行: 42 次
-     * 缓存命中: 91 次 (68.5%)
-     * 
-     * Top 5 慢规则:
-     *   1. Expression: 5.23ms (45次, 平均116μs)
-     *   2. Statement: 3.12ms (28次, 平均111μs)
-     * ```
+     * 获取性能摘要
      */
-    getSummary(): string {
+    private getSummary(): string {
         const allStats = Array.from(this.stats.values())
         
         if (allStats.length === 0) {
@@ -404,57 +607,6 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
         return lines.join('\n')
     }
     
-    /**
-     * 获取简洁摘要（单行）
-     * 
-     * 输出示例：
-     * `⏱️ 12.45ms | 8 rules | 133 calls | 68.5% cached`
-     */
-    getShortSummary(): string {
-        const allStats = Array.from(this.stats.values())
-        const totalCalls = allStats.reduce((sum, s) => sum + s.totalCalls, 0)
-        const totalCacheHits = allStats.reduce((sum, s) => sum + s.cacheHits, 0)
-        const totalTime = allStats.reduce((sum, s) => sum + s.totalTime, 0)
-        const ruleCount = allStats.length
-        const cacheHitRate = totalCalls > 0 ? (totalCacheHits / totalCalls * 100).toFixed(1) : '0.0'
-        
-        return `⏱️  ${totalTime.toFixed(2)}ms | ${ruleCount} rules | ${totalCalls.toLocaleString()} calls | ${cacheHitRate}% cached`
-    }
-    
-    /**
-     * 获取原始统计数据（供高级用户使用）
-     * 
-     * 使用示例：
-     * ```typescript
-     * const stats = debugger.getStats()
-     * for (const [ruleName, stat] of stats) {
-     *   console.log(`${ruleName}: ${stat.avgTime}ms`)
-     * }
-     * ```
-     */
-    getStats(): Map<string, RuleStats> {
-        return this.stats
-    }
-    
-    // ========================================
-    // 清空方法
-    // ========================================
-    
-    /**
-     * 清空所有记录（追踪 + 统计 + CST）
-     */
-    clear(): void {
-        // 清空过程追踪
-        this.depth = 0
-        this.ruleStack = []
-        
-        // 清空性能统计
-        this.stats.clear()
-        
-        // 清空 CST
-        this.topLevelCst = null
-    }
-    
     // ========================================
     // CST 相关方法
     // ========================================
@@ -471,36 +623,114 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
     // ========================================
     
     /**
-     * 自动输出调试报告
-     * 
-     * - CST 模式：只输出 CST 结构
-     * - 普通模式：输出性能摘要
+     * 自动输出完整调试报告
      */
     autoOutput(): void {
-        if (this.cstMode) {
-            // CST 模式：只输出 CST
-            this.outputCst()
-        } else {
-            // 普通模式：输出性能摘要
-            console.log('\n' + '='.repeat(50))
-            console.log(this.getSummary())
-            console.log('='.repeat(50))
-        }
-    }
-    
-    /**
-     * 输出 CST 结构
-     */
-    private outputCst(): void {
-        if (!this.topLevelCst) {
-            console.log('\n📊 CST 结构: (empty)')
-            return
+        console.log('\n' + '='.repeat(60))
+        console.log('🔍 Subhuti Debug 输出')
+        console.log('='.repeat(60))
+        
+        // ========================================
+        // 第一部分：性能摘要
+        // ========================================
+        console.log('\n【第一部分：性能摘要】')
+        console.log('─'.repeat(60))
+        console.log('\n' + this.getSummary())
+        
+        // 所有规则详细统计
+        console.log('\n📋 所有规则详细统计:')
+        const allStats = Array.from(this.stats.values())
+            .sort((a, b) => b.executionTime - a.executionTime)
+        
+        allStats.forEach((stat) => {
+            const cacheRate = stat.totalCalls > 0 
+                ? (stat.cacheHits / stat.totalCalls * 100).toFixed(1) 
+                : '0.0'
+            console.log(
+                `  ${stat.ruleName}: ${stat.totalCalls}次 | ` +
+                `执行${stat.actualExecutions}次 | ` +
+                `耗时${stat.executionTime.toFixed(2)}ms | ` +
+                `缓存${cacheRate}%`
+            )
+        })
+        
+        console.log('\n' + '='.repeat(60))
+        
+        // ========================================
+        // 第二部分：CST 验证报告
+        // ========================================
+        if (this.topLevelCst) {
+            console.log('\n【第二部分：CST 验证报告】')
+            console.log('─'.repeat(60))
+            console.log('\n🔍 CST 验证报告')
+            console.log('─'.repeat(60))
+            
+            // 2.1 结构验证
+            const structureErrors = this.validateStructure(this.topLevelCst)
+            console.log(`\n📌 结构完整性: ${structureErrors.length === 0 ? '✅' : '❌'}`)
+            
+            if (structureErrors.length > 0) {
+                console.log(`   发现 ${structureErrors.length} 个错误:`)
+                structureErrors.forEach((err, i) => {
+                    console.log(`\n   [${i + 1}] ${err.path}`)
+                    console.log(`       问题: ${err.issue}`)
+                    if (err.node) {
+                        const nodeStr = JSON.stringify(err.node, null, 2)
+                            .split('\n')
+                            .map(line => `       ${line}`)
+                            .join('\n')
+                        console.log(nodeStr)
+                    }
+                })
+            } else {
+                console.log('   无结构错误')
+            }
+            
+            // 2.2 Token 完整性
+            const tokenResult = this.checkTokenCompleteness(this.topLevelCst)
+            console.log(`\n📌 Token 完整性: ${tokenResult.missing.length === 0 ? '✅' : '❌'}`)
+            console.log(`   输入 tokens: ${tokenResult.input.length} 个`)
+            console.log(`   CST tokens:  ${tokenResult.cst.length} 个`)
+            console.log(`   输入列表: [${tokenResult.input.join(', ')}]`)
+            console.log(`   CST列表:  [${tokenResult.cst.join(', ')}]`)
+            
+            if (tokenResult.missing.length > 0) {
+                console.log(`   ❌ 缺失: [${tokenResult.missing.join(', ')}]`)
+            } else {
+                console.log(`   ✅ 完整保留`)
+            }
+            
+            // 2.3 CST 统计
+            const stats = this.getCSTStatistics(this.topLevelCst)
+            console.log(`\n📌 CST 统计:`)
+            console.log(`   总节点数: ${stats.totalNodes}`)
+            console.log(`   叶子节点: ${stats.leafNodes}`)
+            console.log(`   最大深度: ${stats.maxDepth}`)
+            console.log(`   节点类型: ${stats.nodeTypes.size} 种`)
+            
+            // 节点类型分布
+            console.log(`\n   节点类型分布:`)
+            const sortedTypes = Array.from(stats.nodeTypes.entries())
+                .sort((a, b) => b[1] - a[1])
+            sortedTypes.forEach(([name, count]) => {
+                console.log(`     ${name}: ${count}`)
+            })
+            
+            console.log('─'.repeat(60))
+            
+            // ========================================
+            // 第三部分：CST 可视化
+            // ========================================
+            console.log('\n【第三部分：CST 可视化】')
+            console.log('─'.repeat(60))
+            console.log('\n📊 CST 结构')
+            console.log('─'.repeat(60))
+            console.log(this.formatCst(this.topLevelCst))
+            console.log('─'.repeat(60))
         }
         
         console.log('\n' + '='.repeat(60))
-        console.log('📊 CST 结构')
-        console.log('='.repeat(60))
-        console.log(this.formatCst(this.topLevelCst))
+        console.log('🎉 Debug 输出完成')
         console.log('='.repeat(60))
     }
     
