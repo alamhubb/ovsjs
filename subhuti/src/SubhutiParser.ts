@@ -196,11 +196,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         this._errorHandler.setDetailed(enable)
         return this
     }
-    
-    loopDetection(enable: boolean = true): this {
-        this.enableLoopDetection = enable
-        return this
-    }
 
     /**
      * RAII 模式：自动管理循环检测状态
