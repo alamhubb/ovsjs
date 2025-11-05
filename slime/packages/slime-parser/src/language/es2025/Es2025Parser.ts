@@ -76,22 +76,10 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
         return this.Or([
             // Identifier (排除保留字)
             {alt: () => this.Identifier()},
-            // [~Yield] yield
-            {
-                alt: () => {
-                    if (!Yield) {
-                        this.tokenConsumer.YieldTok()
-                    }
-                }
-            },
-            // [~Await] await
-            {
-                alt: () => {
-                    if (!Await) {
-                        this.tokenConsumer.AwaitTok()
-                    }
-                }
-            }
+            // [~Yield] yield - 条件展开
+            ...(!Yield ? [{alt: () => this.tokenConsumer.YieldTok()}] : []),
+            // [~Await] await - 条件展开
+            ...(!Await ? [{alt: () => this.tokenConsumer.AwaitTok()}] : [])
         ])
     }
 
@@ -122,20 +110,10 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
 
         return this.Or([
             {alt: () => this.Identifier()},
-            {
-                alt: () => {
-                    if (!Yield) {
-                        this.tokenConsumer.YieldTok()
-                    }
-                }
-            },
-            {
-                alt: () => {
-                    if (!Await) {
-                        this.tokenConsumer.AwaitTok()
-                    }
-                }
-            }
+            // [~Yield] yield - 条件展开
+            ...(!Yield ? [{alt: () => this.tokenConsumer.YieldTok()}] : []),
+            // [~Await] await - 条件展开
+            ...(!Await ? [{alt: () => this.tokenConsumer.AwaitTok()}] : [])
         ])
     }
 
@@ -1186,13 +1164,8 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                     this.UnaryExpression(params)
                 }
             },
-            {
-                alt: () => {
-                    if (Await) {
-                        this.AwaitExpression(params)
-                    }
-                }
-            }
+            // [+Await] AwaitExpression - 条件展开
+            ...(Await ? [{alt: () => this.AwaitExpression(params)}] : [])
         ])
     }
 
@@ -1329,13 +1302,8 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                 {alt: () => this.tokenConsumer.LessThanOrEqual()},
                 {alt: () => this.tokenConsumer.GreaterThanOrEqual()},
                 {alt: () => this.tokenConsumer.InstanceofTok()},
-                {
-                    alt: () => {
-                        if (In) {
-                            this.tokenConsumer.InTok()
-                        }
-                    }
-                }
+                // [+In] in - 条件展开，只在 In=true 时才有这个分支
+                ...(In ? [{alt: () => this.tokenConsumer.InTok()}] : [])
             ])
             this.ShiftExpression(params)
         })
@@ -1533,13 +1501,8 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
 
         return this.Or([
             {alt: () => this.ConditionalExpression(params)},
-            {
-                alt: () => {
-                    if (Yield) {
-                        this.YieldExpression(params)
-                    }
-                }
-            },
+            // [+Yield] YieldExpression - 条件展开
+            ...(Yield ? [{alt: () => this.YieldExpression(params)}] : []),
             {alt: () => this.ArrowFunction(params)},
             {alt: () => this.AsyncArrowFunction(params)},
             {
@@ -1661,13 +1624,8 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             {alt: () => this.BreakableStatement(params)},
             {alt: () => this.ContinueStatement(params)},
             {alt: () => this.BreakStatement(params)},
-            {
-                alt: () => {
-                    if (Return) {
-                        this.ReturnStatement(params)
-                    }
-                }
-            },
+            // [+Return] ReturnStatement - 条件展开
+            ...(Return ? [{alt: () => this.ReturnStatement(params)}] : []),
             {alt: () => this.WithStatement(params)},
             {alt: () => this.LabelledStatement(params)},
             {alt: () => this.ThrowStatement(params)},
@@ -2387,53 +2345,47 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                 }
             },
             // [+Await] for await ( var ForBinding[?Yield, ?Await] of AssignmentExpression[+In, ?Yield, ?Await] ) Statement[?Yield, ?Await, ?Return]
-            {
+            ...(Await ? [{
                 alt: () => {
-                    if (Await) {
-                        this.tokenConsumer.ForTok()
-                        this.tokenConsumer.AwaitTok()
-                        this.tokenConsumer.LParen()
-                        this.tokenConsumer.VarTok()
-                        this.ForBinding(params)
-                        this.tokenConsumer.OfTok()
-                        this.AssignmentExpression({...params, In: true})
-                        this.tokenConsumer.RParen()
-                        this.Statement(params)
-                    }
+                    this.tokenConsumer.ForTok()
+                    this.tokenConsumer.AwaitTok()
+                    this.tokenConsumer.LParen()
+                    this.tokenConsumer.VarTok()
+                    this.ForBinding(params)
+                    this.tokenConsumer.OfTok()
+                    this.AssignmentExpression({...params, In: true})
+                    this.tokenConsumer.RParen()
+                    this.Statement(params)
                 }
-            },
+            }] : []),
             // [+Await] for await ( ForDeclaration[?Yield, ?Await] of AssignmentExpression[+In, ?Yield, ?Await] ) Statement[?Yield, ?Await, ?Return]
-            {
+            ...(Await ? [{
                 alt: () => {
-                    if (Await) {
-                        this.tokenConsumer.ForTok()
-                        this.tokenConsumer.AwaitTok()
-                        this.tokenConsumer.LParen()
-                        this.ForDeclaration(params)
+                    this.tokenConsumer.ForTok()
+                    this.tokenConsumer.AwaitTok()
+                    this.tokenConsumer.LParen()
+                    this.ForDeclaration(params)
+                    this.tokenConsumer.OfTok()
+                    this.AssignmentExpression({...params, In: true})
+                    this.tokenConsumer.RParen()
+                    this.Statement(params)
+                }
+            }] : []),
+            // [+Await] for await ( [lookahead ≠ let] LeftHandSideExpression[?Yield, ?Await] of AssignmentExpression[+In, ?Yield, ?Await] ) Statement[?Yield, ?Await, ?Return]
+            ...(Await ? [{
+                alt: () => {
+                    this.tokenConsumer.ForTok()
+                    this.tokenConsumer.AwaitTok()
+                    this.tokenConsumer.LParen()
+                    if (this.tokenNotIs('LetTok', 1)) {
+                        this.LeftHandSideExpression(params)
                         this.tokenConsumer.OfTok()
                         this.AssignmentExpression({...params, In: true})
                         this.tokenConsumer.RParen()
                         this.Statement(params)
                     }
                 }
-            },
-            // [+Await] for await ( [lookahead ≠ let] LeftHandSideExpression[?Yield, ?Await] of AssignmentExpression[+In, ?Yield, ?Await] ) Statement[?Yield, ?Await, ?Return]
-            {
-                alt: () => {
-                    if (Await) {
-                        this.tokenConsumer.ForTok()
-                        this.tokenConsumer.AwaitTok()
-                        this.tokenConsumer.LParen()
-                        if (this.tokenNotIs('LetTok', 1)) {
-                            this.LeftHandSideExpression(params)
-                            this.tokenConsumer.OfTok()
-                            this.AssignmentExpression({...params, In: true})
-                            this.tokenConsumer.RParen()
-                            this.Statement(params)
-                        }
-                    }
-                }
-            }
+            }] : [])
         ])
     }
 
@@ -3141,20 +3093,18 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                     this.tokenConsumer.RBrace()
                 }
             },
-            // [+Default] function ( FormalParameters[~Yield, ~Await] ) { FunctionBody[~Yield, ~Await] }
-            {
+            // [+Default] function ( FormalParameters[~Yield, ~Await] ) { FunctionBody[~Yield, ~Await] } - 条件展开
+            ...(Default ? [{
                 alt: () => {
-                    if (Default) {
-                        this.tokenConsumer.FunctionTok()
-                        this.tokenConsumer.LParen()
-                        this.FormalParameters({Yield: false, Await: false})
-                        this.tokenConsumer.RParen()
-                        this.tokenConsumer.LBrace()
-                        this.FunctionBody({Yield: false, Await: false})
-                        this.tokenConsumer.RBrace()
-                    }
+                    this.tokenConsumer.FunctionTok()
+                    this.tokenConsumer.LParen()
+                    this.FormalParameters({Yield: false, Await: false})
+                    this.tokenConsumer.RParen()
+                    this.tokenConsumer.LBrace()
+                    this.FunctionBody({Yield: false, Await: false})
+                    this.tokenConsumer.RBrace()
                 }
-            }
+            }] : [])
         ])
     }
 
@@ -3186,21 +3136,19 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                     this.tokenConsumer.RBrace()
                 }
             },
-            // [+Default] function * ( FormalParameters[+Yield, ~Await] ) { GeneratorBody }
-            {
+            // [+Default] function * ( FormalParameters[+Yield, ~Await] ) { GeneratorBody } - 条件展开
+            ...(Default ? [{
                 alt: () => {
-                    if (Default) {
-                        this.tokenConsumer.FunctionTok()
-                        this.tokenConsumer.Asterisk()
-                        this.tokenConsumer.LParen()
-                        this.FormalParameters({Yield: true, Await: false})
-                        this.tokenConsumer.RParen()
-                        this.tokenConsumer.LBrace()
-                        this.GeneratorBody()
-                        this.tokenConsumer.RBrace()
-                    }
+                    this.tokenConsumer.FunctionTok()
+                    this.tokenConsumer.Asterisk()
+                    this.tokenConsumer.LParen()
+                    this.FormalParameters({Yield: true, Await: false})
+                    this.tokenConsumer.RParen()
+                    this.tokenConsumer.LBrace()
+                    this.GeneratorBody()
+                    this.tokenConsumer.RBrace()
                 }
-            }
+            }] : [])
         ])
     }
 
@@ -3277,12 +3225,9 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                     this.tokenConsumer.RBrace()
                 }
             },
-            // [+Default] async [no LineTerminator here] function ( FormalParameters[~Yield, +Await] ) { AsyncFunctionBody }
-            {
+            // [+Default] async [no LineTerminator here] function ( FormalParameters[~Yield, +Await] ) { AsyncFunctionBody } - 条件展开
+            ...(Default ? [{
                 alt: () => {
-                    if (!Default) {
-                        return undefined  // Default 参数不符合，此分支失败
-                    }
                     this.tokenConsumer.AsyncTok()
                     if (this.hasLineTerminatorBefore()) {
                         return undefined  // 有换行，此分支失败
@@ -3295,7 +3240,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                     this.AsyncFunctionBody()
                     this.tokenConsumer.RBrace()
                 }
-            }
+            }] : [])
         ])
     }
 
@@ -3381,12 +3326,9 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                     this.tokenConsumer.RBrace()
                 }
             },
-            // [+Default] async [no LineTerminator here] function * ( FormalParameters[+Yield, +Await] ) { AsyncGeneratorBody }
-            {
+            // [+Default] async [no LineTerminator here] function * ( FormalParameters[+Yield, +Await] ) { AsyncGeneratorBody } - 条件展开
+            ...(Default ? [{
                 alt: () => {
-                    if (!Default) {
-                        return undefined  // Default 参数不符合，此分支失败
-                    }
                     this.tokenConsumer.AsyncTok()
                     if (this.hasLineTerminatorBefore()) {
                         return undefined  // 有换行，此分支失败
@@ -3400,7 +3342,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                     this.AsyncGeneratorBody()
                     this.tokenConsumer.RBrace()
                 }
-            }
+            }] : [])
         ])
     }
 
@@ -3549,15 +3491,13 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                     this.ClassTail(params)
                 }
             },
-            // [+Default] class ClassTail[?Yield, ?Await]
-            {
+            // [+Default] class ClassTail[?Yield, ?Await] - 条件展开
+            ...(Default ? [{
                 alt: () => {
-                    if (Default) {
-                        this.tokenConsumer.ClassTok()
-                        this.ClassTail(params)
-                    }
+                    this.tokenConsumer.ClassTok()
+                    this.ClassTail(params)
                 }
-            }
+            }] : [])
         ])
     }
 
