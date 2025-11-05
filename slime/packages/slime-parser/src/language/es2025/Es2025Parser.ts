@@ -15,6 +15,7 @@ import SubhutiCst from 'subhuti/src/struct/SubhutiCst.ts'
 import SubhutiMatchToken from 'subhuti/src/struct/SubhutiMatchToken.ts'
 import Es2025TokenConsumer from './Es2025TokenConsumer.ts'
 import SubhutiParser, { Subhuti, SubhutiRule } from "subhuti/src/SubhutiParser.ts"
+import { TokenNames } from './Es2025Tokens.ts'
 
 
 /**
@@ -522,10 +523,10 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             {
               alt: () => {
                 // 检查前瞻约束
-                if (this.tokenIs('FunctionTok')) {
+                if (this.tokenIs(TokenNames.FunctionTok)) {
                   return undefined
                 }
-                if (this.tokenIs('ClassTok')) {
+                if (this.tokenIs(TokenNames.ClassTok)) {
                   return undefined
                 }
                 if (this.isAsyncFunctionWithoutLineTerminator()) {
@@ -862,13 +863,13 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
   ExpressionStatement(params: ParseParams = {}): SubhutiCst | undefined {
     // 规范 Line 1087: [lookahead ∉ {{, function, async function, class, let [}]
     // 检查前瞻约束
-    if (this.tokenIs('LBrace')) {
+    if (this.tokenIs(TokenNames.LBrace)) {
       return undefined
     }
-    if (this.tokenIs('FunctionTok')) {
+    if (this.tokenIs(TokenNames.FunctionTok)) {
       return undefined
     }
-    if (this.tokenIs('ClassTok')) {
+    if (this.tokenIs(TokenNames.ClassTok)) {
       return undefined
     }
     if (this.isAsyncFunctionWithoutLineTerminator()) {
@@ -1072,10 +1073,10 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
           if (this.isLetBracket()) {
             return undefined
           }
-          if (this.tokenIs('LetTok')) {
+          if (this.tokenIs(TokenNames.LetTok)) {
             return undefined
           }
-          if (this.matchSequence(['AsyncTok', 'OfTok'])) {
+          if (this.matchSequence([TokenNames.AsyncTok, TokenNames.OfTok])) {
             return undefined
           }
           
@@ -4097,7 +4098,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
       {
         alt: () => {
           // 检查不能是 {
-          if (this.tokenIs('LBrace')) {
+          if (this.tokenIs(TokenNames.LBrace)) {
             return undefined
           }
           this.ExpressionBody({ In: params.In, Await: true })
@@ -4307,7 +4308,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
       {
         alt: () => {
           // 检查不能是 {
-          if (this.tokenIs('LBrace')) {
+          if (this.tokenIs(TokenNames.LBrace)) {
             return undefined
           }
           this.ExpressionBody({ In: params.In, Await: false })
