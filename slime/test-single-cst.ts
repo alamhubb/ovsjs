@@ -5,11 +5,9 @@
  *   npx tsx test-single-cst.ts "const [a, b] = arr"
  *   npx tsx test-single-cst.ts "class Test { *gen() { yield 1 } }"
  */
-import Es6Parser from './packages/slime-parser/src/language/es2015/Es6Parser.ts'
-import {es6Tokens} from './packages/slime-parser/src/language/es2015/Es6Tokens.ts'
 import SubhutiLexer from 'subhuti/src/SubhutiLexer.ts'
-import Es2020Parser from "./packages/slime-parser/src/language/es2020/Es2020Parser.ts"
-import {es2020Tokens} from "./packages/slime-parser/src/language/es2020/Es2020Tokens.ts"
+import {es2025Tokens} from "slime-parser/src/language/es2025/Es2025Tokens";
+import Es2025Parser from "slime-parser/src/language/es2025/Es2025Parser";
 
 // 收集CST中的所有token值
 function collectTokenValues(node: any): string[] {
@@ -181,7 +179,7 @@ for (let i = 0; i < testCases.length; i++) {
     
     try {
         // 词法分析
-        const lexer = new SubhutiLexer(es2020Tokens)
+        const lexer = new SubhutiLexer(es2025Tokens)
         const tokens = lexer.tokenize(code)
         
         const inputTokens = tokens
@@ -198,7 +196,7 @@ for (let i = 0; i < testCases.length; i++) {
         console.log(`  ✅ 词法分析: ${tokens.length} tokens (有效: ${inputTokens.length})`)
         
         // 语法分析
-        const parser = new Es2020Parser(tokens).debug()
+        const parser = new Es2025Parser(tokens).debug()
         const cst = parser.Program()
         console.log(`  ✅ 语法分析: CST生成成功`)
         
@@ -251,7 +249,7 @@ for (let i = 0; i < testCases.length; i++) {
                 try {
                     const lexer = new SubhutiLexer(es2020Tokens)
                     const tokens = lexer.tokenize(testCase.code)
-                    const parser = new Es2020Parser(tokens)
+                    const parser = new Es2025Parser(tokens)
                     const cst = parser.Program()
                     
                     console.log('\n🌳 完整CST结构（失败的测试）:')
@@ -298,7 +296,7 @@ if (firstFailure === -1) {
     if (failedCode.includes('null:')) {
         console.log('  - 问题：null 关键字不能作为对象属性名')
         console.log('  - 原因：LiteralPropertyName 或 PropertyName 规则未支持 null')
-        console.log('  - 建议：检查 Es2020Parser 或 Es6Parser 中的 LiteralPropertyName 规则')
+        console.log('  - 建议：检查 Es2025Parser 或 Es6Parser 中的 LiteralPropertyName 规则')
         console.log('  - 规范：ES6 允许所有 IdentifierName（包括关键字）作为属性名')
     } else if (failedCode.match(/\b(true|false|if|class|for|while|return|function)\s*:/)) {
         console.log('  - 问题：其他关键字不能作为对象属性名')
