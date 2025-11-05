@@ -176,7 +176,7 @@ export const es2025TokensObj = {
     // ============================================
     // A.1.2 注释 (Comments)
     // ============================================
-    
+
     HashbangComment: createValueRegToken(TokenNames.HashbangComment, /#![^\n\r]*/, '', true),
     MultiLineComment: createValueRegToken(TokenNames.MultiLineComment, /\/\*[\s\S]*?\*\//, '', true),
     SingleLineComment: createValueRegToken(TokenNames.SingleLineComment, /\/\/[^\n\r]*/, '', true),
@@ -184,7 +184,7 @@ export const es2025TokensObj = {
     // ============================================
     // A.1.1 空白符和换行符
     // ============================================
-    
+
     WhiteSpace: createValueRegToken(TokenNames.WhiteSpace, /[\t\v\f \u00A0\uFEFF]+/, '', true),
     LineTerminatorCRLF: createValueRegToken(TokenNames.LineTerminator, /\r\n/, '', true),
     LineTerminator: createValueRegToken(TokenNames.LineTerminator, /[\n\r\u2028\u2029]/, '', true),
@@ -192,7 +192,7 @@ export const es2025TokensObj = {
     // ============================================
     // A.1.5 关键字和保留字
     // ============================================
-    
+
     AwaitTok: createKeywordToken(TokenNames.AwaitTok, 'await'),
     BreakTok: createKeywordToken(TokenNames.BreakTok, 'break'),
     CaseTok: createKeywordToken(TokenNames.CaseTok, 'case'),
@@ -231,7 +231,7 @@ export const es2025TokensObj = {
     WhileTok: createKeywordToken(TokenNames.WhileTok, 'while'),
     WithTok: createKeywordToken(TokenNames.WithTok, 'with'),
     YieldTok: createKeywordToken(TokenNames.YieldTok, 'yield'),
-    
+
     AsyncTok: createKeywordToken(TokenNames.AsyncTok, 'async'),
     LetTok: createKeywordToken(TokenNames.LetTok, 'let'),
     StaticTok: createKeywordToken(TokenNames.StaticTok, 'static'),
@@ -246,7 +246,7 @@ export const es2025TokensObj = {
     // ============================================
     // A.1.9 数字字面量
     // ============================================
-    
+
     BigIntHex: createEmptyValueRegToken(TokenNames.BigIntLiteral, /0[xX][0-9a-fA-F](_?[0-9a-fA-F])*n/),
     BigIntBinary: createEmptyValueRegToken(TokenNames.BigIntLiteral, /0[bB][01](_?[01])*n/),
     BigIntOctal: createEmptyValueRegToken(TokenNames.BigIntLiteral, /0[oO][0-7](_?[0-7])*n/),
@@ -260,14 +260,14 @@ export const es2025TokensObj = {
     // ============================================
     // A.1.10 字符串字面量
     // ============================================
-    
+
     StringDoubleQuote: createEmptyValueRegToken(TokenNames.StringLiteral, /"(?:[^\n\r"\\]|\\(?:['"\\bfnrtv]|[^'"\\bfnrtv0-9xu\n\r]|0(?![0-9])|x[0-9a-fA-F]{2}|u(?:[0-9a-fA-F]{4}|\{[0-9a-fA-F]+\})))*"/),
     StringSingleQuote: createEmptyValueRegToken(TokenNames.StringLiteral, /'(?:[^\n\r'\\]|\\(?:['"\\bfnrtv]|[^'"\\bfnrtv0-9xu\n\r]|0(?![0-9])|x[0-9a-fA-F]{2}|u(?:[0-9a-fA-F]{4}|\{[0-9a-fA-F]+\})))*'/),
 
     // ============================================
     // A.1.12 模板字面量
     // ============================================
-    
+
     TemplateHead: createEmptyValueRegToken(TokenNames.TemplateHead, /`(?:[^`\\$]|\\[\s\S]|\$(?!\{))*\$\{/),
     TemplateMiddle: createEmptyValueRegToken(TokenNames.TemplateMiddle, /\}(?:[^`\\$]|\\[\s\S]|\$(?!\{))*\$\{/),
     TemplateTail: createEmptyValueRegToken(TokenNames.TemplateTail, /\}(?:[^`\\$]|\\[\s\S]|\$(?!\{))*`/),
@@ -276,7 +276,7 @@ export const es2025TokensObj = {
     // ============================================
     // A.1.8 运算符和标点符号
     // ============================================
-    
+
     // 4 字符
     UnsignedRightShiftAssign: createValueRegToken(TokenNames.UnsignedRightShiftAssign, />>>=/, '>>>='),
 
@@ -345,15 +345,32 @@ export const es2025TokensObj = {
     // ============================================
     // A.1.5 标识符
     // ============================================
-    
+
     PrivateIdentifier: createEmptyValueRegToken(TokenNames.PrivateIdentifier, /#[a-zA-Z_$][a-zA-Z0-9_$]*/),
     Identifier: createEmptyValueRegToken(TokenNames.Identifier, /[a-zA-Z_$][a-zA-Z0-9_$]*/),
 
     // ============================================
     // A.1.11 正则字面量
     // ============================================
-    
+
     RegularExpressionLiteral: createEmptyValueRegToken(TokenNames.RegularExpressionLiteral, /\/(?:[^\n\r\/\\[]|\\[^\n\r]|\[(?:[^\n\r\]\\]|\\[^\n\r])*\])+\/[dgimsuvy]*/),
 }
 
 export const es2025Tokens: SubhutiCreateToken[] = Object.values(es2025TokensObj)
+
+// ============================================
+// 保留字集合（用于 Identifier 验证）
+// ============================================
+
+/**
+ * ES2025 保留字集合
+ * 来源：ECMAScript® 2025 规范 A.1.5 Keywords and Reserved Words
+ *
+ * 用途：在 Parser 中验证标识符是否为保留字
+ * 实现：自动从所有关键字 token 中提取，确保单一数据源
+ */
+export const ReservedWords = new Set(
+    es2025Tokens
+        .filter(token => token.isKeyword)  // 过滤出所有关键字 token
+        .map(token => token.value!)        // 提取 value（'await', 'break' 等）
+)

@@ -15,7 +15,7 @@ import SubhutiCst from 'subhuti/src/struct/SubhutiCst.ts'
 import SubhutiMatchToken from 'subhuti/src/struct/SubhutiMatchToken.ts'
 import Es2025TokenConsumer from './Es2025TokenConsumer.ts'
 import SubhutiParser, { Subhuti, SubhutiRule } from "subhuti/src/SubhutiParser.ts"
-import { TokenNames } from './Es2025Tokens.ts'
+import { TokenNames, ReservedWords } from './Es2025Tokens.ts'
 
 
 /**
@@ -2714,21 +2714,11 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
    */
   @SubhutiRule
   Identifier(): SubhutiCst | undefined {
-    // 保留字列表（来自 ES2025 规范 A.1）
-    const reservedWords = new Set([
-      'await', 'break', 'case', 'catch', 'class', 'const', 'continue',
-      'debugger', 'default', 'delete', 'do', 'else', 'enum', 'export',
-      'extends', 'false', 'finally', 'for', 'function', 'if', 'import',
-      'in', 'instanceof', 'new', 'null', 'return', 'super', 'switch',
-      'this', 'throw', 'true', 'try', 'typeof', 'var', 'void', 'while',
-      'with', 'yield'
-    ])
-    
     const cst = this.tokenConsumer.Identifier()
     if (!cst) return undefined
     
-    // 检查是否是保留字
-    if (cst.value && reservedWords.has(cst.value)) {
+    // 检查是否是保留字（来自 ES2025 规范 A.1）
+    if (cst.value && ReservedWords.has(cst.value)) {
       this._parseSuccess = false
       return undefined
     }
