@@ -1424,25 +1424,55 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     /**
      * CoalesceExpression[In, Yield, Await] :
      *     CoalesceExpressionHead[?In, ?Yield, ?Await] ?? BitwiseORExpression[?In, ?Yield, ?Await]
+     * 
+     * CoalesceExpressionHead[In, Yield, Await] :
+     *     CoalesceExpression[?In, ?Yield, ?Await]
+     *     BitwiseORExpression[?In, ?Yield, ?Await]
+     * 
+     * ⚠️ 左递归改写说明：
+     * 
+     * 规范使用左递归表达左结合性：
+     *   CoalesceExpression → CoalesceExpressionHead → CoalesceExpression (循环！)
+     * 
+     * PEG Parser 不支持左递归，需改写为迭代形式：
+     *   原语义：a ?? b ?? c ?? d  (左结合)
+     *   PEG改写：BaseExpression ( ?? BaseExpression )*
+     * 
+     * 改写方案：
+     *   1. 先匹配基础表达式（BitwiseORExpression）
+     *   2. 使用 Many 循环匹配后续的 ?? BitwiseORExpression
+     *   3. 删除 CoalesceExpressionHead（不再需要）
+     * 
+     * 这样既符合 PEG 语法，又保持了左结合语义。
      */
     @SubhutiRule
     CoalesceExpression(params: ExpressionParams = {}): SubhutiCst | undefined {
-        this.CoalesceExpressionHead(params)
-        this.tokenConsumer.NullishCoalescing()
-        return this.BitwiseORExpression(params)
+        // 基础表达式
+        this.BitwiseORExpression(params)
+        
+        // 后续的 ?? 运算符（0次或多次）
+        this.Many(() => {
+            this.tokenConsumer.NullishCoalescing()  // ??
+            this.BitwiseORExpression(params)        // 右操作数
+        })
+        
+        return this.curCst
     }
 
     /**
      * CoalesceExpressionHead[In, Yield, Await] :
      *     CoalesceExpression[?In, ?Yield, ?Await]
      *     BitwiseORExpression[?In, ?Yield, ?Await]
+     * 
+     * ⚠️ 已废弃：此规则仅用于规范中的左递归表达
+     * 在 PEG 实现中，CoalesceExpression 直接使用 Many 改写，不再需要此规则。
+     * 
+     * 保留此方法仅为文档目的，实际不会被调用。
      */
     @SubhutiRule
     CoalesceExpressionHead(params: ExpressionParams = {}): SubhutiCst | undefined {
-        return this.Or([
-            {alt: () => this.CoalesceExpression(params)},
-            {alt: () => this.BitwiseORExpression(params)}
-        ])
+        // 此方法已废弃，不应被调用
+        throw new Error('CoalesceExpressionHead 已废弃，请使用 CoalesceExpression')
     }
 
     /**
