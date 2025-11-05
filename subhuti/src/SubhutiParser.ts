@@ -421,8 +421,12 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             for (let i = 0; i < totalCount; i++) {
                 const alt = alternatives[i]
                 const isLast = i === totalCount - 1
+                const isRetry = i > 0
+                
+                // 尝试获取规则名称（如果是直接方法引用，可以获取到 name）
+                const ruleName = alt.alt.name || undefined
 
-                this._debugger?.onOrBranch?.(i, totalCount, this.tokenIndex)
+                this._debugger?.onOrBranch?.(i, totalCount, this.tokenIndex, ruleName, isRetry)
 
                 if (isLast) {
                     this.allowErrorDepth--
@@ -460,6 +464,9 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             return undefined
         }
 
+        // 通知调试器：Many 的子级需要推1格
+        this._debugger?.onManyEnter?.()
+
         return this.withAllowError(() => {
             while (this.tryAndRestore(fn)) {
                 // 使用默认 checkLoop: true，自动检测循环
@@ -478,6 +485,9 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             return undefined
         }
 
+        // 通知调试器：Option 的子级需要推1格
+        this._debugger?.onOptionEnter?.()
+
         return this.withAllowError(() => {
             // checkLoop: false - Option 允许匹配 0 次（不消费 token）
             this.tryAndRestore(fn, false)
@@ -494,6 +504,9 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         if (!this._parseSuccess) {
             return undefined
         }
+
+        // 通知调试器：AtLeastOne 的子级需要推1格
+        this._debugger?.onAtLeastOneEnter?.()
 
         fn()
         if (!this._parseSuccess) {

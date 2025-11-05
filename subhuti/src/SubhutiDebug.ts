@@ -80,7 +80,9 @@ export interface SubhutiDebugger {
     onOrBranch?(
         branchIndex: number,
         totalBranches: number,
-        tokenIndex: number
+        tokenIndex: number,
+        ruleName?: string,
+        isRetry?: boolean
     ): void
     
     /**
@@ -90,6 +92,21 @@ export interface SubhutiDebugger {
         fromTokenIndex: number,
         toTokenIndex: number
     ): void
+    
+    /**
+     * Many 规则进入事件
+     */
+    onManyEnter?(): void
+    
+    /**
+     * AtLeastOne 规则进入事件
+     */
+    onAtLeastOneEnter?(): void
+    
+    /**
+     * Option 规则进入事件
+     */
+    onOptionEnter?(): void
 }
 
 // ============================================
@@ -120,45 +137,61 @@ export interface SubhutiDebugger {
  * ```
  * 
  * ============================================================
+ * 缩进规则（v3.0 - 智能缩进）
+ * ============================================================
+ * 
+ * ✅ 取消默认层级缩进
+ *    - 不再根据规则嵌套深度自动缩进
+ * 
+ * ✅ 同级垂直对齐
+ *    - 同一父节点下的所有子节点必须垂直对齐
+ *    - 所有推格规则只影响子级，同级始终对齐
+ * 
+ * ✅ Or/Many/AtLeastOne：第一条规则的子级推1格
+ *    - 第一条规则本身不推，其子级推1格（2个空格）
+ * 
+ * ✅ Consume：自己推1格
+ *    - Consume 语句本身推1格（2个空格）
+ *    - 不影响 Consume 的同级规则
+ * 
+ * ✅ 消费Token后：当前规则的后续子规则推1格（不影响兄弟）
+ *    - 规则内部消费 token 后，该规则的子级推1格（2个空格）
+ *    - 不影响该规则的同级规则
+ * 
+ * ✅ Option：包裹内容的子级推1格
+ *    - Option 包裹内容的子级推1格（2个空格）
+ *    - 不影响同级规则
+ * 
+ * 🔄 累积效果：
+ *    - 多个推格规则可以累积（例如：Or +2空格 + 消费Token +2空格 = +4空格）
+ *    - 累积只作用于子级，同级始终保持对齐
+ * 
+ * ============================================================
  * 输出格式示例（代码：let count = 1）
  * ============================================================
  * 
  * 【解析过程 - 实时输出】
  * ──────────────────────────────────────
- * ➡️  Script  @token[0]
- *   ➡️  StatementList  @token[0]
- *     🔀 Or[2 branches]  trying #0  @token[0]
- *     ➡️  Statement  @token[0]
- *       ➡️  VariableStatement  @token[0]
- *         ➡️  VariableDeclaration  @token[0]
- *           ➡️  LetDeclaration  @token[0]
- *             🔹 Consume  token[0] - let - <LetTok>  ✅
- *             ➡️  BindingList  @token[1]
- *               ➡️  LexicalBinding  @token[1]
- *                 ➡️  BindingIdentifier  @token[1]
- *                   🔹 Consume  token[1] - count - <Identifier>  ✅
- *                 ⬅️  BindingIdentifier (0.05ms)
- *                 ➡️  Initializer  @token[2]
- *                   🔹 Consume  token[2] - = - <Assign>  ✅
- *                   ➡️  AssignmentExpression  @token[3]
- *                     ➡️  ConditionalExpression  @token[3]
- *                       ➡️  PrimaryExpression  @token[3]
- *                         ➡️  Literal  @token[3]
- *                           🔹 Consume  token[3] - 1 - <DecimalLiteral>  ✅
- *                         ⬅️  Literal (0.02ms)
- *                       ⬅️  PrimaryExpression (0.08ms)
- *                     ⬅️  ConditionalExpression (0.15ms)
- *                   ⬅️  AssignmentExpression (0.18ms)
- *                 ⬅️  Initializer (0.22ms)
- *               ⬅️  LexicalBinding (0.35ms)
- *             ⬅️  BindingList (0.38ms)
- *           ⬅️  LetDeclaration (0.45ms)
- *         ⬅️  VariableDeclaration (0.48ms)
- *       ⬅️  VariableStatement (0.52ms)
- *     ⬅️  Statement (0.55ms)
- *     ⏪ Backtrack  token[4] → token[4]
- *   ⬅️  StatementList (0.68ms)
- * ⬅️  Script (0.75ms)
+ * ➡️  Script
+ * ➡️  StatementList
+ * 🔀 Or → trying Statement (#0/2)
+ * ➡️  Statement
+ *   ➡️  VariableStatement
+ *   ➡️  VariableDeclaration
+ *   ➡️  LetDeclaration
+ *     🔹 Consume  token[0] - let - <LetTok>  ✅
+ *     ➡️  BindingList
+ *     ➡️  LexicalBinding
+ *     ➡️  BindingIdentifier
+ *       🔹 Consume  token[1] - count - <Identifier>  ✅
+ *     ➡️  Initializer
+ *       🔹 Consume  token[2] - = - <Assign>  ✅
+ *       ➡️  AssignmentExpression
+ *       ➡️  ConditionalExpression
+ *       ➡️  PrimaryExpression
+ *       ➡️  Literal
+ *         🔹 Consume  token[3] - 1 - <DecimalLiteral>  ✅
+ * ⏪ Backtrack  token[4] → token[4]
  * 
  * ============================================================
  * 
@@ -261,8 +294,16 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
     // ========================================
     // 过程追踪数据
     // ========================================
-    private depth = 0
-    public ruleStack: Array<{ruleName: string, startTime: number}> = []
+    private indentLevel = 0  // 当前缩进级别（不再使用 depth）
+    public ruleStack: Array<{
+        ruleName: string
+        startTime: number
+        indentLevel: number      // 该规则的缩进级别
+        hasConsumedToken: boolean // 该规则是否消费了 token
+    }> = []
+    
+    // 智能缩进控制
+    private pendingIndentIncrease = 0  // 待应用的缩进增量（用于下一个子规则）
 
     // ========================================
     // 性能统计数据
@@ -308,15 +349,28 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
     onRuleEnter(ruleName: string, tokenIndex: number): number {
         const startTime = performance.now()
         
-        // 1. 过程追踪：立即输出规则进入
-        const indent = '  '.repeat(this.depth)
-        console.log(`${indent}➡️  ${ruleName}  @token[${tokenIndex}]`)
+        // 1. 输出规则进入（使用当前缩进级别）
+        const indent = '  '.repeat(this.indentLevel)
+        console.log(`${indent}➡️  ${ruleName}`)
         
-        // 2. 记录规则栈（用于 onRuleExit 时匹配）
-        this.ruleStack.push({ruleName, startTime})
-        this.depth++
+        // 2. 记录该规则进入时的缩进级别
+        const enterIndentLevel = this.indentLevel
         
-        // 3. 性能统计：初始化统计数据
+        // 3. 应用待增加的缩进（Or/Many/AtLeastOne/Option影响子规则）
+        if (this.pendingIndentIncrease > 0) {
+            this.indentLevel += this.pendingIndentIncrease
+            this.pendingIndentIncrease = 0
+        }
+        
+        // 4. 记录规则栈
+        this.ruleStack.push({
+            ruleName,
+            startTime,
+            indentLevel: enterIndentLevel,  // 记录进入时的缩进（用于退出时恢复）
+            hasConsumedToken: false  // 初始为 false，consume 时会更新
+        })
+        
+        // 5. 性能统计：初始化统计数据
         let stat = this.stats.get(ruleName)
         if (!stat) {
             stat = {
@@ -342,24 +396,20 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
         cacheHit: boolean,
         context?: unknown
     ): void {
-        this.depth--
-        
         // 计算耗时
         let duration = 0
         if (context !== undefined && typeof context === 'number') {
             duration = performance.now() - context
         }
         
-        // 1. 过程追踪：立即输出规则退出
-        const indent = '  '.repeat(this.depth)
-        const cacheTag = cacheHit ? ' ⚡CACHED' : ''
-        const timeTag = duration > 0 ? ` (${duration.toFixed(2)}ms)` : ''
-        console.log(`${indent}⬅️  ${ruleName}${cacheTag}${timeTag}`)
+        // 1. 弹出规则栈并恢复缩进
+        const exitedRule = this.ruleStack.pop()
+        if (exitedRule) {
+            // 恢复到该规则进入前的缩进级别（这会抵消规则内部的缩进增加）
+            this.indentLevel = exitedRule.indentLevel
+        }
         
-        // 2. 弹出规则栈
-        this.ruleStack.pop()
-        
-        // 3. 性能统计：更新统计数据
+        // 2. 性能统计：更新统计数据
         const stat = this.stats.get(ruleName)
         if (stat) {
             stat.totalTime += duration
@@ -384,34 +434,78 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
         tokenName: string,
         success: boolean
     ): void {
-        const indent = '  '.repeat(this.depth)
+        // 规则2：Consume 自己推1格
+        const consumeIndent = '  '.repeat(this.indentLevel + 1)
         const status = success ? '✅' : '❌'
         const value = tokenValue.length > 20 ? tokenValue.slice(0, 20) + '...' : tokenValue
         
         console.log(
-            `${indent}🔹 Consume  token[${tokenIndex}] - ${value} - <${tokenName}>  ${status}`
+            `${consumeIndent}🔹 Consume  token[${tokenIndex}] - ${value} - <${tokenName}>  ${status}`
         )
+        
+        // 规则3：消费 token 后，当前规则的后续子规则需要推1格
+        if (success) {
+            this.indentLevel++
+            
+            // 标记当前规则已消费 token（用于判断）
+            if (this.ruleStack.length > 0) {
+                const currentRule = this.ruleStack[this.ruleStack.length - 1]
+                currentRule.hasConsumedToken = true
+            }
+        }
     }
     
     onOrBranch(
         branchIndex: number,
         totalBranches: number,
-        tokenIndex: number
+        tokenIndex: number,
+        ruleName?: string,
+        isRetry?: boolean
     ): void {
-        const indent = '  '.repeat(this.depth)
+        // 输出 Or 信息（使用当前缩进）
+        const indent = '  '.repeat(this.indentLevel)
+        const ruleInfo = ruleName ? ` ${ruleName}` : ''
+        const status = isRetry ? '🔀 Or failed, trying' : '🔀 Or → trying'
         console.log(
-            `${indent}🔀 Or[${totalBranches} branches]  trying #${branchIndex}  @token[${tokenIndex}]`
+            `${indent}${status}${ruleInfo} (#${branchIndex}/${totalBranches})`
         )
+        
+        // 规则1：Or 下面第一条规则的【子级】推1格
+        // 只在第一个分支时设置（branchIndex === 0）
+        if (branchIndex === 0) {
+            this.pendingIndentIncrease += 1
+        }
     }
     
     onBacktrack(
         fromTokenIndex: number,
         toTokenIndex: number
     ): void {
-        const indent = '  '.repeat(this.depth)
+        const indent = '  '.repeat(this.indentLevel)
         console.log(
             `${indent}⏪ Backtrack  token[${fromTokenIndex}] → token[${toTokenIndex}]`
         )
+    }
+    
+    /**
+     * Many 规则进入事件（规则1：子级推1格）
+     */
+    onManyEnter?(): void {
+        this.pendingIndentIncrease += 1
+    }
+    
+    /**
+     * AtLeastOne 规则进入事件（规则1：子级推1格）
+     */
+    onAtLeastOneEnter?(): void {
+        this.pendingIndentIncrease += 1
+    }
+    
+    /**
+     * Option 规则进入事件（规则4：子级推1格）
+     */
+    onOptionEnter?(): void {
+        this.pendingIndentIncrease += 1
     }
     
     // ========================================
