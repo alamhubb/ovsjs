@@ -62,7 +62,7 @@ export function SubhutiRule(targetFun: any, context: ClassMethodDecoratorContext
 }
 
 export type SubhutiTokenConsumerConstructor<T extends SubhutiTokenConsumer> =
-    new (ctx: ITokenConsumerContext) => T
+    new (parser: SubhutiParser) => T
 
 // ============================================
 // SubhutiParser 核心类
