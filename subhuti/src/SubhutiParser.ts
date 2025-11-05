@@ -198,49 +198,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     }
 
     /**
-     * RAII 模式：自动管理循环检测状态
-     * 
-     * 原理：检测 (rule, position) 在调用栈中是否重复
-     * - 如果重复 → 100% 确定是循环（左递归或循环依赖）
-     * - 不会误报
-     * 
-     * 设计：
-     * - 进入时自动检测并入栈
-     * - 退出时自动出栈（try-finally 保证）
-     * - 闭包自动捕获 key，无需手动管理
-     * 
-     * @param ruleName 规则名称
-     * @param isTopLevel 是否是顶层规则
-     * @param fn 要执行的函数
-     * @returns 函数执行结果
-     */
-    private withLoopDetection<T>(ruleName: string, isTopLevel: boolean, fn: () => T): T {
-        // 顶层规则或检测已禁用，直接执行
-        if (isTopLevel) {
-            return fn()
-        }
-        
-        const key = `${ruleName}:${this.tokenIndex}`
-        
-        // O(1) 快速检测是否重复
-        if (this.loopDetectionSet.has(key)) {
-            // 发现循环！抛出错误
-            this.throwLoopError(ruleName)
-        }
-        
-        // 入栈
-        this.loopDetectionSet.add(key)
-        
-        try {
-            // 执行函数
-            return fn()
-        } finally {
-            // 出栈（无论成功、return、异常都会执行）
-            this.loopDetectionSet.delete(key)
-        }
-    }
-    
-    /**
      * 抛出循环错误信息
      * 
      * @param ruleName 当前规则名称
@@ -277,7 +234,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
     /**
      * 规则执行入口（由 @SubhutiRule 装饰器调用）
-     * 职责：前置检查 → Packrat 缓存 → 核心执行 → 后置处理
+     * 职责：前置检查 → 顶层/非顶层分支 → Packrat 缓存 → 核心执行 → 后置处理
      */
     private executeRuleWrapper(targetFun: Function, ruleName: string, className: string): SubhutiCst | undefined {
         const isTopLevel = this.cstStack.length === 0 && this.ruleStack.length === 0
@@ -285,12 +242,41 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             return undefined
         }
         
-        // ✅ RAII 模式：自动管理循环检测（进入检测、执行、退出清理）
-        return this.withLoopDetection(ruleName, isTopLevel, () => {
+        // 顶层规则：直接执行（无需缓存和循环检测）
+        if (isTopLevel) {
+            const observeContext = this._debugger?.onRuleEnter(ruleName, this.tokenIndex)
+            const cst = this.executeRuleCore(ruleName, targetFun)
+            this._postProcessRule(ruleName, cst, isTopLevel, observeContext)
+            return cst
+        }
+        
+        // 非顶层规则：缓存 + 循环检测
+        return this.executeRuleWithCacheAndLoopDetection(ruleName, targetFun)
+    }
+
+    /**
+     * 非顶层规则执行（带缓存和循环检测）
+     * 职责：循环检测 → Packrat 缓存查询 → 核心执行 → 缓存存储
+     * 
+     * ✅ RAII 模式：自动管理循环检测（进入检测、执行、退出清理）
+     */
+    private executeRuleWithCacheAndLoopDetection(ruleName: string, targetFun: Function): SubhutiCst | undefined {
+        const key = `${ruleName}:${this.tokenIndex}`
+        
+        // O(1) 快速检测是否重复
+        if (this.loopDetectionSet.has(key)) {
+            // 发现循环！抛出错误
+            this.throwLoopError(ruleName)
+        }
+        
+        // 入栈
+        this.loopDetectionSet.add(key)
+        
+        try {
             const observeContext = this._debugger?.onRuleEnter(ruleName, this.tokenIndex)
 
             // Packrat Parsing 缓存查询
-            if (!isTopLevel && this.enableMemoization) {
+            if (this.enableMemoization) {
                 const cached = this._cache.get(ruleName, this.tokenIndex)
                 if (cached !== undefined) {
                     this._debugger?.onRuleExit(ruleName, cached.endTokenIndex, true, observeContext)
@@ -307,7 +293,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             const cst = this.executeRuleCore(ruleName, targetFun)
 
             // 缓存存储
-            if (!isTopLevel && this.enableMemoization) {
+            if (this.enableMemoization) {
                 this._cache.set(ruleName, startTokenIndex, {
                     success: cst !== undefined,
                     endTokenIndex: this.tokenIndex,
@@ -316,10 +302,13 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
                 })
             }
 
-            this._postProcessRule(ruleName, cst, isTopLevel, observeContext)
+            this._postProcessRule(ruleName, cst, false, observeContext)
             
             return cst
-        })
+        } finally {
+            // 出栈（无论成功、return、异常都会执行）
+            this.loopDetectionSet.delete(key)
+        }
     }
 
     private _preCheckRule(ruleName: string, className: string, isTopLevel: boolean): boolean {
