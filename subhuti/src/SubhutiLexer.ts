@@ -1,6 +1,12 @@
 import { SubhutiCreateToken } from './struct/SubhutiCreateToken.ts'
 import SubhutiMatchToken from './struct/SubhutiMatchToken.ts'
 
+export const SubhutiLexerTokenNames = {
+    TemplateHead: 'TemplateHead',
+    TemplateMiddle: 'TemplateMiddle',
+    TemplateTail: 'TemplateTail',
+}
+
 /**
  * Subhuti Lexer - 词法分析器
  * 
@@ -12,12 +18,27 @@ import SubhutiMatchToken from './struct/SubhutiMatchToken.ts'
  * @version 1.0.0
  */
 export default class SubhutiLexer {
-  private readonly _tokens: SubhutiCreateToken[]
+  private readonly _allTokens: SubhutiCreateToken[]
+  private readonly _tokensOutsideTemplate: SubhutiCreateToken[]
   private _templateDepth = 0
+  
+  // Token 名称常量（从外部传入）
+  private readonly _templateHeadName: string
+  private readonly _templateMiddleName: string
+  private readonly _templateTailName: string
 
-  constructor(tokens: SubhutiCreateToken[]) {
+  constructor(
+    tokens: SubhutiCreateToken[], 
+    templateHeadName: string = 'TemplateHead',
+    templateMiddleName: string = 'TemplateMiddle',
+    templateTailName: string = 'TemplateTail'
+  ) {
+    this._templateHeadName = templateHeadName
+    this._templateMiddleName = templateMiddleName
+    this._templateTailName = templateTailName
+    
     // 预编译：给所有正则加 ^ 锚点，并保留原有 flags
-    this._tokens = tokens.map(token => {
+    this._allTokens = tokens.map(token => {
       if (!token.pattern) return token
       
       return {
@@ -25,6 +46,11 @@ export default class SubhutiLexer {
         pattern: new RegExp('^' + token.pattern.source, token.pattern.flags)
       }
     })
+    
+    // 预过滤：只过滤一次，构建模板外部使用的 token 集合
+    this._tokensOutsideTemplate = this._allTokens.filter(
+      t => t.name !== this._templateMiddleName && t.name !== this._templateTailName
+    )
   }
 
   /**
@@ -121,17 +147,15 @@ export default class SubhutiLexer {
   /**
    * 根据模板深度返回活跃的 tokens
    * 实现 ECMAScript 规范的 InputElement 切换机制
+   * 
+   * 使用预编译策略：构造时过滤一次，运行时只选择数组（性能优化）
    */
   private _getActiveTokens(): SubhutiCreateToken[] {
     // 在模板内部：所有 tokens 都可用
-    if (this._templateDepth > 0) {
-      return this._tokens
-    }
-
-    // 在模板外部：过滤掉只能在模板内部出现的 tokens
-    return this._tokens.filter(
-      t => t.name !== 'TemplateMiddle' && t.name !== 'TemplateTail'
-    )
+    // 在模板外部：使用预过滤的 token 集合
+    return this._templateDepth > 0 
+      ? this._allTokens 
+      : this._tokensOutsideTemplate
   }
 
   /**
@@ -141,13 +165,14 @@ export default class SubhutiLexer {
    * TemplateMiddle: 保持深度
    */
   private _updateTemplateDepth(tokenName: string): void {
-    if (tokenName === 'TemplateHead') {
+    if (tokenName === this._templateHeadName) {
       this._templateDepth++
-    } else if (tokenName === 'TemplateTail') {
+    } else if (tokenName === this._templateTailName) {
       this._templateDepth--
     }
   }
 }
+
 
 
 
