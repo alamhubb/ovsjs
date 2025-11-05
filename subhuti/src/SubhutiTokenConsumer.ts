@@ -3,28 +3,28 @@
  * 
  * 职责：
  * 1. 提供高级 token 消费方法
- * 2. 依赖接口而非具体 Parser（依赖倒置）
+ * 2. 封装 consume 调用，避免子类重复代码
  * 3. 支持用户自定义扩展
  * 
  * 设计模式：
- * - 依赖 ITokenConsumerContext 接口（最小权限）
+ * - 直接依赖 SubhutiParser
  * - 可被继承，添加自定义消费方法（如 Semicolon/Comma）
  * 
- * @version 2.0.0
+ * @version 3.0.0
  */
 
-import type {ITokenConsumerContext} from "./ITokenConsumerContext.ts"
+import type SubhutiParser from "./SubhutiParser.ts"
 import type {SubhutiCreateToken} from "./struct/SubhutiCreateToken.ts"
 import type SubhutiCst from "./struct/SubhutiCst.ts"
 
 export default class SubhutiTokenConsumer {
     /**
-     * Parser 上下文（只能访问接口定义的方法）
+     * Parser 实例
      */
-    protected readonly ctx: ITokenConsumerContext
+    protected readonly parser: SubhutiParser
 
-    constructor(ctx: ITokenConsumerContext) {
-        this.ctx = ctx
+    constructor(parser: SubhutiParser) {
+        this.parser = parser
     }
 
     // ============================================
@@ -34,8 +34,8 @@ export default class SubhutiTokenConsumer {
     /**
      * 消费一个 token（修改 Parser 状态）
      */
-    consume(token: SubhutiCreateToken): SubhutiCst | undefined {
-        return this.ctx.consume(token.name)
+    protected consume(token: SubhutiCreateToken): SubhutiCst | undefined {
+        return this.parser._consumeToken(token.name)
     }
 }
 

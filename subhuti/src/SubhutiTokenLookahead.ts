@@ -18,25 +18,27 @@
 
 import type SubhutiMatchToken from "./struct/SubhutiMatchToken.ts"
 
-export default abstract class SubhutiTokenLookahead {
+export default class SubhutiTokenLookahead {
     // ============================================
-    // 抽象接口（子类必须实现）
+    // Token 数据（protected，子类可访问）
     // ============================================
     
     /**
-     * 获取 token 数组（只读访问）
+     * Token 数组
      */
-    protected abstract get tokens(): SubhutiMatchToken[]
+    protected _tokens: SubhutiMatchToken[] = []
     
     /**
-     * 获取当前 token 索引（只读访问）
+     * 当前 token 索引
      */
-    protected abstract get currentIndex(): number
+    protected tokenIndex: number = 0
     
     /**
-     * 获取当前 token（只读访问）
+     * 获取当前 token
      */
-    abstract get curToken(): SubhutiMatchToken | undefined
+    get curToken(): SubhutiMatchToken | undefined {
+        return this._tokens[this.tokenIndex]
+    }
     // ============================================
     // 行终止符检查（从 SubhutiParser 移入）
     // ============================================
@@ -67,11 +69,9 @@ export default abstract class SubhutiTokenLookahead {
      * const next2 = this.tokenHelper.peek(2) // 下下个 token
      */
     peek(offset: number = 1): SubhutiMatchToken | undefined {
-        const tokens = this.tokens
-        const currentIndex = this.currentIndex
-        const index = currentIndex + offset - 1
-        return index >= 0 && index < tokens.length 
-            ? tokens[index] 
+        const index = this.tokenIndex + offset - 1
+        return index >= 0 && index < this._tokens.length 
+            ? this._tokens[index] 
             : undefined
     }
     

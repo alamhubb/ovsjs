@@ -21,7 +21,6 @@ import {SubhutiErrorHandler} from "./SubhutiError.ts";
 import {type SubhutiDebugger, SubhutiTraceDebugger} from "./SubhutiDebug.ts";
 import {SubhutiPackratCache, type SubhutiPackratCacheResult} from "./SubhutiPackratCache.ts";
 import SubhutiTokenConsumer from "./SubhutiTokenConsumer.ts";
-import type {ITokenConsumerContext} from "./ITokenConsumerContext.ts";
 
 // ============================================
 // 类型定义
@@ -70,12 +69,9 @@ export type SubhutiTokenConsumerConstructor<T extends SubhutiTokenConsumer> =
 // ============================================
 
 export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiTokenConsumer> 
-    extends SubhutiTokenLookahead 
-    implements ITokenConsumerContext {
+    extends SubhutiTokenLookahead {
     // 核心字段
     readonly tokenConsumer: T
-    private readonly _tokens: SubhutiMatchToken[]
-    private tokenIndex: number = 0
 
     /**
      * 核心状态：当前规则是否成功
@@ -130,9 +126,9 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         tokens: SubhutiMatchToken[] = [],
         SubhutiTokenConsumerClass?: SubhutiTokenConsumerConstructor<T>,
     ) {
-        super() // 调用抽象类构造函数
-        this._tokens = tokens
-        this.tokenIndex = 0
+        super() // 调用父类构造函数
+        this._tokens = tokens  // 赋值给父类的 _tokens
+        this.tokenIndex = 0    // 赋值给父类的 tokenIndex
         this.className = this.constructor.name
         this._cache = new SubhutiPackratCache()
 
@@ -144,50 +140,15 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     }
 
     // ============================================
-    // 实现抽象接口（SubhutiTokenLookahead）
+    // 公开给 TokenConsumer 使用的方法
     // ============================================
     
     /**
-     * 实现抽象方法：提供 tokens 只读访问
+     * 供 TokenConsumer 使用的 consume 方法
      */
-    protected get tokens(): SubhutiMatchToken[] {
-        return this._tokens
+    _consumeToken(tokenName: string): SubhutiCst | undefined {
+        return this.consume(tokenName)
     }
-
-    /**
-     * 实现抽象方法：提供当前索引只读访问
-     */
-    protected get currentIndex(): number {
-        return this.tokenIndex
-    }
-
-    /**
-     * 实现抽象方法：获取当前 token
-     */
-    get curToken(): SubhutiMatchToken | undefined {
-        return this._tokens[this.tokenIndex]
-    }
-
-    // ============================================
-    // 实现接口（ITokenConsumerContext）
-    // ============================================
-    
-    /**
-     * ITokenConsumerContext.isAtEnd
-     */
-    get isAtEnd(): boolean {
-        return this.tokenIndex >= this._tokens.length
-    }
-
-    /**
-     * ITokenConsumerContext.peek
-     * （继承自 SubhutiTokenLookahead，自动满足）
-     */
-
-    /**
-     * ITokenConsumerContext.consume
-     * （已在下方实现，自动满足）
-     */
 
     // ============================================
     // Parser 内部 Getter
@@ -199,8 +160,8 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
     // 公开方法
     setTokens(tokens: SubhutiMatchToken[]): void {
-        (this._tokens as SubhutiMatchToken[]).length = 0
-        ;(this._tokens as SubhutiMatchToken[]).push(...tokens)
+        this._tokens.length = 0
+        this._tokens.push(...tokens)
         this.tokenIndex = 0
         this._cache.clear()
     }
