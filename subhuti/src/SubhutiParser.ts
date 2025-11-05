@@ -95,11 +95,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      */
     private readonly loopDetectionSet: Set<string> = new Set()
     
-    /**
-     * 是否启用循环检测（默认启用）
-     */
-    enableLoopDetection: boolean = true
-
     // allowError 机制（智能错误管理）
     /**
      * allowError 深度计数器
@@ -226,7 +221,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      */
     private withLoopDetection<T>(ruleName: string, isTopLevel: boolean, fn: () => T): T {
         // 顶层规则或检测已禁用，直接执行
-        if (!this.enableLoopDetection || isTopLevel) {
+        if (isTopLevel) {
             return fn()
         }
         
