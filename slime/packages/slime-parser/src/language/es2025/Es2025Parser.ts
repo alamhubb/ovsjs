@@ -807,6 +807,20 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     }
 
     /**
+     * CallMemberExpression[Yield, Await] :
+     *     MemberExpression[?Yield, ?Await] Arguments[?Yield, ?Await]
+     * 
+     * Supplemental Syntax:
+     * When processing CallExpression : CoverCallExpressionAndAsyncArrowHead,
+     * the interpretation is refined using this rule.
+     */
+    @SubhutiRule
+    CallMemberExpression(params: ExpressionParams = {}): SubhutiCst | undefined {
+        this.MemberExpression(params)
+        return this.Arguments(params)
+    }
+
+    /**
      * SuperCall[Yield, Await] :
      *     super Arguments[?Yield, ?Await]
      */
@@ -2091,8 +2105,25 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      */
     @SubhutiRule
     ExpressionStatement(params: StatementParams = {}): SubhutiCst | undefined {
-        // 前瞻检查 (简化版，实际应该更严格)
-        if (!this.tokenNotIn(['LBrace', 'FunctionTok', 'ClassTok', 'LetTok'])) {
+        // 前瞻检查：[lookahead ∉ {{, function, async [no LineTerminator here] function, class, let [}]
+        // 1. 不能是 {
+        if (this.tokenIs('LBrace', 1)) {
+            return undefined
+        }
+        // 2. 不能是 function
+        if (this.tokenIs('FunctionTok', 1)) {
+            return undefined
+        }
+        // 3. 不能是 class
+        if (this.tokenIs('ClassTok', 1)) {
+            return undefined
+        }
+        // 4. 不能是 async [no LineTerminator here] function
+        if (this.matchSequenceWithoutLineTerminator(['AsyncTok', 'FunctionTok'])) {
+            return undefined
+        }
+        // 5. 不能是 let [
+        if (this.matchSequence(['LetTok', 'LBracket'])) {
             return undefined
         }
 
@@ -2741,8 +2772,6 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     // ============================================
     // A.4 Functions and Classes
     // ============================================
-    // 注：由于完整实现非常长，这里仅提供关键部分的框架
-    // 实际应用中需要根据完整的 ES2025 规范补充所有细节
 
     /**
      * YieldExpression[In, Await] :
@@ -3635,7 +3664,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     }
 
     // ============================================
-    // A.5 Scripts and Modules (简化版)
+    // A.5 Scripts and Modules
     // ============================================
 
     /**
