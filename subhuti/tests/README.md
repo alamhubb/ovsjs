@@ -12,6 +12,8 @@
 | 004 | `subhutiparsertest-many-004.ts` | Many规则测试 | ⭐⭐⭐ |
 | 005 | `subhutiparsertest-option-005.ts` | Option规则测试 | ⭐⭐⭐ |
 | 006 | `subhutiparsertest-nested-006.ts` | 嵌套规则测试 | ⭐⭐⭐⭐ |
+| 007 | `subhutiparsertest-atleastone-007.ts` | AtLeastOne规则测试 | ⭐⭐⭐ |
+| 008 | `subhutiparsertest-lookahead-008.ts` | 前瞻（Lookahead）功能测试 | ⭐⭐⭐⭐⭐ |
 
 ## 快速开始
 
@@ -130,6 +132,63 @@ Or([
 4. CST结构验证
 5. 复杂嵌套：`var a , b = 2 , c = 3 , d ;`
 
+### 007 - AtLeastOne规则测试
+
+**测试目标：**
+- AtLeastOne至少匹配1次
+- AtLeastOne匹配多次
+- AtLeastOne匹配失败抛出异常
+- AtLeastOne与其他规则组合
+
+**测试用例：**
+1. AtLeastOne匹配1次：`123`
+2. AtLeastOne匹配多次：`123 456 789`
+3. AtLeastOne匹配0次应该抛异常：``（空输入）
+4. AtLeastOne的终止条件：`123 abc`
+5. 逗号分隔列表：`1,2,3`（至少2个元素）
+6. 列表至少1个元素的约束
+7. AtLeastOne后跟固定token
+8. 加法表达式：`1 + 2 + 3`
+
+### 008 - 前瞻（Lookahead）功能测试（⭐重要）
+
+**测试目标：**
+- lookaheadAfter.not 字符串形式
+- lookaheadAfter.not 正则形式
+- 换行符处理
+- 特殊字符处理
+- 实际应用场景
+
+**测试场景：**
+1. **区分可选链 ?. 和三元运算符 ?**
+   - 匹配可选链：`a?.b`
+   - 匹配三元运算符：`a ? b : c`
+
+2. **换行符前瞻（正则形式）**
+   - 分号后面是空格：`a; b`
+   - 分号后面是换行符：`a;\nb`
+
+3. **数字后缀前瞻**
+   - 纯整数：`123`
+   - 浮点数：`123.45`（前瞻阻止Integer）
+   - BigInt：`123n`（前瞻阻止Integer）
+
+4. **关键字边界前瞻**
+   - 关键字 in：`x in array`
+   - 标识符 index：`index`（前瞻阻止关键字匹配）
+   - 标识符 iffy：`iffy`（前瞻阻止关键字匹配）
+
+5. **特殊字符前瞻**
+   - 箭头函数：`a -> b`
+   - 减法运算：`a - b`
+   - 自增运算：`a++`
+   - 加法运算：`a + b`
+
+**关键发现：**
+- ⚠️ 前瞻正则必须使用 `^` 锚点（如 `/^[a-zA-Z]/`），否则会匹配字符串中任意位置
+- ⚠️ 关键字 token 必须放在 Identifier 之前
+- 当前实现：✅ lookaheadAfter.not，❌ is/in/notIn 未实现
+
 ## 预期结果
 
 所有测试都应该通过。如果有测试失败，说明 SubhutiParser 有 Bug。
@@ -154,13 +213,20 @@ npx tsx subhutiparsertest-or-order-003.ts
 ## 测试覆盖的功能
 
 ✅ **已覆盖：**
-- Token消费
-- Or规则（顺序选择）
-- Many规则（0次或多次）
-- Option规则（0次或1次）
-- 回溯机制
-- 规则嵌套
-- CST生成
+- Token消费（测试001）
+- Or规则（顺序选择）（测试002, 003）
+- Many规则（0次或多次）（测试004）
+- Option规则（0次或1次）（测试005）
+- AtLeastOne规则（1次或多次）（测试007）
+- 回溯机制（测试002, 005）
+- 规则嵌套（测试006）
+- CST生成（测试001-006）
+- **前瞻功能（测试008）**
+  - ✅ lookaheadAfter.not（字符串和正则）
+  - ✅ 换行符前瞻
+  - ✅ 关键字边界前瞻
+  - ✅ 数字后缀前瞻
+  - ✅ 特殊字符前瞻
 
 ❌ **未覆盖（可以后续添加）：**
 - 错误处理和恢复
@@ -168,6 +234,10 @@ npx tsx subhutiparsertest-or-order-003.ts
 - 性能测试
 - 内存泄漏测试
 - 左递归检测
+- **前瞻功能扩展：**
+  - lookaheadAfter.is（后面必须是）
+  - lookaheadAfter.in（后面必须在集合中）
+  - lookaheadAfter.notIn（后面不能在集合中）
 
 ## 贡献
 

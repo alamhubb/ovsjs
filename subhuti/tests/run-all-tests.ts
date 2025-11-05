@@ -14,6 +14,8 @@ const tests = [
   'subhutiparsertest-many-004.ts',
   'subhutiparsertest-option-005.ts',
   'subhutiparsertest-nested-006.ts',
+  'subhutiparsertest-atleastone-007.ts',
+  'subhutiparsertest-lookahead-008.ts',
 ]
 
 console.log('='.repeat(70))
