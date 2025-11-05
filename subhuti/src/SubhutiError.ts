@@ -59,26 +59,27 @@ export class ParsingError extends Error {
         readonly column: number
     }
     readonly ruleStack: readonly string[]
-    
-    /**
-     * 错误类型
-     */
     readonly type: 'parsing' | 'loop'
     
-    /**
-     * 循环错误专用信息
-     */
-    readonly loopInfo?: Readonly<LoopErrorInfo>
+    // Loop 错误专用字段（平铺）
+    readonly loopRuleName?: string
+    readonly loopDetectionSet?: readonly string[]
+    readonly loopCstDepth?: number
+    readonly loopCacheStats?: Readonly<{
+        hits: number
+        misses: number
+        hitRate: string
+        currentSize: number
+    }>
+    readonly loopTokenContext?: readonly SubhutiMatchToken[]
     
     /**
-     * ⭐ 智能修复建议（简化版）
-     * 
-     * 只覆盖最常见的 8 种错误场景
+     * ⭐ 智能修复建议（仅 parsing 错误）
      */
     readonly suggestions: readonly string[]
     
     /**
-     * 是否启用详细错误信息
+     * 是否启用详细错误信息（仅 parsing 错误使用）
      */
     private readonly useDetailed: boolean
     
@@ -94,11 +95,18 @@ export class ParsingError extends Error {
         this.found = details.found
         this.position = details.position
         this.ruleStack = Object.freeze([...details.ruleStack])
-        this.loopInfo = details.loopInfo
+        
+        // Loop 错误字段
+        this.loopRuleName = details.loopRuleName
+        this.loopDetectionSet = details.loopDetectionSet ? Object.freeze([...details.loopDetectionSet]) : undefined
+        this.loopCstDepth = details.loopCstDepth
+        this.loopCacheStats = details.loopCacheStats
+        this.loopTokenContext = details.loopTokenContext ? Object.freeze([...details.loopTokenContext]) : undefined
+        
         this.useDetailed = useDetailed
         
-        // 详细模式才生成智能建议
-        this.suggestions = useDetailed 
+        // 仅 parsing 错误生成智能建议
+        this.suggestions = (this.type === 'parsing' && useDetailed)
             ? Object.freeze(this.generateSuggestions())
             : Object.freeze([])
     }
@@ -162,17 +170,13 @@ export class ParsingError extends Error {
      * 格式化错误信息（根据类型和模式选择）⭐
      */
     toString(): string {
-        // 循环错误专用格式化
+        // 循环错误：只有一种详细格式
         if (this.type === 'loop') {
-            return this.useDetailed ? this.toLoopDetailedString() : this.toLoopSimpleString()
+            return this.toLoopDetailedString()
         }
         
-        // 解析错误格式化
-        if (this.useDetailed) {
-            return this.toDetailedString()
-        } else {
-            return this.toSimpleString()
-        }
+        // 解析错误：根据模式选择
+        return this.useDetailed ? this.toDetailedString() : this.toSimpleString()
     }
     
     /**
@@ -254,14 +258,13 @@ export class ParsingError extends Error {
      */
     private toLoopDetailedString(): string {
         const lines: string[] = []
-        const loopInfo = this.loopInfo!
         
         // 标题
         lines.push('❌ 检测到无限循环（左递归或循环依赖）')
         lines.push('')
         
         // 核心信息
-        lines.push(`规则 "${loopInfo.ruleName}" 在 token 位置 ${this.position.index} 处重复调用自己`)
+        lines.push(`规则 "${this.loopRuleName}" 在 token 位置 ${this.position.index} 处重复调用自己`)
         lines.push(`当前 token: ${this.found?.tokenName || 'EOF'}("${this.found?.tokenValue || ''}")`)
         lines.push(`  --> line ${this.position.line}, column ${this.position.column}`)
         lines.push('')
@@ -282,32 +285,35 @@ export class ParsingError extends Error {
                 const prefix = '  ' + '  '.repeat(i) + (isLast ? '└─>' : '├─>')
                 lines.push(`${prefix} ${rule}`)
             })
-            lines.push(`  ${'  '.repeat(visible.length)}└─> ${loopInfo.ruleName} ⚠️ 循环点`)
+            lines.push(`  ${'  '.repeat(visible.length)}└─> ${this.loopRuleName} ⚠️ 循环点`)
             lines.push('')
         }
         
         // 诊断信息
         lines.push('诊断信息:')
-        lines.push(`  • CST 栈深度: ${loopInfo.cstDepth}`)
-        lines.push(`  • 循环检测点: ${loopInfo.detectionSet.length} 个`)
+        lines.push(`  • CST 栈深度: ${this.loopCstDepth}`)
         
-        if (loopInfo.detectionSet.length > 0 && loopInfo.detectionSet.length <= 10) {
-            lines.push(`    ${loopInfo.detectionSet.join(', ')}`)
-        } else if (loopInfo.detectionSet.length > 10) {
-            lines.push(`    ${loopInfo.detectionSet.slice(0, 10).join(', ')} ...`)
+        if (this.loopDetectionSet) {
+            lines.push(`  • 循环检测点: ${this.loopDetectionSet.length} 个`)
+            
+            if (this.loopDetectionSet.length > 0 && this.loopDetectionSet.length <= 10) {
+                lines.push(`    ${this.loopDetectionSet.join(', ')}`)
+            } else if (this.loopDetectionSet.length > 10) {
+                lines.push(`    ${this.loopDetectionSet.slice(0, 10).join(', ')} ...`)
+            }
         }
         
         // 缓存统计（可选）
-        if (loopInfo.cacheStats) {
-            lines.push(`  • 缓存命中率: ${loopInfo.cacheStats.hitRate} (${loopInfo.cacheStats.hits} hits / ${loopInfo.cacheStats.misses} misses)`)
-            lines.push(`  • 缓存大小: ${loopInfo.cacheStats.currentSize}`)
+        if (this.loopCacheStats) {
+            lines.push(`  • 缓存命中率: ${this.loopCacheStats.hitRate} (${this.loopCacheStats.hits} hits / ${this.loopCacheStats.misses} misses)`)
+            lines.push(`  • 缓存大小: ${this.loopCacheStats.currentSize}`)
         }
         
         // Token 上下文（可选）
-        if (loopInfo.tokenContext && loopInfo.tokenContext.length > 0) {
+        if (this.loopTokenContext && this.loopTokenContext.length > 0) {
             lines.push('')
             lines.push('Token 上下文:')
-            loopInfo.tokenContext.forEach((token, i) => {
+            this.loopTokenContext.forEach((token) => {
                 const isCurrent = token === this.found
                 const marker = isCurrent ? ' <-- 当前位置' : ''
                 lines.push(`  ${token.tokenName}("${token.tokenValue}")${marker}`)
@@ -330,14 +336,6 @@ export class ParsingError extends Error {
         lines.push('  • 循环依赖:     A → B, B → A             →  检查是否有空匹配分支')
         
         return lines.join('\n')
-    }
-    
-    /**
-     * 循环错误简单格式
-     */
-    private toLoopSimpleString(): string {
-        const loopInfo = this.loopInfo!
-        return `Loop Detection Error: Rule "${loopInfo.ruleName}" at position ${this.position.index} (line ${this.position.line}:${this.position.column})`
     }
 }
 

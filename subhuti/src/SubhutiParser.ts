@@ -212,7 +212,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         // 获取缓存统计
         const cacheStatsReport = this._cache.getStatsReport()
         
-        // 创建错误详情
+        // 创建循环错误（平铺结构）
         throw this._errorHandler.createError({
             type: 'loop',
             expected: '', // 循环错误不需要 expected
@@ -227,18 +227,17 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
                 column: this._tokens[this._tokens.length - 1]?.columnEndNum || 0
             },
             ruleStack: [...this.ruleStack],
-            loopInfo: {
-                ruleName,
-                detectionSet: Array.from(this.loopDetectionSet),
-                cstDepth: this.cstStack.length,
-                cacheStats: {
-                    hits: cacheStatsReport.hits,
-                    misses: cacheStatsReport.misses,
-                    hitRate: cacheStatsReport.hitRate,
-                    currentSize: cacheStatsReport.currentSize
-                },
-                tokenContext
-            }
+            // Loop 专用字段（平铺）
+            loopRuleName: ruleName,
+            loopDetectionSet: Array.from(this.loopDetectionSet),
+            loopCstDepth: this.cstStack.length,
+            loopCacheStats: {
+                hits: cacheStatsReport.hits,
+                misses: cacheStatsReport.misses,
+                hitRate: cacheStatsReport.hitRate,
+                currentSize: cacheStatsReport.currentSize
+            },
+            loopTokenContext: tokenContext
         })
     }
 
