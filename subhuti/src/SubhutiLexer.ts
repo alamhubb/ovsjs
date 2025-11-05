@@ -88,6 +88,16 @@ export default class SubhutiLexer {
         //可以优化，判断不匹配
         // 存在匹配结果，
         if (matchRes) {
+          // 🔥 检查前瞻条件
+          if (token.lookahead) {
+            const matchedText = matchRes[0]
+            const remaining = input.substring(matchedText.length)
+            
+            // 检查前瞻条件是否满足
+            if (!this.checkLookahead(token.lookahead, remaining)) {
+              continue  // 前瞻失败，跳过此token
+            }
+          }
           let matchLength = matchRes[0].length
           //新行，多一个换行符
           // if (newlinesPatternRes) {
@@ -153,5 +163,70 @@ export default class SubhutiLexer {
       resTokens.push(resToken) // 将token加入结果数组
     }
     return resTokens // 返回结果token数组
+  }
+
+  /**
+   * 检查词法前瞻条件
+   * @param lookahead 前瞻配置
+   * @param remaining 剩余字符串
+   * @returns true = 满足条件，false = 不满足
+   */
+  private checkLookahead(
+    lookahead: import('./struct/SubhutiCreateToken.ts').SubhutiTokenLookahead,
+    remaining: string
+  ): boolean {
+    // is: 后面必须是
+    if (lookahead.is !== undefined) {
+      const pattern = this.toRegExp(lookahead.is)
+      if (!pattern.test(remaining)) {
+        return false
+      }
+    }
+    
+    // not: 后面不能是
+    if (lookahead.not !== undefined) {
+      const pattern = this.toRegExp(lookahead.not)
+      if (pattern.test(remaining)) {
+        return false
+      }
+    }
+    
+    // in: 后面必须在集合中
+    if (lookahead.in !== undefined) {
+      const matched = lookahead.in.some(item => {
+        const pattern = this.toRegExp(item)
+        return pattern.test(remaining)
+      })
+      if (!matched) {
+        return false
+      }
+    }
+    
+    // notIn: 后面不能在集合中
+    if (lookahead.notIn !== undefined) {
+      const matched = lookahead.notIn.some(item => {
+        const pattern = this.toRegExp(item)
+        return pattern.test(remaining)
+      })
+      if (matched) {
+        return false
+      }
+    }
+    
+    return true
+  }
+
+  /**
+   * 将字符串或正则转换为正则表达式
+   * @param input 字符串或正则
+   * @returns 正则表达式
+   */
+  private toRegExp(input: RegExp | string): RegExp {
+    if (input instanceof RegExp) {
+      return input
+    }
+    // 字符串转正则，转义特殊字符
+    const escaped = input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    return new RegExp('^' + escaped)
   }
 }
