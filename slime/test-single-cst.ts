@@ -155,7 +155,7 @@ function getCSTStatistics(node: any): {
 // MWE + 二分增量调试法 - 第4轮：验证修复 + 扩展测试
 const testCases = [
     // 原始问题代码
-    { code: `const a = {null: 41}`, desc: '原始问题代码', fullCst: false },
+    { code: `1 + 2`, desc: '原始问题代码', fullCst: false },
     
     // 更多null场景
     { code: `const obj = {null: 1, true: 2, false: 3}`, desc: '多个literal关键字属性', fullCst: false },

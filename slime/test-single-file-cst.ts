@@ -12,6 +12,8 @@ import {es6Tokens} from './packages/slime-parser/src/language/es2015/Es6Tokens.t
 import SubhutiLexer from 'subhuti/src/SubhutiLexer.ts'
 import Es2020Parser from "./packages/slime-parser/src/language/es2020/Es2020Parser.ts"
 import {es2020Tokens} from "./packages/slime-parser/src/language/es2020/Es2020Tokens.ts"
+import {es2025Tokens} from "slime-parser/src/language/es2025/Es2025Tokens";
+import Es2025Parser from "slime-parser/src/language/es2025/Es2025Parser";
 
 // 收集CST中的所有token值
 function collectTokenValues(node: any): string[] {
@@ -152,7 +154,7 @@ function getCSTStatistics(node: any): {
 }
 
 // 主程序
-const filePath = process.argv[2] || 'tests/es6rules/Statement-001.js'
+const filePath = process.argv[2] || 'tests/es6rules/AdditiveExpression-001.js'
 
 if (!filePath) {
     console.log('❌ 错误：请提供要测试的文件路径')
@@ -199,7 +201,7 @@ if (code.length <= 500) {
 
 try {
     // 词法分析（使用ES2020 tokens以支持私有属性）
-    const lexer = new SubhutiLexer(es2020Tokens)
+    const lexer = new SubhutiLexer(es2025Tokens)
     const tokens = lexer.tokenize(code)
     
     const inputTokens = tokens
@@ -216,8 +218,8 @@ try {
     console.log(`✅ 词法分析: ${tokens.length} tokens (有效token: ${inputTokens.length})`)
     
     // 语法分析（使用 Es2020Parser）
-    const parser = new Es2020Parser(tokens)
-    const cst = parser.Program()
+    const parser = new Es2025Parser(tokens)
+    const cst = parser.Script()
     console.log(`✅ 语法分析: CST生成成功`)
     
     // CST结构验证
