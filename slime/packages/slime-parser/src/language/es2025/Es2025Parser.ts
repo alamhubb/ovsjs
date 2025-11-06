@@ -1484,13 +1484,44 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      * ShortCircuitExpression[In, Yield, Await] :
      *     LogicalORExpression[?In, ?Yield, ?Await]
      *     CoalesceExpression[?In, ?Yield, ?Await]
+     * 
+     * ⚠️ PEG 实现说明：
+     * 
+     * 问题：LogicalORExpression 和 CoalesceExpression 都使用 Many 匹配 0 次或多次运算符。
+     *      当没有运算符时，它们都能成功匹配基础表达式，导致第一个分支总是成功。
+     * 
+     * 解决方案：不使用 Or 选择，而是自己实现匹配逻辑：
+     *      1. 先匹配基础表达式（BitwiseORExpression）
+     *      2. 向前看下一个 token，判断是 || 还是 ??
+     *      3. 根据运算符类型，继续匹配相应的表达式序列
+     * 
+     * 这样可以正确区分 || 和 ?? 两种短路运算符。
      */
     @SubhutiRule
     ShortCircuitExpression(params: ExpressionParams = {}): SubhutiCst | undefined {
-        return this.Or([
-            {alt: () => this.LogicalORExpression(params)},
-            {alt: () => this.CoalesceExpression(params)}
-        ])
+        // 先匹配基础表达式层（通过 LogicalANDExpression 最终到 BitwiseORExpression）
+        this.LogicalANDExpression(params)
+        
+        // 向前看，判断使用哪种短路运算符
+        // 如果是 ||，继续匹配 LogicalOR 序列
+        // 如果是 ??，继续匹配 Coalesce 序列
+        // 如果都不是，直接返回（没有短路运算符）
+        
+        if (this.tokenIs('LogicalOr', 1)) {
+            // 匹配 || 运算符序列
+            this.Many(() => {
+                this.tokenConsumer.LogicalOr()
+                this.LogicalANDExpression(params)
+            })
+        } else if (this.tokenIs('NullishCoalescing', 1)) {
+            // 匹配 ?? 运算符序列
+            this.Many(() => {
+                this.tokenConsumer.NullishCoalescing()
+                this.BitwiseORExpression(params)
+            })
+        }
+        
+        return this.curCst
     }
 
     /**
