@@ -770,34 +770,38 @@ export class SubhutiDebugUtils {
 // ============================================
 
 /**
- * Subhuti 轨迹调试器（v4.0 - 职责分离版）
+ * Subhuti 轨迹调试器（v5.0 - 优化输出版）
  * 
  * 职责：
- * - 追踪解析过程（规则进入/退出、Token 消费、Or 分支、回溯）
+ * - 追踪解析过程（规则进入/退出、Token 消费、Or 分支）
  * - 性能统计（调用次数、耗时、缓存命中率）
  * - 自动输出调试报告
  * 
- * 使用场景：
- * - 由 Parser 自动调用（通过 debug() 方法）
- * - 实时追踪解析过程
+ * 输出优化：
+ * - 只输出成功的路径（失败的 Token 消费不显示）
+ * - 规则链合并显示（用 > 连接）
+ * - Or 序号从 1 开始（用户友好）
+ * - 只有 Token 消费才右推缩进
+ * - Or 分支不右推，垂直对齐
  * 
- * @version 4.0.0 - 职责分离
+ * @version 5.0.0 - 优化输出
  * @date 2025-11-06
  */
 export class SubhutiTraceDebugger implements SubhutiDebugger {
     // ========================================
     // 过程追踪数据
     // ========================================
-    private indentLevel = 0  // 当前缩进级别（不再使用 depth）
+    private indentLevel = 0  // 当前缩进级别（只有 Token 消费才增加）
     public ruleStack: Array<{
         ruleName: string
         startTime: number
         indentLevel: number      // 该规则的缩进级别
         hasConsumedToken: boolean // 该规则是否消费了 token
+        hasOrBranch: boolean     // 该规则是否有 Or 分支
     }> = []
     
-    // 智能缩进控制
-    private pendingIndentIncrease = 0  // 待应用的缩进增量（用于下一个子规则）
+    // 未输出的规则链（等待时机输出）
+    private pendingRules: string[] = []
 
     // ========================================
     // 性能统计数据
@@ -837,34 +841,41 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
     }
     
     // ========================================
+    // 辅助方法
+    // ========================================
+    
+    /**
+     * 输出待处理的规则链
+     */
+    private flushPendingRules(): void {
+        if (this.pendingRules.length > 0) {
+            const indent = '  '.repeat(this.indentLevel)
+            const ruleChain = this.pendingRules.join(' > ')
+            console.log(`${indent}➡️  ${ruleChain}`)
+            this.pendingRules = []
+        }
+    }
+    
+    // ========================================
     // 过程追踪方法
     // ========================================
     
     onRuleEnter(ruleName: string, tokenIndex: number): number {
         const startTime = performance.now()
         
-        // 1. 输出规则进入（使用当前缩进级别）
-        const indent = '  '.repeat(this.indentLevel)
-        console.log(`${indent}➡️  ${ruleName}`)
-        
-        // 2. 记录该规则进入时的缩进级别
-        const enterIndentLevel = this.indentLevel
-        
-        // 3. 应用待增加的缩进（Or/Many/AtLeastOne/Option影响子规则）
-        if (this.pendingIndentIncrease > 0) {
-            this.indentLevel += this.pendingIndentIncrease
-            this.pendingIndentIncrease = 0
-        }
-        
-        // 4. 记录规则栈
+        // 记录规则栈（不立即输出）
         this.ruleStack.push({
             ruleName,
             startTime,
-            indentLevel: enterIndentLevel,  // 记录进入时的缩进（用于退出时恢复）
-            hasConsumedToken: false  // 初始为 false，consume 时会更新
+            indentLevel: this.indentLevel,
+            hasConsumedToken: false,
+            hasOrBranch: false
         })
         
-        // 5. 性能统计：初始化统计数据
+        // 将规则加入待输出队列
+        this.pendingRules.push(ruleName)
+        
+        // 性能统计：初始化统计数据
         let stat = this.stats.get(ruleName)
         if (!stat) {
             stat = {
@@ -880,7 +891,6 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
         }
         stat.totalCalls++
         
-        // 返回开始时间（用于计算耗时）
         return startTime
     }
     
@@ -896,14 +906,24 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
             duration = performance.now() - context
         }
         
-        // 1. 弹出规则栈并恢复缩进
+        // 弹出规则栈
         const exitedRule = this.ruleStack.pop()
-        if (exitedRule) {
-            // 恢复到该规则进入前的缩进级别（这会抵消规则内部的缩进增加）
+        
+        // 如果该规则没有 Or 分支且没有消费 Token，从待输出队列移除
+        if (exitedRule && !exitedRule.hasOrBranch && !exitedRule.hasConsumedToken) {
+            // 从 pendingRules 中移除最后一个（应该是当前规则）
+            if (this.pendingRules.length > 0 && 
+                this.pendingRules[this.pendingRules.length - 1] === ruleName) {
+                this.pendingRules.pop()
+            }
+        }
+        
+        // 恢复缩进（只在该规则消费了 Token 时才需要恢复）
+        if (exitedRule && exitedRule.hasConsumedToken) {
             this.indentLevel = exitedRule.indentLevel
         }
         
-        // 2. 性能统计：更新统计数据
+        // 性能统计
         const stat = this.stats.get(ruleName)
         if (stat) {
             stat.totalTime += duration
@@ -914,7 +934,6 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
                 stat.actualExecutions++
                 stat.executionTime += duration
                 
-                // 更新平均耗时
                 if (stat.actualExecutions > 0) {
                     stat.avgTime = stat.executionTime / stat.actualExecutions
                 }
@@ -928,24 +947,28 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
         tokenName: string,
         success: boolean
     ): void {
-        // 规则2：Consume 自己推1格
-        const consumeIndent = '  '.repeat(this.indentLevel + 1)
-        const status = success ? '✅' : '❌'
-        const value = tokenValue.length > 20 ? tokenValue.slice(0, 20) + '...' : tokenValue
+        // 只输出成功的 Token 消费
+        if (!success) {
+            return
+        }
         
+        // 输出待处理的规则链
+        this.flushPendingRules()
+        
+        // 输出 Token 消费
+        const indent = '  '.repeat(this.indentLevel)
+        const value = tokenValue.length > 20 ? tokenValue.slice(0, 20) + '...' : tokenValue
         console.log(
-            `${consumeIndent}🔹 Consume  token[${tokenIndex}] - ${value} - <${tokenName}>  ${status}`
+            `${indent}🔹 Consume  token[${tokenIndex}] - ${value} - <${tokenName}>  ✅`
         )
         
-        // 规则3：消费 token 后，当前规则的后续子规则需要推1格
-        if (success) {
-            this.indentLevel++
-            
-            // 标记当前规则已消费 token（用于判断）
-            if (this.ruleStack.length > 0) {
-                const currentRule = this.ruleStack[this.ruleStack.length - 1]
-                currentRule.hasConsumedToken = true
-            }
+        // Token 消费后右推缩进
+        this.indentLevel++
+        
+        // 标记当前规则已消费 token
+        if (this.ruleStack.length > 0) {
+            const currentRule = this.ruleStack[this.ruleStack.length - 1]
+            currentRule.hasConsumedToken = true
         }
     }
     
@@ -956,50 +979,57 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
         ruleName?: string,
         isRetry?: boolean
     ): void {
-        // 输出 Or 信息（使用当前缩进）
-        const indent = '  '.repeat(this.indentLevel)
-        const ruleInfo = ruleName ? ` ${ruleName}` : ''
-        const status = isRetry ? '🔀 Or failed, trying' : '🔀 Or → trying'
-        console.log(
-            `${indent}${status}${ruleInfo} (#${branchIndex}/${totalBranches})`
-        )
-        
-        // 规则1：Or 下面第一条规则的【子级】推1格
-        // 只在第一个分支时设置（branchIndex === 0）
-        if (branchIndex === 0) {
-            this.pendingIndentIncrease += 1
+        // 标记当前规则有 Or 分支
+        if (this.ruleStack.length > 0) {
+            const currentRule = this.ruleStack[this.ruleStack.length - 1]
+            currentRule.hasOrBranch = true
         }
+        
+        // Or 序号从 1 开始（用户友好）
+        const userFriendlyIndex = branchIndex + 1
+        
+        // 输出 Or 信息（使用当前缩进，不右推）
+        const indent = '  '.repeat(this.indentLevel)
+        
+        if (isRetry) {
+            // 失败的分支（不显示详情）
+            // 这里先简化处理，后续可以优化为折叠显示
+            return
+        }
+        
+        // 第一个分支尝试
+        const ruleInfo = ruleName ? ` ${ruleName}` : ''
+        console.log(
+            `${indent}🔀 Or → trying${ruleInfo} (#${userFriendlyIndex}/${totalBranches})`
+        )
     }
     
     onBacktrack(
         fromTokenIndex: number,
         toTokenIndex: number
     ): void {
-        const indent = '  '.repeat(this.indentLevel)
-        console.log(
-            `${indent}⏪ Backtrack  token[${fromTokenIndex}] → token[${toTokenIndex}]`
-        )
+        // 不输出正常回溯（只在真正出错时才需要）
     }
     
     /**
-     * Many 规则进入事件（规则1：子级推1格）
+     * Many 规则进入事件（v5.0 不再推格）
      */
     onManyEnter?(): void {
-        this.pendingIndentIncrease += 1
+        // 不再推格
     }
     
     /**
-     * AtLeastOne 规则进入事件（规则1：子级推1格）
+     * AtLeastOne 规则进入事件（v5.0 不再推格）
      */
     onAtLeastOneEnter?(): void {
-        this.pendingIndentIncrease += 1
+        // 不再推格
     }
     
     /**
-     * Option 规则进入事件（规则4：子级推1格）
+     * Option 规则进入事件（v5.0 不再推格）
      */
     onOptionEnter?(): void {
-        this.pendingIndentIncrease += 1
+        // 不再推格
     }
     
     // ========================================
