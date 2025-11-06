@@ -1529,31 +1529,18 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      *     LeftHandSideExpression[?Yield, ?Await] &&= AssignmentExpression[?In, ?Yield, ?Await]
      *     LeftHandSideExpression[?Yield, ?Await] ||= AssignmentExpression[?In, ?Yield, ?Await]
      *     LeftHandSideExpression[?Yield, ?Await] ??= AssignmentExpression[?In, ?Yield, ?Await]
+     * 
+     * ⚠️ PEG 顺序原则：具体模式（需要额外运算符）必须在宽泛模式前面
+     * 正确顺序：带运算符的赋值表达式 → 箭头函数 → YieldExpression → ConditionalExpression
      */
     @SubhutiRule
     AssignmentExpression(params: ExpressionParams = {}): SubhutiCst | undefined {
         const {Yield = false} = params
 
         return this.Or([
-            {alt: () => this.ConditionalExpression(params)},
-            // [+Yield] YieldExpression - 条件展开
-            ...(Yield ? [{alt: () => this.YieldExpression(params)}] : []),
-            {alt: () => this.ArrowFunction(params)},
-            {alt: () => this.AsyncArrowFunction(params)},
-            {
-                alt: () => {
-                    this.LeftHandSideExpression(params)
-                    this.tokenConsumer.Assign()
-                    this.AssignmentExpression(params)
-                }
-            },
-            {
-                alt: () => {
-                    this.LeftHandSideExpression(params)
-                    this.AssignmentOperator()
-                    this.AssignmentExpression(params)
-                }
-            },
+            // ============================================
+            // 具体模式：赋值运算符（需要额外的运算符 token）
+            // ============================================
             {
                 alt: () => {
                     this.LeftHandSideExpression(params)
@@ -1574,7 +1561,35 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                     this.tokenConsumer.NullishCoalescingAssign()
                     this.AssignmentExpression(params)
                 }
-            }
+            },
+            {
+                alt: () => {
+                    this.LeftHandSideExpression(params)
+                    this.AssignmentOperator()
+                    this.AssignmentExpression(params)
+                }
+            },
+            {
+                alt: () => {
+                    this.LeftHandSideExpression(params)
+                    this.tokenConsumer.Assign()
+                    this.AssignmentExpression(params)
+                }
+            },
+            // ============================================
+            // 具体模式：箭头函数和异步箭头函数
+            // ============================================
+            {alt: () => this.ArrowFunction(params)},
+            {alt: () => this.AsyncArrowFunction(params)},
+            // ============================================
+            // 具体模式：[+Yield] YieldExpression - 条件展开
+            // ============================================
+            ...(Yield ? [{alt: () => this.YieldExpression(params)}] : []),
+            // ============================================
+            // 宽泛模式：ConditionalExpression（可以匹配任何表达式）
+            // 必须放在最后作为 fallback
+            // ============================================
+            {alt: () => this.ConditionalExpression(params)}
         ])
     }
 
@@ -2031,14 +2046,16 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     @SubhutiRule
     BindingProperty(params: ExpressionParams = {}): SubhutiCst | undefined {
         return this.Or([
-            {alt: () => this.SingleNameBinding(params)},
+            // PropertyName : BindingElement（带冒号的完整属性）应该最先尝试
             {
                 alt: () => {
                     this.PropertyName(params)
                     this.tokenConsumer.Colon()
                     this.BindingElement(params)
                 }
-            }
+            },
+            // SingleNameBinding（简写形式，如 {a} 或 {a = 1}）应该最后尝试
+            {alt: () => this.SingleNameBinding(params)}
         ])
     }
 
