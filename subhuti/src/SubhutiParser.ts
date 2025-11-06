@@ -167,6 +167,12 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         } else {
             this.tokenConsumer = new SubhutiTokenConsumer(this) as T
         }
+
+        // 开发模式自动检查
+        // @ts-ignore - Node.js 环境变量检查
+        if (typeof process !== 'undefined' && process.env.NODE_ENV === 'development') {
+            this.validateGrammar({ verbose: true })
+        }
     }
 
     // ============================================

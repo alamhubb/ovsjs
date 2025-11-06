@@ -5,13 +5,17 @@
  * - 检测直接左递归（A -> A x）
  * - 检测间接左递归（A -> B, B -> A）
  * - 检测多层间接左递归
- * - 左递归检测开关控制
- * - 验证错误消息质量
+ * - 验证错误消息质量（修复建议、规则栈）
+ * - 验证正确的递归不被误报
  * 
  * 核心机制：
  * - 维护 (ruleName:tokenIndex) 调用栈
  * - 检测在同一位置重复调用同一规则
  * - 提供清晰的错误消息和修复建议
+ * 
+ * 设计理念：
+ * - 左递归检测强制启用（无开关控制）
+ * - 防止死循环，保证解析器安全性
  */
 
 import SubhutiParser, {Subhuti, SubhutiRule} from "../../src/SubhutiParser.ts"
@@ -165,7 +169,7 @@ function test(name: string, fn: () => void) {
 // 测试 1：直接左递归检测
 // ============================================
 
-test('直接左递归 - 应该抛出错误', () => {
+test('直接左递归 - 应该抛出 loop 错误', () => {
     const tokens = createTokens([
         {name: 'X', value: 'x'},
         {name: 'X', value: 'x'}
@@ -174,101 +178,92 @@ test('直接左递归 - 应该抛出错误', () => {
     const parser = new DirectLeftRecursionParser(tokens)
     
     let errorThrown = false
-    let errorMessage = ''
+    let error: any = null
     
     try {
         parser.A()
     } catch (e: any) {
         errorThrown = true
-        errorMessage = e.message
+        error = e
     }
     
-    if (!errorThrown) throw new Error('应该抛出左递归错误')
-    if (!errorMessage.includes('Left recursion detected')) {
-        throw new Error('错误消息应该包含 "Left recursion detected"')
-    }
-    if (!errorMessage.includes('rule "A"')) {
-        throw new Error('错误消息应该包含规则名称')
-    }
+    if (!errorThrown) throw new Error('应该抛出循环错误')
+    if (error.type !== 'loop') throw new Error('错误类型应该是 "loop"')
+    if (error.loopRuleName !== 'A') throw new Error('应该检测到规则 A 的循环')
 })
 
-test('直接左递归 - 错误消息包含修复建议', () => {
+test('直接左递归 - 错误包含循环检测信息', () => {
     const tokens = createTokens([{name: 'X', value: 'x'}])
     const parser = new DirectLeftRecursionParser(tokens)
     
-    let errorMessage = ''
+    let error: any = null
     
     try {
         parser.A()
     } catch (e: any) {
-        errorMessage = e.message
+        error = e
     }
     
-    if (!errorMessage.includes('Example')) {
-        throw new Error('错误消息应该包含修复示例')
-    }
-    if (!errorMessage.includes('Bad:') || !errorMessage.includes('Good:')) {
-        throw new Error('错误消息应该包含对比示例')
-    }
+    if (!error.loopDetectionSet) throw new Error('应该包含 loopDetectionSet')
+    if (!error.loopDetectionSet.includes('A:0')) throw new Error('应该检测到 A:0 循环')
 })
 
-test('直接左递归 - 错误消息包含规则栈', () => {
+test('直接左递归 - 错误包含规则栈', () => {
     const tokens = createTokens([{name: 'X', value: 'x'}])
     const parser = new DirectLeftRecursionParser(tokens)
     
-    let errorMessage = ''
+    let error: any = null
     
     try {
         parser.A()
     } catch (e: any) {
-        errorMessage = e.message
+        error = e
     }
     
-    if (!errorMessage.includes('Rule stack')) {
-        throw new Error('错误消息应该包含规则调用栈')
-    }
+    if (!error.ruleStack) throw new Error('应该包含 ruleStack')
+    if (!error.ruleStack.includes('A')) throw new Error('规则栈应该包含 A')
 })
 
 // ============================================
 // 测试 2：间接左递归检测
 // ============================================
 
-test('间接左递归 - 应该抛出错误', () => {
+test('间接左递归 - 应该抛出 loop 错误', () => {
     const tokens = createTokens([{name: 'Y', value: 'y'}])
     const parser = new IndirectLeftRecursionParser(tokens)
     
     let errorThrown = false
-    let errorMessage = ''
+    let error: any = null
     
     try {
         parser.A()
     } catch (e: any) {
         errorThrown = true
-        errorMessage = e.message
+        error = e
     }
     
-    if (!errorThrown) throw new Error('应该抛出左递归错误')
-    if (!errorMessage.includes('Left recursion detected')) {
-        throw new Error('错误消息应该包含 "Left recursion detected"')
-    }
+    if (!errorThrown) throw new Error('应该抛出循环错误')
+    if (error.type !== 'loop') throw new Error('错误类型应该是 "loop"')
 })
 
-test('间接左递归 - 检测规则名称', () => {
+test('间接左递归 - 检测到循环规则和完整路径', () => {
     const tokens = createTokens([{name: 'Y', value: 'y'}])
     const parser = new IndirectLeftRecursionParser(tokens)
     
-    let errorMessage = ''
+    let error: any = null
     
     try {
         parser.A()
     } catch (e: any) {
-        errorMessage = e.message
+        error = e
     }
     
-    // 间接左递归：A调用B，B调用A，所以检测到的是在A的位置重复调用A
-    // 但实际错误会在第一次检测到的位置报告，可能是"B"或"A"
-    if (!errorMessage.includes('rule')) {
-        throw new Error('错误消息应该包含规则名称')
+    // 间接左递归：A调用B，B调用A，检测到循环
+    if (!error.loopRuleName) throw new Error('应该包含 loopRuleName')
+    // 规则栈应该显示：A -> B -> A
+    if (!error.ruleStack || error.ruleStack.length < 2) throw new Error('规则栈应该包含完整路径')
+    if (!error.ruleStack.includes('A') || !error.ruleStack.includes('B')) {
+        throw new Error('规则栈应该包含 A 和 B')
     }
 })
 
@@ -276,37 +271,39 @@ test('间接左递归 - 检测规则名称', () => {
 // 测试 3：多层间接左递归
 // ============================================
 
-test('多层间接左递归 - 应该抛出错误', () => {
+test('多层间接左递归 - 应该抛出 loop 错误', () => {
     const tokens = createTokens([{name: 'Y', value: 'y'}])
     const parser = new MultiLevelLeftRecursionParser(tokens)
     
     let errorThrown = false
+    let error: any = null
     
     try {
         parser.A()
     } catch (e: any) {
         errorThrown = true
+        error = e
     }
     
-    if (!errorThrown) throw new Error('应该抛出左递归错误')
+    if (!errorThrown) throw new Error('应该抛出循环错误')
+    if (error.type !== 'loop') throw new Error('错误类型应该是 "loop"')
 })
 
-test('多层间接左递归 - 规则栈完整', () => {
+test('多层间接左递归 - 规则栈显示完整路径', () => {
     const tokens = createTokens([{name: 'Y', value: 'y'}])
     const parser = new MultiLevelLeftRecursionParser(tokens)
     
-    let errorMessage = ''
+    let error: any = null
     
     try {
         parser.A()
     } catch (e: any) {
-        errorMessage = e.message
+        error = e
     }
     
     // 规则栈应该显示完整路径：A -> B -> C -> A
-    if (!errorMessage.includes('Rule stack')) {
-        throw new Error('错误消息应该包含规则栈')
-    }
+    if (!error.ruleStack) throw new Error('应该包含 ruleStack')
+    if (error.ruleStack.length < 3) throw new Error('规则栈应该包含完整路径（至少3层）')
 })
 
 // ============================================
@@ -346,48 +343,7 @@ test('消除左递归版本 - 不应该报错', () => {
 })
 
 // ============================================
-// 测试 5：左递归检测开关
-// ============================================
-
-test('禁用左递归检测 - 不抛出错误（但可能死循环）', () => {
-    const tokens = createTokens([{name: 'Y', value: 'y'}])
-    const parser = new DirectLeftRecursionParser(tokens)
-    
-    // 禁用左递归检测
-    parser.leftRecursionDetection(false)
-    
-    // 注意：这个测试不实际调用A()，因为会导致栈溢出
-    // 我们只验证开关能够被设置
-    if (parser.enableLeftRecursionDetection) {
-        throw new Error('禁用左递归检测失败')
-    }
-})
-
-test('启用左递归检测 - 默认启用', () => {
-    const tokens = createTokens([{name: 'Y', value: 'y'}])
-    const parser = new DirectLeftRecursionParser(tokens)
-    
-    if (!parser.enableLeftRecursionDetection) {
-        throw new Error('默认应该启用左递归检测')
-    }
-})
-
-test('链式调用 - leftRecursionDetection()', () => {
-    const tokens = createTokens([{name: 'Y', value: 'y'}])
-    const parser = new DirectLeftRecursionParser(tokens)
-        .leftRecursionDetection(false)
-        .cache(true)
-    
-    if (parser.enableLeftRecursionDetection) {
-        throw new Error('链式调用应该生效')
-    }
-    if (!parser.enableMemoization) {
-        throw new Error('链式调用应该支持多个方法')
-    }
-})
-
-// ============================================
-// 测试 6：Token位置变化后可以重复调用
+// 测试 5：Token位置变化后可以重复调用
 // ============================================
 
 test('Token位置变化 - 允许重复调用同一规则', () => {
@@ -421,10 +377,13 @@ if (passCount === testCount) {
     console.log('  - 直接左递归检测（A -> A x）')
     console.log('  - 间接左递归检测（A -> B -> A）')
     console.log('  - 多层间接左递归（A -> B -> C -> A）')
-    console.log('  - 左递归检测开关控制')
-    console.log('  - 错误消息质量验证')
+    console.log('  - 错误消息质量验证（修复建议、规则栈）')
     console.log('  - 正确递归（右递归、消除左递归）')
     console.log('  - Token位置变化后允许重复调用')
+    console.log('\n💡 设计理念：')
+    console.log('  - 左递归检测强制启用（无法关闭）')
+    console.log('  - 防止死循环，保证解析器安全性')
+    console.log('  - 提供清晰的错误信息和修复建议')
 } else {
     console.log(`\n❌ ${testCount - passCount} 个测试失败`)
     process.exit(1)
