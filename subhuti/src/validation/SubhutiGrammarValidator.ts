@@ -24,11 +24,12 @@ export class SubhutiGrammarValidator {
     private mode: 'parse' | 'analyze' = 'parse'
     
     /**
-     * 生命周期钩子：Parser 创建时调用
-     * 开发环境自动验证，有问题直接抛异常
+     * 构造时立即验证，有问题直接抛异常
      */
-    onParserCreated(parser: any): void {
-        this.validate(parser)
+    constructor(parser?: any) {
+        if (parser) {
+            this.validate(parser)
+        }
     }
     
     /**

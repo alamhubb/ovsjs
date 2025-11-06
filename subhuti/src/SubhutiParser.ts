@@ -177,8 +177,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         // @ts-ignore - Node.js 环境变量检查
         if (typeof process !== 'undefined' && process.env.NODE_ENV === 'development') {
             // @ts-ignore - 修改 readonly 字段（仅构造时）
-            this._validator = new SubhutiGrammarValidator()
-            this._validator.onParserCreated(this)  // 有问题直接抛异常
+            this._validator = new SubhutiGrammarValidator(this)  // 构造时自动验证
         }
     }
 
@@ -778,10 +777,9 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * ```
      */
     validateGrammar(): void {
-        // 如果没有 validator（生产环境），创建临时实例
+        // 如果没有 validator（生产环境），创建临时实例并验证
         if (!this._validator) {
-            const tempValidator = new SubhutiGrammarValidator()
-            tempValidator.validate(this)
+            new SubhutiGrammarValidator(this)
         } else {
             this._validator.validate(this)
         }
