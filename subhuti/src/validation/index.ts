@@ -7,8 +7,6 @@
 // 类型定义
 export type {
     ValidationError,
-    ValidationResult,
-    ValidateOptions,
     RuleNode,
     ConsumeNode,
     SequenceNode,
@@ -28,6 +26,7 @@ export { SubhutiRuleCollector } from './SubhutiRuleCollector'
 export { SubhutiGrammarAnalyzer } from './SubhutiGrammarAnalyzer'
 export type { GrammarAnalyzerOptions } from './SubhutiGrammarAnalyzer'
 export { SubhutiConflictDetector } from './SubhutiConflictDetector'
+export { SubhutiGrammarValidator } from './SubhutiGrammarValidator'
 
 // 调试器
 export { SubhutiValidationDebugger } from './SubhutiValidationDebugger'

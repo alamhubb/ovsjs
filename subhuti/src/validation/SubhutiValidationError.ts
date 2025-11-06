@@ -40,7 +40,7 @@ export interface ValidationError {
 }
 
 /**
- * 验证结果接口
+ * 验证结果接口（内部使用）
  */
 export interface ValidationResult {
     /** 是否通过验证 */
@@ -48,28 +48,6 @@ export interface ValidationResult {
     
     /** 错误列表 */
     errors: ValidationError[]
-}
-
-/**
- * 验证选项
- */
-export interface ValidateOptions {
-    /** 严格模式：发现错误时抛出异常 */
-    strict?: boolean
-    
-    /** 单规则路径数量上限（防止路径爆炸） */
-    maxPaths?: number
-    
-    /** 忽略的规则名称列表 */
-    ignoreRules?: string[]
-    
-    /** 
-     * 调试模式：提供详细的验证过程追踪
-     * - false/未设置: 不输出任何信息（静默模式）
-     * - true: 自动创建调试器，输出详细的规则收集、路径计算、冲突检测信息
-     * - SubhutiValidationDebugger 实例: 使用自定义调试器
-     */
-    debug?: boolean | any  // 'any' 避免循环依赖，实际类型是 SubhutiValidationDebugger
 }
 
 // ============================================
