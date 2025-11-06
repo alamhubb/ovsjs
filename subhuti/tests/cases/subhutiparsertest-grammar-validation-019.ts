@@ -194,3 +194,4 @@ const allPassed = !result1.success && !result2.success && result3.success && !re
 console.log(`\nAll tests: ${allPassed ? '✅ PASSED' : '❌ FAILED'}`)
 process.exit(allPassed ? 0 : 1)
 
+
