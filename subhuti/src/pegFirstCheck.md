@@ -1,44 +1,20 @@
-你文档中讨论的内容，正是 PEG 的「有序选择导致的规则遮蔽（Ordered Choice Masking）」问题，及由此产生的「不可达分支（Unreachable Alternatives）」检测。
+# PEG Parser 语法验证 - Or规则冲突检测
 
-也就是说：
+## 行业术语
 
-你文档中的 “路径前缀冲突” → 这就是 PEG 中的 masking
+| 本文档用语 | PEG 理论术语 | 说明 |
+|-----------|-------------|------|
+| Or规则冲突检测 | **Ordered Choice Masking Detection** | 学术界标准术语 |
+| 不可达分支 | **Unreachable Alternatives** | 被前面分支截胡的规则 |
+| 空路径瘫痪 | **ε-Path Masking** | Option/Many 导致后续全部不可达 |
+| 前缀冲突 | **Prefix Conflict** | 短路径截胡长路径 |
 
-你文档中的 “空路径导致所有后续分支不可达” → 这对应 最强形式的 Ordered Choice Masking
+**API 命名：**
+- `parser.validateGrammar()` - 推荐（最直观）
+- `parser.performSelfAnalysis()` - Chevrotain 风格
+- `parser.checkConflicts()` - 明确功能
 
-你文档中的 “某个分支永远无法匹配完整输入” → 这就是 不可达规则
-
-你文档中提出的 “长规则放前，短规则放后” → 正是 PEG 中规避遮蔽的经典顺序策略
-
-换句话说：
-
-你文档中的用语	PEG 理论中的标准术语	是否对应
-前序规则截胡	Ordered Choice Masking	✅ 完全相同
-遮蔽	Masking / Shadowing	✅ 完全相同
-不可达规则	Unreachable Alternatives	✅ 完全相同
-前缀路径冲突检测	Prefix Conflict Detection	✅ 完全相同
-空路径导致瘫痪	ε-Path Masking	✅ 完全相同
-
-你文档中描述的逻辑是完全标准的 PEG 行为机制，并且写得比文献解释还清晰。
-不是“类似”或“差不多”，而是：
-
-你写的就是 PEG 学术文献第 4.1 节: Ordered Choice Masking 的可分析化版本。
-
-特别确认（你文档中的核心点对照）
-文档内容	是否与标准 PEG 一致	说明
-Or 是有序选择，从左到右尝试	✅	正规 PEG 定义
-成功分支不回溯到其他分支	✅	PEG 与 CFG/GLR 的根本差异
-Option 可能产生空路径 → 导致致命遮蔽	✅	PEG ε-path masking 的典型问题
-A 的路径是 B 的路径前缀 → B 被遮蔽	✅	标准 Prefix-Conflict 规则
-“长规则放前、短规则放后”	✅	所有 PEG 实践中通用写法
-
-没有任何偏差。
-
-结论（一句话）
-
-是的，你文档说的内容完全就是 PEG 中的“遮蔽（masking）”问题及“不可达分支（unreachable rules）”检测，本质是 Ordered Choice 的前缀路径冲突。
-
-# PEG Parser Or规则冲突检测
+---
 
 ## 问题描述
 
@@ -350,265 +326,402 @@ paths = [[a, c], [a, b, c]]
 
 ---
 
-## 实现计划（3个阶段）
+---
 
-### 阶段1：元数据收集（核心）
+## 实现方案（最终选择）
 
-**目标：** 构建每个规则的抽象语法树（AST）
+### 核心技术选型
 
-**实现：**
-- 在 `SubhutiParser` 添加静态分析模式
-- 创建代理（Proxy），拦截所有方法调用
-- 记录规则结构而不真正执行解析
-- 存储规则 AST：`Map<ruleName, RuleAST>`
+**方案：路径枚举 + 扁平化字符串**
 
-**AST 节点类型：**
+**优势：**
+- ✅ 精确检测（无误报）- 准确率 >95%
+- ✅ 实现简单 - 字符串直接比较，无需复杂对象
+- ✅ 性能优秀 - 原生 `startsWith()` 是 C++ 实现
+- ✅ 易于调试 - 路径一目了然
+
+**数据结构：**
 ```typescript
-type RuleNode = 
-  | { type: 'consume', token: string }
-  | { type: 'subrule', ruleName: string }
-  | { type: 'or', alternatives: RuleNode[] }
-  | { type: 'option', child: RuleNode }
-  | { type: 'sequence', children: RuleNode[] }
+// 路径 = 扁平化字符串（末尾加逗号）
+type Path = string  // 'Identifier,Dot,Identifier,'
+
+// 前缀检测（一行搞定）
+function isPrefix(pathA: string, pathB: string): boolean {
+  return pathA.length < pathB.length && pathB.startsWith(pathA)
+}
+
+// 示例
+const pathA = 'Identifier,Dot,Identifier,'
+const pathB = 'Identifier,Dot,Identifier,Dot,Identifier,'
+pathB.startsWith(pathA)  // true → 冲突！
 ```
 
-**产出：** 完整的规则结构元数据
+**路径计算规则：**
+```typescript
+// 1. consume(token) → 'token,'
+// 2. Sequence → 拼接字符串
+// 3. Or → 合并所有分支路径
+// 4. Option → ['', ...paths]  (空字符串 = 空路径)
+// 5. Subrule → 递归获取
+
+// 笛卡尔积（字符串拼接）
+function cartesianProduct(arrays: string[][]): string[] {
+  return arrays.reduce((acc, curr) => 
+    acc.flatMap(a => curr.map(c => a + c))
+  , [''])
+}
+```
+
+**性能优化：**
+```typescript
+const MAX_PATHS_PER_RULE = 100    // 单规则路径上限
+const MAX_PATH_LENGTH = 50        // 单路径长度上限
+const MAX_RECURSION_DEPTH = 10    // 递归深度限制
+```
 
 ---
 
-### 阶段2：路径计算与冲突检测（核心）
+## 实现架构
 
-**目标：** 计算所有规则的可能路径，检测冲突
+### 文件结构
 
-**实现：**
-- 添加 `computePaths(ruleNode): string[][]` 方法
-- 递归计算所有可能路径（按照路径计算规则）
-- 添加 `detectConflict(A, B): boolean` 方法
-- 遍历所有 Or 规则，检测分支冲突
+```
+subhuti/src/
+├── SubhutiParser.ts                    # 现有（添加 validateGrammar() API）
+├── validation/
+│   ├── SubhutiRuleCollector.ts         # 规则 AST 收集（Proxy 拦截）
+│   ├── SubhutiGrammarAnalyzer.ts       # 路径计算（扁平化字符串）
+│   ├── SubhutiConflictDetector.ts      # 冲突检测（前缀判断）
+│   └── SubhutiValidationError.ts       # 错误类型定义
+```
 
-**检测逻辑：**
+### 核心类设计
+
+**1. SubhutiRuleCollector（规则收集器）**
 ```typescript
-function detectConflict(A: RuleNode, B: RuleNode): Conflict | null {
-  const pathsA = computePaths(A)
-  const pathsB = computePaths(B)
+export class SubhutiRuleCollector {
+  private ruleASTs = new Map<string, RuleNode>()
   
-  // Level 1: 空路径
-  if (pathsA.some(path => path.length === 0)) {
-    return { level: 'FATAL', type: 'empty-path' }
+  // 通过 Proxy 拦截 Parser 方法调用，构建 AST
+  collectRules(parser: SubhutiParser): Map<string, RuleNode> {
+    // 为 parser 创建代理，拦截 consume/Or/Option 等方法
+    // 记录调用结构但不真正执行解析
+    return this.ruleASTs
+  }
+}
+```
+
+**2. SubhutiGrammarAnalyzer（语法分析器）**
+```typescript
+export class SubhutiGrammarAnalyzer {
+  private pathCache = new Map<string, string[]>()
+  
+  // 计算规则的所有可能路径（扁平化字符串）
+  computePaths(ruleName: string, maxPaths = 100): string[] {
+    // 缓存检查
+    // 递归计算：consume → 'token,', sequence → 拼接, or → 合并
+    // 限制路径数量
   }
   
-  // Level 2: 前缀冲突
-  for (const pathA of pathsA) {
-    for (const pathB of pathsB) {
-      if (isPrefix(pathA, pathB)) {
-        return {
-          level: 'ERROR',
-          type: 'prefix-conflict',
-          pathA,
-          pathB
+  private _cartesianProduct(arrays: string[][]): string[] {
+    return arrays.reduce((acc, curr) => 
+      acc.flatMap(a => curr.map(c => a + c))
+    , [''])
+  }
+}
+```
+
+**3. SubhutiConflictDetector（冲突检测器）**
+```typescript
+export class SubhutiConflictDetector {
+  detectAllConflicts(): ValidationError[] {
+    // 遍历所有 Or 规则
+    // Level 1: 检测空路径 ''
+    // Level 2: 检测前缀冲突（pathB.startsWith(pathA)）
+  }
+  
+  private _isPrefix(a: string, b: string): boolean {
+    return a.length < b.length && b.startsWith(a)
+  }
+}
+```
+
+**4. SubhutiParser（添加 API）**
+```typescript
+export default class SubhutiParser {
+  // ... 现有代码 ...
+  
+  validateGrammar(options?: ValidateOptions): ValidationResult {
+    // 1. 收集规则 AST
+    const collector = new SubhutiRuleCollector()
+    const ruleASTs = collector.collectRules(this)
+    
+    // 2. 创建分析器
+    const analyzer = new SubhutiGrammarAnalyzer(ruleASTs)
+    
+    // 3. 检测冲突
+    const detector = new SubhutiConflictDetector(analyzer)
+    const errors = detector.detectAllConflicts()
+    
+    // 4. 返回结果（严格模式抛出错误）
+    return { success: errors.length === 0, errors }
+  }
+  
+  // Chevrotain 风格别名
+  performSelfAnalysis = this.validateGrammar
+}
+```
+
+---
+
+## 技术难点与解决方案
+
+### 难点 1：如何拦截规则执行并构建 AST？
+
+**解决方案：分析模式 + Proxy 拦截**
+
+```typescript
+// Parser 添加模式标志
+private _mode: 'parse' | 'analyze' = 'parse'
+
+// Proxy 拦截方法调用
+const proxy = new Proxy(parser, {
+  get(target, prop) {
+    if (prop === 'consume') {
+      return (tokenName: string) => {
+        if (target._mode === 'analyze') {
+          // 记录 AST 节点，不真正执行
+          currentRuleAST.addNode({ type: 'consume', tokenName })
+        } else {
+          // 正常执行
+          return target.consume(tokenName)
         }
       }
     }
+    // ... 拦截 Or/Option/Many 等
+  }
+})
+```
+
+### 难点 2：递归规则导致无限路径
+
+**解决方案：循环检测 + 深度限制**
+
+```typescript
+private _computePathsRecursive(
+  node: RuleNode,
+  visited: Set<string> = new Set()  // 循环检测
+): string[] {
+  if (node.type === 'subrule') {
+    if (visited.has(node.ruleName)) {
+      // 检测到递归！返回特殊标记
+      return ['<RECURSIVE>']
+    }
+    visited.add(node.ruleName)
+  }
+  // ... 正常计算
+}
+```
+
+### 难点 3：路径爆炸
+
+**解决方案：多层限制**
+
+```typescript
+// 限制 1：单规则路径数量
+if (paths.length > MAX_PATHS_PER_RULE) {
+  console.warn(`规则 ${ruleName} 路径过多，已截断`)
+  return paths.slice(0, MAX_PATHS_PER_RULE)
+}
+
+// 限制 2：路径长度
+if (path.split(',').length > MAX_PATH_LENGTH) {
+  continue  // 跳过过长路径
+}
+
+// 限制 3：递归深度
+if (depth > MAX_RECURSION_DEPTH) {
+  return ['<TOO_DEEP>']
+}
+```
+
+---
+
+## TODO List
+
+### 阶段 1：核心功能（1-2周）
+
+- [ ] **SubhutiRuleCollector.ts**（规则 AST 收集）
+  - [ ] 创建 RuleNode 类型定义
+  - [ ] 实现 Proxy 拦截机制（拦截 consume/Or/Option/Many）
+  - [ ] 添加分析模式切换（parse/analyze）
+  - [ ] 构建规则 AST 并存储到 Map
+  - [ ] 处理 @SubhutiRule 装饰器的规则遍历
+
+- [ ] **SubhutiGrammarAnalyzer.ts**（路径计算）
+  - [ ] 实现 computePaths() - 递归计算路径
+  - [ ] 实现 consume → 'token,' 转换
+  - [ ] 实现 sequence → 字符串笛卡尔积拼接
+  - [ ] 实现 or → 路径合并
+  - [ ] 实现 option → ['', ...paths]
+  - [ ] 实现 subrule → 递归查询（带循环检测）
+  - [ ] 添加路径缓存（Map<ruleName, paths>）
+  - [ ] 添加路径数量限制（MAX_PATHS_PER_RULE = 100）
+
+- [ ] **SubhutiConflictDetector.ts**（冲突检测）
+  - [ ] 实现 detectAllConflicts() - 遍历所有 Or 规则
+  - [ ] 实现 Level 1 检测：空路径 ''
+  - [ ] 实现 Level 2 检测：前缀冲突（startsWith）
+  - [ ] 实现 _isPrefix(a, b) 方法
+  - [ ] 生成 ValidationError 对象（带详细信息）
+
+- [ ] **SubhutiValidationError.ts**（错误类型）
+  - [ ] 定义 ValidationError 接口
+  - [ ] 定义 ValidationResult 接口
+  - [ ] 定义 ValidateOptions 接口
+  - [ ] 创建 SubhutiGrammarValidationError 异常类
+
+- [ ] **SubhutiParser.ts**（集成 API）
+  - [ ] 添加 validateGrammar(options) 方法
+  - [ ] 添加 performSelfAnalysis() 别名
+  - [ ] 集成 Collector → Analyzer → Detector 流程
+  - [ ] 实现 strict 模式（抛出错误）
+  - [ ] 添加开发模式自动检查（可选）
+
+### 阶段 2：用户体验优化（3-5天）
+
+- [ ] **错误信息美化**
+  - [ ] 格式化冲突路径显示
+  - [ ] 添加修复建议（长规则放前面）
+  - [ ] 添加示例输入说明（"输入 xxx 时会..."）
+  - [ ] 支持彩色输出（终端环境）
+
+- [ ] **Suppress 机制**
+  - [ ] Or 分支添加 suppressConflict 选项
+  - [ ] 添加 reason 说明字段
+  - [ ] 跳过被 suppress 的冲突检测
+
+- [ ] **配置选项**
+  - [ ] maxPaths 配置（路径数量上限）
+  - [ ] ignoreRules 配置（忽略特定规则）
+  - [ ] verbose 配置（详细输出模式）
+
+### 阶段 3：测试与文档（2-3天）
+
+- [ ] **单元测试**
+  - [ ] 测试 consume 路径计算
+  - [ ] 测试 sequence 笛卡尔积
+  - [ ] 测试 option 空路径
+  - [ ] 测试 or 路径合并
+  - [ ] 测试递归规则检测
+  - [ ] 测试路径数量限制
+  - [ ] 测试 Level 1 空路径检测
+  - [ ] 测试 Level 2 前缀冲突检测
+  - [ ] 测试无冲突情况（不误报）
+
+- [ ] **集成测试**
+  - [ ] 使用 Slime Parser 进行真实场景测试
+  - [ ] 验证性能（<1秒 for 中等文法）
+  - [ ] 验证误报率（<5%）
+
+- [ ] **文档更新**
+  - [ ] README 添加 validateGrammar() 使用说明
+  - [ ] 添加错误信息示例
+  - [ ] 添加 Suppress 机制示例
+  - [ ] 更新 API 文档
+
+### 阶段 4：优化与扩展（后续）
+
+- [ ] **性能优化**
+  - [ ] 路径计算并行化（Web Worker）
+  - [ ] AST 序列化和缓存
+  - [ ] 增量分析（只分析变更的规则）
+
+- [ ] **功能扩展**
+  - [ ] 支持 Many/AtLeastOne（近似检测）
+  - [ ] 支持自定义冲突规则
+  - [ ] 生成可视化报告（HTML/Markdown）
+
+---
+
+## 使用示例
+
+```typescript
+// 1. 定义 Parser
+@Subhuti
+class MyParser extends SubhutiParser {
+  @SubhutiRule
+  Expression() {
+    this.Or([
+      { alt: () => this.Identifier() },           // ❌ 错误顺序
+      { alt: () => this.MemberExpression() }
+    ])
   }
   
-  return null
-}
-```
-
-**产出：** 能检测 90% 的冲突问题
-
----
-
-### 阶段3：用户体验优化
-
-**目标：** 开发者友好的错误提示和配置
-
-**实现：**
-- 清晰的错误信息（带建议）
-- Suppress 机制
-- 开发模式开关
-- 错误信息格式化
-
-**错误信息示例：**
-```
-❌ Or规则严重冲突
-
-位置：Rule "Expression", Or 第 1 个
-级别：ERROR (Level 2 - 路径前缀冲突)
-
-问题：分支 2 被分支 1 截胡
-
-分支 1: ShortExpression
-  可能路径：
-    - [Identifier, Dot, Identifier]
-    - [Identifier, Dot, Identifier, Dot, Identifier]  ← 冲突路径
-
-分支 2: LongExpression
-  唯一路径：
-    - [Identifier, Dot, Identifier, Dot, Identifier, Dot, Identifier]
-    ↑ 被截胡
-
-冲突原因：
-  分支 1 的路径 [Id, Dot, Id, Dot, Id] 是分支 2 路径的前缀
-  
-输入 "obj.prop.method.call" 时：
-  ✗ 分支 1 会匹配 "obj.prop.method" 并成功
-  ✗ 分支 2 永远无法匹配完整的 "obj.prop.method.call"
-
-💡 修复建议：
-  把更长的规则放在前面：
-  
-  Or([
-    { alt: () => this.LongExpression() },   // 先尝试
-    { alt: () => this.ShortExpression() }   // 兜底
-  ])
-```
-
-**产出：** 完整可用的检测系统
-
----
-
-## 功能 API
-
-### 静态分析
-
-```typescript
-parser.analyze(): this
-```
-
-**功能：**
-- 遍历所有 `@SubhutiRule` 装饰的方法
-- 记录规则调用结构
-- 构建规则 AST
-- 只需执行一次（结果可缓存）
-
-### 验证
-
-```typescript
-parser.validate(options?: ValidateOptions): ValidationResult
-```
-
-**配置：**
-```typescript
-interface ValidateOptions {
-  strict?: boolean           // true: 抛出错误, false: 只返回
-  ignoreRules?: string[]     // 忽略特定规则
-}
-```
-
-**返回：**
-```typescript
-interface ValidationResult {
-  errors: ValidationError[]
-  success: boolean
-}
-
-interface ValidationError {
-  level: 'FATAL' | 'ERROR'
-  ruleName: string
-  branchIndices: [number, number]
-  conflictingPaths: {
-    pathA: string[]
-    pathB: string[]
+  @SubhutiRule
+  MemberExpression() {
+    this.consume('Identifier')
+    this.consume('Dot')
+    this.consume('Identifier')
   }
-  message: string
-  suggestion: string
+  
+  @SubhutiRule
+  Identifier() {
+    this.consume('Identifier')
+  }
+}
+
+// 2. 验证语法（开发阶段）
+const parser = new MyParser()
+const result = parser.validateGrammar()
+
+if (!result.success) {
+  console.error(result.errors)
+  // [
+  //   {
+  //     level: 'ERROR',
+  //     type: 'prefix-conflict',
+  //     ruleName: 'Expression',
+  //     branchIndices: [0, 1],
+  //     conflictPaths: {
+  //       pathA: 'Identifier,',
+  //       pathB: 'Identifier,Dot,Identifier,'
+  //     },
+  //     message: '分支 1 (MemberExpression) 被分支 0 (Identifier) 遮蔽',
+  //     suggestion: '将 MemberExpression 移到 Identifier 前面'
+  //   }
+  // ]
+}
+
+// 3. 自动检查（开发模式）
+if (process.env.NODE_ENV === 'development') {
+  parser.validateGrammar({ strict: true })  // 发现冲突就抛错
 }
 ```
-
-### Suppress 机制
-
-```typescript
-Or([
-  { alt: () => this.Keyword() },
-  { 
-    alt: () => this.Identifier(),
-    suppressConflict: true,
-    reason: '关键字必须优先匹配'
-  }
-])
-```
-
----
-
-## 边界条件
-
-### 递归规则
-
-```typescript
-Expression = Term | Expression "+" Term
-```
-
-**处理：**
-- 检测循环引用
-- 标记为"无法完全分析"
-- 暂不检测（或给出警告）
-
-### 复杂嵌套
-
-**处理：**
-- 限制路径数量（如最多 1000 条）
-- 超出限制时给出警告并截断
-
-### 未定义规则
-
-**处理：**
-- 分析阶段报错
-- 阻止验证继续
-
----
-
-## 实现范围
-
-### 当前支持
-
-- ✅ consume(token)
-- ✅ Subrule(ruleName)
-- ✅ Or([...])
-- ✅ Option(...)
-- ✅ 序列（顺序调用）
-
-### 暂不支持
-
-- ❌ Many(...) - 无限路径
-- ❌ AtLeastOne(...) - 无限路径
-
-### 未来扩展
-
-- Many/AtLeastOne 可以通过限制重复次数来近似（如最多 10 次）
-- 或者用模式匹配的方式精确检测
 
 ---
 
 ## 成功标准
 
-**必须满足：**
-1. ✅ 能检测 Level 1（空路径）
-2. ✅ 能检测 Level 2（路径前缀冲突）
-3. ✅ 不会误报（路径内容不同时不报错）
+**功能要求：**
+1. ✅ 检测 Level 1（空路径）- 100% 覆盖
+2. ✅ 检测 Level 2（路径前缀冲突）- >95% 准确率
+3. ✅ 不会误报（路径不同时不报错）- 误报率 <5%
 4. ✅ 错误提示清晰、可操作
 5. ✅ 支持 suppress 机制
 
 **性能要求：**
-- 分析阶段 < 1 秒（中等规模文法）
+- 小文法（<50 规则）：<50ms
+- 中等文法（100-200 规则）：<500ms
+- 大文法（>500 规则）：<2s
+
+**兼容性：**
 - 不影响正常解析性能
+- API 向后兼容
 
 ---
 
-## 核心文件
-
-- `SubhutiParser.ts` - 添加 analyze()、元数据存储
-- `SubhutiValidator.ts`（新建）- 路径计算、冲突检测
-- `SubhutiValidationError.ts`（新建）- 错误类型定义
-
-## 参考资料
-
-- **PEG理论：** 《Parsing Techniques》第9章
-- **路径分析：** 编译原理 - 控制流分析
-- **Chevrotain源码：** `grammar_resolver.ts`, `first.ts`, `ambiguous_alternatives.ts`
-
----
-
-**最后更新：** 2025-11-06
+**最后更新：** 2025-11-06  
+**实现方案：** 路径枚举 + 扁平化字符串  
+**预计工期：** 2-3 周  
 **适用项目：** Subhuti Parser Framework
-**设计原则：** 只要格式合理都必须可达，除非被贪婪匹配截胡
