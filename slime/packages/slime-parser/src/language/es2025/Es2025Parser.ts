@@ -162,8 +162,8 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             {alt: () => this.FunctionExpression()},
             {alt: () => this.ClassExpression(params)},
             {alt: () => this.GeneratorExpression()},
-            {alt: () => this.AsyncFunctionExpression()},      // ← 回退到原始顺序
-            {alt: () => this.AsyncGeneratorExpression()},     // ← 回退到原始顺序
+            {alt: () => this.AsyncFunctionExpression()},
+            {alt: () => this.AsyncGeneratorExpression()},
             {alt: () => this.tokenConsumer.RegularExpression()},
             {alt: () => this.TemplateLiteral({...params, Tagged: false})},
             {alt: () => this.CoverParenthesizedExpressionAndArrowParameterList(params)}
@@ -253,11 +253,11 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     /**
      * ParenthesizedExpression[Yield, Await] :
      *     ( Expression[+In, ?Yield, ?Await] )
-     * 
+     *
      * Supplemental Syntax:
      * When processing PrimaryExpression : CoverParenthesizedExpressionAndArrowParameterList,
      * the interpretation is refined using this rule.
-     * 
+     *
      * 注意：此方法是 Cover Grammar 的精化版本，与规范完全对应。
      */
     @SubhutiRule
@@ -394,21 +394,20 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                     this.tokenConsumer.RBrace()
                 }
             },
-            // ⚠️ 临时测试：故意使用错误的顺序（宽泛在前）
-            // { PropertyDefinitionList[?Yield, ?Await] } - 宽泛模式（错误地放在前面）
-            {
-                alt: () => {
-                    this.tokenConsumer.LBrace()
-                    this.PropertyDefinitionList(params)
-                    this.tokenConsumer.RBrace()
-                }
-            },
-            // { PropertyDefinitionList[?Yield, ?Await] , } - 具体模式（错误地放在后面）
+            // { PropertyDefinitionList[?Yield, ?Await] , }
             {
                 alt: () => {
                     this.tokenConsumer.LBrace()
                     this.PropertyDefinitionList(params)
                     this.tokenConsumer.Comma()
+                    this.tokenConsumer.RBrace()
+                }
+            },
+            // { PropertyDefinitionList[?Yield, ?Await] }
+            {
+                alt: () => {
+                    this.tokenConsumer.LBrace()
+                    this.PropertyDefinitionList(params)
                     this.tokenConsumer.RBrace()
                 }
             }
@@ -441,7 +440,8 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     @SubhutiRule
     PropertyDefinition(params: ExpressionParams = {}): SubhutiCst | undefined {
         return this.Or([
-            // PropertyName : AssignmentExpression（带冒号的完整属性）应该最先尝试
+            {alt: () => this.IdentifierReference(params)},
+            {alt: () => this.CoverInitializedName(params)},
             {
                 alt: () => {
                     this.PropertyName(params)
@@ -449,19 +449,13 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                     this.AssignmentExpression({...params, In: true})
                 }
             },
-            // MethodDefinition（方法定义）
             {alt: () => this.MethodDefinition(params)},
-            // ... AssignmentExpression（展开运算符）
             {
                 alt: () => {
                     this.tokenConsumer.Ellipsis()
                     this.AssignmentExpression({...params, In: true})
                 }
-            },
-            // CoverInitializedName（带默认值的简写属性，如 {a = 1}）
-            {alt: () => this.CoverInitializedName(params)},
-            // IdentifierReference（简写属性，如 {a}）应该最后尝试
-            {alt: () => this.IdentifierReference(params)}
+            }
         ])
     }
 
@@ -789,7 +783,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     /**
      * CoverCallExpressionAndAsyncArrowHead[Yield, Await] :
      *     MemberExpression[?Yield, ?Await] Arguments[?Yield, ?Await]
-     * 
+     *
      * 这是一个 Cover Grammar，用于覆盖：
      * 1. 函数调用：func(args)
      * 2. Async 箭头函数头：async (args) => {}
@@ -803,11 +797,11 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     /**
      * CallMemberExpression[Yield, Await] :
      *     MemberExpression[?Yield, ?Await] Arguments[?Yield, ?Await]
-     * 
+     *
      * Supplemental Syntax:
      * When processing CallExpression : CoverCallExpressionAndAsyncArrowHead,
      * the interpretation is refined using this rule.
-     * 
+     *
      * 注意：虽然此方法与 CoverCallExpressionAndAsyncArrowHead 实现完全相同，
      * 但为了与 ES2025 规范完全一致，保留此方法。
      * 规范中 CallMemberExpression 是 Supplemental Syntax，用于语义分析时精化 Cover Grammar。
@@ -1042,29 +1036,13 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      *     NewExpression[?Yield, ?Await]
      *     CallExpression[?Yield, ?Await]
      *     OptionalExpression[?Yield, ?Await]
-     * 
-     * ⚠️ PEG 实现说明：
-     * 
-     * 问题：三个分支都可以匹配基础的 MemberExpression，区别在于后缀操作：
-     *      - OptionalExpression: 包含 ?. 后缀
-     *      - CallExpression: 包含 () 后缀（但不包含 ?.）
-     *      - NewExpression: 不包含 () 或 ?. 后缀
-     * 
-     * 如果按规范顺序，NewExpression 会先匹配基础表达式（如 foo），导致：
-     *      - foo() 只匹配 foo，剩余 ()
-     *      - foo?.bar 只匹配 foo，剩余 ?.bar
-     * 
-     * 解决方案：调整顺序，具体模式（有特定后缀的）在前：
-     *      1. OptionalExpression - 必须包含 ?. 后缀
-     *      2. CallExpression - 必须包含 () 后缀
-     *      3. NewExpression - 不包含特定后缀（最宽泛）
      */
     @SubhutiRule
     LeftHandSideExpression(params: ExpressionParams = {}): SubhutiCst | undefined {
         return this.Or([
-            {alt: () => this.OptionalExpression(params)},
+            {alt: () => this.NewExpression(params)},
             {alt: () => this.CallExpression(params)},
-            {alt: () => this.NewExpression(params)}
+            {alt: () => this.OptionalExpression(params)}
         ])
     }
 
@@ -1446,38 +1424,38 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     /**
      * CoalesceExpression[In, Yield, Await] :
      *     CoalesceExpressionHead[?In, ?Yield, ?Await] ?? BitwiseORExpression[?In, ?Yield, ?Await]
-     * 
+     *
      * CoalesceExpressionHead[In, Yield, Await] :
      *     CoalesceExpression[?In, ?Yield, ?Await]
      *     BitwiseORExpression[?In, ?Yield, ?Await]
-     * 
+     *
      * ⚠️ 左递归改写说明：
-     * 
+     *
      * 规范使用左递归表达左结合性：
      *   CoalesceExpression → CoalesceExpressionHead → CoalesceExpression (循环！)
-     * 
+     *
      * PEG Parser 不支持左递归，需改写为迭代形式：
      *   原语义：a ?? b ?? c ?? d  (左结合)
      *   PEG改写：BaseExpression ( ?? BaseExpression )*
-     * 
+     *
      * 改写方案：
      *   1. 先匹配基础表达式（BitwiseORExpression）
      *   2. 使用 Many 循环匹配后续的 ?? BitwiseORExpression
      *   3. 删除 CoalesceExpressionHead（不再需要）
-     * 
+     *
      * 这样既符合 PEG 语法，又保持了左结合语义。
      */
     @SubhutiRule
     CoalesceExpression(params: ExpressionParams = {}): SubhutiCst | undefined {
         // 基础表达式
         this.BitwiseORExpression(params)
-        
+
         // 后续的 ?? 运算符（0次或多次）
         this.Many(() => {
             this.tokenConsumer.NullishCoalescing()  // ??
             this.BitwiseORExpression(params)        // 右操作数
         })
-        
+
         return this.curCst
     }
 
@@ -1485,10 +1463,10 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      * CoalesceExpressionHead[In, Yield, Await] :
      *     CoalesceExpression[?In, ?Yield, ?Await]
      *     BitwiseORExpression[?In, ?Yield, ?Await]
-     * 
+     *
      * ⚠️ 已废弃：此规则仅用于规范中的左递归表达
      * 在 PEG 实现中，CoalesceExpression 直接使用 Many 改写，不再需要此规则。
-     * 
+     *
      * 保留此方法仅为文档目的，实际不会被调用。
      */
     @SubhutiRule
@@ -1501,44 +1479,13 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      * ShortCircuitExpression[In, Yield, Await] :
      *     LogicalORExpression[?In, ?Yield, ?Await]
      *     CoalesceExpression[?In, ?Yield, ?Await]
-     * 
-     * ⚠️ PEG 实现说明：
-     * 
-     * 问题：LogicalORExpression 和 CoalesceExpression 都使用 Many 匹配 0 次或多次运算符。
-     *      当没有运算符时，它们都能成功匹配基础表达式，导致第一个分支总是成功。
-     * 
-     * 解决方案：不使用 Or 选择，而是自己实现匹配逻辑：
-     *      1. 先匹配基础表达式（BitwiseORExpression）
-     *      2. 向前看下一个 token，判断是 || 还是 ??
-     *      3. 根据运算符类型，继续匹配相应的表达式序列
-     * 
-     * 这样可以正确区分 || 和 ?? 两种短路运算符。
      */
     @SubhutiRule
     ShortCircuitExpression(params: ExpressionParams = {}): SubhutiCst | undefined {
-        // 先匹配基础表达式层（通过 LogicalANDExpression 最终到 BitwiseORExpression）
-        this.LogicalANDExpression(params)
-        
-        // 向前看，判断使用哪种短路运算符
-        // 如果是 ||，继续匹配 LogicalOR 序列
-        // 如果是 ??，继续匹配 Coalesce 序列
-        // 如果都不是，直接返回（没有短路运算符）
-        
-        if (this.tokenIs('LogicalOr', 1)) {
-            // 匹配 || 运算符序列
-            this.Many(() => {
-                this.tokenConsumer.LogicalOr()
-                this.LogicalANDExpression(params)
-            })
-        } else if (this.tokenIs('NullishCoalescing', 1)) {
-            // 匹配 ?? 运算符序列
-            this.Many(() => {
-                this.tokenConsumer.NullishCoalescing()
-                this.BitwiseORExpression(params)
-            })
-        }
-        
-        return this.curCst
+        return this.Or([
+            {alt: () => this.LogicalORExpression(params)},
+            {alt: () => this.CoalesceExpression(params)}
+        ])
     }
 
     /**
@@ -1577,18 +1524,31 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      *     LeftHandSideExpression[?Yield, ?Await] &&= AssignmentExpression[?In, ?Yield, ?Await]
      *     LeftHandSideExpression[?Yield, ?Await] ||= AssignmentExpression[?In, ?Yield, ?Await]
      *     LeftHandSideExpression[?Yield, ?Await] ??= AssignmentExpression[?In, ?Yield, ?Await]
-     * 
-     * ⚠️ PEG 顺序原则：具体模式（需要额外运算符）必须在宽泛模式前面
-     * 正确顺序：带运算符的赋值表达式 → 箭头函数 → YieldExpression → ConditionalExpression
      */
     @SubhutiRule
     AssignmentExpression(params: ExpressionParams = {}): SubhutiCst | undefined {
         const {Yield = false} = params
 
         return this.Or([
-            // ============================================
-            // 具体模式：赋值运算符（需要额外的运算符 token）
-            // ============================================
+            {alt: () => this.ConditionalExpression(params)},
+            // [+Yield] YieldExpression - 条件展开
+            ...(Yield ? [{alt: () => this.YieldExpression(params)}] : []),
+            {alt: () => this.ArrowFunction(params)},
+            {alt: () => this.AsyncArrowFunction(params)},
+            {
+                alt: () => {
+                    this.LeftHandSideExpression(params)
+                    this.tokenConsumer.Assign()
+                    this.AssignmentExpression(params)
+                }
+            },
+            {
+                alt: () => {
+                    this.LeftHandSideExpression(params)
+                    this.AssignmentOperator()
+                    this.AssignmentExpression(params)
+                }
+            },
             {
                 alt: () => {
                     this.LeftHandSideExpression(params)
@@ -1609,35 +1569,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                     this.tokenConsumer.NullishCoalescingAssign()
                     this.AssignmentExpression(params)
                 }
-            },
-            {
-                alt: () => {
-                    this.LeftHandSideExpression(params)
-                    this.AssignmentOperator()
-                    this.AssignmentExpression(params)
-                }
-            },
-            {
-                alt: () => {
-                    this.LeftHandSideExpression(params)
-                    this.tokenConsumer.Assign()
-                    this.AssignmentExpression(params)
-                }
-            },
-            // ============================================
-            // 具体模式：箭头函数和异步箭头函数
-            // ============================================
-            {alt: () => this.ArrowFunction(params)},
-            {alt: () => this.AsyncArrowFunction(params)},
-            // ============================================
-            // 具体模式：[+Yield] YieldExpression - 条件展开
-            // ============================================
-            ...(Yield ? [{alt: () => this.YieldExpression(params)}] : []),
-            // ============================================
-            // 宽泛模式：ConditionalExpression（可以匹配任何表达式）
-            // 必须放在最后作为 fallback
-            // ============================================
-            {alt: () => this.ConditionalExpression(params)}
+            }
         ])
     }
 
@@ -1753,19 +1685,14 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      *     GeneratorDeclaration[?Yield, ?Await, ?Default]
      *     AsyncFunctionDeclaration[?Yield, ?Await, ?Default]
      *     AsyncGeneratorDeclaration[?Yield, ?Await, ?Default]
-     * 
-     * ⚠️ PEG 规则顺序：
-     * - AsyncGeneratorDeclaration 必须在 AsyncFunctionDeclaration 之前
-     * - 原因：async function* 比 async function 更具体，具体规则必须在前
-     * - 否则 async function 会匹配 async function* 的前半部分，导致 async function* 永远无法匹配
      */
     @SubhutiRule
     HoistableDeclaration(params: DeclarationParams = {}): SubhutiCst | undefined {
         return this.Or([
             {alt: () => this.FunctionDeclaration(params)},
             {alt: () => this.GeneratorDeclaration(params)},
-            {alt: () => this.AsyncGeneratorDeclaration(params)},  // ← 具体规则在前
-            {alt: () => this.AsyncFunctionDeclaration(params)}   // ← 宽泛规则在后
+            {alt: () => this.AsyncFunctionDeclaration(params)},
+            {alt: () => this.AsyncGeneratorDeclaration(params)}
         ])
     }
 
@@ -2099,16 +2026,14 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     @SubhutiRule
     BindingProperty(params: ExpressionParams = {}): SubhutiCst | undefined {
         return this.Or([
-            // PropertyName : BindingElement（带冒号的完整属性）应该最先尝试
+            {alt: () => this.SingleNameBinding(params)},
             {
                 alt: () => {
                     this.PropertyName(params)
                     this.tokenConsumer.Colon()
                     this.BindingElement(params)
                 }
-            },
-            // SingleNameBinding（简写形式，如 {a} 或 {a = 1}）应该最后尝试
-            {alt: () => this.SingleNameBinding(params)}
+            }
         ])
     }
 
@@ -2170,17 +2095,17 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
 
     /**
      * Automatic Semicolon Insertion (ASI)
-     * 
+     *
      * ECMAScript 规范 11.9: Automatic Semicolon Insertion
-     * 
+     *
      * 在以下情况下允许省略分号（自动插入）：
      * 1. 遇到换行符（Line Terminator）
      * 2. 遇到文件结束符（EOF）
      * 3. 遇到右大括号 }
      * 4. 特定关键字后（continue, break, return, throw, yield）
-     * 
+     *
      * 实现方式：使用 Option() 使分号变为可选
-     * 
+     *
      * 注意：这是简化实现，完整的 ASI 还需要检查上下文
      */
     @SubhutiRule
@@ -2937,11 +2862,11 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     /**
      * ArrowFormalParameters[Yield, Await] :
      *     ( UniqueFormalParameters[?Yield, ?Await] )
-     * 
+     *
      * Supplemental Syntax:
      * When processing ArrowParameters : CoverParenthesizedExpressionAndArrowParameterList,
      * the interpretation is refined using this rule.
-     * 
+     *
      * 注意：此方法是 Cover Grammar 的精化版本，与规范完全对应。
      */
     @SubhutiRule
@@ -3059,11 +2984,11 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     /**
      * AsyncArrowHead :
      *     async [no LineTerminator here] ArrowFormalParameters[~Yield, +Await]
-     * 
+     *
      * Supplemental Syntax:
      * When processing AsyncArrowFunction : CoverCallExpressionAndAsyncArrowHead [no LineTerminator here] => AsyncConciseBody,
      * the interpretation is refined using this rule.
-     * 
+     *
      * 注意：此方法是 Cover Grammar 的精化版本，与规范完全对应。
      */
     @SubhutiRule
