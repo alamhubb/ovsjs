@@ -2,43 +2,40 @@
  * SubhutiGrammarValidator - 语法验证器
  * 
  * 职责：
- * 1. 封装所有语法验证逻辑
- * 2. 管理分析模式
- * 3. 提供简洁的验证 API
+ * 1. 提供静态验证方法
+ * 2. 封装验证流程（收集 → 分析 → 检测 → 报告）
+ * 
+ * 设计：
+ * - 纯静态方法，无实例状态
+ * - 使用 Proxy 方案收集 AST（零侵入）
+ * - 有问题直接抛异常
+ * 
+ * @version 2.0.0 - 静态方法重构
  */
 
-import SubhutiCst from "../struct/SubhutiCst";
 import {
     SubhutiRuleCollector,
     SubhutiGrammarAnalyzer,
     SubhutiConflictDetector,
-    SubhutiGrammarValidationError,
-    type ValidationResult
+    SubhutiGrammarValidationError
 } from "./index";
 
 export class SubhutiGrammarValidator {
-    /** 分析器实例 */
-    private analyzer?: SubhutiRuleCollector
-    
-    /** 运行模式 */
-    private mode: 'parse' | 'analyze' = 'parse'
-    
-    /**
-     * 构造时立即验证，有问题直接抛异常
-     */
-    constructor(parser?: any) {
-        if (parser) {
-            this.validate(parser)
-        }
-    }
-    
     /**
      * 验证语法：有问题直接抛异常
+     * 
+     * 流程：
+     * 1. 使用 Proxy 收集规则 AST
+     * 2. 分析所有可能路径
+     * 3. 检测 Or 分支冲突
+     * 4. 有错误抛 SubhutiGrammarValidationError
+     * 
+     * @param parser Parser 实例
+     * @throws SubhutiGrammarValidationError 语法有冲突时抛出
      */
-    validate(parser: any): void {
-        // 1. 收集规则 AST
-        const collector = new SubhutiRuleCollector()
-        const ruleASTs = collector.collectRules(parser)
+    static validate(parser: any): void {
+        // 1. 收集规则 AST（通过 Proxy，无需 Parser 配合）
+        const ruleASTs = SubhutiRuleCollector.collectRules(parser)
         
         // 2. 创建语法分析器
         const analyzer = new SubhutiGrammarAnalyzer(ruleASTs, {
@@ -53,183 +50,6 @@ export class SubhutiGrammarValidator {
         if (errors.length > 0) {
             throw new SubhutiGrammarValidationError(errors)
         }
-    }
-    
-    // ============================================
-    // 分析模式支持
-    // ============================================
-    
-    /**
-     * 进入分析模式
-     */
-    enterAnalyzeMode(): void {
-        this.mode = 'analyze'
-        this.analyzer = new SubhutiRuleCollector()
-    }
-    
-    /**
-     * 退出分析模式
-     */
-    exitAnalyzeMode(): void {
-        this.mode = 'parse'
-        this.analyzer = undefined
-    }
-    
-    /**
-     * 检查是否在分析模式
-     */
-    isAnalyzeMode(): boolean {
-        return this.mode === 'analyze'
-    }
-    
-    /**
-     * 通知分析器记录节点
-     */
-    notifyAnalyzer(node: any): void {
-        if (this.analyzer) {
-            this.analyzer.recordNode(node)
-        }
-    }
-    
-    /**
-     * 进入嵌套结构
-     */
-    enterNested(node: any): void {
-        this.analyzer?.enterNested(node)
-    }
-    
-    /**
-     * 退出嵌套结构
-     */
-    exitNested(): any {
-        return this.analyzer?.exitNested()
-    }
-    
-    // ============================================
-    // Or 规则分析
-    // ============================================
-    
-    /**
-     * 处理 Or 规则的分析模式
-     */
-    handleOrAnalyze(alternatives: Array<{ alt: () => any }>, curCst: SubhutiCst | undefined): SubhutiCst | undefined {
-        if (this.mode !== 'analyze') {
-            return undefined
-        }
-        
-        const altNodes: any[] = []
-        
-        for (const alt of alternatives) {
-            // 进入新的序列
-            const seqNode = { type: 'sequence', nodes: [] }
-            this.enterNested(seqNode)
-            
-            // 执行分支（记录调用）
-            alt.alt()
-            
-            // 退出序列，获取结果
-            const result = this.exitNested()
-            if (result) {
-                altNodes.push(result)
-            }
-        }
-        
-        // 记录 Or 节点
-        this.notifyAnalyzer({ type: 'or', alternatives: altNodes })
-        
-        return curCst
-    }
-    
-    // ============================================
-    // Many 规则分析
-    // ============================================
-    
-    /**
-     * 处理 Many 规则的分析模式
-     */
-    handleManyAnalyze(fn: () => any, curCst: SubhutiCst | undefined): SubhutiCst | undefined {
-        if (this.mode !== 'analyze') {
-            return undefined
-        }
-        
-        const seqNode = { type: 'sequence', nodes: [] }
-        this.enterNested(seqNode)
-        fn()
-        const innerNode = this.exitNested()
-        if (innerNode) {
-            this.notifyAnalyzer({ type: 'many', node: innerNode })
-        }
-        return curCst
-    }
-    
-    // ============================================
-    // Option 规则分析
-    // ============================================
-    
-    /**
-     * 处理 Option 规则的分析模式
-     */
-    handleOptionAnalyze(fn: () => any, curCst: SubhutiCst | undefined): SubhutiCst | undefined {
-        if (this.mode !== 'analyze') {
-            return undefined
-        }
-        
-        const seqNode = { type: 'sequence', nodes: [] }
-        this.enterNested(seqNode)
-        fn()
-        const innerNode = this.exitNested()
-        if (innerNode) {
-            this.notifyAnalyzer({ type: 'option', node: innerNode })
-        }
-        return curCst
-    }
-    
-    // ============================================
-    // AtLeastOne 规则分析
-    // ============================================
-    
-    /**
-     * 处理 AtLeastOne 规则的分析模式
-     */
-    handleAtLeastOneAnalyze(fn: () => any, curCst: SubhutiCst | undefined): SubhutiCst | undefined {
-        if (this.mode !== 'analyze') {
-            return undefined
-        }
-        
-        const seqNode = { type: 'sequence', nodes: [] }
-        this.enterNested(seqNode)
-        fn()
-        const innerNode = this.exitNested()
-        if (innerNode) {
-            this.notifyAnalyzer({ type: 'atLeastOne', node: innerNode })
-        }
-        return curCst
-    }
-    
-    // ============================================
-    // consume 分析
-    // ============================================
-    
-    /**
-     * 处理 consume 的分析模式
-     */
-    handleConsumeAnalyze(tokenName: string, curCst: SubhutiCst | undefined): SubhutiCst | undefined {
-        if (this.mode !== 'analyze') {
-            return undefined
-        }
-        
-        this.notifyAnalyzer({ type: 'consume', tokenName })
-        
-        // 创建假 CST（让规则函数继续执行）
-        const fakeCst = new SubhutiCst()
-        fakeCst.name = tokenName
-        
-        // 添加到当前 CST
-        if (curCst) {
-            curCst.children?.push(fakeCst)
-        }
-        
-        return fakeCst
     }
 }
 

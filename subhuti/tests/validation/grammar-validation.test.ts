@@ -109,7 +109,7 @@ class TestParser4 extends SubhutiParser {
 }
 
 // ============================================
-// 测试函数
+// 测试函数（使用新的静态 API）
 // ============================================
 
 console.log('\n=== Subhuti Grammar Validation Tests ===\n')
@@ -119,10 +119,15 @@ console.log('Test 1: Prefix Conflict Detection')
 console.log('Parser: Expression -> Identifier | MemberExpression')
 console.log('Expected: ERROR (Identifier 遮蔽 MemberExpression)')
 const parser1 = new TestParser1([])
-const result1 = parser1.validateGrammar({ verbose: true })
+let result1 = { success: true, errors: [] as any[] }
+try {
+    parser1.validateGrammar()
+} catch (error: any) {
+    result1 = { success: false, errors: error.errors || [error] }
+}
 console.log('Result:', result1.success ? '✅ Pass (no errors)' : `❌ Fail (${result1.errors.length} errors)`)
 if (!result1.success) {
-    console.log('Errors:', result1.errors.map(e => `[${e.level}] ${e.message}`).join(', '))
+    console.log('Errors:', result1.errors.map(e => `[${e.level}] ${e.message}`).join('\n'))
 }
 console.log('')
 
@@ -131,10 +136,15 @@ console.log('Test 2: Empty Path Detection')
 console.log('Parser: Statement -> Option(Keyword) | Identifier')
 console.log('Expected: FATAL (空路径导致后续不可达)')
 const parser2 = new TestParser2([])
-const result2 = parser2.validateGrammar({ verbose: true })
+let result2 = { success: true, errors: [] as any[] }
+try {
+    parser2.validateGrammar()
+} catch (error: any) {
+    result2 = { success: false, errors: error.errors || [error] }
+}
 console.log('Result:', result2.success ? '✅ Pass (no errors)' : `❌ Fail (${result2.errors.length} errors)`)
 if (!result2.success) {
-    console.log('Errors:', result2.errors.map(e => `[${e.level}] ${e.message}`).join(', '))
+    console.log('Errors:', result2.errors.map(e => `[${e.level}] ${e.message}`).join('\n'))
 }
 console.log('')
 
@@ -143,10 +153,15 @@ console.log('Test 3: No Conflict (Correct Order)')
 console.log('Parser: Expression -> MemberExpression | Identifier')
 console.log('Expected: SUCCESS (长规则在前，无冲突)')
 const parser3 = new TestParser3([])
-const result3 = parser3.validateGrammar({ verbose: true })
+let result3 = { success: true, errors: [] as any[] }
+try {
+    parser3.validateGrammar()
+} catch (error: any) {
+    result3 = { success: false, errors: error.errors || [error] }
+}
 console.log('Result:', result3.success ? '✅ Pass (no errors)' : `❌ Fail (${result3.errors.length} errors)`)
 if (!result3.success) {
-    console.log('Errors:', result3.errors.map(e => `[${e.level}] ${e.message}`).join(', '))
+    console.log('Errors:', result3.errors.map(e => `[${e.level}] ${e.message}`).join('\n'))
 }
 console.log('')
 
@@ -155,10 +170,15 @@ console.log('Test 4: Option Multi-Path Conflict')
 console.log('Parser: Expression -> ShortRule(A,[B],C) | LongRule(A,B,C,D)')
 console.log('Expected: ERROR (ShortRule 的 [A,B,C,] 遮蔽 LongRule 的 [A,B,C,D,])')
 const parser4 = new TestParser4([])
-const result4 = parser4.validateGrammar({ verbose: true })
+let result4 = { success: true, errors: [] as any[] }
+try {
+    parser4.validateGrammar()
+} catch (error: any) {
+    result4 = { success: false, errors: error.errors || [error] }
+}
 console.log('Result:', result4.success ? '✅ Pass (no errors)' : `❌ Fail (${result4.errors.length} errors)`)
 if (!result4.success) {
-    console.log('Errors:', result4.errors.map(e => `[${e.level}] ${e.message}`).join(', '))
+    console.log('Errors:', result4.errors.map(e => `[${e.level}] ${e.message}`).join('\n'))
 }
 console.log('')
 

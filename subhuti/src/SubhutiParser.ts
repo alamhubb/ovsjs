@@ -83,9 +83,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     extends SubhutiTokenLookahead {
     // 核心字段
     readonly tokenConsumer: T
-    
-    /** 语法验证器（开发环境自动注入，生产环境为空） */
-    private readonly _validator?: SubhutiGrammarValidator
 
     /**
      * 核心状态：当前规则是否成功
@@ -176,8 +173,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         // 开发环境自动语法验证
         // @ts-ignore - Node.js 环境变量检查
         if (typeof process !== 'undefined' && process.env.NODE_ENV === 'development') {
-            // @ts-ignore - 修改 readonly 字段（仅构造时）
-            this._validator = new SubhutiGrammarValidator(this)  // 构造时自动验证
+            SubhutiGrammarValidator.validate(this)  // 静态方法验证
         }
     }
 
@@ -445,12 +441,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * 核心：前 N-1 分支允许失败，最后分支抛详细错误
      */
     Or(alternatives: SubhutiParserOr[]): SubhutiCst | undefined {
-        // ===== 分析模式：委托给 validator =====
-        if (this._validator?.isAnalyzeMode()) {
-            return this._validator.handleOrAnalyze(alternatives, this.curCst)
-        }
-        
-        // ===== 正常解析模式 =====
         if (!this._parseSuccess) {
             return undefined
         }
@@ -501,12 +491,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * ⚠️ 使用默认 checkLoop: true，自动检测循环
      */
     Many(fn: RuleFunction): SubhutiCst | undefined {
-        // ===== 分析模式：委托给 validator =====
-        if (this._validator?.isAnalyzeMode()) {
-            return this._validator.handleManyAnalyze(fn, this.curCst)
-        }
-        
-        // ===== 正常解析模式 =====
         if (!this._parseSuccess) {
             return undefined
         }
@@ -528,12 +512,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * ⚠️ 注意：Option 允许成功但不消费 token（匹配 0 次），不检测循环
      */
     Option(fn: RuleFunction): SubhutiCst | undefined {
-        // ===== 分析模式：委托给 validator =====
-        if (this._validator?.isAnalyzeMode()) {
-            return this._validator.handleOptionAnalyze(fn, this.curCst)
-        }
-        
-        // ===== 正常解析模式 =====
         if (!this._parseSuccess) {
             return undefined
         }
@@ -554,12 +532,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * ⚠️ 使用默认 checkLoop: true，自动检测循环
      */
     AtLeastOne(fn: RuleFunction): SubhutiCst | undefined {
-        // ===== 分析模式：委托给 validator =====
-        if (this._validator?.isAnalyzeMode()) {
-            return this._validator.handleAtLeastOneAnalyze(fn, this.curCst)
-        }
-        
-        // ===== 正常解析模式 =====
         if (!this._parseSuccess) {
             return undefined
         }
@@ -586,12 +558,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * - allowError=false: 失败抛详细错误
      */
     consume(tokenName: string): SubhutiCst | undefined {
-        // ===== 分析模式：委托给 validator =====
-        if (this._validator?.isAnalyzeMode()) {
-            return this._validator.handleConsumeAnalyze(tokenName, this.curCst)
-        }
-        
-        // ===== 正常解析模式 =====
         if (!this._parseSuccess) {
             return undefined
         }
@@ -777,12 +743,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * ```
      */
     validateGrammar(): void {
-        // 如果没有 validator（生产环境），创建临时实例并验证
-        if (!this._validator) {
-            new SubhutiGrammarValidator(this)
-        } else {
-            this._validator.validate(this)
-        }
+        SubhutiGrammarValidator.validate(this)
     }
 
     /**

@@ -2,9 +2,9 @@
  * Subhuti Grammar Validation - 规则收集器
  * 
  * 功能：收集 Parser 中所有规则的 AST 结构
- * 原理：切换到分析模式，执行规则函数并记录调用序列
+ * 原理：使用 Proxy 拦截 Parser 方法调用，记录调用序列
  * 
- * @version 1.0.0
+ * @version 2.0.0 - Proxy 方案（零侵入）
  */
 
 import type SubhutiParser from "../SubhutiParser"
@@ -14,9 +14,14 @@ import type { RuleNode, SequenceNode } from "./SubhutiValidationError"
  * 规则收集器
  * 
  * 职责：
- * 1. 遍历所有 @SubhutiRule 方法
- * 2. 在分析模式下执行（不需要真实tokens）
- * 3. 记录每个规则的调用序列（AST）
+ * 1. 创建 Parser 的 Proxy 代理
+ * 2. 拦截 Or/Many/Option/AtLeastOne/consume 方法调用
+ * 3. 记录调用序列形成 AST
+ * 
+ * 优势：
+ * - Parser 代码完全干净，无需任何验证相关代码
+ * - 验证逻辑完全独立，易于维护
+ * - 生产环境零性能开销
  */
 export class SubhutiRuleCollector {
     /** 收集到的规则 AST */
@@ -29,35 +34,68 @@ export class SubhutiRuleCollector {
     private currentRuleName: string = ''
     
     /**
-     * 收集所有规则
+     * 收集所有规则 - 静态方法
      * 
      * @param parser Parser 实例
      * @returns 规则名称 → AST 的映射
      */
-    collectRules(parser: SubhutiParser): Map<string, RuleNode> {
-        // 保存原始状态
-        const originalMode = (parser as any)._mode
-        const originalAnalyzer = (parser as any)._analyzer
+    static collectRules(parser: SubhutiParser): Map<string, RuleNode> {
+        const collector = new SubhutiRuleCollector()
+        return collector.collect(parser)
+    }
+    
+    /**
+     * 收集所有规则（私有实现）
+     */
+    private collect(parser: SubhutiParser): Map<string, RuleNode> {
+        // 创建代理，拦截方法调用
+        const proxy = this.createAnalyzeProxy(parser)
         
-        try {
-            // 切换到分析模式
-            (parser as any)._mode = 'analyze'
-            ;(parser as any)._analyzer = this
-            
-            // 获取所有 @SubhutiRule 方法
-            const ruleNames = this.getAllRuleNames(parser)
-            
-            // 遍历执行每个规则
-            for (const ruleName of ruleNames) {
-                this.collectRule(parser, ruleName)
-            }
-            
-            return this.ruleASTs
-        } finally {
-            // 恢复原始状态
-            ;(parser as any)._mode = originalMode
-            ;(parser as any)._analyzer = originalAnalyzer
+        // 获取所有 @SubhutiRule 方法
+        const ruleNames = this.getAllRuleNames(parser)
+        
+        // 遍历执行每个规则
+        for (const ruleName of ruleNames) {
+            this.collectRule(proxy, ruleName)
         }
+        
+        return this.ruleASTs
+    }
+    
+    /**
+     * 创建分析代理（拦截 Parser 方法调用）
+     */
+    private createAnalyzeProxy(parser: SubhutiParser): SubhutiParser {
+        const collector = this
+        
+        return new Proxy(parser, {
+            get(target: any, prop: string | symbol) {
+                // 拦截核心方法
+                if (prop === 'Or') {
+                    return (alternatives: Array<{ alt: () => any }>) => 
+                        collector.handleOr(alternatives, target)
+                }
+                if (prop === 'Many') {
+                    return (fn: () => any) => 
+                        collector.handleMany(fn, target)
+                }
+                if (prop === 'Option') {
+                    return (fn: () => any) => 
+                        collector.handleOption(fn, target)
+                }
+                if (prop === 'AtLeastOne') {
+                    return (fn: () => any) => 
+                        collector.handleAtLeastOne(fn, target)
+                }
+                if (prop === 'consume') {
+                    return (tokenName: string) => 
+                        collector.handleConsume(tokenName)
+                }
+                
+                // 其他属性/方法保持原样
+                return Reflect.get(target, prop)
+            }
+        })
     }
     
     /**
@@ -130,35 +168,96 @@ export class SubhutiRuleCollector {
         return ruleNames
     }
     
+    // ============================================
+    // Proxy 拦截方法
+    // ============================================
+    
     /**
-     * 记录节点（由 Parser 在分析模式下调用）
+     * 处理 Or 规则
      */
-    recordNode(node: RuleNode): void {
-        const currentSeq = this.currentRuleStack[this.currentRuleStack.length - 1]
-        if (currentSeq) {
-            currentSeq.nodes.push(node)
+    private handleOr(alternatives: Array<{ alt: () => any }>, target: any): void {
+        const altNodes: any[] = []
+        
+        for (const alt of alternatives) {
+            // 进入新的序列
+            const seqNode: SequenceNode = { type: 'sequence', nodes: [] }
+            this.currentRuleStack.push(seqNode)
+            
+            // 执行分支（会通过 proxy 拦截）
+            alt.alt.call(target)
+            
+            // 退出序列，获取结果
+            const result = this.currentRuleStack.pop()
+            if (result) {
+                altNodes.push(result)
+            }
+        }
+        
+        // 记录 Or 节点
+        this.recordNode({ type: 'or', alternatives: altNodes })
+    }
+    
+    /**
+     * 处理 Many 规则
+     */
+    private handleMany(fn: () => any, target: any): void {
+        const seqNode: SequenceNode = { type: 'sequence', nodes: [] }
+        this.currentRuleStack.push(seqNode)
+        
+        // 执行一次（收集内部结构）
+        fn.call(target)
+        
+        const innerNode = this.currentRuleStack.pop()
+        if (innerNode) {
+            this.recordNode({ type: 'many', node: innerNode })
         }
     }
     
     /**
-     * 进入嵌套结构（Or/Option/Many/AtLeastOne）
+     * 处理 Option 规则
      */
-    enterNested(node: SequenceNode): void {
-        this.currentRuleStack.push(node)
+    private handleOption(fn: () => any, target: any): void {
+        const seqNode: SequenceNode = { type: 'sequence', nodes: [] }
+        this.currentRuleStack.push(seqNode)
+        
+        fn.call(target)
+        
+        const innerNode = this.currentRuleStack.pop()
+        if (innerNode) {
+            this.recordNode({ type: 'option', node: innerNode })
+        }
     }
     
     /**
-     * 退出嵌套结构
+     * 处理 AtLeastOne 规则
      */
-    exitNested(): RuleNode | undefined {
-        return this.currentRuleStack.pop()
+    private handleAtLeastOne(fn: () => any, target: any): void {
+        const seqNode: SequenceNode = { type: 'sequence', nodes: [] }
+        this.currentRuleStack.push(seqNode)
+        
+        fn.call(target)
+        
+        const innerNode = this.currentRuleStack.pop()
+        if (innerNode) {
+            this.recordNode({ type: 'atLeastOne', node: innerNode })
+        }
     }
     
     /**
-     * 获取当前序列节点
+     * 处理 consume
      */
-    getCurrentSequence(): SequenceNode | undefined {
-        return this.currentRuleStack[this.currentRuleStack.length - 1]
+    private handleConsume(tokenName: string): void {
+        this.recordNode({ type: 'consume', tokenName })
+    }
+    
+    /**
+     * 记录节点到当前序列
+     */
+    private recordNode(node: RuleNode): void {
+        const currentSeq = this.currentRuleStack[this.currentRuleStack.length - 1]
+        if (currentSeq) {
+            currentSeq.nodes.push(node)
+        }
     }
 }
 
