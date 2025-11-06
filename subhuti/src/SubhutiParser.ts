@@ -74,6 +74,16 @@ export function SubhutiRule(targetFun: any, context: ClassMethodDecoratorContext
 export type SubhutiTokenConsumerConstructor<T extends SubhutiTokenConsumer> =
     new (parser: SubhutiParser) => T
 
+/**
+ * Parser 构造选项
+ */
+export interface SubhutiParserOptions<T extends SubhutiTokenConsumer = SubhutiTokenConsumer> {
+    /** TokenConsumer 类（可选） */
+    tokenConsumer?: SubhutiTokenConsumerConstructor<T>
+    /** 是否开启语法验证调试（默认 false） */
+    validationDebug?: boolean
+}
+
 // ============================================
 // SubhutiParser 核心类
 // ============================================
@@ -82,6 +92,9 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     extends SubhutiTokenLookahead {
     // 核心字段
     readonly tokenConsumer: T
+    
+    /** 语法验证调试标志 */
+    private _validationDebug: boolean = false
 
     /**
      * 核心状态：当前规则是否成功
@@ -154,7 +167,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
     constructor(
         tokens: SubhutiMatchToken[] = [],
-        SubhutiTokenConsumerClass?: SubhutiTokenConsumerConstructor<T>,
+        optionsOrConsumer?: SubhutiTokenConsumerConstructor<T> | SubhutiParserOptions<T>,
     ) {
         super() // 调用父类构造函数
         this._tokens = tokens  // 赋值给父类的 _tokens
@@ -162,8 +175,26 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         this.className = this.constructor.name
         this._cache = new SubhutiPackratCache()
 
-        if (SubhutiTokenConsumerClass) {
-            this.tokenConsumer = new SubhutiTokenConsumerClass(this)
+        // 解析参数（向后兼容）
+        let TokenConsumerClass: SubhutiTokenConsumerConstructor<T> | undefined
+        let validationDebug = false
+        
+        if (optionsOrConsumer) {
+            // 判断是 Class 还是 Options 对象
+            if (typeof optionsOrConsumer === 'function') {
+                // 旧方式：直接传入 Class
+                TokenConsumerClass = optionsOrConsumer
+            } else {
+                // 新方式：传入 options 对象
+                TokenConsumerClass = optionsOrConsumer.tokenConsumer
+                validationDebug = optionsOrConsumer.validationDebug || false
+            }
+        }
+        
+        this._validationDebug = validationDebug
+
+        if (TokenConsumerClass) {
+            this.tokenConsumer = new TokenConsumerClass(this)
         } else {
             this.tokenConsumer = new SubhutiTokenConsumer(this) as T
         }
@@ -171,7 +202,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         // 开发模式自动检查
         // @ts-ignore - Node.js 环境变量检查
         if (typeof process !== 'undefined' && process.env.NODE_ENV === 'development') {
-            this.validateGrammar({ verbose: true })
+            this.validateGrammar({ debug: validationDebug })
         }
     }
 
@@ -852,7 +883,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             
             // 2. 创建语法分析器
             const analyzer = new SubhutiGrammarAnalyzer(ruleASTs, {
-                maxPaths: options?.maxPaths || 100
+                maxPaths: options?.maxPaths || 10000
             })
             
             // 3. 检测冲突
@@ -864,16 +895,18 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
                 ? errors.filter(err => !options.ignoreRules!.includes(err.ruleName))
                 : errors
             
-            // 5. 详细输出
-            if (options?.verbose && filteredErrors.length > 0) {
-                console.error('Grammar Validation Errors:')
-                for (const error of filteredErrors) {
-                    console.error(`\n[${error.level}] ${error.message}`)
-                    console.error(`  Rule: ${error.ruleName}`)
-                    console.error(`  Branches: [${error.branchIndices.join(', ')}]`)
-                    console.error(`  Path A: ${error.conflictPaths.pathA}`)
-                    console.error(`  Path B: ${error.conflictPaths.pathB}`)
-                    console.error(`  Suggestion: ${error.suggestion}`)
+            // 5. 调试模式（合并 verbose 和 debug 功能）
+            if (options?.debug) {
+                // debug: true → 自动创建调试器
+                // debug: SubhutiValidationDebugger 实例 → 使用提供的调试器
+                if (options.debug === true) {
+                    // 动态导入（避免循环依赖）
+                    const { SubhutiValidationDebugger } = require('./validation/SubhutiValidationDebugger')
+                    const validationDebugger = new SubhutiValidationDebugger()
+                    validationDebugger.onValidationComplete(ruleASTs, filteredErrors)
+                } else if (typeof options.debug === 'object' && 'onValidationComplete' in options.debug) {
+                    // 使用提供的调试器实例
+                    options.debug.onValidationComplete(ruleASTs, filteredErrors)
                 }
             }
             

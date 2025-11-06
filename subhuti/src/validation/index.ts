@@ -29,3 +29,11 @@ export { SubhutiGrammarAnalyzer } from './SubhutiGrammarAnalyzer'
 export type { GrammarAnalyzerOptions } from './SubhutiGrammarAnalyzer'
 export { SubhutiConflictDetector } from './SubhutiConflictDetector'
 
+// 调试器
+export { SubhutiValidationDebugger } from './SubhutiValidationDebugger'
+export type { 
+    DebugEvent,
+    RuleDebugInfo,
+    ConflictDebugInfo 
+} from './SubhutiValidationDebugger'
+

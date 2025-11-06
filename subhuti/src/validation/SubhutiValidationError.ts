@@ -63,8 +63,13 @@ export interface ValidateOptions {
     /** 忽略的规则名称列表 */
     ignoreRules?: string[]
     
-    /** 详细输出模式（打印所有错误） */
-    verbose?: boolean
+    /** 
+     * 调试模式：提供详细的验证过程追踪
+     * - false/未设置: 不输出任何信息（静默模式）
+     * - true: 自动创建调试器，输出详细的规则收集、路径计算、冲突检测信息
+     * - SubhutiValidationDebugger 实例: 使用自定义调试器
+     */
+    debug?: boolean | any  // 'any' 避免循环依赖，实际类型是 SubhutiValidationDebugger
 }
 
 // ============================================
