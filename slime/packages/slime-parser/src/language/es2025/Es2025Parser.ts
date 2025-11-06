@@ -440,8 +440,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     @SubhutiRule
     PropertyDefinition(params: ExpressionParams = {}): SubhutiCst | undefined {
         return this.Or([
-            {alt: () => this.IdentifierReference(params)},
-            {alt: () => this.CoverInitializedName(params)},
+            // PropertyName : AssignmentExpression（带冒号的完整属性）应该最先尝试
             {
                 alt: () => {
                     this.PropertyName(params)
@@ -449,13 +448,19 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                     this.AssignmentExpression({...params, In: true})
                 }
             },
+            // MethodDefinition（方法定义）
             {alt: () => this.MethodDefinition(params)},
+            // ... AssignmentExpression（展开运算符）
             {
                 alt: () => {
                     this.tokenConsumer.Ellipsis()
                     this.AssignmentExpression({...params, In: true})
                 }
-            }
+            },
+            // CoverInitializedName（带默认值的简写属性，如 {a = 1}）
+            {alt: () => this.CoverInitializedName(params)},
+            // IdentifierReference（简写属性，如 {a}）应该最后尝试
+            {alt: () => this.IdentifierReference(params)}
         ])
     }
 
