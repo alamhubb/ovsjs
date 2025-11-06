@@ -22,6 +22,16 @@ import {type SubhutiDebugger, SubhutiTraceDebugger} from "./SubhutiDebug.ts";
 import {SubhutiPackratCache, type SubhutiPackratCacheResult} from "./SubhutiPackratCache.ts";
 import SubhutiTokenConsumer from "./SubhutiTokenConsumer.ts";
 
+// Grammar Validation
+import {
+    SubhutiRuleCollector,
+    SubhutiGrammarAnalyzer,
+    SubhutiConflictDetector,
+    SubhutiGrammarValidationError,
+    type ValidationResult,
+    type ValidateOptions
+} from "./validation/index";
+
 // ============================================
 // 类型定义
 // ============================================
@@ -128,6 +138,19 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     // Packrat Parsing（默认 LRU 缓存）
     enableMemoization: boolean = true
     private readonly _cache: SubhutiPackratCache
+
+    // Grammar Validation（语法验证）
+    /**
+     * 运行模式：
+     * - 'parse': 正常解析模式（默认）
+     * - 'analyze': 分析模式（用于收集规则AST，不需要真实tokens）
+     */
+    private _mode: 'parse' | 'analyze' = 'parse'
+    
+    /**
+     * 分析器实例（分析模式下使用）
+     */
+    private _analyzer?: SubhutiRuleCollector
 
     constructor(
         tokens: SubhutiMatchToken[] = [],
@@ -410,6 +433,32 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * 核心：前 N-1 分支允许失败，最后分支抛详细错误
      */
     Or(alternatives: SubhutiParserOr[]): SubhutiCst | undefined {
+        // ===== 分析模式：记录所有分支 =====
+        if (this._mode === 'analyze') {
+            const altNodes: any[] = []
+            
+            for (const alt of alternatives) {
+                // 进入新的序列
+                const seqNode = { type: 'sequence', nodes: [] }
+                this._analyzer?.enterNested(seqNode)
+                
+                // 执行分支（记录调用）
+                alt.alt()
+                
+                // 退出序列，获取结果
+                const result = this._analyzer?.exitNested()
+                if (result) {
+                    altNodes.push(result)
+                }
+            }
+            
+            // 记录 Or 节点
+            this._notifyAnalyzer({ type: 'or', alternatives: altNodes })
+            
+            return this.curCst
+        }
+        
+        // ===== 正常解析模式 =====
         if (!this._parseSuccess) {
             return undefined
         }
@@ -460,6 +509,19 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * ⚠️ 使用默认 checkLoop: true，自动检测循环
      */
     Many(fn: RuleFunction): SubhutiCst | undefined {
+        // ===== 分析模式：记录结构 =====
+        if (this._mode === 'analyze') {
+            const seqNode = { type: 'sequence', nodes: [] }
+            this._analyzer?.enterNested(seqNode)
+            fn()
+            const innerNode = this._analyzer?.exitNested()
+            if (innerNode) {
+                this._notifyAnalyzer({ type: 'many', node: innerNode })
+            }
+            return this.curCst
+        }
+        
+        // ===== 正常解析模式 =====
         if (!this._parseSuccess) {
             return undefined
         }
@@ -481,6 +543,19 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * ⚠️ 注意：Option 允许成功但不消费 token（匹配 0 次），不检测循环
      */
     Option(fn: RuleFunction): SubhutiCst | undefined {
+        // ===== 分析模式：记录结构 =====
+        if (this._mode === 'analyze') {
+            const seqNode = { type: 'sequence', nodes: [] }
+            this._analyzer?.enterNested(seqNode)
+            fn()
+            const innerNode = this._analyzer?.exitNested()
+            if (innerNode) {
+                this._notifyAnalyzer({ type: 'option', node: innerNode })
+            }
+            return this.curCst
+        }
+        
+        // ===== 正常解析模式 =====
         if (!this._parseSuccess) {
             return undefined
         }
@@ -501,6 +576,19 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * ⚠️ 使用默认 checkLoop: true，自动检测循环
      */
     AtLeastOne(fn: RuleFunction): SubhutiCst | undefined {
+        // ===== 分析模式：记录结构 =====
+        if (this._mode === 'analyze') {
+            const seqNode = { type: 'sequence', nodes: [] }
+            this._analyzer?.enterNested(seqNode)
+            fn()
+            const innerNode = this._analyzer?.exitNested()
+            if (innerNode) {
+                this._notifyAnalyzer({ type: 'atLeastOne', node: innerNode })
+            }
+            return this.curCst
+        }
+        
+        // ===== 正常解析模式 =====
         if (!this._parseSuccess) {
             return undefined
         }
@@ -527,6 +615,23 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * - allowError=false: 失败抛详细错误
      */
     consume(tokenName: string): SubhutiCst | undefined {
+        // ===== 分析模式：记录调用，不检查 token =====
+        if (this._mode === 'analyze') {
+            this._notifyAnalyzer({ type: 'consume', tokenName })
+            
+            // 创建假 CST（让规则函数继续执行）
+            const fakeCst = new SubhutiCst()
+            fakeCst.name = tokenName
+            
+            // 添加到当前 CST
+            if (this.curCst) {
+                this.curCst.children?.push(fakeCst)
+            }
+            
+            return fakeCst
+        }
+        
+        // ===== 正常解析模式 =====
         if (!this._parseSuccess) {
             return undefined
         }
@@ -694,6 +799,109 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         }
 
         return undefined
+    }
+
+    // ============================================
+    // Grammar Validation API
+    // ============================================
+
+    /**
+     * 通知分析器（分析模式下由 Parser 调用）
+     */
+    private _notifyAnalyzer(node: any): void {
+        if (this._analyzer) {
+            this._analyzer.recordNode(node)
+        }
+    }
+
+    /**
+     * 验证语法（检测 Or 规则冲突）
+     * 
+     * 功能：
+     * 1. 收集所有规则的 AST
+     * 2. 计算每个规则的路径
+     * 3. 检测 Or 规则中的冲突
+     * 
+     * @param options 验证选项
+     * @returns 验证结果
+     * 
+     * @example
+     * ```typescript
+     * const parser = new MyParser()
+     * const result = parser.validateGrammar()
+     * 
+     * if (!result.success) {
+     *   console.error(result.errors)
+     * }
+     * 
+     * // 严格模式（发现错误就抛出）
+     * parser.validateGrammar({ strict: true })
+     * ```
+     */
+    validateGrammar(options?: ValidateOptions): ValidationResult {
+        try {
+            // 1. 收集规则 AST
+            const collector = new SubhutiRuleCollector()
+            const ruleASTs = collector.collectRules(this)
+            
+            // 2. 创建语法分析器
+            const analyzer = new SubhutiGrammarAnalyzer(ruleASTs, {
+                maxPaths: options?.maxPaths || 100
+            })
+            
+            // 3. 检测冲突
+            const detector = new SubhutiConflictDetector(analyzer, ruleASTs)
+            const errors = detector.detectAllConflicts()
+            
+            // 4. 过滤忽略的规则
+            const filteredErrors = options?.ignoreRules
+                ? errors.filter(err => !options.ignoreRules!.includes(err.ruleName))
+                : errors
+            
+            // 5. 详细输出
+            if (options?.verbose && filteredErrors.length > 0) {
+                console.error('Grammar Validation Errors:')
+                for (const error of filteredErrors) {
+                    console.error(`\n[${error.level}] ${error.message}`)
+                    console.error(`  Rule: ${error.ruleName}`)
+                    console.error(`  Branches: [${error.branchIndices.join(', ')}]`)
+                    console.error(`  Path A: ${error.conflictPaths.pathA}`)
+                    console.error(`  Path B: ${error.conflictPaths.pathB}`)
+                    console.error(`  Suggestion: ${error.suggestion}`)
+                }
+            }
+            
+            // 6. 严格模式：抛出错误
+            if (options?.strict && filteredErrors.length > 0) {
+                throw new SubhutiGrammarValidationError(filteredErrors)
+            }
+            
+            return {
+                success: filteredErrors.length === 0,
+                errors: filteredErrors
+            }
+        } catch (error) {
+            // 如果是验证错误，直接抛出
+            if (error instanceof SubhutiGrammarValidationError) {
+                throw error
+            }
+            
+            // 其他错误：返回失败结果
+            console.error('Grammar validation failed with error:', error)
+            return {
+                success: false,
+                errors: []
+            }
+        }
+    }
+
+    /**
+     * 执行语法自检（Chevrotain 风格别名）
+     * 
+     * @see validateGrammar
+     */
+    performSelfAnalysis(options?: ValidateOptions): ValidationResult {
+        return this.validateGrammar(options)
     }
 }
 

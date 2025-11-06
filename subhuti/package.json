@@ -5,6 +5,7 @@
   "license": "MIT",
   "scripts": {
     "test": "tsx test/HelloWorldGrammarParser.ts",
+    "test:validation": "tsx tests/validation/grammar-validation.test.ts",
     "build": "tsc"
   },
   "homepage": "https://github.com/alamhubb/subhuti",

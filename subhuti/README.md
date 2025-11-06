@@ -32,6 +32,7 @@
 ### 🔧 开发友好
 - **调试支持**：内置 Trace Debugger，可视化规则匹配过程
 - **错误处理**：详细的错误信息（位置、期望、实际、规则栈）
+- **语法验证**：自动检测 Or 规则冲突（前缀遮蔽、空路径）⭐ 新功能
 - **CST 辅助方法**：`getChild()`, `getChildren()`, `getToken()` 等便捷方法
 
 ## 📦 安装
@@ -250,6 +251,62 @@ const parser = new MyParser(tokenStream)
   .cache(true)          // 启用 Packrat 缓存（默认开启）
   .debug(true)          // 启用调试输出
   .errorHandler(true)   // 启用详细错误信息
+```
+
+### 语法验证（Grammar Validation）⭐ 新功能
+
+**自动检测 Or 规则冲突**，避免短规则遮蔽长规则的问题！
+
+```typescript
+// 检查语法是否正确
+const result = parser.validateGrammar()
+
+if (!result.success) {
+  console.error('发现语法冲突:', result.errors)
+  // [
+  //   {
+  //     level: 'ERROR',
+  //     type: 'prefix-conflict',
+  //     ruleName: 'Expression',
+  //     branchIndices: [0, 1],
+  //     conflictPaths: {
+  //       pathA: 'Identifier,',               // 短路径
+  //       pathB: 'Identifier,Dot,Identifier,' // 长路径（被遮蔽）
+  //     },
+  //     message: '分支 1 (MemberExpression) 被分支 0 (Identifier) 遮蔽',
+  //     suggestion: '将 MemberExpression 移到 Identifier 前面'
+  //   }
+  // ]
+}
+
+// 严格模式（发现错误就抛出异常）
+parser.validateGrammar({ strict: true })
+
+// 详细输出（打印所有错误）
+parser.validateGrammar({ verbose: true })
+
+// 忽略特定规则
+parser.validateGrammar({ ignoreRules: ['LegacyRule'] })
+```
+
+**检测规则：**
+1. **空路径冲突（FATAL）**：`Option`/`Many` 在 Or 第一个分支，导致后续分支不可达
+2. **前缀冲突（ERROR）**：短规则在前，遮蔽长规则
+
+**推荐使用场景：**
+- ✅ 开发阶段：在测试中自动验证语法
+- ✅ CI/CD：防止错误的规则顺序合入代码
+- ✅ 重构：确保修改不引入冲突
+
+```typescript
+// 示例：在测试中使用
+describe('Parser Grammar', () => {
+  it('should not have Or conflicts', () => {
+    const parser = new MyParser([])
+    const result = parser.validateGrammar()
+    expect(result.success).toBe(true)
+  })
+})
 ```
 
 ## 🎯 核心概念
