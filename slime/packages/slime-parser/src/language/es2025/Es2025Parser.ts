@@ -162,8 +162,8 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             {alt: () => this.FunctionExpression()},
             {alt: () => this.ClassExpression(params)},
             {alt: () => this.GeneratorExpression()},
-            {alt: () => this.AsyncFunctionExpression()},
-            {alt: () => this.AsyncGeneratorExpression()},
+            {alt: () => this.AsyncFunctionExpression()},      // ← 回退到原始顺序
+            {alt: () => this.AsyncGeneratorExpression()},     // ← 回退到原始顺序
             {alt: () => this.tokenConsumer.RegularExpression()},
             {alt: () => this.TemplateLiteral({...params, Tagged: false})},
             {alt: () => this.CoverParenthesizedExpressionAndArrowParameterList(params)}
@@ -394,20 +394,21 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                     this.tokenConsumer.RBrace()
                 }
             },
-            // { PropertyDefinitionList[?Yield, ?Await] , }
+            // ⚠️ 临时测试：故意使用错误的顺序（宽泛在前）
+            // { PropertyDefinitionList[?Yield, ?Await] } - 宽泛模式（错误地放在前面）
+            {
+                alt: () => {
+                    this.tokenConsumer.LBrace()
+                    this.PropertyDefinitionList(params)
+                    this.tokenConsumer.RBrace()
+                }
+            },
+            // { PropertyDefinitionList[?Yield, ?Await] , } - 具体模式（错误地放在后面）
             {
                 alt: () => {
                     this.tokenConsumer.LBrace()
                     this.PropertyDefinitionList(params)
                     this.tokenConsumer.Comma()
-                    this.tokenConsumer.RBrace()
-                }
-            },
-            // { PropertyDefinitionList[?Yield, ?Await] }
-            {
-                alt: () => {
-                    this.tokenConsumer.LBrace()
-                    this.PropertyDefinitionList(params)
                     this.tokenConsumer.RBrace()
                 }
             }
@@ -1752,14 +1753,19 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      *     GeneratorDeclaration[?Yield, ?Await, ?Default]
      *     AsyncFunctionDeclaration[?Yield, ?Await, ?Default]
      *     AsyncGeneratorDeclaration[?Yield, ?Await, ?Default]
+     * 
+     * ⚠️ PEG 规则顺序：
+     * - AsyncGeneratorDeclaration 必须在 AsyncFunctionDeclaration 之前
+     * - 原因：async function* 比 async function 更具体，具体规则必须在前
+     * - 否则 async function 会匹配 async function* 的前半部分，导致 async function* 永远无法匹配
      */
     @SubhutiRule
     HoistableDeclaration(params: DeclarationParams = {}): SubhutiCst | undefined {
         return this.Or([
             {alt: () => this.FunctionDeclaration(params)},
             {alt: () => this.GeneratorDeclaration(params)},
-            {alt: () => this.AsyncFunctionDeclaration(params)},
-            {alt: () => this.AsyncGeneratorDeclaration(params)}
+            {alt: () => this.AsyncGeneratorDeclaration(params)},  // ← 具体规则在前
+            {alt: () => this.AsyncFunctionDeclaration(params)}   // ← 宽泛规则在后
         ])
     }
 
