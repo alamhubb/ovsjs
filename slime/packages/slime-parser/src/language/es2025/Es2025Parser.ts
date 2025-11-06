@@ -1041,13 +1041,29 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      *     NewExpression[?Yield, ?Await]
      *     CallExpression[?Yield, ?Await]
      *     OptionalExpression[?Yield, ?Await]
+     * 
+     * ⚠️ PEG 实现说明：
+     * 
+     * 问题：三个分支都可以匹配基础的 MemberExpression，区别在于后缀操作：
+     *      - OptionalExpression: 包含 ?. 后缀
+     *      - CallExpression: 包含 () 后缀（但不包含 ?.）
+     *      - NewExpression: 不包含 () 或 ?. 后缀
+     * 
+     * 如果按规范顺序，NewExpression 会先匹配基础表达式（如 foo），导致：
+     *      - foo() 只匹配 foo，剩余 ()
+     *      - foo?.bar 只匹配 foo，剩余 ?.bar
+     * 
+     * 解决方案：调整顺序，具体模式（有特定后缀的）在前：
+     *      1. OptionalExpression - 必须包含 ?. 后缀
+     *      2. CallExpression - 必须包含 () 后缀
+     *      3. NewExpression - 不包含特定后缀（最宽泛）
      */
     @SubhutiRule
     LeftHandSideExpression(params: ExpressionParams = {}): SubhutiCst | undefined {
         return this.Or([
-            {alt: () => this.NewExpression(params)},
+            {alt: () => this.OptionalExpression(params)},
             {alt: () => this.CallExpression(params)},
-            {alt: () => this.OptionalExpression(params)}
+            {alt: () => this.NewExpression(params)}
         ])
     }
 
