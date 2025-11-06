@@ -88,9 +88,23 @@ export class SubhutiRuleCollector {
             } else {
                 this.ruleASTs.set(ruleName, rootNode)
             }
-        } catch (error) {
-            // 分析模式下的错误可以忽略（规则可能依赖特定状态）
-            console.warn(`Failed to collect rule "${ruleName}":`, error)
+        } catch (error: any) {
+            // 特殊处理：循环错误（左递归/右递归）
+            if (error?.type === 'loop') {
+                // 递归是预期情况，保存已收集的部分AST
+                if (rootNode.nodes.length > 0) {
+                    // 有部分AST，保存它
+                    this.ruleASTs.set(ruleName, rootNode)
+                    console.info(`✓ Rule "${ruleName}" contains recursion, saved partial AST (${rootNode.nodes.length} nodes)`)
+                } else {
+                    // 没收集到任何东西，标记为递归规则
+                    console.info(`✓ Rule "${ruleName}" contains direct recursion, skipped`)
+                    // 不保存AST（返回空）
+                }
+            } else {
+                // 其他错误才是真正的失败
+                console.warn(`✗ Failed to collect rule "${ruleName}":`, error?.message || error)
+            }
         }
     }
     

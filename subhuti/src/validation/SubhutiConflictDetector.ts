@@ -99,7 +99,7 @@ export class SubhutiConflictDetector {
     ): void {
         // 计算每个分支的路径
         const branchPaths: Path[][] = alternatives.map(alt => 
-            this.analyzer.computeNodePaths(alt, new Set(), 0)
+            this.analyzer.computeNodePaths(alt)
         )
         
         // 两两比较
@@ -150,8 +150,11 @@ export class SubhutiConflictDetector {
             // 跳过空路径（已在 Level 1 检测）
             if (pathA === '') continue
             
-            // 跳过特殊标记
-            if (pathA.startsWith('<')) continue
+            // 跳过特殊标记（递归规则、深度过深等）
+            if (pathA.startsWith('<')) {
+                // 递归规则的路径无法完整分析，跳过
+                continue
+            }
             
             for (const pathB of pathsB) {
                 // 跳过空路径和特殊标记
