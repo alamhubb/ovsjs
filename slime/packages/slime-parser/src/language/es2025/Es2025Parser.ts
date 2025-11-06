@@ -436,12 +436,26 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      *     PropertyName[?Yield, ?Await] : AssignmentExpression[+In, ?Yield, ?Await]
      *     MethodDefinition[?Yield, ?Await]
      *     ... AssignmentExpression[+In, ?Yield, ?Await]
+     * 
+     * ⚠️ Or 顺序调整：
+     * 为了正确处理 PEG 的贪婪匹配，将更具体的规则（带明确分隔符的）放在前面：
+     * 1. ... AssignmentExpression - 有明确的 `...` 前缀
+     * 2. PropertyName : AssignmentExpression - 有明确的 `:` 分隔符
+     * 3. CoverInitializedName - 有明确的 `=` 分隔符
+     * 4. MethodDefinition - 有明确的函数签名
+     * 5. IdentifierReference - 简写属性，最宽松，放最后
      */
     @SubhutiRule
     PropertyDefinition(params: ExpressionParams = {}): SubhutiCst | undefined {
         return this.Or([
-            {alt: () => this.IdentifierReference(params)},
-            {alt: () => this.CoverInitializedName(params)},
+            // 1. ... AssignmentExpression - 扩展属性（最明确）
+            {
+                alt: () => {
+                    this.tokenConsumer.Ellipsis()
+                    this.AssignmentExpression({...params, In: true})
+                }
+            },
+            // 2. PropertyName : AssignmentExpression - 完整属性（有 : 分隔符）
             {
                 alt: () => {
                     this.PropertyName(params)
@@ -449,13 +463,12 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                     this.AssignmentExpression({...params, In: true})
                 }
             },
+            // 3. CoverInitializedName - 带默认值的简写（有 = 分隔符）
+            {alt: () => this.CoverInitializedName(params)},
+            // 4. MethodDefinition - 方法定义
             {alt: () => this.MethodDefinition(params)},
-            {
-                alt: () => {
-                    this.tokenConsumer.Ellipsis()
-                    this.AssignmentExpression({...params, In: true})
-                }
-            }
+            // 5. IdentifierReference - 简写属性（最后尝试）
+            {alt: () => this.IdentifierReference(params)}
         ])
     }
 

@@ -1,10 +1,14 @@
 /**
- * Subhuti Debug - 统一调试和性能分析系统（v3.0）
+ * Subhuti Debug - 统一调试和性能分析系统（v4.0）
  * 
  * 设计理念：
  * - YAGNI：只实现实际需要的功能
  * - 简单优于复杂：统一入口，清晰的输出
- * - 基于实际需求：过程追踪 + 性能统计
+ * - 职责分离：追踪器（有状态）+ 工具集（无状态）
+ * 
+ * 架构：
+ * - SubhutiDebugUtils - 无状态工具集（CST分析、Token验证、高级调试）
+ * - SubhutiTraceDebugger - 有状态追踪器（过程追踪、性能统计、自动输出）
  * 
  * 功能：
  * - ✅ 规则执行追踪（进入/退出）
@@ -16,9 +20,12 @@
  * - ✅ 回溯标识
  * - ✅ 性能统计（totalCalls, avgTime, cacheHits）
  * - ✅ Top N 慢规则（简化输出）
+ * - ✅ 二分增量调试（bisectDebug）
+ * - ✅ CST 结构验证
+ * - ✅ Token 完整性检查
  * 
- * @version 3.0.0 - 合并 Debug + Profiler
- * @date 2025-11-04
+ * @version 4.0.0 - 职责分离 + 通用调试工具
+ * @date 2025-11-06
  */
 
 // ============================================
@@ -290,6 +297,493 @@ export interface SubhutiDebugger {
 
 import type SubhutiCst from "./struct/SubhutiCst.ts"
 
+// ============================================
+// SubhutiDebugUtils - 调试工具集（v4.0）
+// ============================================
+
+/**
+ * Subhuti 调试工具集
+ * 
+ * 职责：
+ * - 提供独立的调试工具（无状态）
+ * - CST 分析、Token 验证、高级调试方法
+ * 
+ * 使用场景：
+ * - 测试脚本直接调用
+ * - 外部工具集成
+ * - 自定义验证逻辑
+ * 
+ * @version 4.0.0 - 职责分离
+ * @date 2025-11-06
+ */
+export class SubhutiDebugUtils {
+    // ========================================
+    // CST Token 分析
+    // ========================================
+    
+    /**
+     * 收集 CST 中的所有 token 值
+     * 
+     * @param node - CST 节点
+     * @returns token 值数组
+     * 
+     * @example
+     * ```typescript
+     * const cst = parser.Script()
+     * const tokens = SubhutiDebugUtils.collectTokens(cst)
+     * console.log(tokens)  // ['const', 'obj', '=', '{', 'sum', ':', '5', '+', '6', '}']
+     * ```
+     */
+    static collectTokens(node: any): string[] {
+        const values: string[] = []
+
+        if (!node) return values
+
+        if (node.value !== undefined && (!node.children || node.children.length === 0)) {
+            values.push(node.value)
+        }
+
+        if (node.children && Array.isArray(node.children)) {
+            for (const child of node.children) {
+                values.push(...SubhutiDebugUtils.collectTokens(child))
+            }
+        }
+
+        return values
+    }
+    
+    /**
+     * 验证 CST 的 token 完整性
+     * 
+     * @param cst - CST 节点
+     * @param inputTokens - 输入 token 数组或 token 值数组
+     * @returns 验证结果
+     * 
+     * @example
+     * ```typescript
+     * const result = SubhutiDebugUtils.validateTokenCompleteness(cst, tokens)
+     * if (result.complete) {
+     *     console.log('✅ Token 完整')
+     * } else {
+     *     console.log('❌ 缺失:', result.missing)
+     * }
+     * ```
+     */
+    static validateTokenCompleteness(
+        cst: any,
+        inputTokens: string[] | any[]
+    ): {
+        complete: boolean
+        inputCount: number
+        cstCount: number
+        inputTokens: string[]
+        cstTokens: string[]
+        missing: string[]
+    } {
+        // 提取 token 值
+        const inputValues = inputTokens.map(t => 
+            typeof t === 'string' ? t : (t.tokenValue || '')
+        ).filter(v => v !== '')
+        
+        const cstTokens = SubhutiDebugUtils.collectTokens(cst)
+        
+        // 找出缺失的 token（按顺序比较）
+        const missing: string[] = []
+        for (let i = 0; i < inputValues.length; i++) {
+            if (i >= cstTokens.length || inputValues[i] !== cstTokens[i]) {
+                missing.push(inputValues[i])
+            }
+        }
+        
+        return {
+            complete: missing.length === 0 && inputValues.length === cstTokens.length,
+            inputCount: inputValues.length,
+            cstCount: cstTokens.length,
+            inputTokens: inputValues,
+            cstTokens: cstTokens,
+            missing: missing
+        }
+    }
+    
+    // ========================================
+    // CST 结构验证
+    // ========================================
+    
+    /**
+     * 验证 CST 结构完整性
+     * 
+     * @param node - CST 节点
+     * @param path - 节点路径（用于错误报告）
+     * @returns 错误列表
+     */
+    static validateStructure(
+        node: any,
+        path: string = 'root'
+    ): Array<{path: string, issue: string, node?: any}> {
+        const errors: Array<{path: string, issue: string, node?: any}> = []
+
+        if (node === null) {
+            errors.push({ path, issue: 'Node is null' })
+            return errors
+        }
+
+        if (node === undefined) {
+            errors.push({ path, issue: 'Node is undefined' })
+            return errors
+        }
+
+        if (!node.name && node.value === undefined) {
+            errors.push({
+                path,
+                issue: 'Node has neither name nor value',
+                node: { ...node, children: node.children ? `[${node.children.length} children]` : undefined }
+            })
+        }
+
+        if (node.children !== undefined) {
+            if (!Array.isArray(node.children)) {
+                errors.push({
+                    path,
+                    issue: `children is not an array (type: ${typeof node.children})`,
+                    node: { name: node.name, childrenType: typeof node.children }
+                })
+                return errors
+            }
+
+            node.children.forEach((child: any, index: number) => {
+                const childPath = `${path}.children[${index}]`
+
+                if (child === null) {
+                    errors.push({ path: childPath, issue: 'Child is null' })
+                    return
+                }
+
+                if (child === undefined) {
+                    errors.push({ path: childPath, issue: 'Child is undefined' })
+                    return
+                }
+
+                const childErrors = SubhutiDebugUtils.validateStructure(child, childPath)
+                errors.push(...childErrors)
+            })
+        }
+
+        if (node.value !== undefined && node.children && node.children.length > 0) {
+            errors.push({
+                path,
+                issue: `Leaf node has both value and non-empty children`,
+                node: { name: node.name, value: node.value, childrenCount: node.children.length }
+            })
+        }
+
+        return errors
+    }
+    
+    /**
+     * 获取 CST 统计信息
+     * 
+     * @param node - CST 节点
+     * @returns 统计信息
+     */
+    static getCSTStatistics(node: any): {
+        totalNodes: number
+        leafNodes: number
+        maxDepth: number
+        nodeTypes: Map<string, number>
+    } {
+        const stats = {
+            totalNodes: 0,
+            leafNodes: 0,
+            maxDepth: 0,
+            nodeTypes: new Map<string, number>()
+        }
+
+        const traverse = (node: any, depth: number) => {
+            if (!node) return
+
+            stats.totalNodes++
+            stats.maxDepth = Math.max(stats.maxDepth, depth)
+
+            if (node.name) {
+                stats.nodeTypes.set(node.name, (stats.nodeTypes.get(node.name) || 0) + 1)
+            }
+
+            if (!node.children || node.children.length === 0) {
+                stats.leafNodes++
+            } else {
+                for (const child of node.children) {
+                    traverse(child, depth + 1)
+                }
+            }
+        }
+
+        traverse(node, 0)
+        return stats
+    }
+    
+    /**
+     * 格式化 CST 为树形结构字符串
+     * 
+     * @param cst - CST 节点
+     * @param prefix - 前缀（递归使用）
+     * @param isLast - 是否为最后一个子节点（递归使用）
+     * @returns 树形结构字符串
+     */
+    static formatCst(cst: any, prefix: string = '', isLast: boolean = true): string {
+        const lines: string[] = []
+        
+        // 当前节点行
+        const connector = isLast ? '└─' : '├─'
+        const nodeLine = SubhutiDebugUtils.formatNode(cst, prefix, connector)
+        lines.push(nodeLine)
+        
+        // 子节点
+        if (cst.children && cst.children.length > 0) {
+            const childPrefix = prefix + (isLast ? '   ' : '│  ')
+            
+            cst.children.forEach((child: any, index: number) => {
+                const isLastChild = index === cst.children.length - 1
+                lines.push(SubhutiDebugUtils.formatCst(child, childPrefix, isLastChild))
+            })
+        }
+        
+        return lines.join('\n')
+    }
+    
+    /**
+     * 格式化单个节点
+     */
+    private static formatNode(cst: any, prefix: string, connector: string): string {
+        const isToken = cst.value !== undefined
+        const parts: string[] = []
+        
+        // 连接符 + 节点名称
+        parts.push(`${prefix}${connector}`)
+        
+        if (isToken) {
+            // Token 节点：显示名称和值
+            const valueStr = SubhutiDebugUtils.formatValue(cst.value)
+            parts.push(`${cst.name}: ${valueStr}`)
+        } else {
+            // Rule 节点：只显示名称
+            parts.push(`${cst.name}`)
+        }
+        
+        // 位置信息（Token节点始终显示）
+        if (isToken && cst.loc) {
+            const locStr = SubhutiDebugUtils.formatLocation(cst.loc)
+            parts.push(` ${locStr}`)
+        }
+        
+        return parts.join('')
+    }
+    
+    /**
+     * 格式化值（处理特殊字符和长度）
+     */
+    private static formatValue(value: string): string {
+        // 转义特殊字符
+        let escaped = value
+            .replace(/\\/g, '\\\\')
+            .replace(/\n/g, '\\n')
+            .replace(/\r/g, '\\r')
+            .replace(/\t/g, '\\t')
+        
+        // 限制长度
+        const maxLength = 40
+        if (escaped.length > maxLength) {
+            escaped = escaped.slice(0, maxLength) + '...'
+        }
+        
+        return `"${escaped}"`
+    }
+    
+    /**
+     * 格式化位置信息
+     */
+    private static formatLocation(loc: any): string {
+        if (!loc.start || !loc.end) {
+            return ''
+        }
+        
+        const startLine = loc.start.line
+        const startCol = loc.start.column
+        const endLine = loc.end.line
+        const endCol = loc.end.column
+        
+        if (startLine === endLine) {
+            return `[${startLine}:${startCol}-${endCol}]`
+        } else {
+            return `[${startLine}:${startCol}-${endLine}:${endCol}]`
+        }
+    }
+    
+    // ========================================
+    // 高级调试方法
+    // ========================================
+    
+    /**
+     * 二分增量调试 - 从最底层规则逐层测试到顶层
+     * 
+     * 这是一个强大的调试工具，用于快速定位问题层级。
+     * 它会从最底层规则开始逐层测试，直到找到第一个失败的层级。
+     * 
+     * @param tokens - 输入 token 流
+     * @param ParserClass - Parser 类（构造函数）
+     * @param levels - 测试层级配置（从底层到顶层）
+     * @param options - 可选配置
+     * @param options.enableDebugOnLastLevel - 是否在最后一层启用 debug（默认 true）
+     * @param options.stopOnFirstError - 遇到第一个错误时停止（默认 true）
+     * @param options.showStackTrace - 显示堆栈跟踪（默认 true）
+     * @param options.stackTraceLines - 堆栈跟踪显示行数（默认 10）
+     * 
+     * @example
+     * ```typescript
+     * import { SubhutiDebugUtils } from 'subhuti/src/SubhutiDebug'
+     * import Es2025Parser from './Es2025Parser'
+     * 
+     * const tokens = lexer.tokenize("let count = 1")
+     * 
+     * SubhutiDebugUtils.bisectDebug(tokens, Es2025Parser, [
+     *     { name: 'LexicalDeclaration', call: (p) => p.LexicalDeclaration({In: true}) },
+     *     { name: 'Declaration', call: (p) => p.Declaration() },
+     *     { name: 'StatementListItem', call: (p) => p.StatementListItem() },
+     *     { name: 'Script', call: (p) => p.Script() }
+     * ], { enableDebugOnLastLevel: false })
+     * ```
+     */
+    static bisectDebug(
+        tokens: any[],
+        ParserClass: new (tokens: any[]) => any,
+        levels: Array<{
+            name: string
+            call: (parser: any) => any
+        }>,
+        options?: {
+            enableDebugOnLastLevel?: boolean
+            stopOnFirstError?: boolean
+            showStackTrace?: boolean
+            stackTraceLines?: number
+        }
+    ): void {
+        // 默认选项
+        const opts = {
+            enableDebugOnLastLevel: true,
+            stopOnFirstError: true,
+            showStackTrace: true,
+            stackTraceLines: 10,
+            ...options
+        }
+        
+        console.log('\n🔬 二分增量调试模式')
+        console.log('='.repeat(80))
+        console.log('策略：从最底层规则逐层测试，找出问题层级\n')
+        
+        for (let i = 0; i < levels.length; i++) {
+            const level = levels[i]
+            
+            console.log(`\n[${'▸'.repeat(i + 1)}] 测试层级 ${i + 1}: ${level.name}`)
+            console.log('-'.repeat(80))
+            
+            try {
+                // 创建 parser 实例
+                const parser = new ParserClass(tokens)
+                
+                // 在最后一层（顶层规则）开启 debug（如果支持且已启用）
+                if (opts.enableDebugOnLastLevel && i === levels.length - 1) {
+                    if (typeof parser.debug === 'function') {
+                        parser.debug()
+                    }
+                }
+                
+                const result = level.call(parser)
+                
+                if (!result) {
+                    console.log(`\n⚠️ ${level.name} 返回 undefined`)
+                    continue
+                }
+                
+                // 验证 token 完整性
+                const validation = SubhutiDebugUtils.validateTokenCompleteness(result, tokens)
+                
+                if (validation.complete) {
+                    console.log(`\n✅ ${level.name} 解析成功（Token完整: ${validation.cstCount}/${validation.inputCount}）`)
+                } else {
+                    console.log(`\n❌ ${level.name} Token不完整`)
+                    console.log(`   输入tokens: ${validation.inputCount} 个`)
+                    console.log(`   CST tokens:  ${validation.cstCount} 个`)
+                    console.log(`   输入列表: [${validation.inputTokens.join(', ')}]`)
+                    console.log(`   CST列表:  [${validation.cstTokens.join(', ')}]`)
+                    
+                    if (validation.missing.length > 0) {
+                        console.log(`   ❌ 缺失或错位: [${validation.missing.join(', ')}]`)
+                    }
+                    
+                    console.log(`\n🔍 问题定位: ${level.name} 未能消费所有token`)
+                    
+                    if (i > 0) {
+                        console.log(`   ⚠️ 前一层级（${levels[i - 1].name}）也可能有问题`)
+                        console.log(`   💡 建议: 检查 ${level.name} 和 ${levels[i - 1].name} 的实现`)
+                    } else {
+                        console.log(`   💡 建议: 检查 ${level.name} 的实现，确保所有token都被正确处理`)
+                    }
+                    
+                    if (opts.stopOnFirstError) {
+                        return // 遇到 token 不完整就停止
+                    }
+                }
+            } catch (error: any) {
+                console.log(`\n❌ ${level.name} 解析失败`)
+                console.log(`   错误: ${error.message}`)
+                console.log(`\n🔍 问题定位: ${level.name} 层级出现错误`)
+                
+                if (i > 0) {
+                    console.log(`   ✅ 前一层级（${levels[i - 1].name}）可以工作`)
+                    console.log(`   ❌ 当前层级（${level.name}）出现问题`)
+                    console.log(`\n💡 建议: 检查 ${level.name} 的实现，特别是它如何调用 ${levels[i - 1].name}`)
+                } else {
+                    console.log(`   ❌ 最底层规则（${level.name}）就已经失败`)
+                    console.log(`\n💡 建议: 检查 ${level.name} 的实现和 token 定义`)
+                }
+                
+                // 输出堆栈跟踪
+                if (opts.showStackTrace && error.stack) {
+                    console.log(`\n📋 堆栈跟踪（前${opts.stackTraceLines}行）:`)
+                    const stackLines = error.stack.split('\n').slice(0, opts.stackTraceLines)
+                    stackLines.forEach((line: string) => console.log(`   ${line}`))
+                }
+                
+                if (opts.stopOnFirstError) {
+                    return // 遇到错误就停止
+                }
+            }
+        }
+        
+        console.log('\n' + '='.repeat(80))
+        console.log('🎉 所有层级测试通过！')
+        console.log('='.repeat(80))
+    }
+}
+
+// ============================================
+// SubhutiTraceDebugger - 追踪器（v4.0）
+// ============================================
+
+/**
+ * Subhuti 轨迹调试器（v4.0 - 职责分离版）
+ * 
+ * 职责：
+ * - 追踪解析过程（规则进入/退出、Token 消费、Or 分支、回溯）
+ * - 性能统计（调用次数、耗时、缓存命中率）
+ * - 自动输出调试报告
+ * 
+ * 使用场景：
+ * - 由 Parser 自动调用（通过 debug() 方法）
+ * - 实时追踪解析过程
+ * 
+ * @version 4.0.0 - 职责分离
+ * @date 2025-11-06
+ */
 export class SubhutiTraceDebugger implements SubhutiDebugger {
     // ========================================
     // 过程追踪数据
@@ -576,44 +1070,37 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
     }
     
     /**
-     * 收集所有 token 值
+     * 收集所有 token 值（内部调用 SubhutiDebugUtils）
      */
     private collectTokenValues(node: any): string[] {
-        const values: string[] = []
-
-        if (node.value !== undefined && (!node.children || node.children.length === 0)) {
-            values.push(node.value)
-        }
-
-        if (node.children) {
-            for (const child of node.children) {
-                values.push(...this.collectTokenValues(child))
-            }
-        }
-
-        return values
+        return SubhutiDebugUtils.collectTokens(node)
     }
     
     /**
-     * 检查 Token 完整性
+     * 检查 Token 完整性（内部调用 SubhutiDebugUtils）
      */
     private checkTokenCompleteness(cst: SubhutiCst): {
         input: string[]
         cst: string[]
         missing: string[]
     } {
-        const cstTokens = this.collectTokenValues(cst)
-        const missing = this.inputTokens.filter(t => !cstTokens.includes(t))
-
+        const result = SubhutiDebugUtils.validateTokenCompleteness(cst, this.inputTokens)
         return {
-            input: this.inputTokens,
-            cst: cstTokens,
-            missing
+            input: result.inputTokens,
+            cst: result.cstTokens,
+            missing: result.missing
         }
     }
     
     /**
-     * 获取 CST 统计信息
+     * 验证 CST 结构完整性（内部调用 SubhutiDebugUtils）
+     */
+    private validateStructure(node: any, path: string = 'root'): Array<{path: string, issue: string, node?: any}> {
+        return SubhutiDebugUtils.validateStructure(node, path)
+    }
+    
+    /**
+     * 获取 CST 统计信息（内部调用 SubhutiDebugUtils）
      */
     private getCSTStatistics(node: any): {
         totalNodes: number
@@ -621,35 +1108,22 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
         maxDepth: number
         nodeTypes: Map<string, number>
     } {
-        const stats = {
-            totalNodes: 0,
-            leafNodes: 0,
-            maxDepth: 0,
-            nodeTypes: new Map<string, number>()
-        }
-
-        const traverse = (node: any, depth: number) => {
-            if (!node) return
-
-            stats.totalNodes++
-            stats.maxDepth = Math.max(stats.maxDepth, depth)
-
-            if (node.name) {
-                stats.nodeTypes.set(node.name, (stats.nodeTypes.get(node.name) || 0) + 1)
-            }
-
-            if (!node.children || node.children.length === 0) {
-                stats.leafNodes++
-            } else {
-                for (const child of node.children) {
-                    traverse(child, depth + 1)
-                }
-            }
-        }
-
-        traverse(node, 0)
-        return stats
+        return SubhutiDebugUtils.getCSTStatistics(node)
     }
+    
+    // ========================================
+    // 向后兼容 - 静态方法别名
+    // ========================================
+    
+    /**
+     * @deprecated 请使用 SubhutiDebugUtils.collectTokens()
+     */
+    static collectTokens = SubhutiDebugUtils.collectTokens
+    
+    /**
+     * @deprecated 请使用 SubhutiDebugUtils.validateTokenCompleteness()
+     */
+    static validateTokenCompleteness = SubhutiDebugUtils.validateTokenCompleteness
     
     // ========================================
     // 性能统计输出
@@ -819,105 +1293,13 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
             console.log('─'.repeat(60))
             console.log('\n📊 CST 结构')
             console.log('─'.repeat(60))
-            console.log(this.formatCst(this.topLevelCst))
+            console.log(SubhutiDebugUtils.formatCst(this.topLevelCst))
             console.log('─'.repeat(60))
         }
         
         console.log('\n' + '='.repeat(60))
         console.log('🎉 Debug 输出完成')
         console.log('='.repeat(60))
-    }
-    
-    /**
-     * 格式化 CST 为树形结构字符串
-     */
-    private formatCst(cst: SubhutiCst, prefix: string = '', isLast: boolean = true): string {
-        const lines: string[] = []
-        
-        // 当前节点行
-        const connector = isLast ? '└─' : '├─'
-        const nodeLine = this.formatNode(cst, prefix, connector)
-        lines.push(nodeLine)
-        
-        // 子节点
-        if (cst.children && cst.children.length > 0) {
-            const childPrefix = prefix + (isLast ? '   ' : '│  ')
-            
-            cst.children.forEach((child, index) => {
-                const isLastChild = index === cst.children!.length - 1
-                lines.push(this.formatCst(child, childPrefix, isLastChild))
-            })
-        }
-        
-        return lines.join('\n')
-    }
-    
-    /**
-     * 格式化单个节点
-     */
-    private formatNode(cst: SubhutiCst, prefix: string, connector: string): string {
-        const isToken = cst.value !== undefined
-        const parts: string[] = []
-        
-        // 连接符 + 节点名称
-        parts.push(`${prefix}${connector}`)
-        
-        if (isToken) {
-            // Token 节点：显示名称和值
-            const valueStr = this.formatValue(cst.value)
-            parts.push(`${cst.name}: ${valueStr}`)
-        } else {
-            // Rule 节点：只显示名称
-            parts.push(`${cst.name}`)
-        }
-        
-        // 位置信息（Token节点始终显示）
-        if (isToken && cst.loc) {
-            const locStr = this.formatLocation(cst.loc)
-            parts.push(` ${locStr}`)
-        }
-        
-        return parts.join('')
-    }
-    
-    /**
-     * 格式化值（处理特殊字符和长度）
-     */
-    private formatValue(value: string): string {
-        // 转义特殊字符
-        let escaped = value
-            .replace(/\\/g, '\\\\')
-            .replace(/\n/g, '\\n')
-            .replace(/\r/g, '\\r')
-            .replace(/\t/g, '\\t')
-        
-        // 限制长度
-        const maxLength = 40
-        if (escaped.length > maxLength) {
-            escaped = escaped.slice(0, maxLength) + '...'
-        }
-        
-        return `"${escaped}"`
-    }
-    
-    /**
-     * 格式化位置信息
-     */
-    private formatLocation(loc: any): string {
-        if (!loc.start || !loc.end) {
-            return ''
-        }
-        
-        const startLine = loc.start.line
-        const startCol = loc.start.column
-        const endLine = loc.end.line
-        const endCol = loc.end.column
-        
-        if (startLine === endLine) {
-            return `[${startLine}:${startCol}-${endCol}]`
-        } else {
-            return `[${startLine}:${startCol}-${endLine}:${endCol}]`
-        }
     }
 }
 
