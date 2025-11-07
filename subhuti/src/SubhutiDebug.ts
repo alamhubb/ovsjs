@@ -1066,15 +1066,45 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
     // ========================================
     
     /**
-     * 输出待处理的规则（简化版：每个规则单独一行）
+     * 输出待处理的规则（支持长链折叠）
      */
     private flushPendingRules(): void {
         // 过滤有效规则
         const validRules = this.getValidRules()
         
-        // 逐个输出，每个规则都单独一行
-        for (const rule of validRules) {
-            this.outputRule(rule)
+        // 查找并折叠连续递增的规则链
+        let i = 0
+        while (i < validRules.length) {
+            const chainStart = i
+            
+            // 查找连续递增的规则链（depth 连续 +1）
+            while (i + 1 < validRules.length && 
+                   validRules[i + 1].depth === validRules[i].depth + 1) {
+                
+                // 如果遇到 Or 分支目标规则，在那里断开
+                const nextRule = validRules[i + 1]
+                const hasOrSuffix = this.currentOrInfo && 
+                                   nextRule.depth === this.currentOrInfo.targetDepth
+                if (hasOrSuffix) {
+                    break
+                }
+                
+                i++
+            }
+            
+            const chain = validRules.slice(chainStart, i + 1)
+            
+            // 折叠判断：链长度 >= 3 时折叠
+            if (chain.length >= 3) {
+                // 折叠：前 N-1 个规则用 > 连接，最后 1 个单独输出
+                this.outputCollapsedChain(chain.slice(0, -1))
+                this.outputRule(chain[chain.length - 1])
+            } else {
+                // 不折叠：逐个输出
+                chain.forEach(rule => this.outputRule(rule))
+            }
+            
+            i++
         }
         
         // 清理
@@ -1099,6 +1129,24 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
         }
         
         return validRules
+    }
+    
+    /**
+     * 输出折叠的规则链（用 > 连接）
+     */
+    private outputCollapsedChain(chain: Array<{ruleName: string, depth: number}>): void {
+        if (chain.length === 0) return
+        
+        const ruleNames = chain.map(r => r.ruleName)
+        const orSuffix = this.getOrSuffix(chain)
+        
+        // 使用第一个规则的深度作为缩进
+        const line = TreeFormatHelper.formatLine(
+            [...ruleNames, orSuffix],
+            { depth: chain[0].depth, separator: ' > ' }
+        )
+        
+        console.log(line)
     }
     
     /**
