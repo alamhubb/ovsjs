@@ -1041,8 +1041,19 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
             const chainStart = i
             
             // 查找连续递增的规则链
+            // 但如果遇到 Or 分支的目标规则，在那里断开（不包括它）
             while (i + 1 < validRules.length && 
                    validRules[i + 1].depth === validRules[i].depth + 1) {
+                // 检查下一个规则是否是 Or 分支的目标
+                const nextRule = validRules[i + 1]
+                const hasOrSuffix = this.currentOrInfo && 
+                                   nextRule.depth === this.currentOrInfo.targetDepth
+                
+                // 如果是 Or 目标规则，在这里断开链
+                if (hasOrSuffix) {
+                    break
+                }
+                
                 i++
             }
             
