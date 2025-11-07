@@ -995,7 +995,7 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
     // ========================================
     // Token 数据
     // ========================================
-    private inputTokens: string[] = []
+    private inputTokens: any[] = []  // 存储完整 token 对象（包含位置信息）
     
     // ========================================
     // CST 数据
@@ -1005,7 +1005,7 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
     /**
      * 构造函数
      * 
-     * @param tokens - 输入 token 流（用于完整性检查）
+     * @param tokens - 输入 token 流（用于完整性检查和位置信息）
      */
     constructor(tokens?: any[]) {
         this.inputTokens = this.extractValidTokens(tokens || [])
@@ -1013,16 +1013,15 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
     
     /**
      * 从 token 流中提取有效 token（排除注释、空格等）
+     * 
+     * @returns 完整的 token 对象数组（包含 tokenValue, tokenName, loc 等）
      */
-    private extractValidTokens(tokens: any[]): string[] {
+    private extractValidTokens(tokens: any[]): any[] {
         const excludeNames = ['SingleLineComment', 'MultiLineComment', 'Spacing', 'LineBreak']
-        return tokens
-            .filter(t => {
-                const name = t.tokenName || ''
-                return excludeNames.indexOf(name) === -1
-            })
-            .map(t => t.tokenValue)
-            .filter(v => v !== undefined)
+        return tokens.filter(t => {
+            const name = t.tokenName || ''
+            return excludeNames.indexOf(name) === -1
+        })
     }
     
     // ========================================
@@ -1220,12 +1219,30 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
         // 先输出所有待处理的规则
         this.flushPendingRules()
         
-        // 输出 Token 消费（使用 TreeFormatHelper）
+        // 输出 Token 消费（使用 TreeFormatHelper，包含位置信息）
         const depth = this.lastOutputDepth + 1
         const value = TreeFormatHelper.formatTokenValue(tokenValue, 20)
         
+        // 获取 token 的位置信息（支持多种格式）
+        const token = this.inputTokens[tokenIndex]
+        let location: string | null = null
+        
+        if (token) {
+            // 格式1：CST 风格 (loc: {start: {line, column}, end: {...}})
+            if (token.loc) {
+                location = TreeFormatHelper.formatLocation(token.loc)
+            }
+            // 格式2：Subhuti 风格 (rowNum, columnStartNum, columnEndNum)
+            else if (token.rowNum !== undefined && token.columnStartNum !== undefined) {
+                const row = token.rowNum
+                const start = token.columnStartNum
+                const end = token.columnEndNum ?? start + tokenValue.length - 1
+                location = `[${row}:${start}-${end}]`
+            }
+        }
+        
         const line = TreeFormatHelper.formatLine(
-            ['🔹 Consume', `token[${tokenIndex}]`, '-', value, '-', `<${tokenName}>`, '✅'],
+            ['🔹 Consume', `token[${tokenIndex}]`, '-', value, '-', `<${tokenName}>`, location, '✅'],
             { depth, separator: ' ' }
         )
         
