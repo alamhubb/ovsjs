@@ -1024,14 +1024,11 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
         savedPendingLength: number  // Or开始时的pendingRules长度
     } | null = null
     
-    // 视觉深度（方案5：统一视觉深度系统）
+    // 视觉深度系统
     private visualDepth = 0
-    private baseVisualDepth: number | null = null  // 基础视觉深度，第一次设定
-    // 记录上一批输出结束时的状态（在为 token +1 之前）
-    private lastOutputRuleActualDepth: number | null = null
-    private lastOutputRuleVisualDepth: number | null = null
-    // 记录当前批次中上一个处理的规则的 actualDepth
-    private lastProcessedActualDepth: number | null = null
+    // 记录上次输出批次结束时的状态（用于计算下次的 visualDepth）
+    private lastActualDepth: number | null = null
+    private lastVisualDepth: number | null = null
 
     // ========================================
     // 性能统计数据
@@ -1075,155 +1072,70 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
     // ========================================
     
     /**
-     * 输出待处理的规则（支持长链折叠）
+     * 输出待处理的规则
      * 
-     * ==========================================
-     * 核心输出逻辑 - 这是整个调试系统的心脏
-     * ==========================================
-     * 
-     * 为什么需要这个方法？
-     * - 规则进入时（onRuleEnter）只记录，不输出
-     * - Token 消费时（onTokenConsume）才触发批量输出
-     * - 这样可以：
-     *   1. 分析整个规则序列，识别可折叠的长链
-     *   2. 过滤失败的 Or 分支（已从 ruleStack 退出）
-     *   3. 在 Or 父规则前断开链，保持层级清晰
-     * 
-     * 输出效果示例（代码：let a = 1）：
-     * ```
-     * Script > StatementList > ... > LexicalDeclaration  ← 长链全部折叠
-     *   LetOrConst [Or]                                  ← 单独输出（Or 父规则）
-     *     🔹 Consume token[0] - let                      ← Token
-     *         BindingList                                ← 新规则序列开始
-     *           LexicalBinding
-     *             BindingIdentifier [Or]                 ← Or 父规则单独显示
-     *               Identifier [#1/3 ✅]                 ← Or 目标规则
-     * ```
-     * 
-     * 核心步骤：
+     * 核心逻辑：
      * 1. 过滤有效规则（去除失败的 Or 分支）
-     * 2. 初始化视觉深度（从第一个规则的实际深度开始）
-     * 3. 识别连续递增的规则链（depth 连续 +1）
-     * 4. 在 Or 父规则前断开链
-     * 5. 折叠长链（>= 3 个规则）或逐个输出
-     * 6. 清理状态
+     * 2. 根据 actualDepth 差值调整 visualDepth
+     * 3. 识别并折叠规则链（>= 2 个规则）
+     * 4. 在 Or 规则前断开链
      */
     private flushPendingRules(): void {
-        // ========================================
-        // 步骤 1: 过滤有效规则
-        // ========================================
-        // 为什么要过滤？
-        // - Or 失败的分支会进入 pendingRules，但已从 ruleStack 退出
-        // - getValidRules() 只保留仍在 ruleStack 中的规则
-        // - 结果：只输出成功的解析路径
         const validRules = this.getValidRules()
+        if (validRules.length === 0) return
         
-        // ========================================
-        // 步骤 2: 初始化视觉深度
-        // ========================================
-        // 核心逻辑：根据 actualDepth 的相对变化调整 visualDepth
-        // - 同级（actualDepth 相同）→ visualDepth 不变
-        // - 子级（actualDepth 更深）→ visualDepth 增加对应层数
-        // - 回退（actualDepth 更浅）→ visualDepth 减少对应层数
-        if (validRules.length > 0) {
-            const firstRuleActualDepth = validRules[0].depth
-            
-            if (this.lastOutputRuleActualDepth === null) {
-                // 第一次：直接使用 actualDepth 作为 visualDepth
-                this.visualDepth = firstRuleActualDepth
-                this.baseVisualDepth = this.visualDepth
-                this.lastProcessedActualDepth = null  // 重置为 null，表示本批次的第一个规则
-            } else {
-                // 之后：根据 actualDepth 的差值调整 visualDepth
-                const depthDiff = firstRuleActualDepth - this.lastOutputRuleActualDepth
-                this.visualDepth = this.lastOutputRuleVisualDepth! + depthDiff
-                this.lastProcessedActualDepth = this.lastOutputRuleActualDepth  // 继承上一批次的最后一个规则
-            }
+        // 初始化视觉深度
+        const firstRuleActualDepth = validRules[0].depth
+        if (this.lastActualDepth === null) {
+            this.visualDepth = firstRuleActualDepth
+        } else {
+            const depthDiff = firstRuleActualDepth - this.lastActualDepth
+            this.visualDepth = this.lastVisualDepth! + depthDiff
         }
         
-        // ========================================
-        // 步骤 3-5: 识别链、断开、折叠
-        // ========================================
+        // 识别链、折叠/输出
         let i = 0
+        let lastProcessedActualDepth = this.lastActualDepth
+        
         while (i < validRules.length) {
             const chainStart = i
             
-            // --- 步骤 3.1: 查找连续递增的规则链 ---
-            // 什么是"链"？depth 连续 +1 的规则序列
-            // 例如：A(5) > B(6) > C(7) > D(8) 是一条链
+            // 查找连续递增的规则链（depth 连续 +1）
             while (i + 1 < validRules.length && 
                    validRules[i + 1].depth === validRules[i].depth + 1) {
-                
                 const nextRule = validRules[i + 1]
-                
-                // --- 步骤 3.2: 在 Or 规则前断开链 ---
-                // 为什么要断开？
-                // - Or 父规则需要单独显示，方便看出 Or 在哪里
-                // - 例如：A > B > C(Or父) > D(Or目标)
-                //   断开为：A > B  和  C(单独)  和  D(单独)
-                if (this.currentOrInfo) {
-                    // 检查 1：下一个是 Or 父规则吗？
-                    // Or 父规则 depth = targetDepth - 1
-                    // 例如：targetDepth=8, 则父规则 depth=7
-                    if (nextRule.depth === this.currentOrInfo.targetDepth - 1) {
-                        break  // 断开，让 Or 父规则单独显示
-                    }
-                    
-                    // 检查 2（后备）：下一个是 Or 目标规则吗？
-                    // 如果父规则没被识别到，至少在目标规则前断开
-                    if (nextRule.depth === this.currentOrInfo.targetDepth) {
-                        break
-                    }
+                // 在 Or 规则前断开链
+                if (this.currentOrInfo && 
+                    (nextRule.depth === this.currentOrInfo.targetDepth - 1 ||
+                     nextRule.depth === this.currentOrInfo.targetDepth)) {
+                    break
                 }
-                
                 i++
             }
             
-            // --- 步骤 4: 提取链 ---
             const chain = validRules.slice(chainStart, i + 1)
             
-            // --- 步骤 5: 折叠或逐个输出 ---
-            // 只要链长度 >= 2 就折叠，保持输出简洁
             if (chain.length >= 2) {
                 this.outputCollapsedChain(chain)
-                // 折叠链的最后一个规则的 actualDepth
-                const lastRuleDepth = chain[chain.length - 1].depth
-                // 更新 lastProcessedActualDepth 为折叠链的最后一个规则
-                this.lastProcessedActualDepth = lastRuleDepth
+                lastProcessedActualDepth = chain[chain.length - 1].depth
             } else {
-                // 逐个输出，每个规则根据 actualDepth 调整 visualDepth
                 chain.forEach(rule => {
-                    // 根据当前规则和上一个规则的 actualDepth 差值调整 visualDepth
-                    if (this.lastProcessedActualDepth !== null) {
-                        const depthDiff = rule.depth - this.lastProcessedActualDepth
-                        this.visualDepth += depthDiff
+                    if (lastProcessedActualDepth !== null) {
+                        this.visualDepth += rule.depth - lastProcessedActualDepth
                     }
                     this.outputRule(rule)
-                    this.lastProcessedActualDepth = rule.depth
+                    lastProcessedActualDepth = rule.depth
                 })
             }
-            
             i++
         }
         
-        // ========================================
-        // 步骤 6: 记录状态并为 token 准备
-        // ========================================
-        if (validRules.length > 0) {
-            const lastRule = validRules[validRules.length - 1]
-            
-            // 关键：先记录当前 visualDepth（规则输出完的状态）
-            this.lastOutputRuleActualDepth = lastRule.depth
-            this.lastOutputRuleVisualDepth = this.visualDepth
-            
-            // 为 token 推进 +1
-            // token 相对于它的上一条规则缩进 1 层（2 空格）
-            this.visualDepth++
-        }
+        // 记录状态并为 token 准备
+        this.lastActualDepth = validRules[validRules.length - 1].depth
+        this.lastVisualDepth = this.visualDepth
+        this.visualDepth++  // token 比规则缩进 1 层
         
-        // ========================================
-        // 步骤 7: 清理状态
-        // ========================================
+        // 清理状态
         this.pendingRules = []
         this.currentOrInfo = null
     }
@@ -1370,48 +1282,15 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
     }
     
     /**
-     * 输出单个规则
-     * 
-     * ==========================================
-     * 单规则输出器 - 简单但重要
-     * ==========================================
-     * 
-     * 为什么需要单独的方法？
-     * - 有些规则不符合折叠条件（链太短）
-     * - 有些规则需要单独展示（如 Or 父规则）
-     * - 统一管理 Or 标记和视觉深度
-     * 
-     * 输出效果：
-     * ```
-     * BindingIdentifier [Or]    ← 如果是 Or 父规则，显示 [Or]
-     * Identifier [#1/3 ✅]      ← 如果是 Or 目标规则，显示分支信息
-     * LexicalDeclaration        ← 普通规则，不显示任何标记
-     * ```
-     * 
-     * 视觉深度：
-     * - 使用 visualDepth 作为缩进
-     * - 输出后 visualDepth++，下一个规则自动缩进一层
-     * 
-     * @param rule - 要输出的规则
+     * 输出单个规则（带 Or 标记）
      */
     private outputRule(rule: {ruleName: string, depth: number}): void {
-        // 步骤 1: 获取 Or 标记
         const orSuffix = this.getOrSuffix([rule])
-        
-        // 步骤 2: 格式化并输出
-        // 使用 visualDepth 作为缩进深度
         const line = TreeFormatHelper.formatLine(
             [rule.ruleName, orSuffix],
             { depth: this.visualDepth }
         )
         console.log(line)
-        
-        // 步骤 3: 不增加 visualDepth
-        // 规则本身不缩进，只有 token 消费才缩进
-        // visualDepth 只在以下情况增加：
-        // 1. 折叠链（outputCollapsedChain）
-        // 2. token 的上一条规则（flushPendingRules 中判断）
-        // 3. token 本身（onTokenConsume）
     }
     
     /**
@@ -1562,11 +1441,9 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
             return
         }
         
-        // 先输出所有待处理的规则
-        // flushPendingRules() 已经完成：visualDepth +1（为 token 准备）
+        // 输出待处理的规则（会自动为 token +1）
         this.flushPendingRules()
         
-        // Token 直接使用当前 visualDepth（已经比规则 +1）
         const depth = this.visualDepth
         const value = TreeFormatHelper.formatTokenValue(tokenValue, 20)
         
