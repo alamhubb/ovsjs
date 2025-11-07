@@ -148,6 +148,46 @@ export interface SubhutiDebugger {
  * ```
  * 
  * ============================================================
+ * ⚠️ 已知限制 - Or 分支的 Token 消费输出
+ * ============================================================
+ * 
+ * 当前实现会输出 Or 分支中所有成功的 Token 消费，包括失败分支的局部成功消费。
+ * 这可能导致同一个 Token 被显示多次消费。
+ * 
+ * 【示例】代码：`const obj = { sum: 5 + 6 }`
+ * 
+ * ObjectLiteral 有3个分支：
+ *   - 分支0: { }                      → 失败（缺少 }）
+ *   - 分支1: { PropertyDefinitionList , } → 失败（缺少尾部逗号）
+ *   - 分支2: { PropertyDefinitionList }   → 成功 ✅
+ * 
+ * 输出会显示：
+ *   ObjectLiteral
+ *     🔹 Consume token[3] - { - <LBrace> [1:13-13] ✅  ← 分支0的消费
+ *     🔹 Consume token[3] - { - <LBrace> [1:13-13] ✅  ← 分支1的消费
+ *     🔹 Consume token[3] - { - <LBrace> [1:13-13] ✅  ← 分支2的消费（成功）
+ *     PropertyDefinitionList > ...
+ * 
+ * 【原因】
+ * - Token 消费是立即输出的（实时追踪）
+ * - 当 Or 分支失败时，已输出的内容无法撤销
+ * - 回溯机制只恢复 tokenIndex，不会撤销输出
+ * 
+ * 【价值】
+ * - ✅ 可以看到 Or 分支的所有尝试过程（调试价值）
+ * - ✅ 帮助发现 Or 分支顺序问题（性能优化）
+ * - ✅ 展示解析器的动态行为（教学价值）
+ * 
+ * 【与 CST 的区别】
+ * - 规则路径：记录动态过程（包括失败的尝试）
+ * - CST 结构：只显示最终成功路径（静态结果）
+ * 
+ * 【未来改进】
+ * - 需要实现 Or 分支输出缓冲机制
+ * - 在 Or 分支成功后才输出缓冲内容
+ * - 需要修改 SubhutiParser 添加 onOrSuccess 回调
+ * 
+ * ============================================================
  * 缩进规则（v3.0 - 智能缩进）
  * ============================================================
  * 
@@ -1115,7 +1155,9 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
         )
         
         console.log(line)
-        this.lastOutputDepth = chain[chain.length - 1].depth
+        // 记录视觉输出深度（第一个规则的深度），而不是实际深度（最后一个规则的深度）
+        // 这样后续内容的缩进会基于折叠后的视觉深度，而不是折叠前的实际深度
+        this.lastOutputDepth = chain[0].depth
     }
     
     /**
@@ -1124,13 +1166,17 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
     private outputSingle(rule: {ruleName: string, depth: number}): void {
         const orSuffix = this.getOrSuffix([rule])
         
+        // 使用视觉深度（基于上一次输出的深度 + 1），而不是实际深度
+        // 这样在折叠后，后续规则的缩进会继续基于折叠后的视觉深度
+        const visualDepth = this.lastOutputDepth + 1
+        
         const line = TreeFormatHelper.formatLine(
             [rule.ruleName, orSuffix],
-            { depth: rule.depth }
+            { depth: visualDepth }
         )
         
         console.log(line)
-        this.lastOutputDepth = rule.depth
+        this.lastOutputDepth = visualDepth
     }
     
     /**
