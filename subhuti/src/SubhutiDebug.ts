@@ -1016,9 +1016,6 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
         depth: number           // 规则深度
     }> = []
     
-    // 最后输出的规则深度（用于计算Token缩进）
-    private lastOutputDepth = -1
-    
     // Or 分支信息（当前活跃的 Or）
     private currentOrInfo: {
         totalBranches: number    // 总分支数
@@ -1069,53 +1066,15 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
     // ========================================
     
     /**
-     * 输出待处理的规则（带折叠）
+     * 输出待处理的规则（简化版：每个规则单独一行）
      */
     private flushPendingRules(): void {
         // 过滤有效规则
         const validRules = this.getValidRules()
         
-        // 折叠并输出
-        let i = 0
-        while (i < validRules.length) {
-            const chainStart = i
-            
-            // 查找连续递增的规则链
-            // 但如果遇到 Or 分支的目标规则，在那里断开（不包括它）
-            while (i + 1 < validRules.length && 
-                   validRules[i + 1].depth === validRules[i].depth + 1) {
-                // 检查下一个规则是否是 Or 分支的目标
-                const nextRule = validRules[i + 1]
-                const hasOrSuffix = this.currentOrInfo && 
-                                   nextRule.depth === this.currentOrInfo.targetDepth
-                
-                // 如果是 Or 目标规则，在这里断开链
-                if (hasOrSuffix) {
-                    break
-                }
-                
-                i++
-            }
-            
-            let chain = validRules.slice(chainStart, i + 1)
-            
-            // 如果链>=3个规则，总是把最后一个规则单独输出
-            // （这样可以保证同级规则的缩进一致，提高可读性）
-            if (chain.length >= 3) {
-                // DEBUG: 输出链信息
-                if (false) {  // 设为 true 启用调试
-                    console.log(`\n[DEBUG] Chain of ${chain.length}: ${chain.map(r => `${r.ruleName}(d=${r.depth})`).join(' -> ')}`)
-                }
-                
-                // 折叠前面的规则链，最后一个规则单独显示
-                this.outputCollapsed(chain.slice(0, -1))
-                this.outputSingle(chain[chain.length - 1])
-            } else {
-                // 链太短（<3个规则），不折叠：逐个输出
-                chain.forEach(rule => this.outputSingle(rule))
-            }
-            
-            i++
+        // 逐个输出，每个规则都单独一行
+        for (const rule of validRules) {
+            this.outputRule(rule)
         }
         
         // 清理
@@ -1143,40 +1102,18 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
     }
     
     /**
-     * 输出折叠的规则链（使用 TreeFormatHelper）
+     * 输出单个规则（简化版：直接使用实际深度）
      */
-    private outputCollapsed(chain: Array<{ruleName: string, depth: number}>): void {
-        const ruleNames = chain.map(r => r.ruleName)
-        const orSuffix = this.getOrSuffix(chain)
-        
-        const line = TreeFormatHelper.formatLine(
-            [...ruleNames, orSuffix],
-            { depth: chain[0].depth, separator: ' > ' }
-        )
-        
-        console.log(line)
-        // 记录视觉输出深度（第一个规则的深度），而不是实际深度（最后一个规则的深度）
-        // 这样后续内容的缩进会基于折叠后的视觉深度，而不是折叠前的实际深度
-        this.lastOutputDepth = chain[0].depth
-    }
-    
-    /**
-     * 输出单个规则（使用 TreeFormatHelper）
-     */
-    private outputSingle(rule: {ruleName: string, depth: number}): void {
+    private outputRule(rule: {ruleName: string, depth: number}): void {
         const orSuffix = this.getOrSuffix([rule])
         
-        // 使用视觉深度（基于上一次输出的深度 + 1），而不是实际深度
-        // 这样在折叠后，后续规则的缩进会继续基于折叠后的视觉深度
-        const visualDepth = this.lastOutputDepth + 1
-        
+        // 直接使用实际深度作为缩进
         const line = TreeFormatHelper.formatLine(
             [rule.ruleName, orSuffix],
-            { depth: visualDepth }
+            { depth: rule.depth }
         )
         
         console.log(line)
-        this.lastOutputDepth = visualDepth
     }
     
     /**
@@ -1278,8 +1215,9 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
         // 先输出所有待处理的规则
         this.flushPendingRules()
         
-        // 输出 Token 消费（使用 TreeFormatHelper，包含位置信息）
-        const depth = this.lastOutputDepth + 1
+        // Token 消费使用当前规则的深度 + 1
+        const currentDepth = this.ruleStack.length - 1
+        const depth = currentDepth + 1
         const value = TreeFormatHelper.formatTokenValue(tokenValue, 20)
         
         // 获取 token 的位置信息（支持多种格式）
