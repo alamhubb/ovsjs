@@ -964,7 +964,46 @@ Level 0: 初始状态
 
 
 
+测试代码: let a = 1
 
+期望的规则路径输出：
+================================================================================
+
+Script > StatementList > StatementListItem > Declaration > LexicalDeclaration
+LetOrConst [Or]
+🔹 Consume token[0] - let - <LetTok> [1:1-3] ✅
+BindingList > LexicalBinding
+BindingIdentifier [Or]
+Identifier [#1/3 ✅]
+🔹 Consume token[1] - a - <Identifier> [1:5-5] ✅
+Initializer
+🔹 Consume token[2] - = - <Assign> [1:7-7] ✅
+AssignmentExpression > ConditionalExpression > ShortCircuitExpression > ... > MemberExpression > PrimaryExpression
+Literal [Or]
+🔹 Consume token[3] - 1 - <NumericLiteral> [1:9-9] ✅
+
+缩进深度说明：
+================================================================================
+
+depth=0: Script > ... > LexicalDeclaration（折叠链，5个规则）
+depth=1: LetOrConst [Or]（LexicalDeclaration 的子节点）
+depth=2:   token
+depth=1: BindingList > LexicalBinding（折叠链，2个规则，与 LetOrConst 同级）
+depth=2:   BindingIdentifier [Or]（LexicalBinding 的子节点）
+depth=3:     Identifier（BindingIdentifier 的子节点）
+depth=4:       token
+depth=2:   Initializer（与 BindingIdentifier 同级）
+depth=3:     token
+depth=3:     AssignmentExpression > ... > PrimaryExpression（折叠链，18个规则）
+depth=4:       Literal [Or]
+depth=5:         token
+
+关键规则：
+================================================================================
+
+1. 折叠链显示在第一个规则的 depth
+2. 折叠链后的规则，displayDepth = realDepth - chainLastDepth
+3. 多个折叠链时，adjustment 要累积/更新
 
 
 
