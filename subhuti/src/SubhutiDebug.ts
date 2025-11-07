@@ -1048,17 +1048,19 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
             
             let chain = validRules.slice(chainStart, i + 1)
             
-            // 如果链>=3个规则，且最后一个规则是链中的最后一个，则保留最后一个规则不折叠
-            // （因为最后一个规则可能是叶子节点，需要单独显示）
-            if (chain.length >= 3 && i === validRules.length - 1) {
-                // 最后一个规则单独处理
+            // 如果链>=3个规则，总是把最后一个规则单独输出
+            // （这样可以保证同级规则的缩进一致，提高可读性）
+            if (chain.length >= 3) {
+                // DEBUG: 输出链信息
+                if (false) {  // 设为 true 启用调试
+                    console.log(`\n[DEBUG] Chain of ${chain.length}: ${chain.map(r => `${r.ruleName}(d=${r.depth})`).join(' -> ')}`)
+                }
+                
+                // 折叠前面的规则链，最后一个规则单独显示
                 this.outputCollapsed(chain.slice(0, -1))
                 this.outputSingle(chain[chain.length - 1])
-            } else if (chain.length >= 3) {
-                // 折叠：一行输出
-                this.outputCollapsed(chain)
             } else {
-                // 不折叠：逐个输出
+                // 链太短（<3个规则），不折叠：逐个输出
                 chain.forEach(rule => this.outputSingle(rule))
             }
             
