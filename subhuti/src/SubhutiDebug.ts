@@ -1132,21 +1132,43 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
     }
     
     /**
-     * 输出折叠的规则链（用 > 连接）
+     * 输出折叠的规则链（用 > 连接，超长时双行显示）
      */
     private outputCollapsedChain(chain: Array<{ruleName: string, depth: number}>): void {
         if (chain.length === 0) return
         
         const ruleNames = chain.map(r => r.ruleName)
         const orSuffix = this.getOrSuffix(chain)
+        const baseDepth = chain[0].depth
         
-        // 使用第一个规则的深度作为缩进
-        const line = TreeFormatHelper.formatLine(
+        // 第一行：完整版（始终输出）
+        const fullLine = TreeFormatHelper.formatLine(
             [...ruleNames, orSuffix],
-            { depth: chain[0].depth, separator: ' > ' }
+            { depth: baseDepth, separator: ' > ' }
         )
+        console.log(fullLine)
         
-        console.log(line)
+        // 如果太长，输出第二行简化版
+        const MAX_CHARS = 120  // 超过此字符数时输出简化版
+        const fullText = ruleNames.join(' > ')
+        
+        if (fullText.length > MAX_CHARS) {
+            // 配置：简化版显示的规则数量
+            const SHOW_HEAD = 3  // 显示前3个
+            const SHOW_TAIL = 2  // 显示后2个
+            
+            const shortNames = [
+                ...ruleNames.slice(0, SHOW_HEAD),
+                '...',
+                ...ruleNames.slice(-SHOW_TAIL)
+            ]
+            
+            const shortLine = TreeFormatHelper.formatLine(
+                [...shortNames, orSuffix],
+                { depth: baseDepth, separator: ' > ' }
+            )
+            console.log(shortLine)
+        }
     }
     
     /**
