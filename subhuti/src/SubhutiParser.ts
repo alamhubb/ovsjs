@@ -374,7 +374,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         ruleName: string,
         cst: SubhutiCst | undefined,
         isTopLevel: boolean,
-        observeContext: any
+        observeContext?: any
     ): void {
         if (cst && !cst.children?.length) {
             cst.children = undefined
@@ -385,11 +385,9 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         } else {
             // 顶层规则完成，输出调试信息
             if (this._debugger) {
-                // 如果是 CST 调试器，设置 CST
                 if ('setCst' in this._debugger) {
                     (this._debugger as any).setCst(cst)
                 }
-                // 调用自动输出
                 (this._debugger as any)?.autoOutput?.()
             }
         }
@@ -495,7 +493,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             return undefined
         }
 
-        // 通知调试器：Many 的子级需要推1格
         this._debugger?.onManyEnter?.()
 
         return this.withAllowError(() => {
@@ -516,7 +513,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             return undefined
         }
 
-        // 通知调试器：Option 的子级需要推1格
         this._debugger?.onOptionEnter?.()
 
         return this.withAllowError(() => {
@@ -536,7 +532,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             return undefined
         }
 
-        // 通知调试器：AtLeastOne 的子级需要推1格
         this._debugger?.onAtLeastOneEnter?.()
 
         fn()
