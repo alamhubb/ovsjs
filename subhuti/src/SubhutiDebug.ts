@@ -1026,6 +1026,7 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
     
     // 视觉深度（方案5：统一视觉深度系统）
     private visualDepth = 0
+    private baseVisualDepth: number | null = null  // 基础视觉深度，第一次设定
 
     // ========================================
     // 性能统计数据
@@ -1115,8 +1116,18 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
         // ========================================
         // 步骤 2: 初始化视觉深度
         // ========================================
+        // 核心逻辑：
+        // - 第一次：使用实际 depth，并记录为 baseVisualDepth
+        // - 之后：总是回到 baseVisualDepth（实现"回到同级"）
         if (validRules.length > 0) {
-            this.visualDepth = validRules[0].depth
+            if (this.baseVisualDepth === null) {
+                // 第一次：记录基础深度
+                this.baseVisualDepth = validRules[0].depth
+                this.visualDepth = this.baseVisualDepth
+            } else {
+                // 之后：总是回到基础深度
+                this.visualDepth = this.baseVisualDepth
+            }
         }
         
         // ========================================
@@ -1161,10 +1172,25 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
             const chain = validRules.slice(chainStart, i + 1)
             
             // --- 步骤 5: 折叠或逐个输出 ---
+            // 判断这个链是否包含最后一个规则（token 的上一条）
+            const isLastChain = (i + 1 >= validRules.length)
+            
             if (chain.length >= 3) {
                 this.outputCollapsedChain(chain)
+                // 如果是最后一个链，折叠链后 +1（token 上一条缩进）
+                if (isLastChain) {
+                    this.visualDepth++
+                }
             } else {
-                chain.forEach(rule => this.outputRule(rule))
+                // 逐个输出
+                chain.forEach((rule, idx) => {
+                    // 如果是最后一个链的最后一个规则（token 上一条），先 +1
+                    const isLastRuleInChain = idx === chain.length - 1
+                    if (isLastChain && isLastRuleInChain) {
+                        this.visualDepth++
+                    }
+                    this.outputRule(rule)
+                })
             }
             
             i++
@@ -1173,8 +1199,7 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
         // ========================================
         // 步骤 6: 统一推进（为 token 准备）
         // ========================================
-        // 所有规则输出完后，统一 +1
-        // 这样 token 就会比规则缩进一层
+        // token 上一条规则已经 +1，这里再 +1 给 token
         if (validRules.length > 0) {
             this.visualDepth++
         }
@@ -1521,11 +1546,12 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
         }
         
         // 先输出所有待处理的规则
-        // 最后一个规则已经 +1 缩进（token 的上一条）
+        // flushPendingRules() 已经完成：
+        // 1. 最后一个规则 +1（token 上一条）
+        // 2. 再 +1（为 token 准备）
         this.flushPendingRules()
         
-        // Token 再 +1 缩进
-        this.visualDepth++
+        // Token 直接使用当前 visualDepth
         const depth = this.visualDepth
         const value = TreeFormatHelper.formatTokenValue(tokenValue, 20)
         
