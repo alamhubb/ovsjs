@@ -1023,6 +1023,9 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
         targetDepth: number      // Or 所在的深度
         savedPendingLength: number  // Or开始时的pendingRules长度
     } | null = null
+    
+    // 视觉深度（方案5：统一视觉深度系统）
+    private visualDepth = 0
 
     // ========================================
     // 性能统计数据
@@ -1072,6 +1075,11 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
         // 过滤有效规则
         const validRules = this.getValidRules()
         
+        // 初始化视觉深度：从第一个待输出规则的实际深度开始
+        if (validRules.length > 0) {
+            this.visualDepth = validRules[0].depth
+        }
+        
         // 查找并折叠连续递增的规则链
         let i = 0
         while (i < validRules.length) {
@@ -1081,12 +1089,20 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
             while (i + 1 < validRules.length && 
                    validRules[i + 1].depth === validRules[i].depth + 1) {
                 
-                // 如果遇到 Or 分支目标规则，在那里断开
                 const nextRule = validRules[i + 1]
-                const hasOrSuffix = this.currentOrInfo && 
-                                   nextRule.depth === this.currentOrInfo.targetDepth
-                if (hasOrSuffix) {
-                    break
+                
+                // 检查是否需要在 Or 规则前断开链
+                if (this.currentOrInfo) {
+                    // 🆕 新规则：如果下一个规则是 Or 目标的父规则，在这里断开
+                    // Or 目标的父规则 depth = targetDepth - 1
+                    if (nextRule.depth === this.currentOrInfo.targetDepth - 1) {
+                        break  // 在 Or 父规则前断开，让父规则单独展示
+                    }
+                    
+                    // 原有规则（后备）：如果下一个规则是 Or 目标，也在这里断开
+                    if (nextRule.depth === this.currentOrInfo.targetDepth) {
+                        break
+                    }
                 }
                 
                 i++
@@ -1133,18 +1149,18 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
     
     /**
      * 输出折叠的规则链（用 > 连接，超长时双行显示）
+     * 使用统一视觉深度系统
      */
     private outputCollapsedChain(chain: Array<{ruleName: string, depth: number}>): void {
         if (chain.length === 0) return
         
         const ruleNames = chain.map(r => r.ruleName)
         const orSuffix = this.getOrSuffix(chain)
-        const baseDepth = chain[0].depth
         
         // 第一行：完整版（始终输出）
         const fullLine = TreeFormatHelper.formatLine(
             [...ruleNames, orSuffix],
-            { depth: baseDepth, separator: ' > ' }
+            { depth: this.visualDepth, separator: ' > ' }
         )
         console.log(fullLine)
         
@@ -1165,25 +1181,32 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
             
             const shortLine = TreeFormatHelper.formatLine(
                 [...shortNames, orSuffix],
-                { depth: baseDepth, separator: ' > ' }
+                { depth: this.visualDepth, separator: ' > ' }
             )
             console.log(shortLine)
         }
+        
+        // 关键：折叠链只增加 1 层视觉深度（不管链有多长）
+        this.visualDepth++
     }
     
     /**
-     * 输出单个规则（简化版：直接使用实际深度）
+     * 输出单个规则
+     * 使用统一视觉深度系统
      */
     private outputRule(rule: {ruleName: string, depth: number}): void {
         const orSuffix = this.getOrSuffix([rule])
         
-        // 直接使用实际深度作为缩进
+        // 使用视觉深度
         const line = TreeFormatHelper.formatLine(
             [rule.ruleName, orSuffix],
-            { depth: rule.depth }
+            { depth: this.visualDepth }
         )
         
         console.log(line)
+        
+        // 输出后增加视觉深度
+        this.visualDepth++
     }
     
     /**
@@ -1285,9 +1308,8 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
         // 先输出所有待处理的规则
         this.flushPendingRules()
         
-        // Token 消费使用当前规则的深度 + 1
-        const currentDepth = this.ruleStack.length - 1
-        const depth = currentDepth + 1
+        // Token 消费使用视觉深度（在已输出规则的下一层）
+        const depth = this.visualDepth
         const value = TreeFormatHelper.formatTokenValue(tokenValue, 20)
         
         // 获取 token 的位置信息（支持多种格式）
