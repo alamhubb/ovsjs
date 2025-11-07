@@ -1102,17 +1102,18 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
 
     /** 过滤有效规则（去除失败的 Or 分支） */
     private getValidRules(): Array<{ruleName: string, depth: number}> {
-        const stackRuleNames = this.ruleStack.map(r => r.ruleName)
         const validRules: Array<{ruleName: string, depth: number}> = []
         
-        // 配对算法：避免同名规则重复匹配
-        let outputIndex = 0
+        // 配对算法（v2.0）：按 depth 匹配，而不是按名称
+        // depth 就是规则在 ruleStack 中的索引，所以直接用 depth 查找
         for (const pending of this.pendingRules) {
-            const stackIndex = stackRuleNames.indexOf(pending.ruleName, outputIndex)
-
-            if (stackIndex >= 0) {
-                validRules.push(pending)
-                outputIndex = stackIndex + 1
+            // 检查 pending.depth 是否在 ruleStack 的有效范围内
+            if (pending.depth < this.ruleStack.length) {
+                const stackRule = this.ruleStack[pending.depth]
+                // 验证规则名称是否匹配（双重保险）
+                if (stackRule && stackRule.ruleName === pending.ruleName) {
+                    validRules.push(pending)
+                }
             }
         }
 
