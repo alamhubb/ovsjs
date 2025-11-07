@@ -302,6 +302,201 @@ export interface SubhutiDebugger {
 import type SubhutiCst from "./struct/SubhutiCst.ts"
 
 // ============================================
+// TreeFormatHelper - 树形输出格式化辅助（轻量级）
+// ============================================
+
+/**
+ * 树形输出格式化辅助类
+ * 
+ * 设计原则：
+ * - 只提取真正重复的格式化部分
+ * - 保持简单，避免过度抽象
+ * - 为运行时追踪和 CST 输出提供统一的格式化工具
+ * 
+ * 核心功能：
+ * 1. formatLine - 统一的行输出格式化（自动处理缩进、拼接、过滤空值）
+ * 2. formatTokenValue - Token 值转义和截断
+ * 3. formatLocation - 位置信息格式化
+ * 4. formatRuleChain - 规则链拼接
+ * 
+ * @version 2.0.0
+ * @date 2025-11-07
+ */
+class TreeFormatHelper {
+    // ========================================
+    // 核心方法：统一行输出
+    // ========================================
+    
+    /**
+     * 格式化一行输出（核心方法）
+     * 
+     * 功能：
+     * - 自动处理缩进（depth 或 prefix）
+     * - 自动拼接内容数组
+     * - 自动过滤空值（null/undefined/''）
+     * - 统一管理分隔符
+     * 
+     * @param parts - 内容数组（null/undefined/'' 会被自动过滤）
+     * @param options - 配置选项
+     * @returns 格式化后的完整行
+     * 
+     * @example
+     * // CST 节点输出
+     * formatLine(
+     *     ['└─', 'ConstTok:', '"const"', '[1:1-5]'],
+     *     { prefix: '│  ', separator: ' ' }
+     * )
+     * // => "│  └─ ConstTok: "const" [1:1-5]"
+     * 
+     * @example
+     * // 规则链输出（自动过滤空值）
+     * formatLine(
+     *     ['Script', 'StatementList', 'Statement', null],
+     *     { depth: 0, separator: ' > ' }
+     * )
+     * // => "Script > StatementList > Statement"
+     * 
+     * @example
+     * // Token 消费输出
+     * formatLine(
+     *     ['🔹 Consume', 'token[0]', '-', 'const', '-', '<ConstTok>', '✅'],
+     *     { depth: 3, separator: ' ' }
+     * )
+     * // => "      🔹 Consume token[0] - const - <ConstTok> ✅"
+     */
+    static formatLine(
+        parts: (string | number | null | undefined)[],
+        options: {
+            depth?: number      // 深度模式（优先使用）
+            prefix?: string     // 前缀模式（已累积的前缀字符串）
+            separator?: string  // 内容分隔符（默认：''，即紧贴）
+        }
+    ): string {
+        // 1. 计算缩进
+        const indent = options.prefix ?? '  '.repeat(options.depth ?? 0)
+        
+        // 2. 过滤空值并拼接（核心价值）
+        const content = parts
+            .filter(p => p !== null && p !== undefined && p !== '')
+            .join(options.separator ?? '')
+        
+        // 3. 返回完整行
+        return indent + content
+    }
+    
+    // ========================================
+    // 辅助方法：值格式化
+    // ========================================
+    
+    /**
+     * 计算缩进字符串
+     * 
+     * @param depth - 深度（0-based）
+     * @returns 缩进字符串（每层 2 个空格）
+     * 
+     * @example
+     * ```typescript
+     * TreeFormatHelper.indent(0)  // => ""
+     * TreeFormatHelper.indent(1)  // => "  "
+     * TreeFormatHelper.indent(3)  // => "      "
+     * ```
+     */
+    static indent(depth: number): string {
+        return '  '.repeat(depth)
+    }
+    
+    /**
+     * 格式化 Token 值（处理特殊字符和长度限制）
+     * 
+     * 用于两个场景：
+     * - 运行时追踪：token[0] - "const" - <ConstTok>
+     * - CST 输出：ConstTok: "const"
+     * 
+     * @param value - 原始值
+     * @param maxLength - 最大长度（超过则截断）
+     * @returns 转义并截断后的值
+     * 
+     * @example
+     * ```typescript
+     * TreeFormatHelper.formatTokenValue("hello\nworld")  // => "hello\\nworld"
+     * TreeFormatHelper.formatTokenValue("a".repeat(50), 20)  // => "aaaaa...（截断）"
+     * ```
+     */
+    static formatTokenValue(value: string, maxLength: number = 40): string {
+        // 转义特殊字符
+        let escaped = value
+            .replace(/\\/g, '\\\\')
+            .replace(/\n/g, '\\n')
+            .replace(/\r/g, '\\r')
+            .replace(/\t/g, '\\t')
+        
+        // 限制长度
+        if (escaped.length > maxLength) {
+            escaped = escaped.slice(0, maxLength) + '...'
+        }
+        
+        return escaped
+    }
+    
+    /**
+     * 格式化位置信息
+     * 
+     * @param loc - 位置对象 {start: {line, column}, end: {line, column}}
+     * @returns 格式化的位置字符串
+     * 
+     * @example
+     * ```typescript
+     * TreeFormatHelper.formatLocation({
+     *     start: {line: 1, column: 1},
+     *     end: {line: 1, column: 5}
+     * })  // => "[1:1-5]"
+     * 
+     * TreeFormatHelper.formatLocation({
+     *     start: {line: 1, column: 1},
+     *     end: {line: 3, column: 10}
+     * })  // => "[1:1-3:10]"
+     * ```
+     */
+    static formatLocation(loc: any): string {
+        if (!loc?.start || !loc?.end) {
+            return ''
+        }
+        
+        const startLine = loc.start.line
+        const startCol = loc.start.column
+        const endLine = loc.end.line
+        const endCol = loc.end.column
+        
+        if (startLine === endLine) {
+            return `[${startLine}:${startCol}-${endCol}]`
+        } else {
+            return `[${startLine}:${startCol}-${endLine}:${endCol}]`
+        }
+    }
+    
+    /**
+     * 格式化规则链（用于折叠显示）
+     * 
+     * @param rules - 规则名数组
+     * @param separator - 分隔符（默认 " > "）
+     * @returns 连接后的规则链字符串
+     * 
+     * @example
+     * ```typescript
+     * TreeFormatHelper.formatRuleChain([
+     *     'Script', 'StatementList', 'Statement'
+     * ])  // => "Script > StatementList > Statement"
+     * 
+     * TreeFormatHelper.formatRuleChain(['A', 'B'], ' → ')
+     * // => "A → B"
+     * ```
+     */
+    static formatRuleChain(rules: string[], separator: string = ' > '): string {
+        return rules.join(separator)
+    }
+}
+
+// ============================================
 // SubhutiDebugUtils - 调试工具集（v4.0）
 // ============================================
 
@@ -555,71 +750,44 @@ export class SubhutiDebugUtils {
     }
     
     /**
-     * 格式化单个节点
+     * 格式化单个节点（使用 TreeFormatHelper）
      */
     private static formatNode(cst: any, prefix: string, connector: string): string {
         const isToken = cst.value !== undefined
-        const parts: string[] = []
-        
-        // 连接符 + 节点名称
-        parts.push(`${prefix}${connector}`)
         
         if (isToken) {
-            // Token 节点：显示名称和值
-            const valueStr = SubhutiDebugUtils.formatValue(cst.value)
-            parts.push(`${cst.name}: ${valueStr}`)
+            // Token 节点：显示名称、值、位置
+            const value = TreeFormatHelper.formatTokenValue(cst.value)
+            const location = cst.loc ? TreeFormatHelper.formatLocation(cst.loc) : null
+            
+            return TreeFormatHelper.formatLine(
+                [connector, cst.name + ':', `"${value}"`, location],
+                { prefix, separator: ' ' }
+            )
         } else {
             // Rule 节点：只显示名称
-            parts.push(`${cst.name}`)
+            return TreeFormatHelper.formatLine(
+                [connector, cst.name],
+                { prefix }
+            )
         }
-        
-        // 位置信息（Token节点始终显示）
-        if (isToken && cst.loc) {
-            const locStr = SubhutiDebugUtils.formatLocation(cst.loc)
-            parts.push(` ${locStr}`)
-        }
-        
-        return parts.join('')
     }
     
+    // 注意：formatValue 和 formatLocation 已移至 TreeFormatHelper
+    // 保留这些方法作为向后兼容的别名
+    
     /**
-     * 格式化值（处理特殊字符和长度）
+     * @deprecated 请使用 TreeFormatHelper.formatTokenValue()
      */
     private static formatValue(value: string): string {
-        // 转义特殊字符
-        let escaped = value
-            .replace(/\\/g, '\\\\')
-            .replace(/\n/g, '\\n')
-            .replace(/\r/g, '\\r')
-            .replace(/\t/g, '\\t')
-        
-        // 限制长度
-        const maxLength = 40
-        if (escaped.length > maxLength) {
-            escaped = escaped.slice(0, maxLength) + '...'
-        }
-        
-        return `"${escaped}"`
+        return `"${TreeFormatHelper.formatTokenValue(value)}"`
     }
     
     /**
-     * 格式化位置信息
+     * @deprecated 请使用 TreeFormatHelper.formatLocation()
      */
     private static formatLocation(loc: any): string {
-        if (!loc.start || !loc.end) {
-            return ''
-        }
-        
-        const startLine = loc.start.line
-        const startCol = loc.start.column
-        const endLine = loc.end.line
-        const endCol = loc.end.column
-        
-        if (startLine === endLine) {
-            return `[${startLine}:${startCol}-${endCol}]`
-        } else {
-            return `[${startLine}:${startCol}-${endLine}:${endCol}]`
-        }
+        return TreeFormatHelper.formatLocation(loc)
     }
     
     // ========================================
@@ -923,25 +1091,33 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
     }
     
     /**
-     * 输出折叠的规则链
+     * 输出折叠的规则链（使用 TreeFormatHelper）
      */
     private outputCollapsed(chain: Array<{ruleName: string, depth: number}>): void {
-        const ruleChain = chain.map(r => r.ruleName).join(' > ')
+        const ruleNames = chain.map(r => r.ruleName)
         const orSuffix = this.getOrSuffix(chain)
-        const indent = '  '.repeat(chain[0].depth)
         
-        console.log(`${indent}${ruleChain}${orSuffix}`)
+        const line = TreeFormatHelper.formatLine(
+            [...ruleNames, orSuffix],
+            { depth: chain[0].depth, separator: ' > ' }
+        )
+        
+        console.log(line)
         this.lastOutputDepth = chain[chain.length - 1].depth
     }
     
     /**
-     * 输出单个规则
+     * 输出单个规则（使用 TreeFormatHelper）
      */
     private outputSingle(rule: {ruleName: string, depth: number}): void {
         const orSuffix = this.getOrSuffix([rule])
-        const indent = '  '.repeat(rule.depth)
         
-        console.log(`${indent}${rule.ruleName}${orSuffix}`)
+        const line = TreeFormatHelper.formatLine(
+            [rule.ruleName, orSuffix],
+            { depth: rule.depth }
+        )
+        
+        console.log(line)
         this.lastOutputDepth = rule.depth
     }
     
@@ -1044,13 +1220,16 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
         // 先输出所有待处理的规则
         this.flushPendingRules()
         
-        // 输出 Token 消费（缩进 = 最后输出的规则深度 + 1）
+        // 输出 Token 消费（使用 TreeFormatHelper）
         const depth = this.lastOutputDepth + 1
-        const indent = '  '.repeat(depth)
-        const value = tokenValue.length > 20 ? tokenValue.slice(0, 20) + '...' : tokenValue
-        console.log(
-            `${indent}🔹 Consume  token[${tokenIndex}] - ${value} - <${tokenName}>  ✅`
+        const value = TreeFormatHelper.formatTokenValue(tokenValue, 20)
+        
+        const line = TreeFormatHelper.formatLine(
+            ['🔹 Consume', `token[${tokenIndex}]`, '-', value, '-', `<${tokenName}>`, '✅'],
+            { depth, separator: ' ' }
         )
+        
+        console.log(line)
         
         // 标记当前规则已消费 token
         if (this.ruleStack.length > 0) {
