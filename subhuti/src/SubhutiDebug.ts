@@ -1065,31 +1065,47 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
     // 辅助方法
     // ========================================
 
-    /**
-     * 输出待处理的规则
-     */
+    /** 输出待处理的规则（识别链并折叠） */
     private flushPendingRules(): void {
-        // 过滤有效规则（去除失败的 Or 分支）
         const validRules = this.getValidRules()
-
-        // 按 depth 逐个输出
-        for (const rule of validRules) {
-            this.outputRule(rule)
+        
+        let i = 0
+        while (i < validRules.length) {
+            const chainStart = i
+            
+            // 查找连续递增的链
+            while (i + 1 < validRules.length &&
+                   validRules[i + 1].depth === validRules[i].depth + 1) {
+                // 在 Or 规则前断开
+                if (this.getOrSuffix(validRules[i + 1].depth) !== '') {
+                    break
+                }
+                i++
+            }
+            
+            const chain = validRules.slice(chainStart, i + 1)
+            
+            // >1 个规则就折叠
+            if (chain.length > 1) {
+                this.outputCollapsedChain(chain)
+            } else {
+                this.outputRule(chain[0])
+            }
+            
+            i++
         }
-
-        // 清理
+        
         this.pendingRules = []
         this.currentOrInfo = null
     }
 
-    /**
-     * 获取有效规则（过滤失败的 Or 分支）
-     */
+    /** 过滤有效规则（去除失败的 Or 分支） */
     private getValidRules(): Array<{ruleName: string, depth: number}> {
         const stackRuleNames = this.ruleStack.map(r => r.ruleName)
         const validRules: Array<{ruleName: string, depth: number}> = []
+        
+        // 配对算法：避免同名规则重复匹配
         let outputIndex = 0
-
         for (const pending of this.pendingRules) {
             const stackIndex = stackRuleNames.indexOf(pending.ruleName, outputIndex)
 
@@ -1102,10 +1118,7 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
         return validRules
     }
 
-
-    /**
-     * 输出单个规则
-     */
+    /** 输出单个规则 */
     private outputRule(rule: {ruleName: string, depth: number}): void {
         const orSuffix = this.getOrSuffix(rule.depth)
         const line = TreeFormatHelper.formatLine(
@@ -1115,11 +1128,23 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
         console.log(line)
     }
 
-    /**
-     * 获取 Or 后缀标记
-     * - Or 父规则: [Or]
-     * - Or 目标规则: [#1/3 ✅]
-     */
+    /** 输出折叠的规则链（用 > 连接） */
+    private outputCollapsedChain(chain: Array<{ruleName: string, depth: number}>): void {
+        const ruleNames = chain.map(r => r.ruleName)
+        
+        // >5 个规则就简化为：前3个 + ... + 后2个
+        const names = ruleNames.length > 5 
+            ? [...ruleNames.slice(0, 3), '...', ...ruleNames.slice(-2)]
+            : ruleNames
+        
+        const line = TreeFormatHelper.formatLine(
+            names,
+            { depth: chain[0].depth, separator: ' > ' }
+        )
+        console.log(line)
+    }
+
+    /** 获取 Or 后缀标记 */
     private getOrSuffix(ruleDepth: number): string {
         if (!this.currentOrInfo) return ''
 
