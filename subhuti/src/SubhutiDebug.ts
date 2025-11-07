@@ -770,7 +770,7 @@ export class SubhutiDebugUtils {
 // ============================================
 
 /**
- * Subhuti 轨迹调试器（v5.0 - 优化输出版）
+ * Subhuti 轨迹调试器（v5.2 - 只显示成功路径）
  * 
  * 职责：
  * - 追踪解析过程（规则进入/退出、Token 消费、Or 分支）
@@ -778,30 +778,42 @@ export class SubhutiDebugUtils {
  * - 自动输出调试报告
  * 
  * 输出优化：
- * - 只输出成功的路径（失败的 Token 消费不显示）
+ * - 只输出成功的路径（失败的分支完全不显示）
  * - 规则链合并显示（用 > 连接）
- * - Or 序号从 1 开始（用户友好）
+ * - Or 只显示成功的分支（带规则链）
  * - 只有 Token 消费才右推缩进
- * - Or 分支不右推，垂直对齐
+ * - 极简输出，信息密度高
  * 
- * @version 5.0.0 - 优化输出
- * @date 2025-11-06
+ * @version 5.2.0 - 只显示成功路径，极简输出
+ * @date 2025-11-07
  */
 export class SubhutiTraceDebugger implements SubhutiDebugger {
     // ========================================
     // 过程追踪数据
     // ========================================
-    private indentLevel = 0  // 当前缩进级别（只有 Token 消费才增加）
     public ruleStack: Array<{
         ruleName: string
         startTime: number
-        indentLevel: number      // 该规则的缩进级别
+        outputted: boolean       // 该规则是否已输出
         hasConsumedToken: boolean // 该规则是否消费了 token
-        hasOrBranch: boolean     // 该规则是否有 Or 分支
     }> = []
     
-    // 未输出的规则链（等待时机输出）
-    private pendingRules: string[] = []
+    // 未输出的规则（等待输出）
+    private pendingRules: Array<{
+        ruleName: string
+        depth: number           // 规则深度
+    }> = []
+    
+    // 最后输出的规则深度（用于计算Token缩进）
+    private lastOutputDepth = -1
+    
+    // Or 分支信息（当前活跃的 Or）
+    private currentOrInfo: {
+        totalBranches: number    // 总分支数
+        currentBranch: number    // 当前分支索引（从 0 开始）
+        targetDepth: number      // Or 所在的深度
+        savedPendingLength: number  // Or开始时的pendingRules长度
+    } | null = null
 
     // ========================================
     // 性能统计数据
@@ -831,10 +843,11 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
      * 从 token 流中提取有效 token（排除注释、空格等）
      */
     private extractValidTokens(tokens: any[]): string[] {
+        const excludeNames = ['SingleLineComment', 'MultiLineComment', 'Spacing', 'LineBreak']
         return tokens
             .filter(t => {
                 const name = t.tokenType?.name || ''
-                return !['SingleLineComment', 'MultiLineComment', 'Spacing', 'LineBreak'].includes(name)
+                return excludeNames.indexOf(name) === -1
             })
             .map(t => t.tokenValue)
             .filter(v => v !== undefined)
@@ -845,14 +858,52 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
     // ========================================
     
     /**
-     * 输出待处理的规则链
+     * 输出待处理的规则（只输出还在规则栈中的规则）
      */
     private flushPendingRules(): void {
-        if (this.pendingRules.length > 0) {
-            const indent = '  '.repeat(this.indentLevel)
-            const ruleChain = this.pendingRules.join(' > ')
-            console.log(`${indent}➡️  ${ruleChain}`)
-            this.pendingRules = []
+        // 获取当前规则栈中的规则名
+        const stackRuleNames = this.ruleStack.map(r => r.ruleName)
+        
+        // 只输出那些还在规则栈中的待处理规则
+        let outputIndex = 0
+        for (let i = 0; i < this.pendingRules.length; i++) {
+            const pending = this.pendingRules[i]
+            
+            // 检查该规则是否还在规则栈中（从output位置开始找）
+            const stackIndex = stackRuleNames.indexOf(pending.ruleName, outputIndex)
+            if (stackIndex === -1) {
+                // 规则已经不在栈中，说明已经退出（失败），跳过
+                continue
+            }
+            
+            outputIndex = stackIndex + 1
+            
+            const indent = '  '.repeat(pending.depth)
+            
+            // 检查该规则是否是 Or 的成功分支
+            let orSuffix = ''
+            if (this.currentOrInfo && pending.depth === this.currentOrInfo.targetDepth) {
+                const branchNum = this.currentOrInfo.currentBranch + 1
+                const totalBranches = this.currentOrInfo.totalBranches
+                orSuffix = ` [Or #${branchNum}/${totalBranches} ✅]`
+            }
+            
+            console.log(`${indent}${pending.ruleName}${orSuffix}`)
+            
+            // 更新最后输出的深度
+            this.lastOutputDepth = pending.depth
+            
+            // 标记对应的规则栈项已输出
+            if (stackIndex >= 0 && stackIndex < this.ruleStack.length) {
+                this.ruleStack[stackIndex].outputted = true
+            }
+        }
+        
+        this.pendingRules = []
+        
+        // 输出后清除 Or 信息
+        if (this.currentOrInfo) {
+            this.currentOrInfo = null
         }
     }
     
@@ -863,17 +914,20 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
     onRuleEnter(ruleName: string, tokenIndex: number): number {
         const startTime = performance.now()
         
-        // 记录规则栈（不立即输出）
+        // 记录规则栈
         this.ruleStack.push({
             ruleName,
             startTime,
-            indentLevel: this.indentLevel,
-            hasConsumedToken: false,
-            hasOrBranch: false
+            outputted: false,
+            hasConsumedToken: false
         })
         
-        // 将规则加入待输出队列
-        this.pendingRules.push(ruleName)
+        // 将规则加入待输出队列（带深度信息）
+        const depth = this.ruleStack.length - 1
+        this.pendingRules.push({
+            ruleName,
+            depth
+        })
         
         // 性能统计：初始化统计数据
         let stat = this.stats.get(ruleName)
@@ -907,21 +961,7 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
         }
         
         // 弹出规则栈
-        const exitedRule = this.ruleStack.pop()
-        
-        // 如果该规则没有 Or 分支且没有消费 Token，从待输出队列移除
-        if (exitedRule && !exitedRule.hasOrBranch && !exitedRule.hasConsumedToken) {
-            // 从 pendingRules 中移除最后一个（应该是当前规则）
-            if (this.pendingRules.length > 0 && 
-                this.pendingRules[this.pendingRules.length - 1] === ruleName) {
-                this.pendingRules.pop()
-            }
-        }
-        
-        // 恢复缩进（只在该规则消费了 Token 时才需要恢复）
-        if (exitedRule && exitedRule.hasConsumedToken) {
-            this.indentLevel = exitedRule.indentLevel
-        }
+        this.ruleStack.pop()
         
         // 性能统计
         const stat = this.stats.get(ruleName)
@@ -952,18 +992,16 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
             return
         }
         
-        // 输出待处理的规则链
+        // 先输出所有待处理的规则
         this.flushPendingRules()
         
-        // 输出 Token 消费
-        const indent = '  '.repeat(this.indentLevel)
+        // 输出 Token 消费（缩进 = 最后输出的规则深度 + 1）
+        const depth = this.lastOutputDepth + 1
+        const indent = '  '.repeat(depth)
         const value = tokenValue.length > 20 ? tokenValue.slice(0, 20) + '...' : tokenValue
         console.log(
             `${indent}🔹 Consume  token[${tokenIndex}] - ${value} - <${tokenName}>  ✅`
         )
-        
-        // Token 消费后右推缩进
-        this.indentLevel++
         
         // 标记当前规则已消费 token
         if (this.ruleStack.length > 0) {
@@ -979,29 +1017,24 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
         ruleName?: string,
         isRetry?: boolean
     ): void {
-        // 标记当前规则有 Or 分支
-        if (this.ruleStack.length > 0) {
-            const currentRule = this.ruleStack[this.ruleStack.length - 1]
-            currentRule.hasOrBranch = true
+        // 新的 Or 开始（branchIndex = 0）
+        if (branchIndex === 0) {
+            // 创建新的 Or 追踪
+            // targetDepth 是第一个分支规则将要处于的深度
+            this.currentOrInfo = {
+                totalBranches,
+                currentBranch: 0,
+                targetDepth: this.ruleStack.length,  // 下一个规则进入后的深度
+                savedPendingLength: this.pendingRules.length  // 保存当前pending长度
+            }
+        } else {
+            // 尝试下一个分支（branchIndex > 0）
+            // 失败的分支：恢复pending到Or开始前的状态
+            if (this.currentOrInfo) {
+                this.pendingRules.length = this.currentOrInfo.savedPendingLength
+                this.currentOrInfo.currentBranch = branchIndex
+            }
         }
-        
-        // Or 序号从 1 开始（用户友好）
-        const userFriendlyIndex = branchIndex + 1
-        
-        // 输出 Or 信息（使用当前缩进，不右推）
-        const indent = '  '.repeat(this.indentLevel)
-        
-        if (isRetry) {
-            // 失败的分支（不显示详情）
-            // 这里先简化处理，后续可以优化为折叠显示
-            return
-        }
-        
-        // 第一个分支尝试
-        const ruleInfo = ruleName ? ` ${ruleName}` : ''
-        console.log(
-            `${indent}🔀 Or → trying${ruleInfo} (#${userFriendlyIndex}/${totalBranches})`
-        )
     }
     
     onBacktrack(
@@ -1033,71 +1066,8 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
     }
     
     // ========================================
-    // CST 验证方法
+    // CST 验证方法（调用 SubhutiDebugUtils）
     // ========================================
-    
-    /**
-     * 验证 CST 结构完整性
-     */
-    private validateStructure(node: any, path: string = 'root'): Array<{path: string, issue: string, node?: any}> {
-        const errors: Array<{path: string, issue: string, node?: any}> = []
-
-        if (node === null) {
-            errors.push({ path, issue: 'Node is null' })
-            return errors
-        }
-
-        if (node === undefined) {
-            errors.push({ path, issue: 'Node is undefined' })
-            return errors
-        }
-
-        if (!node.name && node.value === undefined) {
-            errors.push({
-                path,
-                issue: 'Node has neither name nor value',
-                node: { ...node, children: node.children ? `[${node.children.length} children]` : undefined }
-            })
-        }
-
-        if (node.children !== undefined) {
-            if (!Array.isArray(node.children)) {
-                errors.push({
-                    path,
-                    issue: `children is not an array (type: ${typeof node.children})`,
-                    node: { name: node.name, childrenType: typeof node.children }
-                })
-                return errors
-            }
-
-            node.children.forEach((child: any, index: number) => {
-                const childPath = `${path}.children[${index}]`
-
-                if (child === null) {
-                    errors.push({ path: childPath, issue: 'Child is null' })
-                    return
-                }
-
-                if (child === undefined) {
-                    errors.push({ path: childPath, issue: 'Child is undefined' })
-                    return
-                }
-
-                const childErrors = this.validateStructure(child, childPath)
-                errors.push(...childErrors)
-            })
-        }
-
-        if (node.value !== undefined && node.children && node.children.length > 0) {
-            errors.push({
-                path,
-                issue: `Leaf node has both value and non-empty children`,
-                node: { name: node.name, value: node.value, childrenCount: node.children.length }
-            })
-        }
-
-        return errors
-    }
     
     /**
      * 收集所有 token 值（内部调用 SubhutiDebugUtils）
