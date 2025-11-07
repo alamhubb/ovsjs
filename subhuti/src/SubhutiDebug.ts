@@ -1107,10 +1107,7 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
      * 输出单个规则
      */
     private outputRule(rule: {ruleName: string, depth: number}): void {
-        // 获取 Or 标记
-        const orSuffix = this.getOrSuffix([rule])
-
-        // 输出规则（使用 rule.depth 作为缩进）
+        const orSuffix = this.getOrSuffix(rule.depth)
         const line = TreeFormatHelper.formatLine(
             [rule.ruleName, orSuffix],
             { depth: rule.depth }
@@ -1120,33 +1117,17 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
 
     /**
      * 获取 Or 后缀标记
-     *
-     * 设计思路：
-     * - Or 父规则显示 [Or]：告诉用户"这里有 Or 分支"
-     * - Or 目标规则显示 [#1/3 ✅]：告诉用户"选择了第几个分支"
-     *
-     * 示例输出：
-     * ```
-     * BindingIdentifier [Or]       ← 父规则标记
-     *   Identifier [#1/3 ✅]        ← 目标规则显示分支信息
-     * ```
-     *
-     * @param rules - 规则列表（通常是单个规则或折叠链）
-     * @returns Or 标记字符串
+     * - Or 父规则: [Or]
+     * - Or 目标规则: [#1/3 ✅]
      */
-    private getOrSuffix(rules: Array<{ruleName: string, depth: number}>): string {
+    private getOrSuffix(ruleDepth: number): string {
         if (!this.currentOrInfo) return ''
 
-        // 检查是否是 Or 父规则（depth = targetDepth - 1）
-        const hasOrParent = rules.some(r => r.depth === this.currentOrInfo!.targetDepth - 1)
-        if (hasOrParent) {
-            return ' [Or]'  // 父规则只显示 [Or] 标记
+        if (ruleDepth === this.currentOrInfo.targetDepth - 1) {
+            return ' [Or]'
         }
 
-        // 检查是否是 Or 目标规则（depth = targetDepth）
-        const hasOrTarget = rules.some(r => r.depth === this.currentOrInfo!.targetDepth)
-        if (hasOrTarget) {
-            // 目标规则显示分支信息：[#当前分支/总分支数 ✅]
+        if (ruleDepth === this.currentOrInfo.targetDepth) {
             return ` [#${this.currentOrInfo.currentBranch + 1}/${this.currentOrInfo.totalBranches} ✅]`
         }
 
@@ -1159,68 +1140,41 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
 
     /**
      * 规则进入事件处理器
-     *
-     * ==========================================
-     * 延迟输出策略的核心 - 只记录，不输出
-     * ==========================================
-     *
-     * 为什么不在这里输出？
-     * - 此时还不知道规则是否会成功（Or 分支可能失败）
-     * - 无法判断后面是否有可折叠的长链
-     * - 无法判断是否有 Or 父规则需要单独显示
-     *
-     * 所以采用延迟输出策略：
-     * 1. onRuleEnter: 只记录到 pendingRules 和 ruleStack
-     * 2. onTokenConsume: 触发批量输出 flushPendingRules()
-     * 3. 批量输出时可以：
-     *    - 过滤失败的 Or 分支
-     *    - 识别可折叠的长链
-     *    - 在 Or 父规则前断开
-     *
-     * 数据结构：
-     * - ruleStack: 记录当前活跃的规则栈（用于判断规则是否仍在执行）
-     * - pendingRules: 记录待输出的规则（带 depth 信息）
-     * - stats: 性能统计数据
-     *
-     * @param ruleName - 规则名称
-     * @returns startTime - 用于后续计算耗时
+     * - 记录到 ruleStack（用于追踪）
+     * - 记录到 pendingRules（延迟输出）
      */
     onRuleEnter(ruleName: string): number {
         const startTime = performance.now()
 
-        // 步骤 1: 记录到规则栈（表示"正在执行"）
+        // 记录到规则栈
         this.ruleStack.push({
             ruleName,
             startTime,
-            outputted: false,           // 是否已输出（当前未使用）
-            hasConsumedToken: false     // 是否消费了 token（当前未使用）
+            outputted: false,
+            hasConsumedToken: false
         })
 
-        // 步骤 2: 加入待输出队列（等待 token 消费时触发输出）
-        const depth = this.ruleStack.length - 1  // 当前规则的深度
-        this.pendingRules.push({
-            ruleName,
-            depth  // 保存深度，用于后续折叠判断
-        })
+        // 加入待输出队列
+        const depth = this.ruleStack.length - 1
+        this.pendingRules.push({ ruleName, depth })
 
-        // 步骤 3: 性能统计
+        // 性能统计
         let stat = this.stats.get(ruleName)
         if (!stat) {
-            // 第一次遇到这个规则，初始化统计数据
             stat = {
                 ruleName,
-                totalCalls: 0,          // 总调用次数（含缓存）
-                actualExecutions: 0,    // 实际执行次数（不含缓存）
-                cacheHits: 0,           // 缓存命中次数
-                totalTime: 0,           // 总耗时（含缓存查询）
-                executionTime: 0,       // 实际执行耗时
-                avgTime: 0              // 平均耗时
+                totalCalls: 0,
+                actualExecutions: 0,
+                cacheHits: 0,
+                totalTime: 0,
+                executionTime: 0,
+                avgTime: 0
             }
             this.stats.set(ruleName, stat)
         }
         stat.totalCalls++
 
-        return startTime  // 返回给 Parser，用于 onRuleExit 计算耗时
+        return startTime
     }
 
     onRuleExit(
@@ -1228,16 +1182,13 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
         cacheHit: boolean,
         context?: unknown
     ): void {
-        // 计算耗时
         let duration = 0
         if (context !== undefined && typeof context === 'number') {
             duration = performance.now() - context
         }
 
-        // 弹出规则栈
         this.ruleStack.pop()
 
-        // 性能统计
         const stat = this.stats.get(ruleName)
         if (stat) {
             stat.totalTime += duration
