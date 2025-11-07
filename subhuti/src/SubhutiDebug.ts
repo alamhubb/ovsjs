@@ -50,29 +50,41 @@ export interface RuleStats {
 // ============================================
 
 /**
- * 调试器接口
+ * 调试器接口（v6.0 - 精简优化）
  * 
  * Parser 通过此接口通知调试器解析过程中的事件
+ * 
+ * 设计原则：
+ * - 只保留实际使用的参数
+ * - 移除冗余和可推导的参数
+ * - 移除空实现的方法
  */
 export interface SubhutiDebugger {
     /**
      * 规则进入事件
-     * @returns 上下文对象（用于计算耗时）
+     * @param ruleName - 规则名称
+     * @returns 上下文对象（用于计算耗时，通常返回 startTime）
      */
-    onRuleEnter(ruleName: string, tokenIndex: number): unknown
+    onRuleEnter(ruleName: string): unknown
     
     /**
      * 规则退出事件
+     * @param ruleName - 规则名称
+     * @param cacheHit - 是否为缓存命中
+     * @param context - onRuleEnter 返回的上下文（用于计算耗时）
      */
     onRuleExit(
         ruleName: string, 
-        tokenIndex: number, 
         cacheHit: boolean,
         context?: unknown
     ): void
     
     /**
      * Token 消费事件
+     * @param tokenIndex - Token 索引位置
+     * @param tokenValue - Token 值
+     * @param tokenName - Token 类型名
+     * @param success - 是否消费成功
      */
     onTokenConsume(
         tokenIndex: number,
@@ -83,37 +95,29 @@ export interface SubhutiDebugger {
     
     /**
      * Or 分支尝试事件
+     * @param branchIndex - 当前分支索引（0-based）
+     * @param totalBranches - 总分支数
+     * 
+     * 注意：
+     * - isRetry 可由 branchIndex > 0 推导
+     * - ruleName 可通过后续 onRuleEnter 获取
      */
     onOrBranch?(
         branchIndex: number,
-        totalBranches: number,
-        tokenIndex: number,
-        ruleName?: string,
-        isRetry?: boolean
+        totalBranches: number
     ): void
     
     /**
      * 回溯事件
+     * @param fromTokenIndex - 回溯起始位置
+     * @param toTokenIndex - 回溯目标位置
+     * 
+     * 注意：当前实现为空，但保留用于未来性能分析
      */
     onBacktrack?(
         fromTokenIndex: number,
         toTokenIndex: number
     ): void
-    
-    /**
-     * Many 规则进入事件
-     */
-    onManyEnter?(): void
-    
-    /**
-     * AtLeastOne 规则进入事件
-     */
-    onAtLeastOneEnter?(): void
-    
-    /**
-     * Option 规则进入事件
-     */
-    onOptionEnter?(): void
 }
 
 // ============================================
@@ -846,7 +850,7 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
         const excludeNames = ['SingleLineComment', 'MultiLineComment', 'Spacing', 'LineBreak']
         return tokens
             .filter(t => {
-                const name = t.tokenType?.name || ''
+                const name = t.tokenName || ''
                 return excludeNames.indexOf(name) === -1
             })
             .map(t => t.tokenValue)
@@ -957,7 +961,7 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
     // 过程追踪方法
     // ========================================
     
-    onRuleEnter(ruleName: string, tokenIndex: number): number {
+    onRuleEnter(ruleName: string): number {
         const startTime = performance.now()
         
         // 记录规则栈
@@ -996,7 +1000,6 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
     
     onRuleExit(
         ruleName: string, 
-        tokenIndex: number, 
         cacheHit: boolean,
         context?: unknown
     ): void {
@@ -1058,10 +1061,7 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
     
     onOrBranch(
         branchIndex: number,
-        totalBranches: number,
-        tokenIndex: number,
-        ruleName?: string,
-        isRetry?: boolean
+        totalBranches: number
     ): void {
         // 新的 Or 开始（branchIndex = 0）
         if (branchIndex === 0) {
@@ -1088,27 +1088,6 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
         toTokenIndex: number
     ): void {
         // 不输出正常回溯（只在真正出错时才需要）
-    }
-    
-    /**
-     * Many 规则进入事件（v5.0 不再推格）
-     */
-    onManyEnter?(): void {
-        // 不再推格
-    }
-    
-    /**
-     * AtLeastOne 规则进入事件（v5.0 不再推格）
-     */
-    onAtLeastOneEnter?(): void {
-        // 不再推格
-    }
-    
-    /**
-     * Option 规则进入事件（v5.0 不再推格）
-     */
-    onOptionEnter?(): void {
-        // 不再推格
     }
     
     // ========================================

@@ -52,7 +52,7 @@ function testCode(code: string, entryRule: string = 'Script') {
         // 显示 tokens
         console.log('\nTokens:')
         tokens.forEach((t: any, i: number) => {
-            const tokenName = t.tokenType?.name || 'Unknown'
+            const tokenName = t.tokenName || 'Unknown'
             console.log(`  [${i}] ${tokenName}: "${t.tokenValue}"`)
         })
 

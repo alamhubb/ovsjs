@@ -284,7 +284,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
         // 顶层规则：直接执行（无需缓存和循环检测）
         if (isTopLevel) {
-            const observeContext = this._debugger?.onRuleEnter(ruleName, this.tokenIndex)
+            const observeContext = this._debugger?.onRuleEnter(ruleName)
             const cst = this.executeRuleCore(ruleName, targetFun)
             this._postProcessRule(ruleName, cst, isTopLevel, observeContext)
             return cst
@@ -313,13 +313,13 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         this.loopDetectionSet.add(key)
 
         try {
-            const observeContext = this._debugger?.onRuleEnter(ruleName, this.tokenIndex)
+            const observeContext = this._debugger?.onRuleEnter(ruleName)
 
             // Packrat Parsing 缓存查询
             if (this.enableMemoization) {
                 const cached = this._cache.get(ruleName, this.tokenIndex)
                 if (cached !== undefined) {
-                    this._debugger?.onRuleExit(ruleName, cached.endTokenIndex, true, observeContext)
+                    this._debugger?.onRuleExit(ruleName, true, observeContext)
                     const result = this.applyCachedResult(cached)
                     if (result && !result.children?.length) {
                         result.children = undefined
@@ -381,7 +381,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         }
 
         if (!isTopLevel) {
-            this._debugger?.onRuleExit(ruleName, this.tokenIndex, false, observeContext)
+            this._debugger?.onRuleExit(ruleName, false, observeContext)
         } else {
             // 顶层规则完成，输出调试信息
             if (this._debugger) {
@@ -450,12 +450,8 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             for (let i = 0; i < totalCount; i++) {
                 const alt = alternatives[i]
                 const isLast = i === totalCount - 1
-                const isRetry = i > 0
-                
-                // 尝试获取规则名称（如果是直接方法引用，可以获取到 name）
-                const ruleName = alt.alt.name || undefined
 
-                this._debugger?.onOrBranch?.(i, totalCount, this.tokenIndex, ruleName, isRetry)
+                this._debugger?.onOrBranch?.(i, totalCount)
 
                 if (isLast) {
                     this.allowErrorDepth--
@@ -493,8 +489,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             return undefined
         }
 
-        this._debugger?.onManyEnter?.()
-
         return this.withAllowError(() => {
             while (this.tryAndRestore(fn)) {
                 // 使用默认 checkLoop: true，自动检测循环
@@ -513,8 +507,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             return undefined
         }
 
-        this._debugger?.onOptionEnter?.()
-
         return this.withAllowError(() => {
             // checkLoop: false - Option 允许匹配 0 次（不消费 token）
             this.tryAndRestore(fn, false)
@@ -531,8 +523,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         if (!this._parseSuccess) {
             return undefined
         }
-
-        this._debugger?.onAtLeastOneEnter?.()
 
         fn()
         if (!this._parseSuccess) {
