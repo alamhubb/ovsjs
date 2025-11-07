@@ -858,53 +858,99 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
     // ========================================
     
     /**
-     * 输出待处理的规则（只输出还在规则栈中的规则）
+     * 输出待处理的规则（带折叠）
      */
     private flushPendingRules(): void {
-        // 获取当前规则栈中的规则名
-        const stackRuleNames = this.ruleStack.map(r => r.ruleName)
+        // 过滤有效规则
+        const validRules = this.getValidRules()
         
-        // 只输出那些还在规则栈中的待处理规则
-        let outputIndex = 0
-        for (let i = 0; i < this.pendingRules.length; i++) {
-            const pending = this.pendingRules[i]
+        // 折叠并输出
+        let i = 0
+        while (i < validRules.length) {
+            const chainStart = i
             
-            // 检查该规则是否还在规则栈中（从output位置开始找）
-            const stackIndex = stackRuleNames.indexOf(pending.ruleName, outputIndex)
-            if (stackIndex === -1) {
-                // 规则已经不在栈中，说明已经退出（失败），跳过
-                continue
+            // 查找连续递增的规则链
+            while (i + 1 < validRules.length && 
+                   validRules[i + 1].depth === validRules[i].depth + 1) {
+                i++
             }
             
-            outputIndex = stackIndex + 1
+            let chain = validRules.slice(chainStart, i + 1)
             
-            const indent = '  '.repeat(pending.depth)
-            
-            // 检查该规则是否是 Or 的成功分支
-            let orSuffix = ''
-            if (this.currentOrInfo && pending.depth === this.currentOrInfo.targetDepth) {
-                const branchNum = this.currentOrInfo.currentBranch + 1
-                const totalBranches = this.currentOrInfo.totalBranches
-                orSuffix = ` [Or #${branchNum}/${totalBranches} ✅]`
+            // 如果链>=3个规则，且最后一个规则是链中的最后一个，则保留最后一个规则不折叠
+            // （因为最后一个规则可能是叶子节点，需要单独显示）
+            if (chain.length >= 3 && i === validRules.length - 1) {
+                // 最后一个规则单独处理
+                this.outputCollapsed(chain.slice(0, -1))
+                this.outputSingle(chain[chain.length - 1])
+            } else if (chain.length >= 3) {
+                // 折叠：一行输出
+                this.outputCollapsed(chain)
+            } else {
+                // 不折叠：逐个输出
+                chain.forEach(rule => this.outputSingle(rule))
             }
             
-            console.log(`${indent}${pending.ruleName}${orSuffix}`)
-            
-            // 更新最后输出的深度
-            this.lastOutputDepth = pending.depth
-            
-            // 标记对应的规则栈项已输出
-            if (stackIndex >= 0 && stackIndex < this.ruleStack.length) {
-                this.ruleStack[stackIndex].outputted = true
-            }
+            i++
         }
         
+        // 清理
         this.pendingRules = []
+        this.currentOrInfo = null
+    }
+    
+    /**
+     * 获取有效规则（只保留还在规则栈中的规则）
+     */
+    private getValidRules(): Array<{ruleName: string, depth: number}> {
+        const stackRuleNames = this.ruleStack.map(r => r.ruleName)
+        const validRules: Array<{ruleName: string, depth: number}> = []
+        let outputIndex = 0
         
-        // 输出后清除 Or 信息
-        if (this.currentOrInfo) {
-            this.currentOrInfo = null
+        for (const pending of this.pendingRules) {
+            const stackIndex = stackRuleNames.indexOf(pending.ruleName, outputIndex)
+            if (stackIndex >= 0) {
+                validRules.push(pending)
+                outputIndex = stackIndex + 1
+            }
         }
+        
+        return validRules
+    }
+    
+    /**
+     * 输出折叠的规则链
+     */
+    private outputCollapsed(chain: Array<{ruleName: string, depth: number}>): void {
+        const ruleChain = chain.map(r => r.ruleName).join(' > ')
+        const orSuffix = this.getOrSuffix(chain)
+        const indent = '  '.repeat(chain[0].depth)
+        
+        console.log(`${indent}${ruleChain}${orSuffix}`)
+        this.lastOutputDepth = chain[chain.length - 1].depth
+    }
+    
+    /**
+     * 输出单个规则
+     */
+    private outputSingle(rule: {ruleName: string, depth: number}): void {
+        const orSuffix = this.getOrSuffix([rule])
+        const indent = '  '.repeat(rule.depth)
+        
+        console.log(`${indent}${rule.ruleName}${orSuffix}`)
+        this.lastOutputDepth = rule.depth
+    }
+    
+    /**
+     * 获取 Or 后缀
+     */
+    private getOrSuffix(rules: Array<{ruleName: string, depth: number}>): string {
+        if (!this.currentOrInfo) return ''
+        
+        const hasOrTarget = rules.some(r => r.depth === this.currentOrInfo!.targetDepth)
+        if (!hasOrTarget) return ''
+        
+        return ` [Or #${this.currentOrInfo.currentBranch + 1}/${this.currentOrInfo.totalBranches} ✅]`
     }
     
     // ========================================
