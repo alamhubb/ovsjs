@@ -1138,23 +1138,17 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
 
                 const nextRule = validRules[i + 1]
 
-                // --- 步骤 3.2: 在 Or 规则前断开链 ---
+                // --- 步骤 3.2: 在 Or 目标规则前断开链 ---
                 // 为什么要断开？
-                // - Or 父规则需要单独显示，方便看出 Or 在哪里
+                // - Or 目标规则需要单独显示，方便看出 Or 在哪里
                 // - 例如：A > B > C(Or父) > D(Or目标)
-                //   断开为：A > B  和  C(单独)  和  D(单独)
+                //   断开为：A > B > C  和  D(单独带 [Or] 标记)
                 if (this.currentOrInfo) {
-                    // 检查 1：下一个是 Or 父规则吗？
-                    // Or 父规则 depth = targetDepth - 1
-                    // 例如：targetDepth=8, 则父规则 depth=7
-                    if (nextRule.depth === this.currentOrInfo.targetDepth - 1) {
-                        break  // 断开，让 Or 父规则单独显示
-                    }
-
-                    // 检查 2（后备）：下一个是 Or 目标规则吗？
-                    // 如果父规则没被识别到，至少在目标规则前断开
+                    // 检查：下一个是 Or 目标规则吗？
+                    // Or 目标规则 depth = targetDepth
+                    // 例如：targetDepth=8, 则在 depth=8 的规则前断开
                     if (nextRule.depth === this.currentOrInfo.targetDepth) {
-                        break
+                        break  // 断开，让 Or 目标规则单独显示（带 [Or] 标记）
                     }
                 }
 
