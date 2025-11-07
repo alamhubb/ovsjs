@@ -1085,8 +1085,8 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
      * 
      * 输出效果示例（代码：let a = 1）：
      * ```
-     * Script > StatementList > ... > LexicalDeclaration  ← 折叠链
-     *   LetOrConst                                       ← 单独输出
+     * Script > StatementList > ... > LexicalDeclaration  ← 长链全部折叠
+     *   LetOrConst [Or]                                  ← 单独输出（Or 父规则）
      *     🔹 Consume token[0] - let                      ← Token
      *         BindingList                                ← 新规则序列开始
      *           LexicalBinding
@@ -1115,10 +1115,6 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
         // ========================================
         // 步骤 2: 初始化视觉深度
         // ========================================
-        // 为什么从第一个规则的 depth 开始？
-        // - 第一个规则可能不是 depth=0（可能是中途消费 token）
-        // - 使用它的实际 depth 作为起点，保持缩进正确
-        // 例如：第一个规则 depth=5，则从 visualDepth=5 开始
         if (validRules.length > 0) {
             this.visualDepth = validRules[0].depth
         }
@@ -1165,18 +1161,9 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
             const chain = validRules.slice(chainStart, i + 1)
             
             // --- 步骤 5: 折叠或逐个输出 ---
-            // 为什么 >= 3 才折叠？
-            // - 链太短（1-2个）折叠意义不大
-            // - >= 3 时折叠可显著提升可读性
-            // 例如：A > B > C > D > E（5个）
-            //   折叠为：A > B > C > D  （一行）
-            //           E             （单独一行，便于看它的子规则）
             if (chain.length >= 3) {
-                // 折叠：前 N-1 个用 > 连接，最后 1 个单独输出
-                this.outputCollapsedChain(chain.slice(0, -1))  // [A, B, C, D]
-                this.outputRule(chain[chain.length - 1])        // E
+                this.outputCollapsedChain(chain)
             } else {
-                // 不折叠：逐个输出（每个占一行）
                 chain.forEach(rule => this.outputRule(rule))
             }
             
@@ -1184,11 +1171,17 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
         }
         
         // ========================================
-        // 步骤 6: 清理状态
+        // 步骤 6: 统一推进（为 token 准备）
         // ========================================
-        // 为什么要清理？
-        // - pendingRules 已全部输出，清空避免重复
-        // - currentOrInfo 只在一次 token 消费中有效，清空避免污染下次
+        // 所有规则输出完后，统一 +1
+        // 这样 token 就会比规则缩进一层
+        if (validRules.length > 0) {
+            this.visualDepth++
+        }
+        
+        // ========================================
+        // 步骤 7: 清理状态
+        // ========================================
         this.pendingRules = []
         this.currentOrInfo = null
     }
@@ -1266,11 +1259,11 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
      * 
      * 折叠示例：
      * ```
-     * 不折叠（19行）:                   折叠后（2行）:
-     * AssignmentExpression             AssignmentExpression > ... > MemberExpression
-     *   ConditionalExpression            PrimaryExpression
-     *     ShortCircuitExpression           Literal
-     *       ...（中间15个）                  🔹 token[3] - 1
+     * 不折叠（19行）:                   折叠后（1行 + 子规则）:
+     * AssignmentExpression             AssignmentExpression > ... > PrimaryExpression
+     *   ConditionalExpression            Literal [Or]
+     *     ShortCircuitExpression           🔹 token[3] - 1
+     *       ...（中间15个）
      *       MemberExpression
      *         PrimaryExpression
      *           Literal
@@ -1298,7 +1291,7 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
         
         // 步骤 2: 输出第一行（完整版，始终显示）
         // 使用 visualDepth 作为缩进，用 ' > ' 连接规则名
-        // 例如：AssignmentExpression > ConditionalExpression > ... > Literal
+        // 例如：AssignmentExpression > ConditionalExpression > ... > PrimaryExpression
         const fullLine = TreeFormatHelper.formatLine(
             [...ruleNames, orSuffix],
             { depth: this.visualDepth, separator: ' > ' }
@@ -1330,15 +1323,8 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
             console.log(shortLine)
         }
         
-        // 步骤 4: 关键！折叠链只增加 1 层视觉深度
-        // 为什么只增加 1 层？
-        // - 折叠链代表一个"整体"，不管里面有多少规则
-        // - 链后面的规则（如 Literal）是这个整体的子规则
-        // - 所以只需要缩进 1 层
-        // 例如：
-        //   AssignmentExpression > ... > PrimaryExpression  ← visualDepth = 7
-        //     Literal  ← visualDepth = 8（只增加了 1 层）
-        this.visualDepth++
+        // 步骤 4: 折叠链不推进 visualDepth
+        // visualDepth 的推进统一由 flushPendingRules() 管理
     }
     
     /**
@@ -1368,9 +1354,6 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
      */
     private outputRule(rule: {ruleName: string, depth: number}): void {
         // 步骤 1: 获取 Or 标记
-        // - 如果是 Or 父规则 → [Or]
-        // - 如果是 Or 目标规则 → [#1/3 ✅]
-        // - 否则 → ''
         const orSuffix = this.getOrSuffix([rule])
         
         // 步骤 2: 格式化并输出
@@ -1381,11 +1364,12 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
         )
         console.log(line)
         
-        // 步骤 3: 增加视觉深度
-        // 为什么要 ++？
-        // - 下一个输出的内容（规则或 token）是当前规则的子级
-        // - 子级需要比父级多缩进一层
-        this.visualDepth++
+        // 步骤 3: 不增加 visualDepth
+        // 规则本身不缩进，只有 token 消费才缩进
+        // visualDepth 只在以下情况增加：
+        // 1. 折叠链（outputCollapsedChain）
+        // 2. token 的上一条规则（flushPendingRules 中判断）
+        // 3. token 本身（onTokenConsume）
     }
     
     /**
@@ -1537,9 +1521,11 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
         }
         
         // 先输出所有待处理的规则
+        // 最后一个规则已经 +1 缩进（token 的上一条）
         this.flushPendingRules()
         
-        // Token 消费使用视觉深度（在已输出规则的下一层）
+        // Token 再 +1 缩进
+        this.visualDepth++
         const depth = this.visualDepth
         const value = TreeFormatHelper.formatTokenValue(tokenValue, 20)
         
@@ -1567,6 +1553,9 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
         )
         
         console.log(line)
+        
+        // Token 输出后不再增加 visualDepth
+        // 下次 flushPendingRules() 会重置 visualDepth 到新规则的 depth
         
         // 标记当前规则已消费 token
         if (this.ruleStack.length > 0) {
