@@ -1099,7 +1099,7 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
      * 2. 初始化视觉深度（从第一个规则的实际深度开始）
      * 3. 识别连续递增的规则链（depth 连续 +1）
      * 4. 在 Or 父规则前断开链
-     * 5. 折叠长链（>= 3 个规则）或逐个输出
+     * 5. 折叠长链（>= 2 个规则）或逐个输出
      * 6. 清理状态
      */
     private flushPendingRules(): void {
@@ -1165,13 +1165,13 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
             const chain = validRules.slice(chainStart, i + 1)
 
             // --- 步骤 5: 折叠或逐个输出 ---
-            // 为什么 >= 3 才折叠？
-            // - 链太短（1-2个）折叠意义不大
-            // - >= 3 时折叠可显著提升可读性
+            // 为什么 >= 2 才折叠？
+            // - 链太短（1个）折叠意义不大
+            // - >= 2 时折叠可显著提升可读性
             // 例如：A > B > C > D > E（5个）
             //   折叠为：A > B > C > D  （一行）
             //           E             （单独一行，便于看它的子规则）
-            if (chain.length >= 3) {
+            if (chain.length >= 2) {
                 // 折叠：前 N-1 个用 > 连接，最后 1 个单独输出
                 this.outputCollapsedChain(chain.slice(0, -1))  // [A, B, C, D]
                 this.outputRule(chain[chain.length - 1])        // E
