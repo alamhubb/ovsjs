@@ -283,9 +283,9 @@ export class SubhutiDebugRuleTracePrint {
                 const branchInfo = item.orBranchInfo
                 if (item.orBranchInfo.isOrEntry) {
                     // Or 包裹节点：显示 [Or]
-                    printStr = item.ruleName + '-> Or'
+                    printStr =  '🔀 ' +item.ruleName + '(Or)'
                 } else if (item.orBranchInfo.isOrBranch) {
-                    printStr = `[Or]#${branchInfo.branchIndex + 1}`
+                    printStr = `[Branch #${branchInfo.branchIndex + 1}]`
                 } else {
                     printStr = `错误`
                 }
