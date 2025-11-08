@@ -938,8 +938,7 @@ export class SubhutiTraceDebugger {
             displayDepth: undefined,
             orBranchInfo: {
                 isOrEntry: true,
-                isOrBranch: false,
-                totalBranches  // 添加总分支数
+                isOrBranch: false
             }
         })
     }
