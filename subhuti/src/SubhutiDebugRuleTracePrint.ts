@@ -148,6 +148,53 @@ export interface OrBranchInfo {
 
 export class SubhutiDebugRuleTracePrint {
     /**
+     * 统一的 Or 标记格式化方法
+     * 所有字符串拼接都在这里处理
+     * 
+     * @param item - 规则栈项
+     * @returns 显示后缀（如 "" / " [Or]" / " [Or #1/3]"）
+     */
+    static formatOrSuffix(item: RuleStackItem): string {
+        // 优先使用 orBranchInfo 对象（新设计）
+        if (item.orBranchInfo) {
+            const info = item.orBranchInfo
+            
+            if (info.isOrEntry && !info.isOrBranch) {
+                // Or 包裹节点：显示 [Or]
+                return ' [Or]'
+            } else if (!info.isOrEntry && info.isOrBranch) {
+                // Or 分支节点：显示 [Or #N/Total]
+                if (info.branchIndex !== undefined && info.totalBranches !== undefined) {
+                    return ` [Or #${info.branchIndex + 1}/${info.totalBranches}]`
+                }
+                return ' [Or]'  // 降级显示
+            }
+        }
+        
+        // 兼容旧设计（isOrEntry 和 isOrBranch 在顶层）
+        if (item.isOrEntry && !item.isOrBranch) {
+            return ' [Or]'
+        } else if (!item.isOrEntry && item.isOrBranch) {
+            return ' [Or]'  // 旧设计没有详细分支信息
+        }
+        
+        // 普通规则，无后缀
+        return ''
+    }
+    
+    /**
+     * 判断是否是 Or 相关节点
+     */
+    static isOrRelated(item: RuleStackItem): boolean {
+        // 新设计：检查 orBranchInfo 对象
+        if (item.orBranchInfo) {
+            return item.orBranchInfo.isOrEntry || item.orBranchInfo.isOrBranch
+        }
+        
+        // 兼容旧设计：检查顶层属性
+        return item.isOrEntry === true || item.isOrBranch === true
+    }
+    /**
      * 输出待处理的规则
      * 
      * 实现规则：
@@ -168,10 +215,10 @@ export class SubhutiDebugRuleTracePrint {
         const baseDepth = lastOutputted ? lastOutputted.displayDepth + 1 : 0
         
         // 计算断点（最后一个 Or 相关规则 或 爷爷规则，取较小值）
-        // Or 相关规则包括：Or 包裹节点（isOrEntry）和 Or 分支节点（isOrBranch）
+        // 使用统一的 isOrRelated 方法判断
         let lastOrIndex = -1
         for (let i = pending.length - 1; i >= 0; i--) {
-            if (pending[i].isOrEntry || pending[i].isOrBranch) {
+            if (this.isOrRelated(pending[i])) {
                 lastOrIndex = i
                 break
             }
@@ -214,22 +261,14 @@ export class SubhutiDebugRuleTracePrint {
 
     /**
      * 打印单独规则（深度递增）
+     * 
+     * 所有显示格式化都通过 formatOrSuffix 统一处理
      */
     private static printSingleRule(rules: RuleStackItem[], startDepth: number): void {
         let depth = startDepth
         rules.forEach(r => {
-            // 统一的显示逻辑：根据 isOrEntry 和 isOrBranch 决定后缀
-            let suffix = ''
-            
-            if (r.isOrEntry && !r.isOrBranch) {
-                // Or 包裹节点（onOrEnter 创建）
-                // 显示：规则名 [Or]
-                suffix = ' [Or]'
-            } else if (!r.isOrEntry && r.isOrBranch && r.orBranchInfo) {
-                // Or 分支节点（onOrBranch 创建）
-                // 显示：规则名 [Or #1/3]
-                suffix = ` [Or ${r.orBranchInfo}]`
-            }
+            // 使用统一的格式化方法获取后缀
+            const suffix = this.formatOrSuffix(r)
             
             console.log('  '.repeat(depth) + r.ruleName + suffix)
             r.displayDepth = depth

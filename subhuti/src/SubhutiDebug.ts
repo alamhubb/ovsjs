@@ -835,13 +835,14 @@ export class SubhutiTraceDebugger {
         // ✅ 直接 pop 栈顶（严格 LIFO）
         if (this.ruleStack.length > 0) {
             const top = this.ruleStack[this.ruleStack.length - 1]
-            // 验证栈顶确实是要退出的规则
-            if (top.ruleName === ruleName && !top.hasExited && !top.isOrEntry && !top.isOrBranch) {
+            // 验证栈顶确实是要退出的普通规则（没有 orBranchInfo）
+            if (top.ruleName === ruleName && !top.hasExited && !top.orBranchInfo) {
                 top.hasExited = true
                 this.ruleStack.pop()  // 直接弹出栈顶
             } else {
                 // 防御性检查：如果栈顶不匹配，说明有问题，打印警告
-                console.warn(`⚠️ Rule exit mismatch: expected ${ruleName} at top, got ${top.ruleName} (isOrEntry: ${top.isOrEntry}, isOrBranch: ${top.isOrBranch})`)
+                const isOr = top.orBranchInfo ? `(Or: entry=${top.orBranchInfo.isOrEntry}, branch=${top.orBranchInfo.isOrBranch})` : ''
+                console.warn(`⚠️ Rule exit mismatch: expected ${ruleName} at top, got ${top.ruleName}${isOr}`)
             }
         }
 
@@ -937,7 +938,8 @@ export class SubhutiTraceDebugger {
             displayDepth: undefined,
             orBranchInfo: {
                 isOrEntry: true,
-                isOrBranch: false
+                isOrBranch: false,
+                totalBranches  // 添加总分支数
             }
         })
     }
@@ -949,13 +951,17 @@ export class SubhutiTraceDebugger {
         // 应该直接 pop 栈顶（严格 LIFO）
         if (this.ruleStack.length > 0) {
             const top = this.ruleStack[this.ruleStack.length - 1]
-            // 验证栈顶确实是要退出的 Or 包裹节点
-            if (top.ruleName === parentRuleName && top.isOrEntry && !top.isOrBranch && !top.hasExited) {
+            // 验证栈顶确实是要退出的 Or 包裹节点（orBranchInfo.isOrEntry && !isOrBranch）
+            if (top.ruleName === parentRuleName 
+                && top.orBranchInfo
+                && top.orBranchInfo.isOrEntry 
+                && !top.orBranchInfo.isOrBranch 
+                && !top.hasExited) {
                 top.hasExited = true
                 this.ruleStack.pop()
             } else {
                 // 防御性检查：如果栈顶不匹配，说明有问题
-                console.warn(`⚠️ Or exit mismatch: expected ${parentRuleName} at top, got ${top.ruleName}`)
+                console.warn(`⚠️ Or exit mismatch: expected ${parentRuleName}(OrEntry) at top, got ${top.ruleName}`)
             }
         }
     }
@@ -976,10 +982,10 @@ export class SubhutiTraceDebugger {
             hasExited: false,
             displayDepth: undefined,
             orBranchInfo: {
-                isOrEntry: true,
-                isOrBranch: false,
-                branchIndex: branchIndex,
-                totalBranches: totalBranches
+                isOrEntry: false,     // Or 分支节点不是 Or 包裹节点
+                isOrBranch: true,     // 这是 Or 分支节点
+                branchIndex,
+                totalBranches
             }
         })
     }
@@ -992,13 +998,20 @@ export class SubhutiTraceDebugger {
         // 应该直接 pop 栈顶（严格 LIFO）
         if (this.ruleStack.length > 0) {
             const top = this.ruleStack[this.ruleStack.length - 1]
-            // 验证栈顶确实是要退出的 Or 分支节点
-            if (top.ruleName === parentRuleName && top.isOrBranch && !top.hasExited && top.orBranchInfo.branchIndex === branchIndex) {
+            // 验证栈顶确实是要退出的 Or 分支节点（orBranchInfo.isOrBranch && !isOrEntry）
+            if (top.ruleName === parentRuleName 
+                && top.orBranchInfo
+                && top.orBranchInfo.isOrBranch
+                && !top.orBranchInfo.isOrEntry
+                && top.orBranchInfo.branchIndex === branchIndex
+                && !top.hasExited) {
                 top.hasExited = true
                 this.ruleStack.pop()
             } else {
                 // 防御性检查：如果栈顶不匹配，说明有问题
-                console.warn(`⚠️ OrBranch exit mismatch: expected ${parentRuleName}(isOrBranch) at top, got ${top.ruleName}(isOrEntry:${top.isOrEntry}, isOrBranch:${top.isOrBranch}, hasExited:${top.hasExited})`)
+                const info = top.orBranchInfo
+                const infoStr = info ? `(entry=${info.isOrEntry}, branch=${info.isOrBranch}, idx=${info.branchIndex})` : '(no orInfo)'
+                console.warn(`⚠️ OrBranch exit mismatch: expected ${parentRuleName}(branchIdx=${branchIndex}) at top, got ${top.ruleName}${infoStr}`)
             }
         }
     }
