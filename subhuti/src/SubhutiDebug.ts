@@ -1,4 +1,3 @@
-
 /**
  * Subhuti Debug - 统一调试和性能分析系统（v4.0）
  *
@@ -44,89 +43,6 @@ export interface RuleStats {
     totalTime: number          // 总耗时（含缓存查询）
     executionTime: number      // 实际执行耗时（不含缓存）
     avgTime: number            // 平均耗时（仅实际执行）
-}
-
-// ============================================
-// SubhutiDebugger - 调试器接口
-// ============================================
-
-/**
- * 调试器接口（v6.0 - 精简优化）
- *
- * Parser 通过此接口通知调试器解析过程中的事件
- *
- * 设计原则：
- * - 只保留实际使用的参数
- * - 移除冗余和可推导的参数
- * - 移除空实现的方法
- */
-export interface SubhutiDebugger {
-    /**
-     * 规则进入事件
-     * @param ruleName - 规则名称
-     * @returns 上下文对象（用于计算耗时，通常返回 startTime）
-     */
-    onRuleEnter(ruleName: string): unknown
-
-    /**
-     * 规则退出事件
-     * @param ruleName - 规则名称
-     * @param cacheHit - 是否为缓存命中
-     * @param context - onRuleEnter 返回的上下文（用于计算耗时）
-     */
-    onRuleExit(
-        ruleName: string,
-        cacheHit: boolean,
-        context?: unknown
-    ): void
-
-    /**
-     * Token 消费事件
-     * @param tokenIndex - Token 索引位置
-     * @param tokenValue - Token 值
-     * @param tokenName - Token 类型名
-     * @param success - 是否消费成功
-     */
-    onTokenConsume(
-        tokenIndex: number,
-        tokenValue: string,
-        tokenName: string,
-        success: boolean
-    ): void
-
-    /**
-     * Or 分支进入事件
-     * @param branchIndex - 当前分支索引（0-based）
-     * @param totalBranches - 总分支数
-     * @param parentRuleName - 父规则名（调用 Or 的规则）
-     */
-    onOrBranch?(
-        branchIndex: number,
-        totalBranches: number,
-        parentRuleName: string
-    ): void
-
-    /**
-     * Or 分支退出事件
-     * @param parentRuleName - 父规则名（调用 Or 的规则）
-     * @param branchIndex - 当前分支索引（0-based）
-     */
-    onOrBranchExit?(
-        parentRuleName: string,
-        branchIndex: number
-    ): void
-
-    /**
-     * 回溯事件
-     * @param fromTokenIndex - 回溯起始位置
-     * @param toTokenIndex - 回溯目标位置
-     *
-     * 注意：当前实现为空，但保留用于未来性能分析
-     */
-    onBacktrack?(
-        fromTokenIndex: number,
-        toTokenIndex: number
-    ): void
 }
 
 // ============================================
@@ -483,16 +399,16 @@ export class SubhutiDebugUtils {
     static validateStructure(
         node: any,
         path: string = 'root'
-    ): Array<{path: string, issue: string, node?: any}> {
-        const errors: Array<{path: string, issue: string, node?: any}> = []
+    ): Array<{ path: string, issue: string, node?: any }> {
+        const errors: Array<{ path: string, issue: string, node?: any }> = []
 
         if (node === null) {
-            errors.push({ path, issue: 'Node is null' })
+            errors.push({path, issue: 'Node is null'})
             return errors
         }
 
         if (node === undefined) {
-            errors.push({ path, issue: 'Node is undefined' })
+            errors.push({path, issue: 'Node is undefined'})
             return errors
         }
 
@@ -500,7 +416,7 @@ export class SubhutiDebugUtils {
             errors.push({
                 path,
                 issue: 'Node has neither name nor value',
-                node: { ...node, children: node.children ? `[${node.children.length} children]` : undefined }
+                node: {...node, children: node.children ? `[${node.children.length} children]` : undefined}
             })
         }
 
@@ -509,7 +425,7 @@ export class SubhutiDebugUtils {
                 errors.push({
                     path,
                     issue: `children is not an array (type: ${typeof node.children})`,
-                    node: { name: node.name, childrenType: typeof node.children }
+                    node: {name: node.name, childrenType: typeof node.children}
                 })
                 return errors
             }
@@ -518,12 +434,12 @@ export class SubhutiDebugUtils {
                 const childPath = `${path}.children[${index}]`
 
                 if (child === null) {
-                    errors.push({ path: childPath, issue: 'Child is null' })
+                    errors.push({path: childPath, issue: 'Child is null'})
                     return
                 }
 
                 if (child === undefined) {
-                    errors.push({ path: childPath, issue: 'Child is undefined' })
+                    errors.push({path: childPath, issue: 'Child is undefined'})
                     return
                 }
 
@@ -536,7 +452,7 @@ export class SubhutiDebugUtils {
             errors.push({
                 path,
                 issue: `Leaf node has both value and non-empty children`,
-                node: { name: node.name, value: node.value, childrenCount: node.children.length }
+                node: {name: node.name, value: node.value, childrenCount: node.children.length}
             })
         }
 
@@ -627,13 +543,13 @@ export class SubhutiDebugUtils {
 
             return TreeFormatHelper.formatLine(
                 [connector, cst.name + ':', `"${value}"`, location],
-                { prefix, separator: ' ' }
+                {prefix, separator: ' '}
             )
         } else {
             // Rule 节点：只显示名称
             return TreeFormatHelper.formatLine(
                 [connector, cst.name],
-                { prefix }
+                {prefix}
             )
         }
     }
@@ -807,12 +723,11 @@ export class SubhutiDebugUtils {
  * @version 5.2.0 - 只显示成功路径，极简输出
  * @date 2025-11-07
  */
-export class SubhutiTraceDebugger implements SubhutiDebugger {
+export class SubhutiTraceDebugger {
     // ========================================
     // 过程追踪数据（新版 - 只用 ruleStack）
     // ========================================
     public ruleStack: RuleStackItem[] = []
-    private currentOrInfo: OrBranchInfo | null = null
 
     // ========================================
     // 性能统计数据
@@ -875,13 +790,8 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
         // 计算深度
         const depth = this.ruleStack.length
 
-        // 计算 Or 信息
-        const orInfo = SubhutiDebugRuleTracePrint.getOrInfo(
-            depth,
-            this.currentOrInfo
-        )
-
         // 推入规则栈
+        // 注意：普通规则的 isOrEntry 和 isOrBranch 都为 false
         this.ruleStack.push({
             ruleName,
             depth,
@@ -890,8 +800,7 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
             hasConsumedToken: false,
             hasExited: false,
             displayDepth: undefined,
-            isOrEntry: orInfo.isOrEntry,
-            orBranchInfo: orInfo.branchInfo
+            orBranchInfo: undefined
         })
 
         // 性能统计
@@ -923,13 +832,16 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
             duration = performance.now() - context
         }
 
-        // ✅ 从后往前找第一个未退出的匹配项，标记并删除
-        for (let i = this.ruleStack.length - 1; i >= 0; i--) {
-            const item = this.ruleStack[i]
-            if (!item.hasExited && item.ruleName === ruleName) {
-                item.hasExited = true
-                this.ruleStack.splice(i, 1)  // 立即删除
-                break
+        // ✅ 直接 pop 栈顶（严格 LIFO）
+        if (this.ruleStack.length > 0) {
+            const top = this.ruleStack[this.ruleStack.length - 1]
+            // 验证栈顶确实是要退出的规则
+            if (top.ruleName === ruleName && !top.hasExited && !top.isOrEntry && !top.isOrBranch) {
+                top.hasExited = true
+                this.ruleStack.pop()  // 直接弹出栈顶
+            } else {
+                // 防御性检查：如果栈顶不匹配，说明有问题，打印警告
+                console.warn(`⚠️ Rule exit mismatch: expected ${ruleName} at top, got ${top.ruleName} (isOrEntry: ${top.isOrEntry}, isOrBranch: ${top.isOrBranch})`)
             }
         }
 
@@ -973,7 +885,7 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
                 break
             }
         }
-        
+
         // 格式化 Token 值（限制长度）
         const value = TreeFormatHelper.formatTokenValue(tokenValue, 20)
 
@@ -997,7 +909,7 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
 
         const line = TreeFormatHelper.formatLine(
             ['🔹 Consume', `token[${tokenIndex}]`, '-', value, '-', `<${tokenName}>`, location, '✅'],
-            { depth, separator: ' ' }
+            {depth, separator: ' '}
         )
 
         console.log(line)
@@ -1009,41 +921,66 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
         }
     }
 
-    onOrBranch(
-        branchIndex: number,
-        totalBranches: number,
-        parentRuleName: string
+    onOrEnter(
+        parentRuleName: string,
+        totalBranches: number
     ): void {
-        // 新的 Or 开始（branchIndex = 0）
-        if (branchIndex === 0) {
-            // 创建新的 Or 追踪
-            this.currentOrInfo = {
-                totalBranches,
-                currentBranch: 0,
-                targetDepth: this.ruleStack.length,
-                savedPendingLength: this.ruleStack.length,
-                parentRuleName
-            }
-        } else {
-            // 尝试下一个分支（branchIndex > 0）
-            if (this.currentOrInfo) {
-                this.currentOrInfo.currentBranch = branchIndex
-            }
-        }
-        
-        // 创建虚拟 Or 分支规则项（每次分支尝试都创建）
-        const virtualRuleName = `${parentRuleName} [Or #${branchIndex + 1}]`
-        
+        // 创建 Or 包裹虚拟规则项
+        // 注意：ruleName 只存储纯粹的规则名，不包含显示标记
         this.ruleStack.push({
-            ruleName: virtualRuleName,
+            ruleName: parentRuleName,
             depth: this.ruleStack.length,
             startTime: performance.now(),
             outputted: false,
             hasConsumedToken: false,
             hasExited: false,
             displayDepth: undefined,
-            isOrEntry: true,
-            orBranchInfo: `#${branchIndex + 1}/${totalBranches}`
+            orBranchInfo: {
+                isOrEntry: true,
+                isOrBranch: false
+            }
+        })
+    }
+
+    onOrExit(
+        parentRuleName: string
+    ): void {
+        // 清理 Or 包裹虚拟规则项
+        // 应该直接 pop 栈顶（严格 LIFO）
+        if (this.ruleStack.length > 0) {
+            const top = this.ruleStack[this.ruleStack.length - 1]
+            // 验证栈顶确实是要退出的 Or 包裹节点
+            if (top.ruleName === parentRuleName && top.isOrEntry && !top.isOrBranch && !top.hasExited) {
+                top.hasExited = true
+                this.ruleStack.pop()
+            } else {
+                // 防御性检查：如果栈顶不匹配，说明有问题
+                console.warn(`⚠️ Or exit mismatch: expected ${parentRuleName} at top, got ${top.ruleName}`)
+            }
+        }
+    }
+
+    onOrBranch(
+        branchIndex: number,
+        totalBranches: number,
+        parentRuleName: string
+    ): void {
+        // 创建虚拟 Or 分支规则项（每次分支尝试都创建）
+        // 注意：ruleName 只存储纯粹的规则名，不包含显示标记
+        this.ruleStack.push({
+            ruleName: parentRuleName,
+            depth: this.ruleStack.length,
+            startTime: performance.now(),
+            outputted: false,
+            hasConsumedToken: false,
+            hasExited: false,
+            displayDepth: undefined,
+            orBranchInfo: {
+                isOrEntry: true,
+                isOrBranch: false,
+                branchIndex: branchIndex,
+                totalBranches: totalBranches
+            }
         })
     }
 
@@ -1052,15 +989,16 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
         branchIndex: number
     ): void {
         // 清理虚拟 Or 分支规则项
-        const virtualRuleName = `${parentRuleName} [Or #${branchIndex + 1}]`
-        
-        // 从后往前找第一个匹配的虚拟规则项并删除
-        for (let i = this.ruleStack.length - 1; i >= 0; i--) {
-            const item = this.ruleStack[i]
-            if (item.ruleName === virtualRuleName && !item.hasExited) {
-                item.hasExited = true
-                this.ruleStack.splice(i, 1)
-                break
+        // 应该直接 pop 栈顶（严格 LIFO）
+        if (this.ruleStack.length > 0) {
+            const top = this.ruleStack[this.ruleStack.length - 1]
+            // 验证栈顶确实是要退出的 Or 分支节点
+            if (top.ruleName === parentRuleName && top.isOrBranch && !top.hasExited && top.orBranchInfo.branchIndex === branchIndex) {
+                top.hasExited = true
+                this.ruleStack.pop()
+            } else {
+                // 防御性检查：如果栈顶不匹配，说明有问题
+                console.warn(`⚠️ OrBranch exit mismatch: expected ${parentRuleName}(isOrBranch) at top, got ${top.ruleName}(isOrEntry:${top.isOrEntry}, isOrBranch:${top.isOrBranch}, hasExited:${top.hasExited})`)
             }
         }
     }
@@ -1102,7 +1040,7 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
     /**
      * 验证 CST 结构完整性（内部调用 SubhutiDebugUtils）
      */
-    private validateStructure(node: any, path: string = 'root'): Array<{path: string, issue: string, node?: any}> {
+    private validateStructure(node: any, path: string = 'root'): Array<{ path: string, issue: string, node?: any }> {
         return SubhutiDebugUtils.validateStructure(node, path)
     }
 
@@ -1315,5 +1253,5 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
 // 导出
 // ============================================
 
-export { SubhutiTraceDebugger as default }
+export {SubhutiTraceDebugger as default}
 

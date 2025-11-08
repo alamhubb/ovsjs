@@ -121,8 +121,14 @@ export interface RuleStackItem {
     hasConsumedToken: boolean
     hasExited: boolean          // 是否已退出（标记后立即 pop）
     displayDepth?: number       // 显示深度（flush 时计算）
-    isOrEntry: boolean          // 是否是 Or 入口规则
-    orBranchInfo?: string       // Or 分支信息（如 "#1/3"），用于显示
+    isOrEntry?: boolean
+    isOrBranch?: boolean
+    orBranchInfo?: {
+        branchIndex?:number
+        isOrEntry: boolean // 是否是 Or 包裹节点（onOrEnter 创建）
+        isOrBranch: boolean // 是否是 Or 分支节点（onOrBranch 创建）
+        totalBranches?: number // Or 分支信息（如 "#1/3" 或 "3" 表示总分支数）
+    }
 }
 
 /**
@@ -161,10 +167,11 @@ export class SubhutiDebugRuleTracePrint {
             .find(item => item.outputted && item.displayDepth !== undefined)
         const baseDepth = lastOutputted ? lastOutputted.displayDepth + 1 : 0
         
-        // 计算断点（最后一个 Or 入口规则 或 爷爷规则，取较小值）
+        // 计算断点（最后一个 Or 相关规则 或 爷爷规则，取较小值）
+        // Or 相关规则包括：Or 包裹节点（isOrEntry）和 Or 分支节点（isOrBranch）
         let lastOrIndex = -1
         for (let i = pending.length - 1; i >= 0; i--) {
-            if (pending[i].isOrEntry) {
+            if (pending[i].isOrEntry || pending[i].isOrBranch) {
                 lastOrIndex = i
                 break
             }
@@ -176,20 +183,20 @@ export class SubhutiDebugRuleTracePrint {
         // 执行输出
         if (breakPoint > 0) {
             // 折叠部分：[0, breakPoint)
-            this.printChain(pending.slice(0, breakPoint), baseDepth)
+            this.printChainRule(pending.slice(0, breakPoint), baseDepth)
             
             // 单独部分：[breakPoint, end]
-            this.printIndividual(pending.slice(breakPoint), baseDepth + 1)
+            this.printSingleRule(pending.slice(breakPoint), baseDepth + 1)
         } else {
             // 全部单独输出
-            this.printIndividual(pending, baseDepth)
+            this.printSingleRule(pending, baseDepth)
         }
     }
     
     /**
      * 打印折叠链
      */
-    private static printChain(rules: RuleStackItem[], depth: number): void {
+    private static printChainRule(rules: RuleStackItem[], depth: number): void {
         const names = rules.map(r => r.ruleName)
         
         // 简化长链：>5 个规则时，显示前3个 + ... + 后2个
@@ -208,41 +215,27 @@ export class SubhutiDebugRuleTracePrint {
     /**
      * 打印单独规则（深度递增）
      */
-    private static printIndividual(rules: RuleStackItem[], startDepth: number): void {
+    private static printSingleRule(rules: RuleStackItem[], startDepth: number): void {
         let depth = startDepth
         rules.forEach(r => {
-            const suffix = r.isOrEntry ? ' [Or]' : ''
+            // 统一的显示逻辑：根据 isOrEntry 和 isOrBranch 决定后缀
+            let suffix = ''
+            
+            if (r.isOrEntry && !r.isOrBranch) {
+                // Or 包裹节点（onOrEnter 创建）
+                // 显示：规则名 [Or]
+                suffix = ' [Or]'
+            } else if (!r.isOrEntry && r.isOrBranch && r.orBranchInfo) {
+                // Or 分支节点（onOrBranch 创建）
+                // 显示：规则名 [Or #1/3]
+                suffix = ` [Or ${r.orBranchInfo}]`
+            }
+            
             console.log('  '.repeat(depth) + r.ruleName + suffix)
             r.displayDepth = depth
             r.outputted = true
             depth++
         })
-    }
-
-    /**
-     * 获取 Or 信息（返回结构化数据）
-     * 
-     * @param ruleDepth - 规则深度
-     * @param orInfo - Or 分支信息
-     * @returns {isOrEntry: boolean, branchInfo?: string}
-     */
-    static getOrInfo(
-        ruleDepth: number,
-        orInfo: OrBranchInfo | null
-    ): { isOrEntry: boolean; branchInfo?: string } {
-        if (!orInfo) {
-            return { isOrEntry: false }
-        }
-
-        // Or 分支入口规则（例如：LetOrConst）
-        if (ruleDepth === orInfo.targetDepth) {
-            return {
-                isOrEntry: true,
-                branchInfo: `#${orInfo.currentBranch + 1}/${orInfo.totalBranches}`
-            }
-        }
-
-        return { isOrEntry: false }
     }
 
 }

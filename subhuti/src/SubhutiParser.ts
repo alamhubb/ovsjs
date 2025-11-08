@@ -96,7 +96,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     private readonly className: string
 
     // 调试和错误处理
-    private _debugger?: SubhutiDebugger
+    private _debugger?: SubhutiTraceDebugger
     private readonly _errorHandler = new SubhutiErrorHandler()
 
     // 无限循环检测（调用栈状态检测）
@@ -448,6 +448,9 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             const totalCount = alternatives.length
             const parentRuleName = this.curCst?.name || 'Unknown'
 
+            // 进入 Or（整个 Or 调用开始）
+            this._debugger?.onOrEnter?.(parentRuleName, totalCount)
+
             for (let i = 0; i < totalCount; i++) {
                 const alt = alternatives[i]
                 const isLast = i === totalCount - 1
@@ -469,6 +472,8 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
                 this._debugger?.onOrBranchExit?.(parentRuleName, i)
 
                 if (this._parseSuccess) {
+                    // 退出 Or（整个 Or 调用成功结束）
+                    this._debugger?.onOrExit?.(parentRuleName)
                     return this.curCst
                 }
 
@@ -480,6 +485,8 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
                 }
             }
 
+            // 退出 Or（整个 Or 调用失败结束）
+            this._debugger?.onOrExit?.(parentRuleName)
             return undefined
         })
     }
