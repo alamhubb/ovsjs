@@ -250,14 +250,25 @@ export class SubhutiDebugRuleTracePrint {
      */
     private static printSingleRule(rules: RuleStackItem[], startDepth: number): void {
         let depth = startDepth
-        rules.forEach(r => {
-            // 使用统一的格式化方法获取后缀
-            const suffix = this.formatOrSuffix(r)
-
-            console.log('  '.repeat(depth) + r.ruleName + suffix)
-            r.displayDepth = depth
-            r.outputted = true
+        rules.forEach(item => {
+            let printStr = ''
+            if (item.orBranchInfo) {
+                const branchInfo = item.orBranchInfo
+                if (item.orBranchInfo.isOrEntry) {
+                    // Or 包裹节点：显示 [Or]
+                    printStr = '  '.repeat(depth) + item.ruleName + ' [Or]'
+                } else if (item.orBranchInfo.isOrBranch) {
+                    printStr = '  '.repeat(depth) + `[${branchInfo.branchIndex + 1}/${branchInfo.totalBranches}] + ` + item.ruleName
+                } else {
+                    printStr = `错误`
+                }
+            } else {
+                printStr = '  '.repeat(depth) + item.ruleName
+            }
+            item.displayDepth = depth
+            item.outputted = true
             depth++
+            return printStr
         })
     }
 
