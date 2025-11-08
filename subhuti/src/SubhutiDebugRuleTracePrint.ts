@@ -800,12 +800,18 @@ export class SubhutiDebugRuleTracePrint {
     // ========================================
 
     /**
-     * 输出待处理的规则（最新版 - 直接基于 ruleStack）
+     * 输出待处理的规则（最新版 - 基于四个规则）
      * 
-     * 核心逻辑：
-     * - toOutput 中的规则总是连续的（因为 pop 机制）
-     * - 找第一个不能折叠的位置（canChain=false 或 Or 标记）
-     * - 该位置之前的折叠，该位置单独输出
+     * 四个规则：
+     * 1. 所有连续的普通规则都折叠
+     * 2. 距离 token 最近的 Or 单独显示
+     * 3. Token 消费的直接父规则和直接爷爷规则都单独显示
+     * 4. Token 单独显示
+     * 
+     * 实现逻辑：
+     * - 找到最后一个（最内层的）Or 规则
+     * - 确保最后两个规则（父规则和爷爷规则）不被折叠
+     * - 前面的规则都折叠成链
      * 
      * @param ruleStack - 规则栈（直接修改其中的 outputted 和 displayDepth）
      */
@@ -829,8 +835,8 @@ export class SubhutiDebugRuleTracePrint {
         
         const begin = baseDepth === -1 ? 0 : baseDepth + 1
         
-        // 🆕 3️⃣ 智能处理 Or 规则：只让最后一个（距离 token 最近的）Or 断链
-        // 找到所有带 [Or] 标记的规则
+        // 🆕 3️⃣ 应用四个规则
+        // 规则2: 找到所有带 [Or] 标记的规则，只保留最后一个（距离 token 最近的）断链
         const orIndices: number[] = []
         for (let i = 0; i < toOutput.length; i++) {
             if (toOutput[i].orSuffix && !toOutput[i].canChain) {
@@ -848,7 +854,19 @@ export class SubhutiDebugRuleTracePrint {
             }
         }
         
-        // 4️⃣ 找第一个不能折叠的位置（现在应该是最后一个 Or）
+        // 规则3: 确保最后两个规则（父规则和爷爷规则）不被折叠
+        // Token 的父规则是最后一个，爷爷规则是倒数第二个
+        if (toOutput.length >= 2) {
+            // 父规则（最后一个）
+            toOutput[toOutput.length - 1].canChain = false
+            // 爷爷规则（倒数第二个）
+            toOutput[toOutput.length - 2].canChain = false
+        } else if (toOutput.length === 1) {
+            // 只有一个规则（父规则）
+            toOutput[0].canChain = false
+        }
+        
+        // 4️⃣ 找第一个不能折叠的位置
         const breakPoint = toOutput.findIndex(item => !item.canChain)
         
         // 5️⃣ 根据断点位置输出
