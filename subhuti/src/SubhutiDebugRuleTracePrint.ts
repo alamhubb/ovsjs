@@ -858,8 +858,8 @@ export class SubhutiDebugRuleTracePrint {
             }
             SubhutiDebugRuleTracePrint.outputChainV3(chain)
             
-            // breakPoint 位置的单独输出
-            toOutput[breakPoint].displayDepth = begin
+            // breakPoint 位置的单独输出（链输出后右推一格）
+            toOutput[breakPoint].displayDepth = begin + 1
             SubhutiDebugRuleTracePrint.outputSingleV3(toOutput[breakPoint])
         }
         
