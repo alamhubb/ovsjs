@@ -265,7 +265,7 @@ export class SubhutiDebugRuleTracePrint {
             } else {
                 printStr = item.ruleName
             }
-            console.log('  '.repeat(depth) + printStr)
+            console.log('  '.repeat(depth)+'└─' + printStr)
             item.displayDepth = depth
             item.outputted = true
             depth++
