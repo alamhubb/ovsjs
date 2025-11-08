@@ -64,3 +64,5 @@ Token 消费 → flush
    displayDepth 计算准确
    状态集中管理
    易于调试和维护
+
+

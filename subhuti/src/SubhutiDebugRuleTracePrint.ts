@@ -514,12 +514,17 @@ export class SubhutiDebugRuleTracePrint {
     // ========================================
 
     /**
-     * 获取 Or 后缀标记
+     * 获取 Or 后缀标记（新规则 - 只标记 Or 分支入口）
      * 
      * 规则：
-     * - Or 父规则（targetDepth - 1）：显示 " [Or]"
-     * - Or 分支规则（targetDepth）：显示 " [#X/Y ✅]"
+     * - Or 分支入口规则（targetDepth）：显示 " [Or]"
+     * - Or 分支的子规则（targetDepth 内部消费 token）：显示 " [#X/Y ✅]"
      * - 其他规则：返回空字符串
+     * 
+     * 注意：
+     * - 不再给调用 Or 的父规则（targetDepth - 1）加 [Or]
+     * - 只给进入 Or 的规则（targetDepth）加 [Or]
+     * - 这样可以让更多规则被折叠进链中
      * 
      * @param ruleDepth - 规则深度
      * @param orInfo - Or 分支信息（可能为 null）
@@ -531,15 +536,16 @@ export class SubhutiDebugRuleTracePrint {
     ): string {
         if (!orInfo) return ''
 
-        // Or 父规则
-        if (ruleDepth === orInfo.targetDepth - 1) {
+        // Or 分支入口规则（例如：LetOrConst）
+        if (ruleDepth === orInfo.targetDepth) {
             return ' [Or]'
         }
 
-        // Or 分支规则
-        if (ruleDepth === orInfo.targetDepth) {
-            return ` [#${orInfo.currentBranch + 1}/${orInfo.totalBranches} ✅]`
-        }
+        // Or 分支的子规则（例如：成功消费 token 的规则）
+        // 暂时不使用 [#X/Y ✅]，因为我们只标记入口
+        // if (ruleDepth === orInfo.targetDepth) {
+        //     return ` [#${orInfo.currentBranch + 1}/${orInfo.totalBranches} ✅]`
+        // }
 
         return ''
     }
@@ -846,10 +852,20 @@ export class SubhutiDebugRuleTracePrint {
                 toOutput[0].displayDepth = begin
                 SubhutiDebugRuleTracePrint.outputSingleV3(toOutput[0])
             }
+            
+            // 标记所有为已输出
+            for (const item of toOutput) {
+                item.outputted = true
+            }
         } else if (breakPoint === 0) {
-            // 第一个就不能折叠，全部单独输出
-            toOutput[0].displayDepth = begin
-            SubhutiDebugRuleTracePrint.outputSingleV3(toOutput[0])
+            // 第一个就不能折叠，逐个输出所有规则
+            let currentDepth = begin
+            for (const item of toOutput) {
+                item.displayDepth = currentDepth
+                SubhutiDebugRuleTracePrint.outputSingleV3(item)
+                item.outputted = true
+                currentDepth++  // 每个单独规则都右推一格
+            }
         } else {
             // 前面的折叠成链
             const chain = toOutput.slice(0, breakPoint)
@@ -858,14 +874,15 @@ export class SubhutiDebugRuleTracePrint {
             }
             SubhutiDebugRuleTracePrint.outputChainV3(chain)
             
+            // 标记链为已输出
+            for (const item of chain) {
+                item.outputted = true
+            }
+            
             // breakPoint 位置的单独输出（链输出后右推一格）
             toOutput[breakPoint].displayDepth = begin + 1
             SubhutiDebugRuleTracePrint.outputSingleV3(toOutput[breakPoint])
-        }
-        
-        // 5️⃣ 标记已输出
-        for (const item of toOutput) {
-            item.outputted = true
+            toOutput[breakPoint].outputted = true
         }
     }
 
