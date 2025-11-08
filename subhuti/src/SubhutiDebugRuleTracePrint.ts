@@ -256,19 +256,19 @@ export class SubhutiDebugRuleTracePrint {
                 const branchInfo = item.orBranchInfo
                 if (item.orBranchInfo.isOrEntry) {
                     // Or 包裹节点：显示 [Or]
-                    printStr = '  '.repeat(depth) + item.ruleName + ' [Or]'
+                    printStr = item.ruleName + '-> Or'
                 } else if (item.orBranchInfo.isOrBranch) {
-                    printStr = '  '.repeat(depth) + `[${branchInfo.branchIndex + 1}/${branchInfo.totalBranches}] + ` + item.ruleName
+                    printStr = `[Or]#${branchInfo.branchIndex + 1}`
                 } else {
                     printStr = `错误`
                 }
             } else {
-                printStr = '  '.repeat(depth) + item.ruleName
+                printStr = item.ruleName
             }
+            console.log('  '.repeat(depth) + printStr)
             item.displayDepth = depth
             item.outputted = true
             depth++
-            return printStr
         })
     }
 
