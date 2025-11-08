@@ -800,10 +800,9 @@ export class SubhutiDebugUtils {
  */
 export class SubhutiTraceDebugger implements SubhutiDebugger {
     // ========================================
-    // 过程追踪数据（新版 - 数据自包含）
+    // 过程追踪数据（新版 - 只用 ruleStack）
     // ========================================
     public ruleStack: RuleStackItem[] = []
-    private pendingOutputs: PendingOutput[] = []  // 替代 pendingRules
     private currentOrInfo: OrBranchInfo | null = null
 
     // ========================================
@@ -848,20 +847,105 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
     // ========================================
 
     /**
-     * 输出待处理的规则（新版 - 数据自包含）
+     * 输出待处理的规则（新版 - 只用 ruleStack）
      * 
-     * 委托给 SubhutiDebugRuleTracePrint.flushPendingOutputs()
-     * 打印时只使用缓冲区项的字段，不依赖外部状态
+     * 流程：
+     * 1. 过滤 outputted=false 的项
+     * 2. 查找基准深度
+     * 3. 识别链并计算 displayDepth
+     * 4. 输出
+     * 5. 标记 outputted=true
+     * 6. 不需要清理（已经在 onRuleExit 时 pop 了）
      */
     private flushPendingOutputs(): void {
-        SubhutiDebugRuleTracePrint.flushPendingOutputs({
-            ruleStack: this.ruleStack,
-            pendingOutputs: this.pendingOutputs,
-            currentOrInfo: this.currentOrInfo
-        })
+        // 1️⃣ 过滤待输出的项
+        const toOutput = this.ruleStack.filter(item => !item.outputted)
         
-        // ✅ 清空 currentOrInfo（静态方法里清不掉）
-        this.currentOrInfo = null
+        if (toOutput.length === 0) {
+            return
+        }
+        
+        // 2️⃣ 查找基准深度（最后一个 outputted=true）
+        let baseDepth = -1
+        for (let i = this.ruleStack.length - 1; i >= 0; i--) {
+            const item = this.ruleStack[i]
+            if (item.outputted && item.displayDepth !== undefined) {
+                baseDepth = item.displayDepth
+                break
+            }
+        }
+        
+        let begin = baseDepth === -1 ? 0 : baseDepth + 1
+        
+        // 3️⃣ 识别链并计算 displayDepth
+        let i = 0
+        while (i < toOutput.length) {
+            // 查找连续的可折叠链
+            const chain: RuleStackItem[] = []
+            let j = i
+            
+            while (j < toOutput.length && toOutput[j].canChain) {
+                if (chain.length === 0 || 
+                    toOutput[j].depth === chain[chain.length - 1].depth + 1) {
+                    chain.push(toOutput[j])
+                    j++
+                } else {
+                    break
+                }
+            }
+            
+            if (chain.length > 1) {
+                // 链：共享 displayDepth
+                for (const item of chain) {
+                    item.displayDepth = begin
+                }
+                this.outputChain(chain)
+                i = j
+            } else {
+                // 单独：使用 begin，然后递增
+                toOutput[i].displayDepth = begin
+                this.outputSingle(toOutput[i])
+                begin++
+                i++
+            }
+        }
+        
+        // 4️⃣ 标记已输出
+        for (const item of toOutput) {
+            item.outputted = true
+        }
+    }
+
+    /**
+     * 输出单个规则
+     */
+    private outputSingle(item: RuleStackItem): void {
+        const line = TreeFormatHelper.formatLine(
+            [item.ruleName, item.orSuffix],
+            { depth: item.displayDepth! }
+        )
+        console.log(line)
+    }
+
+    /**
+     * 输出规则链
+     */
+    private outputChain(chain: RuleStackItem[]): void {
+        if (chain.length === 0) return
+        
+        const ruleNames = chain.map(item => item.ruleName)
+        
+        // 简化长链：>5 个规则时，显示前3个 + ... + 后2个
+        const names = ruleNames.length > 5 
+            ? [...ruleNames.slice(0, 3), '...', ...ruleNames.slice(-2)]
+            : ruleNames
+        
+        const line = TreeFormatHelper.formatLine(
+            names,
+            { depth: chain[0].displayDepth!, separator: ' > ' }
+        )
+        
+        console.log(line)
     }
 
     // ========================================
@@ -869,50 +953,40 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
     // ========================================
 
     /**
-     * 规则进入事件处理器（新版 - 立即计算）
+     * 规则进入事件处理器（新版 - 只用 ruleStack）
      * 
      * 流程：
-     * 1. 推入 ruleStack（用于后续规则的计算）
-     * 2. 立即计算 displayDepth、orSuffix
-     * 3. 保存到 pendingOutputs（数据自包含）
+     * 1. 计算 depth（当前 ruleStack 长度）
+     * 2. 计算 orSuffix
+     * 3. 推入 ruleStack（合并了缓冲区的功能）
      * 
      * 特点：
-     * - 进入时依赖外部状态（ruleStack、currentOrInfo）
-     * - 计算结果保存到缓冲区
-     * - 打印时不再需要外部状态
+     * - 不计算 displayDepth（flush 时计算）
+     * - ruleStack 既是规则栈，也是缓冲区
      */
     onRuleEnter(ruleName: string): number {
         const startTime = performance.now()
 
-        // 1️⃣ 推入规则栈（保留，用于后续规则的计算和验证）
-        this.ruleStack.push({
-            ruleName,
-            startTime,
-            outputted: false,
-            hasConsumedToken: false
-        })
+        // 1️⃣ 计算深度（当前 ruleStack 长度）
+        const depth = this.ruleStack.length
 
-        const depth = this.ruleStack.length - 1
-
-        // 2️⃣ 立即计算所有需要的值（读取外部状态）
-        const displayDepth = SubhutiDebugRuleTracePrint.getDisplayDepth(
-            this.ruleStack,
-            depth
-        )
-
+        // 2️⃣ 计算 Or 标记
         const orSuffix = SubhutiDebugRuleTracePrint.getOrSuffix(
             depth,
             this.currentOrInfo
         )
 
-        // 3️⃣ 保存到缓冲区（数据完全自包含）
-        this.pendingOutputs.push({
-            ruleName: ruleName,
-            depth: depth,
-            displayDepth: displayDepth,
-            orSuffix: orSuffix,
-            canChain: orSuffix === '',  // 无 Or 标记才能合并到链中
-            timestamp: startTime
+        // 3️⃣ 推入规则栈（合并了缓冲区的功能）
+        this.ruleStack.push({
+            ruleName,
+            depth,
+            startTime,
+            outputted: false,           // 是否已输出
+            hasConsumedToken: false,
+            hasExited: false,           // 是否已退出
+            displayDepth: undefined,    // flush 时计算
+            orSuffix,
+            canChain: orSuffix === ''   // 无 Or 标记才能合并到链中
         })
 
         // 4️⃣ 性能统计
@@ -944,8 +1018,17 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
             duration = performance.now() - context
         }
 
-        this.ruleStack.pop()
+        // ✅ 从后往前找第一个未退出的匹配项，标记并删除
+        for (let i = this.ruleStack.length - 1; i >= 0; i--) {
+            const item = this.ruleStack[i]
+            if (!item.hasExited && item.ruleName === ruleName) {
+                item.hasExited = true
+                this.ruleStack.splice(i, 1)  // 立即删除
+                break
+            }
+        }
 
+        // 性能统计
         const stat = this.stats.get(ruleName)
         if (stat) {
             stat.totalTime += duration
@@ -973,11 +1056,19 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
             return
         }
 
-        // 先输出所有待处理的规则（新版）
+        // 先输出所有待处理的规则
         this.flushPendingOutputs()
 
-        // 基于最近祖先计算 Token 的显示深度
-        const depth = SubhutiDebugRuleTracePrint.getDisplayDepth(this.ruleStack, this.ruleStack.length)
+        // ✅ 基于 ruleStack 中最后一个已输出的规则计算深度
+        let depth = 0
+        for (let i = this.ruleStack.length - 1; i >= 0; i--) {
+            const item = this.ruleStack[i]
+            if (item.outputted && item.displayDepth !== undefined) {
+                depth = item.displayDepth + 1
+                break
+            }
+        }
+        
         // 格式化 Token 值（限制长度）
         const value = TreeFormatHelper.formatTokenValue(tokenValue, 20)
 
@@ -1025,13 +1116,12 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
                 totalBranches,
                 currentBranch: 0,
                 targetDepth: this.ruleStack.length,  // 下一个规则进入后的深度
-                savedPendingLength: this.pendingOutputs.length  // 保存当前缓冲区长度
+                savedPendingLength: this.ruleStack.length  // 保存当前 ruleStack 长度（用于验证）
             }
         } else {
             // 尝试下一个分支（branchIndex > 0）
-            // 失败的分支：回溯缓冲区到 Or 开始前的状态
+            // 注意：失败分支的规则已经通过 onRuleExit 自动 pop 了，不需要手动回溯
             if (this.currentOrInfo) {
-                this.pendingOutputs.length = this.currentOrInfo.savedPendingLength
                 this.currentOrInfo.currentBranch = branchIndex
             }
         }
@@ -1288,3 +1378,4 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
 // ============================================
 
 export { SubhutiTraceDebugger as default }
+
