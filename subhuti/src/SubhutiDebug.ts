@@ -1,3 +1,4 @@
+
 /**
  * Subhuti Debug - 统一调试和性能分析系统（v4.0）
  *
@@ -858,43 +859,34 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
     // ========================================
 
     /**
-     * 规则进入事件处理器（新版 - 只用 ruleStack）
-     * 
-     * 流程：
-     * 1. 计算 depth（当前 ruleStack 长度）
-     * 2. 计算 orSuffix
-     * 3. 推入 ruleStack（合并了缓冲区的功能）
-     * 
-     * 特点：
-     * - 不计算 displayDepth（flush 时计算）
-     * - ruleStack 既是规则栈，也是缓冲区
+     * 规则进入事件处理器
      */
     onRuleEnter(ruleName: string): number {
         const startTime = performance.now()
 
-        // 1️⃣ 计算深度（当前 ruleStack 长度）
+        // 计算深度
         const depth = this.ruleStack.length
 
-        // 2️⃣ 计算 Or 标记
-        const orSuffix = SubhutiDebugRuleTracePrint.getOrSuffix(
+        // 计算 Or 信息
+        const orInfo = SubhutiDebugRuleTracePrint.getOrInfo(
             depth,
             this.currentOrInfo
         )
 
-        // 3️⃣ 推入规则栈（合并了缓冲区的功能）
+        // 推入规则栈
         this.ruleStack.push({
             ruleName,
             depth,
             startTime,
-            outputted: false,           // 是否已输出
+            outputted: false,
             hasConsumedToken: false,
-            hasExited: false,           // 是否已退出
-            displayDepth: undefined,    // flush 时计算
-            orSuffix,
-            canChain: orSuffix === ''   // 无 Or 标记才能合并到链中
+            hasExited: false,
+            displayDepth: undefined,
+            isOrEntry: orInfo.isOrEntry,
+            orBranchInfo: orInfo.branchInfo
         })
 
-        // 4️⃣ 性能统计
+        // 性能统计
         let stat = this.stats.get(ruleName)
         if (!stat) {
             stat = {

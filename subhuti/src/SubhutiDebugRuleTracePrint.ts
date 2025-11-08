@@ -114,18 +114,18 @@ export class TreeFormatHelper {
 // ============================================
 
 /**
- * 规则栈项（合并了缓冲区的功能）
+ * 规则栈项（最小化设计）
  */
 export interface RuleStackItem {
     ruleName: string
-    depth: number               // 进入时的深度
+    depth: number               // 进入时的深度（用于性能统计）
     startTime: number
     outputted: boolean          // 是否已输出
     hasConsumedToken: boolean
     hasExited: boolean          // 是否已退出（标记后立即 pop）
     displayDepth?: number       // 显示深度（flush 时计算）
-    orSuffix: string            // Or 标记
-    canChain: boolean           // 是否可折叠
+    isOrEntry: boolean          // 是否是 Or 入口规则
+    orBranchInfo?: string       // Or 分支信息（如 "#1/3"），用于显示
 }
 
 /**
@@ -514,40 +514,29 @@ export class SubhutiDebugRuleTracePrint {
     // ========================================
 
     /**
-     * 获取 Or 后缀标记（新规则 - 只标记 Or 分支入口）
-     * 
-     * 规则：
-     * - Or 分支入口规则（targetDepth）：显示 " [Or]"
-     * - Or 分支的子规则（targetDepth 内部消费 token）：显示 " [#X/Y ✅]"
-     * - 其他规则：返回空字符串
-     * 
-     * 注意：
-     * - 不再给调用 Or 的父规则（targetDepth - 1）加 [Or]
-     * - 只给进入 Or 的规则（targetDepth）加 [Or]
-     * - 这样可以让更多规则被折叠进链中
+     * 获取 Or 信息（返回结构化数据）
      * 
      * @param ruleDepth - 规则深度
-     * @param orInfo - Or 分支信息（可能为 null）
-     * @returns Or 后缀字符串
+     * @param orInfo - Or 分支信息
+     * @returns {isOrEntry: boolean, branchInfo?: string}
      */
-    static getOrSuffix(
+    static getOrInfo(
         ruleDepth: number,
         orInfo: OrBranchInfo | null
-    ): string {
-        if (!orInfo) return ''
+    ): { isOrEntry: boolean; branchInfo?: string } {
+        if (!orInfo) {
+            return { isOrEntry: false }
+        }
 
         // Or 分支入口规则（例如：LetOrConst）
         if (ruleDepth === orInfo.targetDepth) {
-            return ' [Or]'
+            return {
+                isOrEntry: true,
+                branchInfo: `#${orInfo.currentBranch + 1}/${orInfo.totalBranches}`
+            }
         }
 
-        // Or 分支的子规则（例如：成功消费 token 的规则）
-        // 暂时不使用 [#X/Y ✅]，因为我们只标记入口
-        // if (ruleDepth === orInfo.targetDepth) {
-        //     return ` [#${orInfo.currentBranch + 1}/${orInfo.totalBranches} ✅]`
-        // }
-
-        return ''
+        return { isOrEntry: false }
     }
 
     // ========================================
@@ -800,90 +789,101 @@ export class SubhutiDebugRuleTracePrint {
     // ========================================
 
     /**
-     * 输出待处理的规则（基于四个规则：1.连续规则折叠 2.最近Or单独 3.父和爷爷单独 4.Token单独）
+     * 输出待处理的规则（四个规则：1.连续折叠 2.最近Or单独 3.父和爷爷单独 4.Token单独）
      */
     static flushPendingOutputsV3(ruleStack: RuleStackItem[]): void {
         // 获取所有未输出的规则
-        const toOutput = ruleStack.filter(item => !item.outputted)
-        if (toOutput.length === 0) return
+        const pending = ruleStack.filter(item => !item.outputted)
+        if (pending.length === 0) return
         
-        // 获取基准深度（最后一个已输出规则的 displayDepth）
-        const lastOutputted = [...ruleStack].reverse().find(item => 
-            item.outputted && item.displayDepth !== undefined
-        )
-        const begin = lastOutputted ? lastOutputted.displayDepth + 1 : 0
+        // 计算基准深度
+        const baseDepth = SubhutiDebugRuleTracePrint.getBaseDepth(ruleStack)
         
-        // 找最后一个 Or 规则的位置
-        const lastOrIndex = toOutput
-            .map((item, index) => item.orSuffix ? index : -1)
-            .filter(index => index !== -1)
-            .pop() ?? -1
+        // 计算断点
+        const breakPoint = SubhutiDebugRuleTracePrint.calculateBreakPoint(pending)
         
-        // 找爷爷规则位置（倒数第2个）
-        const grandpaIndex = toOutput.length >= 2 ? toOutput.length - 2 : -1
+        // 执行输出
+        SubhutiDebugRuleTracePrint.outputRules(pending, breakPoint, baseDepth)
+    }
+    
+    /**
+     * 获取基准深度（最后一个已输出规则的 displayDepth + 1）
+     */
+    private static getBaseDepth(ruleStack: RuleStackItem[]): number {
+        const lastOutputted = [...ruleStack]
+            .reverse()
+            .find(item => item.outputted && item.displayDepth !== undefined)
         
-        // 计算断点 = min(lastOrIndex, grandpaIndex)
-        const candidates = [lastOrIndex, grandpaIndex].filter(i => i >= 0)
-        const breakPoint = candidates.length > 0 ? Math.min(...candidates) : -1
+        return lastOutputted ? lastOutputted.displayDepth + 1 : 0
+    }
+    
+    /**
+     * 计算断点（应用规则2和规则3）
+     */
+    private static calculateBreakPoint(rules: RuleStackItem[]): number {
+        // 找最后一个 Or 入口规则
+        const lastOrIndex = rules.findLastIndex(item => item.isOrEntry)
         
-        // 分两部分输出：[0, breakPoint) 折叠，[breakPoint, end] 单独
+        // 找爷爷规则（倒数第2个）
+        const grandpaIndex = rules.length >= 2 ? rules.length - 2 : -1
+        
+        // 断点 = min(lastOrIndex, grandpaIndex)
+        const validIndices = [lastOrIndex, grandpaIndex].filter(i => i >= 0)
+        return validIndices.length > 0 ? Math.min(...validIndices) : -1
+    }
+    
+    /**
+     * 输出规则（两段式：折叠 + 单独）
+     */
+    private static outputRules(
+        rules: RuleStackItem[], 
+        breakPoint: number, 
+        baseDepth: number
+    ): void {
         if (breakPoint > 0) {
-            const chain = toOutput.slice(0, breakPoint)
-            chain.forEach(item => {
-                item.displayDepth = begin
-                item.outputted = true
-            })
-            SubhutiDebugRuleTracePrint.outputChainV3(chain)
+            // 折叠部分：[0, breakPoint)
+            SubhutiDebugRuleTracePrint.printChain(rules.slice(0, breakPoint), baseDepth)
             
-            let currentDepth = begin + 1
-            toOutput.slice(breakPoint).forEach(item => {
-                item.displayDepth = currentDepth
-                item.outputted = true
-                SubhutiDebugRuleTracePrint.outputSingleV3(item)
-                currentDepth++
-            })
+            // 单独部分：[breakPoint, end]
+            SubhutiDebugRuleTracePrint.printIndividual(rules.slice(breakPoint), baseDepth + 1)
         } else {
-            // breakPoint <= 0，全部单独输出
-            let currentDepth = begin
-            toOutput.forEach(item => {
-                item.displayDepth = currentDepth
-                item.outputted = true
-                SubhutiDebugRuleTracePrint.outputSingleV3(item)
-                currentDepth++
-            })
+            // 全部单独输出
+            SubhutiDebugRuleTracePrint.printIndividual(rules, baseDepth)
         }
     }
-
+    
     /**
-     * 输出单个规则（V3 - 基于 RuleStackItem）
+     * 打印折叠链
      */
-    static outputSingleV3(item: RuleStackItem): void {
-        const line = TreeFormatHelper.formatLine(
-            [item.ruleName, item.orSuffix],
-            { depth: item.displayDepth! }
-        )
-        console.log(line)
-    }
-
-    /**
-     * 输出规则链（V3 - 基于 RuleStackItem）
-     */
-    static outputChainV3(chain: RuleStackItem[]): void {
-        if (chain.length === 0) return
-        
-        const ruleNames = chain.map(item => item.ruleName)
+    private static printChain(rules: RuleStackItem[], depth: number): void {
+        const names = rules.map(r => r.ruleName)
         
         // 简化长链：>5 个规则时，显示前3个 + ... + 后2个
-        const names = ruleNames.length > 5 
-            ? [...ruleNames.slice(0, 3), '...', ...ruleNames.slice(-2)]
-            : ruleNames
+        const displayNames = names.length > 5 
+            ? [...names.slice(0, 3), '...', ...names.slice(-2)]
+            : names
         
-        const line = TreeFormatHelper.formatLine(
-            names,
-            { depth: chain[0].displayDepth!, separator: ' > ' }
-        )
+        console.log('  '.repeat(depth) + displayNames.join(' > '))
         
-        console.log(line)
+        rules.forEach(r => {
+            r.displayDepth = depth
+            r.outputted = true
+        })
     }
+    
+    /**
+     * 打印单独规则（深度递增）
+     */
+    private static printIndividual(rules: RuleStackItem[], startDepth: number): void {
+        let depth = startDepth
+        rules.forEach(r => {
+            const suffix = r.isOrEntry ? ' [Or]' : ''
+            console.log('  '.repeat(depth) + r.ruleName + suffix)
+            r.displayDepth = depth
+            r.outputted = true
+            depth++
+        })
+    }
+
 }
 
