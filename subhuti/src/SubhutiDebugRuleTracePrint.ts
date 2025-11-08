@@ -235,7 +235,8 @@ export class SubhutiDebugRuleTracePrint {
             ? [...names.slice(0, 3), '...', ...names.slice(-2)]
             : names
 
-        console.log('  '.repeat(depth) + '└─' + displayNames.join(' > '))
+        console.log('  '.repeat(depth) + displayNames.join(' > '))
+        // console.log('  '.repeat(depth) + '├─' + displayNames.join(' > '))
 
         rules.forEach(r => {
             r.displayDepth = depth
@@ -250,7 +251,15 @@ export class SubhutiDebugRuleTracePrint {
      */
     private static printSingleRule(rules: RuleStackItem[], startDepth: number): void {
         let depth = startDepth
-        rules.forEach(item => {
+        rules.forEach((item, index) => {
+            // 判断是否是最后一个
+            const isLast = index === rules.length - 1
+
+            // 生成缩进（父层级）+ 分支符号
+            const indent = '   '.repeat(Math.max(0, depth))
+            const branch = isLast ? '└─' : '├─'
+            const treePrefix = depth === 0 ? '└─' : indent + branch
+
             let printStr = ''
             if (item.orBranchInfo) {
                 const branchInfo = item.orBranchInfo
@@ -265,7 +274,8 @@ export class SubhutiDebugRuleTracePrint {
             } else {
                 printStr = item.ruleName
             }
-            console.log('  '.repeat(depth) + '└─' + printStr)
+            console.log('  '.repeat(depth) +  printStr)
+            // console.log(''.repeat(depth) + treePrefix + printStr)
             item.displayDepth = depth
             item.outputted = true
             depth++
