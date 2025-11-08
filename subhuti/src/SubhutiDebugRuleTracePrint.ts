@@ -800,183 +800,57 @@ export class SubhutiDebugRuleTracePrint {
     // ========================================
 
     /**
-     * 输出待处理的规则（最新版 - 基于四个规则）
-     * 
-     * 四个规则：
-     * 1. 所有连续的普通规则都折叠
-     * 2. 距离 token 最近的 Or 单独显示
-     * 3. Token 消费的直接父规则和直接爷爷规则都单独显示
-     * 4. Token 单独显示
-     * 
-     * 实现逻辑：
-     * - 找到最后一个（最内层的）Or 规则
-     * - 确保最后两个规则（父规则和爷爷规则）不被折叠
-     * - 前面的规则都折叠成链
-     * 
-     * @param ruleStack - 规则栈（直接修改其中的 outputted 和 displayDepth）
+     * 输出待处理的规则（基于四个规则：1.连续规则折叠 2.最近Or单独 3.父和爷爷单独 4.Token单独）
      */
     static flushPendingOutputsV3(ruleStack: RuleStackItem[]): void {
-        // 1️⃣ 过滤待输出的项
+        // 获取所有未输出的规则
         const toOutput = ruleStack.filter(item => !item.outputted)
+        if (toOutput.length === 0) return
         
-        if (toOutput.length === 0) {
-            return
-        }
+        // 获取基准深度（最后一个已输出规则的 displayDepth）
+        const lastOutputted = [...ruleStack].reverse().find(item => 
+            item.outputted && item.displayDepth !== undefined
+        )
+        const begin = lastOutputted ? lastOutputted.displayDepth + 1 : 0
         
-        // 2️⃣ 查找基准深度（最后一个已输出的规则）
-        let baseDepth = -1
-        for (let i = ruleStack.length - 1; i >= 0; i--) {
-            const item = ruleStack[i]
-            if (item.outputted && item.displayDepth !== undefined) {
-                baseDepth = item.displayDepth
-                break
-            }
-        }
+        // 找最后一个 Or 规则的位置
+        const lastOrIndex = toOutput
+            .map((item, index) => item.orSuffix ? index : -1)
+            .filter(index => index !== -1)
+            .pop() ?? -1
         
-        const begin = baseDepth === -1 ? 0 : baseDepth + 1
+        // 找爷爷规则位置（倒数第2个）
+        const grandpaIndex = toOutput.length >= 2 ? toOutput.length - 2 : -1
         
-        // 🆕 3️⃣ 应用四个规则
-        // 规则2: 找到所有带 [Or] 标记的规则，只保留最后一个（距离 token 最近的）断链
-        const orIndices: number[] = []
-        for (let i = 0; i < toOutput.length; i++) {
-            if (toOutput[i].orSuffix && !toOutput[i].canChain) {
-                orIndices.push(i)
-            }
-        }
+        // 计算断点 = min(lastOrIndex, grandpaIndex)
+        const candidates = [lastOrIndex, grandpaIndex].filter(i => i >= 0)
+        const breakPoint = candidates.length > 0 ? Math.min(...candidates) : -1
         
-        // 如果有多个 Or 规则，将前面的都设为可折叠，只保留最后一个断链
-        if (orIndices.length > 0) {
-            const lastOrIndex = orIndices[orIndices.length - 1]
-            for (const idx of orIndices) {
-                if (idx < lastOrIndex) {
-                    toOutput[idx].canChain = true
-                }
-            }
-        }
-        
-        // 规则3: 确保最后两个规则（父规则和爷爷规则）不被折叠
-        // Token 的父规则是最后一个，爷爷规则是倒数第二个
-        if (toOutput.length >= 2) {
-            // 父规则（最后一个）
-            toOutput[toOutput.length - 1].canChain = false
-            // 爷爷规则（倒数第二个）
-            toOutput[toOutput.length - 2].canChain = false
-        } else if (toOutput.length === 1) {
-            // 只有一个规则（父规则）
-            toOutput[0].canChain = false
-        }
-        
-        // 4️⃣ 找第一个不能折叠的位置
-        const breakPoint = toOutput.findIndex(item => !item.canChain)
-        
-        // 5️⃣ 根据断点位置输出
-        if (breakPoint === -1) {
-            // 全部可折叠
-            if (toOutput.length > 1) {
-                // 前 n-1 个折叠成链
-                const chain = toOutput.slice(0, -1)
-                for (const item of chain) {
-                    item.displayDepth = begin
-                }
-                SubhutiDebugRuleTracePrint.outputChainV3(chain)
-                
-                // 最后一个单独输出
-                const last = toOutput[toOutput.length - 1]
-                last.displayDepth = begin
-                SubhutiDebugRuleTracePrint.outputSingleV3(last)
-            } else {
-                // 只有一个规则，单独输出
-                toOutput[0].displayDepth = begin
-                SubhutiDebugRuleTracePrint.outputSingleV3(toOutput[0])
-            }
-            
-            // 6️⃣ 标记所有为已输出
-            for (const item of toOutput) {
-                item.outputted = true
-            }
-        } else if (breakPoint === 0) {
-            // 第一个就不能折叠，输出第一个，然后递归处理剩余的
-            toOutput[0].displayDepth = begin
-            SubhutiDebugRuleTracePrint.outputSingleV3(toOutput[0])
-            toOutput[0].outputted = true
-            
-            // 递归处理剩余规则（如果还有）
-            if (toOutput.length > 1) {
-                const remaining = toOutput.slice(1)
-                // 查找剩余规则中是否还有不能折叠的
-                const nextBreakPoint = remaining.findIndex(item => !item.canChain)
-                
-                if (nextBreakPoint === -1) {
-                    // 剩余的都可以折叠
-                    if (remaining.length > 1) {
-                        const chain = remaining.slice(0, -1)
-                        for (const item of chain) {
-                            item.displayDepth = begin + 1
-                        }
-                        SubhutiDebugRuleTracePrint.outputChainV3(chain)
-                        const last = remaining[remaining.length - 1]
-                        last.displayDepth = begin + 1
-                        SubhutiDebugRuleTracePrint.outputSingleV3(last)
-                    } else {
-                        remaining[0].displayDepth = begin + 1
-                        SubhutiDebugRuleTracePrint.outputSingleV3(remaining[0])
-                    }
-                    for (const item of remaining) {
-                        item.outputted = true
-                    }
-                } else {
-                    // 还有不能折叠的，继续递归
-                    const chain = remaining.slice(0, nextBreakPoint)
-                    for (const item of chain) {
-                        item.displayDepth = begin + 1
-                        item.outputted = true
-                    }
-                    if (chain.length > 0) {
-                        SubhutiDebugRuleTracePrint.outputChainV3(chain)
-                    }
-                    remaining[nextBreakPoint].displayDepth = begin + 2
-                    SubhutiDebugRuleTracePrint.outputSingleV3(remaining[nextBreakPoint])
-                    remaining[nextBreakPoint].outputted = true
-                    
-                    // 继续处理后面的（简化：直接逐个输出）
-                    let currentDepth = begin + 2
-                    for (let i = nextBreakPoint + 1; i < remaining.length; i++) {
-                        remaining[i].displayDepth = currentDepth
-                        SubhutiDebugRuleTracePrint.outputSingleV3(remaining[i])
-                        remaining[i].outputted = true
-                        currentDepth++
-                    }
-                }
-            }
-        } else {
-            // 前面的折叠成链
+        // 分两部分输出：[0, breakPoint) 折叠，[breakPoint, end] 单独
+        if (breakPoint > 0) {
             const chain = toOutput.slice(0, breakPoint)
-            for (const item of chain) {
+            chain.forEach(item => {
                 item.displayDepth = begin
-            }
+                item.outputted = true
+            })
             SubhutiDebugRuleTracePrint.outputChainV3(chain)
             
-            // 标记链为已输出
-            for (const item of chain) {
+            let currentDepth = begin + 1
+            toOutput.slice(breakPoint).forEach(item => {
+                item.displayDepth = currentDepth
                 item.outputted = true
-            }
-            
-            // breakPoint 位置的单独输出（链输出后右推一格）
-            toOutput[breakPoint].displayDepth = begin + 1
-            SubhutiDebugRuleTracePrint.outputSingleV3(toOutput[breakPoint])
-            toOutput[breakPoint].outputted = true
-            
-            // 处理 breakPoint 之后的规则
-            if (breakPoint + 1 < toOutput.length) {
-                const remaining = toOutput.slice(breakPoint + 1)
-                let currentDepth = begin + 2
-                for (const item of remaining) {
-                    item.displayDepth = currentDepth
-                    SubhutiDebugRuleTracePrint.outputSingleV3(item)
-                    item.outputted = true
-                    currentDepth++
-                }
-            }
+                SubhutiDebugRuleTracePrint.outputSingleV3(item)
+                currentDepth++
+            })
+        } else {
+            // breakPoint <= 0，全部单独输出
+            let currentDepth = begin
+            toOutput.forEach(item => {
+                item.displayDepth = currentDepth
+                item.outputted = true
+                SubhutiDebugRuleTracePrint.outputSingleV3(item)
+                currentDepth++
+            })
         }
     }
 
