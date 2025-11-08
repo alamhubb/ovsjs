@@ -228,7 +228,8 @@ export class SubhutiDebugRuleTracePrint {
      * 打印折叠链
      */
     private static printChainRule(rules: RuleStackItem[], depth: number): void {
-        const names = rules.map(r => r.ruleName)
+        //过滤or和虚拟规则
+        const names = rules.filter(item => !item.orBranchInfo).map(r => r.ruleName)
 
         const displayNames = names.length > 5
             ? [...names.slice(0, 3), '...', ...names.slice(-2)]
@@ -237,7 +238,7 @@ export class SubhutiDebugRuleTracePrint {
         // 前缀：前面层级的垂直线
         const prefix = '│  '.repeat(depth)
 
-        console.log(prefix + '├─' + names.join(' > '))
+        // console.log(prefix + '├─' + names.join(' > '))
         // 折叠链用 ├─（因为后面有单独规则）
         console.log(prefix + '├─' + displayNames.join(' > '))
 
