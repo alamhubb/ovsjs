@@ -237,6 +237,7 @@ export class SubhutiDebugRuleTracePrint {
         // 前缀：前面层级的垂直线
         const prefix = '│  '.repeat(depth)
 
+        console.log(prefix + '├─' + names.join(' > '))
         // 折叠链用 ├─（因为后面有单独规则）
         console.log(prefix + '├─' + displayNames.join(' > '))
 
