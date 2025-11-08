@@ -230,13 +230,15 @@ export class SubhutiDebugRuleTracePrint {
     private static printChainRule(rules: RuleStackItem[], depth: number): void {
         const names = rules.map(r => r.ruleName)
 
-        // 简化长链：>5 个规则时，显示前3个 + ... + 后2个
         const displayNames = names.length > 5
             ? [...names.slice(0, 3), '...', ...names.slice(-2)]
             : names
 
-        // console.log('  '.repeat(depth) + displayNames.join(' > '))
-        console.log('  '.repeat(depth) + '├─' + displayNames.join(' > '))
+        // 前缀：前面层级的垂直线
+        const prefix = '│  '.repeat(depth)
+
+        // 折叠链用 ├─（因为后面有单独规则）
+        console.log(prefix + '├─' + displayNames.join(' > '))
 
         rules.forEach(r => {
             r.displayDepth = depth
@@ -250,13 +252,29 @@ export class SubhutiDebugRuleTracePrint {
      * 所有显示格式化都通过 formatOrSuffix 统一处理
      */
     private static printSingleRule(rules: RuleStackItem[], startDepth: number): void {
-        let depth = startDepth
         rules.forEach((item, index) => {
             // 判断是否是最后一个
             const isLast = index === rules.length - 1
 
             // 生成缩进（父层级）+ 分支符号
             const branch = isLast ? '└─' : '├─'
+
+            const depth = startDepth + index
+
+            // 生成前缀：每一层的连接线
+            let prefix = ''
+            for (let d = 0; d < depth; d++) {
+                // 计算在 d 这一层，后面是否还有节点
+                // d 对应的规则索引是 (d - startDepth)
+                const ruleIndexAtLayer = d - startDepth
+
+                // 如果当前规则索引 > ruleIndexAtLayer，说明 d 层的规则后面还有节点
+                if (ruleIndexAtLayer < index) {
+                    prefix += '│  '
+                } else {
+                    prefix += '   '
+                }
+            }
 
             let printStr = ''
             if (item.orBranchInfo) {
@@ -273,10 +291,10 @@ export class SubhutiDebugRuleTracePrint {
                 printStr = item.ruleName
             }
             // console.log('  '.repeat(depth) +  printStr)
-            console.log('  '.repeat(depth) + branch + printStr)
+            console.log(prefix + branch + printStr)
             item.displayDepth = depth
             item.outputted = true
-            depth++
+            // depth++
         })
     }
 

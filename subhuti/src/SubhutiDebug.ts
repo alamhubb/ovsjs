@@ -909,9 +909,8 @@ export class SubhutiTraceDebugger {
         }
 
         const line = TreeFormatHelper.formatLine(
-            // ['🔹 Consume', `token[${tokenIndex}]`, '-', value, '-', `<${tokenName}>`, location, '✅'],
-            ['└─' + '🔹 Consume', `token[${tokenIndex}]`, '-', value, '-', `<${tokenName}>`, location, '✅'],
-            {depth, separator: ' '}
+            ['🔹 Consume', `token[${tokenIndex}]`, '-', value, '-', `<${tokenName}>`, location, '✅'],
+            {prefix: '│  '.repeat(depth) + '└─', separator: ' '}
         )
 
         console.log(line)
