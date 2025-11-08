@@ -851,7 +851,7 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
      * 输出待处理的规则（委托给 SubhutiDebugRuleTracePrint）
      */
     private flushPendingOutputs(): void {
-        SubhutiDebugRuleTracePrint.flushPendingOutputsV3(this.ruleStack)
+        SubhutiDebugRuleTracePrint.flushPendingOutputs(this.ruleStack)
     }
 
     // ========================================
