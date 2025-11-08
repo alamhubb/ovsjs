@@ -829,10 +829,29 @@ export class SubhutiDebugRuleTracePrint {
         
         const begin = baseDepth === -1 ? 0 : baseDepth + 1
         
-        // 3️⃣ 找第一个不能折叠的位置
+        // 🆕 3️⃣ 智能处理 Or 规则：只让最后一个（距离 token 最近的）Or 断链
+        // 找到所有带 [Or] 标记的规则
+        const orIndices: number[] = []
+        for (let i = 0; i < toOutput.length; i++) {
+            if (toOutput[i].orSuffix && !toOutput[i].canChain) {
+                orIndices.push(i)
+            }
+        }
+        
+        // 如果有多个 Or 规则，将前面的都设为可折叠，只保留最后一个断链
+        if (orIndices.length > 0) {
+            const lastOrIndex = orIndices[orIndices.length - 1]
+            for (const idx of orIndices) {
+                if (idx < lastOrIndex) {
+                    toOutput[idx].canChain = true
+                }
+            }
+        }
+        
+        // 4️⃣ 找第一个不能折叠的位置（现在应该是最后一个 Or）
         const breakPoint = toOutput.findIndex(item => !item.canChain)
         
-        // 4️⃣ 根据断点位置输出
+        // 5️⃣ 根据断点位置输出
         if (breakPoint === -1) {
             // 全部可折叠
             if (toOutput.length > 1) {
@@ -853,18 +872,63 @@ export class SubhutiDebugRuleTracePrint {
                 SubhutiDebugRuleTracePrint.outputSingleV3(toOutput[0])
             }
             
-            // 标记所有为已输出
+            // 6️⃣ 标记所有为已输出
             for (const item of toOutput) {
                 item.outputted = true
             }
         } else if (breakPoint === 0) {
-            // 第一个就不能折叠，逐个输出所有规则
-            let currentDepth = begin
-            for (const item of toOutput) {
-                item.displayDepth = currentDepth
-                SubhutiDebugRuleTracePrint.outputSingleV3(item)
-                item.outputted = true
-                currentDepth++  // 每个单独规则都右推一格
+            // 第一个就不能折叠，输出第一个，然后递归处理剩余的
+            toOutput[0].displayDepth = begin
+            SubhutiDebugRuleTracePrint.outputSingleV3(toOutput[0])
+            toOutput[0].outputted = true
+            
+            // 递归处理剩余规则（如果还有）
+            if (toOutput.length > 1) {
+                const remaining = toOutput.slice(1)
+                // 查找剩余规则中是否还有不能折叠的
+                const nextBreakPoint = remaining.findIndex(item => !item.canChain)
+                
+                if (nextBreakPoint === -1) {
+                    // 剩余的都可以折叠
+                    if (remaining.length > 1) {
+                        const chain = remaining.slice(0, -1)
+                        for (const item of chain) {
+                            item.displayDepth = begin + 1
+                        }
+                        SubhutiDebugRuleTracePrint.outputChainV3(chain)
+                        const last = remaining[remaining.length - 1]
+                        last.displayDepth = begin + 1
+                        SubhutiDebugRuleTracePrint.outputSingleV3(last)
+                    } else {
+                        remaining[0].displayDepth = begin + 1
+                        SubhutiDebugRuleTracePrint.outputSingleV3(remaining[0])
+                    }
+                    for (const item of remaining) {
+                        item.outputted = true
+                    }
+                } else {
+                    // 还有不能折叠的，继续递归
+                    const chain = remaining.slice(0, nextBreakPoint)
+                    for (const item of chain) {
+                        item.displayDepth = begin + 1
+                        item.outputted = true
+                    }
+                    if (chain.length > 0) {
+                        SubhutiDebugRuleTracePrint.outputChainV3(chain)
+                    }
+                    remaining[nextBreakPoint].displayDepth = begin + 2
+                    SubhutiDebugRuleTracePrint.outputSingleV3(remaining[nextBreakPoint])
+                    remaining[nextBreakPoint].outputted = true
+                    
+                    // 继续处理后面的（简化：直接逐个输出）
+                    let currentDepth = begin + 2
+                    for (let i = nextBreakPoint + 1; i < remaining.length; i++) {
+                        remaining[i].displayDepth = currentDepth
+                        SubhutiDebugRuleTracePrint.outputSingleV3(remaining[i])
+                        remaining[i].outputted = true
+                        currentDepth++
+                    }
+                }
             }
         } else {
             // 前面的折叠成链
@@ -883,6 +947,18 @@ export class SubhutiDebugRuleTracePrint {
             toOutput[breakPoint].displayDepth = begin + 1
             SubhutiDebugRuleTracePrint.outputSingleV3(toOutput[breakPoint])
             toOutput[breakPoint].outputted = true
+            
+            // 处理 breakPoint 之后的规则
+            if (breakPoint + 1 < toOutput.length) {
+                const remaining = toOutput.slice(breakPoint + 1)
+                let currentDepth = begin + 2
+                for (const item of remaining) {
+                    item.displayDepth = currentDepth
+                    SubhutiDebugRuleTracePrint.outputSingleV3(item)
+                    item.outputted = true
+                    currentDepth++
+                }
+            }
         }
     }
 
