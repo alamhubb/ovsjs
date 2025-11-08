@@ -909,7 +909,7 @@ export class SubhutiTraceDebugger {
         }
 
         const line = TreeFormatHelper.formatLine(
-            ['🔹 Consume', `token[${tokenIndex}]`, '-', value, '-', `<${tokenName}>`, location, '✅'],
+            ['└─' + '🔹 Consume', `token[${tokenIndex}]`, '-', value, '-', `<${tokenName}>`, location, '✅'],
             {depth, separator: ' '}
         )
 
@@ -951,10 +951,10 @@ export class SubhutiTraceDebugger {
         if (this.ruleStack.length > 0) {
             const top = this.ruleStack[this.ruleStack.length - 1]
             // 验证栈顶确实是要退出的 Or 包裹节点（orBranchInfo.isOrEntry && !isOrBranch）
-            if (top.ruleName === parentRuleName 
+            if (top.ruleName === parentRuleName
                 && top.orBranchInfo
-                && top.orBranchInfo.isOrEntry 
-                && !top.orBranchInfo.isOrBranch 
+                && top.orBranchInfo.isOrEntry
+                && !top.orBranchInfo.isOrBranch
                 && !top.hasExited) {
                 top.hasExited = true
                 this.ruleStack.pop()
@@ -998,7 +998,7 @@ export class SubhutiTraceDebugger {
         if (this.ruleStack.length > 0) {
             const top = this.ruleStack[this.ruleStack.length - 1]
             // 验证栈顶确实是要退出的 Or 分支节点（orBranchInfo.isOrBranch && !isOrEntry）
-            if (top.ruleName === parentRuleName 
+            if (top.ruleName === parentRuleName
                 && top.orBranchInfo
                 && top.orBranchInfo.isOrBranch
                 && !top.orBranchInfo.isOrEntry

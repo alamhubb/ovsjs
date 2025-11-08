@@ -235,7 +235,7 @@ export class SubhutiDebugRuleTracePrint {
             ? [...names.slice(0, 3), '...', ...names.slice(-2)]
             : names
 
-        console.log('  '.repeat(depth) + displayNames.join(' > '))
+        console.log('  '.repeat(depth) + '└─' + displayNames.join(' > '))
 
         rules.forEach(r => {
             r.displayDepth = depth
@@ -265,7 +265,7 @@ export class SubhutiDebugRuleTracePrint {
             } else {
                 printStr = item.ruleName
             }
-            console.log('  '.repeat(depth)+'└─' + printStr)
+            console.log('  '.repeat(depth) + '└─' + printStr)
             item.displayDepth = depth
             item.outputted = true
             depth++
