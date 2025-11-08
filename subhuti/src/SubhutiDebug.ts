@@ -340,201 +340,17 @@ export interface SubhutiDebugger {
  */
 
 import type SubhutiCst from "./struct/SubhutiCst.ts"
+import {
+    SubhutiDebugRuleTracePrint,
+    TreeFormatHelper,
+    type RuleStackItem,
+    type PendingRule,
+    type PendingOutput,
+    type OrBranchInfo,
+    type RuleTraceContext,
+    type RuleTraceContextV2
+} from "./SubhutiDebugRuleTracePrint"
 
-// ============================================
-// TreeFormatHelper - 树形输出格式化辅助（轻量级）
-// ============================================
-
-/**
- * 树形输出格式化辅助类
- *
- * 设计原则：
- * - 只提取真正重复的格式化部分
- * - 保持简单，避免过度抽象
- * - 为运行时追踪和 CST 输出提供统一的格式化工具
- *
- * 核心功能：
- * 1. formatLine - 统一的行输出格式化（自动处理缩进、拼接、过滤空值）
- * 2. formatTokenValue - Token 值转义和截断
- * 3. formatLocation - 位置信息格式化
- * 4. formatRuleChain - 规则链拼接
- *
- * @version 2.0.0
- * @date 2025-11-07
- */
-class TreeFormatHelper {
-    // ========================================
-    // 核心方法：统一行输出
-    // ========================================
-
-    /**
-     * 格式化一行输出（核心方法）
-     *
-     * 功能：
-     * - 自动处理缩进（depth 或 prefix）
-     * - 自动拼接内容数组
-     * - 自动过滤空值（null/undefined/''）
-     * - 统一管理分隔符
-     *
-     * @param parts - 内容数组（null/undefined/'' 会被自动过滤）
-     * @param options - 配置选项
-     * @returns 格式化后的完整行
-     *
-     * @example
-     * // CST 节点输出
-     * formatLine(
-     *     ['└─', 'ConstTok:', '"const"', '[1:1-5]'],
-     *     { prefix: '│  ', separator: ' ' }
-     * )
-     * // => "│  └─ ConstTok: "const" [1:1-5]"
-     *
-     * @example
-     * // 规则链输出（自动过滤空值）
-     * formatLine(
-     *     ['Script', 'StatementList', 'Statement', null],
-     *     { depth: 0, separator: ' > ' }
-     * )
-     * // => "Script > StatementList > Statement"
-     *
-     * @example
-     * // Token 消费输出
-     * formatLine(
-     *     ['🔹 Consume', 'token[0]', '-', 'const', '-', '<ConstTok>', '✅'],
-     *     { depth: 3, separator: ' ' }
-     * )
-     * // => "      🔹 Consume token[0] - const - <ConstTok> ✅"
-     */
-    static formatLine(
-        parts: (string | number | null | undefined)[],
-        options: {
-            depth?: number      // 深度模式（优先使用）
-            prefix?: string     // 前缀模式（已累积的前缀字符串）
-            separator?: string  // 内容分隔符（默认：''，即紧贴）
-        }
-    ): string {
-        // 1. 计算缩进
-        const indent = options.prefix ?? '  '.repeat(options.depth ?? 0)
-
-        // 2. 过滤空值并拼接（核心价值）
-        const content = parts
-            .filter(p => p !== null && p !== undefined && p !== '')
-            .join(options.separator ?? '')
-
-        // 3. 返回完整行
-        return indent + content
-    }
-
-    // ========================================
-    // 辅助方法：值格式化
-    // ========================================
-
-    /**
-     * 计算缩进字符串
-     *
-     * @param depth - 深度（0-based）
-     * @returns 缩进字符串（每层 2 个空格）
-     *
-     * @example
-     * ```typescript
-     * TreeFormatHelper.indent(0)  // => ""
-     * TreeFormatHelper.indent(1)  // => "  "
-     * TreeFormatHelper.indent(3)  // => "      "
-     * ```
-     */
-    static indent(depth: number): string {
-        return '  '.repeat(depth)
-    }
-
-    /**
-     * 格式化 Token 值（处理特殊字符和长度限制）
-     *
-     * 用于两个场景：
-     * - 运行时追踪：token[0] - "const" - <ConstTok>
-     * - CST 输出：ConstTok: "const"
-     *
-     * @param value - 原始值
-     * @param maxLength - 最大长度（超过则截断）
-     * @returns 转义并截断后的值
-     *
-     * @example
-     * ```typescript
-     * TreeFormatHelper.formatTokenValue("hello\nworld")  // => "hello\\nworld"
-     * TreeFormatHelper.formatTokenValue("a".repeat(50), 20)  // => "aaaaa...（截断）"
-     * ```
-     */
-    static formatTokenValue(value: string, maxLength: number = 40): string {
-        // 转义特殊字符
-        let escaped = value
-            .replace(/\\/g, '\\\\')
-            .replace(/\n/g, '\\n')
-            .replace(/\r/g, '\\r')
-            .replace(/\t/g, '\\t')
-
-        // 限制长度
-        if (escaped.length > maxLength) {
-            escaped = escaped.slice(0, maxLength) + '...'
-        }
-
-        return escaped
-    }
-
-    /**
-     * 格式化位置信息
-     *
-     * @param loc - 位置对象 {start: {line, column}, end: {line, column}}
-     * @returns 格式化的位置字符串
-     *
-     * @example
-     * ```typescript
-     * TreeFormatHelper.formatLocation({
-     *     start: {line: 1, column: 1},
-     *     end: {line: 1, column: 5}
-     * })  // => "[1:1-5]"
-     *
-     * TreeFormatHelper.formatLocation({
-     *     start: {line: 1, column: 1},
-     *     end: {line: 3, column: 10}
-     * })  // => "[1:1-3:10]"
-     * ```
-     */
-    static formatLocation(loc: any): string {
-        if (!loc?.start || !loc?.end) {
-            return ''
-        }
-
-        const startLine = loc.start.line
-        const startCol = loc.start.column
-        const endLine = loc.end.line
-        const endCol = loc.end.column
-
-        if (startLine === endLine) {
-            return `[${startLine}:${startCol}-${endCol}]`
-        } else {
-            return `[${startLine}:${startCol}-${endLine}:${endCol}]`
-        }
-    }
-
-    /**
-     * 格式化规则链（用于折叠显示）
-     *
-     * @param rules - 规则名数组
-     * @param separator - 分隔符（默认 " > "）
-     * @returns 连接后的规则链字符串
-     *
-     * @example
-     * ```typescript
-     * TreeFormatHelper.formatRuleChain([
-     *     'Script', 'StatementList', 'Statement'
-     * ])  // => "Script > StatementList > Statement"
-     *
-     * TreeFormatHelper.formatRuleChain(['A', 'B'], ' → ')
-     * // => "A → B"
-     * ```
-     */
-    static formatRuleChain(rules: string[], separator: string = ' > '): string {
-        return rules.join(separator)
-    }
-}
 
 // ============================================
 // SubhutiDebugUtils - 调试工具集（v4.0）
@@ -813,23 +629,6 @@ export class SubhutiDebugUtils {
         }
     }
 
-    // 注意：formatValue 和 formatLocation 已移至 TreeFormatHelper
-    // 保留这些方法作为向后兼容的别名
-
-    /**
-     * @deprecated 请使用 TreeFormatHelper.formatTokenValue()
-     */
-    private static formatValue(value: string): string {
-        return `"${TreeFormatHelper.formatTokenValue(value)}"`
-    }
-
-    /**
-     * @deprecated 请使用 TreeFormatHelper.formatLocation()
-     */
-    private static formatLocation(loc: any): string {
-        return TreeFormatHelper.formatLocation(loc)
-    }
-
     // ========================================
     // 高级调试方法
     // ========================================
@@ -1001,29 +800,11 @@ export class SubhutiDebugUtils {
  */
 export class SubhutiTraceDebugger implements SubhutiDebugger {
     // ========================================
-    // 过程追踪数据
+    // 过程追踪数据（新版 - 数据自包含）
     // ========================================
-    public ruleStack: Array<{
-        ruleName: string
-        startTime: number
-        outputted: boolean       // 该规则是否已输出
-        hasConsumedToken: boolean // 该规则是否消费了 token
-        displayDepth?: number    // 已输出规则的显示深度（用于后续规则的相对缩进计算）
-    }> = []
-
-    // 未输出的规则（等待输出，用于过滤失败的 Or 分支）
-    private pendingRules: Array<{
-        ruleName: string
-        depth: number
-    }> = []
-
-    // Or 分支信息（用于过滤失败的分支）
-    private currentOrInfo: {
-        totalBranches: number
-        currentBranch: number
-        targetDepth: number
-        savedPendingLength: number
-    } | null = null
+    public ruleStack: RuleStackItem[] = []
+    private pendingOutputs: PendingOutput[] = []  // 替代 pendingRules
+    private currentOrInfo: OrBranchInfo | null = null
 
     // ========================================
     // 性能统计数据
@@ -1063,158 +844,24 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
     }
 
     // ========================================
-    // 辅助方法
+    // 辅助方法（委托给静态工具类）
     // ========================================
 
-    /** 输出待处理的规则（识别链并折叠） */
-    private flushPendingRules(): void {
-        const validRules = this.getValidRules()
+    /**
+     * 输出待处理的规则（新版 - 数据自包含）
+     * 
+     * 委托给 SubhutiDebugRuleTracePrint.flushPendingOutputs()
+     * 打印时只使用缓冲区项的字段，不依赖外部状态
+     */
+    private flushPendingOutputs(): void {
+        SubhutiDebugRuleTracePrint.flushPendingOutputs({
+            ruleStack: this.ruleStack,
+            pendingOutputs: this.pendingOutputs,
+            currentOrInfo: this.currentOrInfo
+        })
         
-        let i = 0
-        while (i < validRules.length) {
-            const chainStart = i
-            
-            // 查找连续递增的链
-            while (i + 1 < validRules.length &&
-                   validRules[i + 1].depth === validRules[i].depth + 1) {
-                // 在 Or 规则前断开
-                if (this.getOrSuffix(validRules[i + 1].depth) !== '') {
-                    break
-                }
-                i++
-            }
-            
-            const chain = validRules.slice(chainStart, i + 1)
-            
-            // >1 个规则就折叠
-            if (chain.length > 1) {
-                this.outputCollapsedChain(chain)
-            } else {
-                this.outputRule(chain[0])
-            }
-            
-            i++
-        }
-        
-        this.pendingRules = []
+        // ✅ 清空 currentOrInfo（静态方法里清不掉）
         this.currentOrInfo = null
-    }
-
-    /** 过滤有效规则（去除失败的 Or 分支） */
-    private getValidRules(): Array<{ruleName: string, depth: number}> {
-        const validRules: Array<{ruleName: string, depth: number}> = []
-        
-        // 配对算法（v2.0）：按 depth 匹配，而不是按名称
-        // depth 就是规则在 ruleStack 中的索引，所以直接用 depth 查找
-        for (const pending of this.pendingRules) {
-            // 检查 pending.depth 是否在 ruleStack 的有效范围内
-            if (pending.depth < this.ruleStack.length) {
-                const stackRule = this.ruleStack[pending.depth]
-                // 验证规则名称是否匹配（双重保险）
-                if (stackRule && stackRule.ruleName === pending.ruleName) {
-                    validRules.push(pending)
-                }
-            }
-        }
-
-        return validRules
-    }
-
-    /** 查找最近的已输出祖先规则 */
-    private findLastOutputAncestor(beforeIndex: number): {index: number, displayDepth: number} | null {
-        // 限制搜索范围：不能超过当前 ruleStack 的长度
-        const maxIndex = Math.min(beforeIndex, this.ruleStack.length)
-        
-        // 从 maxIndex-1 开始向前遍历 ruleStack，查找最近已输出的祖先
-        for (let i = maxIndex - 1; i >= 0; i--) {
-            const rule = this.ruleStack[i]
-            // 如果规则已输出且记录了显示深度，说明找到了有效祖先
-            if (rule.outputted && rule.displayDepth !== undefined) {
-                return {index: i, displayDepth: rule.displayDepth}
-            }
-        }
-        // 没有找到任何祖先，返回 null
-        return null
-    }
-
-    /** 计算规则的显示深度 */
-    private getDisplayDepth(realDepth: number): number {
-        // 查找最近的已输出祖先
-        const ancestor = this.findLastOutputAncestor(realDepth)
-        
-        // 如果没有祖先（第一批输出的规则），直接使用真实深度
-        if (!ancestor) {
-            return realDepth
-        }
-        
-        // 基于祖先计算：显示深度 = 祖先显示深度 + 相对偏移
-        return ancestor.displayDepth + (realDepth - ancestor.index)
-    }
-
-    /** 输出单个规则 */
-    private outputRule(rule: {ruleName: string, depth: number}): void {
-        // 基于最近祖先计算显示深度
-        const displayDepth = this.getDisplayDepth(rule.depth)
-        // 获取 Or 标记（如果有）
-        const orSuffix = this.getOrSuffix(rule.depth)
-        
-        // 格式化输出行
-        const line = TreeFormatHelper.formatLine(
-            [rule.ruleName, orSuffix],
-            { depth: displayDepth }
-        )
-        console.log(line)
-        
-        // 标记 ruleStack 中对应规则为已输出，并记录显示深度
-        if (rule.depth < this.ruleStack.length) {
-            this.ruleStack[rule.depth].outputted = true
-            this.ruleStack[rule.depth].displayDepth = displayDepth
-        }
-    }
-
-    /** 输出折叠的规则链（用 > 连接） */
-    private outputCollapsedChain(chain: Array<{ruleName: string, depth: number}>): void {
-        // 提取所有规则名
-        const ruleNames = chain.map(r => r.ruleName)
-        
-        // 如果链长度 >5，简化为：前3个 + ... + 后2个
-        const names = ruleNames.length > 5 
-            ? [...ruleNames.slice(0, 3), '...', ...ruleNames.slice(-2)]
-            : ruleNames
-        
-        // 基于最近祖先计算折叠链的显示深度
-        const displayDepth = this.getDisplayDepth(chain[0].depth)
-        
-        // 格式化输出行
-        const line = TreeFormatHelper.formatLine(
-            names,
-            { depth: displayDepth, separator: ' > ' }
-        )
-        console.log(line)
-        
-        // 标记链中所有规则为已输出，共享同一个显示深度
-        for (const rule of chain) {
-            // 边界检查：确保规则在 ruleStack 范围内
-            if (rule.depth < this.ruleStack.length) {
-                this.ruleStack[rule.depth].outputted = true
-                this.ruleStack[rule.depth].displayDepth = displayDepth
-            }
-        }
-    }
-
-    /** 获取 Or 后缀标记 */
-    private getOrSuffix(ruleDepth: number): string {
-        if (!this.currentOrInfo) return ''
-
-        if (ruleDepth === this.currentOrInfo.targetDepth - 1) {
-            return ' [Or]'
-        }
-
-        if (ruleDepth === this.currentOrInfo.targetDepth) {
-            return ` [#${this.currentOrInfo.currentBranch + 1}/${this.currentOrInfo.totalBranches} ✅]`
-        }
-
-        return ''
     }
 
     // ========================================
@@ -1222,14 +869,22 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
     // ========================================
 
     /**
-     * 规则进入事件处理器
-     * - 记录到 ruleStack（用于追踪）
-     * - 记录到 pendingRules（延迟输出）
+     * 规则进入事件处理器（新版 - 立即计算）
+     * 
+     * 流程：
+     * 1. 推入 ruleStack（用于后续规则的计算）
+     * 2. 立即计算 displayDepth、orSuffix
+     * 3. 保存到 pendingOutputs（数据自包含）
+     * 
+     * 特点：
+     * - 进入时依赖外部状态（ruleStack、currentOrInfo）
+     * - 计算结果保存到缓冲区
+     * - 打印时不再需要外部状态
      */
     onRuleEnter(ruleName: string): number {
         const startTime = performance.now()
 
-        // 记录到规则栈
+        // 1️⃣ 推入规则栈（保留，用于后续规则的计算和验证）
         this.ruleStack.push({
             ruleName,
             startTime,
@@ -1237,11 +892,30 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
             hasConsumedToken: false
         })
 
-        // 加入待输出队列
         const depth = this.ruleStack.length - 1
-        this.pendingRules.push({ ruleName, depth })
 
-        // 性能统计
+        // 2️⃣ 立即计算所有需要的值（读取外部状态）
+        const displayDepth = SubhutiDebugRuleTracePrint.getDisplayDepth(
+            this.ruleStack,
+            depth
+        )
+
+        const orSuffix = SubhutiDebugRuleTracePrint.getOrSuffix(
+            depth,
+            this.currentOrInfo
+        )
+
+        // 3️⃣ 保存到缓冲区（数据完全自包含）
+        this.pendingOutputs.push({
+            ruleName: ruleName,
+            depth: depth,
+            displayDepth: displayDepth,
+            orSuffix: orSuffix,
+            canChain: orSuffix === '',  // 无 Or 标记才能合并到链中
+            timestamp: startTime
+        })
+
+        // 4️⃣ 性能统计
         let stat = this.stats.get(ruleName)
         if (!stat) {
             stat = {
@@ -1299,11 +973,11 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
             return
         }
 
-        // 先输出所有待处理的规则
-        this.flushPendingRules()
+        // 先输出所有待处理的规则（新版）
+        this.flushPendingOutputs()
 
         // 基于最近祖先计算 Token 的显示深度
-        const depth = this.getDisplayDepth(this.ruleStack.length)
+        const depth = SubhutiDebugRuleTracePrint.getDisplayDepth(this.ruleStack, this.ruleStack.length)
         // 格式化 Token 值（限制长度）
         const value = TreeFormatHelper.formatTokenValue(tokenValue, 20)
 
@@ -1351,13 +1025,13 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
                 totalBranches,
                 currentBranch: 0,
                 targetDepth: this.ruleStack.length,  // 下一个规则进入后的深度
-                savedPendingLength: this.pendingRules.length  // 保存当前pending长度
+                savedPendingLength: this.pendingOutputs.length  // 保存当前缓冲区长度
             }
         } else {
             // 尝试下一个分支（branchIndex > 0）
-            // 失败的分支：恢复pending到Or开始前的状态
+            // 失败的分支：回溯缓冲区到 Or 开始前的状态
             if (this.currentOrInfo) {
-                this.pendingRules.length = this.currentOrInfo.savedPendingLength
+                this.pendingOutputs.length = this.currentOrInfo.savedPendingLength
                 this.currentOrInfo.currentBranch = branchIndex
             }
         }
