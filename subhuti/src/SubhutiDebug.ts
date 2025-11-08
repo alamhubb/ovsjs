@@ -847,15 +847,12 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
     // ========================================
 
     /**
-     * 输出待处理的规则（新版 - 只用 ruleStack）
+     * 输出待处理的规则（简化版 - 只用 ruleStack）
      * 
-     * 流程：
-     * 1. 过滤 outputted=false 的项
-     * 2. 查找基准深度
-     * 3. 识别链并计算 displayDepth
-     * 4. 输出
-     * 5. 标记 outputted=true
-     * 6. 不需要清理（已经在 onRuleExit 时 pop 了）
+     * 核心逻辑：
+     * - toOutput 中的规则总是连续的（因为 pop 机制）
+     * - 找第一个不能折叠的位置（canChain=false 或 Or 标记）
+     * - 该位置之前的折叠，该位置单独输出
      */
     private flushPendingOutputs(): void {
         // 1️⃣ 过滤待输出的项
@@ -865,7 +862,7 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
             return
         }
         
-        // 2️⃣ 查找基准深度（最后一个 outputted=true）
+        // 2️⃣ 查找基准深度（最后一个已输出的规则）
         let baseDepth = -1
         for (let i = this.ruleStack.length - 1; i >= 0; i--) {
             const item = this.ruleStack[i]
@@ -875,42 +872,49 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
             }
         }
         
-        let begin = baseDepth === -1 ? 0 : baseDepth + 1
+        const begin = baseDepth === -1 ? 0 : baseDepth + 1
         
-        // 3️⃣ 识别链并计算 displayDepth
-        let i = 0
-        while (i < toOutput.length) {
-            // 查找连续的可折叠链
-            const chain: RuleStackItem[] = []
-            let j = i
-            
-            while (j < toOutput.length && toOutput[j].canChain) {
-                if (chain.length === 0 || 
-                    toOutput[j].depth === chain[chain.length - 1].depth + 1) {
-                    chain.push(toOutput[j])
-                    j++
-                } else {
-                    break
-                }
-            }
-            
-            if (chain.length > 1) {
-                // 链：共享 displayDepth
+        // 3️⃣ 找第一个不能折叠的位置
+        const breakPoint = toOutput.findIndex(item => !item.canChain)
+        
+        // 4️⃣ 根据断点位置输出
+        if (breakPoint === -1) {
+            // 全部可折叠
+            if (toOutput.length > 1) {
+                // 前 n-1 个折叠成链
+                const chain = toOutput.slice(0, -1)
                 for (const item of chain) {
                     item.displayDepth = begin
                 }
                 this.outputChain(chain)
-                i = j
+                
+                // 最后一个单独输出
+                const last = toOutput[toOutput.length - 1]
+                last.displayDepth = begin
+                this.outputSingle(last)
             } else {
-                // 单独：使用 begin，然后递增
-                toOutput[i].displayDepth = begin
-                this.outputSingle(toOutput[i])
-                begin++
-                i++
+                // 只有一个规则，单独输出
+                toOutput[0].displayDepth = begin
+                this.outputSingle(toOutput[0])
             }
+        } else if (breakPoint === 0) {
+            // 第一个就不能折叠，全部单独输出
+            toOutput[0].displayDepth = begin
+            this.outputSingle(toOutput[0])
+        } else {
+            // 前面的折叠成链
+            const chain = toOutput.slice(0, breakPoint)
+            for (const item of chain) {
+                item.displayDepth = begin
+            }
+            this.outputChain(chain)
+            
+            // breakPoint 位置的单独输出
+            toOutput[breakPoint].displayDepth = begin
+            this.outputSingle(toOutput[breakPoint])
         }
         
-        // 4️⃣ 标记已输出
+        // 5️⃣ 标记已输出
         for (const item of toOutput) {
             item.outputted = true
         }
