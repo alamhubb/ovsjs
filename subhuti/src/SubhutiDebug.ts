@@ -735,6 +735,16 @@ export class SubhutiTraceDebugger {
     private stats = new Map<string, RuleStats>()
 
     // ========================================
+    // 规则路径缓存（用于缓存命中时快速恢复日志路径）
+    // ========================================
+    private rulePathCache = new Map<string, {
+        item: RuleStackItem
+        nextRuleName: string | null
+        nextTokenIndex: number | null
+        nextOrBranchInfo: any
+    }>()
+
+    // ========================================
     // Token 数据
     // ========================================
     private inputTokens: any[] = []  // 存储完整 token 对象（包含位置信息）
@@ -766,15 +776,153 @@ export class SubhutiTraceDebugger {
         })
     }
 
+    /**
+     * 深拷贝 RuleStackItem（手动拷贝每个字段）
+     */
+    private deepCloneRuleStackItem(item: RuleStackItem): RuleStackItem {
+        return {
+            ruleName: item.ruleName,
+            depth: item.depth,
+            startTime: item.startTime,
+            outputted: item.outputted,
+            hasConsumedToken: item.hasConsumedToken,
+            hasExited: item.hasExited,
+            tokenIndex: item.tokenIndex,
+            isManuallyAdded: item.isManuallyAdded,
+            displayDepth: item.displayDepth,
+            orBranchInfo: item.orBranchInfo ? {
+                branchIndex: item.orBranchInfo.branchIndex,
+                isOrEntry: item.orBranchInfo.isOrEntry,
+                isOrBranch: item.orBranchInfo.isOrBranch,
+                totalBranches: item.orBranchInfo.totalBranches
+            } : undefined
+        }
+    }
+
     // ========================================
     // 辅助方法（委托给静态工具类）
     // ========================================
 
     /**
+     * 生成缓存键（包含 Or 节点信息）
+     */
+    private generateCacheKey(item: RuleStackItem): string {
+
+        const parts = [item.ruleName, (item.tokenIndex || 0).toString()]
+
+        if (item.orBranchInfo) {
+            parts.push(item.orBranchInfo.isOrEntry ? '1' : '0')
+            parts.push(item.orBranchInfo.isOrBranch ? '1' : '0')
+            parts.push(item.orBranchInfo.branchIndex?.toString() ?? '-1')
+        } else {
+            parts.push('0', '0', '-1')
+        }
+
+        return parts.join(':')
+    }
+
+    /**
      * 输出待处理的规则（委托给 SubhutiDebugRuleTracePrint）
      */
     private flushPendingOutputs(): void {
+        // 1. 获取所有未输出的规则
+        const pending = this.ruleStack.filter(item => !item.outputted)
+
+        // 2. 在输出前记录缓存（包括 Or 节点）
+        pending.forEach((item, index) => {
+            // 跳过手动添加的（那些是从缓存恢复的）
+            if (item.isManuallyAdded) {
+                return
+            }
+
+            const nextItem = pending[index + 1]
+            const cacheKey = this.generateCacheKey(item)
+
+            this.rulePathCache.set(cacheKey, {
+                item: this.deepCloneRuleStackItem(item),
+                nextRuleName: nextItem?.ruleName ?? null,
+                nextTokenIndex: nextItem?.tokenIndex ?? null,
+                nextIsOrEntry: nextItem?.orBranchInfo?.isOrEntry ?? null,
+                nextIsOrBranch: nextItem?.orBranchInfo?.isOrBranch ?? null,
+                nextBranchIndex: nextItem?.orBranchInfo?.branchIndex ?? null
+            })
+        })
+
+        // 3. 执行输出（会设置 outputted = true）
         SubhutiDebugRuleTracePrint.flushPendingOutputs(this.ruleStack)
+    }
+
+    /**
+     * 从缓存恢复规则路径（递归恢复整个链条）
+     *
+     * @param cacheKey - 缓存键
+     */
+    private restoreFromCache(cacheKey: string): void {
+        const cached = this.rulePathCache.get(cacheKey)
+
+        if (!cached) {
+            return  // 缓存未命中，退出
+        }
+
+        // 1. 入栈当前项（深拷贝 + 标记为手动添加）
+        const restoredItem = this.deepCloneRuleStackItem(cached.item)
+        restoredItem.isManuallyAdded = true
+        restoredItem.outputted = false  // 重置，等待输出
+        this.ruleStack.push(restoredItem)
+
+        // 2. 递归恢复下一个
+        if (cached.nextRuleName && cached.nextTokenIndex !== null) {
+            // 构建下一个节点对象用于生成缓存键
+            const nextItem: Pick<RuleStackItem, 'ruleName' | 'tokenIndex' | 'orBranchInfo'> = {
+                ruleName: cached.nextRuleName,
+                tokenIndex: cached.nextTokenIndex,
+                orBranchInfo: cached.nextOrBranchInfo
+            }
+
+            const nextCacheKey = this.generateCacheKey(nextItem as RuleStackItem)
+            this.restoreFromCache(nextCacheKey)
+        } else {
+            // 3. 链条末尾 → 触发打印
+            this.flushCachedItems()
+        }
+    }
+
+    /**
+     * 打印并清理缓存恢复的手动添加项
+     */
+    private flushCachedItems(): void {
+        // 1. 找到所有手动添加的项
+        const cachedItems = this.ruleStack.filter(item => item.isManuallyAdded)
+
+        if (cachedItems.length === 0) {
+            return
+        }
+
+        // 2. 计算 baseDepth（基于最后一个已输出的正常项）
+        let baseDepth = 0
+        for (let i = this.ruleStack.length - 1; i >= 0; i--) {
+            const item = this.ruleStack[i]
+            if (!item.isManuallyAdded && item.outputted && item.displayDepth !== undefined) {
+                baseDepth = item.displayDepth + 1
+                break
+            }
+        }
+
+        // 3. 打印所有缓存项（包括第一条）
+        SubhutiDebugRuleTracePrint.printSingleRule(cachedItems, baseDepth)
+
+        // 4. 清理：保留第一条（留给 onRuleExit pop），删除其余
+        if (cachedItems.length > 1) {
+            const firstCachedItem = cachedItems[0]
+            this.ruleStack = this.ruleStack.filter(item => {
+                // 保留非手动项
+                if (!item.isManuallyAdded) return true
+                // 保留第一条手动项
+                if (item === firstCachedItem) return true
+                // 移除其他手动项
+                return false
+            })
+        }
     }
 
     // ========================================
@@ -783,25 +931,40 @@ export class SubhutiTraceDebugger {
 
     /**
      * 规则进入事件处理器
+     *
+     * @param ruleName - 规则名称
+     * @param tokenIndex - 规则进入时的 token 索引
      */
-    onRuleEnter(ruleName: string): number {
+    onRuleEnter(ruleName: string, tokenIndex: number): number {
         const startTime = performance.now()
 
-        // 计算深度
+
+        // 缓存未命中 → 正常流程：推入规则栈
         const depth = this.ruleStack.length
 
-        // 推入规则栈
-        // 注意：普通规则的 isOrEntry 和 isOrBranch 都为 false
-        this.ruleStack.push({
+        const ruleItem: RuleStackItem = {
             ruleName,
             depth,
             startTime,
             outputted: false,
             hasConsumedToken: false,
             hasExited: false,
+            tokenIndex,              // ← 记录 tokenIndex
+            isManuallyAdded: false,  // ← 正常规则
             displayDepth: undefined,
             orBranchInfo: undefined
-        })
+        }
+
+        const cacheKey = this.generateCacheKey(ruleItem)
+
+        if (this.rulePathCache.has(cacheKey)) {
+            // 缓存命中 → 恢复整个链条
+            this.restoreFromCache(cacheKey)
+            return startTime
+        }
+
+        // 缓存未命中 → 正常流程：推入规则栈
+        this.ruleStack.push(ruleItem)
 
         // 性能统计
         let stat = this.stats.get(ruleName)

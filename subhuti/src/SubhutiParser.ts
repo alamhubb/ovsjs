@@ -284,7 +284,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
         // 顶层规则：直接执行（无需缓存和循环检测）
         if (isTopLevel) {
-            const observeContext = this._debugger?.onRuleEnter(ruleName)
+            const observeContext = this._debugger?.onRuleEnter(ruleName, this.tokenIndex)
             const cst = this.executeRuleCore(ruleName, targetFun)
             this._postProcessRule(ruleName, cst, isTopLevel, observeContext)
             return cst
@@ -313,7 +313,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         this.loopDetectionSet.add(key)
 
         try {
-            const observeContext = this._debugger?.onRuleEnter(ruleName)
+            const observeContext = this._debugger?.onRuleEnter(ruleName, this.tokenIndex)
 
             // Packrat Parsing 缓存查询
             if (this.enableMemoization) {

@@ -120,6 +120,8 @@ export interface RuleStackItem {
     outputted: boolean          // 是否已输出
     hasConsumedToken: boolean
     hasExited: boolean          // 是否已退出（标记后立即 pop）
+    tokenIndex: number          // 规则进入时的 token 索引（用于缓存键）
+    isManuallyAdded?: boolean   // 是否从缓存恢复的手动添加项
     displayDepth?: number       // 显示深度（flush 时计算）
     orBranchInfo?: {
         branchIndex?: number
@@ -227,7 +229,7 @@ export class SubhutiDebugRuleTracePrint {
     /**
      * 打印折叠链
      */
-    private static printChainRule(rules: RuleStackItem[], depth: number): void {
+    static printChainRule(rules: RuleStackItem[], depth: number): void {
         //过滤or和虚拟规则
         const names = rules.filter(item => !item.orBranchInfo).map(r => r.ruleName)
 
@@ -250,10 +252,8 @@ export class SubhutiDebugRuleTracePrint {
 
     /**
      * 打印单独规则（深度递增）
-     *
-     * 所有显示格式化都通过 formatOrSuffix 统一处理
      */
-    private static printSingleRule(rules: RuleStackItem[], startDepth: number): void {
+    static printSingleRule(rules: RuleStackItem[], startDepth: number): void {
         rules.forEach((item, index) => {
             // 判断是否是最后一个
             const isLast = index === rules.length - 1
@@ -290,8 +290,13 @@ export class SubhutiDebugRuleTracePrint {
                     printStr = `错误`
                 }
             } else {
+                // 普通规则：添加缓存标记
                 printStr = item.ruleName
+                if (item.isManuallyAdded) {
+                    printStr += ' ⚡[Cached]'
+                }
             }
+            
             // console.log('  '.repeat(depth) +  printStr)
             console.log(prefix + branch + printStr)
             item.displayDepth = depth
