@@ -133,6 +133,7 @@ export interface OrBranchInfo {
     currentBranch: number
     targetDepth: number
     savedPendingLength: number
+    parentRuleName: string  // 父规则名（调用 Or 的规则）
 }
 
 // ============================================

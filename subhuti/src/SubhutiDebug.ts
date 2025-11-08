@@ -95,17 +95,25 @@ export interface SubhutiDebugger {
     ): void
 
     /**
-     * Or 分支尝试事件
+     * Or 分支进入事件
      * @param branchIndex - 当前分支索引（0-based）
      * @param totalBranches - 总分支数
-     *
-     * 注意：
-     * - isRetry 可由 branchIndex > 0 推导
-     * - ruleName 可通过后续 onRuleEnter 获取
+     * @param parentRuleName - 父规则名（调用 Or 的规则）
      */
     onOrBranch?(
         branchIndex: number,
-        totalBranches: number
+        totalBranches: number,
+        parentRuleName: string
+    ): void
+
+    /**
+     * Or 分支退出事件
+     * @param parentRuleName - 父规则名（调用 Or 的规则）
+     * @param branchIndex - 当前分支索引（0-based）
+     */
+    onOrBranchExit?(
+        parentRuleName: string,
+        branchIndex: number
     ): void
 
     /**
@@ -1003,23 +1011,56 @@ export class SubhutiTraceDebugger implements SubhutiDebugger {
 
     onOrBranch(
         branchIndex: number,
-        totalBranches: number
+        totalBranches: number,
+        parentRuleName: string
     ): void {
         // 新的 Or 开始（branchIndex = 0）
         if (branchIndex === 0) {
             // 创建新的 Or 追踪
-            // targetDepth 是第一个分支规则将要处于的深度
             this.currentOrInfo = {
                 totalBranches,
                 currentBranch: 0,
-                targetDepth: this.ruleStack.length,  // 下一个规则进入后的深度
-                savedPendingLength: this.ruleStack.length  // 保存当前 ruleStack 长度（用于验证）
+                targetDepth: this.ruleStack.length,
+                savedPendingLength: this.ruleStack.length,
+                parentRuleName
             }
         } else {
             // 尝试下一个分支（branchIndex > 0）
-            // 注意：失败分支的规则已经通过 onRuleExit 自动 pop 了，不需要手动回溯
             if (this.currentOrInfo) {
                 this.currentOrInfo.currentBranch = branchIndex
+            }
+        }
+        
+        // 创建虚拟 Or 分支规则项（每次分支尝试都创建）
+        const virtualRuleName = `${parentRuleName} [Or #${branchIndex + 1}]`
+        
+        this.ruleStack.push({
+            ruleName: virtualRuleName,
+            depth: this.ruleStack.length,
+            startTime: performance.now(),
+            outputted: false,
+            hasConsumedToken: false,
+            hasExited: false,
+            displayDepth: undefined,
+            isOrEntry: true,
+            orBranchInfo: `#${branchIndex + 1}/${totalBranches}`
+        })
+    }
+
+    onOrBranchExit(
+        parentRuleName: string,
+        branchIndex: number
+    ): void {
+        // 清理虚拟 Or 分支规则项
+        const virtualRuleName = `${parentRuleName} [Or #${branchIndex + 1}]`
+        
+        // 从后往前找第一个匹配的虚拟规则项并删除
+        for (let i = this.ruleStack.length - 1; i >= 0; i--) {
+            const item = this.ruleStack[i]
+            if (item.ruleName === virtualRuleName && !item.hasExited) {
+                item.hasExited = true
+                this.ruleStack.splice(i, 1)
+                break
             }
         }
     }

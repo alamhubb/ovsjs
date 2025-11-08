@@ -446,12 +446,14 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         return this.withAllowError(() => {
             const savedState = this.saveState()
             const totalCount = alternatives.length
+            const parentRuleName = this.curCst?.name || 'Unknown'
 
             for (let i = 0; i < totalCount; i++) {
                 const alt = alternatives[i]
                 const isLast = i === totalCount - 1
 
-                this._debugger?.onOrBranch?.(i, totalCount)
+                // 进入 Or 分支
+                this._debugger?.onOrBranch?.(i, totalCount, parentRuleName)
 
                 if (isLast) {
                     this.allowErrorDepth--
@@ -462,6 +464,9 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
                 if (isLast) {
                     this.allowErrorDepth++
                 }
+
+                // 退出 Or 分支（无论成功还是失败）
+                this._debugger?.onOrBranchExit?.(parentRuleName, i)
 
                 if (this._parseSuccess) {
                     return this.curCst
