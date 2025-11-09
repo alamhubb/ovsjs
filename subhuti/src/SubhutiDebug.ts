@@ -878,6 +878,7 @@ export class SubhutiTraceDebugger {
             return  // 缓存未命中，退出
         }
         
+        
         // 记录当前栈的长度（用于后续清除子规则）
         const stackLengthBeforeRestore = this.ruleStack.length
         
@@ -909,7 +910,8 @@ export class SubhutiTraceDebugger {
                         tokenInfo.tokenIndex,
                         tokenInfo.tokenValue,
                         tokenInfo.tokenName,
-                        true  // success = true
+                        true,  // success = true
+                        true   // fromCache = true
                     )
                 }
             }
@@ -918,6 +920,7 @@ export class SubhutiTraceDebugger {
         // 4. 清除栈中恢复的子规则，只保留当前规则
         // 清除从 stackLengthBeforeRestore + 1 之后的所有项（即当前规则之后的所有子规则）
         const currentRuleIndex = stackLengthBeforeRestore
+        const childCount = this.ruleStack.length - currentRuleIndex - 1
         while (this.ruleStack.length > currentRuleIndex + 1) {
             this.ruleStack.pop()
         }
@@ -1031,14 +1034,71 @@ export class SubhutiTraceDebugger {
         tokenIndex: number,
         tokenValue: string,
         tokenName: string,
-        success: boolean
+        success: boolean,
+        fromCache: boolean = false
     ): void {
         if (!success) {
             return
         }
 
-        // 先输出所有待处理的规则
+        const tokenInfo = {
+            tokenIndex,
+            tokenValue,
+            tokenName
+        }
+
+        let currentRule: RuleStackItem | undefined
+
+        if (this.ruleStack.length > 0) {
+            currentRule = this.ruleStack[this.ruleStack.length - 1]
+            currentRule.hasConsumedToken = true
+
+            if (!currentRule.consumedTokens) {
+                currentRule.consumedTokens = []
+            }
+            currentRule.consumedTokens.push(tokenInfo)
+        }
+
+        // 记录 token 后再输出待处理规则，确保缓存的数据是完整的
         this.flushPendingOutputs()
+
+        if (!fromCache && currentRule && !currentRule.isManuallyAdded) {
+            const cacheKey = this.generateCacheKey(currentRule)
+            const cached = this.rulePathCache.get(cacheKey)
+            if (cached) {
+                if (!cached.consumedTokens) {
+                    cached.consumedTokens = []
+                }
+                const alreadyRecorded = cached.consumedTokens.some(
+                    t => t.tokenIndex === tokenIndex && t.tokenName === tokenName
+                )
+                if (!alreadyRecorded) {
+                    cached.consumedTokens.push(tokenInfo)
+                }
+            }
+
+            // 父级规则如果仍在栈上，也需要补充 token 数据
+            for (let i = this.ruleStack.length - 2; i >= 0; i--) {
+                const ancestor = this.ruleStack[i]
+                if (ancestor.isManuallyAdded) {
+                    continue
+                }
+                const ancestorKey = this.generateCacheKey(ancestor)
+                const ancestorCached = this.rulePathCache.get(ancestorKey)
+                if (!ancestorCached) {
+                    continue
+                }
+                if (!ancestorCached.consumedTokens) {
+                    ancestorCached.consumedTokens = []
+                }
+                const ancestorRecorded = ancestorCached.consumedTokens.some(
+                    t => t.tokenIndex === tokenIndex && t.tokenName === tokenName
+                )
+                if (!ancestorRecorded) {
+                    ancestorCached.consumedTokens.push(tokenInfo)
+                }
+            }
+        }
 
         // ✅ 基于 ruleStack 中最后一个已输出的规则计算深度
         let depth = 0
@@ -1050,20 +1110,15 @@ export class SubhutiTraceDebugger {
             }
         }
 
-        // 格式化 Token 值（限制长度）
         const value = TreeFormatHelper.formatTokenValue(tokenValue, 20)
 
-        // 获取 token 的位置信息（支持多种格式）
         const token = this.inputTokens[tokenIndex]
         let location: string | null = null
 
         if (token) {
-            // 格式1：CST 风格 (loc: {start: {line, column}, end: {...}})
             if (token.loc) {
                 location = TreeFormatHelper.formatLocation(token.loc)
-            }
-            // 格式2：Subhuti 风格 (rowNum, columnStartNum, columnEndNum)
-            else if (token.rowNum !== undefined && token.columnStartNum !== undefined) {
+            } else if (token.rowNum !== undefined && token.columnStartNum !== undefined) {
                 const row = token.rowNum
                 const start = token.columnStartNum
                 const end = token.columnEndNum ?? start + tokenValue.length - 1
@@ -1077,22 +1132,6 @@ export class SubhutiTraceDebugger {
         )
 
         console.log(line)
-
-        // 标记当前规则已消费 token，并记录 Token 信息
-        if (this.ruleStack.length > 0) {
-            const currentRule = this.ruleStack[this.ruleStack.length - 1]
-            currentRule.hasConsumedToken = true
-            
-            // 记录 Token 消费信息（用于缓存）
-            if (!currentRule.consumedTokens) {
-                currentRule.consumedTokens = []
-            }
-            currentRule.consumedTokens.push({
-                tokenIndex,
-                tokenValue,
-                tokenName
-            })
-        }
     }
 
     onOrEnter(
