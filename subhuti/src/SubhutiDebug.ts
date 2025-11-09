@@ -272,6 +272,14 @@ import {
     type OrBranchInfo
 } from "./SubhutiDebugRuleTracePrint"
 
+type CachedEntry = {
+    item?: RuleStackItem
+    childs?: string[]
+    tokenIndex?: number
+    tokenValue?: string
+    tokenName?: string
+}
+
 
 // ============================================
 // SubhutiDebugUtils - 调试工具集（v4.0）
@@ -733,17 +741,7 @@ export class SubhutiTraceDebugger {
     // ========================================
     // 规则路径缓存（用于缓存命中时快速恢复日志路径）
     // ========================================
-    private rulePathCache = new Map<string, {
-        item: RuleStackItem
-        nextRuleName: string | null
-        nextTokenIndex: number | null
-        nextOrBranchInfo: any
-        consumedTokens: Array<{  // 该规则路径消费的所有 Token
-            tokenIndex: number
-            tokenValue: string
-            tokenName: string
-        }>
-    }>()
+    private rulePathCache = new Map<string, CachedEntry>()
 
     // ========================================
     // Token 数据
@@ -783,7 +781,6 @@ export class SubhutiTraceDebugger {
     private deepCloneRuleStackItem(item: RuleStackItem): RuleStackItem {
         return {
             ruleName: item.ruleName,
-            depth: item.depth,
             startTime: item.startTime,
             outputted: item.outputted,
             hasConsumedToken: item.hasConsumedToken,
@@ -822,47 +819,72 @@ export class SubhutiTraceDebugger {
         return parts.join(':')
     }
 
-    /**
-     * 输出待处理的规则（委托给 SubhutiDebugRuleTracePrint）
-     */
-    private flushPendingOutputs(): void {
-        // 1. 获取所有未输出的规则
-        const pending = this.ruleStack.filter(item => !item.outputted)
+    private generateTokenKey(tokenIndex: number, tokenName: string): string {
+        return `token:${tokenIndex}:${tokenName}`
+    }
 
-        // 2. 在输出前记录缓存（包括 Or 节点）
-        pending.forEach((item, index) => {
-            // 跳过手动添加的（那些是从缓存恢复的）
-            if (item.isManuallyAdded) {
-                return
+    private getOrCreateRuleEntry(item: RuleStackItem): CachedEntry {
+        // 获取或创建当前规则的缓存节点
+        const cacheKey = this.generateCacheKey(item)
+        let entry = this.rulePathCache.get(cacheKey)
+
+        if (!entry) {
+            entry = {
+                item: this.deepCloneRuleStackItem(item),
+                childs: []
+            }
+            this.rulePathCache.set(cacheKey, entry)
+            return entry
+        }
+
+        entry.item = this.deepCloneRuleStackItem(item)
+        if (!entry.childs) {
+            entry.childs = []
+        }
+
+        return entry
+    }
+
+    private flushPendingOutputs(): void {
+        // 收集尚未输出的规则节点
+        const pendingSet = new Set<RuleStackItem>(
+            this.ruleStack.filter(item => !item.outputted)
+        )
+
+        for (let index = 0; index < this.ruleStack.length; index++) {
+            const item = this.ruleStack[index]
+
+            if (!pendingSet.has(item)) {
+                continue
             }
 
-            const nextItem = pending[index + 1]
-            const cacheKey = this.generateCacheKey(item)
+            if (!item.isManuallyAdded) {
+                // 将规则节点写入缓存以便后续回放
+                const entry = this.getOrCreateRuleEntry(item)
+                entry.item = this.deepCloneRuleStackItem(item)
 
-            // 收集该规则及其所有子规则消费的 Token
-            // 从当前规则开始，到 ruleStack 末尾（包括所有子规则）
-            const consumedTokens: Array<{ tokenIndex: number, tokenValue: string, tokenName: string }> = []
-            const itemIndexInStack = this.ruleStack.indexOf(item)
-            
-            // 从当前规则开始，遍历到栈顶，收集所有 Token
-            // Token 存储在栈顶规则的 consumedTokens 中
-            for (let i = itemIndexInStack; i < this.ruleStack.length; i++) {
-                const rule = this.ruleStack[i]
-                if (rule.consumedTokens && rule.consumedTokens.length > 0) {
-                    consumedTokens.push(...rule.consumedTokens)
+                for (let parentIndex = index - 1; parentIndex >= 0; parentIndex--) {
+                    const parentItem = this.ruleStack[parentIndex]
+                    if (parentItem.isManuallyAdded) {
+                        continue
+                    }
+
+                    // 建立父子节点关系链路
+                    const parentKey = this.generateCacheKey(parentItem)
+                    let parentEntry = this.rulePathCache.get(parentKey)
+                    if (!parentEntry || !parentEntry.item) {
+                        parentEntry = this.getOrCreateRuleEntry(parentItem)
+                    } else if (!parentEntry.childs) {
+                        parentEntry.childs = []
+                    }
+
+                    const childKey = this.generateCacheKey(item)
+                    parentEntry.childs!.push(childKey)
+                    break
                 }
             }
+        }
 
-            this.rulePathCache.set(cacheKey, {
-                item: this.deepCloneRuleStackItem(item),
-                nextRuleName: nextItem?.ruleName ?? null,
-                nextTokenIndex: nextItem?.tokenIndex ?? null,
-                nextOrBranchInfo: nextItem?.orBranchInfo ?? null,
-                consumedTokens: consumedTokens
-            })
-        })
-
-        // 3. 执行输出（会设置 outputted = true）
         SubhutiDebugRuleTracePrint.flushPendingOutputs(this.ruleStack)
     }
 
@@ -871,60 +893,54 @@ export class SubhutiTraceDebugger {
      *
      * @param cacheKey - 缓存键
      */
-    private restoreFromCache(cacheKey: string): void {
+    private restoreFromCache(cacheKey: string, isRoot: boolean): void {
+        // 读取缓存并准备回放规则路径
         const cached = this.rulePathCache.get(cacheKey)
-        
-        if (!cached) {
-            return  // 缓存未命中，退出
+
+        if (!cached || !cached.item) {
+            return
         }
-        
-        
-        // 记录当前栈的长度（用于后续清除子规则）
+
         const stackLengthBeforeRestore = this.ruleStack.length
-        
-        // 1. 入栈当前项（深拷贝 + 标记为手动添加）
+
         const restoredItem = this.deepCloneRuleStackItem(cached.item)
         restoredItem.isManuallyAdded = true
-        restoredItem.outputted = false  // 重置，等待输出
-        restoredItem.consumedTokens = undefined  // 清空，等待模拟消费
+        restoredItem.outputted = false
+        restoredItem.consumedTokens = undefined
         this.ruleStack.push(restoredItem)
-        
-        // 2. 如果有下一个规则，递归恢复下一个（子规则会处理token消费）
-        if (cached.nextRuleName && cached.nextTokenIndex !== null) {
-            // 构建下一个节点对象用于生成缓存键
-            const nextItem: Pick<RuleStackItem, 'ruleName' | 'tokenIndex' | 'orBranchInfo'> = {
-                ruleName: cached.nextRuleName,
-                tokenIndex: cached.nextTokenIndex,
-                orBranchInfo: cached.nextOrBranchInfo
+
+        // 递归恢复子规则和 Token 消费
+        const childKeys = cached.childs ?? []
+        for (const childKey of childKeys) {
+            const childEntry = this.rulePathCache.get(childKey)
+            if (!childEntry) {
+                continue
             }
-            
-            const nextCacheKey = this.generateCacheKey(nextItem as RuleStackItem)
-            this.restoreFromCache(nextCacheKey)
-        } else {
-            // 3. 如果没有下一个规则（链条末尾），才需要模拟 Token 消费
-            if (cached.consumedTokens && cached.consumedTokens.length > 0) {
-                // 按顺序模拟每个 Token 消费
-                for (const tokenInfo of cached.consumedTokens) {
-                    // 模拟调用 onTokenConsume（会触发 flushPendingOutputs）
-                    this.onTokenConsume(
-                        tokenInfo.tokenIndex,
-                        tokenInfo.tokenValue,
-                        tokenInfo.tokenName,
-                        true,  // success = true
-                        true   // fromCache = true
-                    )
-                }
+
+            if (childEntry.item) {
+                this.restoreFromCache(childKey, false)
+            } else if (
+                childEntry.tokenName !== undefined &&
+                childEntry.tokenValue !== undefined &&
+                childEntry.tokenIndex !== undefined
+            ) {
+                this.onTokenConsume(
+                    childEntry.tokenIndex,
+                    childEntry.tokenValue,
+                    childEntry.tokenName,
+                    true,
+                    true
+                )
             }
         }
-        
-        // 4. 清除栈中恢复的子规则，只保留当前规则
-        // 清除从 stackLengthBeforeRestore + 1 之后的所有项（即当前规则之后的所有子规则）
-        const currentRuleIndex = stackLengthBeforeRestore
-        const childCount = this.ruleStack.length - currentRuleIndex - 1
-        while (this.ruleStack.length > currentRuleIndex + 1) {
+
+        while (this.ruleStack.length > stackLengthBeforeRestore + 1) {
             this.ruleStack.pop()
         }
-        // 注意：当前规则（索引 currentRuleIndex）保留在栈中，等待 onRuleExit 时 pop（由原有逻辑处理）
+
+        if (!isRoot) {
+            this.ruleStack.pop()
+        }
     }
 
 
@@ -947,7 +963,6 @@ export class SubhutiTraceDebugger {
 
         const ruleItem: RuleStackItem = {
             ruleName,
-            depth,
             startTime,
             outputted: false,
             hasConsumedToken: false,
@@ -958,11 +973,13 @@ export class SubhutiTraceDebugger {
             orBranchInfo: undefined
         }
 
+        // 计算当前规则的缓存标识
         const cacheKey = this.generateCacheKey(ruleItem)
+        const cachedEntry = this.rulePathCache.get(cacheKey)
 
-        if (this.rulePathCache.has(cacheKey)) {
+        if (cachedEntry && cachedEntry.item) {
             // 缓存命中 → 恢复整个链条
-            this.restoreFromCache(cacheKey)
+            this.restoreFromCache(cacheKey, true)
             return startTime
         }
 
@@ -1063,41 +1080,32 @@ export class SubhutiTraceDebugger {
         this.flushPendingOutputs()
 
         if (!fromCache && currentRule && !currentRule.isManuallyAdded) {
-            const cacheKey = this.generateCacheKey(currentRule)
-            const cached = this.rulePathCache.get(cacheKey)
-            if (cached) {
-                if (!cached.consumedTokens) {
-                    cached.consumedTokens = []
+            const ruleEntry = this.getOrCreateRuleEntry(currentRule)
+
+            const tokenKey = this.generateTokenKey(tokenIndex, tokenName)
+            let tokenEntry = this.rulePathCache.get(tokenKey)
+            if (!tokenEntry) {
+                tokenEntry = {
+                    tokenIndex,
+                    tokenValue,
+                    tokenName,
+                    childs: []
                 }
-                const alreadyRecorded = cached.consumedTokens.some(
-                    t => t.tokenIndex === tokenIndex && t.tokenName === tokenName
-                )
-                if (!alreadyRecorded) {
-                    cached.consumedTokens.push(tokenInfo)
+                this.rulePathCache.set(tokenKey, tokenEntry)
+            } else {
+                tokenEntry.tokenIndex = tokenIndex
+                tokenEntry.tokenValue = tokenValue
+                tokenEntry.tokenName = tokenName
+                if (!tokenEntry.childs) {
+                    tokenEntry.childs = []
                 }
             }
 
-            // 父级规则如果仍在栈上，也需要补充 token 数据
-            for (let i = this.ruleStack.length - 2; i >= 0; i--) {
-                const ancestor = this.ruleStack[i]
-                if (ancestor.isManuallyAdded) {
-                    continue
-                }
-                const ancestorKey = this.generateCacheKey(ancestor)
-                const ancestorCached = this.rulePathCache.get(ancestorKey)
-                if (!ancestorCached) {
-                    continue
-                }
-                if (!ancestorCached.consumedTokens) {
-                    ancestorCached.consumedTokens = []
-                }
-                const ancestorRecorded = ancestorCached.consumedTokens.some(
-                    t => t.tokenIndex === tokenIndex && t.tokenName === tokenName
-                )
-                if (!ancestorRecorded) {
-                    ancestorCached.consumedTokens.push(tokenInfo)
-                }
+            // 记录规则到 Token 的边
+            if (!ruleEntry.childs) {
+                ruleEntry.childs = []
             }
+            ruleEntry.childs.push(tokenKey)
         }
 
         // ✅ 基于 ruleStack 中最后一个已输出的规则计算深度
@@ -1147,7 +1155,6 @@ export class SubhutiTraceDebugger {
         // 注意：ruleName 只存储纯粹的规则名，不包含显示标记
         this.ruleStack.push({
             ruleName: parentRuleName,
-            depth: this.ruleStack.length,
             startTime: performance.now(),
             outputted: false,
             hasConsumedToken: false,
@@ -1197,7 +1204,6 @@ export class SubhutiTraceDebugger {
         // 注意：ruleName 只存储纯粹的规则名，不包含显示标记
         this.ruleStack.push({
             ruleName: parentRuleName,
-            depth: this.ruleStack.length,
             startTime: performance.now(),
             outputted: false,
             hasConsumedToken: false,
