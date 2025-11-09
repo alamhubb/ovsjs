@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 const msgFile = path.join(__dirname, '.msg.txt');
-const projectMdc = path.join(__dirname, '../../.cursor/rules/project.mdc');
+const projectMdc = path.join(__dirname, '../../.cursor/rules/globalRules.mdc');
 
 if (!fs.existsSync(msgFile)) {
     console.log('No .msg.txt file found');
@@ -22,9 +22,9 @@ const logEntry = `【${timestamp}】\n${msg}\n\n`;
 if (fs.existsSync(projectMdc)) {
     const content = fs.readFileSync(projectMdc, 'utf-8');
     fs.writeFileSync(projectMdc, content + logEntry);
-    console.log('✅ 进度已追加到 project.mdc');
+    console.log('✅ 进度已追加到 globalRules.mdc');
 } else {
-    console.log('⚠️ project.mdc 不存在');
+    console.log('⚠️ globalRules.mdc 不存在');
 }
 
 // 清空msg.txt

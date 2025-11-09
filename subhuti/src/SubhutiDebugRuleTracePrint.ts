@@ -115,7 +115,6 @@ export class TreeFormatHelper {
  */
 export interface RuleStackItem {
     ruleName: string
-    depth: number               // 进入时的深度（用于性能统计）
     startTime: number
     outputted: boolean          // 是否已输出
     hasConsumedToken: boolean

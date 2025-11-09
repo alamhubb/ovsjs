@@ -286,7 +286,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         if (isTopLevel) {
             const observeContext = this._debugger?.onRuleEnter(ruleName, this.tokenIndex)
             const cst = this.executeRuleCore(ruleName, targetFun)
-            this._postProcessRule(ruleName, cst, isTopLevel, observeContext)
+            this.onRuleExitDebugHandler(ruleName, cst, isTopLevel, observeContext)
             return cst
         }
 
@@ -313,13 +313,13 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         this.loopDetectionSet.add(key)
 
         try {
-            const observeContext = this._debugger?.onRuleEnter(ruleName, this.tokenIndex)
+            const startTime = this._debugger?.onRuleEnter(ruleName, this.tokenIndex)
 
             // Packrat Parsing 缓存查询
             if (this.enableMemoization) {
                 const cached = this._cache.get(ruleName, this.tokenIndex)
                 if (cached !== undefined) {
-                    this._debugger?.onRuleExit(ruleName, true, observeContext)
+                    this._debugger?.onRuleExit(ruleName, true, startTime)
                     const result = this.applyCachedResult(cached)
                     if (result && !result.children?.length) {
                         result.children = undefined
@@ -342,7 +342,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
                 })
             }
 
-            this._postProcessRule(ruleName, cst, false, observeContext)
+            this.onRuleExitDebugHandler(ruleName, cst, false, startTime)
 
             return cst
         } finally {
@@ -370,18 +370,18 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         return this._parseSuccess
     }
 
-    private _postProcessRule(
+    private onRuleExitDebugHandler(
         ruleName: string,
         cst: SubhutiCst | undefined,
         isTopLevel: boolean,
-        observeContext?: any
+        startTime?: number
     ): void {
         if (cst && !cst.children?.length) {
             cst.children = undefined
         }
 
         if (!isTopLevel) {
-            this._debugger?.onRuleExit(ruleName, false, observeContext)
+            this._debugger?.onRuleExit(ruleName, false, startTime)
         } else {
             // 顶层规则完成，输出调试信息
             if (this._debugger) {

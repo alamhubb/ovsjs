@@ -892,6 +892,7 @@ export class SubhutiTraceDebugger {
      * 从缓存恢复规则路径（递归恢复整个链条）
      *
      * @param cacheKey - 缓存键
+     * @param isRoot
      */
     private restoreFromCache(cacheKey: string, isRoot: boolean): void {
         // 读取缓存并准备回放规则路径
@@ -957,10 +958,6 @@ export class SubhutiTraceDebugger {
     onRuleEnter(ruleName: string, tokenIndex: number): number {
         const startTime = performance.now()
 
-
-        // 缓存未命中 → 正常流程：推入规则栈
-        const depth = this.ruleStack.length
-
         const ruleItem: RuleStackItem = {
             ruleName,
             startTime,
@@ -1008,11 +1005,11 @@ export class SubhutiTraceDebugger {
     onRuleExit(
         ruleName: string,
         cacheHit: boolean,
-        context?: unknown
+        startTime?: number
     ): void {
         let duration = 0
-        if (context !== undefined && typeof context === 'number') {
-            duration = performance.now() - context
+        if (startTime !== undefined && typeof startTime === 'number') {
+            duration = performance.now() - startTime
         }
 
         // ✅ 直接 pop 栈顶（严格 LIFO）
