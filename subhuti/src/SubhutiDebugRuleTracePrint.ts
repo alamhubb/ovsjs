@@ -123,6 +123,11 @@ export interface RuleStackItem {
     tokenIndex: number          // 规则进入时的 token 索引（用于缓存键）
     isManuallyAdded?: boolean   // 是否从缓存恢复的手动添加项
     displayDepth?: number       // 显示深度（flush 时计算）
+    consumedTokens?: Array<{    // 该规则及其子规则消费的所有 Token
+        tokenIndex: number
+        tokenValue: string
+        tokenName: string
+    }>
     orBranchInfo?: {
         branchIndex?: number
         isOrEntry: boolean // 是否是 Or 包裹节点（onOrEnter 创建）

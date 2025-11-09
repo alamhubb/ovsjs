@@ -269,11 +269,7 @@ import {
     SubhutiDebugRuleTracePrint,
     TreeFormatHelper,
     type RuleStackItem,
-    type PendingRule,
-    type PendingOutput,
-    type OrBranchInfo,
-    type RuleTraceContext,
-    type RuleTraceContextV2
+    type OrBranchInfo
 } from "./SubhutiDebugRuleTracePrint"
 
 
@@ -742,6 +738,11 @@ export class SubhutiTraceDebugger {
         nextRuleName: string | null
         nextTokenIndex: number | null
         nextOrBranchInfo: any
+        consumedTokens: Array<{  // 该规则路径消费的所有 Token
+            tokenIndex: number
+            tokenValue: string
+            tokenName: string
+        }>
     }>()
 
     // ========================================
@@ -790,6 +791,7 @@ export class SubhutiTraceDebugger {
             tokenIndex: item.tokenIndex,
             isManuallyAdded: item.isManuallyAdded,
             displayDepth: item.displayDepth,
+            consumedTokens: item.consumedTokens ? [...item.consumedTokens] : undefined,
             orBranchInfo: item.orBranchInfo ? {
                 branchIndex: item.orBranchInfo.branchIndex,
                 isOrEntry: item.orBranchInfo.isOrEntry,
@@ -807,8 +809,7 @@ export class SubhutiTraceDebugger {
      * 生成缓存键（包含 Or 节点信息）
      */
     private generateCacheKey(item: RuleStackItem): string {
-
-        const parts = [item.ruleName, (item.tokenIndex || 0).toString()]
+        const parts = [item.ruleName, item.tokenIndex.toString()]
 
         if (item.orBranchInfo) {
             parts.push(item.orBranchInfo.isOrEntry ? '1' : '0')
@@ -838,13 +839,26 @@ export class SubhutiTraceDebugger {
             const nextItem = pending[index + 1]
             const cacheKey = this.generateCacheKey(item)
 
+            // 收集该规则及其所有子规则消费的 Token
+            // 从当前规则开始，到 ruleStack 末尾（包括所有子规则）
+            const consumedTokens: Array<{ tokenIndex: number, tokenValue: string, tokenName: string }> = []
+            const itemIndexInStack = this.ruleStack.indexOf(item)
+            
+            // 从当前规则开始，遍历到栈顶，收集所有 Token
+            // Token 存储在栈顶规则的 consumedTokens 中
+            for (let i = itemIndexInStack; i < this.ruleStack.length; i++) {
+                const rule = this.ruleStack[i]
+                if (rule.consumedTokens && rule.consumedTokens.length > 0) {
+                    consumedTokens.push(...rule.consumedTokens)
+                }
+            }
+
             this.rulePathCache.set(cacheKey, {
                 item: this.deepCloneRuleStackItem(item),
                 nextRuleName: nextItem?.ruleName ?? null,
                 nextTokenIndex: nextItem?.tokenIndex ?? null,
-                nextIsOrEntry: nextItem?.orBranchInfo?.isOrEntry ?? null,
-                nextIsOrBranch: nextItem?.orBranchInfo?.isOrBranch ?? null,
-                nextBranchIndex: nextItem?.orBranchInfo?.branchIndex ?? null
+                nextOrBranchInfo: nextItem?.orBranchInfo ?? null,
+                consumedTokens: consumedTokens
             })
         })
 
@@ -859,18 +873,22 @@ export class SubhutiTraceDebugger {
      */
     private restoreFromCache(cacheKey: string): void {
         const cached = this.rulePathCache.get(cacheKey)
-
+        
         if (!cached) {
             return  // 缓存未命中，退出
         }
-
+        
+        // 记录当前栈的长度（用于后续清除子规则）
+        const stackLengthBeforeRestore = this.ruleStack.length
+        
         // 1. 入栈当前项（深拷贝 + 标记为手动添加）
         const restoredItem = this.deepCloneRuleStackItem(cached.item)
         restoredItem.isManuallyAdded = true
         restoredItem.outputted = false  // 重置，等待输出
+        restoredItem.consumedTokens = undefined  // 清空，等待模拟消费
         this.ruleStack.push(restoredItem)
-
-        // 2. 递归恢复下一个
+        
+        // 2. 如果有下一个规则，递归恢复下一个（子规则会处理token消费）
         if (cached.nextRuleName && cached.nextTokenIndex !== null) {
             // 构建下一个节点对象用于生成缓存键
             const nextItem: Pick<RuleStackItem, 'ruleName' | 'tokenIndex' | 'orBranchInfo'> = {
@@ -878,52 +896,34 @@ export class SubhutiTraceDebugger {
                 tokenIndex: cached.nextTokenIndex,
                 orBranchInfo: cached.nextOrBranchInfo
             }
-
+            
             const nextCacheKey = this.generateCacheKey(nextItem as RuleStackItem)
             this.restoreFromCache(nextCacheKey)
         } else {
-            // 3. 链条末尾 → 触发打印
-            this.flushCachedItems()
-        }
-    }
-
-    /**
-     * 打印并清理缓存恢复的手动添加项
-     */
-    private flushCachedItems(): void {
-        // 1. 找到所有手动添加的项
-        const cachedItems = this.ruleStack.filter(item => item.isManuallyAdded)
-
-        if (cachedItems.length === 0) {
-            return
-        }
-
-        // 2. 计算 baseDepth（基于最后一个已输出的正常项）
-        let baseDepth = 0
-        for (let i = this.ruleStack.length - 1; i >= 0; i--) {
-            const item = this.ruleStack[i]
-            if (!item.isManuallyAdded && item.outputted && item.displayDepth !== undefined) {
-                baseDepth = item.displayDepth + 1
-                break
+            // 3. 如果没有下一个规则（链条末尾），才需要模拟 Token 消费
+            if (cached.consumedTokens && cached.consumedTokens.length > 0) {
+                // 按顺序模拟每个 Token 消费
+                for (const tokenInfo of cached.consumedTokens) {
+                    // 模拟调用 onTokenConsume（会触发 flushPendingOutputs）
+                    this.onTokenConsume(
+                        tokenInfo.tokenIndex,
+                        tokenInfo.tokenValue,
+                        tokenInfo.tokenName,
+                        true  // success = true
+                    )
+                }
             }
         }
-
-        // 3. 打印所有缓存项（包括第一条）
-        SubhutiDebugRuleTracePrint.printSingleRule(cachedItems, baseDepth)
-
-        // 4. 清理：保留第一条（留给 onRuleExit pop），删除其余
-        if (cachedItems.length > 1) {
-            const firstCachedItem = cachedItems[0]
-            this.ruleStack = this.ruleStack.filter(item => {
-                // 保留非手动项
-                if (!item.isManuallyAdded) return true
-                // 保留第一条手动项
-                if (item === firstCachedItem) return true
-                // 移除其他手动项
-                return false
-            })
+        
+        // 4. 清除栈中恢复的子规则，只保留当前规则
+        // 清除从 stackLengthBeforeRestore + 1 之后的所有项（即当前规则之后的所有子规则）
+        const currentRuleIndex = stackLengthBeforeRestore
+        while (this.ruleStack.length > currentRuleIndex + 1) {
+            this.ruleStack.pop()
         }
+        // 注意：当前规则（索引 currentRuleIndex）保留在栈中，等待 onRuleExit 时 pop（由原有逻辑处理）
     }
+
 
     // ========================================
     // 过程追踪方法
@@ -1078,10 +1078,20 @@ export class SubhutiTraceDebugger {
 
         console.log(line)
 
-        // 标记当前规则已消费 token
+        // 标记当前规则已消费 token，并记录 Token 信息
         if (this.ruleStack.length > 0) {
             const currentRule = this.ruleStack[this.ruleStack.length - 1]
             currentRule.hasConsumedToken = true
+            
+            // 记录 Token 消费信息（用于缓存）
+            if (!currentRule.consumedTokens) {
+                currentRule.consumedTokens = []
+            }
+            currentRule.consumedTokens.push({
+                tokenIndex,
+                tokenValue,
+                tokenName
+            })
         }
     }
 
@@ -1089,6 +1099,11 @@ export class SubhutiTraceDebugger {
         parentRuleName: string,
         totalBranches: number
     ): void {
+        // 获取当前的 tokenIndex（从最近的规则节点获取，或使用 0 作为默认值）
+        const tokenIndex = this.ruleStack.length > 0 
+            ? (this.ruleStack[this.ruleStack.length - 1]?.tokenIndex ?? 0)
+            : 0
+        
         // 创建 Or 包裹虚拟规则项
         // 注意：ruleName 只存储纯粹的规则名，不包含显示标记
         this.ruleStack.push({
@@ -1098,6 +1113,7 @@ export class SubhutiTraceDebugger {
             outputted: false,
             hasConsumedToken: false,
             hasExited: false,
+            tokenIndex,
             displayDepth: undefined,
             orBranchInfo: {
                 isOrEntry: true,
@@ -1133,6 +1149,11 @@ export class SubhutiTraceDebugger {
         totalBranches: number,
         parentRuleName: string
     ): void {
+        // 获取当前的 tokenIndex（从最近的规则节点获取，或使用 0 作为默认值）
+        const tokenIndex = this.ruleStack.length > 0 
+            ? (this.ruleStack[this.ruleStack.length - 1]?.tokenIndex ?? 0)
+            : 0
+        
         // 创建虚拟 Or 分支规则项（每次分支尝试都创建）
         // 注意：ruleName 只存储纯粹的规则名，不包含显示标记
         this.ruleStack.push({
@@ -1142,6 +1163,7 @@ export class SubhutiTraceDebugger {
             outputted: false,
             hasConsumedToken: false,
             hasExited: false,
+            tokenIndex,
             displayDepth: undefined,
             orBranchInfo: {
                 isOrEntry: false,     // Or 分支节点不是 Or 包裹节点
