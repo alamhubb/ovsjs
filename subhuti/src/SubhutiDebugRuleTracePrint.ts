@@ -132,6 +132,7 @@ export interface RuleStackItem {
         isOrBranch: boolean // 是否是 Or 分支节点（onOrBranch 创建）
         totalBranches?: number // Or 分支信息（如 "#1/3" 或 "3" 表示总分支数）
     }
+    [key: string]: any  // 允许其他属性（对于向后兼容）
 }
 
 /**

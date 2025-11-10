@@ -358,15 +358,25 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             }
         }
 
+        // 【顶层规则开始】重置解析器状态
         if (isTopLevel) {
+            // 重置 Parser 的内部状态
             this._parseSuccess = true
             this.cstStack.length = 0
             this.ruleStack.length = 0
             this.allowErrorDepth = 0
             this.loopDetectionSet.clear()
+            
+            // ============================================
+            // 【新增】重置调试器的缓存和统计
+            // ============================================
+            // 这样每次新的顶层解析都有干净的环境
+            this._debugger?.resetForNewParse?.(this._tokens)
+            
             return true
         }
 
+        // 非顶层规则继续执行
         return this._parseSuccess
     }
 
