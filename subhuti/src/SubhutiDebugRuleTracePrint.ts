@@ -119,13 +119,8 @@ export interface RuleStackItem {
     outputted: boolean          // 是否已输出
     hasExited: boolean          // 是否已退出（标记后立即 pop）
     tokenIndex: number          // 规则进入时的 token 索引（用于缓存键）
-    isManuallyAdded?: boolean   // 是否从缓存恢复的手动添加项
     displayDepth?: number       // 显示深度（flush 时计算）
-    consumedTokens?: Array<{    // 该规则及其子规则消费的所有 Token
-        tokenIndex: number
-        tokenValue: string
-        tokenName: string
-    }>
+    shouldBreakLine?: boolean   // 是否应该在这里换行（单独一行）
     orBranchInfo?: {
         branchIndex?: number
         isOrEntry: boolean // 是否是 Or 包裹节点（onOrEnter 创建）
@@ -188,45 +183,74 @@ export class SubhutiDebugRuleTracePrint {
      * 输出待处理的规则
      *
      * 实现规则：
-     * 1. 连续无 Or 标记的规则折叠显示
-     * 2. 最近的 Or 入口规则单独显示
-     * 3. 父规则和爷爷规则单独显示
-     * 4. Token 相关规则单独显示
+     * 1. 根据每个规则的 shouldBreakLine 标记决定是否换行
+     * 2. shouldBreakLine = false: 与前一个规则折叠显示
+     * 3. shouldBreakLine = true: 单独一行显示
+     * 4. 触发缓存回放或消费 token 时，所有 pending 规则都被标记并输出
      */
     static flushPendingOutputs(ruleStack: RuleStackItem[]): void {
-        // 获取所有未输出的规则
+        // 【第一步】获取所有未输出的规则
         const pending = ruleStack.filter(item => !item.outputted)
         if (pending.length === 0) return
 
-        // 计算基准深度（最后一个已输出规则的 displayDepth + 1）
+        // 【第二步】计算基准深度（最后一个已输出规则的 displayDepth + 1）
         const lastOutputted = [...ruleStack]
             .reverse()
             .find(item => item.outputted && item.displayDepth !== undefined)
         const baseDepth = lastOutputted ? lastOutputted.displayDepth + 1 : 0
 
-        // 计算断点（最后一个 Or 相关规则 或 爷爷规则，取较小值）
-        // 使用统一的 isOrRelated 方法判断
-        let lastOrIndex = -1
-        for (let i = pending.length - 1; i >= 0; i--) {
-            if (this.isOrEntry(pending[i])) {
-                lastOrIndex = i
-                break
+        // 【第三步】如果还没有标记 shouldBreakLine，则计算断点并标记
+        // （第一次执行时需要计算，缓存回放时已有标记）
+        const hasAllMarked = pending.every(item => item.shouldBreakLine !== undefined)
+        if (!hasAllMarked) {
+            // 计算断点（最后一个 Or 相关规则 或 爷爷规则，取较小值）
+            let lastOrIndex = -1
+            for (let i = pending.length - 1; i >= 0; i--) {
+                if (this.isOrEntry(pending[i])) {
+                    lastOrIndex = i
+                    break
+                }
+            }
+            const grandpaIndex = pending.length >= 2 ? pending.length - 2 : -1
+            const validIndices = [lastOrIndex, grandpaIndex].filter(i => i >= 0)
+            const breakPoint = validIndices.length > 0 ? Math.min(...validIndices) : -1
+
+            // ✅ 【关键】标记每个规则的 shouldBreakLine
+            // breakPoint 及之后的规则需要换行，之前的不换行（折叠）
+            for (let i = 0; i < pending.length; i++) {
+                pending[i].shouldBreakLine = (breakPoint >= 0) ? (i >= breakPoint) : true
             }
         }
-        const grandpaIndex = pending.length >= 2 ? pending.length - 2 : -1
-        const validIndices = [lastOrIndex, grandpaIndex].filter(i => i >= 0)
-        const breakPoint = validIndices.length > 0 ? Math.min(...validIndices) : -1
 
-        // 执行输出
-        if (breakPoint > 0) {
-            // 折叠部分：[0, breakPoint)
-            this.printChainRule(pending.slice(0, breakPoint), baseDepth)
+        // 【第四步】根据 shouldBreakLine 标记进行分组输出
+        let chainRules: RuleStackItem[] = []  // 积累要折叠的规则
+        let currentDepth = baseDepth
 
-            // 单独部分：[breakPoint, end]
-            this.printSingleRule(pending.slice(breakPoint), baseDepth + 1)
-        } else {
-            // 全部单独输出
-            this.printSingleRule(pending, baseDepth)
+        for (const rule of pending) {
+            if (rule.shouldBreakLine) {
+                // ✅ 当前规则需要换行
+                
+                // 先输出之前积累的折叠链（如果有的话）
+                if (chainRules.length > 0) {
+                    this.printChainRule(chainRules, currentDepth)
+                    currentDepth++
+                }
+                
+                // 再输出当前规则（单独一行）
+                this.printSingleRule([rule], currentDepth)
+                currentDepth++
+                
+                // 重置链，准备下一个折叠段
+                chainRules = []
+            } else {
+                // 不换行，积累到链中
+                chainRules.push(rule)
+            }
+        }
+
+        // 【第五步】输出最后剩余的折叠链（如果有的话）
+        if (chainRules.length > 0) {
+            this.printChainRule(chainRules, currentDepth)
         }
     }
 
@@ -296,9 +320,9 @@ export class SubhutiDebugRuleTracePrint {
             } else {
                 // 普通规则：添加缓存标记
                 printStr = item.ruleName
-                if (item.isManuallyAdded) {
+                /*if (item.isManuallyAdded) {
                     printStr += ' ⚡[Cached]'
-                }
+                }*/
             }
             
             // console.log('  '.repeat(depth) +  printStr)

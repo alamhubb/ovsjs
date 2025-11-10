@@ -273,8 +273,9 @@ import {
 } from "./SubhutiDebugRuleTracePrint"
 
 type CachedEntry = {
-    item?: RuleStackItem
-    childs?: string[]
+    item?: RuleStackItem  // 规则或 Token 的数据（统一使用 RuleStackItem 存储）
+    childs?: string[]     // 子节点的 key（可以是规则 key 或 Token key）
+    // 【已弃用】以下字段已移入 item 中，保留用于向后兼容
     tokenIndex?: number
     tokenValue?: string
     tokenName?: string
@@ -764,21 +765,21 @@ export class SubhutiTraceDebugger {
 
     /**
      * 重置调试器状态，为新一轮解析做准备
-     * 
+     *
      * 职责：
      * - 清空旧的规则路径缓存
      * - 清空旧的性能统计
      * - 刷新 token 快照
-     * 
+     *
      * 调用时机：每次顶层规则开始前（由 SubhutiParser 调用）
      */
     resetForNewParse(tokens?: any[]): void {
         // 清空规则路径缓存（防止上一次解析的数据污染新解析）
         this.rulePathCache.clear()
-        
+
         // 清空性能统计（每次新解析都重新统计）
         this.stats.clear()
-        
+
         // 更新 token 快照（如果传入了新的 tokens）
         if (tokens) {
             // 刷新 token 列表（提取有效 token，排除注释等）
@@ -810,9 +811,8 @@ export class SubhutiTraceDebugger {
             outputted: item.outputted,
             hasExited: item.hasExited,
             tokenIndex: item.tokenIndex,
-            isManuallyAdded: item.isManuallyAdded,
             displayDepth: item.displayDepth,
-            consumedTokens: item.consumedTokens ? [...item.consumedTokens] : undefined,
+            shouldBreakLine: item.shouldBreakLine,  // 保留换行标记，用于缓存回放时的输出
             orBranchInfo: item.orBranchInfo ? {
                 branchIndex: item.orBranchInfo.branchIndex,
                 isOrEntry: item.orBranchInfo.isOrEntry,
@@ -830,21 +830,47 @@ export class SubhutiTraceDebugger {
      * 生成缓存键（包含 Or 节点信息）
      */
     private generateCacheKey(item: RuleStackItem): string {
-        const parts = [item.ruleName, item.tokenIndex.toString()]
+        // 【统一格式】ruleName:tokenIndex:isOrEntry:isOrBranch:branchIndex:tokenValue:tokenName
+        const ruleName = item.ruleName
+        const tokenIndex = item.tokenIndex.toString()
 
-        if (item.orBranchInfo) {
-            parts.push(item.orBranchInfo.isOrEntry ? '1' : '0')
-            parts.push(item.orBranchInfo.isOrBranch ? '1' : '0')
-            parts.push(item.orBranchInfo.branchIndex?.toString() ?? '-1')
-        } else {
-            parts.push('0', '0', '-1')
-        }
+        const isOrEntry = item.orBranchInfo ? (item.orBranchInfo.isOrEntry ? '1' : '0') : '0'
+        const isOrBranch = item.orBranchInfo ? (item.orBranchInfo.isOrBranch ? '1' : '0') : '0'
+        const branchIndex = item.orBranchInfo?.branchIndex?.toString() ?? '-1'
 
-        return parts.join(':')
+        const tokenValue = item.tokenValue ?? ''
+        const tokenName = item.tokenName ?? ''
+
+        return `${ruleName}:${tokenIndex}:${isOrEntry}:${isOrBranch}:${branchIndex}:${tokenValue}:${tokenName}`
     }
 
-    private generateTokenKey(tokenIndex: number, tokenName: string): string {
-        return `token:${tokenIndex}:${tokenName}`
+    private createTokenItem(tokenIndex: number, tokenValue: string, tokenName: string): RuleStackItem {
+        // 【统一】创建 Token 的 RuleStackItem
+        return {
+            ruleName: undefined,
+            startTime: 0,
+            outputted: false,
+            hasExited: true,
+            tokenIndex: tokenIndex,
+            shouldBreakLine: false,
+            tokenValue: tokenValue,  // ✅ 利用 [key: string]: any 存储
+            tokenName: tokenName     // ✅ 利用 [key: string]: any 存储
+        }
+    }
+
+    private generateTokenKeyAndItem(tokenIndex: number, tokenValue: string, tokenName: string): {
+        key: string;
+        item: RuleStackItem
+    } {
+        // 【合并】同时创建 Token 的 RuleStackItem 和生成其 key
+        const item = this.createTokenItem(tokenIndex, tokenValue, tokenName)
+        const key = this.generateCacheKey(item)
+        return {key, item}
+    }
+
+    private generateTokenKey(item: RuleStackItem): string {
+        // 【统一格式】Token 也使用 RuleStackItem，调用同一个 generateCacheKey 方法
+        return this.generateCacheKey(item)
     }
 
     private getOrCreateRuleEntry(item: RuleStackItem): CachedEntry {
@@ -874,7 +900,7 @@ export class SubhutiTraceDebugger {
         // 【说明】该方法现在只负责输出日志，不再建立父子关系
         // 【原因】父子关系已在 onRuleEnter() 时立即建立
         // ============================================
-        
+
         // 收集所有尚未输出的规则
         const pendingSet = new Set<RuleStackItem>(
             this.ruleStack.filter(item => !item.outputted)
@@ -895,50 +921,37 @@ export class SubhutiTraceDebugger {
      * @param isRoot
      */
     private restoreFromCache(cacheKey: string, isRoot: boolean): void {
-        // 读取缓存并准备回放规则路径
+        // 【第 1 步】读取缓存的规则或 Token
         const cached = this.rulePathCache.get(cacheKey)
-
         if (!cached || !cached.item) {
             return
         }
 
         const stackLengthBeforeRestore = this.ruleStack.length
 
+        // 【第 2 步】克隆规则 → 设置为未输出 → 推入栈
         const restoredItem = this.deepCloneRuleStackItem(cached.item)
-        restoredItem.isManuallyAdded = true
-        restoredItem.outputted = false
-        restoredItem.consumedTokens = undefined
+        restoredItem.outputted = false  // ✅ 【关键】标记为未输出，使 flushPendingOutputs 能处理
+        restoredItem.shouldBreakLine = cached.item.shouldBreakLine  // 恢复换行标记
         this.ruleStack.push(restoredItem)
 
-        // 递归恢复子规则和 Token 消费
+        // 【第 3 步】遍历所有子节点，递归推入栈
         const childKeys = cached.childs ?? []
         for (const childKey of childKeys) {
-            const childEntry = this.rulePathCache.get(childKey)
-            if (!childEntry) {
-                continue
-            }
-
-            if (childEntry.item) {
-                this.restoreFromCache(childKey, false)
-            } else if (
-                childEntry.tokenName !== undefined &&
-                childEntry.tokenValue !== undefined &&
-                childEntry.tokenIndex !== undefined
-            ) {
-                this.onTokenConsume(
-                    childEntry.tokenIndex,
-                    childEntry.tokenValue,
-                    childEntry.tokenName,
-                    true,
-                    true
-                )
-            }
+            // 递归处理每个子节点（无论是规则还是 Token，都统一递归处理）
+            this.restoreFromCache(childKey, false)
         }
 
-        while (this.ruleStack.length > stackLengthBeforeRestore + 1) {
-            this.ruleStack.pop()
+        // 【第 4 步】验证栈的一致性 - 递归返回时应该只增加了 1 个元素
+        const stackLengthAfterChilds = this.ruleStack.length
+        if (stackLengthAfterChilds !== stackLengthBeforeRestore + 1) {
+            throw new Error(
+                `❌ Cache replay stack mismatch: expected length ${stackLengthBeforeRestore + 1}, ` +
+                `but got ${stackLengthAfterChilds} after processing children of ${restoredItem.ruleName}`
+            )
         }
 
+        // 【第 5 步】如果不是根，pop 掉自己
         if (!isRoot) {
             this.ruleStack.pop()
         }
@@ -951,7 +964,7 @@ export class SubhutiTraceDebugger {
 
     /**
      * 规则进入事件处理器 - 立即建立父子关系版本
-     * 
+     *
      * 流程：
      * 1. 检查缓存命中（缓存命中直接回放）
      * 2. 从栈顶获取父节点（上一行）
@@ -974,14 +987,13 @@ export class SubhutiTraceDebugger {
             startTime,
             outputted: false,
             hasExited: false,
-            isManuallyAdded: false,
             displayDepth: undefined,
             orBranchInfo: undefined
         }
 
         // 生成当前规则的缓存键（ruleName:tokenIndex:orInfo）
         const cacheKey = this.generateCacheKey(ruleItem)
-        
+
         // 尝试从缓存中获取该规则的历史执行数据
         const cachedEntry = this.rulePathCache.get(cacheKey)
 
@@ -994,7 +1006,7 @@ export class SubhutiTraceDebugger {
         }
 
         // 【缓存未命中】进入新的规则执行流程
-        
+
         // ============================================
         // 【第一步】推入栈，标记规则已进入执行
         // ============================================
@@ -1041,13 +1053,13 @@ export class SubhutiTraceDebugger {
         // 验证栈顶并获取要退出的规则
         if (this.ruleStack.length > 0) {
             const top = this.ruleStack[this.ruleStack.length - 1]
-            
+
             // 验证栈顶确实是要退出的普通规则（没有 orBranchInfo）
             if (top.ruleName === ruleName && !top.hasExited && !top.orBranchInfo) {
                 // ============================================
                 // 【首次执行时】记录规则到缓存
                 // ============================================
-                if (!cacheHit && !top.isManuallyAdded) {
+                if (!cacheHit) {
                     // 【第一步】记录当前规则的最终状态到缓存
                     const cacheKey = this.generateCacheKey(top)
                     const entry = this.getOrCreateRuleEntry(top)
@@ -1060,10 +1072,10 @@ export class SubhutiTraceDebugger {
                     if (this.ruleStack.length > 1) {
                         // 获取上一行（父规则）
                         const parentItem = this.ruleStack[this.ruleStack.length - 2]
-                        
+
                         // 计算父规则的缓存键
                         const parentKey = this.generateCacheKey(parentItem)
-                        
+
                         // 获取或创建父规则的缓存项
                         let parentEntry = this.rulePathCache.get(parentKey)
                         if (!parentEntry) {
@@ -1074,12 +1086,12 @@ export class SubhutiTraceDebugger {
                             }
                             this.rulePathCache.set(parentKey, parentEntry)
                         }
-                        
+
                         // 确保 childs 数组初始化
                         if (!parentEntry.childs) {
                             parentEntry.childs = []
                         }
-                        
+
                         // 避免重复：检查是否已存在此子节点（使用 cacheKey）
                         const alreadyExists = parentEntry.childs.some(key => key === cacheKey)
                         if (!alreadyExists) {
@@ -1127,82 +1139,39 @@ export class SubhutiTraceDebugger {
     onTokenConsume(
         tokenIndex: number,
         tokenValue: string,
-        tokenName: string,
-        success: boolean,
-        fromCache: boolean = false
+        tokenName: string
     ): void {
-        // 【过滤】失败的 token 消费不记录
-        if (!success) {
-            return
-        }
 
-        // ============================================
-        // 【第一步】在当前规则中记录 token 被消费的信息
-        // ============================================
-        const tokenInfo = {
-            tokenIndex,
-            tokenValue,
-            tokenName
-        }
-
-        let currentRule: RuleStackItem | undefined
-
-        // 获取栈顶规则（当前消费 token 的规则）
+        // 【第 1 步】获取栈顶规则（当前消费 token 的规则）
+        let parentRule: RuleStackItem | undefined
         if (this.ruleStack.length > 0) {
-            currentRule = this.ruleStack[this.ruleStack.length - 1]
-
-            // 初始化 consumedTokens 数组
-            if (!currentRule.consumedTokens) {
-                currentRule.consumedTokens = []
-            }
-            // 记录本规则消费了哪些 token（用于调试信息展示）
-            currentRule.consumedTokens.push(tokenInfo)
+            parentRule = this.ruleStack[this.ruleStack.length - 1]
         }
 
-        // ============================================
-        // 【第二步】输出待处理的规则日志
-        // ============================================
+        // 【第 2 步】输出待处理的规则日志
         // 每次 token 消费时都调用，确保日志及时输出
         this.flushPendingOutputs()
 
-        // ============================================
-        // 【第三步】将 token 记录到缓存（仅首次执行，非缓存回放）
-        // ============================================
-        if (!fromCache && currentRule && !currentRule.isManuallyAdded) {
+        // 【第 3 步】将 token 记录到缓存（仅首次执行，非缓存回放）
+        if (parentRule) {
             // 获取当前规则的缓存项
-            const ruleEntry = this.getOrCreateRuleEntry(currentRule)
+            const ruleEntry = this.getOrCreateRuleEntry(parentRule)
 
-            // 生成 token 的唯一 key（格式：token:索引:类型）
-            const tokenKey = this.generateTokenKey(tokenIndex, tokenName)
-            
+            // 【合并】同时创建 Token 的 RuleStackItem 和生成其 key
+            const tokenItem = this.createTokenItem(tokenIndex, tokenValue, tokenName)
+            const tokenKey = this.generateCacheKey(tokenItem)
+
             // 获取或创建 token 的缓存项
             let tokenEntry = this.rulePathCache.get(tokenKey)
             if (!tokenEntry) {
                 // 【首次见到这个 token】创建新的缓存项
                 tokenEntry = {
-                    tokenIndex,
-                    tokenValue,
-                    tokenName,
+                    item: tokenItem,
                     childs: []
                 }
                 this.rulePathCache.set(tokenKey, tokenEntry)
-            } else {
-                // 【已存在】更新 token 信息
-                tokenEntry.tokenIndex = tokenIndex
-                tokenEntry.tokenValue = tokenValue
-                tokenEntry.tokenName = tokenName
-                if (!tokenEntry.childs) {
-                    tokenEntry.childs = []
-                }
             }
 
-            // ============================================
-            // 【关键】建立规则→token 关系
-            // ============================================
-            // 初始化规则的 childs 数组
-            if (!ruleEntry.childs) {
-                ruleEntry.childs = []
-            }
             // 避免重复：检查是否已添加此 token
             const tokenAlreadyExists = ruleEntry.childs.some(key => key === tokenKey)
             if (!tokenAlreadyExists) {
@@ -1263,10 +1232,10 @@ export class SubhutiTraceDebugger {
         totalBranches: number
     ): void {
         // 获取当前的 tokenIndex（从最近的规则节点获取，或使用 0 作为默认值）
-        const tokenIndex = this.ruleStack.length > 0 
+        const tokenIndex = this.ruleStack.length > 0
             ? (this.ruleStack[this.ruleStack.length - 1]?.tokenIndex ?? 0)
             : 0
-        
+
         // 创建 Or 包裹虚拟规则项
         // 注意：ruleName 只存储纯粹的规则名，不包含显示标记
         this.ruleStack.push({
@@ -1291,7 +1260,7 @@ export class SubhutiTraceDebugger {
         // ============================================
         if (this.ruleStack.length > 0) {
             const top = this.ruleStack[this.ruleStack.length - 1]
-            
+
             // 验证栈顶确实是要退出的 Or 包裹节点（orBranchInfo.isOrEntry && !isOrBranch）
             if (top.ruleName === parentRuleName
                 && top.orBranchInfo
@@ -1303,8 +1272,8 @@ export class SubhutiTraceDebugger {
                 this.ruleStack.pop()
             } else {
                 // 防御性检查：如果栈顶不匹配，直接抛出异常
-                const orInfo = top.orBranchInfo 
-                    ? `(entry=${top.orBranchInfo.isOrEntry}, branch=${top.orBranchInfo.isOrBranch}, exited=${top.hasExited})` 
+                const orInfo = top.orBranchInfo
+                    ? `(entry=${top.orBranchInfo.isOrEntry}, branch=${top.orBranchInfo.isOrBranch}, exited=${top.hasExited})`
                     : '(no orBranchInfo)'
                 throw new Error(`❌ Or exit mismatch: expected ${parentRuleName}(OrEntry) at top, got ${top.ruleName}${orInfo}`)
             }
@@ -1320,10 +1289,10 @@ export class SubhutiTraceDebugger {
         parentRuleName: string
     ): void {
         // 获取当前的 tokenIndex（从最近的规则节点获取，或使用 0 作为默认值）
-        const tokenIndex = this.ruleStack.length > 0 
+        const tokenIndex = this.ruleStack.length > 0
             ? (this.ruleStack[this.ruleStack.length - 1]?.tokenIndex ?? 0)
             : 0
-        
+
         // 创建虚拟 Or 分支规则项（每次分支尝试都创建）
         // 注意：ruleName 只存储纯粹的规则名，不包含显示标记
         this.ruleStack.push({
@@ -1351,7 +1320,7 @@ export class SubhutiTraceDebugger {
         // ============================================
         if (this.ruleStack.length > 0) {
             const top = this.ruleStack[this.ruleStack.length - 1]
-            
+
             // 验证栈顶确实是要退出的 Or 分支节点（orBranchInfo.isOrBranch && !isOrEntry）
             if (top.ruleName === parentRuleName
                 && top.orBranchInfo
@@ -1365,8 +1334,8 @@ export class SubhutiTraceDebugger {
             } else {
                 // 防御性检查：如果栈顶不匹配，直接抛出异常
                 const info = top.orBranchInfo
-                const infoStr = info 
-                    ? `(entry=${info.isOrEntry}, branch=${info.isOrBranch}, idx=${info.branchIndex}, exited=${top.hasExited})` 
+                const infoStr = info
+                    ? `(entry=${info.isOrEntry}, branch=${info.isOrBranch}, idx=${info.branchIndex}, exited=${top.hasExited})`
                     : '(no orInfo)'
                 throw new Error(`❌ OrBranch exit mismatch: expected ${parentRuleName}(branchIdx=${branchIndex}) at top, got ${top.ruleName}${infoStr}`)
             }
