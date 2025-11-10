@@ -125,10 +125,11 @@ export interface RuleStackItem {
     displayDepth?: number       // 显示深度（flush 时计算）
     childs?: string[]           // 子节点的 key（可以是规则 key 或 Token key）
     orBranchInfo?: {
-        branchIndex?: number
-        isOrEntry: boolean // 是否是 Or 包裹节点（onOrEnter 创建）
-        isOrBranch: boolean // 是否是 Or 分支节点（onOrBranch 创建）
-        totalBranches?: number // Or 分支信息（如 "#1/3" 或 "3" 表示总分支数）
+        orIndex?: number           // 同一规则内 Or 的序号（0, 1, 2...，用于区分多个 Or）
+        branchIndex?: number       // Or 分支索引（1, 2, 3...）
+        isOrEntry: boolean         // 是否是 Or 包裹节点（onOrEnter 创建）
+        isOrBranch: boolean        // 是否是 Or 分支节点（onOrBranch 创建）
+        totalBranches?: number     // Or 分支信息（如 "#1/3" 或 "3" 表示总分支数）
     }
 }
 

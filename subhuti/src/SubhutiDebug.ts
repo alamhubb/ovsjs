@@ -807,6 +807,7 @@ export class SubhutiTraceDebugger {
             shouldBreakLine: item.shouldBreakLine,
             childs: item.childs ? [...item.childs] : [],  // 【新增】克隆 childs 数组
             orBranchInfo: item.orBranchInfo ? {
+                orIndex: item.orBranchInfo.orIndex,
                 branchIndex: item.orBranchInfo.branchIndex,
                 isOrEntry: item.orBranchInfo.isOrEntry,
                 isOrBranch: item.orBranchInfo.isOrBranch,
@@ -823,18 +824,19 @@ export class SubhutiTraceDebugger {
      * 生成缓存键（包含 Or 节点信息）
      */
     private generateCacheKey(item: RuleStackItem): string {
-        // 【统一格式】ruleName:tokenIndex:isOrEntry:isOrBranch:branchIndex:tokenValue:tokenName
+        // 【统一格式】ruleName:tokenIndex:isOrEntry:isOrBranch:orIndex:branchIndex:tokenValue:tokenName
         const ruleName = item.ruleName
         const tokenIndex = item.tokenIndex.toString()
 
         const isOrEntry = item.orBranchInfo ? (item.orBranchInfo.isOrEntry ? '1' : '0') : '0'
         const isOrBranch = item.orBranchInfo ? (item.orBranchInfo.isOrBranch ? '1' : '0') : '0'
+        const orIndex = item.orBranchInfo?.orIndex?.toString() ?? '-1'
         const branchIndex = item.orBranchInfo?.branchIndex?.toString() ?? '-1'
 
         const tokenValue = item.tokenValue ?? ''
         const tokenName = item.tokenName ?? ''
 
-        return `${ruleName}:${tokenIndex}:${isOrEntry}:${isOrBranch}:${branchIndex}:${tokenValue}:${tokenName}`
+        return `${ruleName}:${tokenIndex}:${isOrEntry}:${isOrBranch}:${orIndex}:${branchIndex}:${tokenValue}:${tokenName}`
     }
 
     private createTokenItem(tokenIndex: number, tokenValue: string, tokenName: string): RuleStackItem {
@@ -1195,6 +1197,21 @@ export class SubhutiTraceDebugger {
             ? (this.ruleStack[this.ruleStack.length - 1]?.tokenIndex ?? 0)
             : 0
 
+        // 【计算 orIndex】检查父规则已有多少个 Or 子节点
+        let orIndex = 0
+        if (this.ruleStack.length > 0) {
+            const parentRule = this.ruleStack[this.ruleStack.length - 1]
+            if (parentRule.childs) {
+                // 统计父规则的 childs 中有多少个 Or 包裹节点（isOrEntry=true）
+                for (const childKey of parentRule.childs) {
+                    const childItem = this.rulePathCache.get(childKey)
+                    if (childItem && childItem.orBranchInfo?.isOrEntry) {
+                        orIndex++
+                    }
+                }
+            }
+        }
+
         // 创建 Or 包裹虚拟规则项
         // 注意：ruleName 只存储纯粹的规则名，不包含显示标记
         this.ruleStack.push({
@@ -1205,6 +1222,7 @@ export class SubhutiTraceDebugger {
             displayDepth: undefined,
             childs: [],  // 初始化 childs 数组
             orBranchInfo: {
+                orIndex,  // 【新增】设置 Or 序号
                 isOrEntry: true,
                 isOrBranch: false
             }
@@ -1280,6 +1298,15 @@ export class SubhutiTraceDebugger {
             ? (this.ruleStack[this.ruleStack.length - 1]?.tokenIndex ?? 0)
             : 0
 
+        // 【继承 orIndex】从父 Or 包裹节点获取 orIndex
+        let orIndex: number | undefined = undefined
+        if (this.ruleStack.length > 0) {
+            const parentOrEntry = this.ruleStack[this.ruleStack.length - 1]
+            if (parentOrEntry.orBranchInfo?.isOrEntry) {
+                orIndex = parentOrEntry.orBranchInfo.orIndex
+            }
+        }
+
         // 创建虚拟 Or 分支规则项（每次分支尝试都创建）
         // 注意：ruleName 只存储纯粹的规则名，不包含显示标记
         this.ruleStack.push({
@@ -1290,6 +1317,7 @@ export class SubhutiTraceDebugger {
             displayDepth: undefined,
             childs: [],  // 初始化 childs 数组
             orBranchInfo: {
+                orIndex,              // 【新增】继承父 Or 包裹节点的 orIndex
                 isOrEntry: false,     // Or 分支节点不是 Or 包裹节点
                 isOrBranch: true,     // 这是 Or 分支节点
                 branchIndex,
