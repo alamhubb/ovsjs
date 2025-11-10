@@ -117,7 +117,6 @@ export interface RuleStackItem {
     ruleName: string
     startTime: number
     outputted: boolean          // 是否已输出
-
     tokenIndex: number          // 规则进入时的 token 索引（用于缓存键）
     displayDepth?: number       // 显示深度（flush 时计算）
     shouldBreakLine?: boolean   // 是否应该在这里换行（单独一行）
@@ -128,7 +127,6 @@ export interface RuleStackItem {
         isOrBranch: boolean // 是否是 Or 分支节点（onOrBranch 创建）
         totalBranches?: number // Or 分支信息（如 "#1/3" 或 "3" 表示总分支数）
     }
-    [key: string]: any  // 允许其他属性（对于向后兼容）
 }
 
 /**
