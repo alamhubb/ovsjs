@@ -884,7 +884,7 @@ export class SubhutiTraceDebugger {
             entry.childs = []
         }
         updated.childs = entry.childs
-        
+
         return updated
     }
 
@@ -913,35 +913,28 @@ export class SubhutiTraceDebugger {
      * @param cacheKey - 缓存键
      * @param isRoot
      */
-    private restoreFromCache(cacheKey: string, isRoot: boolean): void {
-        // 【第 1 步】读取缓存的规则或 Token（直接是 RuleStackItem）
+    private restoreFromCacheAndPushAndPrint(cacheKey: string, isRoot: boolean): void {
+        // 【第 1 步】读取缓存的规则或 Token
         const cached = this.rulePathCache.get(cacheKey)
         if (!cached) {
             return
         }
 
-        const stackLengthBeforeRestore = this.ruleStack.length
-
-        // 【第 2 步】克隆规则 → 设置为未输出 → 推入栈
+        // 【第 2 步】克隆并推入栈
         const restoredItem = this.deepCloneRuleStackItem(cached)
-        restoredItem.outputted = false  // ✅ 【关键】标记为未输出，使 flushPendingOutputs 能处理
-        restoredItem.shouldBreakLine = cached.shouldBreakLine  // 恢复换行标记
+        restoredItem.outputted = false  // 标记为未输出
+        restoredItem.shouldBreakLine = cached.shouldBreakLine
         this.ruleStack.push(restoredItem)
 
-        // 【第 3 步】遍历所有子节点，递归推入栈
+        // 【第 3 步】递归推入所有子节点
         const childKeys = cached.childs ?? []
         for (const childKey of childKeys) {
-            // 递归处理每个子节点（无论是规则还是 Token，都统一递归处理）
-            this.restoreFromCache(childKey, false)
+            this.restoreFromCacheAndPushAndPrint(childKey, false)
         }
 
-        // 【第 4 步】验证栈的一致性 - 递归返回时应该只增加了 1 个元素
-        const stackLengthAfterChilds = this.ruleStack.length
-        if (stackLengthAfterChilds !== stackLengthBeforeRestore + 1) {
-            throw new Error(
-                `❌ Cache replay stack mismatch: expected length ${stackLengthBeforeRestore + 1}, ` +
-                `but got ${stackLengthAfterChilds} after processing children of ${restoredItem.ruleName}`
-            )
+        // 【第 4 步】如果是根规则，触发日志输出
+        if (isRoot) {
+            this.flushPendingOutputs()
         }
 
         // 【第 5 步】如果不是根，pop 掉自己
@@ -979,8 +972,7 @@ export class SubhutiTraceDebugger {
             tokenIndex,
             startTime,
             outputted: false,
-            displayDepth: undefined,
-            orBranchInfo: undefined
+            childs: []
         }
 
         // 生成当前规则的缓存键（ruleName:tokenIndex:orInfo）
@@ -990,9 +982,9 @@ export class SubhutiTraceDebugger {
         const cachedEntry = this.rulePathCache.get(cacheKey)
 
         // 【缓存命中】如果之前已经执行过相同位置的规则，直接回放
-        if (cachedEntry && cachedEntry.item) {
+        if (cachedEntry) {
             // 将历史执行路径恢复到栈中（包括子规则和 Token 消费）
-            this.restoreFromCache(cacheKey, true)
+            this.restoreFromCacheAndPushAndPrint(cacheKey, true)
             // 返回开始时间用于性能统计
             return startTime
         }
@@ -1039,75 +1031,51 @@ export class SubhutiTraceDebugger {
             duration = performance.now() - startTime
         }
 
-        // 验证栈顶确实是要退出的普通规则（没有 orBranchInfo）
-        if (parentRule.ruleName === ruleName && !parentRule.orBranchInfo) {
-            // ============================================
-            // 【首次执行时】记录规则到缓存
-            // ============================================
-            if (!cacheHit) {
-                // 生成规则的缓存 key
-                const cacheKey = this.generateCacheKey(parentRule)
-
-                // 【1】将规则加入缓存
-                const cloned = this.deepCloneRuleStackItem(parentRule)
-
-                this.rulePathCache.set(cacheKey, cloned)
-
-                // 【2】如果有父规则，将当前规则加入父节点的 childs
-                if (this.ruleStack.length > 1) {
-                    // 从栈中获取父规则
-                    const parentItem = this.ruleStack[this.ruleStack.length - 2]
-                    const parentKey = this.generateCacheKey(parentItem)
-                    const parentEntry = this.rulePathCache.get(parentKey)
-
-                    // 防御性检查：父规则必须在缓存中
-                    if (!parentEntry) {
-                        throw new Error(
-                            `❌ Parent rule ${parentItem.ruleName} not found in cache when exiting rule ${ruleName}`
-                        )
-                    }
-
-                    // 防御性检查：父规则必须有 childs 数组
-                    if (!parentEntry.childs) {
-                        throw new Error(
-                            `❌ Parent rule ${parentItem.ruleName} does not have childs array when exiting rule ${ruleName}`
-                        )
-                    }
-
-                    // 防御性检查：当前规则不应该重复添加
-                    const alreadyExists = parentEntry.childs.some(key => key === cacheKey)
-                    if (alreadyExists) {
-                        throw new Error(
-                            `❌ Rule ${ruleName} already exists in parent rule ${parentItem.ruleName}'s childs`
-                        )
-                    }
-
-                    // 将当前规则 key 追加到父规则的 childs
-                    parentEntry.childs.push(cacheKey)
-                }
-            }
-
-                 // 【第三步】pop 栈顶
-                 this.ruleStack.pop()  // 弹出栈顶，规则退出
-        } else {
-            // 防御性检查：如果栈顶不匹配，直接抛出异常
-            const isOr = parentRule.orBranchInfo ? `(Or: entry=${parentRule.orBranchInfo.isOrEntry}, branch=${parentRule.orBranchInfo.isOrBranch})` : ''
-            throw new Error(`❌ Rule exit mismatch: expected ${ruleName} at top, got ${parentRule.ruleName}${isOr}`)
-        }
-
-
-        // ============================================
-        // 【第一步】记录规则到缓存（仅在首次执行，非缓存命中）
-        // ============================================
         // 验证栈顶并获取要退出的规则
-        if (this.ruleStack.length > 0) {
-            let parentRule:RuleStackItem
-            if (this.ruleStack.length){
-                parentRule = this.ruleStack[this.ruleStack.length - 1]
+        if (this.ruleStack.length === 0) {
+            throw new Error(`❌ Rule exit error: ruleStack is empty when exiting ${ruleName}`)
+        }
+
+        const curRule = this.ruleStack[this.ruleStack.length - 1]
+
+
+        // 生成规则的缓存 key
+        const cacheKey = this.generateCacheKey(curRule)
+
+        const parentRule = this.ruleStack[this.ruleStack.length - 2]
+
+        // 【1】无论有没有缓存，都将当前规则加入到父规则的 childs
+        if (this.ruleStack.length > 1) {
+            // 从栈中获取父规则
+            const parentItem = this.ruleStack[this.ruleStack.length - 2]
+
+            // 防御性检查：父规则必须有 childs 数组
+            if (!parentItem.childs) {
+                throw new Error(
+                    `❌ Parent rule ${parentItem.ruleName} does not have childs array when exiting rule ${ruleName}`
+                )
             }
 
+            // 防御性检查：当前规则不应该重复添加
+            const alreadyExists = parentItem.childs.some(key => key === cacheKey)
+            if (alreadyExists) {
+                throw new Error(
+                    `❌ Rule ${ruleName} already exists in parent rule ${parentItem.ruleName}'s childs`
+                )
+            }
 
+            // 将当前规则 key 追加到父规则的 childs
+            parentItem.childs.push(cacheKey)
         }
+
+        // 【2】如果没有缓存，将规则存入缓存
+        if (!cacheHit) {
+            const cloned = this.deepCloneRuleStackItem(curRule)
+            this.rulePathCache.set(cacheKey, cloned)
+        }
+
+        // 【3】Pop 栈顶，规则退出
+        this.ruleStack.pop()
 
         // ============================================
         // 性能统计：记录规则执行数据
@@ -1158,7 +1126,7 @@ export class SubhutiTraceDebugger {
                     `❌ Parent rule ${parentRule.ruleName} does not have childs array when consuming token ${tokenName}`
                 )
             }
-            
+
             // 防御性检查：Token 不应该重复添加
             const tokenAlreadyExists = parentRule.childs.some(key => key === tokenKey)
             if (tokenAlreadyExists) {
@@ -1166,7 +1134,7 @@ export class SubhutiTraceDebugger {
                     `❌ Token ${tokenName} already exists in parent rule ${parentRule.ruleName}'s childs`
                 )
             }
-            
+
             // 添加 Token key 到父规则的 childs
             parentRule.childs.push(tokenKey)
         }
