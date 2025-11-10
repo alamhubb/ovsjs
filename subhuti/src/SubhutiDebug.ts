@@ -802,12 +802,11 @@ export class SubhutiTraceDebugger {
             ruleName: item.ruleName,
             startTime: item.startTime,
             outputted: item.outputted,
-            hasExited: item.hasExited,
             tokenIndex: item.tokenIndex,
             isManuallyAdded: item.isManuallyAdded,
             displayDepth: item.displayDepth,
             shouldBreakLine: item.shouldBreakLine,
-            childs: item.childs ? [...item.childs] : undefined,  // 【新增】克隆 childs 数组
+            childs: item.childs ? [...item.childs] : [],  // 【新增】克隆 childs 数组
             orBranchInfo: item.orBranchInfo ? {
                 branchIndex: item.orBranchInfo.branchIndex,
                 isOrEntry: item.orBranchInfo.isOrEntry,
@@ -845,12 +844,10 @@ export class SubhutiTraceDebugger {
             ruleName: undefined,
             startTime: 0,
             outputted: false,
-            hasExited: true,
             tokenIndex: tokenIndex,
             shouldBreakLine: false,
             tokenValue: tokenValue,  // ✅ 利用 [key: string]: any 存储
             tokenName: tokenName,     // ✅ 利用 [key: string]: any 存储
-            childs:[]
         }
     }
 
@@ -983,7 +980,6 @@ export class SubhutiTraceDebugger {
             tokenIndex,
             startTime,
             outputted: false,
-            hasExited: false,
             displayDepth: undefined,
             orBranchInfo: undefined
         }
@@ -1044,74 +1040,74 @@ export class SubhutiTraceDebugger {
             duration = performance.now() - startTime
         }
 
+        // 验证栈顶确实是要退出的普通规则（没有 orBranchInfo）
+        if (parentRule.ruleName === ruleName && !parentRule.orBranchInfo) {
+            // ============================================
+            // 【首次执行时】记录规则到缓存
+            // ============================================
+            if (!cacheHit) {
+                // 生成规则的缓存 key
+                const cacheKey = this.generateCacheKey(parentRule)
+
+                // 【1】将规则加入缓存
+                const cloned = this.deepCloneRuleStackItem(parentRule)
+
+                this.rulePathCache.set(cacheKey, cloned)
+
+                // 【2】如果有父规则，将当前规则加入父节点的 childs
+                if (this.ruleStack.length > 1) {
+                    // 从栈中获取父规则
+                    const parentItem = this.ruleStack[this.ruleStack.length - 2]
+                    const parentKey = this.generateCacheKey(parentItem)
+                    const parentEntry = this.rulePathCache.get(parentKey)
+
+                    // 防御性检查：父规则必须在缓存中
+                    if (!parentEntry) {
+                        throw new Error(
+                            `❌ Parent rule ${parentItem.ruleName} not found in cache when exiting rule ${ruleName}`
+                        )
+                    }
+
+                    // 防御性检查：父规则必须有 childs 数组
+                    if (!parentEntry.childs) {
+                        throw new Error(
+                            `❌ Parent rule ${parentItem.ruleName} does not have childs array when exiting rule ${ruleName}`
+                        )
+                    }
+
+                    // 防御性检查：当前规则不应该重复添加
+                    const alreadyExists = parentEntry.childs.some(key => key === cacheKey)
+                    if (alreadyExists) {
+                        throw new Error(
+                            `❌ Rule ${ruleName} already exists in parent rule ${parentItem.ruleName}'s childs`
+                        )
+                    }
+
+                    // 将当前规则 key 追加到父规则的 childs
+                    parentEntry.childs.push(cacheKey)
+                }
+            }
+
+                 // 【第三步】pop 栈顶
+                 this.ruleStack.pop()  // 弹出栈顶，规则退出
+        } else {
+            // 防御性检查：如果栈顶不匹配，直接抛出异常
+            const isOr = parentRule.orBranchInfo ? `(Or: entry=${parentRule.orBranchInfo.isOrEntry}, branch=${parentRule.orBranchInfo.isOrBranch})` : ''
+            throw new Error(`❌ Rule exit mismatch: expected ${ruleName} at top, got ${parentRule.ruleName}${isOr}`)
+        }
+
+
         // ============================================
         // 【第一步】记录规则到缓存（仅在首次执行，非缓存命中）
         // ============================================
         // 验证栈顶并获取要退出的规则
         if (this.ruleStack.length > 0) {
-            const top = this.ruleStack[this.ruleStack.length - 1]
-
-            // 验证栈顶确实是要退出的普通规则（没有 orBranchInfo）
-            if (top.ruleName === ruleName && !top.hasExited && !top.orBranchInfo) {
-                // ============================================
-                // 【首次执行时】记录规则到缓存
-                // ============================================
-                if (!cacheHit) {
-                    // 【第一步】记录当前规则的最终状态到缓存
-                    const cacheKey = this.generateCacheKey(top)
-                    const entry = this.getOrCreateRuleEntry(top)
-                    // 【1】使用规则退出时的最终状态更新缓存
-                    const updated = this.deepCloneRuleStackItem(top)
-                    if (!updated.childs) {
-                        updated.childs = []
-                    }
-                    // 保留原有的 childs 列表
-                    if (entry.childs) {
-                        updated.childs = entry.childs
-                    }
-                    this.rulePathCache.set(cacheKey, updated)
-
-                    // 【2】建立父→子关系：把当前规则添加到父节点的 childs
-                    if (this.ruleStack.length > 1) {
-                        // 获取上一行（父规则）
-                        const parentItem = this.ruleStack[this.ruleStack.length - 2]
-                        const parentKey = this.generateCacheKey(parentItem)
-                        const parentEntry = this.rulePathCache.get(parentKey)
-                        
-                        // 【防御】如果缓存中找不到父规则 → 报错
-                        if (!parentEntry) {
-                            throw new Error(
-                                `❌ Parent rule ${parentItem.ruleName} not found in cache when exiting rule ${ruleName}`
-                            )
-                        }
-
-                        // 确保 childs 数组初始化
-                        if (!parentEntry.childs) {
-                            parentEntry.childs = []
-                        }
-
-                        // 避免重复：检查是否已存在此子节点
-                        const alreadyExists = parentEntry.childs.some(key => key === cacheKey)
-                        if (!alreadyExists) {
-                            // 把当前规则的 cacheKey 加入父规则的子节点列表
-                            parentEntry.childs.push(cacheKey)
-                        }
-                    }
-                }
-
-                // ============================================
-                // 【第三步】pop 栈顶
-                // ============================================
-                top.hasExited = true
-                this.ruleStack.pop()  // 直接弹出栈顶
-            } else {
-                // 防御性检查：如果栈顶不匹配，直接抛出异常
-                const isOr = top.orBranchInfo ? `(Or: entry=${top.orBranchInfo.isOrEntry}, branch=${top.orBranchInfo.isOrBranch})` : ''
-                throw new Error(`❌ Rule exit mismatch: expected ${ruleName} at top, got ${top.ruleName}${isOr}`)
+            let parentRule:RuleStackItem
+            if (this.ruleStack.length){
+                parentRule = this.ruleStack[this.ruleStack.length - 1]
             }
-        } else {
-            // 防御性检查：规则栈为空，表示有严重的调用顺序错误
-            throw new Error(`❌ Rule exit error: ruleStack is empty when exiting ${ruleName}`)
+
+
         }
 
         // ============================================
@@ -1242,7 +1238,6 @@ export class SubhutiTraceDebugger {
             ruleName: parentRuleName,
             startTime: performance.now(),
             outputted: false,
-            hasExited: false,
             tokenIndex,
             displayDepth: undefined,
             orBranchInfo: {
@@ -1266,14 +1261,13 @@ export class SubhutiTraceDebugger {
                 && top.orBranchInfo
                 && top.orBranchInfo.isOrEntry
                 && !top.orBranchInfo.isOrBranch
-                && !top.hasExited) {
+            ) {
                 // ✅ 验证通过，标记退出并 pop
-                top.hasExited = true
                 this.ruleStack.pop()
             } else {
                 // 防御性检查：如果栈顶不匹配，直接抛出异常
                 const orInfo = top.orBranchInfo
-                    ? `(entry=${top.orBranchInfo.isOrEntry}, branch=${top.orBranchInfo.isOrBranch}, exited=${top.hasExited})`
+                    ? `(entry=${top.orBranchInfo.isOrEntry}, branch=${top.orBranchInfo.isOrBranch})`
                     : '(no orBranchInfo)'
                 throw new Error(`❌ Or exit mismatch: expected ${parentRuleName}(OrEntry) at top, got ${top.ruleName}${orInfo}`)
             }
@@ -1299,7 +1293,6 @@ export class SubhutiTraceDebugger {
             ruleName: parentRuleName,
             startTime: performance.now(),
             outputted: false,
-            hasExited: false,
             tokenIndex,
             displayDepth: undefined,
             orBranchInfo: {
@@ -1327,15 +1320,14 @@ export class SubhutiTraceDebugger {
                 && top.orBranchInfo.isOrBranch
                 && !top.orBranchInfo.isOrEntry
                 && top.orBranchInfo.branchIndex === branchIndex
-                && !top.hasExited) {
+            ) {
                 // ✅ 验证通过，标记退出并 pop
-                top.hasExited = true
                 this.ruleStack.pop()
             } else {
                 // 防御性检查：如果栈顶不匹配，直接抛出异常
                 const info = top.orBranchInfo
                 const infoStr = info
-                    ? `(entry=${info.isOrEntry}, branch=${info.isOrBranch}, idx=${info.branchIndex}, exited=${top.hasExited})`
+                    ? `(entry=${info.isOrEntry}, branch=${info.isOrBranch}, idx=${info.branchIndex})`
                     : '(no orInfo)'
                 throw new Error(`❌ OrBranch exit mismatch: expected ${parentRuleName}(branchIdx=${branchIndex}) at top, got ${top.ruleName}${infoStr}`)
             }
