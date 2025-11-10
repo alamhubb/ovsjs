@@ -1219,21 +1219,54 @@ export class SubhutiTraceDebugger {
             throw new Error(`❌ Or exit error: ruleStack is empty when exiting Or for ${parentRuleName}`)
         }
 
-        const top = this.ruleStack[this.ruleStack.length - 1]
+        const curOrNode = this.ruleStack[this.ruleStack.length - 1]
 
-        // 快速失败：栈顶必须是要退出的 Or 包裹节点（orBranchInfo.isOrEntry && !isOrBranch）
-        if (!(top.ruleName === parentRuleName
-            && top.orBranchInfo
-            && top.orBranchInfo.isOrEntry
-            && !top.orBranchInfo.isOrBranch
+        // 快速失败：栈顶必须是要退出的 Or 包裹节点
+        if (!(curOrNode.ruleName === parentRuleName
+            && curOrNode.orBranchInfo
+            && curOrNode.orBranchInfo.isOrEntry
+            && !curOrNode.orBranchInfo.isOrBranch
         )) {
-            const orInfo = top.orBranchInfo
-                ? `(entry=${top.orBranchInfo.isOrEntry}, branch=${top.orBranchInfo.isOrBranch})`
+            const orInfo = curOrNode.orBranchInfo
+                ? `(entry=${curOrNode.orBranchInfo.isOrEntry}, branch=${curOrNode.orBranchInfo.isOrBranch})`
                 : '(no orBranchInfo)'
-            throw new Error(`❌ Or exit mismatch: expected ${parentRuleName}(OrEntry) at top, got ${top.ruleName}${orInfo}`)
+            throw new Error(`❌ Or exit mismatch: expected ${parentRuleName}(OrEntry) at top, got ${curOrNode.ruleName}${orInfo}`)
         }
 
-        // 验证通过，pop
+        // 生成 Or 包裹节点的缓存 key
+        const cacheKey = this.generateCacheKey(curOrNode)
+        
+        // 获取父规则
+        const parentItem = this.ruleStack[this.ruleStack.length - 2]
+
+        // 【1】如果有父规则，将 Or 包裹节点加入到父规则的 childs
+        if (parentItem) {
+            // 快速失败：父规则必须有 childs 数组
+            if (!parentItem.childs) {
+                throw new Error(
+                    `❌ Parent rule ${parentItem.ruleName} does not have childs array when exiting Or ${parentRuleName}`
+                )
+            }
+
+            // 快速失败：Or 包裹节点不应该重复添加
+            if (parentItem.childs.some(key => key === cacheKey)) {
+                throw new Error(
+                    `❌ ${cacheKey} Or ${parentRuleName} already exists in parent rule ${parentItem.ruleName}'s childs`
+                )
+            }
+
+            // 将 Or 包裹节点 key 追加到父规则的 childs
+            parentItem.childs.push(cacheKey)
+        }
+
+        // 【2】检查缓存中是否已有此 Or 包裹节点 → 没有则存入
+        const cachedOrNode = this.rulePathCache.get(cacheKey)
+        if (!cachedOrNode) {
+            const cloned = this.deepCloneRuleStackItem(curOrNode)
+            this.rulePathCache.set(cacheKey, cloned)
+        }
+
+        // 【3】Pop 栈顶
         this.ruleStack.pop()
     }
 
@@ -1274,23 +1307,56 @@ export class SubhutiTraceDebugger {
             throw new Error(`❌ OrBranch exit error: ruleStack is empty when exiting branch ${branchIndex} for ${parentRuleName}`)
         }
 
-        const top = this.ruleStack[this.ruleStack.length - 1]
+        const curBranchNode = this.ruleStack[this.ruleStack.length - 1]
 
-        // 快速失败：栈顶必须是要退出的 Or 分支节点（orBranchInfo.isOrBranch && !isOrEntry）
-        if (!(top.ruleName === parentRuleName
-            && top.orBranchInfo
-            && top.orBranchInfo.isOrBranch
-            && !top.orBranchInfo.isOrEntry
-            && top.orBranchInfo.branchIndex === branchIndex
+        // 快速失败：栈顶必须是要退出的 Or 分支节点
+        if (!(curBranchNode.ruleName === parentRuleName
+            && curBranchNode.orBranchInfo
+            && curBranchNode.orBranchInfo.isOrBranch
+            && !curBranchNode.orBranchInfo.isOrEntry
+            && curBranchNode.orBranchInfo.branchIndex === branchIndex
         )) {
-            const info = top.orBranchInfo
+            const info = curBranchNode.orBranchInfo
             const infoStr = info
                 ? `(entry=${info.isOrEntry}, branch=${info.isOrBranch}, idx=${info.branchIndex})`
                 : '(no orInfo)'
-            throw new Error(`❌ OrBranch exit mismatch: expected ${parentRuleName}(branchIdx=${branchIndex}) at top, got ${top.ruleName}${infoStr}`)
+            throw new Error(`❌ OrBranch exit mismatch: expected ${parentRuleName}(branchIdx=${branchIndex}) at top, got ${curBranchNode.ruleName}${infoStr}`)
         }
 
-        // 验证通过，pop
+        // 生成 Or 分支节点的缓存 key
+        const cacheKey = this.generateCacheKey(curBranchNode)
+        
+        // 获取父节点（Or 包裹节点）
+        const parentOrNode = this.ruleStack[this.ruleStack.length - 2]
+
+        // 【1】如果有父节点，将 Or 分支节点加入到父节点的 childs
+        if (parentOrNode) {
+            // 快速失败：父节点必须有 childs 数组
+            if (!parentOrNode.childs) {
+                throw new Error(
+                    `❌ Parent Or node ${parentOrNode.ruleName} does not have childs array when exiting branch ${branchIndex}`
+                )
+            }
+
+            // 快速失败：Or 分支节点不应该重复添加
+            if (parentOrNode.childs.some(key => key === cacheKey)) {
+                throw new Error(
+                    `❌ OrBranch ${branchIndex} already exists in parent Or node ${parentOrNode.ruleName}'s childs`
+                )
+            }
+
+            // 将 Or 分支节点 key 追加到父节点的 childs
+            parentOrNode.childs.push(cacheKey)
+        }
+
+        // 【2】检查缓存中是否已有此 Or 分支节点 → 没有则存入
+        const cachedBranchNode = this.rulePathCache.get(cacheKey)
+        if (!cachedBranchNode) {
+            const cloned = this.deepCloneRuleStackItem(curBranchNode)
+            this.rulePathCache.set(cacheKey, cloned)
+        }
+
+        // 【3】Pop 栈顶
         this.ruleStack.pop()
     }
 
