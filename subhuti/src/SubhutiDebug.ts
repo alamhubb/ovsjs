@@ -803,7 +803,6 @@ export class SubhutiTraceDebugger {
             startTime: item.startTime,
             outputted: item.outputted,
             tokenIndex: item.tokenIndex,
-            isManuallyAdded: item.isManuallyAdded,
             displayDepth: item.displayDepth,
             shouldBreakLine: item.shouldBreakLine,
             childs: item.childs ? [...item.childs] : [],  // 【新增】克隆 childs 数组
