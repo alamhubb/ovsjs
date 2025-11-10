@@ -783,7 +783,6 @@ export class SubhutiTraceDebugger {
             ruleName: item.ruleName,
             startTime: item.startTime,
             outputted: item.outputted,
-            hasConsumedToken: item.hasConsumedToken,
             hasExited: item.hasExited,
             tokenIndex: item.tokenIndex,
             isManuallyAdded: item.isManuallyAdded,
@@ -962,7 +961,6 @@ export class SubhutiTraceDebugger {
             ruleName,
             startTime,
             outputted: false,
-            hasConsumedToken: false,
             hasExited: false,
             tokenIndex,              // ← 记录 tokenIndex
             isManuallyAdded: false,  // ← 正常规则
@@ -1065,7 +1063,6 @@ export class SubhutiTraceDebugger {
 
         if (this.ruleStack.length > 0) {
             currentRule = this.ruleStack[this.ruleStack.length - 1]
-            currentRule.hasConsumedToken = true
 
             if (!currentRule.consumedTokens) {
                 currentRule.consumedTokens = []
@@ -1154,7 +1151,6 @@ export class SubhutiTraceDebugger {
             ruleName: parentRuleName,
             startTime: performance.now(),
             outputted: false,
-            hasConsumedToken: false,
             hasExited: false,
             tokenIndex,
             displayDepth: undefined,
@@ -1203,7 +1199,6 @@ export class SubhutiTraceDebugger {
             ruleName: parentRuleName,
             startTime: performance.now(),
             outputted: false,
-            hasConsumedToken: false,
             hasExited: false,
             tokenIndex,
             displayDepth: undefined,

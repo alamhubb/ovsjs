@@ -117,7 +117,6 @@ export interface RuleStackItem {
     ruleName: string
     startTime: number
     outputted: boolean          // 是否已输出
-    hasConsumedToken: boolean
     hasExited: boolean          // 是否已退出（标记后立即 pop）
     tokenIndex: number          // 规则进入时的 token 索引（用于缓存键）
     isManuallyAdded?: boolean   // 是否从缓存恢复的手动添加项
