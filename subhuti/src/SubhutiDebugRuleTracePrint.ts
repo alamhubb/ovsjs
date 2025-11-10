@@ -119,8 +119,10 @@ export interface RuleStackItem {
     outputted: boolean          // 是否已输出
     hasExited: boolean          // 是否已退出（标记后立即 pop）
     tokenIndex: number          // 规则进入时的 token 索引（用于缓存键）
+    isManuallyAdded?: boolean   // 是否从缓存恢复的手动添加项
     displayDepth?: number       // 显示深度（flush 时计算）
     shouldBreakLine?: boolean   // 是否应该在这里换行（单独一行）
+    childs?: string[]           // 子节点的 key（可以是规则 key 或 Token key）
     orBranchInfo?: {
         branchIndex?: number
         isOrEntry: boolean // 是否是 Or 包裹节点（onOrEnter 创建）
