@@ -117,7 +117,7 @@ export interface RuleStackItem {
     ruleName: string
     startTime: number
     outputted: boolean          // 是否已输出
-    hasExited: boolean          // 是否已退出（标记后立即 pop）
+
     tokenIndex: number          // 规则进入时的 token 索引（用于缓存键）
     displayDepth?: number       // 显示深度（flush 时计算）
     shouldBreakLine?: boolean   // 是否应该在这里换行（单独一行）
