@@ -845,6 +845,7 @@ export class SubhutiTraceDebugger {
             outputted: false,
             tokenIndex: tokenIndex,
             shouldBreakLine: false,
+            // childs: [], token不需要 // 初始化 childs 数组
             tokenValue: tokenValue,  // ✅ 利用 [key: string]: any 存储
             tokenName: tokenName,     // ✅ 利用 [key: string]: any 存储
         }
@@ -1052,6 +1053,7 @@ export class SubhutiTraceDebugger {
                     `❌ Parent rule ${parentItem.ruleName} does not have childs array when exiting rule ${ruleName}`
                 )
             }
+
             // 快速失败：当前规则不应该重复添加
             if (parentItem.childs.some(key => key === cacheKey)) {
                 throw new Error(
@@ -1201,6 +1203,7 @@ export class SubhutiTraceDebugger {
             outputted: false,
             tokenIndex,
             displayDepth: undefined,
+            childs: [],  // 初始化 childs 数组
             orBranchInfo: {
                 isOrEntry: true,
                 isOrBranch: false
@@ -1252,6 +1255,7 @@ export class SubhutiTraceDebugger {
             outputted: false,
             tokenIndex,
             displayDepth: undefined,
+            childs: [],  // 初始化 childs 数组
             orBranchInfo: {
                 isOrEntry: false,     // Or 分支节点不是 Or 包裹节点
                 isOrBranch: true,     // 这是 Or 分支节点
