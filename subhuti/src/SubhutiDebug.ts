@@ -920,7 +920,7 @@ export class SubhutiTraceDebugger {
         // 如果是根规则，触发日志输出（缓存场景）
         // 如果不是根，pop 掉自己
         if (isRoot) {
-            SubhutiDebugRuleTracePrint.flushPendingOutputs_Cache(this.ruleStack)
+            SubhutiDebugRuleTracePrint.flushPendingOutputs_Cache_Impl(this.ruleStack)
         } else {
             this.ruleStack.pop()
         }

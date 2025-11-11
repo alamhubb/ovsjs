@@ -126,7 +126,7 @@ export interface RuleStackItem {
     childs?: string[]           // 子节点的 key（可以是规则 key 或 Token key）
 
     // 【防御性编程】两种方式计算的相对深度，用于交叉验证
-    relativeDepthByStack?: number    // 基于栈计算的相对深度（非缓存时记录）
+    // relativeDepthByStack?: number    // 基于栈计算的相对深度（非缓存时记录）
     relativeDepthByChilds?: number   // 基于 childs 计算的相对深度（缓存恢复时计算）
 
     orBranchInfo?: {
@@ -188,19 +188,6 @@ export class SubhutiDebugRuleTracePrint {
     }
 
     /**
-     * 缓存场景：输出待处理的规则日志（公开方法）
-     * 调用时机：缓存恢复时
-     */
-    static flushPendingOutputs_Cache(ruleStack: RuleStackItem[]): void {
-        // 【第一步】获取所有未输出的规则
-        const pending = ruleStack.filter(item => !item.outputted)
-        if (pending.length === 0) return
-
-        // 【第二步】调用内部实现
-        this.flushPendingOutputs_Cache_Impl(ruleStack, pending)
-    }
-
-    /**
      * 非缓存场景：输出待处理的规则日志（内部实现）
      * 特点：只有一次断链，只有一个折叠段
      *
@@ -257,7 +244,19 @@ export class SubhutiDebugRuleTracePrint {
      * 缓存场景：输出待处理的规则日志（内部实现）
      * 特点：可能有多次断链，可能有多个折叠段
      */
-    private static flushPendingOutputs_Cache_Impl(ruleStack: RuleStackItem[], pending: RuleStackItem[]): void {
+    private static flushPendingOutputs_Cache_Impl(ruleStack: RuleStackItem[]) {
+        const ruleStackGroupAry = []
+        let groupItem = [ruleStack[0]]
+        ruleStackGroupAry.push(groupItem)
+
+        for (const item of ruleStack.slice(1)) {
+            if (item.shouldBreakLine === groupItem[0].shouldBreakLine) {
+                groupItem.push(item)
+            } else {
+                groupItem = [item]
+                ruleStackGroupAry.push(groupItem)
+            }
+        }
 
     }
 
