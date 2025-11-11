@@ -955,7 +955,7 @@ export class SubhutiTraceDebugger {
         // 如果不是根，pop 掉自己
         if (isRoot) {
             this.flushPendingOutputs_Cache()
-        }else {
+        } else {
             this.ruleStack.pop()
         }
     }
@@ -1081,7 +1081,7 @@ export class SubhutiTraceDebugger {
             parentItem.childs.push(cacheKey)
         }
 
-        const cacheCurRule =  this.rulePathCache.get(cacheKey)
+        const cacheCurRule = this.rulePathCache.get(cacheKey)
 
         // 【2】如果没有缓存，将规则存入缓存
         if (!cacheCurRule) {
@@ -1267,7 +1267,7 @@ export class SubhutiTraceDebugger {
 
         // 生成 Or 包裹节点的缓存 key
         const cacheKey = this.generateCacheKey(curOrNode)
-        
+
         // 获取父规则
         const parentItem = this.ruleStack[this.ruleStack.length - 2]
 
@@ -1363,11 +1363,12 @@ export class SubhutiTraceDebugger {
                 ? `(entry=${info.isOrEntry}, branch=${info.isOrBranch}, idx=${info.branchIndex})`
                 : '(no orInfo)'
             throw new Error(`❌ OrBranch exit mismatch: expected ${parentRuleName}(branchIdx=${branchIndex}) at top, got ${curBranchNode.ruleName}${infoStr}`)
+            // return
         }
 
         // 生成 Or 分支节点的缓存 key
         const cacheKey = this.generateCacheKey(curBranchNode)
-        
+
         // 获取父节点（Or 包裹节点）
         const parentOrNode = this.ruleStack[this.ruleStack.length - 2]
 
