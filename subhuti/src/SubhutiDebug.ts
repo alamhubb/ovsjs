@@ -935,13 +935,11 @@ export class SubhutiTraceDebugger {
             this.restoreFromCacheAndPushAndPrint(childKey, false)
         }
 
-        // 【第 4 步】如果是根规则，触发日志输出
+        // 如果是根规则，触发日志输出
+        // 如果不是根，pop 掉自己
         if (isRoot) {
             this.flushPendingOutputs()
-        }
-
-        // 【第 5 步】如果不是根，pop 掉自己
-        if (!isRoot) {
+        }else {
             this.ruleStack.pop()
         }
     }
