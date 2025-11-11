@@ -894,36 +894,6 @@ export class SubhutiTraceDebugger {
     }
 
     /**
-     * 非缓存场景：输出待处理的规则日志
-     * 调用时机：消费 Token 时
-     */
-    private flushPendingOutputs_NonCache(): void {
-        // ============================================
-        // 【说明】该方法现在只负责输出日志，不再建立父子关系
-        // 【原因】父子关系已在 onRuleEnter() 时立即建立
-        // ============================================
-
-        // 【直接委托给输出工具】
-        // SubhutiDebugRuleTracePrint 负责日志格式化和打印
-        SubhutiDebugRuleTracePrint.flushPendingOutputs_NonCache_Impl(this.ruleStack)
-    }
-
-    /**
-     * 缓存场景：输出待处理的规则日志
-     * 调用时机：缓存恢复时
-     */
-    private flushPendingOutputs_Cache(): void {
-        // ============================================
-        // 【说明】该方法现在只负责输出日志，不再建立父子关系
-        // 【原因】父子关系已在 onRuleEnter() 时立即建立
-        // ============================================
-
-        // 【直接委托给输出工具】
-        // SubhutiDebugRuleTracePrint 负责日志格式化和打印
-        SubhutiDebugRuleTracePrint.flushPendingOutputs_Cache(this.ruleStack)
-    }
-
-    /**
      * 从缓存恢复规则路径（递归恢复整个链条）
      *
      * @param cacheKey - 缓存键
@@ -939,22 +909,18 @@ export class SubhutiTraceDebugger {
         // 【第 2 步】克隆并推入栈
         const restoredItem = this.deepCloneRuleStackItem(cached)
         restoredItem.outputted = false  // 标记为未输出
-        restoredItem.shouldBreakLine = cached.shouldBreakLine
-        // restoredItem.relativeDepthByStack = cached.relativeDepthByStack  // 保留缓存的相对深度
-        // relativeDepthByChilds 将在 flushPendingOutputs_Cache 中计算
 
         this.ruleStack.push(restoredItem)
 
-        // 【第 3 步】递归推入所有子节点
-        const childKeys = cached.childs ?? []
-        for (const childKey of childKeys) {
-            this.restoreFromCacheAndPushAndPrint(childKey, false)
+        if (cached.childs) {
+            for (const childKey of cached.childs) {
+                this.restoreFromCacheAndPushAndPrint(childKey, false)
+            }
         }
-
         // 如果是根规则，触发日志输出（缓存场景）
         // 如果不是根，pop 掉自己
         if (isRoot) {
-            this.flushPendingOutputs_Cache()
+            SubhutiDebugRuleTracePrint.flushPendingOutputs_Cache(this.ruleStack)
         } else {
             this.ruleStack.pop()
         }
@@ -992,21 +958,21 @@ export class SubhutiTraceDebugger {
             childs: []
         }
 
-        if (false){
-            // 生成当前规则的缓存键（ruleName:tokenIndex:orInfo）
-            const cacheKey = this.generateCacheKey(ruleItem)
+        // if (false){
+        // 生成当前规则的缓存键（ruleName:tokenIndex:orInfo）
+        const cacheKey = this.generateCacheKey(ruleItem)
 
-            // 尝试从缓存中获取该规则的历史执行数据
-            const cachedEntry = this.rulePathCache.get(cacheKey)
+        // 尝试从缓存中获取该规则的历史执行数据
+        const cachedEntry = this.rulePathCache.get(cacheKey)
 
-            // 【缓存命中】如果之前已经执行过相同位置的规则，直接回放
-            if (cachedEntry) {
-                // 将历史执行路径恢复到栈中（包括子规则和 Token 消费）
-                // this.restoreFromCacheAndPushAndPrint(cacheKey, true)
-                // 返回开始时间用于性能统计
-                // return startTime
-            }
+        // 【缓存命中】如果之前已经执行过相同位置的规则，直接回放
+        if (cachedEntry) {
+            // 将历史执行路径恢复到栈中（包括子规则和 Token 消费）
+            this.restoreFromCacheAndPushAndPrint(cacheKey, true)
+            // 返回开始时间用于性能统计
+            return startTime
         }
+        // }
 
         // 【缓存未命中】进入新的规则执行流程
 
@@ -1155,7 +1121,7 @@ export class SubhutiTraceDebugger {
 
         // 【第 2 步】输出待处理的规则日志（非缓存场景）
         // 每次 token 消费时都调用，确保日志及时输出
-        this.flushPendingOutputs_NonCache()
+        SubhutiDebugRuleTracePrint.flushPendingOutputs_NonCache_Impl(this.ruleStack)
 
 
         // ============================================
