@@ -294,24 +294,24 @@ export class SubhutiDebugRuleTracePrint {
 
         // 【第三步】防御性编程：对比两种相对深度计算方式
         for (const rule of pending) {
-            const depthByStack = rule.relativeDepthByStack
+            // const depthByStack = rule.relativeDepthByStack
             const depthByChilds = rule.relativeDepthByChilds
 
             // 如果两个都存在，必须一致
-            if (depthByStack !== undefined && depthByChilds !== undefined) {
-                if (depthByStack !== depthByChilds) {
-                    const ruleName = rule.ruleName ?? `Token[${rule.tokenValue}]`
-                    throw new Error(
-                        `❌ 相对深度不一致！规则: ${ruleName}\n` +
-                        `   基于栈计算: ${depthByStack}\n` +
-                        `   基于childs计算: ${depthByChilds}\n` +
-                        `   这表明缓存恢复逻辑有问题！`
-                    )
-                }
-            }
+            // if (depthByStack !== undefined && depthByChilds !== undefined) {
+            //     if (depthByStack !== depthByChilds) {
+            //         const ruleName = rule.ruleName ?? `Token[${rule.tokenValue}]`
+            //         throw new Error(
+            //             `❌ 相对深度不一致！规则: ${ruleName}\n` +
+            //             `   基于栈计算: ${depthByStack}\n` +
+            //             `   基于childs计算: ${depthByChilds}\n` +
+            //             `   这表明缓存恢复逻辑有问题！`
+            //         )
+            //     }
+            // }
 
             // 使用相对深度计算显示深度
-            const finalRelativeDepth = depthByStack ?? depthByChilds ?? 0
+            const finalRelativeDepth = depthByChilds
             rule.displayDepth = baseDepth + finalRelativeDepth
         }
 
@@ -367,7 +367,7 @@ export class SubhutiDebugRuleTracePrint {
 
         rules.forEach(r => {
             r.displayDepth = depth
-            r.relativeDepthByStack = 0
+            // r.relativeDepthByStack = 0
             r.outputted = true
         })
     }
@@ -376,8 +376,7 @@ export class SubhutiDebugRuleTracePrint {
      * 打印单独规则
      * 注意：传入的 rules 数组通常只有 1 个元素（单独显示的规则）
      */
-    static printMultipleSingleRule(rules: RuleStackItem[], baseDepth: number): void {
-        let depth = baseDepth
+    static printMultipleSingleRule(rules: RuleStackItem[], displayDepth: number): void {
         rules.forEach((item, index) => {
             // 判断是否是最后一个
             const isLast = index === rules.length - 1
@@ -390,7 +389,7 @@ export class SubhutiDebugRuleTracePrint {
 
             // 生成前缀：每一层的连接线
             let prefix = ''
-            for (let d = 0; d < depth; d++) {
+            for (let d = 0; d < displayDepth; d++) {
                 prefix += '│  '
             }
 
@@ -415,11 +414,10 @@ export class SubhutiDebugRuleTracePrint {
 
             // console.log('  '.repeat(depth) +  printStr)
             console.log(prefix + branch + printStr)
-            item.displayDepth = depth
-            item.relativeDepthByStack = depth - baseDepth
+            item.displayDepth = displayDepth
             item.shouldBreakLine = true
             item.outputted = true
-            depth++
+            displayDepth++
         })
     }
 

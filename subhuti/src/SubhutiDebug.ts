@@ -806,7 +806,7 @@ export class SubhutiTraceDebugger {
             displayDepth: item.displayDepth,
             shouldBreakLine: item.shouldBreakLine,
             childs: item.childs ? [...item.childs] : [],  // 【新增】克隆 childs 数组
-            relativeDepthByStack: item.relativeDepthByStack,    // 【防御性编程】克隆相对深度
+            // relativeDepthByStack: item.relativeDepthByStack,    // 【防御性编程】克隆相对深度
             relativeDepthByChilds: item.relativeDepthByChilds,  // 【防御性编程】克隆相对深度
             orBranchInfo: item.orBranchInfo ? {
                 orIndex: item.orBranchInfo.orIndex,
@@ -940,7 +940,7 @@ export class SubhutiTraceDebugger {
         const restoredItem = this.deepCloneRuleStackItem(cached)
         restoredItem.outputted = false  // 标记为未输出
         restoredItem.shouldBreakLine = cached.shouldBreakLine
-        restoredItem.relativeDepthByStack = cached.relativeDepthByStack  // 保留缓存的相对深度
+        // restoredItem.relativeDepthByStack = cached.relativeDepthByStack  // 保留缓存的相对深度
         // relativeDepthByChilds 将在 flushPendingOutputs_Cache 中计算
 
         this.ruleStack.push(restoredItem)
