@@ -992,18 +992,20 @@ export class SubhutiTraceDebugger {
             childs: []
         }
 
-        // 生成当前规则的缓存键（ruleName:tokenIndex:orInfo）
-        const cacheKey = this.generateCacheKey(ruleItem)
+        if (false){
+            // 生成当前规则的缓存键（ruleName:tokenIndex:orInfo）
+            const cacheKey = this.generateCacheKey(ruleItem)
 
-        // 尝试从缓存中获取该规则的历史执行数据
-        const cachedEntry = this.rulePathCache.get(cacheKey)
+            // 尝试从缓存中获取该规则的历史执行数据
+            const cachedEntry = this.rulePathCache.get(cacheKey)
 
-        // 【缓存命中】如果之前已经执行过相同位置的规则，直接回放
-        if (cachedEntry) {
-            // 将历史执行路径恢复到栈中（包括子规则和 Token 消费）
-            // this.restoreFromCacheAndPushAndPrint(cacheKey, true)
-            // 返回开始时间用于性能统计
-            return startTime
+            // 【缓存命中】如果之前已经执行过相同位置的规则，直接回放
+            if (cachedEntry) {
+                // 将历史执行路径恢复到栈中（包括子规则和 Token 消费）
+                // this.restoreFromCacheAndPushAndPrint(cacheKey, true)
+                // 返回开始时间用于性能统计
+                // return startTime
+            }
         }
 
         // 【缓存未命中】进入新的规则执行流程
@@ -1307,6 +1309,10 @@ export class SubhutiTraceDebugger {
         totalBranches: number,
         parentRuleName: string
     ): void {
+        // 🔍 调试：打印调用信息
+        console.log(`\n🔍 onOrBranch: ${parentRuleName}(branchIdx=${branchIndex})`)
+        console.log(`  栈深度（压入前）: ${this.ruleStack.length}`)
+
         // 获取当前的 tokenIndex（从最近的规则节点获取，或使用 0 作为默认值）
         const tokenIndex = this.ruleStack.length > 0
             ? (this.ruleStack[this.ruleStack.length - 1]?.tokenIndex ?? 0)
@@ -1338,6 +1344,8 @@ export class SubhutiTraceDebugger {
                 totalBranches
             }
         })
+
+        console.log(`  栈深度（压入后）: ${this.ruleStack.length}`)
     }
 
     onOrBranchExit(
@@ -1351,6 +1359,19 @@ export class SubhutiTraceDebugger {
 
         const curBranchNode = this.ruleStack[this.ruleStack.length - 1]
 
+        // 🔍 调试：打印栈的状态
+        const stackInfo = this.ruleStack.map((item, idx) => {
+            const info = item.orBranchInfo
+            const orStr = info
+                ? `(entry=${info.isOrEntry}, branch=${info.isOrBranch}, idx=${info.branchIndex})`
+                : ''
+            return `[${idx}] ${item.ruleName}${orStr}`
+        }).join('\n  ')
+
+        console.log(`\n🔍 onOrBranchExit: ${parentRuleName}(branchIdx=${branchIndex})`)
+        console.log(`  栈深度: ${this.ruleStack.length}`)
+        console.log(`  栈内容:\n  ${stackInfo}`)
+
         // 快速失败：栈顶必须是要退出的 Or 分支节点
         if (!(curBranchNode.ruleName === parentRuleName
             && curBranchNode.orBranchInfo
@@ -1362,8 +1383,9 @@ export class SubhutiTraceDebugger {
             const infoStr = info
                 ? `(entry=${info.isOrEntry}, branch=${info.isOrBranch}, idx=${info.branchIndex})`
                 : '(no orInfo)'
+            console.log(`  ❌ 期望栈顶: ${parentRuleName}(OrBranch#${branchIndex})`)
+            console.log(`  ❌ 实际栈顶: ${curBranchNode.ruleName}${infoStr}`)
             throw new Error(`❌ OrBranch exit mismatch: expected ${parentRuleName}(branchIdx=${branchIndex}) at top, got ${curBranchNode.ruleName}${infoStr}`)
-            // return
         }
 
         // 生成 Or 分支节点的缓存 key

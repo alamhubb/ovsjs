@@ -284,9 +284,9 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
         // 顶层规则：直接执行（无需缓存和循环检测）
         if (isTopLevel) {
-            const observeContext = this._debugger?.onRuleEnter(ruleName, this.tokenIndex)
+            const startTime = this._debugger?.onRuleEnter(ruleName, this.tokenIndex)
             const cst = this.executeRuleCore(ruleName, targetFun)
-            this.onRuleExitDebugHandler(ruleName, cst, isTopLevel, observeContext)
+            this.onRuleExitDebugHandler(ruleName, cst, isTopLevel, startTime)
             return cst
         }
 
