@@ -197,7 +197,7 @@ export class SubhutiDebugRuleTracePrint {
      * 3. 到达断点前：积累到折叠链
      * 4. 到达断点后：逐个输出并赋值 shouldBreakLine = true
      */
-    public static flushPendingOutputs_NonCache_Impl(ruleStack: RuleStackItem[]): void {
+    public static flushPendingOutputs_NonCache_Impl(ruleStack: RuleStackItem[]): number {
         if (!ruleStack.length) {
             throw new Error('系统错误：ruleStack 为空')
         }
@@ -234,30 +234,100 @@ export class SubhutiDebugRuleTracePrint {
             const singleRules = pendingRules.splice(-breakPoint);
             // 输出折叠链
             this.printChainRule(pendingRules, baseDepth)
-            this.printMultipleSingleRule(singleRules, baseDepth + 1)
+            return this.printMultipleSingleRule(singleRules, baseDepth + 1)
         } else {
-            this.printMultipleSingleRule(pendingRules, baseDepth)
+            return this.printMultipleSingleRule(pendingRules, baseDepth)
         }
     }
 
     /**
      * 缓存场景：输出待处理的规则日志（内部实现）
-     * 特点：可能有多次断链，可能有多个折叠段
+     *
+     * 特点：
+     * - displayDepth 已经在 restoreFromCacheAndPushAndPrint 中设置好了
+     * - shouldBreakLine 已经在第一次输出时设置并缓存了
+     * - 直接根据这些信息输出即可
      */
-    private static flushPendingOutputs_Cache_Impl(ruleStack: RuleStackItem[]) {
-        const ruleStackGroupAry = []
-        let groupItem = [ruleStack[0]]
-        ruleStackGroupAry.push(groupItem)
+    public static flushPendingOutputs_Cache_Impl(ruleStack: RuleStackItem[]): void {
 
-        for (const item of ruleStack.slice(1)) {
-            if (item.shouldBreakLine === groupItem[0].shouldBreakLine) {
-                groupItem.push(item)
+
+
+        // 按照 shouldBreakLine 分组
+        const groups: RuleStackItem[][] = []
+        let currentGroup: RuleStackItem[] = [pendingRules[0]]
+        groups.push(currentGroup)
+
+        for (let i = 1; i < pendingRules.length; i++) {
+            const item = pendingRules[i]
+            const prevItem = pendingRules[i - 1]
+
+            // 如果当前规则和前一个规则的 shouldBreakLine 相同，且 displayDepth 相同，则归为同一组（折叠链）
+            if (item.shouldBreakLine === prevItem.shouldBreakLine &&
+                item.displayDepth === prevItem.displayDepth) {
+                currentGroup.push(item)
             } else {
-                groupItem = [item]
-                ruleStackGroupAry.push(groupItem)
+                // 否则开始新的一组
+                currentGroup = [item]
+                groups.push(currentGroup)
             }
         }
 
+        // 输出每一组
+        for (const group of groups) {
+            if (group.length === 1) {
+                // 单个规则：单独输出
+                this.printSingleRuleWithDepth(group[0])
+            } else {
+                // 多个规则：折叠输出
+                this.printChainRuleWithDepth(group)
+            }
+        }
+    }
+
+    /**
+     * 打印单个规则（使用已设置的 displayDepth）
+     */
+    private static printSingleRuleWithDepth(item: RuleStackItem): void {
+        const depth = item.displayDepth ?? 0
+        const prefix = '│  '.repeat(depth)
+
+        let printStr = ''
+        if (item.orBranchInfo) {
+            if (item.orBranchInfo.isOrEntry) {
+                printStr = '🔀 ' + item.ruleName + '(Or)'
+            } else if (item.orBranchInfo.isOrBranch) {
+                printStr = `[Branch #${item.orBranchInfo.branchIndex + 1}]`
+            } else {
+                printStr = `错误`
+            }
+        } else {
+            printStr = item.ruleName
+        }
+
+        console.log(prefix + '├─' + printStr)
+        item.outputted = true
+    }
+
+    /**
+     * 打印折叠链（使用已设置的 displayDepth）
+     */
+    private static printChainRuleWithDepth(rules: RuleStackItem[]): void {
+        // 过滤 or 和虚拟规则
+        const names = rules.filter(item => !item.orBranchInfo).map(r => r.ruleName)
+
+        const displayNames = names.length > 5
+            ? [...names.slice(0, 3), '...', ...names.slice(-2)]
+            : names
+
+        // 使用第一个规则的 displayDepth
+        const depth = rules[0].displayDepth ?? 0
+        const prefix = '│  '.repeat(depth)
+
+        console.log(prefix + '├─' + displayNames.join(' > '))
+
+        rules.forEach(r => {
+            r.outputted = true
+        })
     }
 
     /**
@@ -332,6 +402,7 @@ export class SubhutiDebugRuleTracePrint {
             item.outputted = true
             displayDepth++
         })
+        return displayDepth
     }
 
 }

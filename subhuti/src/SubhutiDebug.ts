@@ -896,9 +896,10 @@ export class SubhutiTraceDebugger {
      * 从缓存恢复规则路径（递归恢复整个链条）
      *
      * @param cacheKey - 缓存键
-     * @param isRoot
+     * @param isRoot - 是否是根节点
+     * @param parentDisplayDepth - 父节点的 displayDepth（用于计算当前节点的深度）
      */
-    private restoreFromCacheAndPushAndPrint(cacheKey: string, isRoot: boolean = true): void {
+    private restoreFromCacheAndPushAndPrint(cacheKey: string, parentDisplayDepth: number, isRoot: boolean = true): void {
         // 【第 1 步】读取缓存的规则或 Token
         const cached = this.rulePathCache.get(cacheKey)
         if (!cached) {
@@ -909,14 +910,28 @@ export class SubhutiTraceDebugger {
         const restoredItem = this.deepCloneRuleStackItem(cached)
         restoredItem.outputted = false  // 标记为未输出
 
+        // 【第 3 步】设置 displayDepth
+        if (isRoot) {
+
+
+            // 根节点：查找栈中最后一个已输出的规则，基于它的深度 +1
+            const lastOutputted = [...this.ruleStack].reverse().find(item => item.outputted)
+            restoredItem.displayDepth = lastOutputted ? lastOutputted.displayDepth + 1 : 0
+        } else {
+            // 子节点：基于父节点的深度 +1
+            restoredItem.displayDepth = parentDisplayDepth + 1
+        }
+
         this.ruleStack.push(restoredItem)
 
+        // 【第 4 步】递归恢复子节点，传递当前节点的 displayDepth
         if (cached.childs) {
             for (const childKey of cached.childs) {
-                this.restoreFromCacheAndPushAndPrint(childKey, false)
+                this.restoreFromCacheAndPushAndPrint(childKey, false, restoredItem.displayDepth)
             }
         }
-        // 如果是根规则，触发日志输出（缓存场景）
+
+        // 【第 5 步】如果是根规则，触发日志输出（缓存场景）
         // 如果不是根，pop 掉自己
         if (isRoot) {
             SubhutiDebugRuleTracePrint.flushPendingOutputs_Cache_Impl(this.ruleStack)
@@ -966,8 +981,9 @@ export class SubhutiTraceDebugger {
 
         // 【缓存命中】如果之前已经执行过相同位置的规则，直接回放
         if (cachedEntry) {
+            let depth = SubhutiDebugRuleTracePrint.flushPendingOutputs_NonCache_Impl(ruleStack)
             // 将历史执行路径恢复到栈中（包括子规则和 Token 消费）
-            this.restoreFromCacheAndPushAndPrint(cacheKey)
+            this.restoreFromCacheAndPushAndPrint(cacheKey, depth)
             // 返回开始时间用于性能统计
             return startTime
         }
@@ -1120,17 +1136,7 @@ export class SubhutiTraceDebugger {
 
         // 【第 2 步】输出待处理的规则日志（非缓存场景）
         // 每次 token 消费时都调用，确保日志及时输出
-        SubhutiDebugRuleTracePrint.flushPendingOutputs_NonCache_Impl(this.ruleStack)
-
-
-        // ============================================
-        // 【第四步】输出 token 消费日志
-        // ============================================
-        // 基于栈中最后一个已输出规则的深度来计算当前 token 的缩进
-
-        const listRuleItem:RuleStackItem = this.ruleStack.findLast(item => item.outputted)
-        let depth = listRuleItem.displayDepth + 1
-
+        const depth = SubhutiDebugRuleTracePrint.flushPendingOutputs_NonCache_Impl(this.ruleStack)
 
         // 格式化 token 值（转义特殊字符、截断长字符串）
         const value = TreeFormatHelper.formatTokenValue(tokenValue, 20)
