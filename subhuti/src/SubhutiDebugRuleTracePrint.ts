@@ -127,7 +127,7 @@ export interface RuleStackItem {
 
     // 【防御性编程】两种方式计算的相对深度，用于交叉验证
     // relativeDepthByStack?: number    // 基于栈计算的相对深度（非缓存时记录）
-    relativeDepthByChilds?: number   // 基于 childs 计算的相对深度（缓存恢复时计算）
+    // relativeDepthByChilds?: number   // 基于 childs 计算的相对深度（缓存恢复时计算）
 
     orBranchInfo?: {
         orIndex?: number           // 同一规则内 Or 的序号（0, 1, 2...，用于区分多个 Or）
