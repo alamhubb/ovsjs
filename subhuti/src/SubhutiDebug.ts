@@ -803,7 +803,6 @@ export class SubhutiTraceDebugger {
             startTime: item.startTime,
             outputted: item.outputted,
             tokenIndex: item.tokenIndex,
-            displayDepth: item.displayDepth,
             shouldBreakLine: item.shouldBreakLine,
             childs: item.childs ? [...item.childs] : [],  // 【新增】克隆 childs 数组
             // relativeDepthByStack: item.relativeDepthByStack,    // 【防御性编程】克隆相对深度
@@ -1128,16 +1127,10 @@ export class SubhutiTraceDebugger {
         // 【第四步】输出 token 消费日志
         // ============================================
         // 基于栈中最后一个已输出规则的深度来计算当前 token 的缩进
-        let depth = 0
-        for (let i = this.ruleStack.length - 1; i >= 0; i--) {
-            const item = this.ruleStack[i]
-            // 找到第一个已输出的规则
-            if (item.outputted && item.displayDepth !== undefined) {
-                // token 比该规则再深一层
-                depth = item.displayDepth + 1
-                break
-            }
-        }
+
+        const listRuleItem:RuleStackItem = this.ruleStack.findLast(item => item.outputted)
+        let depth = listRuleItem.displayDepth + 1
+
 
         // 格式化 token 值（转义特殊字符、截断长字符串）
         const value = TreeFormatHelper.formatTokenValue(tokenValue, 20)
@@ -1201,7 +1194,6 @@ export class SubhutiTraceDebugger {
             startTime: performance.now(),
             outputted: false,
             tokenIndex,
-            displayDepth: undefined,
             childs: [],  // 初始化 childs 数组
             orBranchInfo: {
                 orIndex,  // 【新增】设置 Or 序号
@@ -1300,7 +1292,6 @@ export class SubhutiTraceDebugger {
             startTime: performance.now(),
             outputted: false,
             tokenIndex,
-            displayDepth: undefined,
             childs: [],  // 初始化 childs 数组
             orBranchInfo: {
                 orIndex,              // 【新增】继承父 Or 包裹节点的 orIndex
