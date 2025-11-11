@@ -806,6 +806,8 @@ export class SubhutiTraceDebugger {
             displayDepth: item.displayDepth,
             shouldBreakLine: item.shouldBreakLine,
             childs: item.childs ? [...item.childs] : [],  // 【新增】克隆 childs 数组
+            relativeDepthByStack: item.relativeDepthByStack,    // 【防御性编程】克隆相对深度
+            relativeDepthByChilds: item.relativeDepthByChilds,  // 【防御性编程】克隆相对深度
             orBranchInfo: item.orBranchInfo ? {
                 orIndex: item.orBranchInfo.orIndex,
                 branchIndex: item.orBranchInfo.branchIndex,
@@ -846,7 +848,7 @@ export class SubhutiTraceDebugger {
             startTime: 0,
             outputted: false,
             tokenIndex: tokenIndex,
-            shouldBreakLine: false,
+            shouldBreakLine: true,  // ✅ Token 总是需要单独显示（断链）
             // childs: [], token不需要 // 初始化 childs 数组
             tokenValue: tokenValue,  // ✅ 利用 [key: string]: any 存储
             tokenName: tokenName,     // ✅ 利用 [key: string]: any 存储
@@ -891,23 +893,34 @@ export class SubhutiTraceDebugger {
         return updated
     }
 
-    private flushPendingOutputs(): void {
+    /**
+     * 非缓存场景：输出待处理的规则日志
+     * 调用时机：消费 Token 时
+     */
+    private flushPendingOutputs_NonCache(): void {
         // ============================================
         // 【说明】该方法现在只负责输出日志，不再建立父子关系
         // 【原因】父子关系已在 onRuleEnter() 时立即建立
         // ============================================
 
-        // 收集所有尚未输出的规则
-        const pendingSet = new Set<RuleStackItem>(
-            this.ruleStack.filter(item => !item.outputted)
-        )
+        // 【直接委托给输出工具】
+        // SubhutiDebugRuleTracePrint 负责日志格式化和打印
+        SubhutiDebugRuleTracePrint.flushPendingOutputs_NonCache_Impl(this.ruleStack)
+    }
 
-        // 【简化逻辑】原来这里还要建立父子关系，现在只需要输出日志
-        // 因为父子关系已经在 onRuleEnter() 时建立，childs 已完整填充
+    /**
+     * 缓存场景：输出待处理的规则日志
+     * 调用时机：缓存恢复时
+     */
+    private flushPendingOutputs_Cache(): void {
+        // ============================================
+        // 【说明】该方法现在只负责输出日志，不再建立父子关系
+        // 【原因】父子关系已在 onRuleEnter() 时立即建立
+        // ============================================
 
         // 【直接委托给输出工具】
         // SubhutiDebugRuleTracePrint 负责日志格式化和打印
-        SubhutiDebugRuleTracePrint.flushPendingOutputs(this.ruleStack)
+        SubhutiDebugRuleTracePrint.flushPendingOutputs_Cache(this.ruleStack)
     }
 
     /**
@@ -927,6 +940,9 @@ export class SubhutiTraceDebugger {
         const restoredItem = this.deepCloneRuleStackItem(cached)
         restoredItem.outputted = false  // 标记为未输出
         restoredItem.shouldBreakLine = cached.shouldBreakLine
+        restoredItem.relativeDepthByStack = cached.relativeDepthByStack  // 保留缓存的相对深度
+        // relativeDepthByChilds 将在 flushPendingOutputs_Cache 中计算
+
         this.ruleStack.push(restoredItem)
 
         // 【第 3 步】递归推入所有子节点
@@ -935,10 +951,10 @@ export class SubhutiTraceDebugger {
             this.restoreFromCacheAndPushAndPrint(childKey, false)
         }
 
-        // 如果是根规则，触发日志输出
+        // 如果是根规则，触发日志输出（缓存场景）
         // 如果不是根，pop 掉自己
         if (isRoot) {
-            this.flushPendingOutputs()
+            this.flushPendingOutputs_Cache()
         }else {
             this.ruleStack.pop()
         }
@@ -1135,9 +1151,9 @@ export class SubhutiTraceDebugger {
         // 添加 Token key 到父规则的 childs
         parentRule.childs.push(tokenKey)
 
-        // 【第 2 步】输出待处理的规则日志
+        // 【第 2 步】输出待处理的规则日志（非缓存场景）
         // 每次 token 消费时都调用，确保日志及时输出
-        this.flushPendingOutputs()
+        this.flushPendingOutputs_NonCache()
 
 
         // ============================================

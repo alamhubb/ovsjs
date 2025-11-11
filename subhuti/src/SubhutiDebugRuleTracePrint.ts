@@ -124,6 +124,11 @@ export interface RuleStackItem {
     shouldBreakLine?: boolean   // 是否应该在这里换行（单独一行）
     displayDepth?: number       // 显示深度（flush 时计算）
     childs?: string[]           // 子节点的 key（可以是规则 key 或 Token key）
+
+    // 【防御性编程】两种方式计算的相对深度，用于交叉验证
+    relativeDepthByStack?: number    // 基于栈计算的相对深度（非缓存时记录）
+    relativeDepthByChilds?: number   // 基于 childs 计算的相对深度（缓存恢复时计算）
+
     orBranchInfo?: {
         orIndex?: number           // 同一规则内 Or 的序号（0, 1, 2...，用于区分多个 Or）
         branchIndex?: number       // Or 分支索引（1, 2, 3...）
@@ -183,68 +188,152 @@ export class SubhutiDebugRuleTracePrint {
     }
 
     /**
-     * 输出待处理的规则
-     *
-     * 实现规则：
-     * 1. 根据每个规则的 shouldBreakLine 标记决定是否换行
-     * 2. shouldBreakLine = false: 与前一个规则折叠显示
-     * 3. shouldBreakLine = true: 单独一行显示
-     * 4. 触发缓存回放或消费 token 时，所有 pending 规则都被标记并输出
+     * 缓存场景：输出待处理的规则日志（公开方法）
+     * 调用时机：缓存恢复时
      */
-    static flushPendingOutputs(ruleStack: RuleStackItem[]): void {
+    static flushPendingOutputs_Cache(ruleStack: RuleStackItem[]): void {
         // 【第一步】获取所有未输出的规则
         const pending = ruleStack.filter(item => !item.outputted)
         if (pending.length === 0) return
 
-        // 【第二步】计算基准深度（最后一个已输出规则的 displayDepth + 1）
+        // 【第二步】调用内部实现
+        this.flushPendingOutputs_Cache_Impl(ruleStack, pending)
+    }
+
+    /**
+     * 非缓存场景：输出待处理的规则日志（内部实现）
+     * 特点：只有一次断链，只有一个折叠段
+     *
+     * 【设计思路】
+     * 1. 不需要提前标记 shouldBreakLine
+     * 2. 遍历时直接判断是否到达断点
+     * 3. 到达断点前：积累到折叠链
+     * 4. 到达断点后：逐个输出并赋值 shouldBreakLine = true
+     */
+    public static flushPendingOutputs_NonCache_Impl(ruleStack: RuleStackItem[]): void {
+        if (!ruleStack.length) {
+            throw new Error('系统错误')
+        }
+        const lastOutputted = [...ruleStack].reverse().find(item => item.outputted)
+        if (!lastOutputted || lastOutputted.displayDepth < 0) {
+            throw new Error('系统错误')
+        }
+        //获取上一次输出的深度
+        const baseDepth = lastOutputted.displayDepth + 1
+
+
+        let pendingRules = ruleStack.filter(item => !item.outputted)
+
+        if (!pendingRules.length) {
+            throw new Error('系统错误')
+        }
+
+        //最后一个未输出的or
+        let lastOrIndex = [...pendingRules].reverse().findIndex(item => !!item?.orBranchInfo.isOrEntry)
+
+        const minChainRulesLength = 2
+
+        //获取断链索引
+        const breakIndex = pendingRules.length - Math.max(lastOrIndex, minChainRulesLength)
+
+        //获取折叠链
+        if (pendingRules.length > minChainRulesLength) {
+            const singleRules = pendingRules.splice(-breakIndex);
+            // 输出折叠链
+            this.printChainRule(pendingRules, baseDepth)
+            this.printMultipleSingleRule(singleRules, baseDepth)
+        } else {
+            this.printMultipleSingleRule(pendingRules, baseDepth)
+        }
+    }
+
+    /**
+     * 缓存场景：输出待处理的规则日志（内部实现）
+     * 特点：可能有多次断链，可能有多个折叠段
+     */
+    private static flushPendingOutputs_Cache_Impl(ruleStack: RuleStackItem[], pending: RuleStackItem[]): void {
+        // 【第一步】计算基准深度（最后一个已输出规则的 displayDepth + 1）
         const lastOutputted = [...ruleStack]
             .reverse()
             .find(item => item.outputted && item.displayDepth !== undefined)
         const baseDepth = lastOutputted ? lastOutputted.displayDepth + 1 : 0
 
-        // 【第三步】如果还没有标记 shouldBreakLine，则计算断点并标记
-        // （第一次执行时需要计算，缓存回放时已有标记）
-        const hasAllMarked = pending.every(item => item.shouldBreakLine !== undefined)
-        if (!hasAllMarked) {
-            // 计算断点（最后一个 Or 相关规则 或 爷爷规则，取较小值）
-            let lastOrIndex = -1
-            for (let i = pending.length - 1; i >= 0; i--) {
-                if (this.isOrEntry(pending[i])) {
-                    lastOrIndex = i
-                    break
-                }
-            }
-            const grandpaIndex = pending.length >= 2 ? pending.length - 2 : -1
-            const validIndices = [lastOrIndex, grandpaIndex].filter(i => i >= 0)
-            const breakPoint = validIndices.length > 0 ? Math.min(...validIndices) : -1
-
-            // ✅ 【关键】标记每个规则的 shouldBreakLine
-            // breakPoint 及之后的规则需要换行，之前的不换行（折叠）
-            for (let i = 0; i < pending.length; i++) {
-                pending[i].shouldBreakLine = (breakPoint >= 0) ? (i >= breakPoint) : true
-            }
-        }
-
-        // 【第四步】根据 shouldBreakLine 标记进行分组输出
-        let chainRules: RuleStackItem[] = []  // 积累要折叠的规则
-        let currentDepth = baseDepth
+        // 【第二步】计算 relativeDepthByChilds（基于 shouldBreakLine 标记）
+        let relativeDepth = 0
+        let chainRulesForDepth: RuleStackItem[] = []
 
         for (const rule of pending) {
             if (rule.shouldBreakLine) {
-                // ✅ 当前规则需要换行
-                
+                // 当前规则需要换行（断链）
+
+                // 先处理之前积累的折叠链
+                if (chainRulesForDepth.length > 0) {
+                    // 折叠链中的所有规则相对深度相同
+                    for (const chainRule of chainRulesForDepth) {
+                        chainRule.relativeDepthByChilds = relativeDepth
+                    }
+                    relativeDepth++
+                    chainRulesForDepth = []
+                }
+
+                // 当前规则的相对深度
+                rule.relativeDepthByChilds = relativeDepth
+                relativeDepth++
+            } else {
+                // 不换行，积累到链中
+                chainRulesForDepth.push(rule)
+            }
+        }
+
+        // 处理最后剩余的折叠链
+        if (chainRulesForDepth.length > 0) {
+            for (const chainRule of chainRulesForDepth) {
+                chainRule.relativeDepthByChilds = relativeDepth
+            }
+        }
+
+        // 【第三步】防御性编程：对比两种相对深度计算方式
+        for (const rule of pending) {
+            const depthByStack = rule.relativeDepthByStack
+            const depthByChilds = rule.relativeDepthByChilds
+
+            // 如果两个都存在，必须一致
+            if (depthByStack !== undefined && depthByChilds !== undefined) {
+                if (depthByStack !== depthByChilds) {
+                    const ruleName = rule.ruleName ?? `Token[${rule.tokenValue}]`
+                    throw new Error(
+                        `❌ 相对深度不一致！规则: ${ruleName}\n` +
+                        `   基于栈计算: ${depthByStack}\n` +
+                        `   基于childs计算: ${depthByChilds}\n` +
+                        `   这表明缓存恢复逻辑有问题！`
+                    )
+                }
+            }
+
+            // 使用相对深度计算显示深度
+            const finalRelativeDepth = depthByStack ?? depthByChilds ?? 0
+            rule.displayDepth = baseDepth + finalRelativeDepth
+        }
+
+        // 【第四步】根据 shouldBreakLine 标记进行分组输出
+        // 缓存场景可能有多个折叠段，需要逐个处理
+        let chainRules: RuleStackItem[] = []  // 积累要折叠的规则
+
+        for (const rule of pending) {
+            if (rule.shouldBreakLine) {
+                // 当前规则需要换行（断链）
+
                 // 先输出之前积累的折叠链（如果有的话）
                 if (chainRules.length > 0) {
-                    this.printChainRule(chainRules, currentDepth)
-                    currentDepth++
+                    // 折叠链中的所有规则使用第一个规则的深度
+                    const chainDepth = chainRules[0].displayDepth ?? baseDepth
+                    this.printChainRule(chainRules, chainDepth)
+                    chainRules = []  // 重置链
                 }
-                
+
                 // 再输出当前规则（单独一行）
-                this.printSingleRule([rule], currentDepth)
-                currentDepth++
-                
-                // 重置链，准备下一个折叠段
-                chainRules = []
+                const ruleDepth = rule.displayDepth ?? baseDepth
+                this.printMultipleSingleRule([rule], ruleDepth)
             } else {
                 // 不换行，积累到链中
                 chainRules.push(rule)
@@ -253,7 +342,8 @@ export class SubhutiDebugRuleTracePrint {
 
         // 【第五步】输出最后剩余的折叠链（如果有的话）
         if (chainRules.length > 0) {
-            this.printChainRule(chainRules, currentDepth)
+            const chainDepth = chainRules[0].displayDepth ?? baseDepth
+            this.printChainRule(chainRules, chainDepth)
         }
     }
 
@@ -282,9 +372,11 @@ export class SubhutiDebugRuleTracePrint {
     }
 
     /**
-     * 打印单独规则（深度递增）
+     * 打印单独规则
+     * 注意：传入的 rules 数组通常只有 1 个元素（单独显示的规则）
      */
-    static printSingleRule(rules: RuleStackItem[], startDepth: number): void {
+    static printMultipleSingleRule(rules: RuleStackItem[], startDepth: number): void {
+        let depth = startDepth
         rules.forEach((item, index) => {
             // 判断是否是最后一个
             const isLast = index === rules.length - 1
@@ -292,21 +384,13 @@ export class SubhutiDebugRuleTracePrint {
             // 生成缩进（父层级）+ 分支符号
             const branch = isLast ? '└─' : '├─'
 
-            const depth = startDepth + index
+            // ✅ 修复：所有规则使用相同的深度（同级）
+            // 因为 printSingleRule 通常只传入 1 个规则，不需要递增深度
 
             // 生成前缀：每一层的连接线
             let prefix = ''
             for (let d = 0; d < depth; d++) {
-                // 计算在 d 这一层，后面是否还有节点
-                // d 对应的规则索引是 (d - startDepth)
-                const ruleIndexAtLayer = d - startDepth
-
-                // 如果当前规则索引 > ruleIndexAtLayer，说明 d 层的规则后面还有节点
-                if (ruleIndexAtLayer < index) {
-                    prefix += '│  '
-                } else {
-                    prefix += '   '
-                }
+                prefix += '│  '
             }
 
             let printStr = ''
@@ -314,7 +398,7 @@ export class SubhutiDebugRuleTracePrint {
                 const branchInfo = item.orBranchInfo
                 if (item.orBranchInfo.isOrEntry) {
                     // Or 包裹节点：显示 [Or]
-                    printStr =  '🔀 ' +item.ruleName + '(Or)'
+                    printStr = '🔀 ' + item.ruleName + '(Or)'
                 } else if (item.orBranchInfo.isOrBranch) {
                     printStr = `[Branch #${branchInfo.branchIndex + 1}]`
                 } else {
@@ -327,12 +411,12 @@ export class SubhutiDebugRuleTracePrint {
                     printStr += ' ⚡[Cached]'
                 }*/
             }
-            
+
             // console.log('  '.repeat(depth) +  printStr)
             console.log(prefix + branch + printStr)
             item.displayDepth = depth
             item.outputted = true
-            // depth++
+            depth++
         })
     }
 
