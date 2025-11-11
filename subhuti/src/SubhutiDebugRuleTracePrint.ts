@@ -241,7 +241,7 @@ export class SubhutiDebugRuleTracePrint {
             const singleRules = pendingRules.splice(-breakIndex);
             // 输出折叠链
             this.printChainRule(pendingRules, baseDepth)
-            this.printMultipleSingleRule(singleRules, baseDepth)
+            this.printMultipleSingleRule(singleRules, baseDepth + 1)
         } else {
             this.printMultipleSingleRule(pendingRules, baseDepth)
         }
@@ -367,6 +367,7 @@ export class SubhutiDebugRuleTracePrint {
 
         rules.forEach(r => {
             r.displayDepth = depth
+            r.relativeDepthByStack = 0
             r.outputted = true
         })
     }
@@ -375,8 +376,8 @@ export class SubhutiDebugRuleTracePrint {
      * 打印单独规则
      * 注意：传入的 rules 数组通常只有 1 个元素（单独显示的规则）
      */
-    static printMultipleSingleRule(rules: RuleStackItem[], startDepth: number): void {
-        let depth = startDepth
+    static printMultipleSingleRule(rules: RuleStackItem[], baseDepth: number): void {
+        let depth = baseDepth
         rules.forEach((item, index) => {
             // 判断是否是最后一个
             const isLast = index === rules.length - 1
@@ -415,6 +416,8 @@ export class SubhutiDebugRuleTracePrint {
             // console.log('  '.repeat(depth) +  printStr)
             console.log(prefix + branch + printStr)
             item.displayDepth = depth
+            item.relativeDepthByStack = depth - baseDepth
+            item.shouldBreakLine = true
             item.outputted = true
             depth++
         })
