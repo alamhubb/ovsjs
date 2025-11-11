@@ -233,17 +233,18 @@ export class SubhutiDebugRuleTracePrint {
             throw new Error('系统错误')
         }
 
-        //最后一个未输出的or
-        let lastOrIndex = [...pendingRules].reverse().findIndex(item => !!item?.orBranchInfo?.isOrEntry)
+        //最后一个未输出的 OrEntry（使用 findLastIndex 直接获取正向索引）
+        let lastOrIndex = pendingRules.findLastIndex(item => !!item.orBranchInfo?.isOrEntry)
 
         const minChainRulesLength = 2
 
-        //获取断链索引
-        const breakIndex = pendingRules.length - Math.max(lastOrIndex, minChainRulesLength)
+        // 计算断链位置：最后一个 Or 的位置 + 1（如果没有 Or，则至少保留 minChainRulesLength 个规则单独输出）
+        // lastOrIndex = -1 表示没有找到 Or 节点
+        const breakPoint = Math.max(lastOrIndex, minChainRulesLength)
 
-        //获取折叠链
-        if (pendingRules.length > minChainRulesLength) {
-            const singleRules = pendingRules.splice(-breakIndex);
+        //获取折叠链和单独输出的规则
+        if (breakPoint < pendingRules.length) {
+            const singleRules = pendingRules.splice(-breakPoint);
             // 输出折叠链
             this.printChainRule(pendingRules, baseDepth)
             this.printMultipleSingleRule(singleRules, baseDepth + 1)
