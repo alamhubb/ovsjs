@@ -234,7 +234,7 @@ export class SubhutiDebugRuleTracePrint {
         }
 
         //最后一个未输出的 OrEntry（使用 findLastIndex 直接获取正向索引）
-        let lastOrIndex = pendingRules.findLastIndex(item => !!item.orBranchInfo?.isOrEntry)
+        let lastOrIndex = [...pendingRules].reverse().findIndex(item => !!item.orBranchInfo?.isOrEntry)
 
         const minChainRulesLength = 2
 
