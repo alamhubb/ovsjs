@@ -899,11 +899,11 @@ export class SubhutiTraceDebugger {
      * @param cacheKey - 缓存键
      * @param isRoot
      */
-    private restoreFromCacheAndPushAndPrint(cacheKey: string, isRoot: boolean): void {
+    private restoreFromCacheAndPushAndPrint(cacheKey: string, isRoot: boolean = true): void {
         // 【第 1 步】读取缓存的规则或 Token
         const cached = this.rulePathCache.get(cacheKey)
         if (!cached) {
-            return
+            throw new Error('系统错误')
         }
 
         // 【第 2 步】克隆并推入栈
@@ -968,7 +968,7 @@ export class SubhutiTraceDebugger {
         // 【缓存命中】如果之前已经执行过相同位置的规则，直接回放
         if (cachedEntry) {
             // 将历史执行路径恢复到栈中（包括子规则和 Token 消费）
-            this.restoreFromCacheAndPushAndPrint(cacheKey, true)
+            this.restoreFromCacheAndPushAndPrint(cacheKey)
             // 返回开始时间用于性能统计
             return startTime
         }
