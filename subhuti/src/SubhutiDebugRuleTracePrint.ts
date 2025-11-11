@@ -212,14 +212,19 @@ export class SubhutiDebugRuleTracePrint {
      */
     public static flushPendingOutputs_NonCache_Impl(ruleStack: RuleStackItem[]): void {
         if (!ruleStack.length) {
-            throw new Error('系统错误')
+            throw new Error('系统错误：ruleStack 为空')
         }
+
+        // 查找最后一个已输出的规则
         const lastOutputted = [...ruleStack].reverse().find(item => item.outputted)
-        if (!lastOutputted || lastOutputted.displayDepth < 0) {
-            throw new Error('系统错误')
+
+        // 计算基准深度
+        // 如果没有已输出的规则（第一次输出），baseDepth = 0
+        let baseDepth = 0
+        if (lastOutputted) {
+            // 否则 baseDepth = 最后一个已输出规则的深度 + 1
+            baseDepth = lastOutputted.displayDepth + 1
         }
-        //获取上一次输出的深度
-        const baseDepth = lastOutputted.displayDepth + 1
 
 
         let pendingRules = ruleStack.filter(item => !item.outputted)
@@ -229,7 +234,7 @@ export class SubhutiDebugRuleTracePrint {
         }
 
         //最后一个未输出的or
-        let lastOrIndex = [...pendingRules].reverse().findIndex(item => !!item?.orBranchInfo.isOrEntry)
+        let lastOrIndex = [...pendingRules].reverse().findIndex(item => !!item?.orBranchInfo?.isOrEntry)
 
         const minChainRulesLength = 2
 
