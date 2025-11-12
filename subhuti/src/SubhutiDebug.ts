@@ -1212,9 +1212,9 @@ export class SubhutiTraceDebugger {
 
         const curOrNode = this.ruleStack.pop()
 
-        console.log(`curOrNode.childs.length`)
-        console.log(curOrNode.ruleName)
-        console.log(curOrNode.childs.length)
+        LogUtil.consoleLog(`curOrNode.childs.length`)
+        LogUtil.consoleLog(curOrNode.ruleName)
+        LogUtil.consoleLog(curOrNode.childs.length)
 
         // 快速失败：栈顶必须是要退出的 Or 包裹节点
         if (!(curOrNode.ruleName === parentRuleName
@@ -1283,8 +1283,8 @@ export class SubhutiTraceDebugger {
         parentRuleName: string
     ): void {
         // 🔍 调试：打印调用信息
-        // console.log(`\n🔍 onOrBranch: ${parentRuleName}(branchIdx=${branchIndex})`)
-        // console.log(`  栈深度（压入前）: ${this.ruleStack.length}`)
+        // LogUtil.consoleLog(`\n🔍 onOrBranch: ${parentRuleName}(branchIdx=${branchIndex})`)
+        // LogUtil.consoleLog(`  栈深度（压入前）: ${this.ruleStack.length}`)
 
         // 获取当前的 tokenIndex（从最近的规则节点获取，或使用 0 作为默认值）
         const tokenIndex = this.ruleStack.length > 0
@@ -1317,7 +1317,7 @@ export class SubhutiTraceDebugger {
             }
         })
 
-        // console.log(`  栈深度（压入后）: ${this.ruleStack.length}`)
+        // LogUtil.consoleLog(`  栈深度（压入后）: ${this.ruleStack.length}`)
     }
 
     onOrBranchExit(
@@ -1341,9 +1341,9 @@ export class SubhutiTraceDebugger {
         //     return `[${idx}] ${item.ruleName}${orStr}`
         // }).join('\n  ')
 
-        // console.log(`\n🔍 onOrBranchExit: ${parentRuleName}(branchIdx=${branchIndex})`)
-        // console.log(`  栈深度: ${this.ruleStack.length}`)
-        // console.log(`  栈内容:\n  ${stackInfo}`)
+        // LogUtil.consoleLog(`\n🔍 onOrBranchExit: ${parentRuleName}(branchIdx=${branchIndex})`)
+        // LogUtil.consoleLog(`  栈深度: ${this.ruleStack.length}`)
+        // LogUtil.consoleLog(`  栈内容:\n  ${stackInfo}`)
 
         // 快速失败：栈顶必须是要退出的 Or 分支节点
         if (!(curBranchNode.ruleName === parentRuleName
@@ -1356,8 +1356,8 @@ export class SubhutiTraceDebugger {
             const infoStr = info
                 ? `(entry=${info.isOrEntry}, branch=${info.isOrBranch}, idx=${info.branchIndex})`
                 : '(no orInfo)'
-            // console.log(`  ❌ 期望栈顶: ${parentRuleName}(OrBranch#${branchIndex})`)
-            // console.log(`  ❌ 实际栈顶: ${curBranchNode.ruleName}${infoStr}`)
+            // LogUtil.consoleLog(`  ❌ 期望栈顶: ${parentRuleName}(OrBranch#${branchIndex})`)
+            // LogUtil.consoleLog(`  ❌ 实际栈顶: ${curBranchNode.ruleName}${infoStr}`)
             throw new Error(`❌ OrBranch exit mismatch: expected ${parentRuleName}(branchIdx=${branchIndex}) at top, got ${curBranchNode.ruleName}${infoStr}`)
         }
 
@@ -1547,9 +1547,9 @@ export class SubhutiTraceDebugger {
     }
 
     parentPushChild(parent: RuleStackItem, child: string) {
-        console.log(`parentPushChild: ${parent.ruleName}`);
-        console.log(parent.ruleName)
-        console.log(child)
+        LogUtil.consoleLog(`parentPushChild: ${parent.ruleName}`);
+        LogUtil.consoleLog(parent.ruleName)
+        LogUtil.consoleLog(child)
         parent.childs.push(child)
     }
 
@@ -1559,7 +1559,7 @@ export class SubhutiTraceDebugger {
 }
 
 export class LogUtil {
-    static consoleLog(...str: string[]) {
+    static consoleLog(...str: any[]) {
         if (false) {
             console.log(...str)
         }
