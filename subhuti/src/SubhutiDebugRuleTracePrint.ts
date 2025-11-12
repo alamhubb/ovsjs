@@ -284,7 +284,7 @@ export class SubhutiDebugRuleTracePrint {
         })
 
         if (pendingRules.length === 0) {
-            return  // 没有需要输出的规则
+            throw new Error('不该触发没有规则场景')
         }
 
         // 按照 shouldBreakLine 分组
