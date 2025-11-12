@@ -1068,8 +1068,8 @@ export class SubhutiTraceDebugger {
         const cacheKey = this.generateCacheKey(curRule)
 
         // 获取父规则
-        const parentItem = this.ruleStack[this.ruleStack.length - 2]
-
+        // 注意：当前规则已经被 pop 掉了，所以栈顶就是父节点
+        const parentItem = this.ruleStack[this.ruleStack.length - 1]
 
         // 【1】如果有父规则，将当前规则加入到父规则的 childs
         if (parentItem) {
@@ -1081,7 +1081,13 @@ export class SubhutiTraceDebugger {
             }
 
             // 快速失败：当前规则不应该重复添加
+            // 注意：这个检查现在是针对 Or 分支节点的，所以同一规则可以在不同分支中出现
             if (parentItem.childs.some(key => key === cacheKey)) {
+                console.log(`  ❌ 重复检测：规则 ${ruleName} 已存在于父节点的 childs 中`)
+                console.log(`  父节点的所有子节点键:`)
+                parentItem.childs.forEach((key, idx) => {
+                    console.log(`    [${idx}] ${key}`)
+                })
                 throw new Error(
                     `❌ Rule ${ruleName} already exists in parent rule ${parentItem.ruleName}'s childs`
                 )
@@ -1245,7 +1251,7 @@ export class SubhutiTraceDebugger {
         const cacheKey = this.generateCacheKey(curOrNode)
 
         // 获取父规则
-        const parentItem = this.ruleStack[this.ruleStack.length - 2]
+        const parentItem = this.ruleStack[this.ruleStack.length - 1]
 
         // 【1】如果有父规则，将 Or 包裹节点加入到父规则的 childs
         if (parentItem) {
