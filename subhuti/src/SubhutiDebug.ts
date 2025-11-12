@@ -861,8 +861,6 @@ export class SubhutiTraceDebugger {
     private restoreFromCacheAndPushAndPrint(cacheKey: string, curDisplayDepth: number, isRoot: boolean = true): void {
         // 【第 1 步】读取缓存的规则或 Token
         const cached = this.rulePathCache.get(cacheKey)
-        console.log(cacheKey)
-        console.log(cached)
         if (!cached) {
             throw new Error('系统错误')
         }
@@ -1538,11 +1536,6 @@ export class SubhutiTraceDebugger {
     // ========================================
     // 自动输出（由 Parser 在顶层规则完成时调用）
     // ========================================
-
-
-    openLog = false
-
-
 }
 
 export class LogUtil{
