@@ -1031,7 +1031,30 @@ export class SubhutiTraceDebugger {
         if (this.ruleStack.length === 0) {
             throw new Error(`❌ Rule exit error: ruleStack is empty when exiting ${ruleName}`)
         }
-        const curRule = this.ruleStack[this.ruleStack.length - 1]
+        const curRule = this.ruleStack.pop()
+
+        // ============================================
+        // 性能统计：记录规则执行数据
+        // ============================================
+        const stat = this.stats.get(ruleName)
+        if (stat) {
+            stat.totalTime += duration
+
+            if (cacheHit) {
+                stat.cacheHits++
+            } else {
+                stat.actualExecutions++
+                stat.executionTime += duration
+
+                if (stat.actualExecutions > 0) {
+                    stat.avgTime = stat.executionTime / stat.actualExecutions
+                }
+            }
+        }
+
+        if (!curRule.outputted) {
+            return
+        }
 
         // 生成规则的缓存 key
         const cacheKey = this.generateCacheKey(curRule)
@@ -1056,10 +1079,8 @@ export class SubhutiTraceDebugger {
                 )
             }
 
-            if (curRule.outputted) {
-                // 将当前规则 key 追加到父规则的 childs
-                parentItem.childs.push(cacheKey)
-            }
+            // 将当前规则 key 追加到父规则的 childs
+            parentItem.childs.push(cacheKey)
         }
 
         const cacheCurRule = this.rulePathCache.get(cacheKey)
@@ -1068,28 +1089,6 @@ export class SubhutiTraceDebugger {
         if (!cacheCurRule) {
             const cloned = this.deepCloneRuleStackItem(curRule)
             this.rulePathCache.set(cacheKey, cloned)
-        }
-
-        // 【3】Pop 栈顶，规则退出
-        this.ruleStack.pop()
-
-        // ============================================
-        // 性能统计：记录规则执行数据
-        // ============================================
-        const stat = this.stats.get(ruleName)
-        if (stat) {
-            stat.totalTime += duration
-
-            if (cacheHit) {
-                stat.cacheHits++
-            } else {
-                stat.actualExecutions++
-                stat.executionTime += duration
-
-                if (stat.actualExecutions > 0) {
-                    stat.avgTime = stat.executionTime / stat.actualExecutions
-                }
-            }
         }
     }
 
@@ -1215,7 +1214,11 @@ export class SubhutiTraceDebugger {
             throw new Error(`❌ Or exit error: ruleStack is empty when exiting Or for ${parentRuleName}`)
         }
 
-        const curOrNode = this.ruleStack[this.ruleStack.length - 1]
+        const curOrNode = this.ruleStack.pop()
+
+        if (!curOrNode.outputted) {
+            return
+        }
 
         // 快速失败：栈顶必须是要退出的 Or 包裹节点
         if (!(curOrNode.ruleName === parentRuleName
@@ -1261,9 +1264,6 @@ export class SubhutiTraceDebugger {
             const cloned = this.deepCloneRuleStackItem(curOrNode)
             this.rulePathCache.set(cacheKey, cloned)
         }
-
-        // 【3】Pop 栈顶
-        this.ruleStack.pop()
     }
 
     onOrBranch(
@@ -1318,7 +1318,12 @@ export class SubhutiTraceDebugger {
             throw new Error(`❌ OrBranch exit error: ruleStack is empty when exiting branch ${branchIndex} for ${parentRuleName}`)
         }
 
-        const curBranchNode = this.ruleStack[this.ruleStack.length - 1]
+        // 【3】Pop 栈顶
+        const curBranchNode = this.ruleStack.pop()
+
+        if (!curBranchNode.outputted) {
+            return
+        }
 
         // 🔍 调试：打印栈的状态
         const stackInfo = this.ruleStack.map((item, idx) => {
@@ -1371,10 +1376,8 @@ export class SubhutiTraceDebugger {
                 )
             }
 
-            if (curBranchNode.outputted){
-                // 将 Or 分支节点 key 追加到父节点的 childs
-                parentOrNode.childs.push(cacheKey)
-            }
+            // 将 Or 分支节点 key 追加到父节点的 childs
+            parentOrNode.childs.push(cacheKey)
         }
 
         // 【2】检查缓存中是否已有此 Or 分支节点 → 没有则存入
@@ -1383,9 +1386,6 @@ export class SubhutiTraceDebugger {
             const cloned = this.deepCloneRuleStackItem(curBranchNode)
             this.rulePathCache.set(cacheKey, cloned)
         }
-
-        // 【3】Pop 栈顶
-        this.ruleStack.pop()
     }
 
     onBacktrack(
