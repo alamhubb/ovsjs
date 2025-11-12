@@ -796,12 +796,14 @@ export class SubhutiTraceDebugger {
      */
     private deepCloneRuleStackItem(item: RuleStackItem): RuleStackItem {
         if (item.ruleName) {
-            if (item.childs.length) {
+            if (!item.childs.length) {
                 throw new Error('系统错误')
             }
         }
         const clone = {
             ruleName: item.ruleName,
+            tokenName: item.tokenName,
+            tokenValue: item.tokenValue,
             startTime: item.startTime,
             outputted: item.outputted,
             tokenIndex: item.tokenIndex,
@@ -1086,6 +1088,7 @@ export class SubhutiTraceDebugger {
                 console.error(this.ruleStack.map(item => item.ruleName))
                 console.error(value.outputted)
                 console.error(value.ruleName)
+                console.error(value.tokenName)
                 throw new Error('bugai wei 0')
             }
         }
