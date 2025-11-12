@@ -1369,8 +1369,10 @@ export class SubhutiTraceDebugger {
                 )
             }
 
-            // 将 Or 分支节点 key 追加到父节点的 childs
-            parentOrNode.childs.push(cacheKey)
+            if (curBranchNode.outputted){
+                // 将 Or 分支节点 key 追加到父节点的 childs
+                parentOrNode.childs.push(cacheKey)
+            }
         }
 
         // 【2】检查缓存中是否已有此 Or 分支节点 → 没有则存入
