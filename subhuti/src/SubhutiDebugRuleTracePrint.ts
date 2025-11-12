@@ -217,9 +217,20 @@ export class SubhutiDebugRuleTracePrint {
 
 
         let pendingRules = ruleStack.filter(item => !item.outputted)
+        
+        // ⚠️ 关键修复：过滤掉没有子节点的 Or 分支节点（失败的分支）
+        /*pendingRules = pendingRules.filter(item => {
+            if (item.orBranchInfo?.isOrBranch) {
+                // Or 分支节点必须有子节点才输出
+                return item.childs && item.childs.length > 0
+            }
+            return true  // 其他节点正常输出
+        })*/
 
         if (!pendingRules.length) {
-            throw new Error('系统错误')
+            // 没有需要输出的规则，直接返回当前深度
+            const lastOutputted = [...ruleStack].reverse().find(item => item.outputted)
+            return lastOutputted ? lastOutputted.displayDepth + 1 : 0
         }
 
         //最后一个未输出的 OrEntry（使用 findLastIndex 直接获取正向索引）
@@ -251,7 +262,28 @@ export class SubhutiDebugRuleTracePrint {
      * - 直接根据这些信息输出即可
      */
     public static flushPendingOutputs_Cache_Impl(ruleStack: RuleStackItem[]): void {
-        const pendingRules = ruleStack.filter(item => !item.outputted)
+        let pendingRules = ruleStack.filter(item => !item.outputted)
+        
+        // ⚠️ 关键修复：过滤掉没有子节点的 Or 分支节点（失败的分支）
+        /*pendingRules = pendingRules.filter(item => {
+            if (item.orBranchInfo?.isOrBranch) {
+                // Or 分支节点必须有子节点才输出
+                return item.childs && item.childs.length > 0
+            }
+            return true  // 其他节点正常输出
+        })*/
+        
+        // 🔍 调试：记录缓存回放的规则
+        console.log(`🔍 [DEBUG-CACHE] 缓存回放输出 ${pendingRules.length} 个规则`)
+        pendingRules.forEach((item, idx) => {
+            if (item.orBranchInfo?.isOrBranch) {
+                console.log(`🔍 [DEBUG-CACHE]   [${idx}] ${item.ruleName}(branch=${item.orBranchInfo.branchIndex}), childs=${item.childs?.length || 0}`)
+            }
+        })
+        
+        if (pendingRules.length === 0) {
+            return  // 没有需要输出的规则
+        }
 
         // 按照 shouldBreakLine 分组
         const groups: RuleStackItem[][] = []
@@ -336,6 +368,8 @@ export class SubhutiDebugRuleTracePrint {
             }
 
             let printStr = ''
+            let shouldMarkAsOutputted = true  // 默认标记为 outputted
+            
             if (item.orBranchInfo) {
                 const branchInfo = item.orBranchInfo
                 if (item.orBranchInfo.isOrEntry) {
@@ -343,6 +377,15 @@ export class SubhutiDebugRuleTracePrint {
                     printStr = '🔀 ' + item.ruleName + '(Or)'
                 } else if (item.orBranchInfo.isOrBranch) {
                     printStr = `[Branch #${branchInfo.branchIndex + 1}]`
+                    // 🔍 调试：记录 Or 分支被标记为 outputted
+                    console.log(`🔍 [DEBUG] 标记Or分支为outputted: ${item.ruleName}(branch=${branchInfo.branchIndex}), childs=${item.childs?.length || 0}`)
+                    
+                    // ⚠️ 关键修复：Or 分支节点只有在有子节点时才标记为 outputted
+                    // 这样可以防止失败的分支被缓存
+                    if (!item.childs || item.childs.length === 0) {
+                        shouldMarkAsOutputted = false
+                        console.log(`🔍 [DEBUG] Or分支没有子节点，不标记为outputted`)
+                    }
                 } else {
                     printStr = `错误`
                 }
@@ -364,7 +407,12 @@ export class SubhutiDebugRuleTracePrint {
                 item.displayDepth = depth
             }
             item.shouldBreakLine = true
-            item.outputted = true
+            
+            // 只有在应该标记时才设置 outputted = true
+            if (shouldMarkAsOutputted) {
+                item.outputted = true
+            }
+            
             depth++
         })
         return depth
