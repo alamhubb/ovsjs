@@ -1040,7 +1040,7 @@ export class SubhutiTraceDebugger {
         const parentItem = this.ruleStack[this.ruleStack.length - 2]
 
 
-        // 【1】无论有没有缓存，都将当前规则加入到父规则的 childs
+        // 【1】如果有父规则，将当前规则加入到父规则的 childs
         if (parentItem) {
             // 快速失败：父规则必须有 childs 数组
             if (!parentItem.childs) {
@@ -1056,8 +1056,10 @@ export class SubhutiTraceDebugger {
                 )
             }
 
-            // 将当前规则 key 追加到父规则的 childs
-            parentItem.childs.push(cacheKey)
+            if (curRule.outputted) {
+                // 将当前规则 key 追加到父规则的 childs
+                parentItem.childs.push(cacheKey)
+            }
         }
 
         const cacheCurRule = this.rulePathCache.get(cacheKey)
