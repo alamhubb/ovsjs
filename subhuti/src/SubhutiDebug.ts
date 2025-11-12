@@ -1033,6 +1033,13 @@ export class SubhutiTraceDebugger {
         }
         const curRule = this.ruleStack.pop()
 
+        // 快速失败：栈顶必须是要退出的规则
+        if (!curRule || curRule.ruleName !== ruleName) {
+            throw new Error(
+                `❌ Rule exit mismatch: expected ${ruleName} at top, got ${curRule?.ruleName || 'undefined'}`
+            )
+        }
+
         // ============================================
         // 性能统计：记录规则执行数据
         // ============================================
@@ -1052,6 +1059,7 @@ export class SubhutiTraceDebugger {
             }
         }
 
+        // 如果规则没有被输出，说明它没有消费 Token，不应该被记录到缓存
         if (!curRule.outputted) {
             return
         }
@@ -1216,10 +1224,6 @@ export class SubhutiTraceDebugger {
 
         const curOrNode = this.ruleStack.pop()
 
-        if (!curOrNode.outputted) {
-            return
-        }
-
         // 快速失败：栈顶必须是要退出的 Or 包裹节点
         if (!(curOrNode.ruleName === parentRuleName
             && curOrNode.orBranchInfo
@@ -1230,6 +1234,11 @@ export class SubhutiTraceDebugger {
                 ? `(entry=${curOrNode.orBranchInfo.isOrEntry}, branch=${curOrNode.orBranchInfo.isOrBranch})`
                 : '(no orBranchInfo)'
             throw new Error(`❌ Or exit mismatch: expected ${parentRuleName}(OrEntry) at top, got ${curOrNode.ruleName}${orInfo}`)
+        }
+
+        // 如果 Or 包裹节点没有被输出，说明它没有消费 Token，不应该被记录到缓存
+        if (!curOrNode.outputted) {
+            return
         }
 
         // 生成 Or 包裹节点的缓存 key
@@ -1321,10 +1330,6 @@ export class SubhutiTraceDebugger {
         // 【3】Pop 栈顶
         const curBranchNode = this.ruleStack.pop()
 
-        if (!curBranchNode.outputted) {
-            return
-        }
-
         // 🔍 调试：打印栈的状态
         const stackInfo = this.ruleStack.map((item, idx) => {
             const info = item.orBranchInfo
@@ -1352,6 +1357,11 @@ export class SubhutiTraceDebugger {
             console.log(`  ❌ 期望栈顶: ${parentRuleName}(OrBranch#${branchIndex})`)
             console.log(`  ❌ 实际栈顶: ${curBranchNode.ruleName}${infoStr}`)
             throw new Error(`❌ OrBranch exit mismatch: expected ${parentRuleName}(branchIdx=${branchIndex}) at top, got ${curBranchNode.ruleName}${infoStr}`)
+        }
+
+        // 如果 Or 分支没有被输出，说明它没有消费 Token，不应该被记录到缓存
+        if (!curBranchNode.outputted) {
+            return
         }
 
         // 生成 Or 分支节点的缓存 key
