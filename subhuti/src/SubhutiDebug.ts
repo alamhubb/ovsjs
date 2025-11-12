@@ -941,6 +941,8 @@ export class SubhutiTraceDebugger {
     // 过程追踪方法
     // ========================================
 
+    openDebugLog = false
+
     /**
      * 规则进入事件处理器 - 立即建立父子关系版本
      *
@@ -957,41 +959,6 @@ export class SubhutiTraceDebugger {
     onRuleEnter(ruleName: string, tokenIndex: number): number {
         // 记录开始时间，用于性能统计
         const startTime = performance.now()
-
-        // 创建当前规则的栈项
-        const ruleItem: RuleStackItem = {
-            ruleName,
-            // 记录规则进入时的 tokenIndex，用于缓存键唯一标识
-            tokenIndex,
-            startTime,
-            outputted: false,
-            childs: []
-        }
-
-        // if (false){
-        // 生成当前规则的缓存键（ruleName:tokenIndex:orInfo）
-        const cacheKey = this.generateCacheKey(ruleItem)
-
-        // 尝试从缓存中获取该规则的历史执行数据
-        const cachedEntry = this.rulePathCache.get(cacheKey)
-
-        // 【缓存命中】如果之前已经执行过相同位置的规则，直接回放
-        if (cachedEntry) {
-            let depth = SubhutiDebugRuleTracePrint.flushPendingOutputs_NonCache_Impl(this.ruleStack)
-            // 将历史执行路径恢复到栈中（包括子规则和 Token 消费）
-            this.restoreFromCacheAndPushAndPrint(cacheKey, depth)
-            // 返回开始时间用于性能统计
-            return startTime
-        }
-        // }
-
-        // 【缓存未命中】进入新的规则执行流程
-
-        // ============================================
-        // 【第一步】推入栈，标记规则已进入执行
-        // ============================================
-        // 此时不记录缓存，等到 onRuleExit 时规则完全执行后再记录
-        this.ruleStack.push(ruleItem)
 
         // ============================================
         // 性能统计：记录规则被调用
@@ -1012,6 +979,42 @@ export class SubhutiTraceDebugger {
         }
         // 累加总调用次数
         stat.totalCalls++
+
+        // 创建当前规则的栈项
+        const ruleItem: RuleStackItem = {
+            ruleName,
+            // 记录规则进入时的 tokenIndex，用于缓存键唯一标识
+            tokenIndex,
+            startTime,
+            outputted: false,
+            childs: []
+        }
+
+        if (this.openDebugLog) {
+            // 生成当前规则的缓存键（ruleName:tokenIndex:orInfo）
+            const cacheKey = this.generateCacheKey(ruleItem)
+
+            // 尝试从缓存中获取该规则的历史执行数据
+            const cachedEntry = this.rulePathCache.get(cacheKey)
+
+            // 【缓存命中】如果之前已经执行过相同位置的规则，直接回放
+            if (cachedEntry) {
+                let depth = SubhutiDebugRuleTracePrint.flushPendingOutputs_NonCache_Impl(this.ruleStack)
+                // 将历史执行路径恢复到栈中（包括子规则和 Token 消费）
+                this.restoreFromCacheAndPushAndPrint(cacheKey, depth)
+                // 返回开始时间用于性能统计
+                return startTime
+            }
+        }
+
+        // 【缓存未命中】进入新的规则执行流程
+
+        // ============================================
+        // 【第一步】推入栈，标记规则已进入执行
+        // ============================================
+        // 此时不记录缓存，等到 onRuleExit 时规则完全执行后再记录
+        this.ruleStack.push(ruleItem)
+
 
         // 返回开始时间，供 onRuleExit() 计算耗时
         return startTime
@@ -1287,8 +1290,8 @@ export class SubhutiTraceDebugger {
         parentRuleName: string
     ): void {
         // 🔍 调试：打印调用信息
-        console.log(`\n🔍 onOrBranch: ${parentRuleName}(branchIdx=${branchIndex})`)
-        console.log(`  栈深度（压入前）: ${this.ruleStack.length}`)
+        // console.log(`\n🔍 onOrBranch: ${parentRuleName}(branchIdx=${branchIndex})`)
+        // console.log(`  栈深度（压入前）: ${this.ruleStack.length}`)
 
         // 获取当前的 tokenIndex（从最近的规则节点获取，或使用 0 作为默认值）
         const tokenIndex = this.ruleStack.length > 0
@@ -1321,7 +1324,7 @@ export class SubhutiTraceDebugger {
             }
         })
 
-        console.log(`  栈深度（压入后）: ${this.ruleStack.length}`)
+        // console.log(`  栈深度（压入后）: ${this.ruleStack.length}`)
     }
 
     onOrBranchExit(
@@ -1337,17 +1340,17 @@ export class SubhutiTraceDebugger {
         const curBranchNode = this.ruleStack.pop()
 
         // 🔍 调试：打印栈的状态
-        const stackInfo = this.ruleStack.map((item, idx) => {
-            const info = item.orBranchInfo
-            const orStr = info
-                ? `(entry=${info.isOrEntry}, branch=${info.isOrBranch}, idx=${info.branchIndex})`
-                : ''
-            return `[${idx}] ${item.ruleName}${orStr}`
-        }).join('\n  ')
+        // const stackInfo = this.ruleStack.map((item, idx) => {
+        //     const info = item.orBranchInfo
+        //     const orStr = info
+        //         ? `(entry=${info.isOrEntry}, branch=${info.isOrBranch}, idx=${info.branchIndex})`
+        //         : ''
+        //     return `[${idx}] ${item.ruleName}${orStr}`
+        // }).join('\n  ')
 
-        console.log(`\n🔍 onOrBranchExit: ${parentRuleName}(branchIdx=${branchIndex})`)
-        console.log(`  栈深度: ${this.ruleStack.length}`)
-        console.log(`  栈内容:\n  ${stackInfo}`)
+        // console.log(`\n🔍 onOrBranchExit: ${parentRuleName}(branchIdx=${branchIndex})`)
+        // console.log(`  栈深度: ${this.ruleStack.length}`)
+        // console.log(`  栈内容:\n  ${stackInfo}`)
 
         // 快速失败：栈顶必须是要退出的 Or 分支节点
         if (!(curBranchNode.ruleName === parentRuleName
@@ -1360,8 +1363,8 @@ export class SubhutiTraceDebugger {
             const infoStr = info
                 ? `(entry=${info.isOrEntry}, branch=${info.isOrBranch}, idx=${info.branchIndex})`
                 : '(no orInfo)'
-            console.log(`  ❌ 期望栈顶: ${parentRuleName}(OrBranch#${branchIndex})`)
-            console.log(`  ❌ 实际栈顶: ${curBranchNode.ruleName}${infoStr}`)
+            // console.log(`  ❌ 期望栈顶: ${parentRuleName}(OrBranch#${branchIndex})`)
+            // console.log(`  ❌ 实际栈顶: ${curBranchNode.ruleName}${infoStr}`)
             throw new Error(`❌ OrBranch exit mismatch: expected ${parentRuleName}(branchIdx=${branchIndex}) at top, got ${curBranchNode.ruleName}${infoStr}`)
         }
 
