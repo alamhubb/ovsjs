@@ -266,10 +266,10 @@ export interface RuleStats {
 
 import type SubhutiCst from "./struct/SubhutiCst.ts"
 import {
+    type RuleStackItem,
     SubhutiDebugRuleTracePrint,
     TreeFormatHelper,
 } from "./SubhutiDebugRuleTracePrint"
-
 
 
 // ============================================
@@ -1069,9 +1069,15 @@ export class SubhutiTraceDebugger {
             this.cacheSet(cacheKey, cloned)
         }
     }
-    
-    
-    cacheSet(key: string, value: RuleStackItem){
+
+
+    cacheSet(key: string, value: RuleStackItem) {
+        if (value.childs.length === 0) {
+            console.error(this.ruleStack.map(item => item.ruleName))
+            console.error(key)
+            console.error(value.ruleName)
+            throw new Error('bugai wei 0')
+        }
         this.rulePathCache.set(key, value)
     }
 
@@ -1192,7 +1198,7 @@ export class SubhutiTraceDebugger {
     onOrExit(
         parentRuleName: string
     ): void {
-        console.log(`🔍 [DEBUG] onOrExit: ${parentRuleName}`)
+        LogUtil.consoleLog(`🔍 [DEBUG] onOrExit: ${parentRuleName}`)
         // 快速失败：规则栈不能为空
         if (this.ruleStack.length === 0) {
             throw new Error(`❌ Or exit error: ruleStack is empty when exiting Or for ${parentRuleName}`)
@@ -1216,13 +1222,13 @@ export class SubhutiTraceDebugger {
         if (!curOrNode.outputted) {
             return
         }
-        
+
         // ⚠️ 关键修复：如果 Or 包裹节点没有子节点，说明所有分支都失败了，不应该被缓存
-        if (!curOrNode.childs || curOrNode.childs.length === 0) {
-            console.log(`🔍 [DEBUG] ❌ Or包裹节点没有子节点，跳过缓存: ${parentRuleName}`)
+        /*if (!curOrNode.childs || curOrNode.childs.length === 0) {
+            LogUtil.consoleLog(`🔍 [DEBUG] ❌ Or包裹节点没有子节点，跳过缓存: ${parentRuleName}`)
             return
         }
-
+*/
         // 生成 Or 包裹节点的缓存 key
         const cacheKey = this.generateCacheKey(curOrNode)
 
@@ -1253,9 +1259,9 @@ export class SubhutiTraceDebugger {
         const cachedOrNode = this.rulePathCache.get(cacheKey)
         if (!cachedOrNode) {
             const cloned = this.deepCloneRuleStackItem(curOrNode)
-            console.log(`🔍 [DEBUG] ✅ 缓存Or包裹节点: ${parentRuleName}, childs=${cloned.childs?.length || 0}`)
+            LogUtil.consoleLog(`🔍 [DEBUG] ✅ 缓存Or包裹节点: ${parentRuleName}, childs=${cloned.childs?.length || 0}`)
             if (cloned.childs && cloned.childs.length > 0) {
-                console.log(`🔍 [DEBUG]   childs内容: ${cloned.childs.slice(0, 5).join(', ')}${cloned.childs.length > 5 ? '...' : ''}`)
+                LogUtil.consoleLog(`🔍 [DEBUG]   childs内容: ${cloned.childs.slice(0, 5).join(', ')}${cloned.childs.length > 5 ? '...' : ''}`)
             }
             this.rulePathCache.set(cacheKey, cloned)
         }
@@ -1346,22 +1352,22 @@ export class SubhutiTraceDebugger {
         }
 
         // ⚠️ 调试：检查 Or 分支的 childs
-        console.log(`🔍 [DEBUG] Or分支退出检查: ${parentRuleName}(branch=${branchIndex}), outputted=${curBranchNode.outputted}, childs=${curBranchNode.childs?.length || 0}`)
+        LogUtil.consoleLog(`🔍 [DEBUG] Or分支退出检查: ${parentRuleName}(branch=${branchIndex}), outputted=${curBranchNode.outputted}, childs=${curBranchNode.childs?.length || 0}`)
         if (curBranchNode.childs && curBranchNode.childs.length > 0) {
-            console.log(`🔍 [DEBUG]   childs内容: ${curBranchNode.childs.join(', ')}`)
+            LogUtil.consoleLog(`🔍 [DEBUG]   childs内容: ${curBranchNode.childs.join(', ')}`)
         }
-        
+
         // 如果 Or 分支没有被输出，说明它没有消费 Token，不应该被记录到缓存
         if (!curBranchNode.outputted) {
-            console.log(`🔍 [DEBUG] ❌ Or分支未输出，跳过缓存`)
+            LogUtil.consoleLog(`🔍 [DEBUG] ❌ Or分支未输出，跳过缓存`)
             return
         }
-        
+
         // ⚠️ 关键修复：如果 Or 分支没有子节点，说明它虽然被输出了，但最终失败了，不应该被缓存
-        if (!curBranchNode.childs || curBranchNode.childs.length === 0) {
-            console.log(`🔍 [DEBUG] ❌ Or分支没有子节点，跳过缓存`)
+        /*if (!curBranchNode.childs || curBranchNode.childs.length === 0) {
+            LogUtil.consoleLog(`🔍 [DEBUG] ❌ Or分支没有子节点，跳过缓存`)
             return
-        }
+        }*/
 
         // 生成 Or 分支节点的缓存 key
         const cacheKey = this.generateCacheKey(curBranchNode)
@@ -1386,7 +1392,7 @@ export class SubhutiTraceDebugger {
             }
 
             // 将 Or 分支节点 key 追加到父节点的 childs
-            console.log(`🔍 [DEBUG] 添加Or分支到父节点: ${parentOrNode.ruleName} += ${parentRuleName}(branch=${branchIndex})`)
+            LogUtil.consoleLog(`🔍 [DEBUG] 添加Or分支到父节点: ${parentOrNode.ruleName} += ${parentRuleName}(branch=${branchIndex})`)
             parentOrNode.childs.push(cacheKey)
         }
 
@@ -1394,10 +1400,10 @@ export class SubhutiTraceDebugger {
         const cachedBranchNode = this.rulePathCache.get(cacheKey)
         if (!cachedBranchNode) {
             const cloned = this.deepCloneRuleStackItem(curBranchNode)
-            console.log(`🔍 [DEBUG] ✅ 缓存Or分支: ${parentRuleName}(branch=${branchIndex}), childs=${cloned.childs?.length || 0}`)
+            LogUtil.consoleLog(`🔍 [DEBUG] ✅ 缓存Or分支: ${parentRuleName}(branch=${branchIndex}), childs=${cloned.childs?.length || 0}`)
             this.rulePathCache.set(cacheKey, cloned)
         } else {
-            console.log(`🔍 [DEBUG] ⚠️ Or分支已在缓存中: ${parentRuleName}(branch=${branchIndex})`)
+            LogUtil.consoleLog(`🔍 [DEBUG] ⚠️ Or分支已在缓存中: ${parentRuleName}(branch=${branchIndex})`)
         }
     }
 
@@ -1643,6 +1649,23 @@ export class SubhutiTraceDebugger {
         console.log('\n' + '='.repeat(60))
         console.log('🎉 Debug 输出完成')
         console.log('='.repeat(60))
+    }
+
+    openLog = false
+
+    consoleLog(...str: string[]) {
+        if (this.openLog) {
+            console.log(...str)
+        }
+    }
+
+}
+
+export class LogUtil{
+    static consoleLog(...str: string[]) {
+        if (this.openLog) {
+            console.log(...str)
+        }
     }
 }
 

@@ -18,6 +18,8 @@
 // TreeFormatHelper - 树形输出格式化辅助
 // ============================================
 
+import {LogUtil} from "./SubhutiDebug.ts";
+
 /**
  * 树形输出格式化辅助类
  *
@@ -274,10 +276,10 @@ export class SubhutiDebugRuleTracePrint {
         })*/
         
         // 🔍 调试：记录缓存回放的规则
-        console.log(`🔍 [DEBUG-CACHE] 缓存回放输出 ${pendingRules.length} 个规则`)
+        LogUtil.consoleLog(`🔍 [DEBUG-CACHE] 缓存回放输出 ${pendingRules.length} 个规则`)
         pendingRules.forEach((item, idx) => {
             if (item.orBranchInfo?.isOrBranch) {
-                console.log(`🔍 [DEBUG-CACHE]   [${idx}] ${item.ruleName}(branch=${item.orBranchInfo.branchIndex}), childs=${item.childs?.length || 0}`)
+                LogUtil.consoleLog(`🔍 [DEBUG-CACHE]   [${idx}] ${item.ruleName}(branch=${item.orBranchInfo.branchIndex}), childs=${item.childs?.length || 0}`)
             }
         })
         
@@ -378,13 +380,13 @@ export class SubhutiDebugRuleTracePrint {
                 } else if (item.orBranchInfo.isOrBranch) {
                     printStr = `[Branch #${branchInfo.branchIndex + 1}]`
                     // 🔍 调试：记录 Or 分支被标记为 outputted
-                    console.log(`🔍 [DEBUG] 标记Or分支为outputted: ${item.ruleName}(branch=${branchInfo.branchIndex}), childs=${item.childs?.length || 0}`)
+                    LogUtil.consoleLog(`🔍 [DEBUG] 标记Or分支为outputted: ${item.ruleName}(branch=${branchInfo.branchIndex}), childs=${item.childs?.length || 0}`)
                     
                     // ⚠️ 关键修复：Or 分支节点只有在有子节点时才标记为 outputted
                     // 这样可以防止失败的分支被缓存
                     if (!item.childs || item.childs.length === 0) {
                         shouldMarkAsOutputted = false
-                        console.log(`🔍 [DEBUG] Or分支没有子节点，不标记为outputted`)
+                        LogUtil.consoleLog(`🔍 [DEBUG] Or分支没有子节点，不标记为outputted`)
                     }
                 } else {
                     printStr = `错误`
