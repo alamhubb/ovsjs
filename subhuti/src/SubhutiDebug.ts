@@ -1071,6 +1071,7 @@ export class SubhutiTraceDebugger {
     cacheSet(key: string, value: RuleStackItem) {
         if (value?.childs?.length === 0) {
             console.error(this.ruleStack.map(item => item.ruleName))
+            console.error(value.outputted)
             console.error(key)
             console.error(value.ruleName)
             throw new Error('bugai wei 0')
