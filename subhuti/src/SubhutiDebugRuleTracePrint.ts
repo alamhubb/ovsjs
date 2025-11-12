@@ -121,6 +121,8 @@ export interface RuleStackItem {
     outputted: boolean          // 是否已输出
     tokenIndex: number          // 规则进入时的 token 索引（用于缓存键）
 
+    //用来判断是否为来自缓存的数据
+    isManuallyAdded?: boolean   // 是否应该在这里换行（单独一行）
     shouldBreakLine?: boolean   // 是否应该在这里换行（单独一行）
     displayDepth?: number       // 显示深度（flush 时计算）
     childs?: string[]           // 子节点的 key（可以是规则 key 或 Token key）
@@ -249,8 +251,7 @@ export class SubhutiDebugRuleTracePrint {
      * - 直接根据这些信息输出即可
      */
     public static flushPendingOutputs_Cache_Impl(ruleStack: RuleStackItem[]): void {
-
-
+        const pendingRules = ruleStack.filter(item => !item.outputted)
 
         // 按照 shouldBreakLine 分组
         const groups: RuleStackItem[][] = []
@@ -261,9 +262,8 @@ export class SubhutiDebugRuleTracePrint {
             const item = pendingRules[i]
             const prevItem = pendingRules[i - 1]
 
-            // 如果当前规则和前一个规则的 shouldBreakLine 相同，且 displayDepth 相同，则归为同一组（折叠链）
-            if (item.shouldBreakLine === prevItem.shouldBreakLine &&
-                item.displayDepth === prevItem.displayDepth) {
+            // 如果当前规则和前一个规则的 shouldBreakLine 相同
+            if (item.shouldBreakLine === prevItem.shouldBreakLine) {
                 currentGroup.push(item)
             } else {
                 // 否则开始新的一组
@@ -274,66 +274,22 @@ export class SubhutiDebugRuleTracePrint {
 
         // 输出每一组
         for (const group of groups) {
-            if (group.length === 1) {
+            if (group[0].shouldBreakLine) {
                 // 单个规则：单独输出
-                this.printSingleRuleWithDepth(group[0])
+                this.printMultipleSingleRule(group)
             } else {
                 // 多个规则：折叠输出
-                this.printChainRuleWithDepth(group)
+                this.printChainRule(group)
             }
         }
     }
 
     /**
-     * 打印单个规则（使用已设置的 displayDepth）
+     * 打印折叠链,兼容非缓存和缓存，
+     * @param rules
+     * @param depth 兼容非缓存和缓存，
      */
-    private static printSingleRuleWithDepth(item: RuleStackItem): void {
-        const depth = item.displayDepth ?? 0
-        const prefix = '│  '.repeat(depth)
-
-        let printStr = ''
-        if (item.orBranchInfo) {
-            if (item.orBranchInfo.isOrEntry) {
-                printStr = '🔀 ' + item.ruleName + '(Or)'
-            } else if (item.orBranchInfo.isOrBranch) {
-                printStr = `[Branch #${item.orBranchInfo.branchIndex + 1}]`
-            } else {
-                printStr = `错误`
-            }
-        } else {
-            printStr = item.ruleName
-        }
-
-        console.log(prefix + '├─' + printStr)
-        item.outputted = true
-    }
-
-    /**
-     * 打印折叠链（使用已设置的 displayDepth）
-     */
-    private static printChainRuleWithDepth(rules: RuleStackItem[]): void {
-        // 过滤 or 和虚拟规则
-        const names = rules.filter(item => !item.orBranchInfo).map(r => r.ruleName)
-
-        const displayNames = names.length > 5
-            ? [...names.slice(0, 3), '...', ...names.slice(-2)]
-            : names
-
-        // 使用第一个规则的 displayDepth
-        const depth = rules[0].displayDepth ?? 0
-        const prefix = '│  '.repeat(depth)
-
-        console.log(prefix + '├─' + displayNames.join(' > '))
-
-        rules.forEach(r => {
-            r.outputted = true
-        })
-    }
-
-    /**
-     * 打印折叠链
-     */
-    static printChainRule(rules: RuleStackItem[], depth: number): void {
+    static printChainRule(rules: RuleStackItem[], depth: number = rules[0].displayDepth): void {
         //过滤or和虚拟规则
         const names = rules.filter(item => !item.orBranchInfo).map(r => r.ruleName)
 
@@ -358,8 +314,11 @@ export class SubhutiDebugRuleTracePrint {
     /**
      * 打印单独规则
      * 注意：传入的 rules 数组通常只有 1 个元素（单独显示的规则）
+     *
+     * @param rules
+     * @param depth 兼容非缓存和缓存，
      */
-    static printMultipleSingleRule(rules: RuleStackItem[], displayDepth: number): void {
+    static printMultipleSingleRule(rules: RuleStackItem[], depth: number = rules[0].displayDepth): number {
         rules.forEach((item, index) => {
             // 判断是否是最后一个
             const isLast = index === rules.length - 1
@@ -372,7 +331,7 @@ export class SubhutiDebugRuleTracePrint {
 
             // 生成前缀：每一层的连接线
             let prefix = ''
-            for (let d = 0; d < displayDepth; d++) {
+            for (let d = 0; d < depth; d++) {
                 prefix += '│  '
             }
 
@@ -390,19 +349,25 @@ export class SubhutiDebugRuleTracePrint {
             } else {
                 // 普通规则：添加缓存标记
                 printStr = item.ruleName
-                /*if (item.isManuallyAdded) {
+                if (item.isManuallyAdded) {
                     printStr += ' ⚡[Cached]'
-                }*/
+                }
             }
 
             // console.log('  '.repeat(depth) +  printStr)
             console.log(prefix + branch + printStr)
-            item.displayDepth = displayDepth
+            if (item.isManuallyAdded) {
+                if (item.displayDepth != depth) {
+                    throw new Error('逻辑错误')
+                }
+            } else {
+                item.displayDepth = depth
+            }
             item.shouldBreakLine = true
             item.outputted = true
-            displayDepth++
+            depth++
         })
-        return displayDepth
+        return depth
     }
 
 }
