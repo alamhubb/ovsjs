@@ -795,7 +795,7 @@ export class SubhutiTraceDebugger {
      * 深拷贝 RuleStackItem（手动拷贝每个字段）
      */
     private deepCloneRuleStackItem(item: RuleStackItem): RuleStackItem {
-        return {
+        const clone = {
             ruleName: item.ruleName,
             startTime: item.startTime,
             outputted: item.outputted,
@@ -812,6 +812,9 @@ export class SubhutiTraceDebugger {
                 totalBranches: item.orBranchInfo.totalBranches
             } : undefined
         }
+        console.log(`clone.childs.length`)
+        console.log(clone.childs.length)
+        return clone
     }
 
     // ========================================
@@ -1056,7 +1059,7 @@ export class SubhutiTraceDebugger {
             }
 
             // 将当前规则 key 追加到父规则的 childs
-            parentItem.childs.push(cacheKey)
+            this.parentPushChild(parentItem, cacheKey)
         }
 
         const cacheCurRule = this.rulePathCache.get(cacheKey)
@@ -1069,12 +1072,14 @@ export class SubhutiTraceDebugger {
     }
 
     cacheSet(key: string, value: RuleStackItem) {
-        if (value?.childs?.length === 0) {
-            console.trace(key)
-            console.error(this.ruleStack.map(item => item.ruleName))
-            console.error(value.outputted)
-            console.error(value.ruleName)
-            throw new Error('bugai wei 0')
+        if (!value.tokenName) {
+            if (!value.childs || value.childs?.length === 0) {
+                console.trace(key)
+                console.error(this.ruleStack.map(item => item.ruleName))
+                console.error(value.outputted)
+                console.error(value.ruleName)
+                throw new Error('bugai wei 0')
+            }
         }
         this.rulePathCache.set(key, value)
     }
@@ -1119,7 +1124,7 @@ export class SubhutiTraceDebugger {
         LogUtil.consoleLog('parentRule:' + tokenKey)
 
         // 添加 Token key 到父规则的 childs
-        parentRule.childs.push(tokenKey)
+        this.parentPushChild(parentRule, tokenKey)
 
         // 【第 2 步】输出待处理的规则日志（非缓存场景）
         // 每次 token 消费时都调用，确保日志及时输出
@@ -1207,6 +1212,10 @@ export class SubhutiTraceDebugger {
 
         const curOrNode = this.ruleStack.pop()
 
+        console.log(`curOrNode.childs.length`)
+        console.log(curOrNode.ruleName)
+        console.log(curOrNode.childs.length)
+
         // 快速失败：栈顶必须是要退出的 Or 包裹节点
         if (!(curOrNode.ruleName === parentRuleName
             && curOrNode.orBranchInfo
@@ -1253,7 +1262,7 @@ export class SubhutiTraceDebugger {
             }
 
             // 将 Or 包裹节点 key 追加到父规则的 childs
-            parentItem.childs.push(cacheKey)
+            this.parentPushChild(parentItem, cacheKey)
         }
 
         // 【2】检查缓存中是否已有此 Or 包裹节点 → 没有则存入
@@ -1374,7 +1383,7 @@ export class SubhutiTraceDebugger {
         const cacheKey = this.generateCacheKey(curBranchNode)
 
         // 获取父节点（Or 包裹节点）
-        const parentOrNode = this.ruleStack[this.ruleStack.length - 2]
+        const parentOrNode = this.ruleStack[this.ruleStack.length - 1]
 
         // 【1】如果有父节点，将 Or 分支节点加入到父节点的 childs
         if (parentOrNode) {
@@ -1394,7 +1403,8 @@ export class SubhutiTraceDebugger {
 
             // 将 Or 分支节点 key 追加到父节点的 childs
             LogUtil.consoleLog(`🔍 [DEBUG] 添加Or分支到父节点: ${parentOrNode.ruleName} += ${parentRuleName}(branch=${branchIndex})`)
-            parentOrNode.childs.push(cacheKey)
+
+            this.parentPushChild(parentOrNode, cacheKey)
         }
 
         // 【2】检查缓存中是否已有此 Or 分支节点 → 没有则存入
@@ -1534,6 +1544,13 @@ export class SubhutiTraceDebugger {
      */
     setCst(cst: SubhutiCst | undefined): void {
         this.topLevelCst = cst || null
+    }
+
+    parentPushChild(parent: RuleStackItem, child: string) {
+        console.log(`parentPushChild: ${parent.ruleName}`);
+        console.log(parent.ruleName)
+        console.log(child)
+        parent.childs.push(child)
     }
 
     // ========================================
