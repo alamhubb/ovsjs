@@ -18,7 +18,7 @@ import SubhutiTokenLookahead from "./SubhutiTokenLookahead.ts"
 import SubhutiCst from "./struct/SubhutiCst.ts";
 import type SubhutiMatchToken from "./struct/SubhutiMatchToken.ts";
 import {SubhutiErrorHandler} from "./SubhutiError.ts";
-import {type SubhutiDebugger, SubhutiTraceDebugger} from "./SubhutiDebug.ts";
+import { SubhutiTraceDebugger} from "./SubhutiDebug.ts";
 import {SubhutiPackratCache, type SubhutiPackratCacheResult} from "./SubhutiPackratCache.ts";
 import SubhutiTokenConsumer from "./SubhutiTokenConsumer.ts";
 

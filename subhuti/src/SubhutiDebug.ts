@@ -795,13 +795,18 @@ export class SubhutiTraceDebugger {
      * 深拷贝 RuleStackItem（手动拷贝每个字段）
      */
     private deepCloneRuleStackItem(item: RuleStackItem): RuleStackItem {
+        if (item.ruleName) {
+            if (item.childs.length) {
+                throw new Error('系统错误')
+            }
+        }
         const clone = {
             ruleName: item.ruleName,
             startTime: item.startTime,
             outputted: item.outputted,
             tokenIndex: item.tokenIndex,
             shouldBreakLine: item.shouldBreakLine,
-            childs: item.childs ? [...item.childs] : [],  // 【新增】克隆 childs 数组
+            childs: item.childs,  // 【新增】克隆 childs 数组
             // relativeDepthByStack: item.relativeDepthByStack,    // 【防御性编程】克隆相对深度
             // relativeDepthByChilds: item.relativeDepthByChilds,  // 【防御性编程】克隆相对深度
             orBranchInfo: item.orBranchInfo ? {
@@ -812,9 +817,11 @@ export class SubhutiTraceDebugger {
                 totalBranches: item.orBranchInfo.totalBranches
             } : undefined
         }
-        LogUtil.consoleLog(`clone.childs.length`)
-        LogUtil.consoleLog(clone.childs.length)
-        LogUtil.consoleLog(clone.ruleName?clone.ruleName:'为0的是token')
+        if (item.ruleName) {
+            LogUtil.consoleLog(`clone.childs.length`)
+            LogUtil.consoleLog(clone.childs.length)
+            LogUtil.consoleLog(clone.ruleName ? clone.ruleName : '为0的是token')
+        }
         return clone
     }
 
@@ -1116,7 +1123,7 @@ export class SubhutiTraceDebugger {
 
         // 检查缓存中是否已有此 Token → 没有则存入
         if (!this.rulePathCache.has(tokenKey)) {
-            this.cacheSet(tokenKey, tokenItem)
+            this.cacheSet(tokenKey, this.deepCloneRuleStackItem(tokenItem))
         }
 
         // 快速失败：父规则必须有 childs 数组
