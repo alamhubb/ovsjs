@@ -941,7 +941,7 @@ export class SubhutiTraceDebugger {
     // 过程追踪方法
     // ========================================
 
-    openDebugLog = false
+    openDebugLogCache = false
 
     /**
      * 规则进入事件处理器 - 立即建立父子关系版本
@@ -990,7 +990,7 @@ export class SubhutiTraceDebugger {
             childs: []
         }
 
-        if (this.openDebugLog) {
+        if (this.openDebugLogCache) {
             // 生成当前规则的缓存键（ruleName:tokenIndex:orInfo）
             const cacheKey = this.generateCacheKey(ruleItem)
 
@@ -1148,7 +1148,7 @@ export class SubhutiTraceDebugger {
         // 添加 Token key 到父规则的 childs
         parentRule.childs.push(tokenKey)
 
-        if (this.openDebugLog) {
+        if (this.openDebugLogCache) {
             // 【第 2 步】输出待处理的规则日志（非缓存场景）
             // 每次 token 消费时都调用，确保日志及时输出
             const depth = SubhutiDebugRuleTracePrint.flushPendingOutputs_NonCache_Impl(this.ruleStack)
