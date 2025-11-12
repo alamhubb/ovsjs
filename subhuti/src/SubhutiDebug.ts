@@ -812,8 +812,9 @@ export class SubhutiTraceDebugger {
                 totalBranches: item.orBranchInfo.totalBranches
             } : undefined
         }
-        console.log(`clone.childs.length`)
-        console.log(clone.childs.length)
+        LogUtil.consoleLog(`clone.childs.length`)
+        LogUtil.consoleLog(clone.childs.length)
+        LogUtil.consoleLog(clone.ruleName?clone.ruleName:'为0的是token')
         return clone
     }
 
@@ -863,7 +864,7 @@ export class SubhutiTraceDebugger {
      */
     private restoreFromCacheAndPushAndPrint(cacheKey: string, curDisplayDepth: number, isRoot: boolean = true): void {
         // 【第 1 步】读取缓存的规则或 Token
-        const cached = this.rulePathCache.get(cacheKey)
+        const cached = this.cacheGet(cacheKey)
         if (!cached) {
             throw new Error('系统错误')
         }
@@ -957,7 +958,7 @@ export class SubhutiTraceDebugger {
             const cacheKey = this.generateCacheKey(ruleItem)
 
             // 尝试从缓存中获取该规则的历史执行数据
-            const RuleStackItem = this.rulePathCache.get(cacheKey)
+            const RuleStackItem = this.cacheGet(cacheKey)
 
             // 【缓存命中】如果之前已经执行过相同位置的规则，直接回放
             if (RuleStackItem) {
@@ -1062,7 +1063,7 @@ export class SubhutiTraceDebugger {
             this.parentPushChild(parentItem, cacheKey)
         }
 
-        const cacheCurRule = this.rulePathCache.get(cacheKey)
+        const cacheCurRule = this.cacheGet(cacheKey)
 
         // 【2】如果没有缓存，将规则存入缓存
         if (!cacheCurRule) {
@@ -1082,6 +1083,18 @@ export class SubhutiTraceDebugger {
             }
         }
         this.rulePathCache.set(key, value)
+    }
+
+    cacheGet(key: string) {
+        const res = this.rulePathCache.get(key)
+        if (res) {
+            if (res.ruleName) {
+                LogUtil.consoleLog('get key:' + key)
+                LogUtil.consoleLog(res.ruleName)
+                LogUtil.consoleLog(res?.childs?.length)
+            }
+        }
+        return res
     }
 
     onTokenConsume(
@@ -1177,7 +1190,7 @@ export class SubhutiTraceDebugger {
             if (parentRule.childs) {
                 // 统计父规则的 childs 中有多少个 Or 包裹节点（isOrEntry=true）
                 for (const childKey of parentRule.childs) {
-                    const childItem = this.rulePathCache.get(childKey)
+                    const childItem = this.cacheGet(childKey)
                     if (childItem && childItem.orBranchInfo?.isOrEntry) {
                         orIndex++
                     }
@@ -1266,7 +1279,7 @@ export class SubhutiTraceDebugger {
         }
 
         // 【2】检查缓存中是否已有此 Or 包裹节点 → 没有则存入
-        const cachedOrNode = this.rulePathCache.get(cacheKey)
+        const cachedOrNode = this.cacheGet(cacheKey)
         if (!cachedOrNode) {
             const cloned = this.deepCloneRuleStackItem(curOrNode)
             LogUtil.consoleLog(`🔍 [DEBUG] ✅ 缓存Or包裹节点: ${parentRuleName}, childs=${cloned.childs?.length || 0}`)
@@ -1408,7 +1421,7 @@ export class SubhutiTraceDebugger {
         }
 
         // 【2】检查缓存中是否已有此 Or 分支节点 → 没有则存入
-        const cachedBranchNode = this.rulePathCache.get(cacheKey)
+        const cachedBranchNode = this.cacheGet(cacheKey)
         if (!cachedBranchNode) {
             const cloned = this.deepCloneRuleStackItem(curBranchNode)
             LogUtil.consoleLog(`🔍 [DEBUG] ✅ 缓存Or分支: ${parentRuleName}(branch=${branchIndex}), childs=${cloned.childs?.length || 0}`)
