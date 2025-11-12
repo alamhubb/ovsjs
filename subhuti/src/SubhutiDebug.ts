@@ -268,11 +268,8 @@ import type SubhutiCst from "./struct/SubhutiCst.ts"
 import {
     SubhutiDebugRuleTracePrint,
     TreeFormatHelper,
-    type RuleStackItem,
-    type OrBranchInfo
 } from "./SubhutiDebugRuleTracePrint"
 
-type CachedEntry = RuleStackItem  // 【统一】直接缓存 RuleStackItem，childs 已移入其中
 
 
 // ============================================
@@ -735,7 +732,7 @@ export class SubhutiTraceDebugger {
     // ========================================
     // 规则路径缓存（用于缓存命中时快速恢复日志路径）
     // ========================================
-    private rulePathCache = new Map<string, CachedEntry>()
+    private rulePathCache = new Map<string, RuleStackItem>()
 
     // ========================================
     // Token 数据
@@ -959,10 +956,10 @@ export class SubhutiTraceDebugger {
             const cacheKey = this.generateCacheKey(ruleItem)
 
             // 尝试从缓存中获取该规则的历史执行数据
-            const cachedEntry = this.rulePathCache.get(cacheKey)
+            const RuleStackItem = this.rulePathCache.get(cacheKey)
 
             // 【缓存命中】如果之前已经执行过相同位置的规则，直接回放
-            if (cachedEntry) {
+            if (RuleStackItem) {
                 let depth = SubhutiDebugRuleTracePrint.flushPendingOutputs_NonCache_Impl(this.ruleStack)
                 // 将历史执行路径恢复到栈中（包括子规则和 Token 消费）
                 this.restoreFromCacheAndPushAndPrint(cacheKey, depth)
@@ -1069,8 +1066,13 @@ export class SubhutiTraceDebugger {
         // 【2】如果没有缓存，将规则存入缓存
         if (!cacheCurRule) {
             const cloned = this.deepCloneRuleStackItem(curRule)
-            this.rulePathCache.set(cacheKey, cloned)
+            this.cacheSet(cacheKey, cloned)
         }
+    }
+    
+    
+    cacheSet(key: string, value: RuleStackItem){
+        this.rulePathCache.set(key, value)
     }
 
     onTokenConsume(
