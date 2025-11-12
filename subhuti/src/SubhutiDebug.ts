@@ -1148,41 +1148,39 @@ export class SubhutiTraceDebugger {
         // 添加 Token key 到父规则的 childs
         parentRule.childs.push(tokenKey)
 
-        if (this.openDebugLogCache) {
-            // 【第 2 步】输出待处理的规则日志（非缓存场景）
-            // 每次 token 消费时都调用，确保日志及时输出
-            const depth = SubhutiDebugRuleTracePrint.flushPendingOutputs_NonCache_Impl(this.ruleStack)
+        // 【第 2 步】输出待处理的规则日志（非缓存场景）
+        // 每次 token 消费时都调用，确保日志及时输出
+        const depth = SubhutiDebugRuleTracePrint.flushPendingOutputs_NonCache_Impl(this.ruleStack)
 
-            // 格式化 token 值（转义特殊字符、截断长字符串）
-            const value = TreeFormatHelper.formatTokenValue(tokenValue, 20)
+        // 格式化 token 值（转义特殊字符、截断长字符串）
+        const value = TreeFormatHelper.formatTokenValue(tokenValue, 20)
 
-            // 获取 token 的位置信息（行列号）
-            const token = this.inputTokens[tokenIndex]
-            let location: string | null = null
+        // 获取 token 的位置信息（行列号）
+        const token = this.inputTokens[tokenIndex]
+        let location: string | null = null
 
-            if (token) {
-                if (token.loc) {
-                    // 使用 token 对象中的位置信息
-                    location = TreeFormatHelper.formatLocation(token.loc)
-                } else if (token.rowNum !== undefined && token.columnStartNum !== undefined) {
-                    // 使用行列号构造位置信息
-                    const row = token.rowNum
-                    const start = token.columnStartNum
-                    const end = token.columnEndNum ?? start + tokenValue.length - 1
-                    location = `[${row}:${start}-${end}]`
-                }
+        if (token) {
+            if (token.loc) {
+                // 使用 token 对象中的位置信息
+                location = TreeFormatHelper.formatLocation(token.loc)
+            } else if (token.rowNum !== undefined && token.columnStartNum !== undefined) {
+                // 使用行列号构造位置信息
+                const row = token.rowNum
+                const start = token.columnStartNum
+                const end = token.columnEndNum ?? start + tokenValue.length - 1
+                location = `[${row}:${start}-${end}]`
             }
-
-            // 组装日志行
-            const line = TreeFormatHelper.formatLine(
-                ['🔹 Consume', `token[${tokenIndex}]`, '-', value, '-', `<${tokenName}>`, location, '✅'],
-                // 前缀：根据深度生成缩进，└─ 表示是叶子节点
-                {prefix: '│  '.repeat(depth) + '└─', separator: ' '}
-            )
-
-            // 输出到控制台
-            console.log(line)
         }
+
+        // 组装日志行
+        const line = TreeFormatHelper.formatLine(
+            ['🔹 Consume', `token[${tokenIndex}]`, '-', value, '-', `<${tokenName}>`, location, '✅'],
+            // 前缀：根据深度生成缩进，└─ 表示是叶子节点
+            {prefix: '│  '.repeat(depth) + '└─', separator: ' '}
+        )
+
+        // 输出到控制台
+        console.log(line)
     }
 
     onOrEnter(
