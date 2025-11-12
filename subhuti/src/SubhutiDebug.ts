@@ -1068,9 +1068,8 @@ export class SubhutiTraceDebugger {
         }
     }
 
-
     cacheSet(key: string, value: RuleStackItem) {
-        if (value.childs.length === 0) {
+        if (value?.childs?.length === 0) {
             console.error(this.ruleStack.map(item => item.ruleName))
             console.error(key)
             console.error(value.ruleName)
@@ -1098,7 +1097,7 @@ export class SubhutiTraceDebugger {
 
         // 检查缓存中是否已有此 Token → 没有则存入
         if (!this.rulePathCache.has(tokenKey)) {
-            this.rulePathCache.set(tokenKey, tokenItem)
+            this.cacheSet(tokenKey, tokenItem)
         }
 
         // 快速失败：父规则必须有 childs 数组
@@ -1114,6 +1113,9 @@ export class SubhutiTraceDebugger {
                 `❌ Token ${tokenName} already exists in parent rule ${parentRule.ruleName}'s childs`
             )
         }
+
+        LogUtil.consoleLog('parentRule:' + parentRule.ruleName)
+        LogUtil.consoleLog('parentRule:' + tokenKey)
 
         // 添加 Token key 到父规则的 childs
         parentRule.childs.push(tokenKey)
@@ -1261,7 +1263,7 @@ export class SubhutiTraceDebugger {
             if (cloned.childs && cloned.childs.length > 0) {
                 LogUtil.consoleLog(`🔍 [DEBUG]   childs内容: ${cloned.childs.slice(0, 5).join(', ')}${cloned.childs.length > 5 ? '...' : ''}`)
             }
-            this.rulePathCache.set(cacheKey, cloned)
+            this.cacheSet(cacheKey, cloned)
         }
     }
 
@@ -1399,7 +1401,7 @@ export class SubhutiTraceDebugger {
         if (!cachedBranchNode) {
             const cloned = this.deepCloneRuleStackItem(curBranchNode)
             LogUtil.consoleLog(`🔍 [DEBUG] ✅ 缓存Or分支: ${parentRuleName}(branch=${branchIndex}), childs=${cloned.childs?.length || 0}`)
-            this.rulePathCache.set(cacheKey, cloned)
+            this.cacheSet(cacheKey, cloned)
         } else {
             LogUtil.consoleLog(`🔍 [DEBUG] ⚠️ Or分支已在缓存中: ${parentRuleName}(branch=${branchIndex})`)
         }
@@ -1538,7 +1540,7 @@ export class SubhutiTraceDebugger {
     // ========================================
 }
 
-export class LogUtil{
+export class LogUtil {
     static consoleLog(...str: string[]) {
         if (false) {
             console.log(...str)
