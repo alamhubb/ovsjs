@@ -873,6 +873,7 @@ export class SubhutiTraceDebugger {
      */
     private restoreFromCacheAndPushAndPrint(cacheKey: string, curDisplayDepth: number, isRoot: boolean = true): void {
         // 【第 1 步】读取缓存的规则或 Token
+        console.log('get key:' + cacheKey)
         const cached = this.cacheGet(cacheKey)
         if (!cached) {
             throw new Error('系统错误')
@@ -880,6 +881,10 @@ export class SubhutiTraceDebugger {
 
         // 【第 2 步】克隆并推入栈
         const restoredItem = this.deepCloneRuleStackItem(cached)
+
+        console.log(restoredItem.ruleName)
+        console.log(restoredItem.childs)
+
         restoredItem.outputted = false  // 标记为未输出
         restoredItem.isManuallyAdded = true
 
@@ -890,7 +895,10 @@ export class SubhutiTraceDebugger {
         // 深度为当前深度
         restoredItem.displayDepth = curDisplayDepth
 
-        this.ruleStack.push(restoredItem)
+        let rootIndex = this.ruleStack.push(restoredItem)
+
+
+        // console.log(this.ruleStack.map(item => item.ruleName))
 
         // 【第 4 步】递归恢复子节点，传递当前节点的 displayDepth
         if (cached.childs) {
@@ -902,9 +910,13 @@ export class SubhutiTraceDebugger {
         // 【第 5 步】如果是根规则，触发日志输出（缓存场景）
         // 如果不是根，pop 掉自己
         if (isRoot) {
+            console.log(`cacheKey`)
+            console.log(cacheKey)
+            console.log(this.ruleStack.map(item => item.ruleName))
+            console.log(this.ruleStack.map(item => item.outputted))
             SubhutiDebugRuleTracePrint.flushPendingOutputs_Cache_Impl(this.ruleStack)
-        } else {
-            this.ruleStack.pop()
+            this.ruleStack.splice(rootIndex + 1)
+            throw new Error('不该触发')
         }
     }
 
@@ -1084,11 +1096,11 @@ export class SubhutiTraceDebugger {
     cacheSet(key: string, value: RuleStackItem) {
         if (!value.tokenName) {
             if (!value.childs || value.childs?.length === 0) {
-                console.trace(key)
-                console.error(this.ruleStack.map(item => item.ruleName))
-                console.error(value.outputted)
-                console.error(value.ruleName)
-                console.error(value.tokenName)
+                // console.trace(key)
+                // console.error(this.ruleStack.map(item => item.ruleName))
+                // console.error(value.outputted)
+                // console.error(value.ruleName)
+                // console.error(value.tokenName)
                 throw new Error('bugai wei 0')
             }
         }
@@ -1099,9 +1111,8 @@ export class SubhutiTraceDebugger {
         const res = this.rulePathCache.get(key)
         if (res) {
             if (res.ruleName) {
-                LogUtil.consoleLog('get key:' + key)
-                LogUtil.consoleLog(res.ruleName)
-                LogUtil.consoleLog(res?.childs?.length)
+                // console.log(res.ruleName)
+                // console.log(res?.childs)
             }
         }
         return res
@@ -1186,12 +1197,9 @@ export class SubhutiTraceDebugger {
 
     onOrEnter(
         parentRuleName: string,
-        totalBranches: number
+        tokenIndex: number
     ): void {
         // 获取当前的 tokenIndex（从最近的规则节点获取，或使用 0 作为默认值）
-        const tokenIndex = this.ruleStack.length > 0
-            ? (this.ruleStack[this.ruleStack.length - 1]?.tokenIndex ?? 0)
-            : 0
 
         // 【计算 orIndex】检查父规则已有多少个 Or 子节点
         let orIndex = 0

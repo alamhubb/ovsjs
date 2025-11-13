@@ -266,6 +266,7 @@ export class SubhutiDebugRuleTracePrint {
     public static flushPendingOutputs_Cache_Impl(ruleStack: RuleStackItem[]): void {
         let pendingRules = ruleStack.filter(item => !item.outputted)
 
+
         // ⚠️ 关键修复：过滤掉没有子节点的 Or 分支节点（失败的分支）
         /*pendingRules = pendingRules.filter(item => {
             if (item.orBranchInfo?.isOrBranch) {
@@ -386,11 +387,11 @@ export class SubhutiDebugRuleTracePrint {
             } else {
                 // 普通规则：添加缓存标记
                 printStr = item.ruleName
-                if (item.isManuallyAdded) {
-                    printStr += ' ⚡[Cached]'
-                }
-            }
 
+            }
+            if (item.isManuallyAdded) {
+                printStr += ' ⚡[Cached]'
+            }
             // console.log('  '.repeat(depth) +  printStr)
             console.log(prefix + branch + printStr)
             if (item.isManuallyAdded) {

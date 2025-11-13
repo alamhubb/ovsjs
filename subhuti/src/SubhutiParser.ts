@@ -18,12 +18,12 @@ import SubhutiTokenLookahead from "./SubhutiTokenLookahead.ts"
 import SubhutiCst from "./struct/SubhutiCst.ts";
 import type SubhutiMatchToken from "./struct/SubhutiMatchToken.ts";
 import {SubhutiErrorHandler} from "./SubhutiError.ts";
-import { SubhutiTraceDebugger} from "./SubhutiDebug.ts";
+import {SubhutiTraceDebugger} from "./SubhutiDebug.ts";
 import {SubhutiPackratCache, type SubhutiPackratCacheResult} from "./SubhutiPackratCache.ts";
 import SubhutiTokenConsumer from "./SubhutiTokenConsumer.ts";
 
 // Grammar Validation
-import { SubhutiGrammarValidator } from "./validation/SubhutiGrammarValidator";
+import {SubhutiGrammarValidator} from "./validation/SubhutiGrammarValidator";
 
 // ============================================
 // 类型定义
@@ -152,7 +152,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
         // 解析参数（向后兼容）
         let TokenConsumerClass: SubhutiTokenConsumerConstructor<T> | undefined
-        
+
         if (optionsOrConsumer) {
             // 判断是 Class 还是 Options 对象
             if (typeof optionsOrConsumer === 'function') {
@@ -228,21 +228,21 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     private throwLoopError(ruleName: string): never {
         // 获取当前 token 信息
         const currentToken = this.curToken
-        
+
         // 获取 token 上下文（前后各 2 个）
         const tokenContext: SubhutiMatchToken[] = []
         const contextRange = 2
-        for (let i = Math.max(0, this.tokenIndex - contextRange); 
-             i <= Math.min(this._tokens.length - 1, this.tokenIndex + contextRange); 
+        for (let i = Math.max(0, this.tokenIndex - contextRange);
+             i <= Math.min(this._tokens.length - 1, this.tokenIndex + contextRange);
              i++) {
             if (this._tokens[i]) {
                 tokenContext.push(this._tokens[i])
             }
         }
-        
+
         // 获取缓存统计
         const cacheStatsReport = this._cache.getStatsReport()
-        
+
         // 创建循环错误（平铺结构）
         throw this._errorHandler.createError({
             type: 'loop',
@@ -366,13 +366,13 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             this.ruleStack.length = 0
             this.allowErrorDepth = 0
             this.loopDetectionSet.clear()
-            
+
             // ============================================
             // 【新增】重置调试器的缓存和统计
             // ============================================
             // 这样每次新的顶层解析都有干净的环境
             this._debugger?.resetForNewParse?.(this._tokens)
-            
+
             return true
         }
 
@@ -459,7 +459,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             const parentRuleName = this.curCst?.name || 'Unknown'
 
             // 进入 Or（整个 Or 调用开始）
-            this._debugger?.onOrEnter?.(parentRuleName, totalCount)
+            this._debugger?.onOrEnter?.(parentRuleName, this.tokenIndex)
 
             for (let i = 0; i < totalCount; i++) {
                 const alt = alternatives[i]
@@ -503,7 +503,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
     /**
      * Many 规则 - 0次或多次（EBNF { ... }）
-     * 
+     *
      * ⚠️ 使用默认 checkLoop: true，自动检测循环
      */
     Many(fn: RuleFunction): SubhutiCst | undefined {
@@ -521,7 +521,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
     /**
      * Option 规则 - 0次或1次（EBNF [ ... ]）
-     * 
+     *
      * ⚠️ 注意：Option 允许成功但不消费 token（匹配 0 次），不检测循环
      */
     Option(fn: RuleFunction): SubhutiCst | undefined {
@@ -538,7 +538,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
     /**
      * AtLeastOne 规则 - 1次或多次（第一次必须成功）
-     * 
+     *
      * ⚠️ 使用默认 checkLoop: true，自动检测循环
      */
     AtLeastOne(fn: RuleFunction): SubhutiCst | undefined {
@@ -658,7 +658,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
     /**
      * 尝试执行函数，失败时自动回溯并重置状态
-     * 
+     *
      * @param fn 要执行的函数
      * @param checkLoop 是否检测循环（成功但不消费 token）
      *                  - true: 检测循环，用于 Many/AtLeastOne（防止无限循环）
@@ -667,7 +667,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     private tryAndRestore(fn: () => void, checkLoop: boolean = true): boolean {
         const savedState = this.saveState()
         const startTokenIndex = this.tokenIndex
-        
+
         fn()
 
         if (this._parseSuccess) {
@@ -732,9 +732,9 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
     /**
      * 验证语法（检测 Or 规则冲突）
-     * 
+     *
      * 有问题直接抛异常，无问题静默返回
-     * 
+     *
      * @example
      * ```typescript
      * const parser = new MyParser()
@@ -747,7 +747,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
     /**
      * 执行语法自检（Chevrotain 风格别名）
-     * 
+     *
      * @see validateGrammar
      */
     performSelfAnalysis(): void {
