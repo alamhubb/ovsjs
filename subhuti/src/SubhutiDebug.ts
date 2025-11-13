@@ -1232,7 +1232,7 @@ export class SubhutiTraceDebugger {
     onOrExit(
         parentRuleName: string
     ): void {
-        LogUtil.consoleLog(`🔍 [DEBUG] onOrExit: ${parentRuleName}`)
+        // console.log(`\n🔍 [DEBUG-OR-EXIT] ========== onOrExit: ${parentRuleName} ==========`)
         // 快速失败：规则栈不能为空
         if (this.ruleStack.length === 0) {
             throw new Error(`❌ Or exit error: ruleStack is empty when exiting Or for ${parentRuleName}`)
@@ -1240,9 +1240,13 @@ export class SubhutiTraceDebugger {
 
         const curOrNode = this.ruleStack.pop()
 
-        LogUtil.consoleLog(`curOrNode.childs.length`)
-        LogUtil.consoleLog(curOrNode.ruleName)
-        LogUtil.consoleLog(curOrNode.childs.length)
+        // console.log(`🔍 [DEBUG-OR-EXIT] Or包裹节点状态:`)
+        // console.log(`  ruleName: ${curOrNode.ruleName}`)
+        // console.log(`  outputted: ${curOrNode.outputted}`)
+        // console.log(`  childs.length: ${curOrNode.childs?.length || 0}`)
+        // if (curOrNode.childs && curOrNode.childs.length > 0) {
+        //     console.log(`  childs 前3个: ${curOrNode.childs.slice(0, 3).join(', ')}`)
+        // }
 
         // 快速失败：栈顶必须是要退出的 Or 包裹节点
         if (!(curOrNode.ruleName === parentRuleName
@@ -1258,8 +1262,12 @@ export class SubhutiTraceDebugger {
 
         // 如果 Or 包裹节点没有被输出，说明它没有消费 Token，不应该被记录到缓存
         if (!curOrNode.outputted) {
+            // console.log(`🔍 [DEBUG-OR-EXIT] ❌ Or包裹节点未输出，跳过缓存和父节点添加`)
+            // console.log(`🔍 [DEBUG-OR-EXIT] ========== onOrExit 结束 ==========\n`)
             return
         }
+        
+        // console.log(`🔍 [DEBUG-OR-EXIT] ✅ Or包裹节点已输出，继续处理`)
 
         // ⚠️ 关键修复：如果 Or 包裹节点没有子节点，说明所有分支都失败了，不应该被缓存
         /*if (!curOrNode.childs || curOrNode.childs.length === 0) {
@@ -1352,6 +1360,7 @@ export class SubhutiTraceDebugger {
         parentRuleName: string,
         branchIndex: number
     ): void {
+        // console.log(`\n🔍 [DEBUG-BRANCH-EXIT] ========== onOrBranchExit: ${parentRuleName}(branch=${branchIndex}) ==========`)
         // 快速失败：规则栈不能为空
         if (this.ruleStack.length === 0) {
             throw new Error(`❌ OrBranch exit error: ruleStack is empty when exiting branch ${branchIndex} for ${parentRuleName}`)
@@ -1359,6 +1368,12 @@ export class SubhutiTraceDebugger {
 
         // 【3】Pop 栈顶
         const curBranchNode = this.ruleStack.pop()
+        
+        // console.log(`🔍 [DEBUG-BRANCH-EXIT] Or分支节点状态:`)
+        // console.log(`  ruleName: ${curBranchNode.ruleName}`)
+        // console.log(`  branchIndex: ${curBranchNode.orBranchInfo?.branchIndex}`)
+        // console.log(`  outputted: ${curBranchNode.outputted}`)
+        // console.log(`  childs.length: ${curBranchNode.childs?.length || 0}`)
 
         // 🔍 调试：打印栈的状态
         // const stackInfo = this.ruleStack.map((item, idx) => {
@@ -1389,17 +1404,14 @@ export class SubhutiTraceDebugger {
             throw new Error(`❌ OrBranch exit mismatch: expected ${parentRuleName}(branchIdx=${branchIndex}) at top, got ${curBranchNode.ruleName}${infoStr}`)
         }
 
-        // ⚠️ 调试：检查 Or 分支的 childs
-        LogUtil.consoleLog(`🔍 [DEBUG] Or分支退出检查: ${parentRuleName}(branch=${branchIndex}), outputted=${curBranchNode.outputted}, childs=${curBranchNode.childs?.length || 0}`)
-        if (curBranchNode.childs && curBranchNode.childs.length > 0) {
-            LogUtil.consoleLog(`🔍 [DEBUG]   childs内容: ${curBranchNode.childs.join(', ')}`)
-        }
-
         // 如果 Or 分支没有被输出，说明它没有消费 Token，不应该被记录到缓存
         if (!curBranchNode.outputted) {
-            LogUtil.consoleLog(`🔍 [DEBUG] ❌ Or分支未输出，跳过缓存`)
+            // console.log(`🔍 [DEBUG-BRANCH-EXIT] ❌ Or分支未输出，跳过缓存和父节点添加`)
+            // console.log(`🔍 [DEBUG-BRANCH-EXIT] ========== onOrBranchExit 结束 ==========\n`)
             return
         }
+        
+        // console.log(`🔍 [DEBUG-BRANCH-EXIT] ✅ Or分支已输出，继续处理`)
 
         // ⚠️ 关键修复：如果 Or 分支没有子节点，说明它虽然被输出了，但最终失败了，不应该被缓存
         /*if (!curBranchNode.childs || curBranchNode.childs.length === 0) {
@@ -1412,6 +1424,16 @@ export class SubhutiTraceDebugger {
 
         // 获取父节点（Or 包裹节点）
         const parentOrNode = this.ruleStack[this.ruleStack.length - 1]
+        
+        // console.log(`🔍 [DEBUG-BRANCH-EXIT] 父节点（Or包裹节点）信息:`)
+        // if (parentOrNode) {
+        //     console.log(`  ruleName: ${parentOrNode.ruleName}`)
+        //     console.log(`  isOrEntry: ${parentOrNode.orBranchInfo?.isOrEntry}`)
+        //     console.log(`  outputted: ${parentOrNode.outputted}`)
+        //     console.log(`  childs.length: ${parentOrNode.childs?.length || 0}`)
+        // } else {
+        //     console.log(`  ⚠️ 没有父节点`)
+        // }
 
         // 【1】如果有父节点，将 Or 分支节点加入到父节点的 childs
         if (parentOrNode) {
@@ -1430,10 +1452,17 @@ export class SubhutiTraceDebugger {
             }
 
             // 将 Or 分支节点 key 追加到父节点的 childs
-            LogUtil.consoleLog(`🔍 [DEBUG] 添加Or分支到父节点: ${parentOrNode.ruleName} += ${parentRuleName}(branch=${branchIndex})`)
-
+            // console.log(`🔍 [DEBUG-BRANCH-EXIT] ✅ 添加Or分支到父节点: ${parentOrNode.ruleName} += ${parentRuleName}(branch=${branchIndex})`)
             this.parentPushChild(parentOrNode, cacheKey)
+            
+            // 🔥 关键：标记父 Or 包裹节点为已输出
+            if (!parentOrNode.outputted) {
+                // console.log(`🔍 [DEBUG-BRANCH-EXIT] 🔥 标记父Or包裹节点为已输出: ${parentOrNode.ruleName}`)
+                parentOrNode.outputted = true
+            }
         }
+        
+        // console.log(`🔍 [DEBUG-BRANCH-EXIT] ========== onOrBranchExit 结束 ==========\n`)
 
         // 【2】检查缓存中是否已有此 Or 分支节点 → 没有则存入
         const cachedBranchNode = this.cacheGet(cacheKey)
