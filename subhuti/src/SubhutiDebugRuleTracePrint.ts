@@ -392,7 +392,10 @@ export class SubhutiDebugRuleTracePrint {
 
             if (item.isManuallyAdded) {
                 if (item.displayDepth != depth) {
-                    // throw new Error('逻辑错误')
+
+                    console.log(item.displayDepth)
+                    console.log(depth)
+                    throw new Error('逻辑错误')
                 }
             } else {
                 item.displayDepth = depth
