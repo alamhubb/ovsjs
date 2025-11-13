@@ -393,7 +393,7 @@ export class SubhutiDebugRuleTracePrint {
                 item.displayDepth = depth
             }
 
-            SubhutiDebugRuleTracePrint.printLine(printStrs, depth, branch)
+            SubhutiDebugRuleTracePrint.printLine(printStrs, item.displayDepth, branch)
 
 
             // item.shouldBreakLine = true
