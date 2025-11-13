@@ -1164,9 +1164,6 @@ export class SubhutiTraceDebugger {
         // 每次 token 消费时都调用，确保日志及时输出
         const depth = SubhutiDebugRuleTracePrint.flushPendingOutputs_NonCache_Impl(this.ruleStack)
 
-        // 格式化 token 值（转义特殊字符、截断长字符串）
-        const value = TreeFormatHelper.formatTokenValue(tokenValue, 20)
-
         // 获取 token 的位置信息（行列号）
         const token = this.inputTokens[tokenIndex]
         let location: string | null = null
@@ -1184,15 +1181,8 @@ export class SubhutiTraceDebugger {
             }
         }
 
-        // 组装日志行
-        const line = TreeFormatHelper.formatLine(
-            ['🔹 Consume', `token[${tokenIndex}]`, '-', value, '-', `<${tokenName}>`, location, '✅'],
-            // 前缀：根据深度生成缩进，└─ 表示是叶子节点
-            {prefix: '│  '.repeat(depth) + '└─', separator: ' '}
-        )
-
-        // 输出到控制台
-        console.log(line)
+        const tokenStr = SubhutiDebugRuleTracePrint.getPrintToken(tokenItem, location)
+        SubhutiDebugRuleTracePrint.printLine(tokenStr, depth)
     }
 
     onOrEnter(

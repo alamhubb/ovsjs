@@ -191,6 +191,27 @@ export class SubhutiDebugRuleTracePrint {
         return item.orBranchInfo?.isOrEntry
     }
 
+
+    public static getPrintToken(tokenItem: RuleStackItem, location?: string): string[] {
+
+        // 格式化 token 值（转义特殊字符、截断长字符串）
+        const value = TreeFormatHelper.formatTokenValue(tokenItem.tokenValue, 20)
+
+        const tokenStrs = ['🔹 Consume', `token[${tokenItem.tokenIndex}]`, '-', value, '-', `<${tokenItem.tokenName}>`, location || '[]', '✅ ']
+
+        return tokenStrs
+    }
+
+    public static printLine(str: string[], depth: number, symbol: string = '└─') {
+        const line = TreeFormatHelper.formatLine(
+            str,
+            // 前缀：根据深度生成缩进，└─ 表示是叶子节点
+            {prefix: '│  '.repeat(depth) + symbol, separator: ' '}
+        )
+        console.log(line)
+    }
+
+
     /**
      * 非缓存场景：输出待处理的规则日志（内部实现）
      * 特点：只有一次断链，只有一个折叠段
@@ -358,42 +379,44 @@ export class SubhutiDebugRuleTracePrint {
             // 判断是否是最后一个
             const isLast = index === rules.length - 1
 
-            // 生成缩进（父层级）+ 分支符号
-            const branch = isLast ? '└─' : '├─'
 
             // ✅ 修复：所有规则使用相同的深度（同级）
             // 因为 printSingleRule 通常只传入 1 个规则，不需要递增深度
 
             // 生成前缀：每一层的连接线
-            let prefix = ''
-            for (let d = 0; d < depth; d++) {
-                prefix += '│  '
-            }
 
-            let printStr = ''
+            let printStrs = []
 
             if (item.orBranchInfo) {
                 const branchInfo = item.orBranchInfo
                 if (item.orBranchInfo.isOrEntry) {
                     // Or 包裹节点：显示 [Or]
-                    printStr = '🔀 ' + item.ruleName + '(Or)'
+                    printStrs = ['🔀 ' + item.ruleName + '(Or)']
                 } else if (item.orBranchInfo.isOrBranch) {
-                    printStr = `[Branch #${branchInfo.branchIndex + 1}]`
+                    printStrs = [`[Branch #${branchInfo.branchIndex + 1}]`]
                     // 🔍 调试：记录 Or 分支被标记为 outputted
                     LogUtil.consoleLog(`🔍 [DEBUG] 标记Or分支为outputted: ${item.ruleName}(branch=${branchInfo.branchIndex}), childs=${item.childs?.length || 0}`)
                 } else {
-                    printStr = `错误`
+                    printStrs = [`错误`]
                 }
             } else {
-                // 普通规则：添加缓存标记
-                printStr = item.ruleName
+                if (item.tokenName) {
+                    printStrs = SubhutiDebugRuleTracePrint.getPrintToken(item)
+                } else {
+                    printStrs = [item.ruleName]
+                }
 
             }
             if (item.isManuallyAdded) {
-                printStr += ' ⚡[Cached]'
+                // 普通规则：添加缓存标记
+                printStrs.push(`⚡[Cached]`)
             }
-            // console.log('  '.repeat(depth) +  printStr)
-            console.log(prefix + branch + printStr)
+
+            // 生成缩进（父层级）+ 分支符号
+            const branch = isLast ? '└─' : '├─'
+
+            SubhutiDebugRuleTracePrint.printLine(printStrs, depth, branch)
+
             if (item.isManuallyAdded) {
                 if (item.displayDepth != depth) {
                     throw new Error('逻辑错误')
