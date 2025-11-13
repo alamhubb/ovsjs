@@ -800,7 +800,7 @@ export class SubhutiTraceDebugger {
                 throw new Error('系统错误')
             }
         }
-        const clone = {
+        const clone:RuleStackItem = {
             ruleName: item.ruleName,
             tokenName: item.tokenName,
             tokenValue: item.tokenValue,
@@ -808,6 +808,7 @@ export class SubhutiTraceDebugger {
             outputted: item.outputted,
             tokenIndex: item.tokenIndex,
             shouldBreakLine: item.shouldBreakLine,
+            displayDepth: item.displayDepth,
             childs: item.childs,  // 【新增】克隆 childs 数组
             // relativeDepthByStack: item.relativeDepthByStack,    // 【防御性编程】克隆相对深度
             // relativeDepthByChilds: item.relativeDepthByChilds,  // 【防御性编程】克隆相对深度
