@@ -264,7 +264,8 @@ export class SubhutiDebugRuleTracePrint {
 
         // 计算断链位置：最后一个 Or 的位置 + 1（如果没有 Or，则至少保留 minChainRulesLength 个规则单独输出）
         // lastOrIndex = -1 表示没有找到 Or 节点
-        const breakPoint = Math.max(lastOrIndex, minChainRulesLength)
+        // 注意：如果找到了 Or 节点（lastOrIndex >= 0），则至少要保留 lastOrIndex + 1 个规则单独输出
+        const breakPoint = Math.max(lastOrIndex + 1, minChainRulesLength)
 
         //获取折叠链和单独输出的规则
         if (breakPoint < pendingRules.length) {
