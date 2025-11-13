@@ -269,10 +269,11 @@ export class SubhutiDebugRuleTracePrint {
 
         //获取折叠链和单独输出的规则
         if (breakPoint < pendingRules.length) {
-            const singleRules = pendingRules.splice(-breakPoint);
-            // 输出折叠链
-            this.printChainRule(pendingRules, baseDepth)
-            return this.printMultipleSingleRule(singleRules, baseDepth + 1)
+            // const singleRules = pendingRules.splice(-breakPoint);
+            // // 输出折叠链
+            // this.printChainRule(pendingRules, baseDepth)
+            // return this.printMultipleSingleRule(singleRules, baseDepth + 1)
+            return this.printMultipleSingleRule(pendingRules, baseDepth)
         } else {
             return this.printMultipleSingleRule(pendingRules, baseDepth)
         }
