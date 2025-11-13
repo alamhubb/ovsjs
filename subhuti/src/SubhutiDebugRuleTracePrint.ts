@@ -227,6 +227,11 @@ export class SubhutiDebugRuleTracePrint {
         if (!ruleStack.length) {
             throw new Error('系统错误：ruleStack 为空')
         }
+        let pendingRules = ruleStack.filter(item => !item.outputted)
+
+        if (!pendingRules.length) {
+            throw new Error('系统错误：pendingRules 为空')
+        }
 
         // 查找最后一个已输出的规则
         const lastOutputted = [...ruleStack].reverse().find(item => item.outputted)
@@ -237,15 +242,6 @@ export class SubhutiDebugRuleTracePrint {
         if (lastOutputted) {
             // 否则 baseDepth = 最后一个已输出规则的深度 + 1
             baseDepth = lastOutputted.displayDepth + 1
-        }
-
-
-        let pendingRules = ruleStack.filter(item => !item.outputted)
-
-        if (!pendingRules.length) {
-            // 没有需要输出的规则，直接返回当前深度
-            const lastOutputted = [...ruleStack].reverse().find(item => item.outputted)
-            return lastOutputted ? lastOutputted.displayDepth + 1 : 0
         }
 
         //最后一个未输出的 OrEntry（使用 findLastIndex 直接获取正向索引）
@@ -400,7 +396,7 @@ export class SubhutiDebugRuleTracePrint {
             } else {
                 item.displayDepth = depth
             }
-            item.shouldBreakLine = true
+            // item.shouldBreakLine = true
             item.outputted = true
 
             depth++

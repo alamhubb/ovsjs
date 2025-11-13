@@ -807,7 +807,7 @@ export class SubhutiTraceDebugger {
             startTime: item.startTime,
             outputted: item.outputted,
             tokenIndex: item.tokenIndex,
-            shouldBreakLine: item.shouldBreakLine,
+            // shouldBreakLine: item.shouldBreakLine,
             displayDepth: item.displayDepth,
             childs: item.childs,  // 【新增】克隆 childs 数组
             // relativeDepthByStack: item.relativeDepthByStack,    // 【防御性编程】克隆相对深度
@@ -853,7 +853,7 @@ export class SubhutiTraceDebugger {
             startTime: 0,
             outputted: false,
             tokenIndex: tokenIndex,
-            shouldBreakLine: true,  // ✅ Token 总是需要单独显示（断链）
+            // shouldBreakLine: true,  // ✅ Token 总是需要单独显示（断链）
             // childs: [], token不需要 // 初始化 childs 数组
             tokenValue: tokenValue,  // ✅ 利用 [key: string]: any 存储
             tokenName: tokenName,     // ✅ 利用 [key: string]: any 存储
@@ -888,7 +888,8 @@ export class SubhutiTraceDebugger {
         //   - curDisplayDepth 是父节点的 displayDepth
         //   - 如果子节点需要断链（shouldBreakLine），深度 = 父节点深度 + 1
         //   - 否则深度 = 父节点深度（折叠显示）
-        if (!isRoot && restoredItem.shouldBreakLine) {
+        // if (!isRoot && restoredItem.shouldBreakLine) {
+        if (!isRoot) {
             curDisplayDepth++
         }
 
