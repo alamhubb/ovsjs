@@ -389,9 +389,12 @@ export class SubhutiDebugRuleTracePrint {
 
             let printStrs = []
 
+            let branch = isLast ? '└─' : '├─'
+
             if (item.orBranchInfo) {
                 const branchInfo = item.orBranchInfo
                 if (item.orBranchInfo.isOrEntry) {
+                    // branch = '🔀 '
                     // Or 包裹节点：显示 [Or]
                     printStrs = ['🔀 ' + item.ruleName + '(Or)']
                 } else if (item.orBranchInfo.isOrBranch) {
@@ -414,8 +417,6 @@ export class SubhutiDebugRuleTracePrint {
                 printStrs.push(`⚡[Cached]`)
             }
 
-            // 生成缩进（父层级）+ 分支符号
-            const branch = isLast ? '└─' : '├─'
 
             SubhutiDebugRuleTracePrint.printLine(printStrs, depth, branch)
 
