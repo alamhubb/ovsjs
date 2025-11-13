@@ -261,11 +261,11 @@ export class SubhutiDebugRuleTracePrint {
 
         //获取折叠链和单独输出的规则
         if (breakPoint < pendingRules.length) {
-            // const singleRules = pendingRules.splice(-breakPoint);
-            // // 输出折叠链
-            // this.printChainRule(pendingRules, baseDepth)
-            // return this.printMultipleSingleRule(singleRules, baseDepth + 1)
-            return this.printMultipleSingleRule(pendingRules, baseDepth)
+            const singleRules = pendingRules.splice(-breakPoint);
+            // 输出折叠链
+            this.printChainRule(pendingRules, baseDepth)
+            return this.printMultipleSingleRule(singleRules, baseDepth + 1)
+            // return this.printMultipleSingleRule(pendingRules, baseDepth)
         } else {
             return this.printMultipleSingleRule(pendingRules, baseDepth)
         }
@@ -286,37 +286,37 @@ export class SubhutiDebugRuleTracePrint {
             throw new Error('不该触发没有规则场景')
         }
 
-        this.printMultipleSingleRule(pendingRules, pendingRules[0].displayDepth)
+        // this.printMultipleSingleRule(pendingRules, pendingRules[0].displayDepth)
 
         // 按照 shouldBreakLine 分组
-        // const groups: RuleStackItem[][] = []
-        // let currentGroup: RuleStackItem[] = [pendingRules[0]]
-        // groups.push(currentGroup)
-        //
-        // for (let i = 1; i < pendingRules.length; i++) {
-        //     const item = pendingRules[i]
-        //     const prevItem = pendingRules[i - 1]
-        //
-        //     // 如果当前规则和前一个规则的 shouldBreakLine 相同
-        //     if (item.shouldBreakLine === prevItem.shouldBreakLine) {
-        //         currentGroup.push(item)
-        //     } else {
-        //         // 否则开始新的一组
-        //         currentGroup = [item]
-        //         groups.push(currentGroup)
-        //     }
-        // }
-        //
-        // // 输出每一组
-        // for (const group of groups) {
-        //     if (group[0].shouldBreakLine) {
-        //         // 单个规则：单独输出
-        //         this.printMultipleSingleRule(group)
-        //     } else {
-        //         // 多个规则：折叠输出
-        //         this.printChainRule(group)
-        //     }
-        // }
+        const groups: RuleStackItem[][] = []
+        let currentGroup: RuleStackItem[] = [pendingRules[0]]
+        groups.push(currentGroup)
+
+        for (let i = 1; i < pendingRules.length; i++) {
+            const item = pendingRules[i]
+            const prevItem = pendingRules[i - 1]
+
+            // 如果当前规则和前一个规则的 shouldBreakLine 相同
+            if (item.shouldBreakLine === prevItem.shouldBreakLine) {
+                currentGroup.push(item)
+            } else {
+                // 否则开始新的一组
+                currentGroup = [item]
+                groups.push(currentGroup)
+            }
+        }
+
+        // 输出每一组
+        for (const group of groups) {
+            if (group[0].shouldBreakLine) {
+                // 单个规则：单独输出
+                this.printMultipleSingleRule(group)
+            } else {
+                // 多个规则：折叠输出
+                this.printChainRule(group)
+            }
+        }
     }
 
     /**
@@ -348,7 +348,7 @@ export class SubhutiDebugRuleTracePrint {
      * @param rules
      * @param depth 兼容非缓存和缓存，
      */
-    static printMultipleSingleRule(rules: RuleStackItem[], depth: number): number {
+    static printMultipleSingleRule(rules: RuleStackItem[], depth: number = rules[0].displayDepth): number {
         rules.forEach((item, index) => {
             // 判断是否是最后一个
             const isLast = index === rules.length - 1
