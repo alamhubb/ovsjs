@@ -242,15 +242,6 @@ export class SubhutiDebugRuleTracePrint {
 
         let pendingRules = ruleStack.filter(item => !item.outputted)
 
-        // ⚠️ 关键修复：过滤掉没有子节点的 Or 分支节点（失败的分支）
-        /*pendingRules = pendingRules.filter(item => {
-            if (item.orBranchInfo?.isOrBranch) {
-                // Or 分支节点必须有子节点才输出
-                return item.childs && item.childs.length > 0
-            }
-            return true  // 其他节点正常输出
-        })*/
-
         if (!pendingRules.length) {
             // 没有需要输出的规则，直接返回当前深度
             const lastOutputted = [...ruleStack].reverse().find(item => item.outputted)
@@ -294,35 +285,37 @@ export class SubhutiDebugRuleTracePrint {
             throw new Error('不该触发没有规则场景')
         }
 
+        this.printMultipleSingleRule(pendingRules)
+
         // 按照 shouldBreakLine 分组
-        const groups: RuleStackItem[][] = []
-        let currentGroup: RuleStackItem[] = [pendingRules[0]]
-        groups.push(currentGroup)
-
-        for (let i = 1; i < pendingRules.length; i++) {
-            const item = pendingRules[i]
-            const prevItem = pendingRules[i - 1]
-
-            // 如果当前规则和前一个规则的 shouldBreakLine 相同
-            if (item.shouldBreakLine === prevItem.shouldBreakLine) {
-                currentGroup.push(item)
-            } else {
-                // 否则开始新的一组
-                currentGroup = [item]
-                groups.push(currentGroup)
-            }
-        }
-
-        // 输出每一组
-        for (const group of groups) {
-            if (group[0].shouldBreakLine) {
-                // 单个规则：单独输出
-                this.printMultipleSingleRule(group)
-            } else {
-                // 多个规则：折叠输出
-                this.printChainRule(group)
-            }
-        }
+        // const groups: RuleStackItem[][] = []
+        // let currentGroup: RuleStackItem[] = [pendingRules[0]]
+        // groups.push(currentGroup)
+        //
+        // for (let i = 1; i < pendingRules.length; i++) {
+        //     const item = pendingRules[i]
+        //     const prevItem = pendingRules[i - 1]
+        //
+        //     // 如果当前规则和前一个规则的 shouldBreakLine 相同
+        //     if (item.shouldBreakLine === prevItem.shouldBreakLine) {
+        //         currentGroup.push(item)
+        //     } else {
+        //         // 否则开始新的一组
+        //         currentGroup = [item]
+        //         groups.push(currentGroup)
+        //     }
+        // }
+        //
+        // // 输出每一组
+        // for (const group of groups) {
+        //     if (group[0].shouldBreakLine) {
+        //         // 单个规则：单独输出
+        //         this.printMultipleSingleRule(group)
+        //     } else {
+        //         // 多个规则：折叠输出
+        //         this.printChainRule(group)
+        //     }
+        // }
     }
 
     /**
