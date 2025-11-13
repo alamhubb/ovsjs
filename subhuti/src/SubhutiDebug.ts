@@ -895,7 +895,7 @@ export class SubhutiTraceDebugger {
         // 深度为当前深度
         restoredItem.displayDepth = curDisplayDepth
 
-        let rootIndex = this.ruleStack.push(restoredItem)
+        let childBeginIndex = this.ruleStack.push(restoredItem)
 
 
         // console.log(this.ruleStack.map(item => item.ruleName))
@@ -915,7 +915,7 @@ export class SubhutiTraceDebugger {
             console.log(this.ruleStack.map(item => item.ruleName))
             console.log(this.ruleStack.map(item => item.outputted))
             SubhutiDebugRuleTracePrint.flushPendingOutputs_Cache_Impl(this.ruleStack)
-            this.ruleStack.splice(rootIndex + 1)
+            this.ruleStack.splice(childBeginIndex)
         }
     }
 
