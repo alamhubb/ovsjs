@@ -800,7 +800,7 @@ export class SubhutiTraceDebugger {
                 throw new Error('系统错误')
             }
         }
-        const clone:RuleStackItem = {
+        const clone: RuleStackItem = {
             ruleName: item.ruleName,
             tokenName: item.tokenName,
             tokenValue: item.tokenValue,
@@ -879,7 +879,7 @@ export class SubhutiTraceDebugger {
 
         restoredItem.outputted = false  // 标记为未输出
         restoredItem.isManuallyAdded = true
-
+        restoredItem.displayDepth = curDisplayDepth
         // 【关键】displayDepth 的计算
         // 对于 root 节点（isRoot=true）：
         //   - curDisplayDepth 是从 flushPendingOutputs_NonCache_Impl 计算的当前深度
@@ -893,14 +893,12 @@ export class SubhutiTraceDebugger {
             curDisplayDepth++
         }
 
-        restoredItem.displayDepth = curDisplayDepth
-
         let childBeginIndex = this.ruleStack.push(restoredItem)
 
         // 【第 4 步】递归恢复子节点，传递当前节点的 displayDepth
         if (cached.childs) {
             for (const childKey of cached.childs) {
-                this.restoreFromCacheAndPushAndPrint(childKey, restoredItem.displayDepth, false)
+                this.restoreFromCacheAndPushAndPrint(childKey, curDisplayDepth, false)
             }
         }
 

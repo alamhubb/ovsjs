@@ -389,18 +389,13 @@ export class SubhutiDebugRuleTracePrint {
             }
 
 
-            SubhutiDebugRuleTracePrint.printLine(printStrs, depth, branch)
-
-            if (item.isManuallyAdded) {
-                if (item.displayDepth != depth) {
-
-                    console.log(item.displayDepth)
-                    console.log(depth)
-                    throw new Error('逻辑错误')
-                }
-            } else {
+            if (!item.isManuallyAdded) {
                 item.displayDepth = depth
             }
+
+            SubhutiDebugRuleTracePrint.printLine(printStrs, depth, branch)
+
+
             // item.shouldBreakLine = true
             item.outputted = true
 
