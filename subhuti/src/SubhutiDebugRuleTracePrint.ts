@@ -286,50 +286,34 @@ export class SubhutiDebugRuleTracePrint {
             throw new Error('不该触发没有规则场景')
         }
 
-        // 【缓存场景的折叠逻辑】
-        // 规则：
-        // 1. Or 包裹节点（childs > 1）及其 3 层子孙节点 → 换行（shouldBreakLine=true）
-        // 2. Token 节点 → 换行（shouldBreakLine=true）
-        // 3. 其他节点 → 折叠（shouldBreakLine=false）
-        //
-        // 分组策略：
-        // - shouldBreakLine=true 的节点：每个节点单独一组
-        // - shouldBreakLine=false 的节点：所有连续的节点在一组（折叠），不管前一个节点是什么
+        // this.printMultipleSingleRule(pendingRules, pendingRules[0].displayDepth)
 
+        // 按照 shouldBreakLine 分组
         const groups: RuleStackItem[][] = []
-        let currentGroup: RuleStackItem[] = []
+        let currentGroup: RuleStackItem[] = [pendingRules[0]]
+        groups.push(currentGroup)
 
-        for (let i = 0; i < pendingRules.length; i++) {
+        for (let i = 1; i < pendingRules.length; i++) {
             const item = pendingRules[i]
+            const prevItem = pendingRules[i - 1]
 
-            if (item.shouldBreakLine) {
-                // 需要换行的节点：单独一组
-                // 先保存之前的折叠组（如果有）
-                if (currentGroup.length > 0) {
-                    groups.push(currentGroup)
-                    currentGroup = []
-                }
-                // 当前节点单独一组
-                groups.push([item])
-            } else {
-                // 不需要换行的节点：加入当前折叠组
+            // 如果当前规则和前一个规则的 shouldBreakLine 相同
+            if (item.shouldBreakLine === prevItem.shouldBreakLine) {
                 currentGroup.push(item)
+            } else {
+                // 否则开始新的一组
+                currentGroup = [item]
+                groups.push(currentGroup)
             }
-        }
-
-        // 保存最后的折叠组（如果有）
-        if (currentGroup.length > 0) {
-            groups.push(currentGroup)
         }
 
         // 输出每一组
         for (const group of groups) {
-            if (group.length === 1 && group[0].shouldBreakLine) {
-                // 单个节点且需要换行：单独输出
+            if (group[0].shouldBreakLine) {
+                // 单个规则：单独输出
                 this.printMultipleSingleRule(group)
             } else {
-                // 多个节点（折叠组）：折叠输出
-                // 注意：printChainRule 现在可以处理 shouldBreakLine=false 的 Or 节点
+                // 多个规则：折叠输出
                 this.printChainRule(group)
             }
         }
@@ -341,36 +325,14 @@ export class SubhutiDebugRuleTracePrint {
      * @param depth 兼容非缓存和缓存，
      */
     static printChainRule(rules: RuleStackItem[], depth: number = rules[0].displayDepth): void {
-        // 过滤规则：
-        // 1. 过滤掉 Or 分支节点（isOrBranch）
-        // 2. 过滤掉需要换行的 Or 包裹节点（isOrEntry && shouldBreakLine）
-        // 3. 保留不需要换行的 Or 包裹节点（isOrEntry && !shouldBreakLine）
-        // 4. 保留普通规则节点
-        const names = rules
-            .filter(item => {
-                if (!item.orBranchInfo) {
-                    // 普通规则节点：保留
-                    return true
-                }
-                if (item.orBranchInfo.isOrBranch) {
-                    // Or 分支节点：过滤掉
-                    return false
-                }
-                if (item.orBranchInfo.isOrEntry) {
-                    // Or 包裹节点：只保留不需要换行的（shouldBreakLine=false）
-                    return !item.shouldBreakLine
-                }
-                return false
-            })
-            .map(r => r.ruleName)
+        //过滤or和虚拟规则
+        const names = rules.filter(item => !item.orBranchInfo).map(r => r.ruleName)
 
         const displayNames = names.length > 5
             ? [...names.slice(0, 3), '...', ...names.slice(-2)]
             : names
 
-        if (names.length > 0) {
-            SubhutiDebugRuleTracePrint.printLine([displayNames.join(' > ')], depth, '├─')
-        }
+        SubhutiDebugRuleTracePrint.printLine([displayNames.join(' > ')], depth, '├─')
 
         rules.forEach(r => {
             r.displayDepth = depth

@@ -864,16 +864,11 @@ export class SubhutiTraceDebugger {
      * 从缓存恢复规则路径（递归恢复整个链条）
      *
      * @param cacheKey - 缓存键
-     * @param curDisplayDepth - 父节点的 displayDepth（用于计算当前节点的深度）
      * @param isRoot - 是否是根节点
-     * @param depthFromMultiBranchOr - 距离最近的"有多个分支的 Or"的层级（0=Or本身, 1=子节点, 2=孙节点, 3+=曾孙及以下）
+     * @param newLineNeedNewLine - 是否是根节点
+     * @param curDisplayDepth - 父节点的 displayDepth（用于计算当前节点的深度）
      */
-    private restoreFromCacheAndPushAndPrint(
-        cacheKey: string,
-        curDisplayDepth: number,
-        isRoot: boolean = true,
-        depthFromMultiBranchOr: number = 999
-    ): void {
+    private restoreFromCacheAndPushAndPrint(cacheKey: string, curDisplayDepth: number, newLineNeedNewLine: boolean, isRoot: boolean = true): void {
         // 【第 1 步】读取缓存的规则或 Token
         const cached = this.cacheGet(cacheKey)
         if (!cached) {
@@ -885,60 +880,35 @@ export class SubhutiTraceDebugger {
 
         restoredItem.outputted = false  // 标记为未输出
         restoredItem.isManuallyAdded = true
+        restoredItem.displayDepth = curDisplayDepth
+        restoredItem.shouldBreakLine = false
 
-        // 【关键】判断是否需要换行（shouldBreakLine）
-        // 换行规则（仅针对缓存场景）：
-        // 1. Or 包裹节点（childs > 1）→ 换行（depthFromMultiBranchOr=0）
-        // 2. Or 分支节点（Or 的直接子节点）→ 换行（depthFromMultiBranchOr=1）
-        // 3. Or 的孙子节点 → 换行（depthFromMultiBranchOr=2）
-        // 4. Or 的曾孙节点及以下 → 折叠（depthFromMultiBranchOr>=3）
-        // 5. Or 包裹节点（childs <= 1）→ 折叠（不换行）
-        // 6. Token 节点 → 始终换行
-        // 7. 其他普通规则 → 折叠
-        const isOrEntry = restoredItem.orBranchInfo?.isOrEntry
-        const isToken = !!restoredItem.tokenName
-        const isMultiBranchOr = isOrEntry && (cached.childs?.length ?? 0) > 1
+        newLineNeedNewLine = false
 
-        // 判断是否在"有多个分支的 Or"的 3 层内（Or 本身、Or 分支节点、Or 孙子节点）
-        const withinThreeLevelsOfMultiBranchOr = depthFromMultiBranchOr <= 2
-
-        restoredItem.shouldBreakLine = isMultiBranchOr || withinThreeLevelsOfMultiBranchOr || isToken
-
-        // 【关键】displayDepth 的计算
-        // 对于 root 节点（isRoot=true）：
-        //   - curDisplayDepth 是从 flushPendingOutputs_NonCache_Impl 计算的当前深度
-        //   - 直接使用这个深度
-        // 对于子节点（isRoot=false）：
-        //   - curDisplayDepth 是父节点的 displayDepth
-        //   - 如果子节点需要换行（shouldBreakLine=true），深度 = 父节点深度 + 1
-        //   - 否则深度 = 父节点深度（折叠显示，不增加深度）
-        if (!isRoot && restoredItem.shouldBreakLine) {
-            curDisplayDepth++
+        if (!isRoot) {
+            if (newLineNeedNewLine) {
+                curDisplayDepth++
+                restoredItem.shouldBreakLine = true
+            } else if (restoredItem.tokenName) {
+                curDisplayDepth++
+                restoredItem.shouldBreakLine = true
+            } else if (restoredItem.orBranchInfo && restoredItem.orBranchInfo.isOrEntry && restoredItem.childs.length > 1) {
+                curDisplayDepth++
+                restoredItem.shouldBreakLine = true
+                newLineNeedNewLine = true
+            }
         }
 
-        // 更新节点的 displayDepth
-        restoredItem.displayDepth = curDisplayDepth
+        if (newLineNeedNewLine && restoredItem.orBranchInfo) {
+            newLineNeedNewLine = restoredItem.orBranchInfo.isOrBranch || false
+        }
 
         let childBeginIndex = this.ruleStack.push(restoredItem)
 
         // 【第 4 步】递归恢复子节点，传递当前节点的 displayDepth
         if (cached.childs) {
-            // 计算子节点距离"有多个分支的 Or"的层级
-            let childDepthFromMultiBranchOr: number
-
-            const isOrEntry = restoredItem.orBranchInfo?.isOrEntry
-            const isMultiBranchOr = isOrEntry && (cached.childs?.length ?? 0) > 1
-
-            if (isMultiBranchOr) {
-                // 如果当前节点是"有多个分支的 Or"，子节点的层级是 1（直接子节点）
-                childDepthFromMultiBranchOr = 1
-            } else {
-                // 否则，子节点的层级 = 当前节点的层级 + 1
-                childDepthFromMultiBranchOr = depthFromMultiBranchOr + 1
-            }
-
             for (const childKey of cached.childs) {
-                this.restoreFromCacheAndPushAndPrint(childKey, curDisplayDepth, false, childDepthFromMultiBranchOr)
+                this.restoreFromCacheAndPushAndPrint(childKey, curDisplayDepth, newLineNeedNewLine, false)
             }
         }
 
