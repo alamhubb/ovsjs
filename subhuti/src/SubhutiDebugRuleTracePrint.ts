@@ -290,24 +290,6 @@ export class SubhutiDebugRuleTracePrint {
     public static flushPendingOutputs_Cache_Impl(ruleStack: RuleStackItem[]): void {
         let pendingRules = ruleStack.filter(item => !item.outputted)
 
-
-        // ⚠️ 关键修复：过滤掉没有子节点的 Or 分支节点（失败的分支）
-        /*pendingRules = pendingRules.filter(item => {
-            if (item.orBranchInfo?.isOrBranch) {
-                // Or 分支节点必须有子节点才输出
-                return item.childs && item.childs.length > 0
-            }
-            return true  // 其他节点正常输出
-        })*/
-
-        // 🔍 调试：记录缓存回放的规则
-        LogUtil.consoleLog(`🔍 [DEBUG-CACHE] 缓存回放输出 ${pendingRules.length} 个规则`)
-        pendingRules.forEach((item, idx) => {
-            if (item.orBranchInfo?.isOrBranch) {
-                LogUtil.consoleLog(`🔍 [DEBUG-CACHE]   [${idx}] ${item.ruleName}(branch=${item.orBranchInfo.branchIndex}), childs=${item.childs?.length || 0}`)
-            }
-        })
-
         if (pendingRules.length === 0) {
             throw new Error('不该触发没有规则场景')
         }
@@ -356,12 +338,7 @@ export class SubhutiDebugRuleTracePrint {
             ? [...names.slice(0, 3), '...', ...names.slice(-2)]
             : names
 
-        // 前缀：前面层级的垂直线
-        const prefix = '│  '.repeat(depth)
-
-        // console.log(prefix + '├─' + names.join(' > '))
-        // 折叠链用 ├─（因为后面有单独规则）
-        console.log(prefix + '├─' + displayNames.join(' > '))
+        SubhutiDebugRuleTracePrint.printLine([displayNames.join(' > ')], depth, '├─')
 
         rules.forEach(r => {
             r.displayDepth = depth
@@ -401,7 +378,6 @@ export class SubhutiDebugRuleTracePrint {
                 } else if (item.orBranchInfo.isOrBranch) {
                     printStrs = [`[Branch #${branchInfo.branchIndex + 1}](${item.ruleName})`]
                     // 🔍 调试：记录 Or 分支被标记为 outputted
-                    LogUtil.consoleLog(`🔍 [DEBUG] 标记Or分支为outputted: ${item.ruleName}(branch=${branchInfo.branchIndex}), childs=${item.childs?.length || 0}`)
                 } else {
                     printStrs = [`错误`]
                 }
@@ -422,8 +398,6 @@ export class SubhutiDebugRuleTracePrint {
             SubhutiDebugRuleTracePrint.printLine(printStrs, depth, branch)
 
             if (item.isManuallyAdded) {
-                // console.log(item.displayDepth)
-                // console.log(depth)
                 if (item.displayDepth != depth) {
                     // throw new Error('逻辑错误')
                 }
