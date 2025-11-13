@@ -891,7 +891,7 @@ export class SubhutiTraceDebugger {
         if (!isRoot && restoredItem.shouldBreakLine) {
             curDisplayDepth++
         }
-        
+
         restoredItem.displayDepth = curDisplayDepth
 
         let childBeginIndex = this.ruleStack.push(restoredItem)
@@ -916,7 +916,7 @@ export class SubhutiTraceDebugger {
     // 过程追踪方法
     // ========================================
 
-    openDebugLogCache = false
+    openDebugLogCache = true
 
     /**
      * 规则进入事件处理器 - 立即建立父子关系版本
@@ -1225,7 +1225,7 @@ export class SubhutiTraceDebugger {
         if (!curOrNode.outputted) {
             return
         }
-        
+
         // 生成 Or 包裹节点的缓存 key
         const cacheKey = this.generateCacheKey(curOrNode)
 
@@ -1329,7 +1329,7 @@ export class SubhutiTraceDebugger {
         if (!curBranchNode.outputted) {
             return
         }
-        
+
         // 生成 Or 分支节点的缓存 key
         const cacheKey = this.generateCacheKey(curBranchNode)
 
@@ -1355,7 +1355,7 @@ export class SubhutiTraceDebugger {
             // 将 Or 分支节点 key 追加到父节点的 childs
             this.parentPushChild(parentOrNode, cacheKey)
         }
-        
+
         // 【2】检查缓存中是否已有此 Or 分支节点 → 没有则存入
         const cachedBranchNode = this.cacheGet(cacheKey)
         if (!cachedBranchNode) {
