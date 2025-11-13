@@ -1454,12 +1454,6 @@ export class SubhutiTraceDebugger {
             // 将 Or 分支节点 key 追加到父节点的 childs
             // console.log(`🔍 [DEBUG-BRANCH-EXIT] ✅ 添加Or分支到父节点: ${parentOrNode.ruleName} += ${parentRuleName}(branch=${branchIndex})`)
             this.parentPushChild(parentOrNode, cacheKey)
-            
-            // 🔥 关键：标记父 Or 包裹节点为已输出
-            if (!parentOrNode.outputted) {
-                // console.log(`🔍 [DEBUG-BRANCH-EXIT] 🔥 标记父Or包裹节点为已输出: ${parentOrNode.ruleName}`)
-                parentOrNode.outputted = true
-            }
         }
         
         // console.log(`🔍 [DEBUG-BRANCH-EXIT] ========== onOrBranchExit 结束 ==========\n`)
