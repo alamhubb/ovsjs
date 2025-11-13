@@ -289,6 +289,9 @@ export class SubhutiDebugRuleTracePrint {
         // this.printMultipleSingleRule(pendingRules, pendingRules[0].displayDepth)
 
         // 按照 shouldBreakLine 分组
+        // 规则：
+        // - shouldBreakLine=true 的规则：每个规则单独一行（不折叠）
+        // - shouldBreakLine=false 的规则：连续的规则折叠在一起
         const groups: RuleStackItem[][] = []
         let currentGroup: RuleStackItem[] = [pendingRules[0]]
         groups.push(currentGroup)
@@ -297,23 +300,23 @@ export class SubhutiDebugRuleTracePrint {
             const item = pendingRules[i]
             const prevItem = pendingRules[i - 1]
 
-            // 如果当前规则和前一个规则的 shouldBreakLine 相同
-            if (item.shouldBreakLine === prevItem.shouldBreakLine) {
-                currentGroup.push(item)
-            } else {
-                // 否则开始新的一组
+            // 如果当前规则需要换行，或者前一个规则需要换行，开始新的一组
+            if (item.shouldBreakLine || prevItem.shouldBreakLine) {
                 currentGroup = [item]
                 groups.push(currentGroup)
+            } else {
+                // 否则，两个规则都不需要换行，可以折叠在一起
+                currentGroup.push(item)
             }
         }
 
         // 输出每一组
         for (const group of groups) {
             if (group[0].shouldBreakLine) {
-                // 单个规则：单独输出
+                // 需要换行的规则：单独输出（每个规则一行）
                 this.printMultipleSingleRule(group)
             } else {
-                // 多个规则：折叠输出
+                // 不需要换行的规则：折叠输出（多个规则在一行）
                 this.printChainRule(group)
             }
         }
