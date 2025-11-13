@@ -227,14 +227,19 @@ export class SubhutiDebugRuleTracePrint {
         if (!ruleStack.length) {
             throw new Error('系统错误：ruleStack 为空')
         }
-        let pendingRules = ruleStack.filter(item => !item.outputted)
+        const unOutputIndex = ruleStack.findIndex(item => !item.outputted)
+
+        if (unOutputIndex < 0) {
+            throw new Error('系统错误：没有带输出的日志')
+        }
+        let pendingRules = ruleStack.slice(unOutputIndex)
 
         if (!pendingRules.length) {
             throw new Error('系统错误：pendingRules 为空')
         }
 
-        // 查找最后一个已输出的规则
-        const lastOutputted = [...ruleStack].reverse().find(item => item.outputted)
+        // 最后一个已输出的规则
+        const lastOutputted = ruleStack[unOutputIndex - 1]
 
         // 计算基准深度
         // 如果没有已输出的规则（第一次输出），baseDepth = 0
