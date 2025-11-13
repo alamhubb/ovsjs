@@ -286,7 +286,7 @@ export class SubhutiDebugRuleTracePrint {
             throw new Error('不该触发没有规则场景')
         }
 
-        this.printMultipleSingleRule(pendingRules)
+        this.printMultipleSingleRule(pendingRules, pendingRules[0].displayDepth)
 
         // 按照 shouldBreakLine 分组
         // const groups: RuleStackItem[][] = []
@@ -348,7 +348,7 @@ export class SubhutiDebugRuleTracePrint {
      * @param rules
      * @param depth 兼容非缓存和缓存，
      */
-    static printMultipleSingleRule(rules: RuleStackItem[], depth: number = rules[0].displayDepth): number {
+    static printMultipleSingleRule(rules: RuleStackItem[], depth: number): number {
         rules.forEach((item, index) => {
             // 判断是否是最后一个
             const isLast = index === rules.length - 1
