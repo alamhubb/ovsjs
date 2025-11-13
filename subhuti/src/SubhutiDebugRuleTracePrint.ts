@@ -18,7 +18,7 @@
 // TreeFormatHelper - 树形输出格式化辅助
 // ============================================
 
-import {LogUtil} from "./SubhutiDebug.ts";
+import {LogUtil} from "./logutil.ts";
 
 /**
  * 树形输出格式化辅助类
@@ -209,7 +209,7 @@ export class SubhutiDebugRuleTracePrint {
             // 前缀：根据深度生成缩进，└─ 表示是叶子节点
             {prefix: '│  '.repeat(depth) + symbol, separator: ' '}
         )
-        console.log(line)
+        LogUtil.log(line)
     }
 
 

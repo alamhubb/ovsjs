@@ -1,0 +1,1077 @@
+﻿馃攳 Es2025Parser MWE + 浜屽垎澧為噺璋冭瘯
+================================================================================
+馃摑 浠ｇ爜: let a = 1
+鉁?璇嶆硶鍒嗘瀽: 4 tokens
+
+馃敩 浜屽垎澧為噺璋冭瘯妯″紡
+================================================================================
+绛栫暐锛氫粠鏈€搴曞眰瑙勫垯閫愬眰娴嬭瘯锛屾壘鍑洪棶棰樺眰绾?
+
+[鈻竇 娴嬭瘯灞傜骇 1: LexicalDeclaration
+--------------------------------------------------------------------------------
+
+鉁?LexicalDeclaration 瑙ｆ瀽鎴愬姛锛圱oken瀹屾暣: 4/4锛?
+[鈻糕柛] 娴嬭瘯灞傜骇 2: Declaration
+--------------------------------------------------------------------------------
+
+鉁?Declaration 瑙ｆ瀽鎴愬姛锛圱oken瀹屾暣: 4/4锛?
+[鈻糕柛鈻竇 娴嬭瘯灞傜骇 3: StatementListItem
+--------------------------------------------------------------------------------
+
+鉁?StatementListItem 瑙ｆ瀽鎴愬姛锛圱oken瀹屾暣: 4/4锛?
+[鈻糕柛鈻糕柛] 娴嬭瘯灞傜骇 4: StatementList
+--------------------------------------------------------------------------------
+
+鉁?StatementList 瑙ｆ瀽鎴愬姛锛圱oken瀹屾暣: 4/4锛?
+[鈻糕柛鈻糕柛鈻竇 娴嬭瘯灞傜骇 5: Script
+--------------------------------------------------------------------------------
+
+馃攳 onOrBranch: StatementListItem(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 4
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 5
+
+馃攳 onOrBranch: Statement(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 7
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 8
+
+馃攳 onOrBranch: Statement(branchIdx=1)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 7
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 8
+
+馃攳 onOrBranch: Statement(branchIdx=2)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 7
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 8
+
+馃攳 onOrBranch: Statement(branchIdx=3)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 7
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 8
+
+馃攳 onOrBranch: AssignmentExpression(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 12
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 13
+
+馃攳 onOrBranch: ConditionalExpression(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 15
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 16
+
+馃攳 onOrBranch: ShortCircuitExpression(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 18
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 19
+
+馃攳 onOrBranch: ExponentiationExpression(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 31
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 32
+
+馃攳 onOrBranch: UpdateExpression(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 34
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 35
+
+馃攳 onOrBranch: LeftHandSideExpression(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 37
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 38
+
+馃攳 onOrBranch: NewExpression(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 40
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 41
+
+馃攳 onOrBranch: MemberExpression(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 43
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 44
+
+馃攳 onOrBranch: PrimaryExpression(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 46
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 47
+
+馃攳 onOrBranch: PrimaryExpression(branchIdx=1)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 46
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 47
+
+馃攳 onOrBranch: IdentifierReference(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 49
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 50
+
+馃攳 onOrBranch: IdentifierReference(branchIdx=1)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 49
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 50
+
+馃攳 onOrBranch: IdentifierReference(branchIdx=2)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 49
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 50
+
+馃攳 onOrBranch: PrimaryExpression(branchIdx=2)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 46
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 47
+
+馃攳 onOrBranch: Literal(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 49
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 50
+
+馃攳 onOrBranch: Literal(branchIdx=1)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 49
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 50
+
+馃攳 onOrBranch: Literal(branchIdx=2)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 49
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 50
+
+馃攳 onOrBranch: Literal(branchIdx=3)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 49
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 50
+
+馃攳 onOrBranch: Literal(branchIdx=4)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 49
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 50
+
+馃攳 onOrBranch: PrimaryExpression(branchIdx=3)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 46
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 47
+
+馃攳 onOrBranch: ArrayLiteral(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 49
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 50
+
+馃攳 onOrBranch: ArrayLiteral(branchIdx=1)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 49
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 50
+
+馃攳 onOrBranch: ArrayLiteral(branchIdx=2)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 49
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 50
+
+馃攳 onOrBranch: PrimaryExpression(branchIdx=4)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 46
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 47
+
+馃攳 onOrBranch: ObjectLiteral(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 49
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 50
+
+馃攳 onOrBranch: ObjectLiteral(branchIdx=1)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 49
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 50
+
+馃攳 onOrBranch: ObjectLiteral(branchIdx=2)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 49
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 50
+
+馃攳 onOrBranch: PrimaryExpression(branchIdx=5)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 46
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 47
+
+馃攳 onOrBranch: PrimaryExpression(branchIdx=6)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 46
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 47
+
+馃攳 onOrBranch: PrimaryExpression(branchIdx=7)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 46
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 47
+
+馃攳 onOrBranch: PrimaryExpression(branchIdx=8)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 46
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 47
+
+馃攳 onOrBranch: PrimaryExpression(branchIdx=9)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 46
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 47
+
+馃攳 onOrBranch: PrimaryExpression(branchIdx=10)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 46
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 47
+
+馃攳 onOrBranch: PrimaryExpression(branchIdx=11)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 46
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 47
+
+馃攳 onOrBranch: TemplateLiteral(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 49
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 50
+
+馃攳 onOrBranch: TemplateLiteral(branchIdx=1)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 49
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 50
+
+馃攳 onOrBranch: PrimaryExpression(branchIdx=12)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 46
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 47
+
+馃攳 onOrBranch: CoverParenthesizedExpressionAndArrowParameterList(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 49
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 50
+
+馃攳 onOrBranch: CoverParenthesizedExpressionAndArrowParameterList(branchIdx=1)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 49
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 50
+
+馃攳 onOrBranch: CoverParenthesizedExpressionAndArrowParameterList(branchIdx=2)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 49
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 50
+
+馃攳 onOrBranch: CoverParenthesizedExpressionAndArrowParameterList(branchIdx=3)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 49
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 50
+
+馃攳 onOrBranch: CoverParenthesizedExpressionAndArrowParameterList(branchIdx=4)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 49
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 50
+
+馃攳 onOrBranch: CoverParenthesizedExpressionAndArrowParameterList(branchIdx=5)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 49
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 50
+
+馃攳 onOrBranch: CoverParenthesizedExpressionAndArrowParameterList(branchIdx=6)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 49
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 50
+
+馃攳 onOrBranch: MemberExpression(branchIdx=1)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 43
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 44
+
+馃攳 onOrBranch: SuperProperty(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 46
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 47
+
+馃攳 onOrBranch: SuperProperty(branchIdx=1)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 46
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 47
+
+馃攳 onOrBranch: MemberExpression(branchIdx=2)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 43
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 44
+
+馃攳 onOrBranch: MetaProperty(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 46
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 47
+
+馃攳 onOrBranch: MetaProperty(branchIdx=1)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 46
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 47
+
+馃攳 onOrBranch: MemberExpression(branchIdx=3)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 43
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 44
+
+馃攳 onOrBranch: NewExpression(branchIdx=1)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 40
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 41
+
+馃攳 onOrBranch: LeftHandSideExpression(branchIdx=1)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 37
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 38
+
+馃攳 onOrBranch: CallExpression(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 40
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 41
+
+馃攳 onOrBranch: CallExpression(branchIdx=1)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 40
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 41
+
+馃攳 onOrBranch: CallExpression(branchIdx=2)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 40
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 41
+
+馃攳 onOrBranch: ImportCall(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 43
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 44
+
+馃攳 onOrBranch: ImportCall(branchIdx=1)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 43
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 44
+
+馃攳 onOrBranch: LeftHandSideExpression(branchIdx=2)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 37
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 38
+
+馃攳 onOrBranch: OptionalExpression(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 40
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 41
+
+馃攳 onOrBranch: OptionalExpression(branchIdx=1)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 40
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 41
+
+馃攳 onOrBranch: UpdateExpression(branchIdx=1)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 34
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 35
+
+馃攳 onOrBranch: UpdateExpression(branchIdx=2)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 34
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 35
+
+馃攳 onOrBranch: UpdateExpression(branchIdx=3)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 34
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 35
+
+馃攳 onOrBranch: UpdateExpression(branchIdx=4)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 34
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 35
+
+馃攳 onOrBranch: ExponentiationExpression(branchIdx=1)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 31
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 32
+
+馃攳 onOrBranch: UnaryExpression(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 34
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 35
+
+馃攳 onOrBranch: UnaryExpression(branchIdx=1)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 34
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 35
+
+馃攳 onOrBranch: UnaryExpression(branchIdx=2)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 34
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 35
+
+馃攳 onOrBranch: UnaryExpression(branchIdx=3)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 34
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 35
+
+馃攳 onOrBranch: UnaryExpression(branchIdx=4)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 34
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 35
+
+馃攳 onOrBranch: UnaryExpression(branchIdx=5)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 34
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 35
+
+馃攳 onOrBranch: UnaryExpression(branchIdx=6)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 34
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 35
+
+馃攳 onOrBranch: UnaryExpression(branchIdx=7)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 34
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 35
+
+馃攳 onOrBranch: ShortCircuitExpression(branchIdx=1)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 18
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 19
+
+馃攳 onOrBranch: ConditionalExpression(branchIdx=1)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 15
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 16
+
+馃攳 onOrBranch: AssignmentExpression(branchIdx=1)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 12
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 13
+
+馃攳 onOrBranch: ArrowParameters(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 16
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 17
+
+馃攳 onOrBranch: BindingIdentifier(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 19
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 20
+
+馃攳 onOrBranch: BindingIdentifier(branchIdx=1)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 19
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 20
+
+馃攳 onOrBranch: BindingIdentifier(branchIdx=2)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 19
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 20
+
+馃攳 onOrBranch: ArrowParameters(branchIdx=1)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 16
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 17
+
+馃攳 onOrBranch: AssignmentExpression(branchIdx=2)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 12
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 13
+
+馃攳 onOrBranch: AsyncArrowFunction(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 15
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 16
+
+馃攳 onOrBranch: AsyncArrowFunction(branchIdx=1)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 15
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 16
+
+馃攳 onOrBranch: AssignmentExpression(branchIdx=3)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 12
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 13
+
+馃攳 onOrBranch: AssignmentExpression(branchIdx=4)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 12
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 13
+
+馃攳 onOrBranch: AssignmentExpression(branchIdx=5)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 12
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 13
+
+馃攳 onOrBranch: AssignmentExpression(branchIdx=6)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 12
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 13
+
+馃攳 onOrBranch: AssignmentExpression(branchIdx=7)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 12
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 13
+
+馃攳 onOrBranch: Statement(branchIdx=4)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 7
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 8
+
+馃攳 onOrBranch: IfStatement(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 10
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 11
+
+馃攳 onOrBranch: IfStatement(branchIdx=1)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 10
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 11
+
+馃攳 onOrBranch: Statement(branchIdx=5)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 7
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 8
+
+馃攳 onOrBranch: BreakableStatement(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 10
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 11
+
+馃攳 onOrBranch: IterationStatement(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 13
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 14
+
+馃攳 onOrBranch: IterationStatement(branchIdx=1)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 13
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 14
+
+馃攳 onOrBranch: IterationStatement(branchIdx=2)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 13
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 14
+
+馃攳 onOrBranch: ForStatement(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 16
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 17
+
+馃攳 onOrBranch: ForStatement(branchIdx=1)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 16
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 17
+
+馃攳 onOrBranch: ForStatement(branchIdx=2)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 16
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 17
+
+馃攳 onOrBranch: IterationStatement(branchIdx=3)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 13
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 14
+
+馃攳 onOrBranch: ForInOfStatement(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 16
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 17
+
+馃攳 onOrBranch: ForInOfStatement(branchIdx=1)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 16
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 17
+
+馃攳 onOrBranch: ForInOfStatement(branchIdx=2)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 16
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 17
+
+馃攳 onOrBranch: ForInOfStatement(branchIdx=3)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 16
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 17
+
+馃攳 onOrBranch: ForInOfStatement(branchIdx=4)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 16
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 17
+
+馃攳 onOrBranch: ForInOfStatement(branchIdx=5)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 16
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 17
+
+馃攳 onOrBranch: BreakableStatement(branchIdx=1)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 10
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 11
+
+馃攳 onOrBranch: Statement(branchIdx=6)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 7
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 8
+
+馃攳 onOrBranch: ContinueStatement(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 10
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 11
+
+馃攳 onOrBranch: ContinueStatement(branchIdx=1)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 10
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 11
+
+馃攳 onOrBranch: Statement(branchIdx=7)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 7
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 8
+
+馃攳 onOrBranch: BreakStatement(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 10
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 11
+
+馃攳 onOrBranch: BreakStatement(branchIdx=1)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 10
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 11
+
+馃攳 onOrBranch: Statement(branchIdx=8)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 7
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 8
+
+馃攳 onOrBranch: Statement(branchIdx=9)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 7
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 8
+
+馃攳 onOrBranch: LabelIdentifier(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 11
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 12
+
+馃攳 onOrBranch: LabelIdentifier(branchIdx=1)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 11
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 12
+
+馃攳 onOrBranch: LabelIdentifier(branchIdx=2)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 11
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 12
+
+馃攳 onOrBranch: Statement(branchIdx=10)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 7
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 8
+
+馃攳 onOrBranch: Statement(branchIdx=11)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 7
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 8
+
+馃攳 onOrBranch: TryStatement(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 10
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 11
+
+馃攳 onOrBranch: TryStatement(branchIdx=1)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 10
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 11
+
+馃攳 onOrBranch: TryStatement(branchIdx=2)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 10
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 11
+
+馃攳 onOrBranch: Statement(branchIdx=12)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 7
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 8
+
+馃攳 onOrBranch: StatementListItem(branchIdx=1)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 4
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 5
+
+馃攳 onOrBranch: Declaration(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 7
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 8
+
+馃攳 onOrBranch: HoistableDeclaration(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 10
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 11
+
+馃攳 onOrBranch: FunctionDeclaration(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 13
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 14
+
+馃攳 onOrBranch: HoistableDeclaration(branchIdx=1)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 10
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 11
+
+馃攳 onOrBranch: GeneratorDeclaration(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 13
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 14
+
+馃攳 onOrBranch: HoistableDeclaration(branchIdx=2)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 10
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 11
+
+馃攳 onOrBranch: AsyncFunctionDeclaration(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 13
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 14
+
+馃攳 onOrBranch: HoistableDeclaration(branchIdx=3)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 10
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 11
+
+馃攳 onOrBranch: AsyncGeneratorDeclaration(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 13
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 14
+
+馃攳 onOrBranch: Declaration(branchIdx=1)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 7
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 8
+
+馃攳 onOrBranch: ClassDeclaration(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 10
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 11
+
+馃攳 onOrBranch: Declaration(branchIdx=2)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 7
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 8
+
+馃攳 onOrBranch: LetOrConst(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 11
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 12
+鈹溾攢Script > StatementList > StatementListItem > ... > LexicalDeclaration > LetOrConst
+鈹? 鈹溾攢馃攢 LetOrConst(Or)
+鈹? 鈹? 鈹斺攢[Branch #1]
+鈹? 鈹? 鈹? 鈹斺攢馃敼 Consume token[0] - let - <LetTok> [1:1-3] 鉁?
+馃攳 onOrBranchExit: LetOrConst(branchIdx=0)
+  鏍堟繁搴? 11
+  鏍堝唴瀹?
+  [0] Script
+  [1] StatementList
+  [2] StatementListItem
+  [3] StatementListItem(entry=true, branch=false, idx=undefined)
+  [4] StatementListItem(entry=false, branch=true, idx=1)
+  [5] Declaration
+  [6] Declaration(entry=true, branch=false, idx=undefined)
+  [7] Declaration(entry=false, branch=true, idx=2)
+  [8] LexicalDeclaration
+  [9] LetOrConst
+  [10] LetOrConst(entry=true, branch=false, idx=undefined)
+
+馃攳 onOrBranch: LexicalBinding(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 12
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 13
+
+馃攳 onOrBranch: BindingIdentifier(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 15
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 16
+鈹? 鈹溾攢BindingList > LexicalBinding > BindingIdentifier
+鈹? 鈹? 鈹溾攢[Branch #1]
+鈹? 鈹? 鈹? 鈹斺攢Identifier
+鈹? 鈹? 鈹? 鈹? 鈹斺攢馃敼 Consume token[1] - a - <Identifier> [1:5-5] 鉁?
+馃攳 onOrBranchExit: BindingIdentifier(branchIdx=0)
+  鏍堟繁搴? 15
+  鏍堝唴瀹?
+  [0] Script
+  [1] StatementList
+  [2] StatementListItem
+  [3] StatementListItem(entry=true, branch=false, idx=undefined)
+  [4] StatementListItem(entry=false, branch=true, idx=1)
+  [5] Declaration
+  [6] Declaration(entry=true, branch=false, idx=undefined)
+  [7] Declaration(entry=false, branch=true, idx=2)
+  [8] LexicalDeclaration
+  [9] BindingList
+  [10] LexicalBinding
+  [11] LexicalBinding(entry=true, branch=false, idx=undefined)
+  [12] LexicalBinding(entry=false, branch=true, idx=0)
+  [13] BindingIdentifier
+  [14] BindingIdentifier(entry=true, branch=false, idx=undefined)
+鈹? 鈹? 鈹斺攢Initializer
+鈹? 鈹? 鈹? 鈹斺攢馃敼 Consume token[2] - = - <Assign> [1:7-7] 鉁?
+馃攳 onOrBranch: AssignmentExpression(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 16
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 17
+
+馃攳 onOrBranch: ConditionalExpression(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 19
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 20
+
+馃攳 onOrBranch: ShortCircuitExpression(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 22
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 23
+
+馃攳 onOrBranch: ExponentiationExpression(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 35
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 36
+
+馃攳 onOrBranch: UpdateExpression(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 38
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 39
+
+馃攳 onOrBranch: LeftHandSideExpression(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 41
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 42
+
+馃攳 onOrBranch: NewExpression(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 44
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 45
+
+馃攳 onOrBranch: MemberExpression(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 47
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 48
+
+馃攳 onOrBranch: PrimaryExpression(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 50
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 51
+
+馃攳 onOrBranch: PrimaryExpression(branchIdx=1)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 50
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 51
+
+馃攳 onOrBranch: IdentifierReference(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 53
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 54
+
+馃攳 onOrBranch: IdentifierReference(branchIdx=1)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 53
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 54
+
+馃攳 onOrBranch: IdentifierReference(branchIdx=2)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 53
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 54
+
+馃攳 onOrBranch: PrimaryExpression(branchIdx=2)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 50
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 51
+
+馃攳 onOrBranch: Literal(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 53
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 54
+
+馃攳 onOrBranch: Literal(branchIdx=1)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 53
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 54
+
+馃攳 onOrBranch: Literal(branchIdx=2)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 53
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 54
+
+馃攳 onOrBranch: Literal(branchIdx=3)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 53
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 54
+鈹? 鈹? 鈹? 鈹溾攢AssignmentExpression > ConditionalExpression > ShortCircuitExpression > ... > PrimaryExpression > Literal
+鈹? 鈹? 鈹? 鈹? 鈹溾攢馃攢 Literal(Or)
+鈹? 鈹? 鈹? 鈹? 鈹? 鈹斺攢[Branch #4]
+鈹? 鈹? 鈹? 鈹? 鈹? 鈹? 鈹斺攢馃敼 Consume token[3] - 1 - <NumericLiteral> [1:9-9] 鉁?
+馃攳 onOrBranchExit: Literal(branchIdx=3)
+  鏍堟繁搴? 53
+  鏍堝唴瀹?
+  [0] Script
+  [1] StatementList
+  [2] StatementListItem
+  [3] StatementListItem(entry=true, branch=false, idx=undefined)
+  [4] StatementListItem(entry=false, branch=true, idx=1)
+  [5] Declaration
+  [6] Declaration(entry=true, branch=false, idx=undefined)
+  [7] Declaration(entry=false, branch=true, idx=2)
+  [8] LexicalDeclaration
+  [9] BindingList
+  [10] LexicalBinding
+  [11] LexicalBinding(entry=true, branch=false, idx=undefined)
+  [12] LexicalBinding(entry=false, branch=true, idx=0)
+  [13] Initializer
+  [14] AssignmentExpression
+  [15] AssignmentExpression(entry=true, branch=false, idx=undefined)
+  [16] AssignmentExpression(entry=false, branch=true, idx=0)
+  [17] ConditionalExpression
+  [18] ConditionalExpression(entry=true, branch=false, idx=undefined)
+  [19] ConditionalExpression(entry=false, branch=true, idx=0)
+  [20] ShortCircuitExpression
+  [21] ShortCircuitExpression(entry=true, branch=false, idx=undefined)
+  [22] ShortCircuitExpression(entry=false, branch=true, idx=0)
+  [23] LogicalORExpression
+  [24] LogicalANDExpression
+  [25] BitwiseORExpression
+  [26] BitwiseXORExpression
+  [27] BitwiseANDExpression
+  [28] EqualityExpression
+  [29] RelationalExpression
+  [30] ShiftExpression
+  [31] AdditiveExpression
+  [32] MultiplicativeExpression
+  [33] ExponentiationExpression
+  [34] ExponentiationExpression(entry=true, branch=false, idx=undefined)
+  [35] ExponentiationExpression(entry=false, branch=true, idx=0)
+  [36] UpdateExpression
+  [37] UpdateExpression(entry=true, branch=false, idx=undefined)
+  [38] UpdateExpression(entry=false, branch=true, idx=0)
+  [39] LeftHandSideExpression
+  [40] LeftHandSideExpression(entry=true, branch=false, idx=undefined)
+  [41] LeftHandSideExpression(entry=false, branch=true, idx=0)
+  [42] NewExpression
+  [43] NewExpression(entry=true, branch=false, idx=undefined)
+  [44] NewExpression(entry=false, branch=true, idx=0)
+  [45] MemberExpression
+  [46] MemberExpression(entry=true, branch=false, idx=undefined)
+  [47] MemberExpression(entry=false, branch=true, idx=0)
+  [48] PrimaryExpression
+  [49] PrimaryExpression(entry=true, branch=false, idx=undefined)
+  [50] PrimaryExpression(entry=false, branch=true, idx=2)
+  [51] Literal
+  [52] Literal(entry=true, branch=false, idx=undefined)
+
+馃攳 onOrBranchExit: PrimaryExpression(branchIdx=2)
+  鏍堟繁搴? 50
+  鏍堝唴瀹?
+  [0] Script
+  [1] StatementList
+  [2] StatementListItem
+  [3] StatementListItem(entry=true, branch=false, idx=undefined)
+  [4] StatementListItem(entry=false, branch=true, idx=1)
+  [5] Declaration
+  [6] Declaration(entry=true, branch=false, idx=undefined)
+  [7] Declaration(entry=false, branch=true, idx=2)
+  [8] LexicalDeclaration
+  [9] BindingList
+  [10] LexicalBinding
+  [11] LexicalBinding(entry=true, branch=false, idx=undefined)
+  [12] LexicalBinding(entry=false, branch=true, idx=0)
+  [13] Initializer
+  [14] AssignmentExpression
+  [15] AssignmentExpression(entry=true, branch=false, idx=undefined)
+  [16] AssignmentExpression(entry=false, branch=true, idx=0)
+  [17] ConditionalExpression
+  [18] ConditionalExpression(entry=true, branch=false, idx=undefined)
+  [19] ConditionalExpression(entry=false, branch=true, idx=0)
+  [20] ShortCircuitExpression
+  [21] ShortCircuitExpression(entry=true, branch=false, idx=undefined)
+  [22] ShortCircuitExpression(entry=false, branch=true, idx=0)
+  [23] LogicalORExpression
+  [24] LogicalANDExpression
+  [25] BitwiseORExpression
+  [26] BitwiseXORExpression
+  [27] BitwiseANDExpression
+  [28] EqualityExpression
+  [29] RelationalExpression
+  [30] ShiftExpression
+  [31] AdditiveExpression
+  [32] MultiplicativeExpression
+  [33] ExponentiationExpression
+  [34] ExponentiationExpression(entry=true, branch=false, idx=undefined)
+  [35] ExponentiationExpression(entry=false, branch=true, idx=0)
+  [36] UpdateExpression
+  [37] UpdateExpression(entry=true, branch=false, idx=undefined)
+  [38] UpdateExpression(entry=false, branch=true, idx=0)
+  [39] LeftHandSideExpression
+  [40] LeftHandSideExpression(entry=true, branch=false, idx=undefined)
+  [41] LeftHandSideExpression(entry=false, branch=true, idx=0)
+  [42] NewExpression
+  [43] NewExpression(entry=true, branch=false, idx=undefined)
+  [44] NewExpression(entry=false, branch=true, idx=0)
+  [45] MemberExpression
+  [46] MemberExpression(entry=true, branch=false, idx=undefined)
+  [47] MemberExpression(entry=false, branch=true, idx=0)
+  [48] PrimaryExpression
+  [49] PrimaryExpression(entry=true, branch=false, idx=undefined)
+
+馃攳 onOrBranchExit: MemberExpression(branchIdx=0)
+  鏍堟繁搴? 47
+  鏍堝唴瀹?
+  [0] Script
+  [1] StatementList
+  [2] StatementListItem
+  [3] StatementListItem(entry=true, branch=false, idx=undefined)
+  [4] StatementListItem(entry=false, branch=true, idx=1)
+  [5] Declaration
+  [6] Declaration(entry=true, branch=false, idx=undefined)
+  [7] Declaration(entry=false, branch=true, idx=2)
+  [8] LexicalDeclaration
+  [9] BindingList
+  [10] LexicalBinding
+  [11] LexicalBinding(entry=true, branch=false, idx=undefined)
+  [12] LexicalBinding(entry=false, branch=true, idx=0)
+  [13] Initializer
+  [14] AssignmentExpression
+  [15] AssignmentExpression(entry=true, branch=false, idx=undefined)
+  [16] AssignmentExpression(entry=false, branch=true, idx=0)
+  [17] ConditionalExpression
+  [18] ConditionalExpression(entry=true, branch=false, idx=undefined)
+  [19] ConditionalExpression(entry=false, branch=true, idx=0)
+  [20] ShortCircuitExpression
+  [21] ShortCircuitExpression(entry=true, branch=false, idx=undefined)
+  [22] ShortCircuitExpression(entry=false, branch=true, idx=0)
+  [23] LogicalORExpression
+  [24] LogicalANDExpression
+  [25] BitwiseORExpression
+  [26] BitwiseXORExpression
+  [27] BitwiseANDExpression
+  [28] EqualityExpression
+  [29] RelationalExpression
+  [30] ShiftExpression
+  [31] AdditiveExpression
+  [32] MultiplicativeExpression
+  [33] ExponentiationExpression
+  [34] ExponentiationExpression(entry=true, branch=false, idx=undefined)
+  [35] ExponentiationExpression(entry=false, branch=true, idx=0)
+  [36] UpdateExpression
+  [37] UpdateExpression(entry=true, branch=false, idx=undefined)
+  [38] UpdateExpression(entry=false, branch=true, idx=0)
+  [39] LeftHandSideExpression
+  [40] LeftHandSideExpression(entry=true, branch=false, idx=undefined)
+  [41] LeftHandSideExpression(entry=false, branch=true, idx=0)
+  [42] NewExpression
+  [43] NewExpression(entry=true, branch=false, idx=undefined)
+  [44] NewExpression(entry=false, branch=true, idx=0)
+  [45] MemberExpression
+  [46] MemberExpression(entry=true, branch=false, idx=undefined)
+
+馃攳 onOrBranch: MemberExpression(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 47
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 48
+
+馃攳 onOrBranch: MemberExpression(branchIdx=1)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 47
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 48
+
+馃攳 onOrBranch: MemberExpression(branchIdx=2)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 47
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 48
+
+馃攳 onOrBranch: TemplateLiteral(branchIdx=0)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 50
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 51
+
+馃攳 onOrBranch: TemplateLiteral(branchIdx=1)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 50
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 51
+
+馃攳 onOrBranch: MemberExpression(branchIdx=3)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 47
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 48
+
+馃攳 onOrBranchExit: NewExpression(branchIdx=0)
+  鏍堟繁搴? 44
+  鏍堝唴瀹?
+  [0] Script
+  [1] StatementList
+  [2] StatementListItem
+  [3] StatementListItem(entry=true, branch=false, idx=undefined)
+  [4] StatementListItem(entry=false, branch=true, idx=1)
+  [5] Declaration
+  [6] Declaration(entry=true, branch=false, idx=undefined)
+  [7] Declaration(entry=false, branch=true, idx=2)
+  [8] LexicalDeclaration
+  [9] BindingList
+  [10] LexicalBinding
+  [11] LexicalBinding(entry=true, branch=false, idx=undefined)
+  [12] LexicalBinding(entry=false, branch=true, idx=0)
+  [13] Initializer
+  [14] AssignmentExpression
+  [15] AssignmentExpression(entry=true, branch=false, idx=undefined)
+  [16] AssignmentExpression(entry=false, branch=true, idx=0)
+  [17] ConditionalExpression
+  [18] ConditionalExpression(entry=true, branch=false, idx=undefined)
+  [19] ConditionalExpression(entry=false, branch=true, idx=0)
+  [20] ShortCircuitExpression
+  [21] ShortCircuitExpression(entry=true, branch=false, idx=undefined)
+  [22] ShortCircuitExpression(entry=false, branch=true, idx=0)
+  [23] LogicalORExpression
+  [24] LogicalANDExpression
+  [25] BitwiseORExpression
+  [26] BitwiseXORExpression
+  [27] BitwiseANDExpression
+  [28] EqualityExpression
+  [29] RelationalExpression
+  [30] ShiftExpression
+  [31] AdditiveExpression
+  [32] MultiplicativeExpression
+  [33] ExponentiationExpression
+  [34] ExponentiationExpression(entry=true, branch=false, idx=undefined)
+  [35] ExponentiationExpression(entry=false, branch=true, idx=0)
+  [36] UpdateExpression
+  [37] UpdateExpression(entry=true, branch=false, idx=undefined)
+  [38] UpdateExpression(entry=false, branch=true, idx=0)
+  [39] LeftHandSideExpression
+  [40] LeftHandSideExpression(entry=true, branch=false, idx=undefined)
+  [41] LeftHandSideExpression(entry=false, branch=true, idx=0)
+  [42] NewExpression
+  [43] NewExpression(entry=true, branch=false, idx=undefined)
+
+馃攳 onOrBranchExit: LeftHandSideExpression(branchIdx=0)
+  鏍堟繁搴? 41
+  鏍堝唴瀹?
+  [0] Script
+  [1] StatementList
+  [2] StatementListItem
+  [3] StatementListItem(entry=true, branch=false, idx=undefined)
+  [4] StatementListItem(entry=false, branch=true, idx=1)
+  [5] Declaration
+  [6] Declaration(entry=true, branch=false, idx=undefined)
+  [7] Declaration(entry=false, branch=true, idx=2)
+  [8] LexicalDeclaration
+  [9] BindingList
+  [10] LexicalBinding
+  [11] LexicalBinding(entry=true, branch=false, idx=undefined)
+  [12] LexicalBinding(entry=false, branch=true, idx=0)
+  [13] Initializer
+  [14] AssignmentExpression
+  [15] AssignmentExpression(entry=true, branch=false, idx=undefined)
+  [16] AssignmentExpression(entry=false, branch=true, idx=0)
+  [17] ConditionalExpression
+  [18] ConditionalExpression(entry=true, branch=false, idx=undefined)
+  [19] ConditionalExpression(entry=false, branch=true, idx=0)
+  [20] ShortCircuitExpression
+  [21] ShortCircuitExpression(entry=true, branch=false, idx=undefined)
+  [22] ShortCircuitExpression(entry=false, branch=true, idx=0)
+  [23] LogicalORExpression
+  [24] LogicalANDExpression
+  [25] BitwiseORExpression
+  [26] BitwiseXORExpression
+  [27] BitwiseANDExpression
+  [28] EqualityExpression
+  [29] RelationalExpression
+  [30] ShiftExpression
+  [31] AdditiveExpression
+  [32] MultiplicativeExpression
+  [33] ExponentiationExpression
+  [34] ExponentiationExpression(entry=true, branch=false, idx=undefined)
+  [35] ExponentiationExpression(entry=false, branch=true, idx=0)
+  [36] UpdateExpression
+  [37] UpdateExpression(entry=true, branch=false, idx=undefined)
+  [38] UpdateExpression(entry=false, branch=true, idx=0)
+  [39] LeftHandSideExpression
+  [40] LeftHandSideExpression(entry=true, branch=false, idx=undefined)
+
+馃攳 onOrBranchExit: UpdateExpression(branchIdx=0)
+  鏍堟繁搴? 38
+  鏍堝唴瀹?
+  [0] Script
+  [1] StatementList
+  [2] StatementListItem
+  [3] StatementListItem(entry=true, branch=false, idx=undefined)
+  [4] StatementListItem(entry=false, branch=true, idx=1)
+  [5] Declaration
+  [6] Declaration(entry=true, branch=false, idx=undefined)
+  [7] Declaration(entry=false, branch=true, idx=2)
+  [8] LexicalDeclaration
+  [9] BindingList
+  [10] LexicalBinding
+  [11] LexicalBinding(entry=true, branch=false, idx=undefined)
+  [12] LexicalBinding(entry=false, branch=true, idx=0)
+  [13] Initializer
+  [14] AssignmentExpression
+  [15] AssignmentExpression(entry=true, branch=false, idx=undefined)
+  [16] AssignmentExpression(entry=false, branch=true, idx=0)
+  [17] ConditionalExpression
+  [18] ConditionalExpression(entry=true, branch=false, idx=undefined)
+  [19] ConditionalExpression(entry=false, branch=true, idx=0)
+  [20] ShortCircuitExpression
+  [21] ShortCircuitExpression(entry=true, branch=false, idx=undefined)
+  [22] ShortCircuitExpression(entry=false, branch=true, idx=0)
+  [23] LogicalORExpression
+  [24] LogicalANDExpression
+  [25] BitwiseORExpression
+  [26] BitwiseXORExpression
+  [27] BitwiseANDExpression
+  [28] EqualityExpression
+  [29] RelationalExpression
+  [30] ShiftExpression
+  [31] AdditiveExpression
+  [32] MultiplicativeExpression
+  [33] ExponentiationExpression
+  [34] ExponentiationExpression(entry=true, branch=false, idx=undefined)
+  [35] ExponentiationExpression(entry=false, branch=true, idx=0)
+  [36] UpdateExpression
+  [37] UpdateExpression(entry=true, branch=false, idx=undefined)
+
+馃攳 onOrBranch: UpdateExpression(branchIdx=1)
+  鏍堟繁搴︼紙鍘嬪叆鍓嶏級: 38
+  鏍堟繁搴︼紙鍘嬪叆鍚庯級: 39
+鈹? 鈹? 鈹? 鈹? 鈹斺攢[Branch #2]
+鈹? 鈹? 鈹? 鈹? 鈹? 鈹溾攢LeftHandSideExpression
+
+鉂?Script 瑙ｆ瀽澶辫触
+   閿欒: 鉂?Rule LeftHandSideExpression already exists in parent rule UpdateExpression's childs
+
+馃攳 闂瀹氫綅: Script 灞傜骇鍑虹幇閿欒
+   鉁?鍓嶄竴灞傜骇锛圫tatementList锛夊彲浠ュ伐浣?   鉂?褰撳墠灞傜骇锛圫cript锛夊嚭鐜伴棶棰?
+馃挕 寤鸿: 妫€鏌?Script 鐨勫疄鐜帮紝鐗瑰埆鏄畠濡備綍璋冪敤 StatementList
+
+馃搵 鍫嗘爤璺熻釜锛堝墠10琛岋級:
+   Error: 鉂?Rule LeftHandSideExpression already exists in parent rule UpdateExpression's childs
+       at SubhutiTraceDebugger.onRuleExit (D:\project\qkyproject\test-volar\subhuti\src\SubhutiDebug.ts:1077:23)
+       at _Es2025Parser.executeRuleWithCacheAndLoopDetection (D:\project\qkyproject\test-volar\subhuti\src\SubhutiParser.ts:322:37)
+       at _Es2025Parser.executeRuleWrapper (D:\project\qkyproject\test-volar\subhuti\src\SubhutiParser.ts:294:21)
+       at _Es2025Parser.LeftHandSideExpression (D:\project\qkyproject\test-volar\subhuti\src\SubhutiParser.ts:60:21)
+       at Object.alt (D:\project\qkyproject\test-volar\slime\packages\slime-parser\src\language\es2025\Es2025Parser.ts:1090:26)
+       at <anonymous> (D:\project\qkyproject\test-volar\subhuti\src\SubhutiParser.ts:475:21)
+       at _Es2025Parser.withAllowError (D:\project\qkyproject\test-volar\subhuti\src\SubhutiParser.ts:133:20)
+       at _Es2025Parser.Or (D:\project\qkyproject\test-volar\subhuti\src\SubhutiParser.ts:456:21)
+       at _Es2025Parser.UpdateExpression (D:\project\qkyproject\test-volar\slime\packages\slime-parser\src\language\es2025\Es2025Parser.ts:1076:21)

@@ -1,0 +1,132 @@
+[▸▸▸▸▸] 测试层级 5: Script
+--------------------------------------------------------------------------------
+
+├─Script > StatementList > StatementListItem > ... > LeftHandSideExpression > CallExpression
+│  └─🔀 CallExpression(Or)
+│  │  └─[Branch #1]
+│  │  │  └─CoverCallExpressionAndAsyncArrowHead
+│  │  │  │  └─MemberExpression
+│  ├─OptionalExpression
+│  │  └─🔀 OptionalExpression(Or)
+│  │  │  └─[Branch #1]
+│  │  │  │  └─MemberExpression
+│  │  │  └─[Branch #2]
+│  │  │  │  └─CallExpression
+│  └─[Branch #2]
+│  │  └─LeftHandSideExpression
+│  └─[Branch #5]
+│  │  └─LeftHandSideExpression
+│  ├─UnaryExpression
+│  │  └─🔀 UnaryExpression(Or)
+│  │  │  └─[Branch #1]
+│  │  │  │  └─UpdateExpression
+│  ├─
+│  │  └─CoalesceExpression
+│  │  │  └─BitwiseORExpression
+│  └─[Branch #2]
+│  │  └─ShortCircuitExpression
+│  ├─ArrowFunction > ArrowParameters > BindingIdentifier
+│  │  └─🔀 BindingIdentifier(Or)
+│  │  │  └─[Branch #1]
+│  │  │  │  └─Identifier
+│  │  └─[Branch #2]
+│  │  │  └─CoverParenthesizedExpressionAndArrowParameterList
+│  ├─AsyncArrowFunction
+│  │  └─🔀 AsyncArrowFunction(Or)
+│  │  │  └─[Branch #2]
+│  │  │  │  └─CoverCallExpressionAndAsyncArrowHead
+│  └─[Branch #4]
+│  │  └─LeftHandSideExpression
+│  └─[Branch #5]
+│  │  └─LeftHandSideExpression
+│  └─[Branch #6]
+│  │  └─LeftHandSideExpression
+│  └─[Branch #7]
+│  │  └─LeftHandSideExpression
+│  └─[Branch #8]
+│  │  └─LeftHandSideExpression
+│  ├─LabelledStatement > LabelIdentifier
+│  │  └─🔀 LabelIdentifier(Or)
+│  │  │  └─[Branch #1]
+│  │  │  │  └─Identifier
+│  ├─Declaration > LexicalDeclaration > LetOrConst
+│  │  └─🔀 LetOrConst(Or)
+│  │  │  └─[Branch #2]
+│  │  │  │  └─🔹 Consume token[0] - const - <ConstTok> [1:1-5] ✅
+│  │  ├─BindingList > LexicalBinding > BindingIdentifier
+│  │  │  └─🔀 BindingIdentifier(Or)
+│  │  │  │  └─[Branch #1]
+│  │  │  │  │  └─Identifier
+│  │  │  │  │  │  └─🔹 Consume token[1] - obj - <Identifier> [1:7-9] ✅
+│  │  │  └─Initializer
+│  │  │  │  └─🔹 Consume token[2] - = - <Assign> [1:11-11] ✅
+│  │  │  │  ├─AssignmentExpression > ConditionalExpression > ShortCircuitExpression > ... > PrimaryExpression > ObjectLiteral
+│  │  │  │  │  └─🔀 ObjectLiteral(Or)
+│  │  │  │  │  │  └─[Branch #1]
+│  │  │  │  │  │  │  └─🔹 Consume token[3] - { - <LBrace> [1:13-13] ✅
+│  │  │  │  │  │  └─[Branch #2]
+│  │  │  │  │  │  │  └─🔹 Consume token[3] - { - <LBrace> [1:13-13] ✅
+│  │  │  │  │  │  │  ├─PropertyDefinitionList > PropertyDefinition > PropertyName > LiteralPropertyName
+│  │  │  │  │  │  │  │  └─🔀 LiteralPropertyName(Or)
+│  │  │  │  │  │  │  │  │  └─[Branch #1]
+│  │  │  │  │  │  │  │  │  │  └─🔹 Consume token[4] - sum - <Identifier> [1:15-17] ✅
+│  │  │  │  │  │  │  │  └─🔹 Consume token[5] - : - <Colon> [1:18-18] ✅
+│  │  │  │  │  │  │  │  ├─AssignmentExpression > ConditionalExpression > ShortCircuitExpression > ... > PrimaryExpression > Literal
+│  │  │  │  │  │  │  │  │  └─🔀 Literal(Or)
+│  │  │  │  │  │  │  │  │  │  └─[Branch #4]
+│  │  │  │  │  │  │  │  │  │  │  └─🔹 Consume token[6] - 5 - <NumericLiteral> [1:20-20] ✅
+│  │  │  │  │  │  │  │  │  └─[Branch #2]
+│  │  │  │  │  │  │  │  │  │  └─LeftHandSideExpression
+│  │  │  │  │  │  │  │  │  └─[Branch #5]
+│  │  │  │  │  │  │  │  │  │  └─LeftHandSideExpression
+│  │  │  │  │  │  │  │  │  ├─UnaryExpression
+│  │  │  │  │  │  │  │  │  │  └─🔀 UnaryExpression(Or)
+│  │  │  │  │  │  │  │  │  │  │  └─[Branch #1]
+│  │  │  │  │  │  │  │  │  │  │  │  └─UpdateExpression
+│  │  │  │  │  │  │  │  │  └─🔀 AdditiveExpression(Or)
+│  │  │  │  │  │  │  │  │  │  └─[Branch #1]
+│  │  │  │  │  │  │  │  │  │  │  └─🔹 Consume token[7] - + - <Plus> [1:22-22] ✅
+│  │  │  │  │  │  │  │  │  ├─MultiplicativeExpression > ExponentiationExpression > UpdateExpression > ... > PrimaryExpression > Literal
+│  │  │  │  │  │  │  │  │  │  └─🔀 Literal(Or)
+│  │  │  │  │  │  │  │  │  │  │  └─[Branch #4]
+│  │  │  │  │  │  │  │  │  │  │  │  └─🔹 Consume token[8] - 6 - <NumericLiteral> [1:24-24] ✅
+│  │  │  │  │  │  │  │  │  │  └─[Branch #2]
+│  │  │  │  │  │  │  │  │  │  │  └─LeftHandSideExpression
+│  │  │  │  │  │  │  │  │  │  └─[Branch #5]
+│  │  │  │  │  │  │  │  │  │  │  └─LeftHandSideExpression
+│  │  │  │  │  │  │  │  │  │  ├─UnaryExpression
+│  │  │  │  │  │  │  │  │  │  │  └─🔀 UnaryExpression(Or)
+│  │  │  │  │  │  │  │  │  │  │  │  └─[Branch #1]
+│  │  │  │  │  │  │  │  │  │  │  │  │  └─UpdateExpression
+│  │  │  │  │  │  │  │  │  └─[Branch #2]
+│  │  │  │  │  │  │  │  │  │  └─ShortCircuitExpression
+│  │  │  │  │  │  └─[Branch #3]
+│  │  │  │  │  │  │  └─🔹 Consume token[3] - { - <LBrace> [1:13-13] ✅
+│  │  │  │  │  │  │  ├─PropertyDefinitionList
+│  │  │  │  │  │  │  └─🔹 Consume token[9] - } - <RBrace> [1:26-26] ✅
+│  │  │  │  │  └─[Branch #2]
+│  │  │  │  │  │  └─LeftHandSideExpression
+│  │  │  │  │  └─[Branch #5]
+│  │  │  │  │  │  └─LeftHandSideExpression
+│  │  │  │  │  ├─UnaryExpression
+│  │  │  │  │  │  └─🔀 UnaryExpression(Or)
+│  │  │  │  │  │  │  └─[Branch #1]
+│  │  │  │  │  │  │  │  └─UpdateExpression
+│  │  │  │  │  └─[Branch #2]
+│  │  │  │  │  │  └─ShortCircuitExpression
+│  ├─StatementListItem > Statement > ExpressionStatement > ... > MemberExpression > PrimaryExpression
+│  │  └─🔀 PrimaryExpression(Or)
+│  │  │  └─[Branch #12]
+│  │  │  │  └─TemplateLiteral
+│  │  ├─CallExpression
+│  │  │  └─🔀 CallExpression(Or)
+│  │  │  │  └─[Branch #1]
+│  │  │  │  │  └─CoverCallExpressionAndAsyncArrowHead
+│  │  │  │  │  │  └─MemberExpression
+│  │  ├─OptionalExpression
+│  │  │  └─🔀 OptionalExpression(Or)
+│  │  │  │  └─[Branch #1]
+│  │  │  │  │  └─MemberExpression
+│  │  │  │  └─[Branch #2]
+│  │  │  │  │  └─CallExpression
+
