@@ -873,7 +873,7 @@ export class SubhutiTraceDebugger {
      */
     private restoreFromCacheAndPushAndPrint(cacheKey: string, curDisplayDepth: number, isRoot: boolean = true): void {
         // 【第 1 步】读取缓存的规则或 Token
-        console.log('get key:' + cacheKey)
+        // console.log('get key:' + cacheKey)
         const cached = this.cacheGet(cacheKey)
         if (!cached) {
             throw new Error('系统错误')
@@ -882,17 +882,24 @@ export class SubhutiTraceDebugger {
         // 【第 2 步】克隆并推入栈
         const restoredItem = this.deepCloneRuleStackItem(cached)
 
-        console.log(restoredItem.ruleName)
-        console.log(restoredItem.childs)
+        // console.log(restoredItem.ruleName)
+        // console.log(restoredItem.childs)
 
         restoredItem.outputted = false  // 标记为未输出
         restoredItem.isManuallyAdded = true
 
-        if (restoredItem.shouldBreakLine) {
+        // 【关键】displayDepth 的计算
+        // 对于 root 节点（isRoot=true）：
+        //   - curDisplayDepth 是从 flushPendingOutputs_NonCache_Impl 计算的当前深度
+        //   - 直接使用这个深度
+        // 对于子节点（isRoot=false）：
+        //   - curDisplayDepth 是父节点的 displayDepth
+        //   - 如果子节点需要断链（shouldBreakLine），深度 = 父节点深度 + 1
+        //   - 否则深度 = 父节点深度（折叠显示）
+        if (!isRoot && restoredItem.shouldBreakLine) {
             curDisplayDepth++
         }
-
-        // 深度为当前深度
+        
         restoredItem.displayDepth = curDisplayDepth
 
         let childBeginIndex = this.ruleStack.push(restoredItem)
@@ -910,10 +917,10 @@ export class SubhutiTraceDebugger {
         // 【第 5 步】如果是根规则，触发日志输出（缓存场景）
         // 如果不是根，pop 掉自己
         if (isRoot) {
-            console.log(`cacheKey`)
-            console.log(cacheKey)
-            console.log(this.ruleStack.map(item => item.ruleName))
-            console.log(this.ruleStack.map(item => item.outputted))
+            // console.log(`cacheKey`)
+            // console.log(cacheKey)
+            // console.log(this.ruleStack.map(item => item.ruleName))
+            // console.log(this.ruleStack.map(item => item.outputted))
             SubhutiDebugRuleTracePrint.flushPendingOutputs_Cache_Impl(this.ruleStack)
             this.ruleStack.splice(childBeginIndex)
         }

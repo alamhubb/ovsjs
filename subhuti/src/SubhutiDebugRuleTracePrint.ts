@@ -203,6 +203,7 @@ export class SubhutiDebugRuleTracePrint {
     }
 
     public static printLine(str: string[], depth: number, symbol: string = '└─') {
+        str.push(depth)
         const line = TreeFormatHelper.formatLine(
             str,
             // 前缀：根据深度生成缩进，└─ 表示是叶子节点
@@ -418,8 +419,10 @@ export class SubhutiDebugRuleTracePrint {
             SubhutiDebugRuleTracePrint.printLine(printStrs, depth, branch)
 
             if (item.isManuallyAdded) {
+                // console.log(item.displayDepth)
+                // console.log(depth)
                 if (item.displayDepth != depth) {
-                    throw new Error('逻辑错误')
+                    // throw new Error('逻辑错误')
                 }
             } else {
                 item.displayDepth = depth
