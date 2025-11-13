@@ -916,7 +916,6 @@ export class SubhutiTraceDebugger {
             console.log(this.ruleStack.map(item => item.outputted))
             SubhutiDebugRuleTracePrint.flushPendingOutputs_Cache_Impl(this.ruleStack)
             this.ruleStack.splice(rootIndex + 1)
-            throw new Error('不该触发')
         }
     }
 
