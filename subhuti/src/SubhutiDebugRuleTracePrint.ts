@@ -394,7 +394,7 @@ export class SubhutiDebugRuleTracePrint {
                     // Or 包裹节点：显示 [Or]
                     printStrs = ['🔀 ' + item.ruleName + '(Or)']
                 } else if (item.orBranchInfo.isOrBranch) {
-                    printStrs = [`[Branch #${branchInfo.branchIndex + 1}]`]
+                    printStrs = [`[Branch #${branchInfo.branchIndex + 1}](${item.ruleName})`]
                     // 🔍 调试：记录 Or 分支被标记为 outputted
                     LogUtil.consoleLog(`🔍 [DEBUG] 标记Or分支为outputted: ${item.ruleName}(branch=${branchInfo.branchIndex}), childs=${item.childs?.length || 0}`)
                 } else {
