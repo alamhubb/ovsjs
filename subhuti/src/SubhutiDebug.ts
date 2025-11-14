@@ -1133,16 +1133,19 @@ export class SubhutiTraceDebugger {
         expectName: string,
         success: boolean
     ): void {
-        // if (this.ruleStack.)
-
-
         // 快速失败：当前规则栈不能为空
         if (this.ruleStack.length === 0) {
             throw new Error(`❌ Token consume error: ruleStack is empty when consuming token ${tokenName}`)
         }
-
         // 获取栈顶规则（当前消费 token 的规则）
         const parentRule = this.ruleStack[this.ruleStack.length - 1]
+
+        if (!success) {
+            //如果失败分支没有成功消费过token，则不执行
+            if (tokenIndex <= parentRule.tokenIndex) {
+                return
+            }
+        }
 
         // 创建 Token 的 RuleStackItem 和生成其 key
         const tokenItem = this.createTokenItem(tokenIndex, tokenValue, tokenName, expectName, success)
