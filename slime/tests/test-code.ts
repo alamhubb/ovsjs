@@ -94,8 +94,8 @@ function testCode(code: string, entryRule: string = 'Script') {
 // 主程序
 // ============================================
 
-// const code = process.argv[2] || `let a = 1`
-const code = process.argv[2] || `const obj = { sum: 5 + 6 }`
+const code = process.argv[2] || `let a = 1`
+// const code = process.argv[2] || `const obj = { sum: 5 + 6 }`
 const mode = process.argv[3] || 'bisect' // 默认使用二分调试模式
 
 // 词法分析
