@@ -576,8 +576,8 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
             this._debugger?.onTokenConsume(
                 this.tokenIndex,
-                token?.tokenValue || '<EOF>',
-                token?.tokenName || '<EOF>',
+                token?.tokenValue || 'EOF',
+                token?.tokenName || 'EOF',
                 tokenName,
                 false
             )

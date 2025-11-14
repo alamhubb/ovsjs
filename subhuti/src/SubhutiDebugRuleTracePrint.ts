@@ -202,9 +202,9 @@ export class SubhutiDebugRuleTracePrint {
         const value = TreeFormatHelper.formatTokenValue(tokenItem.tokenValue || '', 20)
 
         if (tokenItem.tokenSuccess) {
-            return ['🔹 Consume', `token[${tokenItem.tokenIndex}]`, value, '-', `<${tokenItem.tokenName}>`, (location || '[]'), '✅ '].join(' ')
+            return ['✅', 'Consume', `token[${tokenItem.tokenIndex}]`, value, '-', `<${tokenItem.tokenName}>`, (location || '[]')].join(' ')
         } else {
-            return ['🔹 Consume', `token[${tokenItem.tokenIndex}]`, 'Expect:', tokenItem.tokenExpectName, '-', 'get:', value, '-', `<${tokenItem.tokenName}>`, (location || '[]'), '❌ '].join(' ')
+            return ['❌', `token[${tokenItem.tokenIndex}]`, 'Expect:', tokenItem.tokenExpectName, '-', 'Get:', value, '-', `<${tokenItem.tokenName}>`].join(' ')
         }
 
     }
