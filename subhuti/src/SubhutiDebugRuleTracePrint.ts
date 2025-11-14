@@ -349,8 +349,8 @@ export class SubhutiDebugRuleTracePrint {
         // const names = rules.filter(item => !item.orBranchInfo).map(r => r.ruleName)
         const names = rules.map(r => SubhutiDebugRuleTracePrint.getRuleItemLogContent(r))
 
-        const displayNames = names.length > 5
-            ? [...names.slice(0, 3), '...', ...names.slice(-2)]
+        const displayNames = names.length > 4
+            ? [...names.slice(0, 2), '...', ...names.slice(-2)]
             : names
 
         SubhutiDebugRuleTracePrint.printLine(displayNames.join(' > '), depth, '├─')
