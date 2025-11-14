@@ -39,18 +39,20 @@ export class TreeFormatHelper {
      * @param options - 配置选项
      */
     static formatLine(
-        parts: (string | number | null | undefined)[],
+        content: string,
         options: {
             depth?: number
             prefix?: string
-            separator?: string
         }
     ): string {
         const indent = options.prefix ?? '  '.repeat(options.depth ?? 0)
+        return indent + content
+    }
+
+    static contentJoin(parts: string[]) {
         const content = parts
             .filter(p => p !== null && p !== undefined && p !== '')
-            .join(options.separator ?? '')
-        return indent + content
+        return content
     }
 
     /**
@@ -202,12 +204,11 @@ export class SubhutiDebugRuleTracePrint {
         return tokenStrs
     }
 
-    public static printLine(str: string[], depth: number, symbol: string = '└─') {
-        str.push(depth)
+    public static printLine(str: string, depth: number, symbol: string = '└─') {
         const line = TreeFormatHelper.formatLine(
             str,
             // 前缀：根据深度生成缩进，└─ 表示是叶子节点
-            {prefix: '│  '.repeat(depth) + symbol, separator: ' '}
+            {prefix: '│  '.repeat(depth) + symbol}
         )
         LogUtil.log(line)
     }
@@ -326,7 +327,7 @@ export class SubhutiDebugRuleTracePrint {
             ? [...names.slice(0, 3), '...', ...names.slice(-2)]
             : names
 
-        SubhutiDebugRuleTracePrint.printLine([displayNames.join(' > ')], depth, '├─')
+        SubhutiDebugRuleTracePrint.printLine(displayNames.join(' > '), depth, '├─')
 
         rules.forEach(r => {
             r.displayDepth = depth
@@ -355,41 +356,17 @@ export class SubhutiDebugRuleTracePrint {
 
             // 生成前缀：每一层的连接线
 
-            let printStrs = []
-
             let branch = isLast ? '└─' : '├─'
 
-            if (item.orBranchInfo) {
-                const branchInfo = item.orBranchInfo
-                if (item.orBranchInfo.isOrEntry) {
-                    // branch = '🔀 '
-                    // Or 包裹节点：显示 [Or]
-                    printStrs = ['🔀 ' + item.ruleName + '(Or)']
-                } else if (item.orBranchInfo.isOrBranch) {
-                    printStrs = [`[Branch #${branchInfo.branchIndex + 1}](${item.ruleName})`]
-                    // 🔍 调试：记录 Or 分支被标记为 outputted
-                } else {
-                    printStrs = [`错误`]
-                }
-            } else {
-                if (item.tokenName) {
-                    printStrs = SubhutiDebugRuleTracePrint.getPrintToken(item)
-                } else {
-                    printStrs = [item.ruleName]
-                }
-
-            }
-            if (item.isManuallyAdded) {
-                // 普通规则：添加缓存标记
-                printStrs.push(`⚡[Cached]`)
-            }
+            let printStr = this.getRuleItemLogContent(item);
 
 
             if (!item.isManuallyAdded) {
                 item.displayDepth = depth
             }
 
-            SubhutiDebugRuleTracePrint.printLine(printStrs, item.displayDepth, branch)
+
+            SubhutiDebugRuleTracePrint.printLine(printStr, item.displayDepth, branch)
 
 
             // item.shouldBreakLine = true
@@ -398,5 +375,35 @@ export class SubhutiDebugRuleTracePrint {
         return depth
     }
 
+    private static getRuleItemLogContent(tokenItem: RuleStackItem) {
+        let res = '错误'
+        if (tokenItem.orBranchInfo) {
+            const branchInfo = tokenItem.orBranchInfo
+            if (tokenItem.orBranchInfo.isOrEntry) {
+                // branch = '🔀 '
+                // Or 包裹节点：显示 [Or]
+                res += '🔀 ' + tokenItem.ruleName + '(Or)'
+            } else if (tokenItem.orBranchInfo.isOrBranch) {
+                res += `Branch #${branchInfo.branchIndex + 1}](${tokenItem.ruleName})`
+                // 🔍 调试：记录 Or 分支被标记为 outputted
+            }
+        } else {
+            if (tokenItem.tokenName) {
+                res += SubhutiDebugRuleTracePrint.getPrintToken(tokenItem)
+
+                // 格式化 token 值（转义特殊字符、截断长字符串）
+                const value = TreeFormatHelper.formatTokenValue(tokenItem.tokenValue, 20)
+
+                res += ('🔹 Consume' + `token[${tokenItem.tokenIndex}]` + '-' + value + '-' + `<${tokenItem.tokenName}>` + (location || '[]') + '✅ ')
+            } else {
+                res += tokenItem.ruleName
+            }
+        }
+        if (tokenItem.isManuallyAdded) {
+            // 普通规则：添加缓存标记
+            res += ` ⚡[Cached]`
+        }
+        return res
+    }
 }
 
