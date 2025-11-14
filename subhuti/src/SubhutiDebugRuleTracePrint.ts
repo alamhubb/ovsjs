@@ -215,7 +215,8 @@ export class SubhutiDebugRuleTracePrint {
             // 前缀：根据深度生成缩进，└─ 表示是叶子节点
             {prefix: '│  '.repeat(depth) + symbol}
         )
-        LogUtil.log(line)
+        console.log(line)
+        // LogUtil.log(line)
     }
 
 
