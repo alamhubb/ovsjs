@@ -150,7 +150,8 @@ function getCSTStatistics(node: any): {
 }
 
 // 主程序
-const filePath = process.argv[2] || 'tests/es6rules/AdditiveExpression-001.js'
+const filePath = process.argv[2] || 'tests/cases/10-shadowing.js'
+// const filePath = process.argv[2] || 'tests/es6rules/AdditiveExpression-001.js'
 
 if (!filePath) {
     console.log('❌ 错误：请提供要测试的文件路径')
@@ -214,7 +215,7 @@ try {
     console.log(`✅ 词法分析: ${tokens.length} tokens (有效token: ${inputTokens.length})`)
     
     // 语法分析（使用 Es2020Parser）
-    const parser = new Es2025Parser(tokens)
+    const parser = new Es2025Parser(tokens).debug()
     const cst = parser.Script()
     console.log(`✅ 语法分析: CST生成成功`)
     
