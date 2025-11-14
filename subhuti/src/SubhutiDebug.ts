@@ -530,23 +530,22 @@ export class SubhutiDebugUtils {
     private static formatNode(cst: any, prefix: string, connector: string): string {
         const isToken = cst.value !== undefined
 
-        /*if (isToken) {
+        if (isToken) {
             // Token 节点：显示名称、值、位置
             const value = TreeFormatHelper.formatTokenValue(cst.value)
             const location = cst.loc ? TreeFormatHelper.formatLocation(cst.loc) : null
 
             return TreeFormatHelper.formatLine(
-                [cst.name + ':', `"${value}"`, location],
-                {prefix, separator: ' '}
+                [cst.name + ':', `"${value}"`, location].join(' '),
+                {prefix}
             )
         } else {
             // Rule 节点：只显示名称
             return TreeFormatHelper.formatLine(
-                [connector, cst.name],
+                [connector, cst.name].join(' '),
                 {prefix}
             )
-        }*/
-        return null
+        }
     }
 
     // ========================================
