@@ -287,10 +287,23 @@ try {
     
 } catch (error: any) {
     console.log(`\n❌ 测试失败: ${error.message}`)
+
+    // 显示完整的错误信息（如果有 toString 方法）
+    if (typeof error.toString === 'function') {
+        console.log('\n' + '='.repeat(60))
+        console.log('详细错误信息:')
+        console.log('='.repeat(60))
+        console.log(error.toString())
+    }
+
+    // 显示堆栈信息
     if (error.stack) {
-        console.log('\n堆栈信息:')
+        console.log('\n' + '='.repeat(60))
+        console.log('堆栈信息:')
+        console.log('='.repeat(60))
         console.log(error.stack)
     }
+
     process.exit(1)
 }
 
