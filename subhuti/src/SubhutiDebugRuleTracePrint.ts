@@ -245,7 +245,7 @@ export class SubhutiDebugRuleTracePrint {
         let baseDepth = 0
         if (lastOutputted) {
             // 否则 baseDepth = 最后一个已输出规则的深度 + 1
-            baseDepth = lastOutputted.displayDepth + 1
+            baseDepth = lastOutputted.displayDepth
         }
 
         //最后一个未输出的 OrEntry（使用 findLastIndex 直接获取正向索引）
@@ -262,19 +262,31 @@ export class SubhutiDebugRuleTracePrint {
         if (breakPoint < pendingRules.length - 1) {
             const singleRules = pendingRules.splice(-breakPoint);
 
-            pendingRules.forEach((item, index) => {
-                if (item.shouldBreakLine) {
-                    const outputSubRules = pendingRules.slice(0, index)
-                    this.printChainRule(outputSubRules, baseDepth)
+            const groups: RuleStackItem[][] = []
+            let currentGroup: RuleStackItem[] = [pendingRules[0]]
+            groups.push(currentGroup)
 
-                    pendingRules.splice(index, 1)
-                    baseDepth = this.printMultipleSingleRule([item], baseDepth)
+            for (let i = 1; i < pendingRules.length; i++) {
+                const item = pendingRules[i]
+                const prevItem = pendingRules[i - 1]
 
-                    pendingRules = pendingRules.slice(index + 1, pendingRules.length)
+                // 如果当前规则和前一个规则的 shouldBreakLine 相同
+                if (item.shouldBreakLine === prevItem.shouldBreakLine) {
+                    currentGroup.push(item)
+                } else {
+                    // 否则开始新的一组
+                    currentGroup = [item]
+                    groups.push(currentGroup)
                 }
-            })
-
-            this.printChainRule(pendingRules, baseDepth)
+            }
+            for (const group of groups) {
+                if (group[0].shouldBreakLine) {
+                    baseDepth = this.printMultipleSingleRule(group, baseDepth)
+                } else {
+                    baseDepth++
+                    this.printChainRule(group, baseDepth)
+                }
+            }
 
             return this.printMultipleSingleRule(singleRules, baseDepth)
             // return this.printMultipleSingleRule(pendingRules, baseDepth)
@@ -283,7 +295,7 @@ export class SubhutiDebugRuleTracePrint {
         }
     }
 
-    public static flushPendingOutputs_Cache_Impl(ruleStack: RuleStackItem[]): void {
+    public static flushPendingOutputs_Cache_Impl(ruleStack: RuleStackItem[],): void {
         let pendingRules = ruleStack.filter(item => !item.outputted)
 
         if (pendingRules.length === 0) {

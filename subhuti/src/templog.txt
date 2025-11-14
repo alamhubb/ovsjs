@@ -1,66 +1,90 @@
 
-├─Script > StatementList > StatementListItem > ... > LexicalDeclaration > LetOrConst
-│  ├─🔀 LetOrConst(Or)
-│  │  └─[Branch #1](LetOrConst)
-│  │  └─🔹 Consume token[0] - let - <LetTok> [1:1-3] ✅ 
-│  ├─BindingList > LexicalBinding > 🔀 LexicalBinding(Or) > [Branch #1](LexicalBinding) > BindingIdentifier
-│  │  ├─🔀 BindingIdentifier(Or)
-│  │  │  ├─[Branch #1](BindingIdentifier)
-│  │  │  │  └─Identifier
-│  │  │  │  └─🔹 Consume token[1] - a - <Identifier> [1:5-5] ✅ 
-│  │  │  └─Initializer
-│  │  │  └─🔹 Consume token[2] - = - <Assign> [1:7-7] ✅ 
-│  │  │  │  ├─AssignmentExpression > 🔀 AssignmentExpression(Or) > [Branch #1](AssignmentExpression) > ... > [Branch #3](PrimaryExpression) > Literal
-│  │  │  │  │  ├─🔀 Literal(Or)
-│  │  │  │  │  │  └─[Branch #4](Literal)
-│  │  │  │  │  │  └─🔹 Consume token[3] - 1 - <NumericLiteral> [1:9-9] ✅ 
-│  │  │  │  │  │  └─[Branch #2](UpdateExpression)
-│  │  │  │  │  │  │  └─LeftHandSideExpression ⚡[Cached]
-│  │  │  │  │  │  │  │  ├─🔀 LeftHandSideExpression(Or) ⚡[Cached] > [Branch #1](LeftHandSideExpression) ⚡[Cached] > NewExpression ⚡[Cached] > ... > 🔀 Literal(Or) ⚡[Cached] > [Branch #4](Literal) ⚡[Cached]
-│  │  │  │  │  │  │  │  │  └─🔹 Consume token[3] - 1 - <NumericLiteral> [] ✅  ⚡[Cached]
-│  │  │  │  │  │  └─[Branch #5](UpdateExpression)
-│  │  │  │  │  │  │  └─LeftHandSideExpression ⚡[Cached]
-│  │  │  │  │  │  │  │  ├─🔀 LeftHandSideExpression(Or) ⚡[Cached] > [Branch #1](LeftHandSideExpression) ⚡[Cached] > NewExpression ⚡[Cached] > ... > 🔀 Literal(Or) ⚡[Cached] > [Branch #4](Literal) ⚡[Cached]
-│  │  │  │  │  │  │  │  │  └─🔹 Consume token[3] - 1 - <NumericLiteral> [] ✅  ⚡[Cached]
-│  │  │  │  │  ├─[Branch #2](ExponentiationExpression) > UnaryExpression
-│  │  │  │  │  │  ├─🔀 UnaryExpression(Or)
-│  │  │  │  │  │  │  └─[Branch #1](UnaryExpression)
-│  │  │  │  │  │  │  │  ├─UpdateExpression ⚡[Cached]
-│  │  │  │  │  │  │  │  │  ├─🔀 UpdateExpression(Or) ⚡[Cached]
-│  │  │  │  │  │  │  │  │  │  └─[Branch #1](UpdateExpression) ⚡[Cached]
-│  │  │  │  │  │  │  │  │  │  │  ├─LeftHandSideExpression ⚡[Cached] > 🔀 LeftHandSideExpression(Or) ⚡[Cached] > [Branch #1](LeftHandSideExpression) ⚡[Cached] > ... > 🔀 Literal(Or) ⚡[Cached] > [Branch #4](Literal) ⚡[Cached]
-│  │  │  │  │  │  │  │  │  │  │  │  ├─🔹 Consume token[3] - 1 - <NumericLiteral> [] ✅  ⚡[Cached]
-│  │  │  │  │  │  │  │  │  │  └─[Branch #2](UpdateExpression) ⚡[Cached]
-│  │  │  │  │  │  │  │  │  │  │  ├─LeftHandSideExpression ⚡[Cached] > 🔀 LeftHandSideExpression(Or) ⚡[Cached] > [Branch #1](LeftHandSideExpression) ⚡[Cached] > ... > 🔀 Literal(Or) ⚡[Cached] > [Branch #4](Literal) ⚡[Cached]
-│  │  │  │  │  │  │  │  │  │  │  │  ├─🔹 Consume token[3] - 1 - <NumericLiteral> [] ✅  ⚡[Cached]
-│  │  │  │  │  │  │  │  │  │  └─[Branch #5](UpdateExpression) ⚡[Cached]
-│  │  │  │  │  │  │  │  │  │  │  ├─LeftHandSideExpression ⚡[Cached] > 🔀 LeftHandSideExpression(Or) ⚡[Cached] > [Branch #1](LeftHandSideExpression) ⚡[Cached] > ... > 🔀 Literal(Or) ⚡[Cached] > [Branch #4](Literal) ⚡[Cached]
-│  │  │  │  │  │  │  │  │  │  │  │  └─🔹 Consume token[3] - 1 - <NumericLiteral> [] ✅  ⚡[Cached]
-│  │  │  │  │  │  └─[Branch #2](ConditionalExpression)
-│  │  │  │  │  │  │  └─ShortCircuitExpression ⚡[Cached]
-│  │  │  │  │  │  │  │  ├─🔀 ShortCircuitExpression(Or) ⚡[Cached] > [Branch #1](ShortCircuitExpression) ⚡[Cached] > LogicalORExpression ⚡[Cached] > ... > MultiplicativeExpression ⚡[Cached] > ExponentiationExpression ⚡[Cached]
-│  │  │  │  │  │  │  │  │  ├─🔀 ExponentiationExpression(Or) ⚡[Cached]
-│  │  │  │  │  │  │  │  │  │  ├─[Branch #1](ExponentiationExpression) ⚡[Cached]
-│  │  │  │  │  │  │  │  │  │  │  ├─UpdateExpression ⚡[Cached]
-│  │  │  │  │  │  │  │  │  │  │  │  ├─🔀 UpdateExpression(Or) ⚡[Cached]
-│  │  │  │  │  │  │  │  │  │  │  │  │  └─[Branch #1](UpdateExpression) ⚡[Cached]
-│  │  │  │  │  │  │  │  │  │  │  │  │  │  ├─LeftHandSideExpression ⚡[Cached] > 🔀 LeftHandSideExpression(Or) ⚡[Cached] > [Branch #1](LeftHandSideExpression) ⚡[Cached] > ... > 🔀 Literal(Or) ⚡[Cached] > [Branch #4](Literal) ⚡[Cached]
-│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  ├─🔹 Consume token[3] - 1 - <NumericLiteral> [] ✅  ⚡[Cached]
-│  │  │  │  │  │  │  │  │  │  │  │  │  └─[Branch #2](UpdateExpression) ⚡[Cached]
-│  │  │  │  │  │  │  │  │  │  │  │  │  │  ├─LeftHandSideExpression ⚡[Cached] > 🔀 LeftHandSideExpression(Or) ⚡[Cached] > [Branch #1](LeftHandSideExpression) ⚡[Cached] > ... > 🔀 Literal(Or) ⚡[Cached] > [Branch #4](Literal) ⚡[Cached]
-│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  ├─🔹 Consume token[3] - 1 - <NumericLiteral> [] ✅  ⚡[Cached]
-│  │  │  │  │  │  │  │  │  │  │  │  │  └─[Branch #5](UpdateExpression) ⚡[Cached]
-│  │  │  │  │  │  │  │  │  │  │  │  │  │  ├─LeftHandSideExpression ⚡[Cached] > 🔀 LeftHandSideExpression(Or) ⚡[Cached] > [Branch #1](LeftHandSideExpression) ⚡[Cached] > ... > 🔀 Literal(Or) ⚡[Cached] > [Branch #4](Literal) ⚡[Cached]
-│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  └─🔹 Consume token[3] - 1 - <NumericLiteral> [] ✅  ⚡[Cached]
-│  │  │  │  │  │  │  │  │  │  ├─[Branch #2](ExponentiationExpression) ⚡[Cached] > UnaryExpression ⚡[Cached] > 🔀 UnaryExpression(Or) ⚡[Cached] > [Branch #1](UnaryExpression) ⚡[Cached]
-│  │  │  │  │  │  │  │  │  │  │  ├─UpdateExpression ⚡[Cached]
-│  │  │  │  │  │  │  │  │  │  │  │  ├─🔀 UpdateExpression(Or) ⚡[Cached]
-│  │  │  │  │  │  │  │  │  │  │  │  │  └─[Branch #1](UpdateExpression) ⚡[Cached]
-│  │  │  │  │  │  │  │  │  │  │  │  │  │  ├─LeftHandSideExpression ⚡[Cached] > 🔀 LeftHandSideExpression(Or) ⚡[Cached] > [Branch #1](LeftHandSideExpression) ⚡[Cached] > ... > 🔀 Literal(Or) ⚡[Cached] > [Branch #4](Literal) ⚡[Cached]
-│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  ├─🔹 Consume token[3] - 1 - <NumericLiteral> [] ✅  ⚡[Cached]
-│  │  │  │  │  │  │  │  │  │  │  │  │  └─[Branch #2](UpdateExpression) ⚡[Cached]
-│  │  │  │  │  │  │  │  │  │  │  │  │  │  ├─LeftHandSideExpression ⚡[Cached] > 🔀 LeftHandSideExpression(Or) ⚡[Cached] > [Branch #1](LeftHandSideExpression) ⚡[Cached] > ... > 🔀 Literal(Or) ⚡[Cached] > [Branch #4](Literal) ⚡[Cached]
-│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  ├─🔹 Consume token[3] - 1 - <NumericLiteral> [] ✅  ⚡[Cached]
-│  │  │  │  │  │  │  │  │  │  │  │  │  └─[Branch #5](UpdateExpression) ⚡[Cached]
-│  │  │  │  │  │  │  │  │  │  │  │  │  │  ├─LeftHandSideExpression ⚡[Cached] > 🔀 LeftHandSideExpression(Or) ⚡[Cached] > [Branch #1](LeftHandSideExpression) ⚡[Cached] > ... > 🔀 Literal(Or) ⚡[Cached] > [Branch #4](Literal) ⚡[Cached]
-│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  └─🔹 Consume token[3] - 1 - <NumericLiteral> [] ✅  ⚡[Cached]
+│  ├─Script > StatementList > StatementListItem
+│  │  └─🔀 StatementListItem(Or)
+│  │  │  ├─[Branch #2](StatementListItem) > Declaration
+│  │  │  │  └─🔀 Declaration(Or)
+│  │  │  │  │  ├─[Branch #3](Declaration) > LexicalDeclaration > LetOrConst
+│  │  │  │  │  │  ├─🔀 LetOrConst(Or)
+│  │  │  │  │  │  │  └─[Branch #1](LetOrConst)
+│  │  │  │  │  │  │  └─🔹 Consume token[0] - let - <LetTok> [1:1-3] ✅ 
+│  │  │  │  │  │  ├─BindingList > LexicalBinding
+│  │  │  │  │  │  │  └─🔀 LexicalBinding(Or)
+│  │  │  │  │  │  │  │  ├─[Branch #1](LexicalBinding) > BindingIdentifier
+│  │  │  │  │  │  │  │  │  ├─🔀 BindingIdentifier(Or)
+│  │  │  │  │  │  │  │  │  │  ├─[Branch #1](BindingIdentifier)
+│  │  │  │  │  │  │  │  │  │  │  └─Identifier
+│  │  │  │  │  │  │  │  │  │  │  └─🔹 Consume token[1] - a - <Identifier> [1:5-5] ✅ 
+│  │  │  │  │  │  │  │  │  └─Initializer
+│  │  │  │  │  │  │  │  │  └─🔹 Consume token[2] - = - <Assign> [1:7-7] ✅ 
+│  │  │  │  │  │  │  │  │  │  ├─AssignmentExpression
+│  │  │  │  │  │  │  │  │  │  │  └─🔀 AssignmentExpression(Or)
+│  │  │  │  │  │  │  │  │  │  │  │  ├─[Branch #1](AssignmentExpression) > ConditionalExpression
+│  │  │  │  │  │  │  │  │  │  │  │  │  └─🔀 ConditionalExpression(Or)
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  ├─[Branch #1](ConditionalExpression) > ShortCircuitExpression
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  └─🔀 ShortCircuitExpression(Or)
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  ├─[Branch #1](ShortCircuitExpression) > LogicalORExpression > LogicalANDExpression > ... > MultiplicativeExpression > ExponentiationExpression
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  └─🔀 ExponentiationExpression(Or)
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  ├─[Branch #1](ExponentiationExpression) > UpdateExpression
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  └─🔀 UpdateExpression(Or)
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  ├─[Branch #1](UpdateExpression) > LeftHandSideExpression
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  └─🔀 LeftHandSideExpression(Or)
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  ├─[Branch #1](LeftHandSideExpression) > NewExpression
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  └─🔀 NewExpression(Or)
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  ├─[Branch #1](NewExpression) > MemberExpression
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  └─🔀 MemberExpression(Or)
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  ├─[Branch #1](MemberExpression) > PrimaryExpression
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  └─🔀 PrimaryExpression(Or)
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  ├─[Branch #3](PrimaryExpression) > Literal
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  ├─🔀 Literal(Or)
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  └─[Branch #4](Literal)
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  └─🔹 Consume token[3] - 1 - <NumericLiteral> [1:9-9] ✅ 
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  └─[Branch #2](UpdateExpression)
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  └─LeftHandSideExpression ⚡[Cached]
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  ├─🔀 LeftHandSideExpression(Or) ⚡[Cached] > [Branch #1](LeftHandSideExpression) ⚡[Cached] > NewExpression ⚡[Cached] > ... > 🔀 Literal(Or) ⚡[Cached] > [Branch #4](Literal) ⚡[Cached]
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  └─🔹 Consume token[3] - 1 - <NumericLiteral> [] ✅  ⚡[Cached]
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  └─[Branch #5](UpdateExpression)
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  └─LeftHandSideExpression ⚡[Cached]
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  ├─🔀 LeftHandSideExpression(Or) ⚡[Cached] > [Branch #1](LeftHandSideExpression) ⚡[Cached] > NewExpression ⚡[Cached] > ... > 🔀 Literal(Or) ⚡[Cached] > [Branch #4](Literal) ⚡[Cached]
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  └─🔹 Consume token[3] - 1 - <NumericLiteral> [] ✅  ⚡[Cached]
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  ├─[Branch #2](ExponentiationExpression) > UnaryExpression
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  ├─🔀 UnaryExpression(Or)
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  └─[Branch #1](UnaryExpression)
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  ├─UpdateExpression ⚡[Cached]
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  ├─🔀 UpdateExpression(Or) ⚡[Cached]
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  └─[Branch #1](UpdateExpression) ⚡[Cached]
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  ├─LeftHandSideExpression ⚡[Cached] > 🔀 LeftHandSideExpression(Or) ⚡[Cached] > [Branch #1](LeftHandSideExpression) ⚡[Cached] > ... > 🔀 Literal(Or) ⚡[Cached] > [Branch #4](Literal) ⚡[Cached]
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  ├─🔹 Consume token[3] - 1 - <NumericLiteral> [] ✅  ⚡[Cached]
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  └─[Branch #2](UpdateExpression) ⚡[Cached]
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  ├─LeftHandSideExpression ⚡[Cached] > 🔀 LeftHandSideExpression(Or) ⚡[Cached] > [Branch #1](LeftHandSideExpression) ⚡[Cached] > ... > 🔀 Literal(Or) ⚡[Cached] > [Branch #4](Literal) ⚡[Cached]
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  ├─🔹 Consume token[3] - 1 - <NumericLiteral> [] ✅  ⚡[Cached]
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  └─[Branch #5](UpdateExpression) ⚡[Cached]
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  ├─LeftHandSideExpression ⚡[Cached] > 🔀 LeftHandSideExpression(Or) ⚡[Cached] > [Branch #1](LeftHandSideExpression) ⚡[Cached] > ... > 🔀 Literal(Or) ⚡[Cached] > [Branch #4](Literal) ⚡[Cached]
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  └─🔹 Consume token[3] - 1 - <NumericLiteral> [] ✅  ⚡[Cached]
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  └─[Branch #2](ConditionalExpression)
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  └─ShortCircuitExpression ⚡[Cached]
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  ├─🔀 ShortCircuitExpression(Or) ⚡[Cached] > [Branch #1](ShortCircuitExpression) ⚡[Cached] > LogicalORExpression ⚡[Cached] > ... > MultiplicativeExpression ⚡[Cached] > ExponentiationExpression ⚡[Cached]
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  ├─🔀 ExponentiationExpression(Or) ⚡[Cached]
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  ├─[Branch #1](ExponentiationExpression) ⚡[Cached]
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  ├─UpdateExpression ⚡[Cached]
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  ├─🔀 UpdateExpression(Or) ⚡[Cached]
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  └─[Branch #1](UpdateExpression) ⚡[Cached]
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  ├─LeftHandSideExpression ⚡[Cached] > 🔀 LeftHandSideExpression(Or) ⚡[Cached] > [Branch #1](LeftHandSideExpression) ⚡[Cached] > ... > 🔀 Literal(Or) ⚡[Cached] > [Branch #4](Literal) ⚡[Cached]
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  ├─🔹 Consume token[3] - 1 - <NumericLiteral> [] ✅  ⚡[Cached]
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  └─[Branch #2](UpdateExpression) ⚡[Cached]
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  ├─LeftHandSideExpression ⚡[Cached] > 🔀 LeftHandSideExpression(Or) ⚡[Cached] > [Branch #1](LeftHandSideExpression) ⚡[Cached] > ... > 🔀 Literal(Or) ⚡[Cached] > [Branch #4](Literal) ⚡[Cached]
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  ├─🔹 Consume token[3] - 1 - <NumericLiteral> [] ✅  ⚡[Cached]
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  └─[Branch #5](UpdateExpression) ⚡[Cached]
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  ├─LeftHandSideExpression ⚡[Cached] > 🔀 LeftHandSideExpression(Or) ⚡[Cached] > [Branch #1](LeftHandSideExpression) ⚡[Cached] > ... > 🔀 Literal(Or) ⚡[Cached] > [Branch #4](Literal) ⚡[Cached]
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  └─🔹 Consume token[3] - 1 - <NumericLiteral> [] ✅  ⚡[Cached]
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  ├─[Branch #2](ExponentiationExpression) ⚡[Cached] > UnaryExpression ⚡[Cached] > 🔀 UnaryExpression(Or) ⚡[Cached] > [Branch #1](UnaryExpression) ⚡[Cached]
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  ├─UpdateExpression ⚡[Cached]
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  ├─🔀 UpdateExpression(Or) ⚡[Cached]
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  └─[Branch #1](UpdateExpression) ⚡[Cached]
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  ├─LeftHandSideExpression ⚡[Cached] > 🔀 LeftHandSideExpression(Or) ⚡[Cached] > [Branch #1](LeftHandSideExpression) ⚡[Cached] > ... > 🔀 Literal(Or) ⚡[Cached] > [Branch #4](Literal) ⚡[Cached]
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  ├─🔹 Consume token[3] - 1 - <NumericLiteral> [] ✅  ⚡[Cached]
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  └─[Branch #2](UpdateExpression) ⚡[Cached]
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  ├─LeftHandSideExpression ⚡[Cached] > 🔀 LeftHandSideExpression(Or) ⚡[Cached] > [Branch #1](LeftHandSideExpression) ⚡[Cached] > ... > 🔀 Literal(Or) ⚡[Cached] > [Branch #4](Literal) ⚡[Cached]
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  ├─🔹 Consume token[3] - 1 - <NumericLiteral> [] ✅  ⚡[Cached]
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  └─[Branch #5](UpdateExpression) ⚡[Cached]
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  ├─LeftHandSideExpression ⚡[Cached] > 🔀 LeftHandSideExpression(Or) ⚡[Cached] > [Branch #1](LeftHandSideExpression) ⚡[Cached] > ... > 🔀 Literal(Or) ⚡[Cached] > [Branch #4](Literal) ⚡[Cached]
+│  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  └─🔹 Consume token[3] - 1 - <NumericLiteral> [] ✅  ⚡[Cached]
