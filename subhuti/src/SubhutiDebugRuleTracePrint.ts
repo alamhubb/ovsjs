@@ -120,6 +120,8 @@ export class TreeFormatHelper {
 export interface RuleStackItem {
     ruleName?: string
     tokenValue?: string
+    tokenSuccess?: boolean
+    tokenExpectName?: string
     tokenName?: string
     startTime: number
     outputted: boolean          // 是否已输出
@@ -197,9 +199,9 @@ export class SubhutiDebugRuleTracePrint {
     public static getPrintToken(tokenItem: RuleStackItem, location?: string): string {
 
         // 格式化 token 值（转义特殊字符、截断长字符串）
-        const value = TreeFormatHelper.formatTokenValue(tokenItem.tokenValue, 20)
+        const value = TreeFormatHelper.formatTokenValue(tokenItem.tokenValue || '', 20)
 
-        return ['🔹 Consume', `token[${tokenItem.tokenIndex}]`, '-', value, '-', `<${tokenItem.tokenName}>`, (location || '[]'), '✅ '].join(' ')
+        return ['🔹 Consume', `token[${tokenItem.tokenIndex}]`, '-', value, '-', `<${tokenItem.tokenName}>`, (location || '[]'), tokenItem.tokenSuccess ? '✅ ' : '❌ ', tokenItem.tokenExpectName].join(' ')
     }
 
     public static printLine(str: string, depth: number, symbol: string = '└─') {
@@ -412,7 +414,7 @@ export class SubhutiDebugRuleTracePrint {
                 // 🔍 调试：记录 Or 分支被标记为 outputted
             }
         } else {
-            if (tokenItem.tokenName) {
+            if (tokenItem.tokenExpectName) {
                 res = SubhutiDebugRuleTracePrint.getPrintToken(tokenItem)
             } else {
                 res = tokenItem.ruleName

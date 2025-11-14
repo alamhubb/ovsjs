@@ -789,6 +789,8 @@ export class SubhutiTraceDebugger {
             startTime: item.startTime,
             outputted: item.outputted,
             tokenIndex: item.tokenIndex,
+            tokenSuccess: item.tokenSuccess,
+            tokenExpectName: item.tokenExpectName,
             shouldBreakLine: item.shouldBreakLine,
             displayDepth: item.displayDepth,
             childs: item.childs,  // 【新增】克隆 childs 数组
@@ -824,14 +826,18 @@ export class SubhutiTraceDebugger {
 
         const tokenValue = item.tokenValue ?? ''
         const tokenName = item.tokenName ?? ''
+        const tokenExpectName = item.tokenExpectName ?? ''
+        const tokenSuccess = item.tokenSuccess ?? false
 
-        return `${ruleName}:${tokenIndex}:${isOrEntry}:${isOrBranch}:${orIndex}:${branchIndex}:${tokenValue}:${tokenName}`
+        return `${ruleName}:${tokenIndex}:${isOrEntry}:${isOrBranch}:${orIndex}:${branchIndex}:${tokenValue}:${tokenName}:${tokenExpectName}:${tokenSuccess}`
     }
 
-    private createTokenItem(tokenIndex: number, tokenValue: string, tokenName: string): RuleStackItem {
+    private createTokenItem(tokenIndex: number, tokenValue: string, tokenName: string, expectName: string, success: boolean): RuleStackItem {
         // 【统一】创建 Token 的 RuleStackItem
         return {
             ruleName: undefined,
+            tokenSuccess: success,
+            tokenExpectName: expectName,
             startTime: 0,
             outputted: false,
             tokenIndex: tokenIndex,
@@ -875,7 +881,7 @@ export class SubhutiTraceDebugger {
         } else if (OrBranchNeedNewLine) {
             displayDepth++
             restoredItem.shouldBreakLine = true
-        } else if (restoredItem.tokenName) {
+        } else if (restoredItem.tokenExpectName) {
             displayDepth++
             restoredItem.shouldBreakLine = true
         } else if (restoredItem.orBranchInfo && restoredItem.orBranchInfo.isOrEntry && restoredItem.childs.length > 1) {
@@ -1107,7 +1113,7 @@ export class SubhutiTraceDebugger {
     }
 
     cacheSet(key: string, value: RuleStackItem) {
-        if (!value.tokenName) {
+        if (!value.tokenExpectName) {
             if (!value.childs || value.childs?.length === 0) {
                 throw new Error('bugai wei 0')
             }
@@ -1123,8 +1129,13 @@ export class SubhutiTraceDebugger {
     onTokenConsume(
         tokenIndex: number,
         tokenValue: string,
-        tokenName: string
+        tokenName: string,
+        expectName: string,
+        success: boolean
     ): void {
+        // if (this.ruleStack.)
+
+
         // 快速失败：当前规则栈不能为空
         if (this.ruleStack.length === 0) {
             throw new Error(`❌ Token consume error: ruleStack is empty when consuming token ${tokenName}`)
@@ -1134,7 +1145,7 @@ export class SubhutiTraceDebugger {
         const parentRule = this.ruleStack[this.ruleStack.length - 1]
 
         // 创建 Token 的 RuleStackItem 和生成其 key
-        const tokenItem = this.createTokenItem(tokenIndex, tokenValue, tokenName)
+        const tokenItem = this.createTokenItem(tokenIndex, tokenValue, tokenName, expectName, success)
         const tokenKey = this.generateCacheKey(tokenItem)
 
         // 检查缓存中是否已有此 Token → 没有则存入
@@ -1165,20 +1176,24 @@ export class SubhutiTraceDebugger {
 
         // 获取 token 的位置信息（行列号）
         const token = this.inputTokens[tokenIndex]
+
         let location: string | null = null
 
-        if (token) {
-            if (token.loc) {
-                // 使用 token 对象中的位置信息
-                location = TreeFormatHelper.formatLocation(token.loc)
-            } else if (token.rowNum !== undefined && token.columnStartNum !== undefined) {
-                // 使用行列号构造位置信息
-                const row = token.rowNum
-                const start = token.columnStartNum
-                const end = token.columnEndNum ?? start + tokenValue.length - 1
-                location = `[${row}:${start}-${end}]`
+        if (success) {
+            if (token) {
+                if (token.loc) {
+                    // 使用 token 对象中的位置信息
+                    location = TreeFormatHelper.formatLocation(token.loc)
+                } else if (token.rowNum !== undefined && token.columnStartNum !== undefined) {
+                    // 使用行列号构造位置信息
+                    const row = token.rowNum
+                    const start = token.columnStartNum
+                    const end = token.columnEndNum ?? start + tokenValue.length - 1
+                    location = `[${row}:${start}-${end}]`
+                }
             }
         }
+
 
         const tokenStr = SubhutiDebugRuleTracePrint.getPrintToken(tokenItem, location)
         SubhutiDebugRuleTracePrint.printLine(tokenStr, depth)

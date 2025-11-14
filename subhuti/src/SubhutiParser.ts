@@ -574,6 +574,14 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         if (!token || token.tokenName !== tokenName) {
             this._parseSuccess = false
 
+            this._debugger?.onTokenConsume(
+                this.tokenIndex,
+                token?.tokenValue,
+                token?.tokenName,
+                tokenName,
+                false
+            )
+
             if (this.outerHasAllowError || this.allowError) {
                 return undefined
             }
@@ -596,8 +604,10 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
         this._debugger?.onTokenConsume(
             this.tokenIndex,
-            token.tokenValue,
-            token.tokenName
+            token?.tokenValue,
+            token?.tokenName,
+            tokenName,
+            true
         )
 
         this.tokenIndex++
