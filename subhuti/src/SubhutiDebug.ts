@@ -947,7 +947,7 @@ export class SubhutiTraceDebugger {
     // 过程追踪方法
     // ========================================
 
-    openDebugLogCache = true
+    openDebugLogCache = false
 
     /**
      * 规则进入事件处理器 - 立即建立父子关系版本

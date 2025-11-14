@@ -246,7 +246,7 @@ export class SubhutiDebugRuleTracePrint {
         let baseDepth = 0
         if (lastOutputted) {
             // 否则 baseDepth = 最后一个已输出规则的深度 + 1
-            baseDepth = lastOutputted.displayDepth
+            baseDepth = lastOutputted.displayDepth + 1
         }
 
         //最后一个未输出的 OrEntry（使用 findLastIndex 直接获取正向索引）
@@ -264,7 +264,7 @@ export class SubhutiDebugRuleTracePrint {
             const singleRules = pendingRules.splice(-breakPoint);
             // 输出折叠链
             this.printChainRule(pendingRules, baseDepth)
-            return this.printMultipleSingleRule(singleRules, baseDepth + 1)
+            return this.printMultipleSingleRule(singleRules, baseDepth)
             // return this.printMultipleSingleRule(pendingRules, baseDepth)
         } else {
             return this.printMultipleSingleRule(pendingRules, baseDepth)
@@ -365,7 +365,7 @@ export class SubhutiDebugRuleTracePrint {
      * @param rules
      * @param depth 兼容非缓存和缓存，
      */
-    static printChainRule(rules: RuleStackItem[], depth: number = rules[0].displayDepth): void {
+    static printChainRule(rules: RuleStackItem[], depth: number = rules[0].displayDepth) {
         //过滤or和虚拟规则
         // const names = rules.filter(item => !item.orBranchInfo).map(r => r.ruleName)
         const names = rules.map(r => r.ruleName)
@@ -377,7 +377,7 @@ export class SubhutiDebugRuleTracePrint {
         SubhutiDebugRuleTracePrint.printLine([displayNames.join(' > ')], depth, '├─')
 
         rules.forEach(r => {
-            r.displayDepth = depth + 1
+            r.displayDepth = depth
             // r.relativeDepthByStack = 0
             r.outputted = true
         })
