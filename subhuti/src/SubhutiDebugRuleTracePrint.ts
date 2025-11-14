@@ -194,14 +194,12 @@ export class SubhutiDebugRuleTracePrint {
     }
 
 
-    public static getPrintToken(tokenItem: RuleStackItem, location?: string): string[] {
+    public static getPrintToken(tokenItem: RuleStackItem, location?: string): string {
 
         // 格式化 token 值（转义特殊字符、截断长字符串）
         const value = TreeFormatHelper.formatTokenValue(tokenItem.tokenValue, 20)
 
-        const tokenStrs = ['🔹 Consume', `token[${tokenItem.tokenIndex}]`, '-', value, '-', `<${tokenItem.tokenName}>`, location || '[]', '✅ ']
-
-        return tokenStrs
+        return ['🔹 Consume', `token[${tokenItem.tokenIndex}]`, '-', value , '-', `<${tokenItem.tokenName}>`, (location || '[]'), '✅ '].join(' ')
     }
 
     public static printLine(str: string, depth: number, symbol: string = '└─') {
@@ -382,21 +380,16 @@ export class SubhutiDebugRuleTracePrint {
             if (tokenItem.orBranchInfo.isOrEntry) {
                 // branch = '🔀 '
                 // Or 包裹节点：显示 [Or]
-                res += '🔀 ' + tokenItem.ruleName + '(Or)'
+                res = '🔀 ' + tokenItem.ruleName + '(Or)'
             } else if (tokenItem.orBranchInfo.isOrBranch) {
-                res += `Branch #${branchInfo.branchIndex + 1}](${tokenItem.ruleName})`
+                res = `[Branch #${branchInfo.branchIndex + 1}](${tokenItem.ruleName})`
                 // 🔍 调试：记录 Or 分支被标记为 outputted
             }
         } else {
             if (tokenItem.tokenName) {
-                res += SubhutiDebugRuleTracePrint.getPrintToken(tokenItem)
-
-                // 格式化 token 值（转义特殊字符、截断长字符串）
-                const value = TreeFormatHelper.formatTokenValue(tokenItem.tokenValue, 20)
-
-                res += ('🔹 Consume' + `token[${tokenItem.tokenIndex}]` + '-' + value + '-' + `<${tokenItem.tokenName}>` + (location || '[]') + '✅ ')
+                res = SubhutiDebugRuleTracePrint.getPrintToken(tokenItem)
             } else {
-                res += tokenItem.ruleName
+                res = tokenItem.ruleName
             }
         }
         if (tokenItem.isManuallyAdded) {

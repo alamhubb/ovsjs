@@ -1,4 +1,4 @@
-import SubhutiTraceDebugger from "../src/SubhutiDebug.ts";
+import {SubhutiTraceDebugger} from "../src/SubhutiDebug.ts";
 
 console.log('\n🧪 测试深度调整逻辑')
 console.log('='.repeat(60))

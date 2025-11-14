@@ -8,7 +8,6 @@
  *
  * 架构：
  * - SubhutiDebugUtils - 无状态工具集（CST分析、Token验证、高级调试）
- * - SubhutiTraceDebugger - 有状态追踪器（过程追踪、性能统计、自动输出）
  *
  * 功能：
  * - ✅ 规则执行追踪（进入/退出）
@@ -531,13 +530,13 @@ export class SubhutiDebugUtils {
     private static formatNode(cst: any, prefix: string, connector: string): string {
         const isToken = cst.value !== undefined
 
-        if (isToken) {
+        /*if (isToken) {
             // Token 节点：显示名称、值、位置
             const value = TreeFormatHelper.formatTokenValue(cst.value)
             const location = cst.loc ? TreeFormatHelper.formatLocation(cst.loc) : null
 
             return TreeFormatHelper.formatLine(
-                [connector, cst.name + ':', `"${value}"`, location],
+                [cst.name + ':', `"${value}"`, location],
                 {prefix, separator: ' '}
             )
         } else {
@@ -546,7 +545,8 @@ export class SubhutiDebugUtils {
                 [connector, cst.name],
                 {prefix}
             )
-        }
+        }*/
+        return null
     }
 
     // ========================================
@@ -700,24 +700,6 @@ export class SubhutiDebugUtils {
 // SubhutiTraceDebugger - 追踪器（v4.0）
 // ============================================
 
-/**
- * Subhuti 轨迹调试器（v5.2 - 只显示成功路径）
- *
- * 职责：
- * - 追踪解析过程（规则进入/退出、Token 消费、Or 分支）
- * - 性能统计（调用次数、耗时、缓存命中率）
- * - 自动输出调试报告
- *
- * 输出优化：
- * - 只输出成功的路径（失败的分支完全不显示）
- * - 规则链合并显示（用 > 连接）
- * - Or 只显示成功的分支（带规则链）
- * - 只有 Token 消费才右推缩进
- * - 极简输出，信息密度高
- *
- * @version 5.2.0 - 只显示成功路径，极简输出
- * @date 2025-11-07
- */
 export class SubhutiTraceDebugger {
     // ========================================
     // 过程追踪数据（新版 - 只用 ruleStack）
@@ -865,10 +847,10 @@ export class SubhutiTraceDebugger {
      *
      * @param cacheKey - 缓存键
      * @param isRoot - 是否是根节点
-     * @param newLineNeedNewLine - 是否是根节点
+     * @param OrBranchNeedNewLine - 是否需要单独行，or相关专用
      * @param displayDepth - 父节点的 displayDepth（用于计算当前节点的深度）
      */
-    private restoreFromCacheAndPushAndPrint(cacheKey: string, displayDepth: number, newLineNeedNewLine: boolean, isRoot: boolean = true): RuleStackItem {
+    private restoreFromCacheAndPushAndPrint(cacheKey: string, displayDepth: number, OrBranchNeedNewLine: boolean, isRoot: boolean = true): RuleStackItem {
         // 【第 1 步】读取缓存的规则或 Token
         const cached = this.cacheGet(cacheKey)
         if (!cached) {
@@ -882,7 +864,7 @@ export class SubhutiTraceDebugger {
         restoredItem.isManuallyAdded = true
         restoredItem.shouldBreakLine = false
 
-        newLineNeedNewLine = false
+        OrBranchNeedNewLine = false
 
         const lastRowShouldBreakLine = this.ruleStack[this.ruleStack.length - 1].shouldBreakLine
 
@@ -890,7 +872,7 @@ export class SubhutiTraceDebugger {
         if (isRoot) {
             displayDepth++
             restoredItem.shouldBreakLine = true
-        } else if (newLineNeedNewLine) {
+        } else if (OrBranchNeedNewLine) {
             displayDepth++
             restoredItem.shouldBreakLine = true
         } else if (restoredItem.tokenName) {
@@ -899,7 +881,7 @@ export class SubhutiTraceDebugger {
         } else if (restoredItem.orBranchInfo && restoredItem.orBranchInfo.isOrEntry && restoredItem.childs.length > 1) {
             displayDepth++
             restoredItem.shouldBreakLine = true
-            newLineNeedNewLine = true
+            OrBranchNeedNewLine = true
         } else if (['UpdateExpression'].indexOf(restoredItem.ruleName) > -1) {
             displayDepth++
             restoredItem.shouldBreakLine = true
@@ -912,8 +894,8 @@ export class SubhutiTraceDebugger {
         restoredItem.displayDepth = displayDepth
 
 
-        if (newLineNeedNewLine && restoredItem.orBranchInfo) {
-            newLineNeedNewLine = restoredItem.orBranchInfo.isOrBranch || false
+        if (OrBranchNeedNewLine && restoredItem.orBranchInfo) {
+            OrBranchNeedNewLine = restoredItem.orBranchInfo.isOrBranch || false
         }
 
 
@@ -924,7 +906,7 @@ export class SubhutiTraceDebugger {
         if (cached.childs) {
             let i = 0
             for (const childKey of cached.childs) {
-                const nextItem = this.restoreFromCacheAndPushAndPrint(childKey, displayDepth, newLineNeedNewLine, false)
+                const nextItem = this.restoreFromCacheAndPushAndPrint(childKey, displayDepth, OrBranchNeedNewLine, false)
                 //不为根节点，且上一行为换行，且当不换行，且下一个换行，则更改本行为换行，删除上次调用，重新执行调用逻辑，并且重新调用
                 if (!isRoot && i === 0 && lastRowShouldBreakLine && !restoredItem.shouldBreakLine && nextItem.shouldBreakLine) {
                     this.ruleStack.splice(childBeginIndex)
@@ -934,7 +916,7 @@ export class SubhutiTraceDebugger {
                     }
                     restoredItem.shouldBreakLine = true
                     restoredItem.displayDepth = displayDepth
-                    this.restoreFromCacheAndPushAndPrint(childKey, displayDepth, newLineNeedNewLine, false)
+                    this.restoreFromCacheAndPushAndPrint(childKey, displayDepth, OrBranchNeedNewLine, false)
                 }
                 i++
             }
@@ -1016,7 +998,7 @@ export class SubhutiTraceDebugger {
             if (RuleStackItem) {
                 let depth = SubhutiDebugRuleTracePrint.flushPendingOutputs_NonCache_Impl(this.ruleStack)
                 // 将历史执行路径恢复到栈中（包括子规则和 Token 消费）
-                this.restoreFromCacheAndPushAndPrint(cacheKey, depth)
+                this.restoreFromCacheAndPushAndPrint(cacheKey, depth, false)
                 // 返回开始时间用于性能统计
                 return startTime
             }
@@ -1544,6 +1526,4 @@ export class SubhutiTraceDebugger {
 // ============================================
 // 导出
 // ============================================
-
-export {SubhutiTraceDebugger as default}
 
