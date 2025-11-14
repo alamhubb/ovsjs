@@ -1541,6 +1541,117 @@ export class SubhutiTraceDebugger {
     // ========================================
     // 自动输出（由 Parser 在顶层规则完成时调用）
     // ========================================
+    /**
+     * 自动输出完整调试报告
+     */
+    autoOutput(): void {
+        console.log('\n' + '='.repeat(60))
+        console.log('🔍 Subhuti Debug 输出')
+        console.log('='.repeat(60))
+
+        // ========================================
+        // 第一部分：性能摘要
+        // ========================================
+        console.log('\n【第一部分：性能摘要】')
+        console.log('─'.repeat(60))
+        console.log('\n' + this.getSummary())
+
+        // 所有规则详细统计
+        console.log('\n📋 所有规则详细统计:')
+        const allStats = Array.from(this.stats.values())
+            .sort((a, b) => b.executionTime - a.executionTime)
+
+        allStats.forEach((stat) => {
+            const cacheRate = stat.totalCalls > 0
+                ? (stat.cacheHits / stat.totalCalls * 100).toFixed(1)
+                : '0.0'
+            console.log(
+                `  ${stat.ruleName}: ${stat.totalCalls}次 | ` +
+                `执行${stat.actualExecutions}次 | ` +
+                `耗时${stat.executionTime.toFixed(2)}ms | ` +
+                `缓存${cacheRate}%`
+            )
+        })
+
+        console.log('\n' + '='.repeat(60))
+
+        // ========================================
+        // 第二部分：CST 验证报告
+        // ========================================
+        if (this.topLevelCst) {
+            console.log('\n【第二部分：CST 验证报告】')
+            console.log('─'.repeat(60))
+            console.log('\n🔍 CST 验证报告')
+            console.log('─'.repeat(60))
+
+            // 2.1 结构验证
+            const structureErrors = this.validateStructure(this.topLevelCst)
+            console.log(`\n📌 结构完整性: ${structureErrors.length === 0 ? '✅' : '❌'}`)
+
+            if (structureErrors.length > 0) {
+                console.log(`   发现 ${structureErrors.length} 个错误:`)
+                structureErrors.forEach((err, i) => {
+                    console.log(`\n   [${i + 1}] ${err.path}`)
+                    console.log(`       问题: ${err.issue}`)
+                    if (err.node) {
+                        const nodeStr = JSON.stringify(err.node, null, 2)
+                            .split('\n')
+                            .map(line => `       ${line}`)
+                            .join('\n')
+                        console.log(nodeStr)
+                    }
+                })
+            } else {
+                console.log('   无结构错误')
+            }
+
+            // 2.2 Token 完整性
+            const tokenResult = this.checkTokenCompleteness(this.topLevelCst)
+            console.log(`\n📌 Token 完整性: ${tokenResult.missing.length === 0 ? '✅' : '❌'}`)
+            console.log(`   输入 tokens: ${tokenResult.input.length} 个`)
+            console.log(`   CST tokens:  ${tokenResult.cst.length} 个`)
+            console.log(`   输入列表: [${tokenResult.input.join(', ')}]`)
+            console.log(`   CST列表:  [${tokenResult.cst.join(', ')}]`)
+
+            if (tokenResult.missing.length > 0) {
+                console.log(`   ❌ 缺失: [${tokenResult.missing.join(', ')}]`)
+            } else {
+                console.log(`   ✅ 完整保留`)
+            }
+
+            // 2.3 CST 统计
+            const stats = this.getCSTStatistics(this.topLevelCst)
+            console.log(`\n📌 CST 统计:`)
+            console.log(`   总节点数: ${stats.totalNodes}`)
+            console.log(`   叶子节点: ${stats.leafNodes}`)
+            console.log(`   最大深度: ${stats.maxDepth}`)
+            console.log(`   节点类型: ${stats.nodeTypes.size} 种`)
+
+            // 节点类型分布
+            console.log(`\n   节点类型分布:`)
+            const sortedTypes = Array.from(stats.nodeTypes.entries())
+                .sort((a, b) => b[1] - a[1])
+            sortedTypes.forEach(([name, count]) => {
+                console.log(`     ${name}: ${count}`)
+            })
+
+            console.log('─'.repeat(60))
+
+            // ========================================
+            // 第三部分：CST 可视化
+            // ========================================
+            console.log('\n【第三部分：CST 可视化】')
+            console.log('─'.repeat(60))
+            console.log('\n📊 CST 结构')
+            console.log('─'.repeat(60))
+            console.log(SubhutiDebugUtils.formatCst(this.topLevelCst))
+            console.log('─'.repeat(60))
+        }
+
+        console.log('\n' + '='.repeat(60))
+        console.log('🎉 Debug 输出完成')
+        console.log('='.repeat(60))
+    }
 }
 
 // ============================================
