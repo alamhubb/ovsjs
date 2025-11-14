@@ -866,9 +866,9 @@ export class SubhutiTraceDebugger {
      * @param cacheKey - 缓存键
      * @param isRoot - 是否是根节点
      * @param newLineNeedNewLine - 是否是根节点
-     * @param parentDisplayDepth - 父节点的 displayDepth（用于计算当前节点的深度）
+     * @param displayDepth - 父节点的 displayDepth（用于计算当前节点的深度）
      */
-    private restoreFromCacheAndPushAndPrint(cacheKey: string, parentDisplayDepth: number, newLineNeedNewLine: boolean, isRoot: boolean = true): RuleStackItem {
+    private restoreFromCacheAndPushAndPrint(cacheKey: string, displayDepth: number, newLineNeedNewLine: boolean, isRoot: boolean = true): RuleStackItem {
         // 【第 1 步】读取缓存的规则或 Token
         const cached = this.cacheGet(cacheKey)
         if (!cached) {
@@ -884,49 +884,57 @@ export class SubhutiTraceDebugger {
 
         newLineNeedNewLine = false
 
-        if (!isRoot) {
-            if (newLineNeedNewLine) {
-                parentDisplayDepth++
-                restoredItem.shouldBreakLine = true
-            } else if (restoredItem.tokenName) {
-                parentDisplayDepth++
-                restoredItem.shouldBreakLine = true
-            } else if (restoredItem.orBranchInfo && restoredItem.orBranchInfo.isOrEntry && restoredItem.childs.length > 1) {
-                parentDisplayDepth++
-                restoredItem.shouldBreakLine = true
-                newLineNeedNewLine = true
-            } else if (['UpdateExpression'].indexOf(restoredItem.ruleName) > -1) {
-                parentDisplayDepth++
-                restoredItem.shouldBreakLine = true
-            }
+        const lastRowShouldBreakLine = this.ruleStack[this.ruleStack.length - 1].shouldBreakLine
+
+        let tempBreakLine = false
+        if (isRoot) {
+            displayDepth++
+            restoredItem.shouldBreakLine = true
+        } else if (newLineNeedNewLine) {
+            displayDepth++
+            restoredItem.shouldBreakLine = true
+        } else if (restoredItem.tokenName) {
+            displayDepth++
+            restoredItem.shouldBreakLine = true
+        } else if (restoredItem.orBranchInfo && restoredItem.orBranchInfo.isOrEntry && restoredItem.childs.length > 1) {
+            displayDepth++
+            restoredItem.shouldBreakLine = true
+            newLineNeedNewLine = true
+        } else if (['UpdateExpression'].indexOf(restoredItem.ruleName) > -1) {
+            displayDepth++
+            restoredItem.shouldBreakLine = true
+        } else if (lastRowShouldBreakLine) {
+            //如果为折叠链的开头则+1
+            displayDepth++
+            tempBreakLine = true
         }
 
-        restoredItem.displayDepth = parentDisplayDepth
+        restoredItem.displayDepth = displayDepth
 
 
         if (newLineNeedNewLine && restoredItem.orBranchInfo) {
             newLineNeedNewLine = restoredItem.orBranchInfo.isOrBranch || false
         }
-        const lastRowShouldBreakLine = this.ruleStack[this.ruleStack.length - 1].shouldBreakLine
+
 
         let childBeginIndex = this.ruleStack.push(restoredItem)
-
 
 
         // 【第 4 步】递归恢复子节点，传递当前节点的 displayDepth
         if (cached.childs) {
             let i = 0
             for (const childKey of cached.childs) {
-
-
-                const nextItem = this.restoreFromCacheAndPushAndPrint(childKey, parentDisplayDepth, newLineNeedNewLine, false)
+                const nextItem = this.restoreFromCacheAndPushAndPrint(childKey, displayDepth, newLineNeedNewLine, false)
                 //不为根节点，且上一行为换行，且当不换行，且下一个换行，则更改本行为换行，删除上次调用，重新执行调用逻辑，并且重新调用
                 if (!isRoot && i === 0 && lastRowShouldBreakLine && !restoredItem.shouldBreakLine && nextItem.shouldBreakLine) {
                     this.ruleStack.splice(childBeginIndex)
-                    parentDisplayDepth++
+                    //如果为断链头，则已经加过了，无需重复增加
+                    if (!tempBreakLine) {
+                        displayDepth++
+                    }
                     restoredItem.shouldBreakLine = true
-                    restoredItem.displayDepth = parentDisplayDepth
-                    this.restoreFromCacheAndPushAndPrint(childKey, parentDisplayDepth, newLineNeedNewLine, false)
+                    restoredItem.displayDepth = displayDepth
+                    this.restoreFromCacheAndPushAndPrint(childKey, displayDepth, newLineNeedNewLine, false)
                 }
                 i++
             }
@@ -947,7 +955,8 @@ export class SubhutiTraceDebugger {
     // 过程追踪方法
     // ========================================
 
-    openDebugLogCache = false
+    // openDebugLogCache = false
+    openDebugLogCache = true
 
     /**
      * 规则进入事件处理器 - 立即建立父子关系版本
