@@ -173,7 +173,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         // 开发环境自动语法验证
         // @ts-ignore - Node.js 环境变量检查
         if (typeof process !== 'undefined' && process.env.NODE_ENV === 'development') {
-            SubhutiGrammarValidator.validate(this)  // 静态方法验证
+            this.validateGrammar()  // 静态方法验证
         }
     }
 
