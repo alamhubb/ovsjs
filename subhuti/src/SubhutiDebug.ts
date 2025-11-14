@@ -1211,6 +1211,8 @@ export class SubhutiTraceDebugger {
             ruleName: parentRuleName,
             startTime: performance.now(),
             outputted: false,
+            //orEntry默认换行
+            shouldBreakLine: true,
             tokenIndex,
             childs: [],  // 初始化 childs 数组
             orBranchInfo: {

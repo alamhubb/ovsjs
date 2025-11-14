@@ -261,8 +261,21 @@ export class SubhutiDebugRuleTracePrint {
         //获取折叠链和单独输出的规则，如果折叠链只有一个不折叠
         if (breakPoint < pendingRules.length - 1) {
             const singleRules = pendingRules.splice(-breakPoint);
-            // 输出折叠链
+
+            pendingRules.forEach((item, index) => {
+                if (item.shouldBreakLine) {
+                    const outputSubRules = pendingRules.slice(0, index)
+                    this.printChainRule(outputSubRules, baseDepth)
+
+                    pendingRules.splice(index, 1)
+                    baseDepth = this.printMultipleSingleRule([item], baseDepth)
+
+                    pendingRules = pendingRules.slice(index + 1, pendingRules.length)
+                }
+            })
+
             this.printChainRule(pendingRules, baseDepth)
+
             return this.printMultipleSingleRule(singleRules, baseDepth)
             // return this.printMultipleSingleRule(pendingRules, baseDepth)
         } else {
@@ -317,6 +330,9 @@ export class SubhutiDebugRuleTracePrint {
      * @param depth 兼容非缓存和缓存，
      */
     static printChainRule(rules: RuleStackItem[], depth: number = rules[0].displayDepth) {
+        if (!rules.length) {
+            throw new Error("系统错误")
+        }
         //过滤or和虚拟规则
         // const names = rules.filter(item => !item.orBranchInfo).map(r => r.ruleName)
         const names = rules.map(r => SubhutiDebugRuleTracePrint.getRuleItemLogContent(r))
@@ -326,6 +342,7 @@ export class SubhutiDebugRuleTracePrint {
             : names
 
         SubhutiDebugRuleTracePrint.printLine(displayNames.join(' > '), depth, '├─')
+
 
         rules.forEach(r => {
             r.displayDepth = depth
