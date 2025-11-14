@@ -1,4 +1,4 @@
-import Es6TokenConsumer, {Es6TokenName, es6TokensObj} from "slime-parser/src/language/es2015/Es6Tokens";
+import Es6TokenConsumer, {Es6TokenName, es6TokensObj} from "slime-parser/src/language/es2025/Es2025Tokens";
 import {createKeywordToken} from "subhuti/src/struct/SubhutiCreateToken";
 
 export const objectScriptTokenName = {

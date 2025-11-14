@@ -3,8 +3,8 @@
  * 测试范围: CST → AST转换
  * 前提: 阶段1已通过（CST可以正常生成）
  */
-import Es2025Parser from './packages/slime-parser/src/language/es2015/Es2025Parser.ts'
-import { es6Tokens } from './packages/slime-parser/src/language/es2015/Es6Tokens.ts'
+import Es2025Parser from './packages/slime-parser/src/language/es2025/Es2025Parser.ts'
+import { es6Tokens } from './packages/slime-parser/src/language/es2025/Es2025Tokens.ts'
 import SubhutiLexer from 'subhuti/src/SubhutiLexer.ts'
 import { SlimeCstToAst } from './packages/slime-parser/src/language/SlimeCstToAstUtil.ts'
 import * as fs from 'fs'

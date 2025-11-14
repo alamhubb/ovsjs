@@ -16,7 +16,7 @@ import {
 import SlimeAstUtil from "slime-ast/src/SlimeAst.ts";
 import ObjectScriptParser from "../parser/ObjectScriptParser.ts";
 import {SubhutiUtil} from "subhuti/src/parser/SubhutiParser.ts";
-import Es2025Parser from "slime-parser/src/language/es2015/Es2025Parser.ts";
+import Es2025Parser from "slime-parser/src/language/es2025/Es2025Parser.ts";
 
 export function checkCstName(cst: SubhutiCst, cstName: string) {
   if (cst.name !== cstName) {

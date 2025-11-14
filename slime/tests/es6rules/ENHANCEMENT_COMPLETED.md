@@ -277,7 +277,7 @@ fs.writeFileSync(filePath, enhanced.join('\n'));
 
 3. **对照Parser代码** - 找到实际规则定义
    ```typescript
-   // slime/packages/slime-parser/src/language/es2015/Es2025Parser.ts:144
+   // slime/packages/slime-parser/src/language/es2025/Es2025Parser.ts:144
    Literal() {
        this.Or([
            {alt: () => this.tokenConsumer.NullLiteral()},  // ← 对应分支1

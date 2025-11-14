@@ -142,7 +142,7 @@
 子项目路径：D:\project\qkyproject\test-volar\slime
 
 核心文件：
-- 规则定义：slime/packages/slime-parser/src/language/es2015/Es2025Parser.ts
+- 规则定义：slime/packages/slime-parser/src/language/es2025/Es2025Parser.ts
 - 测试文件：slime/tests/es6rules/*.js
 - 编辑工具：使用 edit_file 工具（只修改注释行）
 ```

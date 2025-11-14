@@ -420,7 +420,7 @@ FormalParameterList → BindingElement / RestParameter
 ### 关键文件位置
 - **测试脚本：** `slime/test-stage1-cst-content.ts`（CST测试）
 - **测试用例：** `slime/tests/cases/*.js`（53个）
-- **Parser源码：** `slime/packages/slime-parser/src/language/es2015/Es2025Parser.ts`
+- **Parser源码：** `slime/packages/slime-parser/src/language/es2025/Es2025Parser.ts`
 - **进度文档：** `slime/tests/TEST_PROGRESS.md`（本文件）
 - **优化分析：** `slime/optimization-analysis.md`
 

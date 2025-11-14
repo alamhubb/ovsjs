@@ -156,7 +156,7 @@
 
 1. **查看规则定义**（2分钟）
    ```bash
-   grep -A 30 "RuleName() {" slime-parser/src/language/es2015/Es2025Parser.ts
+   grep -A 30 "RuleName() {" slime-parser/src/language/es2025/Es2025Parser.ts
    ```
 
 2. **识别规则特征**（1分钟）

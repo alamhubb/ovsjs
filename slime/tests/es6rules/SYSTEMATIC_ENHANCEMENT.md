@@ -250,10 +250,10 @@ npx tsx verify-rule-test.ts | grep "RuleName"
 
 ```bash
 # 在Es2025Parser.ts中查找规则
-grep -n "RuleName()" slime-parser/src/language/es2015/Es2025Parser.ts
+grep -n "RuleName()" slime-parser/src/language/es2025/Es2025Parser.ts
 
 # 查看规则详情
-sed -n '行号,行号+30p' slime-parser/src/language/es2015/Es2025Parser.ts
+sed -n '行号,行号+30p' slime-parser/src/language/es2025/Es2025Parser.ts
 ```
 
 ### 快速验证

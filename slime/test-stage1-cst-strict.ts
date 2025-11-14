@@ -3,8 +3,8 @@
  * 测试范围: 词法分析 → 语法分析（生成CST）
  * 验证内容: CST结构完整性、节点类型正确性、Token值保留
  */
-import Es2025Parser from './packages/slime-parser/src/language/es2015/Es2025Parser.ts'
-import { es6Tokens } from './packages/slime-parser/src/language/es2015/Es6Tokens.ts'
+import Es2025Parser from './packages/slime-parser/src/language/es2025/Es2025Parser.ts'
+import { es6Tokens } from './packages/slime-parser/src/language/es2025/Es2025Tokens.ts'
 import SubhutiLexer from 'subhuti/src/SubhutiLexer.ts'
 import * as fs from 'fs'
 import * as path from 'path'

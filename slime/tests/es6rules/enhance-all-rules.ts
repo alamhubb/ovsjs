@@ -21,7 +21,7 @@ interface CommentInfo {
  * 从Es2025Parser.ts中提取所有规则定义
  */
 function extractRulesFromParser(): Map<string, RuleInfo> {
-  const parserPath = path.join(__dirname, '../../packages/slime-parser/src/language/es2015/Es2025Parser.ts');
+  const parserPath = path.join(__dirname, '../../packages/slime-parser/src/language/es2025/Es2025Parser.ts');
   const content = fs.readFileSync(parserPath, 'utf-8');
   const lines = content.split('\n');
   

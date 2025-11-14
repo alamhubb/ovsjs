@@ -1,5 +1,5 @@
 import {Subhuti, SubhutiRule, type SubhutiTokenConsumerConstructor} from "subhuti/src/parser/SubhutiParser";
-import Es2025Parser from "slime-parser/src/language/es2015/Es2025Parser";
+import Es2025Parser from "slime-parser/src/language/es2025/Es2025Parser";
 import ObjectScriptTokenConsumer from "./ObjectScriptTokenConsumer";
 import SubhutiMatchToken from "subhuti/src/struct/SubhutiMatchToken";
 
