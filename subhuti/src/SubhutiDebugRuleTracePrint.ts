@@ -246,7 +246,7 @@ export class SubhutiDebugRuleTracePrint {
         let baseDepth = 0
         if (lastOutputted) {
             // 否则 baseDepth = 最后一个已输出规则的深度 + 1
-            baseDepth = lastOutputted.displayDepth + 1
+            baseDepth = lastOutputted.displayDepth
         }
 
         //最后一个未输出的 OrEntry（使用 findLastIndex 直接获取正向索引）
@@ -306,7 +306,7 @@ export class SubhutiDebugRuleTracePrint {
             // 规则 1：第一个节点
             if (i === 0 && nextItem && nextItem.shouldBreakLine) {
                 item.shouldBreakLine = true
-                item.displayDepth ++
+                item.displayDepth++
             }
             // 规则 3：最后一个节点
             else if (i === pendingRules.length - 1 && prevItem && prevItem.shouldBreakLine) {
@@ -377,7 +377,7 @@ export class SubhutiDebugRuleTracePrint {
         SubhutiDebugRuleTracePrint.printLine([displayNames.join(' > ')], depth, '├─')
 
         rules.forEach(r => {
-            r.displayDepth = depth
+            r.displayDepth = depth + 1
             // r.relativeDepthByStack = 0
             r.outputted = true
         })
@@ -392,6 +392,8 @@ export class SubhutiDebugRuleTracePrint {
      */
     static printMultipleSingleRule(rules: RuleStackItem[], depth: number = rules[0].displayDepth): number {
         rules.forEach((item, index) => {
+            depth++
+
             // 判断是否是最后一个
             const isLast = index === rules.length - 1
 
@@ -440,8 +442,6 @@ export class SubhutiDebugRuleTracePrint {
 
             // item.shouldBreakLine = true
             item.outputted = true
-
-            depth++
         })
         return depth
     }
