@@ -199,7 +199,7 @@ export class SubhutiDebugRuleTracePrint {
         // 格式化 token 值（转义特殊字符、截断长字符串）
         const value = TreeFormatHelper.formatTokenValue(tokenItem.tokenValue, 20)
 
-        return ['🔹 Consume', `token[${tokenItem.tokenIndex}]`, '-', value , '-', `<${tokenItem.tokenName}>`, (location || '[]'), '✅ '].join(' ')
+        return ['🔹 Consume', `token[${tokenItem.tokenIndex}]`, '-', value, '-', `<${tokenItem.tokenName}>`, (location || '[]'), '✅ '].join(' ')
     }
 
     public static printLine(str: string, depth: number, symbol: string = '└─') {
@@ -319,7 +319,7 @@ export class SubhutiDebugRuleTracePrint {
     static printChainRule(rules: RuleStackItem[], depth: number = rules[0].displayDepth) {
         //过滤or和虚拟规则
         // const names = rules.filter(item => !item.orBranchInfo).map(r => r.ruleName)
-        const names = rules.map(r => r.ruleName)
+        const names = rules.map(r => SubhutiDebugRuleTracePrint.getRuleItemLogContent(r))
 
         const displayNames = names.length > 5
             ? [...names.slice(0, 3), '...', ...names.slice(-2)]
@@ -354,14 +354,14 @@ export class SubhutiDebugRuleTracePrint {
 
             // 生成前缀：每一层的连接线
 
-            let branch = isLast ? '└─' : '├─'
-
-            let printStr = this.getRuleItemLogContent(item);
-
-
             if (!item.isManuallyAdded) {
                 item.displayDepth = depth
             }
+
+
+            let branch = isLast ? '└─' : '├─'
+
+            let printStr = this.getRuleItemLogContent(item);
 
 
             SubhutiDebugRuleTracePrint.printLine(printStr, item.displayDepth, branch)
