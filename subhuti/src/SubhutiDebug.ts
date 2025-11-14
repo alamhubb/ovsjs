@@ -896,6 +896,9 @@ export class SubhutiTraceDebugger {
                 curDisplayDepth++
                 restoredItem.shouldBreakLine = true
                 newLineNeedNewLine = true
+            } else if (['UpdateExpression'].indexOf(restoredItem.ruleName) > -1) {
+                curDisplayDepth++
+                restoredItem.shouldBreakLine = true
             }
         }
 

@@ -259,8 +259,8 @@ export class SubhutiDebugRuleTracePrint {
         // 注意：如果找到了 Or 节点（lastOrIndex >= 0），则至少要保留 lastOrIndex + 1 个规则单独输出
         const breakPoint = Math.max(lastOrIndex + 1, minChainRulesLength)
 
-        //获取折叠链和单独输出的规则
-        if (breakPoint < pendingRules.length) {
+        //获取折叠链和单独输出的规则，如果折叠链只有一个不折叠
+        if (breakPoint < pendingRules.length - 1) {
             const singleRules = pendingRules.splice(-breakPoint);
             // 输出折叠链
             this.printChainRule(pendingRules, baseDepth)
@@ -326,7 +326,8 @@ export class SubhutiDebugRuleTracePrint {
      */
     static printChainRule(rules: RuleStackItem[], depth: number = rules[0].displayDepth): void {
         //过滤or和虚拟规则
-        const names = rules.filter(item => !item.orBranchInfo).map(r => r.ruleName)
+        // const names = rules.filter(item => !item.orBranchInfo).map(r => r.ruleName)
+        const names = rules.map(r => r.ruleName)
 
         const displayNames = names.length > 5
             ? [...names.slice(0, 3), '...', ...names.slice(-2)]
