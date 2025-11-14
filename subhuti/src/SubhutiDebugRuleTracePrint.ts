@@ -279,6 +279,46 @@ export class SubhutiDebugRuleTracePrint {
      * - shouldBreakLine 已经在第一次输出时设置并缓存了
      * - 直接根据这些信息输出即可
      */
+    /**
+     * 预处理：调整 shouldBreakLine
+     * 规则：
+     * 1. 第一个节点：如果自己不换行，但下一个换行 → 设置为换行
+     * 2. 中间节点：如果自己不换行，但前一个和下一个都换行 → 设置为换行
+     * 3. 最后一个节点：如果自己不换行，但前一个换行 → 设置为换行
+     */
+    private static adjustShouldBreakLine(pendingRules: RuleStackItem[]): void {
+        // 如果只有一个节点，不需要调整
+        if (pendingRules.length <= 1) {
+            return
+        }
+
+        for (let i = 0; i < pendingRules.length; i++) {
+            const item = pendingRules[i]
+
+            // 跳过已经换行的节点
+            if (item.shouldBreakLine) {
+                continue
+            }
+
+            const prevItem = i > 0 ? pendingRules[i - 1] : null
+            const nextItem = i < pendingRules.length - 1 ? pendingRules[i + 1] : null
+
+            // 规则 1：第一个节点
+            if (i === 0 && nextItem && nextItem.shouldBreakLine) {
+                item.shouldBreakLine = true
+                item.displayDepth ++
+            }
+            // 规则 3：最后一个节点
+            else if (i === pendingRules.length - 1 && prevItem && prevItem.shouldBreakLine) {
+                item.shouldBreakLine = true
+            }
+            // 规则 2：中间节点
+            else if (prevItem && nextItem && prevItem.shouldBreakLine && nextItem.shouldBreakLine) {
+                item.shouldBreakLine = true
+            }
+        }
+    }
+
     public static flushPendingOutputs_Cache_Impl(ruleStack: RuleStackItem[]): void {
         let pendingRules = ruleStack.filter(item => !item.outputted)
 
@@ -286,7 +326,8 @@ export class SubhutiDebugRuleTracePrint {
             throw new Error('不该触发没有规则场景')
         }
 
-        // this.printMultipleSingleRule(pendingRules, pendingRules[0].displayDepth)
+        // 【新增】预处理：调整 shouldBreakLine
+        // this.adjustShouldBreakLine(pendingRules)
 
         // 按照 shouldBreakLine 分组
         const groups: RuleStackItem[][] = []

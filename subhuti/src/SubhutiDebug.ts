@@ -868,7 +868,7 @@ export class SubhutiTraceDebugger {
      * @param newLineNeedNewLine - 是否是根节点
      * @param curDisplayDepth - 父节点的 displayDepth（用于计算当前节点的深度）
      */
-    private restoreFromCacheAndPushAndPrint(cacheKey: string, curDisplayDepth: number, newLineNeedNewLine: boolean, isRoot: boolean = true): void {
+    private restoreFromCacheAndPushAndPrint(cacheKey: string, curDisplayDepth: number, newLineNeedNewLine: boolean, isRoot: boolean = true): RuleStackItem {
         // 【第 1 步】读取缓存的规则或 Token
         const cached = this.cacheGet(cacheKey)
         if (!cached) {
@@ -905,13 +905,22 @@ export class SubhutiTraceDebugger {
         if (newLineNeedNewLine && restoredItem.orBranchInfo) {
             newLineNeedNewLine = restoredItem.orBranchInfo.isOrBranch || false
         }
+        const lastRowShouldBreakLine = this.ruleStack[this.ruleStack.length - 1].shouldBreakLine
 
         let childBeginIndex = this.ruleStack.push(restoredItem)
+
 
         // 【第 4 步】递归恢复子节点，传递当前节点的 displayDepth
         if (cached.childs) {
             for (const childKey of cached.childs) {
-                this.restoreFromCacheAndPushAndPrint(childKey, curDisplayDepth, newLineNeedNewLine, false)
+                const nextItem = this.restoreFromCacheAndPushAndPrint(childKey, curDisplayDepth, newLineNeedNewLine, false)
+                //不为根节点，且上一行为换行，且当不换行，且下一个换行，则更改本行为换行，删除上次调用，重新执行调用逻辑，并且重新调用
+                if (!isRoot && lastRowShouldBreakLine && !restoredItem.shouldBreakLine && nextItem.shouldBreakLine) {
+                    this.ruleStack.splice(childBeginIndex)
+                    curDisplayDepth++
+                    restoredItem.shouldBreakLine = true
+                    this.restoreFromCacheAndPushAndPrint(childKey, curDisplayDepth, newLineNeedNewLine, false)
+                }
             }
         }
 
@@ -921,6 +930,8 @@ export class SubhutiTraceDebugger {
             SubhutiDebugRuleTracePrint.flushPendingOutputs_Cache_Impl(this.ruleStack)
             this.ruleStack.splice(childBeginIndex)
         }
+
+        return restoredItem
     }
 
 
