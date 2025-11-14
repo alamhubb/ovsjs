@@ -201,7 +201,12 @@ export class SubhutiDebugRuleTracePrint {
         // 格式化 token 值（转义特殊字符、截断长字符串）
         const value = TreeFormatHelper.formatTokenValue(tokenItem.tokenValue || '', 20)
 
-        return ['🔹 Consume', `token[${tokenItem.tokenIndex}]`, '-', value, '-', `<${tokenItem.tokenName}>`, (location || '[]'), tokenItem.tokenSuccess ? '✅ ' : '❌ ', tokenItem.tokenExpectName].join(' ')
+        if (tokenItem.tokenSuccess) {
+            return ['🔹 Consume', `token[${tokenItem.tokenIndex}]`, value, '-', `<${tokenItem.tokenName}>`, (location || '[]'), '✅ '].join(' ')
+        } else {
+            return ['🔹 Consume', `token[${tokenItem.tokenIndex}]`, 'Expect:', tokenItem.tokenExpectName, '-', 'get:', value, '-', `<${tokenItem.tokenName}>`, (location || '[]'), '❌ '].join(' ')
+        }
+
     }
 
     public static printLine(str: string, depth: number, symbol: string = '└─') {
