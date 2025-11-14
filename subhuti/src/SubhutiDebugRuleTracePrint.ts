@@ -226,16 +226,13 @@ export class SubhutiDebugRuleTracePrint {
         if (!ruleStack.length) {
             throw new Error('系统错误：ruleStack 为空')
         }
-        const unOutputIndex = ruleStack.findIndex(item => !item.outputted)
+        let unOutputIndex = ruleStack.findIndex(item => !item.outputted)
 
         if (unOutputIndex < 0) {
-            throw new Error('系统错误：没有带输出的日志')
+            //允许没有待输出的，连续输出token的情况，上一个已输出的就是最后一个
+            unOutputIndex = ruleStack.length
         }
         let pendingRules = ruleStack.slice(unOutputIndex)
-
-        if (!pendingRules.length) {
-            throw new Error('系统错误：pendingRules 为空')
-        }
 
         // 最后一个已输出的规则
         const lastOutputted = ruleStack[unOutputIndex - 1]
