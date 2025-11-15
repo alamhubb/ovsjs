@@ -57,8 +57,8 @@ export function SubhutiRule(targetFun: any, context: ClassMethodDecoratorContext
     const ruleName = targetFun.name
     const className = context.metadata.className
 
-    const wrappedFunction = function (): SubhutiCst | undefined {
-        return this.executeRuleWrapper(targetFun, ruleName, className)
+    const wrappedFunction = function (...args: any[]): SubhutiCst | undefined {
+        return this.executeRuleWrapper(targetFun, ruleName, className, ...args)
     }
 
     Object.defineProperty(wrappedFunction, 'name', {value: ruleName})
@@ -275,7 +275,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * 规则执行入口（由 @SubhutiRule 装饰器调用）
      * 职责：前置检查 → 顶层/非顶层分支 → Packrat 缓存 → 核心执行 → 后置处理
      */
-    private executeRuleWrapper(targetFun: Function, ruleName: string, className: string): SubhutiCst | undefined {
+    private executeRuleWrapper(targetFun: Function, ruleName: string, className: string, ...args: any[]): SubhutiCst | undefined {
         const isTopLevel = this.cstStack.length === 0
         if (!this._preCheckRule(ruleName, className, isTopLevel)) {
             return undefined
@@ -284,13 +284,13 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         // 顶层规则：直接执行（无需缓存和循环检测）
         if (isTopLevel) {
             const startTime = this._debugger?.onRuleEnter(ruleName, this.tokenIndex)
-            const cst = this.executeRuleCore(ruleName, targetFun)
+            const cst = this.executeRuleCore(ruleName, targetFun, ...args)
             this.onRuleExitDebugHandler(ruleName, cst, isTopLevel, startTime)
             return cst
         }
 
         // 非顶层规则：缓存 + 循环检测
-        return this.executeRuleWithCacheAndLoopDetection(ruleName, targetFun)
+        return this.executeRuleWithCacheAndLoopDetection(ruleName, targetFun, ...args)
     }
 
     /**
@@ -299,7 +299,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      *
      * ✅ RAII 模式：自动管理循环检测（进入检测、执行、退出清理）
      */
-    private executeRuleWithCacheAndLoopDetection(ruleName: string, targetFun: Function): SubhutiCst | undefined {
+    private executeRuleWithCacheAndLoopDetection(ruleName: string, targetFun: Function, ...args: any[]): SubhutiCst | undefined {
         const key = `${ruleName}:${this.tokenIndex}`
 
         // O(1) 快速检测是否重复
@@ -329,7 +329,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
             // 核心执行
             const startTokenIndex = this.tokenIndex
-            const cst = this.executeRuleCore(ruleName, targetFun)
+            const cst = this.executeRuleCore(ruleName, targetFun, ...args)
 
             // 缓存存储
             if (this.enableMemoization) {
@@ -405,7 +405,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * 执行规则函数核心逻辑
      * 职责：创建 CST → 执行规则 → 成功则添加到父节点
      */
-    private executeRuleCore(ruleName: string, targetFun: Function): SubhutiCst | undefined {
+    private executeRuleCore(ruleName: string, targetFun: Function, ...args: any[]): SubhutiCst | undefined {
         const cst = new SubhutiCst()
         cst.name = ruleName
         cst.children = []
@@ -417,7 +417,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
         // 🔍 不变式检查：规则成功时不应该返回 undefined
         // 这通常是因为使用了 "return undefined" 但没有设置 _parseSuccess = false
-        const ruleReturnValue = targetFun.apply(this)
+        const ruleReturnValue = targetFun.apply(this, args)
         if (this._parseSuccess && ruleReturnValue === undefined) {
             throw this.createInfiniteLoopError(
                 ruleName,

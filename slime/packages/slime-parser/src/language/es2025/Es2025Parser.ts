@@ -2113,16 +2113,62 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      * 1. 遇到换行符（Line Terminator）
      * 2. 遇到文件结束符（EOF）
      * 3. 遇到右大括号 }
-     * 4. 特定关键字后（continue, break, return, throw, yield）
      *
-     * 实现方式：使用 Option() 使分号变为可选
-     *
-     * 注意：这是简化实现，完整的 ASI 还需要检查上下文
+     * 实现方式：
+     * - 如果有显式分号，消费它
+     * - 否则检查是否满足 ASI 条件
+     * - 如果不满足 ASI 条件，则失败
      */
     @SubhutiRule
     SemicolonASI(): SubhutiCst | undefined {
-        this.Option(() => this.tokenConsumer.Semicolon())
+        // 检查当前 token 是否是分号
+        if (this.curToken?.tokenName === 'Semicolon') {
+            this.tokenConsumer.Semicolon()
+            return this.curCst
+        }
+
+        // 没有显式分号，检查是否满足 ASI 条件
+        const canInsertSemicolon = this.canAutoInsertSemicolon()
+
+        if (!canInsertSemicolon) {
+            // 不满足 ASI 条件，标记失败
+            return this.parserFail()
+        }
+
+        // 满足 ASI 条件，返回成功
         return this.curCst
+    }
+
+    /**
+     * 检查是否可以自动插入分号
+     *
+     * ASI 条件：
+     * 1. 当前 token 前有换行符
+     * 2. 当前 token 是 }
+     * 3. 已到达文件末尾（EOF）
+     */
+    private canAutoInsertSemicolon(): boolean {
+        // 条件 3：EOF
+        if (this.tokenIndex >= this._tokens.length) {
+            return true
+        }
+
+        const currentToken = this.curToken
+        if (!currentToken) {
+            return true
+        }
+
+        // 条件 1：当前 token 前有换行符
+        if (currentToken.hasLineBreakBefore) {
+            return true
+        }
+
+        // 条件 2：当前 token 是 }
+        if (currentToken.tokenName === 'RBrace') {
+            return true
+        }
+
+        return false
     }
 
     /**
@@ -3077,7 +3123,13 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      */
     @SubhutiRule
     FunctionStatementList(params: ExpressionParams = {}): SubhutiCst | undefined {
-        this.Option(() => this.StatementList({...params, Return: true}))
+        // 注意：必须显式构造参数对象，确保 Return: true 被正确传递
+        const statementParams: StatementParams = {
+            Yield: params.Yield,
+            Await: params.Await,
+            Return: true  // FunctionStatementList 总是设置 Return: true
+        }
+        this.Option(() => this.StatementList(statementParams))
         return this.curCst
     }
 
