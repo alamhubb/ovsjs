@@ -30,7 +30,7 @@ export interface ErrorDetails {
         column: number
     }
     ruleStack: string[]
-    type?: 'parsing' | 'loop'             // 默认 'parsing'
+    type?: 'parsing' | 'left-recursion' | 'infinite-loop'             // 默认 'parsing'
 
     // Loop 错误专用字段（平铺）
     loopRuleName?: string                 // 循环的规则名
@@ -65,7 +65,7 @@ export class ParsingError extends Error {
         readonly column: number
     }
     readonly ruleStack: readonly string[]
-    readonly type: 'parsing' | 'loop'
+    readonly type: 'parsing' | 'left-recursion' | 'infinite-loop'
     
     // Loop 错误专用字段（平铺）
     readonly loopRuleName?: string
@@ -177,7 +177,7 @@ export class ParsingError extends Error {
      */
     toString(): string {
         // 循环错误：只有一种详细格式
-        if (this.type === 'loop') {
+        if (this.type === 'left-recursion' || this.type === 'infinite-loop') {
             return this.toLoopDetailedString()
         }
         
@@ -266,7 +266,7 @@ export class ParsingError extends Error {
         const lines: string[] = []
 
         // 标题
-        lines.push('❌ 检测到无限循环（左递归或循环依赖）')
+        lines.push(`❌ 检测到${this.type === 'left-recursion' ? '左递归' : '无限循环'}`)
         lines.push('')
 
         // 核心信息 - 使用紧凑格式
@@ -323,6 +323,13 @@ export class ParsingError extends Error {
                 const marker = isCurrent ? ' <-- 当前位置' : ''
                 lines.push(`  ${token.tokenName}("${token.tokenValue}")${marker}`)
             })
+        }
+        
+        // 显示 hint（如果有）
+        if (this.hint) {
+            lines.push('💡 提示:')
+            lines.push(`  ${this.hint}`)
+            lines.push('')
         }
         
         lines.push('')

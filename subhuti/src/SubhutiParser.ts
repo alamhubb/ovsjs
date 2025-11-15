@@ -245,8 +245,8 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
         // 创建循环错误（平铺结构）
         throw this._errorHandler.createError({
-            type: 'loop',
-            expected: '', // 循环错误不需要 expected
+            type: 'left-recursion',
+            expected: '',
             found: currentToken,
             position: currentToken ? {
                 tokenIndex: this.tokenIndex,
@@ -260,7 +260,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
                 column: this._tokens[this._tokens.length - 1]?.columnEndNum || 0
             },
             ruleStack: [...this.ruleStack],
-            // Loop 专用字段（平铺）
             loopRuleName: ruleName,
             loopDetectionSet: Array.from(this.loopDetectionSet),
             loopCstDepth: this.cstStack.length,
@@ -270,7 +269,8 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
                 hitRate: cacheStatsReport.hitRate,
                 currentSize: cacheStatsReport.currentSize
             },
-            loopTokenContext: tokenContext
+            loopTokenContext: tokenContext,
+            hint: '检查规则定义，确保在递归前消费了 token'
         })
     }
 
@@ -690,7 +690,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
                 // ❌ 成功但没消费 token → 在 Many/AtLeastOne 中会无限循环
                 const currentRuleName = this.ruleStack[this.ruleStack.length - 1] || 'Unknown'
                 throw this._errorHandler.createError({
-                    type: 'loop',
+                    type: 'infinite-loop',
                     expected: '',
                     found: this.curToken,
                     position: this.curToken ? {
@@ -714,7 +714,8 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
                         hitRate: '0%',
                         currentSize: 0
                     },
-                    loopTokenContext: []
+                    loopTokenContext: [],
+                    hint: '可能原因：规则中使用了 return undefined 但未设置失败状态。建议使用 this.BACKTRACK() 或调整 Or 分支顺序。'
                 })
             }
             return true
