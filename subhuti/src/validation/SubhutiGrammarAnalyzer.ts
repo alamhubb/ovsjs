@@ -1,9 +1,31 @@
 /**
  * Subhuti Grammar Validation - 语法分析器
- * 
+ *
  * 功能：计算规则的所有可能路径（扁平化字符串）
- * 原理：递归遍历 AST，使用笛卡尔积拼接路径
- * 
+ *
+ * 实现方案：方案A - 完全展开subrule，计算实际token序列
+ *
+ * 核心原理：
+ * 1. **展开subrule**：遇到subrule节点时，递归计算该规则的所有可能token序列
+ *    - 不是记录subrule名称（如'Arguments'）
+ *    - 而是展开为实际的token路径（如'LParen,Identifier,RParen,'）
+ *
+ * 2. **笛卡尔积拼接**：对于sequence节点，计算所有子节点路径的笛卡尔积
+ *    - 示例：['a,'] × ['b,', 'c,'] = ['a,b,', 'a,c,']
+ *
+ * 3. **路径格式**：使用逗号分隔的字符串表示token序列
+ *    - 示例：'LParen,RParen,' 表示 LParen → RParen
+ *    - 优点：可以直接使用字符串的startsWith检测前缀关系
+ *
+ * 4. **缓存机制**：每个规则的路径只计算一次，避免重复计算
+ *
+ * 5. **性能优化**：
+ *    - 路径数量限制：默认10000条（防止路径爆炸）
+ *    - 路径长度限制：默认1000个token（防止过长路径）
+ *    - 渐进式终止：达到限制立即停止，避免不必要的计算
+ *
+ * 用途：为SubhutiConflictDetector提供路径数据，用于检测Or分支冲突
+ *
  * @version 1.0.0
  */
 
@@ -135,7 +157,9 @@ export class SubhutiGrammarAnalyzer {
                 return this.computeNodePaths(node.node)
             
             case 'subrule':
-                // subrule → 递归查询（缓存机制避免重复计算）
+                // subrule → 递归展开，计算该规则的所有可能token序列
+                // 这是方案A的核心：不记录subrule名称，而是完全展开为实际token
+                // 示例：subrule('Arguments') → ['LParen,RParen,', 'LParen,Identifier,RParen,', ...]
                 return this.computePaths(node.ruleName)
             
             default:

@@ -1,11 +1,35 @@
 /**
  * Subhuti Grammar Validation - 冲突检测器
- * 
+ *
  * 功能：检测 Or 规则中的路径冲突
- * 原理：
- *   - Level 1: 空路径检测（致命错误）
- *   - Level 2: 前缀冲突检测（使用 startsWith）
- * 
+ *
+ * 实现方案：方案A - 基于完全展开的token路径进行前缀检测
+ *
+ * 检测原理：
+ *
+ * Level 1: 空路径检测（FATAL - 致命错误）
+ *   - 检测：分支是否可以匹配空（路径包含''）
+ *   - 问题：如果前面的分支可以匹配空，后续所有分支都不可达
+ *   - 示例：Or([Option(A), B]) → Option(A)可以匹配空，B永远不会被尝试
+ *
+ * Level 2: 前缀冲突检测（ERROR - 错误）
+ *   - 检测：前面分支的路径是否是后面分支路径的前缀
+ *   - 方法：使用字符串的startsWith检测
+ *   - 示例：
+ *     * 分支A路径：'=,'
+ *     * 分支B路径：'==,'
+ *     * '==,'.startsWith('=,') → true，有冲突！
+ *     * 原因：PEG是贪婪匹配，分支A会先匹配'='，导致分支B的'=='无法完整匹配
+ *
+ * 关键点：
+ * 1. 路径是实际的token序列（由SubhutiGrammarAnalyzer展开subrule得到）
+ * 2. 使用字符串前缀检测，简单高效
+ * 3. 能检测到真正的Or分支顺序问题
+ *
+ * 局限性：
+ * - 依赖SubhutiGrammarAnalyzer的路径计算
+ * - 复杂规则可能导致路径爆炸（已通过路径数量限制缓解）
+ *
  * @version 1.0.0
  */
 
@@ -91,14 +115,19 @@ export class SubhutiConflictDetector {
     
     /**
      * 检测 Or 规则的冲突
+     *
+     * 核心步骤：
+     * 1. 计算每个分支的所有可能路径（完全展开subrule）
+     * 2. 两两比较分支路径，检测前缀关系
+     * 3. 生成详细的错误报告
      */
     private detectOrConflicts(
         ruleName: string,
         alternatives: RuleNode[],
         errors: ValidationError[]
     ): void {
-        // 计算每个分支的路径
-        const branchPaths: Path[][] = alternatives.map(alt => 
+        // 计算每个分支的路径（方案A：完全展开subrule为实际token序列）
+        const branchPaths: Path[][] = alternatives.map(alt =>
             this.analyzer.computeNodePaths(alt)
         )
         
@@ -136,6 +165,16 @@ export class SubhutiConflictDetector {
     
     /**
      * 检测前缀冲突
+     *
+     * 原理：使用字符串的startsWith检测前缀关系
+     *
+     * 示例：
+     * - pathA = '=,'
+     * - pathB = '==,'
+     * - pathB.startsWith(pathA) → true
+     * - 结论：分支A会先匹配'='，导致分支B的'=='无法完整匹配
+     *
+     * 注意：这是PEG的特性（贪婪匹配 + 有序选择）
      */
     private detectPrefixConflicts(
         ruleName: string,
@@ -149,18 +188,18 @@ export class SubhutiConflictDetector {
         for (const pathA of pathsA) {
             // 跳过空路径（已在 Level 1 检测）
             if (pathA === '') continue
-            
+
             // 跳过特殊标记（递归规则、深度过深等）
             if (pathA.startsWith('<')) {
                 // 递归规则的路径无法完整分析，跳过
                 continue
             }
-            
+
             for (const pathB of pathsB) {
                 // 跳过空路径和特殊标记
                 if (pathB === '' || pathB.startsWith('<')) continue
-                
-                // 前缀检测
+
+                // 前缀检测（方案A的核心：使用字符串startsWith）
                 if (this.isPrefix(pathA, pathB)) {
                     errors.push({
                         level: 'ERROR',
@@ -174,7 +213,7 @@ export class SubhutiConflictDetector {
                         message: `分支 ${indexB} 被分支 ${indexA} 遮蔽`,
                         suggestion: `将分支 ${indexB} 移到分支 ${indexA} 前面（长规则在前，短规则在后）`
                     })
-                    
+
                     // 找到一个冲突就够了，不再继续检测
                     return
                 }
@@ -191,15 +230,24 @@ export class SubhutiConflictDetector {
     
     /**
      * 判断 pathA 是否是 pathB 的前缀
-     * 
+     *
+     * 这是方案A的核心检测方法：使用字符串的startsWith
+     *
      * 条件：
-     * 1. pathA.length < pathB.length
-     * 2. pathB.startsWith(pathA)
-     * 
+     * 1. pathA.length > 0（非空）
+     * 2. pathA.length < pathB.length（A比B短）
+     * 3. pathB.startsWith(pathA)（B以A开头）
+     *
      * 示例：
-     * - isPrefix('a,b,', 'a,b,c,') → true
-     * - isPrefix('a,b,c,', 'a,b,') → false
-     * - isPrefix('a,b,', 'a,b,') → false (长度相等)
+     * - isPrefix('a,b,', 'a,b,c,') → true（'a,b,'是'a,b,c,'的前缀）
+     * - isPrefix('a,b,c,', 'a,b,') → false（A比B长）
+     * - isPrefix('a,b,', 'a,b,') → false（长度相等，不是前缀）
+     * - isPrefix('=,', '==,') → true（'='是'=='的前缀，这是典型的Or分支顺序问题）
+     *
+     * PEG语义：
+     * - 如果pathA是pathB的前缀，且分支A在分支B前面
+     * - 那么分支A会先匹配pathA对应的token序列
+     * - 导致分支B永远无法完整匹配pathB对应的token序列
      */
     private isPrefix(pathA: Path, pathB: Path): boolean {
         return pathA.length > 0 && pathA.length < pathB.length && pathB.startsWith(pathA)

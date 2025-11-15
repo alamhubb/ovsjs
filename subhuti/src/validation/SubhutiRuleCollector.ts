@@ -1,10 +1,30 @@
 /**
  * Subhuti Grammar Validation - 规则收集器
- * 
+ *
  * 功能：收集 Parser 中所有规则的 AST 结构
- * 原理：使用 Proxy 拦截 Parser 方法调用，记录调用序列
- * 
- * @version 2.0.0 - Proxy 方案（零侵入）
+ *
+ * 实现方案：使用双层Proxy拦截Parser方法调用，记录规则结构
+ *
+ * 核心原理：
+ * 1. **Parser Proxy**：拦截规则方法调用（Or/Many/Option/AtLeastOne/子规则）
+ * 2. **TokenConsumer Proxy**：拦截token消费调用（LParen/RParen/Identifier等）
+ * 3. **双层Proxy的必要性**：
+ *    - tokenConsumer是独立对象，不是Parser的方法
+ *    - 规则内部通过this.tokenConsumer.XXX()消费token
+ *    - 如果只有Parser Proxy，无法拦截tokenConsumer的方法调用
+ *
+ * 关键改进（相比初始版本）：
+ * 1. ✅ 同时拦截consume和_consumeToken（兼容两种调用方式）
+ * 2. ✅ 代理tokenConsumer对象（拦截所有token消费）
+ * 3. ✅ 拦截子规则调用（记录subrule节点）
+ * 4. ✅ 修复this绑定问题（所有handler使用proxy而不是target）
+ * 5. ✅ 添加异常处理（即使规则执行失败也能收集部分AST）
+ *
+ * 收集到的AST用途：
+ * - 提供给SubhutiGrammarAnalyzer计算路径（展开subrule为实际token序列）
+ * - 提供给SubhutiConflictDetector检测Or分支冲突（基于token路径的前缀检测）
+ *
+ * @version 2.0.0 - Proxy 方案（零侵入）+ 双层Proxy改进
  */
 
 import type SubhutiParser from "../SubhutiParser"
