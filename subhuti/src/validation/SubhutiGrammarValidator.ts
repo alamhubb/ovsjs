@@ -38,9 +38,7 @@ export class SubhutiGrammarValidator {
         const ruleASTs = SubhutiRuleCollector.collectRules(parser)
         
         // 2. 创建语法分析器
-        const analyzer = new SubhutiGrammarAnalyzer(ruleASTs, {
-            maxPaths: 10000
-        })
+        const analyzer = new SubhutiGrammarAnalyzer(ruleASTs)
         
         // 3. 检测冲突
         const detector = new SubhutiConflictDetector(analyzer, ruleASTs)
