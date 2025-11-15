@@ -1078,7 +1078,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             {
                 alt: () => {
                     this.LeftHandSideExpression(params)
-                    if (this.hasLineTerminatorBefore()) {
+                    if (this.lookaheadHasLineBreak()) {
                         return undefined  // 有换行，此分支失败
                     }
                     this.tokenConsumer.Increment()
@@ -1088,7 +1088,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             {
                 alt: () => {
                     this.LeftHandSideExpression(params)
-                    if (this.hasLineTerminatorBefore()) {
+                    if (this.lookaheadHasLineBreak()) {
                         return undefined  // 有换行，此分支失败
                     }
                     this.tokenConsumer.Decrement()
@@ -1299,7 +1299,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
         const {In = false} = params
 
         // 处理 [+In] PrivateIdentifier in ShiftExpression
-        if (In && this.tokenIs('PrivateIdentifier', 1)) {
+        if (In && this.lookahead('PrivateIdentifier', 1)) {
             this.tokenConsumer.PrivateIdentifier()
             this.tokenConsumer.InTok()
             this.ShiftExpression(params)
@@ -2145,15 +2145,15 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     ExpressionStatement(params: StatementParams = {}): SubhutiCst | undefined {
         // 前瞻检查：[lookahead ∉ {{, function, async [no LineTerminator here] function, class, let [}]
         // 使用新的前瞻方法，自动设置 _parseSuccess
-        this.lookaheadNotIn(['LBrace', 'FunctionTok', 'ClassTok'])
+        this.assertLookaheadNotIn(['LBrace', 'FunctionTok', 'ClassTok'])
 
         // 不能是 async [no LineTerminator here] function
-        if (this.matchSequenceWithoutLineTerminator(['AsyncTok', 'FunctionTok'])) {
+        if (this.lookaheadSequenceNoLT(['AsyncTok', 'FunctionTok'])) {
             this._parseSuccess = false
         }
 
         // 不能是 let [
-        this.lookaheadNotSequence(['LetTok', 'LBracket'])
+        this.assertLookaheadNotSequence(['LetTok', 'LBracket'])
 
         this.Expression({...params, In: true})
         return this.SemicolonASI()
@@ -2189,7 +2189,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                     this.Expression({...params, In: true})
                     this.tokenConsumer.RParen()
                     this.Statement(params)
-                    this.lookaheadNot('ElseTok')  // [lookahead ≠ else]
+                    this.assertLookaheadNot('ElseTok')  // [lookahead ≠ else]
                 }
             }
         ])
@@ -2286,7 +2286,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                 alt: () => {
                     this.tokenConsumer.ForTok()
                     this.tokenConsumer.LParen()
-                    if (this.notMatchSequence(['LetTok', 'LBracket'])) {
+                    if (this.assertLookaheadNotSequence(['LetTok', 'LBracket'])) {
                         this.Option(() => this.Expression({...params, In: false}))
                     }
                     this.tokenConsumer.Semicolon()
@@ -2347,7 +2347,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                 alt: () => {
                     this.tokenConsumer.ForTok()
                     this.tokenConsumer.LParen()
-                    if (this.notMatchSequence(['LetTok', 'LBracket'])) {
+                    if (this.assertLookaheadNotSequence(['LetTok', 'LBracket'])) {
                         this.LeftHandSideExpression(params)
                         this.tokenConsumer.InTok()
                         this.Expression({...params, In: true})
@@ -2386,7 +2386,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                 alt: () => {
                     this.tokenConsumer.ForTok()
                     this.tokenConsumer.LParen()
-                    if (this.tokenNotIn(['LetTok'], 1) && !this.matchSequence(['AsyncTok', 'OfTok'])) {
+                    if (this.assertLookaheadNotIn(['LetTok'], 1) && !this.lookaheadSequence(['AsyncTok', 'OfTok'])) {
                         this.LeftHandSideExpression(params)
                         this.tokenConsumer.OfTok()
                         this.AssignmentExpression({...params, In: true})
@@ -2428,7 +2428,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                     this.tokenConsumer.ForTok()
                     this.tokenConsumer.AwaitTok()
                     this.tokenConsumer.LParen()
-                    if (this.tokenNotIs('LetTok', 1)) {
+                    if (this.assertLookaheadNot('LetTok', 1)) {
                         this.LeftHandSideExpression(params)
                         this.tokenConsumer.OfTok()
                         this.AssignmentExpression({...params, In: true})
@@ -2478,7 +2478,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             {
                 alt: () => {
                     this.tokenConsumer.ContinueTok()
-                    this.lookaheadNotLineBreak()  // [no LineTerminator here]
+                    this.assertNoLineBreak()  // [no LineTerminator here]
                     this.LabelIdentifier(params)
                     this.SemicolonASI()
                 }
@@ -2503,7 +2503,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             {
                 alt: () => {
                     this.tokenConsumer.BreakTok()
-                    this.lookaheadNotLineBreak()  // [no LineTerminator here]
+                    this.assertNoLineBreak()  // [no LineTerminator here]
                     this.LabelIdentifier(params)
                     this.SemicolonASI()
                 }
@@ -2528,7 +2528,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             {
                 alt: () => {
                     this.tokenConsumer.ReturnTok()
-                    this.lookaheadNotLineBreak()  // [no LineTerminator here]
+                    this.assertNoLineBreak()  // [no LineTerminator here]
                     this.Expression({...params, In: true})
                     this.SemicolonASI()
                 }
@@ -2678,7 +2678,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     @SubhutiRule
     ThrowStatement(params: StatementParams = {}): SubhutiCst | undefined {
         this.tokenConsumer.ThrowTok()
-        this.lookaheadNotLineBreak()  // [no LineTerminator here]
+        this.assertNoLineBreak()  // [no LineTerminator here]
         this.Expression({...params, In: true})
         return this.SemicolonASI()
     }
@@ -2801,7 +2801,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             {
                 alt: () => {
                     this.tokenConsumer.YieldTok()
-                    this.lookaheadNotLineBreak()  // [no LineTerminator here]
+                    this.assertNoLineBreak()  // [no LineTerminator here]
                     this.tokenConsumer.Asterisk()
                     this.AssignmentExpression({...params, Yield: true})
                 }
@@ -2810,7 +2810,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             {
                 alt: () => {
                     this.tokenConsumer.YieldTok()
-                    this.lookaheadNotLineBreak()  // [no LineTerminator here]
+                    this.assertNoLineBreak()  // [no LineTerminator here]
                     this.AssignmentExpression({...params, Yield: true})
                 }
             },
@@ -2826,7 +2826,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     @SubhutiRule
     ArrowFunction(params: ExpressionParams = {}): SubhutiCst | undefined {
         this.ArrowParameters(params)
-        this.lookaheadNotLineBreak()  // [no LineTerminator here]
+        this.assertNoLineBreak()  // [no LineTerminator here]
         this.tokenConsumer.Arrow()
         this.ConciseBody(params)
         return this.curCst
@@ -2879,7 +2879,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             },
             {
                 alt: () => {
-                    if (this.tokenNotIs('LBrace', 1)) {
+                    if (this.assertLookaheadNot('LBrace', 1)) {
                         this.ExpressionBody({...params, Await: false})
                     }
                 }
@@ -2908,9 +2908,9 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             {
                 alt: () => {
                     this.tokenConsumer.AsyncTok()
-                    this.lookaheadNotLineBreak()  // [no LineTerminator here]
+                    this.assertNoLineBreak()  // [no LineTerminator here]
                     this.AsyncArrowBindingIdentifier(params)
-                    this.lookaheadNotLineBreak()  // [no LineTerminator here]
+                    this.assertNoLineBreak()  // [no LineTerminator here]
                     this.tokenConsumer.Arrow()
                     this.AsyncConciseBody(params)
                 }
@@ -2919,7 +2919,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             {
                 alt: () => {
                     this.CoverCallExpressionAndAsyncArrowHead(params)
-                    this.lookaheadNotLineBreak()  // [no LineTerminator here]
+                    this.assertNoLineBreak()  // [no LineTerminator here]
                     this.tokenConsumer.Arrow()
                     this.AsyncConciseBody(params)
                 }
@@ -2953,7 +2953,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             },
             {
                 alt: () => {
-                    if (this.tokenNotIs('LBrace', 1)) {
+                    if (this.assertLookaheadNot('LBrace', 1)) {
                         this.ExpressionBody({...params, Await: true})
                     }
                 }
@@ -2974,7 +2974,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     @SubhutiRule
     AsyncArrowHead(): SubhutiCst | undefined {
         this.tokenConsumer.AsyncTok()
-        this.lookaheadNotLineBreak()  // [no LineTerminator here]
+        this.assertNoLineBreak()  // [no LineTerminator here]
         this.ArrowFormalParameters({Yield: false, Await: true})
         return this.curCst
     }
@@ -3241,7 +3241,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             {
                 alt: () => {
                     this.tokenConsumer.AsyncTok()
-                    this.lookaheadNotLineBreak()  // [no LineTerminator here]
+                    this.assertNoLineBreak()  // [no LineTerminator here]
                     this.tokenConsumer.FunctionTok()
                     this.BindingIdentifier(params)
                     this.tokenConsumer.LParen()
@@ -3256,7 +3256,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             ...(Default ? [{
                 alt: () => {
                     this.tokenConsumer.AsyncTok()
-                    this.lookaheadNotLineBreak()  // [no LineTerminator here]
+                    this.assertNoLineBreak()  // [no LineTerminator here]
                     this.tokenConsumer.FunctionTok()
                     this.tokenConsumer.LParen()
                     this.FormalParameters({Yield: false, Await: true})
@@ -3276,7 +3276,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     @SubhutiRule
     AsyncFunctionExpression(): SubhutiCst | undefined {
         this.tokenConsumer.AsyncTok()
-        this.lookaheadNotLineBreak()  // [no LineTerminator here]
+        this.assertNoLineBreak()  // [no LineTerminator here]
         this.tokenConsumer.FunctionTok()
         this.Option(() => this.BindingIdentifier({Yield: false, Await: true}))
         this.tokenConsumer.LParen()
@@ -3295,7 +3295,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     @SubhutiRule
     AsyncMethod(params: ExpressionParams = {}): SubhutiCst | undefined {
         this.tokenConsumer.AsyncTok()
-        this.lookaheadNotLineBreak()  // [no LineTerminator here]
+        this.assertNoLineBreak()  // [no LineTerminator here]
         this.ClassElementName(params)
         this.tokenConsumer.LParen()
         this.UniqueFormalParameters({Yield: false, Await: true})
@@ -3333,7 +3333,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             {
                 alt: () => {
                     this.tokenConsumer.AsyncTok()
-                    this.lookaheadNotLineBreak()  // [no LineTerminator here]
+                    this.assertNoLineBreak()  // [no LineTerminator here]
                     this.tokenConsumer.FunctionTok()
                     this.tokenConsumer.Asterisk()
                     this.BindingIdentifier(params)
@@ -3349,7 +3349,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             ...(Default ? [{
                 alt: () => {
                     this.tokenConsumer.AsyncTok()
-                    this.lookaheadNotLineBreak()  // [no LineTerminator here]
+                    this.assertNoLineBreak()  // [no LineTerminator here]
                     this.tokenConsumer.FunctionTok()
                     this.tokenConsumer.Asterisk()
                     this.tokenConsumer.LParen()
@@ -3370,7 +3370,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     @SubhutiRule
     AsyncGeneratorExpression(): SubhutiCst | undefined {
         this.tokenConsumer.AsyncTok()
-        this.lookaheadNotLineBreak()  // [no LineTerminator here]
+        this.assertNoLineBreak()  // [no LineTerminator here]
         this.tokenConsumer.FunctionTok()
         this.tokenConsumer.Asterisk()
         this.Option(() => this.BindingIdentifier({Yield: true, Await: true}))
@@ -3390,7 +3390,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     @SubhutiRule
     AsyncGeneratorMethod(params: ExpressionParams = {}): SubhutiCst | undefined {
         this.tokenConsumer.AsyncTok()
-        this.lookaheadNotLineBreak()  // [no LineTerminator here]
+        this.assertNoLineBreak()  // [no LineTerminator here]
         this.tokenConsumer.Asterisk()
         this.ClassElementName(params)
         this.tokenConsumer.LParen()
@@ -4045,8 +4045,8 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                     this.tokenConsumer.ExportTok()
                     this.tokenConsumer.DefaultTok()
                     // [lookahead ∉ {function, async [no LineTerminator here] function, class}]
-                    if (this.tokenNotIn(['FunctionTok', 'ClassTok'], 1) &&
-                        !this.matchSequenceWithoutLineTerminator(['AsyncTok', 'FunctionTok'])) {
+                    if (this.assertLookaheadNotIn(['FunctionTok', 'ClassTok'], 1) &&
+                        !this.lookaheadSequenceNoLT(['AsyncTok', 'FunctionTok'])) {
                         this.AssignmentExpression({In: true, Yield: false, Await: true})
                         this.SemicolonASI()
                     }
