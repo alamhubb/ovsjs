@@ -773,7 +773,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
     // SubhutiParser，前瞻失败返回 undefined，应该同时设置解析失败
     protected BACKTRACK(): never {
-        this._parseSuccess = false
+        // this._parseSuccess = false
         return undefined as never
     }
 }
