@@ -314,5 +314,24 @@ export default class SubhutiTokenLookahead {
             this._parseSuccess = false
         }
     }
+
+    /**
+     * 断言：条件必须为真
+     * 如果条件为假，则标记失败
+     *
+     * @param condition - 要检查的条件
+     *
+     * @example
+     * // 断言：标识符不能是保留字
+     * const cst = this.tokenConsumer.Identifier()
+     * this.assertCondition(!(cst && ReservedWords.has(cst.value!)))
+     */
+    protected assertCondition(condition: boolean): void {
+        if (!this._parseSuccess) return
+
+        if (!condition) {
+            this._parseSuccess = false
+        }
+    }
 }
 

@@ -1078,9 +1078,8 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             {
                 alt: () => {
                     this.LeftHandSideExpression(params)
-                    if (this.lookaheadHasLineBreak()) {
-                        return undefined  // 有换行，此分支失败
-                    }
+                    // [no LineTerminator here]
+                    this.assertNoLineBreak()
                     this.tokenConsumer.Increment()
                 }
             },
@@ -1088,9 +1087,8 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             {
                 alt: () => {
                     this.LeftHandSideExpression(params)
-                    if (this.lookaheadHasLineBreak()) {
-                        return undefined  // 有换行，此分支失败
-                    }
+                    // [no LineTerminator here]
+                    this.assertNoLineBreak()
                     this.tokenConsumer.Decrement()
                 }
             },
