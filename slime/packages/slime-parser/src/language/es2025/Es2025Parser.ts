@@ -436,7 +436,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      *     PropertyName[?Yield, ?Await] : AssignmentExpression[+In, ?Yield, ?Await]
      *     MethodDefinition[?Yield, ?Await]
      *     ... AssignmentExpression[+In, ?Yield, ?Await]
-     * 
+     *
      * ⚠️ Or 顺序调整：
      * 为了正确处理 PEG 的贪婪匹配，将更具体的规则（带明确分隔符的）放在前面：
      * 1. ... AssignmentExpression - 有明确的 `...` 前缀
@@ -2146,23 +2146,23 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
         // 前瞻检查：[lookahead ∉ {{, function, async [no LineTerminator here] function, class, let [}]
         // 1. 不能是 {
         if (this.tokenIs('LBrace', 1)) {
-            return undefined
+            return this.BACKTRACK()
         }
         // 2. 不能是 function
         if (this.tokenIs('FunctionTok', 1)) {
-            return undefined
+            return this.BACKTRACK()
         }
         // 3. 不能是 class
         if (this.tokenIs('ClassTok', 1)) {
-            return undefined
+            return this.BACKTRACK()
         }
         // 4. 不能是 async [no LineTerminator here] function
         if (this.matchSequenceWithoutLineTerminator(['AsyncTok', 'FunctionTok'])) {
-            return undefined
+            return this.BACKTRACK()
         }
         // 5. 不能是 let [
         if (this.matchSequence(['LetTok', 'LBracket'])) {
-            return undefined
+            return this.BACKTRACK()
         }
 
         this.Expression({...params, In: true})
@@ -2201,7 +2201,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                     this.Statement(params)
                     // [lookahead ≠ else]
                     if (this.tokenIs('ElseTok', 1)) {
-                        return undefined  // 下一个是 else，此分支失败
+                        return this.BACKTRACK()  // 下一个是 else，此分支失败
                     }
                 }
             }
@@ -2492,7 +2492,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                 alt: () => {
                     this.tokenConsumer.ContinueTok()
                     if (this.hasLineTerminatorBefore()) {
-                        return undefined  // 有换行，此分支失败
+                        return this.BACKTRACK()  // 有换行，此分支失败
                     }
                     this.LabelIdentifier(params)
                     this.SemicolonASI()
@@ -2519,7 +2519,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                 alt: () => {
                     this.tokenConsumer.BreakTok()
                     if (this.hasLineTerminatorBefore()) {
-                        return undefined  // 有换行，此分支失败
+                        return this.BACKTRACK()  // 有换行，此分支失败
                     }
                     this.LabelIdentifier(params)
                     this.SemicolonASI()
@@ -2546,7 +2546,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                 alt: () => {
                     this.tokenConsumer.ReturnTok()
                     if (this.hasLineTerminatorBefore()) {
-                        return undefined  // 有换行，此分支失败
+                        return this.BACKTRACK()  // 有换行，此分支失败
                     }
                     this.Expression({...params, In: true})
                     this.SemicolonASI()
@@ -2698,7 +2698,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     ThrowStatement(params: StatementParams = {}): SubhutiCst | undefined {
         this.tokenConsumer.ThrowTok()
         if (this.hasLineTerminatorBefore()) {
-            return undefined  // 有换行，语法错误
+            return this.BACKTRACK()  // 有换行，语法错误
         }
         this.Expression({...params, In: true})
         return this.SemicolonASI()
@@ -2823,7 +2823,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                 alt: () => {
                     this.tokenConsumer.YieldTok()
                     if (this.hasLineTerminatorBefore()) {
-                        return undefined  // 有换行，此分支失败
+                        return this.BACKTRACK()  // 有换行，此分支失败
                     }
                     this.tokenConsumer.Asterisk()
                     this.AssignmentExpression({...params, Yield: true})
@@ -2834,7 +2834,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                 alt: () => {
                     this.tokenConsumer.YieldTok()
                     if (this.hasLineTerminatorBefore()) {
-                        return undefined  // 有换行，此分支失败
+                        return this.BACKTRACK()  // 有换行，此分支失败
                     }
                     this.AssignmentExpression({...params, Yield: true})
                 }
@@ -2852,7 +2852,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     ArrowFunction(params: ExpressionParams = {}): SubhutiCst | undefined {
         this.ArrowParameters(params)
         if (this.hasLineTerminatorBefore()) {
-            return undefined  // 有换行，整个规则失败
+            return this.BACKTRACK()  // 有换行，整个规则失败
         }
         this.tokenConsumer.Arrow()
         this.ConciseBody(params)
@@ -2936,11 +2936,11 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                 alt: () => {
                     this.tokenConsumer.AsyncTok()
                     if (this.hasLineTerminatorBefore()) {
-                        return undefined  // 第一个换行检查失败
+                        return this.BACKTRACK()  // 第一个换行检查失败
                     }
                     this.AsyncArrowBindingIdentifier(params)
                     if (this.hasLineTerminatorBefore()) {
-                        return undefined  // 第二个换行检查失败
+                        return this.BACKTRACK()  // 第二个换行检查失败
                     }
                     this.tokenConsumer.Arrow()
                     this.AsyncConciseBody(params)
@@ -2951,7 +2951,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                 alt: () => {
                     this.CoverCallExpressionAndAsyncArrowHead(params)
                     if (this.hasLineTerminatorBefore()) {
-                        return undefined  // 换行检查失败
+                        return this.BACKTRACK()  // 换行检查失败
                     }
                     this.tokenConsumer.Arrow()
                     this.AsyncConciseBody(params)
@@ -3008,7 +3008,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     AsyncArrowHead(): SubhutiCst | undefined {
         this.tokenConsumer.AsyncTok()
         if (this.hasLineTerminatorBefore()) {
-            return undefined  // 有换行，整个规则失败
+            return this.BACKTRACK()  // 有换行，整个规则失败
         }
         this.ArrowFormalParameters({Yield: false, Await: true})
         return this.curCst
@@ -3277,7 +3277,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                 alt: () => {
                     this.tokenConsumer.AsyncTok()
                     if (this.hasLineTerminatorBefore()) {
-                        return undefined  // 有换行，此分支失败
+                        return this.BACKTRACK()  // 有换行，此分支失败
                     }
                     this.tokenConsumer.FunctionTok()
                     this.BindingIdentifier(params)
@@ -3294,7 +3294,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                 alt: () => {
                     this.tokenConsumer.AsyncTok()
                     if (this.hasLineTerminatorBefore()) {
-                        return undefined  // 有换行，此分支失败
+                        return this.BACKTRACK()  // 有换行，此分支失败
                     }
                     this.tokenConsumer.FunctionTok()
                     this.tokenConsumer.LParen()
@@ -3316,7 +3316,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     AsyncFunctionExpression(): SubhutiCst | undefined {
         this.tokenConsumer.AsyncTok()
         if (this.hasLineTerminatorBefore()) {
-            return undefined  // 有换行，整个规则失败
+            return this.BACKTRACK()  // 有换行，整个规则失败
         }
         this.tokenConsumer.FunctionTok()
         this.Option(() => this.BindingIdentifier({Yield: false, Await: true}))
@@ -3337,7 +3337,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     AsyncMethod(params: ExpressionParams = {}): SubhutiCst | undefined {
         this.tokenConsumer.AsyncTok()
         if (this.hasLineTerminatorBefore()) {
-            return undefined  // 有换行，整个规则失败
+            return this.BACKTRACK()  // 有换行，整个规则失败
         }
         this.ClassElementName(params)
         this.tokenConsumer.LParen()
@@ -3377,7 +3377,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                 alt: () => {
                     this.tokenConsumer.AsyncTok()
                     if (this.hasLineTerminatorBefore()) {
-                        return undefined  // 有换行，此分支失败
+                        return this.BACKTRACK()  // 有换行，此分支失败
                     }
                     this.tokenConsumer.FunctionTok()
                     this.tokenConsumer.Asterisk()
@@ -3395,7 +3395,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                 alt: () => {
                     this.tokenConsumer.AsyncTok()
                     if (this.hasLineTerminatorBefore()) {
-                        return undefined  // 有换行，此分支失败
+                        return this.BACKTRACK()  // 有换行，此分支失败
                     }
                     this.tokenConsumer.FunctionTok()
                     this.tokenConsumer.Asterisk()
@@ -3418,7 +3418,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     AsyncGeneratorExpression(): SubhutiCst | undefined {
         this.tokenConsumer.AsyncTok()
         if (this.hasLineTerminatorBefore()) {
-            return undefined  // 有换行，整个规则失败
+            return this.BACKTRACK()  // 有换行，整个规则失败
         }
         this.tokenConsumer.FunctionTok()
         this.tokenConsumer.Asterisk()
@@ -3440,7 +3440,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     AsyncGeneratorMethod(params: ExpressionParams = {}): SubhutiCst | undefined {
         this.tokenConsumer.AsyncTok()
         if (this.hasLineTerminatorBefore()) {
-            return undefined  // 有换行，整个规则失败
+            return this.BACKTRACK()  // 有换行，整个规则失败
         }
         this.tokenConsumer.Asterisk()
         this.ClassElementName(params)
