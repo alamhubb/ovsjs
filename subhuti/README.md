@@ -34,6 +34,7 @@
 - **错误处理**：详细的错误信息（位置、期望、实际、规则栈）
 - **语法验证**：自动检测 Or 规则冲突（前缀遮蔽、空路径）⭐ 新功能
 - **CST 辅助方法**：`getChild()`, `getChildren()`, `getToken()` 等便捷方法
+- **Token 前瞻**：完整支持 ECMAScript 规范的所有 `[lookahead ...]` 约束 ⭐ 新功能
 
 ## 📦 安装
 
@@ -218,6 +219,81 @@ this.Option(() => {
   this.ElseClause()
 })
 ```
+
+### Token 前瞻（Lookahead）
+
+Subhuti 提供了强大的 Token 前瞻功能，对应 ECMAScript 规范中的 `[lookahead ...]` 约束。
+
+#### 查询方法（用于条件判断）
+
+```typescript
+// 检查下一个 token 是否匹配
+if (this.lookahead('LBrace', 1)) {
+  // 下一个是 {
+}
+
+// 检查下一个 token 是否不匹配
+if (this.lookaheadNot('ElseTok', 1)) {
+  // 下一个不是 else
+}
+
+// 检查是否在集合中
+if (this.lookaheadIn(['FunctionTok', 'ClassTok'], 1)) {
+  // 下一个是 function 或 class
+}
+
+// 检查是否不在集合中
+if (this.lookaheadNotIn(['LBrace', 'FunctionTok'], 1)) {
+  // 下一个既不是 { 也不是 function
+}
+
+// 检查 token 序列
+if (this.lookaheadSequence(['AsyncTok', 'FunctionTok'])) {
+  // 接下来是 async function
+}
+
+// 检查序列且中间无换行符
+if (this.lookaheadSequenceNoLT(['AsyncTok', 'FunctionTok'])) {
+  // async [no LineTerminator here] function
+}
+```
+
+#### 断言方法（用于前瞻约束）
+
+断言方法会自动设置解析状态，失败时标记当前分支失败：
+
+```typescript
+@SubhutiRule
+ExpressionStatement() {
+  // [lookahead ∉ {{, function, class}]
+  this.assertLookaheadNotIn(['LBrace', 'FunctionTok', 'ClassTok'])
+
+  // [lookahead ≠ let []
+  this.assertLookaheadNotSequence(['LetTok', 'LBracket'])
+
+  this.Expression({ In: true })
+  this.SemicolonASI()
+}
+
+@SubhutiRule
+ArrowFunction() {
+  this.AsyncTok()
+
+  // [no LineTerminator here]
+  this.assertNoLineBreak()
+
+  this.ArrowParameters()
+}
+```
+
+**对应 ECMAScript 规范：**
+- `[lookahead = token]` → `assertLookahead('token')`
+- `[lookahead ≠ token]` → `assertLookaheadNot('token')`
+- `[lookahead ∈ {t1, t2}]` → `assertLookaheadIn(['t1', 't2'])`
+- `[lookahead ∉ {t1, t2}]` → `assertLookaheadNotIn(['t1', 't2'])`
+- `[lookahead = t1 t2]` → `assertLookaheadSequence(['t1', 't2'])`
+- `[lookahead ≠ t1 t2]` → `assertLookaheadNotSequence(['t1', 't2'])`
+- `[no LineTerminator here]` → `assertNoLineBreak()`
 
 ### CST 辅助方法
 
