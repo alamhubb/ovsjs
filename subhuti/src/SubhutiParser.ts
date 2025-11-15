@@ -17,7 +17,7 @@
 import SubhutiTokenLookahead from "./SubhutiTokenLookahead.ts"
 import SubhutiCst from "./struct/SubhutiCst.ts";
 import type SubhutiMatchToken from "./struct/SubhutiMatchToken.ts";
-import {SubhutiErrorHandler} from "./SubhutiError.ts";
+import {SubhutiErrorHandler, ParsingError} from "./SubhutiError.ts";
 import {SubhutiTraceDebugger} from "./SubhutiDebug.ts";
 import {SubhutiPackratCache, type SubhutiPackratCacheResult} from "./SubhutiPackratCache.ts";
 import SubhutiTokenConsumer from "./SubhutiTokenConsumer.ts";
@@ -410,16 +410,30 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         this.cstStack.push(cst)
         this.ruleStack.push(ruleName)
 
+        // 记录开始位置
+        const startTokenIndex = this.tokenIndex
 
         // 🔍 不变式检查：规则成功时不应该返回 undefined
         // 这通常是因为使用了 "return undefined" 但没有设置 _parseSuccess = false
         const ruleReturnValue = targetFun.apply(this)
         if (this._parseSuccess && ruleReturnValue === undefined) {
-            throw new Error(
-                `规则 "${ruleName}" 违反不变式：_parseSuccess=true 但返回 undefined\n` +
-                `位置: token[${this.tokenIndex}] ${this.curToken?.tokenName || 'EOF'}\n` +
-                `这通常是因为使用了 "return undefined" 但没有设置失败状态\n` +
-                `建议: 使用 this.BACKTRACK() 代替 return undefined`
+            throw this.createInfiniteLoopError(
+                ruleName,
+                '使用 this.parserFail() 代替 return undefined'
+            )
+        }
+
+        // 🔍 新增检测：成功但不消费 token（仅在非 allowError 上下文）
+        // 说明：
+        // - allowErrorDepth = 0: 普通规则、AtLeastOne 第一次执行
+        // - allowErrorDepth > 0: Option/Many/Or 分支、AtLeastOne 后续循环
+        if (this._parseSuccess &&
+            this.tokenIndex === startTokenIndex &&
+            this.allowErrorDepth === 0) {
+
+            throw this.createInfiniteLoopError(
+                ruleName,
+                '规则成功时必须消费至少一个 token，或使用 this.parserFail() 标记失败'
             )
         }
 
@@ -745,6 +759,55 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         }
 
         return undefined
+    }
+
+    // ============================================
+    // Error Helper Methods
+    // ============================================
+
+    /**
+     * 获取 token 上下文（前后各 N 个 token）
+     *
+     * @param tokenIndex - 当前 token 索引
+     * @param contextSize - 上下文大小（默认 2）
+     * @returns token 上下文数组
+     */
+    private getTokenContext(tokenIndex: number, contextSize: number = 2): SubhutiMatchToken[] {
+        const start = Math.max(0, tokenIndex - contextSize)
+        const end = Math.min(this._tokens.length, tokenIndex + contextSize + 1)
+        return this._tokens.slice(start, end)
+    }
+
+    /**
+     * 创建无限循环错误
+     *
+     * @param ruleName - 规则名称
+     * @param hint - 修复提示
+     * @returns ParsingError 实例
+     */
+    private createInfiniteLoopError(ruleName: string, hint: string): ParsingError {
+        return this._errorHandler.createError({
+            type: 'infinite-loop',
+            expected: '',
+            found: this.curToken,
+            position: this.curToken ? {
+                tokenIndex: this.tokenIndex,
+                charIndex: this.curToken.index || 0,
+                line: this.curToken.rowNum || 0,
+                column: this.curToken.columnStartNum || 0
+            } : {
+                tokenIndex: this._tokens.length,
+                charIndex: this._tokens[this._tokens.length - 1]?.index || 0,
+                line: this._tokens[this._tokens.length - 1]?.rowNum || 0,
+                column: this._tokens[this._tokens.length - 1]?.columnEndNum || 0
+            },
+            ruleStack: [...this.ruleStack],
+            loopRuleName: ruleName,
+            loopDetectionSet: [],
+            loopCstDepth: this.cstStack.length,
+            loopTokenContext: this.getTokenContext(this.tokenIndex, 2),
+            hint: hint
+        })
     }
 
     // ============================================
