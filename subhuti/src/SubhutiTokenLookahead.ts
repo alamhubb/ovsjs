@@ -32,7 +32,14 @@ export default class SubhutiTokenLookahead {
      * 当前 token 索引
      */
     protected tokenIndex: number = 0
-    
+
+    /**
+     * 核心状态：当前规则是否成功
+     * - true: 成功，继续执行
+     * - false: 失败，停止并返回 undefined
+     */
+    protected _parseSuccess = true
+
     /**
      * 获取当前 token
      */
@@ -250,6 +257,133 @@ export default class SubhutiTokenLookahead {
         }
         
         return true
+    }
+
+    // ============================================
+    // 层级 2：前瞻检查方法（自动设置 _parseSuccess）
+    // ============================================
+
+    /**
+     * 前瞻检查：当前 token 不能是指定类型
+     * 如果是，则标记失败
+     *
+     * @param tokenName - 不允许的 token 类型
+     * @param offset - 偏移量（默认 1，即当前 token）
+     *
+     * @example
+     * // [lookahead ≠ function]
+     * this.lookaheadNot('FunctionTok')
+     */
+    protected lookaheadNot(tokenName: string, offset: number = 1): void {
+        if (!this._parseSuccess) return
+
+        if (this.tokenIs(tokenName, offset)) {
+            this._parseSuccess = false
+        }
+    }
+
+    /**
+     * 前瞻检查：当前 token 不能是多个类型中的任何一个
+     * 如果是其中之一，则标记失败
+     *
+     * @param tokenNames - 不允许的 token 类型列表
+     * @param offset - 偏移量（默认 1）
+     *
+     * @example
+     * // [lookahead ∉ {{, function, class}]
+     * this.lookaheadNotIn(['LBrace', 'FunctionTok', 'ClassTok'])
+     */
+    protected lookaheadNotIn(tokenNames: string[], offset: number = 1): void {
+        if (!this._parseSuccess) return
+
+        for (const tokenName of tokenNames) {
+            if (this.tokenIs(tokenName, offset)) {
+                this._parseSuccess = false
+                return
+            }
+        }
+    }
+
+    /**
+     * 前瞻检查：不能是指定的 token 序列
+     * 如果完全匹配序列，则标记失败
+     *
+     * @param tokenNames - token 序列
+     *
+     * @example
+     * // [lookahead ≠ async function]
+     * this.lookaheadNotSequence(['AsyncTok', 'FunctionTok'])
+     */
+    protected lookaheadNotSequence(tokenNames: string[]): void {
+        if (!this._parseSuccess) return
+
+        // 检查序列是否完全匹配
+        for (let i = 0; i < tokenNames.length; i++) {
+            const token = this.peek(i + 1)
+            if (token?.tokenName !== tokenNames[i]) {
+                return  // 序列不匹配，前瞻通过
+            }
+        }
+
+        // 序列完全匹配，前瞻失败
+        this._parseSuccess = false
+    }
+
+    /**
+     * 前瞻检查：当前 token 必须是指定类型
+     * 如果不是，则标记失败
+     *
+     * @param tokenName - 必须的 token 类型
+     * @param offset - 偏移量（默认 1）
+     *
+     * @example
+     * // [lookahead = =]
+     * this.lookaheadIs('Assign')
+     */
+    protected lookaheadIs(tokenName: string, offset: number = 1): void {
+        if (!this._parseSuccess) return
+
+        if (!this.tokenIs(tokenName, offset)) {
+            this._parseSuccess = false
+        }
+    }
+
+    /**
+     * 前瞻检查：必须是指定的 token 序列
+     * 如果不完全匹配，则标记失败
+     *
+     * @param tokenNames - token 序列
+     *
+     * @example
+     * // [lookahead = async function]
+     * this.lookaheadIsSequence(['AsyncTok', 'FunctionTok'])
+     */
+    protected lookaheadIsSequence(tokenNames: string[]): void {
+        if (!this._parseSuccess) return
+
+        for (let i = 0; i < tokenNames.length; i++) {
+            const token = this.peek(i + 1)
+            if (token?.tokenName !== tokenNames[i]) {
+                this._parseSuccess = false
+                return
+            }
+        }
+    }
+
+    /**
+     * 前瞻检查：当前 token 前不能有换行符
+     * 如果有，则标记失败
+     *
+     * @example
+     * // [no LineTerminator here]
+     * this.lookaheadNotLineBreak()
+     */
+    protected lookaheadNotLineBreak(): void {
+        if (!this._parseSuccess) return
+
+        if (this.curToken?.hasLineBreakBefore) {
+            this._parseSuccess = false
+        }
     }
 }
 

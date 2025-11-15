@@ -84,13 +84,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     // 核心字段
     readonly tokenConsumer: T
 
-    /**
-     * 核心状态：当前规则是否成功
-     * - true: 成功，继续执行
-     * - false: 失败，停止并返回 undefined
-     */
-    private _parseSuccess = true
-
     private readonly cstStack: SubhutiCst[] = []
     private readonly ruleStack: string[] = []
     private readonly className: string
