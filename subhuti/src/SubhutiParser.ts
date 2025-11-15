@@ -249,11 +249,13 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             expected: '', // 循环错误不需要 expected
             found: currentToken,
             position: currentToken ? {
-                index: currentToken.index || 0,
+                tokenIndex: this.tokenIndex,
+                charIndex: currentToken.index || 0,
                 line: currentToken.rowNum || 0,
                 column: currentToken.columnStartNum || 0
             } : {
-                index: this._tokens[this._tokens.length - 1]?.index || 0,
+                tokenIndex: this._tokens.length,
+                charIndex: this._tokens[this._tokens.length - 1]?.index || 0,
                 line: this._tokens[this._tokens.length - 1]?.rowNum || 0,
                 column: this._tokens[this._tokens.length - 1]?.columnEndNum || 0
             },
@@ -590,11 +592,13 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
                 expected: tokenName,
                 found: token,
                 position: token ? {
-                    index: token.index || 0,
+                    tokenIndex: this.tokenIndex,
+                    charIndex: token.index || 0,
                     line: token.rowNum || 0,
                     column: token.columnStartNum || 0
                 } : {
-                    index: this._tokens[this._tokens.length - 1]?.index || 0,
+                    tokenIndex: this._tokens.length,
+                    charIndex: this._tokens[this._tokens.length - 1]?.index || 0,
                     line: this._tokens[this._tokens.length - 1]?.rowNum || 0,
                     column: this._tokens[this._tokens.length - 1]?.columnEndNum || 0
                 },
@@ -690,11 +694,13 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
                     expected: '',
                     found: this.curToken,
                     position: this.curToken ? {
-                        index: this.curToken.index || 0,
+                        tokenIndex: this.tokenIndex,
+                        charIndex: this.curToken.index || 0,
                         line: this.curToken.rowNum || 0,
                         column: this.curToken.columnStartNum || 0
                     } : {
-                        index: this._tokens[this._tokens.length - 1]?.index || 0,
+                        tokenIndex: this._tokens.length,
+                        charIndex: this._tokens[this._tokens.length - 1]?.index || 0,
                         line: this._tokens[this._tokens.length - 1]?.rowNum || 0,
                         column: this._tokens[this._tokens.length - 1]?.columnEndNum || 0
                     },

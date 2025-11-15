@@ -23,10 +23,15 @@ export interface ErrorDetails {
     // 通用字段
     expected: string
     found?: SubhutiMatchToken
-    position: { index: number, line: number, column: number }
+    position: {
+        tokenIndex: number      // token 数组索引
+        charIndex: number       // 字符位置索引
+        line: number
+        column: number
+    }
     ruleStack: string[]
     type?: 'parsing' | 'loop'             // 默认 'parsing'
-    
+
     // Loop 错误专用字段（平铺）
     loopRuleName?: string                 // 循环的规则名
     loopDetectionSet?: string[]           // 循环检测点列表
@@ -54,7 +59,8 @@ export class ParsingError extends Error {
     readonly expected: string
     readonly found?: SubhutiMatchToken
     readonly position: {
-        readonly index: number
+        readonly tokenIndex: number    // token 数组索引
+        readonly charIndex: number     // 字符位置索引
         readonly line: number
         readonly column: number
     }
@@ -184,39 +190,39 @@ export class ParsingError extends Error {
      */
     private toDetailedString(): string {
         const lines: string[] = []
-        
+
         // 标题
         lines.push('❌ Parsing Error')
         lines.push('')
-        
-        // 位置信息
-        lines.push(`  --> line ${this.position.line}, column ${this.position.column}`)
+
+        // 位置信息 - 使用紧凑格式
+        lines.push(`Token: token[${this.position.tokenIndex}] ${this.found?.tokenName || 'EOF'} @ line ${this.position.line}:${this.position.column} (char ${this.position.charIndex})`)
         lines.push('')
-        
+
         // 期望和实际
         lines.push(`Expected: ${this.expected}`)
         lines.push(`Found:    ${this.found?.tokenName || 'EOF'}`)
-        
+
         // 规则栈（简化显示，最多 5 个）
         if (this.ruleStack.length > 0) {
             lines.push('')
             lines.push('Rule stack:')
-            
+
             const maxDisplay = 5
             const visible = this.ruleStack.slice(-maxDisplay)
             const hidden = this.ruleStack.length - visible.length
-            
+
             if (hidden > 0) {
                 lines.push(`  ... (${hidden} more)`)
             }
-            
+
             visible.forEach((rule, i) => {
                 const isLast = i === visible.length - 1
                 const prefix = isLast ? '└─>' : '├─>'
                 lines.push(`  ${prefix} ${rule}`)
             })
         }
-        
+
         // 智能修复建议
         if (this.suggestions.length > 0) {
             lines.push('')
@@ -225,7 +231,7 @@ export class ParsingError extends Error {
                 lines.push(`  ${suggestion}`)
             })
         }
-        
+
         return lines.join('\n')
     }
     
@@ -233,7 +239,7 @@ export class ParsingError extends Error {
      * 简单格式（基本信息）
      */
     private toSimpleString(): string {
-        return `Parsing Error at line ${this.position.line}:${this.position.column}: Expected ${this.expected}, found ${this.found?.tokenName || 'EOF'}`
+        return `Parsing Error at token[${this.position.tokenIndex}] line ${this.position.line}:${this.position.column}: Expected ${this.expected}, found ${this.found?.tokenName || 'EOF'}`
     }
     
     /**
@@ -258,15 +264,14 @@ export class ParsingError extends Error {
      */
     private toLoopDetailedString(): string {
         const lines: string[] = []
-        
+
         // 标题
         lines.push('❌ 检测到无限循环（左递归或循环依赖）')
         lines.push('')
-        
-        // 核心信息
-        lines.push(`规则 "${this.loopRuleName}" 在 token 位置 ${this.position.index} 处重复调用自己`)
-        lines.push(`当前 token: ${this.found?.tokenName || 'EOF'}("${this.found?.tokenValue || ''}")`)
-        lines.push(`  --> line ${this.position.line}, column ${this.position.column}`)
+
+        // 核心信息 - 使用紧凑格式
+        lines.push(`规则 "${this.loopRuleName}" 在 token[${this.position.tokenIndex}] 处重复调用自己`)
+        lines.push(`Token: token[${this.position.tokenIndex}] ${this.found?.tokenName || 'EOF'}("${this.found?.tokenValue || ''}") @ line ${this.position.line}:${this.position.column} (char ${this.position.charIndex})`)
         lines.push('')
         
         // 规则调用栈
