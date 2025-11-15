@@ -88,7 +88,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     private readonly cstStack: SubhutiCst[] = []
     private readonly className: string
 
-    get ruleStack() {
+    getRuleStack() {
         return this.cstStack.map(item => item.name)
     }
 
@@ -256,7 +256,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
                 line: this._tokens[this._tokens.length - 1]?.rowNum || 0,
                 column: this._tokens[this._tokens.length - 1]?.columnEndNum || 0
             },
-            ruleStack: [...this.ruleStack],
+            ruleStack: [...this.getRuleStack()],
             loopRuleName: ruleName,
             loopDetectionSet: Array.from(this.loopDetectionSet),
             loopCstDepth: this.cstStack.length,
@@ -276,7 +276,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * 职责：前置检查 → 顶层/非顶层分支 → Packrat 缓存 → 核心执行 → 后置处理
      */
     private executeRuleWrapper(targetFun: Function, ruleName: string, className: string): SubhutiCst | undefined {
-        const isTopLevel = this.cstStack.length === 0 && this.ruleStack.length === 0
+        const isTopLevel = this.cstStack.length === 0
         if (!this._preCheckRule(ruleName, className, isTopLevel)) {
             return undefined
         }
@@ -362,7 +362,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             // 重置 Parser 的内部状态
             this._parseSuccess = true
             this.cstStack.length = 0
-            this.ruleStack.length = 0
             this.allowErrorDepth = 0
             this.loopDetectionSet.clear()
 
@@ -622,7 +621,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
                     line: this._tokens[this._tokens.length - 1]?.rowNum || 0,
                     column: this._tokens[this._tokens.length - 1]?.columnEndNum || 0
                 },
-                ruleStack: [...this.ruleStack]
+                ruleStack: [...this.getRuleStack()]
             })
         }
 
@@ -708,7 +707,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             // ✅ 成功：检查是否需要验证循环
             if (checkLoop && this.tokenIndex === startTokenIndex) {
                 // ❌ 成功但没消费 token → 在 Many/AtLeastOne 中会无限循环
-                const currentRuleName = this.ruleStack[this.ruleStack.length - 1] || 'Unknown'
+                const currentRuleName = this.cstStack[this.cstStack.length - 1].name || 'Unknown'
                 throw this._errorHandler.createError({
                     type: 'infinite-loop',
                     expected: '',
@@ -724,7 +723,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
                         line: this._tokens[this._tokens.length - 1]?.rowNum || 0,
                         column: this._tokens[this._tokens.length - 1]?.columnEndNum || 0
                     },
-                    ruleStack: [...this.ruleStack],
+                    ruleStack: [...this.getRuleStack()],
                     loopRuleName: currentRuleName,
                     loopDetectionSet: Array.from(this.loopDetectionSet),
                     loopCstDepth: this.cstStack.length,
@@ -804,14 +803,15 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * 简单格式化规则路径（当没有调试器时）
      */
     private formatSimpleRulePath(): string[] {
-        if (this.ruleStack.length === 0) {
+        const ruleStack = this.getRuleStack()
+        if (ruleStack.length === 0) {
             return ['  (empty)']
         }
 
         const lines: string[] = []
-        for (let i = 0; i < this.ruleStack.length; i++) {
-            const rule = this.ruleStack[i]
-            const isLast = i === this.ruleStack.length - 1
+        for (let i = 0; i < ruleStack.length; i++) {
+            const rule = ruleStack[i]
+            const isLast = i === ruleStack.length - 1
             const indent = '  '.repeat(i)
             const connector = i === 0 ? '' : '└─ '
             const marker = isLast ? ' ← 当前位置' : ''
@@ -849,7 +849,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
                 line: this._tokens[this._tokens.length - 1]?.rowNum || 0,
                 column: this._tokens[this._tokens.length - 1]?.columnEndNum || 0
             },
-            ruleStack: [...this.ruleStack],
+            ruleStack: [...this.getRuleStack()],
             loopRuleName: ruleName,
             loopDetectionSet: [],
             loopCstDepth: this.cstStack.length,
