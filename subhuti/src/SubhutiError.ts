@@ -43,9 +43,12 @@ export interface ErrorDetails {
         currentSize: number
     }
     loopTokenContext?: SubhutiMatchToken[] // Token 上下文
-    
+
     // 新增：简短的修复提示
     hint?: string
+
+    // 新增：规则路径（格式化后的字符串）
+    rulePath?: string
 }
 
 /**
@@ -81,10 +84,13 @@ export class ParsingError extends Error {
         currentSize: number
     }>
     readonly loopTokenContext?: readonly SubhutiMatchToken[]
-    
+
     // 新增：简短的修复提示
     readonly hint?: string
-    
+
+    // 新增：规则路径（格式化后的字符串）
+    readonly rulePath?: string
+
     /**
      * ⭐ 智能修复建议（仅 parsing 错误）
      */
@@ -114,9 +120,12 @@ export class ParsingError extends Error {
         this.loopCstDepth = details.loopCstDepth
         this.loopCacheStats = details.loopCacheStats
         this.loopTokenContext = details.loopTokenContext ? Object.freeze([...details.loopTokenContext]) : undefined
-        
+
         // 新增：修复提示
         this.hint = details.hint
+
+        // 新增：规则路径
+        this.rulePath = details.rulePath
         
         this.useDetailed = useDetailed
         
@@ -283,17 +292,22 @@ export class ParsingError extends Error {
         lines.push(`Token: token[${this.position.tokenIndex}] ${this.found?.tokenName || 'EOF'}("${this.found?.tokenValue || ''}") @ line ${this.position.line}:${this.position.column} (char ${this.position.charIndex})`)
         lines.push('')
         
-        // 规则调用栈
-        if (this.ruleStack.length > 0) {
+        // 🆕 规则路径（如果有）
+        if (this.rulePath) {
+            lines.push('规则路径:')
+            lines.push(this.rulePath)
+            lines.push('')
+        } else if (this.ruleStack.length > 0) {
+            // 降级：使用简单格式
             lines.push('规则调用栈:')
             const maxDisplay = 8
             const visible = this.ruleStack.slice(-maxDisplay)
             const hidden = this.ruleStack.length - visible.length
-            
+
             if (hidden > 0) {
                 lines.push(`  ... (隐藏 ${hidden} 层)`)
             }
-            
+
             visible.forEach((rule, i) => {
                 const isLast = i === visible.length - 1
                 const prefix = '  ' + '  '.repeat(i) + (isLast ? '└─>' : '├─>')

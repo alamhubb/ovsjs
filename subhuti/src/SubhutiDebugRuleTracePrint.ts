@@ -209,19 +209,29 @@ export class SubhutiDebugRuleTracePrint {
 
     }
 
-    public static printLine(str: string, depth: number, symbol: string = '└─') {
-        const line = TreeFormatHelper.formatLine(
+    /**
+     * 格式化一行（返回字符串）
+     */
+    public static formatLine(str: string, depth: number, symbol: string = '└─'): string {
+        return TreeFormatHelper.formatLine(
             str,
             // 前缀：根据深度生成缩进，└─ 表示是叶子节点
             {prefix: '│  '.repeat(depth) + symbol}
         )
+    }
+
+    /**
+     * 打印一行（直接输出到控制台）
+     */
+    public static printLine(str: string, depth: number, symbol: string = '└─') {
+        const line = this.formatLine(str, depth, symbol)
         console.log(line)
         // LogUtil.log(line)
     }
 
 
     /**
-     * 非缓存场景：输出待处理的规则日志（内部实现）
+     * 非缓存场景：格式化待处理的规则日志（返回字符串数组）
      * 特点：只有一次断链，只有一个折叠段
      *
      * 【设计思路】
@@ -230,10 +240,13 @@ export class SubhutiDebugRuleTracePrint {
      * 3. 到达断点前：积累到折叠链
      * 4. 到达断点后：逐个输出并赋值 shouldBreakLine = true
      */
-    public static flushPendingOutputs_NonCache_Impl(ruleStack: RuleStackItem[]): number {
+    public static formatPendingOutputs_NonCache_Impl(ruleStack: RuleStackItem[]): string[] {
         if (!ruleStack.length) {
             throw new Error('系统错误：ruleStack 为空')
         }
+
+        const allLines: string[] = []
+
         let unOutputIndex = ruleStack.findIndex(item => !item.outputted)
 
         if (unOutputIndex < 0) {
@@ -286,21 +299,39 @@ export class SubhutiDebugRuleTracePrint {
             }
             for (const group of groups) {
                 if (group[0].shouldBreakLine) {
-                    baseDepth = this.printMultipleSingleRule(group, baseDepth)
+                    const result = this.formatMultipleSingleRule(group, baseDepth)
+                    allLines.push(...result.lines)
+                    baseDepth = result.depth
                 } else {
                     baseDepth++
-                    this.printChainRule(group, baseDepth)
+                    const lines = this.formatChainRule(group, baseDepth)
+                    allLines.push(...lines)
                 }
             }
 
-            return this.printMultipleSingleRule(singleRules, baseDepth)
-            // return this.printMultipleSingleRule(pendingRules, baseDepth)
+            const result = this.formatMultipleSingleRule(singleRules, baseDepth)
+            allLines.push(...result.lines)
         } else {
-            return this.printMultipleSingleRule(pendingRules, baseDepth)
+            const result = this.formatMultipleSingleRule(pendingRules, baseDepth)
+            allLines.push(...result.lines)
         }
+
+        return allLines
     }
 
-    public static flushPendingOutputs_Cache_Impl(ruleStack: RuleStackItem[],): void {
+    /**
+     * 非缓存场景：输出待处理的规则日志（直接输出到控制台）
+     */
+    public static flushPendingOutputs_NonCache_Impl(ruleStack: RuleStackItem[]): number {
+        const lines = this.formatPendingOutputs_NonCache_Impl(ruleStack)
+        lines.forEach(line => console.log(line))
+
+        // 返回最后的深度（用于兼容现有代码）
+        const lastRule = ruleStack[ruleStack.length - 1]
+        return lastRule?.displayDepth || 0
+    }
+
+    public static flushPendingOutputs_Cache_Impl(ruleStack: RuleStackItem[]): void {
         let pendingRules = ruleStack.filter(item => !item.outputted)
 
         if (pendingRules.length === 0) {
@@ -342,69 +373,83 @@ export class SubhutiDebugRuleTracePrint {
     }
 
     /**
-     * 打印折叠链,兼容非缓存和缓存，
+     * 格式化折叠链（返回字符串数组）
      * @param rules
      * @param depth 兼容非缓存和缓存，
      */
-    static printChainRule(rules: RuleStackItem[], depth: number = rules[0].displayDepth) {
+    static formatChainRule(rules: RuleStackItem[], depth: number = rules[0].displayDepth): string[] {
         if (!rules.length) {
             throw new Error("系统错误")
         }
-        //过滤or和虚拟规则
-        // const names = rules.filter(item => !item.orBranchInfo).map(r => r.ruleName)
         const names = rules.map(r => SubhutiDebugRuleTracePrint.getRuleItemLogContent(r))
 
         const displayNames = names.length > 4
             ? [...names.slice(0, 2), '...', ...names.slice(-2)]
             : names
 
-        SubhutiDebugRuleTracePrint.printLine(displayNames.join(' > '), depth, '├─')
-
+        const line = SubhutiDebugRuleTracePrint.formatLine(displayNames.join(' > '), depth, '├─')
 
         rules.forEach(r => {
             r.displayDepth = depth
-            // r.relativeDepthByStack = 0
             r.outputted = true
         })
+
+        return [line]
     }
 
     /**
-     * 打印单独规则
+     * 打印折叠链（直接输出到控制台）
+     * @param rules
+     * @param depth 兼容非缓存和缓存，
+     */
+    static printChainRule(rules: RuleStackItem[], depth: number = rules[0].displayDepth) {
+        const lines = this.formatChainRule(rules, depth)
+        lines.forEach(line => console.log(line))
+    }
+
+    /**
+     * 格式化单独规则（返回字符串数组）
      * 注意：传入的 rules 数组通常只有 1 个元素（单独显示的规则）
      *
      * @param rules
      * @param depth 兼容非缓存和缓存，
      */
-    static printMultipleSingleRule(rules: RuleStackItem[], depth: number = rules[0].displayDepth): number {
+    static formatMultipleSingleRule(rules: RuleStackItem[], depth: number = rules[0].displayDepth): { lines: string[], depth: number } {
+        const lines: string[] = []
+
         rules.forEach((item, index) => {
             depth++
 
             // 判断是否是最后一个
             const isLast = index === rules.length - 1
 
-
-            // ✅ 修复：所有规则使用相同的深度（同级）
-            // 因为 printSingleRule 通常只传入 1 个规则，不需要递增深度
-
-            // 生成前缀：每一层的连接线
-
             if (!item.isManuallyAdded) {
                 item.displayDepth = depth
             }
 
-
             let branch = isLast ? '└─' : '├─'
+            let printStr = this.getRuleItemLogContent(item)
 
-            let printStr = this.getRuleItemLogContent(item);
+            const line = SubhutiDebugRuleTracePrint.formatLine(printStr, item.displayDepth, branch)
+            lines.push(line)
 
-
-            SubhutiDebugRuleTracePrint.printLine(printStr, item.displayDepth, branch)
-
-
-            // item.shouldBreakLine = true
             item.outputted = true
         })
-        return depth
+
+        return { lines, depth }
+    }
+
+    /**
+     * 打印单独规则（直接输出到控制台）
+     * 注意：传入的 rules 数组通常只有 1 个元素（单独显示的规则）
+     *
+     * @param rules
+     * @param depth 兼容非缓存和缓存，
+     */
+    static printMultipleSingleRule(rules: RuleStackItem[], depth: number = rules[0].displayDepth): number {
+        const result = this.formatMultipleSingleRule(rules, depth)
+        result.lines.forEach(line => console.log(line))
+        return result.depth
     }
 
     private static getRuleItemLogContent(tokenItem: RuleStackItem) {

@@ -21,6 +21,7 @@ import {SubhutiErrorHandler, ParsingError} from "./SubhutiError.ts";
 import {SubhutiTraceDebugger} from "./SubhutiDebug.ts";
 import {SubhutiPackratCache, type SubhutiPackratCacheResult} from "./SubhutiPackratCache.ts";
 import SubhutiTokenConsumer from "./SubhutiTokenConsumer.ts";
+import {SubhutiDebugRuleTracePrint} from "./SubhutiDebugRuleTracePrint.ts";
 
 // Grammar Validation
 import {SubhutiGrammarValidator} from "./validation/SubhutiGrammarValidator";
@@ -779,6 +780,48 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     }
 
     /**
+     * 生成当前规则路径的字符串（用于错误信息）
+     *
+     * @returns 格式化后的规则路径字符串数组
+     */
+    private formatCurrentRulePath(): string[] {
+        if (!this._debugger) {
+            // 如果没有调试器，使用简单格式
+            return this.formatSimpleRulePath()
+        }
+
+        // 使用调试器的格式化方法
+        const ruleStack = this._debugger.ruleStack
+        if (!ruleStack || ruleStack.length === 0) {
+            return ['  (empty)']
+        }
+
+        return SubhutiDebugRuleTracePrint.formatPendingOutputs_NonCache_Impl(ruleStack)
+    }
+
+    /**
+     * 简单格式化规则路径（当没有调试器时）
+     */
+    private formatSimpleRulePath(): string[] {
+        if (this.ruleStack.length === 0) {
+            return ['  (empty)']
+        }
+
+        const lines: string[] = []
+        for (let i = 0; i < this.ruleStack.length; i++) {
+            const rule = this.ruleStack[i]
+            const isLast = i === this.ruleStack.length - 1
+            const indent = '  '.repeat(i)
+            const connector = i === 0 ? '' : '└─ '
+            const marker = isLast ? ' ← 当前位置' : ''
+
+            lines.push(`  ${indent}${connector}${rule}${marker}`)
+        }
+
+        return lines
+    }
+
+    /**
      * 创建无限循环错误
      *
      * @param ruleName - 规则名称
@@ -786,6 +829,10 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * @returns ParsingError 实例
      */
     private createInfiniteLoopError(ruleName: string, hint: string): ParsingError {
+        // 生成规则路径
+        const rulePathLines = this.formatCurrentRulePath()
+        const rulePath = rulePathLines.join('\n')
+
         return this._errorHandler.createError({
             type: 'infinite-loop',
             expected: '',
@@ -806,7 +853,8 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             loopDetectionSet: [],
             loopCstDepth: this.cstStack.length,
             loopTokenContext: this.getTokenContext(this.tokenIndex, 2),
-            hint: hint
+            hint: hint,
+            rulePath: rulePath  // 🆕 添加规则路径
         })
     }
 
