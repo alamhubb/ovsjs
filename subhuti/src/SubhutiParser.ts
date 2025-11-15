@@ -86,8 +86,11 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     readonly tokenConsumer: T
 
     private readonly cstStack: SubhutiCst[] = []
-    private readonly ruleStack: string[] = []
     private readonly className: string
+
+    get ruleStack() {
+        return this.cstStack.map(item => item.name)
+    }
 
     // 调试和错误处理
     private _debugger?: SubhutiTraceDebugger
@@ -409,7 +412,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         cst.children = []
 
         this.cstStack.push(cst)
-        this.ruleStack.push(ruleName)
 
         // 记录开始位置
         const startTokenIndex = this.tokenIndex
@@ -439,7 +441,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         }
 
         this.cstStack.pop()
-        this.ruleStack.pop()
 
         if (this._parseSuccess) {
             const parentCst = this.cstStack[this.cstStack.length - 1]
