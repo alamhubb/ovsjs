@@ -32,6 +32,7 @@
 ### 🔧 开发友好
 - **调试支持**：内置 Trace Debugger，可视化规则匹配过程
 - **错误处理**：详细的错误信息（位置、期望、实际、规则栈）
+- **问题检测系统**：运行时检测左递归、无限循环等常见错误 ⭐ 新功能
 - **语法验证**：自动检测 Or 规则冲突（前缀遮蔽、空路径）⭐ 新功能
 - **CST 辅助方法**：`getChild()`, `getChildren()`, `getToken()` 等便捷方法
 - **Token 前瞻**：完整支持 ECMAScript 规范的所有 `[lookahead ...]` 约束 ⭐ 新功能
@@ -49,7 +50,7 @@ yarn add subhuti
 ### 1. 定义 Lexer（词法分析器）
 
 ```typescript
-import { SubhutiLexer, createKeywordToken, createRegToken } from 'subhuti'
+import { SubhutiLexer, createKeywordToken, createRegToken, createValueRegToken } from 'subhuti'
 
 // 定义 Token
 const tokens = [
@@ -57,15 +58,19 @@ const tokens = [
   createKeywordToken('IfTok', 'if'),
   createKeywordToken('ElseTok', 'else'),
   createKeywordToken('ReturnTok', 'return'),
-  
+
   // 标识符和字面量
   createRegToken('Identifier', /[a-zA-Z_][a-zA-Z0-9_]*/),
   createRegToken('Number', /[0-9]+/),
-  
+
   // 符号
   createKeywordToken('LParen', '('),
   createKeywordToken('RParen', ')'),
   createKeywordToken('Semicolon', ';'),
+
+  // 跳过空格和注释（skip: true）
+  createValueRegToken('WhiteSpace', /[ \t\r\n]+/, '', true),
+  createValueRegToken('Comment', /\/\/[^\n]*/, '', true),
 ]
 
 // 创建 Lexer
@@ -76,13 +81,35 @@ const sourceCode = 'if (x) return 42;'
 const tokenStream = lexer.tokenize(sourceCode)
 ```
 
-### 2. 定义 Parser（语法分析器）
+### 2. 定义 TokenConsumer（可选，简化 token 消费）
+
+```typescript
+import { SubhutiTokenConsumer } from 'subhuti'
+
+// 自定义 TokenConsumer，为每个 token 创建便捷方法
+class MyTokenConsumer extends SubhutiTokenConsumer {
+  IfTok() { return this.consume(tokens.find(t => t.name === 'IfTok')!) }
+  ElseTok() { return this.consume(tokens.find(t => t.name === 'ElseTok')!) }
+  ReturnTok() { return this.consume(tokens.find(t => t.name === 'ReturnTok')!) }
+  Identifier() { return this.consume(tokens.find(t => t.name === 'Identifier')!) }
+  Number() { return this.consume(tokens.find(t => t.name === 'Number')!) }
+  LParen() { return this.consume(tokens.find(t => t.name === 'LParen')!) }
+  RParen() { return this.consume(tokens.find(t => t.name === 'RParen')!) }
+  Semicolon() { return this.consume(tokens.find(t => t.name === 'Semicolon')!) }
+}
+```
+
+### 3. 定义 Parser（语法分析器）
 
 ```typescript
 import { SubhutiParser, SubhutiRule, Subhuti } from 'subhuti'
 
 @Subhuti
-class MyParser extends SubhutiParser {
+class MyParser extends SubhutiParser<MyTokenConsumer> {
+  constructor(tokens) {
+    super(tokens, MyTokenConsumer)  // 传入自定义 TokenConsumer
+  }
+
   @SubhutiRule
   Statement() {
     this.Or([
@@ -91,47 +118,47 @@ class MyParser extends SubhutiParser {
       { alt: () => this.ExpressionStatement() }
     ])
   }
-  
+
   @SubhutiRule
   IfStatement() {
-    this.consume('IfTok')
-    this.consume('LParen')
+    this.tokenConsumer.IfTok()      // 使用 TokenConsumer 的便捷方法
+    this.tokenConsumer.LParen()
     this.Expression()
-    this.consume('RParen')
+    this.tokenConsumer.RParen()
     this.Statement()
-    
+
     // 可选的 else 分支
     this.Option(() => {
-      this.consume('ElseTok')
+      this.tokenConsumer.ElseTok()
       this.Statement()
     })
   }
-  
+
   @SubhutiRule
   ReturnStatement() {
-    this.consume('ReturnTok')
+    this.tokenConsumer.ReturnTok()
     this.Expression()
-    this.consume('Semicolon')
+    this.tokenConsumer.Semicolon()
   }
-  
+
   @SubhutiRule
   Expression() {
     // 简化示例
     this.Or([
-      { alt: () => this.consume('Identifier') },
-      { alt: () => this.consume('Number') }
+      { alt: () => this.tokenConsumer.Identifier() },
+      { alt: () => this.tokenConsumer.Number() }
     ])
   }
-  
+
   @SubhutiRule
   ExpressionStatement() {
     this.Expression()
-    this.consume('Semicolon')
+    this.tokenConsumer.Semicolon()
   }
 }
 ```
 
-### 3. 解析代码
+### 4. 解析代码
 
 ```typescript
 const parser = new MyParser(tokenStream)
@@ -146,14 +173,62 @@ const cst = parser.Statement()
 if (cst) {
   console.log('规则名称:', cst.name)
   console.log('子节点数量:', cst.childCount)
-  
+
   // 使用便捷方法访问
   const condition = cst.getChild('Expression')
   const returnValue = cst.getToken('Number')
+
+  // 访问位置信息（用于错误报告、源码映射）
+  console.log('位置:', cst.loc.start.line, cst.loc.start.column)
 }
 ```
 
-## 📖 核心 API
+## 📖 核心能力
+
+### Lexer 高级特性
+
+#### 词法层前瞻（Lexical Lookahead）
+
+处理词法歧义，如 `?.` (可选链) vs `?` (三元运算符)：
+
+```typescript
+import { createValueRegToken } from 'subhuti'
+
+const tokens = [
+  // 可选链：?. 后面不能是数字
+  createValueRegToken('OptionalChaining', /\?\./, '?.', false, {
+    not: /[0-9]/  // lookaheadAfter: 后面不能是数字
+  }),
+
+  // 三元运算符
+  createKeywordToken('Question', '?'),
+  createKeywordToken('Dot', '.'),
+]
+
+// 代码: "obj?.prop" → OptionalChaining
+// 代码: "a ? .5 : 1" → Question, Dot, Number
+```
+
+#### 模板字符串支持
+
+自动处理 ECMAScript 的 InputElement 切换：
+
+```typescript
+// Lexer 自动识别模板字符串的上下文
+const code = '`Hello ${name}!`'
+const tokens = lexer.tokenize(code)
+// → TemplateHead(`Hello ${`), Identifier(name), TemplateTail(`}!`)
+```
+
+#### 跳过 Token
+
+自动过滤空格、注释等：
+
+```typescript
+createValueRegToken('WhiteSpace', /[ \t\r\n]+/, '', true),  // skip: true
+createValueRegToken('LineComment', /\/\/[^\n]*/, '', true),
+createValueRegToken('BlockComment', /\/\*[\s\S]*?\*\//, '', true),
+```
 
 ### Parser 组合器
 
@@ -320,6 +395,57 @@ cst.isToken     // 是否为 token 节点
 cst.isEmpty     // 是否为空节点
 ```
 
+### 位置信息（Source Location）
+
+每个 CST 节点都包含完整的位置信息，用于错误报告和源码映射：
+
+```typescript
+const cst = parser.Statement()
+
+// 访问位置信息
+console.log(cst.loc.start)  // { index: 0, line: 1, column: 0 }
+console.log(cst.loc.end)    // { index: 15, line: 1, column: 15 }
+
+// Token 节点还包含值
+const identifier = cst.getToken('Identifier')
+console.log(identifier?.value)  // token 的文本值
+console.log(identifier?.loc.start.line)  // token 所在行号
+```
+
+### 自定义失败标记（parserFail）
+
+在自定义验证逻辑中标记解析失败：
+
+```typescript
+@SubhutiRule
+Identifier() {
+  const cst = this.tokenConsumer.Identifier()
+
+  // 自定义验证：保留字检查
+  if (cst && ReservedWords.has(cst.value!)) {
+    return this.parserFail()  // 标记失败，触发回溯
+  }
+
+  return cst
+}
+```
+
+### 动态更换 Token 流
+
+重用 Parser 实例解析多个文件：
+
+```typescript
+const parser = new MyParser([])
+
+// 解析第一个文件
+parser.setTokens(lexer.tokenize(code1))
+const cst1 = parser.Script()
+
+// 解析第二个文件
+parser.setTokens(lexer.tokenize(code2))
+const cst2 = parser.Script()
+```
+
 ### 功能开关（链式调用）
 
 ```typescript
@@ -484,6 +610,114 @@ PropertyDefinition() {
 }
 ```
 
+## 🛡️ 问题检测系统
+
+Subhuti 内置了强大的问题检测系统，帮助你在开发阶段快速发现和修复常见错误。
+
+### 运行时检测
+
+#### 1. 左递归检测
+
+自动检测并阻止左递归调用，避免栈溢出：
+
+```typescript
+@SubhutiRule
+Expression() {
+  this.Or([
+    { alt: () => {
+      this.Expression()  // ❌ 左递归！
+      this.consume('Plus')
+      this.Number()
+    }},
+    { alt: () => this.Number() }
+  ])
+}
+
+// 运行时错误：
+// ❌ 检测到左递归
+// 规则 "Expression" 在 token[0] 处重复调用自己
+// 💡 Hint: 检查规则定义，确保在递归前消费了 token
+```
+
+#### 2. 无限循环检测
+
+检测规则成功但不消费 token 的情况：
+
+```typescript
+@SubhutiRule
+Statement() {
+  // ❌ 错误：成功但不消费任何 token
+  return this.curCst
+}
+
+// 运行时错误：
+// ❌ 检测到无限循环
+// 规则成功时必须消费至少一个 token，或使用 this.parserFail() 标记失败
+```
+
+#### 3. 不正确的失败标记
+
+检测返回 `undefined` 但未设置失败状态：
+
+```typescript
+@SubhutiRule
+Identifier() {
+  const cst = this.tokenConsumer.Identifier()
+  if (cst && ReservedWords.has(cst.value!)) {
+    // ❌ 错误：应该使用 this.parserFail()
+    return undefined
+  }
+  return cst
+}
+
+// 正确做法：
+@SubhutiRule
+Identifier() {
+  const cst = this.tokenConsumer.Identifier()
+  if (cst && ReservedWords.has(cst.value!)) {
+    return this.parserFail()  // ✅ 正确标记失败
+  }
+  return cst
+}
+```
+
+### 静态语法验证
+
+使用 `validateGrammar()` 在开发阶段检测 Or 规则冲突：
+
+```typescript
+// 在测试中验证语法
+describe('Parser Grammar', () => {
+  it('should not have Or conflicts', () => {
+    const parser = new MyParser([])
+    parser.validateGrammar()  // 有问题会抛异常
+  })
+})
+```
+
+**检测的问题类型：**
+
+1. **前缀冲突**：短规则在前，遮蔽长规则
+2. **空路径冲突**：Option/Many 在第一个分支导致后续不可达
+
+### 调试模式统计信息
+
+启用 `debug()` 模式可以查看详细的性能和解析统计：
+
+```typescript
+const parser = new MyParser(tokens).debug()
+const cst = parser.Script()
+
+// 自动输出性能摘要、缓存命中率、CST 验证等信息
+```
+
+**统计信息说明：**
+- **缓存命中率**：越高越好（通常 > 50%）
+- **Top 慢规则**：优化重点
+- **CST 验证**：确保解析完整性
+
+**注意**：统计信息仅供参考，不做"好坏"判断，由开发者根据实际场景分析。
+
 ## 🔍 调试技巧
 
 ### 1. 启用调试输出
@@ -522,10 +756,17 @@ try {
 ## 🎯 实际应用
 
 ### Slime 项目
-使用 Subhuti 构建完整的 JavaScript ES5/ES6 解析器：
-- ✅ 支持所有核心语法（import/export、箭头函数、模板字符串等）
+使用 Subhuti 构建完整的 **JavaScript ES2025** 解析器：
+- ✅ 支持最新 ECMAScript 2025 规范的所有语法特性
+- ✅ 完整实现 import/export、async/await、装饰器、模板字符串等
 - ✅ CST → AST 转换
-- ✅ 代码生成和 Source Map
+- ✅ 代码生成和 Source Map 支持
+
+## 📚 相关文档
+
+- **[LOOKAHEAD_API.md](./LOOKAHEAD_API.md)** - Token 前瞻 API 完整参考
+- **[DETECTION_IMPROVEMENT_SUMMARY.md](./DETECTION_IMPROVEMENT_SUMMARY.md)** - 问题检测系统详细说明
+- **[RULE_PATH_IN_ERROR_SUMMARY.md](./RULE_PATH_IN_ERROR_SUMMARY.md)** - 错误信息中的规则路径显示
 
 ## 📄 License
 
