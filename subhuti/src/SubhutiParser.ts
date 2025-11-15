@@ -417,7 +417,18 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         this.cstStack.push(cst)
         this.ruleStack.push(ruleName)
 
-        targetFun.apply(this)
+
+        // 🔍 不变式检查：规则成功时不应该返回 undefined
+        // 这通常是因为使用了 "return undefined" 但没有设置 _parseSuccess = false
+        const ruleReturnValue = targetFun.apply(this)
+        if (this._parseSuccess && ruleReturnValue === undefined) {
+            throw new Error(
+                `规则 "${ruleName}" 违反不变式：_parseSuccess=true 但返回 undefined\n` +
+                `位置: token[${this.tokenIndex}] ${this.curToken?.tokenName || 'EOF'}\n` +
+                `这通常是因为使用了 "return undefined" 但没有设置失败状态\n` +
+                `建议: 使用 this.BACKTRACK() 代替 return undefined`
+            )
+        }
 
         this.cstStack.pop()
         this.ruleStack.pop()
@@ -773,7 +784,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
     // SubhutiParser，前瞻失败返回 undefined，应该同时设置解析失败
     protected BACKTRACK(): never {
-        // this._parseSuccess = false
+        this._parseSuccess = false
         return undefined as never
     }
 }
