@@ -43,6 +43,9 @@ export interface ErrorDetails {
         currentSize: number
     }
     loopTokenContext?: SubhutiMatchToken[] // Token 上下文
+    
+    // 新增：简短的修复提示
+    hint?: string
 }
 
 /**
@@ -79,6 +82,9 @@ export class ParsingError extends Error {
     }>
     readonly loopTokenContext?: readonly SubhutiMatchToken[]
     
+    // 新增：简短的修复提示
+    readonly hint?: string
+    
     /**
      * ⭐ 智能修复建议（仅 parsing 错误）
      */
@@ -108,6 +114,9 @@ export class ParsingError extends Error {
         this.loopCstDepth = details.loopCstDepth
         this.loopCacheStats = details.loopCacheStats
         this.loopTokenContext = details.loopTokenContext ? Object.freeze([...details.loopTokenContext]) : undefined
+        
+        // 新增：修复提示
+        this.hint = details.hint
         
         this.useDetailed = useDetailed
         
@@ -333,7 +342,6 @@ export class ParsingError extends Error {
         }
         
         lines.push('')
-        
         // 修复建议
         lines.push('⚠️ PEG 解析器无法直接处理左递归。')
         lines.push('请重构语法以消除左递归。')
