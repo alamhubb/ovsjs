@@ -2144,26 +2144,16 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     @SubhutiRule
     ExpressionStatement(params: StatementParams = {}): SubhutiCst | undefined {
         // 前瞻检查：[lookahead ∉ {{, function, async [no LineTerminator here] function, class, let [}]
-        // 1. 不能是 {
-        if (this.tokenIs('LBrace', 1)) {
-            return this.BACKTRACK()
-        }
-        // 2. 不能是 function
-        if (this.tokenIs('FunctionTok', 1)) {
-            return this.BACKTRACK()
-        }
-        // 3. 不能是 class
-        if (this.tokenIs('ClassTok', 1)) {
-            return this.BACKTRACK()
-        }
-        // 4. 不能是 async [no LineTerminator here] function
+        // 使用新的前瞻方法，自动设置 _parseSuccess
+        this.lookaheadNotIn(['LBrace', 'FunctionTok', 'ClassTok'])
+
+        // 不能是 async [no LineTerminator here] function
         if (this.matchSequenceWithoutLineTerminator(['AsyncTok', 'FunctionTok'])) {
-            return this.BACKTRACK()
+            this._parseSuccess = false
         }
-        // 5. 不能是 let [
-        if (this.matchSequence(['LetTok', 'LBracket'])) {
-            return this.BACKTRACK()
-        }
+
+        // 不能是 let [
+        this.lookaheadNotSequence(['LetTok', 'LBracket'])
 
         this.Expression({...params, In: true})
         return this.SemicolonASI()
