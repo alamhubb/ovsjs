@@ -42,7 +42,7 @@ export default class SubhutiTokenLookahead {
 
 
     // SubhutiParser，前瞻失败返回 undefined，应该同时设置解析失败
-    protected BACKTRACK(): never {
+    protected parserFail(): never {
         this._parseSuccess = false
         return undefined as never
     }

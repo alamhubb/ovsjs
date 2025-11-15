@@ -126,7 +126,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
         const cst = this.tokenConsumer.Identifier()
         if (cst && ReservedWords.has(cst.value!)) {
             // 是保留字，解析失败
-            return undefined
+            return this.parserFail()
         }
         return cst
     }
