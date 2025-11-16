@@ -92,7 +92,6 @@ export class SubhutiGrammarValidationError extends Error {
  */
 export type RuleNode = 
     | ConsumeNode
-    | SequenceNode
     | OrNode
     | OptionNode
     | ManyNode

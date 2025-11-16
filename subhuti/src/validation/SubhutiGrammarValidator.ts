@@ -36,15 +36,18 @@ export class SubhutiGrammarValidator {
     static validate(parser: any): void {
         // 1. 收集规则 AST（通过 Proxy，无需 Parser 配合）
         const ruleASTs = SubhutiRuleCollector.collectRules(parser)
-        
+
         // 2. 创建语法分析器
         const analyzer = new SubhutiGrammarAnalyzer(ruleASTs)
-        
-        // 3. 检测冲突
+
+        // 3. 初始化缓存（遍历所有规则，计算直接子节点和分层展开）
+        analyzer.initializeCaches()
+
+        // 4. 检测冲突
         const detector = new SubhutiConflictDetector(analyzer, ruleASTs)
         const errors = detector.detectAllConflicts()
-        
-        // 4. 有错误直接抛出
+
+        // 5. 有错误直接抛出
         if (errors.length > 0) {
             throw new SubhutiGrammarValidationError(errors)
         }

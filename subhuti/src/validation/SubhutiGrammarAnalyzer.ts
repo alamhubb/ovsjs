@@ -30,7 +30,7 @@
  * @version 2.0.0 - 分层展开版本
  */
 
-import type { RuleNode, Path } from "./SubhutiValidationError"
+import type {RuleNode, Path, SequenceNode} from "./SubhutiValidationError"
 
 /**
  * 规则展开结果（二维数组）
@@ -101,11 +101,27 @@ export class SubhutiGrammarAnalyzer {
      * @param options 配置选项
      */
     constructor(
-        private ruleASTs: Map<string, RuleNode>,
+        private ruleASTs: Map<string, SequenceNode>,
         options?: GrammarAnalyzerOptions
     ) {
         this.options = {
             maxLevel: options?.maxLevel ?? 3
+        }
+    }
+
+    /**
+     * 初始化缓存（遍历所有规则，计算直接子节点和分层展开）
+     *
+     * 应该在收集 AST 之后立即调用
+     */
+    initializeCaches(): void {
+        // 遍历所有规则
+        for (const ruleName of this.ruleASTs.keys()) {
+            // 计算直接子节点缓存
+            this.getDirectChildren(ruleName)
+
+            // 计算分层展开缓存
+            this.computeExpansion(ruleName)
         }
     }
 
@@ -270,7 +286,7 @@ export class SubhutiGrammarAnalyzer {
      * @param node AST 节点
      * @param currentLevel 当前层级（默认0）
      */
-    private computeDirectChildren(node: RuleNode, currentLevel: number = 0): string[][] {
+    private computeDirectChildren(node: SequenceNode, currentLevel: number = 0): string[][] {
         // 如果超过最大层级，不再展开，直接返回节点标识
         if (currentLevel >= this.options.maxLevel) {
             if (node.type === 'consume') {
