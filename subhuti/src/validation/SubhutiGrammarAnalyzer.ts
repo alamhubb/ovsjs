@@ -133,28 +133,17 @@ export class SubhutiGrammarAnalyzer {
      */
     private getDirectChildren(ruleName: string): string[][] {
         if (this.directChildrenCache.has(ruleName)) {
-            return this.directChildrenCache.get(ruleName)!
+            throw new Error('系统错误')
+        }
+        const ruleNode = this.ruleASTs.get(ruleName)
+        if (!ruleNode) {
+            throw new Error('系统错误')
         }
 
-        if (this.computing.has(ruleName)) {
-            return []
-        }
+        const children = this.computeDirectChildren(ruleNode)
+        this.directChildrenCache.set(ruleName, children)
 
-        this.computing.add(ruleName)
-
-        try {
-            const ruleNode = this.ruleASTs.get(ruleName)
-            if (!ruleNode) {
-                return []
-            }
-
-            const children = this.computeDirectChildren(ruleNode)
-            this.directChildrenCache.set(ruleName, children)
-
-            return children
-        } finally {
-            this.computing.delete(ruleName)
-        }
+        return children
     }
 
     /**
@@ -272,11 +261,6 @@ export class SubhutiGrammarAnalyzer {
         // 没有可展开的规则，返回空数组
         return []
     }
-
-
-
-
-
 
 
     /**
