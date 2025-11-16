@@ -218,43 +218,46 @@ export class SubhutiGrammarAnalyzer {
     }
 
     /**
-     * 展开一个分支（将其中的规则名替换为子节点）
+     * 展开一个分支（将其中的第一个可展开的规则名替换为子节点）
+     *
+     * 注意：只展开第一个规则，返回所有可能的新分支
+     * 例如：[A, B] → 如果 A 有 2 个子节点 [a1, a2]，返回 [[a1, a2, B]]
      */
     private expandBranch(branch: string[]): string[][] {
-        const result: string[][] = []
-
+        // 找到第一个可展开的规则
         for (let i = 0; i < branch.length; i++) {
             const node = branch[i]
 
-            if (node === '' || this.isToken(node)) {
+            // 跳过空节点
+            if (node === '') {
                 continue
             }
 
+            // 获取该规则的直接子节点
+            // 如果是 token（不在 ruleASTs 中），getDirectChildren 会返回空数组
             const children = this.getDirectChildren(node)
             if (children.length === 0) continue
 
+            // 展开这个规则，生成所有可能的新分支
+            const result: string[][] = []
             for (const childBranch of children) {
                 const newBranch = [
-                    ...branch.slice(0, i),
-                    ...childBranch,
-                    ...branch.slice(i + 1)
+                    ...branch.slice(0, i),      // 前面的部分
+                    ...childBranch,              // 替换为子节点
+                    ...branch.slice(i + 1)       // 后面的部分
                 ]
                 result.push(newBranch)
             }
 
+            // 找到第一个可展开的规则后就返回
             return result
         }
 
-        return result
+        // 没有可展开的规则，返回空数组
+        return []
     }
 
-    /**
-     * 判断是否是 token（简单判断：大写开头或特殊字符）
-     */
-    private isToken(name: string): boolean {
-        if (name === '') return false
-        return /^[A-Z]/.test(name) || /^[^a-zA-Z]/.test(name)
-    }
+
 
 
 
