@@ -120,7 +120,7 @@ export interface SequenceNode {
  */
 export interface OrNode {
     type: 'or'
-    alternatives: RuleNode[]
+    alternatives: SequenceNode[]
 }
 
 /**
@@ -128,7 +128,7 @@ export interface OrNode {
  */
 export interface OptionNode {
     type: 'option'
-    node: RuleNode
+    node: SequenceNode
 }
 
 /**
@@ -136,7 +136,7 @@ export interface OptionNode {
  */
 export interface ManyNode {
     type: 'many'
-    node: RuleNode
+    node: SequenceNode
 }
 
 /**
@@ -144,7 +144,7 @@ export interface ManyNode {
  */
 export interface AtLeastOneNode {
     type: 'atLeastOne'
-    node: RuleNode
+    node: SequenceNode
 }
 
 /**

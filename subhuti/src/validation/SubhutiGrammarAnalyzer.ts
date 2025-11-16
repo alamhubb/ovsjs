@@ -133,12 +133,13 @@ export class SubhutiGrammarAnalyzer {
      */
     private getDirectChildren(ruleName: string): string[][] {
         if (this.directChildrenCache.has(ruleName)) {
-            throw new Error('系统错误')
+            return this.directChildrenCache.get(ruleName)
         }
 
         const ruleNode = this.ruleASTs.get(ruleName)
         if (!ruleNode) {
-            throw new Error('系统错误')
+            //token节点
+            return []
         }
 
         const children = this.computeDirectChildren(ruleNode)
@@ -274,8 +275,10 @@ export class SubhutiGrammarAnalyzer {
      * - 最终通过笛卡尔积合并所有分支
      *
      * @param rootNode AST 节点
+     * @param maxLevel
+     * @param curLevel
      */
-    private computeDirectChildren(rootNode: RuleNode): string[][] {
+    private computeDirectChildren(rootNode: RuleNode, maxLevel: number = 0, curLevel: number = maxLevel): string[][] {
         switch (rootNode.type) {
             case 'consume':
                 return [[rootNode.tokenName]]
@@ -294,8 +297,11 @@ export class SubhutiGrammarAnalyzer {
                 return this.computeAtLeastOneDirectChildren(rootNode.node)
 
             case 'subrule':
-                return [[rootNode.ruleName]]
-
+                if (curLevel >= maxLevel) {
+                    return [[rootNode.ruleName]]
+                } else {
+                    return this.directChildrenCache.get(rootNode.ruleName)
+                }
             default:
                 console.warn(`Unknown node type: ${(rootNode as any).type}`)
                 return []
@@ -315,7 +321,7 @@ export class SubhutiGrammarAnalyzer {
      * [["B"]] × [[], ["C"]] × [["D"]]
      * = [["B", "D"], ["B", "C", "D"]]
      */
-    private computeOptionDirectChildren(node: RuleNode): string[][] {
+    private computeOptionDirectChildren(node: SequenceNode): string[][] {
         const innerBranches = this.computeDirectChildren(node)
         return [[], ...innerBranches]
     }
@@ -328,7 +334,7 @@ export class SubhutiGrammarAnalyzer {
      * - 如果 A 有 1 个分支：[["a"]]
      * - 返回：[["a"], ["a", "a"]]
      */
-    private computeAtLeastOneDirectChildren(node: RuleNode): string[][] {
+    private computeAtLeastOneDirectChildren(node: SequenceNode): string[][] {
         const innerBranches = this.computeDirectChildren(node)
         const doubleBranches = innerBranches.map(branch => [...branch, ...branch])
         return [...innerBranches, ...doubleBranches]
