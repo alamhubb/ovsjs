@@ -150,7 +150,7 @@ function getCSTStatistics(node: any): {
 }
 
 // 主程序
-const filePath = process.argv[2] || 'tests/cases/09-block-scope.js'
+const filePath = process.argv[2] || 'slime/tests/cases/09-block-scope.js'
 // const filePath = process.argv[2] || 'tests/es6rules/AdditiveExpression-001.js'
 
 if (!filePath) {
@@ -214,7 +214,7 @@ try {
     
     console.log(`✅ 词法分析: ${tokens.length} tokens (有效token: ${inputTokens.length})`)
     
-    // 语法分析（使用 Es2020Parser）
+    // 语法分析（使用 Es2025Parser）
     const parser = new Es2025Parser(tokens).validate()
     const cst = parser.Script()
     console.log(`✅ 语法分析: CST生成成功`)
