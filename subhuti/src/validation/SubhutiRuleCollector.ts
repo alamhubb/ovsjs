@@ -135,7 +135,15 @@ export class SubhutiRuleCollector {
                     /^[A-Z]/.test(prop) &&
                     !coreMethod.includes(prop)) {
                     return function (...args: any[]) {
-                        return collector.handleSubrule(prop, original, proxy, args)
+                        // 如果是顶层规则调用（收集该规则本身），执行原方法
+                        if (collector.isExecutingTopLevelRule && prop === collector.currentRuleName) {
+                            collector.isExecutingTopLevelRule = false
+                            // 执行原方法，不需要 try-catch，因为 tokenConsumer 不会抛出异常
+                            return original.apply(proxy, args)
+                        }
+
+                        // 如果是子规则调用，只记录，不执行
+                        return collector.handleSubrule(prop)
                     }
                 }
 
@@ -163,14 +171,18 @@ export class SubhutiRuleCollector {
                         // 记录 token 消费（方法名即 token 名）
                         collector.handleConsume(prop)
 
-                        // 尝试执行原方法，但捕获异常
-                        try {
-                            return original.apply(target, args)
-                        } catch (error: any) {
-                            // 消费失败（缺少token），但我们已经记录了consume调用
-                            // 返回undefined，让规则继续执行
-                            return undefined
-                        }
+                        // 不需要执行原方法，因为我们只是收集 AST 结构
+                        // 直接返回 undefined
+                        return undefined
+
+                        // // 尝试执行原方法，但捕获异常
+                        // try {
+                        //     return original.apply(target, args)
+                        // } catch (error: any) {
+                        //     // 消费失败（缺少token），但我们已经记录了consume调用
+                        //     // 返回undefined，让规则继续执行
+                        //     return undefined
+                        // }
                     }
                 }
 
@@ -207,25 +219,21 @@ export class SubhutiRuleCollector {
 
             // 保存 AST（简化：如果只有一个子节点，直接返回子节点）
             if (rootNode.nodes.length === 1) {
-                this.ruleASTs.set(ruleName, rootNode.nodes[0])
+                this.ruleASTs.set(ruleName, rootNode)
             } else {
                 this.ruleASTs.set(ruleName, rootNode)
             }
         } catch (error: any) {
-            // 特殊处理：循环错误（左递归/右递归）
-            if (error?.type === 'loop') {
-                // 递归是预期情况，保存已收集的部分AST
-                if (rootNode.nodes.length > 0) {
-                    // 有部分AST，保存它
-                    this.ruleASTs.set(ruleName, rootNode)
-                    console.info(`✓ Rule "${ruleName}" contains recursion, saved partial AST (${rootNode.nodes.length} nodes)`)
+            // 执行失败（可能是 Parser 内部验证错误），但我们已经收集了 AST
+            // 保存已收集的 AST
+            if (rootNode.nodes.length > 0) {
+                if (rootNode.nodes.length === 1) {
+                    this.ruleASTs.set(ruleName, rootNode.nodes[0])
                 } else {
-                    // 没收集到任何东西，标记为递归规则
-                    console.info(`✓ Rule "${ruleName}" contains direct recursion, skipped`)
-                    // 不保存AST（返回空）
+                    this.ruleASTs.set(ruleName, rootNode)
                 }
+                console.info(`✓ Rule "${ruleName}" collected with error (${error?.message || error}), saved partial AST (${rootNode.nodes.length} nodes)`)
             } else {
-                // 其他错误才是真正的失败
                 console.warn(`✗ Failed to collect rule "${ruleName}":`, error?.message || error)
             }
         }
