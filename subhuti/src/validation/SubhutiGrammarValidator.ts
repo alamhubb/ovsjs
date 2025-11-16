@@ -1,15 +1,15 @@
 /**
  * SubhutiGrammarValidator - 语法验证器
- * 
+ *
  * 职责：
  * 1. 提供静态验证方法
  * 2. 封装验证流程（收集 → 分析 → 检测 → 报告）
- * 
+ *
  * 设计：
  * - 纯静态方法，无实例状态
  * - 使用 Proxy 方案收集 AST（零侵入）
  * - 有问题直接抛异常
- * 
+ *
  * @version 2.0.0 - 静态方法重构
  */
 
@@ -23,17 +23,17 @@ import {
 export class SubhutiGrammarValidator {
     /**
      * 验证语法：有问题直接抛异常
-     * 
+     *
      * 流程：
      * 1. 使用 Proxy 收集规则 AST
      * 2. 分析所有可能路径
      * 3. 检测 Or 分支冲突
      * 4. 有错误抛 SubhutiGrammarValidationError
-     * 
+     *
      * @param parser Parser 实例
      * @throws SubhutiGrammarValidationError 语法有冲突时抛出
      */
-    static validate(parser: any): void {
+    static validate(parser: any, maxLevel = 3): void {
         // 1. 收集规则 AST（通过 Proxy，无需 Parser 配合）
         const ruleASTs = SubhutiRuleCollector.collectRules(parser)
 
@@ -41,7 +41,7 @@ export class SubhutiGrammarValidator {
         const analyzer = new SubhutiGrammarAnalyzer(ruleASTs)
 
         // 3. 初始化缓存（遍历所有规则，计算直接子节点和分层展开）
-        analyzer.initializeCaches()
+        analyzer.initializeCaches(maxLevel)
 
         // 4. 检测冲突
         const detector = new SubhutiConflictDetector(analyzer, ruleASTs)

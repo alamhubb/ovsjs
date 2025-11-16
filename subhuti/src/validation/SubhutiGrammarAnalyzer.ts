@@ -114,34 +114,43 @@ export class SubhutiGrammarAnalyzer {
      *
      * 应该在收集 AST 之后立即调用
      */
-    initializeCaches(): void {
+    initializeCaches(maxLevel = 3): void {
         // 遍历所有规则
         for (const ruleName of this.ruleASTs.keys()) {
             // 计算直接子节点缓存
-            this.getDirectChildren(ruleName)
-
-            // 计算分层展开缓存
-            this.computeExpansion(ruleName)
+            this.getDirectChildren(this.directChildrenCache, ruleName, maxLevel, maxLevel)
+            this.getDirectChildren(this.expansionCache, ruleName, maxLevel, 0)
         }
     }
 
     /**
-     * 获取规则的直接子节点（只缓存一层）
+     * 获取规则的直接子节点（支持层级控制）
      *
+     * @param cache
      * @param ruleName 规则名称
+     * @param currentLevel 当前层级（默认0）
+     * @param maxLevel 最大层级（默认0，表示不展开规则名）
      * @returns 直接子节点二维数组
      */
-    private getDirectChildren(ruleName: string): string[][] {
-        if (this.directChildrenCache.has(ruleName)) {
-            throw new Error('系统错误')
+    private getDirectChildren(cache: Map<string, string[][]>, ruleName: string, maxLevel: number = 0, currentLevel: number = 0): string[][] {
+        // 只有在默认参数（currentLevel=0, maxLevel=0）时才使用缓存
+        if (currentLevel === 0 && maxLevel === 0) {
+            if (cache.has(ruleName)) {
+                return cache.get(ruleName)
+            }
         }
+
         const ruleNode = this.ruleASTs.get(ruleName)
         if (!ruleNode) {
             throw new Error('系统错误')
         }
 
-        const children = this.computeDirectChildren(ruleNode)
-        this.directChildrenCache.set(ruleName, children)
+        const children = this.computeDirectChildren(ruleNode, currentLevel, maxLevel)
+
+        // 只有在默认参数时才缓存
+        if (currentLevel === 0 && maxLevel === 0) {
+            cache.set(ruleName, children)
+        }
 
         return children
     }
@@ -264,44 +273,37 @@ export class SubhutiGrammarAnalyzer {
 
 
     /**
-     * 计算节点的直接子节点（带层级限制）
+     * 计算节点的子节点（支持层级控制）
      * 返回：二维数组（分支 × 节点序列）
      *
      * @param node AST 节点
      * @param currentLevel 当前层级（默认0）
+     * @param maxLevel 最大层级（默认0，表示不展开规则名）
      */
-    private computeDirectChildren(node: SequenceNode, currentLevel: number = 0): string[][] {
-        // 如果超过最大层级，不再展开，直接返回节点标识
-        if (currentLevel >= this.options.maxLevel) {
-            if (node.type === 'consume') {
-                return [[node.tokenName]]
-            } else if (node.type === 'subrule') {
-                return [[node.ruleName]]
-            } else {
-                // 对于复合节点（sequence, or, many等），返回一个占位符
-                return [[`<${node.type}>`]]
-            }
-        }
-
+    private computeDirectChildren(node: RuleNode, currentLevel: number = 0, maxLevel: number = 0): string[][] {
         switch (node.type) {
             case 'consume':
                 return [[node.tokenName]]
 
             case 'sequence':
-                return this.computeSequenceDirectChildren(node.nodes, currentLevel)
+                return this.computeSequenceDirectChildren(node.nodes, currentLevel, maxLevel)
 
             case 'or':
-                return this.computeOrDirectChildren(node.alternatives, currentLevel)
+                return this.computeOrDirectChildren(node.alternatives, currentLevel, maxLevel)
 
             case 'option':
             case 'many':
-                return this.computeOptionDirectChildren(node.node, currentLevel)
+                return this.computeOptionDirectChildren(node.node, currentLevel, maxLevel)
 
             case 'atLeastOne':
-                return this.computeAtLeastOneDirectChildren(node.node, currentLevel)
+                return this.computeAtLeastOneDirectChildren(node.node, currentLevel, maxLevel)
 
             case 'subrule':
-                return [[node.ruleName]]
+                if (currentLevel >= maxLevel) {
+                    return [[node.ruleName]]
+                }
+                // 展开规则，层级+1
+                return this.getDirectChildren(node.ruleName, currentLevel + 1, maxLevel)
 
             default:
                 console.warn(`Unknown node type: ${(node as any).type}`)
@@ -322,8 +324,8 @@ export class SubhutiGrammarAnalyzer {
      * [["B"]] × [[], ["C"]] × [["D"]]
      * = [["B", "D"], ["B", "C", "D"]]
      */
-    private computeOptionDirectChildren(node: RuleNode, currentLevel: number): string[][] {
-        const innerBranches = this.computeDirectChildren(node, currentLevel + 1)
+    private computeOptionDirectChildren(node: RuleNode, currentLevel: number, maxLevel: number): string[][] {
+        const innerBranches = this.computeDirectChildren(node, currentLevel, maxLevel)
         return [[], ...innerBranches]
     }
 
@@ -335,8 +337,8 @@ export class SubhutiGrammarAnalyzer {
      * - 如果 A 有 1 个分支：[["a"]]
      * - 返回：[["a"], ["a", "a"]]
      */
-    private computeAtLeastOneDirectChildren(node: RuleNode, currentLevel: number): string[][] {
-        const innerBranches = this.computeDirectChildren(node, currentLevel + 1)
+    private computeAtLeastOneDirectChildren(node: RuleNode, currentLevel: number, maxLevel: number): string[][] {
+        const innerBranches = this.computeDirectChildren(node, currentLevel, maxLevel)
         const doubleBranches = innerBranches.map(branch => [...branch, ...branch])
         return [...innerBranches, ...doubleBranches]
     }
@@ -345,12 +347,12 @@ export class SubhutiGrammarAnalyzer {
      * 计算序列的直接子节点（需要笛卡尔积）
      * A B → 所有 A的分支 × B的分支 的组合
      */
-    private computeSequenceDirectChildren(nodes: RuleNode[], currentLevel: number): string[][] {
+    private computeSequenceDirectChildren(nodes: RuleNode[], currentLevel: number, maxLevel: number): string[][] {
         if (nodes.length === 0) {
             return [[]]
         }
 
-        const allBranches = nodes.map(node => this.computeDirectChildren(node, currentLevel + 1))
+        const allBranches = nodes.map(node => this.computeDirectChildren(node, currentLevel, maxLevel))
         return this.cartesianProduct(allBranches)
     }
 
@@ -358,11 +360,11 @@ export class SubhutiGrammarAnalyzer {
      * 计算 Or 的直接子节点（直接合并，不需要笛卡尔积）
      * A / B → A的所有分支 + B的所有分支
      */
-    private computeOrDirectChildren(alternatives: RuleNode[], currentLevel: number): string[][] {
+    private computeOrDirectChildren(alternatives: RuleNode[], currentLevel: number, maxLevel: number): string[][] {
         const result: string[][] = []
 
         for (const alt of alternatives) {
-            const branches = this.computeDirectChildren(alt, currentLevel + 1)
+            const branches = this.computeDirectChildren(alt, currentLevel, maxLevel)
             result.push(...branches)
         }
 
@@ -398,7 +400,7 @@ export class SubhutiGrammarAnalyzer {
     }
 
     clearCache(): void {
-        this.directChildrenCache.clear()
+        cache.clear()
         this.expansionCache.clear()
         this.firstCache.clear()
     }
