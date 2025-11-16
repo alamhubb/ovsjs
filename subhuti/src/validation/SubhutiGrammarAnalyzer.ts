@@ -131,31 +131,64 @@ export class SubhutiGrammarAnalyzer {
             return [[ruleName]]
         }
 
+        // 检测循环引用（递归规则）
+        // 使用类成员 computing 来检测递归
+        if (this.computing.has(ruleName)) {
+            // 遇到循环引用，停止展开
+            throw new Error('规则：' + ruleName + "存在循环引用")
+        }
+
         // 获取当前规则的直接子节点
         const branches = this.directChildrenCache.get(ruleName)
         if (!branches) {
             return [[ruleName]]  // 如果不在缓存中，说明是 token
         }
 
-        // 对每个分支进行展开
-        const expandedBranches: string[][] = []
-
-        for (const branch of branches) {
-            // 对分支中的每个 item 进行展开
-            const expandedItems: string[][][] = []
-
-            for (const item of branch) {
-                // 递归展开规则，层级+1
-                const itemBranches = this.getExpandChildren(item, maxLevel, curLevel + 1)
-                expandedItems.push(itemBranches)
-            }
-
-            // 对当前分支的所有展开结果进行笛卡尔积
-            const cartesianResult = this.cartesianProduct(expandedItems)
-            expandedBranches.push(...cartesianResult)
+        // 限制分支数量，防止爆炸
+        if (branches.length > 1000) {
+            console.warn(`规则 ${ruleName} 的分支数过多 (${branches.length})，跳过展开`)
+            return [[ruleName]]
         }
 
-        return expandedBranches
+        // 标记当前规则正在计算
+        this.computing.add(ruleName)
+
+        try {
+            // 对每个分支进行展开
+            const expandedBranches: string[][] = []
+
+            for (const branch of branches) {
+                // 对分支中的每个 item 进行展开
+                const expandedItems: string[][][] = []
+
+                for (const item of branch) {
+                    // 递归展开规则，层级+1
+                    const itemBranches = this.getExpandChildren(item, maxLevel, curLevel + 1)
+                    expandedItems.push(itemBranches)
+
+                    // 限制展开结果数量
+                    if (itemBranches.length > 100) {
+                        console.warn(`规则 ${item} 的展开结果过多 (${itemBranches.length})，截断`)
+                        expandedItems[expandedItems.length - 1] = itemBranches.slice(0, 100)
+                    }
+                }
+
+                // 对当前分支的所有展开结果进行笛卡尔积
+                const cartesianResult = this.cartesianProduct(expandedItems)
+                expandedBranches.push(...cartesianResult)
+
+                // 限制总分支数
+                if (expandedBranches.length > 1000) {
+                    console.warn(`规则 ${ruleName} 的展开分支数过多，截断`)
+                    return expandedBranches.slice(0, 1000)
+                }
+            }
+
+            return expandedBranches
+        } finally {
+            // 移除标记
+            this.computing.delete(ruleName)
+        }
     }
 
 
@@ -186,7 +219,11 @@ export class SubhutiGrammarAnalyzer {
         if (!ruleNode) {
             throw new Error('系统错误')
         }
-        const rulesBranches= this.getExpandChildren(ruleName, maxLevel, 0)
+
+        // 清空 computing 集合，开始新的展开计算
+        this.computing.clear()
+
+        const rulesBranches = this.getExpandChildren(ruleName, maxLevel, 0)
 
         this.expansionCache.set(ruleName, rulesBranches)
     }
