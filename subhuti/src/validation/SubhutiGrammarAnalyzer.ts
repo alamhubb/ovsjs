@@ -126,19 +126,37 @@ export class SubhutiGrammarAnalyzer {
         }
     }
 
-    private getExpandChildren(ruleName: string, maxLevel: number = 0, curLevel: number = maxLevel): string[][] {
+    private getExpandChildren(ruleName: string, maxLevel: number, curLevel: number): string[][] {
+        // 达到最大层级，不再展开
+        if (curLevel >= maxLevel) {
+            return [[ruleName]]
+        }
 
-        if (curLevel >= maxLevel) return
+        // 获取当前规则的直接子节点
+        const branches = this.directChildrenCache.get(ruleName)
+        if (!branches) {
+            return [[ruleName]]  // 如果不在缓存中，说明是 token
+        }
 
-        const ruleBranches = this.directChildrenCache.get(ruleName)
+        // 对每个分支进行展开
+        const expandedBranches: string[][] = []
 
-        const newRulesBranches = ruleBranches.map(branch => {
-            const newAllRules = branch.map(item => this.directChildrenCache.get(item))
-            const newBranch = this.cartesianProduct(newAllRules)
-            return newBranch
-        })
+        for (const branch of branches) {
+            // 对分支中的每个 item 进行展开
+            const expandedItems: string[][][] = []
 
-        return this.cartesianProduct(newRulesBranches)
+            for (const item of branch) {
+                // 递归展开规则，层级+1
+                const itemBranches = this.getExpandChildren(item, maxLevel, curLevel + 1)
+                expandedItems.push(itemBranches)
+            }
+
+            // 对当前分支的所有展开结果进行笛卡尔积
+            const cartesianResult = this.cartesianProduct(expandedItems)
+            expandedBranches.push(...cartesianResult)
+        }
+
+        return expandedBranches
     }
 
 
