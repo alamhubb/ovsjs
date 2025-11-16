@@ -118,11 +118,10 @@ export class SubhutiGrammarAnalyzer {
         // 遍历所有规则
         for (const ruleName of this.ruleASTs.keys()) {
             // 计算直接子节点缓存
-            this.getDirectChildren(ruleName)
+            this.initDirectChildrenCache(ruleName)
         }
         for (const ruleName of this.directChildrenCache.keys()) {
-
-            this.getExpandChildren(ruleName, maxLevel, 0)
+            this.initExpansionCache(ruleName, maxLevel)
         }
     }
 
@@ -166,22 +165,30 @@ export class SubhutiGrammarAnalyzer {
      * @param ruleName 规则名称
      * @returns 直接子节点二维数组
      */
-    private getDirectChildren(ruleName: string): string[][] {
+    private initDirectChildrenCache(ruleName: string) {
         if (this.directChildrenCache.has(ruleName)) {
-            return this.directChildrenCache.get(ruleName)
+            throw new Error('系统错误')
         }
-
         const ruleNode = this.ruleASTs.get(ruleName)
         if (!ruleNode) {
-            //token节点
-            return []
+            throw new Error('系统错误')
         }
-
         const children = this.computeDirectChildren(ruleNode)
 
         this.directChildrenCache.set(ruleName, children)
+    }
 
-        return children
+    private initExpansionCache(ruleName: string, maxLevel: number) {
+        if (this.expansionCache.has(ruleName)) {
+            throw new Error('系统错误')
+        }
+        const ruleNode = this.directChildrenCache.get(ruleName)
+        if (!ruleNode) {
+            throw new Error('系统错误')
+        }
+        const rulesBranches= this.getExpandChildren(ruleName, maxLevel, 0)
+
+        this.expansionCache.set(ruleName, rulesBranches)
     }
 
     /**
