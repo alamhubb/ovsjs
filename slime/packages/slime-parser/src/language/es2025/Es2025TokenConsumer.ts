@@ -258,8 +258,8 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
     // 标识符 (Identifiers)
     // ============================================
     
-    Identifier() {
-        return this.consume(es2025TokensObj.Identifier)
+    IdentifierName() {
+        return this.consume(es2025TokensObj.IdentifierName)
     }
     
     PrivateIdentifier() {

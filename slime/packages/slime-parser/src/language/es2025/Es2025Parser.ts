@@ -123,7 +123,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      */
     @SubhutiRule
     Identifier(): SubhutiCst | undefined {
-        const cst = this.tokenConsumer.Identifier()
+        const cst = this.tokenConsumer.IdentifierName()
         if (cst && ReservedWords.has(cst.value!)) {
             // 是保留字，解析失败
             return this.parserFail()
@@ -494,7 +494,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     @SubhutiRule
     LiteralPropertyName(): SubhutiCst | undefined {
         return this.Or([
-            {alt: () => this.tokenConsumer.Identifier()},
+            {alt: () => this.tokenConsumer.IdentifierName()},
             {alt: () => this.tokenConsumer.String()},
             {alt: () => this.tokenConsumer.Number()}
         ])
@@ -640,7 +640,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             {
                 alt: () => {
                     this.tokenConsumer.Dot()
-                    this.tokenConsumer.Identifier()
+                    this.tokenConsumer.IdentifierName()
                 }
             },
             // TemplateLiteral[?Yield, ?Await, +Tagged]
@@ -677,7 +677,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                 alt: () => {
                     this.tokenConsumer.SuperTok()
                     this.tokenConsumer.Dot()
-                    this.tokenConsumer.Identifier()
+                    this.tokenConsumer.IdentifierName()
                 }
             }
         ])
@@ -776,7 +776,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             {
                 alt: () => {
                     this.tokenConsumer.Dot()
-                    this.tokenConsumer.Identifier()
+                    this.tokenConsumer.IdentifierName()
                 }
             },
             // TemplateLiteral[?Yield, ?Await, +Tagged]
@@ -999,7 +999,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             {
                 alt: () => {
                     this.tokenConsumer.OptionalChaining()
-                    this.tokenConsumer.Identifier()
+                    this.tokenConsumer.IdentifierName()
                 }
             },
             {
@@ -1029,7 +1029,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             {
                 alt: () => {
                     this.tokenConsumer.Dot()
-                    this.tokenConsumer.Identifier()
+                    this.tokenConsumer.IdentifierName()
                 }
             },
             {alt: () => this.TemplateLiteral({...params, Tagged: true})},
@@ -4024,7 +4024,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     @SubhutiRule
     AttributeKey(): SubhutiCst | undefined {
         return this.Or([
-            {alt: () => this.tokenConsumer.Identifier()},
+            {alt: () => this.tokenConsumer.IdentifierName()},
             {alt: () => this.tokenConsumer.String()}
         ])
     }
@@ -4214,7 +4214,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     @SubhutiRule
     ModuleExportName(): SubhutiCst | undefined {
         return this.Or([
-            {alt: () => this.tokenConsumer.Identifier()},
+            {alt: () => this.tokenConsumer.IdentifierName()},
             {alt: () => this.tokenConsumer.String()}
         ])
     }

@@ -134,8 +134,7 @@ export class SubhutiGrammarAnalyzer {
         // 检测循环引用（递归规则）
         // 使用类成员 computing 来检测递归
         if (this.computing.has(ruleName)) {
-            // 遇到循环引用，停止展开
-            throw new Error('规则：' + ruleName + "存在循环引用")
+            return [[ruleName]]  // 遇到循环引用，停止展开
         }
 
         // 获取当前规则的直接子节点

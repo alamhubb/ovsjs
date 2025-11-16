@@ -162,7 +162,7 @@ export const TokenNames = {
 
     // 标识符
     PrivateIdentifier: 'PrivateIdentifier',
-    Identifier: 'Identifier',
+    IdentifierName: 'Identifier',
 
     // 正则字面量
     RegularExpressionLiteral: 'RegularExpressionLiteral',
@@ -347,7 +347,7 @@ export const es2025TokensObj = {
     // ============================================
 
     PrivateIdentifier: createEmptyValueRegToken(TokenNames.PrivateIdentifier, /#[a-zA-Z_$][a-zA-Z0-9_$]*/),
-    Identifier: createEmptyValueRegToken(TokenNames.Identifier, /[a-zA-Z_$][a-zA-Z0-9_$]*/),
+    IdentifierName: createEmptyValueRegToken(TokenNames.IdentifierName, /[a-zA-Z_$][a-zA-Z0-9_$]*/),
 
     // ============================================
     // A.1.11 正则字面量
