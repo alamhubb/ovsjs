@@ -1049,6 +1049,11 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      *     NewExpression[?Yield, ?Await]
      *     CallExpression[?Yield, ?Await]
      *     OptionalExpression[?Yield, ?Await]
+     *
+     * 注意：虽然规范中NewExpression在前，但在PEG解析中，
+     * 由于NewExpression包含MemberExpression，会导致短路问题。
+     * 因此我们需要将CallExpression和OptionalExpression放在前面，
+     * 因为它们是"更长"的规则（包含函数调用、可选链等）。
      */
     @SubhutiRule
     LeftHandSideExpression(params: ExpressionParams = {}): SubhutiCst | undefined {

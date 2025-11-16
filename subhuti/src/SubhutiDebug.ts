@@ -1196,9 +1196,9 @@ export class SubhutiTraceDebugger {
             }
         }
 
-
         const tokenStr = SubhutiDebugRuleTracePrint.getPrintToken(tokenItem, location)
-        SubhutiDebugRuleTracePrint.printLine(tokenStr, depth)
+        const line = SubhutiDebugRuleTracePrint.formatLine(tokenStr, depth)
+        SubhutiDebugRuleTracePrint.consoleLog(line)
     }
 
     onOrEnter(
@@ -1235,7 +1235,9 @@ export class SubhutiTraceDebugger {
             orBranchInfo: {
                 orIndex,  // 【新增】设置 Or 序号
                 isOrEntry: true,
-                isOrBranch: false
+                isOrBranch: false,
+                startTokenIndex: tokenIndex,  // 【新增】记录Or开始时的tokenIndex
+                branchAttempts: []  // 【新增】记录所有分支尝试
             }
         })
     }

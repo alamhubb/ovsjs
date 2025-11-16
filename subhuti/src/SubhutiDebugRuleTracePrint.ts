@@ -220,13 +220,11 @@ export class SubhutiDebugRuleTracePrint {
         )
     }
 
-    /**
-     * 打印一行（直接输出到控制台）
-     */
-    public static printLine(str: string, depth: number, symbol: string = '└─') {
-        const line = this.formatLine(str, depth, symbol)
-        console.log(line)
-        // LogUtil.log(line)
+
+
+    public static consoleLog(...strs) {
+        // console.log(...strs)
+        LogUtil.log(strs[0])
     }
 
 
@@ -324,7 +322,7 @@ export class SubhutiDebugRuleTracePrint {
      */
     public static flushPendingOutputs_NonCache_Impl(ruleStack: RuleStackItem[]): number {
         const lines = this.formatPendingOutputs_NonCache_Impl(ruleStack)
-        lines.forEach(line => console.log(line))
+        lines.forEach(line => this.consoleLog(line))
 
         // 返回最后的深度（用于兼容现有代码）
         const lastRule = ruleStack[ruleStack.length - 1]
@@ -404,7 +402,7 @@ export class SubhutiDebugRuleTracePrint {
      */
     static printChainRule(rules: RuleStackItem[], depth: number = rules[0].displayDepth) {
         const lines = this.formatChainRule(rules, depth)
-        lines.forEach(line => console.log(line))
+        lines.forEach(line => this.consoleLog(line))
     }
 
     /**
@@ -448,7 +446,7 @@ export class SubhutiDebugRuleTracePrint {
      */
     static printMultipleSingleRule(rules: RuleStackItem[], depth: number = rules[0].displayDepth): number {
         const result = this.formatMultipleSingleRule(rules, depth)
-        result.lines.forEach(line => console.log(line))
+        result.lines.forEach(line => this.consoleLog(line))
         return result.depth
     }
 

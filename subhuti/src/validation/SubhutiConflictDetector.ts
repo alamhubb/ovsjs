@@ -37,25 +37,53 @@ import type { SubhutiGrammarAnalyzer } from "./SubhutiGrammarAnalyzer"
 import type { RuleNode, ValidationError, Path } from "./SubhutiValidationError"
 
 /**
+ * 冲突检测模式
+ */
+export type ConflictDetectionMode = 'paths' | 'first' | 'auto'
+
+/**
+ * 冲突检测器配置
+ */
+export interface ConflictDetectorOptions {
+    /**
+     * 检测模式
+     * - 'paths': 使用完全展开路径检测（精确但可能慢）
+     * - 'first': 使用First集合检测（快速但不够精确）
+     * - 'auto': 自动选择（默认）
+     */
+    mode?: ConflictDetectionMode
+}
+
+/**
  * 冲突检测器
- * 
+ *
  * 职责：
  * 1. 遍历所有 Or 规则
  * 2. 检测空路径（Level 1 - FATAL）
  * 3. 检测前缀冲突（Level 2 - ERROR）
  * 4. 生成详细的错误报告
+ *
+ * 两种检测模式：
+ * - 完全展开路径：精确但可能路径爆炸
+ * - First集合：快速但不够精确
  */
 export class SubhutiConflictDetector {
+    private mode: ConflictDetectionMode
+
     /**
      * 构造函数
-     * 
+     *
      * @param analyzer 语法分析器
      * @param ruleASTs 规则 AST 映射
+     * @param options 配置选项
      */
     constructor(
         private analyzer: SubhutiGrammarAnalyzer,
-        private ruleASTs: Map<string, RuleNode>
-    ) {}
+        private ruleASTs: Map<string, RuleNode>,
+        options: ConflictDetectorOptions = {}
+    ) {
+        this.mode = options.mode || 'auto'
+    }
     
     /**
      * 检测所有冲突
