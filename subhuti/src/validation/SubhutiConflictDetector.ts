@@ -145,8 +145,10 @@ export class SubhutiConflictDetector {
      * 检测 Or 规则的冲突
      *
      * 核心步骤：
-     * 1. 计算每个分支的所有可能路径（完全展开subrule）
-     * 2. 两两比较分支路径，检测前缀关系
+     * 1. 计算每个分支的路径（限制长度）
+     *    - 被匹配规则（前面的分支）：最多100个token
+     *    - 匹配规则（后面的分支）：最多101个token
+     * 2. 使用 B.startsWith(A) 检测前缀关系
      * 3. 生成详细的错误报告
      */
     private detectOrConflicts(
@@ -154,18 +156,15 @@ export class SubhutiConflictDetector {
         alternatives: RuleNode[],
         errors: ValidationError[]
     ): void {
-        // 计算每个分支的路径（方案A：完全展开subrule为实际token序列）
-        const branchPaths: Path[][] = alternatives.map(alt =>
-            this.analyzer.computeNodePaths(alt)
-        )
-        
         // 两两比较
-        for (let i = 0; i < branchPaths.length; i++) {
-            const pathsA = branchPaths[i]
-            
-            for (let j = i + 1; j < branchPaths.length; j++) {
-                const pathsB = branchPaths[j]
-                
+        for (let i = 0; i < alternatives.length; i++) {
+            // 被匹配规则（A）：最多100个token
+            const pathsA = this.analyzer.computeNodePaths(alternatives[i], 100)
+
+            for (let j = i + 1; j < alternatives.length; j++) {
+                // 匹配规则（B）：最多101个token
+                const pathsB = this.analyzer.computeNodePaths(alternatives[j], 101)
+
                 // Level 1: 空路径检测
                 if (this.hasEmptyPath(pathsA)) {
                     errors.push({
@@ -180,12 +179,12 @@ export class SubhutiConflictDetector {
                         message: `分支 ${i} 有空路径，后续所有分支都不可达`,
                         suggestion: '移除 Option/Many 或将其移到 Or 外部'
                     })
-                    
+
                     // 空路径是致命错误，后续分支全部不可达，不再检测
                     return
                 }
-                
-                // Level 2: 前缀冲突检测
+
+                // Level 2: 前缀冲突检测（使用 B.startsWith(A)）
                 this.detectPrefixConflicts(ruleName, i, j, pathsA, pathsB, errors)
             }
         }
