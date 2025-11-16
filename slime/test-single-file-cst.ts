@@ -215,7 +215,7 @@ try {
     console.log(`✅ 词法分析: ${tokens.length} tokens (有效token: ${inputTokens.length})`)
     
     // 语法分析（使用 Es2020Parser）
-    const parser = new Es2025Parser(tokens).debug().validate()
+    const parser = new Es2025Parser(tokens).validate()
     const cst = parser.Script()
     console.log(`✅ 语法分析: CST生成成功`)
     
