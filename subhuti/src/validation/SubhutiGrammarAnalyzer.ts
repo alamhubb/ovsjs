@@ -234,6 +234,18 @@ export class SubhutiGrammarAnalyzer {
     }
 
     /**
+     * 从缓存中获取规则的展开结果
+     *
+     * 用于冲突检测时获取规则的完全展开结果
+     *
+     * @param ruleName 规则名称或 token 名称
+     * @returns 展开结果（二维数组），如果不在缓存中返回 undefined
+     */
+    getExpansionFromCache(ruleName: string): string[][] | undefined {
+        return this.expansionCache.get(ruleName)
+    }
+
+    /**
      * 计算节点的分层展开（核心递归方法）
      * 返回：所有层级的所有分支（二维数组）
      */
@@ -320,7 +332,7 @@ export class SubhutiGrammarAnalyzer {
      * @param maxLevel
      * @param curLevel
      */
-    private computeDirectChildren(rootNode: RuleNode): string[][] {
+    public computeDirectChildren(rootNode: RuleNode): string[][] {
         // private computeDirectChildren(rootNode: RuleNode, maxLevel: number = 0, curLevel: number = maxLevel): string[][] {
         switch (rootNode.type) {
             case 'consume':

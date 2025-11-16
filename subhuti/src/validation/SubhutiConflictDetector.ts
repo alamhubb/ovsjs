@@ -34,7 +34,7 @@
  */
 
 import type { SubhutiGrammarAnalyzer } from "./SubhutiGrammarAnalyzer"
-import type { RuleNode, ValidationError, Path } from "./SubhutiValidationError"
+import type {RuleNode, ValidationError, Path, SequenceNode} from "./SubhutiValidationError"
 
 /**
  * 冲突检测模式
@@ -145,21 +145,53 @@ export class SubhutiConflictDetector {
      * 检测 Or 规则的冲突
      *
      * 核心步骤：
-     * 1. 计算每个分支的展开结果（二维数组）
-     * 2. 将二维数组转换为路径字符串
-     * 3. 使用 B.startsWith(A) 检测前缀关系
+     * 1. 遍历 Or 节点的每个分支
+     * 2. 对每个分支调用 computeDirectChildren 获取直接子节点（展开辅助节点，保留 token 和 ruleName）
+     * 3. 对每个分支中的每个规则从 expansionCache 中获取其完全展开结果
+     * 4. 通过笛卡尔积将规则替换为其展开结果，得到完整的 token 路径
+     * 5. 两两比较分支，检测前缀冲突
      */
     private detectOrConflicts(
         ruleName: string,
-        alternatives: RuleNode[],
+        alternatives: SequenceNode[],
         errors: ValidationError[]
     ): void {
-        // 计算每个分支的展开结果
-        const branchExpansions = alternatives.map(alt =>
-            this.computeNodeExpansion(alt)
-        )
+        // 计算每个 Or 分支的完全展开结果
+        const branchExpansions: string[][][] = []
 
-        // 两两比较
+        for (const alternative of alternatives) {
+            // 步骤1: 调用 computeDirectChildren 获取分支的直接子节点
+            // 这会展开所有辅助节点（sequence、or、option、many、atLeastOne）
+            // 但保留 token 和 ruleName 不展开
+            // 返回二维数组，例如：[["RuleA", "TokenB"], ["RuleC"]]
+            const directChildren = this.analyzer.computeDirectChildren(alternative)
+
+            // 步骤2: 对每个直接子节点分支进行完全展开
+            const expandedBranches: string[][] = []
+
+            for (const branch of directChildren) {
+                // branch 是一个一维数组，例如：["RuleA", "TokenB"]
+
+                // 步骤3: 对分支中的每个 item（token 或 ruleName）获取其展开结果
+                // 从 expansionCache 中获取规则的完全展开结果
+                // 如果是 token（不在缓存中），则保持原样 [[item]]
+                const expandedItems: string[][][] = branch.map(item => {
+                    const cached = this.analyzer.getExpansionFromCache(item)
+                    return cached || [[item]]  // token 返回 [[item]]，规则返回缓存的展开结果
+                })
+
+                // 步骤4: 通过笛卡尔积将所有规则的展开结果组合
+                // 将三维数组转换为二维数组
+                // 例如：[ [["a", "b"], ["c"]], [["TokenB"]] ]
+                //    → [["a", "TokenB"], ["c", "TokenB"]]
+                const cartesianResult = this.cartesianProduct(expandedItems)
+                expandedBranches.push(...cartesianResult)
+            }
+
+            branchExpansions.push(expandedBranches)
+        }
+
+        // 步骤5: 两两比较 Or 分支，检测前缀冲突
         for (let i = 0; i < alternatives.length; i++) {
             const pathsA = this.expansionToPaths(branchExpansions[i])
 
@@ -301,6 +333,46 @@ export class SubhutiConflictDetector {
      */
     private isPrefix(pathA: Path, pathB: Path): boolean {
         return pathA.length > 0 && pathA.length < pathB.length && pathB.startsWith(pathA)
+    }
+
+    /**
+     * 计算笛卡尔积
+     *
+     * 将三维数组通过笛卡尔积转换为二维数组
+     *
+     * 例如：
+     * 输入：[ [["a", "b"], ["c"]], [["TokenB"]] ]
+     * 输出：[["a", "TokenB"], ["c", "TokenB"]]
+     *
+     * 原理：
+     * - 第一个数组的每个分支 × 第二个数组的每个分支 × ... × 第N个数组的每个分支
+     * - 将每个组合拼接成一个新的分支
+     *
+     * @param arrays 三维数组（数组的数组的数组）
+     * @returns 二维数组（所有可能的组合）
+     */
+    private cartesianProduct(arrays: string[][][]): string[][] {
+        if (arrays.length === 0) {
+            return [[]]
+        }
+
+        if (arrays.length === 1) {
+            return arrays[0]
+        }
+
+        let result = arrays[0]
+
+        for (let i = 1; i < arrays.length; i++) {
+            const temp: string[][] = []
+            for (const seq of result) {
+                for (const branch of arrays[i]) {
+                    temp.push([...seq, ...branch])
+                }
+            }
+            result = temp
+        }
+
+        return result
     }
 }
 
