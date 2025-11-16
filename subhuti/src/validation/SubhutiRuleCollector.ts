@@ -203,6 +203,7 @@ export class SubhutiRuleCollector {
         // 创建根 Sequence 节点
         const rootNode: SequenceNode = {
             type: 'sequence',
+            ruleName: ruleName,
             nodes: []
         }
         this.currentRuleStack.push(rootNode)
@@ -218,20 +219,12 @@ export class SubhutiRuleCollector {
             }
 
             // 保存 AST（简化：如果只有一个子节点，直接返回子节点）
-            if (rootNode.nodes.length === 1) {
-                this.ruleASTs.set(ruleName, rootNode)
-            } else {
-                this.ruleASTs.set(ruleName, rootNode)
-            }
+            this.ruleASTs.set(ruleName, rootNode)
         } catch (error: any) {
             // 执行失败（可能是 Parser 内部验证错误），但我们已经收集了 AST
             // 保存已收集的 AST
             if (rootNode.nodes.length > 0) {
-                if (rootNode.nodes.length === 1) {
-                    this.ruleASTs.set(ruleName, rootNode.nodes[0])
-                } else {
-                    this.ruleASTs.set(ruleName, rootNode)
-                }
+                this.ruleASTs.set(ruleName, rootNode)
                 console.info(`✓ Rule "${ruleName}" collected with error (${error?.message || error}), saved partial AST (${rootNode.nodes.length} nodes)`)
             } else {
                 console.warn(`✗ Failed to collect rule "${ruleName}":`, error?.message || error)
