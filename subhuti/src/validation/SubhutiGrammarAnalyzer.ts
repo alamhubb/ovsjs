@@ -133,7 +133,7 @@ export class SubhutiGrammarAnalyzer {
      */
     private getDirectChildren(ruleName: string): string[][] {
         if (this.directChildrenCache.has(ruleName)) {
-            return this.directChildrenCache.get(ruleName)!
+            throw new Error('系统错误')
         }
 
         const ruleNode = this.ruleASTs.get(ruleName)
