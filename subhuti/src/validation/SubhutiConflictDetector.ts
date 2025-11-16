@@ -145,26 +145,26 @@ export class SubhutiConflictDetector {
      * 检测 Or 规则的冲突
      *
      * 核心步骤：
-     * 1. 计算每个分支的路径（所有路径都是100个token）
-     * 2. 被匹配规则（A）：使用时截取前99个token
-     * 3. 匹配规则（B）：直接使用100个token
-     * 4. 使用 B.startsWith(A) 检测前缀关系
+     * 1. 计算每个分支的展开结果（二维数组）
+     * 2. 将二维数组转换为路径字符串
+     * 3. 使用 B.startsWith(A) 检测前缀关系
      */
     private detectOrConflicts(
         ruleName: string,
         alternatives: RuleNode[],
         errors: ValidationError[]
     ): void {
+        // 计算每个分支的展开结果
+        const branchExpansions = alternatives.map(alt =>
+            this.computeNodeExpansion(alt)
+        )
+
         // 两两比较
         for (let i = 0; i < alternatives.length; i++) {
-            // 被匹配规则（A）：计算路径（100个token）
-            const pathsA_full = this.analyzer.computeNodePaths(alternatives[i])
-            // 截取前99个token
-            const pathsA = pathsA_full.map(p => this.truncatePath(p, 99))
+            const pathsA = this.expansionToPaths(branchExpansions[i])
 
             for (let j = i + 1; j < alternatives.length; j++) {
-                // 匹配规则（B）：直接使用100个token
-                const pathsB = this.analyzer.computeNodePaths(alternatives[j])
+                const pathsB = this.expansionToPaths(branchExpansions[j])
 
                 // Level 1: 空路径检测
                 if (this.hasEmptyPath(pathsA)) {
@@ -181,31 +181,38 @@ export class SubhutiConflictDetector {
                         suggestion: '移除 Option/Many 或将其移到 Or 外部'
                     })
 
-                    // 空路径是致命错误，后续分支全部不可达，不再检测
                     return
                 }
 
-                // Level 2: 前缀冲突检测（使用 B.startsWith(A)）
+                // Level 2: 前缀冲突检测
                 this.detectPrefixConflicts(ruleName, i, j, pathsA, pathsB, errors)
             }
         }
     }
 
     /**
-     * 截断路径到指定的token数量
+     * 计算节点的展开结果
      */
-    private truncatePath(path: Path, maxTokens: number): Path {
-        if (path === '') return ''
-
-        const tokens = path.split(',').filter(t => t !== '')
-        if (tokens.length <= maxTokens) {
-            return path
-        }
-
-        // 截断到maxTokens个token
-        return tokens.slice(0, maxTokens).join(',') + ','
+    private computeNodeExpansion(node: RuleNode): string[][] {
+        return this.analyzer.computeNodeExpansionPublic(node)
     }
-    
+
+    /**
+     * 将展开结果（二维数组）转换为路径字符串数组
+     *
+     * 例如：
+     * [["A", "B"], ["C"]] → ["A,B,", "C,"]
+     */
+    private expansionToPaths(expansion: string[][]): Path[] {
+        return expansion.map(branch => {
+            if (branch.length === 0) {
+                return ''
+            }
+            return branch.join(',') + ','
+        })
+    }
+
+
     /**
      * 检测前缀冲突
      *
