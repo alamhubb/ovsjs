@@ -28,16 +28,16 @@
  */
 
 import type SubhutiParser from "../SubhutiParser"
-import type { RuleNode, SequenceNode } from "./SubhutiValidationError"
+import type {RuleNode, SequenceNode} from "./SubhutiValidationError"
 
 /**
  * 规则收集器
- * 
+ *
  * 职责：
  * 1. 创建 Parser 的 Proxy 代理
  * 2. 拦截 Or/Many/Option/AtLeastOne/consume 方法调用
  * 3. 记录调用序列形成 AST
- * 
+ *
  * 优势：
  * - Parser 代码完全干净，无需任何验证相关代码
  * - 验证逻辑完全独立，易于维护
@@ -55,10 +55,10 @@ export class SubhutiRuleCollector {
 
     /** 是否正在执行顶层规则调用 */
     private isExecutingTopLevelRule: boolean = false
-    
+
     /**
      * 收集所有规则 - 静态方法
-     * 
+     *
      * @param parser Parser 实例
      * @returns 规则名称 → AST 的映射
      */
@@ -66,25 +66,25 @@ export class SubhutiRuleCollector {
         const collector = new SubhutiRuleCollector()
         return collector.collect(parser)
     }
-    
+
     /**
      * 收集所有规则（私有实现）
      */
     private collect(parser: SubhutiParser): Map<string, RuleNode> {
         // 创建代理，拦截方法调用
         const proxy = this.createAnalyzeProxy(parser)
-        
+
         // 获取所有 @SubhutiRule 方法
         const ruleNames = this.getAllRuleNames(parser)
-        
+
         // 遍历执行每个规则
         for (const ruleName of ruleNames) {
             this.collectRule(proxy, ruleName)
         }
-        
+
         return this.ruleASTs
     }
-    
+
     /**
      * 创建分析代理（拦截 Parser 方法调用）
      */
@@ -134,7 +134,7 @@ export class SubhutiRuleCollector {
                     typeof prop === 'string' &&
                     /^[A-Z]/.test(prop) &&
                     !coreMethod.includes(prop)) {
-                    return function(...args: any[]) {
+                    return function (...args: any[]) {
                         return collector.handleSubrule(prop, original, proxy, args)
                     }
                 }
@@ -159,7 +159,7 @@ export class SubhutiRuleCollector {
 
                 // 拦截所有方法调用（除了特殊属性）
                 if (typeof original === 'function' && typeof prop === 'string') {
-                    return function(...args: any[]) {
+                    return function (...args: any[]) {
                         // 记录 token 消费（方法名即 token 名）
                         collector.handleConsume(prop)
 
@@ -178,7 +178,7 @@ export class SubhutiRuleCollector {
             }
         })
     }
-    
+
     /**
      * 收集单个规则
      */
@@ -204,7 +204,7 @@ export class SubhutiRuleCollector {
                 ruleMethod.call(proxy)
                 this.isExecutingTopLevelRule = false
             }
-            
+
             // 保存 AST（简化：如果只有一个子节点，直接返回子节点）
             if (rootNode.nodes.length === 1) {
                 this.ruleASTs.set(ruleName, rootNode.nodes[0])
@@ -230,18 +230,18 @@ export class SubhutiRuleCollector {
             }
         }
     }
-    
+
     /**
      * 获取所有规则名称
      */
     private getAllRuleNames(parser: SubhutiParser): string[] {
         const ruleNames: string[] = []
         const prototype = Object.getPrototypeOf(parser)
-        
+
         // 遍历原型链上的所有方法
         for (const key of Object.getOwnPropertyNames(prototype)) {
             if (key === 'constructor') continue
-            
+
             const descriptor = Object.getOwnPropertyDescriptor(prototype, key)
             if (descriptor && typeof descriptor.value === 'function') {
                 // 检查是否是 @SubhutiRule 装饰的方法
@@ -249,14 +249,14 @@ export class SubhutiRuleCollector {
                 ruleNames.push(key)
             }
         }
-        
+
         return ruleNames
     }
-    
+
     // ============================================
     // Proxy 拦截方法
     // ============================================
-    
+
     /**
      * 处理 Or 规则
      */
@@ -267,7 +267,7 @@ export class SubhutiRuleCollector {
 
         for (const alt of alternatives) {
             // 进入新的序列
-            const seqNode: SequenceNode = { type: 'sequence', nodes: [] }
+            const seqNode: SequenceNode = {type: 'sequence', nodes: []}
             this.currentRuleStack.push(seqNode)
 
             try {
@@ -296,15 +296,15 @@ export class SubhutiRuleCollector {
         // 记录 Or 节点（即使某些分支失败，只要有至少一个分支成功）
         if (altNodes.length > 0) {
             // console.log(`[DEBUG] Recording Or node with ${altNodes.length} alternatives`)
-            this.recordNode({ type: 'or', alternatives: altNodes })
+            this.recordNode({type: 'or', alternatives: altNodes})
         }
     }
-    
+
     /**
      * 处理 Many 规则
      */
     private handleMany(fn: () => any, target: any): void {
-        const seqNode: SequenceNode = { type: 'sequence', nodes: [] }
+        const seqNode: SequenceNode = {type: 'sequence', nodes: []}
         this.currentRuleStack.push(seqNode)
 
         try {
@@ -313,13 +313,13 @@ export class SubhutiRuleCollector {
 
             const innerNode = this.currentRuleStack.pop()
             if (innerNode) {
-                this.recordNode({ type: 'many', node: innerNode })
+                this.recordNode({type: 'many', node: innerNode})
             }
         } catch (error: any) {
             // 执行失败，但仍然尝试保存已收集的部分
             const innerNode = this.currentRuleStack.pop()
             if (innerNode && innerNode.nodes && innerNode.nodes.length > 0) {
-                this.recordNode({ type: 'many', node: innerNode })
+                this.recordNode({type: 'many', node: innerNode})
             }
         }
     }
@@ -328,7 +328,7 @@ export class SubhutiRuleCollector {
      * 处理 Option 规则
      */
     private handleOption(fn: () => any, target: any): void {
-        const seqNode: SequenceNode = { type: 'sequence', nodes: [] }
+        const seqNode: SequenceNode = {type: 'sequence', nodes: []}
         this.currentRuleStack.push(seqNode)
 
         try {
@@ -336,13 +336,13 @@ export class SubhutiRuleCollector {
 
             const innerNode = this.currentRuleStack.pop()
             if (innerNode) {
-                this.recordNode({ type: 'option', node: innerNode })
+                this.recordNode({type: 'option', node: innerNode})
             }
         } catch (error: any) {
             // 执行失败，但仍然尝试保存已收集的部分
             const innerNode = this.currentRuleStack.pop()
             if (innerNode && innerNode.nodes && innerNode.nodes.length > 0) {
-                this.recordNode({ type: 'option', node: innerNode })
+                this.recordNode({type: 'option', node: innerNode})
             }
         }
     }
@@ -351,7 +351,7 @@ export class SubhutiRuleCollector {
      * 处理 AtLeastOne 规则
      */
     private handleAtLeastOne(fn: () => any, target: any): void {
-        const seqNode: SequenceNode = { type: 'sequence', nodes: [] }
+        const seqNode: SequenceNode = {type: 'sequence', nodes: []}
         this.currentRuleStack.push(seqNode)
 
         try {
@@ -359,49 +359,29 @@ export class SubhutiRuleCollector {
 
             const innerNode = this.currentRuleStack.pop()
             if (innerNode) {
-                this.recordNode({ type: 'atLeastOne', node: innerNode })
+                this.recordNode({type: 'atLeastOne', node: innerNode})
             }
         } catch (error: any) {
             // 执行失败，但仍然尝试保存已收集的部分
             const innerNode = this.currentRuleStack.pop()
             if (innerNode && innerNode.nodes && innerNode.nodes.length > 0) {
-                this.recordNode({ type: 'atLeastOne', node: innerNode })
+                this.recordNode({type: 'atLeastOne', node: innerNode})
             }
         }
     }
-    
+
     /**
      * 处理 consume
      */
     private handleConsume(tokenName: string): void {
-        this.recordNode({ type: 'consume', tokenName })
+        this.recordNode({type: 'consume', tokenName})
     }
 
     /**
      * 处理子规则调用
      */
-    private handleSubrule(ruleName: string, original: Function, target: any, args: any[]): any {
-        // 如果是顶层规则调用，不记录为subrule，但要清除标志
-        if (this.isExecutingTopLevelRule && ruleName === this.currentRuleName) {
-            this.isExecutingTopLevelRule = false
-            // 执行原方法
-            try {
-                return original.apply(target, args)
-            } catch (error: any) {
-                return undefined
-            }
-        }
-
-        // 记录子规则调用
-        this.recordNode({ type: 'subrule', ruleName })
-
-        // 执行原方法（可能会抛出异常）
-        try {
-            return original.apply(target, args)
-        } catch (error: any) {
-            // 子规则执行失败，但我们已经记录了调用
-            return undefined
-        }
+    private handleSubrule(ruleName: string): any {
+        this.recordNode({type: 'subrule', ruleName})
     }
 
     /**
