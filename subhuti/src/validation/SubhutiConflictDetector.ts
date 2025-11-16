@@ -145,11 +145,10 @@ export class SubhutiConflictDetector {
      * 检测 Or 规则的冲突
      *
      * 核心步骤：
-     * 1. 计算每个分支的路径（限制长度）
-     *    - 被匹配规则（前面的分支）：最多100个token
-     *    - 匹配规则（后面的分支）：最多101个token
-     * 2. 使用 B.startsWith(A) 检测前缀关系
-     * 3. 生成详细的错误报告
+     * 1. 计算每个分支的路径（所有路径都是100个token）
+     * 2. 被匹配规则（A）：使用时截取前99个token
+     * 3. 匹配规则（B）：直接使用100个token
+     * 4. 使用 B.startsWith(A) 检测前缀关系
      */
     private detectOrConflicts(
         ruleName: string,
@@ -158,12 +157,14 @@ export class SubhutiConflictDetector {
     ): void {
         // 两两比较
         for (let i = 0; i < alternatives.length; i++) {
-            // 被匹配规则（A）：最多100个token
-            const pathsA = this.analyzer.computeNodePaths(alternatives[i], 100)
+            // 被匹配规则（A）：计算路径（100个token）
+            const pathsA_full = this.analyzer.computeNodePaths(alternatives[i])
+            // 截取前99个token
+            const pathsA = pathsA_full.map(p => this.truncatePath(p, 99))
 
             for (let j = i + 1; j < alternatives.length; j++) {
-                // 匹配规则（B）：最多101个token
-                const pathsB = this.analyzer.computeNodePaths(alternatives[j], 101)
+                // 匹配规则（B）：直接使用100个token
+                const pathsB = this.analyzer.computeNodePaths(alternatives[j])
 
                 // Level 1: 空路径检测
                 if (this.hasEmptyPath(pathsA)) {
@@ -188,6 +189,21 @@ export class SubhutiConflictDetector {
                 this.detectPrefixConflicts(ruleName, i, j, pathsA, pathsB, errors)
             }
         }
+    }
+
+    /**
+     * 截断路径到指定的token数量
+     */
+    private truncatePath(path: Path, maxTokens: number): Path {
+        if (path === '') return ''
+
+        const tokens = path.split(',').filter(t => t !== '')
+        if (tokens.length <= maxTokens) {
+            return path
+        }
+
+        // 截断到maxTokens个token
+        return tokens.slice(0, maxTokens).join(',') + ','
     }
     
     /**

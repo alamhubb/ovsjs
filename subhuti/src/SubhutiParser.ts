@@ -166,12 +166,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         } else {
             this.tokenConsumer = new SubhutiTokenConsumer(this) as T
         }
-
-        // 开发环境自动语法验证
-        // @ts-ignore - Node.js 环境变量检查
-        if (typeof process !== 'undefined' && process.env.NODE_ENV === 'development') {
-            this.validateGrammar()  // 静态方法验证
-        }
     }
 
     // ============================================
@@ -214,6 +208,23 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
     errorHandler(enable: boolean = true): this {
         this._errorHandler.setDetailed(enable)
+        return this
+    }
+
+    /**
+     * 启用语法验证（链式调用）
+     *
+     * 用法：
+     * ```typescript
+     * const parser = new Es2025Parser(tokens).validate()
+     * const cst = parser.Script()
+     * ```
+     *
+     * @returns this - 支持链式调用
+     * @throws SubhutiGrammarValidationError - 语法有冲突时抛出
+     */
+    validate(): this {
+        this.validateGrammar()
         return this
     }
 

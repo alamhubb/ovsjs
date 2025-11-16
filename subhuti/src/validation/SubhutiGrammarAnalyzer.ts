@@ -35,19 +35,25 @@ import type { RuleNode, Path } from "./SubhutiValidationError"
  * 语法分析器配置
  */
 export interface GrammarAnalyzerOptions {
-    /** 
+    /**
+     * 单个token序列的最大长度（token数量）
+     * 默认: 100
+     *
+     * 说明：
+     * - 递归展开时，实时计算当前路径的token数量
+     * - 如果达到100个token，立即停止递归
+     * - 所有路径都最多100个token
+     * - 被匹配规则（A）：使用时截取前99个token
+     * - 匹配规则（B）：直接使用100个token
+     * - 检测：B.startsWith(A)
+     */
+    maxTokens?: number
+
+    /**
      * 单规则路径数量上限（防止路径爆炸）
      * 默认: 10000
      */
     maxPaths?: number
-    
-    /** 
-     * 单路径长度上限（token数量）
-     * 默认: maxPaths / 10 (例如：10000 → 1000)
-     * 
-     * 说明：路径长度与路径数量自动关联，简化配置
-     */
-    maxPathLength?: number
 }
 
 /**
@@ -70,7 +76,7 @@ export interface GrammarAnalyzerOptions {
  * - First集合模式：computeNodeFirst() - 快速但不够精确
  */
 export class SubhutiGrammarAnalyzer {
-    /** 路径缓存（完全展开） - 键格式：ruleName:maxTokens */
+    /** 路径缓存（完全展开） */
     private pathCache = new Map<string, Path[]>()
 
     /** First集合缓存 */
@@ -84,7 +90,7 @@ export class SubhutiGrammarAnalyzer {
 
     /** 配置选项 */
     private options: Required<GrammarAnalyzerOptions>
-    
+
     /**
      * 构造函数
      *
@@ -95,59 +101,57 @@ export class SubhutiGrammarAnalyzer {
         private ruleASTs: Map<string, RuleNode>,
         options?: GrammarAnalyzerOptions
     ) {
-        const maxPaths = options?.maxPaths || 100000
         this.options = {
-            maxPaths,
-            // maxPathLength 默认为 100（每个规则的token序列最大长度）
-            maxPathLength: options?.maxPathLength ?? 100
+            maxTokens: options?.maxTokens ?? 100,
+            maxPaths: options?.maxPaths ?? 10000
         }
     }
     
     /**
      * 计算规则的所有路径（限制长度为100个token）
      *
-     * 用于"被匹配规则"（Or分支中前面的分支）
-     *
      * @param ruleName 规则名称
      * @returns 路径数组，每个路径最多100个token
      */
-    computePaths(ruleName: string, maxTokens: number = 100): Path[] {
-        const cacheKey = `${ruleName}:${maxTokens}`
-
+    computePaths(ruleName: string): Path[] {
         // 1. 缓存检查
-        if (this.pathCache.has(cacheKey)) {
-            return this.pathCache.get(cacheKey)!
+        if (this.pathCache.has(ruleName)) {
+            return this.pathCache.get(ruleName)!
         }
 
-        // 2. 获取 AST
-        const ruleNode = this.ruleASTs.get(ruleName)
-        if (!ruleNode) {
-            // 规则未找到，返回空数组（不打印警告，因为这是正常情况）
+        // 2. 递归检测
+        if (this.computingPaths.has(ruleName)) {
+            // 检测到递归，返回空数组（避免无限递归）
             return []
         }
 
-        // 3. 递归计算路径（限制token长度）
-        const paths = this.computeNodePaths(ruleNode, maxTokens)
+        // 3. 标记为正在计算
+        this.computingPaths.add(ruleName)
 
-        // 4. 限制路径数量
-        const limitedPaths = this.limitPaths(paths)
+        try {
+            // 4. 获取 AST
+            const ruleNode = this.ruleASTs.get(ruleName)
+            if (!ruleNode) {
+                // 规则未找到，返回空数组（不打印警告，因为这是正常情况）
+                return []
+            }
 
-        // 5. 缓存结果
-        this.pathCache.set(cacheKey, limitedPaths)
+            // 5. 递归计算路径（限制token长度为100，自动去重）
+            const paths = this.computeNodePaths(ruleNode)
 
-        return limitedPaths
-    }
+            // 6. 调试：打印路径数量
+            if (ruleName === 'ArgumentList' || ruleName === 'Arguments') {
+                console.log(`📊 规则 ${ruleName} 的路径数量: ${paths.length}`)
+            }
 
-    /**
-     * 计算规则的所有路径（限制长度为101个token）
-     *
-     * 用于"匹配规则"（Or分支中后面的分支）
-     *
-     * @param ruleName 规则名称
-     * @returns 路径数组，每个路径最多101个token
-     */
-    computePathsForMatching(ruleName: string): Path[] {
-        return this.computePaths(ruleName, 101)
+            // 7. 缓存结果
+            this.pathCache.set(ruleName, paths)
+
+            return paths
+        } finally {
+            // 8. 清除计算标记
+            this.computingPaths.delete(ruleName)
+        }
     }
 
     /**
@@ -321,38 +325,37 @@ export class SubhutiGrammarAnalyzer {
      * 计算节点的所有路径
      *
      * @param node AST 节点
-     * @param maxTokens 最大token数量
-     * @returns 路径数组
+     * @returns 路径数组，每个路径最多100个token
      */
-    computeNodePaths(node: RuleNode, maxTokens: number = 100): Path[] {
+    computeNodePaths(node: RuleNode): Path[] {
         switch (node.type) {
             case 'consume':
                 // consume('Token') → ['Token,']
                 return [node.tokenName + ',']
 
             case 'sequence':
-                // sequence → 笛卡尔积拼接
-                return this.computeSequencePaths(node.nodes, maxTokens)
+                // sequence → 笛卡尔积拼接（自动截断为100个token）
+                return this.computeSequencePaths(node.nodes)
 
             case 'or':
                 // or → 合并所有分支
-                return this.computeOrPaths(node.alternatives, maxTokens)
+                return this.computeOrPaths(node.alternatives)
 
             case 'option':
                 // option → ['', ...innerPaths]
-                return this.computeOptionPaths(node.node, maxTokens)
+                return this.computeOptionPaths(node.node)
 
             case 'many':
                 // many → 近似为 option（0次或多次，我们只记录0次和1次）
-                return this.computeOptionPaths(node.node, maxTokens)
+                return this.computeOptionPaths(node.node)
 
             case 'atLeastOne':
                 // atLeastOne → 至少1次，返回1次的路径
-                return this.computeNodePaths(node.node, maxTokens)
+                return this.computeNodePaths(node.node)
 
             case 'subrule':
                 // subrule → 递归展开，计算该规则的所有可能token序列
-                return this.computePaths(node.ruleName, maxTokens)
+                return this.computePaths(node.ruleName)
 
             default:
                 console.warn(`Unknown node type: ${(node as any).type}`)
@@ -362,42 +365,55 @@ export class SubhutiGrammarAnalyzer {
     
     /**
      * 计算序列路径（笛卡尔积）
+     *
+     * 核心优化：
+     * 1. 截断到100个token
+     * 2. 如果prefix已经100个token，直接跳过后续节点
+     * 3. maxPaths限制：防止路径数量爆炸
+     * 4. 🆕 笛卡尔积结果去重：每个节点处理完成后立即去重，减少后续计算量
      */
-    private computeSequencePaths(nodes: RuleNode[], maxTokens: number = 100): Path[] {
+    private computeSequencePaths(nodes: RuleNode[]): Path[] {
         if (nodes.length === 0) {
             return ['']
         }
 
-        // 渐进式计算：逐个节点计算并拼接，而不是先全部计算再拼接
-        // 这样可以在达到限制时提前终止
+        // 渐进式计算：逐个节点计算并拼接
         let result: Path[] = ['']
 
         for (const node of nodes) {
-            const nodePaths = this.computeNodePaths(node, maxTokens)
+            const nodePaths = this.computeNodePaths(node)
 
-            // 与当前结果做笛卡尔积
-            const newResult: Path[] = []
+            // 与当前结果做笛卡尔积 - 使用 Set 自动去重
+            const newResultSet = new Set<Path>()
+
             for (const prefix of result) {
+                // ✅ 关键优化：检查当前路径的token数量
+                const prefixTokenCount = this.countTokens(prefix)
+
+                // 如果当前路径已经达到maxTokens，直接添加，跳过后续节点
+                if (prefixTokenCount >= this.options.maxTokens) {
+                    newResultSet.add(prefix)
+                    continue
+                }
+
                 for (const suffix of nodePaths) {
                     const combined = prefix + suffix
 
-                    // 检查token长度限制
-                    if (this.countTokens(combined) > maxTokens) {
-                        // 超过长度限制，截断
-                        continue
-                    }
+                    // 截断：超过100个token的部分丢弃
+                    const truncated = this.truncatePath(combined, this.options.maxTokens)
 
-                    newResult.push(combined)
+                    // 🆕 使用 Set.add() 自动去重
+                    newResultSet.add(truncated)
 
-                    // 检查路径数量限制
-                    if (newResult.length >= this.options.maxPaths) {
-                        console.warn(`Path count reached limit (${this.options.maxPaths}) in sequence paths`)
-                        return newResult
+                    // ✅ maxPaths限制（检查 Set 的大小）
+                    if (newResultSet.size >= this.options.maxPaths) {
+                        return Array.from(newResultSet)
                     }
                 }
             }
 
-            result = newResult
+            // 🆕 将 Set 转换为数组，去重后的结果用于下一轮计算
+            result = Array.from(newResultSet)
 
             // 如果当前结果为空，提前终止
             if (result.length === 0) {
@@ -407,36 +423,52 @@ export class SubhutiGrammarAnalyzer {
 
         return result
     }
+
+    /**
+     * 截断路径到指定的token数量
+     */
+    private truncatePath(path: Path, maxTokens: number): Path {
+        if (path === '') return ''
+
+        const tokens = path.split(',').filter(t => t !== '')
+        if (tokens.length <= maxTokens) {
+            return path
+        }
+
+        // 截断到maxTokens个token
+        return tokens.slice(0, maxTokens).join(',') + ','
+    }
     
     /**
      * 计算 Or 路径（合并所有分支）
+     *
+     * 需要去重：不同分支可能产生相同的路径
+     * 需要限制数量：防止路径爆炸
      */
-    private computeOrPaths(alternatives: RuleNode[], maxTokens: number = 100): Path[] {
-        const allPaths: Path[] = []
+    private computeOrPaths(alternatives: RuleNode[]): Path[] {
+        const allPathsSet = new Set<Path>()
 
         for (const alt of alternatives) {
-            const paths = this.computeNodePaths(alt, maxTokens)
-            // 避免使用 push(...paths)，因为当paths很大时会导致栈溢出
-            // 使用 concat 或循环代替
+            const paths = this.computeNodePaths(alt)
+
             for (const path of paths) {
-                allPaths.push(path)
+                allPathsSet.add(path)  // 自动去重
 
                 // 检查路径数量限制
-                if (allPaths.length >= this.options.maxPaths) {
-                    console.warn(`Path count reached limit (${this.options.maxPaths}) in Or paths`)
-                    return allPaths
+                if (allPathsSet.size >= this.options.maxPaths) {
+                    return Array.from(allPathsSet)
                 }
             }
         }
 
-        return allPaths
+        return Array.from(allPathsSet)
     }
     
     /**
      * 计算 Option 路径（空路径 + 内部路径）
      */
-    private computeOptionPaths(node: RuleNode, maxTokens: number = 100): Path[] {
-        const innerPaths = this.computeNodePaths(node, maxTokens)
+    private computeOptionPaths(node: RuleNode): Path[] {
+        const innerPaths = this.computeNodePaths(node)
 
         // 空路径在前（表示跳过）
         // 避免使用展开运算符，防止栈溢出
@@ -447,60 +479,7 @@ export class SubhutiGrammarAnalyzer {
         return result
     }
     
-    /**
-     * 笛卡尔积（字符串拼接）+ 渐进式路径限制
-     * 
-     * 优化：在计算过程中就检查路径数量，达到上限立即停止
-     * 
-     * 示例：
-     * ['a,'] × ['b,', 'c,'] = ['a,b,', 'a,c,']
-     */
-    private cartesianProduct(arrays: Path[][]): Path[] {
-        if (arrays.length === 0) {
-            return ['']
-        }
-        
-        return arrays.reduce((acc, curr) => {
-            // ⭐ 提前终止：如果累积路径已达上限，不再计算
-            if (acc.length >= this.options.maxPaths) {
-                console.warn(`Path count reached limit (${this.options.maxPaths}), stopping cartesian product`)
-                return acc
-            }
-            
-            const result: Path[] = []
-            
-            for (const a of acc) {
-                for (const c of curr) {
-                    const combined = a + c
-                    
-                    // 检查路径长度
-                    if (this.countTokens(combined) <= this.options.maxPathLength) {
-                        result.push(combined)
-                        
-                        // ⭐ 实时检查：达到上限立即返回
-                        if (result.length >= this.options.maxPaths) {
-                            console.warn(`Path count reached limit (${this.options.maxPaths}) during calculation`)
-                            return result
-                        }
-                    }
-                }
-            }
-            return result
-        }, [''])
-    }
-    
-    /**
-     * 限制路径数量
-     */
-    private limitPaths(paths: Path[]): Path[] {
-        if (paths.length <= this.options.maxPaths) {
-            return paths
-        }
-        
-        console.warn(`Path count (${paths.length}) exceeds limit (${this.options.maxPaths}), truncating`)
-        return paths.slice(0, this.options.maxPaths)
-    }
-    
+
     /**
      * 计算路径中的 token 数量
      */
