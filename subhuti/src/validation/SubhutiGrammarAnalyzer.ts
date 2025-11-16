@@ -242,7 +242,6 @@ export class SubhutiGrammarAnalyzer {
 
             // 获取该规则的直接子节点
             // 如果是 token（不在 ruleASTs 中），getDirectChildren 会返回空数组
-            const children = this.getDirectChildren(node)
             if (children.length === 0) continue
 
             // 展开这个规则，生成所有可能的新分支
