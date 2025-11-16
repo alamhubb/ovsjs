@@ -92,6 +92,7 @@ export class SubhutiGrammarValidationError extends Error {
  */
 export type RuleNode = 
     | ConsumeNode
+    | SequenceNode
     | OrNode
     | OptionNode
     | ManyNode
@@ -111,7 +112,6 @@ export interface ConsumeNode {
  */
 export interface SequenceNode {
     type: 'sequence'
-    ruleName: string
     nodes: RuleNode[]
 }
 

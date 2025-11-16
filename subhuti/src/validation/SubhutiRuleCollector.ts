@@ -45,7 +45,7 @@ import type {RuleNode, SequenceNode} from "./SubhutiValidationError"
  */
 export class SubhutiRuleCollector {
     /** 收集到的规则 AST */
-    private ruleASTs = new Map<string, RuleNode>()
+    private ruleASTs = new Map<string, SequenceNode>()
 
     /** 当前正在记录的规则栈 */
     private currentRuleStack: SequenceNode[] = []
@@ -62,7 +62,7 @@ export class SubhutiRuleCollector {
      * @param parser Parser 实例
      * @returns 规则名称 → AST 的映射
      */
-    static collectRules(parser: SubhutiParser): Map<string, RuleNode> {
+    static collectRules(parser: SubhutiParser): Map<string, SequenceNode> {
         const collector = new SubhutiRuleCollector()
         return collector.collect(parser)
     }
@@ -70,7 +70,7 @@ export class SubhutiRuleCollector {
     /**
      * 收集所有规则（私有实现）
      */
-    private collect(parser: SubhutiParser): Map<string, RuleNode> {
+    private collect(parser: SubhutiParser): Map<string, SequenceNode> {
         // 创建代理，拦截方法调用
         const proxy = this.createAnalyzeProxy(parser)
 
@@ -203,7 +203,6 @@ export class SubhutiRuleCollector {
         // 创建根 Sequence 节点
         const rootNode: SequenceNode = {
             type: 'sequence',
-            ruleName: ruleName,
             nodes: []
         }
         this.currentRuleStack.push(rootNode)
