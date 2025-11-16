@@ -121,9 +121,26 @@ export class SubhutiGrammarAnalyzer {
             this.getDirectChildren(ruleName)
         }
         for (const ruleName of this.directChildrenCache.keys()) {
-            this.getExpandChildren(this.expansionCache, ruleName, maxLevel, 0)
+
+            this.getExpandChildren(ruleName, maxLevel, 0)
         }
     }
+
+    private getExpandChildren(ruleName: string, maxLevel: number = 0, curLevel: number = maxLevel): string[][] {
+
+        if (curLevel >= maxLevel) return
+
+        const ruleBranches = this.directChildrenCache.get(ruleName)
+
+        const newRulesBranches = ruleBranches.map(branch => {
+            const newAllRules = branch.map(item => this.directChildrenCache.get(item))
+            const newBranch = this.cartesianProduct(newAllRules)
+            return newBranch
+        })
+
+        return this.cartesianProduct(newRulesBranches)
+    }
+
 
     /**
      * 获取规则的直接子节点（只缓存一层）
@@ -278,7 +295,8 @@ export class SubhutiGrammarAnalyzer {
      * @param maxLevel
      * @param curLevel
      */
-    private computeDirectChildren(rootNode: RuleNode, maxLevel: number = 0, curLevel: number = maxLevel): string[][] {
+    private computeDirectChildren(rootNode: RuleNode): string[][] {
+        // private computeDirectChildren(rootNode: RuleNode, maxLevel: number = 0, curLevel: number = maxLevel): string[][] {
         switch (rootNode.type) {
             case 'consume':
                 return [[rootNode.tokenName]]
@@ -297,11 +315,12 @@ export class SubhutiGrammarAnalyzer {
                 return this.computeAtLeastOneDirectChildren(rootNode.node)
 
             case 'subrule':
-                if (curLevel >= maxLevel) {
-                    return [[rootNode.ruleName]]
-                } else {
-                    return this.directChildrenCache.get(rootNode.ruleName)
-                }
+                return [[rootNode.ruleName]]
+            // if (curLevel >= maxLevel) {
+            //     return [[rootNode.ruleName]]
+            // } else {
+            //     return this.directChildrenCache.get(rootNode.ruleName)
+            // }
             default:
                 console.warn(`Unknown node type: ${(rootNode as any).type}`)
                 return []
