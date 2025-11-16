@@ -212,7 +212,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     }
 
     /**
-     * 启用语法验证（链式调用）
+     * 启用语法验证（链式调用），验证语法（检测 Or 规则冲突）
      *
      * 用法：
      * ```typescript
@@ -224,7 +224,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * @throws SubhutiGrammarValidationError - 语法有冲突时抛出
      */
     validate(): this {
-        this.validateGrammar()
+        SubhutiGrammarValidator.validate(this)
         return this
     }
 
@@ -868,34 +868,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             hint: hint,
             rulePath: rulePath  // 🆕 添加规则路径
         })
-    }
-
-    // ============================================
-    // Grammar Validation API
-    // ============================================
-
-    /**
-     * 验证语法（检测 Or 规则冲突）
-     *
-     * 有问题直接抛异常，无问题静默返回
-     *
-     * @example
-     * ```typescript
-     * const parser = new MyParser()
-     * parser.validateGrammar()  // 有问题会抛 SubhutiGrammarValidationError
-     * ```
-     */
-    validateGrammar(): void {
-        SubhutiGrammarValidator.validate(this)
-    }
-
-    /**
-     * 执行语法自检（Chevrotain 风格别名）
-     *
-     * @see validateGrammar
-     */
-    performSelfAnalysis(): void {
-        this.validateGrammar()
     }
 }
 
