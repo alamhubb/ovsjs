@@ -261,26 +261,41 @@ export class SubhutiGrammarAnalyzer {
 
 
     /**
-     * 计算节点的直接子节点（不递归展开）
+     * 计算节点的直接子节点（带层级限制）
      * 返回：二维数组（分支 × 节点序列）
+     *
+     * @param node AST 节点
+     * @param currentLevel 当前层级（默认0）
      */
-    private computeDirectChildren(node: RuleNode): string[][] {
+    private computeDirectChildren(node: RuleNode, currentLevel: number = 0): string[][] {
+        // 如果超过最大层级，不再展开，直接返回节点标识
+        if (currentLevel >= this.options.maxLevel) {
+            if (node.type === 'consume') {
+                return [[node.tokenName]]
+            } else if (node.type === 'subrule') {
+                return [[node.ruleName]]
+            } else {
+                // 对于复合节点（sequence, or, many等），返回一个占位符
+                return [[`<${node.type}>`]]
+            }
+        }
+
         switch (node.type) {
             case 'consume':
                 return [[node.tokenName]]
 
             case 'sequence':
-                return this.computeSequenceDirectChildren(node.nodes)
+                return this.computeSequenceDirectChildren(node.nodes, currentLevel)
 
             case 'or':
-                return this.computeOrDirectChildren(node.alternatives)
+                return this.computeOrDirectChildren(node.alternatives, currentLevel)
 
             case 'option':
             case 'many':
-                return this.computeOptionDirectChildren(node.node)
+                return this.computeOptionDirectChildren(node.node, currentLevel)
 
             case 'atLeastOne':
-                return this.computeAtLeastOneDirectChildren(node.node)
+                return this.computeAtLeastOneDirectChildren(node.node, currentLevel)
 
             case 'subrule':
                 return [[node.ruleName]]
@@ -304,8 +319,8 @@ export class SubhutiGrammarAnalyzer {
      * [["B"]] × [[], ["C"]] × [["D"]]
      * = [["B", "D"], ["B", "C", "D"]]
      */
-    private computeOptionDirectChildren(node: RuleNode): string[][] {
-        const innerBranches = this.computeDirectChildren(node)
+    private computeOptionDirectChildren(node: RuleNode, currentLevel: number): string[][] {
+        const innerBranches = this.computeDirectChildren(node, currentLevel + 1)
         return [[], ...innerBranches]
     }
 
@@ -317,8 +332,8 @@ export class SubhutiGrammarAnalyzer {
      * - 如果 A 有 1 个分支：[["a"]]
      * - 返回：[["a"], ["a", "a"]]
      */
-    private computeAtLeastOneDirectChildren(node: RuleNode): string[][] {
-        const innerBranches = this.computeDirectChildren(node)
+    private computeAtLeastOneDirectChildren(node: RuleNode, currentLevel: number): string[][] {
+        const innerBranches = this.computeDirectChildren(node, currentLevel + 1)
         const doubleBranches = innerBranches.map(branch => [...branch, ...branch])
         return [...innerBranches, ...doubleBranches]
     }
@@ -327,12 +342,12 @@ export class SubhutiGrammarAnalyzer {
      * 计算序列的直接子节点（需要笛卡尔积）
      * A B → 所有 A的分支 × B的分支 的组合
      */
-    private computeSequenceDirectChildren(nodes: RuleNode[]): string[][] {
+    private computeSequenceDirectChildren(nodes: RuleNode[], currentLevel: number): string[][] {
         if (nodes.length === 0) {
             return [[]]
         }
 
-        const allBranches = nodes.map(node => this.computeDirectChildren(node))
+        const allBranches = nodes.map(node => this.computeDirectChildren(node, currentLevel + 1))
         return this.cartesianProduct(allBranches)
     }
 
@@ -340,11 +355,11 @@ export class SubhutiGrammarAnalyzer {
      * 计算 Or 的直接子节点（直接合并，不需要笛卡尔积）
      * A / B → A的所有分支 + B的所有分支
      */
-    private computeOrDirectChildren(alternatives: RuleNode[]): string[][] {
+    private computeOrDirectChildren(alternatives: RuleNode[], currentLevel: number): string[][] {
         const result: string[][] = []
 
         for (const alt of alternatives) {
-            const branches = this.computeDirectChildren(alt)
+            const branches = this.computeDirectChildren(alt, currentLevel + 1)
             result.push(...branches)
         }
 
