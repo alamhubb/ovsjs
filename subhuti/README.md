@@ -511,6 +511,293 @@ describe('Parser Grammar', () => {
 })
 ```
 
+## 🔬 Or 冲突检测系统 - 核心设计
+
+Subhuti 的 Or 冲突检测系统是一个创新的静态分析工具，能够在开发阶段自动发现 PEG 语法中的常见问题。
+
+### 设计理念
+
+**问题**：PEG 的顺序选择特性使得规则顺序至关重要，但手动检查所有 Or 规则非常困难且容易出错。
+
+**解决方案**：通过 AST 分析和路径展开，自动检测 Or 分支之间的冲突。
+
+### 核心算法
+
+#### 1. AST 收集（Rule Collection）
+
+使用 Proxy 拦截规则调用，自动构建语法的 AST 表示：
+
+```typescript
+// 自动收集规则定义
+const ruleASTs = SubhutiRuleCollector.collectRules(parser)
+
+// 生成的 AST 结构
+{
+  "Expression": {
+    type: "or",
+    alternatives: [
+      { type: "subrule", ruleName: "PrimaryExpression" },
+      { type: "subrule", ruleName: "BinaryExpression" }
+    ]
+  }
+}
+```
+
+**关键技术**：
+- Proxy 拦截：无需修改 Parser 代码
+- 错误容忍：即使规则执行失败也能收集 AST
+- 完整性：捕获所有规则调用（Or、Many、Option、Sequence 等）
+
+#### 2. 分支展开（Branch Expansion）
+
+将每个 Or 分支展开为所有可能的 token 路径：
+
+```typescript
+// 规则定义
+Or([
+  { alt: () => {
+    this.Identifier()
+    this.Option(() => this.Dot())
+    this.Identifier()
+  }},
+  { alt: () => this.Number() }
+])
+
+// 展开结果
+分支 0: [
+  ["Identifier", "Identifier"],      // 不匹配 Dot
+  ["Identifier", "Dot", "Identifier"] // 匹配 Dot
+]
+分支 1: [
+  ["Number"]
+]
+```
+
+**展开策略**：
+- **Token/Rule**：不展开，保持原样
+- **Sequence**：笛卡尔积组合所有子节点
+- **Or**：合并所有分支
+- **Option/Many**：生成空路径 + 内部分支
+- **AtLeastOne**：生成 1次 + 2次重复
+
+**层级控制**：
+```typescript
+// 支持多层展开
+getExpandChildren(ruleName, maxLevel, curLevel)
+
+// 示例：maxLevel = 2
+Rule1 → Rule2 → Token  // 展开 2 层
+Rule1 → Rule2 → Rule3  // 第 3 层停止，保留 Rule3
+```
+
+#### 3. 冲突检测（Conflict Detection）
+
+##### 3.1 前缀冲突检测
+
+检测短规则是否遮蔽长规则：
+
+```typescript
+// 检测逻辑
+for (pathA of branchA) {
+  for (pathB of branchB) {
+    if (pathA.length < pathB.length && pathB.startsWith(pathA)) {
+      // 发现前缀冲突！
+      // pathA 会先匹配，导致 pathB 永远无法完整匹配
+    }
+  }
+}
+```
+
+**示例**：
+```typescript
+Or([
+  { alt: () => this.Identifier() },           // 分支 0: ["Identifier"]
+  { alt: () => {                              // 分支 1: ["Identifier", "Dot", "Identifier"]
+    this.Identifier()
+    this.Dot()
+    this.Identifier()
+  }}
+])
+
+// 检测结果：
+// ❌ 分支 1 被分支 0 遮蔽
+// Path A: Identifier,
+// Path B: Identifier,Dot,Identifier,
+```
+
+##### 3.2 空路径冲突检测（顶层检测）
+
+检测 Or 分支本身是否可以匹配空输入：
+
+```typescript
+/**
+ * 顶层空路径检测 - 只检测分支的顶层结构
+ *
+ * 真正的问题：
+ * Or([
+ *   { alt: () => this.Option(() => this.A()) },  // ❌ 分支本身可以为空
+ *   { alt: () => this.B() }                       // 永远不可达
+ * ])
+ *
+ * 不是问题：
+ * Or([
+ *   { alt: () => {
+ *     this.X()                                    // ✅ 必须先匹配 X
+ *     this.Option(() => this.A())                 // 内部的 Option 不影响
+ *   }},
+ *   { alt: () => this.B() }
+ * ])
+ */
+hasTopLevelEmptyPath(alternative) {
+  switch (alternative.type) {
+    case 'option':
+    case 'many':
+      return true  // 直接是 Option/Many，可以为空
+
+    case 'sequence':
+      // 检查第一个元素
+      return this.hasTopLevelEmptyPath(alternative.nodes[0])
+
+    case 'or':
+      // 任一子分支可以为空
+      return alternative.alternatives.some(alt =>
+        this.hasTopLevelEmptyPath(alt)
+      )
+
+    default:
+      return false  // token/rule/atLeastOne 不能为空
+  }
+}
+```
+
+**关键区别**：
+- ❌ **旧逻辑**：检测展开后的路径中是否有空路径（误报）
+- ✅ **新逻辑**：只检测分支顶层结构是否可以为空（精准）
+
+#### 4. 代码复用设计
+
+通过提取公共方法，实现代码复用：
+
+```typescript
+/**
+ * 公共方法：计算 Or 分支的完全展开结果
+ *
+ * 被以下检测共用：
+ * - 空路径检测
+ * - 前缀冲突检测
+ * - 未来的其他检测（LL(k)、二义性等）
+ */
+computeOrBranchExpansions(alternatives) {
+  // 步骤1: 获取直接子节点（展开辅助节点）
+  const directChildren = computeDirectChildren(alternative)
+
+  // 步骤2: 对每个规则从缓存中获取展开结果
+  const expandedItems = branch.map(item =>
+    getExpansionFromCache(item) || [[item]]
+  )
+
+  // 步骤3: 笛卡尔积合并
+  return cartesianProduct(expandedItems)
+}
+
+// 使用公共方法
+detectOrConflicts(alternatives) {
+  const branchExpansions = computeOrBranchExpansions(alternatives)
+
+  // 执行各种检测
+  checkEmptyPath(branchExpansions)
+  checkPrefixConflict(branchExpansions)
+}
+```
+
+**优势**：
+- 数据计算逻辑统一
+- 添加新检测类型时直接复用
+- 修改展开逻辑时所有检测自动受益
+
+### 性能优化
+
+#### 1. 缓存机制
+
+```typescript
+// 直接子节点缓存
+directChildrenCache: Map<ruleName, branches>
+
+// 完全展开缓存
+expansionCache: Map<ruleName, expandedBranches>
+```
+
+#### 2. 循环引用检测
+
+```typescript
+// 使用 computing 集合检测递归
+computing: Set<ruleName>
+
+getExpandChildren(ruleName) {
+  if (computing.has(ruleName)) {
+    return [[ruleName]]  // 遇到循环，停止展开
+  }
+  computing.add(ruleName)
+  try {
+    // 展开逻辑
+  } finally {
+    computing.delete(ruleName)
+  }
+}
+```
+
+#### 3. 分支数量限制
+
+防止笛卡尔积爆炸：
+
+```typescript
+// 限制单个规则的分支数
+if (branches.length > 1000) {
+  console.warn(`规则 ${ruleName} 的分支数过多，截断`)
+  return branches.slice(0, 1000)
+}
+
+// 限制展开结果数量
+if (expandedBranches.length > 1000) {
+  return expandedBranches.slice(0, 1000)
+}
+```
+
+### 错误级别
+
+- **FATAL**：空路径冲突 - 导致后续分支完全不可达
+- **ERROR**：前缀冲突 - 导致长规则无法完整匹配
+- **WARNING**：（未来）潜在性能问题
+
+### 使用建议
+
+**开发阶段**：
+```typescript
+// 在测试中自动验证
+describe('Grammar Validation', () => {
+  it('should not have Or conflicts', () => {
+    const parser = new MyParser([])
+    parser.validateGrammar()  // 有问题会抛异常
+  })
+})
+```
+
+**CI/CD**：
+```typescript
+// 在构建脚本中检查
+const parser = new MyParser([])
+const result = parser.validateGrammar()
+if (!result.success) {
+  process.exit(1)  // 阻止错误代码合入
+}
+```
+
+**重构时**：
+```typescript
+// 确保修改不引入冲突
+parser.validateGrammar({ verbose: true })
+```
+
 ## 🎯 核心概念
 
 ### 1. PEG 顺序选择 vs 传统最长匹配

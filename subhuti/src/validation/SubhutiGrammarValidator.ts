@@ -17,7 +17,8 @@ import {
     SubhutiRuleCollector,
     SubhutiGrammarAnalyzer,
     SubhutiConflictDetector,
-    SubhutiGrammarValidationError
+    SubhutiGrammarValidationError,
+    EXPANSION_LIMITS
 } from "./index";
 
 export class SubhutiGrammarValidator {
@@ -31,9 +32,10 @@ export class SubhutiGrammarValidator {
      * 4. 有错误抛 SubhutiGrammarValidationError
      *
      * @param parser Parser 实例
+     * @param maxLevel 最大展开层级（默认使用配置中的 MAX_LEVEL）
      * @throws SubhutiGrammarValidationError 语法有冲突时抛出
      */
-    static validate(parser: any, maxLevel = 3): void {
+    static validate(parser: any, maxLevel = EXPANSION_LIMITS.MAX_LEVEL): void {
         // 1. 收集规则 AST（通过 Proxy，无需 Parser 配合）
         const ruleASTs = SubhutiRuleCollector.collectRules(parser)
 

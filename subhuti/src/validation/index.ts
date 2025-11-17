@@ -23,7 +23,7 @@ export { SubhutiGrammarValidationError } from './SubhutiValidationError'
 
 // 核心类
 export { SubhutiRuleCollector } from './SubhutiRuleCollector'
-export { SubhutiGrammarAnalyzer } from './SubhutiGrammarAnalyzer'
+export { SubhutiGrammarAnalyzer, EXPANSION_LIMITS } from './SubhutiGrammarAnalyzer'
 export type { GrammarAnalyzerOptions } from './SubhutiGrammarAnalyzer'
 export { SubhutiConflictDetector } from './SubhutiConflictDetector'
 export { SubhutiGrammarValidator } from './SubhutiGrammarValidator'
