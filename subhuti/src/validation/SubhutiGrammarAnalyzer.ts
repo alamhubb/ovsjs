@@ -57,7 +57,7 @@ import {SubhutiValidationLogger} from './SubhutiValidationLogger'
  * - 1000 是一个合理的平衡点：足够检测冲突，又不会导致性能问题
  * - 笛卡尔积最坏情况：1000 * 1000 = 100万（可接受）
  */
-const MAX_BRANCHES = 1000
+const MAX_BRANCHES = 5000
 
 export const EXPANSION_LIMITS = {
     /**
@@ -74,7 +74,7 @@ export const EXPANSION_LIMITS = {
      * - 2 层足够检测大部分 Or 分支冲突
      * - 用户可以根据需要设置为具体数字（如 3）来限制展开深度
      */
-    MAX_LEVEL: Infinity,
+    MAX_LEVEL: 3,
 
     /**
      * 展开前的分支数阈值（动态层级限制）
@@ -231,9 +231,9 @@ export class SubhutiGrammarAnalyzer {
     private getExpandChildren(ruleName: string, maxLevel: number, curLevel: number): string[][] {
         const indent = '  '.repeat(curLevel)
 
-        // ⏱️ 性能监控：如果是顶层调用（curLevel=0），记录时间
+        // ⏱️ 性能监控：记录每次调用的时间
+        const startTime = Date.now()
         const isTopLevel = curLevel === 0
-        const startTime = isTopLevel ? Date.now() : 0
 
         // 层级限制：达到最大层级时停止展开
         // 当 maxLevel = Infinity 时，curLevel 永远不会 >= Infinity，所以不会触发
@@ -245,6 +245,8 @@ export class SubhutiGrammarAnalyzer {
         // 检测循环引用（递归规则）
         // 使用类成员 computing 来检测递归
         if (this.computing.has(ruleName)) {
+            console.log(`  🔄 ${ruleName} 检测到循环引用（层级${curLevel}），停止展开`)
+            console.log(`     当前栈：[${Array.from(this.computing).join(' → ')}]`)
             SubhutiValidationLogger.debug(`${indent}[层级${curLevel}] ${ruleName} - 检测到循环引用，停止展开`, ruleName)
             return [[ruleName]]  // 遇到循环引用，停止展开
         }
@@ -254,6 +256,10 @@ export class SubhutiGrammarAnalyzer {
         if (!branches) {
             SubhutiValidationLogger.debug(`${indent}[层级${curLevel}] ${ruleName} - Token，不展开`, ruleName)
             return [[ruleName]]  // 如果不在缓存中，说明是 token
+        }
+
+        if (isTopLevel) {
+            console.log(`  📊 ${ruleName} 开始展开：${branches.length} 个分支，层级${curLevel}`)
         }
 
         SubhutiValidationLogger.debug(`${indent}[层级${curLevel}] 开始展开 ${ruleName}，直接子节点有 ${branches.length} 个分支`, ruleName)
@@ -275,20 +281,57 @@ export class SubhutiGrammarAnalyzer {
         // 标记当前规则正在计算
         this.computing.add(ruleName)
 
+        // 🔍 调试：只在深度超过阈值时输出
+        const stack = Array.from(this.computing)
+        if (curLevel === 10) {
+            console.log(`      ⚠️ 递归深度达到10层！规则：${ruleName}`)
+            console.log(`      当前栈：[${stack.join(' → ')}]`)
+        }
+        if (curLevel === 20) {
+            console.log(`      ❌ 递归深度达到20层！规则：${ruleName}`)
+            console.log(`      当前栈：[${stack.join(' → ')}]`)
+        }
+        if (curLevel > 30) {
+            console.error(`      💥 递归深度超过30层！规则：${ruleName}，强制停止`)
+            return [[ruleName]]  // 强制停止
+        }
+
         try {
             // 对每个分支进行展开
             const expandedBranches: string[][] = []
 
             for (let branchIdx = 0; branchIdx < branches.length; branchIdx++) {
                 const branch = branches[branchIdx]
+                const branchStartTime = Date.now()
+
+                if (isTopLevel) {
+                    console.log(`    🔹 分支 ${branchIdx + 1}/${branches.length}: [${branch.join(', ')}]`)
+                }
+
                 SubhutiValidationLogger.debug(`${indent}  处理分支 ${branchIdx + 1}/${branches.length}: [${branch.join(', ')}]`, ruleName)
 
                 // 对分支中的每个 item 进行展开
                 const expandedItems: string[][][] = []
 
-                for (const item of branch) {
+                for (let itemIdx = 0; itemIdx < branch.length; itemIdx++) {
+                    const item = branch[itemIdx]
+                    const itemStartTime = Date.now()
+
+                    if (isTopLevel) {
+                        console.log(`      🔸 开始展开 ${item} (层级${curLevel + 1})`)
+                    }
+
                     // 递归展开规则，层级+1
                     const itemBranches = this.getExpandChildren(item, maxLevel, curLevel + 1)
+
+                    const itemElapsed = Date.now() - itemStartTime
+                    if (isTopLevel) {
+                        console.log(`      ⏱️ ${item} 展开完成：${itemBranches.length} 个分支，耗时 ${itemElapsed}ms`)
+                    }
+                    if (itemElapsed > 1000) {
+                        console.warn(`      ❌ ${item} 展开耗时过长：${itemElapsed}ms (层级${curLevel + 1})`)
+                    }
+
                     SubhutiValidationLogger.debug(`${indent}    ${item} 展开后有 ${itemBranches.length} 个分支`, ruleName)
                     expandedItems.push(itemBranches)
 
@@ -297,6 +340,11 @@ export class SubhutiGrammarAnalyzer {
                         SubhutiValidationLogger.warn(`${indent}    规则 ${item} 的展开结果过多 (${itemBranches.length})，截断到 ${EXPANSION_LIMITS.MAX_ITEM_BRANCHES}`, ruleName)
                         expandedItems[expandedItems.length - 1] = itemBranches.slice(0, EXPANSION_LIMITS.MAX_ITEM_BRANCHES)
                     }
+                }
+
+                const branchElapsed = Date.now() - branchStartTime
+                if (isTopLevel && branchElapsed > 500) {
+                    console.log(`    ⚠️ 分支 ${branchIdx + 1} 处理耗时 ${branchElapsed}ms`)
                 }
 
                 // 对当前分支的所有展开结果进行笛卡尔积
@@ -323,6 +371,16 @@ export class SubhutiGrammarAnalyzer {
             }
 
             SubhutiValidationLogger.debug(`${indent}[层级${curLevel}] ${ruleName} 展开完成，最终有 ${expandedBranches.length} 个分支`, ruleName)
+
+            // ⏱️ 总体耗时统计
+            const totalElapsed = Date.now() - startTime
+            if (isTopLevel) {
+                console.log(`  ✅ ${ruleName} 展开完成：${expandedBranches.length} 个分支，耗时 ${totalElapsed}ms`)
+            }
+            if (totalElapsed > 5000) {
+                console.warn(`  ❌ ${ruleName} 展开耗时过长：${totalElapsed}ms (${(totalElapsed/1000).toFixed(2)}s)`)
+            }
+
             return expandedBranches
         } finally {
             // 移除标记
