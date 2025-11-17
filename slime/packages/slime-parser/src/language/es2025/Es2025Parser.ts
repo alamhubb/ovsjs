@@ -1050,21 +1050,30 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      *     CallExpression[?Yield, ?Await]
      *     OptionalExpression[?Yield, ?Await]
      *
-     * 注意：虽然规范中NewExpression在前，但在PEG解析中，
-     * 由于NewExpression包含MemberExpression，会导致短路问题。
-     * 因此我们需要将CallExpression和OptionalExpression放在前面，
-     * 因为它们是"更长"的规则（包含函数调用、可选链等）。
+     * PEG 实现注意事项：
      *
-     * 修复前缀冲突：
-     * - OptionalExpression 最长（包含可选链）
-     * - CallExpression 次长（包含函数调用）
-     * - NewExpression 最短（只包含 MemberExpression）
+     * 规范中的三个产生式在语义上是互斥的：
+     * - CallExpression: 必须包含至少一个 Arguments（函数调用 `()`）
+     * - OptionalExpression: 必须包含至少一个 OptionalChain（可选链 `?.`）
+     * - NewExpression: 不包含 Arguments 或 OptionalChain
+     *
+     * 但在 PEG 中，由于顺序选择的特性，如果按规范顺序实现会导致问题：
+     * - NewExpression 包含 MemberExpression，会匹配 `console.log`
+     * - 然后 NewExpression 结束，`(x)` 无法被消耗
+     * - 导致解析失败或无限循环
+     *
+     * 解决方案：调整分支顺序，将"更长"的规则放在前面
+     * - CallExpression 在前：优先匹配函数调用（如 `console.log(x)`）
+     * - OptionalExpression 次之：匹配可选链（如 `obj?.method()`）
+     * - NewExpression 最后：匹配其他情况（如 `this`、`obj.prop`）
+     *
+     * 这与规范顺序不一致，但在 PEG 中是必要的。
      */
     @SubhutiRule
     LeftHandSideExpression(params: ExpressionParams = {}): SubhutiCst | undefined {
         return this.Or([
-            {alt: () => this.OptionalExpression(params)},
             {alt: () => this.CallExpression(params)},
+            {alt: () => this.OptionalExpression(params)},
             {alt: () => this.NewExpression(params)}
         ])
     }
