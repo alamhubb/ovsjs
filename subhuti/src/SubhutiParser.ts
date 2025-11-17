@@ -63,6 +63,14 @@ export function SubhutiRule(targetFun: any, context: ClassMethodDecoratorContext
 
     Object.defineProperty(wrappedFunction, 'name', {value: ruleName})
 
+    // ✅ 保存原始函数引用（供 SubhutiRuleCollector 使用）
+    Object.defineProperty(wrappedFunction, '__originalFunction__', {
+        value: targetFun,
+        writable: false,
+        enumerable: false,
+        configurable: false
+    })
+
     // ✅ 添加元数据标记，标识这是一个规则方法
     Object.defineProperty(wrappedFunction, '__isSubhutiRule__', {
         value: true,

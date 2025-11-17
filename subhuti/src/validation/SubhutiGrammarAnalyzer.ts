@@ -60,11 +60,11 @@ export const EXPANSION_LIMITS = {
      * 说明：
      * - 循环引用检测会防止无限递归（栈溢出）
      * - 分支数限制会防止内存溢出
-     * - ✅ 但实践中发现 Infinity 会导致性能问题，改为 2 层
+     * - ✅ 实践中发现 Infinity 会导致性能问题（PrimaryExpression 等复杂规则会卡死）
      * - 2 层足够检测大部分 Or 分支冲突
      * - 用户可以根据需要设置为具体数字（如 3）来限制展开深度
      */
-    MAX_LEVEL: Infinity,
+    MAX_LEVEL: 2,
 
     /**
      * 展开前的分支数阈值（动态层级限制）
@@ -201,8 +201,18 @@ export class SubhutiGrammarAnalyzer {
                 continue
             }
 
+            const startTime = Date.now()
             console.log(`[${count}/${total}] 初始化展开缓存: ${ruleName}`)
             this.initExpansionCache(ruleName, maxLevel)
+            const elapsed = Date.now() - startTime
+
+            if (elapsed > 1000) {
+                console.log(`  ⚠️ ${ruleName} 耗时 ${elapsed}ms (${(elapsed/1000).toFixed(2)}s)`)
+            }
+
+            if (elapsed > 10000) {
+                console.error(`  ❌❌❌ ${ruleName} 耗时超过10秒！`)
+            }
         }
 
         console.log(`✅ 展开缓存初始化完成：处理 ${count - skipped}/${total} 个规则，跳过 ${skipped} 个空 AST`)
@@ -210,6 +220,10 @@ export class SubhutiGrammarAnalyzer {
 
     private getExpandChildren(ruleName: string, maxLevel: number, curLevel: number): string[][] {
         const indent = '  '.repeat(curLevel)
+
+        // ⏱️ 性能监控：如果是顶层调用（curLevel=0），记录时间
+        const isTopLevel = curLevel === 0
+        const startTime = isTopLevel ? Date.now() : 0
 
         // 层级限制：达到最大层级时停止展开
         // 当 maxLevel = Infinity 时，curLevel 永远不会 >= Infinity，所以不会触发
@@ -233,6 +247,11 @@ export class SubhutiGrammarAnalyzer {
         }
 
         SubhutiValidationLogger.debug(`${indent}[层级${curLevel}] 开始展开 ${ruleName}，直接子节点有 ${branches.length} 个分支`, ruleName)
+
+        // ⏱️ 如果分支数过多，输出警告
+        if (isTopLevel && branches.length > 10) {
+            console.log(`  ⚠️ ${ruleName} 有 ${branches.length} 个分支，可能会很慢...`)
+        }
 
         // 🎯 动态分支数限制：基于分支数决定是否继续展开（截断点 1）
         // 如果分支数已经很多，说明继续展开会导致笛卡尔积爆炸，提前停止
@@ -271,7 +290,15 @@ export class SubhutiGrammarAnalyzer {
                 }
 
                 // 对当前分支的所有展开结果进行笛卡尔积
+                // ⏱️ 监控笛卡尔积计算
+                const cartesianStartTime = Date.now()
                 const cartesianResult = this.cartesianProduct(expandedItems)
+                const cartesianElapsed = Date.now() - cartesianStartTime
+
+                if (cartesianElapsed > 1000) {
+                    console.log(`  ⚠️ ${ruleName} 分支${branchIdx + 1} 笛卡尔积计算耗时 ${cartesianElapsed}ms`)
+                }
+
                 SubhutiValidationLogger.debug(`${indent}    笛卡尔积后得到 ${cartesianResult.length} 个分支`, ruleName)
                 expandedBranches.push(...cartesianResult)
                 SubhutiValidationLogger.debug(`${indent}    当前累积总分支数: ${expandedBranches.length}`, ruleName)

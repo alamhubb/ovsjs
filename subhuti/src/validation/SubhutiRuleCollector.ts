@@ -110,9 +110,15 @@ export class SubhutiRuleCollector {
 
                 // 拦截核心方法
                 if (prop === 'Or') {
-                    // console.log(`[PROXY] Intercepting Or`)
-                    return (alternatives: Array<{ alt: () => any }>) =>
-                        collector.handleOr(alternatives, proxy)
+                    const debugRules = ['ConditionalExpression', 'AssignmentExpression', 'Expression', 'Statement']
+                    const isDebugRule = debugRules.includes(collector.currentRuleName)
+
+                    return (alternatives: Array<{ alt: () => any }>) => {
+                        if (isDebugRule) {
+                            console.log(`🔍 [DEBUG] Or 被拦截，当前规则: ${collector.currentRuleName}`)
+                        }
+                        return collector.handleOr(alternatives, proxy)
+                    }
                 }
                 if (prop === 'Many') {
                     return (fn: () => any) =>
@@ -146,9 +152,16 @@ export class SubhutiRuleCollector {
                     /^[A-Z]/.test(prop) &&
                     !coreMethod.includes(prop)) {
                     return function (...args: any[]) {
+                        const debugRules = ['ConditionalExpression', 'AssignmentExpression', 'Expression', 'Statement']
+                        const isDebugRule = debugRules.includes(prop)
+
                         // 如果是顶层规则调用（收集该规则本身），执行原方法
                         if (collector.isExecutingTopLevelRule && prop === collector.currentRuleName) {
                             collector.isExecutingTopLevelRule = false
+
+                            if (isDebugRule) {
+                                console.log(`🔍 [DEBUG] 顶层规则调用: ${prop}, isExecutingTopLevelRule=true`)
+                            }
 
                             // ✅ 检测递归：如果规则已在执行栈中，说明是递归调用
                             if (collector.executingRuleStack.has(prop)) {
@@ -161,8 +174,22 @@ export class SubhutiRuleCollector {
                             collector.executingRuleStack.add(prop)
 
                             try {
-                                // 执行原方法
-                                return original.apply(proxy, args)
+                                // ✅ 方案3：获取原始函数（绕过装饰器），在 proxy 上下文中执行
+                                // 这样规则内部的 this.Or() 等调用会被 proxy 拦截
+                                const originalFun = (original as any).__originalFunction__ || original
+
+                                if (isDebugRule) {
+                                    console.log(`🔍 [DEBUG] 执行原始函数: ${prop}`)
+                                    console.log(`🔍 [DEBUG] 使用 ${(original as any).__originalFunction__ ? '原始函数' : '装饰后函数'}`)
+                                }
+
+                                // 在 proxy 上下文中执行原始函数
+                                const result = originalFun.call(proxy, ...args)
+
+                                if (isDebugRule) {
+                                    console.log(`🔍 [DEBUG] 原始函数执行完成: ${prop}, 返回值:`, result)
+                                }
+                                return result
                             } finally {
                                 // 执行完成后，从执行栈中移除
                                 collector.executingRuleStack.delete(prop)
@@ -170,6 +197,9 @@ export class SubhutiRuleCollector {
                         }
 
                         // 如果是子规则调用，只记录，不执行
+                        if (isDebugRule) {
+                            console.log(`🔍 [DEBUG] 子规则调用（不执行）: ${prop}`)
+                        }
                         return collector.handleSubrule(prop)
                     }
                 }
@@ -231,6 +261,9 @@ export class SubhutiRuleCollector {
      * - 现在：只捕获真正的业务错误（正常的异常处理）
      */
     private collectRule(proxy: SubhutiParser, ruleName: string): void {
+        // ⏱️ 记录开始时间
+        const startTime = Date.now()
+
         // 重置状态
         this.currentRuleName = ruleName
         this.currentRuleStack = []
@@ -256,22 +289,37 @@ export class SubhutiRuleCollector {
             // 保存 AST
             this.ruleASTs.set(ruleName, rootNode)
 
+            // ⏱️ 计算耗时
+            const elapsed = Date.now() - startTime
+
             // 日志输出（可选）
             if (rootNode.nodes.length > 0) {
-                console.info(`✓ Rule "${ruleName}" collected (${rootNode.nodes.length} nodes)`)
+                if (elapsed > 100) {
+                    console.info(`✓ Rule "${ruleName}" collected (${rootNode.nodes.length} nodes) [${elapsed}ms] ⚠️ SLOW`)
+                } else {
+                    console.info(`✓ Rule "${ruleName}" collected (${rootNode.nodes.length} nodes) [${elapsed}ms]`)
+                }
             } else {
                 // 空 AST 也保存（用于左递归检测）
-                console.warn(`⚠ Rule "${ruleName}" has empty AST (may indicate recursion or parsing failure)`)
+                console.warn(`⚠ Rule "${ruleName}" has empty AST (may indicate recursion or parsing failure) [${elapsed}ms]`)
+            }
+
+            // 如果超过10秒，输出警告
+            if (elapsed > 10000) {
+                console.error(`❌❌❌ Rule "${ruleName}" took ${elapsed}ms (${(elapsed/1000).toFixed(2)}s) - EXTREMELY SLOW!`)
             }
         } catch (error: any) {
             // 捕获业务逻辑错误（如废弃方法、未实现方法等）
             // 即使抛出错误，我们也已经通过 Proxy 收集到了部分 AST
             this.ruleASTs.set(ruleName, rootNode)
 
+            // ⏱️ 计算耗时
+            const elapsed = Date.now() - startTime
+
             if (rootNode.nodes.length > 0) {
-                console.info(`✓ Rule "${ruleName}" collected with error (${error?.message || error}), saved partial AST (${rootNode.nodes.length} nodes)`)
+                console.info(`✓ Rule "${ruleName}" collected with error (${error?.message || error}), saved partial AST (${rootNode.nodes.length} nodes) [${elapsed}ms]`)
             } else {
-                console.warn(`⚠ Rule "${ruleName}" failed: ${error?.message || error} (empty AST saved)`)
+                console.warn(`⚠ Rule "${ruleName}" failed: ${error?.message || error} (empty AST saved) [${elapsed}ms]`)
             }
         }
     }
@@ -316,14 +364,24 @@ export class SubhutiRuleCollector {
      * 处理 Or 规则
      */
     private handleOr(alternatives: Array<{ alt: () => any }>, target: any): void {
+        const debugRules = ['ConditionalExpression', 'AssignmentExpression', 'Expression', 'Statement']
+        const isDebugRule = debugRules.includes(this.currentRuleName)
+
         const altNodes: any[] = []
 
-        // console.log(`[DEBUG] handleOr: ${this.currentRuleName}, alternatives: ${alternatives.length}`)
+        if (isDebugRule) {
+            console.log(`🔍 [DEBUG] handleOr in ${this.currentRuleName}, ${alternatives.length} 个分支`)
+        }
 
-        for (const alt of alternatives) {
+        for (let i = 0; i < alternatives.length; i++) {
+            const alt = alternatives[i]
             // 进入新的序列
             const seqNode: SequenceNode = {type: 'sequence', nodes: []}
             this.currentRuleStack.push(seqNode)
+
+            if (isDebugRule) {
+                console.log(`🔍 [DEBUG]   执行分支 ${i + 1}/${alternatives.length}`)
+            }
 
             try {
                 // 执行分支（会通过 proxy 拦截）
@@ -332,16 +390,21 @@ export class SubhutiRuleCollector {
                 // 退出序列，获取结果
                 const result = this.currentRuleStack.pop()
                 if (result) {
-                    // console.log(`[DEBUG] Or branch collected ${result.nodes?.length || 0} nodes`)
+                    if (isDebugRule) {
+                        console.log(`🔍 [DEBUG]   分支 ${i + 1} 收集到 ${result.nodes?.length || 0} 个节点`)
+                    }
                     altNodes.push(result)
                 }
             } catch (error: any) {
                 // 分支执行失败（可能是缺少token或其他错误）
                 // 但我们仍然尝试保存已收集的部分AST
                 const result = this.currentRuleStack.pop()
+                if (isDebugRule) {
+                    console.log(`🔍 [DEBUG]   分支 ${i + 1} 执行失败: ${error?.message}`)
+                    console.log(`🔍 [DEBUG]   已收集部分节点: ${result?.nodes?.length || 0}`)
+                }
                 if (result && result.nodes && result.nodes.length > 0) {
                     // 如果收集到了部分节点，仍然保存
-                    // console.log(`[DEBUG] Or branch failed but collected ${result.nodes.length} partial nodes`)
                     altNodes.push(result)
                 }
                 // 注意：我们不抛出异常，继续处理下一个分支
@@ -350,8 +413,14 @@ export class SubhutiRuleCollector {
 
         // 记录 Or 节点（即使某些分支失败，只要有至少一个分支成功）
         if (altNodes.length > 0) {
-            // console.log(`[DEBUG] Recording Or node with ${altNodes.length} alternatives`)
+            if (isDebugRule) {
+                console.log(`🔍 [DEBUG] 记录 Or 节点，包含 ${altNodes.length} 个分支`)
+            }
             this.recordNode({type: 'or', alternatives: altNodes})
+        } else {
+            if (isDebugRule) {
+                console.log(`🔍 [DEBUG] ⚠️ Or 节点没有任何有效分支！`)
+            }
         }
     }
 
@@ -436,6 +505,13 @@ export class SubhutiRuleCollector {
      * 处理子规则调用
      */
     private handleSubrule(ruleName: string): any {
+        const debugRules = ['ConditionalExpression', 'AssignmentExpression', 'Expression', 'Statement']
+        const isDebugRule = debugRules.includes(this.currentRuleName)
+
+        if (isDebugRule) {
+            console.log(`🔍 [DEBUG]     子规则调用: ${ruleName}`)
+        }
+
         this.recordNode({type: 'subrule', ruleName})
     }
 
