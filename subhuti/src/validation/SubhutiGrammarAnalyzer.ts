@@ -50,44 +50,36 @@ import {SubhutiValidationLogger} from './SubhutiValidationLogger'
  * 3. MAX_OUTPUT_BRANCHES：限制最终输出分支数，超过则截断
  */
 /**
- * 全局统一限制：所有分支数限制统一为 1000
+ * 全局统一限制配置
  *
  * 设计理念：
  * - 使用统一的限制值，简化配置和理解
  * - 1000 是一个合理的平衡点：足够检测冲突，又不会导致性能问题
  * - 笛卡尔积最坏情况：1000 * 1000 = 100万（可接受）
  */
-const MAX_BRANCHES = 5000
-
 export const EXPANSION_LIMITS = {
     /**
      * 最大展开层级
      * - Infinity：无限制（完全依赖分支数限制和循环引用检测）
      * - 数字：固定层级限制（例如 3 表示最多展开 3 层）
      *
-     * 默认值：2（展开 2 层）
+     * 默认值：3（展开 3 层）
      *
      * 说明：
      * - 循环引用检测会防止无限递归（栈溢出）
      * - 分支数限制会防止内存溢出
      * - ✅ 实践中发现 Infinity 会导致性能问题（PrimaryExpression 等复杂规则会卡死）
-     * - 2 层足够检测大部分 Or 分支冲突
-     * - 用户可以根据需要设置为具体数字（如 3）来限制展开深度
+     * - 3 层足够检测大部分 Or 分支冲突
+     * - 用户可以根据需要设置为具体数字来限制展开深度
      */
     MAX_LEVEL: 3,
 
     /**
-     * 展开前的分支数阈值（动态层级限制）
-     * 如果当前规则的直接子节点分支数超过此值，则提前停止展开
-     * 这样可以动态控制展开深度：分支少时展开更深，分支多时提前停止
+     * 全局分支数限制
+     * - 所有涉及分支数的地方都使用这个统一的值
+     * - 包括：展开前检查、单个item展开、笛卡尔积输入/输出等
      */
-    MAX_BRANCHES_BEFORE_EXPAND: MAX_BRANCHES,
-
-    /** 单个 item 展开结果的分支数上限（超过则截断） */
-    MAX_ITEM_BRANCHES: MAX_BRANCHES,
-
-    /** 单个规则的最终展开结果分支数上限（超过则截断） */
-    MAX_OUTPUT_BRANCHES: MAX_BRANCHES,
+    MAX_BRANCHES: Infinity,
 } as const
 
 /**
@@ -273,8 +265,8 @@ export class SubhutiGrammarAnalyzer {
         // 如果分支数已经很多，说明继续展开会导致笛卡尔积爆炸，提前停止
         // 如果分支数很少，可以继续展开（受可选的固定层级限制约束）
         // 这样可以在分支数多时提前停止，避免浪费计算
-        if (branches.length > EXPANSION_LIMITS.MAX_BRANCHES_BEFORE_EXPAND) {
-            SubhutiValidationLogger.warn(`${indent}规则 ${ruleName} 的分支数 (${branches.length}) 超过阈值 (${EXPANSION_LIMITS.MAX_BRANCHES_BEFORE_EXPAND})，提前停止展开`, ruleName)
+        if (branches.length > EXPANSION_LIMITS.MAX_BRANCHES) {
+            SubhutiValidationLogger.warn(`${indent}规则 ${ruleName} 的分支数 (${branches.length}) 超过阈值 (${EXPANSION_LIMITS.MAX_BRANCHES})，提前停止展开`, ruleName)
             return [[ruleName]]
         }
 
@@ -336,9 +328,9 @@ export class SubhutiGrammarAnalyzer {
                     expandedItems.push(itemBranches)
 
                     // 限制展开结果数量（截断点 2：单个 item 截断）
-                    if (itemBranches.length > EXPANSION_LIMITS.MAX_ITEM_BRANCHES) {
-                        SubhutiValidationLogger.warn(`${indent}    规则 ${item} 的展开结果过多 (${itemBranches.length})，截断到 ${EXPANSION_LIMITS.MAX_ITEM_BRANCHES}`, ruleName)
-                        expandedItems[expandedItems.length - 1] = itemBranches.slice(0, EXPANSION_LIMITS.MAX_ITEM_BRANCHES)
+                    if (itemBranches.length > EXPANSION_LIMITS.MAX_BRANCHES) {
+                        SubhutiValidationLogger.warn(`${indent}    规则 ${item} 的展开结果过多 (${itemBranches.length})，截断到 ${EXPANSION_LIMITS.MAX_BRANCHES}`, ruleName)
+                        expandedItems[expandedItems.length - 1] = itemBranches.slice(0, EXPANSION_LIMITS.MAX_BRANCHES)
                     }
                 }
 
@@ -362,11 +354,11 @@ export class SubhutiGrammarAnalyzer {
                 SubhutiValidationLogger.debug(`${indent}    当前累积总分支数: ${expandedBranches.length}`, ruleName)
 
                 // 限制总分支数（截断点 3：输出截断）
-                if (expandedBranches.length > EXPANSION_LIMITS.MAX_OUTPUT_BRANCHES) {
-                    SubhutiValidationLogger.warn(`${indent}✂️ 规则 ${ruleName} 的展开分支数过多 (${expandedBranches.length})，截断到 ${EXPANSION_LIMITS.MAX_OUTPUT_BRANCHES}`, ruleName)
+                if (expandedBranches.length > EXPANSION_LIMITS.MAX_BRANCHES) {
+                    SubhutiValidationLogger.warn(`${indent}✂️ 规则 ${ruleName} 的展开分支数过多 (${expandedBranches.length})，截断到 ${EXPANSION_LIMITS.MAX_BRANCHES}`, ruleName)
                     SubhutiValidationLogger.warn(`${indent}   已处理 ${branchIdx + 1}/${branches.length} 个直接子节点分支`, ruleName)
                     SubhutiValidationLogger.warn(`${indent}   当前分支: [${branch.join(', ')}]`, ruleName)
-                    return expandedBranches.slice(0, EXPANSION_LIMITS.MAX_OUTPUT_BRANCHES)
+                    return expandedBranches.slice(0, EXPANSION_LIMITS.MAX_BRANCHES)
                 }
             }
 

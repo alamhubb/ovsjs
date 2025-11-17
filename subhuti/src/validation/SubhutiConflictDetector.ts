@@ -34,6 +34,7 @@
  */
 
 import type { SubhutiGrammarAnalyzer } from "./SubhutiGrammarAnalyzer"
+import { EXPANSION_LIMITS } from "./SubhutiGrammarAnalyzer"
 import type {RuleNode, ValidationError, Path, SequenceNode} from "./SubhutiValidationError"
 
 /**
@@ -180,17 +181,15 @@ export class SubhutiConflictDetector {
                 // 步骤3: 对分支中的每个 item（token 或 ruleName）获取其展开结果
                 // 从 expansionCache 中获取规则的完全展开结果
                 // 如果是 token（不在缓存中），则保持原样 [[item]]
-                const MAX_BRANCHES = 1000  // 统一限制值
-
                 const expandedItems: string[][][] = branch.map(item => {
                     const cached = this.analyzer.getExpansionFromCache(item)
                     const result = cached || [[item]]  // token 返回 [[item]]，规则返回缓存的展开结果
 
                     // ⚠️ 关键优化：在笛卡尔积计算之前就限制每个输入的大小
-                    // 这样笛卡尔积最多是 1000^n，而不是可能的百万^n
-                    if (result.length > MAX_BRANCHES) {
-                        console.warn(`⚠️ 规则 "${item}" 的展开结果过大 (${result.length})，截断到 ${MAX_BRANCHES}`)
-                        return result.slice(0, MAX_BRANCHES)
+                    // 这样笛卡尔积最多是 MAX_BRANCHES^n，而不是可能的百万^n
+                    if (result.length > EXPANSION_LIMITS.MAX_BRANCHES) {
+                        console.warn(`⚠️ 规则 "${item}" 的展开结果过大 (${result.length})，截断到 ${EXPANSION_LIMITS.MAX_BRANCHES}`)
+                        return result.slice(0, EXPANSION_LIMITS.MAX_BRANCHES)
                     }
 
                     return result
@@ -205,9 +204,9 @@ export class SubhutiConflictDetector {
                 // ⚠️ 防止栈溢出：不使用 push(...) 展开大数组
                 // 即使输入被限制了，笛卡尔积结果仍可能很大（如 1000^3 = 10亿）
                 // 所以这里仍需要限制并使用循环
-                if (cartesianResult.length > MAX_BRANCHES) {
-                    console.warn(`⚠️ 分支笛卡尔积结果过大 (${cartesianResult.length})，截断到 ${MAX_BRANCHES}`)
-                    for (let i = 0; i < MAX_BRANCHES; i++) {
+                if (cartesianResult.length > EXPANSION_LIMITS.MAX_BRANCHES) {
+                    console.warn(`⚠️ 分支笛卡尔积结果过大 (${cartesianResult.length})，截断到 ${EXPANSION_LIMITS.MAX_BRANCHES}`)
+                    for (let i = 0; i < EXPANSION_LIMITS.MAX_BRANCHES; i++) {
                         expandedBranches.push(cartesianResult[i])
                     }
                 } else {
@@ -500,8 +499,8 @@ export class SubhutiConflictDetector {
      * - 将每个组合拼接成一个新的分支
      *
      * ⚠️ 优化：在计算过程中限制中间结果大小，防止指数爆炸
-     * - 即使每个输入限制为1000，3个数组的笛卡尔积也是 1000^3 = 10亿
-     * - 所以在每次迭代后都限制中间结果为 1000
+     * - 即使每个输入限制为MAX_BRANCHES，3个数组的笛卡尔积也是 MAX_BRANCHES^3
+     * - 所以在每次迭代后都限制中间结果
      *
      * @param arrays 三维数组（数组的数组的数组）
      * @returns 二维数组（所有可能的组合）
@@ -515,13 +514,12 @@ export class SubhutiConflictDetector {
             return arrays[0]
         }
 
-        const MAX_BRANCHES = 1000  // 统一限制值
         let result = arrays[0]
 
         // 如果第一个数组就超过限制，先截断
-        if (result.length > MAX_BRANCHES) {
-            console.warn(`⚠️ 笛卡尔积输入过大 (${result.length})，截断到 ${MAX_BRANCHES}`)
-            result = result.slice(0, MAX_BRANCHES)
+        if (result.length > EXPANSION_LIMITS.MAX_BRANCHES) {
+            console.warn(`⚠️ 笛卡尔积输入过大 (${result.length})，截断到 ${EXPANSION_LIMITS.MAX_BRANCHES}`)
+            result = result.slice(0, EXPANSION_LIMITS.MAX_BRANCHES)
         }
 
         for (let i = 1; i < arrays.length; i++) {
@@ -533,7 +531,7 @@ export class SubhutiConflictDetector {
                     temp.push([...seq, ...branch])
 
                     // ⚠️ 关键优化：在计算过程中就限制大小
-                    if (temp.length >= MAX_BRANCHES) {
+                    if (temp.length >= EXPANSION_LIMITS.MAX_BRANCHES) {
                         truncated = true
                         break
                     }
@@ -542,7 +540,7 @@ export class SubhutiConflictDetector {
             }
 
             if (truncated) {
-                console.warn(`⚠️ 笛卡尔积中间结果过大，截断到 ${MAX_BRANCHES}`)
+                console.warn(`⚠️ 笛卡尔积中间结果过大，截断到 ${EXPANSION_LIMITS.MAX_BRANCHES}`)
             }
 
             result = temp
