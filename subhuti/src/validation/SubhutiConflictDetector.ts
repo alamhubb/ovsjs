@@ -262,16 +262,7 @@ export class SubhutiConflictDetector {
                 // 如果是 token（不在缓存中），则保持原样 [[item]]
                 const expandedItems: string[][][] = branch.map(item => {
                     const cached = this.analyzer.getExpansionFromCache(item)
-                    const result = cached || [[item]]  // token 返回 [[item]]，规则返回缓存的展开结果
-
-                    // ⚠️ 关键优化：在笛卡尔积计算之前就限制每个输入的大小
-                    // 这样笛卡尔积最多是 MAX_BRANCHES^n，而不是可能的百万^n
-                    if (result.length > EXPANSION_LIMITS.MAX_BRANCHES) {
-                        console.warn(`⚠️ 规则 "${item}" 的展开结果过大 (${result.length})，截断到 ${EXPANSION_LIMITS.MAX_BRANCHES}`)
-                        return result.slice(0, EXPANSION_LIMITS.MAX_BRANCHES)
-                    }
-
-                    return result
+                    return cached || [[item]]  // token 返回 [[item]]，规则返回缓存的展开结果
                 })
 
                 // 步骤4: 通过笛卡尔积将所有规则的展开结果组合
@@ -280,19 +271,9 @@ export class SubhutiConflictDetector {
                 //    → [["a", "TokenB"], ["c", "TokenB"]]
                 const cartesianResult = this.cartesianProduct(expandedItems, ruleName, branchIdx)
 
-                // ⚠️ 防止栈溢出：不使用 push(...) 展开大数组
-                // 即使输入被限制了，笛卡尔积结果仍可能很大（如 1000^3 = 10亿）
-                // 所以这里仍需要限制并使用循环
-                if (cartesianResult.length > EXPANSION_LIMITS.MAX_BRANCHES) {
-                    console.warn(`⚠️ 分支笛卡尔积结果过大 (${cartesianResult.length})，截断到 ${EXPANSION_LIMITS.MAX_BRANCHES}`)
-                    for (let i = 0; i < EXPANSION_LIMITS.MAX_BRANCHES; i++) {
-                        expandedBranches.push(cartesianResult[i])
-                    }
-                } else {
-                    // 使用循环而不是 push(...) 避免栈溢出
-                    for (const item of cartesianResult) {
-                        expandedBranches.push(item)
-                    }
+                // 使用循环而不是 push(...) 避免栈溢出
+                for (const item of cartesianResult) {
+                    expandedBranches.push(item)
                 }
             }
 
@@ -640,10 +621,6 @@ export class SubhutiConflictDetector {
      * - 第一个数组的每个分支 × 第二个数组的每个分支 × ... × 第N个数组的每个分支
      * - 将每个组合拼接成一个新的分支
      *
-     * ⚠️ 优化：在计算过程中限制中间结果大小，防止指数爆炸
-     * - 即使每个输入限制为MAX_BRANCHES，3个数组的笛卡尔积也是 MAX_BRANCHES^3
-     * - 所以在每次迭代后都限制中间结果
-     *
      * @param arrays 三维数组（数组的数组的数组）
      * @param ruleName 规则名称（用于日志）
      * @param branchIndex 分支索引（用于日志）
@@ -680,12 +657,6 @@ export class SubhutiConflictDetector {
 
         let result = arrays[0]
 
-        // 如果第一个数组就超过限制，先截断
-        if (result.length > EXPANSION_LIMITS.MAX_BRANCHES) {
-            console.warn(`  ${logPrefix} ⚠️ 笛卡尔积输入过大 (${result.length})，截断到 ${EXPANSION_LIMITS.MAX_BRANCHES}`)
-            result = result.slice(0, EXPANSION_LIMITS.MAX_BRANCHES)
-        }
-
         // 📊 迭代统计
         const iterationStats: Array<{iteration: number, inputSize: number, arraySize: number, outputSize: number, truncated: boolean}> = []
 
@@ -695,19 +666,12 @@ export class SubhutiConflictDetector {
             const arraySize = arrays[i].length
 
             const temp: string[][] = []
-            let truncated = false
+            const truncated = false
 
             for (const seq of result) {
                 for (const branch of arrays[i]) {
                     temp.push([...seq, ...branch])
-
-                    // ⚠️ 关键优化：在计算过程中就限制大小
-                    if (temp.length >= EXPANSION_LIMITS.MAX_BRANCHES) {
-                        truncated = true
-                        break
-                    }
                 }
-                if (truncated) break
             }
 
             const iterElapsed = Date.now() - iterStartTime
