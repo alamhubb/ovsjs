@@ -31,7 +31,7 @@
  */
 
 import type {RuleNode, Path, SequenceNode} from "./SubhutiValidationError"
-import { SubhutiValidationLogger } from './SubhutiValidationLogger'
+import {SubhutiValidationLogger} from './SubhutiValidationLogger'
 
 /**
  * 展开限制配置
@@ -49,6 +49,16 @@ import { SubhutiValidationLogger } from './SubhutiValidationLogger'
  * 2. MAX_ITEM_BRANCHES：限制单个 item 的展开结果，超过则截断
  * 3. MAX_OUTPUT_BRANCHES：限制最终输出分支数，超过则截断
  */
+/**
+ * 全局统一限制：所有分支数限制统一为 1000
+ *
+ * 设计理念：
+ * - 使用统一的限制值，简化配置和理解
+ * - 1000 是一个合理的平衡点：足够检测冲突，又不会导致性能问题
+ * - 笛卡尔积最坏情况：1000 * 1000 = 100万（可接受）
+ */
+const MAX_BRANCHES = 1000
+
 export const EXPANSION_LIMITS = {
     /**
      * 最大展开层级
@@ -64,20 +74,20 @@ export const EXPANSION_LIMITS = {
      * - 2 层足够检测大部分 Or 分支冲突
      * - 用户可以根据需要设置为具体数字（如 3）来限制展开深度
      */
-    MAX_LEVEL: 2,
+    MAX_LEVEL: Infinity,
 
     /**
      * 展开前的分支数阈值（动态层级限制）
      * 如果当前规则的直接子节点分支数超过此值，则提前停止展开
      * 这样可以动态控制展开深度：分支少时展开更深，分支多时提前停止
      */
-    MAX_BRANCHES_BEFORE_EXPAND: 100,
+    MAX_BRANCHES_BEFORE_EXPAND: MAX_BRANCHES,
 
     /** 单个 item 展开结果的分支数上限（超过则截断） */
-    MAX_ITEM_BRANCHES: 100,
+    MAX_ITEM_BRANCHES: MAX_BRANCHES,
 
     /** 单个规则的最终展开结果分支数上限（超过则截断） */
-    MAX_OUTPUT_BRANCHES: 1000,
+    MAX_OUTPUT_BRANCHES: MAX_BRANCHES,
 } as const
 
 /**
@@ -207,7 +217,7 @@ export class SubhutiGrammarAnalyzer {
             const elapsed = Date.now() - startTime
 
             if (elapsed > 1000) {
-                console.log(`  ⚠️ ${ruleName} 耗时 ${elapsed}ms (${(elapsed/1000).toFixed(2)}s)`)
+                console.log(`  ⚠️ ${ruleName} 耗时 ${elapsed}ms (${(elapsed / 1000).toFixed(2)}s)`)
             }
 
             if (elapsed > 10000) {
@@ -585,8 +595,21 @@ export class SubhutiGrammarAnalyzer {
             return [[]]
         }
 
-        const allBranches = nodes.map(node => this.computeDirectChildren(node))
-        return this.cartesianProduct(allBranches)
+        const FIRST_K = 2  // First(3) 集合
+
+        // 每个规则的每个分支，限制为 First(3)
+        const allBranches = nodes.map(node => {
+            const branches = this.computeDirectChildren(node)
+            branches.forEach(branch => branch.splice(FIRST_K))
+            return branches
+        })
+
+        const res = this.cartesianProduct(allBranches)
+
+        // 笛卡尔积结果也限制为 First(3)
+        res.forEach(path => path.splice(FIRST_K))
+
+        return res
     }
 
     /**
