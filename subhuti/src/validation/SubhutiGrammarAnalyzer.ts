@@ -78,8 +78,10 @@ export const EXPANSION_LIMITS = {
      * 全局分支数限制
      * - 所有涉及分支数的地方都使用这个统一的值
      * - 包括：展开前检查、单个item展开、笛卡尔积输入/输出等
+     * - 1000：合理的平衡点，足够检测冲突，又不会导致性能问题
+     * - 路径比较复杂度：O(n²)，1000条路径 = 100万次比较（可接受）
      */
-    MAX_BRANCHES: Infinity,
+    MAX_BRANCHES: 1000,
 } as const
 
 /**

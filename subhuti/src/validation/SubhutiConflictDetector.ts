@@ -71,6 +71,20 @@ export interface ConflictDetectorOptions {
 export class SubhutiConflictDetector {
     private mode: ConflictDetectionMode
 
+    // 📊 笛卡尔积统计
+    private cartesianStats = {
+        totalCalls: 0,
+        totalTime: 0,
+        maxTime: 0,
+        maxTimeRule: '',
+        totalInputArrays: 0,
+        totalOutputBranches: 0,
+        truncatedCount: 0
+    }
+
+    // 📊 Or冲突检测调用统计
+    private orConflictCallCount = new Map<string, number>()
+
     /**
      * 构造函数
      *
@@ -85,20 +99,82 @@ export class SubhutiConflictDetector {
     ) {
         this.mode = options.mode || 'auto'
     }
-    
+
     /**
      * 检测所有冲突
-     * 
+     *
      * @returns 错误列表
      */
     detectAllConflicts(): ValidationError[] {
         const errors: ValidationError[] = []
-        
+
+        // 📊 规则检测统计
+        const ruleStats: Array<{ruleName: string, time: number, conflicts: number}> = []
+
         // 遍历所有规则
+        let ruleIndex = 0
         for (const [ruleName, ruleNode] of this.ruleASTs) {
+            ruleIndex++
+            const ruleStartTime = Date.now()
+            const errorsBefore = errors.length
+
             this.detectNodeConflicts(ruleName, ruleNode, errors)
+
+            const ruleElapsed = Date.now() - ruleStartTime
+            const conflictsFound = errors.length - errorsBefore
+
+            ruleStats.push({
+                ruleName,
+                time: ruleElapsed,
+                conflicts: conflictsFound
+            })
+
+            // 输出每个规则的检测进度和耗时
+            if (ruleElapsed > 50 || conflictsFound > 0) {
+                console.log(`  [${ruleIndex}/${this.ruleASTs.size}] ${ruleName}: ${ruleElapsed}ms${conflictsFound > 0 ? ` (发现${conflictsFound}个冲突)` : ''}`)
+            }
+
+            // 📊 如果是AssignmentExpression，立即输出详细统计
+            if (ruleName === 'AssignmentExpression' && ruleElapsed > 1000) {
+                const callCount = this.orConflictCallCount.get(ruleName) || 0
+                console.log(`    ⚠️ AssignmentExpression 耗时过长：${ruleElapsed}ms，Or冲突检测被调用${callCount}次`)
+                console.log(`    平均每次调用：${(ruleElapsed / callCount).toFixed(2)}ms`)
+            }
         }
-        
+
+        // 📊 输出规则检测统计（按耗时排序）
+        console.log(`\n📊 规则检测统计（Top 20 最耗时）：`)
+        const sortedStats = ruleStats.sort((a, b) => b.time - a.time).slice(0, 20)
+        sortedStats.forEach((stat, index) => {
+            const callCount = this.orConflictCallCount.get(stat.ruleName) || 0
+            console.log(`  ${index + 1}. ${stat.ruleName}: ${stat.time}ms${callCount > 0 ? ` (调用${callCount}次)` : ''}${stat.conflicts > 0 ? ` [${stat.conflicts}个冲突]` : ''}`)
+        })
+
+        const totalRuleTime = ruleStats.reduce((sum, s) => sum + s.time, 0)
+        console.log(`  总耗时: ${totalRuleTime}ms`)
+        console.log(`  平均耗时: ${(totalRuleTime / ruleStats.length).toFixed(2)}ms`)
+
+        // 📊 输出Or冲突检测调用统计（Top 10）
+        console.log(`\n📊 Or冲突检测调用次数（Top 10）：`)
+        const sortedCalls = Array.from(this.orConflictCallCount.entries())
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 10)
+        sortedCalls.forEach(([ruleName, count], index) => {
+            const stat = ruleStats.find(s => s.ruleName === ruleName)
+            const avgTime = stat ? (stat.time / count).toFixed(2) : '0'
+            console.log(`  ${index + 1}. ${ruleName}: ${count}次调用，平均${avgTime}ms/次`)
+        })
+
+        // 📊 输出笛卡尔积统计
+        console.log(`\n📊 笛卡尔积统计：`)
+        console.log(`  - 总调用次数：${this.cartesianStats.totalCalls}`)
+        console.log(`  - 总耗时：${this.cartesianStats.totalTime}ms`)
+        console.log(`  - 平均耗时：${(this.cartesianStats.totalTime / this.cartesianStats.totalCalls).toFixed(2)}ms`)
+        console.log(`  - 最大耗时：${this.cartesianStats.maxTime}ms (规则: ${this.cartesianStats.maxTimeRule})`)
+        console.log(`  - 总输入数组：${this.cartesianStats.totalInputArrays}`)
+        console.log(`  - 总输出分支：${this.cartesianStats.totalOutputBranches}`)
+        console.log(`  - 截断次数：${this.cartesianStats.truncatedCount}`)
+
         return errors
     }
     
@@ -162,10 +238,12 @@ export class SubhutiConflictDetector {
      *          - 第二维：每个分支的所有可能路径
      *          - 第三维：每条路径的 token 序列
      */
-    private computeOrBranchExpansions(alternatives: RuleNode[]): string[][][] {
+    private computeOrBranchExpansions(ruleName: string, alternatives: RuleNode[]): string[][][] {
         const branchExpansions: string[][][] = []
 
-        for (const alternative of alternatives) {
+        for (let branchIdx = 0; branchIdx < alternatives.length; branchIdx++) {
+            const alternative = alternatives[branchIdx]
+
             // 步骤1: 调用 computeDirectChildren 获取分支的直接子节点
             // 这会展开所有辅助节点（sequence、or、option、many、atLeastOne）
             // 但保留 token 和 ruleName 不展开
@@ -175,7 +253,8 @@ export class SubhutiConflictDetector {
             // 步骤2: 对每个直接子节点分支进行完全展开
             const expandedBranches: string[][] = []
 
-            for (const branch of directChildren) {
+            for (let subBranchIdx = 0; subBranchIdx < directChildren.length; subBranchIdx++) {
+                const branch = directChildren[subBranchIdx]
                 // branch 是一个一维数组，例如：["RuleA", "TokenB"]
 
                 // 步骤3: 对分支中的每个 item（token 或 ruleName）获取其展开结果
@@ -199,7 +278,7 @@ export class SubhutiConflictDetector {
                 // 将三维数组转换为二维数组
                 // 例如：[ [["a", "b"], ["c"]], [["TokenB"]] ]
                 //    → [["a", "TokenB"], ["c", "TokenB"]]
-                const cartesianResult = this.cartesianProduct(expandedItems)
+                const cartesianResult = this.cartesianProduct(expandedItems, ruleName, branchIdx)
 
                 // ⚠️ 防止栈溢出：不使用 push(...) 展开大数组
                 // 即使输入被限制了，笛卡尔积结果仍可能很大（如 1000^3 = 10亿）
@@ -239,25 +318,74 @@ export class SubhutiConflictDetector {
         alternatives: SequenceNode[],
         errors: ValidationError[]
     ): void {
+        const t0 = Date.now()
+
+        // 📊 统计调用次数
+        const currentCount = this.orConflictCallCount.get(ruleName) || 0
+        this.orConflictCallCount.set(ruleName, currentCount + 1)
+
         // 🚀 优化：使用 First 集合快速预检
         // 如果两个分支的 First 集合无交集，则肯定无前缀冲突，可以跳过详细检测
+        const t1 = Date.now()
         const hasConflict = this.quickCheckWithFirst(alternatives)
+        const t2 = Date.now()
+
+        const firstCheckTime = t2 - t1
 
         if (!hasConflict) {
             // 无冲突，跳过详细检测
+            const totalTime = Date.now() - t0
+            if (totalTime > 10) {
+                console.log(`    [${ruleName}] First集预检：无冲突，跳过详细检测，耗时${totalTime}ms`)
+            }
             return
         }
 
         // 公共部分：计算所有分支的完全展开结果（只在可能有冲突时才计算）
         // 这个方法被空路径检测和前缀冲突检测共用
-        const branchExpansions = this.computeOrBranchExpansions(alternatives)
+        const t3 = Date.now()
+        const branchExpansions = this.computeOrBranchExpansions(ruleName, alternatives)
+        const t4 = Date.now()
+
+        const expansionTime = t4 - t3
+        const totalPaths = branchExpansions.reduce((sum, exp) => sum + exp.length, 0)
+
+        // 📊 输出每个分支的路径数（用于调试）
+        if (ruleName === 'AssignmentExpression') {
+            console.log(`    [${ruleName}] 各分支路径数：`)
+            branchExpansions.forEach((exp, idx) => {
+                console.log(`      分支${idx}: ${exp.length}条路径`)
+            })
+        }
+
+        if (expansionTime > 50) {
+            console.log(`    [${ruleName}] 分支展开：${alternatives.length}个分支 → ${totalPaths}条路径，耗时${expansionTime}ms`)
+        }
 
         // 两两比较 Or 分支，执行所有检测
+        const t5 = Date.now()
+        let totalComparisons = 0
+
+        // ⚠️ 预处理：限制所有分支的路径数量
+        if (ruleName === 'AssignmentExpression') {
+            console.log(`    [${ruleName}] 开始限制路径数量，MAX_BRANCHES=${EXPANSION_LIMITS.MAX_BRANCHES}`)
+        }
+
+        const limitedBranchExpansions = branchExpansions.map((branchExp, idx) => {
+            if (branchExp.length > EXPANSION_LIMITS.MAX_BRANCHES) {
+                console.warn(`    [${ruleName}] 分支${idx}的展开结果过多 (${branchExp.length})，截断到 ${EXPANSION_LIMITS.MAX_BRANCHES}`)
+                return branchExp.slice(0, EXPANSION_LIMITS.MAX_BRANCHES)
+            }
+            return branchExp
+        })
+
         for (let i = 0; i < alternatives.length; i++) {
-            const pathsA = this.expansionToPaths(branchExpansions[i])
+            const pathsA = this.expansionToPaths(limitedBranchExpansions[i])
 
             for (let j = i + 1; j < alternatives.length; j++) {
-                const pathsB = this.expansionToPaths(branchExpansions[j])
+                const pathsB = this.expansionToPaths(limitedBranchExpansions[j])
+
+                totalComparisons += pathsA.length * pathsB.length
 
                 // Level 1: 空路径检测（FATAL 级别）
                 // 只检测 Or 分支本身是否可以为空（顶层空路径）
@@ -282,6 +410,20 @@ export class SubhutiConflictDetector {
                 // Level 2: 前缀冲突检测（ERROR 级别）
                 this.detectPrefixConflicts(ruleName, i, j, pathsA, pathsB, errors)
             }
+        }
+
+        const t6 = Date.now()
+        const comparisonTime = t6 - t5
+        const totalTime = t6 - t0
+
+        // 📊 详细统计（AssignmentExpression 或耗时超过100ms时输出）
+        if (ruleName === 'AssignmentExpression' || totalTime > 100) {
+            console.log(`    [${ruleName}] 冲突检测详情：`)
+            console.log(`      - First集预检：${firstCheckTime}ms`)
+            console.log(`      - 分支展开：${expansionTime}ms (${alternatives.length}个分支 → ${totalPaths}条路径)`)
+            console.log(`      - 路径比较：${comparisonTime}ms (${totalComparisons}次比较)`)
+            console.log(`      - 总耗时：${totalTime}ms`)
+            console.log(`      - 平均每次比较：${(comparisonTime / totalComparisons).toFixed(4)}ms`)
         }
     }
 
@@ -486,7 +628,7 @@ export class SubhutiConflictDetector {
     }
 
     /**
-     * 计算笛卡尔积（带限制）
+     * 计算笛卡尔积（带限制和性能监控）
      *
      * 将三维数组通过笛卡尔积转换为二维数组
      *
@@ -503,14 +645,36 @@ export class SubhutiConflictDetector {
      * - 所以在每次迭代后都限制中间结果
      *
      * @param arrays 三维数组（数组的数组的数组）
+     * @param ruleName 规则名称（用于日志）
+     * @param branchIndex 分支索引（用于日志）
      * @returns 二维数组（所有可能的组合）
      */
-    private cartesianProduct(arrays: string[][][]): string[][] {
+    private cartesianProduct(arrays: string[][][], ruleName?: string, branchIndex?: number): string[][] {
+        // ⏱️ 入口：记录开始时间和输入信息
+        const startTime = Date.now()
+        const inputInfo = {
+            arrayCount: arrays.length,
+            branchCounts: arrays.map(arr => arr.length),
+            totalInputBranches: arrays.reduce((sum, arr) => sum + arr.length, 0),
+            estimatedOutput: arrays.reduce((product, arr) => product * arr.length, 1)
+        }
+
+        const logPrefix = ruleName ? `[${ruleName}#${branchIndex}]` : '[笛卡尔积]'
+
+        // 📊 输入统计
+        if (inputInfo.estimatedOutput > 1000) {
+            console.log(`  ${logPrefix} 笛卡尔积输入：${inputInfo.arrayCount}个数组，分支数=[${inputInfo.branchCounts.join(', ')}]，预计输出=${inputInfo.estimatedOutput}`)
+        }
+
         if (arrays.length === 0) {
             return [[]]
         }
 
         if (arrays.length === 1) {
+            const elapsed = Date.now() - startTime
+            if (elapsed > 10) {
+                console.log(`  ${logPrefix} 笛卡尔积完成：单数组直接返回，耗时${elapsed}ms`)
+            }
             return arrays[0]
         }
 
@@ -518,11 +682,18 @@ export class SubhutiConflictDetector {
 
         // 如果第一个数组就超过限制，先截断
         if (result.length > EXPANSION_LIMITS.MAX_BRANCHES) {
-            console.warn(`⚠️ 笛卡尔积输入过大 (${result.length})，截断到 ${EXPANSION_LIMITS.MAX_BRANCHES}`)
+            console.warn(`  ${logPrefix} ⚠️ 笛卡尔积输入过大 (${result.length})，截断到 ${EXPANSION_LIMITS.MAX_BRANCHES}`)
             result = result.slice(0, EXPANSION_LIMITS.MAX_BRANCHES)
         }
 
+        // 📊 迭代统计
+        const iterationStats: Array<{iteration: number, inputSize: number, arraySize: number, outputSize: number, truncated: boolean}> = []
+
         for (let i = 1; i < arrays.length; i++) {
+            const iterStartTime = Date.now()
+            const inputSize = result.length
+            const arraySize = arrays[i].length
+
             const temp: string[][] = []
             let truncated = false
 
@@ -539,11 +710,64 @@ export class SubhutiConflictDetector {
                 if (truncated) break
             }
 
+            const iterElapsed = Date.now() - iterStartTime
+
+            // 记录迭代统计
+            iterationStats.push({
+                iteration: i,
+                inputSize,
+                arraySize,
+                outputSize: temp.length,
+                truncated
+            })
+
             if (truncated) {
-                console.warn(`⚠️ 笛卡尔积中间结果过大，截断到 ${EXPANSION_LIMITS.MAX_BRANCHES}`)
+                console.warn(`  ${logPrefix} ⚠️ 迭代${i}：${inputSize} × ${arraySize} → ${temp.length}（截断），耗时${iterElapsed}ms`)
+            } else if (iterElapsed > 100) {
+                console.log(`  ${logPrefix} 迭代${i}：${inputSize} × ${arraySize} = ${temp.length}，耗时${iterElapsed}ms`)
             }
 
             result = temp
+        }
+
+        // ⏱️ 出口：记录结束时间和输出信息
+        const totalElapsed = Date.now() - startTime
+        const outputInfo = {
+            actualOutput: result.length,
+            wasTruncated: iterationStats.some(s => s.truncated),
+            totalIterations: iterationStats.length
+        }
+
+        // 📊 更新统计信息
+        this.cartesianStats.totalCalls++
+        this.cartesianStats.totalTime += totalElapsed
+        this.cartesianStats.totalInputArrays += inputInfo.arrayCount
+        this.cartesianStats.totalOutputBranches += outputInfo.actualOutput
+        if (outputInfo.wasTruncated) {
+            this.cartesianStats.truncatedCount++
+        }
+        if (totalElapsed > this.cartesianStats.maxTime) {
+            this.cartesianStats.maxTime = totalElapsed
+            this.cartesianStats.maxTimeRule = ruleName || '未知'
+        }
+
+        // 📊 输出统计（降低阈值，看到更多信息）
+        if (totalElapsed > 5 || outputInfo.wasTruncated || inputInfo.estimatedOutput > 100) {
+            console.log(`  ${logPrefix} 笛卡尔积完成：输入${inputInfo.arrayCount}个数组，输出${outputInfo.actualOutput}个分支，耗时${totalElapsed}ms${outputInfo.wasTruncated ? '（已截断）' : ''}`)
+        }
+
+        // 📊 详细统计（仅在耗时较长时输出）
+        if (totalElapsed > 50) {
+            console.log(`  ${logPrefix} 详细统计：`)
+            console.log(`    - 输入数组数量：${inputInfo.arrayCount}`)
+            console.log(`    - 各数组分支数：[${inputInfo.branchCounts.join(', ')}]`)
+            console.log(`    - 预计输出：${inputInfo.estimatedOutput}`)
+            console.log(`    - 实际输出：${outputInfo.actualOutput}`)
+            console.log(`    - 迭代次数：${outputInfo.totalIterations}`)
+            console.log(`    - 总耗时：${totalElapsed}ms`)
+            iterationStats.forEach(stat => {
+                console.log(`    - 迭代${stat.iteration}：${stat.inputSize} × ${stat.arraySize} = ${stat.outputSize}${stat.truncated ? '（截断）' : ''}`)
+            })
         }
 
         return result
