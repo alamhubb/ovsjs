@@ -156,7 +156,7 @@ export class SubhutiGrammarAnalyzer {
      *
      * @param maxLevel 最大展开层级（默认使用配置中的 MAX_LEVEL）
      */
-    initializeCaches(maxLevel = EXPANSION_LIMITS.MAX_LEVEL): void {
+    preHandler(maxLevel = EXPANSION_LIMITS.MAX_LEVEL): void {
         // 1. 计算直接子节点缓存
         // ✅ 优化：跳过空 AST 的规则
         for (const ruleName of this.ruleASTs.keys()) {
@@ -337,7 +337,7 @@ export class SubhutiGrammarAnalyzer {
                 console.log(`  ✅ ${ruleName} 展开完成：${expandedBranches.length} 个分支，耗时 ${totalElapsed}ms`)
             }
             if (totalElapsed > 5000) {
-                console.warn(`  ❌ ${ruleName} 展开耗时过长：${totalElapsed}ms (${(totalElapsed/1000).toFixed(2)}s)`)
+                console.warn(`  ❌ ${ruleName} 展开耗时过长：${totalElapsed}ms (${(totalElapsed / 1000).toFixed(2)}s)`)
             }
 
             return expandedBranches
@@ -352,9 +352,10 @@ export class SubhutiGrammarAnalyzer {
      * 获取规则的直接子节点（只缓存一层）
      *
      * @param ruleName 规则名称
+     * @param firstK
      * @returns 直接子节点二维数组
      */
-    private initDirectChildrenCache(ruleName: string) {
+    private initDirectChildrenCache(ruleName: string, firstK: number) {
         if (this.directChildrenCache.has(ruleName)) {
             throw new Error('系统错误')
         }
@@ -362,7 +363,7 @@ export class SubhutiGrammarAnalyzer {
         if (!ruleNode) {
             throw new Error('系统错误')
         }
-        const children = this.computeDirectChildren(ruleNode)
+        const children = this.computeDirectChildren(ruleNode,firstK)
 
         this.directChildrenCache.set(ruleName, children)
     }
@@ -414,16 +415,6 @@ export class SubhutiGrammarAnalyzer {
         } finally {
             this.computing.delete(ruleName)
         }
-    }
-
-    /**
-     * 计算节点的分层展开结果（公开方法）
-     *
-     * @param node AST 节点
-     * @returns 分层展开结果
-     */
-    computeNodeExpansionPublic(node: RuleNode): string[][] {
-        return this.computeNodeExpansion(node)
     }
 
     /**
@@ -536,17 +527,16 @@ export class SubhutiGrammarAnalyzer {
      * - 最终通过笛卡尔积合并所有分支
      *
      * @param rootNode AST 节点
-     * @param maxLevel
-     * @param curLevel
+     * @param firstK
      */
-    public computeDirectChildren(rootNode: RuleNode): string[][] {
+    public computeDirectChildren(rootNode: RuleNode, firstK: number): string[][] {
         // private computeDirectChildren(rootNode: RuleNode, maxLevel: number = 0, curLevel: number = maxLevel): string[][] {
         switch (rootNode.type) {
             case 'consume':
                 return [[rootNode.tokenName]]
 
             case 'sequence':
-                return this.computeSequenceDirectChildren(rootNode.nodes)
+                return this.computeSequenceDirectChildren(rootNode.nodes, firstK)
 
             case 'or':
                 return this.computeOrDirectChildren(rootNode.alternatives)
@@ -607,24 +597,23 @@ export class SubhutiGrammarAnalyzer {
      * 计算序列的直接子节点（需要笛卡尔积）
      * A B → 所有 A的分支 × B的分支 的组合
      */
-    private computeSequenceDirectChildren(nodes: RuleNode[]): string[][] {
+    private computeSequenceDirectChildren(nodes: RuleNode[], firstK: number): string[][] {
         if (nodes.length === 0) {
             return [[]]
         }
 
-        const FIRST_K = 2  // First(3) 集合
 
         // 每个规则的每个分支，限制为 First(3)
         const allBranches = nodes.map(node => {
             const branches = this.computeDirectChildren(node)
-            branches.forEach(branch => branch.splice(FIRST_K))
+            branches.forEach(branch => branch.splice(firstK))
             return branches
         })
 
         const res = this.cartesianProduct(allBranches)
 
         // 笛卡尔积结果也限制为 First(3)
-        res.forEach(path => path.splice(FIRST_K))
+        res.forEach(path => path.splice(firstK))
 
         return res
     }

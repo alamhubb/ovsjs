@@ -232,6 +232,7 @@ export class SubhutiConflictDetector {
      * 3. 对每个分支中的每个规则从 expansionCache 中获取其完全展开结果
      * 4. 通过笛卡尔积将规则替换为其展开结果，得到完整的 token 路径
      *
+     * @param ruleName
      * @param alternatives Or 节点的所有分支
      * @returns 每个分支的完全展开结果（三维数组）
      *          - 第一维：Or 的每个分支
@@ -446,12 +447,6 @@ export class SubhutiConflictDetector {
         return false
     }
 
-    /**
-     * 计算节点的展开结果
-     */
-    private computeNodeExpansion(node: RuleNode): string[][] {
-        return this.analyzer.computeNodeExpansionPublic(node)
-    }
 
     /**
      * 将展开结果（二维数组）转换为路径字符串数组

@@ -51,7 +51,7 @@ export class SubhutiGrammarValidator {
 
         // 3. 初始化缓存（计算直接子节点、First 集合、路径展开）
         const t5 = Date.now()
-        analyzer.initializeCaches(maxLevel)
+        analyzer.preHandler(maxLevel)
         const t6 = Date.now()
         console.log(`  ⏱️ [3.3] 初始化缓存耗时: ${t6 - t5}ms`)
 
