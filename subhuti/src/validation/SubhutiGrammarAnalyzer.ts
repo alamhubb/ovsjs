@@ -69,7 +69,7 @@ export const EXPANSION_LIMITS = {
      * - 1000条路径 × 1000条路径 = 100万次比较（可接受）
      * - 超过1000条路径会导致性能问题（如 28260条 = 8亿次比较）
      */
-    MAX_BRANCHES: Infinity,
+    MAX_BRANCHES: 1000,
 } as const
 
 /**
