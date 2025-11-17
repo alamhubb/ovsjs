@@ -3748,7 +3748,6 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     @SubhutiRule
     Script(): SubhutiCst | undefined {
         this.Option(() => this.StatementList({Yield: false, Await: false, Return: false}))
-        this.expectEOF()  // ✅ 确保所有 token 都被消费
         return this.curCst
     }
 
@@ -3762,7 +3761,6 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     @SubhutiRule
     Module(): SubhutiCst | undefined {
         this.Option(() => this.ModuleItemList())
-        this.expectEOF()  // ✅ 确保所有 token 都被消费
         return this.curCst
     }
 

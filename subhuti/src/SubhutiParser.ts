@@ -326,6 +326,10 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             const startTime = this._debugger?.onRuleEnter(ruleName, this.tokenIndex)
             const cst = this.executeRuleCore(ruleName, targetFun, ...args)
             this.onRuleExitDebugHandler(ruleName, cst, isTopLevel, startTime)
+
+            // ✅ 顶层规则执行完成后，检查是否所有 token 都被消费
+            this.checkEOFForTopLevelRule(ruleName)
+
             return cst
         }
 
@@ -633,13 +637,14 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     }
 
     /**
-     * 检查是否到达文件末尾（EOF）
+     * 检查顶层规则是否消费了所有 token（内部方法）
      *
-     * 用于顶层规则（如 Script、Module）确保所有 token 都被消费
+     * 由 executeRuleWrapper 自动调用，用户无需手动调用
      *
+     * @param ruleName 规则名
      * @throws ParsingError 如果还有未消费的 token
      */
-    expectEOF(): void {
+    private checkEOFForTopLevelRule(ruleName: string): void {
         if (!this._parseSuccess) {
             return
         }
@@ -647,8 +652,29 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         if (this.tokenIndex < this._tokens.length) {
             this._parseSuccess = false
 
+            // 🔍 智能检测：判断是否可能是 Or 分支遮蔽问题
+            // 如果 tokenIndex = 0，说明完全没有消费任何 token
+            // 这很可能是 Or 分支遮蔽导致的（所有分支都失败，Option 回溯到起点）
+            const isPossibleOrShadowing = this.tokenIndex === 0
+
+            // 根据检测结果选择错误类型和建议
+            const errorType = isPossibleOrShadowing ? 'or-branch-shadowing' : 'parsing'
+            const suggestions = isPossibleOrShadowing ? [
+                '⚠️ 可能是 Or 分支遮蔽问题！',
+                '检查 Or 分支顺序是否正确（前面的分支可能遮蔽了后面的分支）',
+                '将更具体、更长的规则放在前面',
+                '例如：CallExpression 应该在 NewExpression 前面'
+            ] : [
+                '检查是否有语法错误导致部分代码无法解析',
+                '确保所有语句都正确结束（如缺少分号、括号不匹配等）',
+                '检查 Or 分支顺序是否正确'
+            ]
+
+            // 获取当前规则名（从规则栈）
+            const ruleStack = this.getRuleStack()
+
             throw this._errorHandler.createError({
-                type: 'parsing',
+                type: errorType,
                 expected: 'EOF (end of file)',
                 found: this.curToken,
                 position: this.curToken ? {
@@ -662,12 +688,72 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
                     line: this._tokens[this._tokens.length - 1]?.rowNum || 0,
                     column: this._tokens[this._tokens.length - 1]?.columnEndNum || 0
                 },
-                ruleStack: this.getRuleStack(),
-                suggestions: [
-                    '检查是否有语法错误导致部分代码无法解析',
-                    '确保所有语句都正确结束（如缺少分号、括号不匹配等）',
-                    '检查 Or 分支顺序是否正确（前面的分支可能遮蔽了后面的分支）'
-                ]
+                ruleStack: ruleStack,
+                loopRuleName: ruleName,  // ✅ 使用传入的规则名
+                loopTokenContext: this.getTokenContext(this.tokenIndex, 3),  // ✅ 添加 token 上下文
+                suggestions: suggestions
+            })
+        }
+    }
+
+    /**
+     * 检查是否到达文件末尾（EOF）
+     *
+     * @deprecated 不推荐手动调用，顶层规则会自动检测 EOF
+     *
+     * 用于顶层规则（如 Script、Module）确保所有 token 都被消费
+     *
+     * @throws ParsingError 如果还有未消费的 token
+     */
+    expectEOF(): void {
+        if (!this._parseSuccess) {
+            return
+        }
+
+        if (this.tokenIndex < this._tokens.length) {
+            this._parseSuccess = false
+
+            // 🔍 智能检测：判断是否可能是 Or 分支遮蔽问题
+            // 如果 tokenIndex = 0，说明完全没有消费任何 token
+            // 这很可能是 Or 分支遮蔽导致的（所有分支都失败，Option 回溯到起点）
+            const isPossibleOrShadowing = this.tokenIndex === 0
+
+            // 根据检测结果选择错误类型和建议
+            const errorType = isPossibleOrShadowing ? 'or-branch-shadowing' : 'parsing'
+            const suggestions = isPossibleOrShadowing ? [
+                '⚠️ 可能是 Or 分支遮蔽问题！',
+                '检查 Or 分支顺序是否正确（前面的分支可能遮蔽了后面的分支）',
+                '将更具体、更长的规则放在前面',
+                '例如：CallExpression 应该在 NewExpression 前面'
+            ] : [
+                '检查是否有语法错误导致部分代码无法解析',
+                '确保所有语句都正确结束（如缺少分号、括号不匹配等）',
+                '检查 Or 分支顺序是否正确'
+            ]
+
+            // 获取当前规则名（从规则栈）
+            const ruleStack = this.getRuleStack()
+            const currentRuleName = ruleStack.length > 0 ? ruleStack[ruleStack.length - 1] : 'Unknown'
+
+            throw this._errorHandler.createError({
+                type: errorType,
+                expected: 'EOF (end of file)',
+                found: this.curToken,
+                position: this.curToken ? {
+                    tokenIndex: this.tokenIndex,
+                    charIndex: this.curToken.index || 0,
+                    line: this.curToken.rowNum || 0,
+                    column: this.curToken.columnStartNum || 0
+                } : {
+                    tokenIndex: this._tokens.length,
+                    charIndex: this._tokens[this._tokens.length - 1]?.index || 0,
+                    line: this._tokens[this._tokens.length - 1]?.rowNum || 0,
+                    column: this._tokens[this._tokens.length - 1]?.columnEndNum || 0
+                },
+                ruleStack: ruleStack,
+                loopRuleName: currentRuleName,  // ✅ 设置当前规则名
+                loopTokenContext: this.getTokenContext(this.tokenIndex, 3),  // ✅ 添加 token 上下文
+                suggestions: suggestions
             })
         }
     }
