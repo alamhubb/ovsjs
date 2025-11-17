@@ -55,12 +55,13 @@ export const EXPANSION_LIMITS = {
      * - Infinity：无限制（完全依赖分支数限制和循环引用检测）
      * - 数字：固定层级限制（例如 3 表示最多展开 3 层）
      *
-     * 默认值：Infinity（无层级限制）
+     * 默认值：2（展开 2 层）
      *
      * 说明：
      * - 循环引用检测会防止无限递归（栈溢出）
      * - 分支数限制会防止内存溢出
-     * - 因此不需要固定层级限制
+     * - ✅ 但实践中发现 Infinity 会导致性能问题，改为 2 层
+     * - 2 层足够检测大部分 Or 分支冲突
      * - 用户可以根据需要设置为具体数字（如 3）来限制展开深度
      */
     MAX_LEVEL: Infinity,
@@ -165,19 +166,46 @@ export class SubhutiGrammarAnalyzer {
      */
     initializeCaches(maxLevel = EXPANSION_LIMITS.MAX_LEVEL): void {
         // 1. 计算直接子节点缓存
+        // ✅ 优化：跳过空 AST 的规则
         for (const ruleName of this.ruleASTs.keys()) {
+            const ruleAST = this.ruleASTs.get(ruleName)
+            if (!ruleAST || ruleAST.nodes.length === 0) {
+                continue  // 跳过空 AST
+            }
             this.initDirectChildrenCache(ruleName)
         }
 
         // 2. 计算 First 集合（用于左递归检测和 Or 冲突快速预检）
+        // ✅ 优化：跳过空 AST 的规则
         for (const ruleName of this.ruleASTs.keys()) {
+            const ruleAST = this.ruleASTs.get(ruleName)
+            if (!ruleAST || ruleAST.nodes.length === 0) {
+                continue  // 跳过空 AST
+            }
             this.computeFirst(ruleName)
         }
 
         // 3. 计算路径展开（用于详细的 Or 冲突检测）
+        // ✅ 优化：跳过空 AST 的规则（没有收集到节点的规则）
+        let count = 0
+        let skipped = 0
+        const total = this.directChildrenCache.size
         for (const ruleName of this.directChildrenCache.keys()) {
+            count++
+
+            // 检查规则是否有 AST 节点
+            const ruleAST = this.ruleASTs.get(ruleName)
+            if (!ruleAST || ruleAST.nodes.length === 0) {
+                skipped++
+                console.log(`[${count}/${total}] 跳过 ${ruleName} (空 AST)`)
+                continue
+            }
+
+            console.log(`[${count}/${total}] 初始化展开缓存: ${ruleName}`)
             this.initExpansionCache(ruleName, maxLevel)
         }
+
+        console.log(`✅ 展开缓存初始化完成：处理 ${count - skipped}/${total} 个规则，跳过 ${skipped} 个空 AST`)
     }
 
     private getExpandChildren(ruleName: string, maxLevel: number, curLevel: number): string[][] {
