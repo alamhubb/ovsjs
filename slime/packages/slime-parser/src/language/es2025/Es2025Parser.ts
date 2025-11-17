@@ -1054,13 +1054,18 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      * 由于NewExpression包含MemberExpression，会导致短路问题。
      * 因此我们需要将CallExpression和OptionalExpression放在前面，
      * 因为它们是"更长"的规则（包含函数调用、可选链等）。
+     *
+     * 修复前缀冲突：
+     * - OptionalExpression 最长（包含可选链）
+     * - CallExpression 次长（包含函数调用）
+     * - NewExpression 最短（只包含 MemberExpression）
      */
     @SubhutiRule
     LeftHandSideExpression(params: ExpressionParams = {}): SubhutiCst | undefined {
         return this.Or([
-            {alt: () => this.NewExpression(params)},
+            {alt: () => this.OptionalExpression(params)},
             {alt: () => this.CallExpression(params)},
-            {alt: () => this.OptionalExpression(params)}
+            {alt: () => this.NewExpression(params)}
         ])
     }
 

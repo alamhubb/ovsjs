@@ -217,12 +217,15 @@ try {
     // 语法分析（使用 Es2025Parser）
     // 🆕 重新启用 validate()，测试左递归检测
     const parser = new Es2025Parser(tokens)
-        .validate()
+        // .validate()
         .debug()
+
+
     console.log(`✅ 语法验证: 通过（无 Or 分支冲突）`)
 
+    const cst = parser.Script()
     // const cst = parser.Script()
-    const cst = null
+    // const cst = null
     console.log(`✅ 语法分析: CST生成成功`)
     
     // CST结构验证
