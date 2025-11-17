@@ -198,9 +198,14 @@ if (code.length <= 500) {
 
 try {
     // 词法分析（使用ES2020 tokens以支持私有属性）
+    console.log('\n⏱️ === 性能分析开始 ===\n')
+
+    const t0 = Date.now()
     const lexer = new SubhutiLexer(es2025Tokens)
     const tokens = lexer.tokenize(code)
-    
+    const t1 = Date.now()
+    console.log(`⏱️ [1] 词法分析耗时: ${t1 - t0}ms`)
+
     const inputTokens = tokens
         .filter((t: any) => {
             const tokenName = t.tokenType?.name || ''
@@ -211,19 +216,29 @@ try {
         })
         .map((t: any) => t.tokenValue)
         .filter((v: any) => v !== undefined)
-    
+
     console.log(`✅ 词法分析: ${tokens.length} tokens (有效token: ${inputTokens.length})`)
-    
+
     // 语法分析（使用 Es2025Parser）
     // 🆕 重新启用 validate()，测试左递归检测
+    const t2 = Date.now()
     const parser = new Es2025Parser(tokens)
-        .validate()
-        .debug()
+    const t3 = Date.now()
+    console.log(`⏱️ [2] Parser构造耗时: ${t3 - t2}ms`)
 
+    const t4 = Date.now()
+    parser.validate()
+    const t5 = Date.now()
+    console.log(`⏱️ [3] validate()调用耗时: ${t5 - t4}ms`)
+
+    parser.debug()
 
     console.log(`✅ 语法验证: 通过（无 Or 分支冲突）`)
 
+    const t6 = Date.now()
     const cst = parser.Script()
+    const t7 = Date.now()
+    console.log(`⏱️ [4] Script()解析耗时: ${t7 - t6}ms`)
     // const cst = parser.Script()
     // const cst = null
     console.log(`✅ 语法分析: CST生成成功`)

@@ -38,24 +38,43 @@ export class SubhutiGrammarValidator {
      */
     static validate(parser: any, maxLevel = EXPANSION_LIMITS.MAX_LEVEL): void {
         // 1. 收集规则 AST（通过 Proxy，无需 Parser 配合）
+        const t1 = Date.now()
         const ruleASTs = SubhutiRuleCollector.collectRules(parser)
+        const t2 = Date.now()
+        console.log(`  ⏱️ [3.1] 收集规则AST耗时: ${t2 - t1}ms (${ruleASTs.size} 个规则)`)
 
         // 2. 创建语法分析器
+        const t3 = Date.now()
         const analyzer = new SubhutiGrammarAnalyzer(ruleASTs)
+        const t4 = Date.now()
+        console.log(`  ⏱️ [3.2] 创建分析器耗时: ${t4 - t3}ms`)
 
         // 3. 初始化缓存（计算直接子节点、First 集合、路径展开）
+        const t5 = Date.now()
         analyzer.initializeCaches(maxLevel)
+        const t6 = Date.now()
+        console.log(`  ⏱️ [3.3] 初始化缓存耗时: ${t6 - t5}ms`)
 
         const errors: any[] = []
 
         // 4. Level 0: 左递归检测 (FATAL)
         // 左递归会导致无限循环，是最致命的错误，必须最先检测
+        const t7 = Date.now()
         const leftRecursionErrors = this.detectLeftRecursion(analyzer, ruleASTs)
+        const t8 = Date.now()
+        console.log(`  ⏱️ [3.4] 左递归检测耗时: ${t8 - t7}ms`)
         errors.push(...leftRecursionErrors)
 
         // 5. Level 1 & 2: Or 分支冲突检测（空路径 + 前缀冲突）
+        const t9 = Date.now()
         const detector = new SubhutiConflictDetector(analyzer, ruleASTs)
+        const t10 = Date.now()
+        console.log(`  ⏱️ [3.5] 创建冲突检测器耗时: ${t10 - t9}ms`)
+
+        const t11 = Date.now()
         const conflictErrors = detector.detectAllConflicts()
+        const t12 = Date.now()
+        console.log(`  ⏱️ [3.6] 冲突检测耗时: ${t12 - t11}ms (发现 ${conflictErrors.length} 个冲突)`)
         errors.push(...conflictErrors)
 
         // 6. 聚合所有错误，一起报告
