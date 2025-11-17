@@ -182,7 +182,16 @@ export class SubhutiConflictDetector {
                 // 如果是 token（不在缓存中），则保持原样 [[item]]
                 const expandedItems: string[][][] = branch.map(item => {
                     const cached = this.analyzer.getExpansionFromCache(item)
-                    return cached || [[item]]  // token 返回 [[item]]，规则返回缓存的展开结果
+                    const result = cached || [[item]]  // token 返回 [[item]]，规则返回缓存的展开结果
+
+                    // ⚠️ 关键优化：在笛卡尔积计算之前就限制每个输入的大小
+                    // 这样笛卡尔积最多是 1000^n，而不是可能的百万^n
+                    if (result.length > 1000) {
+                        console.warn(`⚠️ 规则 "${item}" 的展开结果过大 (${result.length})，截断到 1000`)
+                        return result.slice(0, 1000)
+                    }
+
+                    return result
                 })
 
                 // 步骤4: 通过笛卡尔积将所有规则的展开结果组合
@@ -190,7 +199,22 @@ export class SubhutiConflictDetector {
                 // 例如：[ [["a", "b"], ["c"]], [["TokenB"]] ]
                 //    → [["a", "TokenB"], ["c", "TokenB"]]
                 const cartesianResult = this.cartesianProduct(expandedItems)
-                expandedBranches.push(...cartesianResult)
+
+                // ⚠️ 防止栈溢出：不使用 push(...) 展开大数组
+                // 即使输入被限制了，笛卡尔积结果仍可能很大（如 1000^3 = 10亿）
+                // 所以这里仍需要限制并使用循环
+                const maxResults = 10000
+                if (cartesianResult.length > maxResults) {
+                    console.warn(`⚠️ 分支笛卡尔积结果过大 (${cartesianResult.length})，截断到 ${maxResults}`)
+                    for (let i = 0; i < maxResults; i++) {
+                        expandedBranches.push(cartesianResult[i])
+                    }
+                } else {
+                    // 使用循环而不是 push(...) 避免栈溢出
+                    for (const item of cartesianResult) {
+                        expandedBranches.push(item)
+                    }
+                }
             }
 
             branchExpansions.push(expandedBranches)
