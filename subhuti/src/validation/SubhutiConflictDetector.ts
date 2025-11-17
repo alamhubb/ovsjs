@@ -227,7 +227,9 @@ export class SubhutiConflictDetector {
                 const pathsB = this.expansionToPaths(branchExpansions[j])
 
                 // Level 1: 空路径检测（FATAL 级别）
-                if (this.hasEmptyPath(pathsA)) {
+                // 只检测 Or 分支本身是否可以为空（顶层空路径）
+                // 不检测分支内部的 Option/Many 导致的空路径
+                if (this.hasTopLevelEmptyPath(alternatives[i])) {
                     errors.push({
                         level: 'FATAL',
                         type: 'empty-path',
@@ -237,7 +239,7 @@ export class SubhutiConflictDetector {
                             pathA: '',
                             pathB: pathsB[0] || ''
                         },
-                        message: `分支 ${i} 有空路径，后续所有分支都不可达`,
+                        message: `分支 ${i} 可以匹配空输入，后续所有分支都不可达`,
                         suggestion: '移除 Option/Many 或将其移到 Or 外部'
                     })
 
@@ -336,6 +338,55 @@ export class SubhutiConflictDetector {
      */
     private hasEmptyPath(paths: Path[]): boolean {
         return paths.includes('')
+    }
+
+    /**
+     * 检查 Or 分支本身是否可以匹配空输入（顶层空路径检测）
+     *
+     * 只检测分支的顶层结构，不检测内部的 Option/Many
+     *
+     * 真正的空路径问题：
+     * - Or 的分支直接是 Option/Many（分支本身可以为空）
+     * - Or 的分支是 Sequence，且第一个元素是 Option/Many
+     *
+     * 不是问题的情况：
+     * - Or 的分支是 Sequence，第一个元素不是 Option/Many（即使后面有 Option/Many）
+     * - Or 的分支是具体的 token 或 rule
+     *
+     * @param alternative Or 的一个分支节点
+     * @returns true 如果分支本身可以为空
+     */
+    private hasTopLevelEmptyPath(alternative: RuleNode): boolean {
+        switch (alternative.type) {
+            case 'option':
+            case 'many':
+                // Or 的分支直接是 Option/Many，可以为空
+                return true
+
+            case 'sequence':
+                // 检查 sequence 的第一个元素
+                if (alternative.nodes.length === 0) {
+                    return true  // 空 sequence
+                }
+                // 递归检查第一个元素
+                return this.hasTopLevelEmptyPath(alternative.nodes[0])
+
+            case 'or':
+                // 检查 or 的所有分支，只要有一个可以为空就返回 true
+                return alternative.alternatives.some(alt => this.hasTopLevelEmptyPath(alt))
+
+            case 'atLeastOne':
+                // AtLeastOne 至少匹配 1 次，不能为空
+                return false
+
+            case 'consume':
+            case 'subrule':
+                // token 和 rule 不能为空
+                return false
+
+            default:
+                return false
+        }
     }
     
     /**
