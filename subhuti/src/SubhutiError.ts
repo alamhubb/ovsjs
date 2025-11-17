@@ -49,6 +49,9 @@ export interface ErrorDetails {
 
     // 新增：规则路径（格式化后的字符串）
     rulePath?: string
+
+    // 新增：自定义建议（可选，如果提供则使用，否则自动生成）
+    suggestions?: string[]
 }
 
 /**
@@ -128,11 +131,15 @@ export class ParsingError extends Error {
         this.rulePath = details.rulePath
         
         this.useDetailed = useDetailed
-        
-        // 仅 parsing 错误生成智能建议
-        this.suggestions = (this.type === 'parsing' && useDetailed)
-            ? Object.freeze(this.generateSuggestions())
-            : Object.freeze([])
+
+        // 智能建议：优先使用传入的 suggestions，否则自动生成
+        if (details.suggestions && details.suggestions.length > 0) {
+            this.suggestions = Object.freeze([...details.suggestions])
+        } else if (this.type === 'parsing' && useDetailed) {
+            this.suggestions = Object.freeze(this.generateSuggestions())
+        } else {
+            this.suggestions = Object.freeze([])
+        }
     }
     
     /**
@@ -271,6 +278,63 @@ export class ParsingError extends Error {
     toShortString(): string {
         return this.toSimpleString()
     }
+
+    /**
+     * 格式化左递归路径（更清晰的显示）
+     */
+    private formatLeftRecursionPath(lines: string[]): void {
+        if (!this.loopRuleName || this.ruleStack.length === 0) {
+            return
+        }
+
+        // 找到任何重复规则的第一次出现位置
+        let firstRecursionIndex = -1
+        let recursiveRuleName = this.loopRuleName
+
+        const ruleCounts = new Map<string, number>()
+        for (let i = 0; i < this.ruleStack.length; i++) {
+            const rule = this.ruleStack[i]
+            const count = (ruleCounts.get(rule) || 0) + 1
+            ruleCounts.set(rule, count)
+
+            // 找到第一个重复的规则
+            if (count === 2 && firstRecursionIndex === -1) {
+                firstRecursionIndex = this.ruleStack.indexOf(rule)
+                recursiveRuleName = rule
+            }
+        }
+
+        if (firstRecursionIndex === -1) {
+            // 降级：使用普通格式
+            lines.push(`  完整调用栈:`)
+            this.ruleStack.forEach((rule, i) => {
+                lines.push(`    ${i + 1}. ${rule}`)
+            })
+            return
+        }
+
+        // 显示从第一次出现到当前的路径
+        const recursionPath = this.ruleStack.slice(firstRecursionIndex)
+
+        // 判断是直接还是间接左递归
+        const isDirect = recursionPath.length === 1
+        const pathType = isDirect ? '直接左递归' : '间接左递归'
+
+        lines.push(`  类型: ${pathType}`)
+        lines.push(`  循环规则: ${recursiveRuleName}`)
+        lines.push(`  路径: ${recursionPath.join(' → ')} → ${recursiveRuleName} ⚠️`)
+        lines.push('')
+        lines.push('  详细调用栈:')
+
+        recursionPath.forEach((rule, i) => {
+            const isFirst = i === 0
+            const isRecursive = rule === recursiveRuleName
+            const marker = isFirst ? ' ← 首次调用' : (isRecursive ? ' ← 循环' : '')
+            lines.push(`    ${i + 1}. ${rule}${marker}`)
+        })
+
+        lines.push(`    ${recursionPath.length + 1}. ${recursiveRuleName} ⚠️ 循环点`)
+    }
     
     /**
      * 循环错误详细格式⭐
@@ -303,23 +367,30 @@ export class ParsingError extends Error {
             lines.push(this.rulePath)
             lines.push('')
         } else if (this.ruleStack.length > 0) {
-            // 降级：使用简单格式
-            lines.push('规则调用栈:')
-            const maxDisplay = 8
-            const visible = this.ruleStack.slice(-maxDisplay)
-            const hidden = this.ruleStack.length - visible.length
+            // 显示左递归路径
+            if (this.type === 'left-recursion') {
+                lines.push('左递归路径:')
+                this.formatLeftRecursionPath(lines)
+                lines.push('')
+            } else {
+                // 普通规则调用栈
+                lines.push('规则调用栈:')
+                const maxDisplay = 8
+                const visible = this.ruleStack.slice(-maxDisplay)
+                const hidden = this.ruleStack.length - visible.length
 
-            if (hidden > 0) {
-                lines.push(`  ... (隐藏 ${hidden} 层)`)
+                if (hidden > 0) {
+                    lines.push(`  ... (隐藏 ${hidden} 层)`)
+                }
+
+                visible.forEach((rule, i) => {
+                    const isLast = i === visible.length - 1
+                    const prefix = '  ' + '  '.repeat(i) + (isLast ? '└─>' : '├─>')
+                    lines.push(`${prefix} ${rule}`)
+                })
+                lines.push(`  ${'  '.repeat(visible.length)}└─> ${this.loopRuleName} ⚠️ 循环点`)
+                lines.push('')
             }
-
-            visible.forEach((rule, i) => {
-                const isLast = i === visible.length - 1
-                const prefix = '  ' + '  '.repeat(i) + (isLast ? '└─>' : '├─>')
-                lines.push(`${prefix} ${rule}`)
-            })
-            lines.push(`  ${'  '.repeat(visible.length)}└─> ${this.loopRuleName} ⚠️ 循环点`)
-            lines.push('')
         }
         
         // 诊断信息

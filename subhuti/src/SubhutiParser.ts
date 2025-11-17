@@ -231,25 +231,33 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     /**
      * 检测是否是直接或间接左递归
      *
+     * ✅ 这个方法可以准确判断左递归
+     * ❌ 不能判断是否是 Or 分支遮蔽（返回 false 只表示不是左递归）
+     *
      * @param ruleName 当前规则名称
      * @param ruleStack 规则调用栈
-     * @returns true: 左递归, false: Or 分支遮蔽
+     * @returns true: 确定是左递归, false: 不是左递归（但不能确定是什么问题）
      */
     private isDirectLeftRecursion(ruleName: string, ruleStack: string[]): boolean {
-        // 检查规则栈中是否已经存在当前规则（排除栈顶，因为栈顶就是当前规则）
-        // 如果存在，说明是真正的递归调用
-        const occurrences = ruleStack.filter(r => r === ruleName).length
+        // 检查规则栈中是否有任何规则出现了 >= 2 次
+        // 这可以检测直接左递归和间接左递归
 
-        // 如果规则在栈中出现 >= 2 次，说明是递归
-        // （栈顶是当前规则，如果还有其他位置也是当前规则，就是递归）
-        if (occurrences >= 2) {
-            return true
+        const ruleCounts = new Map<string, number>()
+
+        for (const rule of ruleStack) {
+            ruleCounts.set(rule, (ruleCounts.get(rule) || 0) + 1)
         }
 
-        // 否则，可能是 Or 分支遮蔽导致的无限循环
-        // 例如：LeftHandSideExpression → NewExpression → MemberExpression
-        // 没有递归，但由于分支顺序问题导致解析失败
-        return false
+        // 如果任何规则出现 >= 2 次，说明有递归
+        for (const count of ruleCounts.values()) {
+            if (count >= 2) {
+                return true  // ✅ 确定是左递归（直接或间接）
+            }
+        }
+
+        // 否则，不是左递归
+        // 但可能是其他问题：Or 分支遮蔽、规则实现错误、语法错误等
+        return false  // ❌ 不是左递归（但不确定具体是什么问题）
     }
 
     /**
@@ -648,29 +656,35 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             if (this.tokenIndex < this._tokens.length) {
                 this._parseSuccess = false
 
-                // 🔍 智能检测：判断是否可能是 Or 分支遮蔽问题
-                // 如果 tokenIndex = 0，说明完全没有消费任何 token
-                // 这很可能是 Or 分支遮蔽导致的（所有分支都失败，Option 回溯到起点）
-                const isPossibleOrShadowing = noTokenConsumed
-
-                // 根据检测结果选择错误类型和建议
-                const errorType = isPossibleOrShadowing ? 'or-branch-shadowing' : 'parsing'
-                const suggestions = isPossibleOrShadowing ? [
-                    '⚠️ 可能是 Or 分支遮蔽问题！',
-                    '检查 Or 分支顺序是否正确（前面的分支可能遮蔽了后面的分支）',
-                    '将更具体、更长的规则放在前面',
-                    '例如：CallExpression 应该在 NewExpression 前面'
-                ] : [
-                    '检查是否有语法错误导致部分代码无法解析',
-                    '确保所有语句都正确结束（如缺少分号、括号不匹配等）',
-                    '检查 Or 分支顺序是否正确'
-                ]
-
                 // 获取当前规则名（从规则栈）
                 const ruleStack = this.getRuleStack()
 
+                // 构建建议列表
+                const suggestions: string[] = []
+
+                if (noTokenConsumed) {
+                    // tokenIndex = 0：完全没有消费任何 token
+                    suggestions.push('解析完全失败，没有消费任何 token')
+                    suggestions.push('可能的原因：')
+                    suggestions.push('  1. Or 分支顺序错误（前面的分支可能遮蔽了后面的分支）')
+                    suggestions.push('  2. 语法错误导致所有分支都无法匹配')
+                    suggestions.push('  3. 规则实现错误')
+                    suggestions.push('建议：')
+                    suggestions.push('  - 运行语法验证工具检查 Or 分支顺序')
+                    suggestions.push('  - 检查输入代码是否符合语法规范')
+                } else {
+                    // tokenIndex > 0：消费了部分 token
+                    suggestions.push('解析部分成功，但有剩余 token 无法解析')
+                    suggestions.push('可能的原因：')
+                    suggestions.push('  1. 语法错误（如缺少分号、括号不匹配等）')
+                    suggestions.push('  2. 不支持的语法特性')
+                    suggestions.push('建议：')
+                    suggestions.push('  - 检查剩余 token 附近的语法')
+                    suggestions.push('  - 确保所有语句都正确结束')
+                }
+
                 throw this._errorHandler.createError({
-                    type: errorType,
+                    type: 'parsing',  // ✅ 统一使用 'parsing'，不断言是 Or 遮蔽
                     expected: 'EOF (end of file)',
                     found: this.curToken,
                     position: this.curToken ? {
@@ -961,10 +975,13 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         const rulePathLines = this.formatCurrentRulePath()
         const rulePath = rulePathLines.join('\n')
 
-        // 🔍 分析循环类型：真正的左递归 vs Or 分支遮蔽
+        // 🔍 检测是否是左递归（准确判断）
         const ruleStack = this.getRuleStack()
-        const isDirectLeftRecursion = this.isDirectLeftRecursion(ruleName, ruleStack)
-        const errorType = isDirectLeftRecursion ? 'infinite-loop' : 'or-branch-shadowing'
+        const isLeftRecursion = this.isDirectLeftRecursion(ruleName, ruleStack)
+
+        // ✅ 只有确定是左递归时才使用 'left-recursion' 类型
+        // ❌ 不确定的情况使用 'infinite-loop'，不断言是 Or 遮蔽
+        const errorType = isLeftRecursion ? 'left-recursion' : 'infinite-loop'
 
         return this._errorHandler.createError({
             type: errorType,
