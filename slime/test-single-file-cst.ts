@@ -217,7 +217,7 @@ try {
     // 语法分析（使用 Es2025Parser）
     // 🆕 重新启用 validate()，测试左递归检测
     const parser = new Es2025Parser(tokens)
-        // .validate()
+        .validate()
         .debug()
 
 
