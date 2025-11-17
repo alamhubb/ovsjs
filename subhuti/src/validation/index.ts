@@ -30,9 +30,13 @@ export { SubhutiGrammarValidator } from './SubhutiGrammarValidator'
 
 // 调试器
 export { SubhutiValidationDebugger } from './SubhutiValidationDebugger'
-export type { 
+export type {
     DebugEvent,
     RuleDebugInfo,
-    ConflictDebugInfo 
+    ConflictDebugInfo
 } from './SubhutiValidationDebugger'
+
+// 日志工具
+export { SubhutiValidationLogger, LogLevel } from './SubhutiValidationLogger'
+export type { LoggerConfig } from './SubhutiValidationLogger'
 

@@ -16,25 +16,25 @@
 export interface ValidationError {
     /** 错误级别 */
     level: 'ERROR' | 'FATAL'
-    
+
     /** 错误类型 */
-    type: 'empty-path' | 'prefix-conflict'
-    
+    type: 'empty-path' | 'prefix-conflict' | 'left-recursion'
+
     /** 规则名称 */
     ruleName: string
-    
+
     /** 冲突的分支索引 [前, 后] */
-    branchIndices: [number, number]
-    
+    branchIndices: [number, number] | []
+
     /** 冲突路径 */
     conflictPaths: {
         pathA: string  // 前缀路径（短）
         pathB: string  // 被遮蔽路径（长）
     }
-    
+
     /** 错误消息 */
     message: string
-    
+
     /** 修复建议 */
     suggestion: string
 }

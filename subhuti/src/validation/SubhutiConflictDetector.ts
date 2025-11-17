@@ -215,7 +215,16 @@ export class SubhutiConflictDetector {
         alternatives: SequenceNode[],
         errors: ValidationError[]
     ): void {
-        // 公共部分：计算所有分支的完全展开结果
+        // 🚀 优化：使用 First 集合快速预检
+        // 如果两个分支的 First 集合无交集，则肯定无前缀冲突，可以跳过详细检测
+        const hasConflict = this.quickCheckWithFirst(alternatives)
+
+        if (!hasConflict) {
+            // 无冲突，跳过详细检测
+            return
+        }
+
+        // 公共部分：计算所有分支的完全展开结果（只在可能有冲突时才计算）
         // 这个方法被空路径检测和前缀冲突检测共用
         const branchExpansions = this.computeOrBranchExpansions(alternatives)
 
@@ -250,6 +259,44 @@ export class SubhutiConflictDetector {
                 this.detectPrefixConflicts(ruleName, i, j, pathsA, pathsB, errors)
             }
         }
+    }
+
+    /**
+     * 使用 First 集合快速预检 Or 分支冲突
+     *
+     * 原理：
+     * - 如果两个分支的 First 集合无交集，则肯定无前缀冲突
+     * - 如果有交集，则可能有冲突，需要详细检测
+     *
+     * 性能：
+     * - 对于无冲突的情况，可以跳过昂贵的路径展开
+     * - 对于有冲突的情况，额外开销可忽略
+     *
+     * @param alternatives Or 分支列表
+     * @returns 是否可能有冲突
+     */
+    private quickCheckWithFirst(alternatives: RuleNode[]): boolean {
+        // 计算每个分支的 First 集合
+        const firstSets = alternatives.map(alt =>
+            this.analyzer.computeNodeFirst(alt)
+        )
+
+        // 检查任意两个分支的 First 集合是否有交集
+        for (let i = 0; i < firstSets.length; i++) {
+            for (let j = i + 1; j < firstSets.length; j++) {
+                const intersection = new Set(
+                    [...firstSets[i]].filter(x => firstSets[j].has(x))
+                )
+
+                if (intersection.size > 0) {
+                    // 有交集，可能有冲突，需要详细检测
+                    return true
+                }
+            }
+        }
+
+        // 所有分支的 First 集合都不相交，肯定无冲突
+        return false
     }
 
     /**

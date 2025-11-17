@@ -31,6 +31,7 @@
  */
 
 import type {RuleNode, Path, SequenceNode} from "./SubhutiValidationError"
+import { SubhutiValidationLogger } from './SubhutiValidationLogger'
 
 /**
  * 展开限制配置
@@ -156,57 +157,61 @@ export class SubhutiGrammarAnalyzer {
     }
 
     /**
-     * 初始化缓存（遍历所有规则，计算直接子节点和分层展开）
+     * 初始化缓存（遍历所有规则，计算直接子节点、First 集合和分层展开）
      *
      * 应该在收集 AST 之后立即调用
      *
      * @param maxLevel 最大展开层级（默认使用配置中的 MAX_LEVEL）
      */
     initializeCaches(maxLevel = EXPANSION_LIMITS.MAX_LEVEL): void {
-        // 遍历所有规则
+        // 1. 计算直接子节点缓存
         for (const ruleName of this.ruleASTs.keys()) {
-            // 计算直接子节点缓存
             this.initDirectChildrenCache(ruleName)
         }
+
+        // 2. 计算 First 集合（用于左递归检测和 Or 冲突快速预检）
+        for (const ruleName of this.ruleASTs.keys()) {
+            this.computeFirst(ruleName)
+        }
+
+        // 3. 计算路径展开（用于详细的 Or 冲突检测）
         for (const ruleName of this.directChildrenCache.keys()) {
             this.initExpansionCache(ruleName, maxLevel)
         }
     }
 
     private getExpandChildren(ruleName: string, maxLevel: number, curLevel: number): string[][] {
-        // 只对特定规则启用详细日志
-        const enableLog = ['MemberExpression', 'CallExpression', 'OptionalExpression'].includes(ruleName)
         const indent = '  '.repeat(curLevel)
 
         // 层级限制：达到最大层级时停止展开
         // 当 maxLevel = Infinity 时，curLevel 永远不会 >= Infinity，所以不会触发
         if (curLevel >= maxLevel) {
-            if (enableLog) console.log(`${indent}[层级${curLevel}] ${ruleName} - 达到最大层级 (${maxLevel})，停止展开`)
+            SubhutiValidationLogger.debug(`${indent}[层级${curLevel}] ${ruleName} - 达到最大层级 (${maxLevel})，停止展开`, ruleName)
             return [[ruleName]]
         }
 
         // 检测循环引用（递归规则）
         // 使用类成员 computing 来检测递归
         if (this.computing.has(ruleName)) {
-            if (enableLog) console.log(`${indent}[层级${curLevel}] ${ruleName} - 检测到循环引用，停止展开`)
+            SubhutiValidationLogger.debug(`${indent}[层级${curLevel}] ${ruleName} - 检测到循环引用，停止展开`, ruleName)
             return [[ruleName]]  // 遇到循环引用，停止展开
         }
 
         // 获取当前规则的直接子节点
         const branches = this.directChildrenCache.get(ruleName)
         if (!branches) {
-            if (enableLog) console.log(`${indent}[层级${curLevel}] ${ruleName} - Token，不展开`)
+            SubhutiValidationLogger.debug(`${indent}[层级${curLevel}] ${ruleName} - Token，不展开`, ruleName)
             return [[ruleName]]  // 如果不在缓存中，说明是 token
         }
 
-        if (enableLog) console.log(`${indent}[层级${curLevel}] 开始展开 ${ruleName}，直接子节点有 ${branches.length} 个分支`)
+        SubhutiValidationLogger.debug(`${indent}[层级${curLevel}] 开始展开 ${ruleName}，直接子节点有 ${branches.length} 个分支`, ruleName)
 
         // 🎯 动态分支数限制：基于分支数决定是否继续展开（截断点 1）
         // 如果分支数已经很多，说明继续展开会导致笛卡尔积爆炸，提前停止
         // 如果分支数很少，可以继续展开（受可选的固定层级限制约束）
         // 这样可以在分支数多时提前停止，避免浪费计算
         if (branches.length > EXPANSION_LIMITS.MAX_BRANCHES_BEFORE_EXPAND) {
-            if (enableLog) console.warn(`${indent}规则 ${ruleName} 的分支数 (${branches.length}) 超过阈值 (${EXPANSION_LIMITS.MAX_BRANCHES_BEFORE_EXPAND})，提前停止展开`)
+            SubhutiValidationLogger.warn(`${indent}规则 ${ruleName} 的分支数 (${branches.length}) 超过阈值 (${EXPANSION_LIMITS.MAX_BRANCHES_BEFORE_EXPAND})，提前停止展开`, ruleName)
             return [[ruleName]]
         }
 
@@ -219,7 +224,7 @@ export class SubhutiGrammarAnalyzer {
 
             for (let branchIdx = 0; branchIdx < branches.length; branchIdx++) {
                 const branch = branches[branchIdx]
-                if (enableLog) console.log(`${indent}  处理分支 ${branchIdx + 1}/${branches.length}: [${branch.join(', ')}]`)
+                SubhutiValidationLogger.debug(`${indent}  处理分支 ${branchIdx + 1}/${branches.length}: [${branch.join(', ')}]`, ruleName)
 
                 // 对分支中的每个 item 进行展开
                 const expandedItems: string[][][] = []
@@ -227,32 +232,32 @@ export class SubhutiGrammarAnalyzer {
                 for (const item of branch) {
                     // 递归展开规则，层级+1
                     const itemBranches = this.getExpandChildren(item, maxLevel, curLevel + 1)
-                    if (enableLog) console.log(`${indent}    ${item} 展开后有 ${itemBranches.length} 个分支`)
+                    SubhutiValidationLogger.debug(`${indent}    ${item} 展开后有 ${itemBranches.length} 个分支`, ruleName)
                     expandedItems.push(itemBranches)
 
                     // 限制展开结果数量（截断点 2：单个 item 截断）
                     if (itemBranches.length > EXPANSION_LIMITS.MAX_ITEM_BRANCHES) {
-                        console.warn(`${indent}    规则 ${item} 的展开结果过多 (${itemBranches.length})，截断到 ${EXPANSION_LIMITS.MAX_ITEM_BRANCHES}`)
+                        SubhutiValidationLogger.warn(`${indent}    规则 ${item} 的展开结果过多 (${itemBranches.length})，截断到 ${EXPANSION_LIMITS.MAX_ITEM_BRANCHES}`, ruleName)
                         expandedItems[expandedItems.length - 1] = itemBranches.slice(0, EXPANSION_LIMITS.MAX_ITEM_BRANCHES)
                     }
                 }
 
                 // 对当前分支的所有展开结果进行笛卡尔积
                 const cartesianResult = this.cartesianProduct(expandedItems)
-                if (enableLog) console.log(`${indent}    笛卡尔积后得到 ${cartesianResult.length} 个分支`)
+                SubhutiValidationLogger.debug(`${indent}    笛卡尔积后得到 ${cartesianResult.length} 个分支`, ruleName)
                 expandedBranches.push(...cartesianResult)
-                if (enableLog) console.log(`${indent}    当前累积总分支数: ${expandedBranches.length}`)
+                SubhutiValidationLogger.debug(`${indent}    当前累积总分支数: ${expandedBranches.length}`, ruleName)
 
                 // 限制总分支数（截断点 3：输出截断）
                 if (expandedBranches.length > EXPANSION_LIMITS.MAX_OUTPUT_BRANCHES) {
-                    console.warn(`${indent}✂️ 规则 ${ruleName} 的展开分支数过多 (${expandedBranches.length})，截断到 ${EXPANSION_LIMITS.MAX_OUTPUT_BRANCHES}`)
-                    console.warn(`${indent}   已处理 ${branchIdx + 1}/${branches.length} 个直接子节点分支`)
-                    console.warn(`${indent}   当前分支: [${branch.join(', ')}]`)
+                    SubhutiValidationLogger.warn(`${indent}✂️ 规则 ${ruleName} 的展开分支数过多 (${expandedBranches.length})，截断到 ${EXPANSION_LIMITS.MAX_OUTPUT_BRANCHES}`, ruleName)
+                    SubhutiValidationLogger.warn(`${indent}   已处理 ${branchIdx + 1}/${branches.length} 个直接子节点分支`, ruleName)
+                    SubhutiValidationLogger.warn(`${indent}   当前分支: [${branch.join(', ')}]`, ruleName)
                     return expandedBranches.slice(0, EXPANSION_LIMITS.MAX_OUTPUT_BRANCHES)
                 }
             }
 
-            if (enableLog) console.log(`${indent}[层级${curLevel}] ${ruleName} 展开完成，最终有 ${expandedBranches.length} 个分支`)
+            SubhutiValidationLogger.debug(`${indent}[层级${curLevel}] ${ruleName} 展开完成，最终有 ${expandedBranches.length} 个分支`, ruleName)
             return expandedBranches
         } finally {
             // 移除标记
@@ -576,6 +581,152 @@ export class SubhutiGrammarAnalyzer {
         cache.clear()
         this.expansionCache.clear()
         this.firstCache.clear()
+    }
+
+    // ============================================================================
+    // First 集合计算（用于左递归检测和 Or 冲突快速预检）
+    // ============================================================================
+
+    /**
+     * 计算规则的 First 集合
+     *
+     * First(A) = 规则 A 可能的第一个符号（token 或规则名）
+     *
+     * 用途：
+     * 1. 左递归检测：如果 First(A) 包含 A 本身，则 A 是左递归的
+     * 2. Or 冲突快速预检：如果两个分支的 First 集合无交集，则肯定无冲突
+     *
+     * @param ruleName 规则名
+     * @returns First 集合
+     */
+    public computeFirst(ruleName: string): Set<string> {
+        // 检查缓存
+        if (this.firstCache.has(ruleName)) {
+            return this.firstCache.get(ruleName)!
+        }
+
+        // 检测循环（防止无限递归）
+        if (this.computingFirst.has(ruleName)) {
+            // 遇到循环，返回规则名本身
+            // 这表示：First(A) 包含 A（可能是左递归）
+            return new Set([ruleName])
+        }
+
+        this.computingFirst.add(ruleName)
+
+        const ruleNode = this.ruleASTs.get(ruleName)
+        if (!ruleNode) {
+            // 不在 AST 中，说明是 token
+            this.computingFirst.delete(ruleName)
+            const result = new Set([ruleName])
+            this.firstCache.set(ruleName, result)
+            return result
+        }
+
+        // 计算节点的 First 集合
+        const firstSet = this.computeNodeFirst(ruleNode)
+
+        this.computingFirst.delete(ruleName)
+        this.firstCache.set(ruleName, firstSet)
+
+        return firstSet
+    }
+
+    /**
+     * 计算节点的 First 集合
+     *
+     * @param node AST 节点
+     * @returns First 集合
+     */
+    public computeNodeFirst(node: RuleNode): Set<string> {
+        const firstSet = new Set<string>()
+
+        switch (node.type) {
+            case 'consume':
+                // Token：First 集合就是 token 本身
+                firstSet.add(node.tokenName)
+                break
+
+            case 'subrule':
+                // 子规则：递归计算
+                const subFirst = this.computeFirst(node.ruleName)
+                subFirst.forEach(item => firstSet.add(item))
+                break
+
+            case 'sequence':
+                // 序列：First 集合是第一个非空元素的 First 集合
+                for (const child of node.nodes) {
+                    const childFirst = this.computeNodeFirst(child)
+                    childFirst.forEach(item => firstSet.add(item))
+
+                    // 如果第一个元素不能为空，停止
+                    if (!this.canBeEmpty(child)) {
+                        break
+                    }
+                }
+                break
+
+            case 'or':
+                // Or：First 集合是所有分支的 First 集合的并集
+                for (const alt of node.alternatives) {
+                    const altFirst = this.computeNodeFirst(alt)
+                    altFirst.forEach(item => firstSet.add(item))
+                }
+                break
+
+            case 'option':
+            case 'many':
+                // Option/Many：First 集合包含内部元素的 First 集合
+                // 但也可以为空
+                const innerFirst = this.computeNodeFirst(node.node)
+                innerFirst.forEach(item => firstSet.add(item))
+                break
+
+            case 'atLeastOne':
+                // AtLeastOne：First 集合是内部元素的 First 集合
+                const innerFirst2 = this.computeNodeFirst(node.node)
+                innerFirst2.forEach(item => firstSet.add(item))
+                break
+        }
+
+        return firstSet
+    }
+
+    /**
+     * 检查节点是否可以为空（匹配空输入）
+     *
+     * @param node AST 节点
+     * @returns 是否可以为空
+     */
+    private canBeEmpty(node: RuleNode): boolean {
+        switch (node.type) {
+            case 'option':
+            case 'many':
+                // Option 和 Many 可以匹配 0 次
+                return true
+
+            case 'sequence':
+                // 序列：所有元素都可以为空，序列才能为空
+                return node.nodes.every(child => this.canBeEmpty(child))
+
+            case 'or':
+                // Or：任意分支可以为空，Or 就可以为空
+                return node.alternatives.some(alt => this.canBeEmpty(alt))
+
+            default:
+                // consume, subrule, atLeastOne 不能为空
+                return false
+        }
+    }
+
+    /**
+     * 获取规则的 First 集合（公开方法）
+     *
+     * @param ruleName 规则名
+     * @returns First 集合
+     */
+    public getFirst(ruleName: string): Set<string> {
+        return this.firstCache.get(ruleName) || new Set()
     }
 }
 
