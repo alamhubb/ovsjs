@@ -282,6 +282,20 @@ export class SubhutiGrammarAnalyzer {
     }
 
     /**
+     * 计算节点的直接子节点（公开方法）
+     *
+     * 用于冲突检测时获取节点的直接子节点
+     * - 展开所有辅助节点（sequence、or、option、many、atLeastOne）
+     * - 保留 token 和 ruleName 不展开
+     *
+     * @param node AST 节点
+     * @returns 直接子节点二维数组
+     */
+    computeDirectChildrenPublic(node: RuleNode): string[][] {
+        return this.computeDirectChildren(node)
+    }
+
+    /**
      * 计算节点的分层展开（核心递归方法）
      * 返回：所有层级的所有分支（二维数组）
      */

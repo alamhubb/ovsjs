@@ -142,21 +142,26 @@ export class SubhutiConflictDetector {
     }
     
     /**
-     * 检测 Or 规则的冲突
+     * 计算 Or 分支的完全展开结果（公共方法）
+     *
+     * 这是 Or 冲突检测的核心数据计算逻辑，被所有检测类型共用：
+     * - 空路径检测
+     * - 前缀冲突检测
+     * - 未来可能的其他检测（如 LL(k) 检测）
      *
      * 核心步骤：
      * 1. 遍历 Or 节点的每个分支
      * 2. 对每个分支调用 computeDirectChildren 获取直接子节点（展开辅助节点，保留 token 和 ruleName）
      * 3. 对每个分支中的每个规则从 expansionCache 中获取其完全展开结果
      * 4. 通过笛卡尔积将规则替换为其展开结果，得到完整的 token 路径
-     * 5. 两两比较分支，检测前缀冲突
+     *
+     * @param alternatives Or 节点的所有分支
+     * @returns 每个分支的完全展开结果（三维数组）
+     *          - 第一维：Or 的每个分支
+     *          - 第二维：每个分支的所有可能路径
+     *          - 第三维：每条路径的 token 序列
      */
-    private detectOrConflicts(
-        ruleName: string,
-        alternatives: SequenceNode[],
-        errors: ValidationError[]
-    ): void {
-        // 计算每个 Or 分支的完全展开结果
+    private computeOrBranchExpansions(alternatives: RuleNode[]): string[][][] {
         const branchExpansions: string[][][] = []
 
         for (const alternative of alternatives) {
@@ -164,7 +169,7 @@ export class SubhutiConflictDetector {
             // 这会展开所有辅助节点（sequence、or、option、many、atLeastOne）
             // 但保留 token 和 ruleName 不展开
             // 返回二维数组，例如：[["RuleA", "TokenB"], ["RuleC"]]
-            const directChildren = this.analyzer.computeDirectChildren(alternative)
+            const directChildren = this.analyzer.computeDirectChildrenPublic(alternative)
 
             // 步骤2: 对每个直接子节点分支进行完全展开
             const expandedBranches: string[][] = []
@@ -191,14 +196,37 @@ export class SubhutiConflictDetector {
             branchExpansions.push(expandedBranches)
         }
 
-        // 步骤5: 两两比较 Or 分支，检测前缀冲突
+        return branchExpansions
+    }
+
+    /**
+     * 检测 Or 规则的冲突
+     *
+     * 执行两种检测：
+     * 1. 空路径检测（FATAL）：检测是否有分支可以匹配空输入
+     * 2. 前缀冲突检测（ERROR）：检测是否有分支被前面的分支遮蔽
+     *
+     * @param ruleName 规则名称
+     * @param alternatives Or 节点的所有分支
+     * @param errors 错误列表
+     */
+    private detectOrConflicts(
+        ruleName: string,
+        alternatives: SequenceNode[],
+        errors: ValidationError[]
+    ): void {
+        // 公共部分：计算所有分支的完全展开结果
+        // 这个方法被空路径检测和前缀冲突检测共用
+        const branchExpansions = this.computeOrBranchExpansions(alternatives)
+
+        // 两两比较 Or 分支，执行所有检测
         for (let i = 0; i < alternatives.length; i++) {
             const pathsA = this.expansionToPaths(branchExpansions[i])
 
             for (let j = i + 1; j < alternatives.length; j++) {
                 const pathsB = this.expansionToPaths(branchExpansions[j])
 
-                // Level 1: 空路径检测
+                // Level 1: 空路径检测（FATAL 级别）
                 if (this.hasEmptyPath(pathsA)) {
                     errors.push({
                         level: 'FATAL',
@@ -213,10 +241,10 @@ export class SubhutiConflictDetector {
                         suggestion: '移除 Option/Many 或将其移到 Or 外部'
                     })
 
-                    return
+                    return  // FATAL 错误，停止检测
                 }
 
-                // Level 2: 前缀冲突检测
+                // Level 2: 前缀冲突检测（ERROR 级别）
                 this.detectPrefixConflicts(ruleName, i, j, pathsA, pathsB, errors)
             }
         }
