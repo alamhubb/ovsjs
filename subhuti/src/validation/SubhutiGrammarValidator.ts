@@ -51,17 +51,14 @@ export class SubhutiGrammarValidator {
         // 4. Level 0: 左递归检测 (FATAL)
         // 左递归会导致无限循环，是最致命的错误，必须最先检测
         const leftRecursionErrors = this.detectLeftRecursion(analyzer, ruleASTs)
-        if (leftRecursionErrors.length > 0) {
-            // 左递归是致命错误，立即抛出，不继续后续检测
-            throw new SubhutiGrammarValidationError(leftRecursionErrors)
-        }
+        errors.push(...leftRecursionErrors)
 
         // 5. Level 1 & 2: Or 分支冲突检测（空路径 + 前缀冲突）
         const detector = new SubhutiConflictDetector(analyzer, ruleASTs)
         const conflictErrors = detector.detectAllConflicts()
         errors.push(...conflictErrors)
 
-        // 6. 有错误直接抛出
+        // 6. 聚合所有错误，一起报告
         if (errors.length > 0) {
             throw new SubhutiGrammarValidationError(errors)
         }

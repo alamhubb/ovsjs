@@ -1078,6 +1078,34 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
         ])
     }
 
+    // ========================================
+    // 测试：可检测的左递归（间接左递归）
+    // ========================================
+
+    /**
+     * 测试规则 A：间接左递归 A → B → A
+     *
+     * 这个左递归可以被检测到，因为：
+     * 1. AST 可以被收集（A 调用 B，B 调用 A）
+     * 2. First(A) = First(B) = {A, B}（包含自己）
+     * 3. 语法验证会检测到 First 集合包含规则名本身
+     */
+    @SubhutiRule
+    TestLeftRecursionA(): SubhutiCst | undefined {
+        return this.TestLeftRecursionB()
+    }
+
+    /**
+     * 测试规则 B：间接左递归的一部分
+     */
+    @SubhutiRule
+    TestLeftRecursionB(): SubhutiCst | undefined {
+        return this.Or([
+            {alt: () => this.TestLeftRecursionA()},  // ← 形成循环：A → B → A
+            {alt: () => this.PrimaryExpression()}    // ← 备用分支（防止无限递归）
+        ])
+    }
+
     // ----------------------------------------
     // A.2.8 Update Expressions
     // ----------------------------------------

@@ -56,6 +56,9 @@ export class SubhutiRuleCollector {
     /** 是否正在执行顶层规则调用 */
     private isExecutingTopLevelRule: boolean = false
 
+    /** 正在执行的规则栈（用于检测递归） */
+    private executingRuleStack: Set<string> = new Set()
+
     /**
      * 收集所有规则 - 静态方法
      *
@@ -138,8 +141,24 @@ export class SubhutiRuleCollector {
                         // 如果是顶层规则调用（收集该规则本身），执行原方法
                         if (collector.isExecutingTopLevelRule && prop === collector.currentRuleName) {
                             collector.isExecutingTopLevelRule = false
-                            // 执行原方法，不需要 try-catch，因为 tokenConsumer 不会抛出异常
-                            return original.apply(proxy, args)
+
+                            // ✅ 检测递归：如果规则已在执行栈中，说明是递归调用
+                            if (collector.executingRuleStack.has(prop)) {
+                                // 记录递归调用，但不执行（防止无限递归）
+                                console.warn(`[RECURSION DETECTED] Rule "${prop}" calls itself recursively`)
+                                return collector.handleSubrule(prop)
+                            }
+
+                            // 将规则加入执行栈
+                            collector.executingRuleStack.add(prop)
+
+                            try {
+                                // 执行原方法
+                                return original.apply(proxy, args)
+                            } finally {
+                                // 执行完成后，从执行栈中移除
+                                collector.executingRuleStack.delete(prop)
+                            }
                         }
 
                         // 如果是子规则调用，只记录，不执行
@@ -226,31 +245,43 @@ export class SubhutiRuleCollector {
                 this.ruleASTs.set(ruleName, rootNode)
                 console.info(`✓ Rule "${ruleName}" collected with error (${error?.message || error}), saved partial AST (${rootNode.nodes.length} nodes)`)
             } else {
+                // ✅ 即使没有收集到节点，也保存空的 AST（用于左递归检测）
+                this.ruleASTs.set(ruleName, rootNode)
                 console.warn(`✗ Failed to collect rule "${ruleName}":`, error?.message || error)
             }
         }
     }
 
     /**
-     * 获取所有规则名称
+     * 获取所有规则名称（遍历整个原型链，只收集被 @SubhutiRule 装饰的方法）
+     *
+     * 通过检查 __isSubhutiRule__ 元数据标记来区分规则方法和普通方法
      */
     private getAllRuleNames(parser: SubhutiParser): string[] {
-        const ruleNames: string[] = []
-        const prototype = Object.getPrototypeOf(parser)
+        const ruleNames = new Set<string>()
+        let prototype = Object.getPrototypeOf(parser)
 
-        // 遍历原型链上的所有方法
-        for (const key of Object.getOwnPropertyNames(prototype)) {
-            if (key === 'constructor') continue
+        // 遍历整个原型链，直到 Object.prototype
+        while (prototype && prototype !== Object.prototype) {
+            // 遍历当前原型的所有方法
+            for (const key of Object.getOwnPropertyNames(prototype)) {
+                if (key === 'constructor') continue
 
-            const descriptor = Object.getOwnPropertyDescriptor(prototype, key)
-            if (descriptor && typeof descriptor.value === 'function') {
-                // 检查是否是 @SubhutiRule 装饰的方法
-                // （装饰后的方法会有特殊标记，或者我们简单地认为所有方法都是规则）
-                ruleNames.push(key)
+                const descriptor = Object.getOwnPropertyDescriptor(prototype, key)
+                if (descriptor && typeof descriptor.value === 'function') {
+                    // ✅ 检查是否是 @SubhutiRule 装饰的方法
+                    const method = descriptor.value
+                    if (method.__isSubhutiRule__ === true) {
+                        ruleNames.add(key)
+                    }
+                }
             }
+
+            // 移动到父类原型
+            prototype = Object.getPrototypeOf(prototype)
         }
 
-        return ruleNames
+        return Array.from(ruleNames)
     }
 
     // ============================================
