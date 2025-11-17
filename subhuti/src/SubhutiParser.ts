@@ -97,6 +97,13 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     private readonly cstStack: SubhutiCst[] = []
     private readonly className: string
 
+    /**
+     * 分析模式标志
+     * - true: 分析模式（用于语法验证，不抛异常）
+     * - false: 正常模式（用于解析，抛异常）
+     */
+    private _analysisMode: boolean = false
+
     getRuleStack() {
         return this.cstStack.map(item => item.name)
     }
@@ -221,6 +228,30 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     }
 
     /**
+     * 启用分析模式（用于语法验证，不抛异常）
+     *
+     * 在分析模式下：
+     * - 不抛出左递归异常
+     * - 不抛出无限循环异常
+     * - 不抛出 Token 消费失败异常
+     * - 不抛出 EOF 检测异常
+     *
+     * @internal 仅供 SubhutiRuleCollector 使用
+     */
+    enableAnalysisMode(): void {
+        this._analysisMode = true
+    }
+
+    /**
+     * 禁用分析模式（恢复正常模式）
+     *
+     * @internal 仅供 SubhutiRuleCollector 使用
+     */
+    disableAnalysisMode(): void {
+        this._analysisMode = false
+    }
+
+    /**
      * 启用语法验证（链式调用），验证语法（检测 Or 规则冲突）
      *
      * 用法：
@@ -275,6 +306,13 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * @param ruleName 当前规则名称
      */
     private throwLoopError(ruleName: string): never {
+        // 🔍 分析模式：不抛异常，直接返回
+        if (this._analysisMode) {
+            // 标记解析失败，让 RuleCollector 知道这个规则有问题
+            this._parseSuccess = false
+            return undefined as never
+        }
+
         // 获取当前 token 信息
         const currentToken = this.curToken
 
@@ -479,10 +517,16 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         // 这通常是因为使用了 "return undefined" 但没有设置 _parseSuccess = false
         const ruleReturnValue = targetFun.apply(this, args)
         if (this._parseSuccess && ruleReturnValue === undefined) {
-            throw this.createInfiniteLoopError(
-                ruleName,
-                '使用 this.parserFail() 代替 return undefined'
-            )
+            // 分析模式：不抛异常
+            if (!this._analysisMode) {
+                throw this.createInfiniteLoopError(
+                    ruleName,
+                    '使用 this.parserFail() 代替 return undefined'
+                )
+            } else {
+                // 分析模式：标记失败
+                this._parseSuccess = false
+            }
         }
 
         // ✅ 统一的规则成功检测（合并循环检测和 EOF 检测）
@@ -647,7 +691,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * @param ruleName 规则名
      * @param startTokenIndex 规则开始时的 tokenIndex
      * @param isTopLevel 是否是顶层规则
-     * @throws ParsingError 如果检测到问题
+     * @throws ParsingError 如果检测到问题（分析模式下不抛异常）
      */
     private checkRuleSuccess(ruleName: string, startTokenIndex: number, isTopLevel: boolean): void {
         if (!this._parseSuccess) {
@@ -664,6 +708,11 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
             if (this.tokenIndex < this._tokens.length) {
                 this._parseSuccess = false
+
+                // 🔍 分析模式：不抛异常，直接返回
+                if (this._analysisMode) {
+                    return
+                }
 
                 // 获取当前规则名（从规则栈）
                 const ruleStack = this.getRuleStack()
@@ -722,10 +771,16 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             // allowErrorDepth = 0: 普通规则、AtLeastOne 第一次执行
             // allowErrorDepth > 0: Option/Many/Or 分支、AtLeastOne 后续循环
             if (noTokenConsumed && this.allowErrorDepth === 0) {
-                throw this.createInfiniteLoopError(
-                    ruleName,
-                    '规则成功时必须消费至少一个 token，或使用 this.parserFail() 标记失败'
-                )
+                // 🔍 分析模式：不抛异常
+                if (!this._analysisMode) {
+                    throw this.createInfiniteLoopError(
+                        ruleName,
+                        '规则成功时必须消费至少一个 token，或使用 this.parserFail() 标记失败'
+                    )
+                } else {
+                    // 分析模式：标记失败
+                    this._parseSuccess = false
+                }
             }
         }
     }
@@ -734,6 +789,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * 消费 token（智能错误管理）
      * - allowError=true: 失败返回 undefined
      * - allowError=false: 失败抛详细错误
+     * - analysisMode=true: 失败返回 undefined（不抛异常）
      */
     consume(tokenName: string): SubhutiCst | undefined {
         if (!this._parseSuccess) {
@@ -753,7 +809,8 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
                 false
             )
 
-            if (this.outerHasAllowError || this.allowError) {
+            // 🔍 分析模式、allowError 模式：不抛异常，返回 undefined
+            if (this._analysisMode || this.outerHasAllowError || this.allowError) {
                 return undefined
             }
 
@@ -857,6 +914,14 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             // ✅ 成功：检查是否需要验证循环
             if (checkLoop && this.tokenIndex === startTokenIndex) {
                 // ❌ 成功但没消费 token → 在 Many/AtLeastOne 中会无限循环
+
+                // 🔍 分析模式：不抛异常，标记失败并返回 false
+                if (this._analysisMode) {
+                    this._parseSuccess = false
+                    this.restoreState(savedState)
+                    return false
+                }
+
                 const currentRuleName = this.cstStack[this.cstStack.length - 1].name || 'Unknown'
                 throw this._errorHandler.createError({
                     type: 'infinite-loop',
@@ -977,9 +1042,15 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      *
      * @param ruleName - 规则名称
      * @param hint - 修复提示
-     * @returns ParsingError 实例
+     * @returns ParsingError 实例（分析模式下返回 null）
      */
     private createInfiniteLoopError(ruleName: string, hint: string): ParsingError {
+        // 🔍 分析模式：不创建错误，标记失败并返回 null
+        if (this._analysisMode) {
+            this._parseSuccess = false
+            return null as any  // 分析模式下不会真正使用这个返回值
+        }
+
         // 生成规则路径
         const rulePathLines = this.formatCurrentRulePath()
         const rulePath = rulePathLines.join('\n')

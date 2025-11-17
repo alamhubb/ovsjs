@@ -18,13 +18,13 @@
  * 2. ✅ 代理tokenConsumer对象（拦截所有token消费）
  * 3. ✅ 拦截子规则调用（记录subrule节点）
  * 4. ✅ 修复this绑定问题（所有handler使用proxy而不是target）
- * 5. ✅ 添加异常处理（即使规则执行失败也能收集部分AST）
+ * 5. ✅ 使用分析模式（Parser不抛异常，避免用异常控制流程）
  *
  * 收集到的AST用途：
  * - 提供给SubhutiGrammarAnalyzer计算路径（展开subrule为实际token序列）
  * - 提供给SubhutiConflictDetector检测Or分支冲突（基于token路径的前缀检测）
  *
- * @version 2.0.0 - Proxy 方案（零侵入）+ 双层Proxy改进
+ * @version 3.0.0 - 使用分析模式，不再依赖异常处理
  */
 
 import type SubhutiParser from "../SubhutiParser"
@@ -34,14 +34,16 @@ import type {RuleNode, SequenceNode} from "./SubhutiValidationError"
  * 规则收集器
  *
  * 职责：
- * 1. 创建 Parser 的 Proxy 代理
- * 2. 拦截 Or/Many/Option/AtLeastOne/consume 方法调用
- * 3. 记录调用序列形成 AST
+ * 1. 启用 Parser 的分析模式（不抛异常）
+ * 2. 创建 Parser 的 Proxy 代理
+ * 3. 拦截 Or/Many/Option/AtLeastOne/consume 方法调用
+ * 4. 记录调用序列形成 AST
  *
  * 优势：
  * - Parser 代码完全干净，无需任何验证相关代码
  * - 验证逻辑完全独立，易于维护
  * - 生产环境零性能开销
+ * - 不使用异常控制流程，性能更好
  */
 export class SubhutiRuleCollector {
     /** 收集到的规则 AST */
@@ -74,6 +76,9 @@ export class SubhutiRuleCollector {
      * 收集所有规则（私有实现）
      */
     private collect(parser: SubhutiParser): Map<string, SequenceNode> {
+        // ✅ 启用分析模式（不抛异常）
+        parser.enableAnalysisMode()
+
         // 创建代理，拦截方法调用
         const proxy = this.createAnalyzeProxy(parser)
 
@@ -84,6 +89,9 @@ export class SubhutiRuleCollector {
         for (const ruleName of ruleNames) {
             this.collectRule(proxy, ruleName)
         }
+
+        // ✅ 恢复正常模式
+        parser.disableAnalysisMode()
 
         return this.ruleASTs
     }
@@ -212,6 +220,15 @@ export class SubhutiRuleCollector {
 
     /**
      * 收集单个规则
+     *
+     * 异常处理说明：
+     * - ✅ Parser 在分析模式下不会抛出解析相关的异常（左递归、无限循环、Token 消费失败等）
+     * - ✅ 但仍需 try-catch 捕获业务逻辑错误（如废弃方法主动抛出的 Error）
+     * - ✅ 即使抛出错误，Proxy 也已经收集到了部分 AST，仍然保存
+     *
+     * 这与之前的设计不同：
+     * - 之前：依赖异常来控制流程（不好的设计）
+     * - 现在：只捕获真正的业务错误（正常的异常处理）
      */
     private collectRule(proxy: SubhutiParser, ruleName: string): void {
         // 重置状态
@@ -227,7 +244,7 @@ export class SubhutiRuleCollector {
         this.currentRuleStack.push(rootNode)
 
         try {
-            // 执行规则（分析模式下会记录调用）
+            // 执行规则（分析模式下会记录调用，不会抛解析异常）
             // 注意：这里调用proxy的方法，让内部的子规则调用被拦截
             const ruleMethod = (proxy as any)[ruleName]
             if (typeof ruleMethod === 'function') {
@@ -236,18 +253,25 @@ export class SubhutiRuleCollector {
                 this.isExecutingTopLevelRule = false
             }
 
-            // 保存 AST（简化：如果只有一个子节点，直接返回子节点）
+            // 保存 AST
             this.ruleASTs.set(ruleName, rootNode)
-        } catch (error: any) {
-            // 执行失败（可能是 Parser 内部验证错误），但我们已经收集了 AST
-            // 保存已收集的 AST
+
+            // 日志输出（可选）
             if (rootNode.nodes.length > 0) {
-                this.ruleASTs.set(ruleName, rootNode)
+                console.info(`✓ Rule "${ruleName}" collected (${rootNode.nodes.length} nodes)`)
+            } else {
+                // 空 AST 也保存（用于左递归检测）
+                console.warn(`⚠ Rule "${ruleName}" has empty AST (may indicate recursion or parsing failure)`)
+            }
+        } catch (error: any) {
+            // 捕获业务逻辑错误（如废弃方法、未实现方法等）
+            // 即使抛出错误，我们也已经通过 Proxy 收集到了部分 AST
+            this.ruleASTs.set(ruleName, rootNode)
+
+            if (rootNode.nodes.length > 0) {
                 console.info(`✓ Rule "${ruleName}" collected with error (${error?.message || error}), saved partial AST (${rootNode.nodes.length} nodes)`)
             } else {
-                // ✅ 即使没有收集到节点，也保存空的 AST（用于左递归检测）
-                this.ruleASTs.set(ruleName, rootNode)
-                console.warn(`✗ Failed to collect rule "${ruleName}":`, error?.message || error)
+                console.warn(`⚠ Rule "${ruleName}" failed: ${error?.message || error} (empty AST saved)`)
             }
         }
     }
