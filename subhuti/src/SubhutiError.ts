@@ -30,7 +30,7 @@ export interface ErrorDetails {
         column: number
     }
     ruleStack: string[]
-    type?: 'parsing' | 'left-recursion' | 'infinite-loop'             // 默认 'parsing'
+    type?: 'parsing' | 'left-recursion' | 'infinite-loop' | 'or-branch-shadowing'  // 默认 'parsing'
 
     // Loop 错误专用字段（平铺）
     loopRuleName?: string                 // 循环的规则名
@@ -194,6 +194,11 @@ export class ParsingError extends Error {
      * 格式化错误信息（根据类型和模式选择）⭐
      */
     toString(): string {
+        // Or 分支遮蔽错误：特殊格式
+        if (this.type === 'or-branch-shadowing') {
+            return this.toOrBranchShadowingString()
+        }
+
         // 循环错误：只有一种详细格式
         if (this.type === 'left-recursion' || this.type === 'infinite-loop') {
             return this.toLoopDetailedString()
@@ -368,7 +373,79 @@ export class ParsingError extends Error {
         lines.push('  • 左递归:       A → A \'x\' | \'y\'          →  改为: A → \'y\' (\'x\')*')
         lines.push('  • 间接左递归:   A → B, B → C, C → A      →  需要手动展开或重构')
         lines.push('  • 循环依赖:     A → B, B → A             →  检查是否有空匹配分支')
-        
+
+        return lines.join('\n')
+    }
+
+    /**
+     * Or 分支遮蔽错误格式化（详细版）
+     */
+    private toOrBranchShadowingString(): string {
+        const lines: string[] = []
+
+        lines.push('')
+        lines.push('='.repeat(80))
+        lines.push('❌ 检测到 Or 分支遮蔽问题')
+        lines.push('='.repeat(80))
+        lines.push(`规则 "${this.loopRuleName}" 在 token[${this.position.tokenIndex}] 处重复调用自己`)
+        lines.push(`Token: token[${this.position.tokenIndex}] ${this.found?.tokenName}("${this.found?.tokenValue}") @ line ${this.position.line}:${this.position.column}`)
+        lines.push('')
+
+        // 规则调用栈
+        if (this.ruleStack.length > 0) {
+            lines.push('规则调用栈:')
+            this.ruleStack.forEach((rule, index) => {
+                const marker = index === this.ruleStack.length - 1 ? ' <-- 当前规则' : ''
+                lines.push(`  [${index}] ${rule}${marker}`)
+            })
+            lines.push('')
+        }
+
+        // Token 上下文
+        if (this.loopTokenContext && this.loopTokenContext.length > 0) {
+            lines.push('Token 上下文:')
+            this.loopTokenContext.forEach(token => {
+                const isCurrent = token === this.found
+                const marker = isCurrent ? ' <-- 当前位置' : ''
+                lines.push(`  ${token.tokenName}("${token.tokenValue}")${marker}`)
+            })
+            lines.push('')
+        }
+
+        // 显示 hint（如果有）
+        if (this.hint) {
+            lines.push('💡 提示:')
+            lines.push(`  ${this.hint}`)
+            lines.push('')
+        }
+
+        lines.push('')
+        // 修复建议
+        lines.push('⚠️ 这不是左递归问题，而是 Or 分支遮蔽问题！')
+        lines.push('')
+        lines.push('问题原因:')
+        lines.push('  在 PEG 中，Or 是顺序选择（Ordered Choice）：')
+        lines.push('  - 第一个匹配的分支会立即返回')
+        lines.push('  - 如果前面的分支"部分匹配"了输入，后面的分支永远无法尝试')
+        lines.push('  - 这导致某些输入无法正确解析')
+        lines.push('')
+        lines.push('示例:')
+        lines.push('  ❌ 错误顺序:')
+        lines.push('    LeftHandSideExpression → NewExpression | CallExpression')
+        lines.push('    // NewExpression 包含 MemberExpression')
+        lines.push('    // CallExpression 也包含 MemberExpression，但还有 Arguments')
+        lines.push('    // NewExpression 会先匹配 "console.log"，导致 CallExpression 无法匹配 "console.log(...)"')
+        lines.push('')
+        lines.push('  ✅ 正确顺序:')
+        lines.push('    LeftHandSideExpression → CallExpression | NewExpression')
+        lines.push('    // 先尝试更长的规则（CallExpression）')
+        lines.push('    // 再尝试更短的规则（NewExpression）')
+        lines.push('')
+        lines.push('修复方法:')
+        lines.push('  1. 调整 Or 分支顺序：将更具体、更长的规则放在前面')
+        lines.push('  2. 确保前面的分支不会"遮蔽"后面的分支')
+        lines.push('  3. 如果两个分支有包含关系，将"更大"的分支放在前面')
+
         return lines.join('\n')
     }
 }

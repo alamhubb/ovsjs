@@ -229,6 +229,30 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     }
 
     /**
+     * 检测是否是直接或间接左递归
+     *
+     * @param ruleName 当前规则名称
+     * @param ruleStack 规则调用栈
+     * @returns true: 左递归, false: Or 分支遮蔽
+     */
+    private isDirectLeftRecursion(ruleName: string, ruleStack: string[]): boolean {
+        // 检查规则栈中是否已经存在当前规则（排除栈顶，因为栈顶就是当前规则）
+        // 如果存在，说明是真正的递归调用
+        const occurrences = ruleStack.filter(r => r === ruleName).length
+
+        // 如果规则在栈中出现 >= 2 次，说明是递归
+        // （栈顶是当前规则，如果还有其他位置也是当前规则，就是递归）
+        if (occurrences >= 2) {
+            return true
+        }
+
+        // 否则，可能是 Or 分支遮蔽导致的无限循环
+        // 例如：LeftHandSideExpression → NewExpression → MemberExpression
+        // 没有递归，但由于分支顺序问题导致解析失败
+        return false
+    }
+
+    /**
      * 抛出循环错误信息
      *
      * @param ruleName 当前规则名称
@@ -251,9 +275,14 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         // 获取缓存统计
         const cacheStatsReport = this._cache.getStatsReport()
 
+        // 🔍 分析循环类型：真正的左递归 vs Or 分支遮蔽
+        const ruleStack = this.getRuleStack()
+        const isDirectLeftRecursion = this.isDirectLeftRecursion(ruleName, ruleStack)
+        const errorType = isDirectLeftRecursion ? 'left-recursion' : 'or-branch-shadowing'
+
         // 创建循环错误（平铺结构）
         throw this._errorHandler.createError({
-            type: 'left-recursion',
+            type: errorType,
             expected: '',
             found: currentToken,
             position: currentToken ? {
@@ -267,7 +296,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
                 line: this._tokens[this._tokens.length - 1]?.rowNum || 0,
                 column: this._tokens[this._tokens.length - 1]?.columnEndNum || 0
             },
-            ruleStack: [...this.getRuleStack()],
+            ruleStack: [...ruleStack],
             loopRuleName: ruleName,
             loopDetectionSet: Array.from(this.loopDetectionSet),
             loopCstDepth: this.cstStack.length,
@@ -592,6 +621,58 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     }
 
     /**
+     * 标记解析失败（用于手动失败）
+     *
+     * 用于自定义验证逻辑中标记解析失败
+     *
+     * @returns undefined
+     */
+    parserFail(): undefined {
+        this._parseSuccess = false
+        return undefined
+    }
+
+    /**
+     * 检查是否到达文件末尾（EOF）
+     *
+     * 用于顶层规则（如 Script、Module）确保所有 token 都被消费
+     *
+     * @throws ParsingError 如果还有未消费的 token
+     */
+    expectEOF(): void {
+        if (!this._parseSuccess) {
+            return
+        }
+
+        if (this.tokenIndex < this._tokens.length) {
+            this._parseSuccess = false
+
+            throw this._errorHandler.createError({
+                type: 'parsing',
+                expected: 'EOF (end of file)',
+                found: this.curToken,
+                position: this.curToken ? {
+                    tokenIndex: this.tokenIndex,
+                    charIndex: this.curToken.index || 0,
+                    line: this.curToken.rowNum || 0,
+                    column: this.curToken.columnStartNum || 0
+                } : {
+                    tokenIndex: this._tokens.length,
+                    charIndex: this._tokens[this._tokens.length - 1]?.index || 0,
+                    line: this._tokens[this._tokens.length - 1]?.rowNum || 0,
+                    column: this._tokens[this._tokens.length - 1]?.columnEndNum || 0
+                },
+                ruleStack: this.getRuleStack(),
+                suggestions: [
+                    '检查是否有语法错误导致部分代码无法解析',
+                    '确保所有语句都正确结束（如缺少分号、括号不匹配等）',
+                    '检查 Or 分支顺序是否正确（前面的分支可能遮蔽了后面的分支）'
+                ]
+            })
+        }
+    }
+
+    /**
      * 消费 token（智能错误管理）
      * - allowError=true: 失败返回 undefined
      * - allowError=false: 失败抛详细错误
@@ -845,8 +926,13 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         const rulePathLines = this.formatCurrentRulePath()
         const rulePath = rulePathLines.join('\n')
 
+        // 🔍 分析循环类型：真正的左递归 vs Or 分支遮蔽
+        const ruleStack = this.getRuleStack()
+        const isDirectLeftRecursion = this.isDirectLeftRecursion(ruleName, ruleStack)
+        const errorType = isDirectLeftRecursion ? 'infinite-loop' : 'or-branch-shadowing'
+
         return this._errorHandler.createError({
-            type: 'infinite-loop',
+            type: errorType,
             expected: '',
             found: this.curToken,
             position: this.curToken ? {
@@ -860,7 +946,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
                 line: this._tokens[this._tokens.length - 1]?.rowNum || 0,
                 column: this._tokens[this._tokens.length - 1]?.columnEndNum || 0
             },
-            ruleStack: [...this.getRuleStack()],
+            ruleStack: [...ruleStack],
             loopRuleName: ruleName,
             loopDetectionSet: [],
             loopCstDepth: this.cstStack.length,
