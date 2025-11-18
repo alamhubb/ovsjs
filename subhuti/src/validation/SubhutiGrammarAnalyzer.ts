@@ -228,7 +228,7 @@ export class SubhutiGrammarAnalyzer {
         console.log(`  📊 [3.3.3] 开始计算 firstMoreExpandCache（First(2)，按层级展开）`)
         const t5 = Date.now()
 
-        const ruleTimings: Array<{ruleName: string, time: number}> = []
+        const ruleTimings: Array<{ ruleName: string, time: number }> = []
         let ruleIndex = 0
 
         for (const ruleName of this.ruleASTs.keys()) {
@@ -706,15 +706,26 @@ export class SubhutiGrammarAnalyzer {
                                 // 笛卡尔积组合分支中的符号
                                 return this.cartesianProduct(branchRules)
                             })
+                        } else if (firstK === EXPANSION_LIMITS.FIRST_MORE && maxLevel === EXPANSION_LIMITS.MIN_LEVEL) {
+                            if (this.firstMoreCache.has(ruleName)) {
+                                return this.firstMoreCache.get(ruleName)
+                            }
+
+                            allBranches = node.nodes.map(node => {
+                                const itemRes = this.computeExpanded(null, node, firstK, curLevel, maxLevel)
+                                itemRes.forEach(order => order.splice(firstK))
+                                return itemRes
+                            })
+
                         } else {
-                            allBranches = node.nodes.map(node => this.computeExpanded(null, node, firstK, curLevel, maxLevel))
+                            throw new Error('系统错误')
                         }
                     } else {
                         // 遍历子节点，递归展开（curLevel 不变，因为不是 subrule）
                         allBranches = node.nodes.map(node => this.computeExpanded(null, node, firstK, curLevel, maxLevel))
                     }
 
-
+                    //这些地方都加上缓存 todo
                     // 笛卡尔积组合所有分支
                     const result = this.cartesianProduct(allBranches)
 
