@@ -242,7 +242,7 @@ export class SubhutiGrammarAnalyzer {
         this.computing.clear()
 
         // firstK=2, maxLevel=0（不展开规则名）
-        const children = this.computeExpanded(ruleNode, null, firstK, 0)
+        const children = this.computeExpanded(ruleNode, null, firstK)
 
         this.first2Cache.set(ruleName, children)
     }
@@ -468,23 +468,23 @@ export class SubhutiGrammarAnalyzer {
                         if (!subNode) {
                             return [[node.ruleName]]  // token
                         }
-                        return this.computeExpanded(subNode, node.ruleName, firstK, maxLevel, curLevel + 1)
+                        return this.computeExpanded(subNode, node.ruleName, firstK, curLevel + 1, maxLevel)
                     }
                     return [[node.ruleName]]  // 达到最大层级，不再展开
 
 
                 case 'or':
-                    return this.expandOr(node.alternatives, firstK, maxLevel, curLevel)
+                    return this.expandOr(node.alternatives, firstK, curLevel, maxLevel)
 
                 case 'sequence':
-                    return this.expandSequence(node.nodes, firstK, maxLevel, curLevel)
+                    return this.expandSequence(node.nodes, firstK, curLevel, maxLevel)
 
                 case 'option':
                 case 'many':
-                    return this.expandOption(node.node, firstK, maxLevel, curLevel)
+                    return this.expandOption(node.node, firstK, curLevel, maxLevel)
 
                 case 'atLeastOne':
-                    return this.expandAtLeastOne(node.node, firstK, maxLevel, curLevel)
+                    return this.expandAtLeastOne(node.node, firstK, curLevel, maxLevel)
 
                 default:
                     console.warn(`Unknown node type: ${(node as any).type}`)
@@ -504,13 +504,13 @@ export class SubhutiGrammarAnalyzer {
     private expandOr(
         alternatives: RuleNode[],
         firstK: number,
-        maxLevel: number,
-        curLevel: number
+        curLevel: number,
+        maxLevel: number
     ): string[][] {
         const result: string[][] = []
 
         for (const alt of alternatives) {
-            const branches = this.computeExpanded(alt, null, firstK, maxLevel, curLevel)
+            const branches = this.computeExpanded(alt, null, firstK, curLevel, maxLevel)
             result.push(...branches)
         }
 
@@ -523,8 +523,8 @@ export class SubhutiGrammarAnalyzer {
     private expandSequence(
         nodes: RuleNode[],
         firstK: number,
-        maxLevel: number,
-        curLevel: number
+        curLevel: number,
+        maxLevel: number
     ): string[][] {
         if (nodes.length === 0) {
             return [[]]
@@ -532,7 +532,7 @@ export class SubhutiGrammarAnalyzer {
 
         // 展开每个节点
         const allBranches = nodes.map(node =>
-            this.computeExpanded(node, null, firstK, maxLevel, curLevel)
+            this.computeExpanded(node, null, firstK, curLevel, maxLevel)
         )
 
         // 笛卡尔积
@@ -550,10 +550,10 @@ export class SubhutiGrammarAnalyzer {
     private expandOption(
         node: SequenceNode,
         firstK: number,
-        maxLevel: number,
-        curLevel: number
+        curLevel: number,
+        maxLevel: number
     ): string[][] {
-        const innerBranches = this.computeExpanded(node, null, firstK, maxLevel, curLevel)
+        const innerBranches = this.computeExpanded(node, null, firstK, curLevel, maxLevel)
         return [[], ...innerBranches]
     }
 
@@ -563,10 +563,10 @@ export class SubhutiGrammarAnalyzer {
     private expandAtLeastOne(
         node: SequenceNode,
         firstK: number,
-        maxLevel: number,
-        curLevel: number
+        curLevel: number,
+        maxLevel: number
     ): string[][] {
-        const innerBranches = this.computeExpanded(node, null, firstK, maxLevel, curLevel)
+        const innerBranches = this.computeExpanded(node, null, firstK, curLevel, maxLevel)
         const doubleBranches = innerBranches.map(branch => [...branch, ...branch])
         return [...innerBranches, ...doubleBranches]
     }
