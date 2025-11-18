@@ -135,6 +135,14 @@ export class SubhutiGrammarAnalyzer {
     /** 配置选项 */
     private options: Required<GrammarAnalyzerOptions>
 
+    /** 🔍 DEBUG: 只对这些规则输出日志 */
+    private debugRules = new Set<string>([
+        'AsyncArrowBindingIdentifier',
+        'BindingIdentifier',
+        'AsyncConciseBody',
+        'AsyncArrowHead'
+    ])
+
     /**
      * 构造函数
      *
@@ -184,6 +192,12 @@ export class SubhutiGrammarAnalyzer {
             const children = this.computeFirstMoreBranches(ruleName)
             // 缓存结果
             this.firstMoreCache.set(ruleName, children)
+
+            // 🔍 DEBUG: 输出特定规则的结果
+            if (this.debugRules.has(ruleName)) {
+                console.log(`\n📊 [preHandler] 规则 "${ruleName}" 的 firstMoreCache:`)
+                console.log(`  结果: ${JSON.stringify(children)}`)
+            }
 
 
             const error = this.initFirstCache(ruleName)
@@ -359,7 +373,23 @@ export class SubhutiGrammarAnalyzer {
 
 
     public computeFirstMoreBranches(ruleName: string, ruleNode: RuleNode = null) {
-        return this.computeExpanded(ruleName, ruleNode, EXPANSION_LIMITS.FIRST_MORE)
+        const shouldDebug = this.debugRules.has(ruleName)
+
+        if (shouldDebug) {
+            console.log(`\n🔍 [DEBUG] computeFirstMoreBranches 开始`)
+            console.log(`  规则名: ${ruleName}`)
+            console.log(`  传入节点: ${ruleNode ? ruleNode.type : 'null'}`)
+            console.log(`  参数: firstK=2, curLevel=0, maxLevel=0`)
+        }
+
+        const result = this.computeExpanded(ruleName, ruleNode, EXPANSION_LIMITS.FIRST_MORE)
+
+        if (shouldDebug) {
+            console.log(`  返回结果: ${JSON.stringify(result)}`)
+            console.log(`🔍 [DEBUG] computeFirstMoreBranches 结束\n`)
+        }
+
+        return result
     }
 
     public computeFirst1ExpandBranches(ruleName: string, ruleNode: RuleNode = null) {
@@ -475,24 +505,45 @@ export class SubhutiGrammarAnalyzer {
         curLevel: number = EXPANSION_LIMITS.MIN_LEVEL,
         maxLevel: number = EXPANSION_LIMITS.MIN_LEVEL
     ): string[][] {
+        const shouldDebug = ruleName && this.debugRules.has(ruleName)
+
+        if (shouldDebug) {
+            console.log(`  🔸 [computeExpanded] 进入`)
+            console.log(`    ruleName: ${ruleName}`)
+            console.log(`    node: ${node ? node.type : 'null'}`)
+            console.log(`    firstK: ${firstK}, curLevel: ${curLevel}, maxLevel: ${maxLevel}`)
+        }
+
         // 循环检测：如果规则正在计算中，停止展开
         if (ruleName && this.computing.has(ruleName)) {
+            if (shouldDebug) {
+                console.log(`    ⚠️ 检测到循环：${ruleName} 正在计算中，返回 [[${ruleName}]]`)
+            }
             return [[ruleName]]
         }
 
         // 标记当前规则正在计算
         if (ruleName) {
             this.computing.add(ruleName)
+            if (shouldDebug) {
+                console.log(`    ✓ 标记 ${ruleName} 为正在计算`)
+            }
         }
 
         // 缓存命中检测：如果已经计算过，直接返回缓存
         if (ruleName) {
             if (firstK === EXPANSION_LIMITS.FIRST_1 && maxLevel === Infinity) {
                 if (this.first1ExpandCache.has(ruleName)) {
+                    if (shouldDebug) {
+                        console.log(`    ✓ 缓存命中：first1ExpandCache[${ruleName}]`)
+                    }
                     return this.first1ExpandCache.get(ruleName)
                 }
             } else if (firstK === EXPANSION_LIMITS.FIRST_MORE && maxLevel === EXPANSION_LIMITS.MAX_LEVEL) {
                 if (this.firstMoreExpandCache.has(ruleName)) {
+                    if (shouldDebug) {
+                        console.log(`    ✓ 缓存命中：firstMoreExpandCache[${ruleName}]`)
+                    }
                     return this.firstMoreExpandCache.get(ruleName)
                 }
             }
@@ -504,7 +555,12 @@ export class SubhutiGrammarAnalyzer {
             if (ruleName) {
                 node = this.ruleASTs.get(ruleName)
                 if (!node) {
-                    throw new Error('系统错误：规则不存在')
+                    //token
+                    // throw new Error('系统错误：规则不存在')
+                    return [[ruleName]]
+                }
+                if (shouldDebug) {
+                    console.log(`    ✓ 从 AST 获取节点：${node.type}`)
                 }
             } else {
                 throw new Error(`未知节点类型`)
@@ -514,22 +570,40 @@ export class SubhutiGrammarAnalyzer {
 
         try {
             // 根据节点类型分发处理
+            if (shouldDebug) {
+                console.log(`    📌 处理节点类型: ${node.type}`)
+            }
+
             switch (node.type) {
                 case 'consume':
                     // Token 节点：直接返回
+                    if (shouldDebug) {
+                        console.log(`    ✓ consume 节点，返回 [[${node.tokenName}]]`)
+                    }
                     return [[node.tokenName]]
 
                 case 'subrule':
                     // Subrule 节点：检查层级限制
+                    if (shouldDebug) {
+                        console.log(`    📍 subrule 节点：${node.ruleName}`)
+                        console.log(`      curLevel(${curLevel}) <= maxLevel(${maxLevel})? ${curLevel <= maxLevel}`)
+                    }
+
                     if (curLevel <= maxLevel) {
                         // 未达到最大层级，递归展开子规则（curLevel + 1）
+                        if (shouldDebug) {
+                            console.log(`      ✓ 未达到最大层级，递归展开 ${node.ruleName}（curLevel + 1 = ${curLevel + 1}）`)
+                        }
                         const subNode = this.getRuleNodeByAst(node.ruleName)
                         if (!subNode) {
                             throw new Error('系统错误：子规则不存在')
                         }
-                        return this.computeExpanded(node.ruleName, subNode, firstK, curLevel + 1, maxLevel)
+                        return this.computeExpanded(null, subNode, firstK, curLevel + 1, maxLevel)
                     }
                     // 达到最大层级，不再展开
+                    if (shouldDebug) {
+                        console.log(`      ⚠️ 达到最大层级，返回 [[${node.ruleName}]]（不展开）`)
+                    }
                     return [[node.ruleName]]
 
                 case 'or':
@@ -593,8 +667,7 @@ export class SubhutiGrammarAnalyzer {
                                 return this.cartesianProduct(branchRules)
                             })
                         } else {
-                            // 遍历子节点，递归展开（curLevel 不变，因为不是 subrule）
-                            allBranches = node.nodes.map(node => this.computeExpanded(nodeRuleName, node, firstK, curLevel, maxLevel))
+                            allBranches = node.nodes.map(node => this.computeExpanded(null, node, firstK, curLevel, maxLevel))
                         }
                     } else {
                         // 遍历子节点，递归展开（curLevel 不变，因为不是 subrule）
