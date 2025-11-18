@@ -449,7 +449,7 @@ export class SubhutiConflictDetector {
 
         // 步骤 2：First(2) 详细检测
         // 从 firstMoreExpandCache 获取展开结果
-        const branchExpansions = this.computeOrBranchExpansionsFromCache(ruleName, alternatives)
+        const branchExpansions = this.computeOrBranchExpansionsFromCache(alternatives)
 
         // 限制路径数量
         const limitedBranchExpansions = branchExpansions.map((branchExp, idx) => {
@@ -636,9 +636,7 @@ export class SubhutiConflictDetector {
      */
     private quickCheckWithFirst1(alternatives: RuleNode[]): boolean {
         // 计算每个分支的 First(1) 集合（从 first1ExpandCache 获取）
-        const firstSets = alternatives.map(alt =>
-            this.analyzer.computeNodeFirst(alt)
-        )
+        const firstSets = alternatives.map(alt => this.analyzer.computeNodeFirst(alt))
 
         // 检查任意两个分支的 First(1) 集合是否有交集
         for (let i = 0; i < firstSets.length; i++) {
@@ -667,38 +665,12 @@ export class SubhutiConflictDetector {
      * @param alternatives Or 节点的所有分支
      * @returns 每个分支的展开结果（三维数组）
      */
-    private computeOrBranchExpansionsFromCache(ruleName: string, alternatives: RuleNode[]): string[][][] {
+    private computeOrBranchExpansionsFromCache(alternatives: RuleNode[]): string[][][] {
         const branchExpansions: string[][][] = []
 
         for (const alternative of alternatives) {
-            // 从 firstMoreExpandCache 获取展开结果
-            // TODO: 需要实现从节点获取展开结果的逻辑
-            // 暂时使用旧的方法
-            const directChildren = this.analyzer.computeDirectChildren(alternative, EXPANSION_LIMITS.FIRST_MORE)
-            const expandedBranches: string[][] = []
-
-            for (const branch of directChildren) {
-                const expandedItems: string[][][] = []
-
-                for (const item of branch) {
-                    const expansion = this.analyzer.getExpansion(item)
-                    if (expansion) {
-                        expandedItems.push(expansion)
-                    } else {
-                        expandedItems.push([[item]])
-                    }
-                }
-
-                if (expandedItems.length === 0) {
-                    expandedBranches.push([])
-                } else {
-                    const combined = this.analyzer.cartesianProduct(expandedItems)
-                    combined.forEach(path => path.splice(EXPANSION_LIMITS.FIRST_MORE))
-                    expandedBranches.push(...combined)
-                }
-            }
-
-            branchExpansions.push(expandedBranches)
+            const directChildren = this.analyzer.computeFirstMoreExpandBranches(null, alternative)
+            branchExpansions.push(directChildren)
         }
 
         return branchExpansions
