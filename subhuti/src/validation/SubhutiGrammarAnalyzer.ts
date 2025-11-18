@@ -56,6 +56,8 @@ export const EXPANSION_LIMITS = {
      */
     MAX_LEVEL: 3,
 
+    FIRST_K: 2,
+
     /**
      * 冲突检测路径比较限制
      *
@@ -363,7 +365,7 @@ export class SubhutiGrammarAnalyzer {
         if (!ruleNode) {
             throw new Error('系统错误')
         }
-        const children = this.computeDirectChildren(ruleNode, firstK)
+        const children = this.computeDirectChildren(ruleNode)
 
         this.directChildrenCache.set(ruleName, children)
     }
@@ -410,7 +412,7 @@ export class SubhutiGrammarAnalyzer {
      * @param rootNode AST 节点
      * @param firstK
      */
-    public computeDirectChildren(rootNode: RuleNode, firstK: number): string[][] {
+    public computeDirectChildren(rootNode: RuleNode, firstK: number = EXPANSION_LIMITS.FIRST_K): string[][] {
         // private computeDirectChildren(rootNode: RuleNode, maxLevel: number = 0, curLevel: number = maxLevel): string[][] {
         switch (rootNode.type) {
             case 'consume':
