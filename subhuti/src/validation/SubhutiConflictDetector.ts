@@ -249,7 +249,7 @@ export class SubhutiConflictDetector {
             // 这会展开所有辅助节点（sequence、or、option、many、atLeastOne）
             // 但保留 token 和 ruleName 不展开
             // 返回二维数组，例如：[["RuleA", "TokenB"], ["RuleC"]]
-            const directChildren = this.analyzer.computeDirectChildren(alternative, EXPANSION_LIMITS.FIRST_K)
+            const directChildren = this.analyzer.computeDirectChildren(alternative, EXPANSION_LIMITS.FIRST_MORE)
 
             // 步骤2: 对每个直接子节点分支进行完全展开
             const expandedBranches: string[][] = []

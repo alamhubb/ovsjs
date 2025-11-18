@@ -272,6 +272,7 @@ export class SubhutiRuleCollector {
         // 创建根 Sequence 节点
         const rootNode: SequenceNode = {
             type: 'sequence',
+            ruleName: ruleName,
             nodes: []
         }
         this.currentRuleStack.push(rootNode)
@@ -306,7 +307,7 @@ export class SubhutiRuleCollector {
 
             // 如果超过10秒，输出警告
             if (elapsed > 10000) {
-                console.error(`❌❌❌ Rule "${ruleName}" took ${elapsed}ms (${(elapsed/1000).toFixed(2)}s) - EXTREMELY SLOW!`)
+                console.error(`❌❌❌ Rule "${ruleName}" took ${elapsed}ms (${(elapsed / 1000).toFixed(2)}s) - EXTREMELY SLOW!`)
             }
         } catch (error: any) {
             // 捕获业务逻辑错误（如废弃方法、未实现方法等）

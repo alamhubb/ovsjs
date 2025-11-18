@@ -47,21 +47,13 @@ export type LeftRecursionError = ValidationError
  */
 export const EXPANSION_LIMITS = {
     /**
-     * 最大展开层级
-     * - Infinity：无限制（完全依赖循环引用检测）
-     * - 数字：固定层级限制（例如 3 表示最多展开 3 层）
-     *
-     * 默认值：3（展开 3 层）
-     *
-     * 说明：
-     * - 循环引用检测会防止无限递归（栈溢出）
-     * - ✅ 实践中发现 Infinity 会导致性能问题（PrimaryExpression 等复杂规则会卡死）
-     * - 3 层足够检测大部分 Or 分支冲突
-     * - 用户可以根据需要设置为具体数字来限制展开深度
+     * 0,不展开
+     * Infinity，无线展开
      */
     MAX_LEVEL: 3,
 
-    FIRST_K: 2,
+    FIRST_MORE: 2,
+    FIRST_1: 1,
 
     /**
      * 冲突检测路径比较限制
@@ -76,7 +68,7 @@ export const EXPANSION_LIMITS = {
      * - 1000条路径 × 1000条路径 = 100万次比较（可接受）
      * - 超过1000条路径会导致性能问题（如 28260条 = 8亿次比较）
      */
-    MAX_BRANCHES: Infinity,
+    MAX_BRANCHES: 1000,
 } as const
 
 /**
@@ -124,13 +116,13 @@ export interface GrammarAnalyzerOptions {
  */
 export class SubhutiGrammarAnalyzer {
     /** 直接子节点缓存（First(2)，不展开规则名） */
-    private first2Cache = new Map<string, string[][]>()
+    private firstMoreCache = new Map<string, string[][]>()
 
     /** First(1) 集合缓存（不展开规则名，用于左递归检测） */
-    private firstCache = new Map<string, Set<string>>()
+    private first1Cache = new Map<string, string[]>()
 
     /** 完全展开的 First 集合缓存（First(1)，完全展开到叶子节点，用于 Or 冲突快速预检） */
-    private expandedFirstCache = new Map<string, Set<string>>()
+    private firstExpandCache = new Map<string, string[]>()
 
     /** 路径展开缓存（First(2)，按层级展开，用于 Or 冲突详细检测） */
     private expansionFirst2Cache = new Map<string, string[][]>()
@@ -179,16 +171,19 @@ export class SubhutiGrammarAnalyzer {
 
         // 3. 初始化完全展开的 First 集合缓存（用于 Or 冲突快速预检）
         // ✅ firstK=1, maxLevel=Infinity（完全展开到叶子节点）
+
+        // 清空循环检测集合
+        this.computing.clear()
         for (const ruleName of this.ruleASTs.keys()) {
-            this.computeExpandedFirst(ruleName)
+            this.initExpandedFirstCache(ruleName)
         }
 
         // 4. 计算路径展开缓存（用于详细的 Or 冲突检测）
         // ✅ firstK=2, maxLevel=配置值（按层级展开）
         let count = 0
         let skipped = 0
-        const total = this.first2Cache.size
-        for (const ruleName of this.first2Cache.keys()) {
+        const total = this.firstMoreCache.size
+        for (const ruleName of this.firstMoreCache.keys()) {
             count++
 
             // 检查规则是否有 AST 节点
@@ -201,7 +196,7 @@ export class SubhutiGrammarAnalyzer {
 
             const startTime = Date.now()
             console.log(`[${count}/${total}] 初始化展开缓存: ${ruleName}`)
-            this.initExpansionCache(ruleName, maxLevel)
+            this.initExpansionCache(ruleName, EXPANSION_LIMITS.MAX_LEVEL)
             const elapsed = Date.now() - startTime
 
             if (elapsed > 1000) {
@@ -226,20 +221,18 @@ export class SubhutiGrammarAnalyzer {
      * @returns 直接子节点二维数组
      */
     private initFirst2Cache(ruleName: string) {
-        if (this.first2Cache.has(ruleName)) {
+        if (this.firstMoreCache.has(ruleName)) {
             throw new Error('系统错误：directChildrenCache 已存在')
         }
         const ruleNode = this.getRuleNodeByAst(ruleName)
         if (!ruleNode) {
             throw new Error('系统错误：规则不存在')
         }
-        // 清空循环检测集合
-        this.computing.clear()
 
         // firstK=2, maxLevel=0（不展开规则名）
-        const children = this.computeExpanded(ruleNode, null, EXPANSION_LIMITS.FIRST_K)
+        const children = this.computeExpanded(ruleNode, null, EXPANSION_LIMITS.FIRST_MORE)
 
-        this.first2Cache.set(ruleName, children)
+        this.firstMoreCache.set(ruleName, children)
     }
 
     /**
@@ -251,27 +244,31 @@ export class SubhutiGrammarAnalyzer {
      * @param ruleName 规则名
      * @returns 如果检测到左递归，返回错误对象；否则返回 null
      */
-    private initFirstCache(ruleName: string): LeftRecursionError | null {
-        if (this.firstCache.has(ruleName)) {
+    private initFirstCache(ruleName: string): LeftRecursionError {
+        if (this.first1Cache.has(ruleName)) {
             throw new Error('系统错误：firstCache 已存在')
         }
 
         // 从 directChildrenCache 获取 First(2)
-        const directChildren = this.first2Cache.get(ruleName)
+        const directChildren = this.firstMoreCache.get(ruleName)
         if (!directChildren) {
             throw new Error(`系统错误：规则 "${ruleName}" 的 directChildrenCache 未初始化`)
         }
 
-        // 提取 First(1)：每个分支的第一个符号
-        const firstSet = new Set<string>()
+        const firstAry = []
+
         for (const branch of directChildren) {
             if (branch.length > 0) {
-                firstSet.add(branch[0])  // 只取第一个符号
+                firstAry.push(branch[0])  // 只取第一个符号
             }
         }
 
         // 缓存 First(1) Set
-        this.firstCache.set(ruleName, firstSet)
+        this.first1Cache.set(ruleName, firstAry)
+
+
+        // 提取 First(1)：每个分支的第一个符号
+        const firstSet = new Set(firstAry)
 
         // 左递归检测：如果 First 集合包含规则名本身，就是左递归
         if (firstSet.has(ruleName)) {
@@ -286,9 +283,33 @@ export class SubhutiGrammarAnalyzer {
                 suggestion: this.getLeftRecursionSuggestion(ruleName, ruleAST, firstSet)
             }
         }
-
-        return null  // 无左递归
     }
+
+    /**
+     * 初始化 expandedFirstCache
+     * - 从 firstCache 递归展开到叶子节点，无限层级展开
+     */
+    private initExpandedFirstCache(ruleName: string): void {
+        if (this.firstExpandCache.has(ruleName)) {
+            throw new Error('系统错误：firstExpandCache 已存在')
+        }
+        const ruleNode = this.getRuleNodeByAst(ruleName)
+        if (!ruleNode) {
+            throw new Error('系统错误：规则不存在')
+        }
+
+        const children = this.computeExpanded(ruleNode, null, 0, Infinity)
+
+        const firstSet = new Set<string>()
+        for (const branch of children) {
+            if (branch.length > 0) {
+                firstSet.add(branch[0])  // 只取第一个符号
+            }
+        }
+
+        this.firstExpandCache.set(ruleName, firstSet)
+    }
+
 
     private initExpansionCache(ruleName: string, maxLevel: number) {
         if (this.expansionFirst2Cache.has(ruleName)) {
@@ -296,7 +317,7 @@ export class SubhutiGrammarAnalyzer {
         }
 
         // 使用通用展开方法：firstK=2, maxLevel=配置值
-        const rulesBranches = this.expandFromRule(ruleName, EXPANSION_LIMITS.FIRST_K, maxLevel)
+        const rulesBranches = this.expandFromRule(ruleName, EXPANSION_LIMITS.FIRST_MORE, maxLevel)
 
         this.expansionFirst2Cache.set(ruleName, rulesBranches)
     }
@@ -359,9 +380,9 @@ export class SubhutiGrammarAnalyzer {
 
     clearCache(): void {
         cache.clear()
-        this.first2Cache.clear()
-        this.firstCache.clear()
-        this.expandedFirstCache.clear()
+        this.firstMoreCache.clear()
+        this.first1Cache.clear()
+        this.firstExpandCache.clear()
         this.expansionFirst2Cache.clear()
     }
 
@@ -448,6 +469,12 @@ export class SubhutiGrammarAnalyzer {
         if (ruleName) {
             this.computing.add(ruleName)
         }
+        if (!node && ruleName) {
+            node = this.ruleASTs.get(ruleName)
+            if (!node) {
+                throw new Error('系统错误')
+            }
+        }
 
         try {
             // 3. 根据节点类型处理
@@ -457,22 +484,62 @@ export class SubhutiGrammarAnalyzer {
 
                 case 'subrule':
                     // 检查层级限制（只对 subrule 检查，因为只有它会增加层级）
-                    if (curLevel < maxLevel) {
+                    if (curLevel <= maxLevel) {
                         // 递归展开子规则
                         const subNode = this.getRuleNodeByAst(node.ruleName)
                         if (!subNode) {
-                            return [[node.ruleName]]  // token
+                            throw new Error('系统错误，不该存在的情况')
                         }
                         return this.computeExpanded(subNode, node.ruleName, firstK, curLevel + 1, maxLevel)
                     }
                     return [[node.ruleName]]  // 达到最大层级，不再展开
 
-
                 case 'or':
                     return this.expandOr(node.alternatives, firstK, curLevel, maxLevel)
 
                 case 'sequence':
-                    return this.expandSequence(node.nodes, firstK, curLevel, maxLevel)
+                    const nodeRuleName = node.ruleName
+                    let allBranches: string[][][]
+                    if (nodeRuleName) {
+                        //first2不展开，不会进入这里
+                        if (firstK === EXPANSION_LIMITS.FIRST_MORE && maxLevel === 0) {
+                            throw new Error("系统错误")
+                        } else if (firstK === EXPANSION_LIMITS.FIRST_1 && maxLevel === Infinity) {
+                            //first2,展开max_level
+                            const allBranchesCache = this.first1Cache.get(ruleName)
+                            if (!allBranchesCache) {
+                                throw new Error('系统错误')
+                            }
+                            allBranches = allBranchesCache.map(item => this.computeExpanded(null, item, firstK, curLevel))
+                        } else if (firstK === EXPANSION_LIMITS.FIRST_MORE && maxLevel === EXPANSION_LIMITS.MAX_LEVEL) {
+                            //first2,展开max_level
+                            const allBranchesCache = this.firstMoreCache.get(ruleName)
+                            if (!allBranchesCache) {
+                                throw new Error('系统错误')
+                            }
+                            allBranches = allBranchesCache.map(branch => {
+                                const branchRules = branch.map(item => this.computeExpanded(null, item, firstK, curLevel))
+                                return this.cartesianProduct(branchRules)
+                            })
+                        } else {
+                            throw new Error('错误的分支')
+                        }
+                    } else {
+                        if (node.nodes.length === 0) {
+                            return [[]]
+                        }
+                        // 展开每个节点
+                        allBranches = node.nodes.map(node =>
+                            this.computeExpanded(node, null, firstK, curLevel, maxLevel)
+                        )
+                    }
+                    // 笛卡尔积
+                    const result = this.cartesianProduct(allBranches)
+
+                    // 截断到 firstK
+                    result.forEach(path => path.splice(firstK))
+
+                    return result
 
                 case 'option':
                 case 'many':
@@ -482,8 +549,7 @@ export class SubhutiGrammarAnalyzer {
                     return this.expandAtLeastOne(node.node, firstK, curLevel, maxLevel)
 
                 default:
-                    console.warn(`Unknown node type: ${(node as any).type}`)
-                    return []
+                    throw new Error(`Unknown node type: ${(node as any).type}`)
             }
         } finally {
             // 4. 清除标记
@@ -515,12 +581,21 @@ export class SubhutiGrammarAnalyzer {
     /**
      * 展开 Sequence 节点
      */
-    private expandSequence(
-        nodes: RuleNode[],
+    private expandSequence = (
+        node: SequenceNode,
         firstK: number,
         curLevel: number,
         maxLevel: number
-    ): string[][] {
+    ): string[][] => {
+
+        if (node) {
+            //证明是规则
+            if (node.ruleName) {
+
+            }
+        }
+
+
         if (nodes.length === 0) {
             return [[]]
         }
@@ -537,7 +612,7 @@ export class SubhutiGrammarAnalyzer {
         result.forEach(path => path.splice(firstK))
 
         return result
-    }
+    };
 
     /**
      * 展开 Option/Many 节点
@@ -570,37 +645,6 @@ export class SubhutiGrammarAnalyzer {
     // First 集合计算（用于 Or 冲突快速预检）
     // ============================================================================
 
-    /**
-     * 递归计算完全展开的 First 集合（展开到叶子节点）
-     *
-     * 用于 Or 冲突快速预检：
-     * - firstK = 1（只取第一个符号）
-     * - maxLevel = Infinity（完全展开到叶子节点）
-     *
-     * @param ruleName 规则名
-     * @returns 完全展开的 First 集合（只包含叶子节点/终结符）
-     */
-    private computeExpandedFirst(ruleName: string): Set<string> {
-        // 检查缓存
-        if (this.expandedFirstCache.has(ruleName)) {
-            return this.expandedFirstCache.get(ruleName)!
-        }
-
-        // 使用通用展开方法：firstK=1, maxLevel=Infinity
-        const paths = this.expandFromRule(ruleName, 1, Infinity)
-
-        // 提取每个路径的第一个符号
-        const expandedSet = new Set<string>()
-        for (const path of paths) {
-            if (path.length > 0) {
-                expandedSet.add(path[0])
-            }
-        }
-
-        // 缓存结果
-        this.expandedFirstCache.set(ruleName, expandedSet)
-        return expandedSet
-    }
 
     /**
      * 计算节点的完全展开 First 集合（用于 Or 冲突检测）
@@ -630,7 +674,7 @@ export class SubhutiGrammarAnalyzer {
      * @returns 完全展开的 First 集合（只包含叶子节点）
      */
     public getExpandedFirst(ruleName: string): Set<string> {
-        const cached = this.expandedFirstCache.get(ruleName)
+        const cached = this.firstExpandCache.get(ruleName)
 
         if (cached) {
             return cached
@@ -640,7 +684,7 @@ export class SubhutiGrammarAnalyzer {
         if (!this.ruleASTs.has(ruleName)) {
             // 是 token，返回包含自身的集合
             const tokenSet = new Set([ruleName])
-            this.expandedFirstCache.set(ruleName, tokenSet)
+            this.firstExpandCache.set(ruleName, tokenSet)
             return tokenSet
         }
 

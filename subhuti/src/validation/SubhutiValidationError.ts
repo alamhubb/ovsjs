@@ -1,8 +1,8 @@
 /**
  * Subhuti Grammar Validation - 类型定义
- * 
+ *
  * 功能：定义语法验证相关的类型、接口和异常类
- * 
+ *
  * @version 1.0.0
  */
 
@@ -45,7 +45,7 @@ export interface ValidationError {
 export interface ValidationResult {
     /** 是否通过验证 */
     success: boolean
-    
+
     /** 错误列表 */
     errors: ValidationError[]
 }
@@ -62,13 +62,13 @@ export class SubhutiGrammarValidationError extends Error {
         super('Grammar validation failed')
         this.name = 'SubhutiGrammarValidationError'
     }
-    
+
     /**
      * 格式化错误信息
      */
     toString(): string {
         const lines = ['Grammar Validation Errors:', '']
-        
+
         for (const error of this.errors) {
             lines.push(`[${error.level}] ${error.message}`)
             lines.push(`  Rule: ${error.ruleName}`)
@@ -78,7 +78,7 @@ export class SubhutiGrammarValidationError extends Error {
             lines.push(`  Suggestion: ${error.suggestion}`)
             lines.push('')
         }
-        
+
         return lines.join('\n')
     }
 }
@@ -90,7 +90,7 @@ export class SubhutiGrammarValidationError extends Error {
 /**
  * 规则节点类型（联合类型）
  */
-export type RuleNode = 
+export type RuleNode =
     | ConsumeNode
     | SequenceNode
     | OrNode
@@ -112,6 +112,7 @@ export interface ConsumeNode {
  */
 export interface SequenceNode {
     type: 'sequence'
+    ruleName?: string
     nodes: RuleNode[]
 }
 
@@ -161,9 +162,9 @@ export interface SubruleNode {
 
 /**
  * 路径类型：扁平化字符串
- * 
+ *
  * 格式：'Token1,Token2,Token3,'
- * 
+ *
  * 示例：
  * - 'Identifier,'
  * - 'Identifier,Dot,Identifier,'
