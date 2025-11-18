@@ -164,7 +164,7 @@ export class SubhutiGrammarAnalyzer {
             if (!ruleAST || ruleAST.nodes.length === 0) {
                 continue  // 跳过空 AST
             }
-            this.initDirectChildrenCache(ruleName)
+            this.initDirectChildrenCache(ruleName, 2)
         }
 
         // 2. 计算 First 集合（用于左递归检测和 Or 冲突快速预检）
@@ -482,7 +482,6 @@ export class SubhutiGrammarAnalyzer {
         if (nodes.length === 0) {
             return [[]]
         }
-
 
         // 每个规则的每个分支，限制为 First(3)
         const allBranches = nodes.map(node => {
