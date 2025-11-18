@@ -361,7 +361,7 @@ export class SubhutiGrammarAnalyzer {
     private initFirstMoreExpandCache(ruleName: string) {
         // 检查缓存是否已存在
         if (this.firstMoreExpandCache.has(ruleName)) {
-            throw new Error('系统错误：firstMoreExpandCache 已存在')
+            throw new Error('系统错误：firstMoreExpandCache 已存在：' + ruleName)
         }
 
         // 调用 computeExpanded：firstK=2, maxLevel=配置值（按层级展开）
