@@ -219,59 +219,92 @@ export class SubhutiGrammarAnalyzer {
 
 
     /**
-     * 获取规则的直接子节点（只缓存一层）
+     * 初始化 firstMoreCache（First(2)，不展开规则名）
      *
-     * @param ruleName 规则名称
-     * @returns 直接子节点二维数组
+     * 目的：生成每个规则的前 2 个符号（不展开规则名到叶子节点）
+     *
+     * 参数：
+     * - firstK = 2
+     * - maxLevel = 0（不展开规则名）
+     *
+     * 实现：
+     * 1. 检查缓存是否已存在，存在则抛错
+     * 2. 获取规则的 AST 节点
+     * 3. 调用 computeExpanded(ruleNode, ruleName, 2, 0)
+     * 4. 缓存结果到 firstMoreCache
+     *
+     * 缓存格式：
+     * Map<string, string[][]>
+     * 例如："Expression" → [["Term", "+"], ["Term", "-"]]
      */
     private initFirstMoreCache(ruleName: string) {
+        // 检查缓存是否已存在
         if (this.firstMoreCache.has(ruleName)) {
-            throw new Error('系统错误：directChildrenCache 已存在')
+            throw new Error('系统错误：firstMoreCache 已存在')
         }
+        // 获取规则的 AST 节点
         const ruleNode = this.getRuleNodeByAst(ruleName)
         if (!ruleNode) {
             throw new Error('系统错误：规则不存在')
         }
 
-        // firstK=2, maxLevel=0（不展开规则名）
+        // 调用 computeExpanded：firstK=2, maxLevel=0（不展开规则名）
         const children = this.computeExpanded(ruleNode, ruleName, EXPANSION_LIMITS.FIRST_MORE)
 
+        // 缓存结果
         this.firstMoreCache.set(ruleName, children)
     }
 
     /**
-     * 初始化 firstCache + 左递归检测
-     * - 从 directChildrenCache 提取 First(1)
-     * - 存储为 Set<string>
-     * - 检测左递归
+     * 初始化 first1Cache（First(1)，不展开规则名）+ 左递归检测
+     *
+     * 目的：
+     * 1. 生成每个规则的第 1 个符号（不展开规则名）
+     * 2. 检测左递归
+     *
+     * 输入：从 firstMoreCache 提取
+     *
+     * 实现：
+     * 1. 检查缓存是否已存在，存在则抛错
+     * 2. 从 firstMoreCache 获取分支数组
+     * 3. 遍历每个分支，提取第一个符号
+     * 4. 存储为 string[][]（每个分支只有 1 个符号）
+     * 5. 检测左递归：如果 Set(第一个符号) 包含 ruleName，则报错
+     * 6. 缓存结果到 first1Cache
+     *
+     * 缓存格式：
+     * Map<string, string[][]>
+     * 例如："Expression" → [["Term"], ["Term"]]
+     *
+     * 关键：不调用 computeExpanded，直接从 firstMoreCache 提取
      *
      * @param ruleName 规则名
      * @returns 如果检测到左递归，返回错误对象；否则返回 null
      */
     private initFirstCache(ruleName: string): LeftRecursionError {
+        // 检查缓存是否已存在
         if (this.first1Cache.has(ruleName)) {
-            throw new Error('系统错误：firstCache 已存在')
+            throw new Error('系统错误：first1Cache 已存在')
         }
 
-        // 从 directChildrenCache 获取 First(2)
+        // 从 firstMoreCache 获取 First(2) 分支
         const directChildren = this.firstMoreCache.get(ruleName)
         if (!directChildren) {
-            throw new Error(`系统错误：规则 "${ruleName}" 的 directChildrenCache 未初始化`)
+            throw new Error(`系统错误：规则 "${ruleName}" 的 firstMoreCache 未初始化`)
         }
 
+        // 提取每个分支的第一个符号
         const firstAry: string[] = []
-
         for (const branch of directChildren) {
             if (branch.length > 0) {
-                firstAry.push(branch[0])  // 只取第一个符号
+                firstAry.push(branch[0])
             }
         }
 
-        // 缓存 First(1) Set
+        // 缓存 First(1)（存储为 string[][]）
         this.first1Cache.set(ruleName, firstAry.map(item => [item]))
 
-
-        // 提取 First(1)：每个分支的第一个符号
+        // 转换为 Set 用于左递归检测
         const firstSet = new Set(firstAry)
 
         // 左递归检测：如果 First 集合包含规则名本身，就是左递归
@@ -290,42 +323,97 @@ export class SubhutiGrammarAnalyzer {
     }
 
     /**
-     * 初始化 expandedFirstCache
-     * - 从 firstCache 递归展开到叶子节点，无限层级展开
+     * 初始化 first1ExpandCache（First(1)，完全展开到叶子节点）
+     *
+     * 目的：生成每个规则的第 1 个符号（完全展开到叶子节点/token）
+     *
+     * 参数：
+     * - firstK = 1
+     * - maxLevel = Infinity（无限层级展开）
+     *
+     * 实现：
+     * 1. 检查缓存是否已存在，存在则抛错
+     * 2. 获取规则的 AST 节点
+     * 3. 调用 computeExpanded(ruleNode, ruleName, 1, Infinity)
+     *    - 内部会从 first1Cache 获取已截断的分支
+     *    - 遍历分支中的符号，递归展开
+     * 4. 缓存结果到 first1ExpandCache
+     *
+     * 缓存格式：
+     * Map<string, string[][]>
+     * 例如："Expression" → [["NUMBER"], ["IDENTIFIER"]]
+     *
+     * 关键：computeExpanded 内部从 first1Cache 获取数据，避免重复计算
+     *
+     * @param ruleName 规则名
      */
     private initFirst1ExpandCache(ruleName: string): void {
+        // 检查缓存是否已存在
         if (this.first1ExpandCache.has(ruleName)) {
-            throw new Error('系统错误：firstExpandCache 已存在')
+            throw new Error('系统错误：first1ExpandCache 已存在')
         }
+        // 获取规则的 AST 节点
         const ruleNode = this.getRuleNodeByAst(ruleName)
         if (!ruleNode) {
             throw new Error('系统错误：规则不存在')
         }
 
+        // 调用 computeExpanded：firstK=1, maxLevel=Infinity（完全展开）
         const children = this.computeExpanded(ruleNode, ruleName, EXPANSION_LIMITS.FIRST_1, EXPANSION_LIMITS.INFINITY_LEVEL)
 
+        // 提取第一个符号（用于调试或验证）
         const firstSet = new Set<string>()
         for (const branch of children) {
             if (branch.length > 0) {
-                firstSet.add(branch[0])  // 只取第一个符号
+                firstSet.add(branch[0])
             }
         }
 
+        // 缓存结果
         this.first1ExpandCache.set(ruleName, children)
     }
 
 
+    /**
+     * 初始化 firstMoreExpandCache（First(2)，按层级展开）
+     *
+     * 目的：生成每个规则的前 2 个符号（按配置的层级展开，例如 3 层）
+     *
+     * 参数：
+     * - firstK = 2
+     * - maxLevel = 3（或配置的最大层级）
+     *
+     * 实现：
+     * 1. 检查缓存是否已存在，存在则抛错
+     * 2. 获取规则的 AST 节点
+     * 3. 调用 computeExpanded(ruleNode, null, 2, 3)
+     *    - 内部会从 firstMoreCache 获取已截断的分支
+     *    - 遍历分支中的符号，递归展开（最多 3 层）
+     * 4. 缓存结果到 firstMoreExpandCache
+     *
+     * 缓存格式：
+     * Map<string, string[][]>
+     * 例如："Expression" → [["NUMBER", "+"], ["IDENTIFIER", "+"]]
+     *
+     * 关键：computeExpanded 内部从 firstMoreCache 获取数据，避免重复计算
+     *
+     * @param ruleName 规则名
+     */
     private initFirstMoreExpandCache(ruleName: string) {
+        // 检查缓存是否已存在
         if (this.firstMoreExpandCache.has(ruleName)) {
             throw new Error('系统错误：firstMoreExpandCache 已存在')
         }
+        // 获取规则的 AST 节点
         const ruleNode = this.getRuleNodeByAst(ruleName)
         if (!ruleNode) {
             throw new Error('系统错误：规则不存在')
         }
 
+        // 调用 computeExpanded：firstK=2, maxLevel=配置值（按层级展开）
         const children = this.computeExpanded(ruleNode, null, EXPANSION_LIMITS.FIRST_MORE, EXPANSION_LIMITS.MAX_LEVEL)
 
+        // 缓存结果
         this.firstMoreExpandCache.set(ruleName, children)
     }
 
@@ -445,20 +533,47 @@ export class SubhutiGrammarAnalyzer {
     }
 
     /**
-     * 内部递归方法：通用展开逻辑（只接受 ruleNode）
+     * 通用展开方法：根据 firstK 和 maxLevel 展开规则
      *
-     * @param node - AST 节点
-     * @param ruleName - 规则名（用于循环检测和缓存，可能为 null）
-     * @param firstK - 取前 K 个符号
-     * @param maxLevel - 最大展开层级( curLevel < maxLevel 就持续展开)
-     * @param curLevel - 当前层级（从1开始）
-     * @returns 展开后的路径数组
+     * @param node - AST 节点（可选）
+     * @param ruleName - 规则名（可选）
+     * @param firstK - 取前 K 个符号（1 或 2）
+     * @param curLevel - 当前层级（默认 0）
+     * @param maxLevel - 最大展开层级（0=不展开, 3=展开3层, Infinity=完全展开）
+     * @returns 展开后的路径数组 string[][]
+     *
+     * 调用方式：
+     * - computeExpanded(node, null, firstK, curLevel, maxLevel) - 传入节点
+     * - computeExpanded(null, ruleName, firstK, curLevel, maxLevel) - 传入规则名
+     *
+     * 核心逻辑：
+     * 1. 如果传入 ruleName，获取对应的 node
+     * 2. 根据 node.type 分发处理：
+     *    - consume: 返回 [[tokenName]]
+     *    - subrule:
+     *        - 如果 curLevel >= maxLevel，返回 [[ruleName]]（不展开）
+     *        - 否则递归展开，curLevel + 1
+     *    - sequence:
+     *        - 如果 node.ruleName 存在（规则声明）：
+     *            - 根据 (firstK, maxLevel) 组合，从对应缓存获取已截断的分支
+     *            - 遍历分支中的每个符号，递归调用 computeExpanded(null, 符号, firstK, curLevel, maxLevel)
+     *            - 对展开结果做笛卡尔积，截断到 firstK
+     *        - 如果 node.ruleName 不存在（内联 sequence）：
+     *            - 遍历 node.nodes，递归调用 computeExpanded(node, null, firstK, curLevel, maxLevel)
+     *            - 对展开结果做笛卡尔积，截断到 firstK
+     *    - or: 遍历所有分支，合并结果
+     *    - option/many: 返回 [[], ...内部分支]
+     *    - atLeastOne: 返回 [...内部分支, ...内部分支×2]
+     *
+     * 关键优化：
+     * - 当 node.ruleName 存在时，从缓存获取已截断的分支，避免重复计算笛卡尔积
+     * - 只展开 firstK 个符号，后续符号不展开
      *
      * 使用场景：
-     * - firstK=1, maxLevel=EXPANSION_LIMITS.MAX_LEVEL：左递归检测（不展开，只取第一个符号）
-     * - firstK=2, maxLevel=EXPANSION_LIMITS.MAX_LEVEL：first2Cache（不展开，取前两个符号）
-     * - firstK=1, curLevel = 1, maxLevel=Infinity；完全展开的 First 集合（展开到叶子节点）
-     * - firstK=2, curLevel = 1, maxLevel=EXPANSION_LIMITS.MAX_LEVEL：路径展开缓存（展开 maxLevel 层，取前两个符号）
+     * - firstK=2, maxLevel=0：firstMoreCache（不展开，取前2个符号）
+     * - firstK=1, maxLevel=0：first1Cache（不展开，取第1个符号）
+     * - firstK=1, maxLevel=Infinity：first1ExpandCache（完全展开到叶子节点）
+     * - firstK=2, maxLevel=3：firstMoreExpandCache（展开3层，取前2个符号）
      */
     private computeExpanded(
         node: RuleNode,
@@ -467,16 +582,17 @@ export class SubhutiGrammarAnalyzer {
         curLevel: number = EXPANSION_LIMITS.MAX_LEVEL,
         maxLevel: number = EXPANSION_LIMITS.MAX_LEVEL
     ): string[][] {
-        // 1. 循环检测（只对有规则名的节点）
+        // 循环检测：如果规则正在计算中，停止展开
         if (ruleName && this.computing.has(ruleName)) {
             return [[ruleName]]
         }
 
-        // 2. 标记正在计算
+        // 标记当前规则正在计算
         if (ruleName) {
             this.computing.add(ruleName)
         }
 
+        // 缓存命中检测：如果已经计算过，直接返回缓存
         if (ruleName) {
             if (firstK === EXPANSION_LIMITS.FIRST_1 && maxLevel === Infinity) {
                 if (this.first1ExpandCache.has(ruleName)) {
@@ -489,107 +605,125 @@ export class SubhutiGrammarAnalyzer {
             }
         }
 
-
+        // 如果只传入 ruleName，获取对应的 node
         if (!node && ruleName) {
             node = this.ruleASTs.get(ruleName)
             if (!node) {
-                throw new Error('系统错误')
+                throw new Error('系统错误：规则不存在')
             }
         }
 
 
         try {
-            // 3. 根据节点类型处理
+            // 根据节点类型分发处理
             switch (node.type) {
                 case 'consume':
+                    // Token 节点：直接返回
                     return [[node.tokenName]]
 
                 case 'subrule':
-                    // 检查层级限制（只对 subrule 检查，因为只有它会增加层级）
+                    // Subrule 节点：检查层级限制
                     if (curLevel <= maxLevel) {
-                        // 递归展开子规则
+                        // 未达到最大层级，递归展开子规则（curLevel + 1）
                         const subNode = this.getRuleNodeByAst(node.ruleName)
                         if (!subNode) {
-                            throw new Error('系统错误，不该存在的情况')
+                            throw new Error('系统错误：子规则不存在')
                         }
                         return this.computeExpanded(subNode, node.ruleName, firstK, curLevel + 1, maxLevel)
                     }
-                    return [[node.ruleName]]  // 达到最大层级，不再展开
+                    // 达到最大层级，不再展开
+                    return [[node.ruleName]]
 
                 case 'or':
+                    // Or 节点：遍历所有分支，合并结果
                     return this.expandOr(node.alternatives, firstK, curLevel, maxLevel)
 
                 case 'sequence':
+                    // Sequence 节点：处理序列
                     const nodeRuleName = node.ruleName
                     let allBranches: string[][][]
+
                     if (nodeRuleName) {
-                        //first2不展开，不会进入这里
+                        // 规则声明：从缓存获取已截断的分支
                         if (firstK === EXPANSION_LIMITS.FIRST_MORE && maxLevel === 0) {
-                            throw new Error("系统错误")
+                            // First(2) 不展开：不应该进入这里
+                            throw new Error("系统错误：First(2) 不展开不应该有规则声明")
                         } else if (firstK === EXPANSION_LIMITS.FIRST_1 && maxLevel === Infinity) {
-                            //first2,展开max_level
+                            // First(1) 完全展开：从 first1Cache 获取
                             const allBranchesCache = this.first1Cache.get(ruleName)
                             if (!allBranchesCache) {
-                                throw new Error('系统错误')
+                                throw new Error('系统错误：first1Cache 未初始化')
                             }
+                            // 遍历每个分支，递归展开分支中的符号
                             allBranches = allBranchesCache.map(branch => {
                                 const branchRules = branch.map(item => {
+                                    // 递归展开符号（curLevel 不变，因为从缓存获取）
                                     const itemRes = this.computeExpanded(null, item, firstK, curLevel, maxLevel)
+                                    // 缓存展开结果
                                     if (!this.first1ExpandCache.has(item)) {
                                         this.first1ExpandCache.set(item, itemRes)
                                     }
                                     return itemRes
                                 })
+                                // 笛卡尔积组合分支中的符号
                                 return this.cartesianProduct(branchRules)
                             })
                         } else if (firstK === EXPANSION_LIMITS.FIRST_MORE && maxLevel === EXPANSION_LIMITS.MAX_LEVEL) {
-                            //first2,展开max_level
+                            // First(2) 按层级展开：从 firstMoreCache 获取
                             const allBranchesCache = this.firstMoreCache.get(ruleName)
                             if (!allBranchesCache) {
-                                throw new Error('系统错误')
+                                throw new Error('系统错误：firstMoreCache 未初始化')
                             }
+                            // 遍历每个分支，递归展开分支中的符号
                             allBranches = allBranchesCache.map(branch => {
                                 const branchRules = branch.map(item => {
+                                    // 递归展开符号（curLevel 不变，因为从缓存获取）
                                     const itemRes = this.computeExpanded(null, item, firstK, curLevel, maxLevel)
+                                    // 缓存展开结果
                                     if (!this.firstMoreExpandCache.has(item)) {
                                         this.firstMoreExpandCache.set(item, itemRes)
                                     }
                                     return itemRes
                                 })
+                                // 笛卡尔积组合分支中的符号
                                 return this.cartesianProduct(branchRules)
                             })
                         } else {
-                            throw new Error('错误的分支')
+                            throw new Error('系统错误：不支持的 (firstK, maxLevel) 组合')
                         }
                     } else {
+                        // 内联 sequence：直接展开子节点
                         if (node.nodes.length === 0) {
                             return [[]]
                         }
-                        // 展开每个节点
+                        // 遍历子节点，递归展开（curLevel 不变，因为不是 subrule）
                         allBranches = node.nodes.map(node =>
                             this.computeExpanded(node, null, firstK, curLevel, maxLevel)
                         )
                     }
-                    // 笛卡尔积
+
+                    // 笛卡尔积组合所有分支
                     const result = this.cartesianProduct(allBranches)
 
-                    // 截断到 firstK
+                    // 截断到 firstK（因为笛卡尔积可能组合出超过 firstK 的路径）
                     result.forEach(path => path.splice(firstK))
 
                     return result
 
                 case 'option':
                 case 'many':
+                    // Option/Many 节点：0次或多次
                     return this.expandOption(node.node, firstK, curLevel, maxLevel)
 
                 case 'atLeastOne':
+                    // AtLeastOne 节点：1次或多次
                     return this.expandAtLeastOne(node.node, firstK, curLevel, maxLevel)
 
                 default:
-                    throw new Error(`Unknown node type: ${(node as any).type}`)
+                    throw new Error(`未知节点类型: ${(node as any).type}`)
             }
         } finally {
-            // 4. 清除标记
+            // 清除计算标记
             if (ruleName) {
                 this.computing.delete(ruleName)
             }
