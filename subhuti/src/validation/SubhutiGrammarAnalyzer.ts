@@ -178,6 +178,9 @@ export class SubhutiGrammarAnalyzer {
     initCacheAndCheckLeftRecursion(): LeftRecursionError[] {
         const leftRecursionErrors: LeftRecursionError[] = []
 
+        console.log(`  📊 [3.3.1] 开始计算 firstMoreCache（First(2)，不展开规则名）`)
+        const t1 = Date.now()
+
         // 1. 计算直接子节点缓存（First(2)）
         // ✅ 优化：跳过空 AST 的规则
         for (const ruleName of this.ruleASTs.keys()) {
@@ -206,15 +209,54 @@ export class SubhutiGrammarAnalyzer {
             }
         }
 
+        const t2 = Date.now()
+        console.log(`  ✓ [3.3.1] firstMoreCache 计算完成，耗时 ${t2 - t1}ms`)
+
+        console.log(`  📊 [3.3.2] 开始计算 first1ExpandCache（First(1)，完全展开）`)
+        const t3 = Date.now()
+
         // 清空循环检测集合
         for (const ruleName of this.ruleASTs.keys()) {
             this.computing.clear()
             // ✅ firstK=1, maxLevel=Infinity（完全展开到叶子节点）
             this.initFirst1ExpandCache(ruleName)
+        }
+
+        const t4 = Date.now()
+        console.log(`  ✓ [3.3.2] first1ExpandCache 计算完成，耗时 ${t4 - t3}ms`)
+
+        console.log(`  📊 [3.3.3] 开始计算 firstMoreExpandCache（First(2)，按层级展开）`)
+        const t5 = Date.now()
+
+        const ruleTimings: Array<{ruleName: string, time: number}> = []
+        let ruleIndex = 0
+
+        for (const ruleName of this.ruleASTs.keys()) {
+            ruleIndex++
+            const ruleStart = Date.now()
+
             // ✅ firstK=more, maxLevel=max 根据max层级展开
             this.computing.clear()
             this.initFirstMoreExpandCache(ruleName)
+
+            const ruleTime = Date.now() - ruleStart
+            ruleTimings.push({ruleName, time: ruleTime})
+
+            // 输出耗时超过 100ms 的规则
+            if (ruleTime > 100) {
+                console.log(`    [${ruleIndex}/${this.ruleASTs.size}] ${ruleName}: ${ruleTime}ms ⚠️`)
+            }
         }
+
+        const t6 = Date.now()
+        console.log(`  ✓ [3.3.3] firstMoreExpandCache 计算完成，耗时 ${t6 - t5}ms`)
+
+        // 输出 Top 20 最耗时的规则
+        console.log(`\n  📊 firstMoreExpandCache 计算统计（Top 20 最耗时）：`)
+        const sortedTimings = ruleTimings.sort((a, b) => b.time - a.time).slice(0, 20)
+        sortedTimings.forEach((stat, index) => {
+            console.log(`    ${index + 1}. ${stat.ruleName}: ${stat.time}ms`)
+        })
 
         return leftRecursionErrors
     }
