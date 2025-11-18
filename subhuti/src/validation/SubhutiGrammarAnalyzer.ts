@@ -129,14 +129,14 @@ export class SubhutiGrammarAnalyzer {
     /** 分层展开缓存（二维数组：所有层级的分支 × 节点序列） */
     private expansionCache = new Map<string, string[][]>()
 
-    /** First集合缓存 */
+    /** First集合缓存（规则名 → First 集合） */
     private firstCache = new Map<string, Set<string>>()
+
+    /** 节点 First 集合缓存（节点对象 → First 集合，用于避免重复计算 Or 分支） */
+    private nodeFirstCache = new WeakMap<RuleNode, Set<string>>()
 
     /** 正在计算的规则（用于检测递归） */
     private computing = new Set<string>()
-
-    /** 正在计算First集合的规则（用于检测递归） */
-    private computingFirst = new Set<string>()
 
     /** 配置选项 */
     private options: Required<GrammarAnalyzerOptions>
@@ -167,7 +167,7 @@ export class SubhutiGrammarAnalyzer {
     preHandler(maxLevel = EXPANSION_LIMITS.MAX_LEVEL): LeftRecursionError[] {
         const leftRecursionErrors: LeftRecursionError[] = []
 
-        // 1. 计算直接子节点缓存
+        // 1. 计算直接子节点缓存（First(2)）
         // ✅ 优化：跳过空 AST 的规则
         for (const ruleName of this.ruleASTs.keys()) {
             const ruleAST = this.ruleASTs.get(ruleName)
@@ -177,19 +177,33 @@ export class SubhutiGrammarAnalyzer {
             this.initDirectChildrenCache(ruleName, 2)
         }
 
-        // 2. 计算 First 集合（用于左递归检测和 Or 冲突快速预检）
-        // 同时进行左递归检测
-        // ✅ 优化：跳过空 AST 的规则
+        // 2. 初始化 First(1) 集合 + 左递归检测（合并处理）
+        // ✅ 优化：从 First(2) 中提取 First(1)，无需重新计算
         for (const ruleName of this.ruleASTs.keys()) {
             const ruleAST = this.ruleASTs.get(ruleName)
             if (!ruleAST || ruleAST.nodes.length === 0) {
                 continue  // 跳过空 AST
             }
 
-            // 计算 First 集合
-            const firstSet = this.computeFirst(ruleName)
+            // 从 directChildrenCache 获取 First(2)
+            const directChildren = this.directChildrenCache.get(ruleName)
 
-            // 检测左递归：如果 First 集合包含规则名本身，就是左递归
+            if (!directChildren) {
+                throw new Error(`系统错误：规则 "${ruleName}" 的 directChildrenCache 未初始化`)
+            }
+
+            // 提取 First(1)：每个分支的第一个符号
+            const firstSet = new Set<string>()
+            for (const branch of directChildren) {
+                if (branch.length > 0) {
+                    firstSet.add(branch[0])  // 只取第一个符号
+                }
+            }
+
+            // 缓存 First(1) 集合
+            this.firstCache.set(ruleName, firstSet)
+
+            // 左递归检测：如果 First 集合包含规则名本身，就是左递归
             if (firstSet.has(ruleName)) {
                 leftRecursionErrors.push({
                     level: 'FATAL',
@@ -580,73 +594,100 @@ export class SubhutiGrammarAnalyzer {
     // ============================================================================
 
     /**
-     * 计算规则的 First(1) 集合
+     * 内部方法：计算节点的 First(1) 集合
      *
-     * First(A) = 规则 A 可能的第一个符号（token 或规则名）
-     *
-     * 用途：
-     * 1. 左递归检测：如果 First(A) 包含 A 本身，则 A 是左递归的
-     * 2. Or 冲突快速预检：如果两个分支的 First 集合无交集，则肯定无冲突
-     *
-     * 实现：复用 computeDirectChildren(node, 1) 获取 First(1) 集合
-     *
-     * @param ruleName 规则名
+     * @param node AST 节点
+     * @param expandRules 是否递归展开规则名到终结符
+     *   - false: 返回可能包含规则名的 First 集合（用于左递归检测）
+     *   - true: 递归展开规则名，返回只包含终结符的 First 集合（用于冲突检测）
      * @returns First(1) 集合
      */
-    public computeFirst(ruleName: string): Set<string> {
-        // 检查缓存
-        if (this.firstCache.has(ruleName)) {
-            return this.firstCache.get(ruleName)!
-        }
-
-        // 检测循环（防止无限递归）
-        if (this.computingFirst.has(ruleName)) {
-            // 遇到循环，返回规则名本身
-            // 这表示：First(A) 包含 A（可能是左递归）
-            return new Set([ruleName])
-        }
-
-        this.computingFirst.add(ruleName)
-
-        const ruleNode = this.ruleASTs.get(ruleName)
-        if (!ruleNode) {
-            // 不在 AST 中，说明是 token
-            this.computingFirst.delete(ruleName)
-            const result = new Set([ruleName])
-            this.firstCache.set(ruleName, result)
-            return result
-        }
-
+    private computeFirstInternal(node: RuleNode, expandRules: boolean): Set<string> {
         // 使用 computeDirectChildren(node, 1) 获取 First(1) 集合
         // 返回格式：string[][]（二维数组，每个分支是一个符号数组）
-        // First(1) 只需要每个分支的第一个符号
-        const branches = this.computeDirectChildren(ruleNode, 1)
+        const branches = this.computeDirectChildren(node, 1)
 
         // 将二维数组转换为 Set<string>
-        // 每个分支最多只有1个符号（因为 firstK=1）
         const firstSet = new Set<string>()
         for (const branch of branches) {
             if (branch.length > 0) {
-                firstSet.add(branch[0])  // 只取第一个符号
+                const firstSymbol = branch[0]
+
+                if (expandRules && this.ruleASTs.has(firstSymbol)) {
+                    // 需要展开规则名：递归获取规则的 First 集合
+                    // ✅ 优化：直接从缓存中获取（已在 preHandler 中初始化）
+                    const ruleFirstSet = this.getFirst(firstSymbol)
+                    ruleFirstSet.forEach(symbol => firstSet.add(symbol))
+                } else {
+                    // 不展开规则名，或者是 token：直接添加
+                    firstSet.add(firstSymbol)
+                }
             }
         }
-
-        this.computingFirst.delete(ruleName)
-        this.firstCache.set(ruleName, firstSet)
 
         return firstSet
     }
 
-
-
     /**
-     * 获取规则的 First 集合（公开方法）
+     * 获取规则的 First(1) 集合
+     *
+     * First(A) = 规则 A 可能的第一个符号（可能包含规则名）
+     *
+     * 注意：
+     * - First 集合已在 preHandler() 中初始化
+     * - 返回的集合可能包含规则名，不会递归展开到终结符
+     * - 如果缓存未命中，说明 preHandler() 未调用或规则不存在
      *
      * @param ruleName 规则名
-     * @returns First 集合
+     * @returns First(1) 集合（可能包含规则名）
      */
     public getFirst(ruleName: string): Set<string> {
-        return this.firstCache.get(ruleName) || new Set()
+        const cached = this.firstCache.get(ruleName)
+
+        if (cached) {
+            return cached
+        }
+
+        // 缓存未命中：可能是 token（不在 ruleASTs 中）
+        if (!this.ruleASTs.has(ruleName)) {
+            // 是 token，返回包含自身的集合
+            const tokenSet = new Set([ruleName])
+            this.firstCache.set(ruleName, tokenSet)
+            return tokenSet
+        }
+
+        // 规则存在但缓存未命中：系统错误
+        throw new Error(`系统错误：规则 "${ruleName}" 的 First 集合未初始化，请先调用 preHandler()`)
+    }
+
+    /**
+     * 计算节点的 First 集合（递归展开到终结符）
+     *
+     * 用于 Or 分支冲突快速预检：
+     * - 如果两个分支的 First 集合无交集，则肯定无前缀冲突
+     * - 如果有交集，则可能有冲突，需要详细检测
+     *
+     * 优化：
+     * 1. 使用 WeakMap 缓存节点级别的 First 集合
+     * 2. 复用规则级别的 firstCache
+     *
+     * @param node AST 节点
+     * @returns First 集合（只包含终结符）
+     */
+    public computeNodeFirst(node: RuleNode): Set<string> {
+        // 检查节点缓存
+        const cached = this.nodeFirstCache.get(node)
+        if (cached) {
+            return cached
+        }
+
+        // 使用内部方法计算 First 集合（展开规则名到终结符）
+        const firstSet = this.computeFirstInternal(node, true)
+
+        // 缓存结果
+        this.nodeFirstCache.set(node, firstSet)
+
+        return firstSet
     }
 
     /**
