@@ -123,15 +123,17 @@ export interface GrammarAnalyzerOptions {
  * - 按需计算：使用时才递归展开
  */
 export class SubhutiGrammarAnalyzer {
-    /** 直接子节点缓存（二维数组：分支 × 节点序列） */
-    private directChildrenCache = new Map<string, string[][]>()
+    /** 直接子节点缓存（First(2)，不展开规则名） */
+    private first2Cache = new Map<string, string[][]>()
 
-    /** 分层展开缓存（二维数组：所有层级的分支 × 节点序列） */
-    /** 路径展开缓存（规则名 → 展开路径，用于 Or 冲突详细检测） */
-    private expansionCache = new Map<string, string[][]>()
+    /** First(1) 集合缓存（不展开规则名，用于左递归检测） */
+    private firstCache = new Map<string, Set<string>>()
 
-    /** 完全展开的 First 集合缓存（规则名 → 叶子节点集合，用于 Or 冲突快速预检） */
+    /** 完全展开的 First 集合缓存（First(1)，完全展开到叶子节点，用于 Or 冲突快速预检） */
     private expandedFirstCache = new Map<string, Set<string>>()
+
+    /** 路径展开缓存（First(2)，按层级展开，用于 Or 冲突详细检测） */
+    private expansionFirst2Cache = new Map<string, string[][]>()
 
     /** 正在计算的规则（用于检测递归） */
     private computing = new Set<string>()
@@ -162,59 +164,26 @@ export class SubhutiGrammarAnalyzer {
      * @param maxLevel 最大展开层级（默认使用配置中的 MAX_LEVEL）
      * @returns 左递归错误列表
      */
-    preHandler(maxLevel = EXPANSION_LIMITS.MAX_LEVEL): LeftRecursionError[] {
+    preHandler(): LeftRecursionError[] {
         const leftRecursionErrors: LeftRecursionError[] = []
 
         // 1. 计算直接子节点缓存（First(2)）
         // ✅ 优化：跳过空 AST 的规则
         for (const ruleName of this.ruleASTs.keys()) {
-            this.initDirectChildrenCache(ruleName, EXPANSION_LIMITS.FIRST_K)
+            this.initFirst2Cache(ruleName, EXPANSION_LIMITS.FIRST_K)
         }
 
-        // 2. 左递归检测（不缓存，临时计算）
-        // ✅ 优化：从 directChildrenCache 提取 First(1)，无需重新计算
+        // 2. 初始化 firstCache + 左递归检测（First(1)，不展开）
         for (const ruleName of this.ruleASTs.keys()) {
-            const ruleAST = this.getRuleNodeByAst(ruleName)
-            if (!ruleAST || ruleAST.nodes.length === 0) {
-                continue  // 跳过空 AST
-            }
-
-            // 从 directChildrenCache 获取 First(2)
-            const directChildren = this.directChildrenCache.get(ruleName)
-
-            if (!directChildren) {
-                throw new Error(`系统错误：规则 "${ruleName}" 的 directChildrenCache 未初始化`)
-            }
-
-            // 临时计算 First(1)：每个分支的第一个符号（不展开，不缓存）
-            const firstSet = new Set<string>()
-            for (const branch of directChildren) {
-                if (branch.length > 0) {
-                    firstSet.add(branch[0])  // 只取第一个符号，不展开
-                }
-            }
-
-            // 左递归检测：如果 First 集合包含规则名本身，就是左递归
-            if (firstSet.has(ruleName)) {
-                leftRecursionErrors.push({
-                    level: 'FATAL',
-                    type: 'left-recursion',
-                    ruleName,
-                    branchIndices: [],
-                    conflictPaths: {pathA: '', pathB: ''},
-                    message: `规则 "${ruleName}" 存在左递归`,
-                    suggestion: this.getLeftRecursionSuggestion(ruleName, ruleAST, firstSet)
-                })
+            const error = this.initFirstCache(ruleName)
+            if (error) {
+                leftRecursionErrors.push(error)
             }
         }
 
         // 3. 初始化完全展开的 First 集合缓存（用于 Or 冲突快速预检）
         // ✅ firstK=1, maxLevel=Infinity（完全展开到叶子节点）
         for (const ruleName of this.ruleASTs.keys()) {
-            const ruleAST = this.getRuleNodeByAst(ruleName)
-            if (!ruleAST || ruleAST.nodes.length === 0) {
-                continue  // 跳过空 AST
-            }
             this.computeExpandedFirst(ruleName)
         }
 
@@ -222,8 +191,8 @@ export class SubhutiGrammarAnalyzer {
         // ✅ firstK=2, maxLevel=配置值（按层级展开）
         let count = 0
         let skipped = 0
-        const total = this.directChildrenCache.size
-        for (const ruleName of this.directChildrenCache.keys()) {
+        const total = this.first2Cache.size
+        for (const ruleName of this.first2Cache.keys()) {
             count++
 
             // 检查规则是否有 AST 节点
@@ -261,31 +230,80 @@ export class SubhutiGrammarAnalyzer {
      * @param firstK
      * @returns 直接子节点二维数组
      */
-    private initDirectChildrenCache(ruleName: string, firstK: number) {
-        if (this.directChildrenCache.has(ruleName)) {
-            throw new Error('系统错误')
+    private initFirst2Cache(ruleName: string, firstK: number) {
+        if (this.first2Cache.has(ruleName)) {
+            throw new Error('系统错误：directChildrenCache 已存在')
         }
         const ruleNode = this.getRuleNodeByAst(ruleName)
         if (!ruleNode) {
-            throw new Error('系统错误')
+            throw new Error('系统错误：规则不存在')
         }
         // 清空循环检测集合
         this.computing.clear()
 
-        const children = this.computeExpanded(ruleNode, firstK)
+        // firstK=2, maxLevel=0（不展开规则名）
+        const children = this.computeExpanded(ruleNode, null, firstK, 0)
 
-        this.directChildrenCache.set(ruleName, children)
+        this.first2Cache.set(ruleName, children)
+    }
+
+    /**
+     * 初始化 firstCache + 左递归检测
+     * - 从 directChildrenCache 提取 First(1)
+     * - 存储为 Set<string>
+     * - 检测左递归
+     *
+     * @param ruleName 规则名
+     * @returns 如果检测到左递归，返回错误对象；否则返回 null
+     */
+    private initFirstCache(ruleName: string): LeftRecursionError | null {
+        if (this.firstCache.has(ruleName)) {
+            throw new Error('系统错误：firstCache 已存在')
+        }
+
+        // 从 directChildrenCache 获取 First(2)
+        const directChildren = this.first2Cache.get(ruleName)
+        if (!directChildren) {
+            throw new Error(`系统错误：规则 "${ruleName}" 的 directChildrenCache 未初始化`)
+        }
+
+        // 提取 First(1)：每个分支的第一个符号
+        const firstSet = new Set<string>()
+        for (const branch of directChildren) {
+            if (branch.length > 0) {
+                firstSet.add(branch[0])  // 只取第一个符号
+            }
+        }
+
+        // 缓存 First(1) Set
+        this.firstCache.set(ruleName, firstSet)
+
+        // 左递归检测：如果 First 集合包含规则名本身，就是左递归
+        if (firstSet.has(ruleName)) {
+            const ruleAST = this.getRuleNodeByAst(ruleName)!
+            return {
+                level: 'FATAL',
+                type: 'left-recursion',
+                ruleName,
+                branchIndices: [],
+                conflictPaths: {pathA: '', pathB: ''},
+                message: `规则 "${ruleName}" 存在左递归`,
+                suggestion: this.getLeftRecursionSuggestion(ruleName, ruleAST, firstSet)
+            }
+        }
+
+        return null  // 无左递归
     }
 
     private initExpansionCache(ruleName: string, maxLevel: number) {
-        if (this.expansionCache.has(ruleName)) {
+        if (this.expansionFirst2Cache.has(ruleName)) {
             throw new Error('系统错误：展开缓存已存在')
         }
 
         // 使用通用展开方法：firstK=2, maxLevel=配置值
         const rulesBranches = this.expandFromRule(ruleName, EXPANSION_LIMITS.FIRST_K, maxLevel)
 
-        this.expansionCache.set(ruleName, rulesBranches)
+        this.expansionFirst2Cache.set(ruleName, rulesBranches)
     }
 
     /**
@@ -297,7 +315,7 @@ export class SubhutiGrammarAnalyzer {
      * @returns 展开结果（二维数组），如果不在缓存中返回 undefined
      */
     getExpansionFromCache(ruleName: string): string[][] | undefined {
-        return this.expansionCache.get(ruleName)
+        return this.expansionFirst2Cache.get(ruleName)
     }
 
 
@@ -346,8 +364,10 @@ export class SubhutiGrammarAnalyzer {
 
     clearCache(): void {
         cache.clear()
-        this.expansionCache.clear()
+        this.first2Cache.clear()
+        this.firstCache.clear()
         this.expandedFirstCache.clear()
+        this.expansionFirst2Cache.clear()
     }
 
     // ============================================================================
@@ -407,22 +427,22 @@ export class SubhutiGrammarAnalyzer {
      * @param node - AST 节点
      * @param ruleName - 规则名（用于循环检测和缓存，可能为 null）
      * @param firstK - 取前 K 个符号
-     * @param maxLevel - 最大展开层级（0 = 不展开，Infinity = 完全展开）
-     * @param curLevel - 当前层级
+     * @param maxLevel - 最大展开层级( curLevel < maxLevel 就持续展开)
+     * @param curLevel - 当前层级（从1开始）
      * @returns 展开后的路径数组
      *
      * 使用场景：
-     * - firstK=1, maxLevel=0：左递归检测（不展开，只取第一个符号）
-     * - firstK=2, maxLevel=0：directChildrenCache（不展开，取前两个符号）
-     * - firstK=1, maxLevel=Infinity：完全展开的 First 集合（展开到叶子节点）
-     * - firstK=2, maxLevel=3：路径展开缓存（展开 3 层，取前两个符号）
+     * - firstK=1, maxLevel=EXPANSION_LIMITS.MAX_LEVEL：左递归检测（不展开，只取第一个符号）
+     * - firstK=2, maxLevel=EXPANSION_LIMITS.MAX_LEVEL：first2Cache（不展开，取前两个符号）
+     * - firstK=1, curLevel = 1, maxLevel=Infinity；完全展开的 First 集合（展开到叶子节点）
+     * - firstK=2, curLevel = 1, maxLevel=EXPANSION_LIMITS.MAX_LEVEL：路径展开缓存（展开 maxLevel 层，取前两个符号）
      */
     private computeExpanded(
         node: RuleNode,
         ruleName: string | null,
         firstK: number,
         curLevel: number = EXPANSION_LIMITS.MAX_LEVEL,
-        maxLevel: number = EXPANSION_LIMITS.MAX_LEVEL,
+        maxLevel: number = EXPANSION_LIMITS.MAX_LEVEL
     ): string[][] {
         // 1. 循环检测（只对有规则名的节点）
         if (ruleName && this.computing.has(ruleName)) {
@@ -442,13 +462,16 @@ export class SubhutiGrammarAnalyzer {
 
                 case 'subrule':
                     // 检查层级限制（只对 subrule 检查，因为只有它会增加层级）
-                    if (curLevel <= maxLevel) {
+                    if (curLevel < maxLevel) {
                         // 递归展开子规则
                         const subNode = this.getRuleNodeByAst(node.ruleName)
-
-                        return this.computeExpanded(subNode, node.ruleName, firstK, curLevel + 1)
+                        if (!subNode) {
+                            return [[node.ruleName]]  // token
+                        }
+                        return this.computeExpanded(subNode, node.ruleName, firstK, maxLevel, curLevel + 1)
                     }
                     return [[node.ruleName]]  // 达到最大层级，不再展开
+
 
                 case 'or':
                     return this.expandOr(node.alternatives, firstK, maxLevel, curLevel)
