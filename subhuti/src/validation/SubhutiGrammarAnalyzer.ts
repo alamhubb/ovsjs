@@ -524,22 +524,25 @@ export class SubhutiGrammarAnalyzer {
     /**
      * 计算序列的直接子节点（需要笛卡尔积）
      * A B → 所有 A的分支 × B的分支 的组合
+     *
+     * 等价于：computeExpandedPaths(sequenceNode, firstK, 0)
+     * - firstK: 取前 K 个符号
+     * - maxLevel=0: 不展开规则名
      */
     private computeSequenceDirectChildren(nodes: RuleNode[], firstK: number): string[][] {
         if (nodes.length === 0) {
             return [[]]
         }
 
-        // 每个规则的每个分支，限制为 First(3)
-        const allBranches = nodes.map(node => {
-            const branches = this.computeDirectChildren(node, firstK)
-            branches.forEach(branch => branch.splice(firstK))
-            return branches
-        })
+        // 获取每个节点的直接子节点（不展开，firstK 已经在 computeDirectChildren 中处理）
+        const allBranches = nodes.map(node =>
+            this.computeDirectChildren(node, firstK)
+        )
 
+        // 笛卡尔积组合
         const res = this.cartesianProduct(allBranches)
 
-        // 笛卡尔积结果也限制为 First(3)
+        // 截断到 firstK（因为笛卡尔积可能组合出超过 firstK 的路径）
         res.forEach(path => path.splice(firstK))
 
         return res
@@ -592,6 +595,114 @@ export class SubhutiGrammarAnalyzer {
         cache.clear()
         this.expansionCache.clear()
         this.expandedFirstCache.clear()
+    }
+
+    // ============================================================================
+    // 通用展开方法（支持 firstK 和 maxLevel 参数）
+    // ============================================================================
+
+    /**
+     * 通用展开方法：计算节点或规则的展开路径
+     *
+     * @param input - AST 节点或规则名
+     * @param firstK - 取前 K 个符号（1 = 只取第一个，2 = 取前两个）
+     * @param maxLevel - 最大展开层级（0 = 不展开，Infinity = 完全展开到叶子节点）
+     * @param currentLevel - 当前展开层级（内部使用，默认为 0）
+     * @returns 展开后的路径数组
+     *
+     * 使用场景：
+     * - firstK=1, maxLevel=0：左递归检测（不展开，只取第一个符号）
+     * - firstK=2, maxLevel=0：directChildrenCache（不展开，取前两个符号）
+     * - firstK=1, maxLevel=Infinity：完全展开的 First 集合（展开到叶子节点）
+     * - firstK=2, maxLevel=3：路径展开缓存（展开 3 层，取前两个符号）
+     */
+    private computeExpandedPaths(
+        input: RuleNode | string,
+        firstK: number,
+        maxLevel: number,
+        currentLevel: number = 0
+    ): string[][] {
+        // 1. 获取规则名
+        const ruleName = typeof input === 'string' ? input : null
+        const node = typeof input === 'string' ? this.ruleASTs.get(input) : input
+
+        // 2. 如果是叶子节点（token），直接返回
+        if (!node) {
+            const tokenName = typeof input === 'string' ? input : ''
+            return [[tokenName]]
+        }
+
+        // 3. 检查是否达到最大展开层级
+        if (currentLevel >= maxLevel) {
+            // 达到最大层级，不再展开，返回规则名
+            if (ruleName) {
+                return [[ruleName]]
+            }
+            // 如果是节点，获取其直接子节点（不展开）
+            const directChildren = this.computeDirectChildren(node, firstK)
+            return directChildren
+        }
+
+        // 4. 检测循环引用（仅对规则名检测）
+        if (ruleName && this.computing.has(ruleName)) {
+            return [[ruleName]]  // 遇到循环引用，停止展开
+        }
+
+        // 5. 标记当前规则正在计算（仅对规则名）
+        if (ruleName) {
+            this.computing.add(ruleName)
+        }
+
+        try {
+            // 6. 获取直接子节点
+            const directChildren = this.computeDirectChildren(node, firstK)
+
+            // 7. 如果 maxLevel = 0，直接返回（不展开）
+            if (maxLevel === 0) {
+                return directChildren
+            }
+
+            // 8. 递归展开每个分支
+            const expandedBranches: string[][] = []
+
+            for (const branch of directChildren) {
+                // 对分支中的每个符号进行展开
+                const expandedItems: string[][][] = []
+
+                for (const symbol of branch) {
+                    if (this.ruleASTs.has(symbol)) {
+                        // 是规则名：递归展开
+                        const symbolPaths = this.computeExpandedPaths(
+                            symbol,
+                            firstK,
+                            maxLevel,
+                            currentLevel + 1
+                        )
+                        expandedItems.push(symbolPaths)
+                    } else {
+                        // 是 token：不展开
+                        expandedItems.push([[symbol]])
+                    }
+                }
+
+                // 笛卡尔积组合
+                if (expandedItems.length === 0) {
+                    expandedBranches.push([])
+                } else {
+                    const combined = this.cartesianProduct(expandedItems)
+                    // 截断到 firstK
+                    combined.forEach(path => path.splice(firstK))
+                    expandedBranches.push(...combined)
+                }
+            }
+
+            return expandedBranches
+        } finally {
+            // 9. 清除计算标记（仅对规则名）
+            if (ruleName) {
+                this.computing.delete(ruleName)
+            }
+        }
     }
 
     // ============================================================================
