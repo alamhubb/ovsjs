@@ -33,8 +33,8 @@
  * @version 1.0.0
  */
 
-import type { SubhutiGrammarAnalyzer } from "./SubhutiGrammarAnalyzer"
-import { EXPANSION_LIMITS } from "./SubhutiGrammarAnalyzer"
+import type {SubhutiGrammarAnalyzer} from "./SubhutiGrammarAnalyzer"
+import {EXPANSION_LIMITS} from "./SubhutiGrammarAnalyzer"
 import type {RuleNode, ValidationError, Path, SequenceNode} from "./SubhutiValidationError"
 
 /**
@@ -109,7 +109,7 @@ export class SubhutiConflictDetector {
         const errors: ValidationError[] = []
 
         // 📊 规则检测统计
-        const ruleStats: Array<{ruleName: string, time: number, conflicts: number}> = []
+        const ruleStats: Array<{ ruleName: string, time: number, conflicts: number }> = []
 
         // 遍历所有规则
         let ruleIndex = 0
@@ -177,7 +177,7 @@ export class SubhutiConflictDetector {
 
         return errors
     }
-    
+
     /**
      * 递归检测节点冲突
      */
@@ -190,34 +190,34 @@ export class SubhutiConflictDetector {
             case 'or':
                 // 检测 Or 节点的冲突
                 this.detectOrConflicts(ruleName, node.alternatives, errors)
-                
+
                 // 递归检测每个分支
                 for (const alt of node.alternatives) {
                     this.detectNodeConflicts(ruleName, alt, errors)
                 }
                 break
-            
+
             case 'sequence':
                 // 递归检测序列中的每个节点
                 for (const child of node.nodes) {
                     this.detectNodeConflicts(ruleName, child, errors)
                 }
                 break
-            
+
             case 'option':
             case 'many':
             case 'atLeastOne':
                 // 递归检测内部节点
                 this.detectNodeConflicts(ruleName, node.node, errors)
                 break
-            
+
             // consume 和 subrule 不需要检测
             case 'consume':
             case 'subrule':
                 break
         }
     }
-    
+
     /**
      * 计算 Or 分支的完全展开结果（公共方法）
      *
@@ -249,7 +249,7 @@ export class SubhutiConflictDetector {
             // 这会展开所有辅助节点（sequence、or、option、many、atLeastOne）
             // 但保留 token 和 ruleName 不展开
             // 返回二维数组，例如：[["RuleA", "TokenB"], ["RuleC"]]
-            const directChildren = this.analyzer.computeDirectChildrenPublic(alternative)
+            const directChildren = this.analyzer.computeDirectChildren(alternative, Infinity)
 
             // 步骤2: 对每个直接子节点分支进行完全展开
             const expandedBranches: string[][] = []
@@ -521,7 +521,7 @@ export class SubhutiConflictDetector {
             }
         }
     }
-    
+
     /**
      * 检查路径集合中是否有空路径
      */
@@ -577,7 +577,7 @@ export class SubhutiConflictDetector {
                 return false
         }
     }
-    
+
     /**
      * 判断 pathA 是否是 pathB 的前缀
      *
@@ -653,7 +653,13 @@ export class SubhutiConflictDetector {
         let result = arrays[0]
 
         // 📊 迭代统计
-        const iterationStats: Array<{iteration: number, inputSize: number, arraySize: number, outputSize: number, truncated: boolean}> = []
+        const iterationStats: Array<{
+            iteration: number,
+            inputSize: number,
+            arraySize: number,
+            outputSize: number,
+            truncated: boolean
+        }> = []
 
         for (let i = 1; i < arrays.length; i++) {
             const iterStartTime = Date.now()

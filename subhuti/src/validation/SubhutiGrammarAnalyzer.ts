@@ -363,7 +363,7 @@ export class SubhutiGrammarAnalyzer {
         if (!ruleNode) {
             throw new Error('系统错误')
         }
-        const children = this.computeDirectChildren(ruleNode,firstK)
+        const children = this.computeDirectChildren(ruleNode, firstK)
 
         this.directChildrenCache.set(ruleName, children)
     }
@@ -386,38 +386,6 @@ export class SubhutiGrammarAnalyzer {
     }
 
     /**
-     * 计算规则的分层展开结果
-     *
-     * @param ruleName 规则名称
-     * @returns 分层展开结果（二维数组，包含所有层级的所有分支）
-     */
-    computeExpansion(ruleName: string): string[][] {
-        if (this.expansionCache.has(ruleName)) {
-            return this.expansionCache.get(ruleName)!
-        }
-
-        if (this.computing.has(ruleName)) {
-            return []
-        }
-
-        this.computing.add(ruleName)
-
-        try {
-            const ruleNode = this.ruleASTs.get(ruleName)
-            if (!ruleNode) {
-                return []
-            }
-
-            const expansion = this.computeNodeExpansion(ruleNode)
-            this.expansionCache.set(ruleName, expansion)
-
-            return expansion
-        } finally {
-            this.computing.delete(ruleName)
-        }
-    }
-
-    /**
      * 从缓存中获取规则的展开结果
      *
      * 用于冲突检测时获取规则的完全展开结果
@@ -427,93 +395,6 @@ export class SubhutiGrammarAnalyzer {
      */
     getExpansionFromCache(ruleName: string): string[][] | undefined {
         return this.expansionCache.get(ruleName)
-    }
-
-    /**
-     * 计算节点的直接子节点（公开方法）
-     *
-     * 用于冲突检测时获取节点的直接子节点
-     * - 展开所有辅助节点（sequence、or、option、many、atLeastOne）
-     * - 保留 token 和 ruleName 不展开
-     *
-     * @param node AST 节点
-     * @returns 直接子节点二维数组
-     */
-    computeDirectChildrenPublic(node: RuleNode): string[][] {
-        return this.computeDirectChildren(node)
-    }
-
-    /**
-     * 计算节点的分层展开（核心递归方法）
-     * 返回：所有层级的所有分支（二维数组）
-     */
-    private computeNodeExpansion(node: RuleNode): string[][] {
-        const directBranches = this.computeDirectChildren(node)
-        const allBranches: string[][] = [...directBranches]
-        let currentLevelBranches = directBranches
-
-        for (let level = 1; level < this.options.maxLevel; level++) {
-            const newBranches = this.expandOneLevelFrom(currentLevelBranches)
-            if (newBranches.length === 0) break
-
-            allBranches.push(...newBranches)
-            currentLevelBranches = newBranches
-        }
-
-        return allBranches
-    }
-
-    /**
-     * 从给定的分支展开一层
-     */
-    private expandOneLevelFrom(branches: string[][]): string[][] {
-        const result: string[][] = []
-
-        for (const branch of branches) {
-            const expandedBranches = this.expandBranch(branch)
-            result.push(...expandedBranches)
-        }
-
-        return result
-    }
-
-    /**
-     * 展开一个分支（将其中的第一个可展开的规则名替换为子节点）
-     *
-     * 注意：只展开第一个规则，返回所有可能的新分支
-     * 例如：[A, B] → 如果 A 有 2 个子节点 [a1, a2]，返回 [[a1, a2, B]]
-     */
-    private expandBranch(branch: string[]): string[][] {
-        // 找到第一个可展开的规则
-        for (let i = 0; i < branch.length; i++) {
-            const node = branch[i]
-
-            // 跳过空节点
-            if (node === '') {
-                continue
-            }
-
-            // 获取该规则的直接子节点
-            // 如果是 token（不在 ruleASTs 中），getDirectChildren 会返回空数组
-            if (children.length === 0) continue
-
-            // 展开这个规则，生成所有可能的新分支
-            const result: string[][] = []
-            for (const childBranch of children) {
-                const newBranch = [
-                    ...branch.slice(0, i),      // 前面的部分
-                    ...childBranch,              // 替换为子节点
-                    ...branch.slice(i + 1)       // 后面的部分
-                ]
-                result.push(newBranch)
-            }
-
-            // 找到第一个可展开的规则后就返回
-            return result
-        }
-
-        // 没有可展开的规则，返回空数组
-        return []
     }
 
 
@@ -539,14 +420,14 @@ export class SubhutiGrammarAnalyzer {
                 return this.computeSequenceDirectChildren(rootNode.nodes, firstK)
 
             case 'or':
-                return this.computeOrDirectChildren(rootNode.alternatives)
+                return this.computeOrDirectChildren(rootNode.alternatives, firstK)
 
             case 'option':
             case 'many':
-                return this.computeOptionDirectChildren(rootNode.node)
+                return this.computeOptionDirectChildren(rootNode.node, firstK)
 
             case 'atLeastOne':
-                return this.computeAtLeastOneDirectChildren(rootNode.node)
+                return this.computeAtLeastOneDirectChildren(rootNode.node, firstK)
 
             case 'subrule':
                 return [[rootNode.ruleName]]
@@ -574,8 +455,8 @@ export class SubhutiGrammarAnalyzer {
      * [["B"]] × [[], ["C"]] × [["D"]]
      * = [["B", "D"], ["B", "C", "D"]]
      */
-    private computeOptionDirectChildren(node: SequenceNode): string[][] {
-        const innerBranches = this.computeDirectChildren(node)
+    private computeOptionDirectChildren(node: SequenceNode, firstK: number): string[][] {
+        const innerBranches = this.computeDirectChildren(node, firstK)
         return [[], ...innerBranches]
     }
 
@@ -587,8 +468,8 @@ export class SubhutiGrammarAnalyzer {
      * - 如果 A 有 1 个分支：[["a"]]
      * - 返回：[["a"], ["a", "a"]]
      */
-    private computeAtLeastOneDirectChildren(node: SequenceNode): string[][] {
-        const innerBranches = this.computeDirectChildren(node)
+    private computeAtLeastOneDirectChildren(node: SequenceNode, firstK: number): string[][] {
+        const innerBranches = this.computeDirectChildren(node, firstK)
         const doubleBranches = innerBranches.map(branch => [...branch, ...branch])
         return [...innerBranches, ...doubleBranches]
     }
@@ -605,7 +486,7 @@ export class SubhutiGrammarAnalyzer {
 
         // 每个规则的每个分支，限制为 First(3)
         const allBranches = nodes.map(node => {
-            const branches = this.computeDirectChildren(node)
+            const branches = this.computeDirectChildren(node, firstK)
             branches.forEach(branch => branch.splice(firstK))
             return branches
         })
@@ -622,11 +503,11 @@ export class SubhutiGrammarAnalyzer {
      * 计算 Or 的直接子节点（直接合并，不需要笛卡尔积）
      * A / B → A的所有分支 + B的所有分支
      */
-    private computeOrDirectChildren(alternatives: RuleNode[]): string[][] {
+    private computeOrDirectChildren(alternatives: RuleNode[], firstK: number): string[][] {
         const result: string[][] = []
 
         for (const alt of alternatives) {
-            const branches = this.computeDirectChildren(alt)
+            const branches = this.computeDirectChildren(alt, firstK)
             result.push(...branches)
         }
 
