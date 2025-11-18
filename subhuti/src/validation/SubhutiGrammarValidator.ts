@@ -50,22 +50,17 @@ export class SubhutiGrammarValidator {
         console.log(`  ⏱️ [3.2] 创建分析器耗时: ${t4 - t3}ms`)
 
         // 3. 初始化缓存（计算直接子节点、First 集合、路径展开）
+        // 同时进行左递归检测
         const t5 = Date.now()
-        analyzer.preHandler(maxLevel)
+        const leftRecursionErrors = analyzer.preHandler(maxLevel)
         const t6 = Date.now()
         console.log(`  ⏱️ [3.3] 初始化缓存耗时: ${t6 - t5}ms`)
+        console.log(`  ⏱️ [3.4] 左递归检测完成 (发现 ${leftRecursionErrors.length} 个左递归)`)
 
         const errors: any[] = []
-
-        // 4. Level 0: 左递归检测 (FATAL)
-        // 左递归会导致无限循环，是最致命的错误，必须最先检测
-        const t7 = Date.now()
-        const leftRecursionErrors = this.detectLeftRecursion(analyzer, ruleASTs)
-        const t8 = Date.now()
-        console.log(`  ⏱️ [3.4] 左递归检测耗时: ${t8 - t7}ms`)
         errors.push(...leftRecursionErrors)
 
-        // 5. Level 1 & 2: Or 分支冲突检测（空路径 + 前缀冲突）
+        // 4. Level 1 & 2: Or 分支冲突检测（空路径 + 前缀冲突）
         const t9 = Date.now()
         const detector = new SubhutiConflictDetector(analyzer, ruleASTs)
         const t10 = Date.now()
@@ -77,89 +72,11 @@ export class SubhutiGrammarValidator {
         console.log(`  ⏱️ [3.6] 冲突检测耗时: ${t12 - t11}ms (发现 ${conflictErrors.length} 个冲突)`)
         errors.push(...conflictErrors)
 
-        // 6. 聚合所有错误，一起报告
+        // 5. 聚合所有错误，一起报告
         if (errors.length > 0) {
             throw new SubhutiGrammarValidationError(errors)
         }
     }
 
-    /**
-     * 检测左递归
-     *
-     * 左递归定义：规则 A 的 First 集合包含 A 本身
-     *
-     * 示例：
-     * - ❌ Expression → Expression "+" Term  (直接左递归)
-     * - ❌ A → B, B → A  (间接左递归，如果 B 的第一个符号是 A)
-     * - ✅ MemberExpression → PrimaryExpression ("." IdentifierName)*  (右递归，合法)
-     *
-     * @param analyzer 语法分析器
-     * @param ruleASTs 规则 AST
-     * @returns 左递归错误列表
-     */
-    private static detectLeftRecursion(
-        analyzer: SubhutiGrammarAnalyzer,
-        ruleASTs: Map<string, any>
-    ): any[] {
-        const errors: any[] = []
-
-        for (const [ruleName, ruleNode] of ruleASTs) {
-            const firstSet = analyzer.getFirst(ruleName)
-
-            // 如果 First 集合包含规则名本身，就是左递归
-            if (firstSet.has(ruleName)) {
-                errors.push({
-                    level: 'FATAL',
-                    type: 'left-recursion',
-                    ruleName,
-                    branchIndices: [],
-                    conflictPaths: { pathA: '', pathB: '' },
-                    message: `规则 "${ruleName}" 存在左递归`,
-                    suggestion: this.getLeftRecursionSuggestion(ruleName, ruleNode, firstSet)
-                })
-            }
-        }
-
-        return errors
-    }
-
-    /**
-     * 生成左递归修复建议
-     *
-     * @param ruleName 规则名
-     * @param node 规则节点
-     * @param firstSet First 集合
-     * @returns 修复建议
-     */
-    private static getLeftRecursionSuggestion(
-        ruleName: string,
-        node: any,
-        firstSet: Set<string>
-    ): string {
-        // 分析规则结构，提供具体建议
-        if (node.type === 'or') {
-            return `PEG 不支持左递归！请将左递归改为右递归，或使用 Many/AtLeastOne。
-
-示例：
-  ❌ 左递归（非法）：
-     ${ruleName} → ${ruleName} '+' Term | Term
-
-  ✅ 右递归（合法）：
-     ${ruleName} → Term ('+' Term)*
-
-  或使用 Many：
-     ${ruleName} → Term
-     ${ruleName}Suffix → '+' Term
-     完整形式 → ${ruleName} ${ruleName}Suffix*
-
-First(${ruleName}) = {${Array.from(firstSet).slice(0, 5).join(', ')}${firstSet.size > 5 ? ', ...' : ''}}
-包含 ${ruleName} 本身，说明存在左递归。`
-        }
-
-        return `PEG 不支持左递归！请重构语法以消除左递归。
-
-First(${ruleName}) = {${Array.from(firstSet).slice(0, 5).join(', ')}${firstSet.size > 5 ? ', ...' : ''}}
-包含 ${ruleName} 本身，说明存在左递归。`
-    }
 }
 

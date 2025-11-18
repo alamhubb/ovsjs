@@ -30,8 +30,13 @@
  * @version 2.0.0 - 分层展开版本
  */
 
-import type {RuleNode, Path, SequenceNode} from "./SubhutiValidationError"
+import type {RuleNode, Path, SequenceNode, ValidationError} from "./SubhutiValidationError"
 import {SubhutiValidationLogger} from './SubhutiValidationLogger'
+
+/**
+ * 左递归错误类型
+ */
+export type LeftRecursionError = ValidationError
 
 /**
  * 全局统一限制配置
@@ -157,8 +162,11 @@ export class SubhutiGrammarAnalyzer {
      * 应该在收集 AST 之后立即调用
      *
      * @param maxLevel 最大展开层级（默认使用配置中的 MAX_LEVEL）
+     * @returns 左递归错误列表
      */
-    preHandler(maxLevel = EXPANSION_LIMITS.MAX_LEVEL): void {
+    preHandler(maxLevel = EXPANSION_LIMITS.MAX_LEVEL): LeftRecursionError[] {
+        const leftRecursionErrors: LeftRecursionError[] = []
+
         // 1. 计算直接子节点缓存
         // ✅ 优化：跳过空 AST 的规则
         for (const ruleName of this.ruleASTs.keys()) {
@@ -170,13 +178,29 @@ export class SubhutiGrammarAnalyzer {
         }
 
         // 2. 计算 First 集合（用于左递归检测和 Or 冲突快速预检）
+        // 同时进行左递归检测
         // ✅ 优化：跳过空 AST 的规则
         for (const ruleName of this.ruleASTs.keys()) {
             const ruleAST = this.ruleASTs.get(ruleName)
             if (!ruleAST || ruleAST.nodes.length === 0) {
                 continue  // 跳过空 AST
             }
-            this.computeFirst(ruleName)
+
+            // 计算 First 集合
+            const firstSet = this.computeFirst(ruleName)
+
+            // 检测左递归：如果 First 集合包含规则名本身，就是左递归
+            if (firstSet.has(ruleName)) {
+                leftRecursionErrors.push({
+                    level: 'FATAL',
+                    type: 'left-recursion',
+                    ruleName,
+                    branchIndices: [],
+                    conflictPaths: { pathA: '', pathB: '' },
+                    message: `规则 "${ruleName}" 存在左递归`,
+                    suggestion: this.getLeftRecursionSuggestion(ruleName, ruleAST, firstSet)
+                })
+            }
         }
 
         // 3. 计算路径展开（用于详细的 Or 冲突检测）
@@ -210,6 +234,8 @@ export class SubhutiGrammarAnalyzer {
         }
 
         console.log(`✅ 展开缓存初始化完成：处理 ${count - skipped}/${total} 个规则，跳过 ${skipped} 个空 AST`)
+
+        return leftRecursionErrors
     }
 
     private getExpandChildren(ruleName: string, maxLevel: number, curLevel: number): string[][] {
@@ -554,7 +580,7 @@ export class SubhutiGrammarAnalyzer {
     // ============================================================================
 
     /**
-     * 计算规则的 First 集合
+     * 计算规则的 First(1) 集合
      *
      * First(A) = 规则 A 可能的第一个符号（token 或规则名）
      *
@@ -562,8 +588,10 @@ export class SubhutiGrammarAnalyzer {
      * 1. 左递归检测：如果 First(A) 包含 A 本身，则 A 是左递归的
      * 2. Or 冲突快速预检：如果两个分支的 First 集合无交集，则肯定无冲突
      *
+     * 实现：复用 computeDirectChildren(node, 1) 获取 First(1) 集合
+     *
      * @param ruleName 规则名
-     * @returns First 集合
+     * @returns First(1) 集合
      */
     public computeFirst(ruleName: string): Set<string> {
         // 检查缓存
@@ -589,8 +617,19 @@ export class SubhutiGrammarAnalyzer {
             return result
         }
 
-        // 计算节点的 First 集合
-        const firstSet = this.computeNodeFirst(ruleNode)
+        // 使用 computeDirectChildren(node, 1) 获取 First(1) 集合
+        // 返回格式：string[][]（二维数组，每个分支是一个符号数组）
+        // First(1) 只需要每个分支的第一个符号
+        const branches = this.computeDirectChildren(ruleNode, 1)
+
+        // 将二维数组转换为 Set<string>
+        // 每个分支最多只有1个符号（因为 firstK=1）
+        const firstSet = new Set<string>()
+        for (const branch of branches) {
+            if (branch.length > 0) {
+                firstSet.add(branch[0])  // 只取第一个符号
+            }
+        }
 
         this.computingFirst.delete(ruleName)
         this.firstCache.set(ruleName, firstSet)
@@ -598,92 +637,7 @@ export class SubhutiGrammarAnalyzer {
         return firstSet
     }
 
-    /**
-     * 计算节点的 First 集合
-     *
-     * @param node AST 节点
-     * @returns First 集合
-     */
-    public computeNodeFirst(node: RuleNode): Set<string> {
-        const firstSet = new Set<string>()
 
-        switch (node.type) {
-            case 'consume':
-                // Token：First 集合就是 token 本身
-                firstSet.add(node.tokenName)
-                break
-
-            case 'subrule':
-                // 子规则：递归计算
-                const subFirst = this.computeFirst(node.ruleName)
-                subFirst.forEach(item => firstSet.add(item))
-                break
-
-            case 'sequence':
-                // 序列：First 集合是第一个非空元素的 First 集合
-                for (const child of node.nodes) {
-                    const childFirst = this.computeNodeFirst(child)
-                    childFirst.forEach(item => firstSet.add(item))
-
-                    // 如果第一个元素不能为空，停止
-                    if (!this.canBeEmpty(child)) {
-                        break
-                    }
-                }
-                break
-
-            case 'or':
-                // Or：First 集合是所有分支的 First 集合的并集
-                for (const alt of node.alternatives) {
-                    const altFirst = this.computeNodeFirst(alt)
-                    altFirst.forEach(item => firstSet.add(item))
-                }
-                break
-
-            case 'option':
-            case 'many':
-                // Option/Many：First 集合包含内部元素的 First 集合
-                // 但也可以为空
-                const innerFirst = this.computeNodeFirst(node.node)
-                innerFirst.forEach(item => firstSet.add(item))
-                break
-
-            case 'atLeastOne':
-                // AtLeastOne：First 集合是内部元素的 First 集合
-                const innerFirst2 = this.computeNodeFirst(node.node)
-                innerFirst2.forEach(item => firstSet.add(item))
-                break
-        }
-
-        return firstSet
-    }
-
-    /**
-     * 检查节点是否可以为空（匹配空输入）
-     *
-     * @param node AST 节点
-     * @returns 是否可以为空
-     */
-    private canBeEmpty(node: RuleNode): boolean {
-        switch (node.type) {
-            case 'option':
-            case 'many':
-                // Option 和 Many 可以匹配 0 次
-                return true
-
-            case 'sequence':
-                // 序列：所有元素都可以为空，序列才能为空
-                return node.nodes.every(child => this.canBeEmpty(child))
-
-            case 'or':
-                // Or：任意分支可以为空，Or 就可以为空
-                return node.alternatives.some(alt => this.canBeEmpty(alt))
-
-            default:
-                // consume, subrule, atLeastOne 不能为空
-                return false
-        }
-    }
 
     /**
      * 获取规则的 First 集合（公开方法）
@@ -693,6 +647,45 @@ export class SubhutiGrammarAnalyzer {
      */
     public getFirst(ruleName: string): Set<string> {
         return this.firstCache.get(ruleName) || new Set()
+    }
+
+    /**
+     * 生成左递归修复建议
+     *
+     * @param ruleName 规则名
+     * @param node 规则节点
+     * @param firstSet First 集合
+     * @returns 修复建议
+     */
+    private getLeftRecursionSuggestion(
+        ruleName: string,
+        node: SequenceNode,
+        firstSet: Set<string>
+    ): string {
+        // 分析规则结构，提供具体建议
+        if (node.type === 'or') {
+            return `PEG 不支持左递归！请将左递归改为右递归，或使用 Many/AtLeastOne。
+
+示例：
+  ❌ 左递归（非法）：
+     ${ruleName} → ${ruleName} '+' Term | Term
+
+  ✅ 右递归（合法）：
+     ${ruleName} → Term ('+' Term)*
+
+  或使用 Many：
+     ${ruleName} → Term
+     ${ruleName}Suffix → '+' Term
+     完整形式 → ${ruleName} ${ruleName}Suffix*
+
+First(${ruleName}) = {${Array.from(firstSet).slice(0, 5).join(', ')}${firstSet.size > 5 ? ', ...' : ''}}
+包含 ${ruleName} 本身，说明存在左递归。`
+        }
+
+        return `PEG 不支持左递归！请重构语法以消除左递归。
+
+First(${ruleName}) = {${Array.from(firstSet).slice(0, 5).join(', ')}${firstSet.size > 5 ? ', ...' : ''}}
+包含 ${ruleName} 本身，说明存在左递归。`
     }
 }
 
