@@ -569,7 +569,6 @@ export class SubhutiGrammarAnalyzer {
             }
         }
 
-
         try {
             // 根据节点类型分发处理
             if (shouldDebug) {
@@ -591,7 +590,7 @@ export class SubhutiGrammarAnalyzer {
                         console.log(`      curLevel(${curLevel}) <= maxLevel(${maxLevel})? ${curLevel <= maxLevel}`)
                     }
 
-                    if (curLevel <= maxLevel) {
+                    if (curLevel < maxLevel) {
                         // 未达到最大层级，递归展开子规则（curLevel + 1）
                         if (shouldDebug) {
                             console.log(`      ✓ 未达到最大层级，递归展开 ${node.ruleName}（curLevel + 1 = ${curLevel + 1}）`)
@@ -601,7 +600,7 @@ export class SubhutiGrammarAnalyzer {
                             throw new Error('系统错误：子规则不存在')
                         }
 
-                        return this.computeExpanded(null, subNode, firstK, curLevel + 1, maxLevel)
+                        return this.computeExpanded(node.ruleName, subNode, firstK, curLevel + 1, maxLevel)
                     }
                     // 达到最大层级，不再展开
                     if (shouldDebug) {
