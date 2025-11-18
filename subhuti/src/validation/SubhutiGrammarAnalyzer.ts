@@ -51,7 +51,7 @@ export const EXPANSION_LIMITS = {
      * Infinity，无线展开
      */
     MAX_LEVEL: 3,
-    EMPTY_LEVEL: 0,
+    MIN_LEVEL: 0,
     INFINITY_LEVEL: Infinity,
 
     FIRST_MORE: 2,
@@ -173,8 +173,8 @@ export class SubhutiGrammarAnalyzer {
         // 1. 计算直接子节点缓存（First(2)）
         // ✅ 优化：跳过空 AST 的规则
         for (const ruleName of this.ruleASTs.keys()) {
+
             this.computing.clear()
-            this.initFirstMoreCache(ruleName)
             // 检查缓存是否已存在
             if (this.firstMoreCache.has(ruleName)) {
                 throw new Error('系统错误：firstMoreCache 已存在')
@@ -182,7 +182,6 @@ export class SubhutiGrammarAnalyzer {
 
             // 调用 computeExpanded：firstK=2, maxLevel=0（不展开规则名）
             const children = this.computeFirstMoreBranches(ruleName)
-
             // 缓存结果
             this.firstMoreCache.set(ruleName, children)
 
@@ -205,40 +204,6 @@ export class SubhutiGrammarAnalyzer {
 
         return leftRecursionErrors
     }
-
-
-    /**
-     * 初始化 firstMoreCache（First(2)，不展开规则名）
-     *
-     * 目的：生成每个规则的前 2 个符号（不展开规则名到叶子节点）
-     *
-     * 参数：
-     * - firstK = 2
-     * - maxLevel = 0（不展开规则名）
-     *
-     * 实现：
-     * 1. 检查缓存是否已存在，存在则抛错
-     * 2. 获取规则的 AST 节点
-     * 3. 调用 computeExpanded(ruleNode, ruleName, 2, 0)
-     * 4. 缓存结果到 firstMoreCache
-     *
-     * 缓存格式：
-     * Map<string, string[][]>
-     * 例如："Expression" → [["Term", "+"], ["Term", "-"]]
-     */
-    private initFirstMoreCache(ruleName: string) {
-        // 检查缓存是否已存在
-        if (this.firstMoreCache.has(ruleName)) {
-            throw new Error('系统错误：firstMoreCache 已存在')
-        }
-
-        // 调用 computeExpanded：firstK=2, maxLevel=0（不展开规则名）
-        const children = this.computeExpanded(null, ruleName, EXPANSION_LIMITS.FIRST_MORE)
-
-        // 缓存结果
-        this.firstMoreCache.set(ruleName, children)
-    }
-
 
     /**
      * 初始化 first1Cache（First(1)，不展开规则名）+ 左递归检测
@@ -436,36 +401,6 @@ export class SubhutiGrammarAnalyzer {
 
 
     /**
-     * 从缓存中获取规则的展开结果
-     *
-     * 用于冲突检测时获取规则的完全展开结果
-     *
-     * @param ruleName 规则名称或 token 名称
-     * @returns 展开结果（二维数组），如果不在缓存中返回 undefined
-     */
-    getExpansionFromCache(ruleName: string): string[][] | undefined {
-        return this.firstMoreExpandCache.get(ruleName)
-    }
-
-
-    /**
-     * 公开方法：从节点开始展开
-     *
-     * @param node - AST 节点
-     * @param firstK - 取前 K 个符号
-     * @param maxLevel - 最大展开层级（0 = 不展开，Infinity = 完全展开）
-     * @returns 展开后的路径数组
-     */
-    public expandFromNode(node: RuleNode, firstK: number, maxLevel: number): string[][] {
-        // 清空循环检测集合（即使没有规则名，子规则可能有）
-        this.computing.clear()
-
-        // 调用内部递归方法（ruleName 为 null）
-        return this.computeExpanded(node, null, firstK, maxLevel, 0)
-    }
-
-
-    /**
      * 计算节点的完全展开 First 集合（用于 Or 冲突检测）
      *
      * @param node AST 节点
@@ -537,8 +472,8 @@ export class SubhutiGrammarAnalyzer {
         ruleName: string | null,
         node: RuleNode,
         firstK: number,
-        curLevel: number = EXPANSION_LIMITS.MAX_LEVEL,
-        maxLevel: number = EXPANSION_LIMITS.MAX_LEVEL
+        curLevel: number = EXPANSION_LIMITS.MIN_LEVEL,
+        maxLevel: number = EXPANSION_LIMITS.MIN_LEVEL
     ): string[][] {
         // 循环检测：如果规则正在计算中，停止展开
         if (ruleName && this.computing.has(ruleName)) {
@@ -562,6 +497,7 @@ export class SubhutiGrammarAnalyzer {
                 }
             }
         }
+
 
         // 如果只传入 ruleName，获取对应的 node
         if (!node) {
@@ -601,18 +537,24 @@ export class SubhutiGrammarAnalyzer {
                     return this.expandOr(node.alternatives, firstK, curLevel, maxLevel)
 
                 case 'sequence':
+                    // 内联 sequence：直接展开子节点
+                    if (node.nodes.length === 0) {
+                        console.log(111111)
+                        console.log(node.ruleName)
+                        // throw new Error('错误的情况')
+                        //有可能有弃用的规则
+                        return [[]]
+                    }
+
                     // Sequence 节点：处理序列
                     const nodeRuleName = node.ruleName
                     let allBranches: string[][][]
 
                     if (nodeRuleName) {
                         // 规则声明：从缓存获取已截断的分支
-                        if (firstK === EXPANSION_LIMITS.FIRST_MORE && maxLevel === 0) {
-                            // First(2) 不展开：不应该进入这里
-                            throw new Error("系统错误：First(2) 不展开不应该有规则声明")
-                        } else if (firstK === EXPANSION_LIMITS.FIRST_1 && maxLevel === Infinity) {
+                        if (firstK === EXPANSION_LIMITS.FIRST_1 && maxLevel === Infinity) {
                             // First(1) 完全展开：从 first1Cache 获取
-                            const allBranchesCache = this.first1Cache.get(node.ruleName)
+                            const allBranchesCache = this.first1Cache.get(nodeRuleName)
                             if (!allBranchesCache) {
                                 throw new Error('系统错误：first1Cache 未初始化')
                             }
@@ -632,9 +574,9 @@ export class SubhutiGrammarAnalyzer {
                             })
                         } else if (firstK === EXPANSION_LIMITS.FIRST_MORE && maxLevel === EXPANSION_LIMITS.MAX_LEVEL) {
                             // First(2) 按层级展开：从 firstMoreCache 获取
-                            const allBranchesCache = this.firstMoreCache.get(node.ruleName)
+                            const allBranchesCache = this.firstMoreCache.get(nodeRuleName)
                             if (!allBranchesCache) {
-                                throw new Error('系统错误：firstMoreCache 未初始化')
+                                throw new Error('系统错误：firstMoreCache 未初始化:' + nodeRuleName)
                             }
                             // 遍历每个分支，递归展开分支中的符号
                             allBranches = allBranchesCache.map(branch => {
@@ -651,18 +593,14 @@ export class SubhutiGrammarAnalyzer {
                                 return this.cartesianProduct(branchRules)
                             })
                         } else {
-                            throw new Error('系统错误：不支持的 (firstK, maxLevel) 组合')
+                            // 遍历子节点，递归展开（curLevel 不变，因为不是 subrule）
+                            allBranches = node.nodes.map(node => this.computeExpanded(nodeRuleName, node, firstK, curLevel, maxLevel))
                         }
                     } else {
-                        // 内联 sequence：直接展开子节点
-                        if (node.nodes.length === 0) {
-                            return [[]]
-                        }
                         // 遍历子节点，递归展开（curLevel 不变，因为不是 subrule）
-                        allBranches = node.nodes.map(node =>
-                            this.computeExpanded(null, node, firstK, curLevel, maxLevel)
-                        )
+                        allBranches = node.nodes.map(node => this.computeExpanded(null, node, firstK, curLevel, maxLevel))
                     }
+
 
                     // 笛卡尔积组合所有分支
                     const result = this.cartesianProduct(allBranches)
@@ -704,48 +642,13 @@ export class SubhutiGrammarAnalyzer {
         const result: string[][] = []
 
         for (const alt of alternatives) {
-            const branches = this.computeExpanded(alt, null, firstK, curLevel, maxLevel)
+            const branches = this.computeExpanded(null, alt, firstK, curLevel, maxLevel)
             result.push(...branches)
         }
 
         return result
     }
 
-    /**
-     * 展开 Sequence 节点
-     */
-    private expandSequence = (
-        node: SequenceNode,
-        firstK: number,
-        curLevel: number,
-        maxLevel: number
-    ): string[][] => {
-
-        if (node) {
-            //证明是规则
-            if (node.ruleName) {
-
-            }
-        }
-
-
-        if (nodes.length === 0) {
-            return [[]]
-        }
-
-        // 展开每个节点
-        const allBranches = nodes.map(node =>
-            this.computeExpanded(node, null, firstK, curLevel, maxLevel)
-        )
-
-        // 笛卡尔积
-        const result = this.cartesianProduct(allBranches)
-
-        // 截断到 firstK
-        result.forEach(path => path.splice(firstK))
-
-        return result
-    };
 
     /**
      * 展开 Option/Many 节点
@@ -756,7 +659,7 @@ export class SubhutiGrammarAnalyzer {
         curLevel: number,
         maxLevel: number
     ): string[][] {
-        const innerBranches = this.computeExpanded(node, null, firstK, curLevel, maxLevel)
+        const innerBranches = this.computeExpanded(null, node, firstK, curLevel, maxLevel)
         return [[], ...innerBranches]
     }
 
@@ -769,39 +672,9 @@ export class SubhutiGrammarAnalyzer {
         curLevel: number,
         maxLevel: number
     ): string[][] {
-        const innerBranches = this.computeExpanded(node, null, firstK, curLevel, maxLevel)
+        const innerBranches = this.computeExpanded(null, node, firstK, curLevel, maxLevel)
         const doubleBranches = innerBranches.map(branch => [...branch, ...branch])
         return [...innerBranches, ...doubleBranches]
-    }
-
-    // ============================================================================
-    // First 集合计算（用于 Or 冲突快速预检）
-    // ============================================================================
-
-
-    /**
-     * 获取规则的完全展开 First 集合（公开方法）
-     *
-     * @param ruleName 规则名
-     * @returns 完全展开的 First 集合（只包含叶子节点）
-     */
-    public getExpandedFirst(ruleName: string): Set<string> {
-        const cached = this.first1ExpandCache.get(ruleName)
-
-        if (cached) {
-            return cached
-        }
-
-        // 缓存未命中：可能是 token（不在 ruleASTs 中）
-        if (!this.ruleASTs.has(ruleName)) {
-            // 是 token，返回包含自身的集合
-            const tokenSet = new Set([ruleName])
-            this.first1ExpandCache.set(ruleName, tokenSet)
-            return tokenSet
-        }
-
-        // 规则存在但缓存未命中：系统错误
-        throw new Error(`系统错误：规则 "${ruleName}" 的完全展开 First 集合未初始化，请先调用 preHandler()`)
     }
 
     /**
@@ -814,7 +687,7 @@ export class SubhutiGrammarAnalyzer {
      */
     private getLeftRecursionSuggestion(
         ruleName: string,
-        node: SequenceNode,
+        node: RuleNode,
         firstSet: Set<string>
     ): string {
         // 分析规则结构，提供具体建议
