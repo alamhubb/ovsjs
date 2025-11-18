@@ -101,11 +101,90 @@ export class SubhutiConflictDetector {
     }
 
     /**
-     * 检测所有冲突
+     * 检测所有冲突（新版本：使用分层检测策略）
+     *
+     * 检测策略：
+     * 1. First(1) 快速预检：如果 First(1) 无冲突，跳过详细检测
+     * 2. First(2) 详细检测：如果 First(1) 有冲突，使用 First(2) 详细检测
+     *
+     * 性能优化：
+     * - 大部分规则的 Or 分支 First(1) 无冲突，可以快速跳过
+     * - 只有少数规则需要 First(2) 详细检测
      *
      * @returns 错误列表
      */
     detectAllConflicts(): ValidationError[] {
+        const errors: ValidationError[] = []
+
+        // 📊 规则检测统计
+        const ruleStats: Array<{
+            ruleName: string
+            time: number
+            conflicts: number
+            first1Skipped: boolean  // 是否通过 First(1) 跳过
+        }> = []
+
+        // 遍历所有规则
+        let ruleIndex = 0
+        let first1SkippedCount = 0
+
+        for (const [ruleName, ruleNode] of this.ruleASTs) {
+            ruleIndex++
+            const ruleStartTime = Date.now()
+            const errorsBefore = errors.length
+
+            // 使用新的检测方法
+            const skipped = this.detectNodeConflictsV2(ruleName, ruleNode, errors)
+
+            const ruleElapsed = Date.now() - ruleStartTime
+            const conflictsFound = errors.length - errorsBefore
+
+            if (skipped) {
+                first1SkippedCount++
+            }
+
+            ruleStats.push({
+                ruleName,
+                time: ruleElapsed,
+                conflicts: conflictsFound,
+                first1Skipped: skipped
+            })
+
+            // 输出每个规则的检测进度和耗时
+            if (ruleElapsed > 50 || conflictsFound > 0) {
+                const skipInfo = skipped ? ' [First(1)跳过]' : ''
+                console.log(`  [${ruleIndex}/${this.ruleASTs.size}] ${ruleName}: ${ruleElapsed}ms${conflictsFound > 0 ? ` (发现${conflictsFound}个冲突)` : ''}${skipInfo}`)
+            }
+        }
+
+        // 📊 输出规则检测统计（按耗时排序）
+        console.log(`\n📊 规则检测统计（Top 20 最耗时）：`)
+        const sortedStats = ruleStats.sort((a, b) => b.time - a.time).slice(0, 20)
+        sortedStats.forEach((stat, index) => {
+            const skipInfo = stat.first1Skipped ? ' [First(1)跳过]' : ''
+            console.log(`  ${index + 1}. ${stat.ruleName}: ${stat.time}ms${stat.conflicts > 0 ? ` [${stat.conflicts}个冲突]` : ''}${skipInfo}`)
+        })
+
+        const totalRuleTime = ruleStats.reduce((sum, s) => sum + s.time, 0)
+        console.log(`  总耗时: ${totalRuleTime}ms`)
+        console.log(`  平均耗时: ${(totalRuleTime / ruleStats.length).toFixed(2)}ms`)
+        console.log(`  First(1) 跳过: ${first1SkippedCount}/${ruleStats.length} (${(first1SkippedCount / ruleStats.length * 100).toFixed(1)}%)`)
+
+        return errors
+    }
+
+    /**
+     * 检测所有冲突（旧版本）
+     *
+     * @deprecated 使用 detectAllConflicts() 替代（新版本使用分层检测策略）
+     *
+     * 保留原因：
+     * - 作为参考实现
+     * - 用于性能对比测试
+     *
+     * @returns 错误列表
+     */
+    detectAllConflictsOld(): ValidationError[] {
         const errors: ValidationError[] = []
 
         // 📊 规则检测统计
@@ -179,7 +258,62 @@ export class SubhutiConflictDetector {
     }
 
     /**
-     * 递归检测节点冲突
+     * 递归检测节点冲突（新版本：使用分层检测策略）
+     *
+     * 检测策略：
+     * 1. First(1) 快速预检：如果 First(1) 无冲突，跳过详细检测
+     * 2. First(2) 详细检测：如果 First(1) 有冲突，使用 First(2) 详细检测
+     *
+     * @param ruleName 规则名
+     * @param node AST 节点
+     * @param errors 错误列表
+     * @returns 是否通过 First(1) 跳过了检测
+     */
+    private detectNodeConflictsV2(
+        ruleName: string,
+        node: RuleNode,
+        errors: ValidationError[]
+    ): boolean {
+        let skipped = false
+
+        switch (node.type) {
+            case 'or':
+                // 检测 Or 节点的冲突（使用新的分层检测）
+                skipped = this.detectOrConflictsV2(ruleName, node.alternatives, errors)
+
+                // 递归检测每个分支
+                for (const alt of node.alternatives) {
+                    this.detectNodeConflictsV2(ruleName, alt, errors)
+                }
+                break
+
+            case 'sequence':
+                // 递归检测序列中的每个节点
+                for (const child of node.nodes) {
+                    this.detectNodeConflictsV2(ruleName, child, errors)
+                }
+                break
+
+            case 'option':
+            case 'many':
+            case 'atLeastOne':
+                // 递归检测内部节点
+                this.detectNodeConflictsV2(ruleName, node.node, errors)
+                break
+
+            // consume 和 subrule 不需要检测
+            case 'consume':
+            case 'subrule':
+                break
+        }
+
+        return skipped
+    }
+
+    /**
+     * 递归检测节点冲突（旧版本）
+     *
+     * @deprecated 使用 detectNodeConflictsV2() 替代
      */
     private detectNodeConflicts(
         ruleName: string,
@@ -285,7 +419,84 @@ export class SubhutiConflictDetector {
     }
 
     /**
-     * 检测 Or 规则的冲突
+     * 检测 Or 规则的冲突（新版本：使用分层检测策略）
+     *
+     * 检测策略：
+     * 1. First(1) 快速预检：如果 First(1) 无冲突，跳过详细检测
+     * 2. First(2) 详细检测：如果 First(1) 有冲突，使用 First(2) 详细检测
+     *
+     * 执行两种检测：
+     * 1. 空路径检测（FATAL）：检测是否有分支可以匹配空输入
+     * 2. 前缀冲突检测（ERROR）：检测是否有分支被前面的分支遮蔽
+     *
+     * @param ruleName 规则名称
+     * @param alternatives Or 节点的所有分支
+     * @param errors 错误列表
+     * @returns 是否通过 First(1) 跳过了检测
+     */
+    private detectOrConflictsV2(
+        ruleName: string,
+        alternatives: SequenceNode[],
+        errors: ValidationError[]
+    ): boolean {
+        // 步骤 1：First(1) 快速预检
+        const hasFirst1Conflict = this.quickCheckWithFirst1(alternatives)
+
+        if (!hasFirst1Conflict) {
+            // First(1) 无冲突，跳过详细检测
+            return true
+        }
+
+        // 步骤 2：First(2) 详细检测
+        // 从 firstMoreExpandCache 获取展开结果
+        const branchExpansions = this.computeOrBranchExpansionsFromCache(ruleName, alternatives)
+
+        // 限制路径数量
+        const limitedBranchExpansions = branchExpansions.map((branchExp, idx) => {
+            if (branchExp.length > EXPANSION_LIMITS.MAX_BRANCHES) {
+                console.warn(`    [${ruleName}] 分支${idx}的展开结果过多 (${branchExp.length})，截断到 ${EXPANSION_LIMITS.MAX_BRANCHES}`)
+                return branchExp.slice(0, EXPANSION_LIMITS.MAX_BRANCHES)
+            }
+            return branchExp
+        })
+
+        // 两两比较 Or 分支
+        for (let i = 0; i < alternatives.length; i++) {
+            const pathsA = this.expansionToPaths(limitedBranchExpansions[i])
+
+            for (let j = i + 1; j < alternatives.length; j++) {
+                const pathsB = this.expansionToPaths(limitedBranchExpansions[j])
+
+                // Level 1: 空路径检测（FATAL 级别）
+                if (this.hasTopLevelEmptyPath(alternatives[i])) {
+                    errors.push({
+                        level: 'FATAL',
+                        type: 'empty-path',
+                        ruleName,
+                        branchIndices: [i, j],
+                        conflictPaths: {
+                            pathA: '',
+                            pathB: pathsB[0] || ''
+                        },
+                        message: `分支 ${i} 可以匹配空输入，后续所有分支都不可达`,
+                        suggestion: '移除 Option/Many 或将其移到 Or 外部'
+                    })
+
+                    return false  // FATAL 错误，停止检测
+                }
+
+                // Level 2: 前缀冲突检测（ERROR 级别）
+                this.detectPrefixConflicts(ruleName, i, j, pathsA, pathsB, errors)
+            }
+        }
+
+        return false  // 进行了详细检测
+    }
+
+    /**
+     * 检测 Or 规则的冲突（旧版本）
+     *
+     * @deprecated 使用 detectOrConflictsV2() 替代
      *
      * 执行两种检测：
      * 1. 空路径检测（FATAL）：检测是否有分支可以匹配空输入
@@ -410,7 +621,93 @@ export class SubhutiConflictDetector {
     }
 
     /**
-     * 使用 First 集合快速预检 Or 分支冲突
+     * 使用 First(1) 集合快速预检 Or 分支冲突（新版本）
+     *
+     * 原理：
+     * - 如果两个分支的 First(1) 集合无交集，则肯定无前缀冲突
+     * - 如果有交集，则可能有冲突，需要 First(2) 详细检测
+     *
+     * 性能：
+     * - First(1) 集合已在 first1ExpandCache 中缓存，查询非常快
+     * - 对于无冲突的情况，可以跳过 First(2) 详细检测
+     *
+     * @param alternatives Or 分支列表
+     * @returns 是否可能有冲突
+     */
+    private quickCheckWithFirst1(alternatives: RuleNode[]): boolean {
+        // 计算每个分支的 First(1) 集合（从 first1ExpandCache 获取）
+        const firstSets = alternatives.map(alt =>
+            this.analyzer.computeNodeFirst(alt)
+        )
+
+        // 检查任意两个分支的 First(1) 集合是否有交集
+        for (let i = 0; i < firstSets.length; i++) {
+            for (let j = i + 1; j < firstSets.length; j++) {
+                const intersection = new Set(
+                    [...firstSets[i]].filter(x => firstSets[j].has(x))
+                )
+
+                if (intersection.size > 0) {
+                    // 有交集，可能有冲突，需要 First(2) 详细检测
+                    return true
+                }
+            }
+        }
+
+        // 所有分支的 First(1) 集合都不相交，肯定无冲突
+        return false
+    }
+
+    /**
+     * 从缓存中计算 Or 分支的展开结果（新版本）
+     *
+     * 使用 firstMoreExpandCache 获取已展开的 First(2) 结果
+     *
+     * @param ruleName 规则名
+     * @param alternatives Or 节点的所有分支
+     * @returns 每个分支的展开结果（三维数组）
+     */
+    private computeOrBranchExpansionsFromCache(ruleName: string, alternatives: RuleNode[]): string[][][] {
+        const branchExpansions: string[][][] = []
+
+        for (const alternative of alternatives) {
+            // 从 firstMoreExpandCache 获取展开结果
+            // TODO: 需要实现从节点获取展开结果的逻辑
+            // 暂时使用旧的方法
+            const directChildren = this.analyzer.computeDirectChildren(alternative, EXPANSION_LIMITS.FIRST_MORE)
+            const expandedBranches: string[][] = []
+
+            for (const branch of directChildren) {
+                const expandedItems: string[][][] = []
+
+                for (const item of branch) {
+                    const expansion = this.analyzer.getExpansion(item)
+                    if (expansion) {
+                        expandedItems.push(expansion)
+                    } else {
+                        expandedItems.push([[item]])
+                    }
+                }
+
+                if (expandedItems.length === 0) {
+                    expandedBranches.push([])
+                } else {
+                    const combined = this.analyzer.cartesianProduct(expandedItems)
+                    combined.forEach(path => path.splice(EXPANSION_LIMITS.FIRST_MORE))
+                    expandedBranches.push(...combined)
+                }
+            }
+
+            branchExpansions.push(expandedBranches)
+        }
+
+        return branchExpansions
+    }
+
+    /**
+     * 使用 First 集合快速预检 Or 分支冲突（旧版本）
+     *
+     * @deprecated 使用 quickCheckWithFirst1() 替代
      *
      * 原理：
      * - 如果两个分支的 First 集合无交集，则肯定无前缀冲突

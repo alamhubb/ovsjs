@@ -158,7 +158,7 @@ export class SubhutiGrammarAnalyzer {
      * @param maxLevel 最大展开层级（默认使用配置中的 MAX_LEVEL）
      * @returns 左递归错误列表
      */
-    preHandler(): LeftRecursionError[] {
+    initCacheAndCheckLeftRecursion(): LeftRecursionError[] {
         const leftRecursionErrors: LeftRecursionError[] = []
 
         // 1. 计算直接子节点缓存（First(2)）
@@ -181,38 +181,6 @@ export class SubhutiGrammarAnalyzer {
             this.computing.clear()
             this.initFirstMoreExpandCache(ruleName)
         }
-
-        // 4. 计算路径展开缓存（用于详细的 Or 冲突检测）
-        // ✅ firstK=2, maxLevel=配置值（按层级展开）
-        let count = 0
-        let skipped = 0
-        const total = this.firstMoreCache.size
-        for (const ruleName of this.firstMoreCache.keys()) {
-            count++
-
-            // 检查规则是否有 AST 节点
-            const ruleAST = this.getRuleNodeByAst(ruleName)
-            if (!ruleAST || ruleAST.nodes.length === 0) {
-                skipped++
-                console.log(`[${count}/${total}] 跳过 ${ruleName} (空 AST)`)
-                continue
-            }
-
-            const startTime = Date.now()
-            console.log(`[${count}/${total}] 初始化展开缓存: ${ruleName}`)
-            this.initFirstMoreExpansionCache(ruleName, EXPANSION_LIMITS.MAX_LEVEL)
-            const elapsed = Date.now() - startTime
-
-            if (elapsed > 1000) {
-                console.log(`  ⚠️ ${ruleName} 耗时 ${elapsed}ms (${(elapsed / 1000).toFixed(2)}s)`)
-            }
-
-            if (elapsed > 10000) {
-                console.error(`  ❌❌❌ ${ruleName} 耗时超过10秒！`)
-            }
-        }
-
-        console.log(`✅ 展开缓存初始化完成：处理 ${count - skipped}/${total} 个规则，跳过 ${skipped} 个空 AST`)
 
         return leftRecursionErrors
     }

@@ -52,7 +52,8 @@ export class SubhutiGrammarValidator {
         // 3. 初始化缓存（计算直接子节点、First 集合、路径展开）
         // 同时进行左递归检测
         const t5 = Date.now()
-        const leftRecursionErrors = analyzer.preHandler()
+        const leftRecursionErrors = analyzer.initCacheAndCheckLeftRecursion()
+
         const t6 = Date.now()
         console.log(`  ⏱️ [3.3] 初始化缓存耗时: ${t6 - t5}ms`)
         console.log(`  ⏱️ [3.4] 左递归检测完成 (发现 ${leftRecursionErrors.length} 个左递归)`)
