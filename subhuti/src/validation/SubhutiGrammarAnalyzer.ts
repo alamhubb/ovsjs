@@ -170,11 +170,7 @@ export class SubhutiGrammarAnalyzer {
         // 1. 计算直接子节点缓存（First(2)）
         // ✅ 优化：跳过空 AST 的规则
         for (const ruleName of this.ruleASTs.keys()) {
-            this.initFirst2Cache(ruleName, EXPANSION_LIMITS.FIRST_K)
-        }
-
-        // 2. 初始化 firstCache + 左递归检测（First(1)，不展开）
-        for (const ruleName of this.ruleASTs.keys()) {
+            this.initFirst2Cache(ruleName)
             const error = this.initFirstCache(ruleName)
             if (error) {
                 leftRecursionErrors.push(error)
@@ -227,10 +223,9 @@ export class SubhutiGrammarAnalyzer {
      * 获取规则的直接子节点（只缓存一层）
      *
      * @param ruleName 规则名称
-     * @param firstK
      * @returns 直接子节点二维数组
      */
-    private initFirst2Cache(ruleName: string, firstK: number) {
+    private initFirst2Cache(ruleName: string) {
         if (this.first2Cache.has(ruleName)) {
             throw new Error('系统错误：directChildrenCache 已存在')
         }
@@ -242,7 +237,7 @@ export class SubhutiGrammarAnalyzer {
         this.computing.clear()
 
         // firstK=2, maxLevel=0（不展开规则名）
-        const children = this.computeExpanded(ruleNode, null, firstK)
+        const children = this.computeExpanded(ruleNode, null, EXPANSION_LIMITS.FIRST_K)
 
         this.first2Cache.set(ruleName, children)
     }
