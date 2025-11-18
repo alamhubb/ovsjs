@@ -438,7 +438,7 @@ export class SubhutiGrammarAnalyzer {
      * @param node AST 节点
      * @returns 完全展开的 First 集合（只包含叶子节点）
      */
-    public computeNodeFirst(node: RuleNode): Set<string> {
+    public computeNodeFirst(node: SequenceNode): Set<string> {
         // 清空循环检测集合（即使没有规则名，子规则可能有）
         this.computing.clear()
         // 调用内部递归方法（ruleName 为 null）
@@ -534,7 +534,7 @@ export class SubhutiGrammarAnalyzer {
 
         // 缓存命中检测：如果已经计算过，直接返回缓存
         if (ruleName) {
-            if (firstK === EXPANSION_LIMITS.FIRST_1 && maxLevel === Infinity) {
+            if (firstK === EXPANSION_LIMITS.FIRST_1 && maxLevel === EXPANSION_LIMITS.INFINITY_LEVEL) {
                 if (this.first1ExpandCache.has(ruleName)) {
                     if (shouldDebug) {
                         console.log(`    ✓ 缓存命中：first1ExpandCache[${ruleName}]`)
@@ -600,6 +600,7 @@ export class SubhutiGrammarAnalyzer {
                         if (!subNode) {
                             throw new Error('系统错误：子规则不存在')
                         }
+
                         return this.computeExpanded(null, subNode, firstK, curLevel + 1, maxLevel)
                     }
                     // 达到最大层级，不再展开
@@ -628,7 +629,7 @@ export class SubhutiGrammarAnalyzer {
 
                     if (nodeRuleName) {
                         // 规则声明：从缓存获取已截断的分支
-                        if (firstK === EXPANSION_LIMITS.FIRST_1 && maxLevel === Infinity) {
+                        if (firstK === EXPANSION_LIMITS.FIRST_1 && maxLevel === EXPANSION_LIMITS.INFINITY_LEVEL) {
                             // First(1) 完全展开：从 first1Cache 获取
                             const allBranchesCache = this.first1Cache.get(nodeRuleName)
                             if (!allBranchesCache) {

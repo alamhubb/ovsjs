@@ -597,7 +597,7 @@ export class SubhutiConflictDetector {
      * @param alternatives Or 分支列表
      * @returns 是否可能有冲突
      */
-    private quickCheckWithFirst1(alternatives: RuleNode[]): boolean {
+    private quickCheckWithFirst1(alternatives: SequenceNode[]): boolean {
         const startTime = Date.now()
 
         console.log(`    🔍 [quickCheckWithFirst1] 开始，分支数: ${alternatives.length}`)
