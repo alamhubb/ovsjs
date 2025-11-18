@@ -174,7 +174,7 @@ export class SubhutiGrammarAnalyzer {
             if (!ruleAST || ruleAST.nodes.length === 0) {
                 continue  // 跳过空 AST
             }
-            this.initDirectChildrenCache(ruleName, 2)
+            this.initDirectChildrenCache(ruleName, EXPANSION_LIMITS.FIRST_K)
         }
 
         // 2. 初始化 First(1) 集合 + 左递归检测（合并处理）
@@ -210,7 +210,7 @@ export class SubhutiGrammarAnalyzer {
                     type: 'left-recursion',
                     ruleName,
                     branchIndices: [],
-                    conflictPaths: { pathA: '', pathB: '' },
+                    conflictPaths: {pathA: '', pathB: ''},
                     message: `规则 "${ruleName}" 存在左递归`,
                     suggestion: this.getLeftRecursionSuggestion(ruleName, ruleAST, firstSet)
                 })
@@ -405,7 +405,7 @@ export class SubhutiGrammarAnalyzer {
         if (!ruleNode) {
             throw new Error('系统错误')
         }
-        const children = this.computeDirectChildren(ruleNode)
+        const children = this.computeDirectChildren(ruleNode, firstK)
 
         this.directChildrenCache.set(ruleName, children)
     }
@@ -452,7 +452,7 @@ export class SubhutiGrammarAnalyzer {
      * @param rootNode AST 节点
      * @param firstK
      */
-    public computeDirectChildren(rootNode: RuleNode, firstK: number = EXPANSION_LIMITS.FIRST_K): string[][] {
+    public computeDirectChildren(rootNode: RuleNode, firstK: number): string[][] {
         // private computeDirectChildren(rootNode: RuleNode, maxLevel: number = 0, curLevel: number = maxLevel): string[][] {
         switch (rootNode.type) {
             case 'consume':
