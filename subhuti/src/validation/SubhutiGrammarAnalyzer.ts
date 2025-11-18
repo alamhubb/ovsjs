@@ -637,12 +637,8 @@ export class SubhutiGrammarAnalyzer {
                         if (shouldDebug) {
                             console.log(`      ✓ 未达到最大层级，递归展开 ${node.ruleName}（curLevel + 1 = ${curLevel + 1}）`)
                         }
-                        const subNode = this.getRuleNodeByAst(node.ruleName)
-                        if (!subNode) {
-                            throw new Error('系统错误：子规则不存在')
-                        }
 
-                        return this.computeExpanded(node.ruleName, subNode, firstK, curLevel + 1, maxLevel)
+                        return this.computeExpanded(node.ruleName, node, firstK, curLevel + 1, maxLevel)
                     }
                     // 达到最大层级，不再展开
                     if (shouldDebug) {
