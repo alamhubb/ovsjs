@@ -590,7 +590,7 @@ export class SubhutiGrammarAnalyzer {
                         console.log(`      curLevel(${curLevel}) <= maxLevel(${maxLevel})? ${curLevel <= maxLevel}`)
                     }
 
-                    if (curLevel < maxLevel) {
+                    if (curLevel <= maxLevel) {
                         // 未达到最大层级，递归展开子规则（curLevel + 1）
                         if (shouldDebug) {
                             console.log(`      ✓ 未达到最大层级，递归展开 ${node.ruleName}（curLevel + 1 = ${curLevel + 1}）`)
