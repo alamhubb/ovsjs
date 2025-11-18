@@ -373,17 +373,32 @@ export class SubhutiConflictDetector {
         alternatives: SequenceNode[],
         errors: ValidationError[]
     ): boolean {
+        const t0 = Date.now()
+
+        console.log(`  🔍 [detectOrConflictsV2] 规则: ${ruleName}, 分支数: ${alternatives.length}`)
+
         // 步骤 1：First(1) 快速预检
+        const t1 = Date.now()
         const hasFirst1Conflict = this.quickCheckWithFirst1(alternatives)
+        const first1Time = Date.now() - t1
 
         if (!hasFirst1Conflict) {
             // First(1) 无冲突，跳过详细检测
+            const totalTime = Date.now() - t0
+            console.log(`  ✅ [detectOrConflictsV2] ${ruleName}: First(1) 无冲突，跳过，耗时 ${totalTime}ms (First(1)预检: ${first1Time}ms)`)
             return true
         }
 
+        console.log(`  ⚠️ [detectOrConflictsV2] ${ruleName}: First(1) 有冲突，进入 First(2) 详细检测`)
+
         // 步骤 2：First(2) 详细检测
         // 从 firstMoreExpandCache 获取展开结果
+        const t2 = Date.now()
         const branchExpansions = this.computeOrBranchExpansionsFromCache(alternatives)
+        const expansionTime = Date.now() - t2
+
+        const totalPaths = branchExpansions.reduce((sum, exp) => sum + exp.length, 0)
+        console.log(`    分支展开耗时: ${expansionTime}ms, 总路径数: ${totalPaths}`)
 
         // 限制路径数量
         const limitedBranchExpansions = branchExpansions.map((branchExp, idx) => {
@@ -395,11 +410,16 @@ export class SubhutiConflictDetector {
         })
 
         // 两两比较 Or 分支
+        const t3 = Date.now()
+        let totalComparisons = 0
+
         for (let i = 0; i < alternatives.length; i++) {
             const pathsA = this.expansionToPaths(limitedBranchExpansions[i])
 
             for (let j = i + 1; j < alternatives.length; j++) {
                 const pathsB = this.expansionToPaths(limitedBranchExpansions[j])
+
+                totalComparisons += pathsA.length * pathsB.length
 
                 // Level 1: 空路径检测（FATAL 级别）
                 if (this.hasTopLevelEmptyPath(alternatives[i])) {
@@ -423,6 +443,15 @@ export class SubhutiConflictDetector {
                 this.detectPrefixConflicts(ruleName, i, j, pathsA, pathsB, errors)
             }
         }
+
+        const comparisonTime = Date.now() - t3
+        const totalTime = Date.now() - t0
+
+        console.log(`  ✅ [detectOrConflictsV2] ${ruleName}: 完成`)
+        console.log(`    - First(1)预检: ${first1Time}ms`)
+        console.log(`    - 分支展开: ${expansionTime}ms`)
+        console.log(`    - 路径比较: ${comparisonTime}ms (${totalComparisons}次)`)
+        console.log(`    - 总耗时: ${totalTime}ms`)
 
         return false  // 进行了详细检测
     }
@@ -569,8 +598,21 @@ export class SubhutiConflictDetector {
      * @returns 是否可能有冲突
      */
     private quickCheckWithFirst1(alternatives: RuleNode[]): boolean {
+        const startTime = Date.now()
+
+        console.log(`    🔍 [quickCheckWithFirst1] 开始，分支数: ${alternatives.length}`)
+
         // 计算每个分支的 First(1) 集合（从 first1ExpandCache 获取）
-        const firstSets = alternatives.map(alt => this.analyzer.computeNodeFirst(alt))
+        const firstSets = alternatives.map((alt, idx) => {
+            const computeStart = Date.now()
+            const result = this.analyzer.computeNodeFirst(alt)
+            const computeTime = Date.now() - computeStart
+
+            console.log(`      分支${idx}: computeNodeFirst 耗时 ${computeTime}ms, 结果大小: ${result.size}`)
+            console.log(`        First(1) = {${Array.from(result).slice(0, 5).join(', ')}${result.size > 5 ? '...' : ''}}`)
+
+            return result
+        })
 
         // 检查任意两个分支的 First(1) 集合是否有交集
         for (let i = 0; i < firstSets.length; i++) {
@@ -581,12 +623,17 @@ export class SubhutiConflictDetector {
 
                 if (intersection.size > 0) {
                     // 有交集，可能有冲突，需要 First(2) 详细检测
+                    const elapsed = Date.now() - startTime
+                    console.log(`    ✓ [quickCheckWithFirst1] 发现冲突 (分支${i} ∩ 分支${j}), 耗时 ${elapsed}ms`)
+                    console.log(`      交集: {${Array.from(intersection).slice(0, 5).join(', ')}${intersection.size > 5 ? '...' : ''}}`)
                     return true
                 }
             }
         }
 
         // 所有分支的 First(1) 集合都不相交，肯定无冲突
+        const elapsed = Date.now() - startTime
+        console.log(`    ✓ [quickCheckWithFirst1] 无冲突，跳过详细检测，耗时 ${elapsed}ms`)
         return false
     }
 
@@ -602,8 +649,16 @@ export class SubhutiConflictDetector {
     private computeOrBranchExpansionsFromCache(alternatives: RuleNode[]): string[][][] {
         const branchExpansions: string[][][] = []
 
-        for (const alternative of alternatives) {
+        for (let i = 0; i < alternatives.length; i++) {
+            const alternative = alternatives[i]
+            const t0 = Date.now()
             const directChildren = this.analyzer.computeFirstMoreExpandBranches(null, alternative)
+            const elapsed = Date.now() - t0
+
+            if (elapsed > 10) {
+                console.log(`      分支${i}: computeFirstMoreExpandBranches 耗时 ${elapsed}ms, 路径数: ${directChildren.length}`)
+            }
+
             branchExpansions.push(directChildren)
         }
 
