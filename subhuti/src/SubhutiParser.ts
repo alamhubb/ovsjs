@@ -467,6 +467,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             this.cstStack.length = 0
             this.allowErrorDepth = 0
             this.loopDetectionSet.clear()
+            this.tokenIndex = 0  // ✅ 重置 tokenIndex
 
             // ============================================
             // 【新增】重置调试器的缓存和统计
