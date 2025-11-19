@@ -300,12 +300,28 @@ export class SubhutiGrammarAnalyzer {
             throw new Error(`系统错误：规则 "${ruleName}" 的 firstMoreCache 未初始化`)
         }
 
+        // 🔍 DEBUG: 输出关键规则的 firstKCache
+        const shouldDebug = ruleName === 'Statement' || ruleName === 'Expression' || ruleName === 'Script'
+        if (shouldDebug) {
+            console.log(`\n🔍 [initFirstCache] 规则: ${ruleName}`)
+            console.log(`  firstKCache 分支数: ${directChildren.length}`)
+            if (directChildren.length <= 15) {
+                console.log(`  firstKCache 内容: ${JSON.stringify(directChildren)}`)
+            } else {
+                console.log(`  firstKCache 前5个分支: ${JSON.stringify(directChildren.slice(0, 5))}`)
+            }
+        }
+
         // 提取每个分支的第一个符号
         const firstAry: string[] = []
         for (const branch of directChildren) {
             if (branch.length > 0) {
                 firstAry.push(branch[0])
             }
+        }
+
+        if (shouldDebug) {
+            console.log(`  提取的 firstAry: ${JSON.stringify(firstAry)}`)
         }
 
         // 缓存 First(1)（存储为 string[][]）
@@ -369,6 +385,26 @@ export class SubhutiGrammarAnalyzer {
         for (const branch of children) {
             if (branch.length > 0) {
                 firstSet.add(branch[0])
+            }
+        }
+
+        // 🔍 DEBUG: 输出关键规则的 First(1) 结果
+        const shouldDebug = ruleName === 'Statement' || ruleName === 'Expression' || ruleName === 'BlockStatement' || ruleName === 'Script' || ruleName === 'ForInOfStatement'
+        if (shouldDebug) {
+            console.log(`\n🔍 [initFirst1ExpandCache] 规则: ${ruleName}`)
+            console.log(`  分支数: ${children.length}`)
+            console.log(`  First(1) 集合大小: ${firstSet.size}`)
+            console.log(`  First(1) 集合: {${Array.from(firstSet).join(', ')}}`)
+            if (children.length <= 10) {
+                console.log(`  所有分支:`)
+                children.forEach((branch, idx) => {
+                    console.log(`    [${idx}] ${JSON.stringify(branch)}`)
+                })
+            } else {
+                console.log(`  前5个分支:`)
+                children.slice(0, 5).forEach((branch, idx) => {
+                    console.log(`    [${idx}] ${JSON.stringify(branch)}`)
+                })
             }
         }
 
