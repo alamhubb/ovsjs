@@ -715,9 +715,21 @@ export class SubhutiGrammarAnalyzer {
 
                             allBranches = node.nodes.map(node => {
                                 const itemRes = this.computeExpanded(null, node, firstK, curLevel, maxLevel)
-                                itemRes.forEach(order => order.splice(firstK))
+                                itemRes.forEach(item => {
+                                    item.splice(firstK)
+                                })
                                 return itemRes
                             })
+                            const result = this.cartesianProduct(allBranches)
+
+                            // 截断到 firstK（因为笛卡尔积可能组合出超过 firstK 的路径）
+                            result.forEach(path => path.splice(firstK))
+
+                            if (!this.firstMoreCache.has(ruleName)) {
+                                this.firstMoreCache.set(ruleName, result)
+                            }
+
+                            return result
 
                         } else {
                             throw new Error('系统错误')
