@@ -197,15 +197,11 @@ export class SubhutiGrammarAnalyzer {
             // 调用 computeExpanded：firstK=2, maxLevel=0（不展开规则名）
             const children = this.computeFirstMoreBranches(ruleName)
 
+            console.log(ruleName)
+
             console.log(children)
             // 缓存结果
             this.firstKCache.set(ruleName, children)
-
-            // 🔍 DEBUG: 输出特定规则的结果
-            if (this.debugRules.has(ruleName)) {
-                console.log(`\n📊 [preHandler] 规则 "${ruleName}" 的 firstMoreCache:`)
-                console.log(`  结果: ${JSON.stringify(children)}`)
-            }
 
 
             const error = this.initFirstCache(ruleName)
@@ -469,8 +465,6 @@ export class SubhutiGrammarAnalyzer {
         }
 
         const result = this.computeExpanded(ruleName, ruleNode, EXPANSION_LIMITS.FIRST_K)
-
-        console.log(result)
 
         if (shouldDebug) {
             console.log(`  返回结果: ${JSON.stringify(result)}`)
