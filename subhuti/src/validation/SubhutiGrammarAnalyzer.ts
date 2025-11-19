@@ -760,8 +760,10 @@ export class SubhutiGrammarAnalyzer {
                 }
                 throw new Error('系统错误：first1Cache 未初始化')
             }
-            // 遍历每个分支，递归展开分支中的符号, 二维规则数组，展开变成了三维，每个分支，每个规则，每种可能
-            let allBranches: string[][][] = allBranchesCache.map(branch => {
+            // 遍历每个分支，递归展开分支中的符号
+            // 注意：这里是 Or 分支，应该合并所有分支的展开结果，而不是笛卡尔积
+            const result: string[][] = []
+            for (const branch of allBranchesCache) {
                 if (branch.length !== firstK) {
                     throw new Error('系统错误')
                 }
@@ -773,9 +775,10 @@ export class SubhutiGrammarAnalyzer {
                 if (!this.first1ExpandCache.has(item)) {
                     this.first1ExpandCache.set(item, itemRes)
                 }
-                return itemRes
-            })
-            return this.cartesianProduct(allBranches)
+                // 合并所有展开结果
+                result.push(...itemRes)
+            }
+            return result
         } else if (firstK === EXPANSION_LIMITS.FIRST_K && maxLevel === EXPANSION_LIMITS.MAX_LEVEL) {
             if (this.firstKExpandCache.has(ruleName)) {
                 if (shouldDebug) {
@@ -794,7 +797,9 @@ export class SubhutiGrammarAnalyzer {
                 throw new Error('系统错误：firstMoreCache 未初始化:' + ruleName)
             }
             // 遍历每个分支，递归展开分支中的符号
-            let allBranches: string[][][] = allBranchesCache.map(branch => {
+            // 注意：这里是 Or 分支，应该合并所有分支的展开结果，而不是笛卡尔积
+            const result: string[][] = []
+            for (const branch of allBranchesCache) {
                 if (branch.length > firstK) {
                     throw new Error('系统错误：firstMoreCache 未初始化')
                 }
@@ -808,10 +813,12 @@ export class SubhutiGrammarAnalyzer {
                     }
                     return itemRes
                 })
-                // 笛卡尔积组合分支中的符号
-                return this.cartesianProduct(branchRules)
-            })
-            return this.cartesianProduct(allBranches)
+                // 笛卡尔积组合分支中的符号（这是正确的，因为 branch 是一个序列）
+                const branchExpanded = this.cartesianProduct(branchRules)
+                // 合并所有分支的展开结果
+                result.push(...branchExpanded)
+            }
+            return result
         }
 
         if (firstK === EXPANSION_LIMITS.FIRST_K && maxLevel === EXPANSION_LIMITS.MIN_LEVEL) {
