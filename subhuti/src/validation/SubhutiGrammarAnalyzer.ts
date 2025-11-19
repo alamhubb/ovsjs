@@ -184,7 +184,6 @@ export class SubhutiGrammarAnalyzer {
         // 1. 计算直接子节点缓存（First(2)）
         // ✅ 优化：跳过空 AST 的规则
         for (const ruleName of this.ruleASTs.keys()) {
-
             this.computing.clear()
             // 检查缓存是否已存在
             if (this.firstMoreCache.has(ruleName)) {
@@ -637,8 +636,12 @@ export class SubhutiGrammarAnalyzer {
                         if (shouldDebug) {
                             console.log(`      ✓ 未达到最大层级，递归展开 ${node.ruleName}（curLevel + 1 = ${curLevel + 1}）`)
                         }
+                        const subNode = this.getRuleNodeByAst(node.ruleName)
+                        if (!subNode) {
+                            throw new Error('系统错误：子规则不存在')
+                        }
 
-                        return this.computeExpanded(node.ruleName, node, firstK, curLevel + 1, maxLevel)
+                        return this.computeExpanded(null, subNode, firstK, curLevel + 1, maxLevel)
                     }
                     // 达到最大层级，不再展开
                     if (shouldDebug) {
