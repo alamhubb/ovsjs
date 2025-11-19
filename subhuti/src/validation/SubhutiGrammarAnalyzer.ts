@@ -720,7 +720,7 @@ export class SubhutiGrammarAnalyzer {
             }
             // 遍历每个分支，递归展开分支中的符号, 二维规则数组，展开变成了三维，每个分支，每个规则，每种可能
             let allBranches: string[][][] = allBranchesCache.map(branch => {
-                if (branch.length !== firstK) {
+                if (branch.length <= firstK) {
                     throw new Error('系统错误')
                 }
                 const item = branch[0]
@@ -750,11 +750,11 @@ export class SubhutiGrammarAnalyzer {
             // 遍历每个分支，递归展开分支中的符号
             let allBranches: string[][][] = allBranchesCache.map(branch => {
                 if (branch.length !== firstK) {
-                    throw new Error('系统错误：first1Cache 未初始化')
+                    throw new Error('系统错误：firstMoreCache 未初始化')
                 }
                 const branchRules = branch.map(item => {
                     // 递归展开符号（curLevel 不变，因为从缓存获取）
-                    const itemRes = this.subRuleHandler(item, firstK, curLevel , maxLevel)
+                    const itemRes = this.subRuleHandler(item, firstK, curLevel, maxLevel)
                     itemRes.forEach(order => order.splice(firstK))
                     // 缓存展开结果
                     if (!this.firstKExpandCache.has(item)) {
