@@ -50,11 +50,11 @@ export const EXPANSION_LIMITS = {
      * 0,不展开
      * Infinity，无线展开
      */
-    MAX_LEVEL: 3,
+    MAX_LEVEL: Infinity,
     MIN_LEVEL: 1,
     INFINITY_LEVEL: Infinity,
 
-    FIRST_K: 2,
+    FIRST_K: 1000,
     FIRST_1: 1,
 
     /**
