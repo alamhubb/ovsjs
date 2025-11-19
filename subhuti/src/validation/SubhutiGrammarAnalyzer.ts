@@ -720,7 +720,7 @@ export class SubhutiGrammarAnalyzer {
             }
             // 遍历每个分支，递归展开分支中的符号, 二维规则数组，展开变成了三维，每个分支，每个规则，每种可能
             let allBranches: string[][][] = allBranchesCache.map(branch => {
-                if (branch.length <= firstK) {
+                if (branch.length !== firstK) {
                     throw new Error('系统错误')
                 }
                 const item = branch[0]
@@ -749,7 +749,7 @@ export class SubhutiGrammarAnalyzer {
             }
             // 遍历每个分支，递归展开分支中的符号
             let allBranches: string[][][] = allBranchesCache.map(branch => {
-                if (branch.length !== firstK) {
+                if (branch.length > firstK) {
                     throw new Error('系统错误：firstMoreCache 未初始化')
                 }
                 const branchRules = branch.map(item => {
