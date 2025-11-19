@@ -112,7 +112,7 @@ export interface ConsumeNode {
  */
 export interface SequenceNode {
     type: 'sequence'
-    ruleName?: string
+    // ruleName?: string
     nodes: RuleNode[]
 }
 
