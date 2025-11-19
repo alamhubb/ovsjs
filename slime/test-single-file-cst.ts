@@ -227,13 +227,19 @@ try {
     console.log(`⏱️ [2] Parser构造耗时: ${t3 - t2}ms`)
 
     const t4 = Date.now()
+    console.log(`\n🔍 [DEBUG] validate() 前 tokenIndex: ${(parser as any).tokenIndex}`)
     parser.validate()
+    console.log(`🔍 [DEBUG] validate() 后 tokenIndex: ${(parser as any).tokenIndex}`)
     const t5 = Date.now()
     console.log(`⏱️ [3] validate()调用耗时: ${t5 - t4}ms`)
 
     parser.debug()
 
     console.log(`✅ 语法验证: 通过（无 Or 分支冲突）`)
+
+    console.log(`\n🔍 [DEBUG] 准备调用 Script()`)
+    console.log(`  tokens 数量: ${tokens.length}`)
+    console.log(`  前3个 tokens: ${tokens.slice(0, 3).map((t: any) => t.tokenType?.name || 'unknown').join(', ')}`)
 
     const t6 = Date.now()
     const cst = parser.Script()

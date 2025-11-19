@@ -51,7 +51,7 @@ export const EXPANSION_LIMITS = {
      * Infinity，无线展开
      */
     MAX_LEVEL: 3,
-    MIN_LEVEL: 0,
+    MIN_LEVEL: 1,
     INFINITY_LEVEL: Infinity,
 
     FIRST_K: 2,
@@ -586,7 +586,7 @@ export class SubhutiGrammarAnalyzer {
         ruleName: string | null,
         node: RuleNode,
         firstK: number,
-        curLevel: number = EXPANSION_LIMITS.MIN_LEVEL,
+        curLevel: number = 0,
         maxLevel: number = EXPANSION_LIMITS.MIN_LEVEL
     ): string[][] {
 
