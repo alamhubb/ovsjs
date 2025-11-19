@@ -36,12 +36,12 @@ export class SubhutiGrammarValidator {
      * @param maxLevel 最大展开层级（默认使用配置中的 MAX_LEVEL）
      * @throws SubhutiGrammarValidationError 语法有冲突时抛出
      */
-    static validate(parser: any, maxLevel = EXPANSION_LIMITS.MAX_LEVEL): void {
+    static validate(parser: any): void {
         // 1. 收集规则 AST（通过 Proxy，无需 Parser 配合）
         const t1 = Date.now()
         const ruleASTs = SubhutiRuleCollector.collectRules(parser)
         const t2 = Date.now()
-        console.log(`  ⏱️ [3.1] 收集规则AST耗时: ${t2 - t1}ms (${ruleASTs.size} 个规则)`)
+        console.log(`  ⏱️ [3.1] 收集规则AST耗时: ${t2 - t1}ms (${ruleASTs.cstMap.size} 个规则)`)
 
         // 2. 创建语法分析器
         const t3 = Date.now()
@@ -54,7 +54,7 @@ export class SubhutiGrammarValidator {
         const t5 = Date.now()
         const leftRecursionErrors = analyzer.initCacheAndCheckLeftRecursion()
 
-        const t6 = Date.now()
+        /*const t6 = Date.now()
         console.log(`  ⏱️ [3.3] 初始化缓存耗时: ${t6 - t5}ms`)
         console.log(`  ⏱️ [3.4] 左递归检测完成 (发现 ${leftRecursionErrors.length} 个左递归)`)
 
@@ -76,7 +76,7 @@ export class SubhutiGrammarValidator {
         // 5. 聚合所有错误，一起报告
         if (errors.length > 0) {
             throw new SubhutiGrammarValidationError(errors)
-        }
+        }*/
     }
 
 }

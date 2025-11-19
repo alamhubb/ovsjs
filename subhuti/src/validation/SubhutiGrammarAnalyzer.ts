@@ -183,6 +183,8 @@ export class SubhutiGrammarAnalyzer {
         console.log(`  📊 [3.3.1] 开始计算 firstMoreCache（First(2)，不展开规则名）`)
         const t1 = Date.now()
 
+        // const ruleName = 'LetOrConst'
+
         // 1. 计算直接子节点缓存（First(2)）
         // ✅ 优化：跳过空 AST 的规则
         for (const ruleName of this.ruleASTs.keys()) {
@@ -194,6 +196,8 @@ export class SubhutiGrammarAnalyzer {
 
             // 调用 computeExpanded：firstK=2, maxLevel=0（不展开规则名）
             const children = this.computeFirstMoreBranches(ruleName)
+
+            console.log(children)
             // 缓存结果
             this.firstKCache.set(ruleName, children)
 
@@ -210,7 +214,7 @@ export class SubhutiGrammarAnalyzer {
             }
         }
 
-        const t2 = Date.now()
+        /*const t2 = Date.now()
         console.log(`  ✓ [3.3.1] firstMoreCache 计算完成，耗时 ${t2 - t1}ms`)
 
         console.log(`  📊 [3.3.2] 开始计算 first1ExpandCache（First(1)，完全展开）`)
@@ -258,7 +262,7 @@ export class SubhutiGrammarAnalyzer {
         sortedTimings.forEach((stat, index) => {
             console.log(`    ${index + 1}. ${stat.ruleName}: ${stat.time}ms`)
         })
-
+*/
         return leftRecursionErrors
     }
 
@@ -313,10 +317,10 @@ export class SubhutiGrammarAnalyzer {
         }
 
         // 提取每个分支的第一个符号
-        const firstAry: string[] = []
+        const firstAry: string[][] = []
         for (const branch of directChildren) {
             if (branch.length > 0) {
-                firstAry.push(branch[0])
+                firstAry.push([branch[0]])
             }
         }
 
@@ -324,11 +328,12 @@ export class SubhutiGrammarAnalyzer {
             console.log(`  提取的 firstAry: ${JSON.stringify(firstAry)}`)
         }
 
+        console.log(firstAry)
         // 缓存 First(1)（存储为 string[][]）
-        this.first1Cache.set(ruleName, firstAry.map(item => [item]))
+        this.first1Cache.set(ruleName, firstAry)
 
         // 转换为 Set 用于左递归检测
-        const firstSet = new Set(firstAry)
+        const firstSet = new Set(firstAry.map(item => item[0]))
 
         // 左递归检测：如果 First 集合包含规则名本身，就是左递归
         if (firstSet.has(ruleName)) {
@@ -464,6 +469,8 @@ export class SubhutiGrammarAnalyzer {
         }
 
         const result = this.computeExpanded(ruleName, ruleNode, EXPANSION_LIMITS.FIRST_K)
+
+        console.log(result)
 
         if (shouldDebug) {
             console.log(`  返回结果: ${JSON.stringify(result)}`)
