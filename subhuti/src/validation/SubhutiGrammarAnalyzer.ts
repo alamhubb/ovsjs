@@ -677,6 +677,7 @@ export class SubhutiGrammarAnalyzer {
                                 const branchRules = branch.map(item => {
                                     // 递归展开符号（curLevel 不变，因为从缓存获取）
                                     const itemRes = this.computeExpanded(item, null, firstK, curLevel, maxLevel)
+                                    itemRes.forEach(order => order.splice(firstK))
                                     // 缓存展开结果
                                     if (!this.first1ExpandCache.has(item)) {
                                         this.first1ExpandCache.set(item, itemRes)
@@ -697,6 +698,7 @@ export class SubhutiGrammarAnalyzer {
                                 const branchRules = branch.map(item => {
                                     // 递归展开符号（curLevel 不变，因为从缓存获取）
                                     const itemRes = this.computeExpanded(item, null, firstK, curLevel, maxLevel)
+                                    itemRes.forEach(order => order.splice(firstK))
                                     // 缓存展开结果
                                     if (!this.firstMoreExpandCache.has(item)) {
                                         this.firstMoreExpandCache.set(item, itemRes)
