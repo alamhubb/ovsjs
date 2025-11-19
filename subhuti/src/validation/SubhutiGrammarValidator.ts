@@ -45,7 +45,7 @@ export class SubhutiGrammarValidator {
 
         // 2. 创建语法分析器
         const t3 = Date.now()
-        const analyzer = new SubhutiGrammarAnalyzer(ruleASTs)
+        const analyzer = new SubhutiGrammarAnalyzer(ruleASTs.cstMap, ruleASTs.tokenMap)
         const t4 = Date.now()
         console.log(`  ⏱️ [3.2] 创建分析器耗时: ${t4 - t3}ms`)
 
@@ -63,7 +63,7 @@ export class SubhutiGrammarValidator {
 
         // 4. Level 1 & 2: Or 分支冲突检测（空路径 + 前缀冲突）
         const t9 = Date.now()
-        const detector = new SubhutiConflictDetector(analyzer, ruleASTs)
+        const detector = new SubhutiConflictDetector(analyzer, ruleASTs.cstMap)
         const t10 = Date.now()
         console.log(`  ⏱️ [3.5] 创建冲突检测器耗时: ${t10 - t9}ms`)
 

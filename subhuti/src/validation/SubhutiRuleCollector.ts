@@ -28,7 +28,7 @@
  */
 
 import type SubhutiParser from "../SubhutiParser"
-import type {RuleNode, SequenceNode} from "./SubhutiValidationError"
+import type {ConsumeNode, RuleNode, SequenceNode} from "./SubhutiValidationError"
 
 /**
  * 规则收集器
@@ -49,6 +49,9 @@ export class SubhutiRuleCollector {
     /** 收集到的规则 AST */
     private ruleASTs = new Map<string, SequenceNode>()
 
+
+    private tokenAstCache = new Map<string, ConsumeNode>()
+
     /** 当前正在记录的规则栈 */
     private currentRuleStack: SequenceNode[] = []
 
@@ -67,7 +70,7 @@ export class SubhutiRuleCollector {
      * @param parser Parser 实例
      * @returns 规则名称 → AST 的映射
      */
-    static collectRules(parser: SubhutiParser): Map<string, SequenceNode> {
+    static collectRules(parser: SubhutiParser): { cstMap: Map<string, SequenceNode>, tokenMap: Map<string, ConsumeNode> } {
         const collector = new SubhutiRuleCollector()
         return collector.collect(parser)
     }
@@ -75,7 +78,7 @@ export class SubhutiRuleCollector {
     /**
      * 收集所有规则（私有实现）
      */
-    private collect(parser: SubhutiParser): Map<string, SequenceNode> {
+    private collect(parser: SubhutiParser): { cstMap: Map<string, SequenceNode>, tokenMap: Map<string, ConsumeNode> } {
         // ✅ 启用分析模式（不抛异常）
         parser.enableAnalysisMode()
 
@@ -93,7 +96,10 @@ export class SubhutiRuleCollector {
         // ✅ 恢复正常模式
         parser.disableAnalysisMode()
 
-        return this.ruleASTs
+        return {
+            cstMap: this.ruleASTs,
+            tokenMap: this.tokenAstCache
+        }
     }
 
     /**
@@ -272,7 +278,7 @@ export class SubhutiRuleCollector {
         // 创建根 Sequence 节点
         const rootNode: SequenceNode = {
             type: 'sequence',
-            ruleName: ruleName,
+            // ruleName: ruleName,
             nodes: []
         }
         this.currentRuleStack.push(rootNode)
@@ -499,7 +505,9 @@ export class SubhutiRuleCollector {
      * 处理 consume
      */
     private handleConsume(tokenName: string): void {
-        this.recordNode({type: 'consume', tokenName})
+        const tokenNode: ConsumeNode = {type: 'consume', tokenName}
+        this.tokenAstCache.set(tokenName, tokenNode)
+        this.recordNode(tokenNode)
     }
 
     /**

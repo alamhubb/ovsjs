@@ -30,7 +30,7 @@
  * @version 2.0.0 - 分层展开版本
  */
 
-import type {RuleNode, Path, SequenceNode, ValidationError, SubruleNode} from "./SubhutiValidationError"
+import type {RuleNode, Path, SequenceNode, ValidationError, SubruleNode, ConsumeNode} from "./SubhutiValidationError"
 import {SubhutiValidationLogger} from './SubhutiValidationLogger'
 
 /**
@@ -147,10 +147,12 @@ export class SubhutiGrammarAnalyzer {
      * 构造函数
      *
      * @param ruleASTs 规则名称 → AST 的映射
+     * @param tokenCache
      * @param options 配置选项
      */
     constructor(
         private ruleASTs: Map<string, SequenceNode>,
+        private tokenCache: Map<string, ConsumeNode>,
         options?: GrammarAnalyzerOptions
     ) {
         this.options = {
@@ -716,6 +718,10 @@ export class SubhutiGrammarAnalyzer {
             // First(1) 完全展开：从 first1Cache 获取
             const allBranchesCache = this.first1Cache.get(ruleName)
             if (!allBranchesCache) {
+                const tempNode = this.tokenCache.get(ruleName)
+                if (tempNode.type === 'consume') {
+                    return [[ruleName]]
+                }
                 throw new Error('系统错误：first1Cache 未初始化')
             }
             // 遍历每个分支，递归展开分支中的符号, 二维规则数组，展开变成了三维，每个分支，每个规则，每种可能
@@ -745,6 +751,10 @@ export class SubhutiGrammarAnalyzer {
             // First(2) 按层级展开：从 firstMoreCache 获取
             const allBranchesCache = this.firstKCache.get(ruleName)
             if (!allBranchesCache) {
+                const tempNode = this.tokenCache.get(ruleName)
+                if (tempNode.type === 'consume') {
+                    return [[ruleName]]
+                }
                 throw new Error('系统错误：firstMoreCache 未初始化:' + ruleName)
             }
             // 遍历每个分支，递归展开分支中的符号
