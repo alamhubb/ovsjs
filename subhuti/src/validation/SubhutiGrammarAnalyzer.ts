@@ -778,26 +778,96 @@ export class SubhutiGrammarAnalyzer {
         }
 
         // First(K)：需要笛卡尔积
-        // ⚠️⚠️⚠️ 性能优化：只展开前 firstK 个子节点
-        // 原因：笛卡尔积后会截取到 firstK，所以只需要前 firstK 个子节点
-        // 例如：sequence(a,b,c,d,e) firstK=2
-        //   - 优化前：展开5个节点 → 笛卡尔积 → [[a,b,c,d,e]] → 截取 → [[a,b]]
-        //   - 优化后：只展开前2个节点 → 笛卡尔积 → [[a,b]]（不需要截取）
+        // ⚠️⚠️⚠️ 双重优化策略：
+        // 
+        // 优化1：硬性上限 - slice(0, firstK)
+        // - 最多只展开前 firstK 个子节点
+        // - 例如：firstK=2，最多展开前2个，后续节点完全不看
+        // 
+        // 优化2：累加提前停止 - 在前 firstK 个节点内提前停止
+        // - 原理：笛卡尔积后的最短路径 = 各子节点最短分支的拼接
+        // - 如果累加的最短长度 >= firstK，后续节点不影响截取后的结果
+        // - 可能只展开1个或几个节点就够了
+        // 
+        // 示例1：sequence([a,b,c], [d], [e], [f])  firstK=2
+        //   优化1：slice(0,2) → 最多展开 [a,b,c], [d]
+        //   优化2：
+        //     1. [a,b,c] → [[a,b,c]]，最短=3
+        //        累加：3 >= 2 ✅ 停止！只展开1个节点
+        //   笛卡尔积：[[a,b,c]]
+        //   截取到2：[[a,b]]
+        // 
+        // 示例2：sequence([a], or([b]/[c,d]), [e])  firstK=3
+        //   优化1：slice(0,3) → 最多展开前3个
+        //   优化2：
+        //     1. [a] → [[a]]，最短=1，累加=1 < 3，继续
+        //     2. or([b]/[c,d]) → [[b],[c,d]]，最短=1，累加=2 < 3，继续
+        //     3. [e] → [[e]]，最短=1，累加=3 >= 3 ✅ 停止
+        //   笛卡尔积：[[a]] × [[b],[c,d]] × [[e]] = [[a,b,e],[a,c,d,e]]
+        //   截取到3：[[a,b,e],[a,c,d]]
+        // 
+        // 示例3：包含空分支 sequence([a], option([b]), [c,d])  firstK=2
+        //   优化1：slice(0,2) → 最多展开前2个
+        //   优化2：
+        //     1. [a] → [[a]]，最短=1，累加=1 < 2，继续
+        //     2. option([b]) → [[],[b]]，最短=0（空分支！），累加=1 < 2，继续
+        //   累加不够，需要展开第3个节点，但 slice(0,2) 限制了
+        //   笛卡尔积：[[a]] × [[],[b]] = [[a],[a,b]]
+        //   截取到2：[[a],[a,b]]（不需要截取）
+        //   
+        // ✅ 双重保护：
+        // - 最坏情况：展开 firstK 个节点（优化1）
+        // - 最好情况：展开 1 个节点（优化2）
+        // - 平均情况：展开 < firstK 个节点
+        
+        // ⚠️⚠️⚠️ 双重优化策略：
+        // 1. 第一层保护：slice(0, firstK) - 最多展开 firstK 个节点
+        // 2. 第二层优化：累加提前停止 - 在 firstK 个节点内提前停止
         const nodesToExpand = node.nodes.slice(0, firstK)
         
-        // 递归展开前 firstK 个子节点（每个子节点可能包含空分支 []）
-        const allBranches = nodesToExpand.map(node => this.computeExpanded(null, node, firstK, curLevel, maxLevel))
+        const allBranches: string[][][] = []
+        let minLengthSum = 0  // 累加的最短长度
+        
+        // 遍历前 firstK 个子节点，累加最短分支长度
+        for (let i = 0; i < nodesToExpand.length; i++) {
+            // 展开当前子节点
+            const branches = this.computeExpanded(null, nodesToExpand[i], firstK, curLevel, maxLevel)
+            
+            // 防御：如果 branches 为空（理论上不应该发生）
+            if (branches.length === 0) {
+                throw new Error(`系统错误：节点展开结果为空`)
+            }
+            
+            allBranches.push(branches)
+            
+            // 找到当前子节点的最短分支长度
+            // ⚠️ 注意：如果包含空分支 []，最短长度为 0
+            // 例如：option(abc) → [[], [a,b,c]]，最短长度 = 0
+            const minLength = Math.min(...branches.map(b => b.length))
+            minLengthSum += minLength
+            
+            // 如果累加的最短长度 >= firstK，可以停止了
+            // 原因：后续节点拼接后，截取到 firstK，结果不变
+            if (minLengthSum >= firstK) {
+                break
+            }
+        }
+        
+        // 防御：如果没有展开任何节点（理论上不应该发生）
+        if (allBranches.length === 0) {
+            throw new Error(`系统错误：未展开任何节点`)
+        }
 
-        // 笛卡尔积组合子节点（会让路径变长）
-        // 例如：[[a]] × [[b]] → [[a,b]]
+        // 笛卡尔积组合子节点（只对需要的节点做笛卡尔积）
+        // 例如：[[a,b]] × [[c]] → [[a,b,c]]
         // ⚠️ 如果包含空分支：[[a]] × [[], [b]] → [[a], [a,b]]
         // ⚠️ cartesianProduct 不会过滤空分支，会正常拼接
         const result = this.cartesianProduct(allBranches)
 
         // 笛卡尔积后路径可能超过 firstK，需要截取并去重
-        // 注意：虽然只展开了 firstK 个节点，但如果某些节点包含空分支，
-        //       笛卡尔积后可能产生短路径，所以仍需去重（但通常不需要截取）
-        // 例如：[[a]] × [[], [b]] → [[a], [a,b]]（长度1和2，都≤firstK）
+        // 注意：如果某些节点包含空分支，笛卡尔积后可能产生不同长度的路径
+        // 例如：[[a,b]] × [[], [c]] → [[a,b], [a,b,c]]
+        //       截取到2 → [[a,b], [a,b]] → 去重 → [[a,b]]
         // ⚠️ truncateAndDeduplicate 不会过滤空分支 []
         return this.truncateAndDeduplicate(result, firstK)
     }
@@ -943,6 +1013,13 @@ export class SubhutiGrammarAnalyzer {
         curLevel: number,
         maxLevel: number
     ): string[][] {
+        // 防御：如果 or 没有分支（理论上不应该发生）
+        if (alternatives.length === 0) {
+            throw new Error('系统错误')
+            // 返回空分支（表示匹配失败）
+            // return [[]]
+        }
+        
         // 存储所有分支的展开结果（可能包含空分支 []）
         const result: string[][] = []
 
@@ -952,6 +1029,12 @@ export class SubhutiGrammarAnalyzer {
             const branches = this.computeExpanded(null, alt, firstK, curLevel, maxLevel)
             // 合并到结果中（空分支也会被合并）
             result.push(...branches)
+        }
+
+        // 防御：如果所有分支都没有结果（理论上不应该发生）
+        if (result.length === 0) {
+            throw new Error('系统错误')
+            // return [[]]
         }
 
         // 只去重，不截取（子节点已经处理过截取）
