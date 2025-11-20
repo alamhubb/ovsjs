@@ -312,7 +312,7 @@ export class SubhutiGrammarAnalyzer {
             }
         }
 
-        // 提取每个分支的第一个符号
+        // 第二步：提取每个分支的第一个符号
         const firstAry: string[][] = []
         for (const branch of directChildren) {
             if (branch.length > 0) {
@@ -324,9 +324,15 @@ export class SubhutiGrammarAnalyzer {
             console.log(`  提取的 firstAry: ${JSON.stringify(firstAry)}`)
         }
 
-        console.log(firstAry)
+        // 第三步：去重
+        const uniqueFirstAry = this.deduplicate(firstAry)
+
+        if (shouldDebug) {
+            console.log(`  去重后的 firstAry: ${JSON.stringify(uniqueFirstAry)}`)
+        }
+
         // 缓存 First(1)（存储为 string[][]）
-        this.first1Cache.set(ruleName, firstAry)
+        this.first1Cache.set(ruleName, uniqueFirstAry)
 
         // 转换为 Set 用于左递归检测
         const firstSet = new Set(firstAry.map(item => item[0]))
@@ -862,6 +868,24 @@ export class SubhutiGrammarAnalyzer {
     }
 
     /**
+     * 去重：移除重复的分支
+     */
+    private deduplicate(branches: string[][]): string[][] {
+        const seen = new Set<string>()
+        const result: string[][] = []
+
+        for (const branch of branches) {
+            const key = branch.join(',')
+            if (!seen.has(key)) {
+                seen.add(key)
+                result.push(branch)
+            }
+        }
+
+        return result
+    }
+
+    /**
      * 展开 Or 节点
      */
     private expandOr(
@@ -877,7 +901,8 @@ export class SubhutiGrammarAnalyzer {
             result.push(...branches)
         }
 
-        return result
+        // 第五步：合并后去重
+        return this.deduplicate(result)
     }
 
 
