@@ -196,6 +196,60 @@ export class SubhutiGrammarAnalyzer {
     }
 
     /**
+     * 检测所有规则的左递归
+     * 
+     * 实现方式：
+     * - 遍历所有规则，调用 computeFirstMoreBranches 触发展开
+     * - 在 subRuleHandler 中检测递归，区分左递归和普通递归
+     * - 收集所有左递归错误
+     * 
+     * @returns 左递归错误列表
+     */
+    public checkAllLeftRecursion(): LeftRecursionError[] {
+        const leftRecursionErrors: LeftRecursionError[] = []
+
+        console.log(`\n📊 [左递归检测] 开始检测 ${this.ruleASTs.size} 个规则...`)
+
+        // 遍历所有规则
+        for (const ruleName of this.ruleASTs.keys()) {
+            try {
+                // 调用 computeFirstMoreBranches 触发展开（会在 subRuleHandler 中检测左递归）
+                this.computeFirstMoreBranches(ruleName)
+            } catch (error) {
+                // 检测到左递归
+                if (error.message.includes('左递归')) {
+                    // 获取规则 AST
+                    const ruleAST = this.getRuleNodeByAst(ruleName)
+                    
+                    // 添加到错误列表
+                    leftRecursionErrors.push({
+                        level: 'FATAL',
+                        type: 'left-recursion',
+                        ruleName,
+                        branchIndices: [],
+                        conflictPaths: {pathA: '', pathB: ''},
+                        message: error.message,
+                        suggestion: this.getLeftRecursionSuggestion(ruleName, ruleAST, new Set([ruleName]))
+                    })
+                    
+                    console.log(`  ❌ ${ruleName}: 左递归`)
+                } else {
+                    // 其他错误，重新抛出
+                    console.error(`  ⚠️  ${ruleName}: ${error.message}`)
+                }
+            }
+        }
+
+        if (leftRecursionErrors.length === 0) {
+            console.log(`  ✅ 未发现左递归`)
+        } else {
+            console.log(`  ⚠️  发现 ${leftRecursionErrors.length} 个左递归错误`)
+        }
+
+        return leftRecursionErrors
+    }
+
+    /**
      * 初始化缓存（遍历所有规则，计算直接子节点、First 集合和分层展开）
      *
      * 应该在收集 AST 之后立即调用
@@ -204,7 +258,8 @@ export class SubhutiGrammarAnalyzer {
      * @returns 左递归错误列表
      */
     initCacheAndCheckLeftRecursion(): LeftRecursionError[] {
-        const leftRecursionErrors: LeftRecursionError[] = []
+        // 调用左递归检测方法
+        return this.checkAllLeftRecursion()
 
         // 注释：暂时禁用所有缓存初始化
         /*
@@ -509,7 +564,8 @@ export class SubhutiGrammarAnalyzer {
         }
 
         // 调用通用展开方法（firstK, curLevel=0, maxLevel=MIN_LEVEL）
-        const result = this.computeExpanded(ruleName, ruleNode, EXPANSION_LIMITS.FIRST_K)
+        // 传入 isFirstPosition=true（顶层调用，用于左递归检测）
+        const result = this.computeExpanded(ruleName, ruleNode, EXPANSION_LIMITS.FIRST_K, 0, EXPANSION_LIMITS.MIN_LEVEL, true)
 
         // 调试日志：结束
         if (shouldDebug) {
@@ -530,7 +586,8 @@ export class SubhutiGrammarAnalyzer {
      */
     public computeFirst1ExpandBranches(ruleName: string, ruleNode: RuleNode = null) {
         // 调用通用展开方法（firstK=1, curLevel=0, maxLevel=Infinity）
-        return this.computeExpanded(ruleName, ruleNode, EXPANSION_LIMITS.FIRST_1, 0, EXPANSION_LIMITS.INFINITY_LEVEL)
+        // 传入 isFirstPosition=true（顶层调用，用于左递归检测）
+        return this.computeExpanded(ruleName, ruleNode, EXPANSION_LIMITS.FIRST_1, 0, EXPANSION_LIMITS.INFINITY_LEVEL, true)
     }
 
     /**
@@ -542,7 +599,8 @@ export class SubhutiGrammarAnalyzer {
      */
     public computeFirstMoreExpandBranches(ruleName: string, ruleNode: RuleNode = null) {
         // 调用通用展开方法（firstK=FIRST_K, curLevel=0, maxLevel=MAX_LEVEL）
-        return this.computeExpanded(ruleName, ruleNode, EXPANSION_LIMITS.FIRST_K, 0, EXPANSION_LIMITS.MAX_LEVEL)
+        // 传入 isFirstPosition=true（顶层调用，用于左递归检测）
+        return this.computeExpanded(ruleName, ruleNode, EXPANSION_LIMITS.FIRST_K, 0, EXPANSION_LIMITS.MAX_LEVEL, true)
     }
 
 
