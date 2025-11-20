@@ -25,6 +25,43 @@
  *    - 每层独立存储，避免重复计算
  *    - 路径数量限制：默认10000条（防止路径爆炸）
  *
+ * ⚠️⚠️⚠️ 关键：空分支 [] 的处理 ⚠️⚠️⚠️
+ * 
+ * 空分支来源：
+ * - option(X) 和 many(X) 会产生空分支 []，表示可以跳过（0次）
+ * - 空分支在展开结果中表示为 []（空数组）
+ * 
+ * 空分支的重要性：
+ * - 空分支必须保留，否则 option/many 的语义就错了！
+ * - 例如：option(a) 的 First 集合 = {ε, a}
+ * - 如果过滤掉空分支，就变成 First 集合 = {a}，语义错误！
+ * 
+ * 空分支在各个处理环节的行为：
+ * 1. deduplicate：
+ *    - [] join(',') = ""（空字符串）
+ *    - 空字符串是合法的 Set key，不会被过滤
+ *    - 例如：[[], [a], []] → [[], [a]]（正常去重）
+ * 
+ * 2. cartesianProduct：
+ *    - [...seq, ...[]] = [...seq]（空分支拼接不影响结果）
+ *    - [...[], ...branch] = [...branch]（空序列拼接）
+ *    - 例如：[[a]] × [[], [b]] → [[a], [a,b]]（正常笛卡尔积）
+ * 
+ * 3. truncateAndDeduplicate：
+ *    - [] slice(0, firstK) = []（空分支截取还是空分支）
+ *    - 例如：[[], [a,b]], firstK=1 → [[], [a]]（正常截取）
+ * 
+ * 4. expandSequenceNode：
+ *    - 空分支参与笛卡尔积和截取，不会被过滤
+ * 
+ * 5. expandOr：
+ *    - 空分支参与合并，不会被过滤
+ * 
+ * 结论：
+ * - 整个系统中没有任何地方会过滤空分支 []
+ * - 空分支在所有处理环节都是一等公民
+ * - 空分支的语义被完整保留
+ *
  * 用途：为SubhutiConflictDetector提供路径数据，用于检测Or分支冲突
  *
  * @version 2.0.0 - 分层展开版本
@@ -451,9 +488,18 @@ export class SubhutiGrammarAnalyzer {
     }
 
 
+    /**
+     * 计算 First(K) 集合（不展开规则名）
+     * 
+     * 参数：firstK=FIRST_K, maxLevel=MIN_LEVEL（默认1）
+     * 
+     * 用途：获取规则的前 K 个符号，规则名不展开
+     */
     public computeFirstMoreBranches(ruleName: string, ruleNode: RuleNode = null) {
+        // 调试开关
         const shouldDebug = this.debugRules.has(ruleName)
 
+        // 调试日志：开始
         if (shouldDebug) {
             console.log(`\n🔍 [DEBUG] computeFirstMoreBranches 开始`)
             console.log(`  规则名: ${ruleName}`)
@@ -461,21 +507,40 @@ export class SubhutiGrammarAnalyzer {
             console.log(`  参数: firstK=2, curLevel=0, maxLevel=0`)
         }
 
+        // 调用通用展开方法（firstK, curLevel=0, maxLevel=MIN_LEVEL）
         const result = this.computeExpanded(ruleName, ruleNode, EXPANSION_LIMITS.FIRST_K)
 
+        // 调试日志：结束
         if (shouldDebug) {
             console.log(`  返回结果: ${JSON.stringify(result)}`)
             console.log(`🔍 [DEBUG] computeFirstMoreBranches 结束\n`)
         }
 
+        // 返回展开结果
         return result
     }
 
+    /**
+     * 计算 First(1) 集合（完全展开到 token）
+     * 
+     * 参数：firstK=1, maxLevel=Infinity
+     * 
+     * 用途：获取规则的第1个 token，完全展开规则名
+     */
     public computeFirst1ExpandBranches(ruleName: string, ruleNode: RuleNode = null) {
+        // 调用通用展开方法（firstK=1, curLevel=0, maxLevel=Infinity）
         return this.computeExpanded(ruleName, ruleNode, EXPANSION_LIMITS.FIRST_1, 0, EXPANSION_LIMITS.INFINITY_LEVEL)
     }
 
+    /**
+     * 计算 First(K) 集合（按配置层级展开）
+     * 
+     * 参数：firstK=FIRST_K, maxLevel=MAX_LEVEL
+     * 
+     * 用途：获取规则的前 K 个符号，按配置层级展开规则名
+     */
     public computeFirstMoreExpandBranches(ruleName: string, ruleNode: RuleNode = null) {
+        // 调用通用展开方法（firstK=FIRST_K, curLevel=0, maxLevel=MAX_LEVEL）
         return this.computeExpanded(ruleName, ruleNode, EXPANSION_LIMITS.FIRST_K, 0, EXPANSION_LIMITS.MAX_LEVEL)
     }
 
@@ -483,28 +548,47 @@ export class SubhutiGrammarAnalyzer {
     /**
      * 计算笛卡尔积
      * [[a1, a2], [b1, b2]] → [[a1, b1], [a1, b2], [a2, b1], [a2, b2]]
+     * 
+     * ⚠️ 重要：空分支处理
+     * - 空分支 [] 参与笛卡尔积时，会被正常拼接
+     * - [...seq, ...[]] = [...seq]，相当于只保留 seq
+     * - 例如：[[a]] × [[], [b]] → [[a], [a,b]]
+     * - 这正是 option/many 需要的行为：可以跳过或执行
      */
     private cartesianProduct(arrays: string[][][]): string[][] {
+        // 空数组，返回包含一个空序列的数组
         if (arrays.length === 0) {
             return [[]]
         }
 
+        // 只有一个数组，直接返回（可能包含空分支）
         if (arrays.length === 1) {
             return arrays[0]
         }
 
+        // 初始结果为第一个数组（可能包含空分支）
         let result = arrays[0]
 
+        // 遍历后续数组，逐个计算笛卡尔积
         for (let i = 1; i < arrays.length; i++) {
+            // 临时存储本轮笛卡尔积结果
             const temp: string[][] = []
+            // 遍历当前结果的每个序列
             for (const seq of result) {
+                // 遍历下一个数组的每个分支
                 for (const branch of arrays[i]) {
+                    // 拼接序列和分支，生成新序列
+                    // ⚠️ 如果 branch 是空分支 []，则 [...seq, ...[]] = [...seq]
+                    // ⚠️ 如果 seq 是空序列 []，则 [...[], ...branch] = [...branch]
+                    // ⚠️ 空分支不会被过滤，会正常参与笛卡尔积
                     temp.push([...seq, ...branch])
                 }
             }
+            // 更新结果为本轮笛卡尔积
             result = temp
         }
 
+        // 返回最终笛卡尔积结果（可能包含空序列 []）
         return result
     }
 
@@ -625,14 +709,18 @@ export class SubhutiGrammarAnalyzer {
         curLevel: number = 0,
         maxLevel: number = EXPANSION_LIMITS.MIN_LEVEL
     ): string[][] {
+        // 如果传入规则名，转发给 subRuleHandler 处理
         if (ruleName) {
             return this.subRuleHandler(ruleName, firstK, curLevel, maxLevel)
         }
+        // 根据节点类型分发处理
         switch (node.type) {
             case 'consume':
+                // Token 节点：直接返回 token 名
                 return [[node.tokenName]]
 
             case 'subrule':
+                // 子规则引用：转发给 subRuleHandler 处理
                 return this.subRuleHandler(node.ruleName, firstK, curLevel, maxLevel)
 
             case 'or':
@@ -640,113 +728,205 @@ export class SubhutiGrammarAnalyzer {
                 return this.expandOr(node.alternatives, firstK, curLevel, maxLevel)
 
             case 'sequence':
+                // Sequence 节点：笛卡尔积组合子节点
                 return this.expandSequenceNode(node, firstK, curLevel, maxLevel);
 
             case 'option':
             case 'many':
-                // Option/Many 节点：0次或多次
+                // Option/Many 节点：0次或多次，添加空分支
                 return this.expandOption(node.node, firstK, curLevel, maxLevel)
 
             case 'atLeastOne':
-                // AtLeastOne 节点：1次或多次
+                // AtLeastOne 节点：1次或多次，添加 double 分支
                 return this.expandAtLeastOne(node.node, firstK, curLevel, maxLevel)
 
             default:
+                // 未知节点类型，抛出错误
                 throw new Error(`未知节点类型: ${(node as any).type}`)
         }
     }
 
+    /**
+     * 展开 Sequence 节点
+     * 
+     * 核心逻辑：
+     * - First(1)：只展开第1个子节点
+     * - First(K)：笛卡尔积展开所有子节点，然后截取
+     * 
+     * ⚠️ 重要：空分支在 sequence 中的处理
+     * - 如果子节点包含空分支 []（来自 option/many）
+     * - 笛卡尔积会正常处理：[[a]] × [[], [b]] → [[a], [a,b]]
+     * - 空分支不会被过滤，会正常参与笛卡尔积
+     */
     private expandSequenceNode(node: SequenceNode, firstK: number, curLevel: number, maxLevel: number) {
-        // 内联 sequence：直接展开子节点
+        // 检查是否为空序列
         if (node.nodes.length === 0) {
-            // 空序列
+            // 空序列，返回包含一个空分支
             return [[]]
         }
 
-        // 第一步：展开 Or（笛卡尔积）
-        // 对于 First(1)，只需要展开第1个子节点
+        // First(1) 优化：只需要第1个符号
         if (firstK === 1) {
-            // 只取第1个子节点
+            // 取第1个子节点
             const firstNode = node.nodes[0]
+            // 递归展开第1个子节点（可能包含空分支 []）
             const result = this.computeExpanded(null, firstNode, firstK, curLevel, maxLevel)
 
-            // 第二步：截取 First(1)（已经是1个token，不需要截取）
-            // 第三步：去重
+            // 子节点已保证长度≤firstK，只需去重
+            // ⚠️ deduplicate 不会过滤空分支 []
             return this.deduplicate(result)
         }
 
-        // 对于 First(K)（K > 1），需要笛卡尔积
+        // First(K)：需要笛卡尔积
+        // 递归展开所有子节点（每个子节点可能包含空分支 []）
         const allBranches = node.nodes.map(node => this.computeExpanded(null, node, firstK, curLevel, maxLevel))
 
-        // 笛卡尔积组合所有分支
+        // 笛卡尔积组合所有子节点（会让路径变长）
+        // 例如：[[a]] × [[b]] × [[c]] → [[a,b,c]]
+        // ⚠️ 如果包含空分支：[[a]] × [[], [b]] → [[a], [a,b]]
+        // ⚠️ cartesianProduct 不会过滤空分支，会正常拼接
         const result = this.cartesianProduct(allBranches)
 
-        // 第二步：截断到 firstK
-        result.forEach(path => path.splice(firstK))
-
-        // 第三步：去重
-        return this.deduplicate(result)
+        // 笛卡尔积后路径可能超过 firstK，需要截取并去重
+        // 例如：[[a,b,c]] → 截取到2 → [[a,b]]
+        // ⚠️ truncateAndDeduplicate 不会过滤空分支 []
+        return this.truncateAndDeduplicate(result, firstK)
     }
 
+    /**
+     * 子规则处理器
+     * 
+     * 职责：
+     * 1. 递归防护（防止无限递归）
+     * 2. 层级限制（控制展开深度）
+     * 3. 获取规则 AST 并递归展开
+     */
     private subRuleHandler(ruleName: string, firstK: number, curLevel: number, maxLevel: number) {
+        // 层级+1（进入子规则）
         curLevel++
 
+        // 防御：规则名不能为空
         if (!ruleName) {
             throw new Error('系统错误')
         }
 
-        // 循环检测：如果规则正在计算中，停止展开
+        // 递归检测：如果规则正在计算中，停止展开
         if (this.computing.has(ruleName)) {
+            // 返回规则名本身（不再展开）
             return [[ruleName]]
         }
 
-        // 标记当前规则正在计算
+        // 标记当前规则正在计算（防止循环递归）
         this.computing.add(ruleName)
 
         try {
+            // 层级限制：超过最大层级，停止展开
             if (curLevel > maxLevel) {
+                // 返回规则名本身（达到最大深度）
                 return [[ruleName]]
             }
 
+            // 获取规则的 AST 节点
             const subNode = this.getRuleNodeByAst(ruleName)
             if (!subNode) {
-                // 可能是 token
+                // 规则不存在，可能是 token
                 const tokenNode = this.tokenCache?.get(ruleName)
                 if (tokenNode && tokenNode.type === 'consume') {
+                    // 是 token，返回 token 名
                     return [[ruleName]]
                 }
+                // 既不是规则也不是 token，报错
                 throw new Error(`系统错误：规则不存在: ${ruleName}`)
             }
 
-            // 递归展开（注意：curLevel 已经在开头 +1 了）
+            // 递归展开子规则的 AST 节点
+            // 注意：curLevel 已经在开头 +1 了
             const result = this.computeExpanded(null, subNode, firstK, curLevel, maxLevel)
 
+            // 返回展开结果
             return result
         } finally {
+            // 清除递归标记（确保即使异常也能清除）
             this.computing.delete(ruleName)
         }
     }
 
     /**
      * 去重：移除重复的分支
+     * 
+     * 例如：[[a,b], [c,d], [a,b]] → [[a,b], [c,d]]
+     * 
+     * ⚠️ 重要：空分支处理
+     * - 空分支 [] 会被序列化为空字符串 ""
+     * - 空分支不会被过滤，会正常参与去重
+     * - 例如：[[], [a], []] → [[], [a]]
      */
     private deduplicate(branches: string[][]): string[][] {
+        // 用于记录已经见过的分支（序列化为字符串）
         const seen = new Set<string>()
+        // 存储去重后的结果
         const result: string[][] = []
 
+        // 遍历所有分支
         for (const branch of branches) {
+            // 将分支序列化为字符串（用作 Set 的 key）
+            // ⚠️ 空分支 [] 会被序列化为 ""，不会被过滤
             const key = branch.join(',')
+            // 检查是否已经存在
             if (!seen.has(key)) {
+                // 未见过，添加到 Set 和结果中
+                // ⚠️ 空分支 [] 也会被添加到结果中
                 seen.add(key)
                 result.push(branch)
             }
+            // 已见过，跳过
         }
 
+        // 返回去重后的结果（可能包含空分支 []）
         return result
     }
 
     /**
+     * 截取并去重：先截取到 firstK，再去重
+     * 
+     * 使用场景：笛卡尔积后路径变长，需要截取
+     * 
+     * 例如：[[a,b,c], [d,e,f]], firstK=2 → [[a,b], [d,e]]
+     * 
+     * ⚠️ 重要：空分支处理
+     * - 空分支 [] slice(0, firstK) 还是 []
+     * - 空分支不会被过滤，会正常参与去重
+     * - 例如：[[], [a,b,c]], firstK=2 → [[], [a,b]]
+     */
+    private truncateAndDeduplicate(branches: string[][], firstK: number): string[][] {
+        // 截取每个分支到 firstK（使用 slice 不修改原数组）
+        // ⚠️ 空分支 [] slice(0, firstK) 还是 []，不会被过滤
+        const truncated = branches.map(branch => branch.slice(0, firstK))
+        
+        // 去重（截取后可能产生重复分支）
+        // ⚠️ 空分支 [] 会正常参与去重，不会被过滤
+        return this.deduplicate(truncated)
+    }
+
+    /**
      * 展开 Or 节点
+     * 
+     * 核心逻辑：合并所有分支的展开结果
+     * 
+     * 例如：or(abc / de) firstK=2
+     *   → abc 展开为 [[a,b]]
+     *   → de 展开为 [[d,e]]
+     *   → 合并为 [[a,b], [d,e]]
+     * 
+     * ⚠️ 重要：空分支在 or 中的处理
+     * - 如果某个分支是 option/many，可能包含空分支 []
+     * - 例如：or(option(a) / b)
+     *   → option(a) 展开为 [[], [a]]
+     *   → b 展开为 [[b]]
+     *   → 合并为 [[], [a], [b]]
+     * - 空分支会被正常保留，不会被过滤
+     * 
+     * 注意：不需要截取，因为子节点已保证长度≤firstK
      */
     private expandOr(
         alternatives: RuleNode[],
@@ -754,20 +934,46 @@ export class SubhutiGrammarAnalyzer {
         curLevel: number,
         maxLevel: number
     ): string[][] {
+        // 存储所有分支的展开结果（可能包含空分支 []）
         const result: string[][] = []
 
+        // 遍历 Or 的每个选择分支
         for (const alt of alternatives) {
+            // 递归展开每个分支（可能包含空分支 []）
             const branches = this.computeExpanded(null, alt, firstK, curLevel, maxLevel)
+            // 合并到结果中（空分支也会被合并）
             result.push(...branches)
         }
 
-        // 第五步：合并后去重
+        // 只去重，不截取（子节点已经处理过截取）
+        // ⚠️ deduplicate 不会过滤空分支 []
         return this.deduplicate(result)
     }
 
 
     /**
      * 展开 Option/Many 节点
+     * 
+     * option(X) = ε | X（0次或1次）
+     * many(X) = ε | X | XX | XXX...（0次或多次）
+     * 
+     * First 集合：
+     * First(option(X)) = {ε} ∪ First(X)
+     * First(many(X)) = {ε} ∪ First(X)
+     * 
+     * 例如：option(abc) firstK=2
+     *   → abc 展开为 [[a,b]]
+     *   → 结果为 [[], [a,b]]（空分支 + 内部分支）
+     * 
+     * ⚠️⚠️⚠️ 关键：空分支 [] 的重要性 ⚠️⚠️⚠️
+     * - 空分支 [] 表示 option/many 可以跳过（0次）
+     * - 空分支在后续处理中不会被过滤：
+     *   1. deduplicate：[] join(',') = ""，正常去重
+     *   2. cartesianProduct：[...seq, ...[]] = [...seq]，正常拼接
+     *   3. truncateAndDeduplicate：[] slice(0,k) = []，正常截取
+     * - 空分支必须保留，否则 option/many 的语义就错了！
+     * 
+     * 注意：不需要截取，因为子节点已保证长度≤firstK
      */
     private expandOption(
         node: SequenceNode,
@@ -775,14 +981,44 @@ export class SubhutiGrammarAnalyzer {
         curLevel: number,
         maxLevel: number
     ): string[][] {
+        // 递归展开内部节点
         const innerBranches = this.computeExpanded(null, node, firstK, curLevel, maxLevel)
+        
+        // ⚠️⚠️⚠️ 关键：添加空分支 [] 表示可以跳过（0次）
+        // 空分支必须在第一个位置，表示优先匹配空（PEG 顺序选择）
         const result = [[], ...innerBranches]
-        // 第五步：合并后去重
+        
+        // 只去重，不截取（子节点已经处理过截取）
+        // ⚠️ deduplicate 不会过滤空分支 []
         return this.deduplicate(result)
     }
 
     /**
      * 展开 AtLeastOne 节点
+     * 
+     * atLeastOne(X) = X | XX | XXX...（至少1次）
+     * 
+     * First 集合：
+     * First(atLeastOne(X)) = First(X) ∪ First(XX)
+     * 
+     * 例如：atLeastOne(ab) firstK=3
+     *   → ab 展开为 [[a,b]]
+     *   → 1次：[[a,b]]
+     *   → 2次：[[a,b,a,b]] 截取到3 → [[a,b,a]]
+     *   → 结果为 [[a,b], [a,b,a]]
+     * 
+     * ⚠️ 重要：空分支说明
+     * - atLeastOne 至少执行1次，不会产生空分支 []
+     * - 与 option/many 不同，atLeastOne 的结果不包含 []
+     * - 但如果内部节点包含空分支（来自嵌套的 option/many）：
+     *   例如：atLeastOne(option(a))
+     *   → option(a) 展开为 [[], [a]]
+     *   → 1次：[[], [a]]
+     *   → 2次：[[], [a]] × 2 → [[], [a]]（空分支拼接还是空分支）
+     *   → 结果为 [[], [a]]
+     * - 空分支会被正常保留，不会被过滤
+     * 
+     * 注意：doubleBranches 需要内部截取，因为拼接后会超过 firstK
      */
     private expandAtLeastOne(
         node: SequenceNode,
@@ -790,10 +1026,24 @@ export class SubhutiGrammarAnalyzer {
         curLevel: number,
         maxLevel: number
     ): string[][] {
+        // 递归展开内部节点（1次的情况，可能包含空分支 []）
         const innerBranches = this.computeExpanded(null, node, firstK, curLevel, maxLevel)
-        const doubleBranches = innerBranches.map(branch => [...branch, ...branch])
+        
+        // 生成 doubleBranches（2次的情况）
+        const doubleBranches = innerBranches.map(branch => {
+            // 拼接两次（例如：[a,b] → [a,b,a,b]）
+            // ⚠️ 如果 branch 是空分支 []，则 [...[], ...[]] = []
+            const doubled = [...branch, ...branch]
+            // 截取到 firstK（防止超长）
+            // ⚠️ 空分支 [] slice(0, firstK) 还是 []
+            return doubled.slice(0, firstK)
+        })
+        
+        // 合并1次和2次的结果（可能包含空分支 []）
         const result = [...innerBranches, ...doubleBranches]
-        // 第五步：合并后去重
+        
+        // 只去重，不再截取（已经在内部截取过了）
+        // ⚠️ deduplicate 不会过滤空分支 []
         return this.deduplicate(result)
     }
 
