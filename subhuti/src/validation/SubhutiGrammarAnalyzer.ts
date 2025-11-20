@@ -668,6 +668,7 @@ export class SubhutiGrammarAnalyzer {
      * @param firstK - 取前 K 个符号（1 或 2）
      * @param curLevel - 当前层级（默认 0）
      * @param maxLevel - 最大展开层级（0=不展开, 3=展开3层, Infinity=完全展开）
+     * @param isFirstPosition
      * @returns 展开后的路径数组 string[][]
      *
      * 调用方式：
@@ -708,11 +709,12 @@ export class SubhutiGrammarAnalyzer {
         node: RuleNode,
         firstK: number,
         curLevel: number = 0,
-        maxLevel: number = EXPANSION_LIMITS.MIN_LEVEL
+        maxLevel: number = EXPANSION_LIMITS.MIN_LEVEL,
+        isFirstPosition: boolean = false  // 是否在第一个位置（用于左递归检测）
     ): string[][] {
         // 如果传入规则名，转发给 subRuleHandler 处理
         if (ruleName) {
-            return this.subRuleHandler(ruleName, firstK, curLevel, maxLevel)
+            return this.subRuleHandler(ruleName, firstK, curLevel, maxLevel, isFirstPosition)
         }
         // 根据节点类型分发处理
         switch (node.type) {
@@ -722,7 +724,7 @@ export class SubhutiGrammarAnalyzer {
 
             case 'subrule':
                 // 子规则引用：转发给 subRuleHandler 处理
-                return this.subRuleHandler(node.ruleName, firstK, curLevel, maxLevel)
+                return this.subRuleHandler(node.ruleName, firstK, curLevel, maxLevel, isFirstPosition)
 
             case 'or':
                 // Or 节点：遍历所有分支，合并结果
@@ -730,7 +732,7 @@ export class SubhutiGrammarAnalyzer {
 
             case 'sequence':
                 // Sequence 节点：笛卡尔积组合子节点
-                return this.expandSequenceNode(node, firstK, curLevel, maxLevel);
+                return this.expandSequenceNode(node, firstK, curLevel, maxLevel, isFirstPosition);
 
             case 'option':
             case 'many':
@@ -758,8 +760,20 @@ export class SubhutiGrammarAnalyzer {
      * - 如果子节点包含空分支 []（来自 option/many）
      * - 笛卡尔积会正常处理：[[a]] × [[], [b]] → [[a], [a,b]]
      * - 空分支不会被过滤，会正常参与笛卡尔积
+     *
+     * @param node
+     * @param firstK
+     * @param curLevel
+     * @param maxLevel
+     * @param isFirstPosition 是否在第一个位置（用于左递归检测）
      */
-    private expandSequenceNode(node: SequenceNode, firstK: number, curLevel: number, maxLevel: number) {
+    private expandSequenceNode(
+        node: SequenceNode, 
+        firstK: number, 
+        curLevel: number, 
+        maxLevel: number,
+        isFirstPosition: boolean = true
+    ) {
         // 检查是否为空序列
         if (node.nodes.length === 0) {
             // 空序列，返回包含一个空分支
@@ -817,9 +831,18 @@ export class SubhutiGrammarAnalyzer {
         const allBranches: string[][][] = []
         let minLengthSum = 0  // 累加的最短长度
 
-        for (const nodesToExpandElement of nodesToExpand) {
+        // 遍历前 firstK 个子节点，累加最短分支长度
+        for (let i = 0; i < nodesToExpand.length; i++) {
             // 展开当前子节点
-            const branches = this.computeExpanded(null, nodesToExpandElement, firstK, curLevel, maxLevel)
+            // 💡 传递累积的位置信息：父级是第1个 AND 当前也是第1个
+            const branches = this.computeExpanded(
+                null, 
+                nodesToExpand[i], 
+                firstK, 
+                curLevel, 
+                maxLevel,
+                isFirstPosition && i === 0  // 累积位置：只有当父级和当前都是第1个时才是 true
+            )
 
             // 防御：如果 branches 为空（理论上不应该发生）
             if (branches.length === 0) {
@@ -867,8 +890,21 @@ export class SubhutiGrammarAnalyzer {
      * 1. 递归防护（防止无限递归）
      * 2. 层级限制（控制展开深度）
      * 3. 获取规则 AST 并递归展开
+     * 4. 左递归检测（检测规则是否在第一个位置递归）
+     *
+     * @param ruleName
+     * @param firstK
+     * @param curLevel
+     * @param maxLevel
+     * @param isFirstPosition 是否在第一个位置（用于区分左递归和普通递归）
      */
-    private subRuleHandler(ruleName: string, firstK: number, curLevel: number, maxLevel: number) {
+    private subRuleHandler(
+        ruleName: string, 
+        firstK: number, 
+        curLevel: number, 
+        maxLevel: number,
+        isFirstPosition: boolean = true
+    ) {
         // 层级+1（进入子规则）
         curLevel++
 
@@ -877,10 +913,17 @@ export class SubhutiGrammarAnalyzer {
             throw new Error('系统错误')
         }
 
-        // 递归检测：如果规则正在计算中，停止展开
+        // 递归检测：如果规则正在计算中
         if (this.recursiveDetectionSet.has(ruleName)) {
-            // 返回规则名本身（不再展开）
-            return [[ruleName]]
+            // 💡 区分左递归和普通递归
+            if (isFirstPosition) {
+                // 在第一个位置递归 → 左递归！
+                throw new Error(`规则 "${ruleName}" 存在左递归`)
+            } else {
+                // 不在第一个位置递归 → 普通递归
+                // 返回规则名，防止无限递归
+                return [[ruleName]]
+            }
         }
 
         // 标记当前规则正在计算（防止循环递归）
@@ -908,7 +951,8 @@ export class SubhutiGrammarAnalyzer {
 
             // 递归展开子规则的 AST 节点
             // 注意：curLevel 已经在开头 +1 了
-            const result = this.computeExpanded(null, subNode, firstK, curLevel, maxLevel)
+            // 传递位置信息：保持 isFirstPosition（不改变）
+            const result = this.computeExpanded(null, subNode, firstK, curLevel, maxLevel, isFirstPosition)
 
             // 返回展开结果
             return result
