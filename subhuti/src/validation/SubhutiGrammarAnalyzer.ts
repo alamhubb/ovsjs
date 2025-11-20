@@ -778,17 +778,26 @@ export class SubhutiGrammarAnalyzer {
         }
 
         // First(K)：需要笛卡尔积
-        // 递归展开所有子节点（每个子节点可能包含空分支 []）
-        const allBranches = node.nodes.map(node => this.computeExpanded(null, node, firstK, curLevel, maxLevel))
+        // ⚠️⚠️⚠️ 性能优化：只展开前 firstK 个子节点
+        // 原因：笛卡尔积后会截取到 firstK，所以只需要前 firstK 个子节点
+        // 例如：sequence(a,b,c,d,e) firstK=2
+        //   - 优化前：展开5个节点 → 笛卡尔积 → [[a,b,c,d,e]] → 截取 → [[a,b]]
+        //   - 优化后：只展开前2个节点 → 笛卡尔积 → [[a,b]]（不需要截取）
+        const nodesToExpand = node.nodes.slice(0, firstK)
+        
+        // 递归展开前 firstK 个子节点（每个子节点可能包含空分支 []）
+        const allBranches = nodesToExpand.map(node => this.computeExpanded(null, node, firstK, curLevel, maxLevel))
 
-        // 笛卡尔积组合所有子节点（会让路径变长）
-        // 例如：[[a]] × [[b]] × [[c]] → [[a,b,c]]
+        // 笛卡尔积组合子节点（会让路径变长）
+        // 例如：[[a]] × [[b]] → [[a,b]]
         // ⚠️ 如果包含空分支：[[a]] × [[], [b]] → [[a], [a,b]]
         // ⚠️ cartesianProduct 不会过滤空分支，会正常拼接
         const result = this.cartesianProduct(allBranches)
 
         // 笛卡尔积后路径可能超过 firstK，需要截取并去重
-        // 例如：[[a,b,c]] → 截取到2 → [[a,b]]
+        // 注意：虽然只展开了 firstK 个节点，但如果某些节点包含空分支，
+        //       笛卡尔积后可能产生短路径，所以仍需去重（但通常不需要截取）
+        // 例如：[[a]] × [[], [b]] → [[a], [a,b]]（长度1和2，都≤firstK）
         // ⚠️ truncateAndDeduplicate 不会过滤空分支 []
         return this.truncateAndDeduplicate(result, firstK)
     }
