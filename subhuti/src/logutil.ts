@@ -1,7 +1,7 @@
 import * as fs from 'fs'
 import * as path from 'path'
 import {fileURLToPath} from 'url'
-import JsonUtil from "./utils/JsonUtil";
+// import JsonUtil from "./utils/JsonUtil";
 
 export class LogUtil {
     private static logFilePath: string

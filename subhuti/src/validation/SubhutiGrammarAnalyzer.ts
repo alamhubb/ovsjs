@@ -786,7 +786,8 @@ export class SubhutiGrammarAnalyzer {
 
             case 'or':
                 // Or 节点：遍历所有分支，合并结果
-                return this.expandOr(node.alternatives, firstK, curLevel, maxLevel)
+                // 🔴 关键：Or 分支中的第一个规则也需要传递 isFirstPosition
+                return this.expandOr(node.alternatives, firstK, curLevel, maxLevel, isFirstPosition)
 
             case 'sequence':
                 // Sequence 节点：笛卡尔积组合子节点
@@ -795,11 +796,13 @@ export class SubhutiGrammarAnalyzer {
             case 'option':
             case 'many':
                 // Option/Many 节点：0次或多次，添加空分支
-                return this.expandOption(node.node, firstK, curLevel, maxLevel)
+                // 🔴 关键：Option 内的第一个规则也需要传递 isFirstPosition
+                return this.expandOption(node.node, firstK, curLevel, maxLevel, isFirstPosition)
 
             case 'atLeastOne':
                 // AtLeastOne 节点：1次或多次，添加 double 分支
-                return this.expandAtLeastOne(node.node, firstK, curLevel, maxLevel)
+                // 🔴 关键：AtLeastOne 内的第一个规则也需要传递 isFirstPosition
+                return this.expandAtLeastOne(node.node, firstK, curLevel, maxLevel, isFirstPosition)
 
             default:
                 // 未知节点类型，抛出错误
@@ -971,8 +974,14 @@ export class SubhutiGrammarAnalyzer {
             throw new Error('系统错误')
         }
 
+        // 🔴 递归检测必须在层级检查之前，否则会被层级限制提前中断
         // 递归检测：如果规则正在计算中
         if (this.recursiveDetectionSet.has(ruleName)) {
+            // 🔍 调试：输出关键信息
+            console.log(`\n🔍 [递归检测] 规则: ${ruleName}`)
+            console.log(`  isFirstPosition: ${isFirstPosition}`)
+            console.log(`  recursiveDetectionSet: ${Array.from(this.recursiveDetectionSet).join(', ')}`)
+            
             // 💡 区分左递归和普通递归
             if (isFirstPosition) {
                 // 在第一个位置递归 → 左递归！
@@ -1096,12 +1105,20 @@ export class SubhutiGrammarAnalyzer {
      * - 空分支会被正常保留，不会被过滤
      *
      * 注意：不需要截取，因为子节点已保证长度≤firstK
+     * 
+     * 🔴 关键：Or 分支中的每个替代也是"第一个位置"
+     * - 在 PEG 的选择中，每个分支都是独立的起点
+     * - Or 分支内的第一个规则需要检测左递归
+     * - 例如：A → A '+' B | C
+     *   - 第一个分支 A '+' B 中，A 在第一个位置，需要检测
+     *   - 第二个分支 C 中，C 也在第一个位置
      */
     private expandOr(
         alternatives: RuleNode[],
         firstK: number,
         curLevel: number,
-        maxLevel: number
+        maxLevel: number,
+        isFirstPosition: boolean = true  // 🔴 Or 分支中的第一个规则也需要检测
     ): string[][] {
         // 防御：如果 or 没有分支（理论上不应该发生）
         if (alternatives.length === 0) {
@@ -1115,8 +1132,9 @@ export class SubhutiGrammarAnalyzer {
 
         // 遍历 Or 的每个选择分支
         for (const alt of alternatives) {
+            // 🔴 关键：每个 Or 分支都是独立的起点，第一个位置的规则需要检测左递归
             // 递归展开每个分支（可能包含空分支 []）
-            const branches = this.computeExpanded(null, alt, firstK, curLevel, maxLevel)
+            const branches = this.computeExpanded(null, alt, firstK, curLevel, maxLevel, isFirstPosition)
             // 合并到结果中（空分支也会被合并）
             result.push(...branches)
         }
@@ -1156,15 +1174,22 @@ export class SubhutiGrammarAnalyzer {
      * - 空分支必须保留，否则 option/many 的语义就错了！
      *
      * 注意：不需要截取，因为子节点已保证长度≤firstK
+     * 
+     * 🔴 关键：Option 内的规则也需要检测左递归
+     * - 虽然 option(X) 可以跳过，但当内部有递归时也是左递归
+     * - 例如：A → option(A) B
+     *   - option(A) 中的 A 在第一个位置，需要检测左递归
      */
     private expandOption(
         node: SequenceNode,
         firstK: number,
         curLevel: number,
-        maxLevel: number
+        maxLevel: number,
+        isFirstPosition: boolean = true  // 🔴 Option 内的第一个规则也需要检测
     ): string[][] {
         // 递归展开内部节点
-        const innerBranches = this.computeExpanded(null, node, firstK, curLevel, maxLevel)
+        // 🔴 关键：传递 isFirstPosition 用于递归检测
+        const innerBranches = this.computeExpanded(null, node, firstK, curLevel, maxLevel, isFirstPosition)
 
         // ⚠️⚠️⚠️ 关键：添加空分支 [] 表示可以跳过（0次）
         // 空分支必须在第一个位置，表示优先匹配空（PEG 顺序选择）
@@ -1201,15 +1226,19 @@ export class SubhutiGrammarAnalyzer {
      * - 空分支会被正常保留，不会被过滤
      *
      * 注意：doubleBranches 需要内部截取，因为拼接后会超过 firstK
+     * 
+     * 🔴 关键：AtLeastOne 内的规则也需要检测左递归
      */
     private expandAtLeastOne(
         node: SequenceNode,
         firstK: number,
         curLevel: number,
-        maxLevel: number
+        maxLevel: number,
+        isFirstPosition: boolean = true  // 🔴 AtLeastOne 内的第一个规则也需要检测
     ): string[][] {
         // 递归展开内部节点（1次的情况，可能包含空分支 []）
-        const innerBranches = this.computeExpanded(null, node, firstK, curLevel, maxLevel)
+        // 🔴 关键：传递 isFirstPosition 用于递归检测
+        const innerBranches = this.computeExpanded(null, node, firstK, curLevel, maxLevel, isFirstPosition)
 
         // 生成 doubleBranches（2次的情况）
         const doubleBranches = innerBranches.map(branch => {
