@@ -26,37 +26,37 @@
  *    - 路径数量限制：默认10000条（防止路径爆炸）
  *
  * ⚠️⚠️⚠️ 关键：空分支 [] 的处理 ⚠️⚠️⚠️
- * 
+ *
  * 空分支来源：
  * - option(X) 和 many(X) 会产生空分支 []，表示可以跳过（0次）
  * - 空分支在展开结果中表示为 []（空数组）
- * 
+ *
  * 空分支的重要性：
  * - 空分支必须保留，否则 option/many 的语义就错了！
  * - 例如：option(a) 的 First 集合 = {ε, a}
  * - 如果过滤掉空分支，就变成 First 集合 = {a}，语义错误！
- * 
+ *
  * 空分支在各个处理环节的行为：
  * 1. deduplicate：
  *    - [] join(',') = ""（空字符串）
  *    - 空字符串是合法的 Set key，不会被过滤
  *    - 例如：[[], [a], []] → [[], [a]]（正常去重）
- * 
+ *
  * 2. cartesianProduct：
  *    - [...seq, ...[]] = [...seq]（空分支拼接不影响结果）
  *    - [...[], ...branch] = [...branch]（空序列拼接）
  *    - 例如：[[a]] × [[], [b]] → [[a], [a,b]]（正常笛卡尔积）
- * 
+ *
  * 3. truncateAndDeduplicate：
  *    - [] slice(0, firstK) = []（空分支截取还是空分支）
  *    - 例如：[[], [a,b]], firstK=1 → [[], [a]]（正常截取）
- * 
+ *
  * 4. expandSequenceNode：
  *    - 空分支参与笛卡尔积和截取，不会被过滤
- * 
+ *
  * 5. expandOr：
  *    - 空分支参与合并，不会被过滤
- * 
+ *
  * 结论：
  * - 整个系统中没有任何地方会过滤空分支 []
  * - 空分支在所有处理环节都是一等公民
@@ -155,7 +155,8 @@ export interface GrammarAnalyzerOptions {
  */
 export class SubhutiGrammarAnalyzer {
     /** 正在计算的规则（用于检测循环依赖） */
-    private computing = new Set<string>()
+    private recursiveDetectionSet = new Set<string>()
+    private leftRecursiveDetectionSet = new Set<string>()
 
     /** 配置选项 */
     private options: Required<GrammarAnalyzerOptions>
@@ -490,9 +491,9 @@ export class SubhutiGrammarAnalyzer {
 
     /**
      * 计算 First(K) 集合（不展开规则名）
-     * 
+     *
      * 参数：firstK=FIRST_K, maxLevel=MIN_LEVEL（默认1）
-     * 
+     *
      * 用途：获取规则的前 K 个符号，规则名不展开
      */
     public computeFirstMoreBranches(ruleName: string, ruleNode: RuleNode = null) {
@@ -522,9 +523,9 @@ export class SubhutiGrammarAnalyzer {
 
     /**
      * 计算 First(1) 集合（完全展开到 token）
-     * 
+     *
      * 参数：firstK=1, maxLevel=Infinity
-     * 
+     *
      * 用途：获取规则的第1个 token，完全展开规则名
      */
     public computeFirst1ExpandBranches(ruleName: string, ruleNode: RuleNode = null) {
@@ -534,9 +535,9 @@ export class SubhutiGrammarAnalyzer {
 
     /**
      * 计算 First(K) 集合（按配置层级展开）
-     * 
+     *
      * 参数：firstK=FIRST_K, maxLevel=MAX_LEVEL
-     * 
+     *
      * 用途：获取规则的前 K 个符号，按配置层级展开规则名
      */
     public computeFirstMoreExpandBranches(ruleName: string, ruleNode: RuleNode = null) {
@@ -548,7 +549,7 @@ export class SubhutiGrammarAnalyzer {
     /**
      * 计算笛卡尔积
      * [[a1, a2], [b1, b2]] → [[a1, b1], [a1, b2], [a2, b1], [a2, b2]]
-     * 
+     *
      * ⚠️ 重要：空分支处理
      * - 空分支 [] 参与笛卡尔积时，会被正常拼接
      * - [...seq, ...[]] = [...seq]，相当于只保留 seq
@@ -601,7 +602,7 @@ export class SubhutiGrammarAnalyzer {
      */
     public computeNodeFirst(node: SequenceNode): Set<string> {
         // 清空循环检测集合（即使没有规则名，子规则可能有）
-        this.computing.clear()
+        this.recursiveDetectionSet.clear()
 
         // 🔍 调试日志：检查节点结构
         const nodeRuleName = (node as any).ruleName
@@ -748,11 +749,11 @@ export class SubhutiGrammarAnalyzer {
 
     /**
      * 展开 Sequence 节点
-     * 
+     *
      * 核心逻辑：
      * - First(1)：只展开第1个子节点
      * - First(K)：笛卡尔积展开所有子节点，然后截取
-     * 
+     *
      * ⚠️ 重要：空分支在 sequence 中的处理
      * - 如果子节点包含空分支 []（来自 option/many）
      * - 笛卡尔积会正常处理：[[a]] × [[], [b]] → [[a], [a,b]]
@@ -763,18 +764,6 @@ export class SubhutiGrammarAnalyzer {
         if (node.nodes.length === 0) {
             // 空序列，返回包含一个空分支
             return [[]]
-        }
-
-        // First(1) 优化：只需要第1个符号
-        if (firstK === 1) {
-            // 取第1个子节点
-            const firstNode = node.nodes[0]
-            // 递归展开第1个子节点（可能包含空分支 []）
-            const result = this.computeExpanded(null, firstNode, firstK, curLevel, maxLevel)
-
-            // 子节点已保证长度≤firstK，只需去重
-            // ⚠️ deduplicate 不会过滤空分支 []
-            return this.deduplicate(result)
         }
 
         // First(K)：需要笛卡尔积
@@ -819,40 +808,39 @@ export class SubhutiGrammarAnalyzer {
         // - 最坏情况：展开 firstK 个节点（优化1）
         // - 最好情况：展开 1 个节点（优化2）
         // - 平均情况：展开 < firstK 个节点
-        
+
         // ⚠️⚠️⚠️ 双重优化策略：
         // 1. 第一层保护：slice(0, firstK) - 最多展开 firstK 个节点
         // 2. 第二层优化：累加提前停止 - 在 firstK 个节点内提前停止
         const nodesToExpand = node.nodes.slice(0, firstK)
-        
+
         const allBranches: string[][][] = []
         let minLengthSum = 0  // 累加的最短长度
-        
-        // 遍历前 firstK 个子节点，累加最短分支长度
-        for (let i = 0; i < nodesToExpand.length; i++) {
+
+        for (const nodesToExpandElement of nodesToExpand) {
             // 展开当前子节点
-            const branches = this.computeExpanded(null, nodesToExpand[i], firstK, curLevel, maxLevel)
-            
+            const branches = this.computeExpanded(null, nodesToExpandElement, firstK, curLevel, maxLevel)
+
             // 防御：如果 branches 为空（理论上不应该发生）
             if (branches.length === 0) {
                 throw new Error(`系统错误：节点展开结果为空`)
             }
-            
+
             allBranches.push(branches)
-            
+
             // 找到当前子节点的最短分支长度
             // ⚠️ 注意：如果包含空分支 []，最短长度为 0
             // 例如：option(abc) → [[], [a,b,c]]，最短长度 = 0
             const minLength = Math.min(...branches.map(b => b.length))
             minLengthSum += minLength
-            
+
             // 如果累加的最短长度 >= firstK，可以停止了
             // 原因：后续节点拼接后，截取到 firstK，结果不变
             if (minLengthSum >= firstK) {
                 break
             }
         }
-        
+
         // 防御：如果没有展开任何节点（理论上不应该发生）
         if (allBranches.length === 0) {
             throw new Error(`系统错误：未展开任何节点`)
@@ -874,7 +862,7 @@ export class SubhutiGrammarAnalyzer {
 
     /**
      * 子规则处理器
-     * 
+     *
      * 职责：
      * 1. 递归防护（防止无限递归）
      * 2. 层级限制（控制展开深度）
@@ -890,13 +878,13 @@ export class SubhutiGrammarAnalyzer {
         }
 
         // 递归检测：如果规则正在计算中，停止展开
-        if (this.computing.has(ruleName)) {
+        if (this.recursiveDetectionSet.has(ruleName)) {
             // 返回规则名本身（不再展开）
             return [[ruleName]]
         }
 
         // 标记当前规则正在计算（防止循环递归）
-        this.computing.add(ruleName)
+        this.recursiveDetectionSet.add(ruleName)
 
         try {
             // 层级限制：超过最大层级，停止展开
@@ -926,15 +914,15 @@ export class SubhutiGrammarAnalyzer {
             return result
         } finally {
             // 清除递归标记（确保即使异常也能清除）
-            this.computing.delete(ruleName)
+            this.recursiveDetectionSet.delete(ruleName)
         }
     }
 
     /**
      * 去重：移除重复的分支
-     * 
+     *
      * 例如：[[a,b], [c,d], [a,b]] → [[a,b], [c,d]]
-     * 
+     *
      * ⚠️ 重要：空分支处理
      * - 空分支 [] 会被序列化为空字符串 ""
      * - 空分支不会被过滤，会正常参与去重
@@ -967,11 +955,11 @@ export class SubhutiGrammarAnalyzer {
 
     /**
      * 截取并去重：先截取到 firstK，再去重
-     * 
+     *
      * 使用场景：笛卡尔积后路径变长，需要截取
-     * 
+     *
      * 例如：[[a,b,c], [d,e,f]], firstK=2 → [[a,b], [d,e]]
-     * 
+     *
      * ⚠️ 重要：空分支处理
      * - 空分支 [] slice(0, firstK) 还是 []
      * - 空分支不会被过滤，会正常参与去重
@@ -981,7 +969,7 @@ export class SubhutiGrammarAnalyzer {
         // 截取每个分支到 firstK（使用 slice 不修改原数组）
         // ⚠️ 空分支 [] slice(0, firstK) 还是 []，不会被过滤
         const truncated = branches.map(branch => branch.slice(0, firstK))
-        
+
         // 去重（截取后可能产生重复分支）
         // ⚠️ 空分支 [] 会正常参与去重，不会被过滤
         return this.deduplicate(truncated)
@@ -989,14 +977,14 @@ export class SubhutiGrammarAnalyzer {
 
     /**
      * 展开 Or 节点
-     * 
+     *
      * 核心逻辑：合并所有分支的展开结果
-     * 
+     *
      * 例如：or(abc / de) firstK=2
      *   → abc 展开为 [[a,b]]
      *   → de 展开为 [[d,e]]
      *   → 合并为 [[a,b], [d,e]]
-     * 
+     *
      * ⚠️ 重要：空分支在 or 中的处理
      * - 如果某个分支是 option/many，可能包含空分支 []
      * - 例如：or(option(a) / b)
@@ -1004,7 +992,7 @@ export class SubhutiGrammarAnalyzer {
      *   → b 展开为 [[b]]
      *   → 合并为 [[], [a], [b]]
      * - 空分支会被正常保留，不会被过滤
-     * 
+     *
      * 注意：不需要截取，因为子节点已保证长度≤firstK
      */
     private expandOr(
@@ -1019,7 +1007,7 @@ export class SubhutiGrammarAnalyzer {
             // 返回空分支（表示匹配失败）
             // return [[]]
         }
-        
+
         // 存储所有分支的展开结果（可能包含空分支 []）
         const result: string[][] = []
 
@@ -1045,18 +1033,18 @@ export class SubhutiGrammarAnalyzer {
 
     /**
      * 展开 Option/Many 节点
-     * 
+     *
      * option(X) = ε | X（0次或1次）
      * many(X) = ε | X | XX | XXX...（0次或多次）
-     * 
+     *
      * First 集合：
      * First(option(X)) = {ε} ∪ First(X)
      * First(many(X)) = {ε} ∪ First(X)
-     * 
+     *
      * 例如：option(abc) firstK=2
      *   → abc 展开为 [[a,b]]
      *   → 结果为 [[], [a,b]]（空分支 + 内部分支）
-     * 
+     *
      * ⚠️⚠️⚠️ 关键：空分支 [] 的重要性 ⚠️⚠️⚠️
      * - 空分支 [] 表示 option/many 可以跳过（0次）
      * - 空分支在后续处理中不会被过滤：
@@ -1064,7 +1052,7 @@ export class SubhutiGrammarAnalyzer {
      *   2. cartesianProduct：[...seq, ...[]] = [...seq]，正常拼接
      *   3. truncateAndDeduplicate：[] slice(0,k) = []，正常截取
      * - 空分支必须保留，否则 option/many 的语义就错了！
-     * 
+     *
      * 注意：不需要截取，因为子节点已保证长度≤firstK
      */
     private expandOption(
@@ -1075,11 +1063,11 @@ export class SubhutiGrammarAnalyzer {
     ): string[][] {
         // 递归展开内部节点
         const innerBranches = this.computeExpanded(null, node, firstK, curLevel, maxLevel)
-        
+
         // ⚠️⚠️⚠️ 关键：添加空分支 [] 表示可以跳过（0次）
         // 空分支必须在第一个位置，表示优先匹配空（PEG 顺序选择）
         const result = [[], ...innerBranches]
-        
+
         // 只去重，不截取（子节点已经处理过截取）
         // ⚠️ deduplicate 不会过滤空分支 []
         return this.deduplicate(result)
@@ -1087,18 +1075,18 @@ export class SubhutiGrammarAnalyzer {
 
     /**
      * 展开 AtLeastOne 节点
-     * 
+     *
      * atLeastOne(X) = X | XX | XXX...（至少1次）
-     * 
+     *
      * First 集合：
      * First(atLeastOne(X)) = First(X) ∪ First(XX)
-     * 
+     *
      * 例如：atLeastOne(ab) firstK=3
      *   → ab 展开为 [[a,b]]
      *   → 1次：[[a,b]]
      *   → 2次：[[a,b,a,b]] 截取到3 → [[a,b,a]]
      *   → 结果为 [[a,b], [a,b,a]]
-     * 
+     *
      * ⚠️ 重要：空分支说明
      * - atLeastOne 至少执行1次，不会产生空分支 []
      * - 与 option/many 不同，atLeastOne 的结果不包含 []
@@ -1109,7 +1097,7 @@ export class SubhutiGrammarAnalyzer {
      *   → 2次：[[], [a]] × 2 → [[], [a]]（空分支拼接还是空分支）
      *   → 结果为 [[], [a]]
      * - 空分支会被正常保留，不会被过滤
-     * 
+     *
      * 注意：doubleBranches 需要内部截取，因为拼接后会超过 firstK
      */
     private expandAtLeastOne(
@@ -1120,7 +1108,7 @@ export class SubhutiGrammarAnalyzer {
     ): string[][] {
         // 递归展开内部节点（1次的情况，可能包含空分支 []）
         const innerBranches = this.computeExpanded(null, node, firstK, curLevel, maxLevel)
-        
+
         // 生成 doubleBranches（2次的情况）
         const doubleBranches = innerBranches.map(branch => {
             // 拼接两次（例如：[a,b] → [a,b,a,b]）
@@ -1130,10 +1118,10 @@ export class SubhutiGrammarAnalyzer {
             // ⚠️ 空分支 [] slice(0, firstK) 还是 []
             return doubled.slice(0, firstK)
         })
-        
+
         // 合并1次和2次的结果（可能包含空分支 []）
         const result = [...innerBranches, ...doubleBranches]
-        
+
         // 只去重，不再截取（已经在内部截取过了）
         // ⚠️ deduplicate 不会过滤空分支 []
         return this.deduplicate(result)
