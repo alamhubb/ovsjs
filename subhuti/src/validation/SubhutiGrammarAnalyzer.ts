@@ -197,12 +197,12 @@ export class SubhutiGrammarAnalyzer {
 
     /**
      * 检测所有规则的左递归
-     * 
+     *
      * 实现方式：
      * - 遍历所有规则，调用 computeFirstMoreBranches 触发展开
      * - 在 subRuleHandler 中检测递归，区分左递归和普通递归
      * - 收集所有左递归错误
-     * 
+     *
      * @returns 左递归错误列表
      */
     public checkAllLeftRecursion(): LeftRecursionError[] {
@@ -220,7 +220,7 @@ export class SubhutiGrammarAnalyzer {
                 if (error.message.includes('左递归')) {
                     // 获取规则 AST
                     const ruleAST = this.getRuleNodeByAst(ruleName)
-                    
+
                     // 添加到错误列表
                     leftRecursionErrors.push({
                         level: 'FATAL',
@@ -231,7 +231,7 @@ export class SubhutiGrammarAnalyzer {
                         message: error.message,
                         suggestion: this.getLeftRecursionSuggestion(ruleName, ruleAST, new Set([ruleName]))
                     })
-                    
+
                     console.log(`  ❌ ${ruleName}: 左递归`)
                 } else {
                     // 其他错误，重新抛出
@@ -829,9 +829,9 @@ export class SubhutiGrammarAnalyzer {
      * @param isFirstPosition 是否在第一个位置（用于左递归检测）
      */
     private expandSequenceNode(
-        node: SequenceNode, 
-        firstK: number, 
-        curLevel: number, 
+        node: SequenceNode,
+        firstK: number,
+        curLevel: number,
         maxLevel: number,
         isFirstPosition: boolean = true
     ) {
@@ -896,11 +896,11 @@ export class SubhutiGrammarAnalyzer {
         for (let i = 0; i < nodesToExpand.length; i++) {
             // 展开当前子节点
             // 💡 传递累积的位置信息：父级是第1个 AND 当前也是第1个
-            const branches = this.computeExpanded(
-                null, 
-                nodesToExpand[i], 
-                firstK, 
-                curLevel, 
+            let branches = this.computeExpanded(
+                null,
+                nodesToExpand[i],
+                firstK,
+                curLevel,
                 maxLevel,
                 isFirstPosition && i === 0  // 累积位置：只有当父级和当前都是第1个时才是 true
             )
@@ -909,6 +909,8 @@ export class SubhutiGrammarAnalyzer {
             if (branches.length === 0) {
                 throw new Error(`系统错误：节点展开结果为空`)
             }
+
+            branches = branches.map(item => item.splice(0, firstK))
 
             allBranches.push(branches)
 
@@ -960,9 +962,9 @@ export class SubhutiGrammarAnalyzer {
      * @param isFirstPosition 是否在第一个位置（用于区分左递归和普通递归）
      */
     private subRuleHandler(
-        ruleName: string, 
-        firstK: number, 
-        curLevel: number, 
+        ruleName: string,
+        firstK: number,
+        curLevel: number,
         maxLevel: number,
         isFirstPosition: boolean = true
     ) {
@@ -981,7 +983,7 @@ export class SubhutiGrammarAnalyzer {
             console.log(`\n🔍 [递归检测] 规则: ${ruleName}`)
             console.log(`  isFirstPosition: ${isFirstPosition}`)
             console.log(`  recursiveDetectionSet: ${Array.from(this.recursiveDetectionSet).join(', ')}`)
-            
+
             // 💡 区分左递归和普通递归
             if (isFirstPosition) {
                 // 在第一个位置递归 → 左递归！
@@ -1105,7 +1107,7 @@ export class SubhutiGrammarAnalyzer {
      * - 空分支会被正常保留，不会被过滤
      *
      * 注意：不需要截取，因为子节点已保证长度≤firstK
-     * 
+     *
      * 🔴 关键：Or 分支中的每个替代也是"第一个位置"
      * - 在 PEG 的选择中，每个分支都是独立的起点
      * - Or 分支内的第一个规则需要检测左递归
@@ -1174,7 +1176,7 @@ export class SubhutiGrammarAnalyzer {
      * - 空分支必须保留，否则 option/many 的语义就错了！
      *
      * 注意：不需要截取，因为子节点已保证长度≤firstK
-     * 
+     *
      * 🔴 关键：Option 内的规则也需要检测左递归
      * - 虽然 option(X) 可以跳过，但当内部有递归时也是左递归
      * - 例如：A → option(A) B
@@ -1226,7 +1228,7 @@ export class SubhutiGrammarAnalyzer {
      * - 空分支会被正常保留，不会被过滤
      *
      * 注意：doubleBranches 需要内部截取，因为拼接后会超过 firstK
-     * 
+     *
      * 🔴 关键：AtLeastOne 内的规则也需要检测左递归
      */
     private expandAtLeastOne(
