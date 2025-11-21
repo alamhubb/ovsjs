@@ -727,8 +727,16 @@ const testCases = [
     }
 ]
 
+// 执行左递归检测
+console.log(`\n执行左递归检测...`)
+const leftRecursionErrors = analyzer.checkAllLeftRecursion()
+console.log(`检测完成，发现 ${leftRecursionErrors.length} 个左递归错误\n`)
+
+// 创建错误规则集合，方便查找
+const errorRuleSet = new Set(leftRecursionErrors.map(error => error.ruleName))
+
 // 执行测试
-console.log(`\n开始测试 ${testCases.length} 个用例...\n`)
+console.log(`开始测试 ${testCases.length} 个用例...\n`)
 
 let passCount = 0
 let failCount = 0
@@ -748,37 +756,36 @@ for (const testCase of testCases) {
     console.log(`   规则：${testCase.ruleName}`)
     console.log(`   预期：${testCase.expectedError ? '左递归错误' : '正常'}`)
     
-    try {
-        // 调用展开方法，触发左递归检测
-        const result = analyzer.computeFirst1ExpandBranches(testCase.ruleName)
-        
-        // 没有抛出错误
-        if (testCase.expectedError) {
-            console.log(`   ❌ 失败：应该检测到左递归，但没有报错`)
-            console.log(`      实际结果：${JSON.stringify(result)}`)
-            failCount++
-        } else {
-            console.log(`   ✅ 通过：正常展开`)
-            console.log(`      First 集合：${JSON.stringify(result).substring(0, 80)}${result.length > 3 ? '...' : ''}`)
-            passCount++
+    // 检查规则是否在左递归错误集合中
+    const hasLeftRecursion = errorRuleSet.has(testCase.ruleName)
+    
+    if (testCase.expectedError && hasLeftRecursion) {
+        console.log(`   ✅ 通过：正确检测到左递归`)
+        const error = leftRecursionErrors.find(e => e.ruleName === testCase.ruleName)
+        if (error) {
+            console.log(`      错误信息：${error.message}`)
         }
-    } catch (error) {
-        // 抛出了错误
-        const errorMessage = error.message
-        const isLeftRecursionError = errorMessage.includes('左递归')
-        
-        if (testCase.expectedError && isLeftRecursionError) {
-            console.log(`   ✅ 通过：正确检测到左递归`)
-            console.log(`      错误信息：${errorMessage}`)
-            passCount++
-        } else if (!testCase.expectedError && isLeftRecursionError) {
-            console.log(`   ❌ 失败：不应该报左递归错误`)
-            console.log(`      错误信息：${errorMessage}`)
-            failCount++
-        } else {
-            console.log(`   ⚠️  未知错误：${errorMessage}`)
-            failCount++
+        passCount++
+    } else if (testCase.expectedError && !hasLeftRecursion) {
+        console.log(`   ❌ 失败：应该检测到左递归，但没有检测到`)
+        // 尝试获取该规则的展开结果，看看为什么没有检测到
+        try {
+            const result = analyzer.computeFirst1ExpandBranches(testCase.ruleName)
+            console.log(`      实际结果：${JSON.stringify(result).substring(0, 80)}${JSON.stringify(result).length > 80 ? '...' : ''}`)
+        } catch (e) {
+            console.log(`      展开时出错：${e.message}`)
         }
+        failCount++
+    } else if (!testCase.expectedError && hasLeftRecursion) {
+        console.log(`   ❌ 失败：不应该报左递归错误`)
+        const error = leftRecursionErrors.find(e => e.ruleName === testCase.ruleName)
+        if (error) {
+            console.log(`      错误信息：${error.message}`)
+        }
+        failCount++
+    } else {
+        console.log(`   ✅ 通过：正常（无左递归）`)
+        passCount++
     }
 }
 
@@ -802,11 +809,6 @@ testCases.forEach(tc => {
 
 console.log(`\n分类统计：`)
 Object.entries(categoryStats).forEach(([category, stats]) => {
-    const passed = testCases.filter(tc => 
-        tc.category === category && 
-        ((tc.expectedError && tc.name.includes('✅')) || 
-         (!tc.expectedError && tc.name.includes('✅')))
-    ).length
     console.log(`  ${category}: ${stats.total} 个测试`)
 })
 

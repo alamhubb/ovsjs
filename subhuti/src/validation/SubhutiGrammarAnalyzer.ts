@@ -230,8 +230,10 @@ export class SubhutiGrammarAnalyzer {
             this.recursiveDetectionSet.clear()
             
             try {
-                // 执行展开，左递归错误会自动收集到 detectedLeftRecursionErrors
-                this.computeFirstMoreBranches(ruleName)
+                // 执行展开，使用无限层级以检测间接左递归
+                // 注意：这里使用 computeFirst1ExpandBranches 而不是 computeFirstMoreBranches
+                // 因为后者的 maxLevel=1 无法检测间接左递归
+                this.computeFirst1ExpandBranches(ruleName)
             } catch (error) {
                 // 处理其他系统错误（非左递归错误）
                 console.error(`  ⚠️  ${ruleName}: ${error.message}`)
