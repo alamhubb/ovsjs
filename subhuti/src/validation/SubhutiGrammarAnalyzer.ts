@@ -264,7 +264,7 @@ export class SubhutiGrammarAnalyzer {
     }
 
     /**
-     * 检测所有规则的 Or 分支冲突
+     * 检测所有规则的 Or 分支冲突（使用 First(1)）
      *
      * 实现方式：
      * - 遍历所有规则的 AST
@@ -275,14 +275,31 @@ export class SubhutiGrammarAnalyzer {
      * @returns Or 冲突错误列表
      */
     public checkAllOrConflicts(): ValidationError[] {
+        // 默认使用 First(1)
+        return this.checkAllOrConflictsWithFirstK(1)
+    }
+
+    /**
+     * 检测所有规则的 Or 分支冲突（支持 First(k)）
+     *
+     * 实现方式：
+     * - 遍历所有规则的 AST
+     * - 递归查找所有 Or 节点
+     * - 计算每个分支的 First(k) 集合
+     * - 检测分支间是否有交集
+     *
+     * @param k First(k) 的 k 值，默认为 1
+     * @returns Or 冲突错误列表
+     */
+    public checkAllOrConflictsWithFirstK(k: number = 1): ValidationError[] {
         const orConflictErrors: ValidationError[] = []
 
-        console.log(`\n📊 [Or分支冲突检测] 开始检测 ${this.ruleASTs.size} 个规则...`)
+        console.log(`\n📊 [Or分支冲突检测] 开始检测 ${this.ruleASTs.size} 个规则 (First(${k}))...`)
 
         // 遍历所有规则
         for (const [ruleName, ruleAST] of this.ruleASTs.entries()) {
             // 递归检查 AST 中的所有 Or 节点
-            this.checkOrConflictsInNode(ruleName, ruleAST, orConflictErrors)
+            this.checkOrConflictsInNodeWithFirstK(ruleName, ruleAST, orConflictErrors, k)
         }
 
         if (orConflictErrors.length === 0) {
@@ -295,7 +312,7 @@ export class SubhutiGrammarAnalyzer {
     }
 
     /**
-     * 递归检查节点中的 Or 冲突
+     * 递归检查节点中的 Or 冲突（使用 First(1)）
      *
      * @param ruleName 规则名
      * @param node 当前节点
@@ -306,20 +323,38 @@ export class SubhutiGrammarAnalyzer {
         node: RuleNode,
         errors: ValidationError[]
     ): void {
+        // 默认使用 First(1)
+        this.checkOrConflictsInNodeWithFirstK(ruleName, node, errors, 1)
+    }
+
+    /**
+     * 递归检查节点中的 Or 冲突（支持 First(k)）
+     *
+     * @param ruleName 规则名
+     * @param node 当前节点
+     * @param errors 错误列表
+     * @param k First(k) 的 k 值
+     */
+    private checkOrConflictsInNodeWithFirstK(
+        ruleName: string,
+        node: RuleNode,
+        errors: ValidationError[],
+        k: number = 1
+    ): void {
         switch (node.type) {
             case 'or':
                 // 检测当前 Or 节点的冲突
-                this.detectOrNodeConflict(ruleName, node, errors)
+                this.detectOrNodeConflictWithFirstK(ruleName, node, errors, k)
                 // 递归检查每个分支
                 for (const alt of node.alternatives) {
-                    this.checkOrConflictsInNode(ruleName, alt, errors)
+                    this.checkOrConflictsInNodeWithFirstK(ruleName, alt, errors, k)
                 }
                 break
 
             case 'sequence':
                 // 递归检查序列中的每个节点
                 for (const child of node.nodes) {
-                    this.checkOrConflictsInNode(ruleName, child, errors)
+                    this.checkOrConflictsInNodeWithFirstK(ruleName, child, errors, k)
                 }
                 break
 
@@ -327,7 +362,7 @@ export class SubhutiGrammarAnalyzer {
             case 'many':
             case 'atLeastOne':
                 // 递归检查内部节点
-                this.checkOrConflictsInNode(ruleName, node.node, errors)
+                this.checkOrConflictsInNodeWithFirstK(ruleName, node.node, errors, k)
                 break
 
             case 'consume':
@@ -338,7 +373,7 @@ export class SubhutiGrammarAnalyzer {
     }
 
     /**
-     * 检测单个 Or 节点的冲突
+     * 检测单个 Or 节点的冲突（使用 First(1)）
      *
      * @param ruleName 规则名
      * @param orNode Or 节点
@@ -349,25 +384,43 @@ export class SubhutiGrammarAnalyzer {
         orNode: RuleNode,
         errors: ValidationError[]
     ): void {
+        // 默认使用 First(1)
+        this.detectOrNodeConflictWithFirstK(ruleName, orNode, errors, 1)
+    }
+
+    /**
+     * 检测单个 Or 节点的冲突（支持 First(k)）
+     *
+     * @param ruleName 规则名
+     * @param orNode Or 节点
+     * @param errors 错误列表
+     * @param k First(k) 的 k 值
+     */
+    private detectOrNodeConflictWithFirstK(
+        ruleName: string,
+        orNode: RuleNode,
+        errors: ValidationError[],
+        k: number = 1
+    ): void {
         // 防御：确保是 Or 节点
         if (orNode.type !== 'or') {
-            throw new Error('系统错误：detectOrNodeConflict 只能处理 or 类型节点')
+            throw new Error('系统错误：detectOrNodeConflictWithFirstK 只能处理 or 类型节点')
         }
 
         // 类型断言为 OrNode
         const orNodeTyped = orNode as OrNode
 
-        // 计算每个分支的 First(1) 集合
+        // 计算每个分支的 First(k) 集合
         const branchFirstSets: Set<string>[] = []
 
         for (const alt of orNodeTyped.alternatives) {
             try {
-                // 使用 computeNodeFirst 计算 First(1) 集合（完全展开）
-                const firstSet = this.computeNodeFirst(alt)
+                // 使用 computeNodeFirstK 计算 First(k) 集合
+                const firstSet = this.computeNodeFirstK(alt, k)
                 branchFirstSets.push(firstSet)
             } catch (error) {
                 // 计算 First 集合时出错（可能是递归等问题），跳过该分支
-                console.warn(`  ⚠️  规则 "${ruleName}" 的某个 Or 分支计算 First 集合失败: ${error.message}`)
+                console.warn(`  ⚠️  规则 "${ruleName}" 的某个 Or 分支计算 First(${k}) 集合失败: ${error.message}`)
                 return
             }
         }
@@ -381,20 +434,22 @@ export class SubhutiGrammarAnalyzer {
                 if (intersection.size > 0) {
                     // 发现冲突
                     const conflictTokens = Array.from(intersection).join(', ')
+                    const errorType = k === 1 ? 'or-conflict' : `or-conflict-first${k}`
+                    
                     errors.push({
                         level: 'ERROR',
-                        type: 'or-conflict',
+                        type: errorType as any,
                         ruleName,
                         branchIndices: [i, j],
                         conflictPaths: {
-                            pathA: `分支 ${i + 1}: {${Array.from(branchFirstSets[i]).join(', ')}}`,
-                            pathB: `分支 ${j + 1}: {${Array.from(branchFirstSets[j]).join(', ')}}`
+                            pathA: `分支 ${i + 1} First(${k}): {${Array.from(branchFirstSets[i]).join(', ')}}`,
+                            pathB: `分支 ${j + 1} First(${k}): {${Array.from(branchFirstSets[j]).join(', ')}}`
                         },
-                        message: `规则 "${ruleName}" 的 Or 分支 ${i + 1} 和分支 ${j + 1} 存在冲突`,
+                        message: `规则 "${ruleName}" 的 Or 分支 ${i + 1} 和分支 ${j + 1} 在 First(${k}) 存在冲突`,
                         suggestion: this.getOrConflictSuggestion(ruleName, i, j, intersection, branchFirstSets[i], branchFirstSets[j])
                     })
 
-                    console.log(`  ❌ ${ruleName}: 分支 ${i + 1} 和 ${j + 1} 冲突 (${conflictTokens})`)
+                    console.log(`  ❌ ${ruleName}: 分支 ${i + 1} 和 ${j + 1} 在 First(${k}) 冲突 (${conflictTokens})`)
                 }
             }
         }
@@ -881,23 +936,36 @@ export class SubhutiGrammarAnalyzer {
      * @returns 完全展开的 First 集合（只包含叶子节点）
      */
     public computeNodeFirst(node: SequenceNode): Set<string> {
+        // 默认使用 First(1)
+        return this.computeNodeFirstK(node, 1)
+    }
+
+    /**
+     * 计算节点的 First(k) 集合（支持任意 k 值）
+     *
+     * @param node AST 节点
+     * @param k First(k) 的 k 值
+     * @returns 完全展开的 First(k) 集合（只包含叶子节点序列）
+     */
+    public computeNodeFirstK(node: SequenceNode, k: number = 1): Set<string> {
         // 清空循环检测集合（即使没有规则名，子规则可能有）
         this.recursiveDetectionSet.clear()
 
         // 🔍 调试日志：检查节点结构
         const nodeRuleName = (node as any).ruleName
-        console.log(`\n🔍🔍🔍 [computeNodeFirst] 被调用，规则名: ${nodeRuleName || 'null'}`)
+        console.log(`\n🔍🔍🔍 [computeNodeFirstK] 被调用，规则名: ${nodeRuleName || 'null'}，k=${k}`)
 
         if (nodeRuleName && (nodeRuleName === 'BreakableStatement' || nodeRuleName === 'IterationStatement')) {
-            console.log(`\n🔍 [computeNodeFirst] 规则: ${nodeRuleName}`)
+            console.log(`\n🔍 [computeNodeFirstK] 规则: ${nodeRuleName}`)
             console.log(`   节点类型: ${node.type}`)
             console.log(`   节点结构: ${JSON.stringify(node, null, 2)}`)
         }
 
-        // 调用内部递归方法（ruleName 为 null）
+        // 调用通用展开方法，传入对应的 k 值
         let paths: string[][]
         try {
-            paths = this.computeFirst1ExpandBranches(null, node)
+            // 使用 computeExpanded 方法，传入 firstK 参数
+            paths = this.computeExpanded(null, node, k, 0, EXPANSION_LIMITS.INFINITY_LEVEL, false)
 
             // 🔍 调试日志：检查路径结果
             if (nodeRuleName && (nodeRuleName === 'BreakableStatement' || nodeRuleName === 'IterationStatement')) {
@@ -923,17 +991,31 @@ export class SubhutiGrammarAnalyzer {
             throw e
         }
 
-        // 提取每个路径的第一个符号
+        // 根据 k 值提取符号序列
         const expandedSet = new Set<string>()
-        for (const path of paths) {
-            if (path.length > 0) {
-                expandedSet.add(path[0])
+        
+        if (k === 1) {
+            // First(1)：只提取第一个符号
+            for (const path of paths) {
+                if (path.length > 0) {
+                    expandedSet.add(path[0])
+                }
+            }
+        } else {
+            // First(k)：提取前 k 个符号的序列
+            for (const path of paths) {
+                // 取前 k 个符号（如果路径长度小于 k，就取整个路径）
+                const firstK = path.slice(0, k)
+                if (firstK.length > 0) {
+                    // 将符号序列转换为字符串（用于比较）
+                    expandedSet.add(firstK.join(' '))
+                }
             }
         }
 
         // 🔍 调试日志：检查 First 集合
         if (nodeRuleName && (nodeRuleName === 'BreakableStatement' || nodeRuleName === 'IterationStatement')) {
-            console.log(`   First(1) 集合: ${Array.from(expandedSet).join(', ')}`)
+            console.log(`   First(${k}) 集合: ${Array.from(expandedSet).slice(0, 10).join(', ')}${expandedSet.size > 10 ? '...' : ''}`)
         }
 
         return expandedSet
