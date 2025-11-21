@@ -679,17 +679,31 @@ export class SubhutiGrammarAnalyzer {
                     const sampleConflicts = uniqueConflicts.slice(0, displayLimit)
                     const hasMore = uniqueConflicts.length > displayLimit
                     
-                    // 计算冲突序列的最大token数量
-                    const maxTokenLength = uniqueConflicts.reduce((max, seq) => {
-                        // 提取实际的token序列（去掉"前缀冲突:"等前缀）
-                        const match = seq.match(/"([^"]+)"/)
-                        if (match) {
-                            const tokens = match[1].split(' ')
-                            return Math.max(max, tokens.length)
-                        }
-                        const tokens = seq.split(' ')
-                        return Math.max(max, tokens.length)
-                    }, 0)
+                    // 准备显示分支的First(k)集合
+                    const branchIFirst = Array.from(branchFirst5Sets[i]).slice(0, 10)
+                    const branchJFirst = Array.from(branchFirst5Sets[j]).slice(0, 10)
+                    const hasMoreI = branchFirst5Sets[i].size > 10
+                    const hasMoreJ = branchFirst5Sets[j].size > 10
+                    
+                    // 格式化First(k)集合显示
+                    const formatFirstSet = (sequences: string[], hasMore: boolean, totalCount: number) => {
+                        const formatted = sequences.map(seq => `"${seq}"`).join('\n        ')
+                        const moreInfo = hasMore ? `\n        ... (共 ${totalCount} 个序列)` : ''
+                        return formatted + moreInfo
+                    }
+                    
+                    // 分类冲突类型
+                    const prefixConflicts = uniqueConflicts.filter(c => c.startsWith('前缀冲突'))
+                    const equalConflicts = uniqueConflicts.filter(c => c.startsWith('相等冲突') || c.startsWith('完全冲突'))
+                    
+                    let conflictTypeDesc = ''
+                    if (equalConflicts.length > 0 && prefixConflicts.length > 0) {
+                        conflictTypeDesc = `相等冲突 ${equalConflicts.length} 个 + 前缀冲突 ${prefixConflicts.length} 个`
+                    } else if (equalConflicts.length > 0) {
+                        conflictTypeDesc = `相等冲突 (${equalConflicts.length} 个)`
+                    } else {
+                        conflictTypeDesc = `前缀冲突 (${prefixConflicts.length} 个)`
+                    }
                     
                     // 将冲突序列按长度排序（短的在前，更容易理解）
                     const sortedConflicts = sampleConflicts.sort((a, b) => {
@@ -710,7 +724,7 @@ export class SubhutiGrammarAnalyzer {
                     
                     const suggestion = hasFullLengthConflict
                         ? `⚠️ 深层冲突：存在长度为 ${k} 的完全相同序列，无法通过 First(${k}) 前瞻区分，需要重新设计语法结构`
-                        : `⚠️ 前缀冲突：存在前缀重叠，较短序列是较长序列的前缀，建议调整语法或增加前瞻深度`
+                        : `⚠️ 前缀/相等冲突：存在重叠序列，建议调整语法或增加前瞻深度`
                     
                     errors.push({
                         level: 'ERROR',
@@ -718,14 +732,14 @@ export class SubhutiGrammarAnalyzer {
                         ruleName,
                         branchIndices: [i, j],
                         conflictPaths: {
-                            pathA: `冲突的序列（分支${i + 1}和分支${j + 1}）:\n      ${conflictDetail}${hasMore ? `\n      ... 还有 ${uniqueConflicts.length - displayLimit} 个` : ''}`,
-                            pathB: `(共 ${uniqueConflicts.length} 个冲突)`
+                            pathA: `分支 ${i + 1} 的 First(${k}) 集合:\n      ${formatFirstSet(branchIFirst, hasMoreI, branchFirst5Sets[i].size)}\n\n    分支 ${j + 1} 的 First(${k}) 集合:\n      ${formatFirstSet(branchJFirst, hasMoreJ, branchFirst5Sets[j].size)}\n\n    冲突类型: ${conflictTypeDesc}\n    冲突详情:\n      ${conflictDetail}${hasMore ? `\n      ... 还有 ${uniqueConflicts.length - displayLimit} 个` : ''}`,
+                            pathB: `共 ${uniqueConflicts.length} 个冲突序列`
                         },
                         message: `规则 "${ruleName}" 的 Or 分支 ${i + 1} 和分支 ${j + 1} 在 First(${k}) 存在真实冲突`,
                         suggestion
                     })
                     
-                    console.log(`    ❌ 分支 ${i + 1} 和 ${j + 1} 在 First(${k}) 存在真实冲突 (${uniqueConflicts.length}个)`)
+                    console.log(`    ❌ 分支 ${i + 1} 和 ${j + 1} 在 First(${k}) 存在真实冲突 (${conflictTypeDesc})`)
                 } else {
                     console.log(`    💡 分支 ${i + 1} 和 ${j + 1} 仅在 First(1) 冲突 (浅层冲突，可通过前瞻解决)`)
                 }
