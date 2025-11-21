@@ -676,7 +676,12 @@ export class SubhutiGrammarAnalyzer {
                 const estimatedComparisons = branchFirst5Sets[i].size * branchFirst5Sets[j].size
                 console.log(`       预计比较次数: ${estimatedComparisons}`)
 
+                // 🔧 优化：一旦发现第一个冲突就停止，避免重复报告同一对分支
+                let foundConflict = false
+
                 for (const seqA of branchFirst5Sets[i]) {
+                    if (foundConflict) break  // 已发现冲突，跳出外层循环
+
                     const tokensA = seqA.split(' ')
 
                     for (const seqB of branchFirst5Sets[j]) {
@@ -691,7 +696,8 @@ export class SubhutiGrammarAnalyzer {
                                 behindLen: tokensB.length,
                                 type: 'full'
                             })
-                            continue
+                            foundConflict = true
+                            break  // 发现冲突，停止比较
                         }
 
                         // 情况2：前面就是分支A，后面就是分支B，不调整顺序
@@ -720,6 +726,8 @@ export class SubhutiGrammarAnalyzer {
                                         behindLen: behind.length,
                                         type: 'prefix'
                                     })
+                                    foundConflict = true
+                                    break  // 发现冲突，停止比较
                                 }
                             } else if (behind.length === front.length) {
                                 // 长度相等，检查内容是否相等
@@ -731,6 +739,8 @@ export class SubhutiGrammarAnalyzer {
                                         behindLen: behind.length,
                                         type: 'equal'
                                     })
+                                    foundConflict = true
+                                    break  // 发现冲突，停止比较
                                 }
                             }
                             // 如果 behind.length < front.length，则不检查
@@ -740,47 +750,33 @@ export class SubhutiGrammarAnalyzer {
 
                 const tCompPairEnd = Date.now()
                 const pairCompTime = tCompPairEnd - tCompPairStart
-                console.log(`       📊 发现 ${conflictPairs.length} 个真实冲突 (实际比较${estimatedComparisons}次，耗时${pairCompTime}ms)`)
+                console.log(`       📊 ${conflictPairs.length > 0 ? '发现冲突' : '无冲突'} (耗时${pairCompTime}ms)`)
 
                 // 优化：只要发现一个真实冲突，就报告并停止检测该Or节点的其他分支对
                 if (conflictPairs.length > 0) {
                     // First(5) 有真实冲突 - 深层冲突
-                    const displayLimit = 10  // 最多显示10个冲突对
-                    const sampleConflicts = conflictPairs.slice(0, displayLimit)
-                    const hasMore = conflictPairs.length > displayLimit
+                    // 每对分支只有一个冲突（已优化）
+                    const pair = conflictPairs[0]
 
-                    // 分类冲突类型统计
-                    const fullConflicts = conflictPairs.filter(c => c.type === 'full')
-                    const prefixConflicts = conflictPairs.filter(c => c.type === 'prefix')
-                    const equalConflicts = conflictPairs.filter(c => c.type === 'equal')
-
-                    let conflictTypeDesc = ''
-                    const types: string[] = []
-                    if (fullConflicts.length > 0) types.push(`完全冲突(长度=${k}) ${fullConflicts.length}个`)
-                    if (prefixConflicts.length > 0) types.push(`前缀冲突 ${prefixConflicts.length}个`)
-                    if (equalConflicts.length > 0) types.push(`相等冲突 ${equalConflicts.length}个`)
-                    conflictTypeDesc = types.join(' + ')
-
-                    // 格式化冲突对的详细信息
-                    const formatConflictPair = (pair: ConflictPair, index: number) => {
-                        let typeLabel = ''
-                        if (pair.type === 'full') {
-                            typeLabel = `完全相同(长度=${k})`
-                        } else if (pair.type === 'prefix') {
-                            typeLabel = `前缀冲突(前面${pair.frontLen}个是后面${pair.behindLen}个的前缀)`
-                        } else {
-                            typeLabel = `相等(长度=${pair.frontLen})`
-                        }
-
-                        return `冲突${index + 1}: ${typeLabel}
-      分支${i + 1}: "${pair.frontSeq}"
-      分支${j + 1}: "${pair.behindSeq}"`
+                    // 确定冲突类型
+                    let typeLabel = ''
+                    if (pair.type === 'full') {
+                        typeLabel = `完全相同(长度=${k})`
+                    } else if (pair.type === 'prefix') {
+                        typeLabel = `前缀冲突(前面${pair.frontLen}个是后面${pair.behindLen}个的前缀)`
+                    } else {
+                        typeLabel = `相等(长度=${pair.frontLen})`
                     }
 
-                    const conflictDetails = sampleConflicts.map((pair, idx) => formatConflictPair(pair, idx)).join('\n\n    ')
-                    const moreInfo = hasMore ? `\n\n    ... 还有 ${conflictPairs.length - displayLimit} 个冲突` : ''
+                    // 格式化冲突信息
+                    const conflictDetails = `${typeLabel}
+      分支${i + 1}: "${pair.frontSeq}"
+      分支${j + 1}: "${pair.behindSeq}"`
 
-                    const hasFullLengthConflict = fullConflicts.length > 0
+                    const moreInfo = ''  // 不再需要"还有X个冲突"的提示
+
+                    // 确定是否是深层冲突（完全相同）
+                    const hasFullLengthConflict = pair.type === 'full'
 
                     const suggestion = hasFullLengthConflict
                         ? `⚠️ 深层冲突：存在长度为 ${k} 的完全相同序列，无法通过 First(${k}) 前瞻区分，需要重新设计语法结构`
@@ -793,13 +789,13 @@ export class SubhutiGrammarAnalyzer {
                         branchIndices: [i, j],
                         conflictPaths: {
                             pathA: `${conflictDetails}${moreInfo}`,
-                            pathB: `共 ${conflictPairs.length} 个冲突 (${conflictTypeDesc})`
+                            pathB: ''  // 简化输出
                         },
                         message: `规则 "${ruleName}" 的 Or 分支 ${i + 1} 和分支 ${j + 1} 在 First(${k}) 存在真实冲突`,
                         suggestion
                     })
 
-                    console.log(`    ❌ 分支 ${i + 1} 和 ${j + 1} 在 First(${k}) 存在真实冲突 (${conflictTypeDesc})`)
+                    console.log(`    ❌ 分支 ${i + 1} 和 ${j + 1} 在 First(${k}) 存在真实冲突 (${typeLabel})`)
                     console.log(`    🎯 检测到冲突，停止检查该Or节点的其他分支对`)
 
                     // 优化：发现冲突后立即退出，不再检查该Or节点的其他分支对
