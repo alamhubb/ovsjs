@@ -100,7 +100,7 @@ export const EXPANSION_LIMITS = {
     INFINITY_LEVEL: Infinity,
 
     FIRST_INFINITY: Infinity,
-    FIRST_K: 10,
+    FIRST_K: 3,
     FIRST_1: 1,
 
     /**
@@ -669,6 +669,7 @@ export class SubhutiGrammarAnalyzer {
                 const tCompPairStart = Date.now()
 
                 console.log(`    🔍 [DEBUG] 检测分支 ${i + 1} 和 ${j + 1} 的 First(${k}) 真实冲突...`)
+                console.log(`    🔍 [DEBUG] ${ruleName}`)
                 console.log(`       分支${i + 1} 有 ${branchFirst5Sets[i].size} 个序列`)
                 console.log(`       分支${j + 1} 有 ${branchFirst5Sets[j].size} 个序列`)
 
@@ -1245,7 +1246,7 @@ export class SubhutiGrammarAnalyzer {
 
 
     /**
-     * 计算笛卡尔积
+     * 计算笛卡尔积（优化版：先截取再拼接 + seq级别去重 + 提前移入最终结果集）
      * [[a1, a2], [b1, b2]] → [[a1, b1], [a1, b2], [a2, b1], [a2, b2]]
      *
      * ⚠️ 重要：空分支处理
@@ -1253,6 +1254,13 @@ export class SubhutiGrammarAnalyzer {
      * - [...seq, ...[]] = [...seq]，相当于只保留 seq
      * - 例如：[[a]] × [[], [b]] → [[a], [a,b]]
      * - 这正是 option/many 需要的行为：可以跳过或执行
+     *
+     * 🔧 优化策略：
+     * 1. 先计算可拼接长度，避免拼接超长数据
+     * 2. seq 级别去重，提前跳过重复分支
+     * 3. 修复循环逻辑，逐个数组处理
+     * 4. 长度达到 FIRST_K 的序列立即移入最终结果集，不再参与后续计算
+     * 5. 所有序列都达到 FIRST_K 时提前结束，跳过剩余数组
      */
     private cartesianProduct(arrays: string[][][]): string[][] {
         // 空数组，返回包含一个空序列的数组
@@ -1265,67 +1273,217 @@ export class SubhutiGrammarAnalyzer {
             return arrays[0]
         }
 
-        // 初始结果为第一个数组（可能包含空分支）
-        let result = arrays[0]
+        // 性能监控统计
+        const perfStats = {
+            totalBranches: 0,           // 总分支数
+            skippedByLength: 0,         // 因长度已满跳过的
+            skippedByDuplicate: 0,      // 因重复跳过的（seq级别）
+            actualCombined: 0,          // 实际拼接的
+            maxResultSize: 0,           // 最大结果集大小
+            movedToFinal: 0,            // 移入最终结果集的数量
+            arrayDedupTotal: 0,         // 数组层面去重总数
+            arrayOriginalTotal: 0       // 数组原始总数
+        }
 
-        // 临时存储本轮笛卡尔积结果
-        const temp: string[][] = []
+        // 初始结果为第一个数组
+        let result = arrays[0].filter(item => item.length < EXPANSION_LIMITS.FIRST_K)
+        let finalResult = arrays[0].filter(item => item.length >= EXPANSION_LIMITS.FIRST_K).map(item => item.join(','))
 
-        // 遍历后续数组，逐个计算笛卡尔积
-        for (const seq of result) {
-            // 遍历当前结果的每个序列
+        // 最终结果集（长度已达 FIRST_K 的序列）
+        const finalResultSet = new Set<string>(finalResult)
 
-            if (seq.length > EXPANSION_LIMITS.FIRST_K) {
-                throw new Error('系统错误')
+        // 逐个处理后续数组
+        for (let i = 1; i < arrays.length; i++) {
+            let currentArray = arrays[i]
+
+            // 🔧 优化：数组层面提前去重
+            // 如果数组较大且包含重复，提前去重可以显著减少后续计算
+            const arrayDedupStats = {
+                originalSize: currentArray.length,
+                dedupedSize: 0,
+                skippedDuplicates: 0
             }
-            if (seq.length === EXPANSION_LIMITS.MAX_LEVEL) {
-                temp.push([...seq])
-                continue
-            }
-            for (let i = 1; i < arrays.length; i++) {
-                // 遍历下一个数组的每个分支
-                for (const branch of arrays[i]) {
-                    if (branch.length > EXPANSION_LIMITS.FIRST_K) {
-                        throw Error('系统错误')
+
+            // 只对较大数组进行去重（避免小数组的去重开销）
+            if (currentArray.length > 100) {
+                const arrayDedupSet = new Set<string>()
+                const dedupedArray: string[][] = []
+
+                for (const branch of currentArray) {
+                    const branchKey = branch.join(',')
+                    if (!arrayDedupSet.has(branchKey)) {
+                        arrayDedupSet.add(branchKey)
+                        dedupedArray.push(branch)
+                    } else {
+                        arrayDedupStats.skippedDuplicates++
                     }
-
-                    // 拼接序列和分支，生成新序列
-                    // ⚠️ 如果 branch 是空分支 []，则 [...seq, ...[]] = [...seq]
-                    // ⚠️ 如果 seq 是空序列 []，则 [...[], ...branch] = [...branch]
-                    // ⚠️ 空分支不会被过滤，会正常参与笛卡尔积
-
-                    // 拼接后立即截取到 FIRST_K，防止超长
-                    // 即使 seq 和 branch 都已截取过，拼接后仍可能超过 FIRST_K
-                    // 例如：seq=[1..10], branch=[11] => 拼接后11个元素，需要截取
-                    let temp1 = [].concat(seq)
-                    temp1 = temp1.concat(branch)
-
-                    const combined = temp1.slice(0, EXPANSION_LIMITS.FIRST_K)
-
-                    temp.push(combined)
-
-                    if (temp.length > 1000000) {
-                        console.log(temp.slice(0, 1))
-                        throw new Error('数据大于100w')
-                    }
-                    // 对截取后的数据进行去重
-                    // 将序列序列化为字符串用于去重判断
-
                 }
 
+                currentArray = dedupedArray
+                arrayDedupStats.dedupedSize = currentArray.length
+
+                // 更新总体统计
+                perfStats.arrayOriginalTotal += arrayDedupStats.originalSize
+                perfStats.arrayDedupTotal += arrayDedupStats.skippedDuplicates
+
+                // 如果去重效果显著，输出日志
+                if (arrayDedupStats.skippedDuplicates > 1000) {
+                    console.log(`🔧 [数组 ${i}/${arrays.length - 1}] 数组层面去重: 原始=${arrayDedupStats.originalSize}, 去重后=${arrayDedupStats.dedupedSize}, 消除重复=${arrayDedupStats.skippedDuplicates} (${((arrayDedupStats.skippedDuplicates / arrayDedupStats.originalSize) * 100).toFixed(2)}%)`)
+                }
+            }
+
+            const temp: string[][] = []
+
+            console.log(result.length)
+            // console.log(result.slice(0,10))
+            console.log(currentArray.length)
+            // console.log(currentArray.slice(0,10))
+            console.log(currentArray.length * result.length)
+            // 遍历当前结果的每个序列
+            for (const seq of result) {
+                // 防御检查：不应该出现超长序列
+                if (seq.length > EXPANSION_LIMITS.FIRST_K) {
+                    throw new Error('系统错误：序列长度超过限制')
+                }
+
+                // seq 级别的去重集合
+                const seqDeduplicateSet = new Set<string>()
+
+                // 计算当前 seq 的可拼接长度
+                const availableLength = EXPANSION_LIMITS.FIRST_K - seq.length
+
+                // 情况1：seq 已达到 FIRST_K，直接放入最终结果集
+                if (availableLength === 0) {
+                    const seqKey = seq.join(',')
+                    finalResultSet.add(seqKey)
+                    perfStats.movedToFinal++
+                    perfStats.skippedByLength += currentArray.length
+                    continue  // 不再参与后续计算
+                }
+
+                // 情况2：seq 超过 FIRST_K（不应该发生，已有防御检查）
+                if (availableLength < 0) {
+                    throw new Error('系统错误：可拼接长度为负')
+                }
+
+                // 情况3：seq 长度 < FIRST_K，继续拼接
+                for (const branch of currentArray) {
+                    perfStats.totalBranches++
+
+                    // 提前截取 branch
+                    const truncatedBranch = branch.slice(0, availableLength)
+
+                    // 序列化用于去重
+                    const branchKey = truncatedBranch.join(',')
+
+                    // seq 级别去重
+                    if (seqDeduplicateSet.has(branchKey)) {
+                        perfStats.skippedByDuplicate++
+                        continue
+                    }
+
+                    seqDeduplicateSet.add(branchKey)
+
+                    // 拼接
+                    const combined: string[] = [].concat(seq).concat(truncatedBranch)
+
+                    // 检查拼接后的长度
+                    if (combined.length > EXPANSION_LIMITS.FIRST_K) {
+                        throw new Error('系统错误：笛卡尔积拼接后长度超过限制')
+                    }
+
+                    // 判断拼接后是否达到 FIRST_K
+                    if (combined.length === EXPANSION_LIMITS.FIRST_K) {
+                        // 达到最大长度，放入最终结果集
+                        const combinedKey = combined.join(',')
+                        finalResultSet.add(combinedKey)
+                        perfStats.movedToFinal++
+                    } else {
+                        // 未达到最大长度，放入 temp 继续参与后续计算
+                        temp.push(combined)
+                    }
+
+                    perfStats.actualCombined++
+
+                    // 防止结果集爆炸
+                    if (temp.length + finalResultSet.size > 1000000) {
+                        console.warn(`⚠️ 笛卡尔积结果超过100万 (arrays[${i}/${arrays.length - 1}])`)
+                        console.warn(`   temp: ${temp.length}, finalResultSet: ${finalResultSet.size}`)
+                        console.warn(`   性能统计:`, perfStats)
+                        throw new Error('笛卡尔积结果过大（超过100万）')
+                    }
+                }
+            }
+
+            // 更新结果为本轮笛卡尔积（只包含未达到 FIRST_K 的）
+            result = temp
+
+            // 更新统计
+            perfStats.maxResultSize = Math.max(perfStats.maxResultSize, result.length + finalResultSet.size)
+
+            // 监控
+            if (result.length + finalResultSet.size > 100000) {
+                console.warn(`⚠️ 笛卡尔积中间结果较大: temp=${result.length}, final=${finalResultSet.size} (数组 ${i}/${arrays.length - 1})`)
+            }
+
+            // 优化：如果 result 为空且还有后续数组，可以提前结束
+            if (result.length === 0 && finalResultSet.size > 0) {
+                console.log(`✅ 所有序列已达 FIRST_K，跳过剩余 ${arrays.length - i - 1} 个数组的计算`)
+                break
             }
         }
-        // 更新结果为本轮笛卡尔积（已去重）
-        result = temp
 
-        for (const resultElement of result) {
+        // 合并最终结果：finalResultSet + result
+        const finalArray: string[][] = []
+
+        // 1. 将 Set 中的字符串转回二维数组
+        for (const seqStr of finalResultSet) {
+            if (seqStr === '') {
+                finalArray.push([])  // 空序列
+            } else {
+                finalArray.push(seqStr.split(','))
+            }
+        }
+
+        // 2. 添加未达到 FIRST_K 的序列
+        finalArray.push(...result)
+
+        // 最终验证
+        for (const resultElement of finalArray) {
             if (resultElement.length > EXPANSION_LIMITS.FIRST_K) {
-                throw new Error('系统错误')
+                throw new Error('系统错误：最终结果长度超过限制')
             }
         }
 
-        // 返回最终笛卡尔积结果（可能包含空序列 []）
-        return result
+        // 输出性能统计
+        if (perfStats.maxResultSize > 10000 || perfStats.skippedByDuplicate > 1000 || perfStats.movedToFinal > 1000 || perfStats.arrayDedupTotal > 0) {
+            console.log(`📊 笛卡尔积性能统计:`)
+
+            // 数组层面去重统计
+            if (perfStats.arrayDedupTotal > 0) {
+                console.log(`   [数组去重] 原始总数: ${perfStats.arrayOriginalTotal}, 消除重复: ${perfStats.arrayDedupTotal} (${((perfStats.arrayDedupTotal / perfStats.arrayOriginalTotal) * 100).toFixed(2)}%)`)
+            }
+
+            // 计算统计
+            console.log(`   总分支数: ${perfStats.totalBranches}`)
+            console.log(`   因长度已满跳过: ${perfStats.skippedByLength}`)
+            console.log(`   因重复跳过(seq级别): ${perfStats.skippedByDuplicate}`)
+            console.log(`   实际拼接: ${perfStats.actualCombined}`)
+            console.log(`   移入最终结果集: ${perfStats.movedToFinal}`)
+            console.log(`   最终结果: finalSet=${finalResultSet.size}, temp=${result.length}, total=${finalArray.length}`)
+
+            // 计算优化效果
+            const seqLevelOptimization = perfStats.totalBranches > 0 ? ((perfStats.skippedByDuplicate / perfStats.totalBranches) * 100).toFixed(2) : '0.00'
+            console.log(`   seq级别优化率: ${seqLevelOptimization}%`)
+
+            // 计算总体节省的计算量
+            if (perfStats.arrayDedupTotal > 0 && result.length > 0) {
+                const savedCalculations = perfStats.arrayDedupTotal * result.length
+                console.log(`   💡 数组去重节省计算: ${savedCalculations.toLocaleString()} 次循环`)
+            }
+        }
+
+        return finalArray
     }
 
 
@@ -1586,7 +1744,7 @@ export class SubhutiGrammarAnalyzer {
         // 2. 第二层优化：累加提前停止 - 在 firstK 个节点内提前停止
 
         // 🔴 新增：计算需要展开到的索引（考虑 option/many 不计入必需元素）
-        /*let requiredCount = 0  // 非 option/many 的计数
+        let requiredCount = 0  // 非 option/many 的计数
         let expandToIndex = node.nodes.length  // 默认全部展开
 
         // 遍历找到第 firstK 个必需元素的位置
@@ -1605,11 +1763,11 @@ export class SubhutiGrammarAnalyzer {
                 }
             }
 
-        }*/
+        }
 
         // 使用计算出的索引进行截取（替换原来的简单 firstK）
-        const nodesToExpand = node.nodes.slice(0, firstK)
-        // const nodesToExpand = node.nodes.slice(0, expandToIndex)
+        // const nodesToExpand = node.nodes.slice(0, firstK)
+        const nodesToExpand = node.nodes.slice(0, expandToIndex)
 
         const allBranches: string[][][] = []
         let minLengthSum = 0  // 累加的最短长度
