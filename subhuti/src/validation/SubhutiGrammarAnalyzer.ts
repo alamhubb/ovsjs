@@ -796,12 +796,7 @@ export class SubhutiGrammarAnalyzer {
                     })
 
                     console.log(`    ❌ 分支 ${i + 1} 和 ${j + 1} 在 First(${k}) 存在真实冲突 (${typeLabel})`)
-                    console.log(`    🎯 检测到冲突，停止检查该Or节点的其他分支对`)
-
-                    // 优化：发现冲突后立即退出，不再检查该Or节点的其他分支对
-                    const tCompEnd = Date.now()
-                    if (perfStats) perfStats.comparisonTime += (tCompEnd - tCompStart)
-                    return
+                    // ✅ 不要停止，继续检测其他分支对
                 } else {
                     console.log(`    💡 分支 ${i + 1} 和 ${j + 1} 仅在 First(1) 冲突 (浅层冲突，可通过前瞻解决)`)
                 }
