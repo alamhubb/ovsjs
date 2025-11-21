@@ -887,7 +887,30 @@ export class SubhutiGrammarAnalyzer {
         // ⚠️⚠️⚠️ 双重优化策略：
         // 1. 第一层保护：slice(0, firstK) - 最多展开 firstK 个节点
         // 2. 第二层优化：累加提前停止 - 在 firstK 个节点内提前停止
-        const nodesToExpand = node.nodes.slice(0, firstK)
+        
+        // 🔴 新增：计算需要展开到的索引（考虑 option/many 不计入必需元素）
+        let requiredCount = 0  // 非 option/many 的计数
+        let expandToIndex = node.nodes.length  // 默认全部展开
+        
+        // 遍历找到第 firstK 个必需元素的位置
+        for (let i = 0; i < node.nodes.length; i++) {
+            const child = node.nodes[i]
+            
+            // 非 option/many 才计数
+            if (child.type !== 'option' && child.type !== 'many') {
+                requiredCount++
+                
+                // 找到第 firstK 个必需元素
+                if (requiredCount >= firstK) {
+                    // 包含当前元素，所以是 i + 1
+                    expandToIndex = i + 1
+                    break
+                }
+            }
+        }
+        
+        // 使用计算出的索引进行截取（替换原来的简单 firstK）
+        const nodesToExpand = node.nodes.slice(0, expandToIndex)
 
         const allBranches: string[][][] = []
         let minLengthSum = 0  // 累加的最短长度
@@ -910,7 +933,7 @@ export class SubhutiGrammarAnalyzer {
                 throw new Error(`系统错误：节点展开结果为空`)
             }
 
-            branches = branches.map(item => item.splice(0, firstK))
+            branches = branches.map(item => item.slice(0, firstK))
 
             allBranches.push(branches)
 
