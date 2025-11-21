@@ -917,6 +917,13 @@ export class SubhutiGrammarAnalyzer {
     initCacheAndCheckLeftRecursion(): ValidationError[] {
         const allErrors: ValidationError[] = []
 
+        // 0. 初始化各种组合的缓存
+        console.log(`  📊 [0] 开始初始化缓存...`)
+        const t0 = Date.now()
+        this.initAllCaches()
+        const t0End = Date.now()
+        console.log(`  ✓ [0] 缓存初始化完成，耗时 ${t0End - t0}ms`)
+
         // 1. 左递归检测
         const leftRecursionErrors = this.checkAllLeftRecursion()
         allErrors.push(...leftRecursionErrors)
@@ -1011,6 +1018,131 @@ export class SubhutiGrammarAnalyzer {
         })
 */
         return leftRecursionErrors
+    }
+
+    /**
+     * 初始化所有缓存组合
+     * 
+     * 根据 firstK 和 maxLevel 的不同组合，初始化对应的缓存：
+     * 1. firstK=INFINITY + maxLevel=LEVEL_1 → firstInfinityLevel1Cache
+     * 2. firstK=INFINITY + maxLevel=LEVEL_K → firstInfinityLevelKCache
+     * 3. firstK=FIRST_1 + maxLevel=INFINITY → first1LevelInfinityCache
+     * 4. firstK=FIRST_K + maxLevel=INFINITY → firstKLevelInfinityCache
+     */
+    private initAllCaches(): void {
+        const ruleNames = Array.from(this.ruleASTs.keys())
+        
+        console.log(`    初始化 firstInfinityLevel1Cache (firstK=∞, maxLevel=1)...`)
+        for (const ruleName of ruleNames) {
+            this.initFirstInfinityLevel1Cache(ruleName)
+        }
+        
+        console.log(`    初始化 firstInfinityLevelKCache (firstK=∞, maxLevel=${EXPANSION_LIMITS.LEVEL_K})...`)
+        for (const ruleName of ruleNames) {
+            this.initFirstInfinityLevelKCache(ruleName)
+        }
+        
+        console.log(`    初始化 first1LevelInfinityCache (firstK=1, maxLevel=∞)...`)
+        for (const ruleName of ruleNames) {
+            this.initFirst1LevelInfinityCache(ruleName)
+        }
+        
+        console.log(`    初始化 firstKLevelInfinityCache (firstK=${EXPANSION_LIMITS.FIRST_K}, maxLevel=∞)...`)
+        for (const ruleName of ruleNames) {
+            this.initFirstKLevelInfinityCache(ruleName)
+        }
+    }
+
+    /**
+     * 初始化 firstInfinityLevel1Cache（firstK=INFINITY, maxLevel=LEVEL_1）
+     * 
+     * 用途：获取规则的所有可能 token 序列，但只展开1层
+     */
+    private initFirstInfinityLevel1Cache(ruleName: string): void {
+        if (this.firstInfinityLevel1Cache.has(ruleName)) {
+            return
+        }
+        
+        // firstK=INFINITY, maxLevel=LEVEL_1
+        const branches = this.computeExpanded(
+            ruleName,
+            null,
+            EXPANSION_LIMITS.INFINITY,
+            0,
+            EXPANSION_LIMITS.LEVEL_1,
+            true
+        )
+        
+        this.firstInfinityLevel1Cache.set(ruleName, branches)
+    }
+
+    /**
+     * 初始化 firstInfinityLevelKCache（firstK=INFINITY, maxLevel=LEVEL_K）
+     * 
+     * 用途：获取规则的所有可能 token 序列，展开K层
+     */
+    private initFirstInfinityLevelKCache(ruleName: string): void {
+        if (this.firstInfinityLevelKCache.has(ruleName)) {
+            return
+        }
+        
+        // firstK=INFINITY, maxLevel=LEVEL_K
+        const branches = this.computeExpanded(
+            ruleName,
+            null,
+            EXPANSION_LIMITS.INFINITY,
+            0,
+            EXPANSION_LIMITS.LEVEL_K,
+            true
+        )
+        
+        this.firstInfinityLevelKCache.set(ruleName, branches)
+    }
+
+    /**
+     * 初始化 first1LevelInfinityCache（firstK=FIRST_1, maxLevel=INFINITY）
+     * 
+     * 用途：获取规则的第1个 token，完全展开到叶子节点
+     */
+    private initFirst1LevelInfinityCache(ruleName: string): void {
+        if (this.first1LevelInfinityCache.has(ruleName)) {
+            return
+        }
+        
+        // firstK=FIRST_1, maxLevel=INFINITY
+        const branches = this.computeExpanded(
+            ruleName,
+            null,
+            EXPANSION_LIMITS.FIRST_1,
+            0,
+            EXPANSION_LIMITS.INFINITY,
+            true
+        )
+        
+        this.first1LevelInfinityCache.set(ruleName, branches)
+    }
+
+    /**
+     * 初始化 firstKLevelInfinityCache（firstK=FIRST_K, maxLevel=INFINITY）
+     * 
+     * 用途：获取规则的前K个 token，完全展开到叶子节点
+     */
+    private initFirstKLevelInfinityCache(ruleName: string): void {
+        if (this.firstKLevelInfinityCache.has(ruleName)) {
+            return
+        }
+        
+        // firstK=FIRST_K, maxLevel=INFINITY
+        const branches = this.computeExpanded(
+            ruleName,
+            null,
+            EXPANSION_LIMITS.FIRST_K,
+            0,
+            EXPANSION_LIMITS.INFINITY,
+            true
+        )
+        
+        this.firstKLevelInfinityCache.set(ruleName, branches)
     }
 
     /**
