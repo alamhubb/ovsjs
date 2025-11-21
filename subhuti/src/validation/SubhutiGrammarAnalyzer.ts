@@ -99,7 +99,8 @@ export const EXPANSION_LIMITS = {
     MIN_LEVEL: 1,
     INFINITY_LEVEL: Infinity,
 
-    FIRST_K: 1000,
+    FIRST_INFINITY: Infinity,
+    FIRST_K: 5,
     FIRST_1: 1,
 
     /**
@@ -168,7 +169,7 @@ export class SubhutiGrammarAnalyzer {
     private firstKCache = new Map<string, string[][]>
     private firstInfinityCache = new Map<string, string[][]>
     private leftRecursiveDetectionSet = new Set<string>()
-    
+
     /** 收集检测过程中发现的左递归错误（使用 Map 提高查重性能） */
     private detectedLeftRecursionErrors = new Map<string, LeftRecursionError>()
 
@@ -221,15 +222,15 @@ export class SubhutiGrammarAnalyzer {
      */
     public checkAllLeftRecursion(): LeftRecursionError[] {
         console.log(`\n📊 [左递归检测] 开始检测 ${this.ruleASTs.size} 个规则...`)
-        
+
         // 清空错误 Map
         this.detectedLeftRecursionErrors.clear()
-        
+
         // 遍历所有规则
         for (const ruleName of this.ruleASTs.keys()) {
             // 清空递归检测集合
             this.recursiveDetectionSet.clear()
-            
+
             try {
                 // 执行展开，使用无限层级以检测间接左递归
                 // 注意：这里使用 computeFirst1ExpandBranches 而不是 computeFirstMoreBranches
@@ -240,24 +241,24 @@ export class SubhutiGrammarAnalyzer {
                 console.error(`  ⚠️  ${ruleName}: ${error.message}`)
             }
         }
-        
+
         // 为每个错误补充 suggestion
         for (const error of this.detectedLeftRecursionErrors.values()) {
             const ruleAST = this.getRuleNodeByAst(error.ruleName)
             error.suggestion = this.getLeftRecursionSuggestion(
-                error.ruleName, 
-                ruleAST, 
+                error.ruleName,
+                ruleAST,
                 new Set([error.ruleName])
             )
             console.log(`  ❌ ${error.ruleName}: 左递归`)
         }
-        
+
         if (this.detectedLeftRecursionErrors.size === 0) {
             console.log(`  ✅ 未发现左递归`)
         } else {
             console.log(`  ⚠️  发现 ${this.detectedLeftRecursionErrors.size} 个左递归错误`)
         }
-        
+
         // 返回收集到的错误（转换为数组）
         return Array.from(this.detectedLeftRecursionErrors.values())
     }
@@ -1245,11 +1246,11 @@ export class SubhutiGrammarAnalyzer {
                         message: `规则 "${ruleName}" 存在左递归`,
                         suggestion: '' // 稍后在外层填充
                     }
-                    
+
                     // 添加到错误 Map
                     this.detectedLeftRecursionErrors.set(ruleName, error)
                 }
-                
+
                 // 返回空数组，中断当前分支的计算
                 return []
             } else {
@@ -1277,6 +1278,10 @@ export class SubhutiGrammarAnalyzer {
             } else if (firstK === EXPANSION_LIMITS.FIRST_K) {
                 if (this.firstKCache.has(ruleName)) {
                     return this.first1Cache.get(ruleName)
+                }
+            } else if (firstK === EXPANSION_LIMITS.FIRST_INFINITY) {
+                if (this.firstInfinityCache.has(ruleName)) {
+                    return this.firstInfinityCache.get(ruleName)
                 }
             }
 
@@ -1309,6 +1314,11 @@ export class SubhutiGrammarAnalyzer {
                     throw new Error('系统错误')
                 }
                 this.firstKCache.set(ruleName, result)
+            } else if (firstK === EXPANSION_LIMITS.FIRST_INFINITY) {
+                if (this.firstInfinityCache.has(ruleName)) {
+                    throw new Error('系统错误')
+                }
+                this.firstInfinityCache.set(ruleName, result)
             }
 
             // 返回展开结果
