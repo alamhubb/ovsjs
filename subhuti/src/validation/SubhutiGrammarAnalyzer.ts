@@ -100,9 +100,9 @@ export const EXPANSION_LIMITS = {
     INFINITY_LEVEL: Infinity,
 
     FIRST_INFINITY: Infinity,
-    FIRST_K: 5,
+    FIRST_K: 10,
     FIRST_1: 1,
-    
+
     /**
      * First(k) 集合最大大小限制，防止笛卡尔积爆炸
      */
@@ -282,14 +282,32 @@ export class SubhutiGrammarAnalyzer {
     public checkAllOrConflicts(): ValidationError[] {
         const orConflictErrors: ValidationError[] = []
 
+        // 性能统计对象
+        const perfStats = {
+            totalTime: 0,
+            first1Time: 0,
+            first5Time: 0,
+            comparisonTime: 0,
+            rulesChecked: 0,
+            orNodesChecked: 0,
+            first1Computed: 0,
+            first5Computed: 0,
+            conflictComparisons: 0,
+            first5Skipped: 0  // 跳过的First(5)计算
+        }
+
+        const startTime = Date.now()
+
         console.log(`\n📊 [Or分支冲突检测] 开始智能检测 ${this.ruleASTs.size} 个规则...`)
         console.log(`   策略：先 First(1) 检测，有冲突再 First(5) 深入分析`)
 
         // 遍历所有规则
         for (const [ruleName, ruleAST] of this.ruleASTs.entries()) {
-            // 递归检查 AST 中的所有 Or 节点（使用智能检测）
-            this.checkOrConflictsInNodeSmart(ruleName, ruleAST, orConflictErrors)
+            perfStats.rulesChecked++
+            this.checkOrConflictsInNodeSmart(ruleName, ruleAST, orConflictErrors, perfStats)
         }
+
+        perfStats.totalTime = Date.now() - startTime
 
         if (orConflictErrors.length === 0) {
             console.log(`  ✅ 未发现 Or 分支冲突`)
@@ -297,7 +315,7 @@ export class SubhutiGrammarAnalyzer {
             // 统计冲突类型
             const first1Only = orConflictErrors.filter(e => e.type === 'or-conflict' && e.level === 'WARNING').length
             const first5Also = orConflictErrors.filter(e => e.type === 'or-conflict-first5').length
-            
+
             console.log(`  ⚠️  发现 ${orConflictErrors.length} 个 Or 分支冲突`)
             if (first1Only > 0) {
                 console.log(`     💡 浅层冲突(仅 First(1)): ${first1Only} 个`)
@@ -305,6 +323,19 @@ export class SubhutiGrammarAnalyzer {
             if (first5Also > 0) {
                 console.log(`     ❌ 深层冲突(First(5) 也冲突): ${first5Also} 个`)
             }
+        }
+
+        // 输出性能统计
+        console.log(`\n⏱️  [性能统计]`)
+        console.log(`   总耗时: ${perfStats.totalTime}ms`)
+        console.log(`   ├─ First(1)计算: ${perfStats.first1Time}ms (${(perfStats.first1Time / perfStats.totalTime * 100).toFixed(1)}%) - ${perfStats.first1Computed}次`)
+        console.log(`   ├─ First(k)计算: ${perfStats.first5Time}ms (${(perfStats.first5Time / perfStats.totalTime * 100).toFixed(1)}%) - ${perfStats.first5Computed}次`)
+        console.log(`   ├─ 冲突对比: ${perfStats.comparisonTime}ms (${(perfStats.comparisonTime / perfStats.totalTime * 100).toFixed(1)}%) - ${perfStats.conflictComparisons}次`)
+        console.log(`   └─ 其他: ${(perfStats.totalTime - perfStats.first1Time - perfStats.first5Time - perfStats.comparisonTime)}ms`)
+        console.log(`   Or节点总数: ${perfStats.orNodesChecked}`)
+        console.log(`   性能优化: 跳过 ${perfStats.first5Skipped} 次First(k)计算 (无First(1)冲突)`)
+        if (perfStats.orNodesChecked > 0) {
+            console.log(`   平均每Or节点: ${(perfStats.totalTime / perfStats.orNodesChecked).toFixed(2)}ms`)
         }
 
         return orConflictErrors
@@ -368,22 +399,24 @@ export class SubhutiGrammarAnalyzer {
     private checkOrConflictsInNodeSmart(
         ruleName: string,
         node: RuleNode,
-        errors: ValidationError[]
+        errors: ValidationError[],
+        perfStats?: any
     ): void {
         switch (node.type) {
             case 'or':
                 // 使用智能检测
-                this.detectOrNodeConflictSmart(ruleName, node, errors)
+                if (perfStats) perfStats.orNodesChecked++
+                this.detectOrNodeConflictSmart(ruleName, node, errors, perfStats)
                 // 递归检查每个分支
                 for (const alt of node.alternatives) {
-                    this.checkOrConflictsInNodeSmart(ruleName, alt, errors)
+                    this.checkOrConflictsInNodeSmart(ruleName, alt, errors, perfStats)
                 }
                 break
 
             case 'sequence':
                 // 递归检查序列中的每个节点
                 for (const child of node.nodes) {
-                    this.checkOrConflictsInNodeSmart(ruleName, child, errors)
+                    this.checkOrConflictsInNodeSmart(ruleName, child, errors, perfStats)
                 }
                 break
 
@@ -391,7 +424,7 @@ export class SubhutiGrammarAnalyzer {
             case 'many':
             case 'atLeastOne':
                 // 递归检查内部节点
-                this.checkOrConflictsInNodeSmart(ruleName, node.node, errors)
+                this.checkOrConflictsInNodeSmart(ruleName, node.node, errors, perfStats)
                 break
 
             case 'consume':
@@ -488,15 +521,9 @@ export class SubhutiGrammarAnalyzer {
         const branchFirstSets: Set<string>[] = []
 
         for (const alt of orNodeTyped.alternatives) {
-            try {
-                // 使用 computeNodeFirstK 计算 First(k) 集合
-                const firstSet = this.computeNodeFirstK(alt, k)
-                branchFirstSets.push(firstSet)
-            } catch (error) {
-                // 计算 First 集合时出错（可能是递归等问题），跳过该分支
-                console.warn(`  ⚠️  规则 "${ruleName}" 的某个 Or 分支计算 First(${k}) 集合失败: ${error.message}`)
-                return
-            }
+            // 使用 computeNodeFirstK 计算 First(k) 集合
+            const firstSet = this.computeNodeFirstK(alt, k)
+            branchFirstSets.push(firstSet)
         }
 
         // 检测分支间的冲突（两两比较）
@@ -509,7 +536,7 @@ export class SubhutiGrammarAnalyzer {
                     // 发现冲突
                     const conflictTokens = Array.from(intersection).join(', ')
                     const errorType = k === 1 ? 'or-conflict' : `or-conflict-first${k}`
-                    
+
                     errors.push({
                         level: 'ERROR',
                         type: errorType as any,
@@ -539,7 +566,8 @@ export class SubhutiGrammarAnalyzer {
     private detectOrNodeConflictSmart(
         ruleName: string,
         orNode: RuleNode,
-        errors: ValidationError[]
+        errors: ValidationError[],
+        perfStats?: any
     ): void {
         // 防御：确保是 Or 节点
         if (orNode.type !== 'or') {
@@ -555,26 +583,27 @@ export class SubhutiGrammarAnalyzer {
 
         console.log(`  🔍 [${ruleName}] 检测 Or 节点 First(1) 冲突...`)
 
+        const t1Start = Date.now()
+
         for (const alt of orNodeTyped.alternatives) {
-            try {
-                const firstSet = this.computeNodeFirstK(alt, EXPANSION_LIMITS.FIRST_1)
-                branchFirst1Sets.push(firstSet)
-            } catch (error) {
-                console.warn(`  ⚠️  规则 "${ruleName}" 的某个 Or 分支计算 First(1) 集合失败: ${error.message}`)
-                return
-            }
+            const firstSet = this.computeNodeFirstK(alt, EXPANSION_LIMITS.FIRST_1)
+            branchFirst1Sets.push(firstSet)
+            if (perfStats) perfStats.first1Computed++
         }
 
+        const t1End = Date.now()
+        if (perfStats) perfStats.first1Time += (t1End - t1Start)
+
         // 检测 First(1) 冲突
-        const first1Conflicts: Array<{i: number, j: number, intersection: Set<string>}> = []
-        
+        const first1Conflicts: Array<{ i: number, j: number, intersection: Set<string> }> = []
+
         for (let i = 0; i < branchFirst1Sets.length; i++) {
             for (let j = i + 1; j < branchFirst1Sets.length; j++) {
                 const intersection = this.setIntersection(branchFirst1Sets[i], branchFirst1Sets[j])
                 if (intersection.size > 0) {
                     hasFirst1Conflict = true
                     first1Conflicts.push({i, j, intersection})
-                    
+
                     // 记录 First(1) 冲突
                     const conflictTokens = Array.from(intersection).join(', ')
                     // errors.push({
@@ -598,29 +627,34 @@ export class SubhutiGrammarAnalyzer {
         // Step 2: 如果有 First(1) 冲突，进一步检测 First(5)
         if (hasFirst1Conflict) {
             console.log(`    📊 [${ruleName}] 发现 First(1) 冲突，深入检测 First(5)...`)
-            
+
+            const t5Start = Date.now()
+
             // 计算每个分支的 First(5) 集合
             const branchFirst5Sets: Set<string>[] = []
-            
+
             for (const alt of orNodeTyped.alternatives) {
-                try {
-                    const firstSet = this.computeNodeFirstK(alt, EXPANSION_LIMITS.FIRST_K)
-                    branchFirst5Sets.push(firstSet)
-                } catch (error) {
-                    console.warn(`  ⚠️  规则 "${ruleName}" 的某个 Or 分支计算 First(5) 集合失败: ${error.message}`)
-                    return
-                }
+                const firstSet = this.computeNodeFirstK(alt, EXPANSION_LIMITS.FIRST_K)
+                branchFirst5Sets.push(firstSet)
+                if (perfStats) perfStats.first5Computed++
             }
 
+            const t5End = Date.now()
+            if (perfStats) perfStats.first5Time += (t5End - t5Start)
+
             // 只检测在 First(1) 有冲突的分支对
+            const tCompStart = Date.now()
+
             for (const conflict of first1Conflicts) {
                 const {i, j} = conflict
-                
+
+                if (perfStats) perfStats.conflictComparisons++
+
                 // 新逻辑：检测真正的冲突
                 // 情况1：两个序列长度都等于 k，且完全相同
                 // 情况2：if ((front.length < k) || (behind.length >= front.length))
                 const k = EXPANSION_LIMITS.FIRST_K
-                
+
                 // 存储冲突对的详细信息
                 interface ConflictPair {
                     frontSeq: string
@@ -629,18 +663,24 @@ export class SubhutiGrammarAnalyzer {
                     behindLen: number
                     type: 'equal' | 'prefix' | 'full'
                 }
+
                 const conflictPairs: ConflictPair[] = []
-                
+
+                const tCompPairStart = Date.now()
+
                 console.log(`    🔍 [DEBUG] 检测分支 ${i + 1} 和 ${j + 1} 的 First(${k}) 真实冲突...`)
                 console.log(`       分支${i + 1} 有 ${branchFirst5Sets[i].size} 个序列`)
                 console.log(`       分支${j + 1} 有 ${branchFirst5Sets[j].size} 个序列`)
-                
+
+                const estimatedComparisons = branchFirst5Sets[i].size * branchFirst5Sets[j].size
+                console.log(`       预计比较次数: ${estimatedComparisons}`)
+
                 for (const seqA of branchFirst5Sets[i]) {
                     const tokensA = seqA.split(' ')
-                    
+
                     for (const seqB of branchFirst5Sets[j]) {
                         const tokensB = seqB.split(' ')
-                        
+
                         // 情况1：两个序列长度都等于 k，且完全相同
                         if (tokensA.length === k && tokensB.length === k && seqA === seqB) {
                             conflictPairs.push({
@@ -652,13 +692,13 @@ export class SubhutiGrammarAnalyzer {
                             })
                             continue
                         }
-                        
+
                         // 情况2：前面就是分支A，后面就是分支B，不调整顺序
                         const front = tokensA  // 分支 i (前面的分支)
                         const behind = tokensB  // 分支 j (后面的分支)
                         const frontSeq = front.join(' ')
                         const behindSeq = behind.join(' ')
-                        
+
                         // 外层判断：(front.length < k) || (behind.length >= front.length)
                         if ((front.length < k) || (behind.length >= front.length)) {
                             if (behind.length > front.length) {
@@ -670,7 +710,7 @@ export class SubhutiGrammarAnalyzer {
                                         break
                                     }
                                 }
-                                
+
                                 if (isPrefix) {
                                     conflictPairs.push({
                                         frontSeq,
@@ -696,27 +736,30 @@ export class SubhutiGrammarAnalyzer {
                         }
                     }
                 }
-                
-                console.log(`       📊 发现 ${conflictPairs.length} 个真实冲突`)
-                
+
+                const tCompPairEnd = Date.now()
+                const pairCompTime = tCompPairEnd - tCompPairStart
+                console.log(`       📊 发现 ${conflictPairs.length} 个真实冲突 (实际比较${estimatedComparisons}次，耗时${pairCompTime}ms)`)
+
+                // 优化：只要发现一个真实冲突，就报告并停止检测该Or节点的其他分支对
                 if (conflictPairs.length > 0) {
                     // First(5) 有真实冲突 - 深层冲突
                     const displayLimit = 10  // 最多显示10个冲突对
                     const sampleConflicts = conflictPairs.slice(0, displayLimit)
                     const hasMore = conflictPairs.length > displayLimit
-                    
+
                     // 分类冲突类型统计
                     const fullConflicts = conflictPairs.filter(c => c.type === 'full')
                     const prefixConflicts = conflictPairs.filter(c => c.type === 'prefix')
                     const equalConflicts = conflictPairs.filter(c => c.type === 'equal')
-                    
+
                     let conflictTypeDesc = ''
                     const types: string[] = []
                     if (fullConflicts.length > 0) types.push(`完全冲突(长度=${k}) ${fullConflicts.length}个`)
                     if (prefixConflicts.length > 0) types.push(`前缀冲突 ${prefixConflicts.length}个`)
                     if (equalConflicts.length > 0) types.push(`相等冲突 ${equalConflicts.length}个`)
                     conflictTypeDesc = types.join(' + ')
-                    
+
                     // 格式化冲突对的详细信息
                     const formatConflictPair = (pair: ConflictPair, index: number) => {
                         let typeLabel = ''
@@ -727,21 +770,21 @@ export class SubhutiGrammarAnalyzer {
                         } else {
                             typeLabel = `相等(长度=${pair.frontLen})`
                         }
-                        
+
                         return `冲突${index + 1}: ${typeLabel}
       分支${i + 1}: "${pair.frontSeq}"
       分支${j + 1}: "${pair.behindSeq}"`
                     }
-                    
+
                     const conflictDetails = sampleConflicts.map((pair, idx) => formatConflictPair(pair, idx)).join('\n\n    ')
                     const moreInfo = hasMore ? `\n\n    ... 还有 ${conflictPairs.length - displayLimit} 个冲突` : ''
-                    
+
                     const hasFullLengthConflict = fullConflicts.length > 0
-                    
+
                     const suggestion = hasFullLengthConflict
                         ? `⚠️ 深层冲突：存在长度为 ${k} 的完全相同序列，无法通过 First(${k}) 前瞻区分，需要重新设计语法结构`
                         : `⚠️ 前缀/相等冲突：存在重叠序列，建议调整语法或增加前瞻深度`
-                    
+
                     errors.push({
                         level: 'ERROR',
                         type: 'or-conflict-first5' as any,
@@ -754,12 +797,24 @@ export class SubhutiGrammarAnalyzer {
                         message: `规则 "${ruleName}" 的 Or 分支 ${i + 1} 和分支 ${j + 1} 在 First(${k}) 存在真实冲突`,
                         suggestion
                     })
-                    
+
                     console.log(`    ❌ 分支 ${i + 1} 和 ${j + 1} 在 First(${k}) 存在真实冲突 (${conflictTypeDesc})`)
+                    console.log(`    🎯 检测到冲突，停止检查该Or节点的其他分支对`)
+
+                    // 优化：发现冲突后立即退出，不再检查该Or节点的其他分支对
+                    const tCompEnd = Date.now()
+                    if (perfStats) perfStats.comparisonTime += (tCompEnd - tCompStart)
+                    return
                 } else {
                     console.log(`    💡 分支 ${i + 1} 和 ${j + 1} 仅在 First(1) 冲突 (浅层冲突，可通过前瞻解决)`)
                 }
             }
+
+            const tCompEnd = Date.now()
+            if (perfStats) perfStats.comparisonTime += (tCompEnd - tCompStart)
+        } else {
+            console.log(`    ✅ [${ruleName}] 无 First(1) 冲突，跳过 First(5) 检测`)
+            if (perfStats) perfStats.first5Skipped++
         }
     }
 
@@ -1225,13 +1280,19 @@ export class SubhutiGrammarAnalyzer {
                     // ⚠️ 如果 branch 是空分支 []，则 [...seq, ...[]] = [...seq]
                     // ⚠️ 如果 seq 是空序列 []，则 [...[], ...branch] = [...branch]
                     // ⚠️ 空分支不会被过滤，会正常参与笛卡尔积
+                    if (seq.length > EXPANSION_LIMITS.FIRST_K) {
+                        throw Error('系统错误')
+                    }
+                    if (branch.length > EXPANSION_LIMITS.FIRST_K) {
+                        throw Error('系统错误')
+                    }
+
                     temp.push([...seq, ...branch])
-                    
-                    // 🔴 防止笛卡尔积爆炸：如果结果集超过限制，提前截断
-                    if (temp.length >= EXPANSION_LIMITS.MAX_FIRST_SET_SIZE) {
+
+                    /*if (temp.length >= EXPANSION_LIMITS.MAX_FIRST_SET_SIZE) {
                         console.warn(`  ⚠️  笛卡尔积结果超过 ${EXPANSION_LIMITS.MAX_FIRST_SET_SIZE}，提前截断`)
                         return temp
-                    }
+                    }*/
                 }
             }
             // 更新结果为本轮笛卡尔积
@@ -1300,7 +1361,7 @@ export class SubhutiGrammarAnalyzer {
 
         // 根据 k 值提取符号序列
         const expandedSet = new Set<string>()
-        
+
         if (k === 1) {
             // First(1)：只提取第一个符号
             for (const path of paths) {
