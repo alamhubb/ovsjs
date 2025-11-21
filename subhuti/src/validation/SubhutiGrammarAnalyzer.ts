@@ -1297,9 +1297,17 @@ export class SubhutiGrammarAnalyzer {
                     // 拼接后立即截取到 FIRST_K，防止超长
                     // 即使 seq 和 branch 都已截取过，拼接后仍可能超过 FIRST_K
                     // 例如：seq=[1..10], branch=[11] => 拼接后11个元素，需要截取
-                    const combined = [...seq, ...branch].slice(0, EXPANSION_LIMITS.FIRST_K)
+                    let temp1 = [].concat(seq)
+                    temp1 = temp1.concat(branch)
+
+                    const combined = temp1.slice(0, EXPANSION_LIMITS.FIRST_K)
 
                     temp.push(combined)
+
+                    if (temp.length > 1000000) {
+                        console.log(temp.slice(0, 1))
+                        throw new Error('数据大于100w')
+                    }
                     // 对截取后的数据进行去重
                     // 将序列序列化为字符串用于去重判断
 
@@ -1578,7 +1586,7 @@ export class SubhutiGrammarAnalyzer {
         // 2. 第二层优化：累加提前停止 - 在 firstK 个节点内提前停止
 
         // 🔴 新增：计算需要展开到的索引（考虑 option/many 不计入必需元素）
-        let requiredCount = 0  // 非 option/many 的计数
+        /*let requiredCount = 0  // 非 option/many 的计数
         let expandToIndex = node.nodes.length  // 默认全部展开
 
         // 遍历找到第 firstK 个必需元素的位置
@@ -1596,10 +1604,12 @@ export class SubhutiGrammarAnalyzer {
                     break
                 }
             }
-        }
+
+        }*/
 
         // 使用计算出的索引进行截取（替换原来的简单 firstK）
-        const nodesToExpand = node.nodes.slice(0, expandToIndex)
+        const nodesToExpand = node.nodes.slice(0, firstK)
+        // const nodesToExpand = node.nodes.slice(0, expandToIndex)
 
         const allBranches: string[][][] = []
         let minLengthSum = 0  // 累加的最短长度
@@ -1623,20 +1633,24 @@ export class SubhutiGrammarAnalyzer {
                 return []
             }
 
-            branches = branches.map(item => item.slice(0, firstK))
+            branches = branches.map(item => item.slice(0, firstK));
+            allBranches.push(branches);
 
-            allBranches.push(branches)
+            // 找到当前子节点的最短分支长度（安全写法）
+            let minLength = Infinity;
+            for (const b of branches) {
+                const len = b.length;
+                if (len < minLength) {
+                    minLength = len;
+                    if (minLength === 0) break; // 已经最小，提前结束
+                }
+            }
 
-            // 找到当前子节点的最短分支长度
-            // ⚠️ 注意：如果包含空分支 []，最短长度为 0
-            // 例如：option(abc) → [[], [a,b,c]]，最短长度 = 0
-            const minLength = Math.min(...branches.map(b => b.length))
-            minLengthSum += minLength
+            minLengthSum += minLength;
 
-            // 如果累加的最短长度 >= firstK，可以停止了
-            // 原因：后续节点拼接后，截取到 firstK，结果不变
+            // 如果累加的最短长度 >= firstK，可以停止
             if (minLengthSum >= firstK) {
-                break
+                break;
             }
         }
 
@@ -1694,6 +1708,9 @@ export class SubhutiGrammarAnalyzer {
         if (!ruleName) {
             throw new Error('系统错误')
         }
+
+        console.log('ruleName:')
+        console.log(ruleName)
 
         // 🔴 递归检测必须在层级检查之前，否则会被层级限制提前中断
         // 递归检测：如果规则正在计算中
@@ -1896,7 +1913,7 @@ export class SubhutiGrammarAnalyzer {
         }
 
         // 存储所有分支的展开结果（可能包含空分支 []）
-        const result: string[][] = []
+        let result: string[][] = []
 
         // 遍历 Or 的每个选择分支
         for (const alt of alternatives) {
@@ -1904,7 +1921,7 @@ export class SubhutiGrammarAnalyzer {
             // 递归展开每个分支（可能包含空分支 []）
             const branches = this.computeExpanded(null, alt, firstK, curLevel, maxLevel, isFirstPosition)
             // 合并到结果中（空分支也会被合并）
-            result.push(...branches)
+            result = result.concat(branches)
         }
 
         // 防御：如果所有分支都没有结果（理论上不应该发生）
