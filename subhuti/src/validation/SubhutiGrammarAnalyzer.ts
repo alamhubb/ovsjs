@@ -100,7 +100,7 @@ export const EXPANSION_LIMITS = {
     INFINITY_LEVEL: Infinity,
 
     FIRST_INFINITY: Infinity,
-    FIRST_K: 3,
+    FIRST_K: 5,
     FIRST_1: 1,
     
     /**
@@ -683,7 +683,6 @@ export class SubhutiGrammarAnalyzer {
                             } else if (behind.length === front.length) {
                                 // 长度相等，检查内容是否相等
                                 if (frontSeq === behindSeq) {
-                                    console.log(`       ✅ 情况2b：相等冲突 "${frontSeq}"(长度=${front.length})`)
                                     conflictPairs.push({
                                         frontSeq,
                                         frontLen: front.length,
