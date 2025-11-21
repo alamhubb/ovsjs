@@ -100,8 +100,13 @@ export const EXPANSION_LIMITS = {
     INFINITY_LEVEL: Infinity,
 
     FIRST_INFINITY: Infinity,
-    FIRST_K: 5,
+    FIRST_K: 3,
     FIRST_1: 1,
+    
+    /**
+     * First(k) 集合最大大小限制，防止笛卡尔积爆炸
+     */
+    MAX_FIRST_SET_SIZE: 1000,
 
     /**
      * 冲突检测路径比较限制
@@ -638,7 +643,6 @@ export class SubhutiGrammarAnalyzer {
                         
                         // 情况1：两个序列长度都等于 k，且完全相同
                         if (tokensA.length === k && tokensB.length === k && seqA === seqB) {
-                            console.log(`       ✅ 情况1：两序列长度都=${k}，且相同: "${seqA}"`)
                             conflictPairs.push({
                                 frontSeq: seqA,
                                 frontLen: tokensA.length,
@@ -668,7 +672,6 @@ export class SubhutiGrammarAnalyzer {
                                 }
                                 
                                 if (isPrefix) {
-                                    console.log(`       ✅ 情况2a：前缀冲突 "${frontSeq}"(长度=${front.length}) 是 "${behindSeq}"(长度=${behind.length}) 的前缀`)
                                     conflictPairs.push({
                                         frontSeq,
                                         frontLen: front.length,
@@ -1224,6 +1227,12 @@ export class SubhutiGrammarAnalyzer {
                     // ⚠️ 如果 seq 是空序列 []，则 [...[], ...branch] = [...branch]
                     // ⚠️ 空分支不会被过滤，会正常参与笛卡尔积
                     temp.push([...seq, ...branch])
+                    
+                    // 🔴 防止笛卡尔积爆炸：如果结果集超过限制，提前截断
+                    if (temp.length >= EXPANSION_LIMITS.MAX_FIRST_SET_SIZE) {
+                        console.warn(`  ⚠️  笛卡尔积结果超过 ${EXPANSION_LIMITS.MAX_FIRST_SET_SIZE}，提前截断`)
+                        return temp
+                    }
                 }
             }
             // 更新结果为本轮笛卡尔积
