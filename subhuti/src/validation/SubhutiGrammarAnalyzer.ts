@@ -167,6 +167,9 @@ export class SubhutiGrammarAnalyzer {
     private first1Cache = new Map<string, string[][]>
     private firstMoreCache = new Map<string, string[][]>
     private leftRecursiveDetectionSet = new Set<string>()
+    
+    /** 收集检测过程中发现的左递归错误（使用 Map 提高查重性能） */
+    private detectedLeftRecursionErrors = new Map<string, LeftRecursionError>()
 
     /** 配置选项 */
     private options: Required<GrammarAnalyzerOptions>
@@ -216,47 +219,44 @@ export class SubhutiGrammarAnalyzer {
      * @returns 左递归错误列表
      */
     public checkAllLeftRecursion(): LeftRecursionError[] {
-        const leftRecursionErrors: LeftRecursionError[] = []
-
         console.log(`\n📊 [左递归检测] 开始检测 ${this.ruleASTs.size} 个规则...`)
-
+        
+        // 清空错误 Map
+        this.detectedLeftRecursionErrors.clear()
+        
         // 遍历所有规则
         for (const ruleName of this.ruleASTs.keys()) {
+            // 清空递归检测集合
+            this.recursiveDetectionSet.clear()
+            
             try {
-                // 调用 computeFirstMoreBranches 触发展开（会在 subRuleHandler 中检测左递归）
+                // 执行展开，左递归错误会自动收集到 detectedLeftRecursionErrors
                 this.computeFirstMoreBranches(ruleName)
             } catch (error) {
-                // 检测到左递归
-                if (error.message.includes('左递归')) {
-                    // 获取规则 AST
-                    const ruleAST = this.getRuleNodeByAst(ruleName)
-
-                    // 添加到错误列表
-                    leftRecursionErrors.push({
-                        level: 'FATAL',
-                        type: 'left-recursion',
-                        ruleName,
-                        branchIndices: [],
-                        conflictPaths: {pathA: '', pathB: ''},
-                        message: error.message,
-                        suggestion: this.getLeftRecursionSuggestion(ruleName, ruleAST, new Set([ruleName]))
-                    })
-
-                    console.log(`  ❌ ${ruleName}: 左递归`)
-                } else {
-                    // 其他错误，重新抛出
-                    console.error(`  ⚠️  ${ruleName}: ${error.message}`)
-                }
+                // 处理其他系统错误（非左递归错误）
+                console.error(`  ⚠️  ${ruleName}: ${error.message}`)
             }
         }
-
-        if (leftRecursionErrors.length === 0) {
+        
+        // 为每个错误补充 suggestion
+        for (const error of this.detectedLeftRecursionErrors.values()) {
+            const ruleAST = this.getRuleNodeByAst(error.ruleName)
+            error.suggestion = this.getLeftRecursionSuggestion(
+                error.ruleName, 
+                ruleAST, 
+                new Set([error.ruleName])
+            )
+            console.log(`  ❌ ${error.ruleName}: 左递归`)
+        }
+        
+        if (this.detectedLeftRecursionErrors.size === 0) {
             console.log(`  ✅ 未发现左递归`)
         } else {
-            console.log(`  ⚠️  发现 ${leftRecursionErrors.length} 个左递归错误`)
+            console.log(`  ⚠️  发现 ${this.detectedLeftRecursionErrors.size} 个左递归错误`)
         }
-
-        return leftRecursionErrors
+        
+        // 返回收集到的错误（转换为数组）
+        return Array.from(this.detectedLeftRecursionErrors.values())
     }
 
     /**
@@ -1146,9 +1146,10 @@ export class SubhutiGrammarAnalyzer {
                 isFirstPosition && i === 0  // 累积位置：只有当父级和当前都是第1个时才是 true
             )
 
-            // 防御：如果 branches 为空（理论上不应该发生）
+            // 如果 branches 为空（可能是左递归检测返回的空数组）
             if (branches.length === 0) {
-                throw new Error(`系统错误：节点展开结果为空`)
+                // 左递归情况，返回空分支
+                return []
             }
 
             branches = branches.map(item => item.slice(0, firstK))
@@ -1168,9 +1169,10 @@ export class SubhutiGrammarAnalyzer {
             }
         }
 
-        // 防御：如果没有展开任何节点（理论上不应该发生）
+        // 如果没有展开任何节点（可能是左递归检测返回的空数组）
         if (allBranches.length === 0) {
-            throw new Error(`系统错误：未展开任何节点`)
+            // 左递归情况，返回空分支
+            return []
         }
 
         // 笛卡尔积组合子节点（只对需要的节点做笛卡尔积）
@@ -1228,7 +1230,25 @@ export class SubhutiGrammarAnalyzer {
             // 💡 区分左递归和普通递归
             if (isFirstPosition) {
                 // 在第一个位置递归 → 左递归！
-                throw new Error(`规则 "${ruleName}" 存在左递归`)
+                // 检查是否已经记录过这个规则的左递归错误
+                if (!this.detectedLeftRecursionErrors.has(ruleName)) {
+                    // 创建左递归错误对象
+                    const error: LeftRecursionError = {
+                        level: 'FATAL',
+                        type: 'left-recursion',
+                        ruleName,
+                        branchIndices: [],
+                        conflictPaths: {pathA: '', pathB: ''},
+                        message: `规则 "${ruleName}" 存在左递归`,
+                        suggestion: '' // 稍后在外层填充
+                    }
+                    
+                    // 添加到错误 Map
+                    this.detectedLeftRecursionErrors.set(ruleName, error)
+                }
+                
+                // 返回空数组，中断当前分支的计算
+                return []
             } else {
                 // 不在第一个位置递归 → 普通递归
                 // 返回规则名，防止无限递归
