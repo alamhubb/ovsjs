@@ -104,11 +104,6 @@ export const EXPANSION_LIMITS = {
     FIRST_1: 1,
 
     /**
-     * First(k) 集合最大大小限制，防止笛卡尔积爆炸
-     */
-    MAX_FIRST_SET_SIZE: 1000,
-
-    /**
      * 冲突检测路径比较限制
      *
      * ⚠️ 注意：此限制仅用于冲突检测阶段的路径比较优化
