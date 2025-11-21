@@ -67,7 +67,15 @@
  * @version 2.0.0 - 分层展开版本
  */
 
-import type {RuleNode, Path, SequenceNode, ValidationError, SubruleNode, ConsumeNode, OrNode} from "./SubhutiValidationError"
+import type {
+    RuleNode,
+    Path,
+    SequenceNode,
+    ValidationError,
+    SubruleNode,
+    ConsumeNode,
+    OrNode
+} from "./SubhutiValidationError"
 import {SubhutiValidationLogger} from './SubhutiValidationLogger'
 
 /**
@@ -465,12 +473,9 @@ export class SubhutiGrammarAnalyzer {
         allErrors.push(...leftRecursionErrors)
 
         // 2. Or 分支冲突检测（只有在没有左递归错误时才执行）
-        if (leftRecursionErrors.length === 0) {
-            const orConflictErrors = this.checkAllOrConflicts()
-            allErrors.push(...orConflictErrors)
-        } else {
-            console.log(`\n⚠️  跳过 Or 分支冲突检测（需要先修复左递归错误）`)
-        }
+        const orConflictErrors = this.checkAllOrConflicts()
+        allErrors.push(...orConflictErrors)
+
 
         return allErrors
 
