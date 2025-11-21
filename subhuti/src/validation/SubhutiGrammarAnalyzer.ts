@@ -572,18 +572,18 @@ export class SubhutiGrammarAnalyzer {
                     
                     // 记录 First(1) 冲突
                     const conflictTokens = Array.from(intersection).join(', ')
-                    errors.push({
-                        level: 'WARNING',
-                        type: 'or-conflict',
-                        ruleName,
-                        branchIndices: [i, j],
-                        conflictPaths: {
-                            pathA: `分支 ${i + 1} First(1): {${Array.from(branchFirst1Sets[i]).join(', ')}}`,
-                            pathB: `分支 ${j + 1} First(1): {${Array.from(branchFirst1Sets[j]).join(', ')}}`
-                        },
-                        message: `规则 "${ruleName}" 的 Or 分支 ${i + 1} 和分支 ${j + 1} 在 First(1) 存在冲突`,
-                        suggestion: "检测到 First(1) 冲突，正在深入分析 First(5)..."
-                    })
+                    // errors.push({
+                    //     level: 'WARNING',
+                    //     type: 'or-conflict',
+                    //     ruleName,
+                    //     branchIndices: [i, j],
+                    //     conflictPaths: {
+                    //         pathA: `分支 ${i + 1} First(1): {${Array.from(branchFirst1Sets[i]).join(', ')}}`,
+                    //         pathB: `分支 ${j + 1} First(1): {${Array.from(branchFirst1Sets[j]).join(', ')}}`
+                    //     },
+                    //     message: `规则 "${ruleName}" 的 Or 分支 ${i + 1} 和分支 ${j + 1} 在 First(1) 存在冲突`,
+                    //     suggestion: "检测到 First(1) 冲突，正在深入分析 First(5)..."
+                    // })
 
                     console.log(`    ⚠️  分支 ${i + 1} 和 ${j + 1} 在 First(1) 冲突 (${conflictTokens})`)
                 }
@@ -627,15 +627,8 @@ export class SubhutiGrammarAnalyzer {
                         message: `规则 "${ruleName}" 的 Or 分支 ${i + 1} 和分支 ${j + 1} 在 First(5) 也存在冲突（深层冲突）`,
                         suggestion: "⚠️ 深层冲突：前 5 个 token 都相同，需要重新设计语法结构"
                     })
-
-                    console.log(`    ❌ 分支 ${i + 1} 和 ${j + 1} 在 First(5) 也冲突 (深层冲突)`)
-                } else {
-                    // 仅 First(1) 冲突，First(5) 不冲突 - 浅层冲突
-                    console.log(`    💡 分支 ${i + 1} 和 ${j + 1} 仅在 First(1) 冲突 (浅层冲突，可通过前瞻解决)`)
                 }
             }
-        } else {
-            console.log(`    ✅ [${ruleName}] 无 First(1) 冲突，跳过 First(5) 检测`)
         }
     }
 
@@ -1137,13 +1130,6 @@ export class SubhutiGrammarAnalyzer {
 
         // 🔍 调试日志：检查节点结构
         const nodeRuleName = (node as any).ruleName
-        console.log(`\n🔍🔍🔍 [computeNodeFirstK] 被调用，规则名: ${nodeRuleName || 'null'}，k=${k}`)
-
-        if (nodeRuleName && (nodeRuleName === 'BreakableStatement' || nodeRuleName === 'IterationStatement')) {
-            console.log(`\n🔍 [computeNodeFirstK] 规则: ${nodeRuleName}`)
-            console.log(`   节点类型: ${node.type}`)
-            console.log(`   节点结构: ${JSON.stringify(node, null, 2)}`)
-        }
 
         // 调用通用展开方法，传入对应的 k 值
         let paths: string[][]
@@ -1493,10 +1479,6 @@ export class SubhutiGrammarAnalyzer {
         // 递归检测：如果规则正在计算中
         if (this.recursiveDetectionSet.has(ruleName)) {
             // 🔍 调试：输出关键信息
-            console.log(`\n🔍 [递归检测] 规则: ${ruleName}`)
-            console.log(`  isFirstPosition: ${isFirstPosition}`)
-            console.log(`  recursiveDetectionSet: ${Array.from(this.recursiveDetectionSet).join(', ')}`)
-
             // 💡 区分左递归和普通递归
             if (isFirstPosition) {
                 // 在第一个位置递归 → 左递归！
