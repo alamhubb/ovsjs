@@ -156,6 +156,8 @@ export interface GrammarAnalyzerOptions {
 export class SubhutiGrammarAnalyzer {
     /** 正在计算的规则（用于检测循环依赖） */
     private recursiveDetectionSet = new Set<string>()
+    private first1Cache = new Map<string, string[][]>
+    private firstMoreCache = new Map<string, string[][]>
     private leftRecursiveDetectionSet = new Set<string>()
 
     /** 配置选项 */
@@ -887,19 +889,19 @@ export class SubhutiGrammarAnalyzer {
         // ⚠️⚠️⚠️ 双重优化策略：
         // 1. 第一层保护：slice(0, firstK) - 最多展开 firstK 个节点
         // 2. 第二层优化：累加提前停止 - 在 firstK 个节点内提前停止
-        
+
         // 🔴 新增：计算需要展开到的索引（考虑 option/many 不计入必需元素）
         let requiredCount = 0  // 非 option/many 的计数
         let expandToIndex = node.nodes.length  // 默认全部展开
-        
+
         // 遍历找到第 firstK 个必需元素的位置
         for (let i = 0; i < node.nodes.length; i++) {
             const child = node.nodes[i]
-            
+
             // 非 option/many 才计数
             if (child.type !== 'option' && child.type !== 'many') {
                 requiredCount++
-                
+
                 // 找到第 firstK 个必需元素
                 if (requiredCount >= firstK) {
                     // 包含当前元素，所以是 i + 1
@@ -908,7 +910,7 @@ export class SubhutiGrammarAnalyzer {
                 }
             }
         }
-        
+
         // 使用计算出的索引进行截取（替换原来的简单 firstK）
         const nodesToExpand = node.nodes.slice(0, expandToIndex)
 
@@ -1028,6 +1030,18 @@ export class SubhutiGrammarAnalyzer {
                 return [[ruleName]]
             }
 
+
+            if (firstK === EXPANSION_LIMITS.FIRST_1) {
+                if (this.first1Cache.has(ruleName)) {
+                    return this.first1Cache.get(ruleName)
+                }
+            } else if (firstK === EXPANSION_LIMITS.FIRST_K) {
+                if (this.firstMoreCache.has(ruleName)) {
+                    return this.first1Cache.get(ruleName)
+                }
+            }
+
+
             // 获取规则的 AST 节点
             const subNode = this.getRuleNodeByAst(ruleName)
             if (!subNode) {
@@ -1045,6 +1059,18 @@ export class SubhutiGrammarAnalyzer {
             // 注意：curLevel 已经在开头 +1 了
             // 传递位置信息：保持 isFirstPosition（不改变）
             const result = this.computeExpanded(null, subNode, firstK, curLevel, maxLevel, isFirstPosition)
+
+            if (firstK === EXPANSION_LIMITS.FIRST_1) {
+                if (this.first1Cache.has(ruleName)) {
+                    throw new Error('系统错误')
+                }
+                this.first1Cache.set(ruleName, result)
+            } else if (firstK === EXPANSION_LIMITS.FIRST_K) {
+                if (this.firstMoreCache.has(ruleName)) {
+                    throw new Error('系统错误')
+                }
+                this.firstMoreCache.set(ruleName, result)
+            }
 
             // 返回展开结果
             return result
