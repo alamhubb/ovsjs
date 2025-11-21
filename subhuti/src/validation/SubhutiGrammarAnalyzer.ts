@@ -615,7 +615,16 @@ export class SubhutiGrammarAnalyzer {
                 // 情况1：两个序列长度都等于 k，且完全相同
                 // 情况2：if ((front.length < k) || (behind.length >= front.length))
                 const k = EXPANSION_LIMITS.FIRST_K
-                const realConflicts: string[] = []
+                
+                // 存储冲突对的详细信息
+                interface ConflictPair {
+                    frontSeq: string
+                    frontLen: number
+                    behindSeq: string
+                    behindLen: number
+                    type: 'equal' | 'prefix' | 'full'
+                }
+                const conflictPairs: ConflictPair[] = []
                 
                 console.log(`    🔍 [DEBUG] 检测分支 ${i + 1} 和 ${j + 1} 的 First(${k}) 真实冲突...`)
                 console.log(`       分支${i + 1} 有 ${branchFirst5Sets[i].size} 个序列`)
@@ -630,7 +639,13 @@ export class SubhutiGrammarAnalyzer {
                         // 情况1：两个序列长度都等于 k，且完全相同
                         if (tokensA.length === k && tokensB.length === k && seqA === seqB) {
                             console.log(`       ✅ 情况1：两序列长度都=${k}，且相同: "${seqA}"`)
-                            realConflicts.push(`完全冲突(长度=${k}): "${seqA}"`)
+                            conflictPairs.push({
+                                frontSeq: seqA,
+                                frontLen: tokensA.length,
+                                behindSeq: seqB,
+                                behindLen: tokensB.length,
+                                type: 'full'
+                            })
                             continue
                         }
                         
@@ -654,13 +669,25 @@ export class SubhutiGrammarAnalyzer {
                                 
                                 if (isPrefix) {
                                     console.log(`       ✅ 情况2a：前缀冲突 "${frontSeq}"(长度=${front.length}) 是 "${behindSeq}"(长度=${behind.length}) 的前缀`)
-                                    realConflicts.push(`前缀冲突: "${frontSeq}"(长度=${front.length}) 是 "${behindSeq}"(长度=${behind.length}) 的前缀`)
+                                    conflictPairs.push({
+                                        frontSeq,
+                                        frontLen: front.length,
+                                        behindSeq,
+                                        behindLen: behind.length,
+                                        type: 'prefix'
+                                    })
                                 }
                             } else if (behind.length === front.length) {
                                 // 长度相等，检查内容是否相等
                                 if (frontSeq === behindSeq) {
                                     console.log(`       ✅ 情况2b：相等冲突 "${frontSeq}"(长度=${front.length})`)
-                                    realConflicts.push(`相等冲突: "${frontSeq}"(长度=${front.length})`)
+                                    conflictPairs.push({
+                                        frontSeq,
+                                        frontLen: front.length,
+                                        behindSeq,
+                                        behindLen: behind.length,
+                                        type: 'equal'
+                                    })
                                 }
                             }
                             // 如果 behind.length < front.length，则不检查
@@ -668,59 +695,46 @@ export class SubhutiGrammarAnalyzer {
                     }
                 }
                 
-                console.log(`       📊 发现 ${realConflicts.length} 个真实冲突`)
+                console.log(`       📊 发现 ${conflictPairs.length} 个真实冲突`)
                 
-                // 去重
-                const uniqueConflicts = Array.from(new Set(realConflicts))
-                
-                if (uniqueConflicts.length > 0) {
-                    // First(5) 也有冲突 - 深层冲突
-                    const displayLimit = 10  // 最多显示10个冲突序列
-                    const sampleConflicts = uniqueConflicts.slice(0, displayLimit)
-                    const hasMore = uniqueConflicts.length > displayLimit
+                if (conflictPairs.length > 0) {
+                    // First(5) 有真实冲突 - 深层冲突
+                    const displayLimit = 10  // 最多显示10个冲突对
+                    const sampleConflicts = conflictPairs.slice(0, displayLimit)
+                    const hasMore = conflictPairs.length > displayLimit
                     
-                    // 准备显示分支的First(k)集合
-                    const branchIFirst = Array.from(branchFirst5Sets[i]).slice(0, 10)
-                    const branchJFirst = Array.from(branchFirst5Sets[j]).slice(0, 10)
-                    const hasMoreI = branchFirst5Sets[i].size > 10
-                    const hasMoreJ = branchFirst5Sets[j].size > 10
-                    
-                    // 格式化First(k)集合显示
-                    const formatFirstSet = (sequences: string[], hasMore: boolean, totalCount: number) => {
-                        const formatted = sequences.map(seq => `"${seq}"`).join('\n        ')
-                        const moreInfo = hasMore ? `\n        ... (共 ${totalCount} 个序列)` : ''
-                        return formatted + moreInfo
-                    }
-                    
-                    // 分类冲突类型
-                    const prefixConflicts = uniqueConflicts.filter(c => c.startsWith('前缀冲突'))
-                    const equalConflicts = uniqueConflicts.filter(c => c.startsWith('相等冲突') || c.startsWith('完全冲突'))
+                    // 分类冲突类型统计
+                    const fullConflicts = conflictPairs.filter(c => c.type === 'full')
+                    const prefixConflicts = conflictPairs.filter(c => c.type === 'prefix')
+                    const equalConflicts = conflictPairs.filter(c => c.type === 'equal')
                     
                     let conflictTypeDesc = ''
-                    if (equalConflicts.length > 0 && prefixConflicts.length > 0) {
-                        conflictTypeDesc = `相等冲突 ${equalConflicts.length} 个 + 前缀冲突 ${prefixConflicts.length} 个`
-                    } else if (equalConflicts.length > 0) {
-                        conflictTypeDesc = `相等冲突 (${equalConflicts.length} 个)`
-                    } else {
-                        conflictTypeDesc = `前缀冲突 (${prefixConflicts.length} 个)`
+                    const types: string[] = []
+                    if (fullConflicts.length > 0) types.push(`完全冲突(长度=${k}) ${fullConflicts.length}个`)
+                    if (prefixConflicts.length > 0) types.push(`前缀冲突 ${prefixConflicts.length}个`)
+                    if (equalConflicts.length > 0) types.push(`相等冲突 ${equalConflicts.length}个`)
+                    conflictTypeDesc = types.join(' + ')
+                    
+                    // 格式化冲突对的详细信息
+                    const formatConflictPair = (pair: ConflictPair, index: number) => {
+                        let typeLabel = ''
+                        if (pair.type === 'full') {
+                            typeLabel = `完全相同(长度=${k})`
+                        } else if (pair.type === 'prefix') {
+                            typeLabel = `前缀冲突(前面${pair.frontLen}个是后面${pair.behindLen}个的前缀)`
+                        } else {
+                            typeLabel = `相等(长度=${pair.frontLen})`
+                        }
+                        
+                        return `冲突${index + 1}: ${typeLabel}
+      分支${i + 1}: "${pair.frontSeq}"
+      分支${j + 1}: "${pair.behindSeq}"`
                     }
                     
-                    // 将冲突序列按长度排序（短的在前，更容易理解）
-                    const sortedConflicts = sampleConflicts.sort((a, b) => {
-                        const getLength = (s: string) => {
-                            const match = s.match(/"([^"]+)"/)
-                            return match ? match[1].split(' ').length : s.split(' ').length
-                        }
-                        return getLength(a) - getLength(b)
-                    })
+                    const conflictDetails = sampleConflicts.map((pair, idx) => formatConflictPair(pair, idx)).join('\n\n    ')
+                    const moreInfo = hasMore ? `\n\n    ... 还有 ${conflictPairs.length - displayLimit} 个冲突` : ''
                     
-                    const conflictDetail = sortedConflicts.map(seq => `${seq}`).join('\n      ')
-                    
-                    const hasFullLengthConflict = uniqueConflicts.some(seq => {
-                        const match = seq.match(/"([^"]+)"/)
-                        const tokens = match ? match[1].split(' ') : seq.split(' ')
-                        return tokens.length === k
-                    })
+                    const hasFullLengthConflict = fullConflicts.length > 0
                     
                     const suggestion = hasFullLengthConflict
                         ? `⚠️ 深层冲突：存在长度为 ${k} 的完全相同序列，无法通过 First(${k}) 前瞻区分，需要重新设计语法结构`
@@ -732,8 +746,8 @@ export class SubhutiGrammarAnalyzer {
                         ruleName,
                         branchIndices: [i, j],
                         conflictPaths: {
-                            pathA: `分支 ${i + 1} 的 First(${k}) 集合:\n      ${formatFirstSet(branchIFirst, hasMoreI, branchFirst5Sets[i].size)}\n\n    分支 ${j + 1} 的 First(${k}) 集合:\n      ${formatFirstSet(branchJFirst, hasMoreJ, branchFirst5Sets[j].size)}\n\n    冲突类型: ${conflictTypeDesc}\n    冲突详情:\n      ${conflictDetail}${hasMore ? `\n      ... 还有 ${uniqueConflicts.length - displayLimit} 个` : ''}`,
-                            pathB: `共 ${uniqueConflicts.length} 个冲突序列`
+                            pathA: `${conflictDetails}${moreInfo}`,
+                            pathB: `共 ${conflictPairs.length} 个冲突 (${conflictTypeDesc})`
                         },
                         message: `规则 "${ruleName}" 的 Or 分支 ${i + 1} 和分支 ${j + 1} 在 First(${k}) 存在真实冲突`,
                         suggestion
