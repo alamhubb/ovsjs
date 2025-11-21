@@ -1268,33 +1268,52 @@ export class SubhutiGrammarAnalyzer {
         // 初始结果为第一个数组（可能包含空分支）
         let result = arrays[0]
 
+        // 临时存储本轮笛卡尔积结果
+        const temp: string[][] = []
+
         // 遍历后续数组，逐个计算笛卡尔积
-        for (let i = 1; i < arrays.length; i++) {
-            // 临时存储本轮笛卡尔积结果
-            const temp: string[][] = []
+        for (const seq of result) {
             // 遍历当前结果的每个序列
-            for (const seq of result) {
+
+            if (seq.length > EXPANSION_LIMITS.FIRST_K) {
+                throw new Error('系统错误')
+            }
+            if (seq.length === EXPANSION_LIMITS.MAX_LEVEL) {
+                temp.push([...seq])
+                continue
+            }
+            for (let i = 1; i < arrays.length; i++) {
                 // 遍历下一个数组的每个分支
                 for (const branch of arrays[i]) {
+                    if (branch.length > EXPANSION_LIMITS.FIRST_K) {
+                        throw Error('系统错误')
+                    }
+
                     // 拼接序列和分支，生成新序列
                     // ⚠️ 如果 branch 是空分支 []，则 [...seq, ...[]] = [...seq]
                     // ⚠️ 如果 seq 是空序列 []，则 [...[], ...branch] = [...branch]
                     // ⚠️ 空分支不会被过滤，会正常参与笛卡尔积
-                    
+
                     // 拼接后立即截取到 FIRST_K，防止超长
                     // 即使 seq 和 branch 都已截取过，拼接后仍可能超过 FIRST_K
                     // 例如：seq=[1..10], branch=[11] => 拼接后11个元素，需要截取
                     const combined = [...seq, ...branch].slice(0, EXPANSION_LIMITS.FIRST_K)
-                    temp.push(combined)
 
-                    /*if (temp.length >= EXPANSION_LIMITS.MAX_FIRST_SET_SIZE) {
-                        console.warn(`  ⚠️  笛卡尔积结果超过 ${EXPANSION_LIMITS.MAX_FIRST_SET_SIZE}，提前截断`)
-                        return temp
-                    }*/
+                    temp.push(combined)
+                    // 对截取后的数据进行去重
+                    // 将序列序列化为字符串用于去重判断
+
                 }
+
             }
-            // 更新结果为本轮笛卡尔积
+            // 更新结果为本轮笛卡尔积（已去重）
             result = temp
+        }
+
+        for (const resultElement of result) {
+            if (resultElement.length > EXPANSION_LIMITS.FIRST_K) {
+                throw new Error('系统错误')
+            }
         }
 
         // 返回最终笛卡尔积结果（可能包含空序列 []）
@@ -1631,8 +1650,13 @@ export class SubhutiGrammarAnalyzer {
         // 例如：[[a,b]] × [[c]] → [[a,b,c]]
         // ⚠️ 如果包含空分支：[[a]] × [[], [b]] → [[a], [a,b]]
         // ⚠️ cartesianProduct 不会过滤空分支，会正常拼接
+
+
+        console.log(node.ruleName)
+
         const result = this.cartesianProduct(allBranches)
 
+        console.log(result.length)
         // 笛卡尔积后路径可能超过 firstK，需要截取并去重
         // 注意：如果某些节点包含空分支，笛卡尔积后可能产生不同长度的路径
         // 例如：[[a,b]] × [[], [c]] → [[a,b], [a,b,c]]

@@ -278,7 +278,7 @@ export class SubhutiRuleCollector {
         // 创建根 Sequence 节点
         const rootNode: SequenceNode = {
             type: 'sequence',
-            // ruleName: ruleName,
+            ruleName: ruleName,
             nodes: []
         }
         this.currentRuleStack.push(rootNode)
