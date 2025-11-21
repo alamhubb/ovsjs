@@ -1280,14 +1280,12 @@ export class SubhutiGrammarAnalyzer {
                     // ⚠️ 如果 branch 是空分支 []，则 [...seq, ...[]] = [...seq]
                     // ⚠️ 如果 seq 是空序列 []，则 [...[], ...branch] = [...branch]
                     // ⚠️ 空分支不会被过滤，会正常参与笛卡尔积
-                    if (seq.length > EXPANSION_LIMITS.FIRST_K) {
-                        throw Error('系统错误')
-                    }
-                    if (branch.length > EXPANSION_LIMITS.FIRST_K) {
-                        throw Error('系统错误')
-                    }
-
-                    temp.push([...seq, ...branch])
+                    
+                    // 拼接后立即截取到 FIRST_K，防止超长
+                    // 即使 seq 和 branch 都已截取过，拼接后仍可能超过 FIRST_K
+                    // 例如：seq=[1..10], branch=[11] => 拼接后11个元素，需要截取
+                    const combined = [...seq, ...branch].slice(0, EXPANSION_LIMITS.FIRST_K)
+                    temp.push(combined)
 
                     /*if (temp.length >= EXPANSION_LIMITS.MAX_FIRST_SET_SIZE) {
                         console.warn(`  ⚠️  笛卡尔积结果超过 ${EXPANSION_LIMITS.MAX_FIRST_SET_SIZE}，提前截断`)
