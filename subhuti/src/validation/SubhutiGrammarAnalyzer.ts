@@ -1654,11 +1654,11 @@ export class SubhutiGrammarAnalyzer {
                 }
             } else if (firstK === EXPANSION_LIMITS.FIRST_K) {
                 if (this.firstKCache.has(ruleName)) {
-                    return this.first1Cache.get(ruleName)
+                    return this.firstKCache.get(ruleName)  // 修复：应该返回 firstKCache
                 }
             } else if (firstK === EXPANSION_LIMITS.FIRST_INFINITY) {
                 if (this.firstInfinityCache.has(ruleName)) {
-                    return this.firstInfinityCache.get(ruleName)
+                    return this.firstInfinityCache.get(ruleName)  // 修复：应该返回 firstInfinityCache
                 }
             }
 
