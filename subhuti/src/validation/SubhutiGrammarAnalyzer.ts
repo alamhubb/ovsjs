@@ -645,6 +645,20 @@ export class SubhutiGrammarAnalyzer {
             // 只检测在 First(1) 有冲突的分支对
             const tCompStart = Date.now()
 
+            // 🔧 优化：收集所有冲突，最后合并报告
+            interface RuleConflictInfo {
+                branchIndices: [number, number]
+                conflictPair: {
+                    frontSeq: string
+                    frontLen: number
+                    behindSeq: string
+                    behindLen: number
+                    type: 'equal' | 'prefix' | 'full'
+                }
+                typeLabel: string
+            }
+            const allRuleConflicts: RuleConflictInfo[] = []
+
             for (const conflict of first1Conflicts) {
                 const {i, j} = conflict
 
@@ -773,26 +787,11 @@ export class SubhutiGrammarAnalyzer {
       分支${i + 1}: "${pair.frontSeq}"
       分支${j + 1}: "${pair.behindSeq}"`
 
-                    const moreInfo = ''  // 不再需要"还有X个冲突"的提示
-
-                    // 确定是否是深层冲突（完全相同）
-                    const hasFullLengthConflict = pair.type === 'full'
-
-                    const suggestion = hasFullLengthConflict
-                        ? `⚠️ 深层冲突：存在长度为 ${k} 的完全相同序列，无法通过 First(${k}) 前瞻区分，需要重新设计语法结构`
-                        : `⚠️ 前缀/相等冲突：存在重叠序列，建议调整语法或增加前瞻深度`
-
-                    errors.push({
-                        level: 'ERROR',
-                        type: 'or-conflict-first5' as any,
-                        ruleName,
+                    // 🔧 不立即报告，先收集到数组
+                    allRuleConflicts.push({
                         branchIndices: [i, j],
-                        conflictPaths: {
-                            pathA: `${conflictDetails}${moreInfo}`,
-                            pathB: ''  // 简化输出
-                        },
-                        message: `规则 "${ruleName}" 的 Or 分支 ${i + 1} 和分支 ${j + 1} 在 First(${k}) 存在真实冲突`,
-                        suggestion
+                        conflictPair: pair,
+                        typeLabel
                     })
 
                     console.log(`    ❌ 分支 ${i + 1} 和 ${j + 1} 在 First(${k}) 存在真实冲突 (${typeLabel})`)
@@ -800,6 +799,45 @@ export class SubhutiGrammarAnalyzer {
                 } else {
                     console.log(`    💡 分支 ${i + 1} 和 ${j + 1} 仅在 First(1) 冲突 (浅层冲突，可通过前瞻解决)`)
                 }
+            }
+
+            // 🔧 合并报告：将同一规则的所有冲突合并成一个报告
+            if (allRuleConflicts.length > 0) {
+                const k = EXPANSION_LIMITS.FIRST_K
+                
+                // 构建合并的冲突详情
+                const conflictDetailsArray = allRuleConflicts.map((conflict, index) => {
+                    const {branchIndices, conflictPair, typeLabel} = conflict
+                    const [i, j] = branchIndices
+                    
+                    return `  冲突${index + 1}: 分支${i + 1} 和 分支${j + 1}
+    ${typeLabel}: "${conflictPair.frontSeq}"`
+                })
+                
+                const mergedConflictDetails = conflictDetailsArray.join('\n\n')
+                
+                // 判断是否有深层冲突
+                const hasFullLengthConflict = allRuleConflicts.some(c => c.conflictPair.type === 'full')
+                
+                const suggestion = hasFullLengthConflict
+                    ? `⚠️ 深层冲突：存在长度为 ${k} 的完全相同序列，无法通过 First(${k}) 前瞻区分，需要重新设计语法结构`
+                    : `⚠️ 前缀/相等冲突：存在重叠序列，建议调整语法或增加前瞻深度`
+                
+                // 生成合并的错误报告
+                errors.push({
+                    level: 'ERROR',
+                    type: 'or-conflict-first5' as any,
+                    ruleName,
+                    branchIndices: [],  // 不指定具体分支，因为有多对
+                    conflictPaths: {
+                        pathA: mergedConflictDetails,
+                        pathB: ''
+                    },
+                    message: `规则 "${ruleName}" 存在 ${allRuleConflicts.length} 对 Or 分支冲突`,
+                    suggestion
+                })
+                
+                console.log(`\n    📋 [${ruleName}] 共发现 ${allRuleConflicts.length} 对分支冲突，已合并报告`)
             }
 
             const tCompEnd = Date.now()
