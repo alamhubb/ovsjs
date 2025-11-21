@@ -165,7 +165,8 @@ export class SubhutiGrammarAnalyzer {
     /** 正在计算的规则（用于检测循环依赖） */
     private recursiveDetectionSet = new Set<string>()
     private first1Cache = new Map<string, string[][]>
-    private firstMoreCache = new Map<string, string[][]>
+    private firstKCache = new Map<string, string[][]>
+    private firstInfinityCache = new Map<string, string[][]>
     private leftRecursiveDetectionSet = new Set<string>()
     
     /** 收集检测过程中发现的左递归错误（使用 Map 提高查重性能） */
@@ -1274,7 +1275,7 @@ export class SubhutiGrammarAnalyzer {
                     return this.first1Cache.get(ruleName)
                 }
             } else if (firstK === EXPANSION_LIMITS.FIRST_K) {
-                if (this.firstMoreCache.has(ruleName)) {
+                if (this.firstKCache.has(ruleName)) {
                     return this.first1Cache.get(ruleName)
                 }
             }
@@ -1304,10 +1305,10 @@ export class SubhutiGrammarAnalyzer {
                 }
                 this.first1Cache.set(ruleName, result)
             } else if (firstK === EXPANSION_LIMITS.FIRST_K) {
-                if (this.firstMoreCache.has(ruleName)) {
+                if (this.firstKCache.has(ruleName)) {
                     throw new Error('系统错误')
                 }
-                this.firstMoreCache.set(ruleName, result)
+                this.firstKCache.set(ruleName, result)
             }
 
             // 返回展开结果
