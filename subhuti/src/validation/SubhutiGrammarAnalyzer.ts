@@ -1314,9 +1314,9 @@ export class SubhutiGrammarAnalyzer {
                 }
 
             }
-            // 更新结果为本轮笛卡尔积（已去重）
-            result = temp
         }
+        // 更新结果为本轮笛卡尔积（已去重）
+        result = temp
 
         for (const resultElement of result) {
             if (resultElement.length > EXPANSION_LIMITS.FIRST_K) {
