@@ -50,33 +50,17 @@ export class SubhutiGrammarValidator {
         console.log(`  ⏱️ [3.2] 创建分析器耗时: ${t4 - t3}ms`)
 
         // 3. 初始化缓存（计算直接子节点、First 集合、路径展开）
-        // 同时进行左递归检测
+        // 同时进行左递归检测和 Or 分支冲突检测
         const t5 = Date.now()
-        const leftRecursionErrors = analyzer.initCacheAndCheckLeftRecursion()
+        const allErrors = analyzer.initCacheAndCheckLeftRecursion()
+        const t6 = Date.now()
+        console.log(`  ⏱️ [3.3] 初始化缓存和检测耗时: ${t6 - t5}ms`)
+        console.log(`  ⏱️ [3.4] 检测完成 (发现 ${allErrors.length} 个错误)`)
 
-        /*const t6 = Date.now()
-        console.log(`  ⏱️ [3.3] 初始化缓存耗时: ${t6 - t5}ms`)
-        console.log(`  ⏱️ [3.4] 左递归检测完成 (发现 ${leftRecursionErrors.length} 个左递归)`)
-
-        const errors: any[] = []
-        errors.push(...leftRecursionErrors)
-
-        // 4. Level 1 & 2: Or 分支冲突检测（空路径 + 前缀冲突）
-        const t9 = Date.now()
-        const detector = new SubhutiConflictDetector(analyzer, ruleASTs.cstMap)
-        const t10 = Date.now()
-        console.log(`  ⏱️ [3.5] 创建冲突检测器耗时: ${t10 - t9}ms`)
-
-        const t11 = Date.now()
-        const conflictErrors = detector.detectAllConflicts()
-        const t12 = Date.now()
-        console.log(`  ⏱️ [3.6] 冲突检测耗时: ${t12 - t11}ms (发现 ${conflictErrors.length} 个冲突)`)
-        errors.push(...conflictErrors)
-
-        // 5. 聚合所有错误，一起报告
-        if (errors.length > 0) {
-            throw new SubhutiGrammarValidationError(errors)
-        }*/
+        // 4. 聚合所有错误，一起报告
+        if (allErrors.length > 0) {
+            throw new SubhutiGrammarValidationError(allErrors)
+        }
     }
 
 }

@@ -67,7 +67,7 @@
  * @version 2.0.0 - 分层展开版本
  */
 
-import type {RuleNode, Path, SequenceNode, ValidationError, SubruleNode, ConsumeNode} from "./SubhutiValidationError"
+import type {RuleNode, Path, SequenceNode, ValidationError, SubruleNode, ConsumeNode, OrNode} from "./SubhutiValidationError"
 import {SubhutiValidationLogger} from './SubhutiValidationLogger'
 
 /**
@@ -252,16 +252,227 @@ export class SubhutiGrammarAnalyzer {
     }
 
     /**
+     * 检测所有规则的 Or 分支冲突
+     *
+     * 实现方式：
+     * - 遍历所有规则的 AST
+     * - 递归查找所有 Or 节点
+     * - 计算每个分支的 First(1) 集合
+     * - 检测分支间是否有交集
+     *
+     * @returns Or 冲突错误列表
+     */
+    public checkAllOrConflicts(): ValidationError[] {
+        const orConflictErrors: ValidationError[] = []
+
+        console.log(`\n📊 [Or分支冲突检测] 开始检测 ${this.ruleASTs.size} 个规则...`)
+
+        // 遍历所有规则
+        for (const [ruleName, ruleAST] of this.ruleASTs.entries()) {
+            // 递归检查 AST 中的所有 Or 节点
+            this.checkOrConflictsInNode(ruleName, ruleAST, orConflictErrors)
+        }
+
+        if (orConflictErrors.length === 0) {
+            console.log(`  ✅ 未发现 Or 分支冲突`)
+        } else {
+            console.log(`  ⚠️  发现 ${orConflictErrors.length} 个 Or 分支冲突`)
+        }
+
+        return orConflictErrors
+    }
+
+    /**
+     * 递归检查节点中的 Or 冲突
+     *
+     * @param ruleName 规则名
+     * @param node 当前节点
+     * @param errors 错误列表
+     */
+    private checkOrConflictsInNode(
+        ruleName: string,
+        node: RuleNode,
+        errors: ValidationError[]
+    ): void {
+        switch (node.type) {
+            case 'or':
+                // 检测当前 Or 节点的冲突
+                this.detectOrNodeConflict(ruleName, node, errors)
+                // 递归检查每个分支
+                for (const alt of node.alternatives) {
+                    this.checkOrConflictsInNode(ruleName, alt, errors)
+                }
+                break
+
+            case 'sequence':
+                // 递归检查序列中的每个节点
+                for (const child of node.nodes) {
+                    this.checkOrConflictsInNode(ruleName, child, errors)
+                }
+                break
+
+            case 'option':
+            case 'many':
+            case 'atLeastOne':
+                // 递归检查内部节点
+                this.checkOrConflictsInNode(ruleName, node.node, errors)
+                break
+
+            case 'consume':
+            case 'subrule':
+                // 叶子节点，不需要递归
+                break
+        }
+    }
+
+    /**
+     * 检测单个 Or 节点的冲突
+     *
+     * @param ruleName 规则名
+     * @param orNode Or 节点
+     * @param errors 错误列表
+     */
+    private detectOrNodeConflict(
+        ruleName: string,
+        orNode: RuleNode,
+        errors: ValidationError[]
+    ): void {
+        // 防御：确保是 Or 节点
+        if (orNode.type !== 'or') {
+            throw new Error('系统错误：detectOrNodeConflict 只能处理 or 类型节点')
+        }
+
+        // 类型断言为 OrNode
+        const orNodeTyped = orNode as OrNode
+
+        // 计算每个分支的 First(1) 集合
+        const branchFirstSets: Set<string>[] = []
+
+        for (const alt of orNodeTyped.alternatives) {
+            try {
+                // 使用 computeNodeFirst 计算 First(1) 集合（完全展开）
+                const firstSet = this.computeNodeFirst(alt)
+                branchFirstSets.push(firstSet)
+            } catch (error) {
+                // 计算 First 集合时出错（可能是递归等问题），跳过该分支
+                console.warn(`  ⚠️  规则 "${ruleName}" 的某个 Or 分支计算 First 集合失败: ${error.message}`)
+                return
+            }
+        }
+
+        // 检测分支间的冲突（两两比较）
+        for (let i = 0; i < branchFirstSets.length; i++) {
+            for (let j = i + 1; j < branchFirstSets.length; j++) {
+                // 计算交集
+                const intersection = this.setIntersection(branchFirstSets[i], branchFirstSets[j])
+
+                if (intersection.size > 0) {
+                    // 发现冲突
+                    const conflictTokens = Array.from(intersection).join(', ')
+                    errors.push({
+                        level: 'ERROR',
+                        type: 'or-conflict',
+                        ruleName,
+                        branchIndices: [i, j],
+                        conflictPaths: {
+                            pathA: `分支 ${i + 1}: {${Array.from(branchFirstSets[i]).join(', ')}}`,
+                            pathB: `分支 ${j + 1}: {${Array.from(branchFirstSets[j]).join(', ')}}`
+                        },
+                        message: `规则 "${ruleName}" 的 Or 分支 ${i + 1} 和分支 ${j + 1} 存在冲突`,
+                        suggestion: this.getOrConflictSuggestion(ruleName, i, j, intersection, branchFirstSets[i], branchFirstSets[j])
+                    })
+
+                    console.log(`  ❌ ${ruleName}: 分支 ${i + 1} 和 ${j + 1} 冲突 (${conflictTokens})`)
+                }
+            }
+        }
+    }
+
+    /**
+     * 计算集合交集
+     *
+     * @param setA 集合 A
+     * @param setB 集合 B
+     * @returns 交集
+     */
+    private setIntersection<T>(setA: Set<T>, setB: Set<T>): Set<T> {
+        const result = new Set<T>()
+        for (const item of setA) {
+            if (setB.has(item)) {
+                result.add(item)
+            }
+        }
+        return result
+    }
+
+    /**
+     * 生成 Or 冲突修复建议
+     *
+     * @param ruleName 规则名
+     * @param branchIndexA 分支 A 索引
+     * @param branchIndexB 分支 B 索引
+     * @param intersection 冲突的 token 集合
+     * @param firstSetA 分支 A 的 First 集合
+     * @param firstSetB 分支 B 的 First 集合
+     * @returns 修复建议
+     */
+    private getOrConflictSuggestion(
+        ruleName: string,
+        branchIndexA: number,
+        branchIndexB: number,
+        intersection: Set<string>,
+        firstSetA: Set<string>,
+        firstSetB: Set<string>
+    ): string {
+        const conflictTokens = Array.from(intersection).slice(0, 5).join(', ')
+        const hasMore = intersection.size > 5
+
+        return `PEG 解析器使用顺序选择，Or 分支的 First 集合不能有交集！
+
+检测到的冲突：
+  分支 ${branchIndexA + 1} 的 First(1) 集合: {${Array.from(firstSetA).slice(0, 10).join(', ')}${firstSetA.size > 10 ? ', ...' : ''}}
+  分支 ${branchIndexB + 1} 的 First(1) 集合: {${Array.from(firstSetB).slice(0, 10).join(', ')}${firstSetB.size > 10 ? ', ...' : ''}}
+  
+  冲突的 token: {${conflictTokens}${hasMore ? ', ...' : ''}} (共 ${intersection.size} 个)
+
+修复建议：
+  1. 调整分支顺序：将更具体的分支放在前面
+  2. 重构语法：提取公共前缀或使用不同的 token 区分
+  3. 使用语义谓词：在运行时进行额外判断
+  
+示例（提取公共前缀）：
+  ❌ 有冲突：
+     ${ruleName} → 'if' Expr 'then' Stmt | 'if' Expr 'then' Stmt 'else' Stmt
+  
+  ✅ 无冲突：
+     ${ruleName} → 'if' Expr 'then' Stmt ElseClause?
+     ElseClause → 'else' Stmt`
+    }
+
+    /**
      * 初始化缓存（遍历所有规则，计算直接子节点、First 集合和分层展开）
      *
      * 应该在收集 AST 之后立即调用
      *
      * @param maxLevel 最大展开层级（默认使用配置中的 MAX_LEVEL）
-     * @returns 左递归错误列表
+     * @returns 所有验证错误列表（包括左递归和 Or 冲突）
      */
-    initCacheAndCheckLeftRecursion(): LeftRecursionError[] {
-        // 调用左递归检测方法
-        return this.checkAllLeftRecursion()
+    initCacheAndCheckLeftRecursion(): ValidationError[] {
+        const allErrors: ValidationError[] = []
+
+        // 1. 左递归检测
+        const leftRecursionErrors = this.checkAllLeftRecursion()
+        allErrors.push(...leftRecursionErrors)
+
+        // 2. Or 分支冲突检测（只有在没有左递归错误时才执行）
+        if (leftRecursionErrors.length === 0) {
+            const orConflictErrors = this.checkAllOrConflicts()
+            allErrors.push(...orConflictErrors)
+        } else {
+            console.log(`\n⚠️  跳过 Or 分支冲突检测（需要先修复左递归错误）`)
+        }
+
+        return allErrors
 
         // 注释：暂时禁用所有缓存初始化
         /*

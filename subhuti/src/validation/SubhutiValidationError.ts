@@ -18,7 +18,7 @@ export interface ValidationError {
     level: 'ERROR' | 'FATAL'
 
     /** 错误类型 */
-    type: 'empty-path' | 'prefix-conflict' | 'left-recursion'
+    type: 'empty-path' | 'prefix-conflict' | 'left-recursion' | 'or-conflict'
 
     /** 规则名称 */
     ruleName: string
@@ -28,8 +28,8 @@ export interface ValidationError {
 
     /** 冲突路径 */
     conflictPaths: {
-        pathA: string  // 前缀路径（短）
-        pathB: string  // 被遮蔽路径（长）
+        pathA: string  // 前缀路径（短）或分支 A 的 First 集合
+        pathB: string  // 被遮蔽路径（长）或分支 B 的 First 集合
     }
 
     /** 错误消息 */
