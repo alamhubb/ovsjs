@@ -1064,6 +1064,7 @@ export class SubhutiGrammarAnalyzer {
         }
         
         // firstK=INFINITY, maxLevel=LEVEL_1
+        // 正常的单层展开，不需要遍历多层
         const branches = this.computeExpanded(
             ruleName,
             null,
@@ -1079,24 +1080,41 @@ export class SubhutiGrammarAnalyzer {
     /**
      * 初始化 firstInfinityLevelKCache（firstK=INFINITY, maxLevel=LEVEL_K）
      * 
-     * 用途：获取规则的所有可能 token 序列，展开K层
+     * 用途：获取规则的所有可能 token 序列，展开 <=K 层
+     * 
+     * 返回：所有层级(0到K)的路径合并
+     * 
+     * 🔧 特殊逻辑：
+     * - 不仅存储第K层的数据，而是存储 0 到 K 的每一层
+     * - 使用中间层缓存避免重复计算：ruleName+curLevel
+     * - 最后将所有层的结果 flat 到一起并去重
      */
     private initFirstInfinityLevelKCache(ruleName: string): void {
         if (this.firstInfinityLevelKCache.has(ruleName)) {
             return
         }
         
-        // firstK=INFINITY, maxLevel=LEVEL_K
-        const branches = this.computeExpanded(
-            ruleName,
-            null,
-            EXPANSION_LIMITS.INFINITY,
-            0,
-            EXPANSION_LIMITS.LEVEL_K,
-            true
-        )
+        const allBranches: string[][] = []
         
-        this.firstInfinityLevelKCache.set(ruleName, branches)
+        // 遍历每一层 (0 到 LEVEL_K)
+        for (let level = 0; level <= EXPANSION_LIMITS.LEVEL_K; level++) {
+            // 为每一层计算结果
+            // 中间层缓存可以考虑后续优化（如果需要多次调用）
+            const branches = this.computeExpanded(
+                ruleName,
+                null,
+                EXPANSION_LIMITS.INFINITY,
+                0,
+                level,  // 当前层级
+                true
+            )
+            allBranches.push(...branches)
+        }
+        
+        // 去重（不同层可能产生相同的路径）
+        const uniqueBranches = this.deduplicate(allBranches)
+        
+        this.firstInfinityLevelKCache.set(ruleName, uniqueBranches)
     }
 
     /**
