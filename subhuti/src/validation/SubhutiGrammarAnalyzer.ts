@@ -441,7 +441,7 @@ export class SubhutiGrammarAnalyzer {
             // 清空递归检测集合
             this.recursiveDetectionSet.clear()
 
-            this.computeExpanded(null, ruleNode, EXPANSION_LIMITS.INFINITY, 0, EXPANSION_LIMITS.LEVEL_K, true)
+            this.expandPathsByDFS(null, ruleNode, EXPANSION_LIMITS.INFINITY, 0, EXPANSION_LIMITS.LEVEL_K, true)
         }
 
         // 为每个错误补充 suggestion
@@ -1177,7 +1177,7 @@ export class SubhutiGrammarAnalyzer {
                 throw new Error('系统错误：firstMoreCache 已存在')
             }
 
-            // 调用 computeExpanded：firstK=2, maxLevel=0（不展开规则名）
+            // 调用 expandPathsByDFS：firstK=2, maxLevel=0（不展开规则名）
             const children = this.computeFirstMoreBranches(ruleName)
 
             console.log(ruleName)
@@ -1303,7 +1303,7 @@ export class SubhutiGrammarAnalyzer {
         // subRuleHandler 会自动缓存为 "ruleName:maxLevel"
         // 注意：level=0 表示不展开（只返回规则名本身），通常不需要缓存
         for (let level = 1; level <= EXPANSION_LIMITS.LEVEL_K; level++) {
-            this.computeExpanded(
+            this.expandPathsByDFS(
                 ruleName,
                 null,
                 EXPANSION_LIMITS.INFINITY,
@@ -1334,8 +1334,8 @@ export class SubhutiGrammarAnalyzer {
         const t0 = Date.now()
 
         // firstK=FIRST_1, maxLevel=INFINITY
-        // computeExpanded → subRuleHandler 会自动缓存结果
-        this.computeExpanded(
+        // expandPathsByDFS → subRuleHandler 会自动缓存结果
+        this.expandPathsByDFS(
             ruleName,
             null,
             EXPANSION_LIMITS.FIRST_1,
@@ -1365,8 +1365,8 @@ export class SubhutiGrammarAnalyzer {
         const t0 = Date.now()
 
         // firstK=FIRST_K, maxLevel=INFINITY
-        // computeExpanded → subRuleHandler 会自动缓存结果
-        this.computeExpanded(
+        // expandPathsByDFS → subRuleHandler 会自动缓存结果
+        this.expandPathsByDFS(
             ruleName,
             null,
             EXPANSION_LIMITS.FIRST_K,
@@ -1393,7 +1393,7 @@ export class SubhutiGrammarAnalyzer {
     public computeFirst1ExpandBranches(ruleName: string, ruleNode: RuleNode = null) {
         // 调用通用展开方法（firstK=1, curLevel=0, maxLevel=Infinity）
         // 传入 isFirstPosition=true（顶层调用，用于左递归检测）
-        return this.computeExpanded(ruleName, ruleNode, EXPANSION_LIMITS.FIRST_1, 0, EXPANSION_LIMITS.INFINITY, true)
+        return this.expandPathsByDFS(ruleName, ruleNode, EXPANSION_LIMITS.FIRST_1, 0, EXPANSION_LIMITS.INFINITY, true)
     }
 
     /**
@@ -1406,7 +1406,7 @@ export class SubhutiGrammarAnalyzer {
     public computeFirstMoreExpandBranches(ruleName: string, ruleNode: RuleNode = null) {
         // 调用通用展开方法（firstK=FIRST_K, curLevel=0, maxLevel=MAX_LEVEL）
         // 传入 isFirstPosition=true（顶层调用，用于左递归检测）
-        return this.computeExpanded(ruleName, ruleNode, EXPANSION_LIMITS.FIRST_K, 0, EXPANSION_LIMITS.LEVEL_K, true)
+        return this.expandPathsByDFS(ruleName, ruleNode, EXPANSION_LIMITS.FIRST_K, 0, EXPANSION_LIMITS.LEVEL_K, true)
     }
 
 
@@ -1689,8 +1689,8 @@ export class SubhutiGrammarAnalyzer {
         // 调用通用展开方法，传入对应的 k 值
         let paths: string[][]
         try {
-            // 使用 computeExpanded 方法，传入 firstK 参数
-            paths = this.computeExpanded(null, node, k, 0, EXPANSION_LIMITS.INFINITY, false)
+            // 使用 expandPathsByDFS 方法，传入 firstK 参数
+            paths = this.expandPathsByDFS(null, node, k, 0, EXPANSION_LIMITS.INFINITY, false)
 
             // 🔍 调试日志：检查路径结果
             if (nodeRuleName && (nodeRuleName === 'BreakableStatement' || nodeRuleName === 'IterationStatement')) {
@@ -1748,50 +1748,40 @@ export class SubhutiGrammarAnalyzer {
 
 
     /**
-     * 通用展开方法：根据 firstK 和 maxLevel 展开规则
+     * 深度优先展开（DFS - Depth-First Search）
+     * 
+     * 🚀 算法：递归深入，自然展开到token
+     * 
+     * 适用场景：
+     * - maxLevel = INFINITY（无限层级）
+     * - 需要完全展开到token
+     * - 适合 First(K) + 完全展开
+     * 
+     * 优势：
+     * - 递归处理AST，代码简洁
+     * - 自然深入到叶子节点
+     * - 配合 firstK 截取，可提前终止部分分支
      *
      * @param node - AST 节点（可选）
      * @param ruleName - 规则名（可选）
-     * @param firstK - 取前 K 个符号（1 或 2）
+     * @param firstK - 取前 K 个符号
      * @param curLevel - 当前层级（默认 0）
-     * @param maxLevel - 最大展开层级（0=不展开, 3=展开3层, Infinity=完全展开）
-     * @param isFirstPosition
+     * @param maxLevel - 最大展开层级（通常为 Infinity）
+     * @param isFirstPosition - 是否在第一个位置（用于左递归检测）
      * @returns 展开后的路径数组 string[][]
      *
      * 调用方式：
-     * - computeExpanded(node, null, firstK, curLevel, maxLevel) - 传入节点
-     * - computeExpanded(null, ruleName, firstK, curLevel, maxLevel) - 传入规则名
+     * - expandPathsByDFS(node, null, firstK, curLevel, maxLevel) - 传入节点
+     * - expandPathsByDFS(null, ruleName, firstK, curLevel, maxLevel) - 传入规则名
      *
-     * 核心逻辑：
-     * 1. 如果传入 ruleName，获取对应的 node
-     * 2. 根据 node.type 分发处理：
-     *    - consume: 返回 [[tokenName]]
-     *    - subrule:
-     *        - 如果 curLevel >= maxLevel，返回 [[ruleName]]（不展开）
-     *        - 否则递归展开，curLevel + 1
-     *    - sequence:
-     *        - 如果 node.ruleName 存在（规则声明）：
-     *            - 根据 (firstK, maxLevel) 组合，从对应缓存获取已截断的分支
-     *            - 遍历分支中的每个符号，递归调用 computeExpanded(null, 符号, firstK, curLevel, maxLevel)
-     *            - 对展开结果做笛卡尔积，截断到 firstK
-     *        - 如果 node.ruleName 不存在（内联 sequence）：
-     *            - 遍历 node.nodes，递归调用 computeExpanded(node, null, firstK, curLevel, maxLevel)
-     *            - 对展开结果做笛卡尔积，截断到 firstK
-     *    - or: 遍历所有分支，合并结果
-     *    - option/many: 返回 [[], ...内部分支]
-     *    - atLeastOne: 返回 [...内部分支, ...内部分支×2]
-     *
-     * 关键优化：
-     * - 当 node.ruleName 存在时，从缓存获取已截断的分支，避免重复计算笛卡尔积
-     * - 只展开 firstK 个符号，后续符号不展开
-     *
-     * 使用场景：
-     * - firstK=2, maxLevel=0：firstMoreCache（不展开，取前2个符号）
-     * - firstK=1, maxLevel=0：first1Cache（不展开，取第1个符号）
-     * - firstK=1, maxLevel=Infinity：first1ExpandCache（完全展开到叶子节点）
-     * - firstK=2, maxLevel=3：firstMoreExpandCache（展开3层，取前2个符号）
+     * 核心逻辑：递归处理 AST 节点
+     * - consume: 返回 [[tokenName]]
+     * - subrule: 递归展开
+     * - sequence: 笛卡尔积组合子节点
+     * - or: 合并所有分支
+     * - option/many: 添加空分支
      */
-    private computeExpanded(
+    private expandPathsByDFS(
         ruleName: string | null,
         node: RuleNode,
         firstK: number,
@@ -1950,7 +1940,7 @@ export class SubhutiGrammarAnalyzer {
         for (let i = 0; i < nodesToExpand.length; i++) {
             // 展开当前子节点
             // 💡 传递累积的位置信息：父级是第1个 AND 当前也是第1个
-            let branches = this.computeExpanded(
+            let branches = this.expandPathsByDFS(
                 null,
                 nodesToExpand[i],
                 firstK,
@@ -2094,28 +2084,40 @@ export class SubhutiGrammarAnalyzer {
     }
 
     /**
-     * 递归展开路径中的规则名到更深层级
+     * 广度优先展开（BFS - Breadth-First Search）
+     * 
+     * 🚀 算法：逐层循环，精确控制层数
+     * 
+     * 适用场景：
+     * - maxLevel = 具体值（如 3, 5）
+     * - 需要展开到指定层级
+     * - 适合 First(∞) + 限制层数
+     * 
+     * 优势：
+     * - 精确控制展开层数
+     * - 每层独立处理，方便缓存
+     * - 分离已完成路径（全token）和未完成路径（含规则名）
      *
-     * @param ruleName
-     * @param paths 当前层级的路径列表（level 1）
-     * @param firstK 截取长度（由外层统一处理）
-     * @param curLevel 当前层级（已经+1了）
-     * @param maxLevel 最大层级
-     * @returns 展开到目标层级的路径（不截取，由外层统一截取）
+     * @param ruleName 顶层规则名
+     * @param paths 当前层级的路径列表（起始层级的数据）
+     * @param curLevel 当前层级
+     * @param maxLevel 目标层级
+     * @param firstK 截取长度
+     * @returns 展开到目标层级的路径
      *
      * 核心逻辑（逐层展开）：
-     * 1. 从 level 1 开始
-     * 2. 每次展开1层，直到 curLevel >= maxLevel
-     * 3. 利用 getDirectChildren 获取直接子节点
-     * 4. 通过笛卡尔积替换路径中的规则名
-     * 5. 不在内部截取，由外层统一处理
+     * 1. while (当前层级 < 目标层级)
+     * 2. 每次展开1层：调用 expandSinglePath
+     * 3. 分离已完成（全token）和未完成（含规则名）的路径
+     * 4. 继续展开未完成的路径
+     * 5. 达到目标层级后停止
      *
      * 示例：
-     * level 1: [[If, LParen, Expression, RParen, Statement]]
-     * level 2: [[If, LParen, Identifier, RParen, BlockStatement], ...]
+     * level 1: [[IfStatement], [WhileStatement], ...]
+     * level 2: [[If, LParen, Expression, ...], [While, LParen, ...], ...]
      * level 3: 继续展开...
      */
-    private expandPathsToDeeper(
+    private expandPathsByBFS(
         ruleName: string,
         paths: string[][],
         curLevel: number,
@@ -2299,7 +2301,7 @@ export class SubhutiGrammarAnalyzer {
 
         // 记录性能数据
         const duration = Date.now() - t0
-        this.perfAnalyzer.record('expandPathsToDeeper', duration, paths.length, result.length)
+        this.perfAnalyzer.record('expandPathsByBFS', duration, paths.length, result.length)
 
         return result
     }
@@ -2459,8 +2461,8 @@ export class SubhutiGrammarAnalyzer {
         }
 
         // 4. 动态计算：展开1层
-        // computeExpanded → subRuleHandler 会自动缓存到 "ruleName:1"
-        const result = this.computeExpanded(
+        // expandPathsByDFS → subRuleHandler 会自动缓存到 "ruleName:1"
+        const result = this.expandPathsByDFS(
             null,
             subNode,
             EXPANSION_LIMITS.INFINITY,
@@ -2644,7 +2646,7 @@ export class SubhutiGrammarAnalyzer {
                     // maxLevel = INFINITY：直接使用 DFS 从头展开到token
                     // 不需要先获取 level 1，直接递归展开
                     const subNode = this.getRuleNodeByAst(ruleName)
-                    finalResult = this.computeExpanded(null, subNode, firstK, curLevel, maxLevel, false)
+                    finalResult = this.expandPathsByDFS(null, subNode, firstK, curLevel, maxLevel, false)
                     actualLevel = maxLevel  // 已完全展开
                 } else {
                     // maxLevel = 具体值：先获取 level 1，再用 BFS 按层级展开
@@ -2664,9 +2666,9 @@ export class SubhutiGrammarAnalyzer {
                 // actualLevel 会被设置为 maxLevel，不会进入这个分支
                 
                 // 这里只处理 maxLevel = 具体值 的情况（BFS）
-                // 🚀 使用 BFS（expandPathsToDeeper 按层级展开）
+                // 🚀 使用 BFS（expandPathsByBFS 按层级展开）
                 // 优势：精确控制层级，适合有限层数
-                finalResult = this.expandPathsToDeeper(ruleName, finalResult, actualLevel, maxLevel, firstK)
+                finalResult = this.expandPathsByBFS(ruleName, finalResult, actualLevel, maxLevel, firstK)
             } else if (actualLevel === maxLevel) {
                 // 情况3.2：数据层级 = 目标层级，刚好满足，不需要展开
                 // 但仍需截取到 firstK
@@ -2843,7 +2845,7 @@ export class SubhutiGrammarAnalyzer {
         for (const alt of alternatives) {
             // 🔴 关键：每个 Or 分支都是独立的起点，第一个位置的规则需要检测左递归
             // 递归展开每个分支（可能包含空分支 []）
-            const branches = this.computeExpanded(null, alt, firstK, curLevel, maxLevel, isFirstPosition)
+            const branches = this.expandPathsByDFS(null, alt, firstK, curLevel, maxLevel, isFirstPosition)
             // 合并到结果中（空分支也会被合并）
             result = result.concat(branches)
         }
@@ -2898,7 +2900,7 @@ export class SubhutiGrammarAnalyzer {
     ): string[][] {
         // 递归展开内部节点
         // 🔴 关键：传递 isFirstPosition 用于递归检测
-        const innerBranches = this.computeExpanded(null, node, firstK, curLevel, maxLevel, isFirstPosition)
+        const innerBranches = this.expandPathsByDFS(null, node, firstK, curLevel, maxLevel, isFirstPosition)
 
         // ⚠️⚠️⚠️ 关键：添加空分支 [] 表示可以跳过（0次）
         // 空分支必须在第一个位置，表示优先匹配空（PEG 顺序选择）
@@ -2947,7 +2949,7 @@ export class SubhutiGrammarAnalyzer {
     ): string[][] {
         // 递归展开内部节点（1次的情况，可能包含空分支 []）
         // 🔴 关键：传递 isFirstPosition 用于递归检测
-        const innerBranches = this.computeExpanded(null, node, firstK, curLevel, maxLevel, isFirstPosition)
+        const innerBranches = this.expandPathsByDFS(null, node, firstK, curLevel, maxLevel, isFirstPosition)
 
         // 生成 doubleBranches（2次的情况）
         const doubleBranches = innerBranches.map(branch => {
