@@ -1772,27 +1772,78 @@ export class SubhutiGrammarAnalyzer {
         maxLevel: number,
     ): string[][] {
         let currentPaths = paths
+        let finishedPaths: string[][] = []  // 已经全是 token 的路径
 
-        // 从 level 1 逐层展开到 maxLevel
-        // curLevel 表示已经展开的层数（开始是1）
-        // 需要继续展开 (maxLevel - curLevel) 次
-        const levelsToExpand = maxLevel - curLevel
+        // 计算最多展开多少层
+        // 如果 maxLevel = Infinity，则 levelsToExpand = Infinity
+        const levelsToExpand = maxLevel === EXPANSION_LIMITS.INFINITY 
+            ? EXPANSION_LIMITS.INFINITY 
+            : (maxLevel - curLevel)
 
-        for (let i = 0; i < levelsToExpand; i++) {
+        // 防御检查
+        if (levelsToExpand < 0) {
+            throw new Error(`系统错误：levelsToExpand < 0 (curLevel=${curLevel}, maxLevel=${maxLevel})`)
+        }
+
+        let expandedLevels = 0
+
+        // 广度优先展开
+        // 保护机制：
+        // 1. firstK 截断保证路径长度不会无限增长
+        // 2. 路径全是 token 时自动停止
+        // 3. recursiveDetectionSet 防止左递归
+        while (expandedLevels < levelsToExpand) {
+            // ========================================
+            // 步骤1：分离已完成和未完成的路径
+            // ========================================
+            const pathsToExpand: string[][] = []
+            const pathsFinished: string[][] = []
+
+            for (const path of currentPaths) {
+                // 检查当前路径是否全部是 token
+                const isAllTokens = path.every(symbol => this.tokenCache.has(symbol))
+                
+                if (isAllTokens) {
+                    // 已完成：全部是 token，无需继续展开
+                    pathsFinished.push(path)
+                } else {
+                    // 未完成：还有规则名，需要继续展开
+                    pathsToExpand.push(path)
+                }
+            }
+
+            // 将已完成的路径移到 finishedPaths
+            finishedPaths.push(...pathsFinished)
+
+            // ========================================
+            // 步骤2：如果没有需要展开的路径，停止
+            // ========================================
+            if (pathsToExpand.length === 0) {
+                // 所有路径都已完成，停止展开
+                break
+            }
+
+            // ========================================
+            // 步骤3：展开未完成的路径（广度优先）
+            // ========================================
             const expandedPaths: string[][] = []
 
-            // 展开当前层的每个路径
-            for (const path of currentPaths) {
+            for (const path of pathsToExpand) {
                 const expanded = this.expandSinglePath(path)
                 expandedPaths.push(...expanded)
             }
 
-            // 只去重，不截取（由外层统一截取）
+            // 去重（不截取，由外层统一截取）
             currentPaths = this.deduplicate(expandedPaths)
+            expandedLevels++
         }
 
-        // 返回展开后的路径（不截取）
-        return currentPaths
+        // ========================================
+        // 步骤4：合并已完成和未完成的路径
+        // ========================================
+        // finishedPaths: 已经全是 token 的路径
+        // currentPaths: 达到 maxLevel 但可能还有规则名的路径
+        return [...finishedPaths, ...currentPaths]
     }
 
     /**
@@ -2021,6 +2072,7 @@ export class SubhutiGrammarAnalyzer {
             // 穷举：按 actualLevel 和 maxLevel 的关系分类
             if (actualLevel < maxLevel) {
                 // 情况3.1：数据层级 < 目标层级，需要继续展开
+                // expandPathsToDeeper 支持 maxLevel = Infinity（会自动展开到全是 token）
                 finalResult = this.expandPathsToDeeper(finalResult, actualLevel, maxLevel)
             } else if (actualLevel === maxLevel) {
                 // 情况3.2：数据层级 = 目标层级，刚好满足，不需要展开
