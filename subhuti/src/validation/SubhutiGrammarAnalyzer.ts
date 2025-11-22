@@ -1805,10 +1805,11 @@ export class SubhutiGrammarAnalyzer {
         node: RuleNode,
         firstK: number,
         curLevel: number = 0,
-        isFirstPosition: boolean = false  // 是否在第一个位置（用于左递归检测）
+        isFirstPosition: boolean = false,
+        maxLevel: number = EXPANSION_LIMITS.INFINITY,
+        // 是否在第一个位置（用于左递归检测）
     ): string[][] {
         // DFS 总是无限展开
-        const maxLevel = EXPANSION_LIMITS.INFINITY
 
         // 如果传入规则名，转发给 subRuleHandler 处理
         if (ruleName) {
@@ -2449,10 +2450,18 @@ export class SubhutiGrammarAnalyzer {
 
         // 4. 动态计算：展开1层
         // expandPathsByDFS → subRuleHandler 会自动缓存到 "ruleName:1"
-        const result = this.expandPathsByBFS(
+        const result = this.expandPathsByDFS(
             ruleName,
-            first1
+            null,
+            EXPANSION_LIMITS.INFINITY,
+            0,
+            false,
+            1
         )
+
+        if (!this.bfsLevelCache.has(key)) {
+            this.bfsLevelCache.set(key, result)
+        }
 
         return result
     }
@@ -2516,7 +2525,7 @@ export class SubhutiGrammarAnalyzer {
 
     /**
      * 处理 DFS 模式（深度优先展开，无限层级）
-     * 
+     *
      * @param ruleName 规则名
      * @param firstK 截取数量
      * @param curLevel 当前层级
@@ -2576,40 +2585,40 @@ export class SubhutiGrammarAnalyzer {
             // 阶段1：DFS 缓存查找
             // ========================================
 
-        if (firstK === EXPANSION_LIMITS.FIRST_1) {
-            // 优先查找 first1 缓存
-            if (this.dfsFirst1Cache.has(ruleName)) {
-                this.perfAnalyzer.recordCacheHit('dfsFirst1')
-                const duration = Date.now() - t0
-                this.perfAnalyzer.record('subRuleHandler', duration)
-                return this.dfsFirst1Cache.get(ruleName)!
-            }
+            if (firstK === EXPANSION_LIMITS.FIRST_1) {
+                // 优先查找 first1 缓存
+                if (this.dfsFirst1Cache.has(ruleName)) {
+                    this.perfAnalyzer.recordCacheHit('dfsFirst1')
+                    const duration = Date.now() - t0
+                    this.perfAnalyzer.record('subRuleHandler', duration)
+                    return this.dfsFirst1Cache.get(ruleName)!
+                }
 
-            // first1 未命中，尝试从 firstK 缓存截取
-            if (this.dfsFirstKCache.has(ruleName)) {
-                this.perfAnalyzer.recordCacheHit('dfsFirst1')
-                const firstKData = this.dfsFirstKCache.get(ruleName)!
-                // 从 firstK 截取到 first1
-                const first1Data = firstKData.map(path => path.slice(0, 1))
-                const result = this.deduplicate(first1Data)
-                // 缓存 first1 结果
-                this.dfsFirst1Cache.set(ruleName, result)
-                const duration = Date.now() - t0
-                this.perfAnalyzer.record('subRuleHandler', duration)
-                return result
-            }
-            // 都未命中，继续实际计算
+                // first1 未命中，尝试从 firstK 缓存截取
+                if (this.dfsFirstKCache.has(ruleName)) {
+                    this.perfAnalyzer.recordCacheHit('dfsFirst1')
+                    const firstKData = this.dfsFirstKCache.get(ruleName)!
+                    // 从 firstK 截取到 first1
+                    const first1Data = firstKData.map(path => path.slice(0, 1))
+                    const result = this.deduplicate(first1Data)
+                    // 缓存 first1 结果
+                    this.dfsFirst1Cache.set(ruleName, result)
+                    const duration = Date.now() - t0
+                    this.perfAnalyzer.record('subRuleHandler', duration)
+                    return result
+                }
+                // 都未命中，继续实际计算
 
-        } else if (firstK === EXPANSION_LIMITS.FIRST_K) {
-            // 查找 firstK 缓存
-            if (this.dfsFirstKCache.has(ruleName)) {
-                this.perfAnalyzer.recordCacheHit('dfsFirstK')
-                const duration = Date.now() - t0
-                this.perfAnalyzer.record('subRuleHandler', duration)
-                return this.dfsFirstKCache.get(ruleName)!
+            } else if (firstK === EXPANSION_LIMITS.FIRST_K) {
+                // 查找 firstK 缓存
+                if (this.dfsFirstKCache.has(ruleName)) {
+                    this.perfAnalyzer.recordCacheHit('dfsFirstK')
+                    const duration = Date.now() - t0
+                    this.perfAnalyzer.record('subRuleHandler', duration)
+                    return this.dfsFirstKCache.get(ruleName)!
+                }
+                // 未命中，继续实际计算
             }
-            // 未命中，继续实际计算
-        }
 
             // ========================================
             // 阶段2：DFS 实际计算（缓存未命中）
