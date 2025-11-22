@@ -272,6 +272,7 @@ export const EXPANSION_LIMITS = {
     FIRST_1: 1,
     FIRST_K: 3,
 
+    LEVEL_1: 1,
     LEVEL_K: 2,
 
     INFINITY: Infinity,
@@ -2429,9 +2430,8 @@ export class SubhutiGrammarAnalyzer {
      * - IfStatement → [[If, LParen, Expression, RParen, Statement]]
      */
     private getDirectChildren(ruleName: string): string[][] {
-        const first1 = 1
         // 1. 优先从 bfsLevelCache 获取 level 1 的数据
-        const key = `${ruleName}:${first1}`
+        const key = `${ruleName}`
         if (this.bfsLevelCache.has(key)) {
             return this.bfsLevelCache.get(key)!
         }
@@ -2456,7 +2456,7 @@ export class SubhutiGrammarAnalyzer {
             EXPANSION_LIMITS.INFINITY,
             0,
             false,
-            1
+            EXPANSION_LIMITS.LEVEL_1
         )
 
         if (!this.bfsLevelCache.has(key)) {
@@ -2487,7 +2487,7 @@ export class SubhutiGrammarAnalyzer {
         firstK: number,
         curLevel: number,
         maxLevel: number,
-        isFirstPosition: boolean = true
+        isFirstPosition: boolean = true,
     ) {
         // 记录入口调用
         const t0 = Date.now()
@@ -2512,10 +2512,10 @@ export class SubhutiGrammarAnalyzer {
         // 🎯 核心路由：尽早分流 DFS 和 BFS
         // ========================================
 
-        if (maxLevel === EXPANSION_LIMITS.INFINITY) {
+        if (maxLevel === EXPANSION_LIMITS.INFINITY || maxLevel === 1) {
             // 🔴 DFS 模式：深度优先展开（无限层级）
             // 递归检测和左递归检测在 handleDFS 内部进行
-            return this.handleDFS(ruleName, firstK, curLevel, isFirstPosition)
+            return this.handleDFS(ruleName, firstK, curLevel, maxLevel, isFirstPosition)
         } else {
             // 🔵 BFS 模式：广度优先展开（限制层级）
             // BFS 有层级限制，不需要递归检测
@@ -2529,6 +2529,7 @@ export class SubhutiGrammarAnalyzer {
      * @param ruleName 规则名
      * @param firstK 截取数量
      * @param curLevel 当前层级
+     * @param maxLevel
      * @param isFirstPosition 是否在第一个位置（用于左递归检测）
      * @returns 展开结果
      */
@@ -2536,6 +2537,7 @@ export class SubhutiGrammarAnalyzer {
         ruleName: string,
         firstK: number,
         curLevel: number,
+        maxLevel: number,
         isFirstPosition: boolean
     ): string[][] {
         const t0 = Date.now()
@@ -2618,6 +2620,15 @@ export class SubhutiGrammarAnalyzer {
                     return this.dfsFirstKCache.get(ruleName)!
                 }
                 // 未命中，继续实际计算
+            } else if (firstK === EXPANSION_LIMITS.INFINITY) {
+                if (maxLevel === EXPANSION_LIMITS.LEVEL_1) {
+                    if (this.bfsLevelCache.has(ruleName)) {
+                        return this.bfsLevelCache.get(ruleName)!
+                    }
+                } else {
+                    console.log(maxLevel)
+                    throw new Error("系统错误")
+                }
             }
 
             // ========================================
@@ -2654,6 +2665,14 @@ export class SubhutiGrammarAnalyzer {
                     if (!this.dfsFirst1Cache.has(ruleName)) {
                         this.perfAnalyzer.recordCacheMiss('dfsFirst1')
                         this.dfsFirst1Cache.set(ruleName, finalResult)
+                    }
+                } else if (firstK === EXPANSION_LIMITS.INFINITY) {
+                    if (maxLevel === EXPANSION_LIMITS.LEVEL_1) {
+                        if (!this.bfsLevelCache.has(ruleName)) {
+                            this.bfsLevelCache.set(ruleName, finalResult)!
+                        }
+                    } else {
+                        throw new Error("系统错误")
                     }
                 } else {
                     throw new Error(`系统错误：DFS 不支持 firstK=${firstK}`)
