@@ -2633,33 +2633,40 @@ export class SubhutiGrammarAnalyzer {
             // 穷举：按 finalResult 是否存在分类
             if (finalResult) {
                 // 情况2.1：缓存命中，已经有数据
-                // actualLevel 已经设置为 curLevel
+                // actualLevel 已经设置为 maxLevel
                 // 不需要额外操作
             } else {
                 // 情况2.2：缓存未命中，需要实际计算
                 this.perfAnalyzer.recordActualCompute()
-                // getDirectChildren 返回第 1 层的数据
-                finalResult = this.getDirectChildren(ruleName)
-                actualLevel = 1  // 数据实际是第 1 层
+                
+                // 🎯 智能选择：根据 maxLevel 决定计算方式
+                if (maxLevel === EXPANSION_LIMITS.INFINITY) {
+                    // maxLevel = INFINITY：直接使用 DFS 从头展开到token
+                    // 不需要先获取 level 1，直接递归展开
+                    const subNode = this.getRuleNodeByAst(ruleName)
+                    finalResult = this.computeExpanded(null, subNode, firstK, curLevel, maxLevel, false)
+                    actualLevel = maxLevel  // 已完全展开
+                } else {
+                    // maxLevel = 具体值：先获取 level 1，再用 BFS 按层级展开
+                    finalResult = this.getDirectChildren(ruleName)
+                    actualLevel = 1  // 数据实际是第 1 层
+                }
             }
 
             // ========================================
-            // 阶段3：判断是否需要继续展开（穷举法）
+            // 阶段3：判断是否需要继续展开（智能算法选择）
             // ========================================
 
             // 穷举：按 actualLevel 和 maxLevel 的关系分类
             if (actualLevel < maxLevel) {
                 // 情况3.1：数据层级 < 目标层级，需要继续展开
-                // expandPathsToDeeper 支持 maxLevel = Infinity（会自动展开到全是 token）
-                // ✅ 在展开过程中就会截取到 firstK
-
-                console.log('ruleName:expandPathsToDeeper')
-                console.log(ruleName)
-                console.log(actualLevel)
-                console.log(maxLevel)
-                console.log(firstK)
+                // 注意：如果在阶段2已经用 DFS 完全展开（maxLevel=INFINITY），
+                // actualLevel 会被设置为 maxLevel，不会进入这个分支
+                
+                // 这里只处理 maxLevel = 具体值 的情况（BFS）
+                // 🚀 使用 BFS（expandPathsToDeeper 按层级展开）
+                // 优势：精确控制层级，适合有限层数
                 finalResult = this.expandPathsToDeeper(ruleName, finalResult, actualLevel, maxLevel, firstK)
-                console.log('ruleName:end')
             } else if (actualLevel === maxLevel) {
                 // 情况3.2：数据层级 = 目标层级，刚好满足，不需要展开
                 // 但仍需截取到 firstK
