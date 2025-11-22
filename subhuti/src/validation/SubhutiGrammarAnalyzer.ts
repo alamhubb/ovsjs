@@ -100,14 +100,8 @@ export const EXPANSION_LIMITS = {
     FIRST_K: 3,
 
     LEVEL_K: 5,
-    LEVEL_1: 1,
 
     INFINITY: Infinity,
-
-    First_Infinity_Level_K: 'First_Infinity_Level_K' as const,
-    First_1_Level_Infinity: 'First_1_Level_Infinity' as const,
-    First_K_Level_Infinity: 'First_K_Level_Infinity' as const,
-
 
     /**
      * 冲突检测路径比较限制
@@ -247,19 +241,11 @@ export class SubhutiGrammarAnalyzer {
         this.detectedLeftRecursionErrors.clear()
 
         // 遍历所有规则
-        for (const ruleName of this.ruleASTs.keys()) {
+        for (const ruleNode of this.ruleASTs.values()) {
             // 清空递归检测集合
             this.recursiveDetectionSet.clear()
 
-            try {
-                // 执行展开，使用无限层级以检测间接左递归
-                // 注意：这里使用 computeFirst1ExpandBranches 而不是 computeFirstMoreBranches
-                // 因为后者的 maxLevel=1 无法检测间接左递归
-                this.computeFirst1ExpandBranches(ruleName)
-            } catch (error) {
-                // 处理其他系统错误（非左递归错误）
-                console.error(`  ⚠️  ${ruleName}: ${error.message}`)
-            }
+            this.computeExpanded(null, ruleNode, EXPANSION_LIMITS.INFINITY, 0, EXPANSION_LIMITS.LEVEL_K, true)
         }
 
         // 为每个错误补充 suggestion
@@ -1543,7 +1529,7 @@ export class SubhutiGrammarAnalyzer {
         node: RuleNode,
         firstK: number,
         curLevel: number = 0,
-        maxLevel: number = EXPANSION_LIMITS.LEVEL_1,
+        maxLevel: number,
         isFirstPosition: boolean = false  // 是否在第一个位置（用于左递归检测）
     ): string[][] {
         // 如果传入规则名，转发给 subRuleHandler 处理
@@ -1883,25 +1869,13 @@ export class SubhutiGrammarAnalyzer {
             subNode,
             EXPANSION_LIMITS.INFINITY,
             0,
-            EXPANSION_LIMITS.LEVEL_1,
+            first1,
             false
         )
 
         return result
     }
 
-
-    public getModeString(firstK: number, maxLevel: number): ExpansionMode {
-        if (maxLevel === EXPANSION_LIMITS.LEVEL_K) {
-            if (firstK === EXPANSION_LIMITS.FIRST_1) {
-                return EXPANSION_LIMITS.First_1_Level_Infinity
-            } else if (firstK === EXPANSION_LIMITS.FIRST_K) {
-                return EXPANSION_LIMITS.First_K_Level_Infinity
-            }
-        } else if (firstK === EXPANSION_LIMITS.INFINITY) {
-            return EXPANSION_LIMITS.First_Infinity_Level_K
-        }
-    }
 
     /**
      * 子规则处理器
