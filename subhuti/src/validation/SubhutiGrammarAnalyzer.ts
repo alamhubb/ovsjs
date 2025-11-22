@@ -1787,6 +1787,144 @@ export class SubhutiGrammarAnalyzer {
     }
 
     /**
+     * 递归展开路径中的规则名到更深层级
+     *
+     * @param paths 当前层级的路径列表（level 1）
+     * @param firstK 截取长度
+     * @param curLevel 当前层级（已经+1了）
+     * @param maxLevel 最大层级
+     * @param isFirstPosition 是否在第一个位置
+     * @returns 展开到目标层级的路径
+     *
+     * 核心逻辑（逐层展开）：
+     * 1. 从 level 1 开始
+     * 2. 每次展开1层，直到 curLevel >= maxLevel
+     * 3. 利用 getDirectChildren 获取直接子节点
+     * 4. 通过笛卡尔积替换路径中的规则名
+     *
+     * 示例：
+     * level 1: [[If, LParen, Expression, RParen, Statement]]
+     * level 2: [[If, LParen, Identifier, RParen, BlockStatement], ...]
+     * level 3: 继续展开...
+     */
+    private expandPathsToDeeper(
+        paths: string[][],
+        firstK: number,
+        curLevel: number,
+        maxLevel: number,
+        isFirstPosition: boolean
+    ): string[][] {
+        let currentPaths = paths
+
+        // 从 level 1 逐层展开到 maxLevel
+        // curLevel 表示已经展开的层数（开始是1）
+        // 需要继续展开 (maxLevel - curLevel) 次
+        const levelsToExpand = maxLevel - curLevel
+
+        for (let i = 0; i < levelsToExpand; i++) {
+            const expandedPaths: string[][] = []
+
+            // 展开当前层的每个路径
+            for (const path of currentPaths) {
+                const expanded = this.expandSinglePath(path)
+                expandedPaths.push(...expanded)
+            }
+
+            // 去重并更新为下一层
+            currentPaths = this.deduplicate(expandedPaths)
+        }
+
+        // 截取到 firstK（如果需要）
+        if (firstK !== EXPANSION_LIMITS.INFINITY) {
+            currentPaths = currentPaths.map(p => p.slice(0, firstK))
+            currentPaths = this.deduplicate(currentPaths)
+        }
+
+        return currentPaths
+    }
+
+    /**
+     * 展开单个路径中的规则名（展开1层）
+     *
+     * @param path 单个路径（可能包含 token 和规则名）
+     * @returns 展开后的所有可能路径
+     *
+     * 示例：
+     * path = [If, LParen, Expression, RParen, Statement]
+     * → Expression 的直接子节点: [[Identifier], [BinaryExpr], ...]
+     * → Statement 的直接子节点: [[BlockStatement], [IfStatement], ...]
+     * → 笛卡尔积: [[If, LParen, Identifier, RParen, BlockStatement], ...]
+     *
+     * 注意：只展开1层，使用 getDirectChildren
+     */
+    private expandSinglePath(path: string[]): string[][] {
+        const allBranches: string[][][] = []
+
+        // 遍历路径中的每个符号
+        for (const symbol of path) {
+            if (this.ruleASTs.has(symbol)) {
+                // 是规则名，获取其直接子节点（展开1层）
+                const branches = this.getDirectChildren(symbol)
+                allBranches.push(branches)
+            } else {
+                // 是 token，保持不变
+                allBranches.push([[symbol]])
+            }
+        }
+
+        // 笛卡尔积组合
+        return this.cartesianProduct(allBranches)
+    }
+
+    /**
+     * 获取规则的直接子节点（展开1层）
+     *
+     * @param ruleName 规则名
+     * @returns 直接子节点的所有路径（展开1层）
+     *
+     * 优先级：
+     * 1. 从 firstInfinityLevel1Cache 获取（如果已初始化）
+     * 2. 动态计算并缓存
+     *
+     * 示例：
+     * - Statement → [[BlockStatement], [IfStatement], [ExpressionStatement], ...]
+     * - IfStatement → [[If, LParen, Expression, RParen, Statement]]
+     */
+    private getDirectChildren(ruleName: string): string[][] {
+        // 1. 优先从缓存获取
+        if (this.firstInfinityLevel1Cache.has(ruleName)) {
+            return this.firstInfinityLevel1Cache.get(ruleName)!
+        }
+
+        // 2. 检查是否是 token
+        const tokenNode = this.tokenCache?.get(ruleName)
+        if (tokenNode && tokenNode.type === 'consume') {
+            return [[ruleName]]  // token 直接返回
+        }
+
+        // 3. 获取规则的 AST 节点
+        const subNode = this.getRuleNodeByAst(ruleName)
+        if (!subNode) {
+            throw new Error(`系统错误：规则不存在: ${ruleName}`)
+        }
+
+        // 4. 动态计算：展开1层
+        const result = this.computeExpanded(
+            null,
+            subNode,
+            EXPANSION_LIMITS.INFINITY,
+            0,
+            EXPANSION_LIMITS.LEVEL_1,
+            false
+        )
+
+        // 5. 缓存结果
+        this.firstInfinityLevel1Cache.set(ruleName, result)
+
+        return result
+    }
+
+    /**
      * 子规则处理器
      *
      * 职责：
@@ -1902,32 +2040,21 @@ export class SubhutiGrammarAnalyzer {
             }
 
 
-            // 获取规则的 AST 节点
-            const subNode = this.getRuleNodeByAst(ruleName)
-            if (!subNode) {
-                // 规则不存在，可能是 token
-                const tokenNode = this.tokenCache?.get(ruleName)
-                if (tokenNode && tokenNode.type === 'consume') {
-                    // 是 token，返回 token 名
-                    return [[ruleName]]
-                }
-                // 既不是规则也不是 token，报错
-                throw new Error(`系统错误：规则不存在: ${ruleName}`)
+            // 🔧 优化：使用 getDirectChildren 获取直接子节点
+            // 如果 maxLevel=1 或 curLevel >= maxLevel，直接返回直接子节点
+            const directChildren = this.getDirectChildren(ruleName)
+
+            if (curLevel >= maxLevel) {
+                return directChildren
             }
 
+            // 否则需要继续递归展开
+            // 从 getDirectChildren 获取直接子节点
 
-            if (this.firstInfinityLevel1Cache.has(ruleName)) {
-                const result = this.firstInfinityLevel1Cache.get(ruleName)
-
-                for (const resultElement of result) {
-                    resultElement.splice(0, firstK)
-                }
-            }
-
-            // 递归展开子规则的 AST 节点
-            // 注意：curLevel 已经在开头 +1 了
-            // 传递位置信息：保持 isFirstPosition（不改变）
-            const result = this.computeExpanded(null, subNode, firstK, curLevel, maxLevel, isFirstPosition)
+            // 递归展开每个子节点
+            // 例如：[[BlockStatement], [If, LParen, Expression, RParen, Statement]]
+            // 需要继续展开其中的规则名
+            const result = this.expandPathsToDeeper(directChildren, firstK, curLevel, maxLevel, isFirstPosition)
 
 
             // 🔧 缓存结果（如果缓存中不存在）
