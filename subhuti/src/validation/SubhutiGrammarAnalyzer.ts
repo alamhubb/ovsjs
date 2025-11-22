@@ -85,6 +85,90 @@ import {list} from "@lerna-lite/publish";
 export type LeftRecursionError = ValidationError
 
 /**
+ * 性能分析器
+ */
+class PerformanceAnalyzer {
+    private stats = new Map<string, {
+        count: number
+        totalTime: number
+        maxTime: number
+        minTime: number
+        inputSizes: number[]
+        outputSizes: number[]
+    }>()
+
+    // 记录方法调用
+    record(methodName: string, duration: number, inputSize?: number, outputSize?: number) {
+        if (!this.stats.has(methodName)) {
+            this.stats.set(methodName, {
+                count: 0,
+                totalTime: 0,
+                maxTime: 0,
+                minTime: Infinity,
+                inputSizes: [],
+                outputSizes: []
+            })
+        }
+
+        const stat = this.stats.get(methodName)!
+        stat.count++
+        stat.totalTime += duration
+        stat.maxTime = Math.max(stat.maxTime, duration)
+        stat.minTime = Math.min(stat.minTime, duration)
+        
+        if (inputSize !== undefined) {
+            stat.inputSizes.push(inputSize)
+        }
+        if (outputSize !== undefined) {
+            stat.outputSizes.push(outputSize)
+        }
+    }
+
+    // 输出统计报告
+    report() {
+        console.log('\n📊 ===== 性能分析报告 =====\n')
+
+        const sorted = Array.from(this.stats.entries())
+            .sort((a, b) => b[1].totalTime - a[1].totalTime)
+
+        for (const [method, stat] of sorted) {
+            const avgTime = stat.totalTime / stat.count
+            const avgInput = stat.inputSizes.length > 0 
+                ? stat.inputSizes.reduce((a, b) => a + b, 0) / stat.inputSizes.length 
+                : 0
+            const avgOutput = stat.outputSizes.length > 0
+                ? stat.outputSizes.reduce((a, b) => a + b, 0) / stat.outputSizes.length
+                : 0
+
+            console.log(`📌 ${method}:`)
+            console.log(`   调用次数: ${stat.count}`)
+            console.log(`   总耗时: ${stat.totalTime.toFixed(2)}ms`)
+            console.log(`   平均耗时: ${avgTime.toFixed(2)}ms`)
+            console.log(`   最大耗时: ${stat.maxTime.toFixed(2)}ms`)
+            console.log(`   最小耗时: ${stat.minTime.toFixed(2)}ms`)
+            
+            if (stat.inputSizes.length > 0) {
+                console.log(`   平均输入: ${avgInput.toFixed(1)}`)
+            }
+            if (stat.outputSizes.length > 0) {
+                console.log(`   平均输出: ${avgOutput.toFixed(1)}`)
+            }
+            console.log('')
+        }
+
+        // 总耗时
+        const totalTime = Array.from(this.stats.values())
+            .reduce((sum, stat) => sum + stat.totalTime, 0)
+        console.log(`⏱️  总耗时: ${totalTime.toFixed(2)}ms\n`)
+    }
+
+    // 清空统计
+    clear() {
+        this.stats.clear()
+    }
+}
+
+/**
  * 全局统一限制配置
  *
  * 设计理念：
@@ -179,6 +263,9 @@ export class SubhutiGrammarAnalyzer {
 
     private first1LevelInfinityCache = new Map<string, string[][]>()
     private firstKLevelInfinityCache = new Map<string, string[][]>()
+    
+    /** 性能分析器 */
+    private perfAnalyzer = new PerformanceAnalyzer()
     // private firstInfinityLevel1Cache = new Map<string, string[][]>()
     // 🔧 特殊：key 为 "ruleName:maxLevel"，因为不同层级返回不同结果
     // private firstInfinityLevelKAllCache = new Map<string, string[][]>()
@@ -922,21 +1009,46 @@ export class SubhutiGrammarAnalyzer {
     initCacheAndCheckLeftRecursion(): ValidationError[] {
         const allErrors: ValidationError[] = []
 
+        console.log(`\n🔍 ========== 语法验证与缓存初始化 ==========\n`)
+
         // 0. 初始化各种组合的缓存
-        console.log(`  📊 [0] 开始初始化缓存...`)
+        console.log(`📊 [阶段0] 开始初始化缓存...\n`)
         const t0 = Date.now()
         this.initAllCaches()
         const t0End = Date.now()
-        console.log(`  ✓ [0] 缓存初始化完成，耗时 ${t0End - t0}ms`)
+        console.log(`\n✅ [阶段0] 缓存初始化完成，总耗时 ${t0End - t0}ms`)
+        console.log(`   - FirstInfinityLevelK: ${this.firstInfinityLevelKCache.size} 条`)
+        console.log(`   - First1LevelInfinity: ${this.first1LevelInfinityCache.size} 条`)
+        console.log(`   - FirstKLevelInfinity: ${this.firstKLevelInfinityCache.size} 条`)
+        
+        // 输出阶段性性能报告
+        console.log(`\n📈 [阶段0] 性能报告:`)
+        this.perfAnalyzer.report()
 
         // 1. 左递归检测
+        console.log(`\n📊 [阶段1] 开始左递归检测...`)
+        const t1 = Date.now()
         const leftRecursionErrors = this.checkAllLeftRecursion()
+        const t1End = Date.now()
+        console.log(`✅ [阶段1] 左递归检测完成，耗时 ${t1End - t1}ms`)
         allErrors.push(...leftRecursionErrors)
 
-        // 2. Or 分支冲突检测（只有在没有左递归错误时才执行）
+        // 2. Or 分支冲突检测
+        console.log(`\n📊 [阶段2] 开始 Or 分支冲突检测...`)
+        const t2 = Date.now()
         const orConflictErrors = this.checkAllOrConflicts()
+        const t2End = Date.now()
+        console.log(`✅ [阶段2] Or 分支冲突检测完成，耗时 ${t2End - t2}ms`)
         allErrors.push(...orConflictErrors)
 
+        // 3. 输出最终性能分析报告
+        console.log(`\n🎯 ========== 最终性能分析报告 ==========`)
+        this.perfAnalyzer.report()
+        
+        console.log(`\n⏱️  总耗时: ${t0End - t0 + (t1End - t1) + (t2End - t2)}ms`)
+        console.log(`   - 阶段0(缓存初始化): ${t0End - t0}ms (${((t0End - t0) / (t0End - t0 + (t1End - t1) + (t2End - t2)) * 100).toFixed(1)}%)`)
+        console.log(`   - 阶段1(左递归检测): ${t1End - t1}ms (${((t1End - t1) / (t0End - t0 + (t1End - t1) + (t2End - t2)) * 100).toFixed(1)}%)`)
+        console.log(`   - 阶段2(Or冲突检测): ${t2End - t2}ms (${((t2End - t2) / (t0End - t0 + (t1End - t1) + (t2End - t2)) * 100).toFixed(1)}%)`)
 
         return allErrors
 
@@ -1036,21 +1148,30 @@ export class SubhutiGrammarAnalyzer {
      */
     private initAllCaches(): void {
         const ruleNames = Array.from(this.ruleASTs.keys())
-
-        console.log(`    初始化 firstInfinityLevelKCache (firstK=∞, maxLevel=${EXPANSION_LIMITS.LEVEL_K})...`)
+        
+        console.log(`    [1/3] 初始化 firstInfinityLevelKCache (firstK=∞, maxLevel=5)...`)
+        const t1 = Date.now()
         for (const ruleName of ruleNames) {
             this.initFirstInfinityLevelKCache(ruleName)
         }
-
-        console.log(`    初始化 first1LevelInfinityCache (firstK=1, maxLevel=∞)...`)
+        const t1End = Date.now()
+        console.log(`    ✓ [1/3] 完成，耗时 ${t1End - t1}ms，缓存条目: ${this.firstInfinityLevelKCache.size}`)
+        
+        console.log(`\n    [2/3] 初始化 first1LevelInfinityCache (firstK=1, maxLevel=∞)...`)
+        const t2 = Date.now()
         for (const ruleName of ruleNames) {
             this.initFirst1LevelInfinityCache(ruleName)
         }
-
-        console.log(`    初始化 firstKLevelInfinityCache (firstK=${EXPANSION_LIMITS.FIRST_K}, maxLevel=∞)...`)
+        const t2End = Date.now()
+        console.log(`    ✓ [2/3] 完成，耗时 ${t2End - t2}ms，缓存条目: ${this.first1LevelInfinityCache.size}`)
+        
+        console.log(`\n    [3/3] 初始化 firstKLevelInfinityCache (firstK=3, maxLevel=∞)...`)
+        const t3 = Date.now()
         for (const ruleName of ruleNames) {
             this.initFirstKLevelInfinityCache(ruleName)
         }
+        const t3End = Date.now()
+        console.log(`    ✓ [3/3] 完成，耗时 ${t3End - t3}ms，缓存条目: ${this.firstKLevelInfinityCache.size}`)
     }
 
 
@@ -1067,6 +1188,8 @@ export class SubhutiGrammarAnalyzer {
      *   - firstInfinityLevelKCache["Statement:2"] → 单层 level 2
      */
     private initFirstInfinityLevelKCache(ruleName: string): void {
+        const t0 = Date.now()
+        
         // 为每个层级 (0 到 LEVEL_K) 触发计算
         // subRuleHandler 会自动缓存为 "ruleName:curLevel"
         for (let level = 0; level <= EXPANSION_LIMITS.LEVEL_K; level++) {
@@ -1078,6 +1201,13 @@ export class SubhutiGrammarAnalyzer {
                 level,
                 true
             )
+        }
+        
+        const duration = Date.now() - t0
+        this.perfAnalyzer.record(`init_InfinityLevelK_${ruleName}`, duration)
+        
+        if (duration > 100) {
+            console.log(`      ⚠️  ${ruleName}: ${duration}ms (较慢)`)
         }
     }
 
@@ -1091,6 +1221,8 @@ export class SubhutiGrammarAnalyzer {
             return
         }
 
+        const t0 = Date.now()
+        
         // firstK=FIRST_1, maxLevel=INFINITY
         // computeExpanded → subRuleHandler 会自动缓存结果
         this.computeExpanded(
@@ -1101,6 +1233,13 @@ export class SubhutiGrammarAnalyzer {
             EXPANSION_LIMITS.INFINITY,
             true
         )
+        
+        const duration = Date.now() - t0
+        this.perfAnalyzer.record(`init_1_Infinity_${ruleName}`, duration)
+        
+        if (duration > 100) {
+            console.log(`      ⚠️  ${ruleName}: ${duration}ms (较慢)`)
+        }
     }
 
     /**
@@ -1113,6 +1252,8 @@ export class SubhutiGrammarAnalyzer {
             return
         }
 
+        const t0 = Date.now()
+        
         // firstK=FIRST_K, maxLevel=INFINITY
         // computeExpanded → subRuleHandler 会自动缓存结果
         this.computeExpanded(
@@ -1123,6 +1264,13 @@ export class SubhutiGrammarAnalyzer {
             EXPANSION_LIMITS.INFINITY,
             true
         )
+        
+        const duration = Date.now() - t0
+        this.perfAnalyzer.record(`init_K_Infinity_${ruleName}`, duration)
+        
+        if (duration > 100) {
+            console.log(`      ⚠️  ${ruleName}: ${duration}ms (较慢)`)
+        }
     }
 
     /**
@@ -1170,6 +1318,8 @@ export class SubhutiGrammarAnalyzer {
      * 5. 所有序列都达到 FIRST_K 时提前结束，跳过剩余数组
      */
     private cartesianProduct(arrays: string[][][]): string[][] {
+        const t0 = Date.now()
+        
         // 空数组，返回包含一个空序列的数组
         if (arrays.length === 0) {
             return [[]]
@@ -1177,6 +1327,8 @@ export class SubhutiGrammarAnalyzer {
 
         // 只有一个数组，直接返回（可能包含空分支）
         if (arrays.length === 1) {
+            const duration = Date.now() - t0
+            this.perfAnalyzer.record('cartesianProduct', duration, 1, arrays[0].length)
             return arrays[0]
         }
 
@@ -1389,6 +1541,11 @@ export class SubhutiGrammarAnalyzer {
                 console.log(`   💡 数组去重节省计算: ${savedCalculations.toLocaleString()} 次循环`)
             }
         }*/
+
+        // 记录性能数据
+        const duration = Date.now() - t0
+        const inputSize = arrays.reduce((sum, arr) => sum + arr.length, 0)
+        this.perfAnalyzer.record('cartesianProduct', duration, inputSize, finalArray.length)
 
         return finalArray
     }
@@ -1772,6 +1929,8 @@ export class SubhutiGrammarAnalyzer {
         maxLevel: number,
         firstK: number  // ✅ 新增：传入 firstK 用于截取优化
     ): string[][] {
+        const t0 = Date.now()
+        
         let currentPaths = paths
         let finishedPaths: string[][] = []  // 已经全是 token 的路径
 
@@ -1847,7 +2006,13 @@ export class SubhutiGrammarAnalyzer {
         // finishedPaths: 已经全是 token 的路径
         // currentPaths: 达到 maxLevel 但可能还有规则名的路径
         // ✅ 合并前再次截取，确保 finishedPaths 也被截取
-        return this.truncateAndDeduplicate([...finishedPaths, ...currentPaths], firstK)
+        const result = this.truncateAndDeduplicate([...finishedPaths, ...currentPaths], firstK)
+        
+        // 记录性能数据
+        const duration = Date.now() - t0
+        this.perfAnalyzer.record('expandPathsToDeeper', duration, paths.length, result.length)
+        
+        return result
     }
 
     /**
