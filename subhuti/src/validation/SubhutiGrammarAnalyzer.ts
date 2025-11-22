@@ -102,9 +102,9 @@ class PerformanceAnalyzer {
         subRuleHandlerTotal: 0,  // subRuleHandler 总调用次数
         recursiveReturn: 0,  // 递归检测返回次数
         levelLimitReturn: 0,  // 层级限制返回次数
-        first1LevelInfinity: {hit: 0, miss: 0, total: 0},
-        firstKLevelInfinity: {hit: 0, miss: 0, total: 0},
-        firstInfinityLevelK: {hit: 0, miss: 0, total: 0},
+        dfsFirst1: {hit: 0, miss: 0, total: 0},
+        dfsFirstK: {hit: 0, miss: 0, total: 0},
+        bfsLevel: {hit: 0, miss: 0, total: 0},
         expandOneLevel: {hit: 0, miss: 0, total: 0},  // 展开1层缓存（不截取）
         expandOneLevelTruncated: {hit: 0, miss: 0, total: 0},  // 展开1层+截取缓存
         actualCompute: 0  // 实际计算次数（getDirectChildren）
@@ -138,12 +138,12 @@ class PerformanceAnalyzer {
     }
 
     // 记录缓存命中/未命中
-    recordCacheHit(cacheType: 'first1LevelInfinity' | 'firstKLevelInfinity' | 'firstInfinityLevelK') {
+    recordCacheHit(cacheType: 'dfsFirst1' | 'dfsFirstK' | 'bfsLevel' | 'expandOneLevel' | 'expandOneLevelTruncated') {
         this.cacheStats[cacheType].hit++
         this.cacheStats[cacheType].total++
     }
 
-    recordCacheMiss(cacheType: 'first1LevelInfinity' | 'firstKLevelInfinity' | 'firstInfinityLevelK') {
+    recordCacheMiss(cacheType: 'dfsFirst1' | 'dfsFirstK' | 'bfsLevel' | 'expandOneLevel' | 'expandOneLevelTruncated') {
         this.cacheStats[cacheType].miss++
         this.cacheStats[cacheType].total++
     }
@@ -167,23 +167,23 @@ class PerformanceAnalyzer {
 
         // 2. 缓存统计
         console.log('💾 缓存命中率统计:')
-        console.log(`   First_1_Level_Infinity:`)
-        console.log(`     命中: ${this.cacheStats.first1LevelInfinity.hit}`)
-        console.log(`     未命中: ${this.cacheStats.first1LevelInfinity.miss}`)
-        console.log(`     总次数: ${this.cacheStats.first1LevelInfinity.total}`)
-        console.log(`     命中率: ${this.cacheStats.first1LevelInfinity.total > 0 ? ((this.cacheStats.first1LevelInfinity.hit / this.cacheStats.first1LevelInfinity.total) * 100).toFixed(1) : 0}%`)
+        console.log(`   DFS_First1 (深度优先 First(1)):`)
+        console.log(`     命中: ${this.cacheStats.dfsFirst1.hit}`)
+        console.log(`     未命中: ${this.cacheStats.dfsFirst1.miss}`)
+        console.log(`     总次数: ${this.cacheStats.dfsFirst1.total}`)
+        console.log(`     命中率: ${this.cacheStats.dfsFirst1.total > 0 ? ((this.cacheStats.dfsFirst1.hit / this.cacheStats.dfsFirst1.total) * 100).toFixed(1) : 0}%`)
 
-        console.log(`   First_K_Level_Infinity:`)
-        console.log(`     命中: ${this.cacheStats.firstKLevelInfinity.hit}`)
-        console.log(`     未命中: ${this.cacheStats.firstKLevelInfinity.miss}`)
-        console.log(`     总次数: ${this.cacheStats.firstKLevelInfinity.total}`)
-        console.log(`     命中率: ${this.cacheStats.firstKLevelInfinity.total > 0 ? ((this.cacheStats.firstKLevelInfinity.hit / this.cacheStats.firstKLevelInfinity.total) * 100).toFixed(1) : 0}%`)
+        console.log(`   DFS_FirstK (深度优先 First(K)):`)
+        console.log(`     命中: ${this.cacheStats.dfsFirstK.hit}`)
+        console.log(`     未命中: ${this.cacheStats.dfsFirstK.miss}`)
+        console.log(`     总次数: ${this.cacheStats.dfsFirstK.total}`)
+        console.log(`     命中率: ${this.cacheStats.dfsFirstK.total > 0 ? ((this.cacheStats.dfsFirstK.hit / this.cacheStats.dfsFirstK.total) * 100).toFixed(1) : 0}%`)
 
-        console.log(`   First_Infinity_Level_K:`)
-        console.log(`     命中: ${this.cacheStats.firstInfinityLevelK.hit}`)
-        console.log(`     未命中: ${this.cacheStats.firstInfinityLevelK.miss}`)
-        console.log(`     总次数: ${this.cacheStats.firstInfinityLevelK.total}`)
-        console.log(`     命中率: ${this.cacheStats.firstInfinityLevelK.total > 0 ? ((this.cacheStats.firstInfinityLevelK.hit / this.cacheStats.firstInfinityLevelK.total) * 100).toFixed(1) : 0}%`)
+        console.log(`   BFS_Level (广度优先按层级):`)
+        console.log(`     命中: ${this.cacheStats.bfsLevel.hit}`)
+        console.log(`     未命中: ${this.cacheStats.bfsLevel.miss}`)
+        console.log(`     总次数: ${this.cacheStats.bfsLevel.total}`)
+        console.log(`     命中率: ${this.cacheStats.bfsLevel.total > 0 ? ((this.cacheStats.bfsLevel.hit / this.cacheStats.bfsLevel.total) * 100).toFixed(1) : 0}%`)
 
         console.log(`   ExpandOneLevel (展开1层，不截取):`)
         console.log(`     命中: ${this.cacheStats.expandOneLevel.hit}`)
@@ -202,8 +202,8 @@ class PerformanceAnalyzer {
 
         // 验证统计完整性
         const expectedNormalProcess = this.cacheStats.subRuleHandlerTotal - this.cacheStats.recursiveReturn - this.cacheStats.levelLimitReturn
-        const actualCacheOperations = this.cacheStats.first1LevelInfinity.hit +
-            this.cacheStats.firstKLevelInfinity.hit +
+        const actualCacheOperations = this.cacheStats.dfsFirst1.hit +
+            this.cacheStats.dfsFirstK.hit +
             this.cacheStats.actualCompute
         console.log(`📈 统计验证:`)
         console.log(`   预期正常处理: ${expectedNormalProcess}`)
@@ -247,9 +247,9 @@ class PerformanceAnalyzer {
             subRuleHandlerTotal: 0,
             recursiveReturn: 0,
             levelLimitReturn: 0,
-            first1LevelInfinity: {hit: 0, miss: 0, total: 0},
-            firstKLevelInfinity: {hit: 0, miss: 0, total: 0},
-            firstInfinityLevelK: {hit: 0, miss: 0, total: 0},
+            dfsFirst1: {hit: 0, miss: 0, total: 0},
+            dfsFirstK: {hit: 0, miss: 0, total: 0},
+            bfsLevel: {hit: 0, miss: 0, total: 0},
             expandOneLevel: {hit: 0, miss: 0, total: 0},
             expandOneLevelTruncated: {hit: 0, miss: 0, total: 0},
             actualCompute: 0
@@ -352,11 +352,11 @@ export class SubhutiGrammarAnalyzer {
     // 适用：maxLevel = 具体值（限制层数，按层级展开）
     // 特点：BFS 只负责按层级展开，不负责截取
     // ========================================
-    
+
     /** BFS 缓存：key="ruleName:level"（完整展开，不截取） */
-    private firstInfinityLevelKCache = new Map<string, string[][]>()
-    
-    /** 
+    private bfsLevelCache = new Map<string, string[][]>()
+
+    /**
      * ⚠️ firstKLevelKCache 已删除
      * 原因：BFS 只负责按层级展开（firstK=∞），截取由外层统一处理
      */
@@ -365,12 +365,12 @@ export class SubhutiGrammarAnalyzer {
     // DFS（深度优先）专属缓存
     // 适用：maxLevel = INFINITY（无限层数，递归到token）
     // ========================================
-    
+
     /** DFS 主缓存：key="ruleName"，First(K) + 无限层级 */
-    private firstKLevelInfinityCache = new Map<string, string[][]>()
-    
-    /** DFS 派生缓存：key="ruleName"，First(1) + 无限层级（从 firstKLevelInfinityCache 截取） */
-    private first1LevelInfinityCache = new Map<string, string[][]>()
+    private dfsFirstKCache = new Map<string, string[][]>()
+
+    /** DFS 派生缓存：key="ruleName"，First(1) + 无限层级（从 dfsFirstKCache 截取） */
+    private dfsFirst1Cache = new Map<string, string[][]>()
 
     /** 展开1层缓存（不截取）：key="ruleName:curLevel" */
     private expandOneLevelCache = new Map<string, string[][]>()
@@ -379,8 +379,8 @@ export class SubhutiGrammarAnalyzer {
     private expandOneLevelTruncatedCache = new Map<string, string[][]>()
 
     /**
-     * 注意：levelFullResultCache 已删除，复用 firstInfinityLevelKCache
-     * firstInfinityLevelKCache 存储的就是某规则在某层级的完整结果（firstK=∞）
+     * 注意：levelFullResultCache 已删除，复用 bfsLevelCache
+     * bfsLevelCache 存储的就是某规则在某层级的完整结果（firstK=∞）
      */
 
     /** 展开单个路径缓存（完整版）：key="ruleName:level:pathIndex" */
@@ -1143,10 +1143,10 @@ export class SubhutiGrammarAnalyzer {
         const t0End = Date.now()
         console.log(`\n✅ [阶段0] 缓存初始化完成，总耗时 ${t0End - t0}ms`)
         console.log(`   BFS 缓存（限制层数，循环按层级展开）:`)
-        console.log(`     - FirstInfinityLevelK: ${this.firstInfinityLevelKCache.size} 条`)
+        console.log(`     - FirstInfinityLevelK: ${this.bfsLevelCache.size} 条`)
         console.log(`   DFS 缓存（无限层数，递归展开到token）:`)
-        console.log(`     - FirstKLevelInfinity: ${this.firstKLevelInfinityCache.size} 条（主缓存）`)
-        console.log(`     - First1LevelInfinity: ${this.first1LevelInfinityCache.size} 条（派生）`)
+        console.log(`     - FirstKLevelInfinity: ${this.dfsFirstKCache.size} 条（主缓存）`)
+        console.log(`     - First1LevelInfinity: ${this.dfsFirst1Cache.size} 条（派生）`)
 
         // 输出阶段性性能报告
         console.log(`\n📈 [阶段0] 性能报告:`)
@@ -1269,15 +1269,15 @@ export class SubhutiGrammarAnalyzer {
      *
      * 根据 firstK 和 maxLevel 的不同组合，初始化对应的缓存：
      * 1. firstK=INFINITY + maxLevel=LEVEL_1 → firstInfinityLevel1Cache
-     * 2. firstK=INFINITY + maxLevel=LEVEL_K → firstInfinityLevelKCache
-     * 3. firstK=FIRST_1 + maxLevel=INFINITY → first1LevelInfinityCache
-     * 4. firstK=FIRST_K + maxLevel=INFINITY → firstKLevelInfinityCache
+     * 2. firstK=INFINITY + maxLevel=LEVEL_K → bfsLevelCache
+     * 3. firstK=FIRST_1 + maxLevel=INFINITY → dfsFirst1Cache
+     * 4. firstK=FIRST_K + maxLevel=INFINITY → dfsFirstKCache
      */
     private initAllCaches(): void {
         const ruleNames = Array.from(this.ruleASTs.keys())
 
         console.log(`    [1/2] 初始化 BFS 缓存 (限制层数场景)...`)
-        console.log(`       策略：firstInfinityLevelKCache (firstK=∞, maxLevel=1~${EXPANSION_LIMITS.LEVEL_K})`)
+        console.log(`       策略：bfsLevelCache (firstK=∞, maxLevel=1~${EXPANSION_LIMITS.LEVEL_K})`)
         console.log(`       算法：广度优先，按层级循环展开`)
         const t1 = Date.now()
         for (const ruleName of ruleNames) {
@@ -1286,10 +1286,10 @@ export class SubhutiGrammarAnalyzer {
         const t1End = Date.now()
         console.log(`    ✓ [1/2] BFS 缓存初始化完成`)
         console.log(`       耗时: ${t1End - t1}ms`)
-        console.log(`       缓存条目: ${this.firstInfinityLevelKCache.size} 条`)
+        console.log(`       缓存条目: ${this.bfsLevelCache.size} 条`)
 
         console.log(`\n    [2/2] 初始化 DFS 缓存 (无限层数场景)...`)
-        console.log(`       策略：firstKLevelInfinityCache (firstK=${EXPANSION_LIMITS.FIRST_K}, maxLevel=∞) + 派生 first1`)
+        console.log(`       策略：dfsFirstKCache (firstK=${EXPANSION_LIMITS.FIRST_K}, maxLevel=∞) + 派生 first1`)
         console.log(`       算法：深度优先，递归展开到token`)
         const t2 = Date.now()
         for (const ruleName of ruleNames) {
@@ -1298,26 +1298,26 @@ export class SubhutiGrammarAnalyzer {
         const t2End = Date.now()
         console.log(`    ✓ [2/2] DFS 缓存初始化完成`)
         console.log(`       耗时: ${t2End - t2}ms`)
-        console.log(`       主缓存 firstKLevelInfinityCache: ${this.firstKLevelInfinityCache.size} 条`)
-        console.log(`       派生缓存 first1LevelInfinityCache: ${this.first1LevelInfinityCache.size} 条（从firstK截取）`)
+        console.log(`       主缓存 dfsFirstKCache: ${this.dfsFirstKCache.size} 条`)
+        console.log(`       派生缓存 dfsFirst1Cache: ${this.dfsFirst1Cache.size} 条（从firstK截取）`)
     }
 
 
     /**
-     * 初始化 BFS 缓存（firstInfinityLevelKCache）
+     * 初始化 BFS 缓存（bfsLevelCache）
      *
      * 算法：广度优先（BFS）
      * 场景：限制层数（maxLevel = 1, 2, 3...）
-     * 
+     *
      * 🔧 策略：
      * - 为每个层级 (1 到 LEVEL_K) 预先计算
      * - 缓存 key: "ruleName:level"
      * - 存储：展开到指定层级的完整结果（firstK=∞）
-     * 
+     *
      * 示例：
-     * - firstInfinityLevelKCache["Statement:1"] → level 1
-     * - firstInfinityLevelKCache["Statement:2"] → level 2
-     * - firstInfinityLevelKCache["Statement:3"] → level 3
+     * - bfsLevelCache["Statement:1"] → level 1
+     * - bfsLevelCache["Statement:2"] → level 2
+     * - bfsLevelCache["Statement:3"] → level 3
      */
     private initFirstInfinityLevelKCache(ruleName: string): void {
         const t0 = Date.now()
@@ -1343,12 +1343,12 @@ export class SubhutiGrammarAnalyzer {
     }
 
     /**
-     * 初始化 first1LevelInfinityCache（已废弃）
-     * 
+     * 初始化 dfsFirst1Cache（已废弃）
+     *
      * ⚠️ 已废弃：first1 不再单独计算
-     * 
+     *
      * 新策略：
-     * - first1 从 firstKLevelInfinityCache 截取获得
+     * - first1 从 dfsFirstKCache 截取获得
      * - 在 initFirstKLevelInfinityCache 中自动派生
      * - 减少重复计算，提高效率
      */
@@ -1359,22 +1359,22 @@ export class SubhutiGrammarAnalyzer {
     }
 
     /**
-     * 初始化 DFS 缓存（firstKLevelInfinityCache）
+     * 初始化 DFS 缓存（dfsFirstKCache）
      *
      * 算法：深度优先（DFS）
      * 场景：无限层数（maxLevel = INFINITY）
-     * 
+     *
      * 🔧 策略：
-     * 1. 计算 firstKLevelInfinityCache（DFS 主缓存，firstK=3）
+     * 1. 计算 dfsFirstKCache（DFS 主缓存，firstK=3）
      * 2. 从 firstK 派生 first1（截取第1个token）
      * 3. first1 不单独计算，减少计算量
-     * 
+     *
      * 示例：
-     * - firstKLevelInfinityCache["Statement"] → First(3) 完全展开
-     * - first1LevelInfinityCache["Statement"] → 从 First(3) 截取第1个
+     * - dfsFirstKCache["Statement"] → First(3) 完全展开
+     * - dfsFirst1Cache["Statement"] → 从 First(3) 截取第1个
      */
     private initFirstKLevelInfinityCache(ruleName: string): void {
-        if (this.firstKLevelInfinityCache.has(ruleName)) {
+        if (this.dfsFirstKCache.has(ruleName)) {
             return
         }
 
@@ -1392,14 +1392,14 @@ export class SubhutiGrammarAnalyzer {
         )
 
         // 验证 firstK 缓存已设置
-        if (!this.firstKLevelInfinityCache.has(ruleName)) {
-            throw new Error(`系统错误：firstKLevelInfinityCache 未设置 (${ruleName})`)
+        if (!this.dfsFirstKCache.has(ruleName)) {
+            throw new Error(`系统错误：dfsFirstKCache 未设置 (${ruleName})`)
         }
 
         // ✅ subRuleHandler 内部已经派生了 first1 缓存
         // 验证 first1 缓存已设置
-        if (!this.first1LevelInfinityCache.has(ruleName)) {
-            throw new Error(`系统错误：first1LevelInfinityCache 未派生 (${ruleName})`)
+        if (!this.dfsFirst1Cache.has(ruleName)) {
+            throw new Error(`系统错误：dfsFirst1Cache 未派生 (${ruleName})`)
         }
 
         const duration = Date.now() - t0
@@ -1776,14 +1776,14 @@ export class SubhutiGrammarAnalyzer {
 
     /**
      * 深度优先展开（DFS - Depth-First Search）
-     * 
+     *
      * 🚀 算法：递归深入，自然展开到token
-     * 
+     *
      * 适用场景：
      * - maxLevel = INFINITY（无限层级）
      * - 需要完全展开到token
      * - 适合 First(K) + 完全展开
-     * 
+     *
      * 优势：
      * - 递归处理AST，代码简洁
      * - 自然深入到叶子节点
@@ -1889,16 +1889,16 @@ export class SubhutiGrammarAnalyzer {
 
         // First(K)：需要笛卡尔积
         // ⚠️⚠️⚠️ 双重优化策略：
-        // 
+        //
         // 优化1：硬性上限 - slice(0, firstK)
         // - 最多只展开前 firstK 个子节点
         // - 例如：firstK=2，最多展开前2个，后续节点完全不看
-        // 
+        //
         // 优化2：累加提前停止 - 在前 firstK 个节点内提前停止
         // - 原理：笛卡尔积后的最短路径 = 各子节点最短分支的拼接
         // - 如果累加的最短长度 >= firstK，后续节点不影响截取后的结果
         // - 可能只展开1个或几个节点就够了
-        // 
+        //
         // 示例1：sequence([a,b,c], [d], [e], [f])  firstK=2
         //   优化1：slice(0,2) → 最多展开 [a,b,c], [d]
         //   优化2：
@@ -1906,7 +1906,7 @@ export class SubhutiGrammarAnalyzer {
         //        累加：3 >= 2 ✅ 停止！只展开1个节点
         //   笛卡尔积：[[a,b,c]]
         //   截取到2：[[a,b]]
-        // 
+        //
         // 示例2：sequence([a], or([b]/[c,d]), [e])  firstK=3
         //   优化1：slice(0,3) → 最多展开前3个
         //   优化2：
@@ -1915,7 +1915,7 @@ export class SubhutiGrammarAnalyzer {
         //     3. [e] → [[e]]，最短=1，累加=3 >= 3 ✅ 停止
         //   笛卡尔积：[[a]] × [[b],[c,d]] × [[e]] = [[a,b,e],[a,c,d,e]]
         //   截取到3：[[a,b,e],[a,c,d]]
-        // 
+        //
         // 示例3：包含空分支 sequence([a], option([b]), [c,d])  firstK=2
         //   优化1：slice(0,2) → 最多展开前2个
         //   优化2：
@@ -1924,7 +1924,7 @@ export class SubhutiGrammarAnalyzer {
         //   累加不够，需要展开第3个节点，但 slice(0,2) 限制了
         //   笛卡尔积：[[a]] × [[],[b]] = [[a],[a,b]]
         //   截取到2：[[a],[a,b]]（不需要截取）
-        //   
+        //
         // ✅ 双重保护：
         // - 最坏情况：展开 firstK 个节点（优化1）
         // - 最好情况：展开 1 个节点（优化2）
@@ -2112,19 +2112,19 @@ export class SubhutiGrammarAnalyzer {
 
     /**
      * 广度优先展开（BFS - Breadth-First Search）
-     * 
+     *
      * 🚀 算法：逐层循环，精确控制层数
-     * 
+     *
      * 适用场景：
      * - maxLevel = 具体值（如 3, 5）
      * - 需要展开到指定层级
      * - 适合 First(∞) + 限制层数
-     * 
+     *
      * 设计理念：
      * - BFS 只负责按层级完整展开（firstK=∞）
      * - 不负责截取操作
      * - 截取由外层调用者统一处理
-     * 
+     *
      * 优势：
      * - 职责单一：只管层级展开
      * - 精确控制展开层数
@@ -2160,11 +2160,11 @@ export class SubhutiGrammarAnalyzer {
         // 🔧 优化：尝试从 BFS 缓存直接获取目标层级的结果
         // BFS 缓存存储完整展开结果（不截取），截取由外层处理
         const cacheKey = `${ruleName}:${maxLevel}`
-        
+
         if (maxLevel <= EXPANSION_LIMITS.LEVEL_K) {
-            if (this.firstInfinityLevelKCache.has(cacheKey)) {
+            if (this.bfsLevelCache.has(cacheKey)) {
                 // ✅ BFS 缓存命中，直接返回完整结果
-                return this.firstInfinityLevelKCache.get(cacheKey)!
+                return this.bfsLevelCache.get(cacheKey)!
             }
         }
 
@@ -2200,10 +2200,10 @@ export class SubhutiGrammarAnalyzer {
             // 🔧 优化：检查下一层级是否有 BFS 缓存
             let usedLevelCache = false
             if (nextLevel <= EXPANSION_LIMITS.LEVEL_K &&
-                this.firstInfinityLevelKCache.has(levelCacheKey)) {
+                this.bfsLevelCache.has(levelCacheKey)) {
                 // ✅ 缓存命中：直接使用下一层级的缓存数据
                 // 注意：不能直接 continue，需要经过分离逻辑更新 finishedPaths
-                currentPaths = this.firstInfinityLevelKCache.get(levelCacheKey)!
+                currentPaths = this.bfsLevelCache.get(levelCacheKey)!
                 usedLevelCache = true
             }
 
@@ -2269,8 +2269,8 @@ export class SubhutiGrammarAnalyzer {
 
             // 🔧 缓存当前层级的结果（BFS 只缓存完整版）
             if (nextLevel <= EXPANSION_LIMITS.LEVEL_K) {
-                if (!this.firstInfinityLevelKCache.has(levelCacheKey)) {
-                    this.firstInfinityLevelKCache.set(levelCacheKey, currentPaths)
+                if (!this.bfsLevelCache.has(levelCacheKey)) {
+                    this.bfsLevelCache.set(levelCacheKey, currentPaths)
                 }
             }
 
@@ -2289,8 +2289,8 @@ export class SubhutiGrammarAnalyzer {
         // 步骤5：缓存最终结果（BFS 只缓存完整版）
         // ========================================
         if (maxLevel <= EXPANSION_LIMITS.LEVEL_K) {
-            if (!this.firstInfinityLevelKCache.has(cacheKey)) {
-                this.firstInfinityLevelKCache.set(cacheKey, finalResult)
+            if (!this.bfsLevelCache.has(cacheKey)) {
+                this.bfsLevelCache.set(cacheKey, finalResult)
             }
         }
 
@@ -2428,7 +2428,7 @@ export class SubhutiGrammarAnalyzer {
      * @returns 直接子节点的所有路径（展开1层）
      *
      * 优先级：
-     * 1. 从 firstInfinityLevelKCache 获取 "ruleName:1"（如果已初始化）
+     * 1. 从 bfsLevelCache 获取 "ruleName:1"（如果已初始化）
      * 2. 动态计算并缓存
      *
      * 示例：
@@ -2437,10 +2437,10 @@ export class SubhutiGrammarAnalyzer {
      */
     private getDirectChildren(ruleName: string): string[][] {
         const first1 = 1
-        // 1. 优先从 firstInfinityLevelKCache 获取 level 1 的数据
+        // 1. 优先从 bfsLevelCache 获取 level 1 的数据
         const key = `${ruleName}:${first1}`
-        if (this.firstInfinityLevelKCache.has(key)) {
-            return this.firstInfinityLevelKCache.get(key)!
+        if (this.bfsLevelCache.has(key)) {
+            return this.bfsLevelCache.get(key)!
         }
 
         // 2. 检查是否是 token
@@ -2561,42 +2561,42 @@ export class SubhutiGrammarAnalyzer {
             // ========================================
             // DFS 专属缓存查找（无限层数，递归到token）
             // ========================================
-            
+
             if (maxLevel === EXPANSION_LIMITS.INFINITY) {
                 // DFS 模式：maxLevel = INFINITY
-                
+
                 if (firstK === EXPANSION_LIMITS.FIRST_1) {
                     // First_1_Level_Infinity 模式
                     // 优先查找 first1 缓存
-                    if (this.first1LevelInfinityCache.has(ruleName)) {
-                        this.perfAnalyzer.recordCacheHit('first1LevelInfinity')
+                    if (this.dfsFirst1Cache.has(ruleName)) {
+                        this.perfAnalyzer.recordCacheHit('dfsFirst1')
                         const duration = Date.now() - t0
                         this.perfAnalyzer.record('subRuleHandler', duration)
-                        return this.first1LevelInfinityCache.get(ruleName)!
+                        return this.dfsFirst1Cache.get(ruleName)!
                     }
-                    
+
                     // first1 未命中，尝试从 firstK 缓存截取
-                    if (this.firstKLevelInfinityCache.has(ruleName)) {
-                        this.perfAnalyzer.recordCacheHit('first1LevelInfinity')
-                        const firstKData = this.firstKLevelInfinityCache.get(ruleName)!
+                    if (this.dfsFirstKCache.has(ruleName)) {
+                        this.perfAnalyzer.recordCacheHit('dfsFirst1')
+                        const firstKData = this.dfsFirstKCache.get(ruleName)!
                         // 从 firstK 截取到 first1
                         const first1Data = firstKData.map(path => path.slice(0, 1))
                         const result = this.deduplicate(first1Data)
                         // 缓存 first1 结果
-                        this.first1LevelInfinityCache.set(ruleName, result)
+                        this.dfsFirst1Cache.set(ruleName, result)
                         const duration = Date.now() - t0
                         this.perfAnalyzer.record('subRuleHandler', duration)
                         return result
                     }
                     // 都未命中，继续实际计算
-                    
+
                 } else if (firstK === EXPANSION_LIMITS.FIRST_K) {
                     // First_K_Level_Infinity 模式
-                    if (this.firstKLevelInfinityCache.has(ruleName)) {
-                        this.perfAnalyzer.recordCacheHit('firstKLevelInfinity')
+                    if (this.dfsFirstKCache.has(ruleName)) {
+                        this.perfAnalyzer.recordCacheHit('dfsFirstK')
                         const duration = Date.now() - t0
                         this.perfAnalyzer.record('subRuleHandler', duration)
-                        return this.firstKLevelInfinityCache.get(ruleName)!
+                        return this.dfsFirstKCache.get(ruleName)!
                     }
                     // 未命中，继续实际计算
                 }
@@ -2614,10 +2614,10 @@ export class SubhutiGrammarAnalyzer {
             if (maxLevel <= EXPANSION_LIMITS.LEVEL_K) {
                 const fullKey = `${ruleName}:${maxLevel}`
 
-                if (this.firstInfinityLevelKCache.has(fullKey)) {
+                if (this.bfsLevelCache.has(fullKey)) {
                     // ✅ BFS 缓存命中（完整版）
-                    this.perfAnalyzer.recordCacheHit('firstInfinityLevelK')
-                    const fullResult = this.firstInfinityLevelKCache.get(fullKey)!
+                    this.perfAnalyzer.recordCacheHit('bfsLevel')
+                    const fullResult = this.bfsLevelCache.get(fullKey)!
                     actualLevel = maxLevel  // 数据已展开到 maxLevel 层
 
                     // BFS 返回完整版，外层根据需要截取
@@ -2628,7 +2628,7 @@ export class SubhutiGrammarAnalyzer {
                     }
                 } else {
                     // 缓存未命中
-                    this.perfAnalyzer.recordCacheMiss('firstInfinityLevelK')
+                    this.perfAnalyzer.recordCacheMiss('bfsLevel')
                     // finalResult 保持 undefined，后续会实际计算
                 }
             }
@@ -2645,7 +2645,7 @@ export class SubhutiGrammarAnalyzer {
             } else {
                 // 情况2.2：缓存未命中，需要实际计算
                 this.perfAnalyzer.recordActualCompute()
-                
+
                 // 🎯 智能选择：根据 maxLevel 决定计算方式
                 if (maxLevel === EXPANSION_LIMITS.INFINITY) {
                     // maxLevel = INFINITY：直接使用 DFS 从头展开到token
@@ -2669,20 +2669,20 @@ export class SubhutiGrammarAnalyzer {
                 // 情况3.1：数据层级 < 目标层级，需要继续展开
                 // 注意：如果在阶段2已经用 DFS 完全展开（maxLevel=INFINITY），
                 // actualLevel 会被设置为 maxLevel，不会进入这个分支
-                
+
                 // 这里只处理 maxLevel = 具体值 的情况（BFS）
                 // 🚀 使用 BFS（expandPathsByBFS 按层级展开）
                 // BFS 只做完整展开，返回完整结果
                 const fullResult = this.expandPathsByBFS(ruleName, finalResult, actualLevel, maxLevel)
-                
+
                 // ✅ 先缓存完整版（BFS专属）
                 if (maxLevel <= EXPANSION_LIMITS.LEVEL_K) {
                     const fullKey = `${ruleName}:${maxLevel}`
-                    if (!this.firstInfinityLevelKCache.has(fullKey)) {
-                        this.firstInfinityLevelKCache.set(fullKey, fullResult)
+                    if (!this.bfsLevelCache.has(fullKey)) {
+                        this.bfsLevelCache.set(fullKey, fullResult)
                     }
                 }
-                
+
                 // ✅ 然后根据需要截取
                 if (firstK !== EXPANSION_LIMITS.INFINITY) {
                     finalResult = this.truncateAndDeduplicate(fullResult, firstK)
@@ -2710,24 +2710,24 @@ export class SubhutiGrammarAnalyzer {
                 if (curLevel === 1) {
                     if (firstK === EXPANSION_LIMITS.FIRST_K) {
                         // DFS 主缓存：只计算和缓存 firstK
-                        if (!this.firstKLevelInfinityCache.has(ruleName)) {
-                            this.perfAnalyzer.recordCacheMiss('firstKLevelInfinity')
-                            this.firstKLevelInfinityCache.set(ruleName, finalResult)
+                        if (!this.dfsFirstKCache.has(ruleName)) {
+                            this.perfAnalyzer.recordCacheMiss('dfsFirstK')
+                            this.dfsFirstKCache.set(ruleName, finalResult)
                         }
-                        
+
                         // ✅ 顺便派生 first1 缓存（从 firstK 截取，不单独计算）
-                        if (!this.first1LevelInfinityCache.has(ruleName)) {
+                        if (!this.dfsFirst1Cache.has(ruleName)) {
                             const first1Data = finalResult.map(path => path.slice(0, 1))
                             const first1Result = this.deduplicate(first1Data)
-                            this.first1LevelInfinityCache.set(ruleName, first1Result)
+                            this.dfsFirst1Cache.set(ruleName, first1Result)
                         }
                     } else if (firstK === EXPANSION_LIMITS.FIRST_1) {
                         // ⚠️ 注意：first1 不应该单独计算！
                         // 如果走到这里，说明没有 firstK 缓存，需要先计算 firstK
                         // 但为了向后兼容，仍然缓存 first1 结果
-                        if (!this.first1LevelInfinityCache.has(ruleName)) {
-                            this.perfAnalyzer.recordCacheMiss('first1LevelInfinity')
-                            this.first1LevelInfinityCache.set(ruleName, finalResult)
+                        if (!this.dfsFirst1Cache.has(ruleName)) {
+                            this.perfAnalyzer.recordCacheMiss('dfsFirst1')
+                            this.dfsFirst1Cache.set(ruleName, finalResult)
                         }
                     } else {
                         throw new Error(`系统错误：DFS 不支持 firstK=${firstK}`)
