@@ -2047,6 +2047,8 @@ export class SubhutiGrammarAnalyzer {
                     if (!this.firstInfinityLevelKCache.has(key)) {
                         this.firstInfinityLevelKCache.set(key, finalResult)
                     }
+                } else {
+                    throw new Error('系统错误')
                 }
             } else if (maxLevel === EXPANSION_LIMITS.INFINITY) {
                 // First_1_Level_Infinity 或 First_K_Level_Infinity 模式
@@ -2060,11 +2062,15 @@ export class SubhutiGrammarAnalyzer {
                         if (!this.firstKLevelInfinityCache.has(ruleName)) {
                             this.firstKLevelInfinityCache.set(ruleName, finalResult)
                         }
+                    } else {
+                        throw new Error('系统错误')
                     }
                 } else {
                     // 情况：curLevel > 1（嵌套调用）
                     // 不设置缓存，因为只在顶层调用时缓存
                 }
+            } else {
+                throw new Error('系统错误')
             }
 
             return finalResult
