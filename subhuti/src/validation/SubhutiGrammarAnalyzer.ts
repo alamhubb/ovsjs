@@ -165,12 +165,15 @@ export interface GrammarAnalyzerOptions {
 export class SubhutiGrammarAnalyzer {
     /** 正在计算的规则（用于检测循环依赖） */
     private recursiveDetectionSet = new Set<string>()
+
+    private firstInfinityLevelKCache = new Map<string, string[][]>()
+
+
     private first1LevelInfinityCache = new Map<string, string[][]>()
     private firstKLevelInfinityCache = new Map<string, string[][]>()
-    private firstInfinityLevel1Cache = new Map<string, string[][]>()
+    // private firstInfinityLevel1Cache = new Map<string, string[][]>()
     // 🔧 特殊：key 为 "ruleName:maxLevel"，因为不同层级返回不同结果
-    private firstInfinityLevelKCache = new Map<string, string[][]>()
-    private firstInfinityLevelKAllCache = new Map<string, string[][]>()
+    // private firstInfinityLevelKAllCache = new Map<string, string[][]>()
     private leftRecursiveDetectionSet = new Set<string>()
 
     /** 收集检测过程中发现的左递归错误（使用 Map 提高查重性能） */
@@ -1078,25 +1081,25 @@ export class SubhutiGrammarAnalyzer {
     }
 
     /**
-     * 初始化 firstInfinityLevelKCache（firstK=INFINITY, maxLevel=LEVEL_K）
+     * 初始化 firstInfinityLevelKCache + firstInfinityLevelKAllCache
      *
      * 用途：获取规则的所有可能 token 序列，分层存储
      *
      * 🔧 特殊逻辑：
-     * - computeExpanded 内部会自动缓存每个层级的单层结果（"ruleName:level"）
-     * - 这里只负责聚合所有层级，缓存总条目（"ruleName"）
+     * - firstInfinityLevelKCache: key="ruleName:curLevel"，存储单层结果（由 subRuleHandler 缓存）
+     * - firstInfinityLevelKAllCache: key="ruleName"，存储所有层聚合结果（由这里缓存）
      * - 例如：
-     *   - "Statement:0" → computeExpanded 内部缓存
-     *   - "Statement:1" → computeExpanded 内部缓存
-     *   - "Statement:2" → computeExpanded 内部缓存
-     *   - "Statement" → 这里聚合并缓存（所有层级合并）
+     *   - firstInfinityLevelKCache["Statement:0"] → 单层 level 0
+     *   - firstInfinityLevelKCache["Statement:1"] → 单层 level 1
+     *   - firstInfinityLevelKCache["Statement:2"] → 单层 level 2
+     *   - firstInfinityLevelKAllCache["Statement"] → 所有层(0到K)聚合
      */
     private initFirstInfinityLevelKCache(ruleName: string): void {
         // 存储每个层级的单层结果（用于最后聚合）
         const levelResults: Map<number, string[][]> = new Map()
 
-        // 为每个层级 (0 到 LEVEL_K) 计算结果
-        // computeExpanded 内部会自动缓存为 "ruleName:level"
+        // 为每个层级 (0 到 LEVEL_K) 触发计算
+        // subRuleHandler 会自动缓存为 "ruleName:curLevel"
         for (let level = 0; level <= EXPANSION_LIMITS.LEVEL_K; level++) {
             const branches = this.computeExpanded(
                 ruleName,
@@ -1109,15 +1112,15 @@ export class SubhutiGrammarAnalyzer {
             levelResults.set(level, branches)
         }
 
-        // 🔧 聚合所有层级，缓存总条目
+        // 🔧 聚合所有层级，缓存到 firstInfinityLevelKAllCache
         const allLevelsBranches: string[][] = []
         for (let level = 0; level <= EXPANSION_LIMITS.LEVEL_K; level++) {
             allLevelsBranches.push(...levelResults.get(level)!)
         }
         const allUnique = this.deduplicate(allLevelsBranches)
 
-        // 缓存聚合结果，key 为 "ruleName"
-        this.firstInfinityLevelKCache.set(ruleName, allUnique)
+        // 缓存聚合结果到 AllCache，key 为 "ruleName"
+        this.firstInfinityLevelKAllCache.set(ruleName, allUnique)
     }
 
     /**
@@ -1991,18 +1994,32 @@ export class SubhutiGrammarAnalyzer {
                 return [[ruleName]]
             }
 
+            if (curLevel <= EXPANSION_LIMITS.LEVEL_K) {
+                // 递归调用，获取对应 curLevel 的单层结果
+                const key = `${ruleName}:${curLevel}`
+                if (this.firstInfinityLevelKCache.has(key)) {
+                    return this.firstInfinityLevelKCache.get(key)
+                }
+            } else if (firstK === EXPANSION_LIMITS.FIRST_K) {
+
+            }
+
 
             if (firstK === EXPANSION_LIMITS.INFINITY) {
                 if (maxLevel === EXPANSION_LIMITS.LEVEL_1) {
                     if (this.firstInfinityLevel1Cache.has(ruleName)) {
                         return this.firstInfinityLevel1Cache.get(ruleName)
                     }
+                } else if (maxLevel === EXPANSION_LIMITS.LEVEL_K) {
+                    // 判断是顶层调用还是递归调用
+                    if (curLevel === 1) {
+                        // 顶层调用（curLevel 已经+1了，所以是1），获取聚合结果
+                        if (this.firstInfinityLevelKAllCache.has(ruleName)) {
+                            return this.firstInfinityLevelKAllCache.get(ruleName)
+                        }
+                    } else {
 
-                }
-                // 否则获取对应 curLevel 的单层结果（不合并！）
-                const key = `${ruleName}:${curLevel}`
-                if (this.firstInfinityLevelKCache.has(key)) {
-                    return this.firstInfinityLevelKCache.get(key)  // 只返回单层
+                    }
                 }
             } else if (maxLevel === EXPANSION_LIMITS.INFINITY) {
                 if (firstK === EXPANSION_LIMITS.FIRST_1) {
@@ -2044,12 +2061,13 @@ export class SubhutiGrammarAnalyzer {
                     if (!this.firstInfinityLevel1Cache.has(ruleName)) {
                         this.firstInfinityLevel1Cache.set(ruleName, finalResult)
                     }
-                }
-                // firstK=INFINITY, maxLevel=LEVEL_K
-                // 缓存单层结果，key 为 "ruleName:curLevel"
-                const key = `${ruleName}:${curLevel}`
-                if (!this.firstInfinityLevelKCache.has(key)) {
-                    this.firstInfinityLevelKCache.set(key, finalResult)
+                } else if (maxLevel === EXPANSION_LIMITS.LEVEL_K) {
+                    // firstK=INFINITY, maxLevel=LEVEL_K
+                    // 缓存单层结果，key 为 "ruleName:curLevel"
+                    const key = `${ruleName}:${curLevel}`
+                    if (!this.firstInfinityLevelKCache.has(key)) {
+                        this.firstInfinityLevelKCache.set(key, finalResult)
+                    }
                 }
             } else if (maxLevel === EXPANSION_LIMITS.INFINITY) {
                 if (firstK === EXPANSION_LIMITS.FIRST_1) {
