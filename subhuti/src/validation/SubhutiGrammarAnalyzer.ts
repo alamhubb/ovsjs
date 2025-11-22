@@ -77,6 +77,7 @@ import type {
     OrNode
 } from "./SubhutiValidationError"
 import {SubhutiValidationLogger} from './SubhutiValidationLogger'
+import {list} from "@lerna-lite/publish";
 
 /**
  * 左递归错误类型
@@ -103,6 +104,11 @@ export const EXPANSION_LIMITS = {
 
     INFINITY: Infinity,
 
+    First_Infinity_Level_K: 'First_Infinity_Level_K' as const,
+    First_1_Level_Infinity: 'First_1_Level_Infinity' as const,
+    First_K_Level_Infinity: 'First_K_Level_Infinity' as const,
+
+
     /**
      * 冲突检测路径比较限制
      *
@@ -118,6 +124,14 @@ export const EXPANSION_LIMITS = {
      */
     MAX_BRANCHES: 1000,
 } as const
+
+/**
+ * 展开模式：系统只支持三种模式
+ */
+export type ExpansionMode =
+    | 'First_Infinity_Level_K'    // firstK=∞, maxLevel=5 (完整路径，展开5层)
+    | 'First_1_Level_Infinity'    // firstK=1, maxLevel=∞ (前1个token，完全展开)
+    | 'First_K_Level_Infinity'    // firstK=3, maxLevel=∞ (前3个token，完全展开)
 
 /**
  * 规则展开结果（二维数组）
@@ -203,7 +217,7 @@ export class SubhutiGrammarAnalyzer {
         options?: GrammarAnalyzerOptions
     ) {
         this.options = {
-            maxLevel: options?.maxLevel ?? EXPANSION_LIMITS.LEVEL_K
+            maxLevel: options?.maxLevel ?? 5
         }
     }
 
@@ -1036,17 +1050,17 @@ export class SubhutiGrammarAnalyzer {
      */
     private initAllCaches(): void {
         const ruleNames = Array.from(this.ruleASTs.keys())
-        
+
         console.log(`    初始化 firstInfinityLevelKCache (firstK=∞, maxLevel=${EXPANSION_LIMITS.LEVEL_K})...`)
         for (const ruleName of ruleNames) {
             this.initFirstInfinityLevelKCache(ruleName)
         }
-        
+
         console.log(`    初始化 first1LevelInfinityCache (firstK=1, maxLevel=∞)...`)
         for (const ruleName of ruleNames) {
             this.initFirst1LevelInfinityCache(ruleName)
         }
-        
+
         console.log(`    初始化 firstKLevelInfinityCache (firstK=${EXPANSION_LIMITS.FIRST_K}, maxLevel=∞)...`)
         for (const ruleName of ruleNames) {
             this.initFirstKLevelInfinityCache(ruleName)
@@ -1830,37 +1844,38 @@ export class SubhutiGrammarAnalyzer {
 
     /**
      * 获取规则的直接子节点（展开1层）
-     * 
+     *
      * @param ruleName 规则名
      * @returns 直接子节点的所有路径（展开1层）
-     * 
+     *
      * 优先级：
      * 1. 从 firstInfinityLevelKCache 获取 "ruleName:1"（如果已初始化）
      * 2. 动态计算并缓存
-     * 
+     *
      * 示例：
      * - Statement → [[BlockStatement], [IfStatement], [ExpressionStatement], ...]
      * - IfStatement → [[If, LParen, Expression, RParen, Statement]]
      */
     private getDirectChildren(ruleName: string): string[][] {
+        const first1 = 1
         // 1. 优先从 firstInfinityLevelKCache 获取 level 1 的数据
-        const key = `${ruleName}:1`
+        const key = `${ruleName}:${first1}`
         if (this.firstInfinityLevelKCache.has(key)) {
             return this.firstInfinityLevelKCache.get(key)!
         }
-        
+
         // 2. 检查是否是 token
         const tokenNode = this.tokenCache?.get(ruleName)
         if (tokenNode && tokenNode.type === 'consume') {
             return [[ruleName]]  // token 直接返回
         }
-        
+
         // 3. 获取规则的 AST 节点
         const subNode = this.getRuleNodeByAst(ruleName)
         if (!subNode) {
             throw new Error(`系统错误：规则不存在: ${ruleName}`)
         }
-        
+
         // 4. 动态计算：展开1层
         // computeExpanded → subRuleHandler 会自动缓存到 "ruleName:1"
         const result = this.computeExpanded(
@@ -1871,8 +1886,21 @@ export class SubhutiGrammarAnalyzer {
             EXPANSION_LIMITS.LEVEL_1,
             false
         )
-        
+
         return result
+    }
+
+
+    public getModeString(firstK: number, maxLevel: number): ExpansionMode {
+        if (maxLevel === EXPANSION_LIMITS.LEVEL_K) {
+            if (firstK === EXPANSION_LIMITS.FIRST_1) {
+                return EXPANSION_LIMITS.First_1_Level_Infinity
+            } else if (firstK === EXPANSION_LIMITS.FIRST_K) {
+                return EXPANSION_LIMITS.First_K_Level_Infinity
+            }
+        } else if (firstK === EXPANSION_LIMITS.INFINITY) {
+            return EXPANSION_LIMITS.First_Infinity_Level_K
+        }
     }
 
     /**
@@ -1884,10 +1912,10 @@ export class SubhutiGrammarAnalyzer {
      * 3. 获取规则 AST 并递归展开
      * 4. 左递归检测（检测规则是否在第一个位置递归）
      *
-     * @param ruleName
-     * @param firstK
-     * @param curLevel
-     * @param maxLevel
+     * @param ruleName 规则名
+     * @param firstK 截取长度
+     * @param curLevel 当前层级
+     * @param maxLevel 最大展开层级
      * @param isFirstPosition 是否在第一个位置（用于区分左递归和普通递归）
      */
     private subRuleHandler(
@@ -1907,6 +1935,7 @@ export class SubhutiGrammarAnalyzer {
 
         console.log('ruleName:')
         console.log(ruleName)
+
 
         // 🔴 递归检测必须在层级检查之前，否则会被层级限制提前中断
         // 递归检测：如果规则正在计算中
@@ -1951,78 +1980,88 @@ export class SubhutiGrammarAnalyzer {
                 return [[ruleName]]
             }
 
+
+            // 🔧 判断当前是哪种展开模式
+            // let mode: ExpansionMode = this.getModeString(firstK, maxLevel)
+
             // ========================================
             // 缓存查找：优先从精确匹配的缓存获取
             // ========================================
-            
-            // 情况1：firstK < INFINITY && maxLevel = INFINITY
-            if (firstK < EXPANSION_LIMITS.INFINITY && maxLevel === EXPANSION_LIMITS.INFINITY) {
-                if (firstK === EXPANSION_LIMITS.FIRST_1) {
-                    if (this.first1LevelInfinityCache.has(ruleName)) {
-                        return this.first1LevelInfinityCache.get(ruleName)!
-                    }
-                } else if (firstK === EXPANSION_LIMITS.FIRST_K) {
-                    if (this.firstKLevelInfinityCache.has(ruleName)) {
-                        return this.firstKLevelInfinityCache.get(ruleName)!
-                    }
+
+            // 使用三种模式判断
+            if (firstK === EXPANSION_LIMITS.FIRST_1) {
+                if (this.first1LevelInfinityCache.has(ruleName)) {
+                    return this.first1LevelInfinityCache.get(ruleName)!
+                }
+            } else if (firstK === EXPANSION_LIMITS.FIRST_K) {
+                if (this.firstKLevelInfinityCache.has(ruleName)) {
+                    return this.firstKLevelInfinityCache.get(ruleName)!
                 }
             }
 
             // ========================================
             // 计算或从 LevelK 截取
             // ========================================
-            
+
             let finalResult: string[][]
 
-            // 尝试从 firstInfinityLevelKCache 截取（如果 curLevel <= LEVEL_K）
+            // 尝试从 firstInfinityLevelKCache 截取（如果 curLevel <= 5）
             if (curLevel <= EXPANSION_LIMITS.LEVEL_K) {
                 const key = `${ruleName}:${curLevel}`
                 if (this.firstInfinityLevelKCache.has(key)) {
                     // 从 LevelK 获取并截取
-                    const levelKResult = this.firstInfinityLevelKCache.get(key)!
-                    finalResult = this.truncateAndDeduplicate(levelKResult, firstK)
-                } else {
-                    // LevelK 缓存不存在，实际计算
-                    let result = this.getDirectChildren(ruleName)
-                    if (curLevel < maxLevel) {
-                        result = this.expandPathsToDeeper(result, curLevel, maxLevel)
-                    }
-                    finalResult = this.truncateAndDeduplicate(result, firstK)
+                    finalResult = this.firstInfinityLevelKCache.get(key)!
+
+                    return this.truncateAndDeduplicate(finalResult, firstK)
                 }
-            } else {
-                // curLevel > LEVEL_K，无法从 LevelK 复用，实际计算
-                let result = this.getDirectChildren(ruleName)
-                if (curLevel < maxLevel) {
-                    result = this.expandPathsToDeeper(result, curLevel, maxLevel)
-                }
-                finalResult = this.truncateAndDeduplicate(result, firstK)
             }
 
-            // ========================================
-            // 统一缓存设置（只在这一个地方）
-            // ========================================
-            
-            if (firstK === EXPANSION_LIMITS.INFINITY && curLevel <= EXPANSION_LIMITS.LEVEL_K) {
-                // firstK=INFINITY, maxLevel <= LEVEL_K
-                // 缓存到 firstInfinityLevelKCache，key 为 "ruleName:curLevel"
+            //不为无线
+            // LevelK 缓存不存在，实际计算
+            finalResult = this.getDirectChildren(ruleName)
+            if (curLevel < maxLevel) {
+                finalResult = this.expandPathsToDeeper(finalResult, curLevel, maxLevel)
+            }
+            finalResult = this.truncateAndDeduplicate(finalResult, firstK)
+
+            if (firstK === EXPANSION_LIMITS.INFINITY) {
+                if (curLevel > EXPANSION_LIMITS.LEVEL_K || maxLevel > EXPANSION_LIMITS.LEVEL_K) {
+                    throw new Error('系统错误')
+                }
                 const key = `${ruleName}:${curLevel}`
                 if (!this.firstInfinityLevelKCache.has(key)) {
                     this.firstInfinityLevelKCache.set(key, finalResult)
                 }
             } else if (maxLevel === EXPANSION_LIMITS.INFINITY) {
-                if (firstK === EXPANSION_LIMITS.FIRST_1) {
-                    // firstK=FIRST_1, maxLevel=INFINITY
-                    if (!this.first1LevelInfinityCache.has(ruleName)) {
-                        this.first1LevelInfinityCache.set(ruleName, finalResult)
+                if (curLevel === maxLevel) {
+                    if (firstK === EXPANSION_LIMITS.FIRST_1) {
+                        // firstK=1, maxLevel=INFINITY
+                        if (!this.first1LevelInfinityCache.has(ruleName)) {
+                            this.first1LevelInfinityCache.set(ruleName, finalResult)
+                        } else {
+                            throw new Error('系统错误')
+                        }
+                    } else if (firstK === EXPANSION_LIMITS.FIRST_K) {
+                        // firstK=3, maxLevel=INFINITY
+                        if (!this.firstKLevelInfinityCache.has(ruleName)) {
+                            this.firstKLevelInfinityCache.set(ruleName, finalResult)
+                        } else {
+                            throw new Error('系统错误')
+                        }
+                    } else {
+                        throw new Error('系统错误')
                     }
-                } else if (firstK === EXPANSION_LIMITS.FIRST_K) {
-                    // firstK=FIRST_K, maxLevel=INFINITY
-                    if (!this.firstKLevelInfinityCache.has(ruleName)) {
-                        this.firstKLevelInfinityCache.set(ruleName, finalResult)
+                } else if (curLevel <= EXPANSION_LIMITS.LEVEL_K) {
+                    throw new Error('系统错误')
+                } else {
+                    if (curLevel <= maxLevel) {
+                        //这里不该报错
+                        throw new Error('系统错误')
+                    } else {
+                        throw new Error('系统错误')
                     }
                 }
             }
-
             return finalResult
         } finally {
             // 清除递归标记（确保即使异常也能清除）
