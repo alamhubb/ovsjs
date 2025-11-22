@@ -1302,7 +1302,6 @@ export class SubhutiGrammarAnalyzer {
     }
 
 
-
     /**
      * 计算笛卡尔积（优化版：先截取再拼接 + seq级别去重 + 提前移入最终结果集）
      * [[a1, a2], [b1, b2]] → [[a1, b1], [a1, b2], [a2, b1], [a2, b2]]
@@ -2305,7 +2304,7 @@ export class SubhutiGrammarAnalyzer {
      */
     private getDirectChildren(ruleName: string): string[][] {
         // 1. 优先从 bfsLevelCache 获取 level 1 的数据
-        const key = `${ruleName}`
+        const key = `${ruleName}:${EXPANSION_LIMITS.LEVEL_1}`
         if (this.bfsLevelCache.has(key)) {
             return this.bfsLevelCache.get(key)!
         }
@@ -2329,8 +2328,8 @@ export class SubhutiGrammarAnalyzer {
             null,
             EXPANSION_LIMITS.INFINITY,
             0,
+            EXPANSION_LIMITS.LEVEL_1,
             false,
-            EXPANSION_LIMITS.LEVEL_1
         )
 
         if (!this.bfsLevelCache.has(key)) {
@@ -2496,8 +2495,9 @@ export class SubhutiGrammarAnalyzer {
                 // 未命中，继续实际计算
             } else if (firstK === EXPANSION_LIMITS.INFINITY) {
                 if (maxLevel === EXPANSION_LIMITS.LEVEL_1) {
-                    if (this.bfsLevelCache.has(ruleName)) {
-                        return this.bfsLevelCache.get(ruleName)!
+                    const key = ruleName + `:${EXPANSION_LIMITS.LEVEL_1}`
+                    if (this.bfsLevelCache.has(key)) {
+                        return this.bfsLevelCache.get(key)!
                     }
                 } else {
                     console.log(maxLevel)
@@ -2513,7 +2513,7 @@ export class SubhutiGrammarAnalyzer {
 
             // 使用 DFS 从头展开到 token
             const subNode = this.getRuleNodeByAst(ruleName)
-            const finalResult = this.expandPathsByDFS(null, subNode, firstK, curLevel, isFirstPosition)
+            const finalResult = this.expandPathsByDFS(null, subNode, firstK, curLevel, maxLevel, isFirstPosition)
 
             // ========================================
             // 阶段3：DFS 缓存设置
@@ -2542,8 +2542,9 @@ export class SubhutiGrammarAnalyzer {
                     }
                 } else if (firstK === EXPANSION_LIMITS.INFINITY) {
                     if (maxLevel === EXPANSION_LIMITS.LEVEL_1) {
-                        if (!this.bfsLevelCache.has(ruleName)) {
-                            this.bfsLevelCache.set(ruleName, finalResult)!
+                        const key = ruleName + `:${EXPANSION_LIMITS.LEVEL_1}`
+                        if (!this.bfsLevelCache.has(key)) {
+                            this.bfsLevelCache.set(key, finalResult)
                         }
                     } else {
                         throw new Error("系统错误")
