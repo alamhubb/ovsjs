@@ -1241,11 +1241,11 @@ export class SubhutiGrammarAnalyzer {
 
             const temp: string[][] = []
 
-            console.log(result.length)
+            // console.log(result.length)
             // console.log(result.slice(0,10))
-            console.log(currentArray.length)
+            // console.log(currentArray.length)
             // console.log(currentArray.slice(0,10))
-            console.log(currentArray.length * result.length)
+            // console.log(currentArray.length * result.length)
             // 遍历当前结果的每个序列
             for (const seq of result) {
                 // 防御检查：不应该出现超长序列
