@@ -1813,7 +1813,6 @@ export class SubhutiGrammarAnalyzer {
         node: RuleNode,
         firstK: number,
         curLevel: number = 0,
-        maxLevel: number,
         isFirstPosition: boolean = false  // 是否在第一个位置（用于左递归检测）
     ): string[][] {
         // 如果传入规则名，转发给 subRuleHandler 处理
@@ -2550,199 +2549,206 @@ export class SubhutiGrammarAnalyzer {
                 return [[ruleName]]
             }
 
-
-            // 🔧 判断当前是哪种展开模式
-            // let mode: ExpansionMode = this.getModeString(firstK, maxLevel)
-
             // ========================================
-            // 缓存查找：优先从精确匹配的缓存获取
-            // ========================================
-
-            // ========================================
-            // DFS 专属缓存查找（无限层数，递归到token）
+            // 🎯 核心路由：尽早分流 DFS 和 BFS
             // ========================================
 
             if (maxLevel === EXPANSION_LIMITS.INFINITY) {
-                // DFS 模式：maxLevel = INFINITY
-
-                if (firstK === EXPANSION_LIMITS.FIRST_1) {
-                    // First_1_Level_Infinity 模式
-                    // 优先查找 first1 缓存
-                    if (this.dfsFirst1Cache.has(ruleName)) {
-                        this.perfAnalyzer.recordCacheHit('dfsFirst1')
-                        const duration = Date.now() - t0
-                        this.perfAnalyzer.record('subRuleHandler', duration)
-                        return this.dfsFirst1Cache.get(ruleName)!
-                    }
-
-                    // first1 未命中，尝试从 firstK 缓存截取
-                    if (this.dfsFirstKCache.has(ruleName)) {
-                        this.perfAnalyzer.recordCacheHit('dfsFirst1')
-                        const firstKData = this.dfsFirstKCache.get(ruleName)!
-                        // 从 firstK 截取到 first1
-                        const first1Data = firstKData.map(path => path.slice(0, 1))
-                        const result = this.deduplicate(first1Data)
-                        // 缓存 first1 结果
-                        this.dfsFirst1Cache.set(ruleName, result)
-                        const duration = Date.now() - t0
-                        this.perfAnalyzer.record('subRuleHandler', duration)
-                        return result
-                    }
-                    // 都未命中，继续实际计算
-
-                } else if (firstK === EXPANSION_LIMITS.FIRST_K) {
-                    // First_K_Level_Infinity 模式
-                    if (this.dfsFirstKCache.has(ruleName)) {
-                        this.perfAnalyzer.recordCacheHit('dfsFirstK')
-                        const duration = Date.now() - t0
-                        this.perfAnalyzer.record('subRuleHandler', duration)
-                        return this.dfsFirstKCache.get(ruleName)!
-                    }
-                    // 未命中，继续实际计算
-                }
-            }
-
-            // ========================================
-            // 阶段1：BFS 专属缓存查找（限制层数场景）
-            // ========================================
-
-            let finalResult: string[][]
-            let actualLevel = curLevel  // 记录数据实际展开的层级
-
-            // BFS 缓存：只在 maxLevel <= LEVEL_K 时查找
-            // BFS 只缓存完整版（firstK=∞），截取由外层处理
-            if (maxLevel <= EXPANSION_LIMITS.LEVEL_K) {
-                const fullKey = `${ruleName}:${maxLevel}`
-
-                if (this.bfsLevelCache.has(fullKey)) {
-                    // ✅ BFS 缓存命中（完整版）
-                    this.perfAnalyzer.recordCacheHit('bfsLevel')
-                    const fullResult = this.bfsLevelCache.get(fullKey)!
-                    actualLevel = maxLevel  // 数据已展开到 maxLevel 层
-                    // BFS 返回完整版，外层根据需要截取
-                    finalResult = fullResult
-                } else {
-                    // 缓存未命中
-                    this.perfAnalyzer.recordCacheMiss('bfsLevel')
-                    // finalResult 保持 undefined，后续会实际计算
-                }
-            }
-
-            // ========================================
-            // 阶段2：如果缓存未命中，实际计算（穷举法）
-            // ========================================
-
-            // 穷举：按 finalResult 是否存在分类
-            if (finalResult) {
-                // 情况2.1：缓存命中，已经有数据
-                // actualLevel 已经设置为 maxLevel
-                // 不需要额外操作
+                // 🔴 DFS 模式：深度优先展开（无限层级）
+                return this.handleDFS(ruleName, firstK, curLevel, maxLevel)
             } else {
-                // 情况2.2：缓存未命中，需要实际计算
-                this.perfAnalyzer.recordActualCompute()
-
-                // 🎯 智能选择：根据 maxLevel 决定计算方式
-                if (maxLevel === EXPANSION_LIMITS.INFINITY) {
-                    // maxLevel = INFINITY：直接使用 DFS 从头展开到token
-                    // 不需要先获取 level 1，直接递归展开
-                    const subNode = this.getRuleNodeByAst(ruleName)
-                    finalResult = this.expandPathsByDFS(null, subNode, firstK, curLevel, maxLevel, false)
-                    actualLevel = maxLevel  // 已完全展开
-                } else {
-                    // maxLevel = 具体值：先获取 level 1，再用 BFS 按层级展开
-                    finalResult = this.getDirectChildren(ruleName)
-                    actualLevel = 1  // 数据实际是第 1 层
-                }
+                // 🔵 BFS 模式：广度优先展开（限制层级）
+                return this.handleBFS(ruleName, curLevel, maxLevel)
             }
-
-            // ========================================
-            // 阶段3：判断是否需要继续展开（智能算法选择）
-            // ========================================
-
-            // 穷举：按 actualLevel 和 maxLevel 的关系分类
-            if (actualLevel < maxLevel) {
-                // 情况3.1：数据层级 < 目标层级，需要继续展开
-                // 注意：如果在阶段2已经用 DFS 完全展开（maxLevel=INFINITY），
-                // actualLevel 会被设置为 maxLevel，不会进入这个分支
-
-                // 这里只处理 maxLevel = 具体值 的情况（BFS）
-                // 🚀 使用 BFS（expandPathsByBFS 按层级展开）
-                // BFS 只做完整展开，返回完整结果
-                const fullResult = this.expandPathsByBFS(ruleName, finalResult, actualLevel, maxLevel)
-
-                // ✅ 先缓存完整版（BFS专属）
-                if (maxLevel <= EXPANSION_LIMITS.LEVEL_K) {
-                    const fullKey = `${ruleName}:${maxLevel}`
-                    if (!this.bfsLevelCache.has(fullKey)) {
-                        this.bfsLevelCache.set(fullKey, fullResult)
-                    }
-                }
-
-                // ✅ 然后根据需要截取
-                if (firstK !== EXPANSION_LIMITS.INFINITY) {
-                    finalResult = this.truncateAndDeduplicate(fullResult, firstK)
-                } else {
-                    finalResult = fullResult
-                }
-            } else if (actualLevel === maxLevel) {
-                // 情况3.2：数据层级 = 目标层级，刚好满足，不需要展开
-                // 但仍需截取到 firstK
-                finalResult = this.truncateAndDeduplicate(finalResult, firstK)
-            } else {
-                // 情况3.3：数据层级 > 目标层级（不应该发生）
-                throw new Error(`系统错误：actualLevel(${actualLevel}) > maxLevel(${maxLevel})`)
-            }
-
-            // ========================================
-            // 缓存设置（BFS 和 DFS 分离）
-            // ========================================
-
-            if (maxLevel === EXPANSION_LIMITS.INFINITY) {
-                // ========================================
-                // DFS 专属缓存设置（无限层数场景）
-                // ========================================
-                // 只在顶层调用时设置缓存（curLevel === 1）
-                if (curLevel === 1) {
-                    if (firstK === EXPANSION_LIMITS.FIRST_K) {
-                        // DFS 主缓存：只计算和缓存 firstK
-                        if (!this.dfsFirstKCache.has(ruleName)) {
-                            this.perfAnalyzer.recordCacheMiss('dfsFirstK')
-                            this.dfsFirstKCache.set(ruleName, finalResult)
-                        }
-
-                        // ✅ 顺便派生 first1 缓存（从 firstK 截取，不单独计算）
-                        if (!this.dfsFirst1Cache.has(ruleName)) {
-                            const first1Data = finalResult.map(path => path.slice(0, 1))
-                            const first1Result = this.deduplicate(first1Data)
-                            this.dfsFirst1Cache.set(ruleName, first1Result)
-                        }
-                    } else if (firstK === EXPANSION_LIMITS.FIRST_1) {
-                        // ⚠️ 注意：first1 不应该单独计算！
-                        // 如果走到这里，说明没有 firstK 缓存，需要先计算 firstK
-                        // 但为了向后兼容，仍然缓存 first1 结果
-                        if (!this.dfsFirst1Cache.has(ruleName)) {
-                            this.perfAnalyzer.recordCacheMiss('dfsFirst1')
-                            this.dfsFirst1Cache.set(ruleName, finalResult)
-                        }
-                    } else {
-                        throw new Error(`系统错误：DFS 不支持 firstK=${firstK}`)
-                    }
-                } else {
-                    // curLevel > 1（嵌套调用），不设置缓存
-                }
-            } else {
-                throw new Error('系统错误：无效的 maxLevel')
-            }
-
-            // 记录 subRuleHandler 调用
-            const duration = Date.now() - t0
-            this.perfAnalyzer.record('subRuleHandler', duration)
-
-            return finalResult
         } finally {
             // 清除递归标记（确保即使异常也能清除）
             this.recursiveDetectionSet.delete(ruleName)
         }
+    }
+
+    /**
+     * 处理 DFS 模式（深度优先展开，无限层级）
+     * 
+     * @param ruleName 规则名
+     * @param firstK 截取数量
+     * @param curLevel 当前层级
+     * @returns 展开结果
+     */
+    private handleDFS(
+        ruleName: string,
+        firstK: number,
+        curLevel: number
+    ): string[][] {
+        const t0 = Date.now()
+
+        // ========================================
+        // 阶段1：DFS 缓存查找
+        // ========================================
+
+        if (firstK === EXPANSION_LIMITS.FIRST_1) {
+            // 优先查找 first1 缓存
+            if (this.dfsFirst1Cache.has(ruleName)) {
+                this.perfAnalyzer.recordCacheHit('dfsFirst1')
+                const duration = Date.now() - t0
+                this.perfAnalyzer.record('subRuleHandler', duration)
+                return this.dfsFirst1Cache.get(ruleName)!
+            }
+
+            // first1 未命中，尝试从 firstK 缓存截取
+            if (this.dfsFirstKCache.has(ruleName)) {
+                this.perfAnalyzer.recordCacheHit('dfsFirst1')
+                const firstKData = this.dfsFirstKCache.get(ruleName)!
+                // 从 firstK 截取到 first1
+                const first1Data = firstKData.map(path => path.slice(0, 1))
+                const result = this.deduplicate(first1Data)
+                // 缓存 first1 结果
+                this.dfsFirst1Cache.set(ruleName, result)
+                const duration = Date.now() - t0
+                this.perfAnalyzer.record('subRuleHandler', duration)
+                return result
+            }
+            // 都未命中，继续实际计算
+
+        } else if (firstK === EXPANSION_LIMITS.FIRST_K) {
+            // 查找 firstK 缓存
+            if (this.dfsFirstKCache.has(ruleName)) {
+                this.perfAnalyzer.recordCacheHit('dfsFirstK')
+                const duration = Date.now() - t0
+                this.perfAnalyzer.record('subRuleHandler', duration)
+                return this.dfsFirstKCache.get(ruleName)!
+            }
+            // 未命中，继续实际计算
+        }
+
+        // ========================================
+        // 阶段2：DFS 实际计算（缓存未命中）
+        // ========================================
+
+        this.perfAnalyzer.recordActualCompute()
+
+        // 使用 DFS 从头展开到 token
+        const subNode = this.getRuleNodeByAst(ruleName)
+        const finalResult = this.expandPathsByDFS(null, subNode, firstK, curLevel, false)
+
+        // ========================================
+        // 阶段3：DFS 缓存设置
+        // ========================================
+
+        // 只在顶层调用时设置缓存（curLevel === 1）
+        if (curLevel === 1) {
+            if (firstK === EXPANSION_LIMITS.FIRST_K) {
+                // DFS 主缓存：只计算和缓存 firstK
+                if (!this.dfsFirstKCache.has(ruleName)) {
+                    this.perfAnalyzer.recordCacheMiss('dfsFirstK')
+                    this.dfsFirstKCache.set(ruleName, finalResult)
+                }
+
+                // 顺便派生 first1 缓存（从 firstK 截取）
+                if (!this.dfsFirst1Cache.has(ruleName)) {
+                    const first1Data = finalResult.map(path => path.slice(0, 1))
+                    const first1Result = this.deduplicate(first1Data)
+                    this.dfsFirst1Cache.set(ruleName, first1Result)
+                }
+            } else if (firstK === EXPANSION_LIMITS.FIRST_1) {
+                // first1 不应该单独计算，但为了向后兼容仍然缓存
+                if (!this.dfsFirst1Cache.has(ruleName)) {
+                    this.perfAnalyzer.recordCacheMiss('dfsFirst1')
+                    this.dfsFirst1Cache.set(ruleName, finalResult)
+                }
+            } else {
+                throw new Error(`系统错误：DFS 不支持 firstK=${firstK}`)
+            }
+        }
+
+        // 记录性能
+        const duration = Date.now() - t0
+        this.perfAnalyzer.record('subRuleHandler', duration)
+
+        return finalResult
+    }
+
+    /**
+     * 处理 BFS 模式（广度优先展开，限制层级）
+     * 
+     * @param ruleName 规则名
+     * @param curLevel 当前层级
+     * @param maxLevel 最大层级（具体值）
+     * @returns 展开结果
+     */
+    private handleBFS(
+        ruleName: string,
+        curLevel: number,
+        maxLevel: number
+    ): string[][] {
+        const t0 = Date.now()
+
+        // ========================================
+        // 阶段1：BFS 缓存查找
+        // ========================================
+
+        let finalResult: string[][] | undefined
+        let actualLevel = curLevel
+
+        // BFS 缓存：只在 maxLevel <= LEVEL_K 时查找
+        if (maxLevel <= EXPANSION_LIMITS.LEVEL_K) {
+            const fullKey = `${ruleName}:${maxLevel}`
+
+            if (this.bfsLevelCache.has(fullKey)) {
+                // BFS 缓存命中（完整版）
+                this.perfAnalyzer.recordCacheHit('bfsLevel')
+                const fullResult = this.bfsLevelCache.get(fullKey)!
+                actualLevel = maxLevel
+                // BFS 返回完整版，外层根据需要截取
+                finalResult = fullResult
+            } else {
+                // 缓存未命中
+                this.perfAnalyzer.recordCacheMiss('bfsLevel')
+            }
+        }
+
+        // ========================================
+        // 阶段2：BFS 实际计算（缓存未命中）
+        // ========================================
+
+        if (!finalResult) {
+            this.perfAnalyzer.recordActualCompute()
+
+            // 先获取 level 1
+            finalResult = this.getDirectChildren(ruleName)
+            actualLevel = 1
+        }
+
+        // ========================================
+        // 阶段3：判断是否需要继续展开
+        // ========================================
+
+        if (actualLevel < maxLevel) {
+            // 数据层级 < 目标层级，使用 BFS 按层级展开
+            const fullResult = this.expandPathsByBFS(ruleName, finalResult, actualLevel, maxLevel)
+
+            // 先缓存完整版（BFS 专属）
+            if (maxLevel <= EXPANSION_LIMITS.LEVEL_K) {
+                const fullKey = `${ruleName}:${maxLevel}`
+                if (!this.bfsLevelCache.has(fullKey)) {
+                    this.bfsLevelCache.set(fullKey, fullResult)
+                }
+            }
+
+            // 然后根据需要截取
+                finalResult = fullResult
+        } else if (actualLevel === maxLevel) {
+            // 数据层级 = 目标层级，刚好满足，只需截取
+            finalResult = this.deduplicate(finalResult)
+        } else {
+            // 数据层级 > 目标层级（不应该发生）
+            throw new Error(`系统错误：actualLevel(${actualLevel}) > maxLevel(${maxLevel})`)
+        }
+
+        // 记录性能
+        const duration = Date.now() - t0
+        this.perfAnalyzer.record('subRuleHandler', duration)
+
+        return finalResult
     }
 
     /**
