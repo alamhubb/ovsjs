@@ -184,19 +184,19 @@ class PerformanceAnalyzer {
         console.log(`     未命中: ${this.cacheStats.firstInfinityLevelK.miss}`)
         console.log(`     总次数: ${this.cacheStats.firstInfinityLevelK.total}`)
         console.log(`     命中率: ${this.cacheStats.firstInfinityLevelK.total > 0 ? ((this.cacheStats.firstInfinityLevelK.hit / this.cacheStats.firstInfinityLevelK.total) * 100).toFixed(1) : 0}%`)
-        
+
         console.log(`   ExpandOneLevel (展开1层，不截取):`)
         console.log(`     命中: ${this.cacheStats.expandOneLevel.hit}`)
         console.log(`     未命中: ${this.cacheStats.expandOneLevel.miss}`)
         console.log(`     总次数: ${this.cacheStats.expandOneLevel.total}`)
         console.log(`     命中率: ${this.cacheStats.expandOneLevel.total > 0 ? ((this.cacheStats.expandOneLevel.hit / this.cacheStats.expandOneLevel.total) * 100).toFixed(1) : 0}%`)
-        
+
         console.log(`   ExpandOneLevelTruncated (展开1层+截取):`)
         console.log(`     命中: ${this.cacheStats.expandOneLevelTruncated.hit}`)
         console.log(`     未命中: ${this.cacheStats.expandOneLevelTruncated.miss}`)
         console.log(`     总次数: ${this.cacheStats.expandOneLevelTruncated.total}`)
         console.log(`     命中率: ${this.cacheStats.expandOneLevelTruncated.total > 0 ? ((this.cacheStats.expandOneLevelTruncated.hit / this.cacheStats.expandOneLevelTruncated.total) * 100).toFixed(1) : 0}%`)
-        
+
         console.log(`   实际计算次数 (getDirectChildren): ${this.cacheStats.actualCompute}`)
         console.log('')
 
@@ -347,29 +347,32 @@ export class SubhutiGrammarAnalyzer {
     /** 正在计算的规则（用于检测循环依赖） */
     private recursiveDetectionSet = new Set<string>()
 
+    /** 完整版缓存：key="ruleName:level"（firstK=∞，不截取） */
     private firstInfinityLevelKCache = new Map<string, string[][]>()
 
+    /** 截取版缓存：key="ruleName:level:firstK"（截取到 firstK） */
+    private firstKLevelKCache = new Map<string, string[][]>()
 
     private first1LevelInfinityCache = new Map<string, string[][]>()
     private firstKLevelInfinityCache = new Map<string, string[][]>()
-    
+
     /** 展开1层缓存（不截取）：key="ruleName:curLevel" */
     private expandOneLevelCache = new Map<string, string[][]>()
-    
+
     /** 展开1层+截取缓存：key="ruleName:curLevel:firstK" */
     private expandOneLevelTruncatedCache = new Map<string, string[][]>()
-    
-    /** 
+
+    /**
      * 注意：levelFullResultCache 已删除，复用 firstInfinityLevelKCache
      * firstInfinityLevelKCache 存储的就是某规则在某层级的完整结果（firstK=∞）
      */
-    
+
     /** 展开单个路径缓存（完整版）：key="ruleName:level:pathIndex" */
     private expandSinglePathFullCache = new Map<string, string[][]>()
-    
+
     /** 展开单个路径缓存（截取版）：key="ruleName:level:pathIndex:firstK" */
     private expandSinglePathTruncatedCache = new Map<string, string[][]>()
-    
+
     /** 性能分析器 */
     private perfAnalyzer = new PerformanceAnalyzer()
     // private firstInfinityLevel1Cache = new Map<string, string[][]>()
@@ -2010,7 +2013,7 @@ export class SubhutiGrammarAnalyzer {
 
     /**
      * 展开1层（不截取）
-     * 
+     *
      * @param ruleName 规则名
      * @param paths 当前路径列表
      * @param curLevel 当前层级
@@ -2023,37 +2026,37 @@ export class SubhutiGrammarAnalyzer {
     ): string[][] {
         // 构建缓存 key
         const key = `${ruleName}:${curLevel}`
-        
+
         // 查找缓存
         if (this.expandOneLevelCache.has(key)) {
             this.perfAnalyzer.recordCacheHit('expandOneLevel')
             return this.expandOneLevelCache.get(key)!
         }
-        
+
         // 缓存未命中
         this.perfAnalyzer.recordCacheMiss('expandOneLevel')
-        
+
         // 展开1层
         const expandedPaths: string[][] = []
-        
+
         for (const path of paths) {
             // 展开路径中的所有规则名（不截取）
             const expanded = this.expandSinglePath(path, EXPANSION_LIMITS.INFINITY)
             expandedPaths.push(...expanded)
         }
-        
+
         // 只去重，不截取
         const result = this.deduplicate(expandedPaths)
-        
+
         // 设置缓存
         this.expandOneLevelCache.set(key, result)
-        
+
         return result
     }
 
     /**
      * 展开1层并截取到 firstK
-     * 
+     *
      * @param ruleName 规则名
      * @param paths 当前路径列表
      * @param curLevel 当前层级
@@ -2068,25 +2071,25 @@ export class SubhutiGrammarAnalyzer {
     ): string[][] {
         // 构建缓存 key
         const key = `${ruleName}:${curLevel}:${firstK}`
-        
+
         // 查找缓存
         if (this.expandOneLevelTruncatedCache.has(key)) {
             this.perfAnalyzer.recordCacheHit('expandOneLevelTruncated')
             return this.expandOneLevelTruncatedCache.get(key)!
         }
-        
+
         // 缓存未命中
         this.perfAnalyzer.recordCacheMiss('expandOneLevelTruncated')
-        
+
         // 先获取完整展开1层的结果
         const fullExpanded = this.expandOneLevel(ruleName, paths, curLevel)
-        
+
         // 截取到 firstK
         const result = this.truncateAndDeduplicate(fullExpanded, firstK)
-        
+
         // 设置缓存
         this.expandOneLevelTruncatedCache.set(key, result)
-        
+
         return result
     }
 
@@ -2120,33 +2123,42 @@ export class SubhutiGrammarAnalyzer {
         firstK: number
     ): string[][] {
         const t0 = Date.now()
-        
+
         // 🔧 优化：尝试从缓存直接获取目标层级的结果
         // 如果缓存中已有 "ruleName:maxLevel" 的数据，直接返回，避免逐层展开
-        if (firstK === EXPANSION_LIMITS.INFINITY && maxLevel <= EXPANSION_LIMITS.LEVEL_K) {
-            const cacheKey = `${ruleName}:${maxLevel}`
+        // 只在 maxLevel <= LEVEL_K 时查找缓存
+        const cacheKey = `${ruleName}:${maxLevel}`
+        
+        if (maxLevel <= EXPANSION_LIMITS.LEVEL_K) {
             if (this.firstInfinityLevelKCache.has(cacheKey)) {
-                // ✅ 缓存命中，直接返回（已经是目标层级的数据）
-                const cached = this.firstInfinityLevelKCache.get(cacheKey)!
+                const data = this.firstInfinityLevelKCache.get(cacheKey)!
                 
-                // 防御：确保返回的数据也经过截取和去重（与末尾逻辑保持一致）
-                // 注意：firstK=INFINITY 时，truncateAndDeduplicate 只去重不截取
-                const result = this.truncateAndDeduplicate(cached, firstK)
-                
-                // 记录性能
-                const duration = Date.now() - t0
-                this.perfAnalyzer.record('expandPathsToDeeper_cached', duration, paths.length, result.length)
-                
-                return result
+                if (firstK === EXPANSION_LIMITS.INFINITY) {
+                    // 不需要截取，直接返回完整版
+                    return data
+                } else {
+                    // 需要截取，优先查找截取版缓存
+                    const cacheFirstkKey = `${ruleName}:${maxLevel}:${firstK}`
+                    
+                    if (this.firstKLevelKCache.has(cacheFirstkKey)) {
+                        return this.firstKLevelKCache.get(cacheFirstkKey)
+                    } else {
+                        // 从完整版截取并缓存
+                        const result = this.truncateAndDeduplicate(data, firstK)
+                        this.firstKLevelKCache.set(cacheFirstkKey, result)
+                        return result
+                    }
+                }
             }
         }
-        
+
+
         let currentPaths = paths
         let finishedPaths: string[][] = []  // 已经全是 token 的路径
 
         // 计算最多展开多少层
-        const levelsToExpand = maxLevel === EXPANSION_LIMITS.INFINITY 
-            ? EXPANSION_LIMITS.INFINITY 
+        const levelsToExpand = maxLevel === EXPANSION_LIMITS.INFINITY
+            ? EXPANSION_LIMITS.INFINITY
             : (maxLevel - curLevel)
 
         // 防御检查
@@ -2160,26 +2172,26 @@ export class SubhutiGrammarAnalyzer {
         while (expandedLevels < levelsToExpand) {
             // 当前实际层级 = curLevel + expandedLevels
             const actualCurrentLevel = curLevel + expandedLevels
-            
+
             // 当前实际层级 = curLevel + expandedLevels（循环前已定义）
             // 下一层级 = actualCurrentLevel + 1
             const nextLevel = actualCurrentLevel + 1
             const levelCacheKey = `${ruleName}:${nextLevel}`
-            
+
             // ========================================
             // 步骤0：检查下一层级是否有完整缓存
             // ========================================
             // 🔧 优化：复用 firstInfinityLevelKCache（与 levelFullResultCache 存储相同数据）
             let usedLevelCache = false
-            if (firstK === EXPANSION_LIMITS.INFINITY && 
-                nextLevel <= EXPANSION_LIMITS.LEVEL_K && 
+            if (firstK === EXPANSION_LIMITS.INFINITY &&
+                nextLevel <= EXPANSION_LIMITS.LEVEL_K &&
                 this.firstInfinityLevelKCache.has(levelCacheKey)) {
                 // ✅ 缓存命中：直接使用下一层级的缓存数据
                 // 注意：不能直接 continue，需要经过分离逻辑更新 finishedPaths
                 currentPaths = this.firstInfinityLevelKCache.get(levelCacheKey)!
                 usedLevelCache = true
             }
-            
+
             // ========================================
             // 步骤1：分离已完成和未完成的路径
             // ========================================
@@ -2189,7 +2201,7 @@ export class SubhutiGrammarAnalyzer {
             for (const path of currentPaths) {
                 // 检查当前路径是否全部是 token
                 const isAllTokens = path.every(symbol => this.tokenCache.has(symbol))
-                
+
                 if (isAllTokens) {
                     // 已完成：全部是 token，无需继续展开
                     pathsFinished.push(path)
@@ -2218,14 +2230,14 @@ export class SubhutiGrammarAnalyzer {
             // ========================================
             // 步骤3：展开未完成的路径（使用缓存方法）
             // ========================================
-            
+
             // 对每个路径展开1层（带缓存）
             const expandedPaths: string[][] = []
-            
+
             // 🔧 优化：使用索引，为每个路径位置建立缓存
             for (let pathIndex = 0; pathIndex < pathsToExpand.length; pathIndex++) {
                 const path = pathsToExpand[pathIndex]
-                
+
                 // 🔑 缓存键：ruleName + 层级 + 路径索引 + firstK
                 // 对于同一个 (ruleName, level, pathIndex)，path 是固定的
                 const expanded = this.expandSinglePathCached(
@@ -2240,18 +2252,24 @@ export class SubhutiGrammarAnalyzer {
 
             // 去重
             currentPaths = this.deduplicate(expandedPaths)
-            
-            // 🔧 缓存当前层级的结果（完整版，不截取）
-            // 缓存键：ruleName:nextLevel
-            // 只在 firstK=INFINITY 且 nextLevel <= LEVEL_K 时缓存
-            // 复用 firstInfinityLevelKCache（避免重复缓存）
-            if (firstK === EXPANSION_LIMITS.INFINITY && nextLevel <= EXPANSION_LIMITS.LEVEL_K) {
-                // 只在缓存不存在时设置（避免覆盖）
-                if (!this.firstInfinityLevelKCache.has(levelCacheKey)) {
-                    this.firstInfinityLevelKCache.set(levelCacheKey, currentPaths)
+
+            // 🔧 缓存当前层级的结果（双层策略）
+            // 只在 nextLevel <= LEVEL_K 时缓存
+            if (nextLevel <= EXPANSION_LIMITS.LEVEL_K) {
+                if (firstK === EXPANSION_LIMITS.INFINITY) {
+                    // 情况1：firstK=INFINITY，缓存完整版
+                    if (!this.firstInfinityLevelKCache.has(levelCacheKey)) {
+                        this.firstInfinityLevelKCache.set(levelCacheKey, currentPaths)
+                    }
+                } else {
+                    // 情况2：firstK!=INFINITY，缓存截取版
+                    const truncatedKey = `${ruleName}:${nextLevel}:${firstK}`
+                    if (!this.firstKLevelKCache.has(truncatedKey)) {
+                        this.firstKLevelKCache.set(truncatedKey, currentPaths)
+                    }
                 }
             }
-            
+
             expandedLevels++
         }
 
@@ -2259,26 +2277,45 @@ export class SubhutiGrammarAnalyzer {
         // 步骤4：合并已完成和未完成的路径
         // ========================================
         const result = this.truncateAndDeduplicate([...finishedPaths, ...currentPaths], firstK)
-        
+
+        // ========================================
+        // 步骤5：缓存最终结果（双层策略）
+        // ========================================
+        // 只在 maxLevel <= LEVEL_K 时缓存最终结果
+        if (maxLevel <= EXPANSION_LIMITS.LEVEL_K) {
+            if (firstK === EXPANSION_LIMITS.INFINITY) {
+                // 情况1：firstK=INFINITY，缓存完整版
+                if (!this.firstInfinityLevelKCache.has(cacheKey)) {
+                    this.firstInfinityLevelKCache.set(cacheKey, result)
+                }
+            } else {
+                // 情况2：firstK!=INFINITY，缓存截取版
+                const truncatedKey = `${ruleName}:${maxLevel}:${firstK}`
+                if (!this.firstKLevelKCache.has(truncatedKey)) {
+                    this.firstKLevelKCache.set(truncatedKey, result)
+                }
+            }
+        }
+
         // 记录性能数据
         const duration = Date.now() - t0
         this.perfAnalyzer.record('expandPathsToDeeper', duration, paths.length, result.length)
-        
+
         return result
     }
 
     /**
      * 展开单个路径（带缓存版本，双层缓存策略）
-     * 
+     *
      * 缓存策略：
      * 1. 完整缓存（key="ruleName:level:pathIndex"）- 不截取的完整结果
      * 2. 截取缓存（key="ruleName:level:pathIndex:firstK"）- 截取到firstK的结果
-     * 
+     *
      * 查找顺序：
      * - 优先查找完整缓存（可复用于不同的firstK）
      * - 如果未命中，查找截取缓存
      * - 都未命中则计算
-     * 
+     *
      * @param ruleName 顶层规则名
      * @param path 当前路径
      * @param level 当前层级
@@ -2296,14 +2333,14 @@ export class SubhutiGrammarAnalyzer {
         // 🔑 构建缓存键
         const fullKey = `${ruleName}:${level}:${pathIndex}`
         const truncatedKey = `${ruleName}:${level}:${pathIndex}:${firstK}`
-        
+
         // ========================================
         // 阶段1：查找完整缓存
         // ========================================
         if (this.expandSinglePathFullCache.has(fullKey)) {
             // ✅ 完整缓存命中
             const fullResult = this.expandSinglePathFullCache.get(fullKey)!
-            
+
             // 如果需要截取，截取后返回
             if (firstK !== EXPANSION_LIMITS.INFINITY) {
                 // 截取并缓存截取结果（可选优化）
@@ -2312,11 +2349,11 @@ export class SubhutiGrammarAnalyzer {
                 this.expandSinglePathTruncatedCache.set(truncatedKey, truncated)
                 return truncated
             }
-            
+
             // 不需要截取，直接返回
             return fullResult
         }
-        
+
         // ========================================
         // 阶段2：查找截取缓存（仅当需要截取时）
         // ========================================
@@ -2326,17 +2363,17 @@ export class SubhutiGrammarAnalyzer {
                 return this.expandSinglePathTruncatedCache.get(truncatedKey)!
             }
         }
-        
+
         // ========================================
         // 阶段3：缓存未命中，实际计算
         // ========================================
-        
+
         // 始终计算完整结果（不截取）
         const fullResult = this.expandSinglePath(path, EXPANSION_LIMITS.INFINITY)
-        
+
         // 缓存完整结果
         this.expandSinglePathFullCache.set(fullKey, fullResult)
-        
+
         // 如果需要截取
         if (firstK !== EXPANSION_LIMITS.INFINITY) {
             const truncated = this.truncateAndDeduplicate(fullResult, firstK)
@@ -2344,7 +2381,7 @@ export class SubhutiGrammarAnalyzer {
             this.expandSinglePathTruncatedCache.set(truncatedKey, truncated)
             return truncated
         }
-        
+
         // 不需要截取，返回完整结果
         return fullResult
     }
@@ -2546,32 +2583,48 @@ export class SubhutiGrammarAnalyzer {
             }
 
             // ========================================
-            // 阶段1：尝试从 levelK 缓存获取（穷举法）
+            // 阶段1：尝试从缓存获取（双层缓存策略）
             // ========================================
 
             let finalResult: string[][]
             let actualLevel = curLevel  // 记录数据实际展开的层级
 
-        // 穷举：按 maxLevel 范围分类
-        if (maxLevel <= EXPANSION_LIMITS.LEVEL_K) {
-            // 情况1.1：maxLevel 在 levelK 范围内（maxLevel <= 5）
-            // ✅ 使用 maxLevel 而不是 curLevel，因为 finalResult 是展开到 maxLevel 的结果
-            const key = `${ruleName}:${maxLevel}`
-            if (this.firstInfinityLevelKCache.has(key)) {
-                // 情况1.1.1：缓存命中
-                this.perfAnalyzer.recordCacheHit('firstInfinityLevelK')
-                finalResult = this.firstInfinityLevelKCache.get(key)!
-                actualLevel = maxLevel  // 数据已展开到 maxLevel 层
-            } else {
-                // 情况1.1.2：缓存未命中
-                this.perfAnalyzer.recordCacheMiss('firstInfinityLevelK')
-                // finalResult 保持 undefined，后续会实际计算
+            // 只在 maxLevel <= LEVEL_K 时查找缓存
+            if (maxLevel <= EXPANSION_LIMITS.LEVEL_K) {
+                const fullKey = `${ruleName}:${maxLevel}`
+                const truncatedKey = `${ruleName}:${maxLevel}:${firstK}`
+
+                // 步骤1：优先查找完整版缓存（复用性最高）
+                if (this.firstInfinityLevelKCache.has(fullKey)) {
+                    // ✅ 完整版缓存命中
+                    this.perfAnalyzer.recordCacheHit('firstInfinityLevelK')
+                    const fullResult = this.firstInfinityLevelKCache.get(fullKey)!
+                    actualLevel = maxLevel  // 数据已展开到 maxLevel 层
+
+                    // 如果需要截取
+                    if (firstK !== EXPANSION_LIMITS.INFINITY) {
+                        // 从完整版截取
+                        finalResult = this.truncateAndDeduplicate(fullResult, firstK)
+                        // 顺便缓存截取版
+                        this.firstKLevelKCache.set(truncatedKey, finalResult)
+                    } else {
+                        // 不需要截取，直接使用
+                        finalResult = fullResult
+                    }
+                }
+                // 步骤2：查找截取版缓存（仅当需要截取时）
+                else if (firstK !== EXPANSION_LIMITS.INFINITY && this.firstKLevelKCache.has(truncatedKey)) {
+                    // ✅ 截取版缓存命中
+                    this.perfAnalyzer.recordCacheHit('firstInfinityLevelK')
+                    finalResult = this.firstKLevelKCache.get(truncatedKey)!
+                    actualLevel = maxLevel  // 数据已展开到 maxLevel 层
+                }
+                // 步骤3：缓存未命中
+                else {
+                    this.perfAnalyzer.recordCacheMiss('firstInfinityLevelK')
+                    // finalResult 保持 undefined，后续会实际计算
+                }
             }
-        } else {
-            // 情况1.2：maxLevel 超出 levelK 范围（maxLevel > 5）
-            // 不查找 levelK 缓存
-            // finalResult 保持 undefined，后续会实际计算
-        }
 
             // ========================================
             // 阶段2：如果缓存未命中，实际计算（穷举法）
@@ -2617,22 +2670,27 @@ export class SubhutiGrammarAnalyzer {
             }
 
             // ========================================
-            // 缓存设置
+            // 缓存设置（双层缓存策略）
             // ========================================
 
-        if (firstK === EXPANSION_LIMITS.INFINITY) {
-            // First_Infinity_Level_K 模式：按目标层级缓存
-            // ✅ 使用 maxLevel 而不是 curLevel，确保缓存键与缓存值匹配
             if (maxLevel <= EXPANSION_LIMITS.LEVEL_K) {
-                const key = `${ruleName}:${maxLevel}`
-                if (!this.firstInfinityLevelKCache.has(key)) {
-                    this.firstInfinityLevelKCache.set(key, finalResult)
-                    // 注意：miss 已在查找时记录
+                const fullKey = `${ruleName}:${maxLevel}`
+                const truncatedKey = `${ruleName}:${maxLevel}:${firstK}`
+
+                if (firstK === EXPANSION_LIMITS.INFINITY) {
+                    // 情况1：firstK=INFINITY，finalResult 是完整版
+                    // 缓存到完整版缓存
+                    if (!this.firstInfinityLevelKCache.has(fullKey)) {
+                        this.firstInfinityLevelKCache.set(fullKey, finalResult)
+                    }
+                } else {
+                    // 情况2：firstK!=INFINITY，finalResult 是截取版
+                    // 缓存到截取版缓存
+                    if (!this.firstKLevelKCache.has(truncatedKey)) {
+                        this.firstKLevelKCache.set(truncatedKey, finalResult)
+                    }
                 }
-            } else {
-                throw new Error('系统错误：maxLevel 超出 LEVEL_K 范围')
-            }
-        } else if (maxLevel === EXPANSION_LIMITS.INFINITY) {
+            } else if (maxLevel === EXPANSION_LIMITS.INFINITY) {
                 // First_1_Level_Infinity 或 First_K_Level_Infinity 模式
                 // 只在顶层调用时设置缓存（curLevel === 1）
                 if (curLevel === 1) {
