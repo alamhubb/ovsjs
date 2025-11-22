@@ -2492,11 +2492,52 @@ export class SubhutiGrammarAnalyzer {
             throw new Error('系统错误')
         }
 
-        // 🔴 递归检测必须在层级检查之前，否则会被层级限制提前中断
+        // 层级限制检查（BFS 需要）
+        if (curLevel > maxLevel && maxLevel !== EXPANSION_LIMITS.INFINITY) {
+            // 返回规则名本身（达到最大深度）
+            this.perfAnalyzer.cacheStats.levelLimitReturn++
+            return [[ruleName]]
+        }
+
+        // ========================================
+        // 🎯 核心路由：尽早分流 DFS 和 BFS
+        // ========================================
+
+        if (maxLevel === EXPANSION_LIMITS.INFINITY) {
+            // 🔴 DFS 模式：深度优先展开（无限层级）
+            // 递归检测和左递归检测在 handleDFS 内部进行
+            return this.handleDFS(ruleName, firstK, curLevel, isFirstPosition)
+        } else {
+            // 🔵 BFS 模式：广度优先展开（限制层级）
+            // BFS 有层级限制，不需要递归检测
+            return this.handleBFS(ruleName, maxLevel)
+        }
+    }
+
+    /**
+     * 处理 DFS 模式（深度优先展开，无限层级）
+     * 
+     * @param ruleName 规则名
+     * @param firstK 截取数量
+     * @param curLevel 当前层级
+     * @param isFirstPosition 是否在第一个位置（用于左递归检测）
+     * @returns 展开结果
+     */
+    private handleDFS(
+        ruleName: string,
+        firstK: number,
+        curLevel: number,
+        isFirstPosition: boolean
+    ): string[][] {
+        const t0 = Date.now()
+
+        // ========================================
+        // 阶段0：递归检测（DFS 专属）
+        // ========================================
+
         // 递归检测：如果规则正在计算中
         if (this.recursiveDetectionSet.has(ruleName)) {
-            // 🔍 调试：输出关键信息
-            // 💡 区分左递归和普通递归
+            // 区分左递归和普通递归
             if (isFirstPosition) {
                 // 在第一个位置递归 → 左递归！
                 // 检查是否已经记录过这个规则的左递归错误
@@ -2531,50 +2572,9 @@ export class SubhutiGrammarAnalyzer {
         this.recursiveDetectionSet.add(ruleName)
 
         try {
-            // 层级限制：超过最大层级，停止展开
-            if (curLevel > maxLevel) {
-                // 返回规则名本身（达到最大深度）
-                this.perfAnalyzer.cacheStats.levelLimitReturn++
-                return [[ruleName]]
-            }
-
             // ========================================
-            // 🎯 核心路由：尽早分流 DFS 和 BFS
+            // 阶段1：DFS 缓存查找
             // ========================================
-
-            if (maxLevel === EXPANSION_LIMITS.INFINITY) {
-                // 🔴 DFS 模式：深度优先展开（无限层级）
-                return this.handleDFS(ruleName, firstK, curLevel, isFirstPosition)
-            } else {
-                // 🔵 BFS 模式：广度优先展开（限制层级）
-                return this.handleBFS(ruleName, maxLevel)
-            }
-        } finally {
-            // 清除递归标记（确保即使异常也能清除）
-            this.recursiveDetectionSet.delete(ruleName)
-        }
-    }
-
-    /**
-     * 处理 DFS 模式（深度优先展开，无限层级）
-     *
-     * @param ruleName 规则名
-     * @param firstK 截取数量
-     * @param curLevel 当前层级
-     * @param isFirstPosition
-     * @returns 展开结果
-     */
-    private handleDFS(
-        ruleName: string,
-        firstK: number,
-        curLevel: number,
-        isFirstPosition: boolean
-    ): string[][] {
-        const t0 = Date.now()
-
-        // ========================================
-        // 阶段1：DFS 缓存查找
-        // ========================================
 
         if (firstK === EXPANSION_LIMITS.FIRST_1) {
             // 优先查找 first1 缓存
@@ -2611,51 +2611,55 @@ export class SubhutiGrammarAnalyzer {
             // 未命中，继续实际计算
         }
 
-        // ========================================
-        // 阶段2：DFS 实际计算（缓存未命中）
-        // ========================================
+            // ========================================
+            // 阶段2：DFS 实际计算（缓存未命中）
+            // ========================================
 
-        this.perfAnalyzer.recordActualCompute()
+            this.perfAnalyzer.recordActualCompute()
 
-        // 使用 DFS 从头展开到 token
-        const subNode = this.getRuleNodeByAst(ruleName)
-        const finalResult = this.expandPathsByDFS(null, subNode, firstK, curLevel, isFirstPosition)
+            // 使用 DFS 从头展开到 token
+            const subNode = this.getRuleNodeByAst(ruleName)
+            const finalResult = this.expandPathsByDFS(null, subNode, firstK, curLevel, isFirstPosition)
 
-        // ========================================
-        // 阶段3：DFS 缓存设置
-        // ========================================
+            // ========================================
+            // 阶段3：DFS 缓存设置
+            // ========================================
 
-        // 只在顶层调用时设置缓存（curLevel === 1）
-        if (curLevel === 1) {
-            if (firstK === EXPANSION_LIMITS.FIRST_K) {
-                // DFS 主缓存：只计算和缓存 firstK
-                if (!this.dfsFirstKCache.has(ruleName)) {
-                    this.perfAnalyzer.recordCacheMiss('dfsFirstK')
-                    this.dfsFirstKCache.set(ruleName, finalResult)
+            // 只在顶层调用时设置缓存（curLevel === 1）
+            if (curLevel === 1) {
+                if (firstK === EXPANSION_LIMITS.FIRST_K) {
+                    // DFS 主缓存：只计算和缓存 firstK
+                    if (!this.dfsFirstKCache.has(ruleName)) {
+                        this.perfAnalyzer.recordCacheMiss('dfsFirstK')
+                        this.dfsFirstKCache.set(ruleName, finalResult)
+                    }
+
+                    // 顺便派生 first1 缓存（从 firstK 截取）
+                    if (!this.dfsFirst1Cache.has(ruleName)) {
+                        const first1Data = finalResult.map(path => path.slice(0, 1))
+                        const first1Result = this.deduplicate(first1Data)
+                        this.dfsFirst1Cache.set(ruleName, first1Result)
+                    }
+                } else if (firstK === EXPANSION_LIMITS.FIRST_1) {
+                    // first1 不应该单独计算，但为了向后兼容仍然缓存
+                    if (!this.dfsFirst1Cache.has(ruleName)) {
+                        this.perfAnalyzer.recordCacheMiss('dfsFirst1')
+                        this.dfsFirst1Cache.set(ruleName, finalResult)
+                    }
+                } else {
+                    throw new Error(`系统错误：DFS 不支持 firstK=${firstK}`)
                 }
-
-                // 顺便派生 first1 缓存（从 firstK 截取）
-                if (!this.dfsFirst1Cache.has(ruleName)) {
-                    const first1Data = finalResult.map(path => path.slice(0, 1))
-                    const first1Result = this.deduplicate(first1Data)
-                    this.dfsFirst1Cache.set(ruleName, first1Result)
-                }
-            } else if (firstK === EXPANSION_LIMITS.FIRST_1) {
-                // first1 不应该单独计算，但为了向后兼容仍然缓存
-                if (!this.dfsFirst1Cache.has(ruleName)) {
-                    this.perfAnalyzer.recordCacheMiss('dfsFirst1')
-                    this.dfsFirst1Cache.set(ruleName, finalResult)
-                }
-            } else {
-                throw new Error(`系统错误：DFS 不支持 firstK=${firstK}`)
             }
+
+            // 记录性能
+            const duration = Date.now() - t0
+            this.perfAnalyzer.record('subRuleHandler', duration)
+
+            return finalResult
+        } finally {
+            // 清除递归标记（确保即使异常也能清除）
+            this.recursiveDetectionSet.delete(ruleName)
         }
-
-        // 记录性能
-        const duration = Date.now() - t0
-        this.perfAnalyzer.record('subRuleHandler', duration)
-
-        return finalResult
     }
 
     /**
