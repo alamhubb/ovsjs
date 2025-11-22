@@ -1998,6 +1998,7 @@ export class SubhutiGrammarAnalyzer {
             }
             finalResult = this.truncateAndDeduplicate(finalResult, firstK)
 
+
             if (firstK === EXPANSION_LIMITS.INFINITY) {
                 if (curLevel > EXPANSION_LIMITS.LEVEL_K || maxLevel > EXPANSION_LIMITS.LEVEL_K) {
                     throw new Error('系统错误')
@@ -2007,7 +2008,10 @@ export class SubhutiGrammarAnalyzer {
                     this.firstInfinityLevelKCache.set(key, finalResult)
                 }
             } else if (maxLevel === EXPANSION_LIMITS.INFINITY) {
-                if (curLevel === maxLevel) {
+                if (curLevel <= EXPANSION_LIMITS.LEVEL_K) {
+                    throw new Error('系统错误')
+                }
+                if (curLevel === 1) {
                     if (firstK === EXPANSION_LIMITS.FIRST_1) {
                         // firstK=1, maxLevel=INFINITY
                         if (!this.first1LevelInfinityCache.has(ruleName)) {
@@ -2022,15 +2026,6 @@ export class SubhutiGrammarAnalyzer {
                         } else {
                             throw new Error('系统错误')
                         }
-                    } else {
-                        throw new Error('系统错误')
-                    }
-                } else if (curLevel <= EXPANSION_LIMITS.LEVEL_K) {
-                    throw new Error('系统错误')
-                } else {
-                    if (curLevel <= maxLevel) {
-                        //这里不该报错
-                        throw new Error('系统错误')
                     } else {
                         throw new Error('系统错误')
                     }
