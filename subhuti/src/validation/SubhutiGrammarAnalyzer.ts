@@ -1324,7 +1324,7 @@ export class SubhutiGrammarAnalyzer {
 
         // 为每个层级触发计算
         for (let level = 1; level <= EXPANSION_LIMITS.LEVEL_K; level++) {
-            this.expandPathsByDFS(
+            this.expandPathsByBFS(
                 ruleName,
                 null,
                 EXPANSION_LIMITS.INFINITY,
@@ -2567,7 +2567,7 @@ export class SubhutiGrammarAnalyzer {
 
     /**
      * 处理 DFS 模式（深度优先展开，无限层级）
-     * 
+     *
      * @param ruleName 规则名
      * @param firstK 截取数量
      * @param curLevel 当前层级
@@ -2668,7 +2668,7 @@ export class SubhutiGrammarAnalyzer {
 
     /**
      * 处理 BFS 模式（广度优先展开，限制层级）
-     * 
+     *
      * @param ruleName 规则名
      * @param curLevel 当前层级
      * @param maxLevel 最大层级（具体值）
@@ -2734,7 +2734,7 @@ export class SubhutiGrammarAnalyzer {
             }
 
             // 然后根据需要截取
-                finalResult = fullResult
+            finalResult = fullResult
         } else if (actualLevel === maxLevel) {
             // 数据层级 = 目标层级，刚好满足，只需截取
             finalResult = this.deduplicate(finalResult)
