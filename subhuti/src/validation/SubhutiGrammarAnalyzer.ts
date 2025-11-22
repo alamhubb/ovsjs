@@ -1974,71 +1974,65 @@ export class SubhutiGrammarAnalyzer {
             }
 
             // ========================================
-            // 尝试从 levelK 缓存获取（所有模式都可以复用）
+            // 阶段1：尝试从 levelK 缓存获取（穷举法）
             // ========================================
 
             let finalResult: string[][]
             let actualLevel = curLevel  // 记录数据实际展开的层级
 
-            if (maxLevel === EXPANSION_LIMITS.FIRST_K) {
-
+            // 穷举：按 curLevel 范围分类
+            if (curLevel <= EXPANSION_LIMITS.LEVEL_K) {
+                // 情况1.1：curLevel 在 levelK 范围内（curLevel <= 5）
                 const key = `${ruleName}:${curLevel}`
                 if (this.firstInfinityLevelKCache.has(key)) {
-                    // 从 LevelK 获取数据（已展开到 curLevel 层）
+                    // 情况1.1.1：缓存命中
                     finalResult = this.firstInfinityLevelKCache.get(key)!
-                }
-            } else if (maxLevel === EXPANSION_LIMITS.INFINITY) {
-
-                const key = `${ruleName}:${curLevel}`
-                if (this.firstInfinityLevelKCache.has(key)) {
-                    // 从 LevelK 获取数据（已展开到 curLevel 层）
-                    finalResult = this.firstInfinityLevelKCache.get(key)!
+                    actualLevel = curLevel  // 数据已展开到 curLevel 层
+                } else {
+                    // 情况1.1.2：缓存未命中
+                    // finalResult 保持 undefined，后续会实际计算
                 }
             } else {
-                throw new Error('系统错误')
+                // 情况1.2：curLevel 超出 levelK 范围（curLevel > 5）
+                // 不查找 levelK 缓存
+                // finalResult 保持 undefined，后续会实际计算
             }
 
+            // ========================================
+            // 阶段2：如果缓存未命中，实际计算（穷举法）
+            // ========================================
 
+            // 穷举：按 finalResult 是否存在分类
             if (finalResult) {
-                if (curLevel <= maxLevel) {
-                    if (maxLevel === EXPANSION_LIMITS.LEVEL_K) {
-
-                    } else if (maxLevel === EXPANSION_LIMITS.INFINITY) {
-
-                    }
-                }
-            } else if (!finalResult) {
-                if (curLevel <= maxLevel) {
-                    if (maxLevel === EXPANSION_LIMITS.LEVEL_K) {
-
-                    } else if (maxLevel === EXPANSION_LIMITS.INFINITY) {
-
-                    }
-                }
-            }
-
-            if (curLevel === 1) {
-                finalResult = this.getDirectChildren(ruleName)
-            } else if (curLevel <= maxLevel) {
-
-            }
-
-
-            if (!finalResult) {
-                // ========================================
-                // LevelK 缓存不存在，实际计算
-                // ========================================
-
+                // 情况2.1：缓存命中，已经有数据
+                // actualLevel 已经设置为 curLevel
+                // 不需要额外操作
+            } else {
+                // 情况2.2：缓存未命中，需要实际计算
                 // getDirectChildren 返回第 1 层的数据
                 finalResult = this.getDirectChildren(ruleName)
                 actualLevel = 1  // 数据实际是第 1 层
             }
 
-            // 判断是否需要继续展开
+            // ========================================
+            // 阶段3：判断是否需要继续展开（穷举法）
+            // ========================================
+
+            // 穷举：按 actualLevel 和 maxLevel 的关系分类
             if (actualLevel < maxLevel) {
+                // 情况3.1：数据层级 < 目标层级，需要继续展开
                 finalResult = this.expandPathsToDeeper(finalResult, actualLevel, maxLevel)
+            } else if (actualLevel === maxLevel) {
+                // 情况3.2：数据层级 = 目标层级，刚好满足，不需要展开
+                // finalResult 保持不变
+            } else {
+                // 情况3.3：数据层级 > 目标层级（不应该发生）
+                throw new Error(`系统错误：actualLevel(${actualLevel}) > maxLevel(${maxLevel})`)
             }
 
+            // ========================================
+            // 阶段4：截取到 firstK
+            // ========================================
 
             finalResult = this.truncateAndDeduplicate(finalResult, firstK)
 
@@ -2067,8 +2061,10 @@ export class SubhutiGrammarAnalyzer {
                             this.firstKLevelInfinityCache.set(ruleName, finalResult)
                         }
                     }
+                } else {
+                    // 情况：curLevel > 1（嵌套调用）
+                    // 不设置缓存，因为只在顶层调用时缓存
                 }
-                // curLevel > 1 时不设置缓存（嵌套调用）
             }
 
             return finalResult
