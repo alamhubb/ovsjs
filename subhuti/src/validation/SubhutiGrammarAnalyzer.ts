@@ -458,7 +458,7 @@ export class SubhutiGrammarAnalyzer {
             // 清空递归检测集合
             this.recursiveDetectionSet.clear()
 
-            this.expandPathsByDFS(null, ruleNode, EXPANSION_LIMITS.FIRST_K, 0, true)
+            this.expandPathsByDFS(null, ruleNode, EXPANSION_LIMITS.FIRST_K, 0, EXPANSION_LIMITS.INFINITY, true)
         }
 
         // 为每个错误补充 suggestion
@@ -1381,6 +1381,7 @@ export class SubhutiGrammarAnalyzer {
             null,
             EXPANSION_LIMITS.FIRST_K,
             0,
+            EXPANSION_LIMITS.INFINITY,
             true
         )
 
@@ -1805,9 +1806,9 @@ export class SubhutiGrammarAnalyzer {
         ruleName: string | null,
         node: RuleNode,
         firstK: number,
-        curLevel: number = 0,
+        curLevel: number,
+        maxLevel: number,
         isFirstPosition: boolean = false,
-        maxLevel: number = EXPANSION_LIMITS.INFINITY,
         // 是否在第一个位置（用于左递归检测）
     ): string[][] {
         // DFS 总是无限展开
@@ -1968,6 +1969,7 @@ export class SubhutiGrammarAnalyzer {
                 nodesToExpand[i],
                 firstK,
                 curLevel,
+                maxLevel,
                 isFirstPosition && i === 0  // 累积位置：只有当父级和当前都是第1个时才是 true
             )
 
@@ -2923,7 +2925,7 @@ export class SubhutiGrammarAnalyzer {
     ): string[][] {
         // 递归展开内部节点
         // 🔴 关键：传递 isFirstPosition 用于递归检测
-        const innerBranches = this.expandPathsByDFS(null, node, firstK, curLevel, isFirstPosition)
+        const innerBranches = this.expandPathsByDFS(null, node, firstK, curLevel, maxLevel, isFirstPosition)
 
         // ⚠️⚠️⚠️ 关键：添加空分支 [] 表示可以跳过（0次）
         // 空分支必须在第一个位置，表示优先匹配空（PEG 顺序选择）
