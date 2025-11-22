@@ -1335,7 +1335,7 @@ export class SubhutiGrammarAnalyzer {
 
             // 优化：如果 result 为空且还有后续数组，可以提前结束
             if (result.length === 0 && finalResultSet.size > 0) {
-                console.log(`✅ 所有序列已达 FIRST_K，跳过剩余 ${arrays.length - i - 1} 个数组的计算`)
+                // console.log(`✅ 所有序列已达 FIRST_K，跳过剩余 ${arrays.length - i - 1} 个数组的计算`)
                 break
             }
         }
@@ -1363,7 +1363,7 @@ export class SubhutiGrammarAnalyzer {
         }
 
         // 输出性能统计
-        if (perfStats.maxResultSize > 10000 || perfStats.skippedByDuplicate > 1000 || perfStats.movedToFinal > 1000 || perfStats.arrayDedupTotal > 0) {
+        /*if (perfStats.maxResultSize > 10000 || perfStats.skippedByDuplicate > 1000 || perfStats.movedToFinal > 1000 || perfStats.arrayDedupTotal > 0) {
             console.log(`📊 笛卡尔积性能统计:`)
 
             // 数组层面去重统计
@@ -1388,7 +1388,7 @@ export class SubhutiGrammarAnalyzer {
                 const savedCalculations = perfStats.arrayDedupTotal * result.length
                 console.log(`   💡 数组去重节省计算: ${savedCalculations.toLocaleString()} 次循环`)
             }
-        }
+        }*/
 
         return finalArray
     }
