@@ -1834,13 +1834,8 @@ export class SubhutiGrammarAnalyzer {
             currentPaths = this.deduplicate(expandedPaths)
         }
 
-        // 截取到 firstK（如果需要）
-        if (firstK !== EXPANSION_LIMITS.INFINITY) {
-            currentPaths = currentPaths.map(p => p.slice(0, firstK))
-            currentPaths = this.deduplicate(currentPaths)
-        }
-
-        return currentPaths
+        // 截取到 firstK（使用公共方法）
+        return this.truncateAndDeduplicate(currentPaths, firstK)
     }
 
     /**
@@ -2041,65 +2036,20 @@ export class SubhutiGrammarAnalyzer {
 
 
             // 🔧 优化：使用 getDirectChildren 获取直接子节点
-            // 如果 maxLevel=1 或 curLevel >= maxLevel，直接返回直接子节点
             const directChildren = this.getDirectChildren(ruleName)
 
+            // 如果到达最大层级，截取并返回
             if (curLevel >= maxLevel) {
-                return directChildren
+                return this.truncateAndDeduplicate(directChildren, firstK)
             }
 
             // 否则需要继续递归展开
-            // 从 getDirectChildren 获取直接子节点
-
             // 递归展开每个子节点
             // 例如：[[BlockStatement], [If, LParen, Expression, RParen, Statement]]
             // 需要继续展开其中的规则名
             const result = this.expandPathsToDeeper(directChildren, firstK, curLevel, maxLevel, isFirstPosition)
-
-
-            // 🔧 缓存结果（如果缓存中不存在）
-            if (firstK === EXPANSION_LIMITS.INFINITY) {
-                if (maxLevel === EXPANSION_LIMITS.LEVEL_1) {
-                    if (!this.firstInfinityLevel1Cache.has(ruleName)) {
-                        this.firstInfinityLevel1Cache.set(ruleName, result)
-                    }
-                } else if (maxLevel === EXPANSION_LIMITS.LEVEL_K) {
-                    // 🔧 特殊：根据 curLevel 确定缓存的 key
-                    const remainingLevels = maxLevel - curLevel
-
-                    if (remainingLevels === EXPANSION_LIMITS.LEVEL_K) {
-                        // 顶层调用，缓存为总条目（但应该已经在 init 中初始化了）
-                        if (!this.firstInfinityLevelKCache.has(ruleName)) {
-                            this.firstInfinityLevelKCache.set(ruleName, result)
-                        }
-                    } else {
-                        // 递归调用，缓存为单层（但应该已经在 init 中初始化了）
-                        const key = `${ruleName}:${remainingLevels}`
-                        if (!this.firstInfinityLevelKCache.has(key)) {
-                            this.firstInfinityLevelKCache.set(key, result)
-                        }
-                    }
-                } else {
-                    throw new Error('系统错误')
-                }
-            } else if (maxLevel === EXPANSION_LIMITS.INFINITY) {
-                if (firstK === EXPANSION_LIMITS.FIRST_1) {
-                    if (!this.first1LevelInfinityCache.has(ruleName)) {
-                        this.first1LevelInfinityCache.set(ruleName, result)
-                    }
-                } else if (firstK === EXPANSION_LIMITS.FIRST_K) {
-                    if (!this.firstKLevelInfinityCache.has(ruleName)) {
-                        this.firstKLevelInfinityCache.set(ruleName, result)
-                    }
-                } else {
-                    throw new Error('系统错误')
-                }
-            } else {
-                throw new Error('系统错误')
-            }
-
-
-            // 返回展开结果
+            
+            // expandPathsToDeeper 内部已经处理了截取，这里直接返回
             return result
         } finally {
             // 清除递归标记（确保即使异常也能清除）
@@ -2153,14 +2103,19 @@ export class SubhutiGrammarAnalyzer {
      * - 空分支 [] slice(0, firstK) 还是 []
      * - 空分支不会被过滤，会正常参与去重
      * - 例如：[[], [a,b,c]], firstK=2 → [[], [a,b]]
+     * 
+     * 🔧 优化：如果 firstK=INFINITY，不需要截取，只去重
      */
     private truncateAndDeduplicate(branches: string[][], firstK: number): string[][] {
-        // 截取每个分支到 firstK（使用 slice 不修改原数组）
-        // ⚠️ 空分支 [] slice(0, firstK) 还是 []，不会被过滤
+        // 如果 firstK 为 INFINITY，不需要截取，只去重
+        if (firstK === EXPANSION_LIMITS.INFINITY) {
+            return this.deduplicate(branches)
+        }
+        
+        // 截取每个分支到 firstK
         const truncated = branches.map(branch => branch.slice(0, firstK))
 
         // 去重（截取后可能产生重复分支）
-        // ⚠️ 空分支 [] 会正常参与去重，不会被过滤
         return this.deduplicate(truncated)
     }
 
