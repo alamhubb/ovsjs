@@ -2544,10 +2544,10 @@ export class SubhutiGrammarAnalyzer {
 
             if (maxLevel === EXPANSION_LIMITS.INFINITY) {
                 // 🔴 DFS 模式：深度优先展开（无限层级）
-                return this.handleDFS(ruleName, firstK, curLevel)
+                return this.handleDFS(ruleName, firstK, curLevel, isFirstPosition)
             } else {
                 // 🔵 BFS 模式：广度优先展开（限制层级）
-                return this.handleBFS(ruleName, curLevel, maxLevel)
+                return this.handleBFS(ruleName, maxLevel)
             }
         } finally {
             // 清除递归标记（确保即使异常也能清除）
@@ -2561,12 +2561,14 @@ export class SubhutiGrammarAnalyzer {
      * @param ruleName 规则名
      * @param firstK 截取数量
      * @param curLevel 当前层级
+     * @param isFirstPosition
      * @returns 展开结果
      */
     private handleDFS(
         ruleName: string,
         firstK: number,
-        curLevel: number
+        curLevel: number,
+        isFirstPosition: boolean
     ): string[][] {
         const t0 = Date.now()
 
@@ -2617,7 +2619,7 @@ export class SubhutiGrammarAnalyzer {
 
         // 使用 DFS 从头展开到 token
         const subNode = this.getRuleNodeByAst(ruleName)
-        const finalResult = this.expandPathsByDFS(null, subNode, firstK, curLevel, false)
+        const finalResult = this.expandPathsByDFS(null, subNode, firstK, curLevel, isFirstPosition)
 
         // ========================================
         // 阶段3：DFS 缓存设置
@@ -2666,7 +2668,6 @@ export class SubhutiGrammarAnalyzer {
      */
     private handleBFS(
         ruleName: string,
-        curLevel: number,
         maxLevel: number
     ): string[][] {
         const t0 = Date.now()
@@ -2715,7 +2716,7 @@ export class SubhutiGrammarAnalyzer {
         // ========================================
         // 阶段3：去重并返回
         // ========================================
-        
+
         finalResult = this.deduplicate(finalResult)
 
         // 记录性能
