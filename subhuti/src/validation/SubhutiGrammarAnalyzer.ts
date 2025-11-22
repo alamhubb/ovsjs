@@ -1999,8 +1999,8 @@ export class SubhutiGrammarAnalyzer {
                     }
 
                 }
-                // 否则获取对应 maxLevel 的单层结果（不合并！）
-                const key = `${ruleName}:${maxLevel}`
+                // 否则获取对应 curLevel 的单层结果（不合并！）
+                const key = `${ruleName}:${curLevel}`
                 if (this.firstInfinityLevelKCache.has(key)) {
                     return this.firstInfinityLevelKCache.get(key)  // 只返回单层
                 }
@@ -2046,8 +2046,8 @@ export class SubhutiGrammarAnalyzer {
                     }
                 }
                 // firstK=INFINITY, maxLevel=LEVEL_K
-                // 缓存单层结果，key 为 "ruleName:maxLevel"
-                const key = `${ruleName}:${maxLevel}`
+                // 缓存单层结果，key 为 "ruleName:curLevel"
+                const key = `${ruleName}:${curLevel}`
                 if (!this.firstInfinityLevelKCache.has(key)) {
                     this.firstInfinityLevelKCache.set(key, finalResult)
                 }
