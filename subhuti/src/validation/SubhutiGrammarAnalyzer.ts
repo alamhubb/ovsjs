@@ -1974,63 +1974,65 @@ export class SubhutiGrammarAnalyzer {
             }
 
             // ========================================
-            // 计算或从 LevelK 截取
+            // 尝试从 levelK 缓存获取（所有模式都可以复用）
             // ========================================
 
             let finalResult: string[][]
 
-            // 尝试从 firstInfinityLevelKCache 截取（如果 curLevel <= 5）
             if (curLevel <= EXPANSION_LIMITS.LEVEL_K) {
                 const key = `${ruleName}:${curLevel}`
                 if (this.firstInfinityLevelKCache.has(key)) {
-                    // 从 LevelK 获取并截取
+                    // 从 LevelK 获取数据
                     finalResult = this.firstInfinityLevelKCache.get(key)!
-
+                    
+                    // 判断是否需要继续展开
+                    if (curLevel < maxLevel) {
+                        finalResult = this.expandPathsToDeeper(finalResult, curLevel, maxLevel)
+                    }
+                    
+                    // 截取并返回
                     return this.truncateAndDeduplicate(finalResult, firstK)
                 }
             }
 
-            //不为无线
+            // ========================================
             // LevelK 缓存不存在，实际计算
+            // ========================================
+
             finalResult = this.getDirectChildren(ruleName)
             if (curLevel < maxLevel) {
                 finalResult = this.expandPathsToDeeper(finalResult, curLevel, maxLevel)
             }
             finalResult = this.truncateAndDeduplicate(finalResult, firstK)
 
+            // ========================================
+            // 缓存设置
+            // ========================================
 
             if (firstK === EXPANSION_LIMITS.INFINITY) {
-                if (curLevel > EXPANSION_LIMITS.LEVEL_K || maxLevel > EXPANSION_LIMITS.LEVEL_K) {
-                    throw new Error('系统错误')
-                }
-                const key = `${ruleName}:${curLevel}`
-                if (!this.firstInfinityLevelKCache.has(key)) {
-                    this.firstInfinityLevelKCache.set(key, finalResult)
+                // First_Infinity_Level_K 模式：按层级缓存
+                if (curLevel <= EXPANSION_LIMITS.LEVEL_K) {
+                    const key = `${ruleName}:${curLevel}`
+                    if (!this.firstInfinityLevelKCache.has(key)) {
+                        this.firstInfinityLevelKCache.set(key, finalResult)
+                    }
                 }
             } else if (maxLevel === EXPANSION_LIMITS.INFINITY) {
-                if (curLevel <= EXPANSION_LIMITS.LEVEL_K) {
-                    throw new Error('系统错误')
-                }
+                // First_1_Level_Infinity 或 First_K_Level_Infinity 模式
+                // 只在顶层调用时设置缓存（curLevel === 1）
                 if (curLevel === 1) {
                     if (firstK === EXPANSION_LIMITS.FIRST_1) {
-                        // firstK=1, maxLevel=INFINITY
                         if (!this.first1LevelInfinityCache.has(ruleName)) {
                             this.first1LevelInfinityCache.set(ruleName, finalResult)
-                        } else {
-                            throw new Error('系统错误')
                         }
                     } else if (firstK === EXPANSION_LIMITS.FIRST_K) {
-                        // firstK=3, maxLevel=INFINITY
                         if (!this.firstKLevelInfinityCache.has(ruleName)) {
                             this.firstKLevelInfinityCache.set(ruleName, finalResult)
-                        } else {
-                            throw new Error('系统错误')
                         }
-                    } else {
-                        throw new Error('系统错误')
                     }
                 }
             }
+
             return finalResult
         } finally {
             // 清除递归标记（确保即使异常也能清除）
