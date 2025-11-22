@@ -272,7 +272,7 @@ export const EXPANSION_LIMITS = {
     FIRST_1: 1,
     FIRST_K: 3,
 
-    LEVEL_K: 3,
+    LEVEL_K: 2,
 
     INFINITY: Infinity,
 
@@ -457,7 +457,7 @@ export class SubhutiGrammarAnalyzer {
             // 清空递归检测集合
             this.recursiveDetectionSet.clear()
 
-            this.expandPathsByDFS(null, ruleNode, EXPANSION_LIMITS.INFINITY, 0, true)
+            this.expandPathsByDFS(null, ruleNode, EXPANSION_LIMITS.FIRST_K, 0, true)
         }
 
         // 为每个错误补充 suggestion
