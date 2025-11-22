@@ -1023,7 +1023,7 @@ export class SubhutiGrammarAnalyzer {
 
     /**
      * 初始化所有缓存组合
-     * 
+     *
      * 根据 firstK 和 maxLevel 的不同组合，初始化对应的缓存：
      * 1. firstK=INFINITY + maxLevel=LEVEL_1 → firstInfinityLevel1Cache
      * 2. firstK=INFINITY + maxLevel=LEVEL_K → firstInfinityLevelKCache
@@ -1032,22 +1032,22 @@ export class SubhutiGrammarAnalyzer {
      */
     private initAllCaches(): void {
         const ruleNames = Array.from(this.ruleASTs.keys())
-        
+
         console.log(`    初始化 firstInfinityLevel1Cache (firstK=∞, maxLevel=1)...`)
         for (const ruleName of ruleNames) {
             this.initFirstInfinityLevel1Cache(ruleName)
         }
-        
+
         console.log(`    初始化 firstInfinityLevelKCache (firstK=∞, maxLevel=${EXPANSION_LIMITS.LEVEL_K})...`)
         for (const ruleName of ruleNames) {
             this.initFirstInfinityLevelKCache(ruleName)
         }
-        
+
         console.log(`    初始化 first1LevelInfinityCache (firstK=1, maxLevel=∞)...`)
         for (const ruleName of ruleNames) {
             this.initFirst1LevelInfinityCache(ruleName)
         }
-        
+
         console.log(`    初始化 firstKLevelInfinityCache (firstK=${EXPANSION_LIMITS.FIRST_K}, maxLevel=∞)...`)
         for (const ruleName of ruleNames) {
             this.initFirstKLevelInfinityCache(ruleName)
@@ -1056,14 +1056,14 @@ export class SubhutiGrammarAnalyzer {
 
     /**
      * 初始化 firstInfinityLevel1Cache（firstK=INFINITY, maxLevel=LEVEL_1）
-     * 
+     *
      * 用途：获取规则的所有可能 token 序列，但只展开1层
      */
     private initFirstInfinityLevel1Cache(ruleName: string): void {
         if (this.firstInfinityLevel1Cache.has(ruleName)) {
             return
         }
-        
+
         // firstK=INFINITY, maxLevel=LEVEL_1
         // 正常的单层展开，不需要遍历多层
         const branches = this.computeExpanded(
@@ -1074,15 +1074,15 @@ export class SubhutiGrammarAnalyzer {
             EXPANSION_LIMITS.LEVEL_1,
             true
         )
-        
+
         this.firstInfinityLevel1Cache.set(ruleName, branches)
     }
 
     /**
      * 初始化 firstInfinityLevelKCache（firstK=INFINITY, maxLevel=LEVEL_K）
-     * 
+     *
      * 用途：获取规则的所有可能 token 序列，分层存储
-     * 
+     *
      * 🔧 特殊逻辑：
      * - computeExpanded 内部会自动缓存每个层级的单层结果（"ruleName:level"）
      * - 这里只负责聚合所有层级，缓存总条目（"ruleName"）
@@ -1095,7 +1095,7 @@ export class SubhutiGrammarAnalyzer {
     private initFirstInfinityLevelKCache(ruleName: string): void {
         // 存储每个层级的单层结果（用于最后聚合）
         const levelResults: Map<number, string[][]> = new Map()
-        
+
         // 为每个层级 (0 到 LEVEL_K) 计算结果
         // computeExpanded 内部会自动缓存为 "ruleName:level"
         for (let level = 0; level <= EXPANSION_LIMITS.LEVEL_K; level++) {
@@ -1109,28 +1109,28 @@ export class SubhutiGrammarAnalyzer {
             )
             levelResults.set(level, branches)
         }
-        
+
         // 🔧 聚合所有层级，缓存总条目
         const allLevelsBranches: string[][] = []
         for (let level = 0; level <= EXPANSION_LIMITS.LEVEL_K; level++) {
             allLevelsBranches.push(...levelResults.get(level)!)
         }
         const allUnique = this.deduplicate(allLevelsBranches)
-        
+
         // 缓存聚合结果，key 为 "ruleName"
         this.firstInfinityLevelKCache.set(ruleName, allUnique)
     }
 
     /**
      * 初始化 first1LevelInfinityCache（firstK=FIRST_1, maxLevel=INFINITY）
-     * 
+     *
      * 用途：获取规则的第1个 token，完全展开到叶子节点
      */
     private initFirst1LevelInfinityCache(ruleName: string): void {
         if (this.first1LevelInfinityCache.has(ruleName)) {
             return
         }
-        
+
         // firstK=FIRST_1, maxLevel=INFINITY
         const branches = this.computeExpanded(
             ruleName,
@@ -1140,20 +1140,20 @@ export class SubhutiGrammarAnalyzer {
             EXPANSION_LIMITS.INFINITY,
             true
         )
-        
+
         this.first1LevelInfinityCache.set(ruleName, branches)
     }
 
     /**
      * 初始化 firstKLevelInfinityCache（firstK=FIRST_K, maxLevel=INFINITY）
-     * 
+     *
      * 用途：获取规则的前K个 token，完全展开到叶子节点
      */
     private initFirstKLevelInfinityCache(ruleName: string): void {
         if (this.firstKLevelInfinityCache.has(ruleName)) {
             return
         }
-        
+
         // firstK=FIRST_K, maxLevel=INFINITY
         const branches = this.computeExpanded(
             ruleName,
@@ -1163,7 +1163,7 @@ export class SubhutiGrammarAnalyzer {
             EXPANSION_LIMITS.INFINITY,
             true
         )
-        
+
         this.firstKLevelInfinityCache.set(ruleName, branches)
     }
 
@@ -1862,6 +1862,7 @@ export class SubhutiGrammarAnalyzer {
                 return [[ruleName]]
             }
 
+
             if (firstK === EXPANSION_LIMITS.INFINITY) {
                 if (maxLevel === EXPANSION_LIMITS.LEVEL_1) {
                     if (this.firstInfinityLevel1Cache.has(ruleName)) {
@@ -1870,12 +1871,12 @@ export class SubhutiGrammarAnalyzer {
                 } else if (maxLevel === EXPANSION_LIMITS.LEVEL_K) {
                     // 🔧 特殊：使用剩余可展开层级
                     const remainingLevels = maxLevel - curLevel
-                    
+
                     // 如果 remainingLevels === LEVEL_K，说明是顶层调用，直接获取总条目
                     if (remainingLevels === EXPANSION_LIMITS.LEVEL_K && this.firstInfinityLevelKCache.has(ruleName)) {
                         return this.firstInfinityLevelKCache.get(ruleName)  // 所有层级合并的总条目
                     }
-                    
+
                     // 否则获取对应 remainingLevels 的单层结果（不合并！）
                     const key = `${ruleName}:${remainingLevels}`
                     if (this.firstInfinityLevelKCache.has(key)) {
@@ -1914,6 +1915,15 @@ export class SubhutiGrammarAnalyzer {
                 throw new Error(`系统错误：规则不存在: ${ruleName}`)
             }
 
+
+            if (this.firstInfinityLevel1Cache.has(ruleName)) {
+                const result = this.firstInfinityLevel1Cache.get(ruleName)
+
+                for (const resultElement of result) {
+                    resultElement.splice(0, firstK)
+                }
+            }
+
             // 递归展开子规则的 AST 节点
             // 注意：curLevel 已经在开头 +1 了
             // 传递位置信息：保持 isFirstPosition（不改变）
@@ -1929,7 +1939,7 @@ export class SubhutiGrammarAnalyzer {
                 } else if (maxLevel === EXPANSION_LIMITS.LEVEL_K) {
                     // 🔧 特殊：根据 curLevel 确定缓存的 key
                     const remainingLevels = maxLevel - curLevel
-                    
+
                     if (remainingLevels === EXPANSION_LIMITS.LEVEL_K) {
                         // 顶层调用，缓存为总条目（但应该已经在 init 中初始化了）
                         if (!this.firstInfinityLevelKCache.has(ruleName)) {
