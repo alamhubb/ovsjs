@@ -1324,13 +1324,7 @@ export class SubhutiGrammarAnalyzer {
 
         // 为每个层级触发计算
         for (let level = 1; level <= EXPANSION_LIMITS.LEVEL_K; level++) {
-            this.expandPathsByBFS(
-                ruleName,
-                null,
-                EXPANSION_LIMITS.INFINITY,
-                0,
-                true
-            )
+            this.expandPathsByBFS(ruleName, level)
         }
 
         const duration = Date.now() - t0
@@ -2131,17 +2125,16 @@ export class SubhutiGrammarAnalyzer {
      * - 分离已完成路径（全token）和未完成路径（含规则名）
      *
      * @param ruleName 顶层规则名
-     * @param paths 当前层级的路径列表（起始层级的数据）
-     * @param curLevel 当前层级
      * @param maxLevel 目标层级
      * @returns 展开到目标层级的完整路径（不截取）
      *
      * 核心逻辑（逐层展开）：
-     * 1. while (当前层级 < 目标层级)
-     * 2. 每次展开1层：调用 expandSinglePath
-     * 3. 分离已完成（全token）和未完成（含规则名）的路径
-     * 4. 继续展开未完成的路径
-     * 5. 达到目标层级后停止
+     * 1. 从 level 1 开始（调用 getDirectChildren）
+     * 2. while (当前层级 < 目标层级)
+     * 3. 每次展开1层：调用 expandSinglePath
+     * 4. 分离已完成（全token）和未完成（含规则名）的路径
+     * 5. 继续展开未完成的路径
+     * 6. 达到目标层级后停止
      *
      * 示例：
      * level 1: [[IfStatement], [WhileStatement], ...]
@@ -2150,8 +2143,6 @@ export class SubhutiGrammarAnalyzer {
      */
     private expandPathsByBFS(
         ruleName: string,
-        paths: string[][],
-        curLevel: number,
         maxLevel: number
     ): string[][] {
         const t0 = Date.now()
@@ -2167,8 +2158,10 @@ export class SubhutiGrammarAnalyzer {
             }
         }
 
-
-        let currentPaths = paths
+        // BFS 总是从 level 1 开始展开
+        const curLevel = 1
+        let currentPaths = this.getDirectChildren(ruleName)
+        const initialPathsCount = currentPaths.length  // 记录初始路径数量（用于性能统计）
         let finishedPaths: string[][] = []  // 已经全是 token 的路径
 
         // 计算最多展开多少层
@@ -2295,7 +2288,7 @@ export class SubhutiGrammarAnalyzer {
 
         // 记录性能数据
         const duration = Date.now() - t0
-        this.perfAnalyzer.record('expandPathsByBFS', duration, paths.length, finalResult.length)
+        this.perfAnalyzer.record('expandPathsByBFS', duration, initialPathsCount, finalResult.length)
 
         return finalResult
     }
@@ -2456,12 +2449,9 @@ export class SubhutiGrammarAnalyzer {
 
         // 4. 动态计算：展开1层
         // expandPathsByDFS → subRuleHandler 会自动缓存到 "ruleName:1"
-        const result = this.expandPathsByDFS(
-            null,
-            subNode,
-            EXPANSION_LIMITS.INFINITY,
-            0,
-            false
+        const result = this.expandPathsByBFS(
+            ruleName,
+            first1
         )
 
         return result
@@ -2686,7 +2676,6 @@ export class SubhutiGrammarAnalyzer {
         // ========================================
 
         let finalResult: string[][] | undefined
-        let actualLevel = curLevel
 
         // BFS 缓存：只在 maxLevel <= LEVEL_K 时查找
         if (maxLevel <= EXPANSION_LIMITS.LEVEL_K) {
@@ -2695,10 +2684,7 @@ export class SubhutiGrammarAnalyzer {
             if (this.bfsLevelCache.has(fullKey)) {
                 // BFS 缓存命中（完整版）
                 this.perfAnalyzer.recordCacheHit('bfsLevel')
-                const fullResult = this.bfsLevelCache.get(fullKey)!
-                actualLevel = maxLevel
-                // BFS 返回完整版，外层根据需要截取
-                finalResult = fullResult
+                finalResult = this.bfsLevelCache.get(fullKey)!
             } else {
                 // 缓存未命中
                 this.perfAnalyzer.recordCacheMiss('bfsLevel')
@@ -2712,20 +2698,10 @@ export class SubhutiGrammarAnalyzer {
         if (!finalResult) {
             this.perfAnalyzer.recordActualCompute()
 
-            // 先获取 level 1
-            finalResult = this.getDirectChildren(ruleName)
-            actualLevel = 1
-        }
+            // 调用 BFS 展开（内部从 level 1 开始）
+            const fullResult = this.expandPathsByBFS(ruleName, maxLevel)
 
-        // ========================================
-        // 阶段3：判断是否需要继续展开
-        // ========================================
-
-        if (actualLevel < maxLevel) {
-            // 数据层级 < 目标层级，使用 BFS 按层级展开
-            const fullResult = this.expandPathsByBFS(ruleName, finalResult, actualLevel, maxLevel)
-
-            // 先缓存完整版（BFS 专属）
+            // 缓存完整版（BFS 专属）
             if (maxLevel <= EXPANSION_LIMITS.LEVEL_K) {
                 const fullKey = `${ruleName}:${maxLevel}`
                 if (!this.bfsLevelCache.has(fullKey)) {
@@ -2733,15 +2709,14 @@ export class SubhutiGrammarAnalyzer {
                 }
             }
 
-            // 然后根据需要截取
             finalResult = fullResult
-        } else if (actualLevel === maxLevel) {
-            // 数据层级 = 目标层级，刚好满足，只需截取
-            finalResult = this.deduplicate(finalResult)
-        } else {
-            // 数据层级 > 目标层级（不应该发生）
-            throw new Error(`系统错误：actualLevel(${actualLevel}) > maxLevel(${maxLevel})`)
         }
+
+        // ========================================
+        // 阶段3：去重并返回
+        // ========================================
+        
+        finalResult = this.deduplicate(finalResult)
 
         // 记录性能
         const duration = Date.now() - t0
