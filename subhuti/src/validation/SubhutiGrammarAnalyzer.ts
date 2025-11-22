@@ -350,13 +350,16 @@ export class SubhutiGrammarAnalyzer {
     // ========================================
     // BFS（广度优先）专属缓存
     // 适用：maxLevel = 具体值（限制层数，按层级展开）
+    // 特点：BFS 只负责按层级展开，不负责截取
     // ========================================
     
-    /** BFS 完整版缓存：key="ruleName:level"（firstK=∞，不截取） */
+    /** BFS 缓存：key="ruleName:level"（完整展开，不截取） */
     private firstInfinityLevelKCache = new Map<string, string[][]>()
     
-    /** BFS 截取版缓存：key="ruleName:level:firstK"（截取到 firstK） */
-    private firstKLevelKCache = new Map<string, string[][]>()
+    /** 
+     * ⚠️ firstKLevelKCache 已删除
+     * 原因：BFS 只负责按层级展开（firstK=∞），截取由外层统一处理
+     */
 
     // ========================================
     // DFS（深度优先）专属缓存
@@ -2117,7 +2120,13 @@ export class SubhutiGrammarAnalyzer {
      * - 需要展开到指定层级
      * - 适合 First(∞) + 限制层数
      * 
+     * 设计理念：
+     * - BFS 只负责按层级完整展开（firstK=∞）
+     * - 不负责截取操作
+     * - 截取由外层调用者统一处理
+     * 
      * 优势：
+     * - 职责单一：只管层级展开
      * - 精确控制展开层数
      * - 每层独立处理，方便缓存
      * - 分离已完成路径（全token）和未完成路径（含规则名）
@@ -2126,8 +2135,7 @@ export class SubhutiGrammarAnalyzer {
      * @param paths 当前层级的路径列表（起始层级的数据）
      * @param curLevel 当前层级
      * @param maxLevel 目标层级
-     * @param firstK 截取长度
-     * @returns 展开到目标层级的路径
+     * @returns 展开到目标层级的完整路径（不截取）
      *
      * 核心逻辑（逐层展开）：
      * 1. while (当前层级 < 目标层级)
@@ -2145,36 +2153,18 @@ export class SubhutiGrammarAnalyzer {
         ruleName: string,
         paths: string[][],
         curLevel: number,
-        maxLevel: number,
-        firstK: number
+        maxLevel: number
     ): string[][] {
         const t0 = Date.now()
 
-        // 🔧 优化：尝试从缓存直接获取目标层级的结果
-        // 如果缓存中已有 "ruleName:maxLevel" 的数据，直接返回，避免逐层展开
-        // 只在 maxLevel <= LEVEL_K 时查找缓存
+        // 🔧 优化：尝试从 BFS 缓存直接获取目标层级的结果
+        // BFS 缓存存储完整展开结果（不截取），截取由外层处理
         const cacheKey = `${ruleName}:${maxLevel}`
         
         if (maxLevel <= EXPANSION_LIMITS.LEVEL_K) {
             if (this.firstInfinityLevelKCache.has(cacheKey)) {
-                const data = this.firstInfinityLevelKCache.get(cacheKey)!
-                
-                if (firstK === EXPANSION_LIMITS.INFINITY) {
-                    // 不需要截取，直接返回完整版
-                    return data
-                } else {
-                    // 需要截取，优先查找截取版缓存
-                    const cacheFirstkKey = `${ruleName}:${maxLevel}:${firstK}`
-                    
-                    if (this.firstKLevelKCache.has(cacheFirstkKey)) {
-                        return this.firstKLevelKCache.get(cacheFirstkKey)
-                    } else {
-                        // 从完整版截取并缓存
-                        const result = this.truncateAndDeduplicate(data, firstK)
-                        this.firstKLevelKCache.set(cacheFirstkKey, result)
-                        return result
-                    }
-                }
+                // ✅ BFS 缓存命中，直接返回完整结果
+                return this.firstInfinityLevelKCache.get(cacheKey)!
             }
         }
 
@@ -2207,10 +2197,9 @@ export class SubhutiGrammarAnalyzer {
             // ========================================
             // 步骤0：检查下一层级是否有完整缓存
             // ========================================
-            // 🔧 优化：复用 firstInfinityLevelKCache（与 levelFullResultCache 存储相同数据）
+            // 🔧 优化：检查下一层级是否有 BFS 缓存
             let usedLevelCache = false
-            if (firstK === EXPANSION_LIMITS.INFINITY &&
-                nextLevel <= EXPANSION_LIMITS.LEVEL_K &&
+            if (nextLevel <= EXPANSION_LIMITS.LEVEL_K &&
                 this.firstInfinityLevelKCache.has(levelCacheKey)) {
                 // ✅ 缓存命中：直接使用下一层级的缓存数据
                 // 注意：不能直接 continue，需要经过分离逻辑更新 finishedPaths
@@ -2264,14 +2253,13 @@ export class SubhutiGrammarAnalyzer {
             for (let pathIndex = 0; pathIndex < pathsToExpand.length; pathIndex++) {
                 const path = pathsToExpand[pathIndex]
 
-                // 🔑 缓存键：ruleName + 层级 + 路径索引 + firstK
-                // 对于同一个 (ruleName, level, pathIndex)，path 是固定的
+                // 🔑 BFS 只做完整展开，不截取（firstK=∞）
                 const expanded = this.expandSinglePathCached(
                     ruleName,
                     path,
                     actualCurrentLevel,
                     pathIndex,
-                    firstK
+                    EXPANSION_LIMITS.INFINITY  // BFS 始终完整展开
                 )
                 expandedPaths.push(...expanded)
             }
@@ -2279,20 +2267,10 @@ export class SubhutiGrammarAnalyzer {
             // 去重
             currentPaths = this.deduplicate(expandedPaths)
 
-            // 🔧 缓存当前层级的结果（双层策略）
-            // 只在 nextLevel <= LEVEL_K 时缓存
+            // 🔧 缓存当前层级的结果（BFS 只缓存完整版）
             if (nextLevel <= EXPANSION_LIMITS.LEVEL_K) {
-                if (firstK === EXPANSION_LIMITS.INFINITY) {
-                    // 情况1：firstK=INFINITY，缓存完整版
-                    if (!this.firstInfinityLevelKCache.has(levelCacheKey)) {
-                        this.firstInfinityLevelKCache.set(levelCacheKey, currentPaths)
-                    }
-                } else {
-                    // 情况2：firstK!=INFINITY，缓存截取版
-                    const truncatedKey = `${ruleName}:${nextLevel}:${firstK}`
-                    if (!this.firstKLevelKCache.has(truncatedKey)) {
-                        this.firstKLevelKCache.set(truncatedKey, currentPaths)
-                    }
+                if (!this.firstInfinityLevelKCache.has(levelCacheKey)) {
+                    this.firstInfinityLevelKCache.set(levelCacheKey, currentPaths)
                 }
             }
 
@@ -2302,32 +2280,25 @@ export class SubhutiGrammarAnalyzer {
         // ========================================
         // 步骤4：合并已完成和未完成的路径
         // ========================================
-        const result = this.truncateAndDeduplicate([...finishedPaths, ...currentPaths], firstK)
+        // BFS 只做完整合并，不截取
+        const result = [...finishedPaths, ...currentPaths]
+        // 只去重，不截取
+        const finalResult = this.deduplicate(result)
 
         // ========================================
-        // 步骤5：缓存最终结果（双层策略）
+        // 步骤5：缓存最终结果（BFS 只缓存完整版）
         // ========================================
-        // 只在 maxLevel <= LEVEL_K 时缓存最终结果
         if (maxLevel <= EXPANSION_LIMITS.LEVEL_K) {
-            if (firstK === EXPANSION_LIMITS.INFINITY) {
-                // 情况1：firstK=INFINITY，缓存完整版
-                if (!this.firstInfinityLevelKCache.has(cacheKey)) {
-                    this.firstInfinityLevelKCache.set(cacheKey, result)
-                }
-            } else {
-                // 情况2：firstK!=INFINITY，缓存截取版
-                const truncatedKey = `${ruleName}:${maxLevel}:${firstK}`
-                if (!this.firstKLevelKCache.has(truncatedKey)) {
-                    this.firstKLevelKCache.set(truncatedKey, result)
-                }
+            if (!this.firstInfinityLevelKCache.has(cacheKey)) {
+                this.firstInfinityLevelKCache.set(cacheKey, finalResult)
             }
         }
 
         // 记录性能数据
         const duration = Date.now() - t0
-        this.perfAnalyzer.record('expandPathsByBFS', duration, paths.length, result.length)
+        this.perfAnalyzer.record('expandPathsByBFS', duration, paths.length, finalResult.length)
 
-        return result
+        return finalResult
     }
 
     /**
@@ -2639,37 +2610,24 @@ export class SubhutiGrammarAnalyzer {
             let actualLevel = curLevel  // 记录数据实际展开的层级
 
             // BFS 缓存：只在 maxLevel <= LEVEL_K 时查找
+            // BFS 只缓存完整版（firstK=∞），截取由外层处理
             if (maxLevel <= EXPANSION_LIMITS.LEVEL_K) {
                 const fullKey = `${ruleName}:${maxLevel}`
-                const truncatedKey = `${ruleName}:${maxLevel}:${firstK}`
 
-                // 步骤1：优先查找完整版缓存（复用性最高）
                 if (this.firstInfinityLevelKCache.has(fullKey)) {
-                    // ✅ 完整版缓存命中
+                    // ✅ BFS 缓存命中（完整版）
                     this.perfAnalyzer.recordCacheHit('firstInfinityLevelK')
                     const fullResult = this.firstInfinityLevelKCache.get(fullKey)!
                     actualLevel = maxLevel  // 数据已展开到 maxLevel 层
 
-                    // 如果需要截取
+                    // BFS 返回完整版，外层根据需要截取
                     if (firstK !== EXPANSION_LIMITS.INFINITY) {
-                        // 从完整版截取
                         finalResult = this.truncateAndDeduplicate(fullResult, firstK)
-                        // 顺便缓存截取版
-                        this.firstKLevelKCache.set(truncatedKey, finalResult)
                     } else {
-                        // 不需要截取，直接使用
                         finalResult = fullResult
                     }
-                }
-                // 步骤2：查找截取版缓存（仅当需要截取时）
-                else if (firstK !== EXPANSION_LIMITS.INFINITY && this.firstKLevelKCache.has(truncatedKey)) {
-                    // ✅ 截取版缓存命中
-                    this.perfAnalyzer.recordCacheHit('firstInfinityLevelK')
-                    finalResult = this.firstKLevelKCache.get(truncatedKey)!
-                    actualLevel = maxLevel  // 数据已展开到 maxLevel 层
-                }
-                // 步骤3：缓存未命中
-                else {
+                } else {
+                    // 缓存未命中
                     this.perfAnalyzer.recordCacheMiss('firstInfinityLevelK')
                     // finalResult 保持 undefined，后续会实际计算
                 }
@@ -2714,8 +2672,23 @@ export class SubhutiGrammarAnalyzer {
                 
                 // 这里只处理 maxLevel = 具体值 的情况（BFS）
                 // 🚀 使用 BFS（expandPathsByBFS 按层级展开）
-                // 优势：精确控制层级，适合有限层数
-                finalResult = this.expandPathsByBFS(ruleName, finalResult, actualLevel, maxLevel, firstK)
+                // BFS 只做完整展开，返回完整结果
+                const fullResult = this.expandPathsByBFS(ruleName, finalResult, actualLevel, maxLevel)
+                
+                // ✅ 先缓存完整版（BFS专属）
+                if (maxLevel <= EXPANSION_LIMITS.LEVEL_K) {
+                    const fullKey = `${ruleName}:${maxLevel}`
+                    if (!this.firstInfinityLevelKCache.has(fullKey)) {
+                        this.firstInfinityLevelKCache.set(fullKey, fullResult)
+                    }
+                }
+                
+                // ✅ 然后根据需要截取
+                if (firstK !== EXPANSION_LIMITS.INFINITY) {
+                    finalResult = this.truncateAndDeduplicate(fullResult, firstK)
+                } else {
+                    finalResult = fullResult
+                }
             } else if (actualLevel === maxLevel) {
                 // 情况3.2：数据层级 = 目标层级，刚好满足，不需要展开
                 // 但仍需截取到 firstK
@@ -2729,25 +2702,7 @@ export class SubhutiGrammarAnalyzer {
             // 缓存设置（BFS 和 DFS 分离）
             // ========================================
 
-            if (maxLevel <= EXPANSION_LIMITS.LEVEL_K) {
-                // ========================================
-                // BFS 专属缓存设置（限制层数场景）
-                // ========================================
-                const fullKey = `${ruleName}:${maxLevel}`
-                const truncatedKey = `${ruleName}:${maxLevel}:${firstK}`
-
-                if (firstK === EXPANSION_LIMITS.INFINITY) {
-                    // BFS 完整版
-                    if (!this.firstInfinityLevelKCache.has(fullKey)) {
-                        this.firstInfinityLevelKCache.set(fullKey, finalResult)
-                    }
-                } else {
-                    // BFS 截取版
-                    if (!this.firstKLevelKCache.has(truncatedKey)) {
-                        this.firstKLevelKCache.set(truncatedKey, finalResult)
-                    }
-                }
-            } else if (maxLevel === EXPANSION_LIMITS.INFINITY) {
+            if (maxLevel === EXPANSION_LIMITS.INFINITY) {
                 // ========================================
                 // DFS 专属缓存设置（无限层数场景）
                 // ========================================
