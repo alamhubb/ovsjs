@@ -1770,6 +1770,7 @@ export class SubhutiGrammarAnalyzer {
         paths: string[][],
         curLevel: number,
         maxLevel: number,
+        firstK: number  // ✅ 新增：传入 firstK 用于截取优化
     ): string[][] {
         let currentPaths = paths
         let finishedPaths: string[][] = []  // 已经全是 token 的路径
@@ -1829,12 +1830,14 @@ export class SubhutiGrammarAnalyzer {
             const expandedPaths: string[][] = []
 
             for (const path of pathsToExpand) {
-                const expanded = this.expandSinglePath(path)
+                // ✅ 传入 firstK，只展开前 firstK 个位置
+                const expanded = this.expandSinglePath(path, firstK)
                 expandedPaths.push(...expanded)
             }
 
-            // 去重（不截取，由外层统一截取）
-            currentPaths = this.deduplicate(expandedPaths)
+            // ✅ 优化：截取并去重
+            // 在展开过程中就截取，减少内存占用和计算量
+            currentPaths = this.truncateAndDeduplicate(expandedPaths, firstK)
             expandedLevels++
         }
 
@@ -1843,28 +1846,34 @@ export class SubhutiGrammarAnalyzer {
         // ========================================
         // finishedPaths: 已经全是 token 的路径
         // currentPaths: 达到 maxLevel 但可能还有规则名的路径
-        return [...finishedPaths, ...currentPaths]
+        // ✅ 合并前再次截取，确保 finishedPaths 也被截取
+        return this.truncateAndDeduplicate([...finishedPaths, ...currentPaths], firstK)
     }
 
     /**
      * 展开单个路径中的规则名（展开1层）
      *
      * @param path 单个路径（可能包含 token 和规则名）
+     * @param firstK 只展开前 firstK 个位置，后面的直接截断
      * @returns 展开后的所有可能路径
      *
      * 示例：
-     * path = [If, LParen, Expression, RParen, Statement]
+     * path = [If, LParen, Expression, RParen, Statement], firstK = 3
+     * → 只展开前3个: [If, LParen, Expression]
      * → Expression 的直接子节点: [[Identifier], [BinaryExpr], ...]
-     * → Statement 的直接子节点: [[BlockStatement], [IfStatement], ...]
-     * → 笛卡尔积: [[If, LParen, Identifier, RParen, BlockStatement], ...]
+     * → 笛卡尔积: [[If, LParen, Identifier], [If, LParen, BinaryExpr], ...]
+     * → 后面的 RParen, Statement 被忽略（超过 firstK）
      *
      * 注意：只展开1层，使用 getDirectChildren
      */
-    private expandSinglePath(path: string[]): string[][] {
+    private expandSinglePath(path: string[], firstK: number): string[][] {
         const allBranches: string[][][] = []
 
-        // 遍历路径中的每个符号
-        for (const symbol of path) {
+        // ✅ 优化：只展开前 firstK 个位置
+        const symbolsToExpand = path.slice(0, firstK)
+
+        // 遍历需要展开的符号
+        for (const symbol of symbolsToExpand) {
             if (this.ruleASTs.has(symbol)) {
                 // 是规则名，获取其直接子节点（展开1层）
                 const branches = this.getDirectChildren(symbol)
@@ -1875,7 +1884,7 @@ export class SubhutiGrammarAnalyzer {
             }
         }
 
-        // 笛卡尔积组合
+        // 笛卡尔积组合（已经只包含前 firstK 个位置）
         return this.cartesianProduct(allBranches)
     }
 
@@ -2073,20 +2082,16 @@ export class SubhutiGrammarAnalyzer {
             if (actualLevel < maxLevel) {
                 // 情况3.1：数据层级 < 目标层级，需要继续展开
                 // expandPathsToDeeper 支持 maxLevel = Infinity（会自动展开到全是 token）
-                finalResult = this.expandPathsToDeeper(finalResult, actualLevel, maxLevel)
+                // ✅ 在展开过程中就会截取到 firstK
+                finalResult = this.expandPathsToDeeper(finalResult, actualLevel, maxLevel, firstK)
             } else if (actualLevel === maxLevel) {
                 // 情况3.2：数据层级 = 目标层级，刚好满足，不需要展开
-                // finalResult 保持不变
+                // 但仍需截取到 firstK
+                finalResult = this.truncateAndDeduplicate(finalResult, firstK)
             } else {
                 // 情况3.3：数据层级 > 目标层级（不应该发生）
                 throw new Error(`系统错误：actualLevel(${actualLevel}) > maxLevel(${maxLevel})`)
             }
-
-            // ========================================
-            // 阶段4：截取到 firstK
-            // ========================================
-
-            finalResult = this.truncateAndDeduplicate(finalResult, firstK)
 
             // ========================================
             // 缓存设置
