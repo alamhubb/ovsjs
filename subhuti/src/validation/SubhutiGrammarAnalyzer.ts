@@ -1998,7 +1998,7 @@ export class SubhutiGrammarAnalyzer {
                 finalResult = this.expandPathsToDeeper(finalResult, curLevel, maxLevel)
             }
 
-            this.truncateAndDeduplicate(finalResult, firstK)
+            finalResult = this.truncateAndDeduplicate(finalResult, firstK)
 
             // ========================================
             // 缓存设置
