@@ -170,6 +170,7 @@ export class SubhutiGrammarAnalyzer {
     private firstInfinityLevel1Cache = new Map<string, string[][]>()
     // 🔧 特殊：key 为 "ruleName:maxLevel"，因为不同层级返回不同结果
     private firstInfinityLevelKCache = new Map<string, string[][]>()
+    private firstInfinityLevelKAllCache = new Map<string, string[][]>()
     private leftRecursiveDetectionSet = new Set<string>()
 
     /** 收集检测过程中发现的左递归错误（使用 Map 提高查重性能） */
@@ -1057,7 +1058,7 @@ export class SubhutiGrammarAnalyzer {
     /**
      * 初始化 firstInfinityLevel1Cache（firstK=INFINITY, maxLevel=LEVEL_1）
      *
-     * 用途：获取规则的所有可能 token 序列，但只展开1层
+     * 用途：触发计算，缓存由 subRuleHandler 内部设置
      */
     private initFirstInfinityLevel1Cache(ruleName: string): void {
         if (this.firstInfinityLevel1Cache.has(ruleName)) {
@@ -1065,8 +1066,8 @@ export class SubhutiGrammarAnalyzer {
         }
 
         // firstK=INFINITY, maxLevel=LEVEL_1
-        // 正常的单层展开，不需要遍历多层
-        const branches = this.computeExpanded(
+        // computeExpanded → subRuleHandler 会自动缓存结果
+        this.computeExpanded(
             ruleName,
             null,
             EXPANSION_LIMITS.INFINITY,
@@ -1074,8 +1075,6 @@ export class SubhutiGrammarAnalyzer {
             EXPANSION_LIMITS.LEVEL_1,
             true
         )
-
-        this.firstInfinityLevel1Cache.set(ruleName, branches)
     }
 
     /**
@@ -1124,7 +1123,7 @@ export class SubhutiGrammarAnalyzer {
     /**
      * 初始化 first1LevelInfinityCache（firstK=FIRST_1, maxLevel=INFINITY）
      *
-     * 用途：获取规则的第1个 token，完全展开到叶子节点
+     * 用途：触发计算，缓存由 subRuleHandler 内部设置
      */
     private initFirst1LevelInfinityCache(ruleName: string): void {
         if (this.first1LevelInfinityCache.has(ruleName)) {
@@ -1132,7 +1131,8 @@ export class SubhutiGrammarAnalyzer {
         }
 
         // firstK=FIRST_1, maxLevel=INFINITY
-        const branches = this.computeExpanded(
+        // computeExpanded → subRuleHandler 会自动缓存结果
+        this.computeExpanded(
             ruleName,
             null,
             EXPANSION_LIMITS.FIRST_1,
@@ -1140,14 +1140,12 @@ export class SubhutiGrammarAnalyzer {
             EXPANSION_LIMITS.INFINITY,
             true
         )
-
-        this.first1LevelInfinityCache.set(ruleName, branches)
     }
 
     /**
      * 初始化 firstKLevelInfinityCache（firstK=FIRST_K, maxLevel=INFINITY）
      *
-     * 用途：获取规则的前K个 token，完全展开到叶子节点
+     * 用途：触发计算，缓存由 subRuleHandler 内部设置
      */
     private initFirstKLevelInfinityCache(ruleName: string): void {
         if (this.firstKLevelInfinityCache.has(ruleName)) {
@@ -1155,7 +1153,8 @@ export class SubhutiGrammarAnalyzer {
         }
 
         // firstK=FIRST_K, maxLevel=INFINITY
-        const branches = this.computeExpanded(
+        // computeExpanded → subRuleHandler 会自动缓存结果
+        this.computeExpanded(
             ruleName,
             null,
             EXPANSION_LIMITS.FIRST_K,
@@ -1163,8 +1162,6 @@ export class SubhutiGrammarAnalyzer {
             EXPANSION_LIMITS.INFINITY,
             true
         )
-
-        this.firstKLevelInfinityCache.set(ruleName, branches)
     }
 
     /**
@@ -1790,17 +1787,18 @@ export class SubhutiGrammarAnalyzer {
      * 递归展开路径中的规则名到更深层级
      *
      * @param paths 当前层级的路径列表（level 1）
-     * @param firstK 截取长度
+     * @param firstK 截取长度（由外层统一处理）
      * @param curLevel 当前层级（已经+1了）
      * @param maxLevel 最大层级
      * @param isFirstPosition 是否在第一个位置
-     * @returns 展开到目标层级的路径
+     * @returns 展开到目标层级的路径（不截取，由外层统一截取）
      *
      * 核心逻辑（逐层展开）：
      * 1. 从 level 1 开始
      * 2. 每次展开1层，直到 curLevel >= maxLevel
      * 3. 利用 getDirectChildren 获取直接子节点
      * 4. 通过笛卡尔积替换路径中的规则名
+     * 5. 不在内部截取，由外层统一处理
      *
      * 示例：
      * level 1: [[If, LParen, Expression, RParen, Statement]]
@@ -1809,10 +1807,8 @@ export class SubhutiGrammarAnalyzer {
      */
     private expandPathsToDeeper(
         paths: string[][],
-        firstK: number,
         curLevel: number,
         maxLevel: number,
-        isFirstPosition: boolean
     ): string[][] {
         let currentPaths = paths
 
@@ -1830,12 +1826,12 @@ export class SubhutiGrammarAnalyzer {
                 expandedPaths.push(...expanded)
             }
 
-            // 去重并更新为下一层
+            // 只去重，不截取（由外层统一截取）
             currentPaths = this.deduplicate(expandedPaths)
         }
 
-        // 截取到 firstK（使用公共方法）
-        return this.truncateAndDeduplicate(currentPaths, firstK)
+        // 返回展开后的路径（不截取）
+        return currentPaths
     }
 
     /**
@@ -2001,22 +1997,12 @@ export class SubhutiGrammarAnalyzer {
                     if (this.firstInfinityLevel1Cache.has(ruleName)) {
                         return this.firstInfinityLevel1Cache.get(ruleName)
                     }
-                } else if (maxLevel === EXPANSION_LIMITS.LEVEL_K) {
-                    // 🔧 特殊：使用剩余可展开层级
-                    const remainingLevels = maxLevel - curLevel
 
-                    // 如果 remainingLevels === LEVEL_K，说明是顶层调用，直接获取总条目
-                    if (remainingLevels === EXPANSION_LIMITS.LEVEL_K && this.firstInfinityLevelKCache.has(ruleName)) {
-                        return this.firstInfinityLevelKCache.get(ruleName)  // 所有层级合并的总条目
-                    }
-
-                    // 否则获取对应 remainingLevels 的单层结果（不合并！）
-                    const key = `${ruleName}:${remainingLevels}`
-                    if (this.firstInfinityLevelKCache.has(key)) {
-                        return this.firstInfinityLevelKCache.get(key)  // 只返回单层
-                    }
-                } else {
-                    throw new Error('系统错误')
+                }
+                // 否则获取对应 maxLevel 的单层结果（不合并！）
+                const key = `${ruleName}:${maxLevel}`
+                if (this.firstInfinityLevelKCache.has(key)) {
+                    return this.firstInfinityLevelKCache.get(key)  // 只返回单层
                 }
             } else if (maxLevel === EXPANSION_LIMITS.INFINITY) {
                 if (firstK === EXPANSION_LIMITS.FIRST_1) {
@@ -2034,23 +2020,52 @@ export class SubhutiGrammarAnalyzer {
                 throw new Error('系统错误')
             }
 
+            // 根据层级决定是否继续展开
+            let result: string[][]
 
             // 🔧 优化：使用 getDirectChildren 获取直接子节点
-            const directChildren = this.getDirectChildren(ruleName)
+            result = this.getDirectChildren(ruleName)
 
-            // 如果到达最大层级，截取并返回
-            if (curLevel >= maxLevel) {
-                return this.truncateAndDeduplicate(directChildren, firstK)
+            if (curLevel < maxLevel) {
+                // 需要继续递归展开
+                // 递归展开每个子节点
+                // 例如：[[BlockStatement], [If, LParen, Expression, RParen, Statement]]
+                // 需要继续展开其中的规则名
+                result = this.expandPathsToDeeper(result, curLevel, maxLevel)
             }
 
-            // 否则需要继续递归展开
-            // 递归展开每个子节点
-            // 例如：[[BlockStatement], [If, LParen, Expression, RParen, Statement]]
-            // 需要继续展开其中的规则名
-            const result = this.expandPathsToDeeper(directChildren, firstK, curLevel, maxLevel, isFirstPosition)
-            
-            // expandPathsToDeeper 内部已经处理了截取，这里直接返回
-            return result
+            // 🔧 统一在外层处理截取和去重
+            const finalResult = this.truncateAndDeduplicate(result, firstK)
+
+            // 🔧 缓存结果（统一在 subRuleHandler 中设置）
+            if (firstK === EXPANSION_LIMITS.INFINITY) {
+                if (maxLevel === EXPANSION_LIMITS.LEVEL_1) {
+                    // firstK=INFINITY, maxLevel=LEVEL_1
+                    if (!this.firstInfinityLevel1Cache.has(ruleName)) {
+                        this.firstInfinityLevel1Cache.set(ruleName, finalResult)
+                    }
+                }
+                // firstK=INFINITY, maxLevel=LEVEL_K
+                // 缓存单层结果，key 为 "ruleName:maxLevel"
+                const key = `${ruleName}:${maxLevel}`
+                if (!this.firstInfinityLevelKCache.has(key)) {
+                    this.firstInfinityLevelKCache.set(key, finalResult)
+                }
+            } else if (maxLevel === EXPANSION_LIMITS.INFINITY) {
+                if (firstK === EXPANSION_LIMITS.FIRST_1) {
+                    // firstK=FIRST_1, maxLevel=INFINITY
+                    if (!this.first1LevelInfinityCache.has(ruleName)) {
+                        this.first1LevelInfinityCache.set(ruleName, finalResult)
+                    }
+                } else if (firstK === EXPANSION_LIMITS.FIRST_K) {
+                    // firstK=FIRST_K, maxLevel=INFINITY
+                    if (!this.firstKLevelInfinityCache.has(ruleName)) {
+                        this.firstKLevelInfinityCache.set(ruleName, finalResult)
+                    }
+                }
+            }
+
+            return finalResult
         } finally {
             // 清除递归标记（确保即使异常也能清除）
             this.recursiveDetectionSet.delete(ruleName)
@@ -2103,7 +2118,7 @@ export class SubhutiGrammarAnalyzer {
      * - 空分支 [] slice(0, firstK) 还是 []
      * - 空分支不会被过滤，会正常参与去重
      * - 例如：[[], [a,b,c]], firstK=2 → [[], [a,b]]
-     * 
+     *
      * 🔧 优化：如果 firstK=INFINITY，不需要截取，只去重
      */
     private truncateAndDeduplicate(branches: string[][], firstK: number): string[][] {
@@ -2111,7 +2126,7 @@ export class SubhutiGrammarAnalyzer {
         if (firstK === EXPANSION_LIMITS.INFINITY) {
             return this.deduplicate(branches)
         }
-        
+
         // 截取每个分支到 firstK
         const truncated = branches.map(branch => branch.slice(0, firstK))
 
