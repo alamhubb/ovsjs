@@ -450,6 +450,43 @@ export class SubhutiGrammarAnalyzer {
     public checkAllLeftRecursion(): LeftRecursionError[] {
         console.log(`\n📊 [左递归检测] 开始检测 ${this.ruleASTs.size} 个规则...`)
 
+        const ruleNames = Array.from(this.ruleASTs.keys())
+
+        console.log(`    [1/2] 初始化 BFS 缓存 (限制层数场景)...`)
+        console.log(`       策略：bfsLevelCache (firstK=∞, maxLevel=1~${EXPANSION_LIMITS.LEVEL_K})`)
+        console.log(`       算法：广度优先，按层级循环展开`)
+        const t1 = Date.now()
+        for (const ruleName of ruleNames) {
+            const t0 = Date.now()
+
+            // 为每个层级触发计算
+            for (let level = 1; level <= EXPANSION_LIMITS.LEVEL_K; level++) {
+                this.expandPathsByBFS(ruleName, level)
+            }
+
+            const duration = Date.now() - t0
+            this.perfAnalyzer.record(`init_InfinityLevelK_${ruleName}`, duration)
+
+            if (duration > 100) {
+                console.log(`      ⚠️  ${ruleName}: ${duration}ms (较慢)`)
+            }
+        }
+        const t1End = Date.now()
+        console.log(`    ✓ [1/2] BFS 缓存初始化完成`)
+        console.log(`       耗时: ${t1End - t1}ms`)
+        console.log(`       缓存条目: ${this.bfsLevelCache.size} 条`)
+
+        console.log(`\n    [2/2] 初始化 DFS 缓存 (无限层数场景)...`)
+        console.log(`       策略：dfsFirstKCache (firstK=${EXPANSION_LIMITS.FIRST_K}, maxLevel=∞) + 派生 first1`)
+        console.log(`       算法：深度优先，递归展开到token`)
+        const t2 = Date.now()
+
+        const t2End = Date.now()
+        console.log(`    ✓ [2/2] DFS 缓存初始化完成`)
+        console.log(`       耗时: ${t2End - t2}ms`)
+        console.log(`       主缓存 dfsFirstKCache: ${this.dfsFirstKCache.size} 条`)
+        console.log(`       派生缓存 dfsFirst1Cache: ${this.dfsFirst1Cache.size} 条（从firstK截取）`)
+
         // 清空错误 Map
         this.detectedLeftRecursionErrors.clear()
 
@@ -1140,7 +1177,6 @@ export class SubhutiGrammarAnalyzer {
         // 0. 初始化各种组合的缓存
         console.log(`📊 [阶段0] 开始初始化缓存...\n`)
         const t0 = Date.now()
-        this.initAllCaches()
         const t0End = Date.now()
         console.log(`\n✅ [阶段0] 缓存初始化完成，总耗时 ${t0End - t0}ms`)
         console.log(`   BFS 缓存（限制层数，循环按层级展开）:`)
@@ -1265,170 +1301,6 @@ export class SubhutiGrammarAnalyzer {
         return leftRecursionErrors
     }
 
-    /**
-     * 初始化所有缓存组合
-     *
-     * 根据 firstK 和 maxLevel 的不同组合，初始化对应的缓存：
-     * 1. firstK=INFINITY + maxLevel=LEVEL_1 → firstInfinityLevel1Cache
-     * 2. firstK=INFINITY + maxLevel=LEVEL_K → bfsLevelCache
-     * 3. firstK=FIRST_1 + maxLevel=INFINITY → dfsFirst1Cache
-     * 4. firstK=FIRST_K + maxLevel=INFINITY → dfsFirstKCache
-     */
-    private initAllCaches(): void {
-        const ruleNames = Array.from(this.ruleASTs.keys())
-
-        console.log(`    [1/2] 初始化 BFS 缓存 (限制层数场景)...`)
-        console.log(`       策略：bfsLevelCache (firstK=∞, maxLevel=1~${EXPANSION_LIMITS.LEVEL_K})`)
-        console.log(`       算法：广度优先，按层级循环展开`)
-        const t1 = Date.now()
-        for (const ruleName of ruleNames) {
-            this.initFirstInfinityLevelKCache(ruleName)
-        }
-        const t1End = Date.now()
-        console.log(`    ✓ [1/2] BFS 缓存初始化完成`)
-        console.log(`       耗时: ${t1End - t1}ms`)
-        console.log(`       缓存条目: ${this.bfsLevelCache.size} 条`)
-
-        console.log(`\n    [2/2] 初始化 DFS 缓存 (无限层数场景)...`)
-        console.log(`       策略：dfsFirstKCache (firstK=${EXPANSION_LIMITS.FIRST_K}, maxLevel=∞) + 派生 first1`)
-        console.log(`       算法：深度优先，递归展开到token`)
-        const t2 = Date.now()
-        for (const ruleName of ruleNames) {
-            this.initFirstKLevelInfinityCache(ruleName)
-        }
-        const t2End = Date.now()
-        console.log(`    ✓ [2/2] DFS 缓存初始化完成`)
-        console.log(`       耗时: ${t2End - t2}ms`)
-        console.log(`       主缓存 dfsFirstKCache: ${this.dfsFirstKCache.size} 条`)
-        console.log(`       派生缓存 dfsFirst1Cache: ${this.dfsFirst1Cache.size} 条（从firstK截取）`)
-    }
-
-
-    /**
-     * 初始化 BFS 缓存（bfsLevelCache）
-     *
-     * 算法：广度优先（BFS）
-     * 场景：限制层数（maxLevel = 1, 2, 3...）
-     *
-     * 🔧 策略：
-     * - 为每个层级 (1 到 LEVEL_K) 预先计算
-     * - 缓存 key: "ruleName:level"
-     * - 存储：展开到指定层级的完整结果（firstK=∞）
-     *
-     * 示例：
-     * - bfsLevelCache["Statement:1"] → level 1
-     * - bfsLevelCache["Statement:2"] → level 2
-     * - bfsLevelCache["Statement:3"] → level 3
-     */
-    private initFirstInfinityLevelKCache(ruleName: string): void {
-        const t0 = Date.now()
-
-        // 为每个层级触发计算
-        for (let level = 1; level <= EXPANSION_LIMITS.LEVEL_K; level++) {
-            this.expandPathsByBFS(ruleName, level)
-        }
-
-        const duration = Date.now() - t0
-        this.perfAnalyzer.record(`init_InfinityLevelK_${ruleName}`, duration)
-
-        if (duration > 100) {
-            console.log(`      ⚠️  ${ruleName}: ${duration}ms (较慢)`)
-        }
-    }
-
-    /**
-     * 初始化 dfsFirst1Cache（已废弃）
-     *
-     * ⚠️ 已废弃：first1 不再单独计算
-     *
-     * 新策略：
-     * - first1 从 dfsFirstKCache 截取获得
-     * - 在 initFirstKLevelInfinityCache 中自动派生
-     * - 减少重复计算，提高效率
-     */
-    private initFirst1LevelInfinityCache(ruleName: string): void {
-        // 已废弃：first1 从 firstK 截取获得
-        // 保留方法签名以保持兼容性（避免破坏性变更）
-        throw new Error('已废弃：first1 应该从 firstK 派生，不应该单独初始化')
-    }
-
-    /**
-     * 初始化 DFS 缓存（dfsFirstKCache）
-     *
-     * 算法：深度优先（DFS）
-     * 场景：无限层数（maxLevel = INFINITY）
-     *
-     * 🔧 策略：
-     * 1. 计算 dfsFirstKCache（DFS 主缓存，firstK=3）
-     * 2. 从 firstK 派生 first1（截取第1个token）
-     * 3. first1 不单独计算，减少计算量
-     *
-     * 示例：
-     * - dfsFirstKCache["Statement"] → First(3) 完全展开
-     * - dfsFirst1Cache["Statement"] → 从 First(3) 截取第1个
-     */
-    private initFirstKLevelInfinityCache(ruleName: string): void {
-        if (this.dfsFirstKCache.has(ruleName)) {
-            return
-        }
-
-        const t0 = Date.now()
-
-        // firstK=FIRST_K, maxLevel=INFINITY
-        // expandPathsByDFS → subRuleHandler 会自动缓存 firstK 结果并派生 first1
-        this.expandPathsByDFS(
-            ruleName,
-            null,
-            EXPANSION_LIMITS.FIRST_K,
-            0,
-            EXPANSION_LIMITS.INFINITY,
-            true
-        )
-
-        // 验证 firstK 缓存已设置
-        if (!this.dfsFirstKCache.has(ruleName)) {
-            throw new Error(`系统错误：dfsFirstKCache 未设置 (${ruleName})`)
-        }
-
-        // ✅ subRuleHandler 内部已经派生了 first1 缓存
-        // 验证 first1 缓存已设置
-        if (!this.dfsFirst1Cache.has(ruleName)) {
-            throw new Error(`系统错误：dfsFirst1Cache 未派生 (${ruleName})`)
-        }
-
-        const duration = Date.now() - t0
-        this.perfAnalyzer.record(`init_K_Infinity_${ruleName}`, duration)
-
-        if (duration > 100) {
-            console.log(`      ⚠️  ${ruleName}: ${duration}ms (较慢)`)
-        }
-    }
-
-    /**
-     * 计算 First(1) 集合（完全展开到 token）
-     *
-     * 参数：firstK=1, maxLevel=Infinity
-     *
-     * 用途：获取规则的第1个 token，完全展开规则名
-     */
-    public computeFirst1ExpandBranches(ruleName: string, ruleNode: RuleNode = null) {
-        // 调用通用展开方法（firstK=1, curLevel=0, maxLevel=Infinity）
-        // 传入 isFirstPosition=true（顶层调用，用于左递归检测）
-        return this.expandPathsByDFS(ruleName, ruleNode, EXPANSION_LIMITS.FIRST_1, 0, true)
-    }
-
-    /**
-     * 计算 First(K) 集合（按配置层级展开）
-     *
-     * 参数：firstK=FIRST_K, maxLevel=MAX_LEVEL
-     *
-     * 用途：获取规则的前 K 个符号，按配置层级展开规则名
-     */
-    public computeFirstMoreExpandBranches(ruleName: string, ruleNode: RuleNode = null) {
-        // 调用通用展开方法（firstK=FIRST_K, curLevel=0, maxLevel=MAX_LEVEL）
-        // 传入 isFirstPosition=true（顶层调用，用于左递归检测）
-        return this.expandPathsByDFS(ruleName, ruleNode, EXPANSION_LIMITS.FIRST_K, 0, true)
-    }
 
 
     /**
