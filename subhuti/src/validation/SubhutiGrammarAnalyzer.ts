@@ -1984,27 +1984,30 @@ export class SubhutiGrammarAnalyzer {
                 if (this.firstInfinityLevelKCache.has(key)) {
                     // 从 LevelK 获取数据（已展开到 curLevel 层）
                     finalResult = this.firstInfinityLevelKCache.get(key)!
-                    
-                    // 判断是否需要继续展开
-                    if (curLevel < maxLevel) {
-                        finalResult = this.expandPathsToDeeper(finalResult, curLevel, maxLevel)
-                    }
+
+
                 }
             }
+
 
             if (!finalResult) {
                 // ========================================
                 // LevelK 缓存不存在，实际计算
                 // ========================================
-                
+
                 // getDirectChildren 返回第 1 层的数据
                 finalResult = this.getDirectChildren(ruleName)
-                
-                // 从第 1 层继续展开到 maxLevel
-                if (1 < maxLevel) {
-                    finalResult = this.expandPathsToDeeper(finalResult, 1, maxLevel)
-                }
             }
+
+            // 判断是否需要继续展开
+            if (curLevel < maxLevel) {
+                finalResult = this.expandPathsToDeeper(finalResult, curLevel, maxLevel)
+            } else if (curLevel === maxLevel) {
+
+            }else if (maxLevel > 1) {
+                finalResult = this.expandPathsToDeeper(finalResult, 1, maxLevel)
+            }
+
 
             finalResult = this.truncateAndDeduplicate(finalResult, firstK)
 
