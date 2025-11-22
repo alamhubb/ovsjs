@@ -1084,19 +1084,20 @@ export class SubhutiGrammarAnalyzer {
      * 用途：获取规则的所有可能 token 序列，分层存储
      * 
      * 🔧 特殊逻辑：
-     * - 为每个层级(0到K)单独缓存**单层结果**，key 为 "ruleName:level"
-     * - 额外缓存一个总的条目，key 为 "ruleName"，包含所有层级(0到K)合并
+     * - computeExpanded 内部会自动缓存每个层级的单层结果（"ruleName:level"）
+     * - 这里只负责聚合所有层级，缓存总条目（"ruleName"）
      * - 例如：
-     *   - "Statement:0" → 只有 level 0 的路径: [[Statement]]
-     *   - "Statement:1" → 只有 level 1 的路径: [[BlockStatement], [IfStatement], ...]
-     *   - "Statement:2" → 只有 level 2 的路径: [[LBrace, RBrace], [If, LParen, ...], ...]
-     *   - "Statement" → 所有层级(0到K)合并的完整结果
+     *   - "Statement:0" → computeExpanded 内部缓存
+     *   - "Statement:1" → computeExpanded 内部缓存
+     *   - "Statement:2" → computeExpanded 内部缓存
+     *   - "Statement" → 这里聚合并缓存（所有层级合并）
      */
     private initFirstInfinityLevelKCache(ruleName: string): void {
-        // 存储每个层级的单层结果
+        // 存储每个层级的单层结果（用于最后聚合）
         const levelResults: Map<number, string[][]> = new Map()
         
-        // 为每个层级 (0 到 LEVEL_K) 计算单层结果
+        // 为每个层级 (0 到 LEVEL_K) 计算结果
+        // computeExpanded 内部会自动缓存为 "ruleName:level"
         for (let level = 0; level <= EXPANSION_LIMITS.LEVEL_K; level++) {
             const branches = this.computeExpanded(
                 ruleName,
@@ -1107,20 +1108,16 @@ export class SubhutiGrammarAnalyzer {
                 true
             )
             levelResults.set(level, branches)
-            
-            // 缓存单层结果，key 为 "ruleName:level"
-            const key = `${ruleName}:${level}`
-            this.firstInfinityLevelKCache.set(key, branches)
         }
         
-        // 🔧 额外存储一个总的条目：所有层级(0到K)合并
+        // 🔧 聚合所有层级，缓存总条目
         const allLevelsBranches: string[][] = []
         for (let level = 0; level <= EXPANSION_LIMITS.LEVEL_K; level++) {
             allLevelsBranches.push(...levelResults.get(level)!)
         }
         const allUnique = this.deduplicate(allLevelsBranches)
         
-        // 使用 "ruleName" 作为总条目的 key
+        // 缓存聚合结果，key 为 "ruleName"
         this.firstInfinityLevelKCache.set(ruleName, allUnique)
     }
 
@@ -2154,31 +2151,40 @@ export class SubhutiGrammarAnalyzer {
             const result = this.computeExpanded(null, subNode, firstK, curLevel, maxLevel, isFirstPosition)
 
 
+            // 🔧 缓存结果（如果缓存中不存在）
             if (firstK === EXPANSION_LIMITS.INFINITY) {
                 if (maxLevel === EXPANSION_LIMITS.LEVEL_1) {
-                    if (this.firstInfinityLevel1Cache.has(ruleName)) {
-                        throw new Error('系统错误')
+                    if (!this.firstInfinityLevel1Cache.has(ruleName)) {
+                        this.firstInfinityLevel1Cache.set(ruleName, result)
                     }
-                    this.firstInfinityLevel1Cache.set(ruleName, result)
                 } else if (maxLevel === EXPANSION_LIMITS.LEVEL_K) {
-                    if (this.firstInfinityLevelKCache.has(ruleName)) {
-                        throw new Error('系统错误')
+                    // 🔧 特殊：根据 curLevel 确定缓存的 key
+                    const remainingLevels = maxLevel - curLevel
+                    
+                    if (remainingLevels === EXPANSION_LIMITS.LEVEL_K) {
+                        // 顶层调用，缓存为总条目（但应该已经在 init 中初始化了）
+                        if (!this.firstInfinityLevelKCache.has(ruleName)) {
+                            this.firstInfinityLevelKCache.set(ruleName, result)
+                        }
+                    } else {
+                        // 递归调用，缓存为单层（但应该已经在 init 中初始化了）
+                        const key = `${ruleName}:${remainingLevels}`
+                        if (!this.firstInfinityLevelKCache.has(key)) {
+                            this.firstInfinityLevelKCache.set(key, result)
+                        }
                     }
-                    this.firstInfinityLevelKCache.set(ruleName, result)
                 } else {
                     throw new Error('系统错误')
                 }
             } else if (maxLevel === EXPANSION_LIMITS.INFINITY) {
                 if (firstK === EXPANSION_LIMITS.FIRST_1) {
-                    if (this.first1LevelInfinityCache.has(ruleName)) {
-                        throw new Error('系统错误')
+                    if (!this.first1LevelInfinityCache.has(ruleName)) {
+                        this.first1LevelInfinityCache.set(ruleName, result)
                     }
-                    this.first1LevelInfinityCache.set(ruleName, result)
                 } else if (firstK === EXPANSION_LIMITS.FIRST_K) {
-                    if (this.firstKLevelInfinityCache.has(ruleName)) {
-                        throw new Error('系统错误')
+                    if (!this.firstKLevelInfinityCache.has(ruleName)) {
+                        this.firstKLevelInfinityCache.set(ruleName, result)
                     }
-                    this.firstKLevelInfinityCache.set(ruleName, result)
                 } else {
                     throw new Error('系统错误')
                 }
