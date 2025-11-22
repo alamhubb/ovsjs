@@ -2619,13 +2619,8 @@ export class SubhutiGrammarAnalyzer {
                     this.perfAnalyzer.recordCacheHit('bfsLevel')
                     const fullResult = this.bfsLevelCache.get(fullKey)!
                     actualLevel = maxLevel  // 数据已展开到 maxLevel 层
-
                     // BFS 返回完整版，外层根据需要截取
-                    if (firstK !== EXPANSION_LIMITS.INFINITY) {
-                        finalResult = this.truncateAndDeduplicate(fullResult, firstK)
-                    } else {
-                        finalResult = fullResult
-                    }
+                    finalResult = fullResult
                 } else {
                     // 缓存未命中
                     this.perfAnalyzer.recordCacheMiss('bfsLevel')
