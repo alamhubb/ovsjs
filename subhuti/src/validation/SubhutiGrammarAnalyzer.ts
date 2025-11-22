@@ -1978,15 +1978,49 @@ export class SubhutiGrammarAnalyzer {
             // ========================================
 
             let finalResult: string[][]
+            let actualLevel = curLevel  // 记录数据实际展开的层级
 
-            if (curLevel <= EXPANSION_LIMITS.LEVEL_K) {
+            if (maxLevel === EXPANSION_LIMITS.FIRST_K) {
+
                 const key = `${ruleName}:${curLevel}`
                 if (this.firstInfinityLevelKCache.has(key)) {
                     // 从 LevelK 获取数据（已展开到 curLevel 层）
                     finalResult = this.firstInfinityLevelKCache.get(key)!
-
-
                 }
+            } else if (maxLevel === EXPANSION_LIMITS.INFINITY) {
+
+                const key = `${ruleName}:${curLevel}`
+                if (this.firstInfinityLevelKCache.has(key)) {
+                    // 从 LevelK 获取数据（已展开到 curLevel 层）
+                    finalResult = this.firstInfinityLevelKCache.get(key)!
+                }
+            } else {
+                throw new Error('系统错误')
+            }
+
+
+            if (finalResult) {
+                if (curLevel <= maxLevel) {
+                    if (maxLevel === EXPANSION_LIMITS.LEVEL_K) {
+
+                    } else if (maxLevel === EXPANSION_LIMITS.INFINITY) {
+
+                    }
+                }
+            } else if (!finalResult) {
+                if (curLevel <= maxLevel) {
+                    if (maxLevel === EXPANSION_LIMITS.LEVEL_K) {
+
+                    } else if (maxLevel === EXPANSION_LIMITS.INFINITY) {
+
+                    }
+                }
+            }
+
+            if (curLevel === 1) {
+                finalResult = this.getDirectChildren(ruleName)
+            } else if (curLevel <= maxLevel) {
+
             }
 
 
@@ -1997,15 +2031,12 @@ export class SubhutiGrammarAnalyzer {
 
                 // getDirectChildren 返回第 1 层的数据
                 finalResult = this.getDirectChildren(ruleName)
+                actualLevel = 1  // 数据实际是第 1 层
             }
 
             // 判断是否需要继续展开
-            if (curLevel < maxLevel) {
-                finalResult = this.expandPathsToDeeper(finalResult, curLevel, maxLevel)
-            } else if (curLevel === maxLevel) {
-
-            }else if (maxLevel > 1) {
-                finalResult = this.expandPathsToDeeper(finalResult, 1, maxLevel)
+            if (actualLevel < maxLevel) {
+                finalResult = this.expandPathsToDeeper(finalResult, actualLevel, maxLevel)
             }
 
 
@@ -2036,8 +2067,6 @@ export class SubhutiGrammarAnalyzer {
                             this.firstKLevelInfinityCache.set(ruleName, finalResult)
                         }
                     }
-                } else if (curLevel <= EXPANSION_LIMITS.LEVEL_K) {
-                    throw new Error('系统错误')
                 }
                 // curLevel > 1 时不设置缓存（嵌套调用）
             }
