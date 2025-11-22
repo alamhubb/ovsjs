@@ -165,10 +165,11 @@ export interface GrammarAnalyzerOptions {
 export class SubhutiGrammarAnalyzer {
     /** 正在计算的规则（用于检测循环依赖） */
     private recursiveDetectionSet = new Set<string>()
-    private first1LevelInfinityCache = new Map<string, string[][]>
-    private firstKLevelInfinityCache = new Map<string, string[][]>
-    private firstInfinityLevel1Cache = new Map<string, string[][]>
-    private firstInfinityLevelKCache = new Map<string, string[][]>
+    private first1LevelInfinityCache = new Map<string, string[][]>()
+    private firstKLevelInfinityCache = new Map<string, string[][]>()
+    private firstInfinityLevel1Cache = new Map<string, string[][]>()
+    // 🔧 特殊：key 为 "ruleName:maxLevel"，因为不同层级返回不同结果
+    private firstInfinityLevelKCache = new Map<string, string[][]>()
     private leftRecursiveDetectionSet = new Set<string>()
 
     /** 收集检测过程中发现的左递归错误（使用 Map 提高查重性能） */
@@ -1080,41 +1081,47 @@ export class SubhutiGrammarAnalyzer {
     /**
      * 初始化 firstInfinityLevelKCache（firstK=INFINITY, maxLevel=LEVEL_K）
      * 
-     * 用途：获取规则的所有可能 token 序列，展开 <=K 层
-     * 
-     * 返回：所有层级(0到K)的路径合并
+     * 用途：获取规则的所有可能 token 序列，分层存储
      * 
      * 🔧 特殊逻辑：
-     * - 不仅存储第K层的数据，而是存储 0 到 K 的每一层
-     * - 使用中间层缓存避免重复计算：ruleName+curLevel
-     * - 最后将所有层的结果 flat 到一起并去重
+     * - 为每个层级(0到K)单独缓存**单层结果**，key 为 "ruleName:level"
+     * - 额外缓存一个总的条目，key 为 "ruleName"，包含所有层级(0到K)合并
+     * - 例如：
+     *   - "Statement:0" → 只有 level 0 的路径: [[Statement]]
+     *   - "Statement:1" → 只有 level 1 的路径: [[BlockStatement], [IfStatement], ...]
+     *   - "Statement:2" → 只有 level 2 的路径: [[LBrace, RBrace], [If, LParen, ...], ...]
+     *   - "Statement" → 所有层级(0到K)合并的完整结果
      */
     private initFirstInfinityLevelKCache(ruleName: string): void {
-        if (this.firstInfinityLevelKCache.has(ruleName)) {
-            return
-        }
+        // 存储每个层级的单层结果
+        const levelResults: Map<number, string[][]> = new Map()
         
-        const allBranches: string[][] = []
-        
-        // 遍历每一层 (0 到 LEVEL_K)
+        // 为每个层级 (0 到 LEVEL_K) 计算单层结果
         for (let level = 0; level <= EXPANSION_LIMITS.LEVEL_K; level++) {
-            // 为每一层计算结果
-            // 中间层缓存可以考虑后续优化（如果需要多次调用）
             const branches = this.computeExpanded(
                 ruleName,
                 null,
                 EXPANSION_LIMITS.INFINITY,
                 0,
-                level,  // 当前层级
+                level,
                 true
             )
-            allBranches.push(...branches)
+            levelResults.set(level, branches)
+            
+            // 缓存单层结果，key 为 "ruleName:level"
+            const key = `${ruleName}:${level}`
+            this.firstInfinityLevelKCache.set(key, branches)
         }
         
-        // 去重（不同层可能产生相同的路径）
-        const uniqueBranches = this.deduplicate(allBranches)
+        // 🔧 额外存储一个总的条目：所有层级(0到K)合并
+        const allLevelsBranches: string[][] = []
+        for (let level = 0; level <= EXPANSION_LIMITS.LEVEL_K; level++) {
+            allLevelsBranches.push(...levelResults.get(level)!)
+        }
+        const allUnique = this.deduplicate(allLevelsBranches)
         
-        this.firstInfinityLevelKCache.set(ruleName, uniqueBranches)
+        // 使用 "ruleName" 作为总条目的 key
+        this.firstInfinityLevelKCache.set(ruleName, allUnique)
     }
 
     /**
@@ -2092,11 +2099,21 @@ export class SubhutiGrammarAnalyzer {
             if (firstK === EXPANSION_LIMITS.INFINITY) {
                 if (maxLevel === EXPANSION_LIMITS.LEVEL_1) {
                     if (this.firstInfinityLevel1Cache.has(ruleName)) {
-                        return this.firstInfinityLevel1Cache.get(ruleName)  // 修复：应该返回 firstInfinityCache
+                        return this.firstInfinityLevel1Cache.get(ruleName)
                     }
                 } else if (maxLevel === EXPANSION_LIMITS.LEVEL_K) {
-                    if (this.firstInfinityLevelKCache.has(ruleName)) {
-                        return this.firstInfinityLevelKCache.get(ruleName)  // 修复：应该返回 firstInfinityCache
+                    // 🔧 特殊：使用剩余可展开层级
+                    const remainingLevels = maxLevel - curLevel
+                    
+                    // 如果 remainingLevels === LEVEL_K，说明是顶层调用，直接获取总条目
+                    if (remainingLevels === EXPANSION_LIMITS.LEVEL_K && this.firstInfinityLevelKCache.has(ruleName)) {
+                        return this.firstInfinityLevelKCache.get(ruleName)  // 所有层级合并的总条目
+                    }
+                    
+                    // 否则获取对应 remainingLevels 的单层结果（不合并！）
+                    const key = `${ruleName}:${remainingLevels}`
+                    if (this.firstInfinityLevelKCache.has(key)) {
+                        return this.firstInfinityLevelKCache.get(key)  // 只返回单层
                     }
                 } else {
                     throw new Error('系统错误')
