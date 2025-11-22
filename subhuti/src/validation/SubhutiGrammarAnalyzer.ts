@@ -1036,72 +1036,41 @@ export class SubhutiGrammarAnalyzer {
      */
     private initAllCaches(): void {
         const ruleNames = Array.from(this.ruleASTs.keys())
-
-        console.log(`    初始化 firstInfinityLevel1Cache (firstK=∞, maxLevel=1)...`)
-        for (const ruleName of ruleNames) {
-            this.initFirstInfinityLevel1Cache(ruleName)
-        }
-
+        
         console.log(`    初始化 firstInfinityLevelKCache (firstK=∞, maxLevel=${EXPANSION_LIMITS.LEVEL_K})...`)
         for (const ruleName of ruleNames) {
             this.initFirstInfinityLevelKCache(ruleName)
         }
-
+        
         console.log(`    初始化 first1LevelInfinityCache (firstK=1, maxLevel=∞)...`)
         for (const ruleName of ruleNames) {
             this.initFirst1LevelInfinityCache(ruleName)
         }
-
+        
         console.log(`    初始化 firstKLevelInfinityCache (firstK=${EXPANSION_LIMITS.FIRST_K}, maxLevel=∞)...`)
         for (const ruleName of ruleNames) {
             this.initFirstKLevelInfinityCache(ruleName)
         }
     }
 
-    /**
-     * 初始化 firstInfinityLevel1Cache（firstK=INFINITY, maxLevel=LEVEL_1）
-     *
-     * 用途：触发计算，缓存由 subRuleHandler 内部设置
-     */
-    private initFirstInfinityLevel1Cache(ruleName: string): void {
-        if (this.firstInfinityLevel1Cache.has(ruleName)) {
-            return
-        }
-
-        // firstK=INFINITY, maxLevel=LEVEL_1
-        // computeExpanded → subRuleHandler 会自动缓存结果
-        this.computeExpanded(
-            ruleName,
-            null,
-            EXPANSION_LIMITS.INFINITY,
-            0,
-            EXPANSION_LIMITS.LEVEL_1,
-            true
-        )
-    }
 
     /**
-     * 初始化 firstInfinityLevelKCache + firstInfinityLevelKAllCache
+     * 初始化 firstInfinityLevelKCache
      *
-     * 用途：获取规则的所有可能 token 序列，分层存储
+     * 用途：触发每一层的计算，单层结果由 subRuleHandler 缓存
      *
-     * 🔧 特殊逻辑：
+     * 🔧 逻辑：
      * - firstInfinityLevelKCache: key="ruleName:curLevel"，存储单层结果（由 subRuleHandler 缓存）
-     * - firstInfinityLevelKAllCache: key="ruleName"，存储所有层聚合结果（由这里缓存）
      * - 例如：
      *   - firstInfinityLevelKCache["Statement:0"] → 单层 level 0
      *   - firstInfinityLevelKCache["Statement:1"] → 单层 level 1
      *   - firstInfinityLevelKCache["Statement:2"] → 单层 level 2
-     *   - firstInfinityLevelKAllCache["Statement"] → 所有层(0到K)聚合
      */
     private initFirstInfinityLevelKCache(ruleName: string): void {
-        // 存储每个层级的单层结果（用于最后聚合）
-        const levelResults: Map<number, string[][]> = new Map()
-
         // 为每个层级 (0 到 LEVEL_K) 触发计算
         // subRuleHandler 会自动缓存为 "ruleName:curLevel"
         for (let level = 0; level <= EXPANSION_LIMITS.LEVEL_K; level++) {
-            const branches = this.computeExpanded(
+            this.computeExpanded(
                 ruleName,
                 null,
                 EXPANSION_LIMITS.INFINITY,
@@ -1109,18 +1078,7 @@ export class SubhutiGrammarAnalyzer {
                 level,
                 true
             )
-            levelResults.set(level, branches)
         }
-
-        // 🔧 聚合所有层级，缓存到 firstInfinityLevelKAllCache
-        const allLevelsBranches: string[][] = []
-        for (let level = 0; level <= EXPANSION_LIMITS.LEVEL_K; level++) {
-            allLevelsBranches.push(...levelResults.get(level)!)
-        }
-        const allUnique = this.deduplicate(allLevelsBranches)
-
-        // 缓存聚合结果到 AllCache，key 为 "ruleName"
-        this.firstInfinityLevelKAllCache.set(ruleName, allUnique)
     }
 
     /**
@@ -1872,37 +1830,39 @@ export class SubhutiGrammarAnalyzer {
 
     /**
      * 获取规则的直接子节点（展开1层）
-     *
+     * 
      * @param ruleName 规则名
      * @returns 直接子节点的所有路径（展开1层）
-     *
+     * 
      * 优先级：
-     * 1. 从 firstInfinityLevel1Cache 获取（如果已初始化）
+     * 1. 从 firstInfinityLevelKCache 获取 "ruleName:1"（如果已初始化）
      * 2. 动态计算并缓存
-     *
+     * 
      * 示例：
      * - Statement → [[BlockStatement], [IfStatement], [ExpressionStatement], ...]
      * - IfStatement → [[If, LParen, Expression, RParen, Statement]]
      */
     private getDirectChildren(ruleName: string): string[][] {
-        // 1. 优先从缓存获取
-        if (this.firstInfinityLevel1Cache.has(ruleName)) {
-            return this.firstInfinityLevel1Cache.get(ruleName)!
+        // 1. 优先从 firstInfinityLevelKCache 获取 level 1 的数据
+        const key = `${ruleName}:1`
+        if (this.firstInfinityLevelKCache.has(key)) {
+            return this.firstInfinityLevelKCache.get(key)!
         }
-
+        
         // 2. 检查是否是 token
         const tokenNode = this.tokenCache?.get(ruleName)
         if (tokenNode && tokenNode.type === 'consume') {
             return [[ruleName]]  // token 直接返回
         }
-
+        
         // 3. 获取规则的 AST 节点
         const subNode = this.getRuleNodeByAst(ruleName)
         if (!subNode) {
             throw new Error(`系统错误：规则不存在: ${ruleName}`)
         }
-
+        
         // 4. 动态计算：展开1层
+        // computeExpanded → subRuleHandler 会自动缓存到 "ruleName:1"
         const result = this.computeExpanded(
             null,
             subNode,
@@ -1911,10 +1871,7 @@ export class SubhutiGrammarAnalyzer {
             EXPANSION_LIMITS.LEVEL_1,
             false
         )
-
-        // 5. 缓存结果
-        this.firstInfinityLevel1Cache.set(ruleName, result)
-
+        
         return result
     }
 
@@ -1994,80 +1951,63 @@ export class SubhutiGrammarAnalyzer {
                 return [[ruleName]]
             }
 
-            if (curLevel <= EXPANSION_LIMITS.LEVEL_K) {
-                // 递归调用，获取对应 curLevel 的单层结果
-                const key = `${ruleName}:${curLevel}`
-                if (this.firstInfinityLevelKCache.has(key)) {
-                    return this.firstInfinityLevelKCache.get(key)
-                }
-            } else if (firstK === EXPANSION_LIMITS.FIRST_K) {
-
-            }
-
-
-            if (firstK === EXPANSION_LIMITS.INFINITY) {
-                if (maxLevel === EXPANSION_LIMITS.LEVEL_1) {
-                    if (this.firstInfinityLevel1Cache.has(ruleName)) {
-                        return this.firstInfinityLevel1Cache.get(ruleName)
-                    }
-                } else if (maxLevel === EXPANSION_LIMITS.LEVEL_K) {
-                    // 判断是顶层调用还是递归调用
-                    if (curLevel === 1) {
-                        // 顶层调用（curLevel 已经+1了，所以是1），获取聚合结果
-                        if (this.firstInfinityLevelKAllCache.has(ruleName)) {
-                            return this.firstInfinityLevelKAllCache.get(ruleName)
-                        }
-                    } else {
-
-                    }
-                }
-            } else if (maxLevel === EXPANSION_LIMITS.INFINITY) {
+            // ========================================
+            // 缓存查找：优先从精确匹配的缓存获取
+            // ========================================
+            
+            // 情况1：firstK < INFINITY && maxLevel = INFINITY
+            if (firstK < EXPANSION_LIMITS.INFINITY && maxLevel === EXPANSION_LIMITS.INFINITY) {
                 if (firstK === EXPANSION_LIMITS.FIRST_1) {
                     if (this.first1LevelInfinityCache.has(ruleName)) {
-                        return this.first1LevelInfinityCache.get(ruleName)
+                        return this.first1LevelInfinityCache.get(ruleName)!
                     }
                 } else if (firstK === EXPANSION_LIMITS.FIRST_K) {
                     if (this.firstKLevelInfinityCache.has(ruleName)) {
-                        return this.firstKLevelInfinityCache.get(ruleName)  // 修复：应该返回 firstKCache
+                        return this.firstKLevelInfinityCache.get(ruleName)!
                     }
+                }
+            }
+
+            // ========================================
+            // 计算或从 LevelK 截取
+            // ========================================
+            
+            let finalResult: string[][]
+
+            // 尝试从 firstInfinityLevelKCache 截取（如果 curLevel <= LEVEL_K）
+            if (curLevel <= EXPANSION_LIMITS.LEVEL_K) {
+                const key = `${ruleName}:${curLevel}`
+                if (this.firstInfinityLevelKCache.has(key)) {
+                    // 从 LevelK 获取并截取
+                    const levelKResult = this.firstInfinityLevelKCache.get(key)!
+                    finalResult = this.truncateAndDeduplicate(levelKResult, firstK)
                 } else {
-                    throw new Error('系统错误')
+                    // LevelK 缓存不存在，实际计算
+                    let result = this.getDirectChildren(ruleName)
+                    if (curLevel < maxLevel) {
+                        result = this.expandPathsToDeeper(result, curLevel, maxLevel)
+                    }
+                    finalResult = this.truncateAndDeduplicate(result, firstK)
                 }
             } else {
-                throw new Error('系统错误')
+                // curLevel > LEVEL_K，无法从 LevelK 复用，实际计算
+                let result = this.getDirectChildren(ruleName)
+                if (curLevel < maxLevel) {
+                    result = this.expandPathsToDeeper(result, curLevel, maxLevel)
+                }
+                finalResult = this.truncateAndDeduplicate(result, firstK)
             }
 
-            // 根据层级决定是否继续展开
-            let result: string[][]
-
-            // 🔧 优化：使用 getDirectChildren 获取直接子节点
-            result = this.getDirectChildren(ruleName)
-
-            if (curLevel < maxLevel) {
-                // 需要继续递归展开
-                // 递归展开每个子节点
-                // 例如：[[BlockStatement], [If, LParen, Expression, RParen, Statement]]
-                // 需要继续展开其中的规则名
-                result = this.expandPathsToDeeper(result, curLevel, maxLevel)
-            }
-
-            // 🔧 统一在外层处理截取和去重
-            const finalResult = this.truncateAndDeduplicate(result, firstK)
-
-            // 🔧 缓存结果（统一在 subRuleHandler 中设置）
-            if (firstK === EXPANSION_LIMITS.INFINITY) {
-                if (maxLevel === EXPANSION_LIMITS.LEVEL_1) {
-                    // firstK=INFINITY, maxLevel=LEVEL_1
-                    if (!this.firstInfinityLevel1Cache.has(ruleName)) {
-                        this.firstInfinityLevel1Cache.set(ruleName, finalResult)
-                    }
-                } else if (maxLevel === EXPANSION_LIMITS.LEVEL_K) {
-                    // firstK=INFINITY, maxLevel=LEVEL_K
-                    // 缓存单层结果，key 为 "ruleName:curLevel"
-                    const key = `${ruleName}:${curLevel}`
-                    if (!this.firstInfinityLevelKCache.has(key)) {
-                        this.firstInfinityLevelKCache.set(key, finalResult)
-                    }
+            // ========================================
+            // 统一缓存设置（只在这一个地方）
+            // ========================================
+            
+            if (firstK === EXPANSION_LIMITS.INFINITY && curLevel <= EXPANSION_LIMITS.LEVEL_K) {
+                // firstK=INFINITY, maxLevel <= LEVEL_K
+                // 缓存到 firstInfinityLevelKCache，key 为 "ruleName:curLevel"
+                const key = `${ruleName}:${curLevel}`
+                if (!this.firstInfinityLevelKCache.has(key)) {
+                    this.firstInfinityLevelKCache.set(key, finalResult)
                 }
             } else if (maxLevel === EXPANSION_LIMITS.INFINITY) {
                 if (firstK === EXPANSION_LIMITS.FIRST_1) {
