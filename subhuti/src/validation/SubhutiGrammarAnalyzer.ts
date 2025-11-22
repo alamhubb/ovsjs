@@ -1984,26 +1984,21 @@ export class SubhutiGrammarAnalyzer {
                 if (this.firstInfinityLevelKCache.has(key)) {
                     // 从 LevelK 获取数据
                     finalResult = this.firstInfinityLevelKCache.get(key)!
-                    
-                    // 判断是否需要继续展开
-                    if (curLevel < maxLevel) {
-                        finalResult = this.expandPathsToDeeper(finalResult, curLevel, maxLevel)
-                    }
-                    
-                    // 截取并返回
-                    return this.truncateAndDeduplicate(finalResult, firstK)
                 }
             }
 
-            // ========================================
-            // LevelK 缓存不存在，实际计算
-            // ========================================
+            if (!finalResult) {
+                // ========================================
+                // LevelK 缓存不存在，实际计算
+                // ========================================
+                finalResult = this.getDirectChildren(ruleName)
+            }
 
-            finalResult = this.getDirectChildren(ruleName)
             if (curLevel < maxLevel) {
                 finalResult = this.expandPathsToDeeper(finalResult, curLevel, maxLevel)
             }
-            finalResult = this.truncateAndDeduplicate(finalResult, firstK)
+
+            this.truncateAndDeduplicate(finalResult, firstK)
 
             // ========================================
             // 缓存设置
@@ -2030,6 +2025,8 @@ export class SubhutiGrammarAnalyzer {
                             this.firstKLevelInfinityCache.set(ruleName, finalResult)
                         }
                     }
+                } else if (curLevel <= EXPANSION_LIMITS.LEVEL_K) {
+                    throw new Error('系统错误')
                 }
             }
 
