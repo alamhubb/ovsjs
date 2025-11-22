@@ -1982,8 +1982,13 @@ export class SubhutiGrammarAnalyzer {
             if (curLevel <= EXPANSION_LIMITS.LEVEL_K) {
                 const key = `${ruleName}:${curLevel}`
                 if (this.firstInfinityLevelKCache.has(key)) {
-                    // 从 LevelK 获取数据
+                    // 从 LevelK 获取数据（已展开到 curLevel 层）
                     finalResult = this.firstInfinityLevelKCache.get(key)!
+                    
+                    // 判断是否需要继续展开
+                    if (curLevel < maxLevel) {
+                        finalResult = this.expandPathsToDeeper(finalResult, curLevel, maxLevel)
+                    }
                 }
             }
 
@@ -1991,11 +1996,14 @@ export class SubhutiGrammarAnalyzer {
                 // ========================================
                 // LevelK 缓存不存在，实际计算
                 // ========================================
+                
+                // getDirectChildren 返回第 1 层的数据
                 finalResult = this.getDirectChildren(ruleName)
-            }
-
-            if (curLevel < maxLevel) {
-                finalResult = this.expandPathsToDeeper(finalResult, curLevel, maxLevel)
+                
+                // 从第 1 层继续展开到 maxLevel
+                if (1 < maxLevel) {
+                    finalResult = this.expandPathsToDeeper(finalResult, 1, maxLevel)
+                }
             }
 
             finalResult = this.truncateAndDeduplicate(finalResult, firstK)
@@ -2028,6 +2036,7 @@ export class SubhutiGrammarAnalyzer {
                 } else if (curLevel <= EXPANSION_LIMITS.LEVEL_K) {
                     throw new Error('系统错误')
                 }
+                // curLevel > 1 时不设置缓存（嵌套调用）
             }
 
             return finalResult
