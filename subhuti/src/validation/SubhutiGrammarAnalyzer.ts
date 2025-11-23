@@ -2560,18 +2560,14 @@ export class SubhutiGrammarAnalyzer {
                     // 🔧 注意：这里不应该 recordCacheMiss，因为未命中已经在前面记录过了
                     this.dfsFirst1Cache.set(ruleName, finalResult)
                 }
-            }
-
-            /*else if (firstK === EXPANSION_LIMITS.INFINITY) {
+            } else if (firstK === EXPANSION_LIMITS.INFINITY) {
                 if (maxLevel === EXPANSION_LIMITS.LEVEL_1) {
                     const key = ruleName + `:${EXPANSION_LIMITS.LEVEL_1}`
                     if (!this.bfsLevelCache.has(key)) {
-                        // 🔧 注意：这里不应该 recordCacheMiss，因为未命中已经在前面记录过了
                         this.bfsLevelCache.set(key, finalResult)
                     }
                 }
-                // firstK=INFINITY, maxLevel=INFINITY 暂不缓存
-            }*/
+            }
 
             // 记录性能
             const duration = Date.now() - t0
