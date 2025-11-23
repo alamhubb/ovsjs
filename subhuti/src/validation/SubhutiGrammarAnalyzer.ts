@@ -2031,54 +2031,117 @@ export class SubhutiGrammarAnalyzer {
         targetLevel: number,
         path: string[] = []
     ): string[][] {
-        // 查找最大可用缓存
-        let cachedLevel = 0
-        let cachedPaths: string[][] | null = null
-
-        for (let level = Math.min(targetLevel, EXPANSION_LIMITS.LEVEL_K); level >= 1; level--) {
-            const cacheKey = `${ruleName}:${level}`
-            if (this.bfsLevelCache.has(cacheKey)) {
-                cachedLevel = level
-                cachedPaths = this.bfsLevelCache.get(cacheKey)!
-
-                // 找到目标层级，直接返回
-                if (level === targetLevel) {
-                    return cachedPaths
-                }
-
-                break
-            }
-        }
-
-        // 没有找到缓存，从 level 1 开始
-        if (cachedLevel === 0) {
-            cachedLevel = 1
-            cachedPaths = this.getDirectChildren(ruleName)
-
-            // 基础情况：目标就是 level 1
+        // 根部调用：获取 level 1，然后展开剩余层数
+        if (path.length === 0) {
+            const level1Paths = this.getDirectChildren(ruleName)
             if (targetLevel === 1) {
-                return cachedPaths
+                return level1Paths
             }
+            const result = this.expandPathsByLevelClean(level1Paths, targetLevel - 1)
+            
+            // 缓存最终结果
+            if (targetLevel <= EXPANSION_LIMITS.LEVEL_K) {
+                this.bfsLevelCache.set(`${ruleName}:${targetLevel}`, result)
+            }
+            return result
+        }
+        
+        // 非根部调用（兼容旧代码）
+        return this.expandPathsByBFSCacheClean(ruleName, targetLevel, [])
+    }
+
+    /**
+     * 通用路径展开方法（纯净版，无 ruleName 参数）
+     * 
+     * 核心逻辑：
+     * 1. 对每个路径中的每个规则名，查找该规则的缓存
+     * 2. 如果有缓存，复用；否则递归展开
+     * 3. 自动缓存中间结果
+     * 
+     * 示例：
+     * - paths = [[A, B, C]]
+     * - levels = 10
+     * - 遍历 A: 查找 A:10 → 找到 A:3 → 递归展开 A:3 的结果 7 层 → 缓存 A:10
+     * - 遍历 B: 查找 B:10 → 找到 B:3 → 递归展开 B:3 的结果 7 层 → 缓存 B:10
+     * - 遍历 C: 查找 C:10 → 找到 C:3 → 递归展开 C:3 的结果 7 层 → 缓存 C:10
+     * 
+     * @param paths 当前路径数组
+     * @param levels 要展开的层数
+     * @returns 展开后的路径
+     */
+    private expandPathsByLevelClean(
+        paths: string[][],
+        levels: number
+    ): string[][] {
+        // 基础情况：不需要展开
+        if (levels === 0) {
+            return paths
         }
 
-        // 计算剩余层数
-        const remainingLevels = targetLevel - cachedLevel
-
-        // 对每个缓存路径递归展开
         const expandedPaths: string[][] = []
 
-        for (const cachedPath of cachedPaths!) {
+        for (const path of paths) {
             const allBranches: string[][][] = []
 
             // 遍历路径中的每个符号
-            for (const symbol of cachedPath) {
-                if (this.ruleASTs.has(symbol)) {
-                    // 递归调用自己
-                    const branches = this.expandPathsByBFSCacheClean(symbol, remainingLevels, [symbol])
-                    allBranches.push(branches)
-                } else {
+            for (const symbol of path) {
+                // 判断是否为 token
+                if (this.tokenCache.has(symbol)) {
                     // token，保持不变
                     allBranches.push([[symbol]])
+                    continue
+                }
+
+                // 是规则名
+                // 基础情况：level 1，直接获取子节点
+                if (levels === 1) {
+                    const children = this.getDirectChildren(symbol)
+                    allBranches.push(children)
+                    continue
+                }
+
+                // 查找该规则的缓存
+                let cachedLevel = 0
+                let cachedPaths: string[][] | null = null
+
+                // 查找最大可用缓存
+                for (let level = Math.min(levels, EXPANSION_LIMITS.LEVEL_K); level >= 1; level--) {
+                    const cacheKey = `${symbol}:${level}`
+                    if (this.bfsLevelCache.has(cacheKey)) {
+                        cachedLevel = level
+                        cachedPaths = this.bfsLevelCache.get(cacheKey)!
+
+                        // 找到目标层级，直接使用
+                        if (level === levels) {
+                            allBranches.push(cachedPaths)
+                            cachedPaths = null
+                            break
+                        }
+
+                        break
+                    }
+                }
+
+                // 需要继续展开
+                if (cachedPaths !== null) {
+                    // 没有找到缓存，从 level 1 开始
+                    if (cachedLevel === 0) {
+                        cachedLevel = 1
+                        cachedPaths = this.getDirectChildren(symbol)
+                    }
+
+                    // 计算剩余层数
+                    const remainingLevels = levels - cachedLevel
+
+                    // 递归展开
+                    const result = this.expandPathsByLevelClean(cachedPaths, remainingLevels)
+
+                    // 缓存结果
+                    if (levels <= EXPANSION_LIMITS.LEVEL_K) {
+                        this.bfsLevelCache.set(`${symbol}:${levels}`, result)
+                    }
+
+                    allBranches.push(result)
                 }
             }
 
@@ -2088,17 +2151,7 @@ export class SubhutiGrammarAnalyzer {
         }
 
         // 去重
-        const finalResult = this.deduplicate(expandedPaths)
-
-        // 缓存结果
-        if (targetLevel <= EXPANSION_LIMITS.LEVEL_K) {
-            const cacheKey = `${ruleName}:${targetLevel}`
-            if (!this.bfsLevelCache.has(cacheKey)) {
-                this.bfsLevelCache.set(cacheKey, finalResult)
-            }
-        }
-
-        return finalResult
+        return this.deduplicate(expandedPaths)
     }
 
     /**
