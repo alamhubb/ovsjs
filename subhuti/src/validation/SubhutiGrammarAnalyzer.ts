@@ -2031,12 +2031,6 @@ export class SubhutiGrammarAnalyzer {
         targetLevel: number,
         path: string[] = []
     ): string[][] {
-        const isRootCall = path.length === 0
-
-        if (isRootCall) {
-            this.perfAnalyzer.cacheStats.bfsOptimization.totalCalls++
-        }
-
         // 查找最大可用缓存
         let cachedLevel = 0
         let cachedPaths: string[][] | null = null
@@ -2049,27 +2043,15 @@ export class SubhutiGrammarAnalyzer {
 
                 // 找到目标层级，直接返回
                 if (level === targetLevel) {
-                    if (isRootCall) {
-                        this.perfAnalyzer.recordCacheHit('bfsLevel')
-                    }
                     return cachedPaths
                 }
 
-                // 找到更低层级的缓存
-                if (isRootCall) {
-                    this.perfAnalyzer.cacheStats.bfsOptimization.skippedLevels += level
-                    this.perfAnalyzer.cacheStats.bfsOptimization.fromCachedLevel++
-                }
                 break
             }
         }
 
         // 没有找到缓存，从 level 1 开始
         if (cachedLevel === 0) {
-            if (isRootCall) {
-                this.perfAnalyzer.cacheStats.bfsOptimization.fromLevel1++
-            }
-
             cachedLevel = 1
             cachedPaths = this.getDirectChildren(ruleName)
 
@@ -2077,14 +2059,6 @@ export class SubhutiGrammarAnalyzer {
             if (targetLevel === 1) {
                 return cachedPaths
             }
-        }
-
-        // 记录缓存未命中
-        if (isRootCall && targetLevel <= EXPANSION_LIMITS.LEVEL_K) {
-            this.perfAnalyzer.recordCacheMiss('bfsLevel')
-        }
-        if (isRootCall) {
-            this.perfAnalyzer.recordActualCompute()
         }
 
         // 计算剩余层数
@@ -2229,7 +2203,7 @@ export class SubhutiGrammarAnalyzer {
                     if (isRootCall) {
                         console.log(`      🔄 递归展开: ${symbol}:${remainingLevels}`)
                     }
-                    const branches = this.expandPathsByBFSCache(symbol, remainingLevels, [symbol])
+                    const branches = this.expandPathsByBFSCacheWithLog(symbol, remainingLevels, [symbol])
                     allBranches.push(branches)
                 } else {
                     // 是 token，保持不变
