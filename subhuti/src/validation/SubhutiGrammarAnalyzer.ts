@@ -1089,30 +1089,12 @@ export class SubhutiGrammarAnalyzer {
         // BFS 缓存预填充
         console.log(`    预填充策略: 从 level 1 到 level ${EXPANSION_LIMITS.LEVEL_K}`)
 
-        const ruleNames = Array.from(this.ruleASTs.keys())
         let totalFilled = 0
 
         // 预填充 level 1 到 level_k
         for (let level = 1; level <= EXPANSION_LIMITS.LEVEL_K; level++) {
             for (const ruleName of ruleNames) {
-                const key = `${ruleName}:${level}`
-                console.log(`\n    [预填充] 规则: ${ruleName}`)
-
-                // 跳过已有缓存
-                if (this.bfsLevelCache.has(key)) {
-                    console.log(`      ✓ Level ${level}: 已有缓存，跳过`)
-                    continue
-                }
-
-                try {
-                    // 调用 BFS 展开（会触发 getDirectChildren 和懒加载）
-                    const result = this.expandPathsByBFSCache(ruleName, level)
-                    totalFilled++
-                    console.log(`      ✓ Level ${level}: 填充完成 (${result.length} 条路径)`)
-                } catch (e) {
-                    console.error(`      ✗ Level ${level}: 填充失败: ${e.message}`)
-                    throw e
-                }
+                this.expandPathsByBFSCache(ruleName, level)
             }
         }
 
