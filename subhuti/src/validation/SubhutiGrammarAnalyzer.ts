@@ -1003,28 +1003,64 @@ or([A, A, B]) → or([A, B])  // 删除重复的A`
      * @param orNode - Or 节点
      * @returns 检测到的错误，如果没有错误返回 undefined
      */
+    /**
+     * 完整的 Or 分支检测（First(K) 预检 + MaxLevel 深度检测）
+     * 
+     * 业务逻辑：
+     * 1. First(K) 预检：快速检测相同/遮蔽错误
+     * 2. 有任何错误 → 执行 MaxLevel 深度检测
+     * 3. 防御性检查：如果 First(K) 检测到遮蔽，MaxLevel 必须也能检测到
+     * 4. 返回结果：优先返回 MaxLevel 结果，如果没有则返回 First(K) 结果
+     * 
+     * @param ruleName - 规则名
+     * @param orNode - Or 节点
+     * @returns 检测到的错误，如果没有错误返回 undefined
+     */
     detectOrBranchConflictsWithCache(
         ruleName: string,
         orNode: OrNode
     ) {
-        // 🚀 线路1：使用 First(K) 检测（快速）
+        // 🚀 线路1：First(K) 预检（快速）
         let firstKError = this.detectOrBranchEqualWithFirstK(ruleName, orNode)
 
-        // 情况1：First(K) 没有发现错误
+        // 情况1：预检通过，没有发现错误
         if (!firstKError) {
-            return
+            return  // 直接返回，无需深度检测
         }
-        // 继续用 MaxLevel 深度检测
+
+        // 情况2：预检发现错误（相同/遮蔽），执行深度检测
         const maxLevelError = this.detectOrBranchPrefixWithMaxLevel(ruleName, orNode)
 
-        // 情况2：First(K) 发现"相同"错误
+        // 🛡️ 防御性编程：如果 First(K) 检测到遮蔽，MaxLevel 必须也能检测到
         if (firstKError.type === 'prefix-conflict') {
             if (!maxLevelError) {
-                throw new Error('系统粗欧文')
+                const errorMsg = `
+🔴 ========== 防御性检查失败 ==========
+规则: ${ruleName}
+问题: First(K) 检测到遮蔽，但 MaxLevel 未检测到
+
+First(K) 检测结果:
+  类型: ${firstKError.type}
+  分支: ${firstKError.branchIndices[0] + 1} → ${firstKError.branchIndices[1] + 1}
+  前缀: ${firstKError.conflictPaths?.pathA}
+  完整: ${firstKError.conflictPaths?.pathB}
+
+MaxLevel 检测结果: 无冲突
+
+可能原因:
+1. First(K) 误报（检测逻辑错误）
+2. MaxLevel 漏检（检测逻辑错误）
+3. dfsFirstKCache 和 bfsAllCache 数据不一致
+==========================================`
+                console.error(errorMsg)
+                throw new Error(`防御性检查失败: First(K) 检测到遮蔽但 MaxLevel 未检测到 (规则: ${ruleName})`)
             }
         }
-        // 未知错误类型
-        return maxLevelError
+
+        // 返回结果：优先返回 MaxLevel 结果（更准确），如果没有则返回 First(K) 结果
+        // 说明：maxLevelError 只检测"遮蔽"，不检测"相同"
+        // 所以当 First(K) 检测到"相同"时，maxLevelError 为 undefined，需要兜底
+        return maxLevelError || firstKError
     }
 
     /**
