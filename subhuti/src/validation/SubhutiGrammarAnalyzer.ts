@@ -1078,7 +1078,7 @@ export class SubhutiGrammarAnalyzer {
 
             try {
                 this.checkTimeout(`规则${ruleName}-开始`)
-                this.expandPathsByDFS(null, ruleNode, EXPANSION_LIMITS.FIRST_K, 0, EXPANSION_LIMITS.INFINITY, true)
+                this.expandNode(null, ruleNode, EXPANSION_LIMITS.FIRST_K, 0, EXPANSION_LIMITS.INFINITY, true)
             } catch (e) {
                 console.error(`  ❌ 规则 ${ruleName} 检测失败: ${e.message}`)
                 throw e
@@ -1499,7 +1499,7 @@ export class SubhutiGrammarAnalyzer {
         let paths: string[][]
         try {
             // 使用 expandPathsByDFS 方法，传入 firstK 参数
-            paths = this.expandPathsByDFS(null, node, k, 0, EXPANSION_LIMITS.INFINITY, false)
+            paths = this.expandNode(null, node, k, 0, EXPANSION_LIMITS.INFINITY, false)
 
             // 🔍 调试日志：检查路径结果
             if (nodeRuleName && (nodeRuleName === 'BreakableStatement' || nodeRuleName === 'IterationStatement')) {
@@ -1590,7 +1590,7 @@ export class SubhutiGrammarAnalyzer {
      * - or: 合并所有分支
      * - option/many: 添加空分支
      */
-    private expandPathsByDFS(
+    private expandNode(
         ruleName: string | null,
         node: RuleNode,
         firstK: number,
@@ -1787,7 +1787,7 @@ export class SubhutiGrammarAnalyzer {
             const childNode = nodesToExpand[i]
             // 展开当前子节点
             // 💡 传递累积的位置信息：父级是第1个 AND 当前也是第1个
-            let branches = this.expandPathsByDFS(
+            let branches = this.expandNode(
                 null,
                 nodesToExpand[i],
                 firstK,
@@ -2504,7 +2504,7 @@ export class SubhutiGrammarAnalyzer {
 
             // 使用 DFS 从头展开到 token
             const subNode = this.getRuleNodeByAst(ruleName)
-            const finalResult = this.expandPathsByDFS(null, subNode, firstK, curLevel, maxLevel, isFirstPosition)
+            const finalResult = this.expandNode(null, subNode, firstK, curLevel, maxLevel, isFirstPosition)
 
             // ========================================
             // 阶段4：DFS 缓存设置（在任何层级都缓存！）
@@ -2657,7 +2657,7 @@ export class SubhutiGrammarAnalyzer {
         // 遍历 Or 的每个选择分支
         for (const alt of alternatives) {
             // 🔴 关键：每个 Or 分支都是独立的起点，第一个位置的规则需要检测左递归
-            const branches = this.expandPathsByDFS(null, alt, firstK, curLevel, maxLevel, isFirstPosition)
+            const branches = this.expandNode(null, alt, firstK, curLevel, maxLevel, isFirstPosition)
             result = result.concat(branches)
         }
 
@@ -2708,7 +2708,7 @@ export class SubhutiGrammarAnalyzer {
         isFirstPosition: boolean = true  // 🔴 Option 内的第一个规则也需要检测
     ): string[][] {
         // 递归展开内部节点，传递所有必需参数
-        const innerBranches = this.expandPathsByDFS(null, node, firstK, curLevel, maxLevel, isFirstPosition)
+        const innerBranches = this.expandNode(null, node, firstK, curLevel, maxLevel, isFirstPosition)
 
         // ⚠️⚠️⚠️ 关键：添加空分支 [] 表示可以跳过（0次）
         // 空分支必须在第一个位置，表示优先匹配空（PEG 顺序选择）
@@ -2755,7 +2755,7 @@ export class SubhutiGrammarAnalyzer {
         isFirstPosition: boolean = true  // 🔴 AtLeastOne 内的第一个规则也需要检测
     ): string[][] {
         // 递归展开内部节点（1次的情况），传递所有必需参数
-        const innerBranches = this.expandPathsByDFS(null, node, firstK, curLevel, maxLevel, isFirstPosition)
+        const innerBranches = this.expandNode(null, node, firstK, curLevel, maxLevel, isFirstPosition)
 
         // 生成 doubleBranches（2次的情况）
         const doubleBranches = innerBranches.map(branch => {
