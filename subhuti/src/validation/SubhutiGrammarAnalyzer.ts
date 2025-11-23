@@ -2409,7 +2409,7 @@ export class SubhutiGrammarAnalyzer {
         }
 
         // 层级限制检查（BFS 需要）
-        if (curLevel > maxLevel && maxLevel !== EXPANSION_LIMITS.INFINITY) {
+        if (curLevel > maxLevel) {
             // 返回规则名本身（达到最大深度）
             this.perfAnalyzer.cacheStats.levelLimitReturn++
             return [[ruleName]]
@@ -2459,7 +2459,7 @@ export class SubhutiGrammarAnalyzer {
                 this.perfAnalyzer.recordCacheHit('dfsFirst1')
                 const firstKData = this.dfsFirstKCache.get(ruleName)!
                 // 从 firstK 截取到 first1
-                const first1Data = firstKData.map(path => path.slice(0, 1))
+                const first1Data = firstKData.map(path => path.slice(0, EXPANSION_LIMITS.FIRST_1))
                 const result = this.deduplicate(first1Data)
                 // 缓存 first1 结果
                 this.dfsFirst1Cache.set(ruleName, result)
@@ -2550,7 +2550,7 @@ export class SubhutiGrammarAnalyzer {
 
                 // 顺便派生 first1 缓存（从 firstK 截取）
                 if (!this.dfsFirst1Cache.has(ruleName)) {
-                    const first1Data = finalResult.map(path => path.slice(0, 1))
+                    const first1Data = finalResult.map(path => path.slice(0, EXPANSION_LIMITS.FIRST_1))
                     const first1Result = this.deduplicate(first1Data)
                     this.dfsFirst1Cache.set(ruleName, first1Result)
                 }
