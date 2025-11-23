@@ -376,38 +376,14 @@ export class SubhutiGrammarAnalyzer {
     /** BFS 缓存：key="ruleName:level"（完整展开，不截取） */
     private bfsLevelCache = new Map<string, string[][]>()
 
-    /**
-     * 注意：levelFullResultCache 已删除，复用 bfsLevelCache
-     * bfsLevelCache 存储的就是某规则在某层级的完整结果（firstK=∞）
-     */
-
-    /** 展开单个路径缓存（完整版）：key="ruleName:level:pathIndex" */
-    private expandSinglePathFullCache = new Map<string, string[][]>()
-
-    /** 展开单个路径缓存（截取版）：key="ruleName:level:pathIndex:firstK" */
-    private expandSinglePathTruncatedCache = new Map<string, string[][]>()
-
-
     /** 性能分析器 */
     private perfAnalyzer = new PerformanceAnalyzer()
-    // private firstInfinityLevel1Cache = new Map<string, string[][]>()
-    // 🔧 特殊：key 为 "ruleName:maxLevel"，因为不同层级返回不同结果
-    // private firstInfinityLevelKAllCache = new Map<string, string[][]>()
-    private leftRecursiveDetectionSet = new Set<string>()
 
     /** 收集检测过程中发现的左递归错误（使用 Map 提高查重性能） */
     private detectedLeftRecursionErrors = new Map<string, LeftRecursionError>()
 
     /** 配置选项 */
     private options: Required<GrammarAnalyzerOptions>
-
-    /** 🔍 DEBUG: 只对这些规则输出日志 */
-    private debugRules = new Set<string>([
-        'AsyncArrowBindingIdentifier',
-        'BindingIdentifier',
-        'AsyncConciseBody',
-        'AsyncArrowHead'
-    ])
 
     /**
      * 构造函数
