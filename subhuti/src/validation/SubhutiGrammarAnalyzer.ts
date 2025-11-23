@@ -445,7 +445,7 @@ export class SubhutiGrammarAnalyzer {
 
     /**
      * 检查规则中所有 Or 节点的问题（示例方法）
-     * 
+     *
      * 展示如何使用新的遍历方法：
      * - traverseOrNodes: 递归遍历，对每个 Or 执行回调
      * - findAllOrNodes: 收集所有 Or 节点
@@ -461,7 +461,7 @@ export class SubhutiGrammarAnalyzer {
         console.log('\n方式1：使用 forEachOrNode')
         this.forEachOrNode(ruleName, (orNode) => {
             console.log(`  找到 Or 节点，有 ${orNode.alternatives.length} 个分支`)
-            
+
             // 如果提供了 errors，则执行检测
             if (errors) {
                 // 检测完全相同的分支
@@ -473,7 +473,7 @@ export class SubhutiGrammarAnalyzer {
         console.log('\n方式2：先收集再处理')
         const allOrNodes = this.findAllOrNodes(ruleName)
         console.log(`  规则中共有 ${allOrNodes.length} 个 Or 节点`)
-        
+
         for (let i = 0; i < allOrNodes.length; i++) {
             const orNode = allOrNodes[i]
             console.log(`  Or[${i}]: ${orNode.alternatives.length} 个分支`)
@@ -629,12 +629,12 @@ export class SubhutiGrammarAnalyzer {
         switch (node.type) {
             case 'or':
                 // 步骤1：检测完全相同的分支（重复分支检测）
-                this.detectOrNodeIdenticalBranches(ruleName, node, errors)
-                
+                // this.detectOrNodeIdenticalBranches(ruleName, node, errors)
+
                 // 步骤2：使用智能检测（First(1) → First(K) 冲突检测）
                 if (perfStats) perfStats.orNodesChecked++
                 this.detectOrNodeConflictSmart(ruleName, node, errors, perfStats)
-                
+
                 // 递归检查每个分支
                 for (const alt of node.alternatives) {
                     this.checkOrConflictsInNodeSmart(ruleName, alt, errors, perfStats)
@@ -727,7 +727,7 @@ export class SubhutiGrammarAnalyzer {
      * 检测 Or 节点中是否有完全相同的分支（重复分支检测）
      *
      * 目标：检测 Or 的多个分支是否完全相同
-     * 
+     *
      * 示例：
      * ```
      * // ❌ 错误：分支1 和 分支2 完全相同
@@ -735,7 +735,7 @@ export class SubhutiGrammarAnalyzer {
      *   IfStatement,        // 分支1
      *   IfStatement,        // 分支2 - 和分支1 完全相同！
      * ])
-     * 
+     *
      * // ❌ 错误：结构相同
      * or([
      *   sequence(If, Block),   // 分支1
@@ -817,7 +817,7 @@ export class SubhutiGrammarAnalyzer {
 
     /**
      * 序列化 RuleNode 为字符串（用于比较）
-     * 
+     *
      * 实现：递归遍历 AST，生成唯一的字符串表示
      *
      * @param node - 规则节点
@@ -956,6 +956,36 @@ export class SubhutiGrammarAnalyzer {
         }
     }
 
+
+    getOrNodeAllBranchRules(orNode: OrNode, cache: Map<string, string[][]>) {
+        const allOrs = []
+
+        for (const seqNode of orNode.alternatives) {
+            //得到展开的规则，这也是一层，然后根据规则名再获取几层，然后叠在一起，去重，对比
+            //获取一个or分支的所有可能性分支
+            const nodeAllBranches = this.expandNode(seqNode, EXPANSION_LIMITS.INFINITY, 0, 1, false)
+
+            const setAry = []
+
+            for (const branch of nodeAllBranches) {
+                //所有规则的所有可能性
+                const seqAllBranches = branch.map(rule => cache.get(rule))
+
+                //获取当前分支的所有可能性
+                const branchAllSeq = this.cartesianProduct(seqAllBranches, EXPANSION_LIMITS.INFINITY)
+
+                const branchAllSeqStrAry = branchAllSeq.map(item => item.join(','))
+
+                setAry.concat(branchAllSeqStrAry)
+
+            }
+            allOrs.push(new Set(setAry))
+        }
+
+
+
+    }
+
     /**
      * 智能检测单个 Or 节点的冲突（先 First(1)，有冲突再 First(5)）
      *
@@ -985,6 +1015,8 @@ export class SubhutiGrammarAnalyzer {
 
         for (const alt of orNodeTyped.alternatives) {
             const firstSet = this.computeNodeFirstK(alt, EXPANSION_LIMITS.FIRST_1)
+
+
             branchFirst1Sets.push(firstSet)
             if (perfStats) perfStats.first1Computed++
         }
@@ -1239,14 +1271,14 @@ export class SubhutiGrammarAnalyzer {
 
     /**
      * 遍历 RuleNode，找到所有 Or 节点并执行回调
-     * 
+     *
      * 功能：深度优先遍历 AST，对每个 Or 节点执行回调函数
-     * 
+     *
      * 使用场景：
      * - 检测所有 Or 节点的重复分支
      * - 检测所有 Or 节点的冲突
      * - 收集所有 Or 节点的信息
-     * 
+     *
      * 示例：
      * ```typescript
      * // 检测所有 Or 的重复分支
@@ -1267,7 +1299,7 @@ export class SubhutiGrammarAnalyzer {
             case 'or':
                 // 找到 Or 节点，执行回调
                 callback(node as OrNode)
-                
+
                 // 继续递归遍历 Or 的每个分支
                 for (const alt of (node as OrNode).alternatives) {
                     this.traverseOrNodes(alt, callback)
@@ -1297,9 +1329,9 @@ export class SubhutiGrammarAnalyzer {
 
     /**
      * 在整个规则中查找所有 Or 节点
-     * 
+     *
      * 功能：遍历规则的 AST，收集所有 Or 节点
-     * 
+     *
      * @param ruleName - 规则名
      * @returns 所有 Or 节点的数组
      */
@@ -1312,7 +1344,7 @@ export class SubhutiGrammarAnalyzer {
 
         // 收集所有 Or 节点
         const orNodes: OrNode[] = []
-        
+
         this.traverseOrNodes(ruleNode, (orNode) => {
             orNodes.push(orNode)
         })
@@ -1322,9 +1354,9 @@ export class SubhutiGrammarAnalyzer {
 
     /**
      * 对规则中的所有 Or 节点执行操作
-     * 
+     *
      * 功能：遍历规则的 AST，对每个 Or 节点执行回调
-     * 
+     *
      * 使用场景：
      * ```typescript
      * // 检测所有 Or 的重复分支
@@ -1612,7 +1644,7 @@ export class SubhutiGrammarAnalyzer {
      * 4. 长度达到 FIRST_K 的序列立即移入最终结果集，不再参与后续计算
      * 5. 所有序列都达到 FIRST_K 时提前结束，跳过剩余数组
      */
-    private cartesianProduct(arrays: string[][][]): string[][] {
+    private cartesianProduct(arrays: string[][][], firstK: number): string[][] {
         const t0 = Date.now()
 
         // 空数组，返回包含一个空序列的数组
@@ -1640,8 +1672,8 @@ export class SubhutiGrammarAnalyzer {
         }
 
         // 初始结果为第一个数组
-        let result = arrays[0].filter(item => item.length < EXPANSION_LIMITS.FIRST_K)
-        let finalResult = arrays[0].filter(item => item.length >= EXPANSION_LIMITS.FIRST_K).map(item => item.join(','))
+        let result = arrays[0].filter(item => item.length < firstK)
+        let finalResult = arrays[0].filter(item => item.length >= firstK).map(item => item.join(','))
 
         // 最终结果集（长度已达 FIRST_K 的序列）
         const finalResultSet = new Set<string>(finalResult)
@@ -1950,66 +1982,6 @@ export class SubhutiGrammarAnalyzer {
 
 
     /**
-     * 展开 RuleNode（只展开结构，不展开规则内容）
-     * 
-     * 核心逻辑：
-     * - 展开：or, sequence, option, many, atLeastOne
-     * - 不展开：subrule（保留规则名），consume（保留 token 名）
-     * 
-     * 示例：
-     * - sequence(If, LParen, Expression, RParen) → [[If, LParen, Expression, RParen]]
-     * - or(IfStatement, BlockStatement) → [[IfStatement], [BlockStatement]]
-     * - sequence(If, option(Else)) → [[If], [If, Else]]
-     * 
-     * @param node AST 节点
-     * @returns 所有可能的路径（规则名 + token 名）
-     */
-    private expandRuleNodeStructure(node: RuleNode): string[][] {
-        switch (node.type) {
-            case 'consume':
-                // token，返回名字
-                return [[node.tokenName]]
-            
-            case 'subrule':
-                // 规则，返回名字（不展开内容）
-                return [[node.ruleName]]
-            
-            case 'sequence':
-                // sequence，笛卡尔积
-                const seqBranches: string[][][] = []
-                for (const child of node.nodes) {
-                    const childPaths = this.expandRuleNodeStructure(child)
-                    seqBranches.push(childPaths)
-                }
-                return this.cartesianProduct(seqBranches)
-            
-            case 'or':
-                // or，合并所有分支
-                let orResult: string[][] = []
-                for (const alt of node.alternatives) {
-                    const altPaths = this.expandRuleNodeStructure(alt)
-                    orResult = orResult.concat(altPaths)
-                }
-                return this.deduplicate(orResult)
-            
-            case 'option':
-            case 'many':
-                // option/many，添加空分支
-                const optionPaths = this.expandRuleNodeStructure(node.node)
-                return this.deduplicate([[], ...optionPaths])
-            
-            case 'atLeastOne':
-                // atLeastOne，1次和2次
-                const oncePaths = this.expandRuleNodeStructure(node.node)
-                const twicePaths = oncePaths.map(path => [...path, ...path])
-                return this.deduplicate([...oncePaths, ...twicePaths])
-            
-            default:
-                throw new Error(`未知节点类型: ${(node as any).type}`)
-        }
-    }
-
-    /**
      * 深度优先展开（DFS - Depth-First Search）
      *
      * 🚀 算法：递归深入，自然展开到token
@@ -2306,7 +2278,7 @@ export class SubhutiGrammarAnalyzer {
         console.log(`  [笛卡尔积] 数组数量: ${allBranches.length}, 各数组大小: [${branchSizes.join(', ')}]`)
         console.log(`  [笛卡尔积] 估计结果大小: ${branchSizes.join(' × ')} = ${estimatedSize}`)
         this.checkTimeout(`笛卡尔积-${ruleName}`)
-        const result = this.cartesianProduct(allBranches)
+        const result = this.cartesianProduct(allBranches, firstK)
         console.log(`  [笛卡尔积] 完成, 实际结果: ${result.length} 个路径`)
         this.checkTimeout(`笛卡尔积完成-${ruleName}`)
 
@@ -2459,7 +2431,7 @@ export class SubhutiGrammarAnalyzer {
             }
 
             // 笛卡尔积组合
-            const pathResult = this.cartesianProduct(allBranches)
+            const pathResult = this.cartesianProduct(allBranches, EXPANSION_LIMITS.INFINITY)
             expandedPaths.push(...pathResult)
         }
 
@@ -2473,281 +2445,6 @@ export class SubhutiGrammarAnalyzer {
             this.bfsLevelCache.set(key, finalResult)
         }
         return finalResult
-    }
-
-    /**
-     * BFS 展开（带日志版本）
-     *
-     * 完整的日志输出，方便调试
-     *
-     * @param ruleName 规则名
-     * @param targetLevel 目标层级
-     * @param path 当前路径（根部调用传入空数组 []）
-     * @returns 展开结果
-     */
-    private expandPathsByBFSCacheWithLog(
-        ruleName: string,
-        targetLevel: number,
-        path: string[] = []
-    ): string[][] {
-        const t0 = Date.now()
-        const isRootCall = path.length === 0
-
-        if (isRootCall) {
-            console.log(`\n📊 [BFS展开] 规则: ${ruleName}, 目标层级: ${targetLevel}`)
-            this.perfAnalyzer.cacheStats.bfsOptimization.totalCalls++
-        }
-
-        // 1. 查找最大可用缓存（从 targetLevel 向下）
-        let cachedLevel = 0
-        let cachedPaths: string[][] | null = null
-
-        for (let level = Math.min(targetLevel, EXPANSION_LIMITS.LEVEL_K); level >= 1; level--) {
-            const cacheKey = `${ruleName}:${level}`
-            if (this.bfsLevelCache.has(cacheKey)) {
-                cachedLevel = level
-                cachedPaths = this.bfsLevelCache.get(cacheKey)!
-
-                // 提前返回：找到目标层级的缓存
-                if (level === targetLevel) {
-                    if (isRootCall) {
-                        console.log(`   ✅ 缓存命中: ${cacheKey}`)
-                        this.perfAnalyzer.recordCacheHit('bfsLevel')
-                        this.perfAnalyzer.record('expandPathsByBFS', Date.now() - t0, 0, 0)
-                    } else {
-                        console.log(`      🔄 递归: ${ruleName}:${targetLevel} 缓存命中`)
-                    }
-                    return cachedPaths
-                }
-
-                // 找到更低层级的缓存
-                if (isRootCall) {
-                    console.log(`   ✅ 找到缓存: level ${level} (${cachedPaths.length} 条路径)`)
-                    this.perfAnalyzer.cacheStats.bfsOptimization.skippedLevels += level
-                    this.perfAnalyzer.cacheStats.bfsOptimization.fromCachedLevel++
-                } else {
-                    console.log(`      🔄 递归: ${ruleName}:${targetLevel} 找到 level ${level}`)
-                }
-                break
-            }
-        }
-
-        // 2. 没有找到任何缓存，从 level 1 开始
-        if (cachedLevel === 0) {
-            if (isRootCall) {
-                console.log(`   ⚠️  无缓存，从 level 1 开始`)
-                this.perfAnalyzer.cacheStats.bfsOptimization.fromLevel1++
-            } else {
-                console.log(`      🔄 递归: ${ruleName}:${targetLevel} 无缓存，获取 level 1`)
-            }
-
-            cachedLevel = 1
-            cachedPaths = this.getDirectChildren(ruleName)
-
-            // 基础情况：如果目标就是 level 1
-            if (targetLevel === 1) {
-                return cachedPaths
-            }
-        }
-
-        // 缓存未命中
-        if (isRootCall && targetLevel <= EXPANSION_LIMITS.LEVEL_K) {
-            this.perfAnalyzer.recordCacheMiss('bfsLevel')
-        }
-        if (isRootCall) {
-            this.perfAnalyzer.recordActualCompute()
-        }
-
-        // 3. 计算剩余层数
-        const remainingLevels = targetLevel - cachedLevel
-        if (isRootCall) {
-            console.log(`   📈 需要展开层数: ${remainingLevels} (从 level ${cachedLevel} 继续)`)
-        }
-
-        // 4. 对 cachedPaths 中的每个路径，递归展开
-        const expandedPaths: string[][] = []
-
-        for (const cachedPath of cachedPaths!) {
-            const allBranches: string[][][] = []
-
-            // 遍历路径中的每个符号
-            for (const symbol of cachedPath) {
-                if (this.ruleASTs.has(symbol)) {
-                    // 是规则名，递归调用自己
-                    if (isRootCall) {
-                        console.log(`      🔄 递归展开: ${symbol}:${remainingLevels}`)
-                    }
-                    const branches = this.expandPathsByBFSCacheWithLog(symbol, remainingLevels, [symbol])
-                    allBranches.push(branches)
-                } else {
-                    // 是 token，保持不变
-                    allBranches.push([[symbol]])
-                }
-            }
-
-            // 笛卡尔积组合
-            const pathResult = this.cartesianProduct(allBranches)
-            expandedPaths.push(...pathResult)
-        }
-
-        // 5. 去重并缓存
-        const finalResult = this.deduplicate(expandedPaths)
-
-        if (isRootCall) {
-            console.log(`   📦 最终结果: ${finalResult.length} 条路径`)
-        }
-
-        // 缓存结果（只缓存 <= LEVEL_K 的）
-        if (targetLevel <= EXPANSION_LIMITS.LEVEL_K) {
-            const cacheKey = `${ruleName}:${targetLevel}`
-            if (!this.bfsLevelCache.has(cacheKey)) {
-                this.bfsLevelCache.set(cacheKey, finalResult)
-                if (isRootCall) {
-                    console.log(`   💾 缓存: ${cacheKey}`)
-                } else {
-                    console.log(`      💾 递归缓存: ${cacheKey}`)
-                }
-            }
-        }
-
-        // 记录性能
-        if (isRootCall) {
-            const duration = Date.now() - t0
-            this.perfAnalyzer.record('expandPathsByBFS', duration, cachedPaths!.length, finalResult.length)
-            console.log(`   ⏱️  耗时: ${duration}ms\n`)
-        }
-
-        return finalResult
-    }
-
-
-    /**
-     * 展开单个路径（带缓存版本，双层缓存策略）
-     *
-     * 缓存策略：
-     * 1. 完整缓存（key="ruleName:level:pathIndex"）- 不截取的完整结果
-     * 2. 截取缓存（key="ruleName:level:pathIndex:firstK"）- 截取到firstK的结果
-     *
-     * 查找顺序：
-     * - 优先查找完整缓存（可复用于不同的firstK）
-     * - 如果未命中，查找截取缓存
-     * - 都未命中则计算
-     *
-     * @param ruleName 顶层规则名
-     * @param path 当前路径
-     * @param level 当前层级
-     * @param pathIndex 路径在当前层级的索引
-     * @param firstK 截取长度
-     * @returns 展开后的路径列表
-     */
-    private expandSinglePathCached(
-        ruleName: string,
-        path: string[],
-        level: number,
-        pathIndex: number,
-        firstK: number
-    ): string[][] {
-        // 🔑 构建缓存键
-        const fullKey = `${ruleName}:${level}:${pathIndex}`
-        const truncatedKey = `${ruleName}:${level}:${pathIndex}:${firstK}`
-
-        // ========================================
-        // 阶段1：查找完整缓存
-        // ========================================
-        if (this.expandSinglePathFullCache.has(fullKey)) {
-            // ✅ 完整缓存命中
-            this.perfAnalyzer.recordCacheHit('expandOneLevel')
-            const fullResult = this.expandSinglePathFullCache.get(fullKey)!
-
-            // 如果需要截取，截取后返回
-            if (firstK !== EXPANSION_LIMITS.INFINITY) {
-                // 截取并缓存截取结果（可选优化）
-                const truncated = this.truncateAndDeduplicate(fullResult, firstK)
-                // 缓存截取结果，下次可以直接命中
-                this.expandSinglePathTruncatedCache.set(truncatedKey, truncated)
-                return truncated
-            }
-
-            // 不需要截取，直接返回
-            return fullResult
-        }
-
-        // ========================================
-        // 阶段2：查找截取缓存（仅当需要截取时）
-        // ========================================
-        if (firstK !== EXPANSION_LIMITS.INFINITY) {
-            if (this.expandSinglePathTruncatedCache.has(truncatedKey)) {
-                // ✅ 截取缓存命中
-                this.perfAnalyzer.recordCacheHit('expandOneLevelTruncated')
-                return this.expandSinglePathTruncatedCache.get(truncatedKey)!
-            }
-        }
-
-        // ========================================
-        // 阶段3：缓存未命中，实际计算
-        // ========================================
-
-        // 🔧 修复：记录缓存未命中
-        if (firstK !== EXPANSION_LIMITS.INFINITY) {
-            this.perfAnalyzer.recordCacheMiss('expandOneLevelTruncated')
-        } else {
-            this.perfAnalyzer.recordCacheMiss('expandOneLevel')
-        }
-
-        // 始终计算完整结果（不截取）
-        const fullResult = this.expandSinglePath(path, EXPANSION_LIMITS.INFINITY)
-
-        // 缓存完整结果
-        this.expandSinglePathFullCache.set(fullKey, fullResult)
-
-        // 如果需要截取
-        if (firstK !== EXPANSION_LIMITS.INFINITY) {
-            const truncated = this.truncateAndDeduplicate(fullResult, firstK)
-            // 缓存截取结果
-            this.expandSinglePathTruncatedCache.set(truncatedKey, truncated)
-            return truncated
-        }
-
-        // 不需要截取，返回完整结果
-        return fullResult
-    }
-
-    /**
-     * 展开单个路径中的规则名（展开1层）
-     *
-     * @param path 单个路径（可能包含 token 和规则名）
-     * @param firstK 只展开前 firstK 个位置，后面的直接截断
-     * @returns 展开后的所有可能路径
-     *
-     * 示例：
-     * path = [If, LParen, Expression, RParen, Statement], firstK = 3
-     * → 只展开前3个: [If, LParen, Expression]
-     * → Expression 的直接子节点: [[Identifier], [BinaryExpr], ...]
-     * → 笛卡尔积: [[If, LParen, Identifier], [If, LParen, BinaryExpr], ...]
-     * → 后面的 RParen, Statement 被忽略（超过 firstK）
-     *
-     * 注意：只展开1层，使用 getDirectChildren
-     */
-    private expandSinglePath(path: string[], firstK: number): string[][] {
-        const allBranches: string[][][] = []
-
-        // ✅ 优化：只展开前 firstK 个位置
-        const symbolsToExpand = path.slice(0, firstK)
-
-        // 遍历需要展开的符号
-        for (const symbol of symbolsToExpand) {
-            if (this.ruleASTs.has(symbol)) {
-                // 是规则名，获取其直接子节点（展开1层）
-                const branches = this.getDirectChildren(symbol)
-                allBranches.push(branches)
-            } else {
-                // 是 token，保持不变
-                allBranches.push([[symbol]])
-            }
-        }
-
-        // 笛卡尔积组合（已经只包含前 firstK 个位置）
-        return this.cartesianProduct(allBranches)
     }
 
     /**
