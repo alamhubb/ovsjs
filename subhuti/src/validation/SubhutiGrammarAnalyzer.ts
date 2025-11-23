@@ -435,7 +435,7 @@ export class SubhutiGrammarAnalyzer {
      * 检测所有规则的左递归
      *
      * 实现方式：
-     * - 遍历所有规则，调用 computeFirstMoreBranches 触发展开
+     * - 遍历所有规则，调用 expandPathsByDFS 触发展开
      * - 在 subRuleHandler 中检测递归，区分左递归和普通递归
      * - 收集所有左递归错误
      *
@@ -461,12 +461,9 @@ export class SubhutiGrammarAnalyzer {
         this.operationStartTime = Date.now()
 
         // 遍历所有规则
-        let ruleIndex = 0
         for (const ruleNode of this.ruleASTs.values()) {
             const ruleName = (ruleNode as any).ruleName
             this.currentProcessingRule = ruleName
-            ruleIndex++
-            console.log(`\n  [${ruleIndex}/${this.ruleASTs.size}] 检测规则: ${ruleName}`)
 
             // 清空递归检测集合
             this.recursiveDetectionSet.clear()
@@ -474,7 +471,6 @@ export class SubhutiGrammarAnalyzer {
             try {
                 this.checkTimeout(`规则${ruleName}-开始`)
                 this.expandPathsByDFS(null, ruleNode, EXPANSION_LIMITS.FIRST_K, 0, EXPANSION_LIMITS.INFINITY, true)
-                console.log(`  ✓ 规则 ${ruleName} 检测完成`)
             } catch (e) {
                 console.error(`  ❌ 规则 ${ruleName} 检测失败: ${e.message}`)
                 throw e
@@ -492,13 +488,6 @@ export class SubhutiGrammarAnalyzer {
                 ruleAST,
                 new Set([error.ruleName])
             )
-            console.log(`  ❌ ${error.ruleName}: 左递归`)
-        }
-
-        if (this.detectedLeftRecursionErrors.size === 0) {
-            console.log(`  ✅ 未发现左递归`)
-        } else {
-            console.log(`  ⚠️  发现 ${this.detectedLeftRecursionErrors.size} 个左递归错误`)
         }
 
         const t1End = Date.now()
@@ -506,6 +495,9 @@ export class SubhutiGrammarAnalyzer {
         console.log(`       耗时: ${t1End - t1}ms`)
         console.log(`       主缓存 dfsFirstKCache: ${this.dfsFirstKCache.size} 条`)
         console.log(`       派生缓存 dfsFirst1Cache: ${this.dfsFirst1Cache.size} 条（从firstK截取）`)
+        if (this.detectedLeftRecursionErrors.size > 0) {
+            console.log(`       ⚠️  发现 ${this.detectedLeftRecursionErrors.size} 个左递归错误（详情见后续汇总）`)
+        }
 
         // ========================================
         // 阶段2：初始化 BFS 缓存
@@ -516,17 +508,7 @@ export class SubhutiGrammarAnalyzer {
         const t2 = Date.now()
         for (let level = 1; level <= EXPANSION_LIMITS.LEVEL_K; level++) {
             for (const ruleName of ruleNames) {
-                const t0 = Date.now()
-
-                // 为每个层级触发计算
                 this.expandPathsByBFS(ruleName, level)
-
-                const duration = Date.now() - t0
-                this.perfAnalyzer.record(`init_InfinityLevelK_${ruleName}`, duration)
-
-                if (duration > 100) {
-                    console.log(`      ⚠️  ${ruleName}: ${duration}ms (较慢)`)
-                }
             }
         }
         const t2End = Date.now()
@@ -539,7 +521,6 @@ export class SubhutiGrammarAnalyzer {
         const tAgg = Date.now()
         for (const ruleName of ruleNames) {
             const allLevelPaths: string[][] = []
-            // 遍历所有层级，收集该规则的所有路径
             for (let level = 1; level <= EXPANSION_LIMITS.LEVEL_K; level++) {
                 const key = `${ruleName}:${level}`
                 const levelPaths = this.bfsLevelCache.get(key)
@@ -547,7 +528,6 @@ export class SubhutiGrammarAnalyzer {
                     allLevelPaths.push(...levelPaths)
                 }
             }
-            // 去重后存储到 bfsAllCache
             const deduplicated = this.deduplicate(allLevelPaths)
             this.bfsAllCache.set(ruleName, deduplicated)
         }
@@ -560,6 +540,17 @@ export class SubhutiGrammarAnalyzer {
         return Array.from(this.detectedLeftRecursionErrors.values())
     }
 
+    /**
+     * 检测所有规则的 Or 分支冲突（智能模式：先 First(1)，有冲突再 First(5)）
+     *
+     * 实现方式：
+     * - 遍历所有规则的 AST
+     * - 递归查找所有 Or 节点
+     * - 先计算每个分支的 First(1) 集合
+     * - 如果有冲突，再深入检测 First(5)
+     *
+     * @returns Or 冲突错误列表
+     */
     /**
      * 检测所有规则的 Or 分支冲突（智能模式：先 First(1)，有冲突再 First(5)）
      *
@@ -601,20 +592,8 @@ export class SubhutiGrammarAnalyzer {
 
         perfStats.totalTime = Date.now() - startTime
 
-        if (orConflictErrors.length === 0) {
-            console.log(`  ✅ 未发现 Or 分支冲突`)
-        } else {
-            // 统计冲突类型
-            const first1Only = orConflictErrors.filter(e => e.type === 'or-conflict' && e.level === 'WARNING').length
-            const first5Also = orConflictErrors.filter(e => e.type === 'or-conflict-first5').length
-
-            console.log(`  ⚠️  发现 ${orConflictErrors.length} 个 Or 分支冲突`)
-            if (first1Only > 0) {
-                console.log(`     💡 浅层冲突(仅 First(1)): ${first1Only} 个`)
-            }
-            if (first5Also > 0) {
-                console.log(`     ❌ 深层冲突(First(5) 也冲突): ${first5Also} 个`)
-            }
+        if (orConflictErrors.length > 0) {
+            console.log(`   ⚠️  发现 ${orConflictErrors.length} 个 Or 分支冲突（详情见后续汇总）`)
         }
 
         // 输出性能统计
@@ -873,8 +852,6 @@ export class SubhutiGrammarAnalyzer {
         const branchFirst1Sets: Set<string>[] = []
         let hasFirst1Conflict = false
 
-        console.log(`  🔍 [${ruleName}] 检测 Or 节点 First(1) 冲突...`)
-
         const t1Start = Date.now()
 
         for (const alt of orNodeTyped.alternatives) {
@@ -895,30 +872,12 @@ export class SubhutiGrammarAnalyzer {
                 if (intersection.size > 0) {
                     hasFirst1Conflict = true
                     first1Conflicts.push({i, j, intersection})
-
-                    // 记录 First(1) 冲突
-                    const conflictTokens = Array.from(intersection).join(', ')
-                    // errors.push({
-                    //     level: 'WARNING',
-                    //     type: 'or-conflict',
-                    //     ruleName,
-                    //     branchIndices: [i, j],
-                    //     conflictPaths: {
-                    //         pathA: `分支 ${i + 1} First(1): {${Array.from(branchFirst1Sets[i]).join(', ')}}`,
-                    //         pathB: `分支 ${j + 1} First(1): {${Array.from(branchFirst1Sets[j]).join(', ')}}`
-                    //     },
-                    //     message: `规则 "${ruleName}" 的 Or 分支 ${i + 1} 和分支 ${j + 1} 在 First(1) 存在冲突`,
-                    //     suggestion: "检测到 First(1) 冲突，正在深入分析 First(5)..."
-                    // })
-
-                    console.log(`    ⚠️  分支 ${i + 1} 和 ${j + 1} 在 First(1) 冲突 (${conflictTokens})`)
                 }
             }
         }
 
         // Step 2: 如果有 First(1) 冲突，进一步检测 First(5)
         if (hasFirst1Conflict) {
-            console.log(`    📊 [${ruleName}] 发现 First(1) 冲突，深入检测 First(5)...`)
 
             const t5Start = Date.now()
 
@@ -972,16 +931,6 @@ export class SubhutiGrammarAnalyzer {
                 }
 
                 const conflictPairs: ConflictPair[] = []
-
-                const tCompPairStart = Date.now()
-
-                console.log(`    🔍 [DEBUG] 检测分支 ${i + 1} 和 ${j + 1} 的 First(${k}) 真实冲突...`)
-                console.log(`    🔍 [DEBUG] ${ruleName}`)
-                console.log(`       分支${i + 1} 有 ${branchFirst5Sets[i].size} 个序列`)
-                console.log(`       分支${j + 1} 有 ${branchFirst5Sets[j].size} 个序列`)
-
-                const estimatedComparisons = branchFirst5Sets[i].size * branchFirst5Sets[j].size
-                console.log(`       预计比较次数: ${estimatedComparisons}`)
 
                 // 🔧 优化：一旦发现第一个冲突就停止，避免重复报告同一对分支
                 let foundConflict = false
@@ -1055,11 +1004,7 @@ export class SubhutiGrammarAnalyzer {
                     }
                 }
 
-                const tCompPairEnd = Date.now()
-                const pairCompTime = tCompPairEnd - tCompPairStart
-                console.log(`       📊 ${conflictPairs.length > 0 ? '发现冲突' : '无冲突'} (耗时${pairCompTime}ms)`)
-
-                // 优化：只要发现一个真实冲突，就报告并停止检测该Or节点的其他分支对
+                // 收集冲突信息（不输出日志）
                 if (conflictPairs.length > 0) {
                     // First(5) 有真实冲突 - 深层冲突
                     // 每对分支只有一个冲突（已优化）
@@ -1075,22 +1020,12 @@ export class SubhutiGrammarAnalyzer {
                         typeLabel = `相等(长度=${pair.frontLen})`
                     }
 
-                    // 格式化冲突信息
-                    const conflictDetails = `${typeLabel}
-      分支${i + 1}: "${pair.frontSeq}"
-      分支${j + 1}: "${pair.behindSeq}"`
-
-                    // 🔧 不立即报告，先收集到数组
+                    // 收集到数组
                     allRuleConflicts.push({
                         branchIndices: [i, j],
                         conflictPair: pair,
                         typeLabel
                     })
-
-                    console.log(`    ❌ 分支 ${i + 1} 和 ${j + 1} 在 First(${k}) 存在真实冲突 (${typeLabel})`)
-                    // ✅ 不要停止，继续检测其他分支对
-                } else {
-                    console.log(`    💡 分支 ${i + 1} 和 ${j + 1} 仅在 First(1) 冲突 (浅层冲突，可通过前瞻解决)`)
                 }
             }
 
@@ -1129,14 +1064,12 @@ export class SubhutiGrammarAnalyzer {
                     message: `规则 "${ruleName}" 存在 ${allRuleConflicts.length} 对 Or 分支冲突`,
                     suggestion
                 })
-
-                console.log(`\n    📋 [${ruleName}] 共发现 ${allRuleConflicts.length} 对分支冲突，已合并报告`)
             }
 
             const tCompEnd = Date.now()
             if (perfStats) perfStats.comparisonTime += (tCompEnd - tCompStart)
         } else {
-            console.log(`    ✅ [${ruleName}] 无 First(1) 冲突，跳过 First(5) 检测`)
+            // 无 First(1) 冲突，跳过 First(5) 检测
             if (perfStats) perfStats.first5Skipped++
         }
     }
@@ -1211,148 +1144,16 @@ export class SubhutiGrammarAnalyzer {
      * @returns 所有验证错误列表（包括左递归和 Or 冲突）
      */
     initCacheAndCheckLeftRecursion(): ValidationError[] {
-        const allErrors: ValidationError[] = []
-
         console.log(`\n🔍 ========== 语法验证与缓存初始化 ==========\n`)
 
-        // 0. 初始化各种组合的缓存
-        console.log(`📊 [阶段0] 开始初始化缓存...\n`)
-        const t0 = Date.now()
-        const t0End = Date.now()
-        console.log(`\n✅ [阶段0] 缓存初始化完成，总耗时 ${t0End - t0}ms`)
-        console.log(`   BFS 缓存（限制层数，循环按层级展开）:`)
-        console.log(`     - FirstInfinityLevelK: ${this.bfsLevelCache.size} 条`)
-        console.log(`   DFS 缓存（无限层数，递归展开到token）:`)
-        console.log(`     - FirstKLevelInfinity: ${this.dfsFirstKCache.size} 条（主缓存）`)
-        console.log(`     - First1LevelInfinity: ${this.dfsFirst1Cache.size} 条（派生）`)
+        const totalStartTime = Date.now()
 
-        // 输出阶段性性能报告
-        console.log(`\n📈 [阶段0] 性能报告:`)
-        this.perfAnalyzer.report()
-
-        // 1. 左递归检测
-        console.log(`\n📊 [阶段1] 开始左递归检测...`)
+        // 1. 左递归检测（内部会初始化 DFS 缓存和 BFS 缓存）
+        console.log(`📊 [阶段1] 开始左递归检测...`)
         const t1 = Date.now()
-        // const leftRecursionErrors = this.checkAllLeftRecursion()
-
-        console.log(`\n📊 [左递归检测] 开始检测 ${this.ruleASTs.size} 个规则...`)
-
-        const ruleNames = Array.from(this.ruleASTs.keys())
-
-        // ========================================
-        // 阶段1：初始化 DFS 缓存 + 左递归检测
-        // ========================================
-        console.log(`    [1/2] 初始化 DFS 缓存 (无限层数场景) + 左递归检测...`)
-        console.log(`       策略：dfsFirstKCache (firstK=${EXPANSION_LIMITS.FIRST_K}, maxLevel=∞) + 派生 first1`)
-        console.log(`       算法：深度优先，递归展开到token`)
-
-        // 清空错误 Map
-        this.detectedLeftRecursionErrors.clear()
-
-        // 启动超时检测
-        this.operationStartTime = Date.now()
-
-        // 遍历所有规则
-        let ruleIndex = 0
-        for (const ruleNode of this.ruleASTs.values()) {
-            const ruleName = (ruleNode as any).ruleName
-            this.currentProcessingRule = ruleName
-            ruleIndex++
-            console.log(`\n  [${ruleIndex}/${this.ruleASTs.size}] 检测规则: ${ruleName}`)
-
-            // 清空递归检测集合
-            this.recursiveDetectionSet.clear()
-
-            try {
-                this.checkTimeout(`规则${ruleName}-开始`)
-                this.expandPathsByDFS(null, ruleNode, EXPANSION_LIMITS.FIRST_K, 0, EXPANSION_LIMITS.INFINITY, true)
-                console.log(`  ✓ 规则 ${ruleName} 检测完成`)
-            } catch (e) {
-                console.error(`  ❌ 规则 ${ruleName} 检测失败: ${e.message}`)
-                throw e
-            }
-        }
-
-        // 重置超时检测
-        this.operationStartTime = 0
-
-        // 为每个错误补充 suggestion
-        for (const error of this.detectedLeftRecursionErrors.values()) {
-            const ruleAST = this.getRuleNodeByAst(error.ruleName)
-            error.suggestion = this.getLeftRecursionSuggestion(
-                error.ruleName,
-                ruleAST,
-                new Set([error.ruleName])
-            )
-            console.log(`  ❌ ${error.ruleName}: 左递归`)
-        }
-
-        if (this.detectedLeftRecursionErrors.size === 0) {
-            console.log(`  ✅ 未发现左递归`)
-        } else {
-            console.log(`  ⚠️  发现 ${this.detectedLeftRecursionErrors.size} 个左递归错误`)
-        }
-
-        const t1End = Date.now()
-        console.log(`\n    ✓ [1/2] DFS 缓存初始化 + 左递归检测完成`)
-        console.log(`       耗时: ${t1End - t1}ms`)
-        console.log(`       主缓存 dfsFirstKCache: ${this.dfsFirstKCache.size} 条`)
-        console.log(`       派生缓存 dfsFirst1Cache: ${this.dfsFirst1Cache.size} 条（从firstK截取）`)
-
-        // ========================================
-        // 阶段2：初始化 BFS 缓存
-        // ========================================
-        console.log(`\n    [2/2] 初始化 BFS 缓存 (限制层数场景)...`)
-        console.log(`       策略：bfsLevelCache (firstK=∞, maxLevel=1~${EXPANSION_LIMITS.LEVEL_K})`)
-        console.log(`       算法：广度优先，按层级循环展开`)
-        const t2 = Date.now()
-        for (let level = 1; level <= EXPANSION_LIMITS.LEVEL_K; level++) {
-            for (const ruleName of ruleNames) {
-                const t0 = Date.now()
-
-                // 为每个层级触发计算
-                this.expandPathsByBFS(ruleName, level)
-
-                const duration = Date.now() - t0
-                this.perfAnalyzer.record(`init_InfinityLevelK_${ruleName}`, duration)
-
-                if (duration > 100) {
-                    console.log(`      ⚠️  ${ruleName}: ${duration}ms (较慢)`)
-                }
-            }
-        }
-        const t2End = Date.now()
-        console.log(`    ✓ [2/2] BFS 缓存初始化完成`)
-        console.log(`       耗时: ${t2End - t2}ms`)
-        console.log(`       缓存条目: ${this.bfsLevelCache.size} 条`)
-
-        // 聚合所有层级的数据到 bfsAllCache
-        console.log(`\n    [2.5] 聚合所有层级数据到 bfsAllCache...`)
-        const tAgg = Date.now()
-        for (const ruleName of ruleNames) {
-            const allLevelPaths: string[][] = []
-            // 遍历所有层级，收集该规则的所有路径
-            for (let level = 1; level <= EXPANSION_LIMITS.LEVEL_K; level++) {
-                const key = `${ruleName}:${level}`
-                const levelPaths = this.bfsLevelCache.get(key)
-                if (levelPaths) {
-                    allLevelPaths.push(...levelPaths)
-                }
-            }
-            // 去重后存储到 bfsAllCache
-            const deduplicated = this.deduplicate(allLevelPaths)
-            this.bfsAllCache.set(ruleName, deduplicated)
-        }
-        const tAggEnd = Date.now()
-        console.log(`    ✓ [2.5] 数据聚合完成`)
-        console.log(`       耗时: ${tAggEnd - tAgg}ms`)
-        console.log(`       bfsAllCache 条目: ${this.bfsAllCache.size} 条`)
-
-        // 返回收集到的错误（转换为数组）
-        return Array.from(this.detectedLeftRecursionErrors.values())
+        const leftRecursionErrors = this.checkAllLeftRecursion()
         const t1End = Date.now()
         console.log(`✅ [阶段1] 左递归检测完成，耗时 ${t1End - t1}ms`)
-        allErrors.push(...leftRecursionErrors)
 
         // 2. Or 分支冲突检测
         console.log(`\n📊 [阶段2] 开始 Or 分支冲突检测...`)
@@ -1360,102 +1161,71 @@ export class SubhutiGrammarAnalyzer {
         const orConflictErrors = this.checkAllOrConflicts()
         const t2End = Date.now()
         console.log(`✅ [阶段2] Or 分支冲突检测完成，耗时 ${t2End - t2}ms`)
+
+        // 3. 合并所有错误（左递归优先）
+        const allErrors: ValidationError[] = []
+        allErrors.push(...leftRecursionErrors)
         allErrors.push(...orConflictErrors)
 
-        // 3. 输出最终性能分析报告
+        // 4. 统一输出错误汇总
+        console.log(`\n`)
+        console.log(`${'='.repeat(60)}`)
+        console.log(`📋 语法验证错误汇总`)
+        console.log(`${'='.repeat(60)}`)
+        
+        if (allErrors.length === 0) {
+            console.log(`\n✅ 未发现任何语法错误！\n`)
+        } else {
+            console.log(`\n⚠️  发现 ${allErrors.length} 个语法错误：\n`)
+            
+            // 4.1 输出左递归错误（优先）
+            if (leftRecursionErrors.length > 0) {
+                console.log(`❌ 左递归错误 (${leftRecursionErrors.length} 个)：`)
+                console.log(`${'─'.repeat(60)}`)
+                leftRecursionErrors.forEach((error, index) => {
+                    console.log(`\n[${index + 1}] 规则: ${error.ruleName}`)
+                    console.log(`    消息: ${error.message}`)
+                    if (error.suggestion) {
+                        console.log(`    建议:\n${error.suggestion.split('\n').map(line => `      ${line}`).join('\n')}`)
+                    }
+                })
+                console.log(`\n`)
+            }
+            
+            // 4.2 输出 Or 分支冲突错误
+            if (orConflictErrors.length > 0) {
+                console.log(`⚠️  Or 分支冲突 (${orConflictErrors.length} 个)：`)
+                console.log(`${'─'.repeat(60)}`)
+                orConflictErrors.forEach((error, index) => {
+                    console.log(`\n[${index + 1}] 规则: ${error.ruleName}`)
+                    console.log(`    消息: ${error.message}`)
+                    if (error.conflictPaths) {
+                        console.log(`    冲突详情:`)
+                        console.log(`${error.conflictPaths.pathA}`)
+                        if (error.conflictPaths.pathB) {
+                            console.log(`${error.conflictPaths.pathB}`)
+                        }
+                    }
+                    if (error.suggestion) {
+                        console.log(`    建议: ${error.suggestion}`)
+                    }
+                })
+                console.log(`\n`)
+            }
+        }
+        
+        console.log(`${'='.repeat(60)}`)
+
+        // 5. 输出性能统计
+        const totalTime = Date.now() - totalStartTime
+        console.log(`\n⏱️  总耗时: ${totalTime}ms`)
+        console.log(`   - 阶段1(左递归检测): ${t1End - t1}ms (${((t1End - t1) / totalTime * 100).toFixed(1)}%)`)
+        console.log(`   - 阶段2(Or冲突检测): ${t2End - t2}ms (${((t2End - t2) / totalTime * 100).toFixed(1)}%)`)
+
         console.log(`\n🎯 ========== 最终性能分析报告 ==========`)
         this.perfAnalyzer.report()
 
-        console.log(`\n⏱️  总耗时: ${t0End - t0 + (t1End - t1) + (t2End - t2)}ms`)
-        console.log(`   - 阶段0(缓存初始化): ${t0End - t0}ms (${((t0End - t0) / (t0End - t0 + (t1End - t1) + (t2End - t2)) * 100).toFixed(1)}%)`)
-        console.log(`   - 阶段1(左递归检测): ${t1End - t1}ms (${((t1End - t1) / (t0End - t0 + (t1End - t1) + (t2End - t2)) * 100).toFixed(1)}%)`)
-        console.log(`   - 阶段2(Or冲突检测): ${t2End - t2}ms (${((t2End - t2) / (t0End - t0 + (t1End - t1) + (t2End - t2)) * 100).toFixed(1)}%)`)
-
         return allErrors
-
-        // 注释：暂时禁用所有缓存初始化
-        /*
-        console.log(`  📊 [3.3.1] 开始计算 firstMoreCache（First(2)，不展开规则名）`)
-        const t1 = Date.now()
-
-        // const ruleName = 'LetOrConst'
-
-        // 1. 计算直接子节点缓存（First(2)）
-        // ✅ 优化：跳过空 AST 的规则
-        for (const ruleName of this.ruleASTs.keys()) {
-            this.computing.clear()
-            // 检查缓存是否已存在
-            if (this.firstKCache.has(ruleName)) {
-                throw new Error('系统错误：firstMoreCache 已存在')
-            }
-
-            // 调用 expandPathsByDFS：firstK=2, maxLevel=0（不展开规则名）
-            const children = this.computeFirstMoreBranches(ruleName)
-
-            console.log(ruleName)
-
-            console.log(children)
-            // 缓存结果
-            this.firstKCache.set(ruleName, children)
-
-
-            const error = this.initFirstCache(ruleName)
-            if (error) {
-                leftRecursionErrors.push(error)
-            }
-        }
-        */
-
-        /*const t2 = Date.now()
-        console.log(`  ✓ [3.3.1] firstMoreCache 计算完成，耗时 ${t2 - t1}ms`)
-
-        console.log(`  📊 [3.3.2] 开始计算 first1ExpandCache（First(1)，完全展开）`)
-        const t3 = Date.now()
-
-        // 清空循环检测集合
-        for (const ruleName of this.ruleASTs.keys()) {
-            this.computing.clear()
-            // ✅ firstK=1, maxLevel=Infinity（完全展开到叶子节点）
-            this.initFirst1ExpandCache(ruleName)
-        }
-
-        const t4 = Date.now()
-        console.log(`  ✓ [3.3.2] first1ExpandCache 计算完成，耗时 ${t4 - t3}ms`)
-
-        console.log(`  📊 [3.3.3] 开始计算 firstMoreExpandCache（First(2)，按层级展开）`)
-        const t5 = Date.now()
-
-        const ruleTimings: Array<{ ruleName: string, time: number }> = []
-        let ruleIndex = 0
-
-        for (const ruleName of this.ruleASTs.keys()) {
-            ruleIndex++
-            const ruleStart = Date.now()
-
-            // ✅ firstK=more, maxLevel=max 根据max层级展开
-            this.computing.clear()
-            this.initFirstMoreExpandCache(ruleName)
-
-            const ruleTime = Date.now() - ruleStart
-            ruleTimings.push({ruleName, time: ruleTime})
-
-            // 输出耗时超过 100ms 的规则
-            if (ruleTime > 100) {
-                console.log(`    [${ruleIndex}/${this.ruleASTs.size}] ${ruleName}: ${ruleTime}ms ⚠️`)
-            }
-        }
-
-        const t6 = Date.now()
-        console.log(`  ✓ [3.3.3] firstMoreExpandCache 计算完成，耗时 ${t6 - t5}ms`)
-
-        // 输出 Top 20 最耗时的规则
-        console.log(`\n  📊 firstMoreExpandCache 计算统计（Top 20 最耗时）：`)
-        const sortedTimings = ruleTimings.sort((a, b) => b.time - a.time).slice(0, 20)
-        sortedTimings.forEach((stat, index) => {
-            console.log(`    ${index + 1}. ${stat.ruleName}: ${stat.time}ms`)
-        })
-*/
-        return leftRecursionErrors
     }
 
 
@@ -1952,9 +1722,8 @@ export class SubhutiGrammarAnalyzer {
     ) {
         this.checkTimeout('expandSequenceNode-开始')
 
-        // 🔍 调试日志
+        // 获取规则名（用于日志和错误提示）
         const ruleName = (node as any).ruleName || '(unnamed)'
-        console.log(`[expandSequenceNode] 规则: ${ruleName}, 子节点数: ${node.nodes.length}`)
 
         // 检查是否为空序列
         if (node.nodes.length === 0) {
@@ -2043,11 +1812,6 @@ export class SubhutiGrammarAnalyzer {
             this.checkTimeout(`expandSequenceNode-子节点${i + 1}`)
 
             const childNode = nodesToExpand[i]
-            const childType = childNode.type
-            const childName = (childNode as any).ruleName || (childNode as any).tokenName || childType
-
-            console.log(`  [子节点 ${i + 1}/${nodesToExpand.length}] 类型: ${childType}, 名称: ${childName}`)
-
             // 展开当前子节点
             // 💡 传递累积的位置信息：父级是第1个 AND 当前也是第1个
             let branches = this.expandPathsByDFS(
@@ -2058,8 +1822,6 @@ export class SubhutiGrammarAnalyzer {
                 maxLevel,
                 isFirstPosition && i === 0  // 累积位置：只有当父级和当前都是第1个时才是 true
             )
-
-            console.log(`  [子节点 ${i + 1}] 展开结果: ${branches.length} 个分支`)
 
             // 如果 branches 为空（可能是左递归检测返回的空数组）
             if (branches.length === 0) {
