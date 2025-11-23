@@ -443,6 +443,25 @@ export class SubhutiGrammarAnalyzer {
         return ruleNode
     }
 
+    checkor(ruleName) {
+
+        const ruleNode = this.ruleASTs.get(ruleName)
+        for (const node of ruleNode.nodes) {
+            if (node.type === 'Or'){
+
+            }
+        }
+
+
+        //获取一个规则的所有分支
+        const allBranch = this.dfsFirstKCache.get(ruleName)
+
+        for (const allBranch1 of allBranch) {
+
+        }
+
+    }
+
 
     /**
      * 检测所有规则的 Or 分支冲突（智能模式：先 First(1)，有冲突再 First(5)）
@@ -796,10 +815,10 @@ export class SubhutiGrammarAnalyzer {
 
             const t5End = Date.now()
             if (perfStats) perfStats.first5Time += (t5End - t5Start)
-            
+
             // 检测 First(K) 冲突
             const firstKConflicts: Array<{ i: number, j: number }> = []
-            
+
             for (let i = 0; i < branchFirstKSets.length; i++) {
                 for (let j = i + 1; j < branchFirstKSets.length; j++) {
                     const intersection = this.setIntersection(branchFirstKSets[i], branchFirstKSets[j])
@@ -808,7 +827,7 @@ export class SubhutiGrammarAnalyzer {
                     }
                 }
             }
-            
+
             // 如果没有 First(K) 冲突，跳过
             if (firstKConflicts.length === 0) {
                 if (perfStats) perfStats.first5Skipped++
@@ -817,13 +836,13 @@ export class SubhutiGrammarAnalyzer {
 
             // Step 3: 使用 bfsAllCache 深度检测（First(∞) + Level(K)）
             const tCompStart = Date.now()
-            
+
             // 获取每个分支的 BFS 完整路径
             const branchBFSPaths: string[][][] = []
-            
+
             for (let idx = 0; idx < orNodeTyped.alternatives.length; idx++) {
                 const alt = orNodeTyped.alternatives[idx]
-                
+
                 // 如果是单个规则，直接从 bfsAllCache 获取
                 if ((alt as any).type === 'subrule') {
                     const altSubrule = alt as any
@@ -1141,7 +1160,7 @@ export class SubhutiGrammarAnalyzer {
         console.log(`\n    聚合所有层级数据到 bfsAllCache...`)
         for (const ruleName of ruleNames) {
             const allLevelPaths: string[][] = []
-            
+
             // 收集该规则的所有层级数据
             for (let level = 1; level <= EXPANSION_LIMITS.LEVEL_K; level++) {
                 const key = `${ruleName}:${level}`
@@ -1150,12 +1169,12 @@ export class SubhutiGrammarAnalyzer {
                     allLevelPaths.push(...levelPaths)
                 }
             }
-            
+
             // 去重并存入 bfsAllCache
             const deduplicated = this.deduplicate(allLevelPaths)
             this.bfsAllCache.set(ruleName, deduplicated)
         }
-        
+
         console.log(`      bfsAllCache 总数: ${this.bfsAllCache.size} 条`)
 
         // 重置超时检测
@@ -1610,6 +1629,66 @@ export class SubhutiGrammarAnalyzer {
         return expandedSet
     }
 
+
+    /**
+     * 展开 RuleNode（只展开结构，不展开规则内容）
+     * 
+     * 核心逻辑：
+     * - 展开：or, sequence, option, many, atLeastOne
+     * - 不展开：subrule（保留规则名），consume（保留 token 名）
+     * 
+     * 示例：
+     * - sequence(If, LParen, Expression, RParen) → [[If, LParen, Expression, RParen]]
+     * - or(IfStatement, BlockStatement) → [[IfStatement], [BlockStatement]]
+     * - sequence(If, option(Else)) → [[If], [If, Else]]
+     * 
+     * @param node AST 节点
+     * @returns 所有可能的路径（规则名 + token 名）
+     */
+    private expandRuleNodeStructure(node: RuleNode): string[][] {
+        switch (node.type) {
+            case 'consume':
+                // token，返回名字
+                return [[node.tokenName]]
+            
+            case 'subrule':
+                // 规则，返回名字（不展开内容）
+                return [[node.ruleName]]
+            
+            case 'sequence':
+                // sequence，笛卡尔积
+                const seqBranches: string[][][] = []
+                for (const child of node.nodes) {
+                    const childPaths = this.expandRuleNodeStructure(child)
+                    seqBranches.push(childPaths)
+                }
+                return this.cartesianProduct(seqBranches)
+            
+            case 'or':
+                // or，合并所有分支
+                let orResult: string[][] = []
+                for (const alt of node.alternatives) {
+                    const altPaths = this.expandRuleNodeStructure(alt)
+                    orResult = orResult.concat(altPaths)
+                }
+                return this.deduplicate(orResult)
+            
+            case 'option':
+            case 'many':
+                // option/many，添加空分支
+                const optionPaths = this.expandRuleNodeStructure(node.node)
+                return this.deduplicate([[], ...optionPaths])
+            
+            case 'atLeastOne':
+                // atLeastOne，1次和2次
+                const oncePaths = this.expandRuleNodeStructure(node.node)
+                const twicePaths = oncePaths.map(path => [...path, ...path])
+                return this.deduplicate([...oncePaths, ...twicePaths])
+            
+            default:
+                throw new Error(`未知节点类型: ${(node as any).type}`)
+        }
+    }
 
     /**
      * 深度优先展开（DFS - Depth-First Search）
