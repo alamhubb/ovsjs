@@ -2082,47 +2082,46 @@ export class SubhutiGrammarAnalyzer {
                 // 查找最大可用缓存
                 for (let level = Math.min(levels, EXPANSION_LIMITS.LEVEL_K); level >= 1; level--) {
                     const cacheKey = `${symbol}:${level}`
-                    if (this.bfsLevelCache.has(cacheKey)) {
-                        cachedLevel = level
-                        cachedPaths = this.bfsLevelCache.get(cacheKey)!
+                    if (level === 1) {
+                        cachedPaths = this.getDirectChildren(cacheKey)
+                    } else {
+                        if (this.bfsLevelCache.has(cacheKey)) {
+                            cachedLevel = level
+                            cachedPaths = this.bfsLevelCache.get(cacheKey)!
 
-                        // 找到目标层级，直接使用
-                        if (level === levels) {
-                            allBranches.push(cachedPaths)
-                            cachedPaths = null
+                            // 找到目标层级，直接使用
+                            if (level === levels) {
+                                allBranches.push(cachedPaths)
+                                cachedPaths = null
+                                break
+                            }
+
                             break
                         }
-
-                        break
                     }
+                }
+                if (cachedPaths === null) {
+                    throw new Error('系统错误')
                 }
 
                 // 需要继续展开
-                if (cachedPaths !== null) {
-                    // 没有找到缓存，从 level 1 开始
-                    if (cachedLevel === 0) {
-                        cachedLevel = 1
-                        cachedPaths = this.getDirectChildren(symbol)
+                // 计算剩余层数
+                const remainingLevels = levels - cachedLevel
+
+                // 递归调用自己
+                const result = this.expandPathsByBFSCacheClean(cachedPaths, remainingLevels)
+
+                // 缓存结果（用 symbol 作为 key）
+                if (levels <= EXPANSION_LIMITS.LEVEL_K) {
+                    const key = `${symbol}:${levels}`
+                    if (!this.bfsLevelCache.has(key)) {
+                        this.bfsLevelCache.set(key, result)
+                    } else {
+                        throw new Error('系统错误')
                     }
-
-                    // 计算剩余层数
-                    const remainingLevels = levels - cachedLevel
-
-                    // 递归调用自己
-                    const result = this.expandPathsByBFSCacheClean(cachedPaths, remainingLevels)
-
-                    // 缓存结果（用 symbol 作为 key）
-                    if (levels <= EXPANSION_LIMITS.LEVEL_K) {
-                        const key = `${symbol}:${levels}`
-                        if (!this.bfsLevelCache.has(key)) {
-                            this.bfsLevelCache.set(key, result)
-                        } else {
-                            throw new Error('系统错误')
-                        }
-                    }
-
-                    allBranches.push(result)
                 }
+
+                allBranches.push(result)
             }
 
             // 笛卡尔积组合
