@@ -203,9 +203,6 @@ export class SubhutiRuleCollector {
                         }
 
                         // 如果是子规则调用，只记录，不执行
-                        if (isDebugRule) {
-                            console.log(`🔍 [DEBUG] 子规则调用（不执行）: ${prop}`)
-                        }
                         return collector.handleSubrule(prop)
                     }
                 }
@@ -299,18 +296,6 @@ export class SubhutiRuleCollector {
             // ⏱️ 计算耗时
             const elapsed = Date.now() - startTime
 
-            // 日志输出（可选）
-            if (rootNode.nodes.length > 0) {
-                if (elapsed > 100) {
-                    console.info(`✓ Rule "${ruleName}" collected (${rootNode.nodes.length} nodes) [${elapsed}ms] ⚠️ SLOW`)
-                } else {
-                    console.info(`✓ Rule "${ruleName}" collected (${rootNode.nodes.length} nodes) [${elapsed}ms]`)
-                }
-            } else {
-                // 空 AST 也保存（用于左递归检测）
-                console.warn(`⚠ Rule "${ruleName}" has empty AST (may indicate recursion or parsing failure) [${elapsed}ms]`)
-            }
-
             // 如果超过10秒，输出警告
             if (elapsed > 10000) {
                 console.error(`❌❌❌ Rule "${ruleName}" took ${elapsed}ms (${(elapsed / 1000).toFixed(2)}s) - EXTREMELY SLOW!`)
@@ -371,24 +356,13 @@ export class SubhutiRuleCollector {
      * 处理 Or 规则
      */
     private handleOr(alternatives: Array<{ alt: () => any }>, target: any): void {
-        const debugRules = ['ConditionalExpression', 'AssignmentExpression', 'Expression', 'Statement']
-        const isDebugRule = debugRules.includes(this.currentRuleName)
-
         const altNodes: any[] = []
-
-        if (isDebugRule) {
-            console.log(`🔍 [DEBUG] handleOr in ${this.currentRuleName}, ${alternatives.length} 个分支`)
-        }
 
         for (let i = 0; i < alternatives.length; i++) {
             const alt = alternatives[i]
             // 进入新的序列
             const seqNode: SequenceNode = {type: 'sequence', nodes: []}
             this.currentRuleStack.push(seqNode)
-
-            if (isDebugRule) {
-                console.log(`🔍 [DEBUG]   执行分支 ${i + 1}/${alternatives.length}`)
-            }
 
             try {
                 // 执行分支（会通过 proxy 拦截）
@@ -397,19 +371,12 @@ export class SubhutiRuleCollector {
                 // 退出序列，获取结果
                 const result = this.currentRuleStack.pop()
                 if (result) {
-                    if (isDebugRule) {
-                        console.log(`🔍 [DEBUG]   分支 ${i + 1} 收集到 ${result.nodes?.length || 0} 个节点`)
-                    }
                     altNodes.push(result)
                 }
             } catch (error: any) {
                 // 分支执行失败（可能是缺少token或其他错误）
                 // 但我们仍然尝试保存已收集的部分AST
                 const result = this.currentRuleStack.pop()
-                if (isDebugRule) {
-                    console.log(`🔍 [DEBUG]   分支 ${i + 1} 执行失败: ${error?.message}`)
-                    console.log(`🔍 [DEBUG]   已收集部分节点: ${result?.nodes?.length || 0}`)
-                }
                 if (result && result.nodes && result.nodes.length > 0) {
                     // 如果收集到了部分节点，仍然保存
                     altNodes.push(result)
@@ -420,14 +387,7 @@ export class SubhutiRuleCollector {
 
         // 记录 Or 节点（即使某些分支失败，只要有至少一个分支成功）
         if (altNodes.length > 0) {
-            if (isDebugRule) {
-                console.log(`🔍 [DEBUG] 记录 Or 节点，包含 ${altNodes.length} 个分支`)
-            }
             this.recordNode({type: 'or', alternatives: altNodes})
-        } else {
-            if (isDebugRule) {
-                console.log(`🔍 [DEBUG] ⚠️ Or 节点没有任何有效分支！`)
-            }
         }
     }
 
