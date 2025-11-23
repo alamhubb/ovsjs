@@ -1042,13 +1042,9 @@ MaxLevel 检测结果: 无冲突
             // 清空递归检测集合
             this.recursiveDetectionSet.clear()
 
-            try {
-                this.checkTimeout(`规则${ruleName}-开始`)
-                this.expandNode(ruleNode, EXPANSION_LIMITS.FIRST_K, 0, EXPANSION_LIMITS.INFINITY, true)
-            } catch (e) {
-                console.error(`  ❌ 规则 ${ruleName} 检测失败: ${e.message}`)
-                throw e
-            }
+            this.checkTimeout(`规则${ruleName}-开始`)
+            this.expandNode(ruleNode, EXPANSION_LIMITS.FIRST_K, 0, EXPANSION_LIMITS.INFINITY, true)
+
         }
 
         // BFS 缓存预填充
