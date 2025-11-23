@@ -2092,7 +2092,15 @@ export class SubhutiGrammarAnalyzer {
     }
 
     /**
-     * 逐层展开路径
+     * 逐层展开路径（智能递归复用版）
+     * 
+     * 核心思想：对路径中的每个规则名，递归查找其最大可用缓存
+     * 
+     * 示例：A:10，缓存有 A:3, B:3
+     * - A:3 = [a1, a2, B, c1, c2]
+     * - 要展开到 A:10，需要继续展开 7 层
+     * - 对 B 递归查找 B:7 → 找到 B:3
+     * - B:3 继续展开 4 层...
      * 
      * @param ruleName 规则名
      * @param startLevel 起始层级
@@ -2108,27 +2116,17 @@ export class SubhutiGrammarAnalyzer {
     ): { paths: string[][]; finishedPaths: string[][] } {
         let currentPaths = initialPaths
         let finishedPaths: string[][] = []
-        const levelsToExpand = maxLevel - startLevel
+        let currentLevel = startLevel
 
         // 防御检查
-        if (levelsToExpand < 0) {
-            throw new Error(`系统错误：levelsToExpand < 0 (startLevel=${startLevel}, maxLevel=${maxLevel})`)
+        if (maxLevel < startLevel) {
+            throw new Error(`系统错误：maxLevel < startLevel (startLevel=${startLevel}, maxLevel=${maxLevel})`)
         }
 
-        // 逐层展开
-        for (let i = 0; i < levelsToExpand; i++) {
-            const currentLevel = startLevel + i
-            const nextLevel = currentLevel + 1
-            
-            console.log(`\n   [层级 ${currentLevel} → ${nextLevel}]`)
-
-            // 尝试使用层级缓存
-            const levelCacheKey = `${ruleName}:${nextLevel}`
-            if (nextLevel <= EXPANSION_LIMITS.LEVEL_K && this.bfsLevelCache.has(levelCacheKey)) {
-                currentPaths = this.bfsLevelCache.get(levelCacheKey)!
-                console.log(`      ✅ 层级缓存命中: ${levelCacheKey}`)
-                continue
-            }
+        // 🔥 核心优化：循环直到达到目标层级
+        while (currentLevel < maxLevel) {
+            const remainingLevels = maxLevel - currentLevel
+            console.log(`\n   [当前层级: ${currentLevel}, 目标: ${maxLevel}, 剩余: ${remainingLevels}]`)
 
             // 分离已完成和未完成的路径
             const { toExpand, finished } = this.separatePaths(currentPaths)
@@ -2141,14 +2139,32 @@ export class SubhutiGrammarAnalyzer {
                 break
             }
 
-            // 展开路径
-            currentPaths = this.expandPaths(ruleName, toExpand, currentLevel)
-            console.log(`      📊 展开结果: ${currentPaths.length} 条路径`)
+            // 🔥 关键：对每个路径中的规则名，递归查找最大可用缓存
+            const expandedPaths: string[][] = []
+            
+            for (let pathIndex = 0; pathIndex < toExpand.length; pathIndex++) {
+                const path = toExpand[pathIndex]
+                
+                // 展开这个路径，使用智能缓存复用
+                const expanded = this.expandSinglePathWithSmartCache(
+                    path,
+                    remainingLevels,
+                    currentLevel,
+                    pathIndex
+                )
+                expandedPaths.push(...expanded)
+            }
 
+            currentPaths = this.deduplicate(expandedPaths)
+            console.log(`      📊 展开结果: ${currentPaths.length} 条路径`)
+            
+            currentLevel += 1
+            
             // 缓存当前层级
-            if (nextLevel <= EXPANSION_LIMITS.LEVEL_K && !this.bfsLevelCache.has(levelCacheKey)) {
-                this.bfsLevelCache.set(levelCacheKey, currentPaths)
-                console.log(`      💾 缓存: ${levelCacheKey}`)
+            const cacheKey = `${ruleName}:${currentLevel}`
+            if (currentLevel <= EXPANSION_LIMITS.LEVEL_K && !this.bfsLevelCache.has(cacheKey)) {
+                this.bfsLevelCache.set(cacheKey, currentPaths)
+                console.log(`      💾 缓存: ${cacheKey}`)
             }
         }
 
@@ -2156,8 +2172,105 @@ export class SubhutiGrammarAnalyzer {
     }
 
     /**
-     * 分离已完成和未完成的路径
+     * 用智能缓存复用展开单个路径
      * 
+     * 核心：对路径中的每个规则名，递归查找其最大可用缓存
+     * 
+     * @param path 当前路径
+     * @param remainingLevels 剩余层数
+     * @param currentLevel 当前层级
+     * @param pathIndex 路径索引
+     * @returns 展开后的路径列表
+     */
+    private expandSinglePathWithSmartCache(
+        path: string[],
+        remainingLevels: number,
+        currentLevel: number,
+        pathIndex: number
+    ): string[][] {
+        const allBranches: string[][][] = []
+        
+        // 遍历路径中的每个符号
+        for (const symbol of path) {
+            if (this.ruleASTs.has(symbol)) {
+                // 是规则名，递归查找最大可用缓存
+                const branches = this.getExpandedRuleWithSmartCache(symbol, remainingLevels)
+                allBranches.push(branches)
+            } else {
+                // 是 token，保持不变
+                allBranches.push([[symbol]])
+            }
+        }
+        
+        // 笛卡尔积组合
+        return this.cartesianProduct(allBranches)
+    }
+
+    /**
+     * 获取规则的展开结果（智能缓存复用）
+     * 
+     * 核心逻辑：
+     * 1. 查找最大可用缓存（如 level 3）
+     * 2. 如果剩余层数 > 缓存层数，递归展开
+     * 3. 否则直接返回缓存
+     * 
+     * @param ruleName 规则名
+     * @param targetLevel 目标层级
+     * @returns 展开结果
+     */
+    private getExpandedRuleWithSmartCache(
+        ruleName: string,
+        targetLevel: number
+    ): string[][] {
+        // 查找最大可用缓存
+        let cachedLevel = 0
+        let cachedPaths: string[][] | null = null
+        
+        for (let level = Math.min(targetLevel, EXPANSION_LIMITS.LEVEL_K); level >= 1; level--) {
+            const cacheKey = `${ruleName}:${level}`
+            if (this.bfsLevelCache.has(cacheKey)) {
+                cachedLevel = level
+                cachedPaths = this.bfsLevelCache.get(cacheKey)!
+                console.log(`         🔍 找到 ${ruleName}:${level} 缓存`)
+                break
+            }
+        }
+        
+        if (cachedLevel === 0) {
+            // 没有缓存，获取 level 1
+            console.log(`         🔍 ${ruleName} 无缓存，获取 level 1`)
+            return this.getDirectChildren(ruleName)
+        }
+        
+        if (cachedLevel >= targetLevel) {
+            // 缓存层级 >= 目标层级，直接返回
+            console.log(`         ✅ ${ruleName}:${cachedLevel} 满足需求`)
+            return cachedPaths!
+        }
+        
+        // 缓存层级 < 目标层级，需要继续展开
+        const remainingLevels = targetLevel - cachedLevel
+        console.log(`         📈 ${ruleName} 从 level ${cachedLevel} 继续展开 ${remainingLevels} 层`)
+        
+        // 对缓存的每个路径，递归展开
+        const expandedPaths: string[][] = []
+        for (const path of cachedPaths!) {
+            const expanded = this.expandSinglePathWithSmartCache(
+                path,
+                remainingLevels,
+                cachedLevel,
+                0
+            )
+            expandedPaths.push(...expanded)
+        }
+        
+        return this.deduplicate(expandedPaths)
+    }
+
+
+    /**
+     * 分离已完成和未完成的路径
+     *
      * @param paths 路径列表
      * @returns 待展开的路径和已完成的路径
      */
@@ -2182,7 +2295,7 @@ export class SubhutiGrammarAnalyzer {
 
     /**
      * 展开路径列表
-     * 
+     *
      * @param ruleName 规则名
      * @param paths 待展开的路径列表
      * @param currentLevel 当前层级
@@ -2208,6 +2321,7 @@ export class SubhutiGrammarAnalyzer {
 
         return this.deduplicate(expandedPaths)
     }
+
 
     /**
      * 展开单个路径（带缓存版本，双层缓存策略）
