@@ -55,19 +55,50 @@ export interface ValidationResult {
 // ============================================
 
 /**
+ * 统计信息接口
+ */
+export interface ValidationStats {
+    /** First(K) 缓存生成用时 */
+    dfsFirstKTime: number
+    /** MaxLevel 缓存生成用时 */
+    bfsMaxLevelTime: number
+    /** Or 冲突检测用时 */
+    orDetectionTime: number
+    /** 左递归错误数量 */
+    leftRecursionCount: number
+    /** Or 分支冲突数量 */
+    orConflictCount: number
+    /** 总用时 */
+    totalTime: number
+    /** dfsFirstKCache 大小 */
+    dfsFirstKCacheSize: number
+    /** bfsAllCache 大小 */
+    bfsAllCacheSize: number
+    /** First(K) 的 K 值 */
+    firstK: number
+}
+
+/**
  * 语法验证异常
  */
 export class SubhutiGrammarValidationError extends Error {
-    constructor(public errors: ValidationError[]) {
+    constructor(
+        public errors: ValidationError[],
+        public stats?: ValidationStats
+    ) {
         super('Grammar validation failed')
         this.name = 'SubhutiGrammarValidationError'
     }
 
     /**
-     * 格式化错误信息
+     * 格式化错误信息（包含统计信息）
      */
     toString(): string {
-        const lines = ['Grammar Validation Errors:', '']
+        const lines: string[] = []
+        
+        // 输出错误详情
+        lines.push('Grammar Validation Errors:')
+        lines.push('')
 
         for (const error of this.errors) {
             lines.push(`[${error.level}] ${error.message}`)
@@ -80,6 +111,32 @@ export class SubhutiGrammarValidationError extends Error {
             }
             lines.push(`  Suggestion: ${error.suggestion}`)
             lines.push('')
+        }
+
+        // 输出统计信息（在最后）
+        if (this.stats) {
+            const s = this.stats
+            lines.push('')
+            lines.push('='.repeat(60))
+            lines.push('📊 ========== 统计信息 ==========')
+            lines.push('='.repeat(60))
+            lines.push('')
+            lines.push('⏱️  时间统计：')
+            lines.push(`   总耗时: ${s.totalTime}ms`)
+            lines.push(`   ├─ First(K) 缓存生成: ${s.dfsFirstKTime}ms (${(s.dfsFirstKTime / s.totalTime * 100).toFixed(1)}%)`)
+            lines.push(`   ├─ MaxLevel 缓存生成: ${s.bfsMaxLevelTime}ms (${(s.bfsMaxLevelTime / s.totalTime * 100).toFixed(1)}%)`)
+            lines.push(`   └─ Or 冲突检测: ${s.orDetectionTime}ms (${(s.orDetectionTime / s.totalTime * 100).toFixed(1)}%)`)
+            lines.push('')
+            lines.push('🔍 检测结果：')
+            lines.push(`   ├─ 左递归错误: ${s.leftRecursionCount} 个`)
+            lines.push(`   └─ Or 分支遮蔽: ${s.orConflictCount} 个`)
+            lines.push(`   总计: ${this.errors.length} 个错误`)
+            lines.push('')
+            lines.push('📦 缓存信息：')
+            lines.push(`   ├─ dfsFirstKCache: ${s.dfsFirstKCacheSize} 条 (First(${s.firstK}))`)
+            lines.push(`   └─ bfsAllCache: ${s.bfsAllCacheSize} 条 (MaxLevel)`)
+            lines.push('')
+            lines.push('='.repeat(60))
         }
 
         return lines.join('\n')

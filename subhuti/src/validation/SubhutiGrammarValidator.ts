@@ -18,6 +18,7 @@ import {
     SubhutiGrammarAnalyzer,
     SubhutiConflictDetector,
     SubhutiGrammarValidationError,
+    ValidationStats,
     EXPANSION_LIMITS
 } from "./index";
 
@@ -52,14 +53,14 @@ export class SubhutiGrammarValidator {
         // 3. 初始化缓存（计算直接子节点、First 集合、路径展开）
         // 同时进行左递归检测和 Or 分支冲突检测
         const t5 = Date.now()
-        const allErrors = analyzer.initCacheAndCheckLeftRecursion()
+        const result = analyzer.initCacheAndCheckLeftRecursion()
         const t6 = Date.now()
         console.log(`  ⏱️ [3.3] 初始化缓存和检测耗时: ${t6 - t5}ms`)
-        console.log(`  ⏱️ [3.4] 检测完成 (发现 ${allErrors.length} 个错误)`)
+        console.log(`  ⏱️ [3.4] 检测完成 (发现 ${result.errors.length} 个错误)`)
 
-        // 4. 聚合所有错误，一起报告
-        if (allErrors.length > 0) {
-            throw new SubhutiGrammarValidationError(allErrors)
+        // 4. 聚合所有错误，一起报告（统计信息会在异常的 toString() 中输出）
+        if (result.errors.length > 0) {
+            throw new SubhutiGrammarValidationError(result.errors, result.stats)
         }
     }
 

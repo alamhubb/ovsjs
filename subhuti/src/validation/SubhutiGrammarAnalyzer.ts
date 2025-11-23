@@ -1002,9 +1002,9 @@ MaxLevel 检测结果: 无冲突
      *
      * 应该在收集 AST 之后立即调用
      *
-     * @returns 所有验证错误列表（包括左递归和 Or 冲突）
+     * @returns { errors: 验证错误列表, stats: 统计信息 }
      */
-    initCacheAndCheckLeftRecursion(): ValidationError[] {
+    initCacheAndCheckLeftRecursion(): { errors: ValidationError[], stats: any } {
         console.log(`\n🔍 ========== 语法验证与缓存初始化 ==========\n`)
 
         const totalStartTime = Date.now()
@@ -1016,7 +1016,10 @@ MaxLevel 检测结果: 无冲突
             orDetectionTime: 0,  // Or 冲突检测用时
             leftRecursionCount: 0,  // 左递归错误数量
             orConflictCount: 0,  // Or 分支冲突数量
-            totalTime: 0  // 总用时
+            totalTime: 0,  // 总用时
+            dfsFirstKCacheSize: 0,  // dfsFirstKCache 大小
+            bfsAllCacheSize: 0,  // bfsAllCache 大小
+            firstK: 0  // First(K) 的 K 值
         }
 
         // 1. 左递归检测（内部会初始化 DFS 缓存和 BFS 缓存）
@@ -1182,35 +1185,17 @@ MaxLevel 检测结果: 无冲突
             }
         }
         
-        // 5. 【最后】输出统计信息（放在最后，一目了然）
+        // 5. 准备统计信息（不在这里输出，放到 error 对象中）
         stats.totalTime = Date.now() - totalStartTime
-        
-        console.log(`\n`)
-        console.log(`${'='.repeat(60)}`)
-        console.log(`📊 ========== 统计信息 ==========`)
-        console.log(`${'='.repeat(60)}`)
-        
-        console.log(`\n⏱️  时间统计：`)
-        console.log(`   总耗时: ${stats.totalTime}ms`)
-        console.log(`   ├─ First(K) 缓存生成: ${stats.dfsFirstKTime}ms (${(stats.dfsFirstKTime / stats.totalTime * 100).toFixed(1)}%)`)
-        console.log(`   ├─ MaxLevel 缓存生成: ${stats.bfsMaxLevelTime}ms (${(stats.bfsMaxLevelTime / stats.totalTime * 100).toFixed(1)}%)`)
-        console.log(`   └─ Or 冲突检测: ${stats.orDetectionTime}ms (${(stats.orDetectionTime / stats.totalTime * 100).toFixed(1)}%)`)
-        
-        console.log(`\n🔍 检测结果：`)
-        console.log(`   ├─ 左递归错误: ${stats.leftRecursionCount} 个`)
-        console.log(`   └─ Or 分支遮蔽: ${stats.orConflictCount} 个`)
-        console.log(`   总计: ${allErrors.length} 个错误`)
-        
-        console.log(`\n📦 缓存信息：`)
-        console.log(`   ├─ dfsFirstKCache: ${this.dfsFirstKCache.size} 条 (First(${EXPANSION_LIMITS.FIRST_K}))`)
-        console.log(`   └─ bfsAllCache: ${this.bfsAllCache.size} 条 (MaxLevel)`)
-        
-        console.log(`\n${'='.repeat(60)}`)
+        stats.dfsFirstKCacheSize = this.dfsFirstKCache.size
+        stats.bfsAllCacheSize = this.bfsAllCache.size
+        stats.firstK = EXPANSION_LIMITS.FIRST_K
 
-        console.log(`\n🎯 ========== 详细性能分析报告 ==========`)
-        this.perfAnalyzer.report()
-
-        return allErrors
+        // 返回错误列表和统计信息
+        return {
+            errors: allErrors,
+            stats: stats
+        }
     }
 
 

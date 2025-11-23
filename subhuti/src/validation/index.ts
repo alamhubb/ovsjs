@@ -7,6 +7,7 @@
 // 类型定义
 export type {
     ValidationError,
+    ValidationStats,
     RuleNode,
     ConsumeNode,
     SequenceNode,
