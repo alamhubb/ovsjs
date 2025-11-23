@@ -191,7 +191,7 @@ class PerformanceAnalyzer {
         console.log(`     未命中: ${this.cacheStats.getDirectChildren.miss}`)
         console.log(`     总次数: ${this.cacheStats.getDirectChildren.total}`)
         console.log(`     命中率: ${this.cacheStats.getDirectChildren.total > 0 ? ((this.cacheStats.getDirectChildren.hit / this.cacheStats.getDirectChildren.total) * 100).toFixed(1) : 0}%`)
-        
+
         // BFS 增量优化效果
         if (this.cacheStats.bfsOptimization.totalCalls > 0) {
             console.log(`\n   🚀 BFS 增量优化效果:`)
@@ -204,7 +204,7 @@ class PerformanceAnalyzer {
                 console.log(`     平均每次跳过: ${avgSkipped.toFixed(2)} 层`)
             }
         }
-        
+
         // 以下缓存仅在特殊场景使用，通常命中率较低
         if (this.cacheStats.bfsLevel.total > 0) {
             console.log(`   BFS_Level (handleDFS特殊场景: firstK=∞, maxLevel=1):`)
@@ -213,7 +213,7 @@ class PerformanceAnalyzer {
             console.log(`     总次数: ${this.cacheStats.bfsLevel.total}`)
             console.log(`     命中率: ${((this.cacheStats.bfsLevel.hit / this.cacheStats.bfsLevel.total) * 100).toFixed(1)}%`)
         }
-        
+
         if (this.cacheStats.expandOneLevel.total > 0) {
             console.log(`   ExpandOneLevel (BFS路径展开缓存):`)
             console.log(`     命中: ${this.cacheStats.expandOneLevel.hit}`)
@@ -1181,12 +1181,12 @@ export class SubhutiGrammarAnalyzer {
         console.log(`${'='.repeat(60)}`)
         console.log(`📋 语法验证错误汇总`)
         console.log(`${'='.repeat(60)}`)
-        
+
         if (allErrors.length === 0) {
             console.log(`\n✅ 未发现任何语法错误！\n`)
         } else {
             console.log(`\n⚠️  发现 ${allErrors.length} 个语法错误：\n`)
-            
+
             // 4.1 输出左递归错误（优先）
             if (leftRecursionErrors.length > 0) {
                 console.log(`❌ 左递归错误 (${leftRecursionErrors.length} 个)：`)
@@ -1200,7 +1200,7 @@ export class SubhutiGrammarAnalyzer {
                 })
                 console.log(`\n`)
             }
-            
+
             // 4.2 输出 Or 分支冲突错误
             if (orConflictErrors.length > 0) {
                 console.log(`⚠️  Or 分支冲突 (${orConflictErrors.length} 个)：`)
@@ -1222,7 +1222,7 @@ export class SubhutiGrammarAnalyzer {
                 console.log(`\n`)
             }
         }
-        
+
         console.log(`${'='.repeat(60)}`)
 
         // 5. 输出性能统计
@@ -1977,12 +1977,12 @@ export class SubhutiGrammarAnalyzer {
             if (this.bfsLevelCache.has(searchKey)) {
                 startLevel = searchLevel
                 currentPaths = this.bfsLevelCache.get(searchKey)!
-                
+
                 // 记录优化统计
                 const skippedLevels = searchLevel - 1
                 this.perfAnalyzer.cacheStats.bfsOptimization.skippedLevels += skippedLevels
                 this.perfAnalyzer.cacheStats.bfsOptimization.fromCachedLevel++
-                
+
                 console.log(`   ✅ 找到缓存: level ${searchLevel} (${currentPaths.length} 条路径)`)
                 console.log(`   🚀 优化: 跳过 ${skippedLevels} 层计算（level 1~${searchLevel}），直接从 level ${searchLevel} 开始`)
                 break
@@ -1994,7 +1994,7 @@ export class SubhutiGrammarAnalyzer {
             console.log(`   ⚠️  无缓存，从 level 1 开始展开`)
             startLevel = 1
             currentPaths = this.getDirectChildren(ruleName)
-            
+
             // 记录统计：从 level 1 开始
             this.perfAnalyzer.cacheStats.bfsOptimization.fromLevel1++
         }
@@ -2132,7 +2132,7 @@ export class SubhutiGrammarAnalyzer {
         // BFS 只做完整合并，不截取
         const result = [...finishedPaths, ...currentPaths]
         console.log(`\n   📦 合并路径: 已完成=${finishedPaths.length}, 未完成=${currentPaths.length}, 总计=${result.length}`)
-        
+
         // 只去重，不截取
         const finalResult = this.deduplicate(result)
         console.log(`   🔄 最终去重: ${result.length} → ${finalResult.length}`)
@@ -2223,7 +2223,7 @@ export class SubhutiGrammarAnalyzer {
         // ========================================
         // 阶段3：缓存未命中，实际计算
         // ========================================
-        
+
         // 🔧 修复：记录缓存未命中
         if (firstK !== EXPANSION_LIMITS.INFINITY) {
             this.perfAnalyzer.recordCacheMiss('expandOneLevelTruncated')
@@ -2303,7 +2303,7 @@ export class SubhutiGrammarAnalyzer {
      */
     private getDirectChildren(ruleName: string): string[][] {
         console.log(`\n🔍 [getDirectChildren] 规则: ${ruleName}`)
-        
+
         // 1. 优先从 bfsLevelCache 获取 level 1 的数据（懒加载缓存）
         const key = `${ruleName}:${EXPANSION_LIMITS.LEVEL_1}`
         if (this.bfsLevelCache.has(key)) {
@@ -2316,7 +2316,7 @@ export class SubhutiGrammarAnalyzer {
         // 缓存未命中，需要动态计算
         this.perfAnalyzer.recordCacheMiss('getDirectChildren')
         console.log(`   ⚠️  缓存未命中: ${key}`)
-        
+
         // 2. 检查是否是 token
         const tokenNode = this.tokenCache?.get(ruleName)
         if (tokenNode && tokenNode.type === 'consume') {
@@ -2334,13 +2334,12 @@ export class SubhutiGrammarAnalyzer {
         }
 
         console.log(`   🔧 动态计算: 展开1层...`)
-        
+
         // 4. 动态计算：展开1层
         // expandPathsByDFS → subRuleHandler 会自动缓存到 "ruleName:1"
         const t0 = Date.now()
-        const result = this.expandPathsByDFS(
+        const result = this.handleDFS(
             ruleName,
-            null,
             EXPANSION_LIMITS.INFINITY,
             0,
             EXPANSION_LIMITS.LEVEL_1,
@@ -2403,11 +2402,19 @@ export class SubhutiGrammarAnalyzer {
         // 🎯 核心路由：尽早分流 DFS 和 BFS
         // ========================================
 
-        if (maxLevel === EXPANSION_LIMITS.INFINITY || maxLevel === 1) {
+        if (maxLevel === EXPANSION_LIMITS.INFINITY) {
             // 🔴 DFS 模式：深度优先展开（无限层级）
             // 递归检测和左递归检测在 handleDFS 内部进行
             return this.handleDFS(ruleName, firstK, curLevel, maxLevel, isFirstPosition)
         } else {
+            /*if (maxLevel === 1) {
+                const key = `${ruleName}:${EXPANSION_LIMITS.LEVEL_1}`
+                if (this.bfsLevelCache.has(key)) {
+                    return this.getDirectChildren(ruleName)
+                }
+            }
+*/
+
             // 🔵 BFS 模式：广度优先展开（限制层级）
             // BFS 有层级限制，不需要递归检测
             return this.handleBFS(ruleName, maxLevel)
