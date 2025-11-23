@@ -444,55 +444,6 @@ export class SubhutiGrammarAnalyzer {
     }
 
 
-    /**
-     * BFS 缓存预填充（从 level 1 到 level_k）
-     *
-     * 目的：
-     * - 提前计算常用的浅层展开结果
-     * - 为 BFS 增量优化提供基础缓存
-     * - 触发 getDirectChildren 的懒加载填充
-     *
-     * 策略：
-     * - 遍历所有规则
-     * - 对每个规则预填充 level 1 到 level_k 的缓存
-     */
-    private preFillBFSCache(): void {
-        console.log(`    预填充策略: 从 level 1 到 level ${EXPANSION_LIMITS.LEVEL_K}`)
-
-        const ruleNames = Array.from(this.ruleASTs.keys())
-        let totalFilled = 0
-
-        // 预填充 level 1 到 level_k
-        for (let level = 1; level <= EXPANSION_LIMITS.LEVEL_K; level++) {
-
-            for (const ruleName of ruleNames) {
-                const key = `${ruleName}:${level}`
-                console.log(`\n    [预填充] 规则: ${ruleName}`)
-
-                // 跳过已有缓存
-                if (this.bfsLevelCache.has(key)) {
-                    console.log(`      ✓ Level ${level}: 已有缓存，跳过`)
-                    continue
-                }
-
-                try {
-                    // 调用 BFS 展开（会触发 getDirectChildren 和懒加载）
-                    const result = this.expandPathsByBFSCache(ruleName, level)
-                    totalFilled++
-                    console.log(`      ✓ Level ${level}: 填充完成 (${result.length} 条路径)`)
-                } catch (e) {
-                    console.error(`      ✗ Level ${level}: 填充失败: ${e.message}`)
-                    throw e
-                }
-            }
-        }
-
-        console.log(`\n    预填充汇总:`)
-        console.log(`      规则数: ${ruleNames.length}`)
-        console.log(`      层级数: 1~${EXPANSION_LIMITS.LEVEL_K}`)
-        console.log(`      新增缓存: ${totalFilled} 条`)
-        console.log(`      BFS Level 缓存总数: ${this.bfsLevelCache.size} 条`)
-    }
 
     /**
      * 检测所有规则的 Or 分支冲突（智能模式：先 First(1)，有冲突再 First(5)）
@@ -1094,7 +1045,6 @@ export class SubhutiGrammarAnalyzer {
      *
      * 应该在收集 AST 之后立即调用
      *
-     * @param maxLevel 最大展开层级（默认使用配置中的 MAX_LEVEL）
      * @returns 所有验证错误列表（包括左递归和 Or 冲突）
      */
     initCacheAndCheckLeftRecursion(): ValidationError[] {
@@ -1163,8 +1113,41 @@ export class SubhutiGrammarAnalyzer {
 
         // 1.5. BFS 缓存预填充（level 1 到 level_k）
         console.log(`\n📊 [阶段1.5] 开始 BFS 缓存预填充...`)
+        console.log(`    预填充策略: 从 level 1 到 level ${EXPANSION_LIMITS.LEVEL_K}`)
         const t1_5 = Date.now()
-        this.preFillBFSCache()
+        
+        let totalFilled = 0
+        
+        // 预填充 level 1 到 level_k
+        for (let level = 1; level <= EXPANSION_LIMITS.LEVEL_K; level++) {
+            for (const ruleName of ruleNames) {
+                const key = `${ruleName}:${level}`
+                console.log(`\n    [预填充] 规则: ${ruleName}`)
+
+                // 跳过已有缓存
+                if (this.bfsLevelCache.has(key)) {
+                    console.log(`      ✓ Level ${level}: 已有缓存，跳过`)
+                    continue
+                }
+
+                try {
+                    // 调用 BFS 展开（会触发 getDirectChildren 和懒加载）
+                    const result = this.expandPathsByBFSCache(ruleName, level)
+                    totalFilled++
+                    console.log(`      ✓ Level ${level}: 填充完成 (${result.length} 条路径)`)
+                } catch (e) {
+                    console.error(`      ✗ Level ${level}: 填充失败: ${e.message}`)
+                    throw e
+                }
+            }
+        }
+
+        console.log(`\n    预填充汇总:`)
+        console.log(`      规则数: ${ruleNames.length}`)
+        console.log(`      层级数: 1~${EXPANSION_LIMITS.LEVEL_K}`)
+        console.log(`      新增缓存: ${totalFilled} 条`)
+        console.log(`      BFS Level 缓存总数: ${this.bfsLevelCache.size} 条`)
+        
         const t1_5End = Date.now()
         console.log(`✅ [阶段1.5] BFS 缓存预填充完成，耗时 ${t1_5End - t1_5}ms`)
 
