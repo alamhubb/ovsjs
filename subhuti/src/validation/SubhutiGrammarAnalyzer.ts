@@ -1970,14 +1970,12 @@ export class SubhutiGrammarAnalyzer {
      * - 缓存 C:4, B:7, A:10 ✅
      *
      * @param ruleName
-     * @param paths 当前路径数组
      * @param levels 要展开的层数
      * @returns 展开后的路径
      */
     private expandPathsByBFSCacheClean(
         ruleName: string,
-        levels: number,
-        paths: string[][]
+        levels: number
     ): string[][] {
         if (levels === 0) {
             throw new Error('系统错误')
@@ -1989,6 +1987,20 @@ export class SubhutiGrammarAnalyzer {
         if (levels === 1) {
             return this.getDirectChildren(ruleName)
         }
+
+
+        let cachedLevel = 1
+        let cachedPaths: string[][] | null = null
+        for (let level = Math.min(levels, EXPANSION_LIMITS.LEVEL_K); level >= 2; level--) {
+            const cacheKey = `${ruleName}:${level}`
+            if (this.bfsLevelCache.has(cacheKey)) {
+                cachedLevel = level
+                cachedPaths = this.bfsLevelCache.get(cacheKey)!
+                break
+            }
+        }
+
+
 
         const expandedPaths: string[][] = []
 
@@ -2022,7 +2034,7 @@ export class SubhutiGrammarAnalyzer {
 
                 if (remainingLevels !== 0) {
                     // 递归调用自己
-                    cachedPaths = this.expandPathsByBFSCacheClean(symbol, remainingLevels, cachedPaths)
+                    cachedPaths = this.expandPathsByBFSCacheClean(symbol, remainingLevels)
                 }
 
                 // 缓存结果（用 symbol 作为 key）
