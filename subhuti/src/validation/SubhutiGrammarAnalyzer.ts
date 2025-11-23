@@ -780,25 +780,67 @@ export class SubhutiGrammarAnalyzer {
             }
         }
 
-        // Step 2: 如果有 First(1) 冲突，进一步检测 First(5)
+        // Step 2: 如果有 First(1) 冲突，进一步检测 First(K)
         if (hasFirst1Conflict) {
 
             const t5Start = Date.now()
 
-            // 计算每个分支的 First(5) 集合
-            const branchFirst5Sets: Set<string>[] = []
+            // 计算每个分支的 First(K) 集合
+            const branchFirstKSets: Set<string>[] = []
 
             for (const alt of orNodeTyped.alternatives) {
                 const firstSet = this.computeNodeFirstK(alt, EXPANSION_LIMITS.FIRST_K)
-                branchFirst5Sets.push(firstSet)
+                branchFirstKSets.push(firstSet)
                 if (perfStats) perfStats.first5Computed++
             }
 
             const t5End = Date.now()
             if (perfStats) perfStats.first5Time += (t5End - t5Start)
+            
+            // 检测 First(K) 冲突
+            const firstKConflicts: Array<{ i: number, j: number }> = []
+            
+            for (let i = 0; i < branchFirstKSets.length; i++) {
+                for (let j = i + 1; j < branchFirstKSets.length; j++) {
+                    const intersection = this.setIntersection(branchFirstKSets[i], branchFirstKSets[j])
+                    if (intersection.size > 0) {
+                        firstKConflicts.push({i, j})
+                    }
+                }
+            }
+            
+            // 如果没有 First(K) 冲突，跳过
+            if (firstKConflicts.length === 0) {
+                if (perfStats) perfStats.first5Skipped++
+                return
+            }
 
-            // 只检测在 First(1) 有冲突的分支对
+            // Step 3: 使用 bfsAllCache 深度检测（First(∞) + Level(K)）
             const tCompStart = Date.now()
+            
+            // 获取每个分支的 BFS 完整路径
+            const branchBFSPaths: string[][][] = []
+            
+            for (let idx = 0; idx < orNodeTyped.alternatives.length; idx++) {
+                const alt = orNodeTyped.alternatives[idx]
+                
+                // 如果是单个规则，直接从 bfsAllCache 获取
+                if ((alt as any).type === 'subrule') {
+                    const altSubrule = alt as any
+                    const paths = this.bfsAllCache.get(altSubrule.ruleName)
+                    if (paths) {
+                        branchBFSPaths.push(paths)
+                    } else {
+                        // 没有缓存，使用 First(K) 的结果
+                        const firstKPaths = Array.from(branchFirstKSets[idx]).map(seq => seq.split(' '))
+                        branchBFSPaths.push(firstKPaths)
+                    }
+                } else {
+                    // 复杂节点，使用 First(K) 的结果
+                    const firstKPaths = Array.from(branchFirstKSets[idx]).map(seq => seq.split(' '))
+                    branchBFSPaths.push(firstKPaths)
+                }
+            }
 
             // 🔧 优化：收集所有冲突，最后合并报告
             interface RuleConflictInfo {
@@ -815,7 +857,8 @@ export class SubhutiGrammarAnalyzer {
 
             const allRuleConflicts: RuleConflictInfo[] = []
 
-            for (const conflict of first1Conflicts) {
+            // 只检测在 First(K) 有冲突的分支对
+            for (const conflict of firstKConflicts) {
                 const {i, j} = conflict
 
                 if (perfStats) perfStats.conflictComparisons++
@@ -839,40 +882,32 @@ export class SubhutiGrammarAnalyzer {
                 // 🔧 优化：一旦发现第一个冲突就停止，避免重复报告同一对分支
                 let foundConflict = false
 
-                for (const seqA of branchFirst5Sets[i]) {
-                    if (foundConflict) break  // 已发现冲突，跳出外层循环
+                // 使用 BFS 路径检测冲突
+                for (const pathA of branchBFSPaths[i]) {
+                    if (foundConflict) break
 
-                    const tokensA = seqA.split(' ')
-
-                    for (const seqB of branchFirst5Sets[j]) {
-                        const tokensB = seqB.split(' ')
+                    for (const pathB of branchBFSPaths[j]) {
 
                         // 情况1：两个序列长度都等于 k，且完全相同
-                        if (tokensA.length === k && tokensB.length === k && seqA === seqB) {
+                        if (pathA.length === k && pathB.length === k && pathA.join(' ') === pathB.join(' ')) {
                             conflictPairs.push({
-                                frontSeq: seqA,
-                                frontLen: tokensA.length,
-                                behindSeq: seqB,
-                                behindLen: tokensB.length,
+                                frontSeq: pathA.join(' '),
+                                frontLen: pathA.length,
+                                behindSeq: pathB.join(' '),
+                                behindLen: pathB.length,
                                 type: 'full'
                             })
                             foundConflict = true
-                            break  // 发现冲突，停止比较
+                            break
                         }
 
-                        // 情况2：前面就是分支A，后面就是分支B，不调整顺序
-                        const front = tokensA  // 分支 i (前面的分支)
-                        const behind = tokensB  // 分支 j (后面的分支)
-                        const frontSeq = front.join(' ')
-                        const behindSeq = behind.join(' ')
-
-                        // 外层判断：(front.length < k) || (behind.length >= front.length)
-                        if ((front.length < k) || (behind.length >= front.length)) {
-                            if (behind.length > front.length) {
-                                // 后面长度大于前面，检查是否包含前面（前缀关系）
+                        // 情况2：前缀关系
+                        if ((pathA.length < k) || (pathB.length >= pathA.length)) {
+                            if (pathB.length > pathA.length) {
+                                // 检查是否是前缀
                                 let isPrefix = true
-                                for (let idx = 0; idx < front.length; idx++) {
-                                    if (front[idx] !== behind[idx]) {
+                                for (let idx = 0; idx < pathA.length; idx++) {
+                                    if (pathA[idx] !== pathB[idx]) {
                                         isPrefix = false
                                         break
                                     }
@@ -880,30 +915,29 @@ export class SubhutiGrammarAnalyzer {
 
                                 if (isPrefix) {
                                     conflictPairs.push({
-                                        frontSeq,
-                                        frontLen: front.length,
-                                        behindSeq,
-                                        behindLen: behind.length,
+                                        frontSeq: pathA.join(' '),
+                                        frontLen: pathA.length,
+                                        behindSeq: pathB.join(' '),
+                                        behindLen: pathB.length,
                                         type: 'prefix'
                                     })
                                     foundConflict = true
-                                    break  // 发现冲突，停止比较
+                                    break
                                 }
-                            } else if (behind.length === front.length) {
-                                // 长度相等，检查内容是否相等
-                                if (frontSeq === behindSeq) {
+                            } else if (pathB.length === pathA.length) {
+                                // 长度相等，检查内容
+                                if (pathA.join(' ') === pathB.join(' ')) {
                                     conflictPairs.push({
-                                        frontSeq,
-                                        frontLen: front.length,
-                                        behindSeq,
-                                        behindLen: behind.length,
+                                        frontSeq: pathA.join(' '),
+                                        frontLen: pathA.length,
+                                        behindSeq: pathB.join(' '),
+                                        behindLen: pathB.length,
                                         type: 'equal'
                                     })
                                     foundConflict = true
-                                    break  // 发现冲突，停止比较
+                                    break
                                 }
                             }
-                            // 如果 behind.length < front.length，则不检查
                         }
                     }
                 }
