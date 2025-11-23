@@ -929,7 +929,7 @@ MaxLevel 检测结果: 无冲突
         const totalStartTime = Date.now()
         
         // 统计对象
-        const stats = {
+        const stats: any = {
             dfsFirstKTime: 0,  // First(K) 缓存生成用时
             bfsMaxLevelTime: 0,  // MaxLevel 缓存生成用时
             orDetectionTime: 0,  // Or 冲突检测用时
@@ -941,6 +941,7 @@ MaxLevel 检测结果: 无冲突
             firstK: 0,  // First(K) 的 K 值
             cacheUsage: {
                 dfsFirstK: { hit: 0, miss: 0, total: 0, hitRate: 0 },
+                bfsLevelCache: { hit: 0, miss: 0, total: 0, hitRate: 0, size: 0 },
                 getDirectChildren: { hit: 0, miss: 0, total: 0, hitRate: 0 }
             }
         }
@@ -1044,6 +1045,7 @@ MaxLevel 检测结果: 无冲突
         
         // 收集缓存使用率统计
         const dfsFirstKStats = this.perfAnalyzer.cacheStats.dfsFirstK
+        const bfsLevelStats = this.perfAnalyzer.cacheStats.bfsLevel
         const getDirectChildrenStats = this.perfAnalyzer.cacheStats.getDirectChildren
         
         stats.cacheUsage = {
@@ -1052,6 +1054,13 @@ MaxLevel 检测结果: 无冲突
                 miss: dfsFirstKStats.miss,
                 total: dfsFirstKStats.total,
                 hitRate: dfsFirstKStats.total > 0 ? (dfsFirstKStats.hit / dfsFirstKStats.total * 100) : 0
+            },
+            bfsLevelCache: {
+                hit: bfsLevelStats.hit,
+                miss: bfsLevelStats.miss,
+                total: bfsLevelStats.total,
+                hitRate: bfsLevelStats.total > 0 ? (bfsLevelStats.hit / bfsLevelStats.total * 100) : 0,
+                size: this.bfsLevelCache.size
             },
             getDirectChildren: {
                 hit: getDirectChildrenStats.hit,

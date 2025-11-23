@@ -79,6 +79,7 @@ export interface ValidationStats {
     /** 缓存使用率统计 */
     cacheUsage?: {
         dfsFirstK: { hit: number, miss: number, total: number, hitRate: number }
+        bfsLevelCache: { hit: number, miss: number, total: number, hitRate: number, size: number }
         getDirectChildren: { hit: number, miss: number, total: number, hitRate: number }
     }
 }
@@ -171,6 +172,14 @@ export class SubhutiGrammarValidationError extends Error {
                 lines.push(`   dfsFirstKCache:`)
                 lines.push(`      命中: ${dfs.hit} 次, 未命中: ${dfs.miss} 次, 总计: ${dfs.total} 次`)
                 lines.push(`      命中率: ${dfs.hitRate.toFixed(1)}%`)
+                
+                const bfs = s.cacheUsage.bfsLevelCache
+                if (bfs.total > 0) {
+                    lines.push(`   bfsLevelCache (分层缓存):`)
+                    lines.push(`      大小: ${bfs.size} 条 (规则名:层级)`)
+                    lines.push(`      命中: ${bfs.hit} 次, 未命中: ${bfs.miss} 次, 总计: ${bfs.total} 次`)
+                    lines.push(`      命中率: ${bfs.hitRate.toFixed(1)}%`)
+                }
                 
                 const gdc = s.cacheUsage.getDirectChildren
                 if (gdc.total > 0) {
