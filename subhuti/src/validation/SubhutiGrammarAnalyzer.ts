@@ -150,14 +150,14 @@ class PerformanceAnalyzer {
     }
 
     // 记录缓存命中/未命中
-    recordCacheHit(cacheType: 'dfsFirstKCache' | 'bfsAllCache' | 'bfsLevelCache' | 'getDirectChildren' | 
-                             'dfsFirst1' | 'dfsFirstK' | 'bfsLevel' | 'expandOneLevel' | 'expandOneLevelTruncated') {
+    recordCacheHit(cacheType: 'dfsFirstKCache' | 'bfsAllCache' | 'bfsLevelCache' | 'getDirectChildren' |
+        'dfsFirst1' | 'dfsFirstK' | 'bfsLevel' | 'expandOneLevel' | 'expandOneLevelTruncated') {
         this.cacheStats[cacheType].hit++
         this.cacheStats[cacheType].total++
     }
 
-    recordCacheMiss(cacheType: 'dfsFirstKCache' | 'bfsAllCache' | 'bfsLevelCache' | 'getDirectChildren' | 
-                              'dfsFirst1' | 'dfsFirstK' | 'bfsLevel' | 'expandOneLevel' | 'expandOneLevelTruncated') {
+    recordCacheMiss(cacheType: 'dfsFirstKCache' | 'bfsAllCache' | 'bfsLevelCache' | 'getDirectChildren' |
+        'dfsFirst1' | 'dfsFirstK' | 'bfsLevel' | 'expandOneLevel' | 'expandOneLevelTruncated') {
         this.cacheStats[cacheType].miss++
         this.cacheStats[cacheType].total++
     }
@@ -396,12 +396,12 @@ export class SubhutiGrammarAnalyzer {
 
     /**
      * 封装的缓存 get 方法（统一管理所有缓存统计）
-     * 
+     *
      * ✅ 设计原则：
      * - 每次 get 调用都会增加 total 计数
      * - 如果缓存存在则 hit++，否则 miss++
      * - total 始终等于 hit + miss
-     * 
+     *
      * @param cacheType - 缓存类型
      * @param key - 缓存键
      * @returns 缓存的值，如果不存在返回 undefined
@@ -502,32 +502,32 @@ export class SubhutiGrammarAnalyzer {
         const startTime = Date.now()
 
         console.log('\n🔍 ===== Or 冲突检测开始 =====')
-        
+
         // 遍历所有规则
-        let slowestRule = { name: '', time: 0 }
+        let slowestRule = {name: '', time: 0}
         for (const [ruleName, ruleAST] of this.ruleASTs.entries()) {
             const ruleStartTime = Date.now()
-            
+
             const ruleStats = {
                 time: 0,
                 orNodeCount: 0,
                 pathCount: 0,
                 maxPathCount: 0
             }
-            
+
             const error = this.checkOrConflictsInNodeSmart(ruleName, ruleAST, ruleStats)
             if (error) {
                 orConflictErrors.push(error)
             }
-            
+
             ruleStats.time = Date.now() - ruleStartTime
             perfStats.ruleStats.set(ruleName, ruleStats)
-            
+
             // 记录最慢的规则
             if (ruleStats.time > slowestRule.time) {
-                slowestRule = { name: ruleName, time: ruleStats.time }
+                slowestRule = {name: ruleName, time: ruleStats.time}
             }
-            
+
             // 如果规则检测时间超过 100ms，立即输出日志
             if (ruleStats.time > 100) {
                 console.log(`⚠️  慢规则: ${ruleName}`)
@@ -539,18 +539,18 @@ export class SubhutiGrammarAnalyzer {
         }
 
         perfStats.totalTime = Date.now() - startTime
-        
+
         // 输出 Top 10 最慢的规则
         console.log('\n📊 Top 10 最慢的规则:')
         const sortedRules = Array.from(perfStats.ruleStats.entries())
             .sort((a, b) => b[1].time - a[1].time)
             .slice(0, 10)
-        
+
         for (let i = 0; i < sortedRules.length; i++) {
             const [ruleName, stats] = sortedRules[i]
             console.log(`${i + 1}. ${ruleName}: ${stats.time}ms (Or节点: ${stats.orNodeCount}, 路径: ${stats.pathCount}, 最大: ${stats.maxPathCount})`)
         }
-        
+
         console.log(`\n⏱️  Or 冲突检测总耗时: ${perfStats.totalTime}ms`)
         console.log('===========================\n')
 
@@ -575,7 +575,7 @@ export class SubhutiGrammarAnalyzer {
             case 'or':
                 // 统计 Or 节点数量
                 if (ruleStats) ruleStats.orNodeCount++
-                
+
                 // 执行冲突检测（带性能统计）
                 error = this.detectOrBranchConflictsWithCache(ruleName, node, ruleStats)
                 if (error) return error
@@ -626,8 +626,9 @@ export class SubhutiGrammarAnalyzer {
      * @returns 每个分支的路径集合数组
      */
     getOrNodeAllBranchRules(
-        orNode: OrNode, 
-        firstK: number, 
+        ruleName: string,
+        orNode: OrNode,
+        firstK: number,
         cacheType: 'dfsFirstKCache' | 'bfsAllCache'
     ): string[][] {
         // 存储每个分支的路径集合
@@ -792,6 +793,7 @@ or([A, A, B]) → or([A, B])  // 删除重复的A`
      *
      * @param ruleName 输出错误日志使用
      * @param orNode - Or 节点
+     * @param ruleStats
      */
     detectOrBranchEqualWithFirstK(
         ruleName: string,
@@ -804,9 +806,9 @@ or([A, A, B]) → or([A, B])  // 删除重复的A`
         }
 
         // 获取每个分支的 First(K) 路径集合
-        const branchPathSets = this.getOrNodeAllBranchRules(orNode, EXPANSION_LIMITS.FIRST_K, 'dfsFirstKCache')
+        const branchPathSets = this.getOrNodeAllBranchRules(ruleName, orNode, EXPANSION_LIMITS.FIRST_K, 'dfsFirstKCache')
         const firstK = EXPANSION_LIMITS.FIRST_K
-        
+
         // 统计路径数量
         if (ruleStats) {
             const totalPaths = branchPathSets.reduce((sum, paths) => sum + paths.length, 0)
@@ -888,17 +890,22 @@ or([A, A, B]) → or([A, B])  // 删除重复的A`
         }
 
         // 获取每个分支的深度展开路径集合
-        const branchPathSets = this.getOrNodeAllBranchRules(orNode, EXPANSION_LIMITS.INFINITY, 'bfsAllCache')
-        
+        const branchPathSets = this.getOrNodeAllBranchRules(ruleName, orNode, EXPANSION_LIMITS.INFINITY, 'bfsAllCache')
+
         // 统计路径数量（MaxLevel 的路径可能非常多）
         if (ruleStats) {
             const totalPaths = branchPathSets.reduce((sum, paths) => sum + paths.length, 0)
             const maxPaths = Math.max(...branchPathSets.map(paths => paths.length))
-            
+
             // 如果路径数量非常大，输出警告
             if (maxPaths > 1000) {
                 console.log(`   ⚠️  大量路径: ${ruleName} (最大单分支路径: ${maxPaths})`)
             }
+        }
+
+        console.log(ruleName)
+        for (const branchPathSet of branchPathSets) {
+            console.log(branchPathSet.length)
         }
 
         // 单向遍历：检测前面的分支是否遮蔽后面的分支
@@ -995,7 +1002,7 @@ or([A, A, B]) → or([A, B])  // 删除重复的A`
         ruleStats?: any
     ) {
         const orStartTime = Date.now()
-        
+
         // 🚀 线路1：First(K) 预检（快速）
         let firstKError = this.detectOrBranchEqualWithFirstK(ruleName, orNode, ruleStats)
 
@@ -1009,7 +1016,7 @@ or([A, A, B]) → or([A, B])  // 删除重复的A`
         const maxLevelError = this.detectOrBranchPrefixWithMaxLevel(ruleName, orNode, ruleStats)
 
         const orTime = Date.now() - orStartTime
-        
+
         // 如果单个 Or 节点检测时间超过 50ms，输出警告
         if (orTime > 50 && ruleStats) {
             console.log(`   ⚠️  Or节点慢: ${ruleName} (分支数: ${orNode.alternatives.length}, 耗时: ${orTime}ms)`)
@@ -1055,7 +1062,7 @@ MaxLevel 检测结果: 无冲突
      */
     initCacheAndCheckLeftRecursion(): { errors: ValidationError[], stats: any } {
         const totalStartTime = Date.now()
-        
+
         // 统计对象
         const stats: any = {
             dfsFirstKTime: 0,  // First(K) 缓存生成用时
@@ -1068,9 +1075,9 @@ MaxLevel 检测结果: 无冲突
             bfsAllCacheSize: 0,  // bfsAllCache 大小
             firstK: 0,  // First(K) 的 K 值
             cacheUsage: {
-                dfsFirstK: { hit: 0, miss: 0, total: 0, hitRate: 0 },
-                bfsLevelCache: { hit: 0, miss: 0, total: 0, hitRate: 0, size: 0 },
-                getDirectChildren: { hit: 0, miss: 0, total: 0, hitRate: 0 }
+                dfsFirstK: {hit: 0, miss: 0, total: 0, hitRate: 0},
+                bfsLevelCache: {hit: 0, miss: 0, total: 0, hitRate: 0, size: 0},
+                getDirectChildren: {hit: 0, miss: 0, total: 0, hitRate: 0}
             }
         }
 
@@ -1115,7 +1122,7 @@ MaxLevel 检测结果: 无冲突
 
             // 去重并存入 bfsAllCache
             const deduplicated = this.deduplicate(allLevelPaths)
-            
+
             // ⚠️ 问题所在：无论 deduplicated 是否为空，都会 set
             // 这导致 BFS 为所有规则名（包括未被引用的和 Token）都创建了缓存
             this.bfsAllCache.set(ruleName, deduplicated)
@@ -1136,7 +1143,7 @@ MaxLevel 检测结果: 无冲突
 
         const t1End = Date.now()
         const stage1Time = t1End - t1
-        
+
         // 记录统计信息
         stats.dfsFirstKTime = stage1Time  // DFS 包含 First(K) 缓存生成
         stats.bfsMaxLevelTime = stage1Time  // BFS 包含 MaxLevel 缓存生成（两者同时进行）
@@ -1149,7 +1156,7 @@ MaxLevel 检测结果: 无冲突
         const orConflictErrors = this.checkAllOrConflicts()
         const t2End = Date.now()
         const stage2Time = t2End - t2
-        
+
         // 记录 Or 检测统计
         stats.orDetectionTime = stage2Time
         stats.orConflictCount = orConflictErrors.length
@@ -1164,13 +1171,13 @@ MaxLevel 检测结果: 无冲突
         stats.dfsFirstKCacheSize = this.dfsFirstKCache.size
         stats.bfsAllCacheSize = this.bfsAllCache.size
         stats.firstK = EXPANSION_LIMITS.FIRST_K
-        
+
         // 收集缓存使用率统计（使用新的独立统计字段）
         const dfsFirstKCacheStats = this.perfAnalyzer.cacheStats.dfsFirstKCache
         const bfsAllCacheStats = this.perfAnalyzer.cacheStats.bfsAllCache
         const bfsLevelCacheStats = this.perfAnalyzer.cacheStats.bfsLevelCache
         const getDirectChildrenStats = this.perfAnalyzer.cacheStats.getDirectChildren
-        
+
         stats.cacheUsage = {
             dfsFirstK: {
                 hit: dfsFirstKCacheStats.hit,
