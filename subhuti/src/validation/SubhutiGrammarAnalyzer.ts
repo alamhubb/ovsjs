@@ -1674,7 +1674,6 @@ MaxLevel 检测结果: 无冲突
         for (let i = 0; i < nodesToExpand.length; i++) {
             this.checkTimeout(`expandSequenceNode-子节点${i + 1}`)
 
-            const childNode = nodesToExpand[i]
             // 展开当前子节点
             // 💡 传递累积的位置信息：父级是第1个 AND 当前也是第1个
             let branches = this.expandNode(
@@ -1708,11 +1707,8 @@ MaxLevel 检测结果: 无冲突
 
             minLengthSum += minLength;
 
-            console.log(`  [累加长度] 当前: ${minLengthSum}, firstK: ${firstK}`)
-
             // 如果累加的最短长度 >= firstK，可以停止
             if (minLengthSum >= firstK) {
-                console.log(`  [提前停止] 累加长度已满足`)
                 break;
             }
         }
