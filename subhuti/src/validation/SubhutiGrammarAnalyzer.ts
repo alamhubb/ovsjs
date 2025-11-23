@@ -2535,8 +2535,6 @@ export class SubhutiGrammarAnalyzer {
                 // 这种情况通常只在特殊场景使用
             } else if (maxLevel !== EXPANSION_LIMITS.LEVEL_1) {
                 throw new Error(`系统错误：不支持的参数组合 firstK=${firstK}, maxLevel=${maxLevel}`)
-            } else {
-                throw new Error(`系统错误：不支持的参数组合 firstK=${firstK}, maxLevel=${maxLevel}`)
             }
         }
 
