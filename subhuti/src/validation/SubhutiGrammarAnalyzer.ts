@@ -104,8 +104,9 @@ class PerformanceAnalyzer {
         levelLimitReturn: 0,  // 层级限制返回次数
         dfsFirst1: {hit: 0, miss: 0, total: 0},
         dfsFirstK: {hit: 0, miss: 0, total: 0},
-        bfsLevel: {hit: 0, miss: 0, total: 0},
-        expandOneLevel: {hit: 0, miss: 0, total: 0},  // 展开1层缓存（不截取）
+        bfsLevel: {hit: 0, miss: 0, total: 0},  // handleDFS 中的特殊场景（firstK=∞, maxLevel=1）
+        getDirectChildren: {hit: 0, miss: 0, total: 0},  // getDirectChildren 第一层缓存（懒加载）
+        expandOneLevel: {hit: 0, miss: 0, total: 0},  // 展开1层缓存（不截取）- 仅在 BFS 预填充时使用
         expandOneLevelTruncated: {hit: 0, miss: 0, total: 0},  // 展开1层+截取缓存
         actualCompute: 0  // 实际计算次数（getDirectChildren）
     }
@@ -138,12 +139,12 @@ class PerformanceAnalyzer {
     }
 
     // 记录缓存命中/未命中
-    recordCacheHit(cacheType: 'dfsFirst1' | 'dfsFirstK' | 'bfsLevel' | 'expandOneLevel' | 'expandOneLevelTruncated') {
+    recordCacheHit(cacheType: 'dfsFirst1' | 'dfsFirstK' | 'bfsLevel' | 'getDirectChildren' | 'expandOneLevel' | 'expandOneLevelTruncated') {
         this.cacheStats[cacheType].hit++
         this.cacheStats[cacheType].total++
     }
 
-    recordCacheMiss(cacheType: 'dfsFirst1' | 'dfsFirstK' | 'bfsLevel' | 'expandOneLevel' | 'expandOneLevelTruncated') {
+    recordCacheMiss(cacheType: 'dfsFirst1' | 'dfsFirstK' | 'bfsLevel' | 'getDirectChildren' | 'expandOneLevel' | 'expandOneLevelTruncated') {
         this.cacheStats[cacheType].miss++
         this.cacheStats[cacheType].total++
     }
@@ -179,23 +180,28 @@ class PerformanceAnalyzer {
         console.log(`     总次数: ${this.cacheStats.dfsFirstK.total}`)
         console.log(`     命中率: ${this.cacheStats.dfsFirstK.total > 0 ? ((this.cacheStats.dfsFirstK.hit / this.cacheStats.dfsFirstK.total) * 100).toFixed(1) : 0}%`)
 
-        console.log(`   BFS_Level (广度优先按层级):`)
-        console.log(`     命中: ${this.cacheStats.bfsLevel.hit}`)
-        console.log(`     未命中: ${this.cacheStats.bfsLevel.miss}`)
-        console.log(`     总次数: ${this.cacheStats.bfsLevel.total}`)
-        console.log(`     命中率: ${this.cacheStats.bfsLevel.total > 0 ? ((this.cacheStats.bfsLevel.hit / this.cacheStats.bfsLevel.total) * 100).toFixed(1) : 0}%`)
-
-        console.log(`   ExpandOneLevel (展开1层，不截取):`)
-        console.log(`     命中: ${this.cacheStats.expandOneLevel.hit}`)
-        console.log(`     未命中: ${this.cacheStats.expandOneLevel.miss}`)
-        console.log(`     总次数: ${this.cacheStats.expandOneLevel.total}`)
-        console.log(`     命中率: ${this.cacheStats.expandOneLevel.total > 0 ? ((this.cacheStats.expandOneLevel.hit / this.cacheStats.expandOneLevel.total) * 100).toFixed(1) : 0}%`)
-
-        console.log(`   ExpandOneLevelTruncated (展开1层+截取):`)
-        console.log(`     命中: ${this.cacheStats.expandOneLevelTruncated.hit}`)
-        console.log(`     未命中: ${this.cacheStats.expandOneLevelTruncated.miss}`)
-        console.log(`     总次数: ${this.cacheStats.expandOneLevelTruncated.total}`)
-        console.log(`     命中率: ${this.cacheStats.expandOneLevelTruncated.total > 0 ? ((this.cacheStats.expandOneLevelTruncated.hit / this.cacheStats.expandOneLevelTruncated.total) * 100).toFixed(1) : 0}%`)
+        console.log(`   GetDirectChildren (懒加载缓存):`)
+        console.log(`     命中: ${this.cacheStats.getDirectChildren.hit}`)
+        console.log(`     未命中: ${this.cacheStats.getDirectChildren.miss}`)
+        console.log(`     总次数: ${this.cacheStats.getDirectChildren.total}`)
+        console.log(`     命中率: ${this.cacheStats.getDirectChildren.total > 0 ? ((this.cacheStats.getDirectChildren.hit / this.cacheStats.getDirectChildren.total) * 100).toFixed(1) : 0}%`)
+        
+        // 以下缓存仅在特殊场景使用，通常命中率较低
+        if (this.cacheStats.bfsLevel.total > 0) {
+            console.log(`   BFS_Level (handleDFS特殊场景: firstK=∞, maxLevel=1):`)
+            console.log(`     命中: ${this.cacheStats.bfsLevel.hit}`)
+            console.log(`     未命中: ${this.cacheStats.bfsLevel.miss}`)
+            console.log(`     总次数: ${this.cacheStats.bfsLevel.total}`)
+            console.log(`     命中率: ${((this.cacheStats.bfsLevel.hit / this.cacheStats.bfsLevel.total) * 100).toFixed(1)}%`)
+        }
+        
+        if (this.cacheStats.expandOneLevel.total > 0) {
+            console.log(`   ExpandOneLevel (BFS路径展开缓存):`)
+            console.log(`     命中: ${this.cacheStats.expandOneLevel.hit}`)
+            console.log(`     未命中: ${this.cacheStats.expandOneLevel.miss}`)
+            console.log(`     总次数: ${this.cacheStats.expandOneLevel.total}`)
+            console.log(`     命中率: ${((this.cacheStats.expandOneLevel.hit / this.cacheStats.expandOneLevel.total) * 100).toFixed(1)}%`)
+        }
 
         console.log(`   实际计算次数 (getDirectChildren): ${this.cacheStats.actualCompute}`)
         console.log('')
@@ -250,6 +256,7 @@ class PerformanceAnalyzer {
             dfsFirst1: {hit: 0, miss: 0, total: 0},
             dfsFirstK: {hit: 0, miss: 0, total: 0},
             bfsLevel: {hit: 0, miss: 0, total: 0},
+            getDirectChildren: {hit: 0, miss: 0, total: 0},
             expandOneLevel: {hit: 0, miss: 0, total: 0},
             expandOneLevelTruncated: {hit: 0, miss: 0, total: 0},
             actualCompute: 0
@@ -2208,16 +2215,26 @@ export class SubhutiGrammarAnalyzer {
      * - IfStatement → [[If, LParen, Expression, RParen, Statement]]
      */
     private getDirectChildren(ruleName: string): string[][] {
-        // 1. 优先从 bfsLevelCache 获取 level 1 的数据
+        // 🔧 添加统计
+        this.perfAnalyzer.cacheStats.getDirectChildren.total++
+        
+        // 1. 优先从 bfsLevelCache 获取 level 1 的数据（懒加载缓存）
         const key = `${ruleName}:${EXPANSION_LIMITS.LEVEL_1}`
         if (this.bfsLevelCache.has(key)) {
+            this.perfAnalyzer.recordCacheHit('getDirectChildren')
             return this.bfsLevelCache.get(key)!
         }
 
+        // 缓存未命中，需要动态计算
+        this.perfAnalyzer.recordCacheMiss('getDirectChildren')
+        
         // 2. 检查是否是 token
         const tokenNode = this.tokenCache?.get(ruleName)
         if (tokenNode && tokenNode.type === 'consume') {
-            return [[ruleName]]  // token 直接返回
+            const result = [[ruleName]]  // token 直接返回
+            // 缓存 token 的结果
+            this.bfsLevelCache.set(key, result)
+            return result
         }
 
         // 3. 获取规则的 AST 节点
@@ -2237,6 +2254,7 @@ export class SubhutiGrammarAnalyzer {
             false,
         )
 
+        // 缓存计算结果（懒加载填充）
         if (!this.bfsLevelCache.has(key)) {
             this.bfsLevelCache.set(key, result)
         }
