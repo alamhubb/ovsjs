@@ -197,14 +197,9 @@ if (code.length <= 500) {
 }
 
 try {
-    // 词法分析（使用ES2020 tokens以支持私有属性）
-    console.log('\n⏱️ === 性能分析开始 ===\n')
-
-    const t0 = Date.now()
+    // 词法分析
     const lexer = new SubhutiLexer(es2025Tokens)
     const tokens = lexer.tokenize(code)
-    const t1 = Date.now()
-    console.log(`⏱️ [1] 词法分析耗时: ${t1 - t0}ms`)
 
     const inputTokens = tokens
         .filter((t: any) => {
@@ -217,34 +212,13 @@ try {
         .map((t: any) => t.tokenValue)
         .filter((v: any) => v !== undefined)
 
-    console.log(`✅ 词法分析: ${tokens.length} tokens (有效token: ${inputTokens.length})`)
-
-    // 语法分析（使用 Es2025Parser）
-    // 🆕 重新启用 validate()，测试左递归检测
-    const t2 = Date.now()
+    // 语法分析和验证
     const parser = new Es2025Parser(tokens)
-    const t3 = Date.now()
-    console.log(`⏱️ [2] Parser构造耗时: ${t3 - t2}ms`)
-
-    const t4 = Date.now()
     parser.validate()
-    const t5 = Date.now()
-    console.log(`⏱️ [3] validate()调用耗时: ${t5 - t4}ms`)
-
     parser.debug()
 
-    console.log(`✅ 语法验证: 通过（无 Or 分支冲突）`)
-
-    console.log(`  tokens 数量: ${tokens.length}`)
-    console.log(`  前3个 tokens: ${tokens.slice(0, 3).map((t: any) => t.tokenType?.name || 'unknown').join(', ')}`)
-
-    const t6 = Date.now()
+    // 生成 CST
     const cst = parser.Script()
-    const t7 = Date.now()
-    console.log(`⏱️ [4] Script()解析耗时: ${t7 - t6}ms`)
-    // const cst = parser.Script()
-    // const cst = null
-    console.log(`✅ 语法分析: CST生成成功`)
     
     // CST结构验证
     const structureErrors = validateCSTStructure(cst)
@@ -257,20 +231,6 @@ try {
             }
         })
         throw new Error(`CST结构验证失败: ${structureErrors.length}个错误`)
-    }
-    console.log(`✅ CST结构: 无null/undefined节点，结构完整`)
-    
-    // CST统计信息
-    const stats = getCSTStatistics(cst)
-    console.log(`\n📊 CST统计:`)
-    console.log(`  - 总节点数: ${stats.totalNodes}`)
-    console.log(`  - 叶子节点: ${stats.leafNodes}`)
-    console.log(`  - 最大深度: ${stats.maxDepth}`)
-    
-    // 输出完整CST（用于调试）
-    if (process.argv.includes('--full')) {
-        console.log('\n🌳 完整CST结构:')
-        console.log(JSON.stringify(cst, null, 2))
     }
     
     // Token值验证
@@ -287,26 +247,11 @@ try {
         console.log(`\n❌ CST丢失了${missingTokens.length}个token值:`, missingTokens)
         throw new Error('Token值未完整保留')
     }
-    console.log(`✅ Token值: ${cstTokens.length}个token值完整保留`)
     
-    // 节点类型统计
-    const nodeNames = collectNodeNames(cst)
-    const uniqueNodeTypes = Array.from(stats.nodeTypes.entries())
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 10)
-    
-    console.log(`\n📋 主要节点类型 (Top 10):`)
-    uniqueNodeTypes.forEach(([name, count]) => {
-        console.log(`  - ${name}: ${count}次`)
-    })
-    
-    // 输出完整CST（可选，默认不输出以保持简洁）
+    // 输出完整CST（可选）
     if (process.argv.includes('--full')) {
         console.log('\n🌳 完整CST结构:')
         console.log(JSON.stringify(cst, null, 2))
-    } else {
-        console.log('\n💡 提示：添加 --full 参数可查看完整CST结构')
-        console.log(`   例如：npx tsx test-file-cst.ts ${filePath} --full`)
     }
     
     console.log('\n' + '='.repeat(60))

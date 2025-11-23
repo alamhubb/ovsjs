@@ -943,8 +943,6 @@ MaxLevel 检测结果: 无冲突
 
         // 1. 左递归检测（内部会初始化 DFS 缓存和 BFS 缓存）
         const ruleNames = Array.from(this.ruleASTs.keys())
-        console.log(`       策略：dfsFirstKCache (firstK=${EXPANSION_LIMITS.FIRST_K}, maxLevel=∞) + 派生 first1`)
-        console.log(`       算法：深度优先，递归展开到token`)
         const t1 = Date.now()
 
         // 清空错误 Map
