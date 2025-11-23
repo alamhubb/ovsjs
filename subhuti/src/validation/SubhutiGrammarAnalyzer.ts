@@ -1233,7 +1233,123 @@ export class SubhutiGrammarAnalyzer {
         // 1. 左递归检测
         console.log(`\n📊 [阶段1] 开始左递归检测...`)
         const t1 = Date.now()
-        const leftRecursionErrors = this.checkAllLeftRecursion()
+        // const leftRecursionErrors = this.checkAllLeftRecursion()
+
+        console.log(`\n📊 [左递归检测] 开始检测 ${this.ruleASTs.size} 个规则...`)
+
+        const ruleNames = Array.from(this.ruleASTs.keys())
+
+        // ========================================
+        // 阶段1：初始化 DFS 缓存 + 左递归检测
+        // ========================================
+        console.log(`    [1/2] 初始化 DFS 缓存 (无限层数场景) + 左递归检测...`)
+        console.log(`       策略：dfsFirstKCache (firstK=${EXPANSION_LIMITS.FIRST_K}, maxLevel=∞) + 派生 first1`)
+        console.log(`       算法：深度优先，递归展开到token`)
+
+        // 清空错误 Map
+        this.detectedLeftRecursionErrors.clear()
+
+        // 启动超时检测
+        this.operationStartTime = Date.now()
+
+        // 遍历所有规则
+        let ruleIndex = 0
+        for (const ruleNode of this.ruleASTs.values()) {
+            const ruleName = (ruleNode as any).ruleName
+            this.currentProcessingRule = ruleName
+            ruleIndex++
+            console.log(`\n  [${ruleIndex}/${this.ruleASTs.size}] 检测规则: ${ruleName}`)
+
+            // 清空递归检测集合
+            this.recursiveDetectionSet.clear()
+
+            try {
+                this.checkTimeout(`规则${ruleName}-开始`)
+                this.expandPathsByDFS(null, ruleNode, EXPANSION_LIMITS.FIRST_K, 0, EXPANSION_LIMITS.INFINITY, true)
+                console.log(`  ✓ 规则 ${ruleName} 检测完成`)
+            } catch (e) {
+                console.error(`  ❌ 规则 ${ruleName} 检测失败: ${e.message}`)
+                throw e
+            }
+        }
+
+        // 重置超时检测
+        this.operationStartTime = 0
+
+        // 为每个错误补充 suggestion
+        for (const error of this.detectedLeftRecursionErrors.values()) {
+            const ruleAST = this.getRuleNodeByAst(error.ruleName)
+            error.suggestion = this.getLeftRecursionSuggestion(
+                error.ruleName,
+                ruleAST,
+                new Set([error.ruleName])
+            )
+            console.log(`  ❌ ${error.ruleName}: 左递归`)
+        }
+
+        if (this.detectedLeftRecursionErrors.size === 0) {
+            console.log(`  ✅ 未发现左递归`)
+        } else {
+            console.log(`  ⚠️  发现 ${this.detectedLeftRecursionErrors.size} 个左递归错误`)
+        }
+
+        const t1End = Date.now()
+        console.log(`\n    ✓ [1/2] DFS 缓存初始化 + 左递归检测完成`)
+        console.log(`       耗时: ${t1End - t1}ms`)
+        console.log(`       主缓存 dfsFirstKCache: ${this.dfsFirstKCache.size} 条`)
+        console.log(`       派生缓存 dfsFirst1Cache: ${this.dfsFirst1Cache.size} 条（从firstK截取）`)
+
+        // ========================================
+        // 阶段2：初始化 BFS 缓存
+        // ========================================
+        console.log(`\n    [2/2] 初始化 BFS 缓存 (限制层数场景)...`)
+        console.log(`       策略：bfsLevelCache (firstK=∞, maxLevel=1~${EXPANSION_LIMITS.LEVEL_K})`)
+        console.log(`       算法：广度优先，按层级循环展开`)
+        const t2 = Date.now()
+        for (let level = 1; level <= EXPANSION_LIMITS.LEVEL_K; level++) {
+            for (const ruleName of ruleNames) {
+                const t0 = Date.now()
+
+                // 为每个层级触发计算
+                this.expandPathsByBFS(ruleName, level)
+
+                const duration = Date.now() - t0
+                this.perfAnalyzer.record(`init_InfinityLevelK_${ruleName}`, duration)
+
+                if (duration > 100) {
+                    console.log(`      ⚠️  ${ruleName}: ${duration}ms (较慢)`)
+                }
+            }
+        }
+        const t2End = Date.now()
+        console.log(`    ✓ [2/2] BFS 缓存初始化完成`)
+        console.log(`       耗时: ${t2End - t2}ms`)
+        console.log(`       缓存条目: ${this.bfsLevelCache.size} 条`)
+
+        // 聚合所有层级的数据到 bfsAllCache
+        console.log(`\n    [2.5] 聚合所有层级数据到 bfsAllCache...`)
+        const tAgg = Date.now()
+        for (const ruleName of ruleNames) {
+            const allLevelPaths: string[][] = []
+            // 遍历所有层级，收集该规则的所有路径
+            for (let level = 1; level <= EXPANSION_LIMITS.LEVEL_K; level++) {
+                const key = `${ruleName}:${level}`
+                const levelPaths = this.bfsLevelCache.get(key)
+                if (levelPaths) {
+                    allLevelPaths.push(...levelPaths)
+                }
+            }
+            // 去重后存储到 bfsAllCache
+            const deduplicated = this.deduplicate(allLevelPaths)
+            this.bfsAllCache.set(ruleName, deduplicated)
+        }
+        const tAggEnd = Date.now()
+        console.log(`    ✓ [2.5] 数据聚合完成`)
+        console.log(`       耗时: ${tAggEnd - tAgg}ms`)
+        console.log(`       bfsAllCache 条目: ${this.bfsAllCache.size} 条`)
+
+        // 返回收集到的错误（转换为数组）
+        return Array.from(this.detectedLeftRecursionErrors.values())
         const t1End = Date.now()
         console.log(`✅ [阶段1] 左递归检测完成，耗时 ${t1End - t1}ms`)
         allErrors.push(...leftRecursionErrors)
