@@ -2011,65 +2011,45 @@ export class SubhutiGrammarAnalyzer {
         ruleName: string,
         targetLevel: number
     ): string[][] {
-        // 默认使用纯净版（无日志），方便学习
-        // 如需调试，改为：return this.expandPathsByBFSCacheWithLog(ruleName, targetLevel, [])
-        return this.expandPathsByBFSCacheClean(ruleName, targetLevel, [])
-    }
-
-    /**
-     * BFS 展开（纯净版，无日志）
-     *
-     * 用于学习和理解核心逻辑
-     *
-     * @param ruleName 规则名
-     * @param targetLevel 目标层级
-     * @param path 当前路径（根部调用传入空数组 []）
-     * @returns 展开结果
-     */
-    private expandPathsByBFSCacheClean(
-        ruleName: string,
-        targetLevel: number,
-        path: string[] = []
-    ): string[][] {
-        // 根部调用：获取 level 1，然后展开剩余层数
-        if (path.length === 0) {
-            const level1Paths = this.getDirectChildren(ruleName)
-            if (targetLevel === 1) {
-                return level1Paths
-            }
-            const result = this.expandPathsByLevelClean(level1Paths, targetLevel - 1)
-            
-            // 缓存最终结果
-            if (targetLevel <= EXPANSION_LIMITS.LEVEL_K) {
-                this.bfsLevelCache.set(`${ruleName}:${targetLevel}`, result)
-            }
-            return result
+        // 获取 level 1
+        const level1Paths = this.getDirectChildren(ruleName)
+        if (targetLevel === 1) {
+            return level1Paths
         }
         
-        // 非根部调用（兼容旧代码）
-        return this.expandPathsByBFSCacheClean(ruleName, targetLevel, [])
+        // 默认使用纯净版（无日志），方便学习
+        const result = this.expandPathsByBFSCacheClean(level1Paths, targetLevel - 1)
+        
+        // 缓存最终结果
+        if (targetLevel <= EXPANSION_LIMITS.LEVEL_K) {
+            this.bfsLevelCache.set(`${ruleName}:${targetLevel}`, result)
+        }
+        
+        return result
+        
+        // 如需调试，改为：
+        // return this.expandPathsByBFSCacheWithLog(ruleName, targetLevel, [])
     }
 
     /**
-     * 通用路径展开方法（纯净版，无 ruleName 参数）
-     * 
+     * BFS 展开（纯净版，单方法实现）
+     *
      * 核心逻辑：
      * 1. 对每个路径中的每个规则名，查找该规则的缓存
      * 2. 如果有缓存，复用；否则递归展开
      * 3. 自动缓存中间结果
      * 
      * 示例：
-     * - paths = [[A, B, C]]
-     * - levels = 10
+     * - paths = [[A, B, C]], levels = 10
      * - 遍历 A: 查找 A:10 → 找到 A:3 → 递归展开 A:3 的结果 7 层 → 缓存 A:10
      * - 遍历 B: 查找 B:10 → 找到 B:3 → 递归展开 B:3 的结果 7 层 → 缓存 B:10
      * - 遍历 C: 查找 C:10 → 找到 C:3 → 递归展开 C:3 的结果 7 层 → 缓存 C:10
-     * 
+     *
      * @param paths 当前路径数组
      * @param levels 要展开的层数
      * @returns 展开后的路径
      */
-    private expandPathsByLevelClean(
+    private expandPathsByBFSCacheClean(
         paths: string[][],
         levels: number
     ): string[][] {
@@ -2085,14 +2065,13 @@ export class SubhutiGrammarAnalyzer {
 
             // 遍历路径中的每个符号
             for (const symbol of path) {
-                // 判断是否为 token
+                // token，保持不变
                 if (this.tokenCache.has(symbol)) {
-                    // token，保持不变
                     allBranches.push([[symbol]])
                     continue
                 }
 
-                // 是规则名
+                // 规则名
                 // 基础情况：level 1，直接获取子节点
                 if (levels === 1) {
                     const children = this.getDirectChildren(symbol)
@@ -2134,7 +2113,7 @@ export class SubhutiGrammarAnalyzer {
                     const remainingLevels = levels - cachedLevel
 
                     // 递归展开
-                    const result = this.expandPathsByLevelClean(cachedPaths, remainingLevels)
+                    const result = this.expandPathsByBFSCacheClean(cachedPaths, remainingLevels)
 
                     // 缓存结果
                     if (levels <= EXPANSION_LIMITS.LEVEL_K) {
