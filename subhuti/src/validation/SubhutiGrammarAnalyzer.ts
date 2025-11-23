@@ -1984,12 +1984,12 @@ export class SubhutiGrammarAnalyzer {
      */
     /**
      * BFS 展开（纯递归实现，智能缓存复用）
-     * 
+     *
      * 核心思想：
      * 1. 查找最大可用缓存块（如 level 3）
      * 2. 对缓存的每个路径中的规则名，递归调用自己
      * 3. 缓存并返回结果
-     * 
+     *
      * 示例：查找 A:10，缓存有 A:3
      * - 找到 A:3 = [a1, B, c1]
      * - 对 B 递归调用 expandPathsByBFSCache(B, 7, [B])
@@ -2009,12 +2009,142 @@ export class SubhutiGrammarAnalyzer {
      */
     private expandPathsByBFSCache(
         ruleName: string,
+        targetLevel: number
+    ): string[][] {
+        // 默认使用纯净版（无日志），方便学习
+        // 如需调试，改为：return this.expandPathsByBFSCacheWithLog(ruleName, targetLevel, [])
+        return this.expandPathsByBFSCacheClean(ruleName, targetLevel, [])
+    }
+
+    /**
+     * BFS 展开（纯净版，无日志）
+     *
+     * 用于学习和理解核心逻辑
+     *
+     * @param ruleName 规则名
+     * @param targetLevel 目标层级
+     * @param path 当前路径（根部调用传入空数组 []）
+     * @returns 展开结果
+     */
+    private expandPathsByBFSCacheClean(
+        ruleName: string,
+        targetLevel: number,
+        path: string[] = []
+    ): string[][] {
+        const isRootCall = path.length === 0
+
+        if (isRootCall) {
+            this.perfAnalyzer.cacheStats.bfsOptimization.totalCalls++
+        }
+
+        // 查找最大可用缓存
+        let cachedLevel = 0
+        let cachedPaths: string[][] | null = null
+
+        for (let level = Math.min(targetLevel, EXPANSION_LIMITS.LEVEL_K); level >= 1; level--) {
+            const cacheKey = `${ruleName}:${level}`
+            if (this.bfsLevelCache.has(cacheKey)) {
+                cachedLevel = level
+                cachedPaths = this.bfsLevelCache.get(cacheKey)!
+
+                // 找到目标层级，直接返回
+                if (level === targetLevel) {
+                    if (isRootCall) {
+                        this.perfAnalyzer.recordCacheHit('bfsLevel')
+                    }
+                    return cachedPaths
+                }
+
+                // 找到更低层级的缓存
+                if (isRootCall) {
+                    this.perfAnalyzer.cacheStats.bfsOptimization.skippedLevels += level
+                    this.perfAnalyzer.cacheStats.bfsOptimization.fromCachedLevel++
+                }
+                break
+            }
+        }
+
+        // 没有找到缓存，从 level 1 开始
+        if (cachedLevel === 0) {
+            if (isRootCall) {
+                this.perfAnalyzer.cacheStats.bfsOptimization.fromLevel1++
+            }
+
+            cachedLevel = 1
+            cachedPaths = this.getDirectChildren(ruleName)
+
+            // 基础情况：目标就是 level 1
+            if (targetLevel === 1) {
+                return cachedPaths
+            }
+        }
+
+        // 记录缓存未命中
+        if (isRootCall && targetLevel <= EXPANSION_LIMITS.LEVEL_K) {
+            this.perfAnalyzer.recordCacheMiss('bfsLevel')
+        }
+        if (isRootCall) {
+            this.perfAnalyzer.recordActualCompute()
+        }
+
+        // 计算剩余层数
+        const remainingLevels = targetLevel - cachedLevel
+
+        // 对每个缓存路径递归展开
+        const expandedPaths: string[][] = []
+
+        for (const cachedPath of cachedPaths!) {
+            const allBranches: string[][][] = []
+
+            // 遍历路径中的每个符号
+            for (const symbol of cachedPath) {
+                if (this.ruleASTs.has(symbol)) {
+                    // 递归调用自己
+                    const branches = this.expandPathsByBFSCacheClean(symbol, remainingLevels, [symbol])
+                    allBranches.push(branches)
+                } else {
+                    // token，保持不变
+                    allBranches.push([[symbol]])
+                }
+            }
+
+            // 笛卡尔积组合
+            const pathResult = this.cartesianProduct(allBranches)
+            expandedPaths.push(...pathResult)
+        }
+
+        // 去重
+        const finalResult = this.deduplicate(expandedPaths)
+
+        // 缓存结果
+        if (targetLevel <= EXPANSION_LIMITS.LEVEL_K) {
+            const cacheKey = `${ruleName}:${targetLevel}`
+            if (!this.bfsLevelCache.has(cacheKey)) {
+                this.bfsLevelCache.set(cacheKey, finalResult)
+            }
+        }
+
+        return finalResult
+    }
+
+    /**
+     * BFS 展开（带日志版本）
+     *
+     * 完整的日志输出，方便调试
+     *
+     * @param ruleName 规则名
+     * @param targetLevel 目标层级
+     * @param path 当前路径（根部调用传入空数组 []）
+     * @returns 展开结果
+     */
+    private expandPathsByBFSCacheWithLog(
+        ruleName: string,
         targetLevel: number,
         path: string[] = []
     ): string[][] {
         const t0 = Date.now()
         const isRootCall = path.length === 0
-        
+
         if (isRootCall) {
             console.log(`\n📊 [BFS展开] 规则: ${ruleName}, 目标层级: ${targetLevel}`)
             this.perfAnalyzer.cacheStats.bfsOptimization.totalCalls++
@@ -2023,13 +2153,13 @@ export class SubhutiGrammarAnalyzer {
         // 1. 查找最大可用缓存（从 targetLevel 向下）
         let cachedLevel = 0
         let cachedPaths: string[][] | null = null
-        
+
         for (let level = Math.min(targetLevel, EXPANSION_LIMITS.LEVEL_K); level >= 1; level--) {
             const cacheKey = `${ruleName}:${level}`
             if (this.bfsLevelCache.has(cacheKey)) {
                 cachedLevel = level
                 cachedPaths = this.bfsLevelCache.get(cacheKey)!
-                
+
                 // 提前返回：找到目标层级的缓存
                 if (level === targetLevel) {
                     if (isRootCall) {
@@ -2041,7 +2171,7 @@ export class SubhutiGrammarAnalyzer {
                     }
                     return cachedPaths
                 }
-                
+
                 // 找到更低层级的缓存
                 if (isRootCall) {
                     console.log(`   ✅ 找到缓存: level ${level} (${cachedPaths.length} 条路径)`)
@@ -2062,10 +2192,10 @@ export class SubhutiGrammarAnalyzer {
             } else {
                 console.log(`      🔄 递归: ${ruleName}:${targetLevel} 无缓存，获取 level 1`)
             }
-            
+
             cachedLevel = 1
             cachedPaths = this.getDirectChildren(ruleName)
-            
+
             // 基础情况：如果目标就是 level 1
             if (targetLevel === 1) {
                 return cachedPaths
@@ -2088,10 +2218,10 @@ export class SubhutiGrammarAnalyzer {
 
         // 4. 对 cachedPaths 中的每个路径，递归展开
         const expandedPaths: string[][] = []
-        
+
         for (const cachedPath of cachedPaths!) {
             const allBranches: string[][][] = []
-            
+
             // 遍历路径中的每个符号
             for (const symbol of cachedPath) {
                 if (this.ruleASTs.has(symbol)) {
@@ -2106,7 +2236,7 @@ export class SubhutiGrammarAnalyzer {
                     allBranches.push([[symbol]])
                 }
             }
-            
+
             // 笛卡尔积组合
             const pathResult = this.cartesianProduct(allBranches)
             expandedPaths.push(...pathResult)
@@ -2114,7 +2244,7 @@ export class SubhutiGrammarAnalyzer {
 
         // 5. 去重并缓存
         const finalResult = this.deduplicate(expandedPaths)
-        
+
         if (isRootCall) {
             console.log(`   📦 最终结果: ${finalResult.length} 条路径`)
         }
