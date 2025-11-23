@@ -762,9 +762,6 @@ or([A, A, B]) → or([A, B])  // 删除重复的A`
                 // 先尝试检测完全相同（快速，O(n)）
                 const equalPath = this.findEqualPath(pathsFront, pathsBehind)
                 if (equalPath) {
-                    console.log(`  ❌ ${ruleName}: 分支 ${i + 1} 和 ${j + 1} 相同（First(${firstK})）`)
-                    console.log(`     路径: ${equalPath}`)
-
                     return {
                         level: 'ERROR',
                         type: 'or-identical-branches',
@@ -782,10 +779,6 @@ or([A, A, B]) → or([A, B])  // 删除重复的A`
                 // 如果没有完全相同，再检测前缀关系（O(n²)）
                 const prefixRelation = this.findPrefixRelation(pathsFront, pathsBehind)
                 if (prefixRelation) {
-                    console.log(`  ❌ ${ruleName}: 分支 ${i + 1} 遮蔽分支 ${j + 1}（First(${firstK}) 阶段发现前缀）`)
-                    console.log(`     前缀路径: ${prefixRelation.prefix}`)
-                    console.log(`     完整路径: ${prefixRelation.full}`)
-
                     return {
                         level: 'ERROR',
                         type: 'prefix-conflict',
@@ -844,10 +837,6 @@ or([A, A, B]) → or([A, B])  // 删除重复的A`
                 const prefixRelation = this.findPrefixRelation(pathsFront, pathsBehind)
 
                 if (prefixRelation) {
-                    console.log(`  ❌ ${ruleName}: 分支 ${i + 1} 遮蔽分支 ${j + 1}（前缀关系）`)
-                    console.log(`     前缀路径: ${prefixRelation.prefix}`)
-                    console.log(`     完整路径: ${prefixRelation.full}`)
-
                     // 发现前缀遮蔽，报告错误
                     return ({
                         level: 'ERROR',
@@ -1066,6 +1055,35 @@ MaxLevel 检测结果: 无冲突
         }
 
         console.log(`      bfsAllCache 总数: ${this.bfsAllCache.size} 条`)
+        
+        // 🔍 调试：检查缓存差异
+        const dfsKeys = new Set(this.dfsFirstKCache.keys())
+        const bfsKeys = new Set(this.bfsAllCache.keys())
+        
+        // 找出只在 DFS 中的规则
+        const onlyInDFS = Array.from(dfsKeys).filter(key => !bfsKeys.has(key))
+        // 找出只在 BFS 中的规则
+        const onlyInBFS = Array.from(bfsKeys).filter(key => !dfsKeys.has(key))
+        
+        if (onlyInDFS.length > 0 || onlyInBFS.length > 0) {
+            console.log(`\n    ⚠️  缓存差异分析：`)
+            console.log(`       dfsFirstKCache: ${dfsKeys.size} 条`)
+            console.log(`       bfsAllCache: ${bfsKeys.size} 条`)
+            
+            if (onlyInDFS.length > 0) {
+                console.log(`       只在 DFS 中的规则 (${onlyInDFS.length} 个): ${onlyInDFS.slice(0, 5).join(', ')}${onlyInDFS.length > 5 ? '...' : ''}`)
+            }
+            
+            if (onlyInBFS.length > 0) {
+                console.log(`       只在 BFS 中的规则 (${onlyInBFS.length} 个): ${onlyInBFS.slice(0, 5).join(', ')}${onlyInBFS.length > 5 ? '...' : ''}`)
+                
+                // 检查这些规则是否是 Token
+                const bfsTokens = onlyInBFS.filter(name => this.tokenCache.has(name))
+                if (bfsTokens.length > 0) {
+                    console.log(`       其中是 Token 的 (${bfsTokens.length} 个): ${bfsTokens.slice(0, 5).join(', ')}${bfsTokens.length > 5 ? '...' : ''}`)
+                }
+            }
+        }
 
         // 重置超时检测
         this.operationStartTime = 0
@@ -1117,50 +1135,6 @@ MaxLevel 检测结果: 无冲突
         allErrors.push(...leftRecursionErrors)
         allErrors.push(...orConflictErrors)
 
-        // 4. 先输出错误详情（如果有）
-        console.log(`\n`)
-        console.log(`${'='.repeat(60)}`)
-        if (allErrors.length === 0) {
-            console.log(`✅ 未发现任何语法错误！`)
-        } else {
-            console.log(`📋 检测到 ${allErrors.length} 个错误`)
-            console.log(`${'='.repeat(60)}`)
-
-            // 4.1 输出左递归错误（优先）
-            if (leftRecursionErrors.length > 0) {
-                console.log(`\n❌ 左递归错误 (${leftRecursionErrors.length} 个)：`)
-                console.log(`${'─'.repeat(60)}`)
-                leftRecursionErrors.forEach((error, index) => {
-                    console.log(`\n[${index + 1}] 规则: ${error.ruleName}`)
-                    console.log(`    消息: ${error.message}`)
-                    if (error.suggestion) {
-                        console.log(`    建议:\n${error.suggestion.split('\n').map(line => `      ${line}`).join('\n')}`)
-                    }
-                })
-                console.log(`\n`)
-            }
-
-            // 4.2 输出 Or 分支冲突错误
-            if (orConflictErrors.length > 0) {
-                console.log(`\n⚠️  Or 分支冲突 (${orConflictErrors.length} 个)：`)
-                console.log(`${'─'.repeat(60)}`)
-                orConflictErrors.forEach((error, index) => {
-                    console.log(`\n[${index + 1}] 规则: ${error.ruleName}`)
-                    console.log(`    消息: ${error.message}`)
-                    if (error.conflictPaths) {
-                        console.log(`    冲突详情:`)
-                        console.log(`      ${error.conflictPaths.pathA}`)
-                        if (error.conflictPaths.pathB) {
-                            console.log(`      ${error.conflictPaths.pathB}`)
-                        }
-                    }
-                    if (error.suggestion) {
-                        console.log(`    建议: ${error.suggestion}`)
-                    }
-                })
-            }
-        }
-        
         // 5. 准备统计信息（不在这里输出，放到 error 对象中）
         stats.totalTime = Date.now() - totalStartTime
         stats.dfsFirstKCacheSize = this.dfsFirstKCache.size
