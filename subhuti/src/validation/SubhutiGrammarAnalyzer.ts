@@ -968,6 +968,9 @@ MaxLevel 检测结果: 无冲突
         console.log(`\n📊 [左递归检测] 开始检测 ${this.ruleASTs.size} 个规则...`)
 
         const ruleNames = Array.from(this.ruleASTs.keys())
+        
+        console.log(`    规则总数: ${ruleNames.length}`)
+        console.log(`    Token 总数: ${this.tokenCache.size}`)
 
         console.log(`    [1/2] 初始化 DFS 缓存 (无限层数场景) + 左递归检测...`)
         console.log(`       策略：dfsFirstKCache (firstK=${EXPANSION_LIMITS.FIRST_K}, maxLevel=∞) + 派生 first1`)
@@ -980,16 +983,10 @@ MaxLevel 检测结果: 无冲突
         // 启动超时检测
         this.operationStartTime = Date.now()
 
-        // 遍历所有规则
-        for (const ruleNode of this.ruleASTs.values()) {
-            const ruleName = (ruleNode as any).ruleName
-            this.currentProcessingRule = ruleName
-
+        for (const ruleName of ruleNames) {
             // 清空递归检测集合
             this.recursiveDetectionSet.clear()
-
-            this.checkTimeout(`规则${ruleName}-开始`)
-            this.expandNode(ruleNode, EXPANSION_LIMITS.FIRST_K, 0, EXPANSION_LIMITS.INFINITY, true)
+            this.expandPathsByDFSCache(ruleNode, EXPANSION_LIMITS.FIRST_K, 0, EXPANSION_LIMITS.INFINITY, true)
         }
 
         // BFS 缓存预填充
@@ -1026,6 +1023,9 @@ MaxLevel 检测结果: 无冲突
 
             // 去重并存入 bfsAllCache
             const deduplicated = this.deduplicate(allLevelPaths)
+            
+            // ⚠️ 问题所在：无论 deduplicated 是否为空，都会 set
+            // 这导致 BFS 为所有规则名（包括未被引用的和 Token）都创建了缓存
             this.bfsAllCache.set(ruleName, deduplicated)
         }
 
