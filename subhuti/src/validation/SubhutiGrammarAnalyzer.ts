@@ -2025,23 +2025,25 @@ export class SubhutiGrammarAnalyzer {
         }
 
         // 🔥 增量优化：查找最近的缓存层级
-        let startLevel = 1
+        let startLevel = 0  // 当前已有的层级（0 表示还没开始）
         let currentPaths: string[][] | null = null
 
         console.log(`   🔍 查找最近的缓存层级...`)
         for (let searchLevel = maxLevel - 1; searchLevel >= 1; searchLevel--) {
             const searchKey = `${ruleName}:${searchLevel}`
             if (this.bfsLevelCache.has(searchKey)) {
-                startLevel = searchLevel
+                // 找到 level N 的缓存，说明 level 1~N 已经计算过了
+                startLevel = searchLevel  // 当前已有的层级
                 currentPaths = this.bfsLevelCache.get(searchKey)!
 
-                // 记录优化统计（跳过了 level 1 ~ searchLevel 的计算）
+                // 记录优化统计
+                // 跳过的层数 = 找到的缓存层级（level 1 ~ searchLevel 都不需要重新计算）
                 const skippedLevels = searchLevel
                 this.perfAnalyzer.cacheStats.bfsOptimization.skippedLevels += skippedLevels
                 this.perfAnalyzer.cacheStats.bfsOptimization.fromCachedLevel++
 
                 console.log(`   ✅ 找到缓存: level ${searchLevel} (${currentPaths.length} 条路径)`)
-                console.log(`   🚀 优化: 跳过 ${skippedLevels} 层计算（level 1~${searchLevel}），直接从 level ${searchLevel} 开始`)
+                console.log(`   🚀 优化: 跳过 ${skippedLevels} 层计算（level 1~${searchLevel}），从 level ${searchLevel} 继续展开到 level ${maxLevel}`)
                 break
             }
         }
@@ -2049,6 +2051,7 @@ export class SubhutiGrammarAnalyzer {
         // 如果没有找到缓存，从 level 1 开始
         if (currentPaths === null) {
             console.log(`   ⚠️  无缓存，从 level 1 开始展开`)
+            // getDirectChildren 返回的是 level 1 的结果
             startLevel = 1
             currentPaths = this.getDirectChildren(ruleName)
 
