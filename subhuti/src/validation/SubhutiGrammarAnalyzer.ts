@@ -108,7 +108,13 @@ class PerformanceAnalyzer {
         getDirectChildren: {hit: 0, miss: 0, total: 0},  // getDirectChildren 第一层缓存（懒加载）
         expandOneLevel: {hit: 0, miss: 0, total: 0},  // 展开1层缓存（不截取）- 仅在 BFS 预填充时使用
         expandOneLevelTruncated: {hit: 0, miss: 0, total: 0},  // 展开1层+截取缓存
-        actualCompute: 0  // 实际计算次数（getDirectChildren）
+        actualCompute: 0,  // 实际计算次数（getDirectChildren）
+        bfsOptimization: {
+            totalCalls: 0,           // BFS 总调用次数
+            skippedLevels: 0,        // 跳过的层级数（增量优化效果）
+            fromLevel1: 0,           // 从 level 1 开始的次数
+            fromCachedLevel: 0       // 从缓存层级开始的次数
+        }
     }
 
     // 记录方法调用
@@ -186,6 +192,19 @@ class PerformanceAnalyzer {
         console.log(`     总次数: ${this.cacheStats.getDirectChildren.total}`)
         console.log(`     命中率: ${this.cacheStats.getDirectChildren.total > 0 ? ((this.cacheStats.getDirectChildren.hit / this.cacheStats.getDirectChildren.total) * 100).toFixed(1) : 0}%`)
         
+        // BFS 增量优化效果
+        if (this.cacheStats.bfsOptimization.totalCalls > 0) {
+            console.log(`\n   🚀 BFS 增量优化效果:`)
+            console.log(`     总调用次数: ${this.cacheStats.bfsOptimization.totalCalls}`)
+            console.log(`     从 level 1 开始: ${this.cacheStats.bfsOptimization.fromLevel1} (${((this.cacheStats.bfsOptimization.fromLevel1 / this.cacheStats.bfsOptimization.totalCalls) * 100).toFixed(1)}%)`)
+            console.log(`     从缓存层级开始: ${this.cacheStats.bfsOptimization.fromCachedLevel} (${((this.cacheStats.bfsOptimization.fromCachedLevel / this.cacheStats.bfsOptimization.totalCalls) * 100).toFixed(1)}%)`)
+            console.log(`     总计跳过层数: ${this.cacheStats.bfsOptimization.skippedLevels}`)
+            if (this.cacheStats.bfsOptimization.fromCachedLevel > 0) {
+                const avgSkipped = this.cacheStats.bfsOptimization.skippedLevels / this.cacheStats.bfsOptimization.fromCachedLevel
+                console.log(`     平均每次跳过: ${avgSkipped.toFixed(2)} 层`)
+            }
+        }
+        
         // 以下缓存仅在特殊场景使用，通常命中率较低
         if (this.cacheStats.bfsLevel.total > 0) {
             console.log(`   BFS_Level (handleDFS特殊场景: firstK=∞, maxLevel=1):`)
@@ -259,7 +278,13 @@ class PerformanceAnalyzer {
             getDirectChildren: {hit: 0, miss: 0, total: 0},
             expandOneLevel: {hit: 0, miss: 0, total: 0},
             expandOneLevelTruncated: {hit: 0, miss: 0, total: 0},
-            actualCompute: 0
+            actualCompute: 0,
+            bfsOptimization: {
+                totalCalls: 0,
+                skippedLevels: 0,
+                fromLevel1: 0,
+                fromCachedLevel: 0
+            }
         }
     }
 }
@@ -1885,6 +1910,7 @@ export class SubhutiGrammarAnalyzer {
      * 广度优先展开（BFS - Breadth-First Search）
      *
      * 🚀 算法：逐层循环，精确控制层数
+     * 🔥 优化：增量复用 - 从最近的缓存层级开始，而非每次从 level 1 开始
      *
      * 适用场景：
      * - maxLevel = 具体值（如 3, 5）
@@ -1896,28 +1922,28 @@ export class SubhutiGrammarAnalyzer {
      * - 不负责截取操作
      * - 截取由外层调用者统一处理
      *
-     * 优势：
-     * - 职责单一：只管层级展开
-     * - 精确控制展开层数
-     * - 每层独立处理，方便缓存
-     * - 分离已完成路径（全token）和未完成路径（含规则名）
+     * 优化策略：
+     * - 增量复用：level3 = level2 + 展开1层
+     * - 缓存查找：从 maxLevel-1 → maxLevel-2 → ... → level 1
+     * - 跳过中间计算：避免重复展开低层级
      *
      * @param ruleName 顶层规则名
      * @param maxLevel 目标层级
      * @returns 展开到目标层级的完整路径（不截取）
      *
-     * 核心逻辑（逐层展开）：
-     * 1. 从 level 1 开始（调用 getDirectChildren）
-     * 2. while (当前层级 < 目标层级)
+     * 核心逻辑（增量展开）：
+     * 1. 查找最近的缓存层级（maxLevel-1, maxLevel-2, ..., 1）
+     * 2. 从最近的缓存开始展开（而非总是从 level 1）
      * 3. 每次展开1层：调用 expandSinglePath
      * 4. 分离已完成（全token）和未完成（含规则名）的路径
      * 5. 继续展开未完成的路径
      * 6. 达到目标层级后停止
      *
      * 示例：
-     * level 1: [[IfStatement], [WhileStatement], ...]
-     * level 2: [[If, LParen, Expression, ...], [While, LParen, ...], ...]
-     * level 3: 继续展开...
+     * 展开 level 4：
+     *   - 查找 level 3 缓存 → 找到 ✅
+     *   - level 3 + 展开1层 = level 4
+     *   - 节省：level 1→2→3 的计算
      */
     private expandPathsByBFS(
         ruleName: string,
@@ -1925,44 +1951,83 @@ export class SubhutiGrammarAnalyzer {
     ): string[][] {
         const t0 = Date.now()
 
+        console.log(`\n📊 [BFS展开] 规则: ${ruleName}, 目标层级: ${maxLevel}`)
+
+        // 记录统计
+        this.perfAnalyzer.cacheStats.bfsOptimization.totalCalls++
+
         // 🔧 优化：尝试从 BFS 缓存直接获取目标层级的结果
-        // BFS 缓存存储完整展开结果（不截取），截取由外层处理
         const cacheKey = `${ruleName}:${maxLevel}`
 
         if (maxLevel <= EXPANSION_LIMITS.LEVEL_K) {
             if (this.bfsLevelCache.has(cacheKey)) {
                 // ✅ BFS 缓存命中，直接返回完整结果
+                console.log(`   ✅ 缓存命中: ${cacheKey}`)
                 return this.bfsLevelCache.get(cacheKey)!
             }
         }
 
-        // BFS 总是从 level 1 开始展开
-        const curLevel = 1
-        let currentPaths = this.getDirectChildren(ruleName)
-        const initialPathsCount = currentPaths.length  // 记录初始路径数量（用于性能统计）
+        // 🔥 增量优化：查找最近的缓存层级
+        let startLevel = 1
+        let currentPaths: string[][] | null = null
+
+        console.log(`   🔍 查找最近的缓存层级...`)
+        for (let searchLevel = maxLevel - 1; searchLevel >= 1; searchLevel--) {
+            const searchKey = `${ruleName}:${searchLevel}`
+            if (this.bfsLevelCache.has(searchKey)) {
+                startLevel = searchLevel
+                currentPaths = this.bfsLevelCache.get(searchKey)!
+                
+                // 记录优化统计
+                const skippedLevels = searchLevel - 1
+                this.perfAnalyzer.cacheStats.bfsOptimization.skippedLevels += skippedLevels
+                this.perfAnalyzer.cacheStats.bfsOptimization.fromCachedLevel++
+                
+                console.log(`   ✅ 找到缓存: level ${searchLevel} (${currentPaths.length} 条路径)`)
+                console.log(`   🚀 优化: 跳过 ${skippedLevels} 层计算（level 1~${searchLevel}），直接从 level ${searchLevel} 开始`)
+                break
+            }
+        }
+
+        // 如果没有找到缓存，从 level 1 开始
+        if (currentPaths === null) {
+            console.log(`   ⚠️  无缓存，从 level 1 开始展开`)
+            startLevel = 1
+            currentPaths = this.getDirectChildren(ruleName)
+            
+            // 记录统计：从 level 1 开始
+            this.perfAnalyzer.cacheStats.bfsOptimization.fromLevel1++
+        }
+
+        const initialPathsCount = currentPaths.length
         let finishedPaths: string[][] = []  // 已经全是 token 的路径
 
-        // 计算最多展开多少层
+        // 🔥 优化：从 startLevel 开始展开，而非总是从 level 1
+        // 计算需要展开多少层
         const levelsToExpand = maxLevel === EXPANSION_LIMITS.INFINITY
             ? EXPANSION_LIMITS.INFINITY
-            : (maxLevel - curLevel)
+            : (maxLevel - startLevel)
 
         // 防御检查
         if (levelsToExpand < 0) {
-            throw new Error(`系统错误：levelsToExpand < 0 (curLevel=${curLevel}, maxLevel=${maxLevel})`)
+            throw new Error(`系统错误：levelsToExpand < 0 (startLevel=${startLevel}, maxLevel=${maxLevel})`)
         }
+
+        console.log(`   📈 需要展开层数: ${levelsToExpand} (从 level ${startLevel} → level ${maxLevel})`)
 
         let expandedLevels = 0
 
         // 广度优先展开
         while (expandedLevels < levelsToExpand) {
-            // 当前实际层级 = curLevel + expandedLevels
-            const actualCurrentLevel = curLevel + expandedLevels
+            // 当前实际层级 = startLevel + expandedLevels
+            const actualCurrentLevel = startLevel + expandedLevels
 
-            // 当前实际层级 = curLevel + expandedLevels（循环前已定义）
+            // 当前实际层级 = startLevel + expandedLevels（循环前已定义）
             // 下一层级 = actualCurrentLevel + 1
             const nextLevel = actualCurrentLevel + 1
             const levelCacheKey = `${ruleName}:${nextLevel}`
+
+            console.log(`\n   [层级 ${actualCurrentLevel} → ${nextLevel}]`)
 
             // ========================================
             // 步骤0：检查下一层级是否有完整缓存
@@ -1975,6 +2040,9 @@ export class SubhutiGrammarAnalyzer {
                 // 注意：不能直接 continue，需要经过分离逻辑更新 finishedPaths
                 currentPaths = this.bfsLevelCache.get(levelCacheKey)!
                 usedLevelCache = true
+                console.log(`      ✅ 层级缓存命中: ${levelCacheKey} (${currentPaths.length} 条路径)`)
+            } else {
+                console.log(`      ⚠️  层级缓存未命中: ${levelCacheKey}`)
             }
 
             // ========================================
@@ -1999,6 +2067,8 @@ export class SubhutiGrammarAnalyzer {
             // 将已完成的路径移到 finishedPaths
             finishedPaths.push(...pathsFinished)
 
+            console.log(`      分离结果: 已完成=${pathsFinished.length}, 待展开=${pathsToExpand.length}`)
+
             // ========================================
             // 步骤2：如果使用了层级缓存或没有需要展开的路径，跳过展开
             // ========================================
@@ -2007,14 +2077,18 @@ export class SubhutiGrammarAnalyzer {
                 // 情况2：所有路径都已完成，停止展开
                 expandedLevels++
                 if (pathsToExpand.length === 0) {
+                    console.log(`      ✅ 所有路径已完成，停止展开`)
                     break  // 所有路径都已完成，退出循环
                 }
+                console.log(`      ⏭️  使用层级缓存，跳过展开，进入下一层`)
                 continue  // 进入下一轮（层级缓存的情况）
             }
 
             // ========================================
             // 步骤3：展开未完成的路径（使用缓存方法）
             // ========================================
+
+            console.log(`      🔧 开始展开 ${pathsToExpand.length} 条路径...`)
 
             // 对每个路径展开1层（带缓存）
             const expandedPaths: string[][] = []
@@ -2034,13 +2108,18 @@ export class SubhutiGrammarAnalyzer {
                 expandedPaths.push(...expanded)
             }
 
+            console.log(`      📊 展开结果: ${expandedPaths.length} 条路径（展开前 ${pathsToExpand.length}）`)
+
             // 去重
+            const beforeDedup = expandedPaths.length
             currentPaths = this.deduplicate(expandedPaths)
+            console.log(`      🔄 去重: ${beforeDedup} → ${currentPaths.length}`)
 
             // 🔧 缓存当前层级的结果（BFS 只缓存完整版）
             if (nextLevel <= EXPANSION_LIMITS.LEVEL_K) {
                 if (!this.bfsLevelCache.has(levelCacheKey)) {
                     this.bfsLevelCache.set(levelCacheKey, currentPaths)
+                    console.log(`      💾 缓存设置: ${levelCacheKey} (${currentPaths.length} 条)`)
                 }
             }
 
@@ -2052,8 +2131,11 @@ export class SubhutiGrammarAnalyzer {
         // ========================================
         // BFS 只做完整合并，不截取
         const result = [...finishedPaths, ...currentPaths]
+        console.log(`\n   📦 合并路径: 已完成=${finishedPaths.length}, 未完成=${currentPaths.length}, 总计=${result.length}`)
+        
         // 只去重，不截取
         const finalResult = this.deduplicate(result)
+        console.log(`   🔄 最终去重: ${result.length} → ${finalResult.length}`)
 
         // ========================================
         // 步骤5：缓存最终结果（BFS 只缓存完整版）
@@ -2061,12 +2143,17 @@ export class SubhutiGrammarAnalyzer {
         if (maxLevel <= EXPANSION_LIMITS.LEVEL_K) {
             if (!this.bfsLevelCache.has(cacheKey)) {
                 this.bfsLevelCache.set(cacheKey, finalResult)
+                console.log(`   💾 最终缓存设置: ${cacheKey} (${finalResult.length} 条路径)`)
             }
         }
 
         // 记录性能数据
         const duration = Date.now() - t0
         this.perfAnalyzer.record('expandPathsByBFS', duration, initialPathsCount, finalResult.length)
+
+        console.log(`   ⏱️  耗时: ${duration}ms`)
+        console.log(`   📊 优化效果: 从 level ${startLevel} 开始（跳过 ${startLevel - 1} 层），展开 ${expandedLevels} 层`)
+        console.log(`   📈 路径变化: ${initialPathsCount} → ${finalResult.length}\n`)
 
         return finalResult
     }
@@ -2218,15 +2305,20 @@ export class SubhutiGrammarAnalyzer {
         // 🔧 添加统计
         this.perfAnalyzer.cacheStats.getDirectChildren.total++
         
+        console.log(`\n🔍 [getDirectChildren] 规则: ${ruleName}`)
+        
         // 1. 优先从 bfsLevelCache 获取 level 1 的数据（懒加载缓存）
         const key = `${ruleName}:${EXPANSION_LIMITS.LEVEL_1}`
         if (this.bfsLevelCache.has(key)) {
             this.perfAnalyzer.recordCacheHit('getDirectChildren')
-            return this.bfsLevelCache.get(key)!
+            const cached = this.bfsLevelCache.get(key)!
+            console.log(`   ✅ 缓存命中: ${key} (${cached.length} 条路径)`)
+            return cached
         }
 
         // 缓存未命中，需要动态计算
         this.perfAnalyzer.recordCacheMiss('getDirectChildren')
+        console.log(`   ⚠️  缓存未命中: ${key}`)
         
         // 2. 检查是否是 token
         const tokenNode = this.tokenCache?.get(ruleName)
@@ -2234,6 +2326,7 @@ export class SubhutiGrammarAnalyzer {
             const result = [[ruleName]]  // token 直接返回
             // 缓存 token 的结果
             this.bfsLevelCache.set(key, result)
+            console.log(`   📌 Token: ${ruleName}，缓存结果`)
             return result
         }
 
@@ -2243,8 +2336,11 @@ export class SubhutiGrammarAnalyzer {
             throw new Error(`系统错误：规则不存在: ${ruleName}`)
         }
 
+        console.log(`   🔧 动态计算: 展开1层...`)
+        
         // 4. 动态计算：展开1层
         // expandPathsByDFS → subRuleHandler 会自动缓存到 "ruleName:1"
+        const t0 = Date.now()
         const result = this.expandPathsByDFS(
             ruleName,
             null,
@@ -2253,10 +2349,12 @@ export class SubhutiGrammarAnalyzer {
             EXPANSION_LIMITS.LEVEL_1,
             false,
         )
+        const duration = Date.now() - t0
 
         // 缓存计算结果（懒加载填充）
         if (!this.bfsLevelCache.has(key)) {
             this.bfsLevelCache.set(key, result)
+            console.log(`   💾 缓存填充: ${key} (${result.length} 条路径，耗时 ${duration}ms)`)
         }
 
         return result
