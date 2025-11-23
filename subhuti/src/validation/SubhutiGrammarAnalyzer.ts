@@ -598,22 +598,6 @@ export class SubhutiGrammarAnalyzer {
     }
 
     /**
-     * 递归检查节点中的 Or 冲突（使用 First(1)）
-     *
-     * @param ruleName 规则名
-     * @param node 当前节点
-     * @param errors 错误列表
-     */
-    private checkOrConflictsInNode(
-        ruleName: string,
-        node: RuleNode,
-        errors: ValidationError[]
-    ): void {
-        // 默认使用 First(1)
-        this.checkOrConflictsInNodeWithFirstK(ruleName, node, errors, 1)
-    }
-
-    /**
      * 递归检查节点中的 Or 冲突（智能模式：先 First(1)，有冲突再 First(5)）
      *
      * @param ruleName 规则名
@@ -625,31 +609,25 @@ export class SubhutiGrammarAnalyzer {
      */
     private checkOrConflictsInNodeSmart(
         ruleName: string,
-        firstK: number,
         node: RuleNode,
-        cache: Map<string, string[][]>,
-        errors: ValidationError[],
         perfStats?: any
     ): void {
         switch (node.type) {
             case 'or':
-                // 步骤1：检测完全相同的分支（重复分支检测）
-                this.detectOrNodeIdenticalBranches(ruleName, node, errors)
-
                 // 步骤2：使用智能检测（深度前缀冲突检测）
                 if (perfStats) perfStats.orNodesChecked++
-                this.detectOrBranchConflictsWithCache(ruleName, firstK, node, cache, errors, perfStats)
+                this.detectOrBranchConflictsWithCache(ruleName, node)
 
                 // 递归检查每个分支
                 for (const alt of node.alternatives) {
-                    this.checkOrConflictsInNodeSmart(ruleName, firstK, alt, cache, errors, perfStats)
+                    this.checkOrConflictsInNodeSmart(ruleName, alt, perfStats)
                 }
                 break
 
             case 'sequence':
                 // 递归检查序列中的每个节点
                 for (const child of node.nodes) {
-                    this.checkOrConflictsInNodeSmart(ruleName, firstK, child, cache, errors, perfStats)
+                    this.checkOrConflictsInNodeSmart(ruleName, child, perfStats)
                 }
                 break
 
@@ -657,307 +635,13 @@ export class SubhutiGrammarAnalyzer {
             case 'many':
             case 'atLeastOne':
                 // 递归检查内部节点
-                this.checkOrConflictsInNodeSmart(ruleName, firstK, node.node, cache, errors, perfStats)
+                this.checkOrConflictsInNodeSmart(ruleName, node.node, perfStats)
                 break
 
             case 'consume':
             case 'subrule':
                 // 叶子节点，不需要递归
                 break
-        }
-    }
-
-    /**
-     * 递归检查节点中的 Or 冲突（支持 First(k)）
-     *
-     * @param ruleName 规则名
-     * @param node 当前节点
-     * @param errors 错误列表
-     * @param k First(k) 的 k 值
-     */
-    private checkOrConflictsInNodeWithFirstK(
-        ruleName: string,
-        node: RuleNode,
-        errors: ValidationError[],
-        k: number = 1
-    ): void {
-        switch (node.type) {
-            case 'or':
-                // 检测当前 Or 节点的冲突
-                this.detectOrNodeConflictWithFirstK(ruleName, node, errors, k)
-                // 递归检查每个分支
-                for (const alt of node.alternatives) {
-                    this.checkOrConflictsInNodeWithFirstK(ruleName, alt, errors, k)
-                }
-                break
-
-            case 'sequence':
-                // 递归检查序列中的每个节点
-                for (const child of node.nodes) {
-                    this.checkOrConflictsInNodeWithFirstK(ruleName, child, errors, k)
-                }
-                break
-
-            case 'option':
-            case 'many':
-            case 'atLeastOne':
-                // 递归检查内部节点
-                this.checkOrConflictsInNodeWithFirstK(ruleName, node.node, errors, k)
-                break
-
-            case 'consume':
-            case 'subrule':
-                // 叶子节点，不需要递归
-                break
-        }
-    }
-
-    /**
-     * 检测单个 Or 节点的冲突（使用 First(1)）
-     *
-     * @param ruleName 规则名
-     * @param orNode Or 节点
-     * @param errors 错误列表
-     */
-    private detectOrNodeConflict(
-        ruleName: string,
-        orNode: RuleNode,
-        errors: ValidationError[]
-    ): void {
-        // 默认使用 First(1)
-        this.detectOrNodeConflictWithFirstK(ruleName, orNode, errors, 1)
-    }
-
-    /**
-     * 检测 Or 节点中是否有完全相同的分支（重复分支检测）
-     *
-     * 目标：检测 Or 的多个分支是否完全相同
-     *
-     * 示例：
-     * ```
-     * // ❌ 错误：分支1 和 分支2 完全相同
-     * or([
-     *   IfStatement,        // 分支1
-     *   IfStatement,        // 分支2 - 和分支1 完全相同！
-     * ])
-     *
-     * // ❌ 错误：结构相同
-     * or([
-     *   sequence(If, Block),   // 分支1
-     *   sequence(If, Block),   // 分支2 - 结构完全相同！
-     * ])
-     * ```
-     *
-     * 实现思路：
-     * 1. 使用 expandNode 展开每个分支（结构展开，保留规则名）
-     * 2. 序列化展开结果
-     * 3. 检测是否有重复
-     *
-     * @param ruleName - 规则名
-     * @param orNode - Or 节点
-     * @param errors - 错误列表
-     */
-    private detectOrNodeIdenticalBranches(
-        ruleName: string,
-        orNode: RuleNode,
-        errors: ValidationError[]
-    ): void {
-        // 防御：确保是 Or 节点
-        if (orNode.type !== 'or') {
-            throw new Error('系统错误：detectOrNodeIdenticalBranches 只能处理 or 类型节点')
-        }
-
-        // 类型断言
-        const orNodeTyped = orNode as OrNode
-
-        // 防御：至少需要 2 个分支才能比较
-        if (orNodeTyped.alternatives.length < 2) {
-            return
-        }
-
-        // 存储每个分支的序列化结果
-        // key: 序列化字符串, value: 分支索引数组
-        const branchSignatures = new Map<string, number[]>()
-
-        // 遍历所有分支
-        for (let i = 0; i < orNodeTyped.alternatives.length; i++) {
-            const alt = orNodeTyped.alternatives[i]
-
-            // 使用 expandNode 展开分支（结构展开，不完全展开到 token）
-            // 这里我们用一个简单的方法：直接序列化 AST 节点
-            const signature = this.serializeRuleNode(alt)
-
-            // 记录这个签名对应的分支索引
-            if (!branchSignatures.has(signature)) {
-                branchSignatures.set(signature, [])
-            }
-            branchSignatures.get(signature)!.push(i)
-        }
-
-        // 检测重复的分支
-        for (const [signature, indices] of branchSignatures.entries()) {
-            if (indices.length > 1) {
-                // 发现重复分支
-                // 报告所有重复的分支对
-                for (let i = 0; i < indices.length; i++) {
-                    for (let j = i + 1; j < indices.length; j++) {
-                        const branchA = indices[i]
-                        const branchB = indices[j]
-
-                        errors.push({
-                            level: 'ERROR',
-                            type: 'or-identical-branches',
-                            ruleName,
-                            branchIndices: [branchA, branchB],
-                            message: `规则 "${ruleName}" 的 Or 分支 ${branchA + 1} 和分支 ${branchB + 1} 完全相同`,
-                            suggestion: this.getIdenticalBranchSuggestion(ruleName, branchA, branchB, signature)
-                        })
-
-                        console.log(`  ❌ ${ruleName}: 分支 ${branchA + 1} 和 ${branchB + 1} 完全相同`)
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * 序列化 RuleNode 为字符串（用于比较）
-     *
-     * 实现：递归遍历 AST，生成唯一的字符串表示
-     *
-     * @param node - 规则节点
-     * @returns 序列化字符串
-     */
-    private serializeRuleNode(node: RuleNode): string {
-        switch (node.type) {
-            case 'consume':
-                // Token 节点：返回 token 名
-                return `consume(${node.tokenName})`
-
-            case 'subrule':
-                // 子规则引用：返回规则名
-                return `subrule(${node.ruleName})`
-
-            case 'or':
-                // Or 节点：递归序列化所有分支
-                const orAlts = node.alternatives.map(alt => this.serializeRuleNode(alt))
-                return `or(${orAlts.join('|')})`
-
-            case 'sequence':
-                // Sequence 节点：递归序列化所有子节点
-                const seqNodes = node.nodes.map(child => this.serializeRuleNode(child))
-                return `seq(${seqNodes.join(',')})`
-
-            case 'option':
-                // Option 节点：递归序列化内部节点
-                return `opt(${this.serializeRuleNode(node.node)})`
-
-            case 'many':
-                // Many 节点：递归序列化内部节点
-                return `many(${this.serializeRuleNode(node.node)})`
-
-            case 'atLeastOne':
-                // AtLeastOne 节点：递归序列化内部节点
-                return `atLeastOne(${this.serializeRuleNode(node.node)})`
-
-            default:
-                // 未知节点类型
-                return `unknown(${(node as any).type})`
-        }
-    }
-
-    /**
-     * 生成完全相同分支的修复建议
-     *
-     * @param ruleName - 规则名
-     * @param branchA - 分支 A 索引
-     * @param branchB - 分支 B 索引
-     * @param signature - 分支签名
-     * @returns 修复建议
-     */
-    private getIdenticalBranchSuggestion(
-        ruleName: string,
-        branchA: number,
-        branchB: number,
-        signature: string
-    ): string {
-        return `Or 节点中存在完全相同的分支，这会导致解析器永远无法匹配后面的分支！
-
-检测到的问题：
-  分支 ${branchA + 1} 和分支 ${branchB + 1} 的结构完全相同
-  签名: ${signature}
-
-修复建议：
-1. **删除重复分支**：保留其中一个分支，删除另一个
-   示例：
-   or([A, A, B]) → or([A, B])
-
-2. **检查是否为复制粘贴错误**：可能是误复制了代码
-
-3. **如果是不同的语义**：考虑在规则名或结构上做区分
-
-注意：PEG 解析器使用顺序选择，第一个匹配的分支会被使用。
-      如果两个分支完全相同，第二个分支永远不会被执行。`
-    }
-
-    /**
-     * 检测单个 Or 节点的冲突（智能检测：先 First(1)，有冲突再 First(k)）
-     *
-     * @param ruleName 规则名
-     * @param orNode Or 节点
-     * @param errors 错误列表
-     * @param k First(k) 的 k 值（仅在单独调用时使用）
-     */
-    private detectOrNodeConflictWithFirstK(
-        ruleName: string,
-        orNode: RuleNode,
-        errors: ValidationError[],
-        k: number = 1
-    ): void {
-        // 防御：确保是 Or 节点
-        if (orNode.type !== 'or') {
-            throw new Error('系统错误：detectOrNodeConflictWithFirstK 只能处理 or 类型节点')
-        }
-
-        // 类型断言为 OrNode
-        const orNodeTyped = orNode as OrNode
-
-        // 计算每个分支的 First(k) 集合
-        const branchFirstSets: Set<string>[] = []
-
-        for (const alt of orNodeTyped.alternatives) {
-            // 使用 computeNodeFirstK 计算 First(k) 集合
-            const firstSet = this.computeNodeFirstK(alt, k)
-            branchFirstSets.push(firstSet)
-        }
-
-        // 检测分支间的冲突（两两比较）
-        for (let i = 0; i < branchFirstSets.length; i++) {
-            for (let j = i + 1; j < branchFirstSets.length; j++) {
-                // 计算交集
-                const intersection = this.setIntersection(branchFirstSets[i], branchFirstSets[j])
-
-                if (intersection.size > 0) {
-                    // 发现冲突
-                    const conflictTokens = Array.from(intersection).join(', ')
-                    const errorType = k === 1 ? 'or-conflict' : `or-conflict-first${k}`
-
-                    errors.push({
-                        level: 'ERROR',
-                        type: errorType as any,
-                        ruleName,
-                        branchIndices: [i, j],
-                        conflictPaths: {
-                            pathA: `分支 ${i + 1} First(${k}): {${Array.from(branchFirstSets[i]).join(', ')}}`,
-                            pathB: `分支 ${j + 1} First(${k}): {${Array.from(branchFirstSets[j]).join(', ')}}`
-                        },
-                        message: `规则 "${ruleName}" 的 Or 分支 ${i + 1} 和分支 ${j + 1} 在 First(${k}) 存在冲突`,
-                        suggestion: this.getOrConflictSuggestion(ruleName, i, j, intersection, branchFirstSets[i], branchFirstSets[j])
-                    })
-
-                    console.log(`  ❌ ${ruleName}: 分支 ${i + 1} 和 ${j + 1} 在 First(${k}) 冲突 (${conflictTokens})`)
-                }
-            }
         }
     }
 
@@ -976,9 +660,9 @@ export class SubhutiGrammarAnalyzer {
      * @param cache - 规则缓存（规则名 → 所有路径）
      * @returns 每个分支的路径集合数组
      */
-    getOrNodeAllBranchRules(orNode: OrNode, firstK: number, cache: Map<string, string[][]>): Set<string>[] {
+    getOrNodeAllBranchRules(orNode: OrNode, firstK: number, cache: Map<string, string[][]>): string[][] {
         // 存储每个分支的路径集合
-        const allOrs: Set<string>[] = []
+        const allOrs: [][] = []
 
         // 遍历 Or 的每个分支
         for (const seqNode of orNode.alternatives) {
@@ -987,7 +671,7 @@ export class SubhutiGrammarAnalyzer {
             const nodeAllBranches = this.expandNode(seqNode, EXPANSION_LIMITS.INFINITY, 0, 1, false)
 
             // 存储当前分支的所有路径字符串
-            const setAry: string[] = []
+            let setAry: string[] = []
 
             // 遍历第一层展开的每个可能性
             for (const branch of nodeAllBranches) {
@@ -1007,11 +691,11 @@ export class SubhutiGrammarAnalyzer {
                 const branchAllSeqStrAry = branchAllSeq.map(item => item.join(','))
 
                 // 🔴 修复：concat 不会修改原数组，需要用 push
-                setAry.push(...branchAllSeqStrAry)
+                setAry = setAry.concat(branchAllSeqStrAry)
             }
 
             // 去重并添加到结果
-            allOrs.push(new Set(setAry))
+            allOrs.push(Array.from(new Set(setAry)))
         }
 
         return allOrs
@@ -1035,7 +719,7 @@ export class SubhutiGrammarAnalyzer {
      *   分支1: ['If,LParen,Expression,RParen'],           // 短路径
      *   分支2: ['If,LParen,Expression,RParen,Block']      // 长路径
      * ])
-     * 
+     *
      * 结果：分支1 是分支2 的前缀 → ❌ 冲突！分支2 永远不会被匹配
      * ```
      *
@@ -1090,9 +774,9 @@ export class SubhutiGrammarAnalyzer {
 
     /**
      * 检测两个路径集合是否有完全相同的路径（单向检测）
-     * 
+     *
      * ⚠️ 检测方向：只检测 pathsFront 与 pathsBehind 是否有相同的路径
-     * 
+     *
      * 🚀 性能优化：使用 Set 实现 O(n) 时间复杂度
      *
      * 示例：
@@ -1112,7 +796,7 @@ export class SubhutiGrammarAnalyzer {
     ): string | null {
         // 使用 Set 快速检测（O(n)）
         const setBehind = new Set(pathsBehind)
-        
+
         for (const pathFront of pathsFront) {
             if (setBehind.has(pathFront)) {
                 // 找到完全相同的路径
@@ -1126,9 +810,9 @@ export class SubhutiGrammarAnalyzer {
 
     /**
      * 检测两个路径集合是否有前缀包含关系（单向检测）
-     * 
+     *
      * ⚠️ 检测方向：只检测 pathsFront 的某个路径是否是 pathsBehind 某个路径的前缀
-     * 
+     *
      * 前缀定义：
      * - 'A,B' 是 'A,B,C' 的前缀 ✅
      * - 'A,B' 不是 'A,B' 的前缀 ❌（完全相同不算前缀）
@@ -1172,9 +856,9 @@ export class SubhutiGrammarAnalyzer {
 
     /**
      * 查找两个路径集合之间的第一个冲突（单向检测，组合方法）
-     * 
+     *
      * ⚠️ 检测方向：只检测 pathsFront 是否遮蔽 pathsBehind
-     * 
+     *
      * 检测顺序：
      * 1. 先检测完全相同（O(n)）
      * 2. 再检测前缀包含（O(n²)）
@@ -1265,32 +949,173 @@ or([A, A, B]) → or([A, B])  // 删除重复的A`
     }
 
     /**
-     * 完整的 Or 分支深度检测（使用缓存）
+     * 线路1：使用 First(K) 检测 Or 分支是否完全相同
+     *
+     * 检测目标：前 K 个 token 是否完全相同
+     * 数据源：dfsFirstKCache（First(K) 的展开结果）
+     * 检测方法：findEqualPath()
+     * 性能：O(n) - 快速检测
+     *
+     * 适用场景：
+     * - 快速发现明显的重复分支
+     * - 前 K 个 token 就足够区分的情况
+     *
+     * @param ruleName 输出错误日志使用
+     * @param orNode - Or 节点
+     */
+    detectOrBranchEqualWithFirstK(
+        ruleName: string,
+        orNode: OrNode
+    ) {
+        // 防御：至少需要2个分支
+        if (orNode.alternatives.length < 2) {
+            return
+        }
+
+        // 获取每个分支的 First(K) 路径集合
+        const branchPathSets = this.getOrNodeAllBranchRules(orNode, EXPANSION_LIMITS.FIRST_K, this.dfsFirstKCache)
+
+        // 单向遍历：检测前面的分支是否与后面的分支完全相同
+        for (let i = 0; i < branchPathSets.length; i++) {
+            for (let j = i + 1; j < branchPathSets.length; j++) {
+                const pathsFront = branchPathSets[i]
+                const pathsBehind = branchPathSets[j]
+
+                // 检测完全相同的路径（O(n)）
+                const equalPath = this.findEqualPath(pathsFront, pathsBehind)
+
+                if (equalPath) {
+                    console.log(`  ❌ ${ruleName}: 分支 ${i + 1} 和 ${j + 1} 相同（First(${EXPANSION_LIMITS.FIRST_K})）`)
+                    console.log(`     路径: ${equalPath}`)
+                    // 发现相同路径，报告错误
+                    return {
+                        level: 'ERROR',
+                        type: 'or-identical-branches',
+                        ruleName,
+                        branchIndices: [i, j],
+                        conflictPaths: {
+                            pathA: equalPath,
+                            pathB: equalPath
+                        },
+                        message: `规则 "${ruleName}" 的 Or 分支 ${i + 1} 和分支 ${j + 1} 的前 ${EXPANSION_LIMITS.FIRST_K} 个 token 完全相同`,
+                        suggestion: this.getEqualBranchSuggestion(ruleName, i, j, equalPath)
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * 线路2：使用 MaxLevel 检测 Or 分支的前缀遮蔽关系
+     *
+     * 检测目标：前面的分支是否是后面分支的前缀
+     * 数据源：bfsAllCache（深度展开的完整路径）
+     * 检测方法：findPrefixRelation()
+     * 性能：O(n²) - 深度检测
+     *
+     * 适用场景：
+     * - 检测前缀遮蔽问题
+     * - 需要深度展开才能发现的冲突
+     *
+     * @param ruleName - 规则名
+     * @param orNode - Or 节点
+     */
+    detectOrBranchPrefixWithMaxLevel(
+        ruleName: string,
+        orNode: OrNode
+    ) {
+        // 防御：至少需要2个分支
+        if (orNode.alternatives.length < 2) {
+            return
+        }
+
+        // 获取每个分支的深度展开路径集合
+        const branchPathSets = this.getOrNodeAllBranchRules(orNode, EXPANSION_LIMITS.INFINITY, this.bfsAllCache)
+
+        // 单向遍历：检测前面的分支是否遮蔽后面的分支
+        for (let i = 0; i < branchPathSets.length; i++) {
+            for (let j = i + 1; j < branchPathSets.length; j++) {
+                const pathsFront = branchPathSets[i]
+                const pathsBehind = branchPathSets[j]
+
+                // 检测前缀关系（O(n²)）
+                const prefixRelation = this.findPrefixRelation(pathsFront, pathsBehind)
+
+                if (prefixRelation) {
+                    console.log(`  ❌ ${ruleName}: 分支 ${i + 1} 遮蔽分支 ${j + 1}（前缀关系）`)
+                    console.log(`     前缀路径: ${prefixRelation.prefix}`)
+                    console.log(`     完整路径: ${prefixRelation.full}`)
+
+                    // 发现前缀遮蔽，报告错误
+                    return ({
+                        level: 'ERROR',
+                        type: 'prefix-conflict',
+                        ruleName,
+                        branchIndices: [i, j],
+                        conflictPaths: {
+                            pathA: prefixRelation.prefix,
+                            pathB: prefixRelation.full
+                        },
+                        message: `规则 "${ruleName}" 的 Or 分支 ${i + 1} 会遮蔽分支 ${j + 1}`,
+                        suggestion: this.getPrefixConflictSuggestion(ruleName, i, j, {
+                            prefix: prefixRelation.prefix,
+                            full: prefixRelation.full,
+                            type: 'prefix'
+                        })
+                    })
+                }
+            }
+        }
+    }
+
+    /**
+     * 生成相同分支的修复建议
+     */
+    private getEqualBranchSuggestion(
+        ruleName: string,
+        branchA: number,
+        branchB: number,
+        equalPath: string
+    ): string {
+        return `分支 ${branchA + 1} 和分支 ${branchB + 1} 的路径完全相同！
+
+检测到的问题：
+  相同路径: ${equalPath}
+
+这意味着：
+- 两个分支会匹配相同的输入
+- 分支 ${branchB + 1} 永远不会被执行（因为分支 ${branchA + 1} 在前面）
+
+修复建议：
+1. **删除重复分支**：保留其中一个分支即可
+2. **检查逻辑**：确认是否是复制粘贴错误
+3. **合并分支**：如果语义相同，合并为一个分支
+
+示例：
+or([A, A, B]) → or([A, B])  // 删除重复的A`
+    }
+
+    /**
+     * 完整的 Or 分支深度检测（使用缓存）- 保留向后兼容
      *
      * 集成方法：
      * 1. 获取每个分支的所有路径
      * 2. 检测前缀冲突
      *
      * @param ruleName - 规则名
-     * @param firstK - First(K) 的 K 值
      * @param orNode - Or 节点
-     * @param cache - 规则缓存（规则名 → 所有路径）
-     * @param errors - 错误列表
-     * @param perfStats - 性能统计（可选）
      */
     detectOrBranchConflictsWithCache(
         ruleName: string,
-        firstK: number,
-        orNode: OrNode,
-        cache: Map<string, string[][]>,
-        errors: ValidationError[],
-        perfStats?: any
-    ): void {
-        // 步骤1：获取每个分支的所有路径
-        const branchPathSets = this.getOrNodeAllBranchRules(orNode, firstK, cache)
+        orNode: OrNode
+    ) {
+        // 🚀 线路1：使用 First(K) 检测相同（快速）
+        const error = this.detectOrBranchEqualWithFirstK(ruleName, orNode)
 
-        // 步骤2：检测前缀冲突（包含完全相同的情况）
-        this.detectOrBranchPrefixConflicts(ruleName, branchPathSets, errors)
+        if (error) {
+            // 🚀 线路2：使用 MaxLevel 检测前缀遮蔽（深度）
+            return this.detectOrBranchPrefixWithMaxLevel(ruleName, orNode)
+        }
     }
 
     /**
