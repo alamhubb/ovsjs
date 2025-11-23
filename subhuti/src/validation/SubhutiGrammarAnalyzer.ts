@@ -1089,16 +1089,95 @@ export class SubhutiGrammarAnalyzer {
     }
 
     /**
-     * 查找两个路径集合之间的第一个前缀冲突（单向检测，优化版）
+     * 检测两个路径集合是否有完全相同的路径（单向检测）
+     * 
+     * ⚠️ 检测方向：只检测 pathsFront 与 pathsBehind 是否有相同的路径
+     * 
+     * 🚀 性能优化：使用 Set 实现 O(n) 时间复杂度
+     *
+     * 示例：
+     * ```
+     * pathsFront = ['A,B', 'C,D']
+     * pathsBehind = ['A,B', 'E,F']
+     * 结果：'A,B' 完全相同 → 返回 'A,B'
+     * ```
+     *
+     * @param pathsFront - 前面分支的路径数组
+     * @param pathsBehind - 后面分支的路径数组
+     * @returns 第一个相同的路径，如果没有返回 null
+     */
+    private findEqualPath(
+        pathsFront: string[],
+        pathsBehind: string[]
+    ): string | null {
+        // 使用 Set 快速检测（O(n)）
+        const setBehind = new Set(pathsBehind)
+        
+        for (const pathFront of pathsFront) {
+            if (setBehind.has(pathFront)) {
+                // 找到完全相同的路径
+                return pathFront
+            }
+        }
+
+        // 没有相同的路径
+        return null
+    }
+
+    /**
+     * 检测两个路径集合是否有前缀包含关系（单向检测）
+     * 
+     * ⚠️ 检测方向：只检测 pathsFront 的某个路径是否是 pathsBehind 某个路径的前缀
+     * 
+     * 前缀定义：
+     * - 'A,B' 是 'A,B,C' 的前缀 ✅
+     * - 'A,B' 不是 'A,B' 的前缀 ❌（完全相同不算前缀）
+     * - 'A,B' 不是 'A' 的前缀 ❌（不检测反向）
+     *
+     * ⚠️ 性能：O(n²)，需要遍历所有路径对
+     *
+     * 示例：
+     * ```
+     * pathsFront = ['A,B']
+     * pathsBehind = ['A,B,C', 'D,E']
+     * 结果：'A,B' 是 'A,B,C' 的前缀 → 返回 { prefix: 'A,B', full: 'A,B,C' }
+     * ```
+     *
+     * @param pathsFront - 前面分支的路径数组
+     * @param pathsBehind - 后面分支的路径数组
+     * @returns 第一个前缀关系，如果没有返回 null
+     */
+    private findPrefixRelation(
+        pathsFront: string[],
+        pathsBehind: string[]
+    ): { prefix: string, full: string } | null {
+        // 双层循环检测前缀关系（O(n²)）
+        for (const pathFront of pathsFront) {
+            for (const pathBehind of pathsBehind) {
+                // 检测：前面的路径是否是后面路径的前缀
+                // 注意：必须加 ',' 以确保是完整的 token 前缀
+                // 例如：'If,LParen,Expression' 是 'If,LParen,Expression,RParen,Block' 的前缀
+                if (pathBehind.startsWith(pathFront + ',')) {
+                    return {
+                        prefix: pathFront,
+                        full: pathBehind
+                    }
+                }
+            }
+        }
+
+        // 没有前缀关系
+        return null
+    }
+
+    /**
+     * 查找两个路径集合之间的第一个冲突（单向检测，组合方法）
      * 
      * ⚠️ 检测方向：只检测 pathsFront 是否遮蔽 pathsBehind
      * 
-     * 检测规则：
-     * 1. pathFront === pathBehind → 完全相同，前面的分支会遮蔽后面的
-     * 2. pathBehind.startsWith(pathFront) → 前缀关系，前面的分支会遮蔽后面的
-     * 3. ❌ 不检测 pathFront.startsWith(pathBehind) → 不需要（单向检测）
-     *
-     * 优化：找到第一个冲突立即返回（不需要找全部冲突）
+     * 检测顺序：
+     * 1. 先检测完全相同（O(n)）
+     * 2. 再检测前缀包含（O(n²)）
      *
      * @param pathsFront - 前面分支的路径数组
      * @param pathsBehind - 后面分支的路径数组
@@ -1108,30 +1187,23 @@ export class SubhutiGrammarAnalyzer {
         pathsFront: string[],
         pathsBehind: string[]
     ): { prefix: string, full: string, type: 'prefix' | 'equal' } | null {
-        // 遍历前面分支的所有路径
-        for (const pathFront of pathsFront) {
-            // 遍历后面分支的所有路径
-            for (const pathBehind of pathsBehind) {
-                // 情况1：完全相同
-                if (pathFront === pathBehind) {
-                    // 找到冲突，立即返回
-                    return {
-                        prefix: pathFront,
-                        full: pathBehind,
-                        type: 'equal'
-                    }
-                }
+        // 步骤1：检测完全相同（O(n)）
+        const equalPath = this.findEqualPath(pathsFront, pathsBehind)
+        if (equalPath) {
+            return {
+                prefix: equalPath,
+                full: equalPath,
+                type: 'equal'
+            }
+        }
 
-                // 情况2：前面的路径是后面路径的前缀
-                // 例如：'If,LParen,Expression' 是 'If,LParen,Expression,RParen,Block' 的前缀
-                if (pathBehind.startsWith(pathFront + ',')) {
-                    // 找到冲突，立即返回
-                    return {
-                        prefix: pathFront,
-                        full: pathBehind,
-                        type: 'prefix'
-                    }
-                }
+        // 步骤2：检测前缀包含（O(n²)）
+        const prefixRelation = this.findPrefixRelation(pathsFront, pathsBehind)
+        if (prefixRelation) {
+            return {
+                prefix: prefixRelation.prefix,
+                full: prefixRelation.full,
+                type: 'prefix'
             }
         }
 
