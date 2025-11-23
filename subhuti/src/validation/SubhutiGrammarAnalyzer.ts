@@ -1986,10 +1986,9 @@ export class SubhutiGrammarAnalyzer {
      * BFS 展开（广度优先展开，限制层级）
      * 
      * 流程：
-     * 1. 查找缓存（优先返回）
-     * 2. 查找最近的中间层级缓存（增量优化）
-     * 3. 逐层展开到目标层级
-     * 4. 缓存并返回结果
+     * 1. 查找最近的缓存层级（从 maxLevel 向下）
+     * 2. 逐层展开到目标层级
+     * 3. 缓存并返回结果
      *
      * @param ruleName 规则名
      * @param maxLevel 最大层级
@@ -2003,26 +2002,25 @@ export class SubhutiGrammarAnalyzer {
         console.log(`\n📊 [BFS展开] 规则: ${ruleName}, 目标层级: ${maxLevel}`)
         
         this.perfAnalyzer.cacheStats.bfsOptimization.totalCalls++
-        const cacheKey = `${ruleName}:${maxLevel}`
 
-        // 提前返回：缓存命中
-        if (maxLevel <= EXPANSION_LIMITS.LEVEL_K && this.bfsLevelCache.has(cacheKey)) {
-            console.log(`   ✅ 缓存命中: ${cacheKey}`)
+        // 查找最近的缓存层级（从 maxLevel 开始）
+        const { startLevel, currentPaths } = this.findNearestCachedLevel(ruleName, maxLevel)
+        
+        // 提前返回：找到目标层级的缓存
+        if (startLevel === maxLevel) {
+            console.log(`   ✅ 缓存命中: ${ruleName}:${maxLevel}`)
             this.perfAnalyzer.recordCacheHit('bfsLevel')
             this.perfAnalyzer.record('expandPathsByBFS', Date.now() - t0, 0, 0)
-            return this.bfsLevelCache.get(cacheKey)!
+            return currentPaths
         }
 
-        // 缓存未命中，开始计算
+        // 缓存未命中，需要计算
         if (maxLevel <= EXPANSION_LIMITS.LEVEL_K) {
             this.perfAnalyzer.recordCacheMiss('bfsLevel')
         }
         this.perfAnalyzer.recordActualCompute()
 
-        // 查找最近的缓存层级（增量优化）
-        const { startLevel, currentPaths } = this.findNearestCachedLevel(ruleName, maxLevel)
         const initialPathsCount = currentPaths.length
-        
         console.log(`   📈 需要展开层数: ${maxLevel - startLevel} (从 level ${startLevel} → level ${maxLevel})`)
 
         // 逐层展开
@@ -2038,6 +2036,7 @@ export class SubhutiGrammarAnalyzer {
         console.log(`   📦 最终结果: ${finalResult.length} 条路径`)
 
         // 缓存最终结果
+        const cacheKey = `${ruleName}:${maxLevel}`
         if (maxLevel <= EXPANSION_LIMITS.LEVEL_K && !this.bfsLevelCache.has(cacheKey)) {
             this.bfsLevelCache.set(cacheKey, finalResult)
             console.log(`   💾 缓存设置: ${cacheKey}`)
@@ -2064,8 +2063,8 @@ export class SubhutiGrammarAnalyzer {
     ): { startLevel: number; currentPaths: string[][] } {
         console.log(`   🔍 查找最近的缓存层级...`)
 
-        // 从 maxLevel-1 向下查找最近的缓存
-        for (let level = maxLevel - 1; level >= 1; level--) {
+        // 从 maxLevel 向下查找最近的缓存
+        for (let level = maxLevel; level >= 1; level--) {
             const cacheKey = `${ruleName}:${level}`
             if (this.bfsLevelCache.has(cacheKey)) {
                 const paths = this.bfsLevelCache.get(cacheKey)!
