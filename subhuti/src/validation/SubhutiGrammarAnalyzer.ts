@@ -617,39 +617,39 @@ export class SubhutiGrammarAnalyzer {
      * 递归检查节点中的 Or 冲突（智能模式：先 First(1)，有冲突再 First(5)）
      *
      * @param ruleName 规则名
-     * @param firstK
+     * @param firstK First(K) 的 K 值
      * @param node 当前节点
-     * @param cache
+     * @param cache 规则缓存（规则名 → 所有路径）
      * @param errors 错误列表
-     * @param perfStats
+     * @param perfStats 性能统计
      */
     private checkOrConflictsInNodeSmart(
         ruleName: string,
         firstK: number,
         node: RuleNode,
         cache: Map<string, string[][]>,
+        errors: ValidationError[],
         perfStats?: any
     ): void {
-        let error = null
         switch (node.type) {
             case 'or':
                 // 步骤1：检测完全相同的分支（重复分支检测）
-                // this.detectOrNodeIdenticalBranches(ruleName, node, errors)
+                this.detectOrNodeIdenticalBranches(ruleName, node, errors)
 
-                // 步骤2：使用智能检测（First(1) → First(K) 冲突检测）
+                // 步骤2：使用智能检测（深度前缀冲突检测）
                 if (perfStats) perfStats.orNodesChecked++
-                this.detectOrBranchConflictsWithCache(ruleName, firstK, node, cache, perfStats)
+                this.detectOrBranchConflictsWithCache(ruleName, firstK, node, cache, errors, perfStats)
 
                 // 递归检查每个分支
                 for (const alt of node.alternatives) {
-                    this.checkOrConflictsInNodeSmart(ruleName, firstK, alt, cache, perfStats)
+                    this.checkOrConflictsInNodeSmart(ruleName, firstK, alt, cache, errors, perfStats)
                 }
                 break
 
             case 'sequence':
                 // 递归检查序列中的每个节点
                 for (const child of node.nodes) {
-                    this.checkOrConflictsInNodeSmart(ruleName, firstK, child, cache, perfStats)
+                    this.checkOrConflictsInNodeSmart(ruleName, firstK, child, cache, errors, perfStats)
                 }
                 break
 
@@ -657,7 +657,7 @@ export class SubhutiGrammarAnalyzer {
             case 'many':
             case 'atLeastOne':
                 // 递归检查内部节点
-                this.checkOrConflictsInNodeSmart(ruleName, firstK, node.node, cache, perfStats)
+                this.checkOrConflictsInNodeSmart(ruleName, firstK, node.node, cache, errors, perfStats)
                 break
 
             case 'consume':
@@ -1018,23 +1018,28 @@ export class SubhutiGrammarAnalyzer {
     }
 
     /**
-     * 检测 Or 分支之间的包含关系（前缀冲突检测）
+     * 检测 Or 分支之间的包含关系（单向前缀冲突检测）
      *
-     * 核心逻辑：
-     * 1. 对比每两个分支的路径集合
-     * 2. 检测是否存在前缀关系：
-     *    - 分支A的某个路径是分支B的某个路径的前缀 → 分支A会遮蔽分支B
-     *    - 两个路径完全相同 → 分支重复
+     * ⚠️ 核心原则：PEG 顺序选择，只检测前面的分支遮蔽后面的分支
+     *
+     * 检测逻辑：
+     * 1. 遍历所有分支对 (i, j)，其中 i < j（前面的分支 i，后面的分支 j）
+     * 2. 检测分支 i 是否遮蔽分支 j：
+     *    - 分支 i 的某个路径与分支 j 的某个路径完全相同 → 分支 j 永远不会执行
+     *    - 分支 i 的某个路径是分支 j 的某个路径的前缀 → 分支 j 永远不会匹配
+     * 3. ✅ 单向检测：只检测 i → j，不检测 j → i
      *
      * 示例：
      * ```
-     * 分支1: ['If,LParen,Expression,RParen']
-     * 分支2: ['If,LParen,Expression,RParen,Block']
-     * 结果：分支1是分支2的前缀 → 分支2永远不会被匹配
+     * or([
+     *   分支1: ['If,LParen,Expression,RParen'],           // 短路径
+     *   分支2: ['If,LParen,Expression,RParen,Block']      // 长路径
+     * ])
+     * 
+     * 结果：分支1 是分支2 的前缀 → ❌ 冲突！分支2 永远不会被匹配
      * ```
      *
      * @param ruleName - 规则名
-     * @param orNode - Or 节点
      * @param branchPathSets - 每个分支的路径集合（来自 getOrNodeAllBranchRules）
      * @param errors - 错误列表
      */
@@ -1048,81 +1053,90 @@ export class SubhutiGrammarAnalyzer {
             return
         }
 
-        // 两两对比分支
+        // 单向遍历：只检测前面的分支（i）是否遮蔽后面的分支（j）
         for (let i = 0; i < branchPathSets.length; i++) {
             for (let j = i + 1; j < branchPathSets.length; j++) {
-                const pathsA = Array.from(branchPathSets[i])
-                const pathsB = Array.from(branchPathSets[j])
+                // 前面的分支路径集合
+                const pathsFront = Array.from(branchPathSets[i])
+                // 后面的分支路径集合
+                const pathsBehind = Array.from(branchPathSets[j])
 
-                // 检测分支 i 和分支 j 之间的冲突
-                const conflicts = this.findPrefixConflicts(pathsA, pathsB)
+                // 检测：前面的分支 i 是否遮蔽后面的分支 j
+                const conflict = this.findFirstPrefixConflict(pathsFront, pathsBehind)
 
-                // 如果发现冲突，报告错误
-                if (conflicts.length > 0) {
-                    // 取第一个冲突作为示例
-                    const firstConflict = conflicts[0]
-
+                // 如果发现冲突，报告错误并立即跳到下一对分支
+                if (conflict) {
                     errors.push({
                         level: 'ERROR',
                         type: 'prefix-conflict',
                         ruleName,
                         branchIndices: [i, j],
                         conflictPaths: {
-                            pathA: firstConflict.prefix,
-                            pathB: firstConflict.full
+                            pathA: conflict.prefix,
+                            pathB: conflict.full
                         },
                         message: `规则 "${ruleName}" 的 Or 分支 ${i + 1} 会遮蔽分支 ${j + 1}`,
-                        suggestion: this.getPrefixConflictSuggestion(ruleName, i, j, firstConflict)
+                        suggestion: this.getPrefixConflictSuggestion(ruleName, i, j, conflict)
                     })
 
                     console.log(`  ❌ ${ruleName}: 分支 ${i + 1} 遮蔽分支 ${j + 1}`)
-                    console.log(`     前缀: ${firstConflict.prefix}`)
-                    console.log(`     完整: ${firstConflict.full}`)
+                    console.log(`     前面的路径: ${conflict.prefix}`)
+                    console.log(`     后面的路径: ${conflict.full}`)
+                    console.log(`     冲突类型: ${conflict.type === 'equal' ? '完全相同' : '前缀遮蔽'}`)
                 }
             }
         }
     }
 
     /**
-     * 查找两个路径集合之间的前缀冲突
+     * 查找两个路径集合之间的第一个前缀冲突（单向检测，优化版）
+     * 
+     * ⚠️ 检测方向：只检测 pathsFront 是否遮蔽 pathsBehind
+     * 
+     * 检测规则：
+     * 1. pathFront === pathBehind → 完全相同，前面的分支会遮蔽后面的
+     * 2. pathBehind.startsWith(pathFront) → 前缀关系，前面的分支会遮蔽后面的
+     * 3. ❌ 不检测 pathFront.startsWith(pathBehind) → 不需要（单向检测）
      *
-     * @param pathsA - 分支A的路径数组
-     * @param pathsB - 分支B的路径数组
-     * @returns 冲突数组
+     * 优化：找到第一个冲突立即返回（不需要找全部冲突）
+     *
+     * @param pathsFront - 前面分支的路径数组
+     * @param pathsBehind - 后面分支的路径数组
+     * @returns 第一个冲突，如果没有冲突返回 null
      */
-    private findPrefixConflicts(
-        pathsA: string[],
-        pathsB: string[]
-    ): Array<{ prefix: string, full: string, type: 'prefix' | 'equal' }> {
-        const conflicts: Array<{ prefix: string, full: string, type: 'prefix' | 'equal' }> = []
-
-        // 对比 A 和 B 的每对路径
-        for (const pathA of pathsA) {
-            for (const pathB of pathsB) {
+    private findFirstPrefixConflict(
+        pathsFront: string[],
+        pathsBehind: string[]
+    ): { prefix: string, full: string, type: 'prefix' | 'equal' } | null {
+        // 遍历前面分支的所有路径
+        for (const pathFront of pathsFront) {
+            // 遍历后面分支的所有路径
+            for (const pathBehind of pathsBehind) {
                 // 情况1：完全相同
-                if (pathA === pathB) {
-                    conflicts.push({
-                        prefix: pathA,
-                        full: pathB,
+                if (pathFront === pathBehind) {
+                    // 找到冲突，立即返回
+                    return {
+                        prefix: pathFront,
+                        full: pathBehind,
                         type: 'equal'
-                    })
-                    continue
+                    }
                 }
 
-                // 情况2：A 是 B 的前缀
+                // 情况2：前面的路径是后面路径的前缀
                 // 例如：'If,LParen,Expression' 是 'If,LParen,Expression,RParen,Block' 的前缀
-                if (pathB.startsWith(pathA + ',') || pathB.startsWith(pathA)) {
-                    conflicts.push({
-                        prefix: pathA,
-                        full: pathB,
+                if (pathBehind.startsWith(pathFront + ',')) {
+                    // 找到冲突，立即返回
+                    return {
+                        prefix: pathFront,
+                        full: pathBehind,
                         type: 'prefix'
-                    })
-                    break
+                    }
                 }
             }
         }
 
-        return conflicts
+        // 没有冲突
+        return null
     }
 
     /**
@@ -1183,23 +1197,25 @@ or([A, A, B]) → or([A, B])  // 删除重复的A`
      *
      * 集成方法：
      * 1. 获取每个分支的所有路径
-     * 2. 检测完全相同的分支
-     * 3. 检测前缀冲突
+     * 2. 检测前缀冲突
      *
      * @param ruleName - 规则名
+     * @param firstK - First(K) 的 K 值
      * @param orNode - Or 节点
-     * @param cache - 规则缓存
+     * @param cache - 规则缓存（规则名 → 所有路径）
      * @param errors - 错误列表
+     * @param perfStats - 性能统计（可选）
      */
     detectOrBranchConflictsWithCache(
         ruleName: string,
         firstK: number,
         orNode: OrNode,
         cache: Map<string, string[][]>,
+        errors: ValidationError[],
         perfStats?: any
     ): void {
         // 步骤1：获取每个分支的所有路径
-        const branchPathSets = this.getOrNodeAllBranchRules(orNode, cache)
+        const branchPathSets = this.getOrNodeAllBranchRules(orNode, firstK, cache)
 
         // 步骤2：检测前缀冲突（包含完全相同的情况）
         this.detectOrBranchPrefixConflicts(ruleName, branchPathSets, errors)
