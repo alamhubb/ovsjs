@@ -1008,9 +1008,19 @@ MaxLevel 检测结果: 无冲突
         console.log(`\n🔍 ========== 语法验证与缓存初始化 ==========\n`)
 
         const totalStartTime = Date.now()
+        
+        // 统计对象
+        const stats = {
+            dfsFirstKTime: 0,  // First(K) 缓存生成用时
+            bfsMaxLevelTime: 0,  // MaxLevel 缓存生成用时
+            orDetectionTime: 0,  // Or 冲突检测用时
+            leftRecursionCount: 0,  // 左递归错误数量
+            orConflictCount: 0,  // Or 分支冲突数量
+            totalTime: 0  // 总用时
+        }
 
         // 1. 左递归检测（内部会初始化 DFS 缓存和 BFS 缓存）
-        console.log(`📊 [阶段1] 开始左递归检测...`)
+        console.log(`📊 [阶段1] 开始左递归检测与缓存初始化...`)
         console.log(`\n📊 [左递归检测] 开始检测 ${this.ruleASTs.size} 个规则...`)
 
         const ruleNames = Array.from(this.ruleASTs.keys())
@@ -1092,22 +1102,36 @@ MaxLevel 检测结果: 无冲突
         }
 
         const t1End = Date.now()
-        console.log(`\n    ✓ [1/1] DFS 缓存初始化 + 左递归检测完成`)
-        console.log(`       耗时: ${t1End - t1}ms`)
-        console.log(`       主缓存 dfsFirstKCache: ${this.dfsFirstKCache.size} 条`)
+        const stage1Time = t1End - t1
+        
+        // 记录统计信息
+        stats.dfsFirstKTime = stage1Time  // DFS 包含 First(K) 缓存生成
+        stats.bfsMaxLevelTime = stage1Time  // BFS 包含 MaxLevel 缓存生成（两者同时进行）
+        stats.leftRecursionCount = this.detectedLeftRecursionErrors.size
+        
+        console.log(`\n    ✓ [1/1] 缓存初始化 + 左递归检测完成`)
+        console.log(`       耗时: ${stage1Time}ms`)
+        console.log(`       ├─ dfsFirstKCache (First(${EXPANSION_LIMITS.FIRST_K})): ${this.dfsFirstKCache.size} 条`)
+        console.log(`       └─ bfsAllCache (MaxLevel): ${this.bfsAllCache.size} 条`)
         if (this.detectedLeftRecursionErrors.size > 0) {
             console.log(`       ⚠️  发现 ${this.detectedLeftRecursionErrors.size} 个左递归错误（详情见后续汇总）`)
         }
 
         const leftRecursionErrors = Array.from(this.detectedLeftRecursionErrors.values())
-        console.log(`✅ [阶段1] 左递归检测完成，耗时 ${t1End - t1}ms`)
+        console.log(`✅ [阶段1] 左递归检测完成，耗时 ${stage1Time}ms`)
 
         // 2. Or 分支冲突检测
         console.log(`\n📊 [阶段2] 开始 Or 分支冲突检测...`)
         const t2 = Date.now()
         const orConflictErrors = this.checkAllOrConflicts()
         const t2End = Date.now()
-        console.log(`✅ [阶段2] Or 分支冲突检测完成，耗时 ${t2End - t2}ms`)
+        const stage2Time = t2End - t2
+        
+        // 记录 Or 检测统计
+        stats.orDetectionTime = stage2Time
+        stats.orConflictCount = orConflictErrors.length
+        
+        console.log(`✅ [阶段2] Or 分支冲突检测完成，耗时 ${stage2Time}ms`)
 
         // 3. 合并所有错误（左递归优先）
         const allErrors: ValidationError[] = []
@@ -1163,13 +1187,28 @@ MaxLevel 检测结果: 无冲突
 
         console.log(`${'='.repeat(60)}`)
 
-        // 5. 输出性能统计
-        const totalTime = Date.now() - totalStartTime
-        console.log(`\n⏱️  总耗时: ${totalTime}ms`)
-        console.log(`   - 阶段1(左递归检测): ${t1End - t1}ms (${((t1End - t1) / totalTime * 100).toFixed(1)}%)`)
-        console.log(`   - 阶段2(Or冲突检测): ${t2End - t2}ms (${((t2End - t2) / totalTime * 100).toFixed(1)}%)`)
+        // 5. 输出统计信息
+        stats.totalTime = Date.now() - totalStartTime
+        
+        console.log(`\n📊 ========== 统计信息 ==========`)
+        console.log(`\n⏱️  时间统计：`)
+        console.log(`   总耗时: ${stats.totalTime}ms`)
+        console.log(`   ├─ First(K) 缓存生成: ${stats.dfsFirstKTime}ms (${(stats.dfsFirstKTime / stats.totalTime * 100).toFixed(1)}%)`)
+        console.log(`   ├─ MaxLevel 缓存生成: ${stats.bfsMaxLevelTime}ms (${(stats.bfsMaxLevelTime / stats.totalTime * 100).toFixed(1)}%)`)
+        console.log(`   └─ Or 冲突检测: ${stats.orDetectionTime}ms (${(stats.orDetectionTime / stats.totalTime * 100).toFixed(1)}%)`)
+        
+        console.log(`\n🔍 检测结果：`)
+        console.log(`   ├─ 左递归错误: ${stats.leftRecursionCount} 个`)
+        console.log(`   └─ Or 分支遮蔽: ${stats.orConflictCount} 个`)
+        console.log(`   总计: ${allErrors.length} 个错误`)
+        
+        console.log(`\n📦 缓存信息：`)
+        console.log(`   ├─ dfsFirstKCache: ${this.dfsFirstKCache.size} 条 (First(${EXPANSION_LIMITS.FIRST_K}))`)
+        console.log(`   └─ bfsAllCache: ${this.bfsAllCache.size} 条 (MaxLevel)`)
+        
+        console.log(`\n${'='.repeat(60)}`)
 
-        console.log(`\n🎯 ========== 最终性能分析报告 ==========`)
+        console.log(`\n🎯 ========== 详细性能分析报告 ==========`)
         this.perfAnalyzer.report()
 
         return allErrors
