@@ -367,6 +367,8 @@ export class SubhutiGrammarAnalyzer {
     // 特点：BFS 只负责按层级展开，不负责截取
     // ========================================
 
+    /** BFS 缓存：key="ruleName"（完整展开，不截取，所有层级聚合） */
+    private bfsAllCache = new Map<string, string[][]>()
     /** BFS 缓存：key="ruleName:level"（完整展开，不截取） */
     private bfsLevelCache = new Map<string, string[][]>()
 
@@ -467,6 +469,28 @@ export class SubhutiGrammarAnalyzer {
         console.log(`    ✓ [1/2] BFS 缓存初始化完成`)
         console.log(`       耗时: ${t1End - t1}ms`)
         console.log(`       缓存条目: ${this.bfsLevelCache.size} 条`)
+
+        // 聚合所有层级的数据到 bfsAllCache
+        console.log(`\n    [1.5] 聚合所有层级数据到 bfsAllCache...`)
+        const tAgg = Date.now()
+        for (const ruleName of ruleNames) {
+            const allLevelPaths: string[][] = []
+            // 遍历所有层级，收集该规则的所有路径
+            for (let level = 1; level <= EXPANSION_LIMITS.LEVEL_K; level++) {
+                const key = `${ruleName}:${level}`
+                const levelPaths = this.bfsLevelCache.get(key)
+                if (levelPaths) {
+                    allLevelPaths.push(...levelPaths)
+                }
+            }
+            // 去重后存储到 bfsAllCache
+            const deduplicated = this.deduplicate(allLevelPaths)
+            this.bfsAllCache.set(ruleName, deduplicated)
+        }
+        const tAggEnd = Date.now()
+        console.log(`    ✓ [1.5] 数据聚合完成`)
+        console.log(`       耗时: ${tAggEnd - tAgg}ms`)
+        console.log(`       bfsAllCache 条目: ${this.bfsAllCache.size} 条`)
 
         console.log(`\n    [2/2] 初始化 DFS 缓存 (无限层数场景)...`)
         console.log(`       策略：dfsFirstKCache (firstK=${EXPANSION_LIMITS.FIRST_K}, maxLevel=∞) + 派生 first1`)
