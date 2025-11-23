@@ -443,91 +443,6 @@ export class SubhutiGrammarAnalyzer {
         return ruleNode
     }
 
-    /**
-     * 检测所有规则的左递归
-     *
-     * 实现方式：
-     * - 遍历所有规则，调用 expandPathsByDFS 触发展开
-     * - 在 subRuleHandler 中检测递归，区分左递归和普通递归
-     * - 收集所有左递归错误
-     *
-     * @returns 左递归错误列表
-     */
-    public checkAllLeftRecursion(): LeftRecursionError[] {
-        console.log(`\n📊 [左递归检测] 开始检测 ${this.ruleASTs.size} 个规则...`)
-
-        const ruleNames = Array.from(this.ruleASTs.keys())
-
-        // ========================================
-        // 阶段1：初始化 DFS 缓存 + 左递归检测
-        // ========================================
-        console.log(`    [1/2] 初始化 DFS 缓存 (无限层数场景) + 左递归检测...`)
-        console.log(`       策略：dfsFirstKCache (firstK=${EXPANSION_LIMITS.FIRST_K}, maxLevel=∞) + 派生 first1`)
-        console.log(`       算法：深度优先，递归展开到token`)
-        const t1 = Date.now()
-
-        // 清空错误 Map
-        this.detectedLeftRecursionErrors.clear()
-
-        // 启动超时检测
-        this.operationStartTime = Date.now()
-
-        // 遍历所有规则
-        for (const ruleNode of this.ruleASTs.values()) {
-            const ruleName = (ruleNode as any).ruleName
-            this.currentProcessingRule = ruleName
-
-            // 清空递归检测集合
-            this.recursiveDetectionSet.clear()
-
-            try {
-                this.checkTimeout(`规则${ruleName}-开始`)
-                this.expandPathsByDFS(null, ruleNode, EXPANSION_LIMITS.FIRST_K, 0, EXPANSION_LIMITS.INFINITY, true)
-            } catch (e) {
-                console.error(`  ❌ 规则 ${ruleName} 检测失败: ${e.message}`)
-                throw e
-            }
-        }
-
-        // 重置超时检测
-        this.operationStartTime = 0
-
-        // 为每个错误补充 suggestion
-        for (const error of this.detectedLeftRecursionErrors.values()) {
-            const ruleAST = this.getRuleNodeByAst(error.ruleName)
-            error.suggestion = this.getLeftRecursionSuggestion(
-                error.ruleName,
-                ruleAST,
-                new Set([error.ruleName])
-            )
-        }
-
-        const t1End = Date.now()
-        console.log(`\n    ✓ [1/1] DFS 缓存初始化 + 左递归检测完成`)
-        console.log(`       耗时: ${t1End - t1}ms`)
-        console.log(`       主缓存 dfsFirstKCache: ${this.dfsFirstKCache.size} 条`)
-        console.log(`       派生缓存 dfsFirst1Cache: ${this.dfsFirst1Cache.size} 条（从firstK截取）`)
-        if (this.detectedLeftRecursionErrors.size > 0) {
-            console.log(`       ⚠️  发现 ${this.detectedLeftRecursionErrors.size} 个左递归错误（详情见后续汇总）`)
-        }
-
-        // ========================================
-        // 🔧 优化：删除无用的 BFS 预填充
-        // ========================================
-        // 原因：整个系统都使用 DFS（maxLevel=∞），BFS 缓存从未被有效使用
-        // BFS 缓存改为懒加载：在 getDirectChildren 中第一次使用时才填充
-        // 
-        // ❌ 已删除阶段2：BFS 缓存预填充（浪费时间和内存）
-        // ❌ 已删除阶段2.5：bfsAllCache 聚合（从未使用）
-        //
-        // 性能提升：
-        // - 减少初始化时间（不再遍历所有规则的 level 1-2）
-        // - 减少内存占用（按需填充，不存储无用数据）
-        // - ExpandOneLevel 缓存统计不再显示无意义的 0%
-
-        // 返回收集到的错误（转换为数组）
-        return Array.from(this.detectedLeftRecursionErrors.values())
-    }
 
     /**
      * BFS 缓存预填充（从 level 1 到 level_k）
@@ -1189,9 +1104,61 @@ export class SubhutiGrammarAnalyzer {
 
         // 1. 左递归检测（内部会初始化 DFS 缓存和 BFS 缓存）
         console.log(`📊 [阶段1] 开始左递归检测...`)
+        console.log(`\n📊 [左递归检测] 开始检测 ${this.ruleASTs.size} 个规则...`)
+        
+        const ruleNames = Array.from(this.ruleASTs.keys())
+        
+        console.log(`    [1/2] 初始化 DFS 缓存 (无限层数场景) + 左递归检测...`)
+        console.log(`       策略：dfsFirstKCache (firstK=${EXPANSION_LIMITS.FIRST_K}, maxLevel=∞) + 派生 first1`)
+        console.log(`       算法：深度优先，递归展开到token`)
         const t1 = Date.now()
-        const leftRecursionErrors = this.checkAllLeftRecursion()
+
+        // 清空错误 Map
+        this.detectedLeftRecursionErrors.clear()
+
+        // 启动超时检测
+        this.operationStartTime = Date.now()
+
+        // 遍历所有规则
+        for (const ruleNode of this.ruleASTs.values()) {
+            const ruleName = (ruleNode as any).ruleName
+            this.currentProcessingRule = ruleName
+
+            // 清空递归检测集合
+            this.recursiveDetectionSet.clear()
+
+            try {
+                this.checkTimeout(`规则${ruleName}-开始`)
+                this.expandPathsByDFS(null, ruleNode, EXPANSION_LIMITS.FIRST_K, 0, EXPANSION_LIMITS.INFINITY, true)
+            } catch (e) {
+                console.error(`  ❌ 规则 ${ruleName} 检测失败: ${e.message}`)
+                throw e
+            }
+        }
+
+        // 重置超时检测
+        this.operationStartTime = 0
+
+        // 为每个错误补充 suggestion
+        for (const error of this.detectedLeftRecursionErrors.values()) {
+            const ruleAST = this.getRuleNodeByAst(error.ruleName)
+            error.suggestion = this.getLeftRecursionSuggestion(
+                error.ruleName,
+                ruleAST,
+                new Set([error.ruleName])
+            )
+        }
+
         const t1End = Date.now()
+        console.log(`\n    ✓ [1/1] DFS 缓存初始化 + 左递归检测完成`)
+        console.log(`       耗时: ${t1End - t1}ms`)
+        console.log(`       主缓存 dfsFirstKCache: ${this.dfsFirstKCache.size} 条`)
+        console.log(`       派生缓存 dfsFirst1Cache: ${this.dfsFirst1Cache.size} 条（从firstK截取）`)
+        if (this.detectedLeftRecursionErrors.size > 0) {
+            console.log(`       ⚠️  发现 ${this.detectedLeftRecursionErrors.size} 个左递归错误（详情见后续汇总）`)
+        }
+        
+        const leftRecursionErrors = Array.from(this.detectedLeftRecursionErrors.values())
         console.log(`✅ [阶段1] 左递归检测完成，耗时 ${t1End - t1}ms`)
 
         // 1.5. BFS 缓存预填充（level 1 到 level_k）
