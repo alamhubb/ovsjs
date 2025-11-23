@@ -1103,6 +1103,27 @@ export class SubhutiGrammarAnalyzer {
         console.log(`      新增缓存: ${totalFilled} 条`)
         console.log(`      BFS Level 缓存总数: ${this.bfsLevelCache.size} 条`)
 
+        // 聚合所有层级的数据到 bfsAllCache
+        console.log(`\n    聚合所有层级数据到 bfsAllCache...`)
+        for (const ruleName of ruleNames) {
+            const allLevelPaths: string[][] = []
+            
+            // 收集该规则的所有层级数据
+            for (let level = 1; level <= EXPANSION_LIMITS.LEVEL_K; level++) {
+                const key = `${ruleName}:${level}`
+                if (this.bfsLevelCache.has(key)) {
+                    const levelPaths = this.bfsLevelCache.get(key)!
+                    allLevelPaths.push(...levelPaths)
+                }
+            }
+            
+            // 去重并存入 bfsAllCache
+            const deduplicated = this.deduplicate(allLevelPaths)
+            this.bfsAllCache.set(ruleName, deduplicated)
+        }
+        
+        console.log(`      bfsAllCache 总数: ${this.bfsAllCache.size} 条`)
+
         // 重置超时检测
         this.operationStartTime = 0
 
