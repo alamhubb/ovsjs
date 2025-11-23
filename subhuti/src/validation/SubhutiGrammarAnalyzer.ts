@@ -443,23 +443,53 @@ export class SubhutiGrammarAnalyzer {
         return ruleNode
     }
 
-    checkor(ruleName) {
+    /**
+     * 检查规则中所有 Or 节点的问题（示例方法）
+     * 
+     * 展示如何使用新的遍历方法：
+     * - traverseOrNodes: 递归遍历，对每个 Or 执行回调
+     * - findAllOrNodes: 收集所有 Or 节点
+     * - forEachOrNode: 对规则中的所有 Or 节点执行回调
+     *
+     * @param ruleName - 规则名
+     * @param errors - 错误列表（可选）
+     */
+    checkOrNodesInRule(ruleName: string, errors?: ValidationError[]): void {
+        console.log(`\n=== 检查规则 "${ruleName}" 中的所有 Or 节点 ===`)
 
-        /*const ruleNode = this.ruleASTs.get(ruleName)
-        for (const node of ruleNode.nodes) {
-            if (node.type === 'Or'){
-
+        // 方式1：使用 forEachOrNode（推荐 - 最简洁）
+        console.log('\n方式1：使用 forEachOrNode')
+        this.forEachOrNode(ruleName, (orNode) => {
+            console.log(`  找到 Or 节点，有 ${orNode.alternatives.length} 个分支`)
+            
+            // 如果提供了 errors，则执行检测
+            if (errors) {
+                // 检测完全相同的分支
+                this.detectOrNodeIdenticalBranches(ruleName, orNode, errors)
             }
+        })
+
+        // 方式2：先收集所有 Or 节点，再统一处理
+        console.log('\n方式2：先收集再处理')
+        const allOrNodes = this.findAllOrNodes(ruleName)
+        console.log(`  规则中共有 ${allOrNodes.length} 个 Or 节点`)
+        
+        for (let i = 0; i < allOrNodes.length; i++) {
+            const orNode = allOrNodes[i]
+            console.log(`  Or[${i}]: ${orNode.alternatives.length} 个分支`)
         }
 
-
-        //获取一个规则的所有分支
-        const allBranch = this.dfsFirstKCache.get(ruleName)
-
-        for (const allBranch1 of allBranch) {
-
+        // 方式3：直接使用 traverseOrNodes（最底层 - 最灵活）
+        console.log('\n方式3：直接遍历')
+        const ruleNode = this.ruleASTs.get(ruleName)
+        if (ruleNode) {
+            let orCount = 0
+            this.traverseOrNodes(ruleNode, (orNode) => {
+                orCount++
+                // 自定义处理逻辑
+            })
+            console.log(`  共遍历了 ${orCount} 个 Or 节点`)
         }
-*/
     }
 
 
@@ -598,9 +628,13 @@ export class SubhutiGrammarAnalyzer {
     ): void {
         switch (node.type) {
             case 'or':
-                // 使用智能检测
+                // 步骤1：检测完全相同的分支（重复分支检测）
+                this.detectOrNodeIdenticalBranches(ruleName, node, errors)
+                
+                // 步骤2：使用智能检测（First(1) → First(K) 冲突检测）
                 if (perfStats) perfStats.orNodesChecked++
                 this.detectOrNodeConflictSmart(ruleName, node, errors, perfStats)
+                
                 // 递归检查每个分支
                 for (const alt of node.alternatives) {
                     this.checkOrConflictsInNodeSmart(ruleName, alt, errors, perfStats)
@@ -687,6 +721,178 @@ export class SubhutiGrammarAnalyzer {
     ): void {
         // 默认使用 First(1)
         this.detectOrNodeConflictWithFirstK(ruleName, orNode, errors, 1)
+    }
+
+    /**
+     * 检测 Or 节点中是否有完全相同的分支（重复分支检测）
+     *
+     * 目标：检测 Or 的多个分支是否完全相同
+     * 
+     * 示例：
+     * ```
+     * // ❌ 错误：分支1 和 分支2 完全相同
+     * or([
+     *   IfStatement,        // 分支1
+     *   IfStatement,        // 分支2 - 和分支1 完全相同！
+     * ])
+     * 
+     * // ❌ 错误：结构相同
+     * or([
+     *   sequence(If, Block),   // 分支1
+     *   sequence(If, Block),   // 分支2 - 结构完全相同！
+     * ])
+     * ```
+     *
+     * 实现思路：
+     * 1. 使用 expandNode 展开每个分支（结构展开，保留规则名）
+     * 2. 序列化展开结果
+     * 3. 检测是否有重复
+     *
+     * @param ruleName - 规则名
+     * @param orNode - Or 节点
+     * @param errors - 错误列表
+     */
+    private detectOrNodeIdenticalBranches(
+        ruleName: string,
+        orNode: RuleNode,
+        errors: ValidationError[]
+    ): void {
+        // 防御：确保是 Or 节点
+        if (orNode.type !== 'or') {
+            throw new Error('系统错误：detectOrNodeIdenticalBranches 只能处理 or 类型节点')
+        }
+
+        // 类型断言
+        const orNodeTyped = orNode as OrNode
+
+        // 防御：至少需要 2 个分支才能比较
+        if (orNodeTyped.alternatives.length < 2) {
+            return
+        }
+
+        // 存储每个分支的序列化结果
+        // key: 序列化字符串, value: 分支索引数组
+        const branchSignatures = new Map<string, number[]>()
+
+        // 遍历所有分支
+        for (let i = 0; i < orNodeTyped.alternatives.length; i++) {
+            const alt = orNodeTyped.alternatives[i]
+
+            // 使用 expandNode 展开分支（结构展开，不完全展开到 token）
+            // 这里我们用一个简单的方法：直接序列化 AST 节点
+            const signature = this.serializeRuleNode(alt)
+
+            // 记录这个签名对应的分支索引
+            if (!branchSignatures.has(signature)) {
+                branchSignatures.set(signature, [])
+            }
+            branchSignatures.get(signature)!.push(i)
+        }
+
+        // 检测重复的分支
+        for (const [signature, indices] of branchSignatures.entries()) {
+            if (indices.length > 1) {
+                // 发现重复分支
+                // 报告所有重复的分支对
+                for (let i = 0; i < indices.length; i++) {
+                    for (let j = i + 1; j < indices.length; j++) {
+                        const branchA = indices[i]
+                        const branchB = indices[j]
+
+                        errors.push({
+                            level: 'ERROR',
+                            type: 'or-identical-branches',
+                            ruleName,
+                            branchIndices: [branchA, branchB],
+                            message: `规则 "${ruleName}" 的 Or 分支 ${branchA + 1} 和分支 ${branchB + 1} 完全相同`,
+                            suggestion: this.getIdenticalBranchSuggestion(ruleName, branchA, branchB, signature)
+                        })
+
+                        console.log(`  ❌ ${ruleName}: 分支 ${branchA + 1} 和 ${branchB + 1} 完全相同`)
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * 序列化 RuleNode 为字符串（用于比较）
+     * 
+     * 实现：递归遍历 AST，生成唯一的字符串表示
+     *
+     * @param node - 规则节点
+     * @returns 序列化字符串
+     */
+    private serializeRuleNode(node: RuleNode): string {
+        switch (node.type) {
+            case 'consume':
+                // Token 节点：返回 token 名
+                return `consume(${node.tokenName})`
+
+            case 'subrule':
+                // 子规则引用：返回规则名
+                return `subrule(${node.ruleName})`
+
+            case 'or':
+                // Or 节点：递归序列化所有分支
+                const orAlts = node.alternatives.map(alt => this.serializeRuleNode(alt))
+                return `or(${orAlts.join('|')})`
+
+            case 'sequence':
+                // Sequence 节点：递归序列化所有子节点
+                const seqNodes = node.nodes.map(child => this.serializeRuleNode(child))
+                return `seq(${seqNodes.join(',')})`
+
+            case 'option':
+                // Option 节点：递归序列化内部节点
+                return `opt(${this.serializeRuleNode(node.node)})`
+
+            case 'many':
+                // Many 节点：递归序列化内部节点
+                return `many(${this.serializeRuleNode(node.node)})`
+
+            case 'atLeastOne':
+                // AtLeastOne 节点：递归序列化内部节点
+                return `atLeastOne(${this.serializeRuleNode(node.node)})`
+
+            default:
+                // 未知节点类型
+                return `unknown(${(node as any).type})`
+        }
+    }
+
+    /**
+     * 生成完全相同分支的修复建议
+     *
+     * @param ruleName - 规则名
+     * @param branchA - 分支 A 索引
+     * @param branchB - 分支 B 索引
+     * @param signature - 分支签名
+     * @returns 修复建议
+     */
+    private getIdenticalBranchSuggestion(
+        ruleName: string,
+        branchA: number,
+        branchB: number,
+        signature: string
+    ): string {
+        return `Or 节点中存在完全相同的分支，这会导致解析器永远无法匹配后面的分支！
+
+检测到的问题：
+  分支 ${branchA + 1} 和分支 ${branchB + 1} 的结构完全相同
+  签名: ${signature}
+
+修复建议：
+1. **删除重复分支**：保留其中一个分支，删除另一个
+   示例：
+   or([A, A, B]) → or([A, B])
+
+2. **检查是否为复制粘贴错误**：可能是误复制了代码
+
+3. **如果是不同的语义**：考虑在规则名或结构上做区分
+
+注意：PEG 解析器使用顺序选择，第一个匹配的分支会被使用。
+      如果两个分支完全相同，第二个分支永远不会被执行。`
     }
 
     /**
@@ -1029,6 +1235,119 @@ export class SubhutiGrammarAnalyzer {
             // 无 First(1) 冲突，跳过 First(5) 检测
             if (perfStats) perfStats.first5Skipped++
         }
+    }
+
+    /**
+     * 遍历 RuleNode，找到所有 Or 节点并执行回调
+     * 
+     * 功能：深度优先遍历 AST，对每个 Or 节点执行回调函数
+     * 
+     * 使用场景：
+     * - 检测所有 Or 节点的重复分支
+     * - 检测所有 Or 节点的冲突
+     * - 收集所有 Or 节点的信息
+     * 
+     * 示例：
+     * ```typescript
+     * // 检测所有 Or 的重复分支
+     * traverseOrNodes(ruleNode, (orNode) => {
+     *     this.detectOrNodeIdenticalBranches(ruleName, orNode, errors)
+     * })
+     * ```
+     *
+     * @param node - 根节点
+     * @param callback - 对每个 Or 节点执行的回调函数
+     */
+    private traverseOrNodes(
+        node: RuleNode,
+        callback: (orNode: OrNode) => void
+    ): void {
+        // 根据节点类型递归遍历
+        switch (node.type) {
+            case 'or':
+                // 找到 Or 节点，执行回调
+                callback(node as OrNode)
+                
+                // 继续递归遍历 Or 的每个分支
+                for (const alt of (node as OrNode).alternatives) {
+                    this.traverseOrNodes(alt, callback)
+                }
+                break
+
+            case 'sequence':
+                // 递归遍历 Sequence 的每个子节点
+                for (const child of node.nodes) {
+                    this.traverseOrNodes(child, callback)
+                }
+                break
+
+            case 'option':
+            case 'many':
+            case 'atLeastOne':
+                // 递归遍历内部节点
+                this.traverseOrNodes(node.node, callback)
+                break
+
+            case 'consume':
+            case 'subrule':
+                // 叶子节点，不需要递归
+                break
+        }
+    }
+
+    /**
+     * 在整个规则中查找所有 Or 节点
+     * 
+     * 功能：遍历规则的 AST，收集所有 Or 节点
+     * 
+     * @param ruleName - 规则名
+     * @returns 所有 Or 节点的数组
+     */
+    private findAllOrNodes(ruleName: string): OrNode[] {
+        // 获取规则的 AST
+        const ruleNode = this.ruleASTs.get(ruleName)
+        if (!ruleNode) {
+            return []
+        }
+
+        // 收集所有 Or 节点
+        const orNodes: OrNode[] = []
+        
+        this.traverseOrNodes(ruleNode, (orNode) => {
+            orNodes.push(orNode)
+        })
+
+        return orNodes
+    }
+
+    /**
+     * 对规则中的所有 Or 节点执行操作
+     * 
+     * 功能：遍历规则的 AST，对每个 Or 节点执行回调
+     * 
+     * 使用场景：
+     * ```typescript
+     * // 检测所有 Or 的重复分支
+     * this.forEachOrNode('Statement', (orNode) => {
+     *     this.detectOrNodeIdenticalBranches('Statement', orNode, errors)
+     * })
+     * ```
+     *
+     * @param ruleName - 规则名
+     * @param callback - 对每个 Or 节点执行的回调函数
+     */
+    private forEachOrNode(
+        ruleName: string,
+        callback: (orNode: OrNode) => void
+    ): void {
+        // 获取规则的 AST
+        const ruleNode = this.ruleASTs.get(ruleName)
+        if (!ruleNode) {
+            return
+        }
+
+        // 遍历所有 Or 节点
+        this.traverseOrNodes(ruleNode, callback)
     }
 
     /**

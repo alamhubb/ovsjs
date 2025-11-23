@@ -18,7 +18,7 @@ export interface ValidationError {
     level: 'ERROR' | 'FATAL'
 
     /** 错误类型 */
-    type: 'empty-path' | 'prefix-conflict' | 'left-recursion' | 'or-conflict'
+    type: 'empty-path' | 'prefix-conflict' | 'left-recursion' | 'or-conflict' | 'or-identical-branches'
 
     /** 规则名称 */
     ruleName: string
@@ -26,8 +26,8 @@ export interface ValidationError {
     /** 冲突的分支索引 [前, 后] */
     branchIndices: [number, number] | []
 
-    /** 冲突路径 */
-    conflictPaths: {
+    /** 冲突路径（可选，部分错误类型不需要） */
+    conflictPaths?: {
         pathA: string  // 前缀路径（短）或分支 A 的 First 集合
         pathB: string  // 被遮蔽路径（长）或分支 B 的 First 集合
     }
@@ -73,8 +73,11 @@ export class SubhutiGrammarValidationError extends Error {
             lines.push(`[${error.level}] ${error.message}`)
             lines.push(`  Rule: ${error.ruleName}`)
             lines.push(`  Branches: [${error.branchIndices.join(', ')}]`)
-            lines.push(`  Path A: ${error.conflictPaths.pathA}`)
-            lines.push(`  Path B: ${error.conflictPaths.pathB}`)
+            // conflictPaths 是可选的
+            if (error.conflictPaths) {
+                lines.push(`  Path A: ${error.conflictPaths.pathA}`)
+                lines.push(`  Path B: ${error.conflictPaths.pathB}`)
+            }
             lines.push(`  Suggestion: ${error.suggestion}`)
             lines.push('')
         }
