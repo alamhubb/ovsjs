@@ -2011,39 +2011,35 @@ export class SubhutiGrammarAnalyzer {
         ruleName: string,
         targetLevel: number
     ): string[][] {
-        // 获取 level 1
-        const level1Paths = this.getDirectChildren(ruleName)
-        if (targetLevel === 1) {
-            return level1Paths
-        }
-        
         // 默认使用纯净版（无日志），方便学习
-        const result = this.expandPathsByBFSCacheClean(level1Paths, targetLevel - 1)
-        
-        // 缓存最终结果
-        if (targetLevel <= EXPANSION_LIMITS.LEVEL_K) {
-            this.bfsLevelCache.set(`${ruleName}:${targetLevel}`, result)
-        }
-        
-        return result
-        
+        return this.expandPathsByBFSCacheClean([[ruleName]], targetLevel)
+
         // 如需调试，改为：
         // return this.expandPathsByBFSCacheWithLog(ruleName, targetLevel, [])
     }
 
     /**
-     * BFS 展开（纯净版，单方法实现）
+     * BFS 展开（纯净版，单方法递归实现）
      *
      * 核心逻辑：
      * 1. 对每个路径中的每个规则名，查找该规则的缓存
      * 2. 如果有缓存，复用；否则递归展开
-     * 3. 自动缓存中间结果
-     * 
-     * 示例：
-     * - paths = [[A, B, C]], levels = 10
-     * - 遍历 A: 查找 A:10 → 找到 A:3 → 递归展开 A:3 的结果 7 层 → 缓存 A:10
-     * - 遍历 B: 查找 B:10 → 找到 B:3 → 递归展开 B:3 的结果 7 层 → 缓存 B:10
-     * - 遍历 C: 查找 C:10 → 找到 C:3 → 递归展开 C:3 的结果 7 层 → 缓存 C:10
+     * 3. 自动缓存中间结果（用 symbol 作为 key）
+     *
+     * 调用方式：
+     * - 根部调用：expandPathsByBFSCacheClean([[ruleName]], targetLevel)
+     * - 递归调用：expandPathsByBFSCacheClean(paths, remainingLevels)
+     *
+     * 示例：查找 A:10，缓存有 A:3
+     * - 调用：expandPathsByBFSCacheClean([[A]], 10)
+     * - 遍历 A: 查找 A:10 → 找到 A:3 = [[a, B, c]]
+     * - 递归：expandPathsByBFSCacheClean([[a, B, c]], 7)
+     * - 遍历 B: 查找 B:7 → 找到 B:3 = [[b, C, d]]
+     * - 递归：expandPathsByBFSCacheClean([[b, C, d]], 4)
+     * - 遍历 C: 查找 C:4 → 找到 C:3 = [[c, D, e]]
+     * - 递归：expandPathsByBFSCacheClean([[c, D, e]], 1)
+     * - 遍历 D: levels=1 → getDirectChildren(D)
+     * - 缓存 C:4, B:7, A:10 ✅
      *
      * @param paths 当前路径数组
      * @param levels 要展开的层数
@@ -2112,10 +2108,10 @@ export class SubhutiGrammarAnalyzer {
                     // 计算剩余层数
                     const remainingLevels = levels - cachedLevel
 
-                    // 递归展开
+                    // 递归调用自己
                     const result = this.expandPathsByBFSCacheClean(cachedPaths, remainingLevels)
 
-                    // 缓存结果
+                    // 缓存结果（用 symbol 作为 key）
                     if (levels <= EXPANSION_LIMITS.LEVEL_K) {
                         this.bfsLevelCache.set(`${symbol}:${levels}`, result)
                     }
