@@ -289,7 +289,7 @@ export const EXPANSION_LIMITS = {
      * - 路径比较复杂度：O(n²)
      * - 1000条路径 × 1000条路径 = 100万次比较（可接受）
      * - 超过1000条路径会导致性能问题（如 28260条 = 8亿次比较）
-     * 
+     *
      * 当前设置：已取消限制（Infinity），可能导致性能问题
      */
     MAX_BRANCHES: Infinity,
@@ -448,19 +448,19 @@ export class SubhutiGrammarAnalyzer {
         console.log(`       策略：bfsLevelCache (firstK=∞, maxLevel=1~${EXPANSION_LIMITS.LEVEL_K})`)
         console.log(`       算法：广度优先，按层级循环展开`)
         const t1 = Date.now()
-        for (const ruleName of ruleNames) {
-            const t0 = Date.now()
+        for (let level = 1; level <= EXPANSION_LIMITS.LEVEL_K; level++) {
+            for (const ruleName of ruleNames) {
+                const t0 = Date.now()
 
-            // 为每个层级触发计算
-            for (let level = 1; level <= EXPANSION_LIMITS.LEVEL_K; level++) {
+                // 为每个层级触发计算
                 this.expandPathsByBFS(ruleName, level)
-            }
 
-            const duration = Date.now() - t0
-            this.perfAnalyzer.record(`init_InfinityLevelK_${ruleName}`, duration)
+                const duration = Date.now() - t0
+                this.perfAnalyzer.record(`init_InfinityLevelK_${ruleName}`, duration)
 
-            if (duration > 100) {
-                console.log(`      ⚠️  ${ruleName}: ${duration}ms (较慢)`)
+                if (duration > 100) {
+                    console.log(`      ⚠️  ${ruleName}: ${duration}ms (较慢)`)
+                }
             }
         }
         const t1End = Date.now()
@@ -484,7 +484,7 @@ export class SubhutiGrammarAnalyzer {
 
         // 启动超时检测
         this.operationStartTime = Date.now()
-        
+
         // 遍历所有规则
         let ruleIndex = 0
         for (const ruleNode of this.ruleASTs.values()) {
@@ -492,7 +492,7 @@ export class SubhutiGrammarAnalyzer {
             this.currentProcessingRule = ruleName
             ruleIndex++
             console.log(`\n  [${ruleIndex}/${this.ruleASTs.size}] 检测规则: ${ruleName}`)
-            
+
             // 清空递归检测集合
             this.recursiveDetectionSet.clear()
 
@@ -505,7 +505,7 @@ export class SubhutiGrammarAnalyzer {
                 throw e
             }
         }
-        
+
         // 重置超时检测
         this.operationStartTime = 0
 
@@ -1367,10 +1367,10 @@ export class SubhutiGrammarAnalyzer {
         // 逐个处理后续数组
         for (let i = 1; i < arrays.length; i++) {
             this.checkTimeout(`cartesianProduct-数组${i}/${arrays.length}`)
-            
+
             let currentArray = arrays[i]
-            
-            console.log(`    [笛卡尔积-步骤${i}/${arrays.length-1}] result(${result.length}) × currentArray(${currentArray.length})`)
+
+            console.log(`    [笛卡尔积-步骤${i}/${arrays.length - 1}] result(${result.length}) × currentArray(${currentArray.length})`)
 
             // 🔧 优化：数组层面提前去重
             // 如果数组较大且包含重复，提前去重可以显著减少后续计算
@@ -1420,13 +1420,13 @@ export class SubhutiGrammarAnalyzer {
             const totalSeqs = result.length
             for (const seq of result) {
                 seqIndex++
-                
+
                 // 每处理1000个seq输出一次进度
                 if (seqIndex % 1000 === 0 || seqIndex === totalSeqs) {
                     console.log(`      [处理seq进度] ${seqIndex}/${totalSeqs}, temp累积: ${temp.length}`)
                     this.checkTimeout(`cartesianProduct-seq${seqIndex}`)
                 }
-                
+
                 // 防御检查：不应该出现超长序列
                 if (seq.length > EXPANSION_LIMITS.FIRST_K) {
                     throw new Error('系统错误：序列长度超过限制')
@@ -1506,7 +1506,7 @@ export class SubhutiGrammarAnalyzer {
 
             // 更新统计
             perfStats.maxResultSize = Math.max(perfStats.maxResultSize, result.length + finalResultSet.size)
-            
+
             // 输出本轮统计
             console.log(`    [步骤${i}完成] 新result: ${result.length}, finalResult: ${finalResultSet.size}, 总计: ${result.length + finalResultSet.size}`)
 
@@ -1770,14 +1770,14 @@ export class SubhutiGrammarAnalyzer {
      * @param maxLevel
      * @param isFirstPosition 是否在第一个位置（用于左递归检测）
      */
-    // 超时检测相关
+        // 超时检测相关
     private operationStartTime: number = 0
     private currentProcessingRule: string = ''
     private timeoutSeconds: number = 20
-    
+
     private checkTimeout(location: string): void {
         if (!this.operationStartTime) return
-        
+
         const elapsed = (Date.now() - this.operationStartTime) / 1000
         if (elapsed > this.timeoutSeconds) {
             const errorMsg = `
@@ -1796,7 +1796,7 @@ export class SubhutiGrammarAnalyzer {
             throw new Error(`操作超时: ${elapsed.toFixed(2)}秒 (超时位置: ${location})`)
         }
     }
-    
+
     private expandSequenceNode(
         node: SequenceNode,
         firstK: number,
@@ -1805,11 +1805,11 @@ export class SubhutiGrammarAnalyzer {
         isFirstPosition: boolean = true
     ) {
         this.checkTimeout('expandSequenceNode-开始')
-        
+
         // 🔍 调试日志
         const ruleName = (node as any).ruleName || '(unnamed)'
         console.log(`[expandSequenceNode] 规则: ${ruleName}, 子节点数: ${node.nodes.length}`)
-        
+
         // 检查是否为空序列
         if (node.nodes.length === 0) {
             // 空序列，返回包含一个空分支
@@ -1894,14 +1894,14 @@ export class SubhutiGrammarAnalyzer {
 
         // 遍历前 firstK 个子节点，累加最短分支长度
         for (let i = 0; i < nodesToExpand.length; i++) {
-            this.checkTimeout(`expandSequenceNode-子节点${i+1}`)
-            
+            this.checkTimeout(`expandSequenceNode-子节点${i + 1}`)
+
             const childNode = nodesToExpand[i]
             const childType = childNode.type
             const childName = (childNode as any).ruleName || (childNode as any).tokenName || childType
-            
-            console.log(`  [子节点 ${i+1}/${nodesToExpand.length}] 类型: ${childType}, 名称: ${childName}`)
-            
+
+            console.log(`  [子节点 ${i + 1}/${nodesToExpand.length}] 类型: ${childType}, 名称: ${childName}`)
+
             // 展开当前子节点
             // 💡 传递累积的位置信息：父级是第1个 AND 当前也是第1个
             let branches = this.expandPathsByDFS(
@@ -1913,8 +1913,8 @@ export class SubhutiGrammarAnalyzer {
                 isFirstPosition && i === 0  // 累积位置：只有当父级和当前都是第1个时才是 true
             )
 
-            console.log(`  [子节点 ${i+1}] 展开结果: ${branches.length} 个分支`)
-            
+            console.log(`  [子节点 ${i + 1}] 展开结果: ${branches.length} 个分支`)
+
             // 如果 branches 为空（可能是左递归检测返回的空数组）
             if (branches.length === 0) {
                 // 左递归情况，返回空分支
@@ -1923,7 +1923,7 @@ export class SubhutiGrammarAnalyzer {
 
             branches = branches.map(item => item.slice(0, firstK));
             allBranches.push(branches);
-            
+
             console.log(`  [allBranches] 当前总数: ${allBranches.length} 组`)
 
             // 找到当前子节点的最短分支长度（安全写法）
@@ -1937,7 +1937,7 @@ export class SubhutiGrammarAnalyzer {
             }
 
             minLengthSum += minLength;
-            
+
             console.log(`  [累加长度] 当前: ${minLengthSum}, firstK: ${firstK}`)
 
             // 如果累加的最短长度 >= firstK，可以停止
@@ -1956,7 +1956,7 @@ export class SubhutiGrammarAnalyzer {
         // 笛卡尔积组合子节点（只对需要的节点做笛卡尔积）
         // 例如：[[a,b]] × [[c]] → [[a,b,c]]
         // ⚠️ 如果包含空分支：[[a]] × [[], [b]] → [[a], [a,b]]
-        
+
         // 🔍 计算笛卡尔积大小估计
         let estimatedSize = 1
         const branchSizes: number[] = []
@@ -1974,7 +1974,7 @@ export class SubhutiGrammarAnalyzer {
             //     throw new Error(`笛卡尔积爆炸: 估计大小 ${estimatedSize} 超过限制`)
             // }
         }
-        
+
         console.log(`  [笛卡尔积] 规则: ${ruleName}`)
         console.log(`  [笛卡尔积] 数组数量: ${allBranches.length}, 各数组大小: [${branchSizes.join(', ')}]`)
         console.log(`  [笛卡尔积] 估计结果大小: ${branchSizes.join(' × ')} = ${estimatedSize}`)
