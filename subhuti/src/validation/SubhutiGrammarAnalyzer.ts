@@ -2012,7 +2012,7 @@ export class SubhutiGrammarAnalyzer {
         targetLevel: number
     ): string[][] {
         // 默认使用纯净版（无日志），方便学习
-        return this.expandPathsByBFSCacheClean([[ruleName]], targetLevel)
+        return this.expandPathsByBFSCacheClean(ruleName, [[ruleName]], targetLevel)
 
         // 如需调试，改为：
         // return this.expandPathsByBFSCacheWithLog(ruleName, targetLevel, [])
@@ -2041,17 +2041,22 @@ export class SubhutiGrammarAnalyzer {
      * - 遍历 D: levels=1 → getDirectChildren(D)
      * - 缓存 C:4, B:7, A:10 ✅
      *
+     * @param ruleName
      * @param paths 当前路径数组
      * @param levels 要展开的层数
      * @returns 展开后的路径
      */
     private expandPathsByBFSCacheClean(
-        paths: string[][],
-        levels: number
+        ruleName: string,
+        levels: number,
+        paths?: string[][]
     ): string[][] {
         // 基础情况：不需要展开
         if (levels === 0) {
             return paths
+        }
+        if (levels === 1) {
+            return this.getDirectChildren(ruleName)
         }
 
         const expandedPaths: string[][] = []
@@ -2083,7 +2088,7 @@ export class SubhutiGrammarAnalyzer {
                 for (let level = Math.min(levels, EXPANSION_LIMITS.LEVEL_K); level >= 1; level--) {
                     const cacheKey = `${symbol}:${level}`
                     if (level === 1) {
-                        cachedPaths = this.getDirectChildren(cacheKey)
+                        cachedPaths = this.getDirectChildren(symbol)
                     } else {
                         if (this.bfsLevelCache.has(cacheKey)) {
                             cachedLevel = level
@@ -2109,7 +2114,7 @@ export class SubhutiGrammarAnalyzer {
                 const remainingLevels = levels - cachedLevel
 
                 // 递归调用自己
-                const result = this.expandPathsByBFSCacheClean(cachedPaths, remainingLevels)
+                const result = this.expandPathsByBFSCacheClean(symbol, remainingLevels, cachedPaths)
 
                 // 缓存结果（用 symbol 作为 key）
                 if (levels <= EXPANSION_LIMITS.LEVEL_K) {
