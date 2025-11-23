@@ -360,6 +360,17 @@ export class SubhutiGrammarAnalyzer {
     private bfsLevelCache = new Map<string, string[][]>()
 
     /**
+     * 注意：levelFullResultCache 已删除，复用 bfsLevelCache
+     * bfsLevelCache 存储的就是某规则在某层级的完整结果（firstK=∞）
+     */
+
+    /** 展开单个路径缓存（完整版）：key="ruleName:level:pathIndex" */
+    private expandSinglePathFullCache = new Map<string, string[][]>()
+
+    /** 展开单个路径缓存（截取版）：key="ruleName:level:pathIndex:firstK" */
+    private expandSinglePathTruncatedCache = new Map<string, string[][]>()
+
+    /**
      * ⚠️ firstKLevelKCache 已删除
      * 原因：BFS 只负责按层级展开（firstK=∞），截取由外层统一处理
      */
@@ -375,22 +386,6 @@ export class SubhutiGrammarAnalyzer {
     /** DFS 派生缓存：key="ruleName"，First(1) + 无限层级（从 dfsFirstKCache 截取） */
     private dfsFirst1Cache = new Map<string, string[][]>()
 
-    /** 展开1层缓存（不截取）：key="ruleName:curLevel" */
-    private expandOneLevelCache = new Map<string, string[][]>()
-
-    /** 展开1层+截取缓存：key="ruleName:curLevel:firstK" */
-    private expandOneLevelTruncatedCache = new Map<string, string[][]>()
-
-    /**
-     * 注意：levelFullResultCache 已删除，复用 bfsLevelCache
-     * bfsLevelCache 存储的就是某规则在某层级的完整结果（firstK=∞）
-     */
-
-    /** 展开单个路径缓存（完整版）：key="ruleName:level:pathIndex" */
-    private expandSinglePathFullCache = new Map<string, string[][]>()
-
-    /** 展开单个路径缓存（截取版）：key="ruleName:level:pathIndex:firstK" */
-    private expandSinglePathTruncatedCache = new Map<string, string[][]>()
 
     /** 性能分析器 */
     private perfAnalyzer = new PerformanceAnalyzer()
@@ -1998,87 +1993,6 @@ export class SubhutiGrammarAnalyzer {
         return this.truncateAndDeduplicate(result, firstK)
     }
 
-    /**
-     * 展开1层（不截取）
-     *
-     * @param ruleName 规则名
-     * @param paths 当前路径列表
-     * @param curLevel 当前层级
-     * @returns 展开1层后的完整结果（不截取）
-     */
-    private expandOneLevel(
-        ruleName: string,
-        paths: string[][],
-        curLevel: number
-    ): string[][] {
-        // 构建缓存 key
-        const key = `${ruleName}:${curLevel}`
-
-        // 查找缓存
-        if (this.expandOneLevelCache.has(key)) {
-            this.perfAnalyzer.recordCacheHit('expandOneLevel')
-            return this.expandOneLevelCache.get(key)!
-        }
-
-        // 缓存未命中
-        this.perfAnalyzer.recordCacheMiss('expandOneLevel')
-
-        // 展开1层
-        const expandedPaths: string[][] = []
-
-        for (const path of paths) {
-            // 展开路径中的所有规则名（不截取）
-            const expanded = this.expandSinglePath(path, EXPANSION_LIMITS.INFINITY)
-            expandedPaths.push(...expanded)
-        }
-
-        // 只去重，不截取
-        const result = this.deduplicate(expandedPaths)
-
-        // 设置缓存
-        this.expandOneLevelCache.set(key, result)
-
-        return result
-    }
-
-    /**
-     * 展开1层并截取到 firstK
-     *
-     * @param ruleName 规则名
-     * @param paths 当前路径列表
-     * @param curLevel 当前层级
-     * @param firstK 截取长度
-     * @returns 展开1层后截取到 firstK 的结果
-     */
-    private expandOneLevelTruncated(
-        ruleName: string,
-        paths: string[][],
-        curLevel: number,
-        firstK: number
-    ): string[][] {
-        // 构建缓存 key
-        const key = `${ruleName}:${curLevel}:${firstK}`
-
-        // 查找缓存
-        if (this.expandOneLevelTruncatedCache.has(key)) {
-            this.perfAnalyzer.recordCacheHit('expandOneLevelTruncated')
-            return this.expandOneLevelTruncatedCache.get(key)!
-        }
-
-        // 缓存未命中
-        this.perfAnalyzer.recordCacheMiss('expandOneLevelTruncated')
-
-        // 先获取完整展开1层的结果
-        const fullExpanded = this.expandOneLevel(ruleName, paths, curLevel)
-
-        // 截取到 firstK
-        const result = this.truncateAndDeduplicate(fullExpanded, firstK)
-
-        // 设置缓存
-        this.expandOneLevelTruncatedCache.set(key, result)
-
-        return result
-    }
 
     /**
      * 广度优先展开（BFS - Breadth-First Search）
