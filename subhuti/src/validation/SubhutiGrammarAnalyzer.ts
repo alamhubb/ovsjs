@@ -2302,9 +2302,6 @@ export class SubhutiGrammarAnalyzer {
      * - IfStatement → [[If, LParen, Expression, RParen, Statement]]
      */
     private getDirectChildren(ruleName: string): string[][] {
-        // 🔧 添加统计
-        this.perfAnalyzer.cacheStats.getDirectChildren.total++
-        
         console.log(`\n🔍 [getDirectChildren] 规则: ${ruleName}`)
         
         // 1. 优先从 bfsLevelCache 获取 level 1 的数据（懒加载缓存）
