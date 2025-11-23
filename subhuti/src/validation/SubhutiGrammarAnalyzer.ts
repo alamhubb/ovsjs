@@ -2012,7 +2012,7 @@ export class SubhutiGrammarAnalyzer {
         targetLevel: number
     ): string[][] {
         // 默认使用纯净版（无日志），方便学习
-        return this.expandPathsByBFSCacheClean(ruleName, [[ruleName]], targetLevel)
+        return this.expandPathsByBFSCacheClean(ruleName, targetLevel, [[ruleName]])
 
         // 如需调试，改为：
         // return this.expandPathsByBFSCacheWithLog(ruleName, targetLevel, [])
