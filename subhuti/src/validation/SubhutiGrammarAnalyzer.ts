@@ -312,7 +312,7 @@ export const EXPANSION_LIMITS = {
     FIRST_K: 3,
 
     LEVEL_1: 1,
-    LEVEL_K: 3,
+    LEVEL_K: 5,
 
     INFINITY: Infinity,
 
