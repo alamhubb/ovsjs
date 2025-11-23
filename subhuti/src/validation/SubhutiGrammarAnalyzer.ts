@@ -1138,20 +1138,18 @@ MaxLevel 检测结果: 无冲突
         allErrors.push(...leftRecursionErrors)
         allErrors.push(...orConflictErrors)
 
-        // 4. 统一输出错误汇总
+        // 4. 先输出错误详情（如果有）
         console.log(`\n`)
         console.log(`${'='.repeat(60)}`)
-        console.log(`📋 语法验证错误汇总`)
-        console.log(`${'='.repeat(60)}`)
-
         if (allErrors.length === 0) {
-            console.log(`\n✅ 未发现任何语法错误！\n`)
+            console.log(`✅ 未发现任何语法错误！`)
         } else {
-            console.log(`\n⚠️  发现 ${allErrors.length} 个语法错误：\n`)
+            console.log(`📋 检测到 ${allErrors.length} 个错误`)
+            console.log(`${'='.repeat(60)}`)
 
             // 4.1 输出左递归错误（优先）
             if (leftRecursionErrors.length > 0) {
-                console.log(`❌ 左递归错误 (${leftRecursionErrors.length} 个)：`)
+                console.log(`\n❌ 左递归错误 (${leftRecursionErrors.length} 个)：`)
                 console.log(`${'─'.repeat(60)}`)
                 leftRecursionErrors.forEach((error, index) => {
                     console.log(`\n[${index + 1}] 规则: ${error.ruleName}`)
@@ -1165,32 +1163,33 @@ MaxLevel 检测结果: 无冲突
 
             // 4.2 输出 Or 分支冲突错误
             if (orConflictErrors.length > 0) {
-                console.log(`⚠️  Or 分支冲突 (${orConflictErrors.length} 个)：`)
+                console.log(`\n⚠️  Or 分支冲突 (${orConflictErrors.length} 个)：`)
                 console.log(`${'─'.repeat(60)}`)
                 orConflictErrors.forEach((error, index) => {
                     console.log(`\n[${index + 1}] 规则: ${error.ruleName}`)
                     console.log(`    消息: ${error.message}`)
                     if (error.conflictPaths) {
                         console.log(`    冲突详情:`)
-                        console.log(`${error.conflictPaths.pathA}`)
+                        console.log(`      ${error.conflictPaths.pathA}`)
                         if (error.conflictPaths.pathB) {
-                            console.log(`${error.conflictPaths.pathB}`)
+                            console.log(`      ${error.conflictPaths.pathB}`)
                         }
                     }
                     if (error.suggestion) {
                         console.log(`    建议: ${error.suggestion}`)
                     }
                 })
-                console.log(`\n`)
             }
         }
-
-        console.log(`${'='.repeat(60)}`)
-
-        // 5. 输出统计信息
+        
+        // 5. 【最后】输出统计信息（放在最后，一目了然）
         stats.totalTime = Date.now() - totalStartTime
         
-        console.log(`\n📊 ========== 统计信息 ==========`)
+        console.log(`\n`)
+        console.log(`${'='.repeat(60)}`)
+        console.log(`📊 ========== 统计信息 ==========`)
+        console.log(`${'='.repeat(60)}`)
+        
         console.log(`\n⏱️  时间统计：`)
         console.log(`   总耗时: ${stats.totalTime}ms`)
         console.log(`   ├─ First(K) 缓存生成: ${stats.dfsFirstKTime}ms (${(stats.dfsFirstKTime / stats.totalTime * 100).toFixed(1)}%)`)
