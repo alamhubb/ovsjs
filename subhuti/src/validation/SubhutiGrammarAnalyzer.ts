@@ -289,8 +289,10 @@ export const EXPANSION_LIMITS = {
      * - 路径比较复杂度：O(n²)
      * - 1000条路径 × 1000条路径 = 100万次比较（可接受）
      * - 超过1000条路径会导致性能问题（如 28260条 = 8亿次比较）
+     * 
+     * 当前设置：已取消限制（Infinity），可能导致性能问题
      */
-    MAX_BRANCHES: 1000,
+    MAX_BRANCHES: Infinity,
 } as const
 
 /**
@@ -490,13 +492,32 @@ export class SubhutiGrammarAnalyzer {
         // 清空错误 Map
         this.detectedLeftRecursionErrors.clear()
 
+        // 启动超时检测
+        this.operationStartTime = Date.now()
+        
         // 遍历所有规则
+        let ruleIndex = 0
         for (const ruleNode of this.ruleASTs.values()) {
+            const ruleName = (ruleNode as any).ruleName
+            this.currentProcessingRule = ruleName
+            ruleIndex++
+            console.log(`\n  [${ruleIndex}/${this.ruleASTs.size}] 检测规则: ${ruleName}`)
+            
             // 清空递归检测集合
             this.recursiveDetectionSet.clear()
 
-            this.expandPathsByDFS(null, ruleNode, EXPANSION_LIMITS.FIRST_K, 0, EXPANSION_LIMITS.INFINITY, true)
+            try {
+                this.checkTimeout(`规则${ruleName}-开始`)
+                this.expandPathsByDFS(null, ruleNode, EXPANSION_LIMITS.FIRST_K, 0, EXPANSION_LIMITS.INFINITY, true)
+                console.log(`  ✓ 规则 ${ruleName} 检测完成`)
+            } catch (e) {
+                console.error(`  ❌ 规则 ${ruleName} 检测失败: ${e.message}`)
+                throw e
+            }
         }
+        
+        // 重置超时检测
+        this.operationStartTime = 0
 
         // 为每个错误补充 suggestion
         for (const error of this.detectedLeftRecursionErrors.values()) {
@@ -1355,7 +1376,11 @@ export class SubhutiGrammarAnalyzer {
 
         // 逐个处理后续数组
         for (let i = 1; i < arrays.length; i++) {
+            this.checkTimeout(`cartesianProduct-数组${i}/${arrays.length}`)
+            
             let currentArray = arrays[i]
+            
+            console.log(`    [笛卡尔积-步骤${i}/${arrays.length-1}] result(${result.length}) × currentArray(${currentArray.length})`)
 
             // 🔧 优化：数组层面提前去重
             // 如果数组较大且包含重复，提前去重可以显著减少后续计算
@@ -1401,7 +1426,17 @@ export class SubhutiGrammarAnalyzer {
             // console.log(currentArray.slice(0,10))
             // console.log(currentArray.length * result.length)
             // 遍历当前结果的每个序列
+            let seqIndex = 0
+            const totalSeqs = result.length
             for (const seq of result) {
+                seqIndex++
+                
+                // 每处理1000个seq输出一次进度
+                if (seqIndex % 1000 === 0 || seqIndex === totalSeqs) {
+                    console.log(`      [处理seq进度] ${seqIndex}/${totalSeqs}, temp累积: ${temp.length}`)
+                    this.checkTimeout(`cartesianProduct-seq${seqIndex}`)
+                }
+                
                 // 防御检查：不应该出现超长序列
                 if (seq.length > EXPANSION_LIMITS.FIRST_K) {
                     throw new Error('系统错误：序列长度超过限制')
@@ -1481,6 +1516,9 @@ export class SubhutiGrammarAnalyzer {
 
             // 更新统计
             perfStats.maxResultSize = Math.max(perfStats.maxResultSize, result.length + finalResultSet.size)
+            
+            // 输出本轮统计
+            console.log(`    [步骤${i}完成] 新result: ${result.length}, finalResult: ${finalResultSet.size}, 总计: ${result.length + finalResultSet.size}`)
 
             // 监控
             if (result.length + finalResultSet.size > 100000) {
@@ -1742,6 +1780,33 @@ export class SubhutiGrammarAnalyzer {
      * @param maxLevel
      * @param isFirstPosition 是否在第一个位置（用于左递归检测）
      */
+    // 超时检测相关
+    private operationStartTime: number = 0
+    private currentProcessingRule: string = ''
+    private timeoutSeconds: number = 20
+    
+    private checkTimeout(location: string): void {
+        if (!this.operationStartTime) return
+        
+        const elapsed = (Date.now() - this.operationStartTime) / 1000
+        if (elapsed > this.timeoutSeconds) {
+            const errorMsg = `
+❌ ========== 操作超时 ==========
+超时位置: ${location}
+当前规则: ${this.currentProcessingRule}
+已耗时: ${elapsed.toFixed(2)}秒
+超时阈值: ${this.timeoutSeconds}秒
+
+建议：
+1. 检查是否存在笛卡尔积爆炸
+2. 检查是否有循环递归未被检测
+3. 查看日志最后处理的规则和子节点
+================================`
+            console.error(errorMsg)
+            throw new Error(`操作超时: ${elapsed.toFixed(2)}秒 (超时位置: ${location})`)
+        }
+    }
+    
     private expandSequenceNode(
         node: SequenceNode,
         firstK: number,
@@ -1749,6 +1814,12 @@ export class SubhutiGrammarAnalyzer {
         maxLevel: number,
         isFirstPosition: boolean = true
     ) {
+        this.checkTimeout('expandSequenceNode-开始')
+        
+        // 🔍 调试日志
+        const ruleName = (node as any).ruleName || '(unnamed)'
+        console.log(`[expandSequenceNode] 规则: ${ruleName}, 子节点数: ${node.nodes.length}`)
+        
         // 检查是否为空序列
         if (node.nodes.length === 0) {
             // 空序列，返回包含一个空分支
@@ -1833,6 +1904,14 @@ export class SubhutiGrammarAnalyzer {
 
         // 遍历前 firstK 个子节点，累加最短分支长度
         for (let i = 0; i < nodesToExpand.length; i++) {
+            this.checkTimeout(`expandSequenceNode-子节点${i+1}`)
+            
+            const childNode = nodesToExpand[i]
+            const childType = childNode.type
+            const childName = (childNode as any).ruleName || (childNode as any).tokenName || childType
+            
+            console.log(`  [子节点 ${i+1}/${nodesToExpand.length}] 类型: ${childType}, 名称: ${childName}`)
+            
             // 展开当前子节点
             // 💡 传递累积的位置信息：父级是第1个 AND 当前也是第1个
             let branches = this.expandPathsByDFS(
@@ -1844,6 +1923,8 @@ export class SubhutiGrammarAnalyzer {
                 isFirstPosition && i === 0  // 累积位置：只有当父级和当前都是第1个时才是 true
             )
 
+            console.log(`  [子节点 ${i+1}] 展开结果: ${branches.length} 个分支`)
+            
             // 如果 branches 为空（可能是左递归检测返回的空数组）
             if (branches.length === 0) {
                 // 左递归情况，返回空分支
@@ -1852,6 +1933,8 @@ export class SubhutiGrammarAnalyzer {
 
             branches = branches.map(item => item.slice(0, firstK));
             allBranches.push(branches);
+            
+            console.log(`  [allBranches] 当前总数: ${allBranches.length} 组`)
 
             // 找到当前子节点的最短分支长度（安全写法）
             let minLength = Infinity;
@@ -1864,9 +1947,12 @@ export class SubhutiGrammarAnalyzer {
             }
 
             minLengthSum += minLength;
+            
+            console.log(`  [累加长度] 当前: ${minLengthSum}, firstK: ${firstK}`)
 
             // 如果累加的最短长度 >= firstK，可以停止
             if (minLengthSum >= firstK) {
+                console.log(`  [提前停止] 累加长度已满足`)
                 break;
             }
         }
@@ -1880,19 +1966,35 @@ export class SubhutiGrammarAnalyzer {
         // 笛卡尔积组合子节点（只对需要的节点做笛卡尔积）
         // 例如：[[a,b]] × [[c]] → [[a,b,c]]
         // ⚠️ 如果包含空分支：[[a]] × [[], [b]] → [[a], [a,b]]
-        // ⚠️ cartesianProduct 不会过滤空分支，会正常拼接
-
-
-        console.log(node.ruleName)
-
+        
+        // 🔍 计算笛卡尔积大小估计
+        let estimatedSize = 1
+        const branchSizes: number[] = []
+        for (const branches of allBranches) {
+            branchSizes.push(branches.length)
+            estimatedSize *= branches.length
+            // 已取消笛卡尔积大小限制
+            // if (estimatedSize > 1000000) {
+            //     console.error(`❌ [笛卡尔积] 估计大小超限: ${estimatedSize}`)
+            //     console.error(`   当前规则: ${ruleName}`)
+            //     console.error(`   allBranches 详情:`)
+            //     allBranches.forEach((br, idx) => {
+            //         console.error(`     [${idx}]: ${br.length} 个分支`)
+            //     })
+            //     throw new Error(`笛卡尔积爆炸: 估计大小 ${estimatedSize} 超过限制`)
+            // }
+        }
+        
+        console.log(`  [笛卡尔积] 规则: ${ruleName}`)
+        console.log(`  [笛卡尔积] 数组数量: ${allBranches.length}, 各数组大小: [${branchSizes.join(', ')}]`)
+        console.log(`  [笛卡尔积] 估计结果大小: ${branchSizes.join(' × ')} = ${estimatedSize}`)
+        this.checkTimeout(`笛卡尔积-${ruleName}`)
         const result = this.cartesianProduct(allBranches)
+        console.log(`  [笛卡尔积] 完成, 实际结果: ${result.length} 个路径`)
+        this.checkTimeout(`笛卡尔积完成-${ruleName}`)
 
-        console.log(result.length)
         // 笛卡尔积后路径可能超过 firstK，需要截取并去重
         // 注意：如果某些节点包含空分支，笛卡尔积后可能产生不同长度的路径
-        // 例如：[[a,b]] × [[], [c]] → [[a,b], [a,b,c]]
-        //       截取到2 → [[a,b], [a,b]] → 去重 → [[a,b]]
-        // ⚠️ truncateAndDeduplicate 不会过滤空分支 []
         return this.truncateAndDeduplicate(result, firstK)
     }
 
@@ -2416,7 +2518,59 @@ export class SubhutiGrammarAnalyzer {
         const t0 = Date.now()
 
         // ========================================
-        // 阶段0：递归检测（DFS 专属）
+        // 阶段1：DFS 缓存查找（在递归检测之前！）
+        // ========================================
+
+        if (firstK === EXPANSION_LIMITS.FIRST_1) {
+            // 优先查找 first1 缓存
+            if (this.dfsFirst1Cache.has(ruleName)) {
+                this.perfAnalyzer.recordCacheHit('dfsFirst1')
+                const duration = Date.now() - t0
+                this.perfAnalyzer.record('subRuleHandler', duration)
+                return this.dfsFirst1Cache.get(ruleName)!
+            }
+
+            // first1 未命中，尝试从 firstK 缓存截取
+            if (this.dfsFirstKCache.has(ruleName)) {
+                this.perfAnalyzer.recordCacheHit('dfsFirst1')
+                const firstKData = this.dfsFirstKCache.get(ruleName)!
+                // 从 firstK 截取到 first1
+                const first1Data = firstKData.map(path => path.slice(0, 1))
+                const result = this.deduplicate(first1Data)
+                // 缓存 first1 结果
+                this.dfsFirst1Cache.set(ruleName, result)
+                const duration = Date.now() - t0
+                this.perfAnalyzer.record('subRuleHandler', duration)
+                return result
+            }
+            // 都未命中，继续实际计算
+
+        } else if (firstK === EXPANSION_LIMITS.FIRST_K) {
+            // 查找 firstK 缓存
+            if (this.dfsFirstKCache.has(ruleName)) {
+                this.perfAnalyzer.recordCacheHit('dfsFirstK')
+                const duration = Date.now() - t0
+                this.perfAnalyzer.record('subRuleHandler', duration)
+                return this.dfsFirstKCache.get(ruleName)!
+            }
+            // 未命中，继续实际计算
+        } else if (firstK === EXPANSION_LIMITS.INFINITY) {
+            if (maxLevel === EXPANSION_LIMITS.LEVEL_1) {
+                const key = ruleName + `:${EXPANSION_LIMITS.LEVEL_1}`
+                if (this.bfsLevelCache.has(key)) {
+                    this.perfAnalyzer.recordCacheHit('bfsLevel')
+                    return this.bfsLevelCache.get(key)!
+                }
+            } else if (maxLevel === EXPANSION_LIMITS.INFINITY) {
+                // firstK=INFINITY, maxLevel=INFINITY 的情况暂不缓存
+                // 这种情况通常只在特殊场景使用
+            } else {
+                throw new Error(`系统错误：不支持的参数组合 firstK=${firstK}, maxLevel=${maxLevel}`)
+            }
+        }
+
+        // ========================================
+        // 阶段2：递归检测（DFS 专属）
         // ========================================
 
         // 递归检测：如果规则正在计算中
@@ -2457,56 +2611,7 @@ export class SubhutiGrammarAnalyzer {
 
         try {
             // ========================================
-            // 阶段1：DFS 缓存查找
-            // ========================================
-
-            if (firstK === EXPANSION_LIMITS.FIRST_1) {
-                // 优先查找 first1 缓存
-                if (this.dfsFirst1Cache.has(ruleName)) {
-                    this.perfAnalyzer.recordCacheHit('dfsFirst1')
-                    const duration = Date.now() - t0
-                    this.perfAnalyzer.record('subRuleHandler', duration)
-                    return this.dfsFirst1Cache.get(ruleName)!
-                }
-
-                // first1 未命中，尝试从 firstK 缓存截取
-                if (this.dfsFirstKCache.has(ruleName)) {
-                    this.perfAnalyzer.recordCacheHit('dfsFirst1')
-                    const firstKData = this.dfsFirstKCache.get(ruleName)!
-                    // 从 firstK 截取到 first1
-                    const first1Data = firstKData.map(path => path.slice(0, 1))
-                    const result = this.deduplicate(first1Data)
-                    // 缓存 first1 结果
-                    this.dfsFirst1Cache.set(ruleName, result)
-                    const duration = Date.now() - t0
-                    this.perfAnalyzer.record('subRuleHandler', duration)
-                    return result
-                }
-                // 都未命中，继续实际计算
-
-            } else if (firstK === EXPANSION_LIMITS.FIRST_K) {
-                // 查找 firstK 缓存
-                if (this.dfsFirstKCache.has(ruleName)) {
-                    this.perfAnalyzer.recordCacheHit('dfsFirstK')
-                    const duration = Date.now() - t0
-                    this.perfAnalyzer.record('subRuleHandler', duration)
-                    return this.dfsFirstKCache.get(ruleName)!
-                }
-                // 未命中，继续实际计算
-            } else if (firstK === EXPANSION_LIMITS.INFINITY) {
-                if (maxLevel === EXPANSION_LIMITS.LEVEL_1) {
-                    const key = ruleName + `:${EXPANSION_LIMITS.LEVEL_1}`
-                    if (this.bfsLevelCache.has(key)) {
-                        return this.bfsLevelCache.get(key)!
-                    }
-                } else {
-                    console.log(maxLevel)
-                    throw new Error("系统错误")
-                }
-            }
-
-            // ========================================
-            // 阶段2：DFS 实际计算（缓存未命中）
+            // 阶段3：DFS 实际计算（缓存未命中）
             // ========================================
 
             this.perfAnalyzer.recordActualCompute()
@@ -2516,42 +2621,36 @@ export class SubhutiGrammarAnalyzer {
             const finalResult = this.expandPathsByDFS(null, subNode, firstK, curLevel, maxLevel, isFirstPosition)
 
             // ========================================
-            // 阶段3：DFS 缓存设置
+            // 阶段4：DFS 缓存设置（在任何层级都缓存！）
             // ========================================
 
-            // 只在顶层调用时设置缓存（curLevel === 1）
-            if (curLevel === 1) {
-                if (firstK === EXPANSION_LIMITS.FIRST_K) {
-                    // DFS 主缓存：只计算和缓存 firstK
-                    if (!this.dfsFirstKCache.has(ruleName)) {
-                        this.perfAnalyzer.recordCacheMiss('dfsFirstK')
-                        this.dfsFirstKCache.set(ruleName, finalResult)
-                    }
-
-                    // 顺便派生 first1 缓存（从 firstK 截取）
-                    if (!this.dfsFirst1Cache.has(ruleName)) {
-                        const first1Data = finalResult.map(path => path.slice(0, 1))
-                        const first1Result = this.deduplicate(first1Data)
-                        this.dfsFirst1Cache.set(ruleName, first1Result)
-                    }
-                } else if (firstK === EXPANSION_LIMITS.FIRST_1) {
-                    // first1 不应该单独计算，但为了向后兼容仍然缓存
-                    if (!this.dfsFirst1Cache.has(ruleName)) {
-                        this.perfAnalyzer.recordCacheMiss('dfsFirst1')
-                        this.dfsFirst1Cache.set(ruleName, finalResult)
-                    }
-                } else if (firstK === EXPANSION_LIMITS.INFINITY) {
-                    if (maxLevel === EXPANSION_LIMITS.LEVEL_1) {
-                        const key = ruleName + `:${EXPANSION_LIMITS.LEVEL_1}`
-                        if (!this.bfsLevelCache.has(key)) {
-                            this.bfsLevelCache.set(key, finalResult)
-                        }
-                    } else {
-                        throw new Error("系统错误")
-                    }
-                } else {
-                    throw new Error(`系统错误：DFS 不支持 firstK=${firstK}`)
+            if (firstK === EXPANSION_LIMITS.FIRST_K) {
+                // DFS 主缓存：计算和缓存 firstK
+                if (!this.dfsFirstKCache.has(ruleName)) {
+                    this.perfAnalyzer.recordCacheMiss('dfsFirstK')
+                    this.dfsFirstKCache.set(ruleName, finalResult)
                 }
+
+                // 顺便派生 first1 缓存（从 firstK 截取）
+                if (!this.dfsFirst1Cache.has(ruleName)) {
+                    const first1Data = finalResult.map(path => path.slice(0, 1))
+                    const first1Result = this.deduplicate(first1Data)
+                    this.dfsFirst1Cache.set(ruleName, first1Result)
+                }
+            } else if (firstK === EXPANSION_LIMITS.FIRST_1) {
+                // first1 不应该单独计算，但为了向后兼容仍然缓存
+                if (!this.dfsFirst1Cache.has(ruleName)) {
+                    this.perfAnalyzer.recordCacheMiss('dfsFirst1')
+                    this.dfsFirst1Cache.set(ruleName, finalResult)
+                }
+            } else if (firstK === EXPANSION_LIMITS.INFINITY) {
+                if (maxLevel === EXPANSION_LIMITS.LEVEL_1) {
+                    const key = ruleName + `:${EXPANSION_LIMITS.LEVEL_1}`
+                    if (!this.bfsLevelCache.has(key)) {
+                        this.bfsLevelCache.set(key, finalResult)
+                    }
+                }
+                // firstK=INFINITY, maxLevel=INFINITY 暂不缓存
             }
 
             // 记录性能
@@ -2729,33 +2828,27 @@ export class SubhutiGrammarAnalyzer {
         maxLevel: number,
         isFirstPosition: boolean = true  // 🔴 Or 分支中的第一个规则也需要检测
     ): string[][] {
-        // 防御：如果 or 没有分支（理论上不应该发生）
+        // 防御：如果 or 没有分支
         if (alternatives.length === 0) {
-            throw new Error('系统错误')
-            // 返回空分支（表示匹配失败）
-            // return [[]]
+            throw new Error('系统错误：Or 节点没有分支')
         }
 
-        // 存储所有分支的展开结果（可能包含空分支 []）
+        // 存储所有分支的展开结果
         let result: string[][] = []
 
         // 遍历 Or 的每个选择分支
         for (const alt of alternatives) {
             // 🔴 关键：每个 Or 分支都是独立的起点，第一个位置的规则需要检测左递归
-            // 递归展开每个分支（可能包含空分支 []）
-            const branches = this.expandPathsByDFS(null, alt, firstK, curLevel, isFirstPosition)
-            // 合并到结果中（空分支也会被合并）
+            const branches = this.expandPathsByDFS(null, alt, firstK, curLevel, maxLevel, isFirstPosition)
             result = result.concat(branches)
         }
 
-        // 防御：如果所有分支都没有结果（理论上不应该发生）
+        // 防御：如果所有分支都没有结果
         if (result.length === 0) {
-            throw new Error('系统错误')
-            // return [[]]
+            throw new Error('系统错误：Or 节点所有分支都没有结果')
         }
 
         // 只去重，不截取（子节点已经处理过截取）
-        // ⚠️ deduplicate 不会过滤空分支 []
         return this.deduplicate(result)
     }
 
@@ -2796,8 +2889,7 @@ export class SubhutiGrammarAnalyzer {
         maxLevel: number,
         isFirstPosition: boolean = true  // 🔴 Option 内的第一个规则也需要检测
     ): string[][] {
-        // 递归展开内部节点
-        // 🔴 关键：传递 isFirstPosition 用于递归检测
+        // 递归展开内部节点，传递所有必需参数
         const innerBranches = this.expandPathsByDFS(null, node, firstK, curLevel, maxLevel, isFirstPosition)
 
         // ⚠️⚠️⚠️ 关键：添加空分支 [] 表示可以跳过（0次）
@@ -2805,7 +2897,6 @@ export class SubhutiGrammarAnalyzer {
         const result = [[], ...innerBranches]
 
         // 只去重，不截取（子节点已经处理过截取）
-        // ⚠️ deduplicate 不会过滤空分支 []
         return this.deduplicate(result)
     }
 
@@ -2845,9 +2936,8 @@ export class SubhutiGrammarAnalyzer {
         maxLevel: number,
         isFirstPosition: boolean = true  // 🔴 AtLeastOne 内的第一个规则也需要检测
     ): string[][] {
-        // 递归展开内部节点（1次的情况，可能包含空分支 []）
-        // 🔴 关键：传递 isFirstPosition 用于递归检测
-        const innerBranches = this.expandPathsByDFS(null, node, firstK, curLevel, isFirstPosition)
+        // 递归展开内部节点（1次的情况），传递所有必需参数
+        const innerBranches = this.expandPathsByDFS(null, node, firstK, curLevel, maxLevel, isFirstPosition)
 
         // 生成 doubleBranches（2次的情况）
         const doubleBranches = innerBranches.map(branch => {
