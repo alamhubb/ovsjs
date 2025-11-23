@@ -1950,26 +1950,23 @@ export class SubhutiGrammarAnalyzer {
      * BFS 展开（纯净版，单方法递归实现）
      *
      * 核心逻辑：
-     * 1. 对每个路径中的每个规则名，查找该规则的缓存
-     * 2. 如果有缓存，复用；否则递归展开
-     * 3. 自动缓存中间结果（用 symbol 作为 key）
-     *
-     * 调用方式：
-     * - 根部调用：expandPathsByBFSCacheClean([[ruleName]], targetLevel)
-     * - 递归调用：expandPathsByBFSCacheClean(paths, remainingLevels)
+     * 1. 查找 ruleName 的最近缓存
+     * 2. 对缓存的每个路径中的规则名，递归调用自己
+     * 3. 自动缓存中间结果
      *
      * 示例：查找 A:10，缓存有 A:3
-     * - 调用：expandPathsByBFSCacheClean([[A]], 10)
-     * - 遍历 A: 查找 A:10 → 找到 A:3 = [[a, B, c]]
-     * - 递归：expandPathsByBFSCacheClean([[a, B, c]], 7)
-     * - 遍历 B: 查找 B:7 → 找到 B:3 = [[b, C, d]]
-     * - 递归：expandPathsByBFSCacheClean([[b, C, d]], 4)
-     * - 遍历 C: 查找 C:4 → 找到 C:3 = [[c, D, e]]
-     * - 递归：expandPathsByBFSCacheClean([[c, D, e]], 1)
-     * - 遍历 D: levels=1 → getDirectChildren(D)
-     * - 缓存 C:4, B:7, A:10 ✅
+     * - 查找 A:10 → 找到 A:3 = [[a1, B, c1]]
+     * - 对 B 递归：expandPathsByBFSCacheClean(B, 7)
+     *   - 查找 B:7 → 找到 B:3 = [[b1, C, d1]]
+     *   - 对 C 递归：expandPathsByBFSCacheClean(C, 4)
+     *     - 查找 C:4 → 找到 C:3 = [[c1, D, e1]]
+     *     - 对 D 递归：expandPathsByBFSCacheClean(D, 1)
+     *       → 返回 getDirectChildren(D)
+     *     - 缓存 C:4 ✅
+     *   - 缓存 B:7 ✅
+     * - 缓存 A:10 ✅
      *
-     * @param ruleName
+     * @param ruleName 规则名
      * @param levels 要展开的层数
      * @returns 展开后的路径
      */
@@ -1977,73 +1974,71 @@ export class SubhutiGrammarAnalyzer {
         ruleName: string,
         levels: number
     ): string[][] {
+        // 防御检查
         if (levels === 0) {
             throw new Error('系统错误')
         }
-        // token，保持不变
+        // token，直接返回
         if (this.tokenCache.has(ruleName)) {
             return [[ruleName]]
         }
+        // 基础情况：level 1
         if (levels === 1) {
             return this.getDirectChildren(ruleName)
         }
-
 
         // 查找 ruleName 的最近缓存
         let cachedLevel = 1
         let cachedPaths: string[][] | null = null
         
-        for (let level = Math.min(levels, EXPANSION_LIMITS.LEVEL_K); level >= 2; level--) {
+        for (let level = Math.min(levels, EXPANSION_LIMITS.LEVEL_K); level >= 1; level--) {
             const cacheKey = `${ruleName}:${level}`
             if (this.bfsLevelCache.has(cacheKey)) {
                 cachedLevel = level
                 cachedPaths = this.bfsLevelCache.get(cacheKey)!
+                
+                // 提前返回：找到目标层级
+                if (level === levels) {
+                    return cachedPaths
+                }
                 break
             }
         }
         
-        // 没有找到缓存，使用 level 1
+        // 没有找到缓存（不应该发生）
         if (!cachedPaths) {
-            cachedPaths = this.getDirectChildren(ruleName)
+            throw new Error(`系统错误：${ruleName} 没有缓存`)
         }
 
         // 计算剩余层数
         const remainingLevels = levels - cachedLevel
         
         // 防御检查
-        if (remainingLevels < 0) {
+        if (remainingLevels <= 0) {
             throw new Error('系统错误')
         }
 
         // 对 cachedPaths 的每个路径递归展开
         const expandedPaths: string[][] = []
-
         for (const path of cachedPaths) {
             const allBranches: string[][][] = []
-
-            // 遍历路径中的每个符号
+            
+            // 遍历路径中的每个符号，递归展开
             for (const symbol of path) {
-                // 递归调用自己
                 const result = this.expandPathsByBFSCacheClean(symbol, remainingLevels)
                 allBranches.push(result)
             }
-
+            
             // 笛卡尔积组合
             const pathResult = this.cartesianProduct(allBranches)
             expandedPaths.push(...pathResult)
         }
 
-        // 去重
+        // 去重并缓存
         const finalResult = this.deduplicate(expandedPaths)
-        
-        // 缓存结果
         if (levels <= EXPANSION_LIMITS.LEVEL_K) {
-            const key = `${ruleName}:${levels}`
-            if (!this.bfsLevelCache.has(key)) {
-                this.bfsLevelCache.set(key, finalResult)
-            }
+            this.bfsLevelCache.set(`${ruleName}:${levels}`, finalResult)
         }
-
         return finalResult
     }
 
