@@ -986,7 +986,7 @@ MaxLevel 检测结果: 无冲突
         for (const ruleName of ruleNames) {
             // 清空递归检测集合
             this.recursiveDetectionSet.clear()
-            this.expandPathsByDFSCache(ruleNode, EXPANSION_LIMITS.FIRST_K, 0, EXPANSION_LIMITS.INFINITY, true)
+            this.expandPathsByDFSCache(ruleName, EXPANSION_LIMITS.FIRST_K, 0, EXPANSION_LIMITS.INFINITY, true)
         }
 
         // BFS 缓存预填充
