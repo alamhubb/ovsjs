@@ -382,9 +382,6 @@ export class SubhutiGrammarAnalyzer {
     private expandSinglePathTruncatedCache = new Map<string, string[][]>()
 
 
-
-
-
     /** 性能分析器 */
     private perfAnalyzer = new PerformanceAnalyzer()
     // private firstInfinityLevel1Cache = new Map<string, string[][]>()
