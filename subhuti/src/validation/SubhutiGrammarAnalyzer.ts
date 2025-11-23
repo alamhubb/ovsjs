@@ -1603,7 +1603,7 @@ export class SubhutiGrammarAnalyzer {
 
         // 如果传入规则名，转发给 subRuleHandler 处理
         if (ruleName) {
-            return this.subRuleHandler(ruleName, firstK, curLevel, maxLevel, isFirstPosition)
+            return this.expandPathsByDFSCache(ruleName, firstK, curLevel, maxLevel, isFirstPosition)
         }
         // 根据节点类型分发处理
         switch (node.type) {
@@ -1613,7 +1613,7 @@ export class SubhutiGrammarAnalyzer {
 
             case 'subrule':
                 // 子规则引用：转发给 subRuleHandler 处理
-                return this.subRuleHandler(node.ruleName, firstK, curLevel, maxLevel, isFirstPosition)
+                return this.expandPathsByDFSCache(node.ruleName, firstK, curLevel, maxLevel, isFirstPosition)
 
             case 'or':
                 // Or 节点：遍历所有分支，合并结果
@@ -2373,29 +2373,24 @@ export class SubhutiGrammarAnalyzer {
         return result
     }
 
-
     /**
-     * 子规则处理器
-     *
-     * 职责：
-     * 1. 递归防护（防止无限递归）
-     * 2. 层级限制（控制展开深度）
-     * 3. 获取规则 AST 并递归展开
-     * 4. 左递归检测（检测规则是否在第一个位置递归）
+     * 处理 DFS 模式（深度优先展开，无限层级）
      *
      * @param ruleName 规则名
-     * @param firstK 截取长度
+     * @param firstK 截取数量
      * @param curLevel 当前层级
-     * @param maxLevel 最大展开层级
-     * @param isFirstPosition 是否在第一个位置（用于区分左递归和普通递归）
+     * @param maxLevel
+     * @param isFirstPosition 是否在第一个位置（用于左递归检测）
+     * @returns 展开结果
      */
-    private subRuleHandler(
+    private expandPathsByDFSCache(
         ruleName: string,
         firstK: number,
         curLevel: number,
         maxLevel: number,
-        isFirstPosition: boolean = true,
-    ) {
+        isFirstPosition: boolean
+    ): string[][] {
+
         // 记录入口调用
         const t0 = Date.now()
         this.perfAnalyzer.cacheStats.subRuleHandlerTotal++
@@ -2414,32 +2409,6 @@ export class SubhutiGrammarAnalyzer {
             this.perfAnalyzer.cacheStats.levelLimitReturn++
             return [[ruleName]]
         }
-
-        // ========================================
-        // 🎯 核心路由：尽早分流 DFS 和 BFS
-        // ========================================
-
-        return this.expandPathsByDFSCache(ruleName, firstK, curLevel, maxLevel, isFirstPosition)
-    }
-
-    /**
-     * 处理 DFS 模式（深度优先展开，无限层级）
-     *
-     * @param ruleName 规则名
-     * @param firstK 截取数量
-     * @param curLevel 当前层级
-     * @param maxLevel
-     * @param isFirstPosition 是否在第一个位置（用于左递归检测）
-     * @returns 展开结果
-     */
-    private expandPathsByDFSCache(
-        ruleName: string,
-        firstK: number,
-        curLevel: number,
-        maxLevel: number,
-        isFirstPosition: boolean
-    ): string[][] {
-        const t0 = Date.now()
 
         // ========================================
         // 阶段1：DFS 缓存查找（在递归检测之前！）
