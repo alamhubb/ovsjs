@@ -562,7 +562,7 @@ export class SubhutiGrammarAnalyzer {
 
                 try {
                     // 调用 BFS 展开（会触发 getDirectChildren 和懒加载）
-                    const result = this.expandPathsByBFS(ruleName, level)
+                    const result = this.expandPathsByBFSCache(ruleName, level)
                     totalFilled++
                     console.log(`      ✓ Level ${level}: 填充完成 (${result.length} 条路径)`)
                 } catch (e) {
@@ -1982,7 +1982,19 @@ export class SubhutiGrammarAnalyzer {
      *   - level 3 + 展开1层 = level 4
      *   - 节省：level 1→2→3 的计算
      */
-    private expandPathsByBFS(
+    /**
+     * BFS 展开（广度优先展开，限制层级）
+     * 
+     * 功能：
+     * 1. 优先从缓存获取结果
+     * 2. 缓存未命中时，执行 BFS 展开
+     * 3. 缓存最终结果和中间层级结果
+     *
+     * @param ruleName 规则名
+     * @param maxLevel 最大层级
+     * @returns 展开结果
+     */
+    private expandPathsByBFSCache(
         ruleName: string,
         maxLevel: number
     ): string[][] {
@@ -1993,18 +2005,34 @@ export class SubhutiGrammarAnalyzer {
         // 记录统计
         this.perfAnalyzer.cacheStats.bfsOptimization.totalCalls++
 
-        // 🔧 优化：尝试从 BFS 缓存直接获取目标层级的结果
+        // ========================================
+        // 步骤1：查找顶层缓存
+        // ========================================
         const cacheKey = `${ruleName}:${maxLevel}`
 
         if (maxLevel <= EXPANSION_LIMITS.LEVEL_K) {
             if (this.bfsLevelCache.has(cacheKey)) {
                 // ✅ BFS 缓存命中，直接返回完整结果
                 console.log(`   ✅ 缓存命中: ${cacheKey}`)
+                this.perfAnalyzer.recordCacheHit('bfsLevel')
+                
+                const duration = Date.now() - t0
+                this.perfAnalyzer.record('expandPathsByBFS', duration, 0, 0)
+                
                 return this.bfsLevelCache.get(cacheKey)!
+            } else {
+                // 缓存未命中
+                this.perfAnalyzer.recordCacheMiss('bfsLevel')
             }
         }
 
-        // 🔥 增量优化：查找最近的缓存层级
+        // 缓存未命中，需要实际计算
+        this.perfAnalyzer.recordActualCompute()
+
+        // ========================================
+        // 步骤2：查找最近的缓存层级（增量优化）
+        // ========================================
+
         let startLevel = 0  // 当前已有的层级（0 表示还没开始）
         let currentPaths: string[][] | null = null
 
@@ -2619,73 +2647,6 @@ export class SubhutiGrammarAnalyzer {
         }
     }
 
-    /**
-     * 处理 BFS 模式（广度优先展开，限制层级）
-     *
-     * @param ruleName 规则名
-     * @param curLevel 当前层级
-     * @param maxLevel 最大层级（具体值）
-     * @returns 展开结果
-     */
-    private expandPathsByBFSCache(
-        ruleName: string,
-        maxLevel: number
-    ): string[][] {
-        const t0 = Date.now()
-
-        // ========================================
-        // 阶段1：BFS 缓存查找
-        // ========================================
-
-        let finalResult: string[][] | undefined
-
-        // BFS 缓存：只在 maxLevel <= LEVEL_K 时查找
-        if (maxLevel <= EXPANSION_LIMITS.LEVEL_K) {
-            const fullKey = `${ruleName}:${maxLevel}`
-
-            if (this.bfsLevelCache.has(fullKey)) {
-                // BFS 缓存命中（完整版）
-                this.perfAnalyzer.recordCacheHit('bfsLevel')
-                finalResult = this.bfsLevelCache.get(fullKey)!
-            } else {
-                // 缓存未命中
-                this.perfAnalyzer.recordCacheMiss('bfsLevel')
-            }
-        }
-
-        // ========================================
-        // 阶段2：BFS 实际计算（缓存未命中）
-        // ========================================
-
-        if (!finalResult) {
-            this.perfAnalyzer.recordActualCompute()
-
-            // 调用 BFS 展开（内部从 level 1 开始）
-            const fullResult = this.expandPathsByBFS(ruleName, maxLevel)
-
-            // 缓存完整版（BFS 专属）
-            if (maxLevel <= EXPANSION_LIMITS.LEVEL_K) {
-                const fullKey = `${ruleName}:${maxLevel}`
-                if (!this.bfsLevelCache.has(fullKey)) {
-                    this.bfsLevelCache.set(fullKey, fullResult)
-                }
-            }
-
-            finalResult = fullResult
-        }
-
-        // ========================================
-        // 阶段3：去重并返回
-        // ========================================
-
-        finalResult = this.deduplicate(finalResult)
-
-        // 记录性能
-        const duration = Date.now() - t0
-        this.perfAnalyzer.record('subRuleHandler', duration)
-
-        return finalResult
-    }
 
     /**
      * 去重：移除重复的分支
