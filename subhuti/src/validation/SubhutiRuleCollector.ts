@@ -120,9 +120,6 @@ export class SubhutiRuleCollector {
                     const isDebugRule = debugRules.includes(collector.currentRuleName)
 
                     return (alternatives: Array<{ alt: () => any }>) => {
-                        if (isDebugRule) {
-                            console.log(`🔍 [DEBUG] Or 被拦截，当前规则: ${collector.currentRuleName}`)
-                        }
                         return collector.handleOr(alternatives, proxy)
                     }
                 }
@@ -165,14 +162,9 @@ export class SubhutiRuleCollector {
                         if (collector.isExecutingTopLevelRule && prop === collector.currentRuleName) {
                             collector.isExecutingTopLevelRule = false
 
-                            if (isDebugRule) {
-                                console.log(`🔍 [DEBUG] 顶层规则调用: ${prop}, isExecutingTopLevelRule=true`)
-                            }
-
-                            // ✅ 检测递归：如果规则已在执行栈中，说明是递归调用
+                            // 检测递归：如果规则已在执行栈中，说明是递归调用
                             if (collector.executingRuleStack.has(prop)) {
                                 // 记录递归调用，但不执行（防止无限递归）
-                                console.warn(`[RECURSION DETECTED] Rule "${prop}" calls itself recursively`)
                                 return collector.handleSubrule(prop)
                             }
 
@@ -180,21 +172,12 @@ export class SubhutiRuleCollector {
                             collector.executingRuleStack.add(prop)
 
                             try {
-                                // ✅ 方案3：获取原始函数（绕过装饰器），在 proxy 上下文中执行
-                                // 这样规则内部的 this.Or() 等调用会被 proxy 拦截
+                                // 获取原始函数（绕过装饰器），在 proxy 上下文中执行
                                 const originalFun = (original as any).__originalFunction__ || original
-
-                                if (isDebugRule) {
-                                    console.log(`🔍 [DEBUG] 执行原始函数: ${prop}`)
-                                    console.log(`🔍 [DEBUG] 使用 ${(original as any).__originalFunction__ ? '原始函数' : '装饰后函数'}`)
-                                }
 
                                 // 在 proxy 上下文中执行原始函数
                                 const result = originalFun.call(proxy, ...args)
 
-                                if (isDebugRule) {
-                                    console.log(`🔍 [DEBUG] 原始函数执行完成: ${prop}, 返回值:`, result)
-                                }
                                 return result
                             } finally {
                                 // 执行完成后，从执行栈中移除
@@ -308,11 +291,7 @@ export class SubhutiRuleCollector {
             // ⏱️ 计算耗时
             const elapsed = Date.now() - startTime
 
-            if (rootNode.nodes.length > 0) {
-                console.info(`✓ Rule "${ruleName}" collected with error (${error?.message || error}), saved partial AST (${rootNode.nodes.length} nodes) [${elapsed}ms]`)
-            } else {
-                console.warn(`⚠ Rule "${ruleName}" failed: ${error?.message || error} (empty AST saved) [${elapsed}ms]`)
-            }
+            // 规则收集失败，但已保存部分 AST（不输出日志）
         }
     }
 

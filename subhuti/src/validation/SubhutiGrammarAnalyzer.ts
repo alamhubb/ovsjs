@@ -452,9 +452,6 @@ export class SubhutiGrammarAnalyzer {
 
         const startTime = Date.now()
 
-        console.log(`\n📊 [Or分支冲突检测] 开始智能检测 ${this.ruleASTs.size} 个规则...`)
-        console.log(`   策略：先 First(1) 检测，有冲突再 First(5) 深入分析`)
-
         // 遍历所有规则
         for (const [ruleName, ruleAST] of this.ruleASTs.entries()) {
             perfStats.rulesChecked++
@@ -465,23 +462,6 @@ export class SubhutiGrammarAnalyzer {
         }
 
         perfStats.totalTime = Date.now() - startTime
-
-        if (orConflictErrors.length > 0) {
-            console.log(`   ⚠️  发现 ${orConflictErrors.length} 个 Or 分支冲突（详情见后续汇总）`)
-        }
-
-        // 输出性能统计
-        console.log(`\n⏱️  [性能统计]`)
-        console.log(`   总耗时: ${perfStats.totalTime}ms`)
-        console.log(`   ├─ First(1)计算: ${perfStats.first1Time}ms (${(perfStats.first1Time / perfStats.totalTime * 100).toFixed(1)}%) - ${perfStats.first1Computed}次`)
-        console.log(`   ├─ First(k)计算: ${perfStats.first5Time}ms (${(perfStats.first5Time / perfStats.totalTime * 100).toFixed(1)}%) - ${perfStats.first5Computed}次`)
-        console.log(`   ├─ 冲突对比: ${perfStats.comparisonTime}ms (${(perfStats.comparisonTime / perfStats.totalTime * 100).toFixed(1)}%) - ${perfStats.conflictComparisons}次`)
-        console.log(`   └─ 其他: ${(perfStats.totalTime - perfStats.first1Time - perfStats.first5Time - perfStats.comparisonTime)}ms`)
-        console.log(`   Or节点总数: ${perfStats.orNodesChecked}`)
-        console.log(`   性能优化: 跳过 ${perfStats.first5Skipped} 次First(k)计算 (无First(1)冲突)`)
-        if (perfStats.orNodesChecked > 0) {
-            console.log(`   平均每Or节点: ${(perfStats.totalTime / perfStats.orNodesChecked).toFixed(2)}ms`)
-        }
 
         return orConflictErrors
     }
@@ -946,8 +926,6 @@ MaxLevel 检测结果: 无冲突
      * @returns { errors: 验证错误列表, stats: 统计信息 }
      */
     initCacheAndCheckLeftRecursion(): { errors: ValidationError[], stats: any } {
-        console.log(`\n🔍 ========== 语法验证与缓存初始化 ==========\n`)
-
         const totalStartTime = Date.now()
         
         // 统计对象
@@ -964,15 +942,7 @@ MaxLevel 检测结果: 无冲突
         }
 
         // 1. 左递归检测（内部会初始化 DFS 缓存和 BFS 缓存）
-        console.log(`📊 [阶段1] 开始左递归检测与缓存初始化...`)
-        console.log(`\n📊 [左递归检测] 开始检测 ${this.ruleASTs.size} 个规则...`)
-
         const ruleNames = Array.from(this.ruleASTs.keys())
-        
-        console.log(`    规则总数: ${ruleNames.length}`)
-        console.log(`    Token 总数: ${this.tokenCache.size}`)
-
-        console.log(`    [1/2] 初始化 DFS 缓存 (无限层数场景) + 左递归检测...`)
         console.log(`       策略：dfsFirstKCache (firstK=${EXPANSION_LIMITS.FIRST_K}, maxLevel=∞) + 派生 first1`)
         console.log(`       算法：深度优先，递归展开到token`)
         const t1 = Date.now()
@@ -990,8 +960,6 @@ MaxLevel 检测结果: 无冲突
         }
 
         // BFS 缓存预填充
-        console.log(`    预填充策略: 从 level 1 到 level ${EXPANSION_LIMITS.LEVEL_K}`)
-
         let totalFilled = 0
 
         // 预填充 level 1 到 level_k
@@ -1001,14 +969,7 @@ MaxLevel 检测结果: 无冲突
             }
         }
 
-        console.log(`\n    预填充汇总:`)
-        console.log(`      规则数: ${ruleNames.length}`)
-        console.log(`      层级数: 1~${EXPANSION_LIMITS.LEVEL_K}`)
-        console.log(`      新增缓存: ${totalFilled} 条`)
-        console.log(`      BFS Level 缓存总数: ${this.bfsLevelCache.size} 条`)
-
         // 聚合所有层级的数据到 bfsAllCache
-        console.log(`\n    聚合所有层级数据到 bfsAllCache...`)
         for (const ruleName of ruleNames) {
             const allLevelPaths: string[][] = []
 
@@ -1029,36 +990,11 @@ MaxLevel 检测结果: 无冲突
             this.bfsAllCache.set(ruleName, deduplicated)
         }
 
-        console.log(`      bfsAllCache 总数: ${this.bfsAllCache.size} 条`)
-        
-        // 🔍 调试：检查缓存差异
+        // 🔍 调试：检查缓存差异（仅用于内部统计，不输出）
         const dfsKeys = new Set(this.dfsFirstKCache.keys())
         const bfsKeys = new Set(this.bfsAllCache.keys())
-        
-        // 找出只在 DFS 中的规则
         const onlyInDFS = Array.from(dfsKeys).filter(key => !bfsKeys.has(key))
-        // 找出只在 BFS 中的规则
         const onlyInBFS = Array.from(bfsKeys).filter(key => !dfsKeys.has(key))
-        
-        if (onlyInDFS.length > 0 || onlyInBFS.length > 0) {
-            console.log(`\n    ⚠️  缓存差异分析：`)
-            console.log(`       dfsFirstKCache: ${dfsKeys.size} 条`)
-            console.log(`       bfsAllCache: ${bfsKeys.size} 条`)
-            
-            if (onlyInDFS.length > 0) {
-                console.log(`       只在 DFS 中的规则 (${onlyInDFS.length} 个): ${onlyInDFS.slice(0, 5).join(', ')}${onlyInDFS.length > 5 ? '...' : ''}`)
-            }
-            
-            if (onlyInBFS.length > 0) {
-                console.log(`       只在 BFS 中的规则 (${onlyInBFS.length} 个): ${onlyInBFS.slice(0, 5).join(', ')}${onlyInBFS.length > 5 ? '...' : ''}`)
-                
-                // 检查这些规则是否是 Token
-                const bfsTokens = onlyInBFS.filter(name => this.tokenCache.has(name))
-                if (bfsTokens.length > 0) {
-                    console.log(`       其中是 Token 的 (${bfsTokens.length} 个): ${bfsTokens.slice(0, 5).join(', ')}${bfsTokens.length > 5 ? '...' : ''}`)
-                }
-            }
-        }
 
         // 重置超时检测
         this.operationStartTime = 0
@@ -1080,20 +1016,10 @@ MaxLevel 检测结果: 无冲突
         stats.dfsFirstKTime = stage1Time  // DFS 包含 First(K) 缓存生成
         stats.bfsMaxLevelTime = stage1Time  // BFS 包含 MaxLevel 缓存生成（两者同时进行）
         stats.leftRecursionCount = this.detectedLeftRecursionErrors.size
-        
-        console.log(`\n    ✓ [1/1] 缓存初始化 + 左递归检测完成`)
-        console.log(`       耗时: ${stage1Time}ms`)
-        console.log(`       ├─ dfsFirstKCache (First(${EXPANSION_LIMITS.FIRST_K})): ${this.dfsFirstKCache.size} 条`)
-        console.log(`       └─ bfsAllCache (MaxLevel): ${this.bfsAllCache.size} 条`)
-        if (this.detectedLeftRecursionErrors.size > 0) {
-            console.log(`       ⚠️  发现 ${this.detectedLeftRecursionErrors.size} 个左递归错误（详情见后续汇总）`)
-        }
 
         const leftRecursionErrors = Array.from(this.detectedLeftRecursionErrors.values())
-        console.log(`✅ [阶段1] 左递归检测完成，耗时 ${stage1Time}ms`)
 
         // 2. Or 分支冲突检测
-        console.log(`\n📊 [阶段2] 开始 Or 分支冲突检测...`)
         const t2 = Date.now()
         const orConflictErrors = this.checkAllOrConflicts()
         const t2End = Date.now()
@@ -1102,8 +1028,6 @@ MaxLevel 检测结果: 无冲突
         // 记录 Or 检测统计
         stats.orDetectionTime = stage2Time
         stats.orConflictCount = orConflictErrors.length
-        
-        console.log(`✅ [阶段2] Or 分支冲突检测完成，耗时 ${stage2Time}ms`)
 
         // 3. 合并所有错误（左递归优先）
         const allErrors: ValidationError[] = []
