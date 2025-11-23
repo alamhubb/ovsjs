@@ -2338,7 +2338,7 @@ export class SubhutiGrammarAnalyzer {
         // 4. 动态计算：展开1层
         // expandPathsByDFS → subRuleHandler 会自动缓存到 "ruleName:1"
         const t0 = Date.now()
-        const result = this.handleDFS(
+        const result = this.expandPathsByDFSCache(
             ruleName,
             EXPANSION_LIMITS.INFINITY,
             0,
@@ -2405,7 +2405,7 @@ export class SubhutiGrammarAnalyzer {
         if (maxLevel === EXPANSION_LIMITS.INFINITY) {
             // 🔴 DFS 模式：深度优先展开（无限层级）
             // 递归检测和左递归检测在 handleDFS 内部进行
-            return this.handleDFS(ruleName, firstK, curLevel, maxLevel, isFirstPosition)
+            return this.expandPathsByDFSCache(ruleName, firstK, curLevel, maxLevel, isFirstPosition)
         } else {
             /*if (maxLevel === 1) {
                 const key = `${ruleName}:${EXPANSION_LIMITS.LEVEL_1}`
@@ -2417,7 +2417,7 @@ export class SubhutiGrammarAnalyzer {
 
             // 🔵 BFS 模式：广度优先展开（限制层级）
             // BFS 有层级限制，不需要递归检测
-            return this.handleBFS(ruleName, maxLevel)
+            return this.expandPathsByBFSCache(ruleName, maxLevel)
         }
     }
 
@@ -2431,7 +2431,7 @@ export class SubhutiGrammarAnalyzer {
      * @param isFirstPosition 是否在第一个位置（用于左递归检测）
      * @returns 展开结果
      */
-    private handleDFS(
+    private expandPathsByDFSCache(
         ruleName: string,
         firstK: number,
         curLevel: number,
@@ -2600,7 +2600,7 @@ export class SubhutiGrammarAnalyzer {
      * @param maxLevel 最大层级（具体值）
      * @returns 展开结果
      */
-    private handleBFS(
+    private expandPathsByBFSCache(
         ruleName: string,
         maxLevel: number
     ): string[][] {
