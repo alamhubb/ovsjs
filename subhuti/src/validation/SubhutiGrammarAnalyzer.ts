@@ -990,7 +990,6 @@ MaxLevel 检测结果: 无冲突
 
             this.checkTimeout(`规则${ruleName}-开始`)
             this.expandNode(ruleNode, EXPANSION_LIMITS.FIRST_K, 0, EXPANSION_LIMITS.INFINITY, true)
-
         }
 
         // BFS 缓存预填充
