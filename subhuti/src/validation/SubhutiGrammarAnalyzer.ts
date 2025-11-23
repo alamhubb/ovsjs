@@ -488,32 +488,71 @@ export class SubhutiGrammarAnalyzer {
     public checkAllOrConflicts(): ValidationError[] {
         const orConflictErrors: ValidationError[] = []
 
-        // 性能统计对象
+        // 详细的性能统计
         const perfStats = {
             totalTime: 0,
-            first1Time: 0,
-            first5Time: 0,
-            comparisonTime: 0,
-            rulesChecked: 0,
-            orNodesChecked: 0,
-            first1Computed: 0,
-            first5Computed: 0,
-            conflictComparisons: 0,
-            first5Skipped: 0  // 跳过的First(5)计算
+            ruleStats: new Map<string, {
+                time: number,
+                orNodeCount: number,
+                pathCount: number,
+                maxPathCount: number
+            }>()
         }
 
         const startTime = Date.now()
 
+        console.log('\n🔍 ===== Or 冲突检测开始 =====')
+        
         // 遍历所有规则
+        let slowestRule = { name: '', time: 0 }
         for (const [ruleName, ruleAST] of this.ruleASTs.entries()) {
-            perfStats.rulesChecked++
-            const error = this.checkOrConflictsInNodeSmart(ruleName, ruleAST, perfStats)
+            const ruleStartTime = Date.now()
+            
+            const ruleStats = {
+                time: 0,
+                orNodeCount: 0,
+                pathCount: 0,
+                maxPathCount: 0
+            }
+            
+            const error = this.checkOrConflictsInNodeSmart(ruleName, ruleAST, ruleStats)
             if (error) {
                 orConflictErrors.push(error)
+            }
+            
+            ruleStats.time = Date.now() - ruleStartTime
+            perfStats.ruleStats.set(ruleName, ruleStats)
+            
+            // 记录最慢的规则
+            if (ruleStats.time > slowestRule.time) {
+                slowestRule = { name: ruleName, time: ruleStats.time }
+            }
+            
+            // 如果规则检测时间超过 100ms，立即输出日志
+            if (ruleStats.time > 100) {
+                console.log(`⚠️  慢规则: ${ruleName}`)
+                console.log(`   耗时: ${ruleStats.time}ms`)
+                console.log(`   Or节点数: ${ruleStats.orNodeCount}`)
+                console.log(`   总路径数: ${ruleStats.pathCount}`)
+                console.log(`   最大单个Or路径数: ${ruleStats.maxPathCount}`)
             }
         }
 
         perfStats.totalTime = Date.now() - startTime
+        
+        // 输出 Top 10 最慢的规则
+        console.log('\n📊 Top 10 最慢的规则:')
+        const sortedRules = Array.from(perfStats.ruleStats.entries())
+            .sort((a, b) => b[1].time - a[1].time)
+            .slice(0, 10)
+        
+        for (let i = 0; i < sortedRules.length; i++) {
+            const [ruleName, stats] = sortedRules[i]
+            console.log(`${i + 1}. ${ruleName}: ${stats.time}ms (Or节点: ${stats.orNodeCount}, 路径: ${stats.pathCount}, 最大: ${stats.maxPathCount})`)
+        }
+        
+        console.log(`\n⏱️  Or 冲突检测总耗时: ${perfStats.totalTime}ms`)
+        console.log('===========================\n')
 
         return orConflictErrors
     }
@@ -524,24 +563,26 @@ export class SubhutiGrammarAnalyzer {
      *
      * @param ruleName 规则名
      * @param node 当前节点
-     * @param perfStats 性能统计
+     * @param ruleStats 规则统计信息
      */
     private checkOrConflictsInNodeSmart(
         ruleName: string,
         node: RuleNode,
-        perfStats?: any
+        ruleStats?: any
     ) {
         let error
         switch (node.type) {
             case 'or':
-                // 步骤2：使用智能检测（深度前缀冲突检测）
-                if (perfStats) perfStats.orNodesChecked++
-                error = this.detectOrBranchConflictsWithCache(ruleName, node)
+                // 统计 Or 节点数量
+                if (ruleStats) ruleStats.orNodeCount++
+                
+                // 执行冲突检测（带性能统计）
+                error = this.detectOrBranchConflictsWithCache(ruleName, node, ruleStats)
                 if (error) return error
 
                 // 递归检查每个分支
                 for (const alt of node.alternatives) {
-                    error = this.checkOrConflictsInNodeSmart(ruleName, alt, perfStats)
+                    error = this.checkOrConflictsInNodeSmart(ruleName, alt, ruleStats)
                     if (error) return error
                 }
                 break
@@ -549,7 +590,7 @@ export class SubhutiGrammarAnalyzer {
             case 'sequence':
                 // 递归检查序列中的每个节点
                 for (const child of node.nodes) {
-                    error = this.checkOrConflictsInNodeSmart(ruleName, child, perfStats)
+                    error = this.checkOrConflictsInNodeSmart(ruleName, child, ruleStats)
                     if (error) return error
                 }
                 break
@@ -558,7 +599,7 @@ export class SubhutiGrammarAnalyzer {
             case 'many':
             case 'atLeastOne':
                 // 递归检查内部节点
-                error = this.checkOrConflictsInNodeSmart(ruleName, node.node, perfStats)
+                error = this.checkOrConflictsInNodeSmart(ruleName, node.node, ruleStats)
                 if (error) return error
                 break
 
@@ -754,7 +795,8 @@ or([A, A, B]) → or([A, B])  // 删除重复的A`
      */
     detectOrBranchEqualWithFirstK(
         ruleName: string,
-        orNode: OrNode
+        orNode: OrNode,
+        ruleStats?: any
     ) {
         // 防御：至少需要2个分支
         if (orNode.alternatives.length < 2) {
@@ -764,6 +806,14 @@ or([A, A, B]) → or([A, B])  // 删除重复的A`
         // 获取每个分支的 First(K) 路径集合
         const branchPathSets = this.getOrNodeAllBranchRules(orNode, EXPANSION_LIMITS.FIRST_K, 'dfsFirstKCache')
         const firstK = EXPANSION_LIMITS.FIRST_K
+        
+        // 统计路径数量
+        if (ruleStats) {
+            const totalPaths = branchPathSets.reduce((sum, paths) => sum + paths.length, 0)
+            const maxPaths = Math.max(...branchPathSets.map(paths => paths.length))
+            ruleStats.pathCount += totalPaths
+            ruleStats.maxPathCount = Math.max(ruleStats.maxPathCount, maxPaths)
+        }
 
         // 单向遍历：检测前面的分支是否与后面的分支冲突
         for (let i = 0; i < branchPathSets.length; i++) {
@@ -829,7 +879,8 @@ or([A, A, B]) → or([A, B])  // 删除重复的A`
      */
     detectOrBranchPrefixWithMaxLevel(
         ruleName: string,
-        orNode: OrNode
+        orNode: OrNode,
+        ruleStats?: any
     ) {
         // 防御：至少需要2个分支
         if (orNode.alternatives.length < 2) {
@@ -838,6 +889,17 @@ or([A, A, B]) → or([A, B])  // 删除重复的A`
 
         // 获取每个分支的深度展开路径集合
         const branchPathSets = this.getOrNodeAllBranchRules(orNode, EXPANSION_LIMITS.INFINITY, 'bfsAllCache')
+        
+        // 统计路径数量（MaxLevel 的路径可能非常多）
+        if (ruleStats) {
+            const totalPaths = branchPathSets.reduce((sum, paths) => sum + paths.length, 0)
+            const maxPaths = Math.max(...branchPathSets.map(paths => paths.length))
+            
+            // 如果路径数量非常大，输出警告
+            if (maxPaths > 1000) {
+                console.log(`   ⚠️  大量路径: ${ruleName} (最大单分支路径: ${maxPaths})`)
+            }
+        }
 
         // 单向遍历：检测前面的分支是否遮蔽后面的分支
         for (let i = 0; i < branchPathSets.length; i++) {
@@ -929,10 +991,13 @@ or([A, A, B]) → or([A, B])  // 删除重复的A`
      */
     detectOrBranchConflictsWithCache(
         ruleName: string,
-        orNode: OrNode
+        orNode: OrNode,
+        ruleStats?: any
     ) {
+        const orStartTime = Date.now()
+        
         // 🚀 线路1：First(K) 预检（快速）
-        let firstKError = this.detectOrBranchEqualWithFirstK(ruleName, orNode)
+        let firstKError = this.detectOrBranchEqualWithFirstK(ruleName, orNode, ruleStats)
 
         // 情况1：预检通过，没有发现错误
         if (!firstKError) {
@@ -941,7 +1006,14 @@ or([A, A, B]) → or([A, B])  // 删除重复的A`
         }
 
         // 情况2：预检发现错误（相同/遮蔽），执行深度检测
-        const maxLevelError = this.detectOrBranchPrefixWithMaxLevel(ruleName, orNode)
+        const maxLevelError = this.detectOrBranchPrefixWithMaxLevel(ruleName, orNode, ruleStats)
+
+        const orTime = Date.now() - orStartTime
+        
+        // 如果单个 Or 节点检测时间超过 50ms，输出警告
+        if (orTime > 50 && ruleStats) {
+            console.log(`   ⚠️  Or节点慢: ${ruleName} (分支数: ${orNode.alternatives.length}, 耗时: ${orTime}ms)`)
+        }
 
         // 🛡️ 防御性编程：如果 First(K) 检测到遮蔽，MaxLevel 必须也能检测到
         if (firstKError.type === 'prefix-conflict') {
