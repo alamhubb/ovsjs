@@ -490,7 +490,10 @@ export class SubhutiGrammarAnalyzer {
         // 遍历所有规则
         for (const [ruleName, ruleAST] of this.ruleASTs.entries()) {
             perfStats.rulesChecked++
-            this.checkOrConflictsInNodeSmart(ruleName, ruleAST, perfStats)
+            const error = this.checkOrConflictsInNodeSmart(ruleName, ruleAST, perfStats)
+            if (error) {
+                orConflictErrors.push(error)
+            }
         }
 
         perfStats.totalTime = Date.now() - startTime
@@ -520,33 +523,34 @@ export class SubhutiGrammarAnalyzer {
      * 递归检查节点中的 Or 冲突（智能模式：先 First(1)，有冲突再 First(5)）
      *
      * @param ruleName 规则名
-     * @param firstK First(K) 的 K 值
      * @param node 当前节点
-     * @param cache 规则缓存（规则名 → 所有路径）
-     * @param errors 错误列表
      * @param perfStats 性能统计
      */
     private checkOrConflictsInNodeSmart(
         ruleName: string,
         node: RuleNode,
         perfStats?: any
-    ): void {
+    ) {
+        let error
         switch (node.type) {
             case 'or':
                 // 步骤2：使用智能检测（深度前缀冲突检测）
                 if (perfStats) perfStats.orNodesChecked++
-                this.detectOrBranchConflictsWithCache(ruleName, node)
+                error = this.detectOrBranchConflictsWithCache(ruleName, node)
+                if (error) return error
 
                 // 递归检查每个分支
                 for (const alt of node.alternatives) {
-                    this.checkOrConflictsInNodeSmart(ruleName, alt, perfStats)
+                    error = this.checkOrConflictsInNodeSmart(ruleName, alt, perfStats)
+                    if (error) return error
                 }
                 break
 
             case 'sequence':
                 // 递归检查序列中的每个节点
                 for (const child of node.nodes) {
-                    this.checkOrConflictsInNodeSmart(ruleName, child, perfStats)
+                    error = this.checkOrConflictsInNodeSmart(ruleName, child, perfStats)
+                    if (error) return error
                 }
                 break
 
@@ -554,7 +558,8 @@ export class SubhutiGrammarAnalyzer {
             case 'many':
             case 'atLeastOne':
                 // 递归检查内部节点
-                this.checkOrConflictsInNodeSmart(ruleName, node.node, perfStats)
+                error = this.checkOrConflictsInNodeSmart(ruleName, node.node, perfStats)
+                if (error) return error
                 break
 
             case 'consume':
@@ -942,13 +947,13 @@ or([A, A, B]) → or([A, B])  // 删除重复的A`
      */
     /**
      * 完整的 Or 分支检测（First(K) 预检 + MaxLevel 深度检测）
-     * 
+     *
      * 业务逻辑：
      * 1. First(K) 预检：快速检测相同/遮蔽错误
      * 2. 有任何错误 → 执行 MaxLevel 深度检测
      * 3. 防御性检查：如果 First(K) 检测到遮蔽，MaxLevel 必须也能检测到
      * 4. 返回结果：优先返回 MaxLevel 结果，如果没有则返回 First(K) 结果
-     * 
+     *
      * @param ruleName - 规则名
      * @param orNode - Or 节点
      * @returns 检测到的错误，如果没有错误返回 undefined
