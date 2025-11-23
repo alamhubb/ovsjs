@@ -370,9 +370,6 @@ export class SubhutiGrammarAnalyzer {
     /** DFS 主缓存：key="ruleName"，First(K) + 无限层级 */
     private dfsFirstKCache = new Map<string, string[][]>()
 
-    /** DFS 派生缓存：key="ruleName"，First(1) + 无限层级（从 dfsFirstKCache 截取） */
-    private dfsFirst1Cache = new Map<string, string[][]>()
-
     // ========================================
     // BFS（广度优先）专属缓存
     // 适用：maxLevel = 具体值（限制层数，按层级展开）
@@ -1103,7 +1100,6 @@ MaxLevel 检测结果: 无冲突
         console.log(`\n    ✓ [1/1] DFS 缓存初始化 + 左递归检测完成`)
         console.log(`       耗时: ${t1End - t1}ms`)
         console.log(`       主缓存 dfsFirstKCache: ${this.dfsFirstKCache.size} 条`)
-        console.log(`       派生缓存 dfsFirst1Cache: ${this.dfsFirst1Cache.size} 条（从firstK截取）`)
         if (this.detectedLeftRecursionErrors.size > 0) {
             console.log(`       ⚠️  发现 ${this.detectedLeftRecursionErrors.size} 个左递归错误（详情见后续汇总）`)
         }
@@ -1973,32 +1969,7 @@ MaxLevel 检测结果: 无冲突
         // 阶段1：DFS 缓存查找（在递归检测之前！）
         // ========================================
 
-        if (firstK === EXPANSION_LIMITS.FIRST_1) {
-            // 优先查找 first1 缓存
-            if (this.dfsFirst1Cache.has(ruleName)) {
-                this.perfAnalyzer.recordCacheHit('dfsFirst1')
-                const duration = Date.now() - t0
-                this.perfAnalyzer.record('subRuleHandler', duration)
-                return this.dfsFirst1Cache.get(ruleName)!
-            }
-
-            // first1 未命中，尝试从 firstK 缓存截取
-            if (this.dfsFirstKCache.has(ruleName)) {
-                this.perfAnalyzer.recordCacheHit('dfsFirst1')
-                const firstKData = this.dfsFirstKCache.get(ruleName)!
-                // 从 firstK 截取到 first1
-                const first1Data = firstKData.map(path => path.slice(0, EXPANSION_LIMITS.FIRST_1))
-                const result = this.deduplicate(first1Data)
-                // 缓存 first1 结果
-                this.dfsFirst1Cache.set(ruleName, result)
-                const duration = Date.now() - t0
-                this.perfAnalyzer.record('subRuleHandler', duration)
-                return result
-            }
-            // 🔧 修复：记录缓存未命中
-            this.perfAnalyzer.recordCacheMiss('dfsFirst1')
-
-        } else if (firstK === EXPANSION_LIMITS.FIRST_K) {
+        if (firstK === EXPANSION_LIMITS.FIRST_K) {
             // 查找 firstK 缓存
             if (this.dfsFirstKCache.has(ruleName)) {
                 this.perfAnalyzer.recordCacheHit('dfsFirstK')
@@ -2074,19 +2045,6 @@ MaxLevel 检测结果: 无冲突
                 if (!this.dfsFirstKCache.has(ruleName)) {
                     // 🔧 注意：这里不应该 recordCacheMiss，因为未命中已经在前面记录过了
                     this.dfsFirstKCache.set(ruleName, finalResult)
-                }
-
-                // 顺便派生 first1 缓存（从 firstK 截取）
-                if (!this.dfsFirst1Cache.has(ruleName)) {
-                    const first1Data = finalResult.map(path => path.slice(0, EXPANSION_LIMITS.FIRST_1))
-                    const first1Result = this.deduplicate(first1Data)
-                    this.dfsFirst1Cache.set(ruleName, first1Result)
-                }
-            } else if (firstK === EXPANSION_LIMITS.FIRST_1) {
-                // first1 不应该单独计算，但为了向后兼容仍然缓存
-                if (!this.dfsFirst1Cache.has(ruleName)) {
-                    // 🔧 注意：这里不应该 recordCacheMiss，因为未命中已经在前面记录过了
-                    this.dfsFirst1Cache.set(ruleName, finalResult)
                 }
             } else if (firstK === EXPANSION_LIMITS.INFINITY) {
                 if (maxLevel === EXPANSION_LIMITS.LEVEL_1) {
