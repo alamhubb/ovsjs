@@ -993,12 +993,6 @@ MaxLevel 检测结果: 无冲突
             this.bfsAllCache.set(ruleName, deduplicated)
         }
 
-        // 🔍 调试：检查缓存差异（仅用于内部统计，不输出）
-        const dfsKeys = new Set(this.dfsFirstKCache.keys())
-        const bfsKeys = new Set(this.bfsAllCache.keys())
-        const onlyInDFS = Array.from(dfsKeys).filter(key => !bfsKeys.has(key))
-        const onlyInBFS = Array.from(bfsKeys).filter(key => !dfsKeys.has(key))
-
         // 重置超时检测
         this.operationStartTime = 0
 
