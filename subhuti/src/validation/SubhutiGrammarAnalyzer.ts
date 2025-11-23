@@ -1242,8 +1242,6 @@ MaxLevel 检测结果: 无冲突
 
             let currentArray = arrays[i]
 
-            console.log(`    [笛卡尔积-步骤${i}/${arrays.length - 1}] result(${result.length}) × currentArray(${currentArray.length})`)
-
             // 🔧 优化：数组层面提前去重
             // 如果数组较大且包含重复，提前去重可以显著减少后续计算
             const arrayDedupStats = {
@@ -1282,11 +1280,6 @@ MaxLevel 检测结果: 无冲突
 
             const temp: string[][] = []
 
-            // console.log(result.length)
-            // console.log(result.slice(0,10))
-            // console.log(currentArray.length)
-            // console.log(currentArray.slice(0,10))
-            // console.log(currentArray.length * result.length)
             // 遍历当前结果的每个序列
             let seqIndex = 0
             const totalSeqs = result.length
@@ -1295,7 +1288,6 @@ MaxLevel 检测结果: 无冲突
 
                 // 每处理1000个seq输出一次进度
                 if (seqIndex % 1000 === 0 || seqIndex === totalSeqs) {
-                    console.log(`      [处理seq进度] ${seqIndex}/${totalSeqs}, temp累积: ${temp.length}`)
                     this.checkTimeout(`cartesianProduct-seq${seqIndex}`)
                 }
 
@@ -1378,9 +1370,6 @@ MaxLevel 检测结果: 无冲突
 
             // 更新统计
             perfStats.maxResultSize = Math.max(perfStats.maxResultSize, result.length + finalResultSet.size)
-
-            // 输出本轮统计
-            console.log(`    [步骤${i}完成] 新result: ${result.length}, finalResult: ${finalResultSet.size}, 总计: ${result.length + finalResultSet.size}`)
 
             // 监控
             if (result.length + finalResultSet.size > 100000) {
@@ -1693,8 +1682,6 @@ MaxLevel 检测结果: 无冲突
             branches = branches.map(item => item.slice(0, firstK));
             allBranches.push(branches);
 
-            console.log(`  [allBranches] 当前总数: ${allBranches.length} 组`)
-
             // 找到当前子节点的最短分支长度（安全写法）
             let minLength = Infinity;
             for (const b of branches) {
@@ -1719,37 +1706,7 @@ MaxLevel 检测结果: 无冲突
             return []
         }
 
-        // 笛卡尔积组合子节点（只对需要的节点做笛卡尔积）
-        // 例如：[[a,b]] × [[c]] → [[a,b,c]]
-        // ⚠️ 如果包含空分支：[[a]] × [[], [b]] → [[a], [a,b]]
-
-        // 🔍 计算笛卡尔积大小估计
-        let estimatedSize = 1
-        const branchSizes: number[] = []
-        for (const branches of allBranches) {
-            branchSizes.push(branches.length)
-            estimatedSize *= branches.length
-            // 已取消笛卡尔积大小限制
-            // if (estimatedSize > 1000000) {
-            //     console.error(`❌ [笛卡尔积] 估计大小超限: ${estimatedSize}`)
-            //     console.error(`   当前规则: ${ruleName}`)
-            //     console.error(`   allBranches 详情:`)
-            //     allBranches.forEach((br, idx) => {
-            //         console.error(`     [${idx}]: ${br.length} 个分支`)
-            //     })
-            //     throw new Error(`笛卡尔积爆炸: 估计大小 ${estimatedSize} 超过限制`)
-            // }
-        }
-
-        console.log(`  [笛卡尔积] 规则: ${ruleName}`)
-        console.log(`  [笛卡尔积] 数组数量: ${allBranches.length}, 各数组大小: [${branchSizes.join(', ')}]`)
-        console.log(`  [笛卡尔积] 估计结果大小: ${branchSizes.join(' × ')} = ${estimatedSize}`)
-        this.checkTimeout(`笛卡尔积-${ruleName}`)
         const result = this.cartesianProduct(allBranches, firstK)
-        console.log(`  [笛卡尔积] 完成, 实际结果: ${result.length} 个路径`)
-        this.checkTimeout(`笛卡尔积完成-${ruleName}`)
-
-        // 笛卡尔积后路径可能超过 firstK，需要截取并去重
         // 注意：如果某些节点包含空分支，笛卡尔积后可能产生不同长度的路径
         return this.truncateAndDeduplicate(result, firstK)
     }
@@ -1929,20 +1886,16 @@ MaxLevel 检测结果: 无冲突
      * - IfStatement → [[If, LParen, Expression, RParen, Statement]]
      */
     private getDirectChildren(ruleName: string): string[][] {
-        console.log(`\n🔍 [getDirectChildren] 规则: ${ruleName}`)
-
         // 1. 优先从 bfsLevelCache 获取 level 1 的数据（懒加载缓存）
         const key = `${ruleName}:${EXPANSION_LIMITS.LEVEL_1}`
         if (this.bfsLevelCache.has(key)) {
             this.perfAnalyzer.recordCacheHit('getDirectChildren')
             const cached = this.bfsLevelCache.get(key)!
-            console.log(`   ✅ 缓存命中: ${key} (${cached.length} 条路径)`)
             return cached
         }
 
         // 缓存未命中，需要动态计算
         this.perfAnalyzer.recordCacheMiss('getDirectChildren')
-        console.log(`   ⚠️  缓存未命中: ${key}`)
 
         // 2. 检查是否是 token
         const tokenNode = this.tokenCache?.get(ruleName)
@@ -1950,7 +1903,6 @@ MaxLevel 检测结果: 无冲突
             const result = [[ruleName]]  // token 直接返回
             // 缓存 token 的结果
             this.bfsLevelCache.set(key, result)
-            console.log(`   📌 Token: ${ruleName}，缓存结果`)
             return result
         }
 
@@ -1959,8 +1911,6 @@ MaxLevel 检测结果: 无冲突
         if (!subNode) {
             throw new Error(`系统错误：规则不存在: ${ruleName}`)
         }
-
-        console.log(`   🔧 动态计算: 展开1层...`)
 
         // 4. 动态计算：展开1层
         // expandPathsByDFS → subRuleHandler 会自动缓存到 "ruleName:1"
@@ -1977,7 +1927,6 @@ MaxLevel 检测结果: 无冲突
         // 缓存计算结果（懒加载填充）
         if (!this.bfsLevelCache.has(key)) {
             this.bfsLevelCache.set(key, result)
-            console.log(`   💾 缓存填充: ${key} (${result.length} 条路径，耗时 ${duration}ms)`)
         }
 
         return result

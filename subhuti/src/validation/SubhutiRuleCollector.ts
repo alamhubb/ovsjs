@@ -514,13 +514,6 @@ export class SubhutiRuleCollector {
      * 处理子规则调用
      */
     private handleSubrule(ruleName: string): any {
-        const debugRules = ['ConditionalExpression', 'AssignmentExpression', 'Expression', 'Statement']
-        const isDebugRule = debugRules.includes(this.currentRuleName)
-
-        if (isDebugRule) {
-            console.log(`🔍 [DEBUG]     子规则调用: ${ruleName}`)
-        }
-
         this.recordNode({type: 'subrule', ruleName})
     }
 
