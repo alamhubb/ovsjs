@@ -76,6 +76,11 @@ export interface ValidationStats {
     bfsAllCacheSize: number
     /** First(K) 的 K 值 */
     firstK: number
+    /** 缓存使用率统计 */
+    cacheUsage?: {
+        dfsFirstK: { hit: number, miss: number, total: number, hitRate: number }
+        getDirectChildren: { hit: number, miss: number, total: number, hitRate: number }
+    }
 }
 
 /**
@@ -156,6 +161,25 @@ export class SubhutiGrammarValidationError extends Error {
             lines.push('📦 缓存信息：')
             lines.push(`   ├─ dfsFirstKCache: ${s.dfsFirstKCacheSize} 条 (First(${s.firstK}))`)
             lines.push(`   └─ bfsAllCache: ${s.bfsAllCacheSize} 条 (MaxLevel)`)
+            
+            // 输出缓存使用率
+            if (s.cacheUsage) {
+                lines.push('')
+                lines.push('💾 缓存使用率：')
+                
+                const dfs = s.cacheUsage.dfsFirstK
+                lines.push(`   dfsFirstKCache:`)
+                lines.push(`      命中: ${dfs.hit} 次, 未命中: ${dfs.miss} 次, 总计: ${dfs.total} 次`)
+                lines.push(`      命中率: ${dfs.hitRate.toFixed(1)}%`)
+                
+                const gdc = s.cacheUsage.getDirectChildren
+                if (gdc.total > 0) {
+                    lines.push(`   getDirectChildren (懒加载):`)
+                    lines.push(`      命中: ${gdc.hit} 次, 未命中: ${gdc.miss} 次, 总计: ${gdc.total} 次`)
+                    lines.push(`      命中率: ${gdc.hitRate.toFixed(1)}%`)
+                }
+            }
+            
             lines.push('')
             lines.push('='.repeat(60))
         }

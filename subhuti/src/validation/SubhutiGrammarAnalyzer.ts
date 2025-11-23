@@ -938,7 +938,11 @@ MaxLevel 检测结果: 无冲突
             totalTime: 0,  // 总用时
             dfsFirstKCacheSize: 0,  // dfsFirstKCache 大小
             bfsAllCacheSize: 0,  // bfsAllCache 大小
-            firstK: 0  // First(K) 的 K 值
+            firstK: 0,  // First(K) 的 K 值
+            cacheUsage: {
+                dfsFirstK: { hit: 0, miss: 0, total: 0, hitRate: 0 },
+                getDirectChildren: { hit: 0, miss: 0, total: 0, hitRate: 0 }
+            }
         }
 
         // 1. 左递归检测（内部会初始化 DFS 缓存和 BFS 缓存）
@@ -1037,6 +1041,25 @@ MaxLevel 检测结果: 无冲突
         stats.dfsFirstKCacheSize = this.dfsFirstKCache.size
         stats.bfsAllCacheSize = this.bfsAllCache.size
         stats.firstK = EXPANSION_LIMITS.FIRST_K
+        
+        // 收集缓存使用率统计
+        const dfsFirstKStats = this.perfAnalyzer.cacheStats.dfsFirstK
+        const getDirectChildrenStats = this.perfAnalyzer.cacheStats.getDirectChildren
+        
+        stats.cacheUsage = {
+            dfsFirstK: {
+                hit: dfsFirstKStats.hit,
+                miss: dfsFirstKStats.miss,
+                total: dfsFirstKStats.total,
+                hitRate: dfsFirstKStats.total > 0 ? (dfsFirstKStats.hit / dfsFirstKStats.total * 100) : 0
+            },
+            getDirectChildren: {
+                hit: getDirectChildrenStats.hit,
+                miss: getDirectChildrenStats.miss,
+                total: getDirectChildrenStats.total,
+                hitRate: getDirectChildrenStats.total > 0 ? (getDirectChildrenStats.hit / getDirectChildrenStats.total * 100) : 0
+            }
+        }
 
         // 返回错误列表和统计信息
         return {
