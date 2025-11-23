@@ -78,8 +78,9 @@ export interface ValidationStats {
     firstK: number
     /** 缓存使用率统计 */
     cacheUsage?: {
-        dfsFirstK: { hit: number, miss: number, total: number, hitRate: number }
-        bfsLevelCache: { hit: number, miss: number, total: number, hitRate: number, size: number }
+        dfsFirstK: { hit: number, miss: number, total: number, hitRate: number, getCount: number }
+        bfsAllCache: { getCount: number, size: number }
+        bfsLevelCache: { hit: number, miss: number, total: number, hitRate: number, size: number, getCount: number }
         getDirectChildren: { hit: number, miss: number, total: number, hitRate: number }
     }
 }
@@ -163,29 +164,47 @@ export class SubhutiGrammarValidationError extends Error {
             lines.push(`   ├─ dfsFirstKCache: ${s.dfsFirstKCacheSize} 条 (First(${s.firstK}))`)
             lines.push(`   └─ bfsAllCache: ${s.bfsAllCacheSize} 条 (MaxLevel)`)
             
-            // 输出缓存使用率
+            // 输出缓存使用率（统一格式）
             if (s.cacheUsage) {
                 lines.push('')
                 lines.push('💾 缓存使用率：')
                 
+                // dfsFirstKCache
                 const dfs = s.cacheUsage.dfsFirstK
                 lines.push(`   dfsFirstKCache:`)
-                lines.push(`      命中: ${dfs.hit} 次, 未命中: ${dfs.miss} 次, 总计: ${dfs.total} 次`)
+                lines.push(`      查询次数: ${dfs.getCount}`)
+                lines.push(`      命中次数: ${dfs.hit}`)
+                lines.push(`      未命中次数: ${dfs.miss}`)
                 lines.push(`      命中率: ${dfs.hitRate.toFixed(1)}%`)
+                lines.push(`      缓存总条数: ${s.dfsFirstKCacheSize}`)
                 
-                const bfs = s.cacheUsage.bfsLevelCache
-                if (bfs.total > 0) {
-                    lines.push(`   bfsLevelCache (分层缓存):`)
-                    lines.push(`      大小: ${bfs.size} 条 (规则名:层级)`)
-                    lines.push(`      命中: ${bfs.hit} 次, 未命中: ${bfs.miss} 次, 总计: ${bfs.total} 次`)
-                    lines.push(`      命中率: ${bfs.hitRate.toFixed(1)}%`)
-                }
+                // bfsAllCache
+                const bfsAll = s.cacheUsage.bfsAllCache
+                lines.push(`   bfsAllCache:`)
+                lines.push(`      查询次数: ${bfsAll.getCount}`)
+                lines.push(`      命中次数: ${bfsAll.hit}`)
+                lines.push(`      未命中次数: ${bfsAll.miss}`)
+                lines.push(`      命中率: ${bfsAll.total > 0 ? bfsAll.hitRate.toFixed(1) : '0.0'}%`)
+                lines.push(`      缓存总条数: ${bfsAll.size}`)
                 
+                // bfsLevelCache
+                const bfsLevel = s.cacheUsage.bfsLevelCache
+                lines.push(`   bfsLevelCache:`)
+                lines.push(`      查询次数: ${bfsLevel.getCount}`)
+                lines.push(`      命中次数: ${bfsLevel.hit}`)
+                lines.push(`      未命中次数: ${bfsLevel.miss}`)
+                lines.push(`      命中率: ${bfsLevel.total > 0 ? bfsLevel.hitRate.toFixed(1) : 'N/A'}%`)
+                lines.push(`      缓存总条数: ${bfsLevel.size}`)
+                
+                // getDirectChildren
                 const gdc = s.cacheUsage.getDirectChildren
                 if (gdc.total > 0) {
                     lines.push(`   getDirectChildren (懒加载):`)
-                    lines.push(`      命中: ${gdc.hit} 次, 未命中: ${gdc.miss} 次, 总计: ${gdc.total} 次`)
+                    lines.push(`      查询次数: ${gdc.total}`)
+                    lines.push(`      命中次数: ${gdc.hit}`)
+                    lines.push(`      未命中次数: ${gdc.miss}`)
                     lines.push(`      命中率: ${gdc.hitRate.toFixed(1)}%`)
+                    lines.push(`      缓存总条数: 与 bfsLevelCache 共用`)
                 }
             }
             

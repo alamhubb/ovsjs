@@ -102,12 +102,17 @@ class PerformanceAnalyzer {
         subRuleHandlerTotal: 0,  // subRuleHandler 总调用次数
         recursiveReturn: 0,  // 递归检测返回次数
         levelLimitReturn: 0,  // 层级限制返回次数
+        // 独立的缓存统计（每个缓存都有自己的 hit/miss/total）
+        dfsFirstKCache: {hit: 0, miss: 0, total: 0},  // DFS First(K) 缓存
+        bfsAllCache: {hit: 0, miss: 0, total: 0},  // BFS 所有层级聚合缓存
+        bfsLevelCache: {hit: 0, miss: 0, total: 0},  // BFS 按层级缓存
+        getDirectChildren: {hit: 0, miss: 0, total: 0},  // getDirectChildren 懒加载缓存
+        // 废弃的统计（保留用于兼容性）
         dfsFirst1: {hit: 0, miss: 0, total: 0},
         dfsFirstK: {hit: 0, miss: 0, total: 0},
-        bfsLevel: {hit: 0, miss: 0, total: 0},  // handleDFS 中的特殊场景（firstK=∞, maxLevel=1）
-        getDirectChildren: {hit: 0, miss: 0, total: 0},  // getDirectChildren 第一层缓存（懒加载）
-        expandOneLevel: {hit: 0, miss: 0, total: 0},  // 展开1层缓存（不截取）- 仅在 BFS 预填充时使用
-        expandOneLevelTruncated: {hit: 0, miss: 0, total: 0},  // 展开1层+截取缓存
+        bfsLevel: {hit: 0, miss: 0, total: 0},
+        expandOneLevel: {hit: 0, miss: 0, total: 0},
+        expandOneLevelTruncated: {hit: 0, miss: 0, total: 0},
         actualCompute: 0,  // 实际计算次数（getDirectChildren）
         bfsOptimization: {
             totalCalls: 0,           // BFS 总调用次数
@@ -145,12 +150,14 @@ class PerformanceAnalyzer {
     }
 
     // 记录缓存命中/未命中
-    recordCacheHit(cacheType: 'dfsFirst1' | 'dfsFirstK' | 'bfsLevel' | 'getDirectChildren' | 'expandOneLevel' | 'expandOneLevelTruncated') {
+    recordCacheHit(cacheType: 'dfsFirstKCache' | 'bfsAllCache' | 'bfsLevelCache' | 'getDirectChildren' | 
+                             'dfsFirst1' | 'dfsFirstK' | 'bfsLevel' | 'expandOneLevel' | 'expandOneLevelTruncated') {
         this.cacheStats[cacheType].hit++
         this.cacheStats[cacheType].total++
     }
 
-    recordCacheMiss(cacheType: 'dfsFirst1' | 'dfsFirstK' | 'bfsLevel' | 'getDirectChildren' | 'expandOneLevel' | 'expandOneLevelTruncated') {
+    recordCacheMiss(cacheType: 'dfsFirstKCache' | 'bfsAllCache' | 'bfsLevelCache' | 'getDirectChildren' | 
+                              'dfsFirst1' | 'dfsFirstK' | 'bfsLevel' | 'expandOneLevel' | 'expandOneLevelTruncated') {
         this.cacheStats[cacheType].miss++
         this.cacheStats[cacheType].total++
     }
@@ -272,10 +279,15 @@ class PerformanceAnalyzer {
             subRuleHandlerTotal: 0,
             recursiveReturn: 0,
             levelLimitReturn: 0,
+            // 新的独立缓存统计
+            dfsFirstKCache: {hit: 0, miss: 0, total: 0},
+            bfsAllCache: {hit: 0, miss: 0, total: 0},
+            bfsLevelCache: {hit: 0, miss: 0, total: 0},
+            getDirectChildren: {hit: 0, miss: 0, total: 0},
+            // 废弃的统计（保留兼容性）
             dfsFirst1: {hit: 0, miss: 0, total: 0},
             dfsFirstK: {hit: 0, miss: 0, total: 0},
             bfsLevel: {hit: 0, miss: 0, total: 0},
-            getDirectChildren: {hit: 0, miss: 0, total: 0},
             expandOneLevel: {hit: 0, miss: 0, total: 0},
             expandOneLevelTruncated: {hit: 0, miss: 0, total: 0},
             actualCompute: 0,
@@ -376,11 +388,51 @@ export class SubhutiGrammarAnalyzer {
     /** BFS 缓存：key="ruleName:level"（完整展开，不截取） */
     private bfsLevelCache = new Map<string, string[][]>()
 
-    /** 性能分析器 */
+    /** 性能分析器（包含所有缓存统计） */
     private perfAnalyzer = new PerformanceAnalyzer()
 
     /** 收集检测过程中发现的左递归错误（使用 Map 提高查重性能） */
     private detectedLeftRecursionErrors = new Map<string, LeftRecursionError>()
+
+    /**
+     * 封装的缓存 get 方法（统一管理所有缓存统计）
+     * 
+     * ✅ 设计原则：
+     * - 每次 get 调用都会增加 total 计数
+     * - 如果缓存存在则 hit++，否则 miss++
+     * - total 始终等于 hit + miss
+     * 
+     * @param cacheType - 缓存类型
+     * @param key - 缓存键
+     * @returns 缓存的值，如果不存在返回 undefined
+     */
+    private getCacheValue(
+        cacheType: 'dfsFirstKCache' | 'bfsAllCache' | 'bfsLevelCache',
+        key: string
+    ): string[][] | undefined {
+        // 根据类型获取对应的缓存
+        let result: string[][] | undefined
+        switch (cacheType) {
+            case 'dfsFirstKCache':
+                result = this.dfsFirstKCache.get(key)
+                break
+            case 'bfsAllCache':
+                result = this.bfsAllCache.get(key)
+                break
+            case 'bfsLevelCache':
+                result = this.bfsLevelCache.get(key)
+                break
+        }
+
+        // 统一记录命中/未命中统计
+        if (result !== undefined) {
+            this.perfAnalyzer.recordCacheHit(cacheType)
+        } else {
+            this.perfAnalyzer.recordCacheMiss(cacheType)
+        }
+
+        return result
+    }
 
     /** 配置选项 */
     private options: Required<GrammarAnalyzerOptions>
@@ -528,11 +580,15 @@ export class SubhutiGrammarAnalyzer {
      * 4. 返回每个分支的路径集合
      *
      * @param orNode - Or 节点
-     * @param firstK
-     * @param cache - 规则缓存（规则名 → 所有路径）
+     * @param firstK - First(K) 的 K 值
+     * @param cacheType - 缓存类型
      * @returns 每个分支的路径集合数组
      */
-    getOrNodeAllBranchRules(orNode: OrNode, firstK: number, cache: Map<string, string[][]>): string[][] {
+    getOrNodeAllBranchRules(
+        orNode: OrNode, 
+        firstK: number, 
+        cacheType: 'dfsFirstKCache' | 'bfsAllCache'
+    ): string[][] {
         // 存储每个分支的路径集合
         const allOrs: string[][] = []
 
@@ -550,7 +606,7 @@ export class SubhutiGrammarAnalyzer {
                 // 步骤2：从 cache 获取每个规则的所有路径
                 // 例如：['If', 'Expression'] → [[If的路径], [Expression的路径]]
                 const seqAllBranches = branch.map(rule => {
-                    const paths = cache.get(rule)
+                    const paths = this.getCacheValue(cacheType, rule)
                     // 防御：如果规则不在缓存中，返回 [[rule]]
                     return paths || [[rule]]
                 })
@@ -706,7 +762,7 @@ or([A, A, B]) → or([A, B])  // 删除重复的A`
         }
 
         // 获取每个分支的 First(K) 路径集合
-        const branchPathSets = this.getOrNodeAllBranchRules(orNode, EXPANSION_LIMITS.FIRST_K, this.dfsFirstKCache)
+        const branchPathSets = this.getOrNodeAllBranchRules(orNode, EXPANSION_LIMITS.FIRST_K, 'dfsFirstKCache')
         const firstK = EXPANSION_LIMITS.FIRST_K
 
         // 单向遍历：检测前面的分支是否与后面的分支冲突
@@ -781,7 +837,7 @@ or([A, A, B]) → or([A, B])  // 删除重复的A`
         }
 
         // 获取每个分支的深度展开路径集合
-        const branchPathSets = this.getOrNodeAllBranchRules(orNode, EXPANSION_LIMITS.INFINITY, this.bfsAllCache)
+        const branchPathSets = this.getOrNodeAllBranchRules(orNode, EXPANSION_LIMITS.INFINITY, 'bfsAllCache')
 
         // 单向遍历：检测前面的分支是否遮蔽后面的分支
         for (let i = 0; i < branchPathSets.length; i++) {
@@ -980,7 +1036,7 @@ MaxLevel 检测结果: 无冲突
             for (let level = 1; level <= EXPANSION_LIMITS.LEVEL_K; level++) {
                 const key = `${ruleName}:${level}`
                 if (this.bfsLevelCache.has(key)) {
-                    const levelPaths = this.bfsLevelCache.get(key)!
+                    const levelPaths = this.getCacheValue('bfsLevelCache', key)!
                     allLevelPaths.push(...levelPaths)
                 }
             }
@@ -1037,24 +1093,36 @@ MaxLevel 检测结果: 无冲突
         stats.bfsAllCacheSize = this.bfsAllCache.size
         stats.firstK = EXPANSION_LIMITS.FIRST_K
         
-        // 收集缓存使用率统计
-        const dfsFirstKStats = this.perfAnalyzer.cacheStats.dfsFirstK
-        const bfsLevelStats = this.perfAnalyzer.cacheStats.bfsLevel
+        // 收集缓存使用率统计（使用新的独立统计字段）
+        const dfsFirstKCacheStats = this.perfAnalyzer.cacheStats.dfsFirstKCache
+        const bfsAllCacheStats = this.perfAnalyzer.cacheStats.bfsAllCache
+        const bfsLevelCacheStats = this.perfAnalyzer.cacheStats.bfsLevelCache
         const getDirectChildrenStats = this.perfAnalyzer.cacheStats.getDirectChildren
         
         stats.cacheUsage = {
             dfsFirstK: {
-                hit: dfsFirstKStats.hit,
-                miss: dfsFirstKStats.miss,
-                total: dfsFirstKStats.total,
-                hitRate: dfsFirstKStats.total > 0 ? (dfsFirstKStats.hit / dfsFirstKStats.total * 100) : 0
+                hit: dfsFirstKCacheStats.hit,
+                miss: dfsFirstKCacheStats.miss,
+                total: dfsFirstKCacheStats.total,
+                hitRate: dfsFirstKCacheStats.total > 0 ? (dfsFirstKCacheStats.hit / dfsFirstKCacheStats.total * 100) : 0,
+                // total 就是查询次数（每次 getCacheValue 都会增加 total）
+                getCount: dfsFirstKCacheStats.total
+            },
+            bfsAllCache: {
+                hit: bfsAllCacheStats.hit,
+                miss: bfsAllCacheStats.miss,
+                total: bfsAllCacheStats.total,
+                hitRate: bfsAllCacheStats.total > 0 ? (bfsAllCacheStats.hit / bfsAllCacheStats.total * 100) : 0,
+                getCount: bfsAllCacheStats.total,
+                size: this.bfsAllCache.size
             },
             bfsLevelCache: {
-                hit: bfsLevelStats.hit,
-                miss: bfsLevelStats.miss,
-                total: bfsLevelStats.total,
-                hitRate: bfsLevelStats.total > 0 ? (bfsLevelStats.hit / bfsLevelStats.total * 100) : 0,
-                size: this.bfsLevelCache.size
+                hit: bfsLevelCacheStats.hit,
+                miss: bfsLevelCacheStats.miss,
+                total: bfsLevelCacheStats.total,
+                hitRate: bfsLevelCacheStats.total > 0 ? (bfsLevelCacheStats.hit / bfsLevelCacheStats.total * 100) : 0,
+                size: this.bfsLevelCache.size,
+                getCount: bfsLevelCacheStats.total
             },
             getDirectChildren: {
                 hit: getDirectChildrenStats.hit,
@@ -1706,7 +1774,7 @@ MaxLevel 检测结果: 无冲突
             const cacheKey = `${ruleName}:${level}`
             if (this.bfsLevelCache.has(cacheKey)) {
                 cachedLevel = level
-                cachedPaths = this.bfsLevelCache.get(cacheKey)!
+                cachedPaths = this.getCacheValue('bfsLevelCache', cacheKey)!
 
                 // 提前返回：找到目标层级
                 if (level === targetLevel) {
@@ -1777,7 +1845,7 @@ MaxLevel 检测结果: 无冲突
         const key = `${ruleName}:${EXPANSION_LIMITS.LEVEL_1}`
         if (this.bfsLevelCache.has(key)) {
             this.perfAnalyzer.recordCacheHit('getDirectChildren')
-            const cached = this.bfsLevelCache.get(key)!
+            const cached = this.getCacheValue('bfsLevelCache', key)!
             return cached
         }
 
@@ -1861,15 +1929,14 @@ MaxLevel 检测结果: 无冲突
         // ========================================
 
         if (firstK === EXPANSION_LIMITS.FIRST_K) {
-            // 查找 firstK 缓存
-            if (this.dfsFirstKCache.has(ruleName)) {
-                this.perfAnalyzer.recordCacheHit('dfsFirstK')
+            // 查找 firstK 缓存（getCacheValue 会自动记录命中/未命中统计）
+            const cached = this.getCacheValue('dfsFirstKCache', ruleName)
+            if (cached !== undefined) {
                 const duration = Date.now() - t0
                 this.perfAnalyzer.record('subRuleHandler', duration)
-                return this.dfsFirstKCache.get(ruleName)!
+                return cached
             }
-            // 🔧 修复：记录缓存未命中
-            this.perfAnalyzer.recordCacheMiss('dfsFirstK')
+            // 缓存未命中，继续执行下面的逻辑
         } else if (firstK === EXPANSION_LIMITS.INFINITY) {
             if (maxLevel !== EXPANSION_LIMITS.LEVEL_1) {
                 throw new Error(`系统错误：不支持的参数组合 firstK=${firstK}, maxLevel=${maxLevel}`)
