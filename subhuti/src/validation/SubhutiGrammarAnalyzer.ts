@@ -2407,14 +2407,6 @@ export class SubhutiGrammarAnalyzer {
             // 递归检测和左递归检测在 handleDFS 内部进行
             return this.expandPathsByDFSCache(ruleName, firstK, curLevel, maxLevel, isFirstPosition)
         } else {
-            /*if (maxLevel === 1) {
-                const key = `${ruleName}:${EXPANSION_LIMITS.LEVEL_1}`
-                if (this.bfsLevelCache.has(key)) {
-                    return this.getDirectChildren(ruleName)
-                }
-            }
-*/
-
             // 🔵 BFS 模式：广度优先展开（限制层级）
             // BFS 有层级限制，不需要递归检测
             return this.expandPathsByBFSCache(ruleName, maxLevel)
