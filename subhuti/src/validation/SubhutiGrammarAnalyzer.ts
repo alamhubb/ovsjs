@@ -2035,8 +2035,8 @@ export class SubhutiGrammarAnalyzer {
                 startLevel = searchLevel
                 currentPaths = this.bfsLevelCache.get(searchKey)!
 
-                // 记录优化统计
-                const skippedLevels = searchLevel - 1
+                // 记录优化统计（跳过了 level 1 ~ searchLevel 的计算）
+                const skippedLevels = searchLevel
                 this.perfAnalyzer.cacheStats.bfsOptimization.skippedLevels += skippedLevels
                 this.perfAnalyzer.cacheStats.bfsOptimization.fromCachedLevel++
 
