@@ -1929,23 +1929,6 @@ export class SubhutiGrammarAnalyzer {
      *   - 缓存 B:7 ✅
      * - 缓存 A:10 ✅
      *
-     * @param ruleName 规则名
-     * @param targetLevel 目标层级
-     * @param path 当前路径（根部调用传入空数组 []）
-     * @returns 展开结果
-     */
-    private expandPathsByBFSCache(
-        ruleName: string,
-        targetLevel: number
-    ): string[][] {
-        // 默认使用纯净版（无日志），方便学习
-        return this.expandPathsByBFSCacheClean(ruleName, targetLevel)
-
-        // 如需调试，改为：
-        // return this.expandPathsByBFSCacheWithLog(ruleName, targetLevel, [])
-    }
-
-    /**
      * BFS 展开（纯净版，单方法递归实现）
      *
      * 核心逻辑：
@@ -1966,15 +1949,15 @@ export class SubhutiGrammarAnalyzer {
      * - 缓存 A:10 ✅
      *
      * @param ruleName 规则名
-     * @param levels 要展开的层数
-     * @returns 展开后的路径
+     * @param targetLevel 目标层级
+     * @returns 展开结果
      */
-    private expandPathsByBFSCacheClean(
+    private expandPathsByBFSCache(
         ruleName: string,
-        levels: number
+        targetLevel: number
     ): string[][] {
         // 防御检查
-        if (levels === 0) {
+        if (targetLevel === 0) {
             throw new Error('系统错误')
         }
         // token，直接返回
@@ -1982,7 +1965,7 @@ export class SubhutiGrammarAnalyzer {
             return [[ruleName]]
         }
         // 基础情况：level 1
-        if (levels === EXPANSION_LIMITS.LEVEL_1) {
+        if (targetLevel === EXPANSION_LIMITS.LEVEL_1) {
             return this.getDirectChildren(ruleName)
         }
 
@@ -1990,14 +1973,14 @@ export class SubhutiGrammarAnalyzer {
         let cachedLevel = 1
         let cachedPaths: string[][] | null = null
 
-        for (let level = Math.min(levels, EXPANSION_LIMITS.LEVEL_K); level >= 2; level--) {
+        for (let level = Math.min(targetLevel, EXPANSION_LIMITS.LEVEL_K); level >= 2; level--) {
             const cacheKey = `${ruleName}:${level}`
             if (this.bfsLevelCache.has(cacheKey)) {
                 cachedLevel = level
                 cachedPaths = this.bfsLevelCache.get(cacheKey)!
 
                 // 提前返回：找到目标层级
-                if (level === levels) {
+                if (level === targetLevel) {
                     return cachedPaths
                 }
                 break
@@ -2011,7 +1994,7 @@ export class SubhutiGrammarAnalyzer {
         }
 
         // 计算剩余层数
-        const remainingLevels = levels - cachedLevel
+        const remainingLevels = targetLevel - cachedLevel
 
         // 防御检查
         if (remainingLevels <= 0) {
@@ -2025,7 +2008,7 @@ export class SubhutiGrammarAnalyzer {
 
             // 遍历路径中的每个符号，递归展开
             for (const symbol of path) {
-                const result = this.expandPathsByBFSCacheClean(symbol, remainingLevels)
+                const result = this.expandPathsByBFSCache(symbol, remainingLevels)
                 allBranches.push(result)
             }
 
@@ -2036,8 +2019,8 @@ export class SubhutiGrammarAnalyzer {
 
         // 去重并缓存
         const finalResult = this.deduplicate(expandedPaths)
-        if (levels <= EXPANSION_LIMITS.LEVEL_K) {
-            const key = `${ruleName}:${levels}`
+        if (targetLevel <= EXPANSION_LIMITS.LEVEL_K) {
+            const key = `${ruleName}:${targetLevel}`
             if (this.bfsLevelCache.has(key)) {
                 throw new Error('系统错误')
             }
