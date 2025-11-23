@@ -906,6 +906,9 @@ or([A, A, B]) → or([A, B])  // 删除重复的A`
         console.log(ruleName)
         for (const branchPathSet of branchPathSets) {
             console.log(branchPathSet.length)
+            if (branchPathSet.length > 7000) {
+                console.log(branchPathSet.slice(6990, 7000))
+            }
         }
 
         // 单向遍历：检测前面的分支是否遮蔽后面的分支
