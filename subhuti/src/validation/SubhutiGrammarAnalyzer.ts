@@ -2049,9 +2049,8 @@ export class SubhutiGrammarAnalyzer {
     private expandPathsByBFSCacheClean(
         ruleName: string,
         levels: number,
-        paths?: string[][]
+        paths: string[][]
     ): string[][] {
-        // 基础情况：不需要展开
         if (levels === 0) {
             return paths
         }
@@ -2071,44 +2070,21 @@ export class SubhutiGrammarAnalyzer {
                     allBranches.push([[symbol]])
                     continue
                 }
-
-                // 规则名
-                // 基础情况：level 1，直接获取子节点
-                if (levels === 1) {
-                    const children = this.getDirectChildren(symbol)
-                    allBranches.push(children)
-                    continue
-                }
-
                 // 查找该规则的缓存
-                let cachedLevel = 0
+                let cachedLevel = 1
                 let cachedPaths: string[][] | null = null
-
                 // 查找最大可用缓存
-                for (let level = Math.min(levels, EXPANSION_LIMITS.LEVEL_K); level >= 1; level--) {
+                for (let level = Math.min(levels, EXPANSION_LIMITS.LEVEL_K); level >= 2; level--) {
                     const cacheKey = `${symbol}:${level}`
-                    if (level === 1) {
-                        cachedPaths = this.getDirectChildren(symbol)
-                    } else {
-                        if (this.bfsLevelCache.has(cacheKey)) {
-                            cachedLevel = level
-                            cachedPaths = this.bfsLevelCache.get(cacheKey)!
-
-                            // 找到目标层级，直接使用
-                            if (level === levels) {
-                                allBranches.push(cachedPaths)
-                                cachedPaths = null
-                                break
-                            }
-
-                            break
-                        }
+                    if (this.bfsLevelCache.has(cacheKey)) {
+                        cachedLevel = level
+                        cachedPaths = this.bfsLevelCache.get(cacheKey)!
+                        break
                     }
                 }
-                if (cachedPaths === null) {
-                    throw new Error('系统错误')
+                if (!cachedPaths) {
+                    cachedPaths = this.getDirectChildren(symbol)
                 }
-
                 // 需要继续展开
                 // 计算剩余层数
                 const remainingLevels = levels - cachedLevel
