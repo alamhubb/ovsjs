@@ -2540,11 +2540,7 @@ export class SubhutiGrammarAnalyzer {
             // 🔧 修复：记录缓存未命中
             this.perfAnalyzer.recordCacheMiss('dfsFirstK')
         } else if (firstK === EXPANSION_LIMITS.INFINITY) {
-            if (maxLevel === EXPANSION_LIMITS.INFINITY) {
-                throw new Error(`系统错误：不支持的参数组合 firstK=${firstK}, maxLevel=${maxLevel}`)
-                // firstK=INFINITY, maxLevel=INFINITY 的情况暂不缓存
-                // 这种情况通常只在特殊场景使用
-            } else if (maxLevel !== EXPANSION_LIMITS.LEVEL_1) {
+            if (maxLevel !== EXPANSION_LIMITS.LEVEL_1) {
                 throw new Error(`系统错误：不支持的参数组合 firstK=${firstK}, maxLevel=${maxLevel}`)
             }
         }
