@@ -1940,7 +1940,7 @@ export class SubhutiGrammarAnalyzer {
         targetLevel: number
     ): string[][] {
         // 默认使用纯净版（无日志），方便学习
-        return this.expandPathsByBFSCacheClean(ruleName, targetLevel, [[ruleName]])
+        return this.expandPathsByBFSCacheClean(ruleName, targetLevel)
 
         // 如需调试，改为：
         // return this.expandPathsByBFSCacheWithLog(ruleName, targetLevel, [])
@@ -1989,8 +1989,10 @@ export class SubhutiGrammarAnalyzer {
         }
 
 
+        // 查找 ruleName 的最近缓存
         let cachedLevel = 1
         let cachedPaths: string[][] | null = null
+        
         for (let level = Math.min(levels, EXPANSION_LIMITS.LEVEL_K); level >= 2; level--) {
             const cacheKey = `${ruleName}:${level}`
             if (this.bfsLevelCache.has(cacheKey)) {
@@ -1999,55 +2001,31 @@ export class SubhutiGrammarAnalyzer {
                 break
             }
         }
+        
+        // 没有找到缓存，使用 level 1
+        if (!cachedPaths) {
+            cachedPaths = this.getDirectChildren(ruleName)
+        }
 
+        // 计算剩余层数
+        const remainingLevels = levels - cachedLevel
+        
+        // 防御检查
+        if (remainingLevels < 0) {
+            throw new Error('系统错误')
+        }
 
-
+        // 对 cachedPaths 的每个路径递归展开
         const expandedPaths: string[][] = []
 
-        for (const path of paths) {
+        for (const path of cachedPaths) {
             const allBranches: string[][][] = []
 
             // 遍历路径中的每个符号
             for (const symbol of path) {
-                // 查找该规则的缓存
-                let cachedLevel = 1
-                let cachedPaths: string[][] | null = null
-                // 查找最大可用缓存
-                for (let level = Math.min(levels, EXPANSION_LIMITS.LEVEL_K); level >= 2; level--) {
-                    const cacheKey = `${symbol}:${level}`
-                    if (this.bfsLevelCache.has(cacheKey)) {
-                        cachedLevel = level
-                        cachedPaths = this.bfsLevelCache.get(cacheKey)!
-                        break
-                    }
-                }
-                if (!cachedPaths) {
-                    cachedPaths = this.getDirectChildren(symbol)
-                }
-                // 需要继续展开
-                // 计算剩余层数
-                const remainingLevels = levels - cachedLevel
-
-                if (remainingLevels < 0) {
-                    throw new Error('系统错误')
-                }
-
-                if (remainingLevels !== 0) {
-                    // 递归调用自己
-                    cachedPaths = this.expandPathsByBFSCacheClean(symbol, remainingLevels)
-                }
-
-                // 缓存结果（用 symbol 作为 key）
-                if (levels <= EXPANSION_LIMITS.LEVEL_K) {
-                    const key = `${symbol}:${levels}`
-                    if (!this.bfsLevelCache.has(key)) {
-                        this.bfsLevelCache.set(key, cachedPaths)
-                    } else {
-                        throw new Error('系统错误')
-                    }
-                }
-
-                allBranches.push(cachedPaths)
+                // 递归调用自己
+                const result = this.expandPathsByBFSCacheClean(symbol, remainingLevels)
+                allBranches.push(result)
             }
 
             // 笛卡尔积组合
@@ -2056,7 +2034,17 @@ export class SubhutiGrammarAnalyzer {
         }
 
         // 去重
-        return this.deduplicate(expandedPaths)
+        const finalResult = this.deduplicate(expandedPaths)
+        
+        // 缓存结果
+        if (levels <= EXPANSION_LIMITS.LEVEL_K) {
+            const key = `${ruleName}:${levels}`
+            if (!this.bfsLevelCache.has(key)) {
+                this.bfsLevelCache.set(key, finalResult)
+            }
+        }
+
+        return finalResult
     }
 
     /**
