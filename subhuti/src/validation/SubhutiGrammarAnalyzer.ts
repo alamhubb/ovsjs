@@ -461,7 +461,7 @@ export class SubhutiGrammarAnalyzer {
         console.log('\n方式1：使用 forEachOrNode')
         this.forEachOrNode(ruleName, (orNode) => {
             console.log(`  找到 Or 节点，有 ${orNode.alternatives.length} 个分支`)
-            
+
             // 如果提供了 errors，则执行检测
             if (errors) {
                 // 可以调用检测方法
@@ -854,7 +854,7 @@ or([A, A, B]) → or([A, B])  // 删除重复的A`
                 if (equalPath) {
                     console.log(`  ❌ ${ruleName}: 分支 ${i + 1} 和 ${j + 1} 相同（First(${firstK})）`)
                     console.log(`     路径: ${equalPath}`)
-                    
+
                     return {
                         level: 'ERROR',
                         type: 'or-identical-branches',
@@ -875,7 +875,7 @@ or([A, A, B]) → or([A, B])  // 删除重复的A`
                     console.log(`  ❌ ${ruleName}: 分支 ${i + 1} 遮蔽分支 ${j + 1}（First(${firstK}) 阶段发现前缀）`)
                     console.log(`     前缀路径: ${prefixRelation.prefix}`)
                     console.log(`     完整路径: ${prefixRelation.full}`)
-                    
+
                     return {
                         level: 'ERROR',
                         type: 'prefix-conflict',
@@ -988,26 +988,43 @@ or([A, A, B]) → or([A, B])  // 删除重复的A`
     }
 
     /**
-     * 完整的 Or 分支深度检测（使用缓存）- 保留向后兼容
+     * 完整的 Or 分支深度检测（使用缓存）- 带防御性校验
      *
-     * 集成方法：
-     * 1. 获取每个分支的所有路径
-     * 2. 检测前缀冲突
+     * 检测流程：
+     * 1. 线路1：使用 First(K) 快速检测
+     * 2. 如果发现"遮蔽"错误：使用 MaxLevel 深度检测进行验证（防御性编程）
+     * 3. 如果发现"相同"错误：直接返回（不需要验证）
+     *
+     * 防御性编程：
+     * - 如果 First(K) 检测到遮蔽，MaxLevel 必须也能检测到
+     * - 否则说明两个检测逻辑不一致，抛出错误
      *
      * @param ruleName - 规则名
      * @param orNode - Or 节点
+     * @returns 检测到的错误，如果没有错误返回 undefined
      */
     detectOrBranchConflictsWithCache(
         ruleName: string,
         orNode: OrNode
     ) {
-        // 🚀 线路1：使用 First(K) 检测相同（快速）
-        const error = this.detectOrBranchEqualWithFirstK(ruleName, orNode)
+        // 🚀 线路1：使用 First(K) 检测（快速）
+        let firstKError = this.detectOrBranchEqualWithFirstK(ruleName, orNode)
 
-        if (error) {
-            // 🚀 线路2：使用 MaxLevel 检测前缀遮蔽（深度）
-            return this.detectOrBranchPrefixWithMaxLevel(ruleName, orNode)
+        // 情况1：First(K) 没有发现错误
+        if (!firstKError) {
+            return
         }
+        // 继续用 MaxLevel 深度检测
+        const maxLevelError = this.detectOrBranchPrefixWithMaxLevel(ruleName, orNode)
+
+        // 情况2：First(K) 发现"相同"错误
+        if (firstKError.type === 'prefix-conflict') {
+            if (!maxLevelError) {
+                throw new Error('系统粗欧文')
+            }
+        }
+        // 未知错误类型
+        return maxLevelError
     }
 
     /**
