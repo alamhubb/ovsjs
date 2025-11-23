@@ -97,19 +97,40 @@ export class SubhutiGrammarValidationError extends Error {
         const lines: string[] = []
         
         // 输出错误详情
-        lines.push('Grammar Validation Errors:')
-        lines.push('')
-
         for (const error of this.errors) {
-            lines.push(`[${error.level}] ${error.message}`)
+            // 格式化标题
+            let title = ''
+            if (error.type === 'prefix-conflict' && error.branchIndices.length === 2) {
+                // 前缀冲突：分支 j 被分支 i 遮蔽
+                const [i, j] = error.branchIndices
+                title = `[${error.level}] 分支 ${j} 被分支 ${i} 遮蔽`
+            } else if (error.type === 'or-identical-branches' && error.branchIndices.length === 2) {
+                // 相同分支：分支 i 和分支 j 完全相同
+                const [i, j] = error.branchIndices
+                title = `[${error.level}] 分支 ${i} 和分支 ${j} 完全相同`
+            } else {
+                // 其他类型：使用原始 message
+                title = `[${error.level}] ${error.message}`
+            }
+            
+            lines.push(title)
             lines.push(`  Rule: ${error.ruleName}`)
             lines.push(`  Branches: [${error.branchIndices.join(', ')}]`)
+            
             // conflictPaths 是可选的
             if (error.conflictPaths) {
                 lines.push(`  Path A: ${error.conflictPaths.pathA}`)
                 lines.push(`  Path B: ${error.conflictPaths.pathB}`)
             }
-            lines.push(`  Suggestion: ${error.suggestion}`)
+            
+            // 格式化 Suggestion（简化）
+            if (error.type === 'prefix-conflict' && error.branchIndices.length === 2) {
+                const [i, j] = error.branchIndices
+                lines.push(`  Suggestion: 将分支 ${j} 移到分支 ${i} 前面（长规则在前，短规则在后）`)
+            } else {
+                lines.push(`  Suggestion: ${error.suggestion}`)
+            }
+            
             lines.push('')
         }
 
