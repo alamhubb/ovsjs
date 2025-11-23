@@ -2472,17 +2472,12 @@ export class SubhutiGrammarAnalyzer {
             // 🔧 修复：记录缓存未命中
             this.perfAnalyzer.recordCacheMiss('dfsFirstK')
         } else if (firstK === EXPANSION_LIMITS.INFINITY) {
-            if (maxLevel === EXPANSION_LIMITS.LEVEL_1) {
-                const key = ruleName + `:${EXPANSION_LIMITS.LEVEL_1}`
-                if (this.bfsLevelCache.has(key)) {
-                    this.perfAnalyzer.recordCacheHit('bfsLevel')
-                    return this.bfsLevelCache.get(key)!
-                }
-                // 🔧 修复：记录缓存未命中
-                this.perfAnalyzer.recordCacheMiss('bfsLevel')
-            } else if (maxLevel === EXPANSION_LIMITS.INFINITY) {
+            if (maxLevel === EXPANSION_LIMITS.INFINITY) {
+                throw new Error(`系统错误：不支持的参数组合 firstK=${firstK}, maxLevel=${maxLevel}`)
                 // firstK=INFINITY, maxLevel=INFINITY 的情况暂不缓存
                 // 这种情况通常只在特殊场景使用
+            } else if (maxLevel !== EXPANSION_LIMITS.LEVEL_1) {
+                throw new Error(`系统错误：不支持的参数组合 firstK=${firstK}, maxLevel=${maxLevel}`)
             } else {
                 throw new Error(`系统错误：不支持的参数组合 firstK=${firstK}, maxLevel=${maxLevel}`)
             }
@@ -2562,7 +2557,9 @@ export class SubhutiGrammarAnalyzer {
                     // 🔧 注意：这里不应该 recordCacheMiss，因为未命中已经在前面记录过了
                     this.dfsFirst1Cache.set(ruleName, finalResult)
                 }
-            } else if (firstK === EXPANSION_LIMITS.INFINITY) {
+            }
+
+            /*else if (firstK === EXPANSION_LIMITS.INFINITY) {
                 if (maxLevel === EXPANSION_LIMITS.LEVEL_1) {
                     const key = ruleName + `:${EXPANSION_LIMITS.LEVEL_1}`
                     if (!this.bfsLevelCache.has(key)) {
@@ -2571,7 +2568,7 @@ export class SubhutiGrammarAnalyzer {
                     }
                 }
                 // firstK=INFINITY, maxLevel=INFINITY 暂不缓存
-            }
+            }*/
 
             // 记录性能
             const duration = Date.now() - t0
