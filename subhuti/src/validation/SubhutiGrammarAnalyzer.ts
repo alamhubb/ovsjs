@@ -351,6 +351,17 @@ export class SubhutiGrammarAnalyzer {
     private recursiveDetectionSet = new Set<string>()
 
     // ========================================
+    // DFS（深度优先）专属缓存
+    // 适用：maxLevel = INFINITY（无限层数，递归到token）
+    // ========================================
+
+    /** DFS 主缓存：key="ruleName"，First(K) + 无限层级 */
+    private dfsFirstKCache = new Map<string, string[][]>()
+
+    /** DFS 派生缓存：key="ruleName"，First(1) + 无限层级（从 dfsFirstKCache 截取） */
+    private dfsFirst1Cache = new Map<string, string[][]>()
+
+    // ========================================
     // BFS（广度优先）专属缓存
     // 适用：maxLevel = 具体值（限制层数，按层级展开）
     // 特点：BFS 只负责按层级展开，不负责截取
@@ -370,21 +381,8 @@ export class SubhutiGrammarAnalyzer {
     /** 展开单个路径缓存（截取版）：key="ruleName:level:pathIndex:firstK" */
     private expandSinglePathTruncatedCache = new Map<string, string[][]>()
 
-    /**
-     * ⚠️ firstKLevelKCache 已删除
-     * 原因：BFS 只负责按层级展开（firstK=∞），截取由外层统一处理
-     */
 
-    // ========================================
-    // DFS（深度优先）专属缓存
-    // 适用：maxLevel = INFINITY（无限层数，递归到token）
-    // ========================================
 
-    /** DFS 主缓存：key="ruleName"，First(K) + 无限层级 */
-    private dfsFirstKCache = new Map<string, string[][]>()
-
-    /** DFS 派生缓存：key="ruleName"，First(1) + 无限层级（从 dfsFirstKCache 截取） */
-    private dfsFirst1Cache = new Map<string, string[][]>()
 
 
     /** 性能分析器 */
