@@ -444,7 +444,6 @@ export class SubhutiGrammarAnalyzer {
     }
 
 
-
     /**
      * 检测所有规则的 Or 分支冲突（智能模式：先 First(1)，有冲突再 First(5)）
      *
@@ -1055,9 +1054,9 @@ export class SubhutiGrammarAnalyzer {
         // 1. 左递归检测（内部会初始化 DFS 缓存和 BFS 缓存）
         console.log(`📊 [阶段1] 开始左递归检测...`)
         console.log(`\n📊 [左递归检测] 开始检测 ${this.ruleASTs.size} 个规则...`)
-        
+
         const ruleNames = Array.from(this.ruleASTs.keys())
-        
+
         console.log(`    [1/2] 初始化 DFS 缓存 (无限层数场景) + 左递归检测...`)
         console.log(`       策略：dfsFirstKCache (firstK=${EXPANSION_LIMITS.FIRST_K}, maxLevel=∞) + 派生 first1`)
         console.log(`       算法：深度优先，递归展开到token`)
@@ -1085,7 +1084,7 @@ export class SubhutiGrammarAnalyzer {
                 throw e
             }
         }
-        
+
         // BFS 缓存预填充
         console.log(`    预填充策略: 从 level 1 到 level ${EXPANSION_LIMITS.LEVEL_K}`)
 
@@ -1125,7 +1124,7 @@ export class SubhutiGrammarAnalyzer {
         if (this.detectedLeftRecursionErrors.size > 0) {
             console.log(`       ⚠️  发现 ${this.detectedLeftRecursionErrors.size} 个左递归错误（详情见后续汇总）`)
         }
-        
+
         const leftRecursionErrors = Array.from(this.detectedLeftRecursionErrors.values())
         console.log(`✅ [阶段1] 左递归检测完成，耗时 ${t1End - t1}ms`)
 
@@ -1983,20 +1982,20 @@ export class SubhutiGrammarAnalyzer {
             return [[ruleName]]
         }
         // 基础情况：level 1
-        if (levels === 1) {
+        if (levels === EXPANSION_LIMITS.LEVEL_1) {
             return this.getDirectChildren(ruleName)
         }
 
         // 查找 ruleName 的最近缓存
         let cachedLevel = 1
         let cachedPaths: string[][] | null = null
-        
-        for (let level = Math.min(levels, EXPANSION_LIMITS.LEVEL_K); level >= 1; level--) {
+
+        for (let level = Math.min(levels, EXPANSION_LIMITS.LEVEL_K); level >= 2; level--) {
             const cacheKey = `${ruleName}:${level}`
             if (this.bfsLevelCache.has(cacheKey)) {
                 cachedLevel = level
                 cachedPaths = this.bfsLevelCache.get(cacheKey)!
-                
+
                 // 提前返回：找到目标层级
                 if (level === levels) {
                     return cachedPaths
@@ -2004,15 +2003,16 @@ export class SubhutiGrammarAnalyzer {
                 break
             }
         }
-        
+
         // 没有找到缓存（不应该发生）
         if (!cachedPaths) {
-            throw new Error(`系统错误：${ruleName} 没有缓存`)
+            cachedLevel = EXPANSION_LIMITS.LEVEL_1
+            cachedPaths = this.getDirectChildren(ruleName)
         }
 
         // 计算剩余层数
         const remainingLevels = levels - cachedLevel
-        
+
         // 防御检查
         if (remainingLevels <= 0) {
             throw new Error('系统错误')
@@ -2022,13 +2022,13 @@ export class SubhutiGrammarAnalyzer {
         const expandedPaths: string[][] = []
         for (const path of cachedPaths) {
             const allBranches: string[][][] = []
-            
+
             // 遍历路径中的每个符号，递归展开
             for (const symbol of path) {
                 const result = this.expandPathsByBFSCacheClean(symbol, remainingLevels)
                 allBranches.push(result)
             }
-            
+
             // 笛卡尔积组合
             const pathResult = this.cartesianProduct(allBranches)
             expandedPaths.push(...pathResult)
@@ -2037,7 +2037,11 @@ export class SubhutiGrammarAnalyzer {
         // 去重并缓存
         const finalResult = this.deduplicate(expandedPaths)
         if (levels <= EXPANSION_LIMITS.LEVEL_K) {
-            this.bfsLevelCache.set(`${ruleName}:${levels}`, finalResult)
+            const key = `${ruleName}:${levels}`
+            if (this.bfsLevelCache.has(key)) {
+                throw new Error('系统错误')
+            }
+            this.bfsLevelCache.set(key, finalResult)
         }
         return finalResult
     }
