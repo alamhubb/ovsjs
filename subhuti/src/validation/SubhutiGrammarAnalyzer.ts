@@ -491,7 +491,7 @@ export class SubhutiGrammarAnalyzer {
         }
 
         const t1End = Date.now()
-        console.log(`\n    ✓ [1/2] DFS 缓存初始化 + 左递归检测完成`)
+        console.log(`\n    ✓ [1/1] DFS 缓存初始化 + 左递归检测完成`)
         console.log(`       耗时: ${t1End - t1}ms`)
         console.log(`       主缓存 dfsFirstKCache: ${this.dfsFirstKCache.size} 条`)
         console.log(`       派生缓存 dfsFirst1Cache: ${this.dfsFirst1Cache.size} 条（从firstK截取）`)
@@ -500,41 +500,18 @@ export class SubhutiGrammarAnalyzer {
         }
 
         // ========================================
-        // 阶段2：初始化 BFS 缓存
+        // 🔧 优化：删除无用的 BFS 预填充
         // ========================================
-        console.log(`\n    [2/2] 初始化 BFS 缓存 (限制层数场景)...`)
-        console.log(`       策略：bfsLevelCache (firstK=∞, maxLevel=1~${EXPANSION_LIMITS.LEVEL_K})`)
-        console.log(`       算法：广度优先，按层级循环展开`)
-        const t2 = Date.now()
-        for (let level = 1; level <= EXPANSION_LIMITS.LEVEL_K; level++) {
-            for (const ruleName of ruleNames) {
-                this.expandPathsByBFS(ruleName, level)
-            }
-        }
-        const t2End = Date.now()
-        console.log(`    ✓ [2/2] BFS 缓存初始化完成`)
-        console.log(`       耗时: ${t2End - t2}ms`)
-        console.log(`       缓存条目: ${this.bfsLevelCache.size} 条`)
-
-        // 聚合所有层级的数据到 bfsAllCache
-        console.log(`\n    [2.5] 聚合所有层级数据到 bfsAllCache...`)
-        const tAgg = Date.now()
-        for (const ruleName of ruleNames) {
-            const allLevelPaths: string[][] = []
-            for (let level = 1; level <= EXPANSION_LIMITS.LEVEL_K; level++) {
-                const key = `${ruleName}:${level}`
-                const levelPaths = this.bfsLevelCache.get(key)
-                if (levelPaths) {
-                    allLevelPaths.push(...levelPaths)
-                }
-            }
-            const deduplicated = this.deduplicate(allLevelPaths)
-            this.bfsAllCache.set(ruleName, deduplicated)
-        }
-        const tAggEnd = Date.now()
-        console.log(`    ✓ [2.5] 数据聚合完成`)
-        console.log(`       耗时: ${tAggEnd - tAgg}ms`)
-        console.log(`       bfsAllCache 条目: ${this.bfsAllCache.size} 条`)
+        // 原因：整个系统都使用 DFS（maxLevel=∞），BFS 缓存从未被有效使用
+        // BFS 缓存改为懒加载：在 getDirectChildren 中第一次使用时才填充
+        // 
+        // ❌ 已删除阶段2：BFS 缓存预填充（浪费时间和内存）
+        // ❌ 已删除阶段2.5：bfsAllCache 聚合（从未使用）
+        //
+        // 性能提升：
+        // - 减少初始化时间（不再遍历所有规则的 level 1-2）
+        // - 减少内存占用（按需填充，不存储无用数据）
+        // - ExpandOneLevel 缓存统计不再显示无意义的 0%
 
         // 返回收集到的错误（转换为数组）
         return Array.from(this.detectedLeftRecursionErrors.values())
