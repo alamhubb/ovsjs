@@ -1985,10 +1985,11 @@ export class SubhutiGrammarAnalyzer {
     /**
      * BFS 展开（广度优先展开，限制层级）
      * 
-     * 功能：
-     * 1. 优先从缓存获取结果
-     * 2. 缓存未命中时，执行 BFS 展开
-     * 3. 缓存最终结果和中间层级结果
+     * 流程：
+     * 1. 查找缓存（优先返回）
+     * 2. 查找最近的中间层级缓存（增量优化）
+     * 3. 逐层展开到目标层级
+     * 4. 缓存并返回结果
      *
      * @param ruleName 规则名
      * @param maxLevel 最大层级
@@ -1999,231 +2000,213 @@ export class SubhutiGrammarAnalyzer {
         maxLevel: number
     ): string[][] {
         const t0 = Date.now()
-
         console.log(`\n📊 [BFS展开] 规则: ${ruleName}, 目标层级: ${maxLevel}`)
-
-        // 记录统计
+        
         this.perfAnalyzer.cacheStats.bfsOptimization.totalCalls++
-
-        // ========================================
-        // 步骤1：查找顶层缓存
-        // ========================================
         const cacheKey = `${ruleName}:${maxLevel}`
 
-        if (maxLevel <= EXPANSION_LIMITS.LEVEL_K) {
-            if (this.bfsLevelCache.has(cacheKey)) {
-                // ✅ BFS 缓存命中，直接返回完整结果
-                console.log(`   ✅ 缓存命中: ${cacheKey}`)
-                this.perfAnalyzer.recordCacheHit('bfsLevel')
-                
-                const duration = Date.now() - t0
-                this.perfAnalyzer.record('expandPathsByBFS', duration, 0, 0)
-                
-                return this.bfsLevelCache.get(cacheKey)!
-            } else {
-                // 缓存未命中
-                this.perfAnalyzer.recordCacheMiss('bfsLevel')
-            }
+        // 提前返回：缓存命中
+        if (maxLevel <= EXPANSION_LIMITS.LEVEL_K && this.bfsLevelCache.has(cacheKey)) {
+            console.log(`   ✅ 缓存命中: ${cacheKey}`)
+            this.perfAnalyzer.recordCacheHit('bfsLevel')
+            this.perfAnalyzer.record('expandPathsByBFS', Date.now() - t0, 0, 0)
+            return this.bfsLevelCache.get(cacheKey)!
         }
 
-        // 缓存未命中，需要实际计算
+        // 缓存未命中，开始计算
+        if (maxLevel <= EXPANSION_LIMITS.LEVEL_K) {
+            this.perfAnalyzer.recordCacheMiss('bfsLevel')
+        }
         this.perfAnalyzer.recordActualCompute()
 
-        // ========================================
-        // 步骤2：查找最近的缓存层级（增量优化）
-        // ========================================
+        // 查找最近的缓存层级（增量优化）
+        const { startLevel, currentPaths } = this.findNearestCachedLevel(ruleName, maxLevel)
+        const initialPathsCount = currentPaths.length
+        
+        console.log(`   📈 需要展开层数: ${maxLevel - startLevel} (从 level ${startLevel} → level ${maxLevel})`)
 
-        let startLevel = 0  // 当前已有的层级（0 表示还没开始）
-        let currentPaths: string[][] | null = null
+        // 逐层展开
+        const { paths, finishedPaths } = this.expandLevelByLevel(
+            ruleName,
+            startLevel,
+            maxLevel,
+            currentPaths
+        )
 
+        // 合并、去重、缓存
+        const finalResult = this.deduplicate([...finishedPaths, ...paths])
+        console.log(`   📦 最终结果: ${finalResult.length} 条路径`)
+
+        // 缓存最终结果
+        if (maxLevel <= EXPANSION_LIMITS.LEVEL_K && !this.bfsLevelCache.has(cacheKey)) {
+            this.bfsLevelCache.set(cacheKey, finalResult)
+            console.log(`   💾 缓存设置: ${cacheKey}`)
+        }
+
+        // 记录性能
+        const duration = Date.now() - t0
+        this.perfAnalyzer.record('expandPathsByBFS', duration, initialPathsCount, finalResult.length)
+        console.log(`   ⏱️  耗时: ${duration}ms\n`)
+
+        return finalResult
+    }
+
+    /**
+     * 查找最近的缓存层级
+     * 
+     * @param ruleName 规则名
+     * @param maxLevel 目标层级
+     * @returns 起始层级和对应的路径
+     */
+    private findNearestCachedLevel(
+        ruleName: string,
+        maxLevel: number
+    ): { startLevel: number; currentPaths: string[][] } {
         console.log(`   🔍 查找最近的缓存层级...`)
-        for (let searchLevel = maxLevel - 1; searchLevel >= 1; searchLevel--) {
-            const searchKey = `${ruleName}:${searchLevel}`
-            if (this.bfsLevelCache.has(searchKey)) {
-                // 找到 level N 的缓存，说明 level 1~N 已经计算过了
-                startLevel = searchLevel  // 当前已有的层级
-                currentPaths = this.bfsLevelCache.get(searchKey)!
 
-                // 记录优化统计
-                // 跳过的层数 = 找到的缓存层级（level 1 ~ searchLevel 都不需要重新计算）
-                const skippedLevels = searchLevel
-                this.perfAnalyzer.cacheStats.bfsOptimization.skippedLevels += skippedLevels
+        // 从 maxLevel-1 向下查找最近的缓存
+        for (let level = maxLevel - 1; level >= 1; level--) {
+            const cacheKey = `${ruleName}:${level}`
+            if (this.bfsLevelCache.has(cacheKey)) {
+                const paths = this.bfsLevelCache.get(cacheKey)!
+                
+                // 记录统计
+                this.perfAnalyzer.cacheStats.bfsOptimization.skippedLevels += level
                 this.perfAnalyzer.cacheStats.bfsOptimization.fromCachedLevel++
-
-                console.log(`   ✅ 找到缓存: level ${searchLevel} (${currentPaths.length} 条路径)`)
-                console.log(`   🚀 优化: 跳过 ${skippedLevels} 层计算（level 1~${searchLevel}），从 level ${searchLevel} 继续展开到 level ${maxLevel}`)
-                break
+                
+                console.log(`   ✅ 找到缓存: level ${level} (${paths.length} 条路径)`)
+                console.log(`   🚀 跳过 ${level} 层计算`)
+                
+                return { startLevel: level, currentPaths: paths }
             }
         }
 
-        // 如果没有找到缓存，从 level 1 开始
-        if (currentPaths === null) {
-            console.log(`   ⚠️  无缓存，从 level 1 开始展开`)
-            // getDirectChildren 返回的是 level 1 的结果
-            startLevel = 1
-            currentPaths = this.getDirectChildren(ruleName)
-
-            // 记录统计：从 level 1 开始
-            this.perfAnalyzer.cacheStats.bfsOptimization.fromLevel1++
+        // 没有缓存，从 level 1 开始
+        console.log(`   ⚠️  无缓存，从 level 1 开始`)
+        this.perfAnalyzer.cacheStats.bfsOptimization.fromLevel1++
+        
+        return {
+            startLevel: 1,
+            currentPaths: this.getDirectChildren(ruleName)
         }
+    }
 
-        const initialPathsCount = currentPaths.length
-        let finishedPaths: string[][] = []  // 已经全是 token 的路径
-
-        // 🔥 优化：从 startLevel 开始展开，而非总是从 level 1
-        // 计算需要展开多少层
-        const levelsToExpand = maxLevel === EXPANSION_LIMITS.INFINITY
-            ? EXPANSION_LIMITS.INFINITY
-            : (maxLevel - startLevel)
+    /**
+     * 逐层展开路径
+     * 
+     * @param ruleName 规则名
+     * @param startLevel 起始层级
+     * @param maxLevel 目标层级
+     * @param initialPaths 初始路径
+     * @returns 展开后的路径和已完成的路径
+     */
+    private expandLevelByLevel(
+        ruleName: string,
+        startLevel: number,
+        maxLevel: number,
+        initialPaths: string[][]
+    ): { paths: string[][]; finishedPaths: string[][] } {
+        let currentPaths = initialPaths
+        let finishedPaths: string[][] = []
+        const levelsToExpand = maxLevel - startLevel
 
         // 防御检查
         if (levelsToExpand < 0) {
             throw new Error(`系统错误：levelsToExpand < 0 (startLevel=${startLevel}, maxLevel=${maxLevel})`)
         }
 
-        console.log(`   📈 需要展开层数: ${levelsToExpand} (从 level ${startLevel} → level ${maxLevel})`)
+        // 逐层展开
+        for (let i = 0; i < levelsToExpand; i++) {
+            const currentLevel = startLevel + i
+            const nextLevel = currentLevel + 1
+            
+            console.log(`\n   [层级 ${currentLevel} → ${nextLevel}]`)
 
-        let expandedLevels = 0
-
-        // 广度优先展开
-        while (expandedLevels < levelsToExpand) {
-            // 当前实际层级 = startLevel + expandedLevels
-            const actualCurrentLevel = startLevel + expandedLevels
-
-            // 当前实际层级 = startLevel + expandedLevels（循环前已定义）
-            // 下一层级 = actualCurrentLevel + 1
-            const nextLevel = actualCurrentLevel + 1
+            // 尝试使用层级缓存
             const levelCacheKey = `${ruleName}:${nextLevel}`
-
-            console.log(`\n   [层级 ${actualCurrentLevel} → ${nextLevel}]`)
-
-            // ========================================
-            // 步骤0：检查下一层级是否有完整缓存
-            // ========================================
-            // 🔧 优化：检查下一层级是否有 BFS 缓存
-            let usedLevelCache = false
-            if (nextLevel <= EXPANSION_LIMITS.LEVEL_K &&
-                this.bfsLevelCache.has(levelCacheKey)) {
-                // ✅ 缓存命中：直接使用下一层级的缓存数据
-                // 注意：不能直接 continue，需要经过分离逻辑更新 finishedPaths
+            if (nextLevel <= EXPANSION_LIMITS.LEVEL_K && this.bfsLevelCache.has(levelCacheKey)) {
                 currentPaths = this.bfsLevelCache.get(levelCacheKey)!
-                usedLevelCache = true
-                console.log(`      ✅ 层级缓存命中: ${levelCacheKey} (${currentPaths.length} 条路径)`)
+                console.log(`      ✅ 层级缓存命中: ${levelCacheKey}`)
+                continue
+            }
+
+            // 分离已完成和未完成的路径
+            const { toExpand, finished } = this.separatePaths(currentPaths)
+            finishedPaths.push(...finished)
+            console.log(`      分离: 已完成=${finished.length}, 待展开=${toExpand.length}`)
+
+            // 提前返回：所有路径都已完成
+            if (toExpand.length === 0) {
+                console.log(`      ✅ 所有路径已完成`)
+                break
+            }
+
+            // 展开路径
+            currentPaths = this.expandPaths(ruleName, toExpand, currentLevel)
+            console.log(`      📊 展开结果: ${currentPaths.length} 条路径`)
+
+            // 缓存当前层级
+            if (nextLevel <= EXPANSION_LIMITS.LEVEL_K && !this.bfsLevelCache.has(levelCacheKey)) {
+                this.bfsLevelCache.set(levelCacheKey, currentPaths)
+                console.log(`      💾 缓存: ${levelCacheKey}`)
+            }
+        }
+
+        return { paths: currentPaths, finishedPaths }
+    }
+
+    /**
+     * 分离已完成和未完成的路径
+     * 
+     * @param paths 路径列表
+     * @returns 待展开的路径和已完成的路径
+     */
+    private separatePaths(paths: string[][]): {
+        toExpand: string[][]
+        finished: string[][]
+    } {
+        const toExpand: string[][] = []
+        const finished: string[][] = []
+
+        for (const path of paths) {
+            const isAllTokens = path.every(symbol => this.tokenCache.has(symbol))
+            if (isAllTokens) {
+                finished.push(path)
             } else {
-                console.log(`      ⚠️  层级缓存未命中: ${levelCacheKey}`)
-            }
-
-            // ========================================
-            // 步骤1：分离已完成和未完成的路径
-            // ========================================
-            const pathsToExpand: string[][] = []
-            const pathsFinished: string[][] = []
-
-            for (const path of currentPaths) {
-                // 检查当前路径是否全部是 token
-                const isAllTokens = path.every(symbol => this.tokenCache.has(symbol))
-
-                if (isAllTokens) {
-                    // 已完成：全部是 token，无需继续展开
-                    pathsFinished.push(path)
-                } else {
-                    // 未完成：还有规则名，需要继续展开
-                    pathsToExpand.push(path)
-                }
-            }
-
-            // 将已完成的路径移到 finishedPaths
-            finishedPaths.push(...pathsFinished)
-
-            console.log(`      分离结果: 已完成=${pathsFinished.length}, 待展开=${pathsToExpand.length}`)
-
-            // ========================================
-            // 步骤2：如果使用了层级缓存或没有需要展开的路径，跳过展开
-            // ========================================
-            if (usedLevelCache || pathsToExpand.length === 0) {
-                // 情况1：使用了层级缓存，currentPaths 已经是下一层级的数据
-                // 情况2：所有路径都已完成，停止展开
-                expandedLevels++
-                if (pathsToExpand.length === 0) {
-                    console.log(`      ✅ 所有路径已完成，停止展开`)
-                    break  // 所有路径都已完成，退出循环
-                }
-                console.log(`      ⏭️  使用层级缓存，跳过展开，进入下一层`)
-                continue  // 进入下一轮（层级缓存的情况）
-            }
-
-            // ========================================
-            // 步骤3：展开未完成的路径（使用缓存方法）
-            // ========================================
-
-            console.log(`      🔧 开始展开 ${pathsToExpand.length} 条路径...`)
-
-            // 对每个路径展开1层（带缓存）
-            const expandedPaths: string[][] = []
-
-            // 🔧 优化：使用索引，为每个路径位置建立缓存
-            for (let pathIndex = 0; pathIndex < pathsToExpand.length; pathIndex++) {
-                const path = pathsToExpand[pathIndex]
-
-                // 🔑 BFS 只做完整展开，不截取（firstK=∞）
-                const expanded = this.expandSinglePathCached(
-                    ruleName,
-                    path,
-                    actualCurrentLevel,
-                    pathIndex,
-                    EXPANSION_LIMITS.INFINITY  // BFS 始终完整展开
-                )
-                expandedPaths.push(...expanded)
-            }
-
-            console.log(`      📊 展开结果: ${expandedPaths.length} 条路径（展开前 ${pathsToExpand.length}）`)
-
-            // 去重
-            const beforeDedup = expandedPaths.length
-            currentPaths = this.deduplicate(expandedPaths)
-            console.log(`      🔄 去重: ${beforeDedup} → ${currentPaths.length}`)
-
-            // 🔧 缓存当前层级的结果（BFS 只缓存完整版）
-            if (nextLevel <= EXPANSION_LIMITS.LEVEL_K) {
-                if (!this.bfsLevelCache.has(levelCacheKey)) {
-                    this.bfsLevelCache.set(levelCacheKey, currentPaths)
-                    console.log(`      💾 缓存设置: ${levelCacheKey} (${currentPaths.length} 条)`)
-                }
-            }
-
-            expandedLevels++
-        }
-
-        // ========================================
-        // 步骤4：合并已完成和未完成的路径
-        // ========================================
-        // BFS 只做完整合并，不截取
-        const result = [...finishedPaths, ...currentPaths]
-        console.log(`\n   📦 合并路径: 已完成=${finishedPaths.length}, 未完成=${currentPaths.length}, 总计=${result.length}`)
-
-        // 只去重，不截取
-        const finalResult = this.deduplicate(result)
-        console.log(`   🔄 最终去重: ${result.length} → ${finalResult.length}`)
-
-        // ========================================
-        // 步骤5：缓存最终结果（BFS 只缓存完整版）
-        // ========================================
-        if (maxLevel <= EXPANSION_LIMITS.LEVEL_K) {
-            if (!this.bfsLevelCache.has(cacheKey)) {
-                this.bfsLevelCache.set(cacheKey, finalResult)
-                console.log(`   💾 最终缓存设置: ${cacheKey} (${finalResult.length} 条路径)`)
+                toExpand.push(path)
             }
         }
 
-        // 记录性能数据
-        const duration = Date.now() - t0
-        this.perfAnalyzer.record('expandPathsByBFS', duration, initialPathsCount, finalResult.length)
+        return { toExpand, finished }
+    }
 
-        console.log(`   ⏱️  耗时: ${duration}ms`)
-        console.log(`   📊 优化效果: 从 level ${startLevel} 开始（跳过 ${startLevel - 1} 层），展开 ${expandedLevels} 层`)
-        console.log(`   📈 路径变化: ${initialPathsCount} → ${finalResult.length}\n`)
+    /**
+     * 展开路径列表
+     * 
+     * @param ruleName 规则名
+     * @param paths 待展开的路径列表
+     * @param currentLevel 当前层级
+     * @returns 展开后的路径
+     */
+    private expandPaths(
+        ruleName: string,
+        paths: string[][],
+        currentLevel: number
+    ): string[][] {
+        const expandedPaths: string[][] = []
 
-        return finalResult
+        for (let i = 0; i < paths.length; i++) {
+            const expanded = this.expandSinglePathCached(
+                ruleName,
+                paths[i],
+                currentLevel,
+                i,
+                EXPANSION_LIMITS.INFINITY
+            )
+            expandedPaths.push(...expanded)
+        }
+
+        return this.deduplicate(expandedPaths)
     }
 
     /**
