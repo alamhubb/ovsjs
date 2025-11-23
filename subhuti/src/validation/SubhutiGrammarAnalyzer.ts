@@ -2052,7 +2052,11 @@ export class SubhutiGrammarAnalyzer {
         paths: string[][]
     ): string[][] {
         if (levels === 0) {
-            return paths
+            throw new Error('系统错误')
+        }
+        // token，保持不变
+        if (this.tokenCache.has(ruleName)) {
+            return [[ruleName]]
         }
         if (levels === 1) {
             return this.getDirectChildren(ruleName)
@@ -2065,11 +2069,6 @@ export class SubhutiGrammarAnalyzer {
 
             // 遍历路径中的每个符号
             for (const symbol of path) {
-                // token，保持不变
-                if (this.tokenCache.has(symbol)) {
-                    allBranches.push([[symbol]])
-                    continue
-                }
                 // 查找该规则的缓存
                 let cachedLevel = 1
                 let cachedPaths: string[][] | null = null
@@ -2089,20 +2088,26 @@ export class SubhutiGrammarAnalyzer {
                 // 计算剩余层数
                 const remainingLevels = levels - cachedLevel
 
-                // 递归调用自己
-                const result = this.expandPathsByBFSCacheClean(symbol, remainingLevels, cachedPaths)
+                if (remainingLevels < 0) {
+                    throw new Error('系统错误')
+                }
+
+                if (remainingLevels !== 0) {
+                    // 递归调用自己
+                    cachedPaths = this.expandPathsByBFSCacheClean(symbol, remainingLevels, cachedPaths)
+                }
 
                 // 缓存结果（用 symbol 作为 key）
                 if (levels <= EXPANSION_LIMITS.LEVEL_K) {
                     const key = `${symbol}:${levels}`
                     if (!this.bfsLevelCache.has(key)) {
-                        this.bfsLevelCache.set(key, result)
+                        this.bfsLevelCache.set(key, cachedPaths)
                     } else {
                         throw new Error('系统错误')
                     }
                 }
 
-                allBranches.push(result)
+                allBranches.push(cachedPaths)
             }
 
             // 笛卡尔积组合
