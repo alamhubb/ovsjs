@@ -98,7 +98,7 @@ class PerformanceAnalyzer {
     }>()
 
     // 缓存统计
-    private cacheStats = {
+    public cacheStats = {
         subRuleHandlerTotal: 0,  // subRuleHandler 总调用次数
         recursiveReturn: 0,  // 递归检测返回次数
         levelLimitReturn: 0,  // 层级限制返回次数
@@ -1526,7 +1526,7 @@ export class SubhutiGrammarAnalyzer {
         let paths: string[][]
         try {
             // 使用 expandPathsByDFS 方法，传入 firstK 参数
-            paths = this.expandPathsByDFS(null, node, k, 0, false)
+            paths = this.expandPathsByDFS(null, node, k, 0, EXPANSION_LIMITS.INFINITY, false)
 
             // 🔍 调试日志：检查路径结果
             if (nodeRuleName && (nodeRuleName === 'BreakableStatement' || nodeRuleName === 'IterationStatement')) {
@@ -2122,6 +2122,7 @@ export class SubhutiGrammarAnalyzer {
         // ========================================
         if (this.expandSinglePathFullCache.has(fullKey)) {
             // ✅ 完整缓存命中
+            this.perfAnalyzer.recordCacheHit('expandOneLevel')
             const fullResult = this.expandSinglePathFullCache.get(fullKey)!
 
             // 如果需要截取，截取后返回
@@ -2143,6 +2144,7 @@ export class SubhutiGrammarAnalyzer {
         if (firstK !== EXPANSION_LIMITS.INFINITY) {
             if (this.expandSinglePathTruncatedCache.has(truncatedKey)) {
                 // ✅ 截取缓存命中
+                this.perfAnalyzer.recordCacheHit('expandOneLevelTruncated')
                 return this.expandSinglePathTruncatedCache.get(truncatedKey)!
             }
         }
@@ -2150,6 +2152,13 @@ export class SubhutiGrammarAnalyzer {
         // ========================================
         // 阶段3：缓存未命中，实际计算
         // ========================================
+        
+        // 🔧 修复：记录缓存未命中
+        if (firstK !== EXPANSION_LIMITS.INFINITY) {
+            this.perfAnalyzer.recordCacheMiss('expandOneLevelTruncated')
+        } else {
+            this.perfAnalyzer.recordCacheMiss('expandOneLevel')
+        }
 
         // 始终计算完整结果（不截取）
         const fullResult = this.expandSinglePath(path, EXPANSION_LIMITS.INFINITY)
@@ -2360,7 +2369,8 @@ export class SubhutiGrammarAnalyzer {
                 this.perfAnalyzer.record('subRuleHandler', duration)
                 return result
             }
-            // 都未命中，继续实际计算
+            // 🔧 修复：记录缓存未命中
+            this.perfAnalyzer.recordCacheMiss('dfsFirst1')
 
         } else if (firstK === EXPANSION_LIMITS.FIRST_K) {
             // 查找 firstK 缓存
@@ -2370,7 +2380,8 @@ export class SubhutiGrammarAnalyzer {
                 this.perfAnalyzer.record('subRuleHandler', duration)
                 return this.dfsFirstKCache.get(ruleName)!
             }
-            // 未命中，继续实际计算
+            // 🔧 修复：记录缓存未命中
+            this.perfAnalyzer.recordCacheMiss('dfsFirstK')
         } else if (firstK === EXPANSION_LIMITS.INFINITY) {
             if (maxLevel === EXPANSION_LIMITS.LEVEL_1) {
                 const key = ruleName + `:${EXPANSION_LIMITS.LEVEL_1}`
@@ -2378,6 +2389,8 @@ export class SubhutiGrammarAnalyzer {
                     this.perfAnalyzer.recordCacheHit('bfsLevel')
                     return this.bfsLevelCache.get(key)!
                 }
+                // 🔧 修复：记录缓存未命中
+                this.perfAnalyzer.recordCacheMiss('bfsLevel')
             } else if (maxLevel === EXPANSION_LIMITS.INFINITY) {
                 // firstK=INFINITY, maxLevel=INFINITY 的情况暂不缓存
                 // 这种情况通常只在特殊场景使用
@@ -2444,7 +2457,7 @@ export class SubhutiGrammarAnalyzer {
             if (firstK === EXPANSION_LIMITS.FIRST_K) {
                 // DFS 主缓存：计算和缓存 firstK
                 if (!this.dfsFirstKCache.has(ruleName)) {
-                    this.perfAnalyzer.recordCacheMiss('dfsFirstK')
+                    // 🔧 注意：这里不应该 recordCacheMiss，因为未命中已经在前面记录过了
                     this.dfsFirstKCache.set(ruleName, finalResult)
                 }
 
@@ -2457,13 +2470,14 @@ export class SubhutiGrammarAnalyzer {
             } else if (firstK === EXPANSION_LIMITS.FIRST_1) {
                 // first1 不应该单独计算，但为了向后兼容仍然缓存
                 if (!this.dfsFirst1Cache.has(ruleName)) {
-                    this.perfAnalyzer.recordCacheMiss('dfsFirst1')
+                    // 🔧 注意：这里不应该 recordCacheMiss，因为未命中已经在前面记录过了
                     this.dfsFirst1Cache.set(ruleName, finalResult)
                 }
             } else if (firstK === EXPANSION_LIMITS.INFINITY) {
                 if (maxLevel === EXPANSION_LIMITS.LEVEL_1) {
                     const key = ruleName + `:${EXPANSION_LIMITS.LEVEL_1}`
                     if (!this.bfsLevelCache.has(key)) {
+                        // 🔧 注意：这里不应该 recordCacheMiss，因为未命中已经在前面记录过了
                         this.bfsLevelCache.set(key, finalResult)
                     }
                 }
