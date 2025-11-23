@@ -2419,15 +2419,7 @@ export class SubhutiGrammarAnalyzer {
         // 🎯 核心路由：尽早分流 DFS 和 BFS
         // ========================================
 
-        if (maxLevel === EXPANSION_LIMITS.INFINITY) {
-            // 🔴 DFS 模式：深度优先展开（无限层级）
-            // 递归检测和左递归检测在 handleDFS 内部进行
-            return this.expandPathsByDFSCache(ruleName, firstK, curLevel, maxLevel, isFirstPosition)
-        } else {
-            // 🔵 BFS 模式：广度优先展开（限制层级）
-            // BFS 有层级限制，不需要递归检测
-            return this.expandPathsByBFSCache(ruleName, maxLevel)
-        }
+        return this.expandPathsByDFSCache(ruleName, firstK, curLevel, maxLevel, isFirstPosition)
     }
 
     /**
