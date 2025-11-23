@@ -328,26 +328,6 @@ export const EXPANSION_LIMITS = {
 } as const
 
 /**
- * 展开模式：系统只支持三种模式
- */
-export type ExpansionMode =
-    | 'First_Infinity_Level_K'    // firstK=∞, maxLevel=5 (完整路径，展开5层)
-    | 'First_1_Level_Infinity'    // firstK=1, maxLevel=∞ (前1个token，完全展开)
-    | 'First_K_Level_Infinity'    // firstK=3, maxLevel=∞ (前3个token，完全展开)
-
-/**
- * 规则展开结果（二维数组）
- * expansion[branchIndex][nodeIndex]
- *
- * 第一维：分支索引（包含所有层级的所有分支）
- * 第二维：该分支的节点序列（规则名或token名）
- *
- * 特殊值：
- * - 空数组 [] 表示 option/many 的跳过分支
- */
-export type RuleExpansion = string[][]
-
-/**
  * 语法分析器配置
  */
 export interface GrammarAnalyzerOptions {
