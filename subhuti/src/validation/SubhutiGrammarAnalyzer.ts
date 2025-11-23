@@ -2113,7 +2113,12 @@ export class SubhutiGrammarAnalyzer {
 
                     // 缓存结果（用 symbol 作为 key）
                     if (levels <= EXPANSION_LIMITS.LEVEL_K) {
-                        this.bfsLevelCache.set(`${symbol}:${levels}`, result)
+                        const key = `${symbol}:${levels}`
+                        if (!this.bfsLevelCache.has(key)) {
+                            this.bfsLevelCache.set(key, result)
+                        } else {
+                            throw new Error('系统错误')
+                        }
                     }
 
                     allBranches.push(result)
