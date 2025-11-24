@@ -735,7 +735,7 @@ export class SubhutiGrammarAnalyzer {
         pathsBehind: string[]
     ): { prefix: string, full: string } | null {
         const frontSet = new Set(pathsFront)
-        /*const newBehind: string[] = []
+        const newBehind: string[] = []
 
         //如果后面的分支里面有和前面分支中一样的内容，剔除掉
         for (const string of pathsBehind) {
@@ -750,14 +750,14 @@ export class SubhutiGrammarAnalyzer {
             console.log(pathsBehind.length)
             console.log('去除后')
             console.log(newBehind.length)
-        }*/
+        }
 
         // 双层循环检测前缀关系（O(n²)）
         for (const pathFront of pathsFront) {
             for (const pathBehind of pathsBehind) {
-                /*if (pathFront.length >= pathBehind.length) {
+                if (pathFront.length >= pathBehind.length) {
                     return null
-                }*/
+                }
                 // 检测：前面的路径是否是后面路径的前缀
                 // 注意：必须加 ',' 以确保是完整的 token 前缀
                 // 例如：'If,LParen,Expression' 是 'If,LParen,Expression,RParen,Block' 的前缀
