@@ -659,7 +659,7 @@ export class SubhutiGrammarAnalyzer {
                 // 合并到结果中
                 allBranchAllSeq = allBranchAllSeq.concat(branchAllSeq)
             }
-            allOrs.push(allBranchAllSeq)
+            allOrs.push(this.deduplicate(allBranchAllSeq))
         }
 
         // 统一去重：多个分支可能产生相同的路径
@@ -685,9 +685,11 @@ export class SubhutiGrammarAnalyzer {
      * @returns 第一个相同的路径，如果没有返回 null
      */
     private findEqualPath(
-        pathsFront: string[],
-        pathsBehind: string[]
+        pathsFront: string[][],
+        pathsBehind: string[][]
     ): string | null {
+
+
         // 使用 Set 快速检测（O(n)）
         const setBehind = new Set(pathsBehind)
 
