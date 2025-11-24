@@ -315,6 +315,7 @@ export const EXPANSION_LIMITS = {
     LEVEL_K: 8,
 
     INFINITY: Infinity,
+    RuleJoinSymbol: '\x1F',
 
     /**
      * 冲突检测路径比较限制
@@ -658,7 +659,7 @@ export class SubhutiGrammarAnalyzer {
                 const branchAllSeq = this.cartesianProduct(seqAllBranches, firstK)
 
                 // 步骤4：转换为字符串（用于 Set 去重）
-                const branchAllSeqStrAry = branchAllSeq.map(item => item.join(','))
+                const branchAllSeqStrAry = branchAllSeq.map(item => item.join(EXPANSION_LIMITS.RuleJoinSymbol))
 
                 // 🔴 修复：concat 不会修改原数组，需要用 push
                 setAry = setAry.concat(branchAllSeqStrAry)
