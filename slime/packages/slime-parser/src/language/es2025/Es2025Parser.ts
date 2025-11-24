@@ -2056,14 +2056,14 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     @SubhutiRule
     BindingProperty(params: ExpressionParams = {}): SubhutiCst | undefined {
         return this.Or([
-            {alt: () => this.SingleNameBinding(params)},
             {
                 alt: () => {
                     this.PropertyName(params)
                     this.tokenConsumer.Colon()
                     this.BindingElement(params)
                 }
-            }
+            },
+            {alt: () => this.SingleNameBinding(params)}
         ])
     }
 
@@ -2410,13 +2410,12 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                 alt: () => {
                     this.tokenConsumer.ForTok()
                     this.tokenConsumer.LParen()
-                    if (this.assertLookaheadNotSequence(['LetTok', 'LBracket'])) {
-                        this.LeftHandSideExpression(params)
-                        this.tokenConsumer.InTok()
-                        this.Expression({...params, In: true})
-                        this.tokenConsumer.RParen()
-                        this.Statement(params)
-                    }
+                    this.assertLookaheadNotSequence(['LetTok', 'LBracket'])
+                    this.LeftHandSideExpression(params)
+                    this.tokenConsumer.InTok()
+                    this.Expression({...params, In: true})
+                    this.tokenConsumer.RParen()
+                    this.Statement(params)
                 }
             },
             // for ( var ForBinding[?Yield, ?Await] of AssignmentExpression[+In, ?Yield, ?Await] ) Statement[?Yield, ?Await, ?Return]

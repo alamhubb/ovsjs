@@ -1136,7 +1136,8 @@ MaxLevel 检测结果: 无冲突
             const allLevelPaths: string[][] = []
 
             // 收集该规则的所有层级数据
-            for (let level = EXPANSION_LIMITS.LEVEL_K; level <= EXPANSION_LIMITS.LEVEL_K; level++) {
+            for (let level = 1; level <= EXPANSION_LIMITS.LEVEL_K; level++) {
+            // for (let level = EXPANSION_LIMITS.LEVEL_K; level <= EXPANSION_LIMITS.LEVEL_K; level++) {
                 const key = `${ruleName}:${level}`
                 if (this.bfsLevelCache.has(key)) {
                     const levelPaths = this.getCacheValue('bfsLevelCache', key)!
