@@ -756,7 +756,7 @@ export class SubhutiGrammarAnalyzer {
         for (const pathFront of pathsFront) {
             for (const pathBehind of pathsBehind) {
                 if (pathFront.length >= pathBehind.length) {
-                    return null
+                    continue
                 }
                 // 检测：前面的路径是否是后面路径的前缀
                 // 注意：必须加 ',' 以确保是完整的 token 前缀
