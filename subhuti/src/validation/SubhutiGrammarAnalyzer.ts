@@ -655,12 +655,13 @@ export class SubhutiGrammarAnalyzer {
                 // 例如：[[a,b], [c,d]] × [[e], [f,g]] → [[a,b,e], [a,b,f,g], [c,d,e], [c,d,f,g]]
                 const branchAllSeq = this.cartesianProduct(seqAllBranches, firstK)
 
-                // 🔴 修复：concat 不会修改原数组，需要用 push
+                // 合并到结果中
                 allOrs = allOrs.concat(branchAllSeq)
             }
         }
 
-        return allOrs
+        // 统一去重：多个分支可能产生相同的路径
+        return this.deduplicate(allOrs)
     }
 
     /**
@@ -1412,8 +1413,11 @@ MaxLevel 检测结果: 无冲突
         // 2. 添加未达到 FIRST_K 的序列
         finalArray.push(...result)
 
+        // 3. 统一去重：使用 this.deduplicate 对最终结果去重
+        const deduplicatedFinalArray = this.deduplicate(finalArray)
+
         // 最终验证
-        for (const resultElement of finalArray) {
+        for (const resultElement of deduplicatedFinalArray) {
             if (resultElement.length > EXPANSION_LIMITS.FIRST_K) {
                 throw new Error('系统错误：最终结果长度超过限制')
             }
@@ -1421,9 +1425,9 @@ MaxLevel 检测结果: 无冲突
         // 记录性能数据
         const duration = Date.now() - t0
         const inputSize = arrays.reduce((sum, arr) => sum + arr.length, 0)
-        this.perfAnalyzer.record('cartesianProduct', duration, inputSize, finalArray.length)
+        this.perfAnalyzer.record('cartesianProduct', duration, inputSize, deduplicatedFinalArray.length)
 
-        return finalArray
+        return deduplicatedFinalArray
     }
 
     /**
