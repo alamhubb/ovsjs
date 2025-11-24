@@ -38,7 +38,7 @@
  *
  * 空分支在各个处理环节的行为：
  * 1. deduplicate：
- *    - [] join(',') = ""（空字符串）
+ *    - [] join(RuleJoinSymbol) = ""（空字符串）
  *    - 空字符串是合法的 Set key，不会被过滤
  *    - 例如：[[], [a], []] → [[], [a]]（正常去重）
  *
@@ -78,6 +78,7 @@ import type {
 } from "./SubhutiValidationError"
 import {SubhutiValidationLogger} from './SubhutiValidationLogger'
 import {list} from "@lerna-lite/publish";
+import ArrayTrie from "./ArrayTria.ts";
 
 /**
  * 左递归错误类型
@@ -315,6 +316,7 @@ export const EXPANSION_LIMITS = {
     LEVEL_K: 8,
 
     INFINITY: Infinity,
+    RuleJoinSymbol: '\x1F',
 
     /**
      * 冲突检测路径比较限制
@@ -630,9 +632,9 @@ export class SubhutiGrammarAnalyzer {
         orNode: OrNode,
         firstK: number,
         cacheType: 'dfsFirstKCache' | 'bfsAllCache'
-    ): string[][] {
+    ): string[][][] {
         // 存储每个分支的路径集合
-        const allOrs: string[][] = []
+        let allOrs: string[][][] = []
 
         // 遍历 Or 的每个分支
         for (const seqNode of orNode.alternatives) {
@@ -640,10 +642,9 @@ export class SubhutiGrammarAnalyzer {
             // 例如：sequence(If, Expression, Block) → [['If', 'Expression', 'Block']]
             const nodeAllBranches = this.expandNode(seqNode, EXPANSION_LIMITS.INFINITY, 0, 1, false)
 
-            // 存储当前分支的所有路径字符串
-            let setAry: string[] = []
+            let allBranchAllSeq: string[][] = []
 
-            // 遍历第一层展开的每个可能性
+            // 遍历第一层展开的每个可能性,每个分支的所有可能性
             for (const branch of nodeAllBranches) {
                 // 步骤2：从 cache 获取每个规则的所有路径
                 // 例如：['If', 'Expression'] → [[If的路径], [Expression的路径]]
@@ -656,18 +657,13 @@ export class SubhutiGrammarAnalyzer {
                 // 步骤3：笛卡尔积组合，得到当前分支的所有可能路径
                 // 例如：[[a,b], [c,d]] × [[e], [f,g]] → [[a,b,e], [a,b,f,g], [c,d,e], [c,d,f,g]]
                 const branchAllSeq = this.cartesianProduct(seqAllBranches, firstK)
-
-                // 步骤4：转换为字符串（用于 Set 去重）
-                const branchAllSeqStrAry = branchAllSeq.map(item => item.join(','))
-
-                // 🔴 修复：concat 不会修改原数组，需要用 push
-                setAry = setAry.concat(branchAllSeqStrAry)
+                // 合并到结果中
+                allBranchAllSeq = allBranchAllSeq.concat(branchAllSeq)
             }
-
-            // 去重并添加到结果
-            allOrs.push(Array.from(new Set(setAry)))
+            allOrs.push(this.deduplicate(allBranchAllSeq))
         }
 
+        // 统一去重：多个分支可能产生相同的路径
         return allOrs
     }
 
@@ -845,38 +841,43 @@ or([A, A, B]) → or([A, B])  // 删除重复的A`
                 const pathsBehind = branchPathSets[j]
 
                 // 先尝试检测完全相同（快速，O(n)）
-                const equalPath = this.findEqualPath(pathsFront, pathsBehind)
+                const equalPath = this.findEqualPath1(pathsFront, pathsBehind)
                 if (equalPath) {
+                    // 将路径数组转换为字符串（使用逗号分隔，便于显示）
+                    const equalPathStr = equalPath.join(',')
                     return {
                         level: 'ERROR',
                         type: 'or-identical-branches',
                         ruleName,
                         branchIndices: [i, j],
                         conflictPaths: {
-                            pathA: equalPath,
-                            pathB: equalPath
+                            pathA: equalPathStr,
+                            pathB: equalPathStr
                         },
                         message: `规则 "${ruleName}" 的 Or 分支 ${i + 1} 和分支 ${j + 1} 的前 ${firstK} 个 token 完全相同`,
-                        suggestion: this.getEqualBranchSuggestion(ruleName, i, j, equalPath)
+                        suggestion: this.getEqualBranchSuggestion(ruleName, i, j, equalPathStr)
                     }
                 }
 
                 // 如果没有完全相同，再检测前缀关系（O(n²)）
-                const prefixRelation = this.findPrefixRelation(pathsFront, pathsBehind)
+                const prefixRelation = this.trieTreeFindPrefixMatch(pathsFront, pathsBehind)
                 if (prefixRelation) {
+                    // 将路径数组转换为字符串（使用逗号分隔，便于显示）
+                    const prefixStr = prefixRelation.prefix.join(',')
+                    const fullStr = prefixRelation.full.join(',')
                     return {
                         level: 'ERROR',
                         type: 'prefix-conflict',
                         ruleName,
                         branchIndices: [i, j],
                         conflictPaths: {
-                            pathA: prefixRelation.prefix,
-                            pathB: prefixRelation.full
+                            pathA: prefixStr,
+                            pathB: fullStr
                         },
                         message: `规则 "${ruleName}" 的 Or 分支 ${i + 1} 会遮蔽分支 ${j + 1}（在 First(${firstK}) 阶段检测到）`,
                         suggestion: this.getPrefixConflictSuggestion(ruleName, i, j, {
-                            prefix: prefixRelation.prefix,
-                            full: prefixRelation.full,
+                            prefix: prefixStr,
+                            full: fullStr,
                             type: 'prefix'
                         })
                     }
@@ -939,9 +940,12 @@ or([A, A, B]) → or([A, B])  // 删除重复的A`
                 const pathsBehind = branchPathSets[j]
 
                 // 检测前缀关系（O(n²)）
-                const prefixRelation = this.findPrefixRelation(pathsFront, pathsBehind)
+                const prefixRelation = this.trieTreeFindPrefixMatch(pathsFront, pathsBehind)
 
                 if (prefixRelation) {
+                    // 将路径数组转换为字符串（使用逗号分隔，便于显示）
+                    const prefixStr = prefixRelation.prefix.join(',')
+                    const fullStr = prefixRelation.full.join(',')
                     // 发现前缀遮蔽，报告错误
                     return ({
                         level: 'ERROR',
@@ -949,13 +953,13 @@ or([A, A, B]) → or([A, B])  // 删除重复的A`
                         ruleName,
                         branchIndices: [i, j],
                         conflictPaths: {
-                            pathA: prefixRelation.prefix,
-                            pathB: prefixRelation.full
+                            pathA: prefixStr,
+                            pathB: fullStr
                         },
                         message: `规则 "${ruleName}" 的 Or 分支 ${i + 1} 会遮蔽分支 ${j + 1}`,
                         suggestion: this.getPrefixConflictSuggestion(ruleName, i, j, {
-                            prefix: prefixRelation.prefix,
-                            full: prefixRelation.full,
+                            prefix: prefixStr,
+                            full: fullStr,
                             type: 'prefix'
                         })
                     })
@@ -1283,14 +1287,16 @@ MaxLevel 检测结果: 无冲突
             skippedByDuplicate: 0,      // 因重复跳过的（seq级别）
             actualCombined: 0,          // 实际拼接的
             maxResultSize: 0,           // 最大结果集大小
-            movedToFinal: 0,            // 移入最终结果集的数量
-            arrayDedupTotal: 0,         // 数组层面去重总数
-            arrayOriginalTotal: 0       // 数组原始总数
+            movedToFinal: 0             // 移入最终结果集的数量
         }
 
+        //第一个规则的每种可能性
+        const arrayFirst = arrays[0]
+
+        //第一层顺序，第二层可能性，第三层每种可能性的顺序
         // 初始结果为第一个数组
-        let result = arrays[0].filter(item => item.length < firstK)
-        let finalResult = arrays[0].filter(item => item.length >= firstK).map(item => item.join(','))
+        let result = arrayFirst.filter(item => item.length < firstK)
+        let finalResult = arrayFirst.filter(item => item.length >= firstK).map(item => item.join(EXPANSION_LIMITS.RuleJoinSymbol))
 
         // 最终结果集（长度已达 FIRST_K 的序列）
         const finalResultSet = new Set<string>(finalResult)
@@ -1299,43 +1305,8 @@ MaxLevel 检测结果: 无冲突
         for (let i = 1; i < arrays.length; i++) {
             this.checkTimeout(`cartesianProduct-数组${i}/${arrays.length}`)
 
-            let currentArray = arrays[i]
-
-            // 🔧 优化：数组层面提前去重
-            // 如果数组较大且包含重复，提前去重可以显著减少后续计算
-            const arrayDedupStats = {
-                originalSize: currentArray.length,
-                dedupedSize: 0,
-                skippedDuplicates: 0
-            }
-
-            // 只对较大数组进行去重（避免小数组的去重开销）
-            if (currentArray.length > 100) {
-                const arrayDedupSet = new Set<string>()
-                const dedupedArray: string[][] = []
-
-                for (const branch of currentArray) {
-                    const branchKey = branch.join(',')
-                    if (!arrayDedupSet.has(branchKey)) {
-                        arrayDedupSet.add(branchKey)
-                        dedupedArray.push(branch)
-                    } else {
-                        arrayDedupStats.skippedDuplicates++
-                    }
-                }
-
-                currentArray = dedupedArray
-                arrayDedupStats.dedupedSize = currentArray.length
-
-                // 更新总体统计
-                perfStats.arrayOriginalTotal += arrayDedupStats.originalSize
-                perfStats.arrayDedupTotal += arrayDedupStats.skippedDuplicates
-
-                // 如果去重效果显著，输出日志
-                if (arrayDedupStats.skippedDuplicates > 1000) {
-                    console.log(`🔧 [数组 ${i}/${arrays.length - 1}] 数组层面去重: 原始=${arrayDedupStats.originalSize}, 去重后=${arrayDedupStats.dedupedSize}, 消除重复=${arrayDedupStats.skippedDuplicates} (${((arrayDedupStats.skippedDuplicates / arrayDedupStats.originalSize) * 100).toFixed(2)}%)`)
-                }
-            }
+            // 数组层面去重：统一处理所有数组
+            const currentArray = this.deduplicate(arrays[i])
 
             const temp: string[][] = []
 
@@ -1350,30 +1321,24 @@ MaxLevel 检测结果: 无冲突
                     this.checkTimeout(`cartesianProduct-seq${seqIndex}`)
                 }
 
-                // 防御检查：不应该出现超长序列
-                if (seq.length > EXPANSION_LIMITS.FIRST_K) {
-                    throw new Error('系统错误：序列长度超过限制')
-                }
-
-                // seq 级别的去重集合
-                const seqDeduplicateSet = new Set<string>()
-
                 // 计算当前 seq 的可拼接长度
                 const availableLength = EXPANSION_LIMITS.FIRST_K - seq.length
 
-                // 情况1：seq 已达到 FIRST_K，直接放入最终结果集
-                if (availableLength === 0) {
-                    const seqKey = seq.join(',')
+                // 情况2：seq 超过 FIRST_K（不应该发生，已有防御检查）
+                if (availableLength < 0) {
+                    throw new Error('系统错误：序列长度超过限制')
+                } else if (availableLength === 0) {
+                    // 情况1：seq 已达到 FIRST_K，直接放入最终结果集
+                    const seqKey = seq.join(EXPANSION_LIMITS.RuleJoinSymbol)
                     finalResultSet.add(seqKey)
                     perfStats.movedToFinal++
                     perfStats.skippedByLength += currentArray.length
                     continue  // 不再参与后续计算
                 }
 
-                // 情况2：seq 超过 FIRST_K（不应该发生，已有防御检查）
-                if (availableLength < 0) {
-                    throw new Error('系统错误：可拼接长度为负')
-                }
+                // seq 级别的去重集合
+                const seqDeduplicateSet = new Set<string>()
+
 
                 // 情况3：seq 长度 < FIRST_K，继续拼接
                 for (const branch of currentArray) {
@@ -1383,7 +1348,7 @@ MaxLevel 检测结果: 无冲突
                     const truncatedBranch = branch.slice(0, availableLength)
 
                     // 序列化用于去重
-                    const branchKey = truncatedBranch.join(',')
+                    const branchKey = truncatedBranch.join(EXPANSION_LIMITS.RuleJoinSymbol)
 
                     // seq 级别去重
                     if (seqDeduplicateSet.has(branchKey)) {
@@ -1404,7 +1369,7 @@ MaxLevel 检测结果: 无冲突
                     // 判断拼接后是否达到 FIRST_K
                     if (combined.length === EXPANSION_LIMITS.FIRST_K) {
                         // 达到最大长度，放入最终结果集
-                        const combinedKey = combined.join(',')
+                        const combinedKey = combined.join(EXPANSION_LIMITS.RuleJoinSymbol)
                         finalResultSet.add(combinedKey)
                         perfStats.movedToFinal++
                     } else {
@@ -1450,54 +1415,28 @@ MaxLevel 检测结果: 无冲突
             if (seqStr === '') {
                 finalArray.push([])  // 空序列
             } else {
-                finalArray.push(seqStr.split(','))
+                finalArray.push(seqStr.split(EXPANSION_LIMITS.RuleJoinSymbol))
             }
         }
 
         // 2. 添加未达到 FIRST_K 的序列
         finalArray.push(...result)
 
+        // 3. 统一去重：使用 this.deduplicate 对最终结果去重
+        const deduplicatedFinalArray = this.deduplicate(finalArray)
+
         // 最终验证
-        for (const resultElement of finalArray) {
+        for (const resultElement of deduplicatedFinalArray) {
             if (resultElement.length > EXPANSION_LIMITS.FIRST_K) {
                 throw new Error('系统错误：最终结果长度超过限制')
             }
         }
-
-        // 输出性能统计
-        /*if (perfStats.maxResultSize > 10000 || perfStats.skippedByDuplicate > 1000 || perfStats.movedToFinal > 1000 || perfStats.arrayDedupTotal > 0) {
-            console.log(`📊 笛卡尔积性能统计:`)
-
-            // 数组层面去重统计
-            if (perfStats.arrayDedupTotal > 0) {
-                console.log(`   [数组去重] 原始总数: ${perfStats.arrayOriginalTotal}, 消除重复: ${perfStats.arrayDedupTotal} (${((perfStats.arrayDedupTotal / perfStats.arrayOriginalTotal) * 100).toFixed(2)}%)`)
-            }
-
-            // 计算统计
-            console.log(`   总分支数: ${perfStats.totalBranches}`)
-            console.log(`   因长度已满跳过: ${perfStats.skippedByLength}`)
-            console.log(`   因重复跳过(seq级别): ${perfStats.skippedByDuplicate}`)
-            console.log(`   实际拼接: ${perfStats.actualCombined}`)
-            console.log(`   移入最终结果集: ${perfStats.movedToFinal}`)
-            console.log(`   最终结果: finalSet=${finalResultSet.size}, temp=${result.length}, total=${finalArray.length}`)
-
-            // 计算优化效果
-            const seqLevelOptimization = perfStats.totalBranches > 0 ? ((perfStats.skippedByDuplicate / perfStats.totalBranches) * 100).toFixed(2) : '0.00'
-            console.log(`   seq级别优化率: ${seqLevelOptimization}%`)
-
-            // 计算总体节省的计算量
-            if (perfStats.arrayDedupTotal > 0 && result.length > 0) {
-                const savedCalculations = perfStats.arrayDedupTotal * result.length
-                console.log(`   💡 数组去重节省计算: ${savedCalculations.toLocaleString()} 次循环`)
-            }
-        }*/
-
         // 记录性能数据
         const duration = Date.now() - t0
         const inputSize = arrays.reduce((sum, arr) => sum + arr.length, 0)
-        this.perfAnalyzer.record('cartesianProduct', duration, inputSize, finalArray.length)
+        this.perfAnalyzer.record('cartesianProduct', duration, inputSize, deduplicatedFinalArray.length)
 
-        return finalArray
+        return deduplicatedFinalArray
     }
 
     /**
@@ -2149,7 +2088,8 @@ MaxLevel 检测结果: 无冲突
         for (const branch of branches) {
             // 将分支序列化为字符串（用作 Set 的 key）
             // ⚠️ 空分支 [] 会被序列化为 ""，不会被过滤
-            const key = branch.join(',')
+            // 🔧 修复：统一使用 RuleJoinSymbol，与冲突检测保持一致
+            const key = branch.join(EXPANSION_LIMITS.RuleJoinSymbol)
             // 检查是否已经存在
             if (!seen.has(key)) {
                 // 未见过，添加到 Set 和结果中
@@ -2267,7 +2207,7 @@ MaxLevel 检测结果: 无冲突
      * ⚠️⚠️⚠️ 关键：空分支 [] 的重要性 ⚠️⚠️⚠️
      * - 空分支 [] 表示 option/many 可以跳过（0次）
      * - 空分支在后续处理中不会被过滤：
-     *   1. deduplicate：[] join(',') = ""，正常去重
+     *   1. deduplicate：[] join(RuleJoinSymbol) = ""，正常去重
      *   2. cartesianProduct：[...seq, ...[]] = [...seq]，正常拼接
      *   3. truncateAndDeduplicate：[] slice(0,k) = []，正常截取
      * - 空分支必须保留，否则 option/many 的语义就错了！
@@ -2391,6 +2331,110 @@ First(${ruleName}) = {${Array.from(firstSet).slice(0, 5).join(', ')}${firstSet.s
 
 First(${ruleName}) = {${Array.from(firstSet).slice(0, 5).join(', ')}${firstSet.size > 5 ? ', ...' : ''}}
 包含 ${ruleName} 本身，说明存在左递归。`
+    }
+
+
+    /**
+     * 使用前缀树检测两个路径集合中是否存在完全相同的路径
+     *
+     * @param pathsFront - 前面分支的路径数组
+     * @param pathsBehind - 后面分支的路径数组
+     * @returns 如果找到完全相同的路径返回该路径，否则返回 null
+     */
+    private findEqualPath1(
+        pathsFront: string[][],
+        pathsBehind: string[][]
+    ): string[] | null {
+        // 时间复杂度：O((m+n)*k)
+        // 空间复杂度：O(m) - 只需要存储字符串
+        const behindSet = new Set<string>()
+        for (const path of pathsBehind) {
+            behindSet.add(path.join(EXPANSION_LIMITS.RuleJoinSymbol))  // O(k)
+        }
+        for (const pathFront of pathsFront) {
+            const key = pathFront.join(EXPANSION_LIMITS.RuleJoinSymbol)  // O(k)
+            if (behindSet.has(key)) {  // O(1)
+                return pathFront
+            }
+        }
+    }
+
+    /**
+     * 使用前缀树检测两个路径集合中的前缀关系
+     *
+     * @param pathsFront - 前面分支的路径数组
+     * @param pathsBehind - 后面分支的路径数组
+     * @returns 如果找到前缀关系返回 { prefix, full }，否则返回 null
+     */
+    private trieTreeFindPrefixMatch(
+        pathsFront: string[][],
+        pathsBehind: string[][]
+    ): { prefix: string[], full: string[] } | null {
+        // 防御：如果没有可比较的路径，直接返回
+        if (pathsBehind.length === 0 || pathsFront.length === 0) {
+            return null
+        }
+
+        // 过滤掉与 pathsFront 完全相同的路径
+        const uniqueBehind = this.removeDuplicatePaths(pathsFront, pathsBehind)
+
+        // 如果过滤后没有路径，直接返回
+        if (uniqueBehind.length === 0) {
+            return null
+        }
+
+        // 步骤2：构建前缀树（O(m*k)，m=pathsBehind.length，k=平均路径长度）
+        const trie = new ArrayTrie()
+        for (const path of uniqueBehind) {
+            // 将每个路径插入到前缀树中
+            trie.insert(path)
+        }
+
+        // 步骤3：查询前缀关系（O(n*k)，n=pathsFront.length）
+        for (const pathFront of pathsFront) {
+            // 使用前缀树查找匹配
+            // 查找是否有以 pathFront 为前缀的更长路径
+            const fullPath = trie.findPrefixMatch(pathFront)
+
+            if (fullPath) {
+                // 找到前缀关系
+                return {
+                    prefix: pathFront,
+                    full: fullPath
+                }
+            }
+        }
+
+        // 没有前缀关系
+        return null
+    }
+
+    private removeDuplicatePaths(
+        pathsFront: string[][],
+        pathsBehind: string[][]
+    ): string[][] {
+        // 防御：如果输入为空，直接返回
+        if (pathsBehind.length === 0) {
+            return []
+        }
+
+        // 步骤1：将 pathsFront 转换为 Set<string>（用于快速查找）
+        const frontSet = new Set<string>()
+        for (const path of pathsFront) {
+            // 将路径数组转换为字符串作为 key
+            const key = path.join(EXPANSION_LIMITS.RuleJoinSymbol)
+            frontSet.add(key)
+        }
+
+        // 步骤2：过滤 pathsBehind，只保留不在 Set 中的路径
+        const uniqueBehind: string[][] = []
+        for (const path of pathsBehind) {
+            const key = path.join(EXPANSION_LIMITS.RuleJoinSymbol)
+            if (!frontSet.has(key)) {
+                uniqueBehind.push(path)
+            }
+        }
+        return uniqueBehind
     }
 }
 

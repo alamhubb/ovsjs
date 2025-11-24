@@ -164,12 +164,12 @@ export default class ArrayTrie {
      * 时间复杂度：O(k)，k=前缀长度
      */
     private isPrefix(prefix: string[], fullPath: string[]): boolean {
-        // 前缀必须比完整路径短
-        if (prefix.length < fullPath.length) {
+        // 🔴 修复：前缀必须比完整路径短（前缀长度 < 完整路径长度）
+        if (prefix.length >= fullPath.length) {
             return false
         }
 
-        // 🔴 核心：逐个比较 token
+        // 🔴 核心：逐个比较 token（只比较前缀的长度）
         for (let i = 0; i < prefix.length; i++) {
             if (prefix[i] !== fullPath[i]) {
                 return false
