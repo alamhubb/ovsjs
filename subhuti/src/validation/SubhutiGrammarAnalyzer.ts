@@ -1284,9 +1284,7 @@ MaxLevel 检测结果: 无冲突
             skippedByDuplicate: 0,      // 因重复跳过的（seq级别）
             actualCombined: 0,          // 实际拼接的
             maxResultSize: 0,           // 最大结果集大小
-            movedToFinal: 0,            // 移入最终结果集的数量
-            arrayDedupTotal: 0,         // 数组层面去重总数
-            arrayOriginalTotal: 0       // 数组原始总数
+            movedToFinal: 0             // 移入最终结果集的数量
         }
 
         // 初始结果为第一个数组
@@ -1300,43 +1298,8 @@ MaxLevel 检测结果: 无冲突
         for (let i = 1; i < arrays.length; i++) {
             this.checkTimeout(`cartesianProduct-数组${i}/${arrays.length}`)
 
-            let currentArray = arrays[i]
-
-            // 🔧 优化：数组层面提前去重
-            // 如果数组较大且包含重复，提前去重可以显著减少后续计算
-            const arrayDedupStats = {
-                originalSize: currentArray.length,
-                dedupedSize: 0,
-                skippedDuplicates: 0
-            }
-
-            // 只对较大数组进行去重（避免小数组的去重开销）
-            if (currentArray.length > 100) {
-                const arrayDedupSet = new Set<string>()
-                const dedupedArray: string[][] = []
-
-                for (const branch of currentArray) {
-                    const branchKey = branch.join(EXPANSION_LIMITS.RuleJoinSymbol)
-                    if (!arrayDedupSet.has(branchKey)) {
-                        arrayDedupSet.add(branchKey)
-                        dedupedArray.push(branch)
-                    } else {
-                        arrayDedupStats.skippedDuplicates++
-                    }
-                }
-
-                currentArray = dedupedArray
-                arrayDedupStats.dedupedSize = currentArray.length
-
-                // 更新总体统计
-                perfStats.arrayOriginalTotal += arrayDedupStats.originalSize
-                perfStats.arrayDedupTotal += arrayDedupStats.skippedDuplicates
-
-                // 如果去重效果显著，输出日志
-                if (arrayDedupStats.skippedDuplicates > 1000) {
-                    console.log(`🔧 [数组 ${i}/${arrays.length - 1}] 数组层面去重: 原始=${arrayDedupStats.originalSize}, 去重后=${arrayDedupStats.dedupedSize}, 消除重复=${arrayDedupStats.skippedDuplicates} (${((arrayDedupStats.skippedDuplicates / arrayDedupStats.originalSize) * 100).toFixed(2)}%)`)
-                }
-            }
+            // 数组层面去重：统一处理所有数组
+            const currentArray = this.deduplicate(arrays[i])
 
             const temp: string[][] = []
 
