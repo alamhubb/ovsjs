@@ -78,6 +78,7 @@ import type {
 } from "./SubhutiValidationError"
 import {SubhutiValidationLogger} from './SubhutiValidationLogger'
 import {list} from "@lerna-lite/publish";
+import ArrayTrie from "./ArrayTria.ts";
 
 /**
  * 左递归错误类型
@@ -728,8 +729,8 @@ export class SubhutiGrammarAnalyzer {
      * @returns 第一个前缀关系，如果没有返回 null
      */
     private findPrefixRelation(
-        pathsFront: string[],
-        pathsBehind: string[]
+        pathsFront: string[][],
+        pathsBehind: string[][]
     ): { prefix: string, full: string } | null {
         const frontSet = new Set(pathsFront)
         const newBehind: string[] = []
@@ -763,6 +764,78 @@ export class SubhutiGrammarAnalyzer {
                         prefix: pathFront,
                         full: pathBehind
                     }
+                }
+            }
+        }
+
+        // 没有前缀关系
+        return null
+    }
+
+    private removeDuplicatePaths(
+        pathsFront: string[][],
+        pathsBehind: string[][]
+    ): string[][] {
+        // 防御：如果输入为空，直接返回
+        if (pathsBehind.length === 0) {
+            return []
+        }
+
+        // 步骤1：将 pathsFront 转换为 Set<string>（用于快速查找）
+        const frontSet = new Set<string>()
+        for (const path of pathsFront) {
+            // 将路径数组转换为字符串作为 key
+            const key = path.join(EXPANSION_LIMITS.RuleJoinSymbol)
+            frontSet.add(key)
+        }
+
+        // 步骤2：过滤 pathsBehind，只保留不在 Set 中的路径
+        const uniqueBehind: string[][] = []
+        for (const path of pathsBehind) {
+            const key = path.join(EXPANSION_LIMITS.RuleJoinSymbol)
+            if (!frontSet.has(key)) {
+                uniqueBehind.push(path)
+            }
+        }
+        return uniqueBehind
+    }
+
+    private trieTree(
+        pathsFront: string[][],
+        pathsBehind: string[][]
+    ) {
+
+        // 防御：如果没有可比较的路径，直接返回
+        if (pathsBehind.length === 0 || pathsFront.length === 0) {
+            return null
+        }
+
+        // 过滤掉与 pathsFront 完全相同的路径
+        const uniqueBehind = this.removeDuplicatePaths(pathsFront,pathsBehind)
+
+        // 如果过滤后没有路径，直接返回
+        if (uniqueBehind.length === 0) {
+            return null
+        }
+
+        // 步骤2：构建前缀树（O(m*k)，m=pathsBehind.length，k=平均路径长度）
+        const trie = new ArrayTrie()
+        for (const path of uniqueBehind) {
+            // 将每个路径插入到前缀树中
+            trie.insert(path)
+        }
+
+        // 步骤3：查询前缀关系（O(n*k)，n=pathsFront.length）
+        for (const pathFront of pathsFront) {
+            // 使用前缀树查找匹配
+            // 查找是否有以 pathFront 为前缀的更长路径
+            const fullPath = trie.findPrefixMatch(pathFront)
+
+            if (fullPath) {
+                // 找到前缀关系
+                return {
+                    prefix: pathFront,
+                    full: fullPath
                 }
             }
         }
