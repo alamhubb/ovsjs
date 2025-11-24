@@ -62,13 +62,6 @@ export default class ArrayTrie {
 
     /**
      * 查找完全相同的路径
-     *
-     * 核心逻辑：
-     * 1. 沿着路径向下遍历到叶子节点
-     * 2. 检查该节点的 fullPaths 中是否有长度相同且完全匹配的路径
-     *
-     * @param path - 要查找的路径数组
-     * @returns 如果找到完全相同的路径返回该路径，否则返回 null
      */
     findEqual(path: string[]): string[] | null {
         let node = this.root
@@ -83,21 +76,8 @@ export default class ArrayTrie {
 
         // 检查 fullPaths 中是否有完全相同的路径
         for (const fullPath of node.fullPaths) {
-            // 长度必须相同
-            if (fullPath.length !== path.length) {
-                continue
-            }
-
-            // 逐个比较 token
-            let isEqual = true
-            for (let i = 0; i < path.length; i++) {
-                if (path[i] !== fullPath[i]) {
-                    isEqual = false
-                    break
-                }
-            }
-
-            if (isEqual) {
+            // 🔴 使用提取的 isEqual 方法
+            if (this.isEqual(path, fullPath)) {
                 return fullPath
             }
         }
