@@ -1086,7 +1086,7 @@ MaxLevel 检测结果: 无冲突
         // BFS 缓存预填充
 
         // 预填充 level 1 到 level_k
-        for (let level = 1; level <= EXPANSION_LIMITS.LEVEL_K; level++) {
+        for (let level = EXPANSION_LIMITS.LEVEL_K; level <= EXPANSION_LIMITS.LEVEL_K; level++) {
             for (const ruleName of ruleNames) {
                 this.expandPathsByBFSCache(ruleName, level)
             }
