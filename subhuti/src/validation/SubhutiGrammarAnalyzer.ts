@@ -633,16 +633,13 @@ export class SubhutiGrammarAnalyzer {
         cacheType: 'dfsFirstKCache' | 'bfsAllCache'
     ): string[][] {
         // 存储每个分支的路径集合
-        const allOrs: string[][] = []
+        let allOrs: string[][] = []
 
         // 遍历 Or 的每个分支
         for (const seqNode of orNode.alternatives) {
             // 步骤1：展开分支到第一层（得到规则名序列）
             // 例如：sequence(If, Expression, Block) → [['If', 'Expression', 'Block']]
             const nodeAllBranches = this.expandNode(seqNode, EXPANSION_LIMITS.INFINITY, 0, 1, false)
-
-            // 存储当前分支的所有路径字符串
-            let setAry: string[][] = []
 
             // 遍历第一层展开的每个可能性
             for (const branch of nodeAllBranches) {
@@ -659,7 +656,7 @@ export class SubhutiGrammarAnalyzer {
                 const branchAllSeq = this.cartesianProduct(seqAllBranches, firstK)
 
                 // 🔴 修复：concat 不会修改原数组，需要用 push
-                allOrs.concat(branchAllSeq)
+                allOrs = allOrs.concat(branchAllSeq)
             }
         }
 
