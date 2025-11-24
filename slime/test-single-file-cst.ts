@@ -214,8 +214,8 @@ try {
 
     // 语法分析和验证
     const parser = new Es2025Parser(tokens)
-    parser.validate()
     parser.debug()
+    parser.validate()
 
     // 生成 CST
     const cst = parser.Script()
