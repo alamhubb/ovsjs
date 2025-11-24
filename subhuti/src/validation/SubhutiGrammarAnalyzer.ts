@@ -631,9 +631,9 @@ export class SubhutiGrammarAnalyzer {
         orNode: OrNode,
         firstK: number,
         cacheType: 'dfsFirstKCache' | 'bfsAllCache'
-    ): string[][] {
+    ): string[][][] {
         // 存储每个分支的路径集合
-        let allOrs: string[][] = []
+        let allOrs: string[][][] = []
 
         // 遍历 Or 的每个分支
         for (const seqNode of orNode.alternatives) {
@@ -641,7 +641,9 @@ export class SubhutiGrammarAnalyzer {
             // 例如：sequence(If, Expression, Block) → [['If', 'Expression', 'Block']]
             const nodeAllBranches = this.expandNode(seqNode, EXPANSION_LIMITS.INFINITY, 0, 1, false)
 
-            // 遍历第一层展开的每个可能性
+            let allBranchAllSeq = []
+
+            // 遍历第一层展开的每个可能性,每个分支的所有可能性
             for (const branch of nodeAllBranches) {
                 // 步骤2：从 cache 获取每个规则的所有路径
                 // 例如：['If', 'Expression'] → [[If的路径], [Expression的路径]]
@@ -654,14 +656,14 @@ export class SubhutiGrammarAnalyzer {
                 // 步骤3：笛卡尔积组合，得到当前分支的所有可能路径
                 // 例如：[[a,b], [c,d]] × [[e], [f,g]] → [[a,b,e], [a,b,f,g], [c,d,e], [c,d,f,g]]
                 const branchAllSeq = this.cartesianProduct(seqAllBranches, firstK)
-
                 // 合并到结果中
-                allOrs = allOrs.concat(branchAllSeq)
+                allBranchAllSeq = allBranchAllSeq.concat(branchAllSeq)
             }
+            allOrs.push(allBranchAllSeq)
         }
 
         // 统一去重：多个分支可能产生相同的路径
-        return this.deduplicate(allOrs)
+        return allOrs
     }
 
     /**
