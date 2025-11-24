@@ -642,7 +642,7 @@ export class SubhutiGrammarAnalyzer {
             const nodeAllBranches = this.expandNode(seqNode, EXPANSION_LIMITS.INFINITY, 0, 1, false)
 
             // 存储当前分支的所有路径字符串
-            let setAry: string[] = []
+            let setAry: string[][] = []
 
             // 遍历第一层展开的每个可能性
             for (const branch of nodeAllBranches) {
@@ -658,15 +658,9 @@ export class SubhutiGrammarAnalyzer {
                 // 例如：[[a,b], [c,d]] × [[e], [f,g]] → [[a,b,e], [a,b,f,g], [c,d,e], [c,d,f,g]]
                 const branchAllSeq = this.cartesianProduct(seqAllBranches, firstK)
 
-                // 步骤4：转换为字符串（用于 Set 去重）
-                const branchAllSeqStrAry = branchAllSeq.map(item => item.join(EXPANSION_LIMITS.RuleJoinSymbol))
-
                 // 🔴 修复：concat 不会修改原数组，需要用 push
-                setAry = setAry.concat(branchAllSeqStrAry)
+                allOrs.concat(branchAllSeq)
             }
-
-            // 去重并添加到结果
-            allOrs.push(Array.from(new Set(setAry)))
         }
 
         return allOrs
