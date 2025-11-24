@@ -165,7 +165,7 @@ export default class ArrayTrie {
      */
     private isPrefix(prefix: string[], fullPath: string[]): boolean {
         // 🔴 修复：前缀必须比完整路径短（前缀长度 < 完整路径长度）
-        if (prefix.length >= fullPath.length) {
+        if (fullPath.length < prefix.length) {
             return false
         }
 
