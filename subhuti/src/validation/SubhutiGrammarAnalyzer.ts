@@ -760,9 +760,9 @@ export class SubhutiGrammarAnalyzer {
                     continue
                 }
                 // 检测：前面的路径是否是后面路径的前缀
-                // 注意：必须加 ',' 以确保是完整的 token 前缀
-                // 例如：'If,LParen,Expression' 是 'If,LParen,Expression,RParen,Block' 的前缀
-                if (pathBehind.startsWith(pathFront + ',')) {
+                // 注意：必须加分隔符以确保是完整的 token 前缀
+                // 例如：'If\x1FLParen\x1FExpression' 是 'If\x1FLParen\x1FExpression\x1FRParen\x1FBlock' 的前缀
+                if (pathBehind.startsWith(pathFront + EXPANSION_LIMITS.RuleJoinSymbol)) {
                     return {
                         prefix: pathFront,
                         full: pathBehind
@@ -1291,7 +1291,7 @@ MaxLevel 检测结果: 无冲突
 
         // 初始结果为第一个数组
         let result = arrays[0].filter(item => item.length < firstK)
-        let finalResult = arrays[0].filter(item => item.length >= firstK).map(item => item.join(','))
+        let finalResult = arrays[0].filter(item => item.length >= firstK).map(item => item.join(EXPANSION_LIMITS.RuleJoinSymbol))
 
         // 最终结果集（长度已达 FIRST_K 的序列）
         const finalResultSet = new Set<string>(finalResult)
@@ -1316,7 +1316,7 @@ MaxLevel 检测结果: 无冲突
                 const dedupedArray: string[][] = []
 
                 for (const branch of currentArray) {
-                    const branchKey = branch.join(',')
+                    const branchKey = branch.join(EXPANSION_LIMITS.RuleJoinSymbol)
                     if (!arrayDedupSet.has(branchKey)) {
                         arrayDedupSet.add(branchKey)
                         dedupedArray.push(branch)
@@ -1364,7 +1364,7 @@ MaxLevel 检测结果: 无冲突
 
                 // 情况1：seq 已达到 FIRST_K，直接放入最终结果集
                 if (availableLength === 0) {
-                    const seqKey = seq.join(',')
+                    const seqKey = seq.join(EXPANSION_LIMITS.RuleJoinSymbol)
                     finalResultSet.add(seqKey)
                     perfStats.movedToFinal++
                     perfStats.skippedByLength += currentArray.length
@@ -1384,7 +1384,7 @@ MaxLevel 检测结果: 无冲突
                     const truncatedBranch = branch.slice(0, availableLength)
 
                     // 序列化用于去重
-                    const branchKey = truncatedBranch.join(',')
+                    const branchKey = truncatedBranch.join(EXPANSION_LIMITS.RuleJoinSymbol)
 
                     // seq 级别去重
                     if (seqDeduplicateSet.has(branchKey)) {
@@ -1405,7 +1405,7 @@ MaxLevel 检测结果: 无冲突
                     // 判断拼接后是否达到 FIRST_K
                     if (combined.length === EXPANSION_LIMITS.FIRST_K) {
                         // 达到最大长度，放入最终结果集
-                        const combinedKey = combined.join(',')
+                        const combinedKey = combined.join(EXPANSION_LIMITS.RuleJoinSymbol)
                         finalResultSet.add(combinedKey)
                         perfStats.movedToFinal++
                     } else {
@@ -1451,7 +1451,7 @@ MaxLevel 检测结果: 无冲突
             if (seqStr === '') {
                 finalArray.push([])  // 空序列
             } else {
-                finalArray.push(seqStr.split(','))
+                finalArray.push(seqStr.split(EXPANSION_LIMITS.RuleJoinSymbol))
             }
         }
 
@@ -2150,7 +2150,7 @@ MaxLevel 检测结果: 无冲突
         for (const branch of branches) {
             // 将分支序列化为字符串（用作 Set 的 key）
             // ⚠️ 空分支 [] 会被序列化为 ""，不会被过滤
-            const key = branch.join(',')
+            const key = branch.join(EXPANSION_LIMITS.RuleJoinSymbol)
             // 检查是否已经存在
             if (!seen.has(key)) {
                 // 未见过，添加到 Set 和结果中
