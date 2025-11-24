@@ -667,91 +667,6 @@ export class SubhutiGrammarAnalyzer {
         return allOrs
     }
 
-    /**
-     * 检测两个路径集合是否有完全相同的路径（单向检测）
-     *
-     * ⚠️ 检测方向：只检测 pathsFront 与 pathsBehind 是否有相同的路径
-     *
-     * 🚀 性能优化：使用 Set 实现 O(n) 时间复杂度
-     *
-     * 示例：
-     * ```
-     * pathsFront = ['A,B', 'C,D']
-     * pathsBehind = ['A,B', 'E,F']
-     * 结果：'A,B' 完全相同 → 返回 'A,B'
-     * ```
-     *
-     * @param pathsFront - 前面分支的路径数组
-     * @param pathsBehind - 后面分支的路径数组
-     * @returns 第一个相同的路径，如果没有返回 null
-     */
-    private findEqualPath(
-        pathsFront: string[][],
-        pathsBehind: string[][]
-    ): string | null {
-
-
-        // 使用 Set 快速检测（O(n)）
-        const setBehind = new Set(pathsBehind)
-
-        for (const pathFront of pathsFront) {
-            if (setBehind.has(pathFront)) {
-                // 找到完全相同的路径
-                return pathFront
-            }
-        }
-
-        // 没有相同的路径
-        return null
-    }
-
-    /**
-     * 检测两个路径集合是否有前缀包含关系（单向检测）
-     *
-     * ⚠️ 检测方向：只检测 pathsFront 的某个路径是否是 pathsBehind 某个路径的前缀
-     *
-     * 前缀定义：
-     * - 'A,B' 是 'A,B,C' 的前缀 ✅
-     * - 'A,B' 不是 'A,B' 的前缀 ❌（完全相同不算前缀）
-     * - 'A,B' 不是 'A' 的前缀 ❌（不检测反向）
-     *
-     * ⚠️ 性能：O(n²)，需要遍历所有路径对
-     *
-     * 示例：
-     * ```
-     * pathsFront = ['A,B']
-     * pathsBehind = ['A,B,C', 'D,E']
-     * 结果：'A,B' 是 'A,B,C' 的前缀 → 返回 { prefix: 'A,B', full: 'A,B,C' }
-     * ```
-     *
-     * @param pathsFront - 前面分支的路径数组
-     * @param pathsBehind - 后面分支的路径数组
-     * @returns 第一个前缀关系，如果没有返回 null
-     */
-    private findPrefixRelation(
-        pathsFront: string[][],
-        pathsBehind: string[][]
-    ): { prefix: string, full: string } | null {
-
-        // 过滤掉与 pathsFront 完全相同的路径
-        const uniqueBehind = this.removeDuplicatePaths(pathsFront,pathsBehind)
-
-        // 双层循环检测前缀关系（O(n²)）
-        for (const pathFront of pathsFront) {
-            for (const pathBehind of uniqueBehind) {
-                if (pathFront.length >= pathBehind.length) {
-                    continue
-                }
-
-
-
-            }
-        }
-
-        // 没有前缀关系
-        return null
-    }
-
     private removeDuplicatePaths(
         pathsFront: string[][],
         pathsBehind: string[][]
@@ -780,7 +695,7 @@ export class SubhutiGrammarAnalyzer {
         return uniqueBehind
     }
 
-    private trieTree(
+    private trieTreeFindEqual(
         pathsFront: string[][],
         pathsBehind: string[][]
     ) {
@@ -793,7 +708,50 @@ export class SubhutiGrammarAnalyzer {
         }
 
         // 过滤掉与 pathsFront 完全相同的路径
-        const uniqueBehind = this.removeDuplicatePaths(pathsFront,pathsBehind)
+        const uniqueBehind = this.removeDuplicatePaths(pathsFront, pathsBehind)
+
+        // 如果过滤后没有路径，直接返回
+        if (uniqueBehind.length === 0) {
+            return null
+        }
+
+        // 步骤2：构建前缀树（O(m*k)，m=pathsBehind.length，k=平均路径长度）
+        const trie = new ArrayTrie()
+        for (const path of uniqueBehind) {
+            // 将每个路径插入到前缀树中
+            trie.insert(path)
+        }
+
+        // 步骤3：查询前缀关系（O(n*k)，n=pathsFront.length）
+        for (const pathFront of pathsFront) {
+            // 使用前缀树查找匹配
+            // 查找是否有以 pathFront 为前缀的更长路径
+            const fullPath = trie.findEqual(pathFront)
+
+            if (fullPath) {
+                // 找到前缀关系
+                return pathFront
+            }
+        }
+
+        // 没有前缀关系
+        return null
+    }
+
+    private trieTreeFindPrefixMatch(
+        pathsFront: string[][],
+        pathsBehind: string[][]
+    ) {
+        pathsFront = this.deduplicate(pathsFront)
+        pathsBehind = this.deduplicate(pathsBehind)
+
+        // 防御：如果没有可比较的路径，直接返回
+        if (pathsBehind.length === 0 || pathsFront.length === 0) {
+            return null
+        }
+
+        // 过滤掉与 pathsFront 完全相同的路径
+        const uniqueBehind = this.removeDuplicatePaths(pathsFront, pathsBehind)
 
         // 如果过滤后没有路径，直接返回
         if (uniqueBehind.length === 0) {
@@ -896,54 +854,7 @@ or([A, A, B]) → or([A, B])  // 删除重复的A`
                 const pathsFront = branchPathSets[i]
                 const pathsBehind = branchPathSets[j]
 
-
-                // 过滤掉与 pathsFront 完全相同的路径
-                const uniqueBehind = this.removeDuplicatePaths(pathsFront,pathsBehind)
-
-                // 双层循环检测前缀关系（O(n²)）
-                for (const pathFront of pathsFront) {
-                    for (const pathBehind of uniqueBehind) {
-
-
-
-
-
-                        if (pathFront.length !== pathBehind.length) {
-                            continue
-                        }
-
-                        let isEqual = true
-                        for (let i = 0; i < pathFront.length; i++) {
-                            if (pathFront[i] !== pathBehind[i]) {
-                                 return  false
-                            }
-                        }
-
-                        return isEqual
-
-                        // 判断 pathFront 是否是 pathBehind 的前缀
-                        let isPrefix = true
-                        for (let i = 0; i < pathFront.length; i++) {
-                            if (pathFront[i] !== pathBehind[i]) {
-                                isPrefix = false
-                                break
-                            }
-                        }
-                        if (isPrefix) {
-                            return {
-                                prefix: pathFront,
-                                full: pathBehind
-                            }
-                        }
-                    }
-                }
-
-                // 没有前缀关系
-                return null
-
-                //todo 请检测pathsFront和pathsBehind 中存在相同的代码
-
-
+                const equalPath = this.trieTreeFindEqual(pathsFront, pathsBehind)
 
                 if (equalPath) {
                     return {
@@ -959,85 +870,10 @@ or([A, A, B]) → or([A, B])  // 删除重复的A`
                         suggestion: this.getEqualBranchSuggestion(ruleName, i, j, equalPath)
                     }
                 }
-
-                // 如果没有完全相同，再检测前缀关系（O(n²)）
-                const prefixRelation = this.findPrefixRelation(pathsFront, pathsBehind)
-                if (prefixRelation) {
-                    return {
-                        level: 'ERROR',
-                        type: 'prefix-conflict',
-                        ruleName,
-                        branchIndices: [i, j],
-                        conflictPaths: {
-                            pathA: prefixRelation.prefix,
-                            pathB: prefixRelation.full
-                        },
-                        message: `规则 "${ruleName}" 的 Or 分支 ${i + 1} 会遮蔽分支 ${j + 1}（在 First(${firstK}) 阶段检测到）`,
-                        suggestion: this.getPrefixConflictSuggestion(ruleName, i, j, {
-                            prefix: prefixRelation.prefix,
-                            full: prefixRelation.full,
-                            type: 'prefix'
-                        })
-                    }
-                }
             }
         }
     }
 
-
-    checkArrayIsEqu(pathsFront:string[][],pathsBehind:string[][]){
-        // 过滤掉与 pathsFront 完全相同的路径
-        const uniqueBehind = this.removeDuplicatePaths(pathsFront,pathsBehind)
-
-        // 双层循环检测前缀关系（O(n²)）
-        for (const pathFront of pathsFront) {
-            for (const pathBehind of uniqueBehind) {
-                if (pathFront.length !== pathBehind.length) {
-                    continue
-                }
-
-                let isEqual = true
-                for (let i = 0; i < pathFront.length; i++) {
-                    if (pathFront[i] !== pathBehind[i]) {
-                        return  false
-                    }
-                }
-
-                return isEqual
-
-                // 判断 pathFront 是否是 pathBehind 的前缀
-                let isPrefix = true
-                for (let i = 0; i < pathFront.length; i++) {
-                    if (pathFront[i] !== pathBehind[i]) {
-                        isPrefix = false
-                        break
-                    }
-                }
-                if (isPrefix) {
-                    return {
-                        prefix: pathFront,
-                        full: pathBehind
-                    }
-                }
-            }
-        }
-
-
-
-
-        if (pathFront.length !== pathBehind.length) {
-            continue
-        }
-
-        let isEqual = true
-        for (let i = 0; i < pathFront.length; i++) {
-            if (pathFront[i] !== pathBehind[i]) {
-                return  false
-            }
-        }
-
-        return isEqual
-    }
 
     /**
      * 线路2：使用 MaxLevel 检测 Or 分支的前缀遮蔽关系
@@ -1093,7 +929,7 @@ or([A, A, B]) → or([A, B])  // 删除重复的A`
                 const pathsBehind = branchPathSets[j]
 
                 // 检测前缀关系（O(n²)）
-                const prefixRelation = this.findPrefixRelation(pathsFront, pathsBehind)
+                const prefixRelation = this.trieTreeFindPrefixMatch(pathsFront, pathsBehind)
 
                 if (prefixRelation) {
                     // 发现前缀遮蔽，报告错误
