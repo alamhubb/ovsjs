@@ -503,10 +503,7 @@ export class SubhutiGrammarAnalyzer {
 
         const startTime = Date.now()
 
-        console.log('\n🔍 ===== Or 冲突检测开始 =====')
-
         // 遍历所有规则
-        let slowestRule = {name: '', time: 0}
         for (const [ruleName, ruleAST] of this.ruleASTs.entries()) {
             const ruleStartTime = Date.now()
 
@@ -524,37 +521,9 @@ export class SubhutiGrammarAnalyzer {
 
             ruleStats.time = Date.now() - ruleStartTime
             perfStats.ruleStats.set(ruleName, ruleStats)
-
-            // 记录最慢的规则
-            if (ruleStats.time > slowestRule.time) {
-                slowestRule = {name: ruleName, time: ruleStats.time}
-            }
-
-            // 如果规则检测时间超过 100ms，立即输出日志
-            if (ruleStats.time > 100) {
-                console.log(`⚠️  慢规则: ${ruleName}`)
-                console.log(`   耗时: ${ruleStats.time}ms`)
-                console.log(`   Or节点数: ${ruleStats.orNodeCount}`)
-                console.log(`   总路径数: ${ruleStats.pathCount}`)
-                console.log(`   最大单个Or路径数: ${ruleStats.maxPathCount}`)
-            }
         }
 
         perfStats.totalTime = Date.now() - startTime
-
-        // 输出 Top 10 最慢的规则
-        console.log('\n📊 Top 10 最慢的规则:')
-        const sortedRules = Array.from(perfStats.ruleStats.entries())
-            .sort((a, b) => b[1].time - a[1].time)
-            .slice(0, 10)
-
-        for (let i = 0; i < sortedRules.length; i++) {
-            const [ruleName, stats] = sortedRules[i]
-            console.log(`${i + 1}. ${ruleName}: ${stats.time}ms (Or节点: ${stats.orNodeCount}, 路径: ${stats.pathCount}, 最大: ${stats.maxPathCount})`)
-        }
-
-        console.log(`\n⏱️  Or 冲突检测总耗时: ${perfStats.totalTime}ms`)
-        console.log('===========================\n')
 
         return orConflictErrors
     }
@@ -918,18 +887,6 @@ or([A, A, B]) → or([A, B])  // 删除重复的A`
             const totalPaths = branchPathSets.reduce((sum, paths) => sum + paths.length, 0)
             const maxPaths = Math.max(...branchPathSets.map(paths => paths.length))
 
-            // 如果路径数量非常大，输出警告
-            if (maxPaths > 1000) {
-                console.log(`   ⚠️  大量路径: ${ruleName} (最大单分支路径: ${maxPaths})`)
-            }
-        }
-
-        console.log(ruleName)
-        for (const branchPathSet of branchPathSets) {
-            console.log(branchPathSet.length)
-            if (branchPathSet.length > 7000) {
-                console.log(branchPathSet.slice(6990, 7000))
-            }
         }
 
         // 单向遍历：检测前面的分支是否遮蔽后面的分支
@@ -1045,11 +1002,6 @@ or([A, A, B]) → or([A, B])  // 删除重复的A`
 
         const orTime = Date.now() - orStartTime
 
-        // 如果单个 Or 节点检测时间超过 50ms，输出警告
-        if (orTime > 50 && ruleStats) {
-            console.log(`   ⚠️  Or节点慢: ${ruleName} (分支数: ${orNode.alternatives.length}, 耗时: ${orTime}ms)`)
-        }
-
         // 🛡️ 防御性编程：如果 First(K) 检测到遮蔽，MaxLevel 必须也能检测到
         if (firstKError.type === 'prefix-conflict') {
             if (!maxLevelError) {
@@ -1132,7 +1084,6 @@ MaxLevel 检测结果: 无冲突
         // 阶段1.2：BFS MaxLevel 缓存生成
         const t1_2_start = Date.now()
         // BFS 缓存预填充
-        let totalFilled = 0
 
         // 预填充 level 1 到 level_k
         for (let level = 1; level <= EXPANSION_LIMITS.LEVEL_K; level++) {
