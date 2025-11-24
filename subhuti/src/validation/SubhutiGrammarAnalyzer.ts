@@ -697,7 +697,7 @@ export class SubhutiGrammarAnalyzer {
 
     /**
      * 使用前缀树检测两个路径集合中是否存在完全相同的路径
-     * 
+     *
      * @param pathsFront - 前面分支的路径数组
      * @param pathsBehind - 后面分支的路径数组
      * @returns 如果找到完全相同的路径返回该路径，否则返回 null
@@ -722,7 +722,7 @@ export class SubhutiGrammarAnalyzer {
 
     /**
      * 使用前缀树检测两个路径集合中的前缀关系
-     * 
+     *
      * @param pathsFront - 前面分支的路径数组
      * @param pathsBehind - 后面分支的路径数组
      * @returns 如果找到前缀关系返回 { prefix, full }，否则返回 null
@@ -923,7 +923,7 @@ or([A, A, B]) → or([A, B])  // 删除重复的A`
                     // 将路径数组转换为字符串
                     const prefixStr = prefixRelation.prefix.join(EXPANSION_LIMITS.RuleJoinSymbol)
                     const fullStr = prefixRelation.full.join(EXPANSION_LIMITS.RuleJoinSymbol)
-                    
+
                     // 发现前缀遮蔽，报告错误
                     return ({
                         level: 'ERROR',
@@ -1302,9 +1302,16 @@ MaxLevel 检测结果: 无冲突
                 // 计算当前 seq 的可拼接长度
                 const availableLength = EXPANSION_LIMITS.FIRST_K - seq.length
 
-                // 防御检查：不应该出现超长序列
-                if (availableLength <= 0) {
+                // 情况2：seq 超过 FIRST_K（不应该发生，已有防御检查）
+                if (availableLength < 0) {
                     throw new Error('系统错误：序列长度超过限制')
+                } else if (availableLength === 0) {
+                    // 情况1：seq 已达到 FIRST_K，直接放入最终结果集
+                    const seqKey = seq.join(EXPANSION_LIMITS.RuleJoinSymbol)
+                    finalResultSet.add(seqKey)
+                    perfStats.movedToFinal++
+                    perfStats.skippedByLength += currentArray.length
+                    continue  // 不再参与后续计算
                 }
 
                 // seq 级别的去重集合
