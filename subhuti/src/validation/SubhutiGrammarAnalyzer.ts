@@ -38,7 +38,7 @@
  *
  * 空分支在各个处理环节的行为：
  * 1. deduplicate：
- *    - [] join(RuleJoinSymbol) = ""（空字符串）
+ *    - [] join(',') = ""（空字符串）
  *    - 空字符串是合法的 Set key，不会被过滤
  *    - 例如：[[], [a], []] → [[], [a]]（正常去重）
  *
@@ -667,101 +667,101 @@ export class SubhutiGrammarAnalyzer {
         return allOrs
     }
 
-    /**
-     * 检测两个路径集合是否有完全相同的路径（单向检测）
-     *
-     * ⚠️ 检测方向：只检测 pathsFront 与 pathsBehind 是否有相同的路径
-     *
-     * 🚀 性能优化：使用 Set 实现 O(n) 时间复杂度
-     *
-     * 示例：
-     * ```
-     * pathsFront = ['A,B', 'C,D']
-     * pathsBehind = ['A,B', 'E,F']
-     * 结果：'A,B' 完全相同 → 返回 'A,B'
-     * ```
-     *
-     * @param pathsFront - 前面分支的路径数组
-     * @param pathsBehind - 后面分支的路径数组
-     * @returns 第一个相同的路径，如果没有返回 null
-     */
-    private findEqualPath(
-        pathsFront: string[],
-        pathsBehind: string[]
-    ): string | null {
-        // 使用 Set 快速检测（O(n)）
-        const setBehind = new Set(pathsBehind)
-
-        for (const pathFront of pathsFront) {
-            if (setBehind.has(pathFront)) {
-                // 找到完全相同的路径
-                return pathFront
-            }
+    private removeDuplicatePaths(
+        pathsFront: string[][],
+        pathsBehind: string[][]
+    ): string[][] {
+        // 防御：如果输入为空，直接返回
+        if (pathsBehind.length === 0) {
+            return []
         }
 
-        // 没有相同的路径
-        return null
+        // 步骤1：将 pathsFront 转换为 Set<string>（用于快速查找）
+        const frontSet = new Set<string>()
+        for (const path of pathsFront) {
+            // 将路径数组转换为字符串作为 key
+            const key = path.join(EXPANSION_LIMITS.RuleJoinSymbol)
+            frontSet.add(key)
+        }
+
+        // 步骤2：过滤 pathsBehind，只保留不在 Set 中的路径
+        const uniqueBehind: string[][] = []
+        for (const path of pathsBehind) {
+            const key = path.join(EXPANSION_LIMITS.RuleJoinSymbol)
+            if (!frontSet.has(key)) {
+                uniqueBehind.push(path)
+            }
+        }
+        return uniqueBehind
     }
 
     /**
-     * 检测两个路径集合是否有前缀包含关系（单向检测）
-     *
-     * ⚠️ 检测方向：只检测 pathsFront 的某个路径是否是 pathsBehind 某个路径的前缀
-     *
-     * 前缀定义：
-     * - 'A,B' 是 'A,B,C' 的前缀 ✅
-     * - 'A,B' 不是 'A,B' 的前缀 ❌（完全相同不算前缀）
-     * - 'A,B' 不是 'A' 的前缀 ❌（不检测反向）
-     *
-     * ⚠️ 性能：O(n²)，需要遍历所有路径对
-     *
-     * 示例：
-     * ```
-     * pathsFront = ['A,B']
-     * pathsBehind = ['A,B,C', 'D,E']
-     * 结果：'A,B' 是 'A,B,C' 的前缀 → 返回 { prefix: 'A,B', full: 'A,B,C' }
-     * ```
+     * 使用前缀树检测两个路径集合中是否存在完全相同的路径
      *
      * @param pathsFront - 前面分支的路径数组
      * @param pathsBehind - 后面分支的路径数组
-     * @returns 第一个前缀关系，如果没有返回 null
+     * @returns 如果找到完全相同的路径返回该路径，否则返回 null
      */
-    private findPrefixRelation(
-        pathsFront: string[],
-        pathsBehind: string[]
-    ): { prefix: string, full: string } | null {
-        const frontSet = new Set(pathsFront)
-        const newBehind: string[] = []
-
-        //如果后面的分支里面有和前面分支中一样的内容，剔除掉
-        for (const string of pathsBehind) {
-            if (!frontSet.has(string)) {
-                newBehind.push(string)
+    private findEqualPath(
+        pathsFront: string[][],
+        pathsBehind: string[][]
+    ): string[] | null {
+        // 时间复杂度：O((m+n)*k)
+        // 空间复杂度：O(m) - 只需要存储字符串
+        const behindSet = new Set<string>()
+        for (const path of pathsBehind) {
+            behindSet.add(path.join(EXPANSION_LIMITS.RuleJoinSymbol))  // O(k)
+        }
+        for (const pathFront of pathsFront) {
+            const key = pathFront.join(EXPANSION_LIMITS.RuleJoinSymbol)  // O(k)
+            if (behindSet.has(key)) {  // O(1)
+                return pathFront
             }
         }
-        pathsBehind = newBehind
+    }
 
-        if (pathsBehind.length > 1000 && pathsBehind.length > newBehind.length) {
-            console.log('去除前')
-            console.log(pathsBehind.length)
-            console.log('去除后')
-            console.log(newBehind.length)
+    /**
+     * 使用前缀树检测两个路径集合中的前缀关系
+     *
+     * @param pathsFront - 前面分支的路径数组
+     * @param pathsBehind - 后面分支的路径数组
+     * @returns 如果找到前缀关系返回 { prefix, full }，否则返回 null
+     */
+    private trieTreeFindPrefixMatch(
+        pathsFront: string[][],
+        pathsBehind: string[][]
+    ): { prefix: string[], full: string[] } | null {
+        // 防御：如果没有可比较的路径，直接返回
+        if (pathsBehind.length === 0 || pathsFront.length === 0) {
+            return null
         }
 
-        // 双层循环检测前缀关系（O(n²)）
+        // 过滤掉与 pathsFront 完全相同的路径
+        const uniqueBehind = this.removeDuplicatePaths(pathsFront, pathsBehind)
+
+        // 如果过滤后没有路径，直接返回
+        if (uniqueBehind.length === 0) {
+            return null
+        }
+
+        // 步骤2：构建前缀树（O(m*k)，m=pathsBehind.length，k=平均路径长度）
+        const trie = new ArrayTrie()
+        for (const path of uniqueBehind) {
+            // 将每个路径插入到前缀树中
+            trie.insert(path)
+        }
+
+        // 步骤3：查询前缀关系（O(n*k)，n=pathsFront.length）
         for (const pathFront of pathsFront) {
-            for (const pathBehind of pathsBehind) {
-                if (pathFront.length >= pathBehind.length) {
-                    continue
-                }
-                // 检测：前面的路径是否是后面路径的前缀
-                // 注意：必须加 ',' 以确保是完整的 token 前缀
-                // 例如：'If,LParen,Expression' 是 'If,LParen,Expression,RParen,Block' 的前缀
-                if (pathBehind.startsWith(pathFront + ',')) {
-                    return {
-                        prefix: pathFront,
-                        full: pathBehind
-                    }
+            // 使用前缀树查找匹配
+            // 查找是否有以 pathFront 为前缀的更长路径
+            const fullPath = trie.findPrefixMatch(pathFront)
+
+            if (fullPath) {
+                // 找到前缀关系
+                return {
+                    prefix: pathFront,
+                    full: fullPath
                 }
             }
         }
@@ -826,6 +826,31 @@ or([A, A, B]) → or([A, B])  // 删除重复的A`
         const branchPathSets = this.getOrNodeAllBranchRules(ruleName, orNode, EXPANSION_LIMITS.FIRST_K, 'dfsFirstKCache')
         const firstK = EXPANSION_LIMITS.FIRST_K
 
+        // 🔍 调试日志：可通过环境变量或配置控制（默认关闭）
+        const isDebugTarget = process.env.DEBUG_OR_CONFLICT === 'true' && ruleName === process.env.DEBUG_RULE_NAME
+        if (isDebugTarget) {
+            console.log(`\n🔍 ===== [调试] ${ruleName} Or 分支冲突检测 =====`)
+            console.log(`分支数量: ${branchPathSets.length}`)
+            console.log(`First(K) = ${firstK}`)
+            branchPathSets.forEach((paths, index) => {
+                console.log(`\n分支 ${index} (${orNode.alternatives[index]?.type || 'unknown'}):`)
+                console.log(`  路径数量: ${paths.length}`)
+                if (paths.length > 0) {
+                    const sampleSize = Math.min(10, paths.length)
+                    console.log(`  示例路径 (前${sampleSize}条):`)
+                    paths.slice(0, sampleSize).forEach((path, idx) => {
+                        const pathStr = path.join(EXPANSION_LIMITS.RuleJoinSymbol)
+                        console.log(`    [${idx}] ${pathStr} (长度: ${path.length})`)
+                    })
+                    if (paths.length > 10) {
+                        console.log(`  ... 还有 ${paths.length - 10} 条路径`)
+                    }
+                } else {
+                    console.log(`  ⚠️  警告：分支 ${index} 没有路径！`)
+                }
+            })
+        }
+
         // 统计路径数量
         if (ruleStats) {
             const totalPaths = branchPathSets.reduce((sum, paths) => sum + paths.length, 0)
@@ -840,11 +865,19 @@ or([A, A, B]) → or([A, B])  // 删除重复的A`
                 const pathsFront = branchPathSets[i]
                 const pathsBehind = branchPathSets[j]
 
-                // 先尝试检测完全相同（快速，O(n)）
-                const equalPath = this.findEqualPath1(pathsFront, pathsBehind)
+                if (isDebugTarget) {
+                    console.log(`\n🔍 检测分支 ${i} vs 分支 ${j}:`)
+                    console.log(`  分支 ${i} 路径数: ${pathsFront.length}`)
+                    console.log(`  分支 ${j} 路径数: ${pathsBehind.length}`)
+                }
+
+                // 检测相等冲突
+                const equalPath = this.findEqualPath(pathsFront, pathsBehind)
+                if (isDebugTarget) {
+                    console.log(`  相等检测结果: ${equalPath ? `找到相同路径: ${equalPath.join(EXPANSION_LIMITS.RuleJoinSymbol)}` : '无相同路径'}`)
+                }
                 if (equalPath) {
-                    // 将路径数组转换为字符串（使用逗号分隔，便于显示）
-                    const equalPathStr = equalPath.join(',')
+                    const equalPathStr = equalPath.join(EXPANSION_LIMITS.RuleJoinSymbol)
                     return {
                         level: 'ERROR',
                         type: 'or-identical-branches',
@@ -859,12 +892,20 @@ or([A, A, B]) → or([A, B])  // 删除重复的A`
                     }
                 }
 
-                // 如果没有完全相同，再检测前缀关系（O(n²)）
+                // 检测前缀冲突
                 const prefixRelation = this.trieTreeFindPrefixMatch(pathsFront, pathsBehind)
+                if (isDebugTarget) {
+                    if (prefixRelation) {
+                        console.log(`  前缀检测结果: ✅ 找到前缀冲突`)
+                        console.log(`    前缀: ${prefixRelation.prefix.join(EXPANSION_LIMITS.RuleJoinSymbol)}`)
+                        console.log(`    完整: ${prefixRelation.full.join(EXPANSION_LIMITS.RuleJoinSymbol)}`)
+                    } else {
+                        console.log(`  前缀检测结果: ❌ 无前缀冲突`)
+                    }
+                }
                 if (prefixRelation) {
-                    // 将路径数组转换为字符串（使用逗号分隔，便于显示）
-                    const prefixStr = prefixRelation.prefix.join(',')
-                    const fullStr = prefixRelation.full.join(',')
+                    const prefixStr = prefixRelation.prefix.join(EXPANSION_LIMITS.RuleJoinSymbol)
+                    const fullStr = prefixRelation.full.join(EXPANSION_LIMITS.RuleJoinSymbol)
                     return {
                         level: 'ERROR',
                         type: 'prefix-conflict',
@@ -884,7 +925,14 @@ or([A, A, B]) → or([A, B])  // 删除重复的A`
                 }
             }
         }
+
+        // 🔍 调试日志：检测完成
+        if (isDebugTarget) {
+            console.log(`\n✅ [调试] ${ruleName} 检测完成：未发现冲突`)
+            console.log(`==========================================\n`)
+        }
     }
+
 
     /**
      * 线路2：使用 MaxLevel 检测 Or 分支的前缀遮蔽关系
@@ -943,9 +991,10 @@ or([A, A, B]) → or([A, B])  // 删除重复的A`
                 const prefixRelation = this.trieTreeFindPrefixMatch(pathsFront, pathsBehind)
 
                 if (prefixRelation) {
-                    // 将路径数组转换为字符串（使用逗号分隔，便于显示）
-                    const prefixStr = prefixRelation.prefix.join(',')
-                    const fullStr = prefixRelation.full.join(',')
+                    // 将路径数组转换为字符串
+                    const prefixStr = prefixRelation.prefix.join(EXPANSION_LIMITS.RuleJoinSymbol)
+                    const fullStr = prefixRelation.full.join(EXPANSION_LIMITS.RuleJoinSymbol)
+
                     // 发现前缀遮蔽，报告错误
                     return ({
                         level: 'ERROR',
@@ -2088,7 +2137,6 @@ MaxLevel 检测结果: 无冲突
         for (const branch of branches) {
             // 将分支序列化为字符串（用作 Set 的 key）
             // ⚠️ 空分支 [] 会被序列化为 ""，不会被过滤
-            // 🔧 修复：统一使用 RuleJoinSymbol，与冲突检测保持一致
             const key = branch.join(EXPANSION_LIMITS.RuleJoinSymbol)
             // 检查是否已经存在
             if (!seen.has(key)) {
@@ -2207,7 +2255,7 @@ MaxLevel 检测结果: 无冲突
      * ⚠️⚠️⚠️ 关键：空分支 [] 的重要性 ⚠️⚠️⚠️
      * - 空分支 [] 表示 option/many 可以跳过（0次）
      * - 空分支在后续处理中不会被过滤：
-     *   1. deduplicate：[] join(RuleJoinSymbol) = ""，正常去重
+     *   1. deduplicate：[] join(',') = ""，正常去重
      *   2. cartesianProduct：[...seq, ...[]] = [...seq]，正常拼接
      *   3. truncateAndDeduplicate：[] slice(0,k) = []，正常截取
      * - 空分支必须保留，否则 option/many 的语义就错了！
@@ -2331,110 +2379,6 @@ First(${ruleName}) = {${Array.from(firstSet).slice(0, 5).join(', ')}${firstSet.s
 
 First(${ruleName}) = {${Array.from(firstSet).slice(0, 5).join(', ')}${firstSet.size > 5 ? ', ...' : ''}}
 包含 ${ruleName} 本身，说明存在左递归。`
-    }
-
-
-    /**
-     * 使用前缀树检测两个路径集合中是否存在完全相同的路径
-     *
-     * @param pathsFront - 前面分支的路径数组
-     * @param pathsBehind - 后面分支的路径数组
-     * @returns 如果找到完全相同的路径返回该路径，否则返回 null
-     */
-    private findEqualPath1(
-        pathsFront: string[][],
-        pathsBehind: string[][]
-    ): string[] | null {
-        // 时间复杂度：O((m+n)*k)
-        // 空间复杂度：O(m) - 只需要存储字符串
-        const behindSet = new Set<string>()
-        for (const path of pathsBehind) {
-            behindSet.add(path.join(EXPANSION_LIMITS.RuleJoinSymbol))  // O(k)
-        }
-        for (const pathFront of pathsFront) {
-            const key = pathFront.join(EXPANSION_LIMITS.RuleJoinSymbol)  // O(k)
-            if (behindSet.has(key)) {  // O(1)
-                return pathFront
-            }
-        }
-    }
-
-    /**
-     * 使用前缀树检测两个路径集合中的前缀关系
-     *
-     * @param pathsFront - 前面分支的路径数组
-     * @param pathsBehind - 后面分支的路径数组
-     * @returns 如果找到前缀关系返回 { prefix, full }，否则返回 null
-     */
-    private trieTreeFindPrefixMatch(
-        pathsFront: string[][],
-        pathsBehind: string[][]
-    ): { prefix: string[], full: string[] } | null {
-        // 防御：如果没有可比较的路径，直接返回
-        if (pathsBehind.length === 0 || pathsFront.length === 0) {
-            return null
-        }
-
-        // 过滤掉与 pathsFront 完全相同的路径
-        const uniqueBehind = this.removeDuplicatePaths(pathsFront, pathsBehind)
-
-        // 如果过滤后没有路径，直接返回
-        if (uniqueBehind.length === 0) {
-            return null
-        }
-
-        // 步骤2：构建前缀树（O(m*k)，m=pathsBehind.length，k=平均路径长度）
-        const trie = new ArrayTrie()
-        for (const path of uniqueBehind) {
-            // 将每个路径插入到前缀树中
-            trie.insert(path)
-        }
-
-        // 步骤3：查询前缀关系（O(n*k)，n=pathsFront.length）
-        for (const pathFront of pathsFront) {
-            // 使用前缀树查找匹配
-            // 查找是否有以 pathFront 为前缀的更长路径
-            const fullPath = trie.findPrefixMatch(pathFront)
-
-            if (fullPath) {
-                // 找到前缀关系
-                return {
-                    prefix: pathFront,
-                    full: fullPath
-                }
-            }
-        }
-
-        // 没有前缀关系
-        return null
-    }
-
-    private removeDuplicatePaths(
-        pathsFront: string[][],
-        pathsBehind: string[][]
-    ): string[][] {
-        // 防御：如果输入为空，直接返回
-        if (pathsBehind.length === 0) {
-            return []
-        }
-
-        // 步骤1：将 pathsFront 转换为 Set<string>（用于快速查找）
-        const frontSet = new Set<string>()
-        for (const path of pathsFront) {
-            // 将路径数组转换为字符串作为 key
-            const key = path.join(EXPANSION_LIMITS.RuleJoinSymbol)
-            frontSet.add(key)
-        }
-
-        // 步骤2：过滤 pathsBehind，只保留不在 Set 中的路径
-        const uniqueBehind: string[][] = []
-        for (const path of pathsBehind) {
-            const key = path.join(EXPANSION_LIMITS.RuleJoinSymbol)
-            if (!frontSet.has(key)) {
-                uniqueBehind.push(path)
-            }
-        }
-        return uniqueBehind
     }
 }
 
