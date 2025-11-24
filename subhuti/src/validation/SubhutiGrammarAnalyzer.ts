@@ -642,7 +642,7 @@ export class SubhutiGrammarAnalyzer {
             // 例如：sequence(If, Expression, Block) → [['If', 'Expression', 'Block']]
             const nodeAllBranches = this.expandNode(seqNode, EXPANSION_LIMITS.INFINITY, 0, 1, false)
 
-            let allBranchAllSeq = []
+            let allBranchAllSeq: string[][] = []
 
             // 遍历第一层展开的每个可能性,每个分支的所有可能性
             for (const branch of nodeAllBranches) {
@@ -695,10 +695,17 @@ export class SubhutiGrammarAnalyzer {
         return uniqueBehind
     }
 
+    /**
+     * 使用前缀树检测两个路径集合中是否存在完全相同的路径
+     * 
+     * @param pathsFront - 前面分支的路径数组
+     * @param pathsBehind - 后面分支的路径数组
+     * @returns 如果找到完全相同的路径返回该路径，否则返回 null
+     */
     private trieTreeFindEqual(
         pathsFront: string[][],
         pathsBehind: string[][]
-    ) {
+    ): string[] | null {
         pathsFront = this.deduplicate(pathsFront)
         pathsBehind = this.deduplicate(pathsBehind)
 
@@ -707,41 +714,39 @@ export class SubhutiGrammarAnalyzer {
             return null
         }
 
-        // 过滤掉与 pathsFront 完全相同的路径
-        const uniqueBehind = this.removeDuplicatePaths(pathsFront, pathsBehind)
-
-        // 如果过滤后没有路径，直接返回
-        if (uniqueBehind.length === 0) {
-            return null
-        }
-
-        // 步骤2：构建前缀树（O(m*k)，m=pathsBehind.length，k=平均路径长度）
+        // 构建前缀树（O(m*k)，m=pathsBehind.length，k=平均路径长度）
         const trie = new ArrayTrie()
-        for (const path of uniqueBehind) {
+        for (const path of pathsBehind) {
             // 将每个路径插入到前缀树中
             trie.insert(path)
         }
 
-        // 步骤3：查询前缀关系（O(n*k)，n=pathsFront.length）
+        // 查询相等关系（O(n*k)，n=pathsFront.length）
         for (const pathFront of pathsFront) {
-            // 使用前缀树查找匹配
-            // 查找是否有以 pathFront 为前缀的更长路径
-            const fullPath = trie.findEqual(pathFront)
+            // 使用前缀树查找完全相同的路径
+            const equalPath = trie.findEqual(pathFront)
 
-            if (fullPath) {
-                // 找到前缀关系
+            if (equalPath) {
+                // 找到完全相同的路径
                 return pathFront
             }
         }
 
-        // 没有前缀关系
+        // 没有找到完全相同的路径
         return null
     }
 
+    /**
+     * 使用前缀树检测两个路径集合中的前缀关系
+     * 
+     * @param pathsFront - 前面分支的路径数组
+     * @param pathsBehind - 后面分支的路径数组
+     * @returns 如果找到前缀关系返回 { prefix, full }，否则返回 null
+     */
     private trieTreeFindPrefixMatch(
         pathsFront: string[][],
         pathsBehind: string[][]
-    ) {
+    ): { prefix: string[], full: string[] } | null {
         pathsFront = this.deduplicate(pathsFront)
         pathsBehind = this.deduplicate(pathsBehind)
 
@@ -857,17 +862,19 @@ or([A, A, B]) → or([A, B])  // 删除重复的A`
                 const equalPath = this.trieTreeFindEqual(pathsFront, pathsBehind)
 
                 if (equalPath) {
+                    // 将路径数组转换为字符串
+                    const equalPathStr = equalPath.join(EXPANSION_LIMITS.RuleJoinSymbol)
                     return {
                         level: 'ERROR',
                         type: 'or-identical-branches',
                         ruleName,
                         branchIndices: [i, j],
                         conflictPaths: {
-                            pathA: equalPath,
-                            pathB: equalPath
+                            pathA: equalPathStr,
+                            pathB: equalPathStr
                         },
                         message: `规则 "${ruleName}" 的 Or 分支 ${i + 1} 和分支 ${j + 1} 的前 ${firstK} 个 token 完全相同`,
-                        suggestion: this.getEqualBranchSuggestion(ruleName, i, j, equalPath)
+                        suggestion: this.getEqualBranchSuggestion(ruleName, i, j, equalPathStr)
                     }
                 }
             }
@@ -932,6 +939,10 @@ or([A, A, B]) → or([A, B])  // 删除重复的A`
                 const prefixRelation = this.trieTreeFindPrefixMatch(pathsFront, pathsBehind)
 
                 if (prefixRelation) {
+                    // 将路径数组转换为字符串
+                    const prefixStr = prefixRelation.prefix.join(EXPANSION_LIMITS.RuleJoinSymbol)
+                    const fullStr = prefixRelation.full.join(EXPANSION_LIMITS.RuleJoinSymbol)
+                    
                     // 发现前缀遮蔽，报告错误
                     return ({
                         level: 'ERROR',
@@ -939,13 +950,13 @@ or([A, A, B]) → or([A, B])  // 删除重复的A`
                         ruleName,
                         branchIndices: [i, j],
                         conflictPaths: {
-                            pathA: prefixRelation.prefix,
-                            pathB: prefixRelation.full
+                            pathA: prefixStr,
+                            pathB: fullStr
                         },
                         message: `规则 "${ruleName}" 的 Or 分支 ${i + 1} 会遮蔽分支 ${j + 1}`,
                         suggestion: this.getPrefixConflictSuggestion(ruleName, i, j, {
-                            prefix: prefixRelation.prefix,
-                            full: prefixRelation.full,
+                            prefix: prefixStr,
+                            full: fullStr,
                             type: 'prefix'
                         })
                     })
