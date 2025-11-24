@@ -896,8 +896,55 @@ or([A, A, B]) → or([A, B])  // 删除重复的A`
                 const pathsFront = branchPathSets[i]
                 const pathsBehind = branchPathSets[j]
 
-                // 先尝试检测完全相同（快速，O(n)）
-                const equalPath = this.findEqualPath(pathsFront, pathsBehind)
+
+                // 过滤掉与 pathsFront 完全相同的路径
+                const uniqueBehind = this.removeDuplicatePaths(pathsFront,pathsBehind)
+
+                // 双层循环检测前缀关系（O(n²)）
+                for (const pathFront of pathsFront) {
+                    for (const pathBehind of uniqueBehind) {
+
+
+
+
+
+                        if (pathFront.length !== pathBehind.length) {
+                            continue
+                        }
+
+                        let isEqual = true
+                        for (let i = 0; i < pathFront.length; i++) {
+                            if (pathFront[i] !== pathBehind[i]) {
+                                 return  false
+                            }
+                        }
+
+                        return isEqual
+
+                        // 判断 pathFront 是否是 pathBehind 的前缀
+                        let isPrefix = true
+                        for (let i = 0; i < pathFront.length; i++) {
+                            if (pathFront[i] !== pathBehind[i]) {
+                                isPrefix = false
+                                break
+                            }
+                        }
+                        if (isPrefix) {
+                            return {
+                                prefix: pathFront,
+                                full: pathBehind
+                            }
+                        }
+                    }
+                }
+
+                // 没有前缀关系
+                return null
+
+                //todo 请检测pathsFront和pathsBehind 中存在相同的代码
+
+
+
                 if (equalPath) {
                     return {
                         level: 'ERROR',
@@ -935,6 +982,61 @@ or([A, A, B]) → or([A, B])  // 删除重复的A`
                 }
             }
         }
+    }
+
+
+    checkArrayIsEqu(pathsFront:string[][],pathsBehind:string[][]){
+        // 过滤掉与 pathsFront 完全相同的路径
+        const uniqueBehind = this.removeDuplicatePaths(pathsFront,pathsBehind)
+
+        // 双层循环检测前缀关系（O(n²)）
+        for (const pathFront of pathsFront) {
+            for (const pathBehind of uniqueBehind) {
+                if (pathFront.length !== pathBehind.length) {
+                    continue
+                }
+
+                let isEqual = true
+                for (let i = 0; i < pathFront.length; i++) {
+                    if (pathFront[i] !== pathBehind[i]) {
+                        return  false
+                    }
+                }
+
+                return isEqual
+
+                // 判断 pathFront 是否是 pathBehind 的前缀
+                let isPrefix = true
+                for (let i = 0; i < pathFront.length; i++) {
+                    if (pathFront[i] !== pathBehind[i]) {
+                        isPrefix = false
+                        break
+                    }
+                }
+                if (isPrefix) {
+                    return {
+                        prefix: pathFront,
+                        full: pathBehind
+                    }
+                }
+            }
+        }
+
+
+
+
+        if (pathFront.length !== pathBehind.length) {
+            continue
+        }
+
+        let isEqual = true
+        for (let i = 0; i < pathFront.length; i++) {
+            if (pathFront[i] !== pathBehind[i]) {
+                return  false
+            }
+        }
+
+        return isEqual
     }
 
     /**

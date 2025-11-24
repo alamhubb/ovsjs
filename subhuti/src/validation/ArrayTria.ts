@@ -61,6 +61,51 @@ export default class ArrayTrie {
     }
 
     /**
+     * 查找完全相同的路径
+     *
+     * 核心逻辑：
+     * 1. 沿着路径向下遍历到叶子节点
+     * 2. 检查该节点的 fullPaths 中是否有长度相同且完全匹配的路径
+     *
+     * @param path - 要查找的路径数组
+     * @returns 如果找到完全相同的路径返回该路径，否则返回 null
+     */
+    findEqual(path: string[]): string[] | null {
+        let node = this.root
+
+        // 沿着路径向下遍历
+        for (const token of path) {
+            if (!node.children.has(token)) {
+                return null  // 路径不存在
+            }
+            node = node.children.get(token)!
+        }
+
+        // 检查 fullPaths 中是否有完全相同的路径
+        for (const fullPath of node.fullPaths) {
+            // 长度必须相同
+            if (fullPath.length !== path.length) {
+                continue
+            }
+
+            // 逐个比较 token
+            let isEqual = true
+            for (let i = 0; i < path.length; i++) {
+                if (path[i] !== fullPath[i]) {
+                    isEqual = false
+                    break
+                }
+            }
+
+            if (isEqual) {
+                return fullPath
+            }
+        }
+
+        return null
+    }
+
+    /**
      * 查找以 prefix 为前缀的路径（且不等于 prefix）
      *
      * 核心逻辑：
@@ -90,11 +135,9 @@ export default class ArrayTrie {
         // fullPaths 中存储的是所有经过此节点的完整路径
         for (const fullPath of node.fullPaths) {
             // 确保不是完全相同（完全相同不算前缀关系）
-            if (fullPath.length !== prefix.length) {
-                // 确保 fullPath 确实以 prefix 开头（防御性检查）
-                if (this.isPrefix(prefix, fullPath)) {
-                    return fullPath
-                }
+            // 确保 fullPath 确实以 prefix 开头（防御性检查）
+            if (this.isPrefix(prefix, fullPath)) {
+                return fullPath
             }
         }
 
