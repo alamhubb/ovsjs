@@ -1945,7 +1945,7 @@ MaxLevel 检测结果: 无冲突
         }
 
         for (let branchIndex = 0; branchIndex < cachedBranches.length; branchIndex++) {
-            const rulesSeq = cachedBranches[branchIndex]
+            const branchSeqRules = cachedBranches[branchIndex]
 
             // 超时检测
             if (branchIndex % 10 === 0 || branchIndex === cachedBranches.length - 1) {
@@ -1955,33 +1955,20 @@ MaxLevel 检测结果: 无冲突
             // 每处理 10 个路径或最后一个路径时输出进度
             if (shouldLog && (branchIndex % 10 === 0 || branchIndex === cachedBranches.length - 1)) {
                 const elapsed = startTime > 0 ? Date.now() - startTime : 0
-                console.log(`      📊 进度: [${branchIndex + 1}/${totalPaths}] 路径, 已耗时: ${elapsed}ms, 当前路径: [${rulesSeq.join(', ')}]`)
+                console.log(`      📊 进度: [${branchIndex + 1}/${totalPaths}] 路径, 已耗时: ${elapsed}ms, 当前路径: [${branchSeqRules.join(', ')}]`)
             }
 
             const allBranches: string[][][] = []
 
             // 遍历路径中的每个符号，递归展开
-            for (let ruleIndex = 0; ruleIndex < rulesSeq.length; ruleIndex++) {
-                const ruleName = rulesSeq[ruleIndex]
+            for (let ruleIndex = 0; ruleIndex < branchSeqRules.length; ruleIndex++) {
+                const ruleName = branchSeqRules[ruleIndex]
 
                 // 超时检测
-                this.checkTimeout(`expandPathsByBFSCache-${ruleName}-展开符号${ruleIndex + 1}/${rulesSeq.length}:${ruleName}`)
-
-                if (shouldLog && rulesSeq.length > 3) {
-                    console.log(`        🔀 正在展开符号 [${ruleIndex + 1}/${rulesSeq.length}]: ${ruleName}, 剩余层级: ${remainingLevels}`)
-                }
-
-                const symbolStartTime = shouldLog ? Date.now() : 0
+                this.checkTimeout(`expandPathsByBFSCache-${ruleName}-展开符号${ruleIndex + 1}/${branchSeqRules.length}:${ruleName}`)
 
                 console.log(`调用expandPathsByBFSCache:${ruleName}--${remainingLevels}`)
                 const result = this.expandPathsByBFSCache(ruleName, remainingLevels)
-
-                if (shouldLog && rulesSeq.length > 3) {
-                    const symbolDuration = Date.now() - symbolStartTime
-                    if (symbolDuration > 50 || result.length > 100) {
-                        console.log(`        ✅ 符号展开完成: ${ruleName}, 结果数: ${result.length}, 耗时: ${symbolDuration}ms`)
-                    }
-                }
 
                 allBranches.push(result)
             }
