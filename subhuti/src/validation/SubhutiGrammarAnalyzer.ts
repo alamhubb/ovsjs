@@ -826,6 +826,31 @@ or([A, A, B]) → or([A, B])  // 删除重复的A`
         const branchPathSets = this.getOrNodeAllBranchRules(ruleName, orNode, EXPANSION_LIMITS.FIRST_K, 'dfsFirstKCache')
         const firstK = EXPANSION_LIMITS.FIRST_K
 
+        // 🔍 调试日志：针对 LeftHandSideExpression 规则
+        const isDebugTarget = ruleName === 'LeftHandSideExpression'
+        if (isDebugTarget) {
+            console.log(`\n🔍 ===== [调试] ${ruleName} Or 分支冲突检测 =====`)
+            console.log(`分支数量: ${branchPathSets.length}`)
+            console.log(`First(K) = ${firstK}`)
+            branchPathSets.forEach((paths, index) => {
+                console.log(`\n分支 ${index} (${orNode.alternatives[index]?.type || 'unknown'}):`)
+                console.log(`  路径数量: ${paths.length}`)
+                if (paths.length > 0) {
+                    const sampleSize = Math.min(10, paths.length)
+                    console.log(`  示例路径 (前${sampleSize}条):`)
+                    paths.slice(0, sampleSize).forEach((path, idx) => {
+                        const pathStr = path.join(EXPANSION_LIMITS.RuleJoinSymbol)
+                        console.log(`    [${idx}] ${pathStr} (长度: ${path.length})`)
+                    })
+                    if (paths.length > 10) {
+                        console.log(`  ... 还有 ${paths.length - 10} 条路径`)
+                    }
+                } else {
+                    console.log(`  ⚠️  警告：分支 ${index} 没有路径！`)
+                }
+            })
+        }
+
         // 统计路径数量
         if (ruleStats) {
             const totalPaths = branchPathSets.reduce((sum, paths) => sum + paths.length, 0)
@@ -840,8 +865,17 @@ or([A, A, B]) → or([A, B])  // 删除重复的A`
                 const pathsFront = branchPathSets[i]
                 const pathsBehind = branchPathSets[j]
 
+                if (isDebugTarget) {
+                    console.log(`\n🔍 检测分支 ${i} vs 分支 ${j}:`)
+                    console.log(`  分支 ${i} 路径数: ${pathsFront.length}`)
+                    console.log(`  分支 ${j} 路径数: ${pathsBehind.length}`)
+                }
+
                 // 检测相等冲突
                 const equalPath = this.findEqualPath(pathsFront, pathsBehind)
+                if (isDebugTarget) {
+                    console.log(`  相等检测结果: ${equalPath ? `找到相同路径: ${equalPath.join(EXPANSION_LIMITS.RuleJoinSymbol)}` : '无相同路径'}`)
+                }
                 if (equalPath) {
                     const equalPathStr = equalPath.join(EXPANSION_LIMITS.RuleJoinSymbol)
                     return {
@@ -860,6 +894,15 @@ or([A, A, B]) → or([A, B])  // 删除重复的A`
 
                 // 检测前缀冲突
                 const prefixRelation = this.trieTreeFindPrefixMatch(pathsFront, pathsBehind)
+                if (isDebugTarget) {
+                    if (prefixRelation) {
+                        console.log(`  前缀检测结果: ✅ 找到前缀冲突`)
+                        console.log(`    前缀: ${prefixRelation.prefix.join(EXPANSION_LIMITS.RuleJoinSymbol)}`)
+                        console.log(`    完整: ${prefixRelation.full.join(EXPANSION_LIMITS.RuleJoinSymbol)}`)
+                    } else {
+                        console.log(`  前缀检测结果: ❌ 无前缀冲突`)
+                    }
+                }
                 if (prefixRelation) {
                     const prefixStr = prefixRelation.prefix.join(EXPANSION_LIMITS.RuleJoinSymbol)
                     const fullStr = prefixRelation.full.join(EXPANSION_LIMITS.RuleJoinSymbol)
@@ -881,6 +924,12 @@ or([A, A, B]) → or([A, B])  // 删除重复的A`
                     }
                 }
             }
+        }
+
+        // 🔍 调试日志：检测完成
+        if (isDebugTarget) {
+            console.log(`\n✅ [调试] ${ruleName} 检测完成：未发现冲突`)
+            console.log(`==========================================\n`)
         }
     }
 
