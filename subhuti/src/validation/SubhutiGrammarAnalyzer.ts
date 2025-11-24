@@ -840,10 +840,9 @@ or([A, A, B]) → or([A, B])  // 删除重复的A`
                 const pathsFront = branchPathSets[i]
                 const pathsBehind = branchPathSets[j]
 
+                // 检测相等冲突
                 const equalPath = this.findEqualPath(pathsFront, pathsBehind)
-
                 if (equalPath) {
-                    // 将路径数组转换为字符串
                     const equalPathStr = equalPath.join(EXPANSION_LIMITS.RuleJoinSymbol)
                     return {
                         level: 'ERROR',
