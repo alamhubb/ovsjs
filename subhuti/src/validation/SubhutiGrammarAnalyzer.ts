@@ -311,6 +311,7 @@ class PerformanceAnalyzer {
  */
 export const EXPANSION_LIMITS = {
     FIRST_K: 3,
+    FIRST_Max: 100,
 
     LEVEL_1: 1,
     LEVEL_K: 100,
@@ -880,7 +881,7 @@ or([A, A, B]) → or([A, B])  // 删除重复的A`
         }
 
         // 获取每个分支的深度展开路径集合
-        const branchPathSets = this.getOrNodeAllBranchRules(ruleName, orNode, EXPANSION_LIMITS.INFINITY, 'bfsAllCache')
+        const branchPathSets = this.getOrNodeAllBranchRules(ruleName, orNode, EXPANSION_LIMITS.FIRST_Max, 'bfsAllCache')
 
         // 统计路径数量（MaxLevel 的路径可能非常多）
         if (ruleStats) {
@@ -1067,9 +1068,6 @@ MaxLevel 检测结果: 无冲突
         // 清空错误 Map
         this.detectedLeftRecursionErrors.clear()
 
-        // 启动超时检测
-        this.operationStartTime = Date.now()
-
         // 🔧 修复：分别统计 DFS First(K) 和 BFS MaxLevel 的耗时
         // 阶段1.1：DFS First(K) 缓存生成（包含左递归检测）
         const t1_1_start = Date.now()
@@ -1082,11 +1080,13 @@ MaxLevel 检测结果: 无冲突
         stats.dfsFirstKTime = t1_1_end - t1_1_start
 
         // 阶段1.2：BFS MaxLevel 缓存生成
+        // 启动超时检测（在 BFS 缓存生成阶段）
+        this.operationStartTime = Date.now()
         const t1_2_start = Date.now()
         console.log(`\n📦 ===== BFS MaxLevel 缓存生成开始 =====`)
         console.log(`目标层级: Level 1 到 Level ${EXPANSION_LIMITS.LEVEL_K}`)
         console.log(`规则总数: ${ruleNames.length}`)
-        
+
         // BFS 缓存预填充
         // 预填充 level 1 到 level_k
         for (let level = EXPANSION_LIMITS.LEVEL_K; level <= EXPANSION_LIMITS.LEVEL_K; level++) {
@@ -1095,25 +1095,25 @@ MaxLevel 检测结果: 无冲突
             for (const ruleName of ruleNames) {
                 levelRuleIndex++
                 const key = `${ruleName}:${level}`
-                
+
                 // 如果已经存在缓存，跳过
                 if (this.bfsLevelCache.has(key)) {
                     continue
                 }
-                
+
                 // 记录开始时间
                 const ruleStartTime = Date.now()
                 console.log(`  [${levelRuleIndex}/${ruleNames.length}] 开始生成: ${ruleName}, Level ${level}, Key: ${key}`)
-                
+
                 // 生成缓存
                 this.expandPathsByBFSCache(ruleName, level)
-                
+
                 // 记录结束时间和耗时
                 const ruleEndTime = Date.now()
                 const ruleDuration = ruleEndTime - ruleStartTime
                 const cachedPaths = this.bfsLevelCache.get(key)
                 const pathCount = cachedPaths ? cachedPaths.length : 0
-                
+
                 // 如果耗时超过 10ms 或路径数量很多，输出详细信息
                 if (ruleDuration > 10 || pathCount > 100) {
                     console.log(`  ✅ 生成完成: ${ruleName}, Level ${level} (耗时: ${ruleDuration}ms, 路径数: ${pathCount})`)
@@ -1149,7 +1149,7 @@ MaxLevel 检测结果: 无冲突
                 console.log(`  [${aggregateIndex}/${ruleNames.length}] 聚合完成: ${ruleName} (耗时: ${aggregateDuration}ms, 路径数: ${deduplicated.length})`)
             }
         }
-        
+
         const t1_2_end = Date.now()
         stats.bfsMaxLevelTime = t1_2_end - t1_2_start
         console.log(`\n✅ BFS MaxLevel 缓存生成完成 (总耗时: ${stats.bfsMaxLevelTime}ms)`)
@@ -1296,20 +1296,51 @@ MaxLevel 检测结果: 无冲突
         for (let i = 1; i < arrays.length; i++) {
             this.checkTimeout(`cartesianProduct-数组${i}/${arrays.length}`)
 
+            //已经是去重的了，没必要去重了
+            const arrilen = arrays[i].length
             // 数组层面去重：统一处理所有数组
             const currentArray = this.deduplicate(arrays[i])
+
+
+            if (arrilen > currentArray.length) {
+                throw new Error('系统错误')
+            }
 
             const temp: string[][] = []
 
             // 遍历当前结果的每个序列
             let seqIndex = 0
             const totalSeqs = result.length
+            const arrayIndex = i
+            const shouldLogProgress = totalSeqs > 1000 || currentArray.length > 1000
+            const cartesianStartTime = shouldLogProgress ? Date.now() : 0
+
+            if (shouldLogProgress) {
+                const estimatedTotal = totalSeqs * currentArray.length
+            }
+
             for (const seq of result) {
+                const pla = currentArray.length * seq.length
+                if (pla > 100000) {
+                    console.log('currentArray.length')
+                    console.log(currentArray.length)
+
+                    console.log('seq.length')
+                    console.log(seq.length)
+                    console.log('预计结果:' + currentArray.length * seq.length)
+                }
+
+
                 seqIndex++
 
                 // 每处理1000个seq输出一次进度
                 if (seqIndex % 1000 === 0 || seqIndex === totalSeqs) {
-                    this.checkTimeout(`cartesianProduct-seq${seqIndex}`)
+                    this.checkTimeout(`cartesianProduct-seq${seqIndex}/${totalSeqs}`)
+
+                    if (shouldLogProgress) {
+                        const elapsed = Date.now() - cartesianStartTime
+                        const progress = ((seqIndex / totalSeqs) * 100).toFixed(1)
+                    }
                 }
 
                 // 计算当前 seq 的可拼接长度
@@ -1332,13 +1363,23 @@ MaxLevel 检测结果: 无冲突
 
 
                 // 情况3：seq 长度 < FIRST_K，继续拼接
+                // 🔧 性能优化：预计算 seq 的长度和 join 结果（如果达到 FIRST_K 时需要）
+                const seqLength = seq.length
+                const seqKey = seqLength > 0 ? seq.join(EXPANSION_LIMITS.RuleJoinSymbol) : ''
+                
                 for (const branch of currentArray) {
                     perfStats.totalBranches++
 
-                    // 提前截取 branch
-                    const truncatedBranch = branch.slice(0, availableLength)
+                    // 🔧 性能优化：减少不必要的 slice
+                    // 如果 branch.length <= availableLength，直接使用 branch，避免 slice 开销
+                    const branchLength = branch.length
+                    const truncatedBranch = branchLength <= availableLength 
+                        ? branch 
+                        : branch.slice(0, availableLength)
+                    const truncatedLength = truncatedBranch.length
 
-                    // 序列化用于去重
+                    // 🔧 性能优化：只在需要去重时才 join
+                    // 如果 truncatedBranch === branch，可以复用（但为了安全，还是每次都 join）
                     const branchKey = truncatedBranch.join(EXPANSION_LIMITS.RuleJoinSymbol)
 
                     // seq 级别去重
@@ -1349,34 +1390,38 @@ MaxLevel 检测结果: 无冲突
 
                     seqDeduplicateSet.add(branchKey)
 
-                    // 拼接
-                    const combined: string[] = [].concat(seq).concat(truncatedBranch)
-
+                    // 🔧 性能优化：先计算长度，避免创建数组后再检查
+                    const combinedLength = seqLength + truncatedLength
+                    
                     // 检查拼接后的长度
-                    if (combined.length > EXPANSION_LIMITS.FIRST_K) {
+                    if (combinedLength > EXPANSION_LIMITS.FIRST_K) {
                         throw new Error('系统错误：笛卡尔积拼接后长度超过限制')
                     }
 
                     // 判断拼接后是否达到 FIRST_K
-                    if (combined.length === EXPANSION_LIMITS.FIRST_K) {
+                    if (combinedLength === EXPANSION_LIMITS.FIRST_K) {
                         // 达到最大长度，放入最终结果集
-                        const combinedKey = combined.join(EXPANSION_LIMITS.RuleJoinSymbol)
+                        // 🔧 性能优化：复用已计算的 seqKey 和 branchKey，避免重复 join
+                        const combinedKey = seqKey 
+                            ? (seqKey + EXPANSION_LIMITS.RuleJoinSymbol + branchKey)
+                            : branchKey
                         finalResultSet.add(combinedKey)
                         perfStats.movedToFinal++
                     } else {
                         // 未达到最大长度，放入 temp 继续参与后续计算
+                        // 🔧 性能优化：使用预分配数组 + 循环赋值，比 concat 更快
+                        const combined: string[] = new Array(combinedLength)
+                        for (let j = 0; j < seqLength; j++) {
+                            combined[j] = seq[j]
+                        }
+                        for (let j = 0; j < truncatedLength; j++) {
+                            combined[seqLength + j] = truncatedBranch[j]
+                        }
                         temp.push(combined)
                     }
 
                     perfStats.actualCombined++
 
-                    // 防止结果集爆炸
-                    if (temp.length + finalResultSet.size > 1000000) {
-                        console.warn(`⚠️ 笛卡尔积结果超过100万 (arrays[${i}/${arrays.length - 1}])`)
-                        console.warn(`   temp: ${temp.length}, finalResultSet: ${finalResultSet.size}`)
-                        console.warn(`   性能统计:`, perfStats)
-                        throw new Error('笛卡尔积结果过大（超过100万）')
-                    }
                 }
             }
 
@@ -1386,7 +1431,11 @@ MaxLevel 检测结果: 无冲突
             // 更新统计
             perfStats.maxResultSize = Math.max(perfStats.maxResultSize, result.length + finalResultSet.size)
 
-            // 监控
+            // 监控和日志
+            if (shouldLogProgress) {
+                const elapsed = Date.now() - cartesianStartTime
+            }
+
             if (result.length + finalResultSet.size > 100000) {
                 console.warn(`⚠️ 笛卡尔积中间结果较大: temp=${result.length}, final=${finalResultSet.size} (数组 ${i}/${arrays.length - 1})`)
             }
@@ -1536,6 +1585,8 @@ MaxLevel 检测结果: 无冲突
         if (!this.operationStartTime) return
 
         const elapsed = (Date.now() - this.operationStartTime) / 1000
+        const remainingTime = this.timeoutSeconds - elapsed
+
         if (elapsed > this.timeoutSeconds) {
             const errorMsg = `
 ❌ ========== 操作超时 ==========
@@ -1785,18 +1836,19 @@ MaxLevel 检测结果: 无冲突
      */
     private expandPathsByBFSCache(
         ruleName: string,
-        targetLevel: number
+        targetLevel: number,
+        firstK: number = EXPANSION_LIMITS.LEVEL_K,
     ): string[][] {
         // 防御检查
         if (targetLevel === 0) {
             throw new Error('系统错误')
         }
-        
+
         // token，直接返回
         if (this.tokenCache.has(ruleName)) {
             return [[ruleName]]
         }
-        
+
         // 基础情况：level 1
         if (targetLevel === EXPANSION_LIMITS.LEVEL_1) {
             return this.getDirectChildren(ruleName)
@@ -1806,14 +1858,20 @@ MaxLevel 检测结果: 无冲突
         const shouldLog = targetLevel >= EXPANSION_LIMITS.LEVEL_K - 1
         const key = `${ruleName}:${targetLevel}`
         const startTime = shouldLog ? Date.now() : 0
-        
+
+        // 更新当前处理规则（用于超时日志）
+        this.currentProcessingRule = `${ruleName}:Level${targetLevel}`
+
+        // 超时检测
+        this.checkTimeout(`expandPathsByBFSCache-${ruleName}-Level${targetLevel}`)
+
         if (shouldLog) {
             // 检查是否已经存在缓存
             if (this.bfsLevelCache.has(key)) {
                 // 缓存已存在，不输出日志（在调用处已记录）
                 return this.getCacheValue('bfsLevelCache', key)!
             }
-            // console.log(`    🔄 开始生成: ${ruleName}, Level ${targetLevel}, Key: ${key}`)
+            console.log(`    🔄 开始生成: ${ruleName}, Level ${targetLevel}, Key: ${key}`)
         }
 
         // 查找 ruleName 的最近缓存
@@ -1850,22 +1908,95 @@ MaxLevel 检测结果: 无冲突
 
         // 对 cachedPaths 的每个路径递归展开
         const expandedPaths: string[][] = []
-        for (const path of cachedPaths) {
+        const totalPaths = cachedPaths.length
+
+        if (shouldLog) {
+            console.log(`      📍 找到缓存: ${ruleName}:Level${cachedLevel}, 路径数: ${totalPaths}, 需要继续展开 ${remainingLevels} 层`)
+        }
+
+        for (let pathIndex = 0; pathIndex < cachedPaths.length; pathIndex++) {
+            const path = cachedPaths[pathIndex]
+
+            // 超时检测
+            if (pathIndex % 10 === 0 || pathIndex === cachedPaths.length - 1) {
+                this.checkTimeout(`expandPathsByBFSCache-${ruleName}-处理路径${pathIndex + 1}/${totalPaths}`)
+            }
+
+            // 每处理 10 个路径或最后一个路径时输出进度
+            if (shouldLog && (pathIndex % 10 === 0 || pathIndex === cachedPaths.length - 1)) {
+                const elapsed = startTime > 0 ? Date.now() - startTime : 0
+                console.log(`      📊 进度: [${pathIndex + 1}/${totalPaths}] 路径, 已耗时: ${elapsed}ms, 当前路径: [${path.join(', ')}]`)
+            }
+
             const allBranches: string[][][] = []
 
             // 遍历路径中的每个符号，递归展开
-            for (const symbol of path) {
+            for (let symbolIndex = 0; symbolIndex < path.length; symbolIndex++) {
+                const symbol = path[symbolIndex]
+
+                // 超时检测
+                this.checkTimeout(`expandPathsByBFSCache-${ruleName}-展开符号${symbolIndex + 1}/${path.length}:${symbol}`)
+
+                if (shouldLog && path.length > 3) {
+                    console.log(`        🔀 正在展开符号 [${symbolIndex + 1}/${path.length}]: ${symbol}, 剩余层级: ${remainingLevels}`)
+                }
+
+                const symbolStartTime = shouldLog ? Date.now() : 0
                 const result = this.expandPathsByBFSCache(symbol, remainingLevels)
+
+                if (shouldLog && path.length > 3) {
+                    const symbolDuration = Date.now() - symbolStartTime
+                    if (symbolDuration > 50 || result.length > 100) {
+                        console.log(`        ✅ 符号展开完成: ${symbol}, 结果数: ${result.length}, 耗时: ${symbolDuration}ms`)
+                    }
+                }
+
                 allBranches.push(result)
             }
 
             // 笛卡尔积组合
+            const branchSizes = allBranches.map(b => b.length)
+            const estimatedCombinations = branchSizes.reduce((a, b) => a * b, 1)
+
+            if (shouldLog) {
+
+            }
+
+            const cartesianStartTime = Date.now()
+            this.checkTimeout(`expandPathsByBFSCache-${ruleName}-笛卡尔积-路径${pathIndex + 1}-预计${estimatedCombinations}`)
+
             const pathResult = this.cartesianProduct(allBranches, EXPANSION_LIMITS.INFINITY)
+            const cartesianDuration = Date.now() - cartesianStartTime
+
+            // 🔍 总是输出笛卡尔积完成日志（无论结果大小）
+            if (shouldLog) {
+                console.log(`        ✅ 笛卡尔积完成: 结果数: ${pathResult.length}, 预计: ${estimatedCombinations}, 耗时: ${cartesianDuration}ms`)
+            }
+
+            // 超时检测
+            this.checkTimeout(`expandPathsByBFSCache-${ruleName}-路径${pathIndex + 1}-笛卡尔积后`)
+
             expandedPaths.push(...pathResult)
+
+            if (shouldLog && pathIndex < cachedPaths.length - 1) {
+                console.log(`      📊 路径 ${pathIndex + 1} 处理完成，累计结果数: ${expandedPaths.length}`)
+            }
         }
 
         // 去重并缓存
+        if (shouldLog) {
+            console.log(`      📦 所有路径处理完成，开始去重: ${expandedPaths.length} 条路径`)
+        }
+
+        this.checkTimeout(`expandPathsByBFSCache-${ruleName}-去重前`)
+        const dedupeStartTime = shouldLog ? Date.now() : 0
         const finalResult = this.deduplicate(expandedPaths)
+
+        if (shouldLog) {
+            const dedupeDuration = Date.now() - dedupeStartTime
+            console.log(`      ✅ 去重完成: ${expandedPaths.length} → ${finalResult.length}, 耗时: ${dedupeDuration}ms`)
+        }
+
         if (targetLevel <= EXPANSION_LIMITS.LEVEL_K) {
             // 复用之前定义的 key 变量
             if (this.bfsLevelCache.has(key)) {
