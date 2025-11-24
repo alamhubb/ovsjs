@@ -1130,7 +1130,7 @@ MaxLevel 检测结果: 无冲突
 
             // 收集该规则的所有层级数据
             for (let level = 1; level <= EXPANSION_LIMITS.LEVEL_K; level++) {
-            // for (let level = EXPANSION_LIMITS.LEVEL_K; level <= EXPANSION_LIMITS.LEVEL_K; level++) {
+                // for (let level = EXPANSION_LIMITS.LEVEL_K; level <= EXPANSION_LIMITS.LEVEL_K; level++) {
                 const key = `${ruleName}:${level}`
                 if (this.bfsLevelCache.has(key)) {
                     const levelPaths = this.getCacheValue('bfsLevelCache', key)!
@@ -1279,9 +1279,13 @@ MaxLevel 检测结果: 无冲突
             movedToFinal: 0             // 移入最终结果集的数量
         }
 
+        //第一个规则的每种可能性
+        const arrayFirst = arrays[0]
+
+        //第一层顺序，第二层可能性，第三层每种可能性的顺序
         // 初始结果为第一个数组
-        let result = arrays[0].filter(item => item.length < firstK)
-        let finalResult = arrays[0].filter(item => item.length >= firstK).map(item => item.join(EXPANSION_LIMITS.RuleJoinSymbol))
+        let result = arrayFirst.filter(item => item.length < firstK)
+        let finalResult = arrayFirst.filter(item => item.length >= firstK).map(item => item.join(EXPANSION_LIMITS.RuleJoinSymbol))
 
         // 最终结果集（长度已达 FIRST_K 的序列）
         const finalResultSet = new Set<string>(finalResult)
@@ -1306,30 +1310,17 @@ MaxLevel 检测结果: 无冲突
                     this.checkTimeout(`cartesianProduct-seq${seqIndex}`)
                 }
 
+                // 计算当前 seq 的可拼接长度
+                const availableLength = EXPANSION_LIMITS.FIRST_K - seq.length
+
                 // 防御检查：不应该出现超长序列
-                if (seq.length > EXPANSION_LIMITS.FIRST_K) {
+                if (availableLength <= 0) {
                     throw new Error('系统错误：序列长度超过限制')
                 }
 
                 // seq 级别的去重集合
                 const seqDeduplicateSet = new Set<string>()
 
-                // 计算当前 seq 的可拼接长度
-                const availableLength = EXPANSION_LIMITS.FIRST_K - seq.length
-
-                // 情况1：seq 已达到 FIRST_K，直接放入最终结果集
-                if (availableLength === 0) {
-                    const seqKey = seq.join(EXPANSION_LIMITS.RuleJoinSymbol)
-                    finalResultSet.add(seqKey)
-                    perfStats.movedToFinal++
-                    perfStats.skippedByLength += currentArray.length
-                    continue  // 不再参与后续计算
-                }
-
-                // 情况2：seq 超过 FIRST_K（不应该发生，已有防御检查）
-                if (availableLength < 0) {
-                    throw new Error('系统错误：可拼接长度为负')
-                }
 
                 // 情况3：seq 长度 < FIRST_K，继续拼接
                 for (const branch of currentArray) {
