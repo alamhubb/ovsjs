@@ -1464,35 +1464,6 @@ MaxLevel 检测结果: 无冲突
                 throw new Error('系统错误：最终结果长度超过限制')
             }
         }
-
-        // 输出性能统计
-        /*if (perfStats.maxResultSize > 10000 || perfStats.skippedByDuplicate > 1000 || perfStats.movedToFinal > 1000 || perfStats.arrayDedupTotal > 0) {
-            console.log(`📊 笛卡尔积性能统计:`)
-
-            // 数组层面去重统计
-            if (perfStats.arrayDedupTotal > 0) {
-                console.log(`   [数组去重] 原始总数: ${perfStats.arrayOriginalTotal}, 消除重复: ${perfStats.arrayDedupTotal} (${((perfStats.arrayDedupTotal / perfStats.arrayOriginalTotal) * 100).toFixed(2)}%)`)
-            }
-
-            // 计算统计
-            console.log(`   总分支数: ${perfStats.totalBranches}`)
-            console.log(`   因长度已满跳过: ${perfStats.skippedByLength}`)
-            console.log(`   因重复跳过(seq级别): ${perfStats.skippedByDuplicate}`)
-            console.log(`   实际拼接: ${perfStats.actualCombined}`)
-            console.log(`   移入最终结果集: ${perfStats.movedToFinal}`)
-            console.log(`   最终结果: finalSet=${finalResultSet.size}, temp=${result.length}, total=${finalArray.length}`)
-
-            // 计算优化效果
-            const seqLevelOptimization = perfStats.totalBranches > 0 ? ((perfStats.skippedByDuplicate / perfStats.totalBranches) * 100).toFixed(2) : '0.00'
-            console.log(`   seq级别优化率: ${seqLevelOptimization}%`)
-
-            // 计算总体节省的计算量
-            if (perfStats.arrayDedupTotal > 0 && result.length > 0) {
-                const savedCalculations = perfStats.arrayDedupTotal * result.length
-                console.log(`   💡 数组去重节省计算: ${savedCalculations.toLocaleString()} 次循环`)
-            }
-        }*/
-
         // 记录性能数据
         const duration = Date.now() - t0
         const inputSize = arrays.reduce((sum, arr) => sum + arr.length, 0)
