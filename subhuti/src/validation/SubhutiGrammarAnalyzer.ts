@@ -732,39 +732,19 @@ export class SubhutiGrammarAnalyzer {
         pathsFront: string[][],
         pathsBehind: string[][]
     ): { prefix: string, full: string } | null {
-        const frontSet = new Set(pathsFront)
-        const newBehind: string[] = []
 
-        //如果后面的分支里面有和前面分支中一样的内容，剔除掉
-        for (const string of pathsBehind) {
-            if (!frontSet.has(string)) {
-                newBehind.push(string)
-            }
-        }
-        pathsBehind = newBehind
-
-        if (pathsBehind.length > 1000 && pathsBehind.length > newBehind.length) {
-            console.log('去除前')
-            console.log(pathsBehind.length)
-            console.log('去除后')
-            console.log(newBehind.length)
-        }
+        // 过滤掉与 pathsFront 完全相同的路径
+        const uniqueBehind = this.removeDuplicatePaths(pathsFront,pathsBehind)
 
         // 双层循环检测前缀关系（O(n²)）
         for (const pathFront of pathsFront) {
-            for (const pathBehind of pathsBehind) {
+            for (const pathBehind of uniqueBehind) {
                 if (pathFront.length >= pathBehind.length) {
                     continue
                 }
-                // 检测：前面的路径是否是后面路径的前缀
-                // 注意：必须加分隔符以确保是完整的 token 前缀
-                // 例如：'If\x1FLParen\x1FExpression' 是 'If\x1FLParen\x1FExpression\x1FRParen\x1FBlock' 的前缀
-                if (pathBehind.startsWith(pathFront + EXPANSION_LIMITS.RuleJoinSymbol)) {
-                    return {
-                        prefix: pathFront,
-                        full: pathBehind
-                    }
-                }
+
+
+
             }
         }
 
@@ -804,6 +784,8 @@ export class SubhutiGrammarAnalyzer {
         pathsFront: string[][],
         pathsBehind: string[][]
     ) {
+        pathsFront = this.deduplicate(pathsFront)
+        pathsBehind = this.deduplicate(pathsBehind)
 
         // 防御：如果没有可比较的路径，直接返回
         if (pathsBehind.length === 0 || pathsFront.length === 0) {
