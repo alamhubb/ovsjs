@@ -312,7 +312,7 @@ export const EXPANSION_LIMITS = {
     FIRST_K: 3,
 
     LEVEL_1: 1,
-    LEVEL_K: 5,
+    LEVEL_K: 8,
 
     INFINITY: Infinity,
 
@@ -743,6 +743,7 @@ export class SubhutiGrammarAnalyzer {
                 newBehind.push(string)
             }
         }
+        pathsBehind = newBehind
 
         if (pathsBehind.length > 1000 && pathsBehind.length > newBehind.length) {
             console.log('去除前')
@@ -753,10 +754,10 @@ export class SubhutiGrammarAnalyzer {
 
         // 双层循环检测前缀关系（O(n²)）
         for (const pathFront of pathsFront) {
-            for (const pathBehind of newBehind) {
-                if (pathFront.length >= pathBehind.length) {
+            for (const pathBehind of pathsBehind) {
+                /*if (pathFront.length >= pathBehind.length) {
                     return null
-                }
+                }*/
                 // 检测：前面的路径是否是后面路径的前缀
                 // 注意：必须加 ',' 以确保是完整的 token 前缀
                 // 例如：'If,LParen,Expression' 是 'If,LParen,Expression,RParen,Block' 的前缀
