@@ -223,8 +223,8 @@ export class SubhutiDebugRuleTracePrint {
 
 
     public static consoleLog(...strs) {
-        // console.log(...strs)
-        LogUtil.log(strs[0])
+        console.log(...strs)  // 恢复实时输出
+        // LogUtil.log(strs[0])  // 可选：同时写入文件
     }
 
 

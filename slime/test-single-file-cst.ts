@@ -218,7 +218,23 @@ try {
     parser.validate()
 
     // 生成 CST
-    const cst = parser.Script()
+    let cst
+    let parseError: any = null
+    try {
+        cst = parser.Script()
+    } catch (error) {
+        parseError = error
+    } finally {
+        // 即使解析失败，也输出 debug 信息
+        if ((parser as any)._debugger?.autoOutput) {
+            (parser as any)._debugger.autoOutput()
+        }
+    }
+    
+    // 如果解析失败，重新抛出异常
+    if (parseError) {
+        throw parseError
+    }
     
     // CST结构验证
     const structureErrors = validateCSTStructure(cst)
