@@ -702,38 +702,24 @@ export class SubhutiGrammarAnalyzer {
      * @param pathsBehind - 后面分支的路径数组
      * @returns 如果找到完全相同的路径返回该路径，否则返回 null
      */
-    private trieTreeFindEqual(
+    private findEqualPath(
         pathsFront: string[][],
         pathsBehind: string[][]
     ): string[] | null {
         pathsFront = this.deduplicate(pathsFront)
         pathsBehind = this.deduplicate(pathsBehind)
-
-        // 防御：如果没有可比较的路径，直接返回
-        if (pathsBehind.length === 0 || pathsFront.length === 0) {
-            return null
-        }
-
-        // 构建前缀树（O(m*k)，m=pathsBehind.length，k=平均路径长度）
-        const trie = new ArrayTrie()
+        // 时间复杂度：O((m+n)*k)
+        // 空间复杂度：O(m) - 只需要存储字符串
+        const behindSet = new Set<string>()
         for (const path of pathsBehind) {
-            // 将每个路径插入到前缀树中
-            trie.insert(path)
+            behindSet.add(path.join(EXPANSION_LIMITS.RuleJoinSymbol))  // O(k)
         }
-
-        // 查询相等关系（O(n*k)，n=pathsFront.length）
         for (const pathFront of pathsFront) {
-            // 使用前缀树查找完全相同的路径
-            const equalPath = trie.findEqual(pathFront)
-
-            if (equalPath) {
-                // 找到完全相同的路径
+            const key = pathFront.join(EXPANSION_LIMITS.RuleJoinSymbol)  // O(k)
+            if (behindSet.has(key)) {  // O(1)
                 return pathFront
             }
         }
-
-        // 没有找到完全相同的路径
-        return null
     }
 
     /**
@@ -859,7 +845,7 @@ or([A, A, B]) → or([A, B])  // 删除重复的A`
                 const pathsFront = branchPathSets[i]
                 const pathsBehind = branchPathSets[j]
 
-                const equalPath = this.trieTreeFindEqual(pathsFront, pathsBehind)
+                const equalPath = this.findEqualPath(pathsFront, pathsBehind)
 
                 if (equalPath) {
                     // 将路径数组转换为字符串
