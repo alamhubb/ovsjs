@@ -313,7 +313,7 @@ export const EXPANSION_LIMITS = {
     FIRST_K: 3,
 
     LEVEL_1: 1,
-    LEVEL_K: 8,
+    LEVEL_K: 11,
 
     INFINITY: Infinity,
     RuleJoinSymbol: '\x1F',
@@ -1111,7 +1111,6 @@ MaxLevel 检测结果: 无冲突
 
         // 1. 左递归检测（内部会初始化 DFS 缓存和 BFS 缓存）
         const ruleNames = Array.from(this.ruleASTs.keys())
-        const t1 = Date.now()
 
         // 清空错误 Map
         this.detectedLeftRecursionErrors.clear()
@@ -1119,12 +1118,19 @@ MaxLevel 检测结果: 无冲突
         // 启动超时检测
         this.operationStartTime = Date.now()
 
+        // 🔧 修复：分别统计 DFS First(K) 和 BFS MaxLevel 的耗时
+        // 阶段1.1：DFS First(K) 缓存生成（包含左递归检测）
+        const t1_1_start = Date.now()
         for (const ruleName of ruleNames) {
             // 清空递归检测集合
             this.recursiveDetectionSet.clear()
             this.expandPathsByDFSCache(ruleName, EXPANSION_LIMITS.FIRST_K, 0, EXPANSION_LIMITS.INFINITY, true)
         }
+        const t1_1_end = Date.now()
+        stats.dfsFirstKTime = t1_1_end - t1_1_start
 
+        // 阶段1.2：BFS MaxLevel 缓存生成
+        const t1_2_start = Date.now()
         // BFS 缓存预填充
         let totalFilled = 0
 
@@ -1156,6 +1162,8 @@ MaxLevel 检测结果: 无冲突
             // 这导致 BFS 为所有规则名（包括未被引用的和 Token）都创建了缓存
             this.bfsAllCache.set(ruleName, deduplicated)
         }
+        const t1_2_end = Date.now()
+        stats.bfsMaxLevelTime = t1_2_end - t1_2_start
 
         // 重置超时检测
         this.operationStartTime = 0
@@ -1169,13 +1177,6 @@ MaxLevel 检测结果: 无冲突
                 new Set([error.ruleName])
             )
         }
-
-        const t1End = Date.now()
-        const stage1Time = t1End - t1
-
-        // 记录统计信息
-        stats.dfsFirstKTime = stage1Time  // DFS 包含 First(K) 缓存生成
-        stats.bfsMaxLevelTime = stage1Time  // BFS 包含 MaxLevel 缓存生成（两者同时进行）
         stats.leftRecursionCount = this.detectedLeftRecursionErrors.size
 
         const leftRecursionErrors = Array.from(this.detectedLeftRecursionErrors.values())
