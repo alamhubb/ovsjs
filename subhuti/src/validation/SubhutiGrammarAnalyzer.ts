@@ -857,6 +857,29 @@ or([A, A, B]) → or([A, B])  // 删除重复的A`
                         suggestion: this.getEqualBranchSuggestion(ruleName, i, j, equalPathStr)
                     }
                 }
+
+                // 检测前缀冲突
+                const prefixRelation = this.trieTreeFindPrefixMatch(pathsFront, pathsBehind)
+                if (prefixRelation) {
+                    const prefixStr = prefixRelation.prefix.join(EXPANSION_LIMITS.RuleJoinSymbol)
+                    const fullStr = prefixRelation.full.join(EXPANSION_LIMITS.RuleJoinSymbol)
+                    return {
+                        level: 'ERROR',
+                        type: 'prefix-conflict',
+                        ruleName,
+                        branchIndices: [i, j],
+                        conflictPaths: {
+                            pathA: prefixStr,
+                            pathB: fullStr
+                        },
+                        message: `规则 "${ruleName}" 的 Or 分支 ${i + 1} 会遮蔽分支 ${j + 1}（在 First(${firstK}) 阶段检测到）`,
+                        suggestion: this.getPrefixConflictSuggestion(ruleName, i, j, {
+                            prefix: prefixStr,
+                            full: fullStr,
+                            type: 'prefix'
+                        })
+                    }
+                }
             }
         }
     }
