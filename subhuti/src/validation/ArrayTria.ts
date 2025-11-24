@@ -146,6 +146,35 @@ export default class ArrayTrie {
     }
 
     /**
+     * 检查两个路径数组是否完全相同
+     *
+     * 核心逻辑：
+     * 1. 长度必须相同
+     * 2. 逐个比较 token，必须完全相同
+     *
+     * 时间复杂度：O(k)，k=路径长度
+     *
+     * @returns 如果两个路径完全相同返回 true，否则返回 false
+     * @param prefix
+     * @param fullPath
+     */
+    private isEqual(prefix: string[], fullPath: string[]): boolean {
+        // 长度必须相同
+        if (prefix.length !== fullPath.length) {
+            return false
+        }
+
+        // 🔴 核心：逐个比较 token
+        for (let i = 0; i < prefix.length; i++) {
+            if (prefix[i] !== fullPath[i]) {
+                return false
+            }
+        }
+
+        return true
+    }
+
+    /**
      * 检查 prefix 是否是 fullPath 的前缀
      *
      * 核心逻辑：
@@ -156,7 +185,7 @@ export default class ArrayTrie {
      */
     private isPrefix(prefix: string[], fullPath: string[]): boolean {
         // 前缀必须比完整路径短
-        if (prefix.length >= fullPath.length) {
+        if (prefix.length < fullPath.length) {
             return false
         }
 
