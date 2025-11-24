@@ -1133,7 +1133,7 @@ MaxLevel 检测结果: 无冲突
         // 聚合所有层级的数据到 bfsAllCache
         console.log(`\n📦 正在聚合所有层级的数据到 bfsAllCache...`)
         let aggregateIndex = 0
-        for (const ruleName of ruleNames) {
+        /*for (const ruleName of ruleNames) {
             aggregateIndex++
             const aggregateStartTime = Date.now()
             const allLevelPaths: string[][] = []
@@ -1156,7 +1156,7 @@ MaxLevel 检测结果: 无冲突
                 const aggregateDuration = Date.now() - aggregateStartTime
                 console.log(`  [${aggregateIndex}/${ruleNames.length}] 聚合完成: ${ruleName} (耗时: ${aggregateDuration}ms, 路径数: ${deduplicated.length})`)
             }
-        }
+        }*/
 
         const t1_2_end = Date.now()
         stats.bfsMaxLevelTime = t1_2_end - t1_2_start
@@ -1860,6 +1860,7 @@ MaxLevel 检测结果: 无冲突
         targetLevel: number,
         firstK: number = EXPANSION_LIMITS.LEVEL_K,
     ): string[][] {
+
         // 防御检查
         if (targetLevel === 0) {
             throw new Error('系统错误')
@@ -1884,10 +1885,7 @@ MaxLevel 检测结果: 无冲突
             return this.getDirectChildren(ruleName)
         }
 
-        // 🔍 记录开始处理（仅在高层级或首次调用时输出，避免递归日志过多）
-        const shouldLog = targetLevel >= EXPANSION_LIMITS.LEVEL_K - 1
         const key = `${ruleName}:${targetLevel}`
-        const startTime = shouldLog ? Date.now() : 0
 
         // 更新当前处理规则（用于超时日志）
         this.currentProcessingRule = `${ruleName}:Level${targetLevel}`
@@ -1895,14 +1893,18 @@ MaxLevel 检测结果: 无冲突
         // 超时检测
         this.checkTimeout(`expandPathsByBFSCache-${ruleName}-Level${targetLevel}`)
 
-        if (shouldLog) {
-            // 检查是否已经存在缓存
-            if (this.bfsLevelCache.has(key)) {
-                // 缓存已存在，不输出日志（在调用处已记录）
-                return this.getCacheValue('bfsLevelCache', key)!
-            }
-            console.log(`    🔄 开始生成: ${ruleName}, Level ${targetLevel}, Key: ${key}`)
+
+        // 检查是否已经存在缓存
+        if (this.bfsLevelCache.has(key)) {
+            // 缓存已存在，不输出日志（在调用处已记录）
+            console.log('expandPathsByBFSCache chufa缓存')
+            return this.getCacheValue('bfsLevelCache', key)!
         }
+
+        console.log('ruleName4')
+        console.log(ruleName)
+        console.log('targetLevel')
+        console.log(targetLevel)
 
         // 查找 ruleName 的最近缓存
         let cachedLevel = 1
@@ -1912,6 +1914,7 @@ MaxLevel 检测结果: 无冲突
             const cacheKey = `${ruleName}:${level}`
             if (this.bfsLevelCache.has(cacheKey)) {
                 cachedLevel = level
+                console.log('内部触发 chufa缓存')
                 cachedBranches = this.getCacheValue('bfsLevelCache', cacheKey)!
 
                 // 提前返回：找到目标层级
@@ -1920,6 +1923,7 @@ MaxLevel 检测结果: 无冲突
                 }
                 break
             }
+            console.log('没有缓存' + cacheKey)
         }
 
         // 没有找到缓存（不应该发生）
@@ -1940,10 +1944,6 @@ MaxLevel 检测结果: 无冲突
         const expandedPaths: string[][] = []
         const totalPaths = cachedBranches.length
 
-        if (shouldLog) {
-            console.log(`      📍 找到缓存: ${ruleName}:Level${cachedLevel}, 路径数: ${totalPaths}, 需要继续展开 ${remainingLevels} 层`)
-        }
-
         for (let branchIndex = 0; branchIndex < cachedBranches.length; branchIndex++) {
             const branchSeqRules = cachedBranches[branchIndex]
 
@@ -1952,13 +1952,7 @@ MaxLevel 检测结果: 无冲突
                 this.checkTimeout(`expandPathsByBFSCache-${ruleName}-处理路径${branchIndex + 1}/${totalPaths}`)
             }
 
-            // 每处理 10 个路径或最后一个路径时输出进度
-            if (shouldLog && (branchIndex % 10 === 0 || branchIndex === cachedBranches.length - 1)) {
-                const elapsed = startTime > 0 ? Date.now() - startTime : 0
-                console.log(`      📊 进度: [${branchIndex + 1}/${totalPaths}] 路径, 已耗时: ${elapsed}ms, 当前路径: [${branchSeqRules.join(', ')}]`)
-            }
-
-            const allBranches: string[][][] = []
+            const branchAllRuleBranchSeqs: string[][][] = []
 
             // 遍历路径中的每个符号，递归展开
             for (let ruleIndex = 0; ruleIndex < branchSeqRules.length; ruleIndex++) {
@@ -1967,50 +1961,26 @@ MaxLevel 检测结果: 无冲突
                 // 超时检测
                 this.checkTimeout(`expandPathsByBFSCache-${ruleName}-展开符号${ruleIndex + 1}/${branchSeqRules.length}:${ruleName}`)
 
-                console.log(`调用expandPathsByBFSCache:${ruleName}--${remainingLevels}`)
+                // console.log(`调用expandPathsByBFSCache:${ruleName}--${remainingLevels}`)
                 const result = this.expandPathsByBFSCache(ruleName, remainingLevels)
 
-                allBranches.push(result)
+                branchAllRuleBranchSeqs.push(result)
             }
 
-            const pathResult = this.cartesianProduct(allBranches, EXPANSION_LIMITS.INFINITY)
+            const pathResult = this.cartesianProduct(branchAllRuleBranchSeqs, EXPANSION_LIMITS.INFINITY)
 
             // 超时检测
             this.checkTimeout(`expandPathsByBFSCache-${ruleName}-路径${branchIndex + 1}-笛卡尔积后`)
 
             expandedPaths.push(...pathResult)
-
-            if (shouldLog && branchIndex < cachedBranches.length - 1) {
-                console.log(`      📊 路径 ${branchIndex + 1} 处理完成，累计结果数: ${expandedPaths.length}`)
-            }
         }
-
-        // 去重并缓存
-        if (shouldLog) {
-            console.log(`      📦 所有路径处理完成，开始去重: ${expandedPaths.length} 条路径`)
-        }
-
         this.checkTimeout(`expandPathsByBFSCache-${ruleName}-去重前`)
-        const dedupeStartTime = shouldLog ? Date.now() : 0
         const finalResult = this.deduplicate(expandedPaths)
-
-        if (shouldLog) {
-            const dedupeDuration = Date.now() - dedupeStartTime
-            console.log(`      ✅ 去重完成: ${expandedPaths.length} → ${finalResult.length}, 耗时: ${dedupeDuration}ms`)
-        }
 
         if (targetLevel <= EXPANSION_LIMITS.LEVEL_K) {
             // 复用之前定义的 key 变量
             if (this.bfsLevelCache.has(key)) {
                 throw new Error('系统错误')
-            }
-            // 🔍 记录缓存生成完成信息
-            if (shouldLog && startTime > 0) {
-                const duration = Date.now() - startTime
-                // 如果耗时较长或路径数量很多，输出详细信息
-                if (duration > 10 || finalResult.length > 100) {
-                    console.log(`    ✅ 缓存生成完成: ${ruleName}, Level ${targetLevel}, Key: ${key}, 路径数: ${finalResult.length}, 耗时: ${duration}ms`)
-                }
             }
             this.bfsLevelCache.set(key, finalResult)
         }
@@ -2039,6 +2009,7 @@ MaxLevel 检测结果: 无冲突
         console.log(key)
         if (this.bfsLevelCache.has(key)) {
             this.perfAnalyzer.recordCacheHit('getDirectChildren')
+            console.log('getDirectChildren chufa缓存')
             const cached = this.getCacheValue('bfsLevelCache', key)!
             return cached
         }
