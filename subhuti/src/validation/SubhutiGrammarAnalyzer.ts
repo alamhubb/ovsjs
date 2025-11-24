@@ -706,8 +706,6 @@ export class SubhutiGrammarAnalyzer {
         pathsFront: string[][],
         pathsBehind: string[][]
     ): string[] | null {
-        pathsFront = this.deduplicate(pathsFront)
-        pathsBehind = this.deduplicate(pathsBehind)
         // 时间复杂度：O((m+n)*k)
         // 空间复杂度：O(m) - 只需要存储字符串
         const behindSet = new Set<string>()
@@ -733,9 +731,6 @@ export class SubhutiGrammarAnalyzer {
         pathsFront: string[][],
         pathsBehind: string[][]
     ): { prefix: string[], full: string[] } | null {
-        pathsFront = this.deduplicate(pathsFront)
-        pathsBehind = this.deduplicate(pathsBehind)
-
         // 防御：如果没有可比较的路径，直接返回
         if (pathsBehind.length === 0 || pathsFront.length === 0) {
             return null
