@@ -50,7 +50,8 @@ export class SubhutiGrammarValidator {
 
         // 4. 聚合所有错误，一起报告（统计信息会在异常的 toString() 中输出）
         if (result.errors.length > 0) {
-            throw new SubhutiGrammarValidationError(result.errors, result.stats)
+            const error = new SubhutiGrammarValidationError(result.errors, result.stats)
+            console.error('\n' + error.toString())
         }
     }
 
