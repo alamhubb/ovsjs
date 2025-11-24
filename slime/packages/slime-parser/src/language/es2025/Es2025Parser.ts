@@ -2393,18 +2393,6 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                     this.Statement(params)
                 }
             },
-            // for ( ForDeclaration[?Yield, ?Await] in Expression[+In, ?Yield, ?Await] ) Statement[?Yield, ?Await, ?Return]
-            {
-                alt: () => {
-                    this.tokenConsumer.ForTok()
-                    this.tokenConsumer.LParen()
-                    this.ForDeclaration(params)
-                    this.tokenConsumer.InTok()
-                    this.Expression({...params, In: true})
-                    this.tokenConsumer.RParen()
-                    this.Statement(params)
-                }
-            },
             // for ( [lookahead ≠ let [] LeftHandSideExpression[?Yield, ?Await] in Expression[+In, ?Yield, ?Await] ) Statement[?Yield, ?Await, ?Return]
             {
                 alt: () => {
@@ -2412,6 +2400,18 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                     this.tokenConsumer.LParen()
                     this.assertLookaheadNotSequence(['LetTok', 'LBracket'])
                     this.LeftHandSideExpression(params)
+                    this.tokenConsumer.InTok()
+                    this.Expression({...params, In: true})
+                    this.tokenConsumer.RParen()
+                    this.Statement(params)
+                }
+            },
+            // for ( ForDeclaration[?Yield, ?Await] in Expression[+In, ?Yield, ?Await] ) Statement[?Yield, ?Await, ?Return]
+            {
+                alt: () => {
+                    this.tokenConsumer.ForTok()
+                    this.tokenConsumer.LParen()
+                    this.ForDeclaration(params)
                     this.tokenConsumer.InTok()
                     this.Expression({...params, In: true})
                     this.tokenConsumer.RParen()
