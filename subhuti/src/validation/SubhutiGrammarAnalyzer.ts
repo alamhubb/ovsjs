@@ -1287,42 +1287,6 @@ MaxLevel 检测结果: 无冲突
         const result = this.expandPathsByBFSCache(ruleName, EXPANSION_LIMITS.LEVEL_K)
         this.writeLog(`✅ 规则处理完成: ${ruleName}, 结果路径数: ${result.length}`, 0)
         this.writeLog(`退出规则: ${ruleName}, 目标层级: ${EXPANSION_LIMITS.LEVEL_K}`, 0)
-
-        // 按分支分组显示结果
-        this.writeLog(``, 0)
-        this.writeLog(`📋 完整结果 (共 ${result.length} 条路径):`, 0)
-        this.writeLog(`${'='.repeat(80)}`, 0)
-        if (result.length > 0) {
-            // 按第一个符号分组（即按分支分组）
-            const branchGroups = new Map<string, string[][]>()
-
-            for (const path of result) {
-                const firstSymbol = path[0] || '(空)'
-                if (!branchGroups.has(firstSymbol)) {
-                    branchGroups.set(firstSymbol, [])
-                }
-                branchGroups.get(firstSymbol)!.push(path)
-            }
-
-            // 输出每个分支
-            let branchIndex = 1
-            for (const [firstSymbol, paths] of branchGroups) {
-                this.writeLog(``, 0)
-                this.writeLog(`分支 ${branchIndex}: ${firstSymbol} (${paths.length} 条路径)`, 0)
-                this.writeLog(`${'-'.repeat(80)}`, 0)
-
-                paths.forEach((path, index) => {
-                    this.writeLog(`   ${(index + 1).toString().padStart(4, ' ')}. ${path.join(' ')}`, 0)
-                })
-
-                branchIndex++
-            }
-        } else {
-            this.writeLog(`⚠️ 结果为空`, 0)
-        }
-
-        this.writeLog(`${'='.repeat(80)}`, 0)
-        this.writeLog(``, 0)
         /*for (const ruleName of ruleNames) {
             processedCount++
             console.log(`\n[${processedCount}/${ruleNames.length}] 开始处理规则: ${ruleName}`)
@@ -2192,6 +2156,9 @@ MaxLevel 检测结果: 无冲突
         const expandedPaths: string[][] = []
         const totalPaths = cachedBranches.length
 
+        // 如果是最终层级，记录每个分支的结果
+        const branchResults: Array<{branchName: string, paths: string[][]}> = []
+
         for (let branchIndex = 0; branchIndex < cachedBranches.length; branchIndex++) {
             const branchSeqRules = cachedBranches[branchIndex]
 
@@ -2231,6 +2198,15 @@ MaxLevel 检测结果: 无冲突
             // 超时检测
             this.checkTimeout(`expandPathsByBFSCache-${ruleName}-路径${branchIndex + 1}-笛卡尔积后`)
 
+            // 如果是最终层级，记录这个分支的结果
+            if (targetLevel === EXPANSION_LIMITS.LEVEL_K) {
+                const branchName = branchSeqRules.join(' ')
+                branchResults.push({
+                    branchName: branchName,
+                    paths: pathResult
+                })
+            }
+
             expandedPaths.push(...pathResult)
         }
         this.checkTimeout(`expandPathsByBFSCache-${ruleName}-去重前`)
@@ -2244,7 +2220,24 @@ MaxLevel 检测结果: 无冲突
             this.bfsLevelCache.set(key, finalResult)
             this.writeLog(`📦 存储缓存: ${key}, 路径数: ${finalResult.length}`, depth)
         } else if (targetLevel === EXPANSION_LIMITS.LEVEL_K) {
+            // 输出每个分支的结果
+            this.writeLog(``, depth)
+            this.writeLog(`📋 完整结果 (共 ${finalResult.length} 条路径, ${branchResults.length} 个语法分支):`, depth)
+            this.writeLog(`${'='.repeat(80)}`, depth)
 
+            for (let i = 0; i < branchResults.length; i++) {
+                const branch = branchResults[i]
+                this.writeLog(``, depth)
+                this.writeLog(`分支 ${i + 1}: ${branch.branchName} (${branch.paths.length} 条路径)`, depth)
+                this.writeLog(`${'-'.repeat(80)}`, depth)
+
+                branch.paths.forEach((path, index) => {
+                    this.writeLog(`   ${(index + 1).toString().padStart(4, ' ')}. ${path.join(' ')}`, depth)
+                })
+            }
+
+            this.writeLog(`${'='.repeat(80)}`, depth)
+            this.writeLog(``, depth)
         }
         this.writeLog(`◀ 返回: expandPathsByBFSCache(${ruleName}, targetLevel=${targetLevel}), 路径数: ${finalResult.length} [执行完]`, depth)
         return finalResult
