@@ -499,7 +499,7 @@ export class SubhutiGrammarAnalyzer {
         if (this.currentLogStream && this.currentRuleName) {
             this.writeLog('', 0)
             this.writeLog(`========== 结束处理规则: ${this.currentRuleName} ==========`, 0)
-            
+
             // 保存规则名和文件路径，用于重命名
             const ruleName = this.currentRuleName
             // 从当前文件位置向上查找，找到 subhuti 目录
@@ -513,7 +513,7 @@ export class SubhutiGrammarAnalyzer {
                 // CommonJS 方式（如果 __dirname 可用）
                 currentDir = typeof __dirname !== 'undefined' ? __dirname : process.cwd()
             }
-            
+
             let subhutiDir = currentDir
             while (subhutiDir !== path.dirname(subhutiDir)) {
                 const dirName = path.basename(subhutiDir)
@@ -525,22 +525,38 @@ export class SubhutiGrammarAnalyzer {
             const logDir = path.join(subhutiDir, 'logall')
             const executingFilePath = path.join(logDir, `${ruleName}-执行中.log`)
             const completedFilePath = path.join(logDir, `${ruleName}-执行完.log`)
-            
-            // 监听流的 close 事件，确保文件完全关闭后再重命名
-            this.currentLogStream.once('close', () => {
-                if (fs.existsSync(executingFilePath)) {
-                    try {
-                        fs.renameSync(executingFilePath, completedFilePath)
-                    } catch (error) {
-                        // 如果重命名失败（可能文件还在使用中），记录错误但不抛出
-                        console.error(`重命名日志文件失败: ${executingFilePath} -> ${completedFilePath}`, error)
-                    }
+
+            console.log(`[DEBUG] 准备关闭日志流: ${ruleName}`)
+
+            // 同步关闭流并重命名文件
+            try {
+                // 关闭当前流（同步方式）
+                this.currentLogStream.end()
+                this.currentLogStream.destroy()
+                this.currentLogStream = null
+
+                console.log(`[DEBUG] 日志流已关闭，准备重命名文件`)
+                console.log(`[DEBUG] 源文件: ${executingFilePath}`)
+                console.log(`[DEBUG] 目标文件: ${completedFilePath}`)
+
+                // 等待一小段时间确保文件句柄释放
+                // 使用同步方式等待
+                const waitStart = Date.now()
+                while (Date.now() - waitStart < 100) {
+                    // 忙等待 100ms
                 }
-            })
-            
-            // 关闭当前流
-            this.currentLogStream.end()
-            this.currentLogStream = null
+
+                // 检查源文件是否存在
+                if (fs.existsSync(executingFilePath)) {
+                    console.log(`[DEBUG] 源文件存在，开始重命名`)
+                    fs.renameSync(executingFilePath, completedFilePath)
+                    console.log(`✅ 日志文件已重命名: ${ruleName}-执行中.log -> ${ruleName}-执行完.log`)
+                } else {
+                    console.error(`❌ 源文件不存在: ${executingFilePath}`)
+                }
+            } catch (error) {
+                console.error(`❌ 关闭或重命名日志文件失败: ${executingFilePath} -> ${completedFilePath}`, error)
+            }
         }
         this.currentRuleName = null
         this.currentDepth = 0
@@ -1276,14 +1292,16 @@ MaxLevel 检测结果: 无冲突
             
             try {
                 this.expandPathsByBFSCache(ruleName, EXPANSION_LIMITS.LEVEL_K)
+                this.writeLog(`退出规则: ${ruleName}, 目标层级: ${EXPANSION_LIMITS.LEVEL_K}`, 0)
             } catch (error) {
+                this.writeLog(`❌ 规则处理异常: ${ruleName}`, 0)
+                this.writeLog(`错误信息: ${error}`, 0)
                 console.error(`处理规则 ${ruleName} 时出错:`, error)
                 throw error
+            } finally {
+                // 无论成功还是失败，都结束日志记录
+                this.endRuleLogging()
             }
-            
-            this.writeLog(`退出规则: ${ruleName}, 目标层级: ${EXPANSION_LIMITS.LEVEL_K}`, 0)
-            // 结束记录当前规则的日志
-            this.endRuleLogging()
             
             console.log(`[${processedCount}/${ruleNames.length}] 完成处理规则: ${ruleName}`)
         }

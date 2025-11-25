@@ -197,6 +197,20 @@ if (code.length <= 500) {
 }
 
 try {
+    // 清空 logall 目录
+    const logallDir = path.join(__dirname, '../subhuti/logall')
+    if (fs.existsSync(logallDir)) {
+        const files = fs.readdirSync(logallDir)
+        for (const file of files) {
+            fs.unlinkSync(path.join(logallDir, file))
+        }
+        console.log(`🧹 已清空日志目录: ${logallDir}`)
+        console.log(`   清空了 ${files.length} 个文件`)
+    } else {
+        console.log(`📁 日志目录不存在，将在验证时自动创建: ${logallDir}`)
+    }
+    console.log('='.repeat(60))
+
     // 词法分析
     const lexer = new SubhutiLexer(es2025Tokens)
     const tokens = lexer.tokenize(code)
