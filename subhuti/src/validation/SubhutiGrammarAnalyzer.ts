@@ -79,6 +79,8 @@ import type {
 import {SubhutiValidationLogger} from './SubhutiValidationLogger'
 import {list} from "@lerna-lite/publish";
 import ArrayTrie from "./ArrayTria.ts";
+import * as fs from 'fs';
+import * as path from 'path';
 
 /**
  * 左递归错误类型
@@ -371,6 +373,66 @@ export interface GrammarAnalyzerOptions {
 export class SubhutiGrammarAnalyzer {
     /** 正在计算的规则（用于检测循环依赖） */
     private recursiveDetectionSet = new Set<string>()
+
+    /** 当前规则名（用于日志记录） */
+    private currentRuleName: string | null = null
+
+    /** 当前规则的日志文件流 */
+    private currentLogStream: fs.WriteStream | null = null
+
+    /** 当前调用深度（用于缩进） */
+    private currentDepth: number = 0
+
+    /**
+     * 写入日志（使用当前深度控制缩进）
+     */
+    private writeLog(message: string, depth?: number): void {
+        if (this.currentLogStream) {
+            const indent = '  '.repeat(depth !== undefined ? depth : this.currentDepth)
+            this.currentLogStream.write(`${indent}${message}\n`)
+        }
+    }
+
+    /**
+     * 开始记录规则日志
+     */
+    private startRuleLogging(ruleName: string): void {
+        // 结束之前的日志
+        this.endRuleLogging()
+
+        // 设置当前规则和深度
+        this.currentRuleName = ruleName
+        this.currentDepth = 0
+
+        // 创建日志目录
+        const logDir = path.join(__dirname, '../logall')
+        if (!fs.existsSync(logDir)) {
+            fs.mkdirSync(logDir, { recursive: true })
+        }
+
+        // 创建日志文件
+        const logFilePath = path.join(logDir, `${ruleName}.log`)
+        this.currentLogStream = fs.createWriteStream(logFilePath, { encoding: 'utf8' })
+
+        // 写入初始信息
+        this.writeLog(`========== 开始处理规则: ${ruleName} ==========`, 0)
+        this.writeLog(`时间: ${new Date().toISOString()}`, 0)
+        this.writeLog('', 0)
+    }
+
+    /**
+     * 结束记录规则日志
+     */
+    private endRuleLogging(): void {
+        if (this.currentLogStream) {
+            this.writeLog('', 0)
+            this.writeLog(`========== 结束处理规则: ${this.currentRuleName} ==========`, 0)
+            this.currentLogStream.end()
+            this.currentLogStream = null
+        }
+        this.currentRuleName = null
+        this.currentDepth = 0
+    }
 
     // ========================================
     // DFS（深度优先）专属缓存
@@ -1075,9 +1137,15 @@ MaxLevel 检测结果: 无冲突
         // 阶段1.1：DFS First(K) 缓存生成（包含左递归检测）
         const t1_1_start = Date.now()
         for (const ruleName of ruleNames) {
+            // 开始记录当前规则的日志
+            this.startRuleLogging(ruleName)
+            
             // 清空递归检测集合
             this.recursiveDetectionSet.clear()
             this.expandPathsByDFSCache(ruleName, EXPANSION_LIMITS.FIRST_K, 0, EXPANSION_LIMITS.INFINITY, true)
+            
+            // 结束记录当前规则的日志
+            this.endRuleLogging()
         }
         const t1_1_end = Date.now()
         stats.dfsFirstKTime = t1_1_end - t1_1_start
@@ -1091,7 +1159,15 @@ MaxLevel 检测结果: 无冲突
         console.log(`规则总数: ${ruleNames.length}`)
 
         for (const ruleName of ruleNames) {
+            // 开始记录当前规则的日志
+            this.startRuleLogging(ruleName)
+            this.writeLog(`进入规则: ${ruleName}, 目标层级: ${EXPANSION_LIMITS.LEVEL_K}`, 0)
+            
             this.expandPathsByBFSCache(ruleName, EXPANSION_LIMITS.LEVEL_K)
+            
+            this.writeLog(`退出规则: ${ruleName}, 目标层级: ${EXPANSION_LIMITS.LEVEL_K}`, 0)
+            // 结束记录当前规则的日志
+            this.endRuleLogging()
         }
 
 
@@ -1860,6 +1936,7 @@ MaxLevel 检测结果: 无冲突
         targetLevel: number,
         firstK: number = EXPANSION_LIMITS.LEVEL_K,
     ): string[][] {
+        const depth = this.currentDepth
 
         // 防御检查
         if (targetLevel === 0) {
@@ -1882,7 +1959,11 @@ MaxLevel 检测结果: 无冲突
 
         // 基础情况：level 1
         if (targetLevel === EXPANSION_LIMITS.LEVEL_1) {
-            return this.getDirectChildren(ruleName)
+            this.writeLog(`触发 getDirectChildren(${ruleName})`, depth)
+            this.currentDepth = depth + 1
+            const result = this.getDirectChildren(ruleName)
+            this.currentDepth = depth
+            return result
         }
 
         const key = `${ruleName}:${targetLevel}`
@@ -1893,18 +1974,12 @@ MaxLevel 检测结果: 无冲突
         // 超时检测
         this.checkTimeout(`expandPathsByBFSCache-${ruleName}-Level${targetLevel}`)
 
-
         // 检查是否已经存在缓存
         if (this.bfsLevelCache.has(key)) {
-            // 缓存已存在，不输出日志（在调用处已记录）
-            console.log('expandPathsByBFSCache chufa缓存')
-            return this.getCacheValue('bfsLevelCache', key)!
+            const cached = this.getCacheValue('bfsLevelCache', key)!
+            this.writeLog(`✅ BFS缓存命中: ${key}, 路径数: ${cached.length}`, depth)
+            return cached
         }
-
-        console.log('ruleName4')
-        console.log(ruleName)
-        console.log('targetLevel')
-        console.log(targetLevel)
 
         // 查找 ruleName 的最近缓存
         let cachedLevel = 1
@@ -1914,8 +1989,8 @@ MaxLevel 检测结果: 无冲突
             const cacheKey = `${ruleName}:${level}`
             if (this.bfsLevelCache.has(cacheKey)) {
                 cachedLevel = level
-                console.log('内部触发 chufa缓存')
                 cachedBranches = this.getCacheValue('bfsLevelCache', cacheKey)!
+                this.writeLog(`✅ 找到缓存: ${cacheKey}, 路径数: ${cachedBranches.length}`, depth)
 
                 // 提前返回：找到目标层级
                 if (level === targetLevel) {
@@ -1923,13 +1998,15 @@ MaxLevel 检测结果: 无冲突
                 }
                 break
             }
-            console.log('没有缓存' + cacheKey)
         }
 
         // 没有找到缓存（不应该发生）
         if (!cachedBranches) {
+            this.writeLog(`触发 getDirectChildren(${ruleName})`, depth)
             cachedLevel = EXPANSION_LIMITS.LEVEL_1
+            this.currentDepth = depth + 1
             cachedBranches = this.getDirectChildren(ruleName)
+            this.currentDepth = depth
         }
 
         // 计算剩余层数
@@ -1944,28 +2021,6 @@ MaxLevel 检测结果: 无冲突
         const expandedPaths: string[][] = []
         const totalPaths = cachedBranches.length
 
-        // 🔧 性能优化：预先展开所有唯一的子规则，避免重复展开
-        // 收集所有需要展开的子规则（去重）
-        const allSubRulesSet = new Set<string>()
-        for (const branchSeqRules of cachedBranches) {
-            for (const subRuleName of branchSeqRules) {
-                allSubRulesSet.add(subRuleName)
-            }
-        }
-        const allSubRules = Array.from(allSubRulesSet)
-
-        // 🔧 性能优化：预先展开所有唯一的子规则，建立本地缓存
-        const subRuleExpandedCache = new Map<string, string[][]>()
-        for (const subRuleName of allSubRules) {
-            // 超时检测
-            this.checkTimeout(`expandPathsByBFSCache-${ruleName}-预展开子规则${subRuleName}`)
-            
-            // 展开子规则
-            const expanded = this.expandPathsByBFSCache(subRuleName, remainingLevels)
-            subRuleExpandedCache.set(subRuleName, expanded)
-        }
-
-        // 使用预展开的结果，避免重复查询缓存
         for (let branchIndex = 0; branchIndex < cachedBranches.length; branchIndex++) {
             const branchSeqRules = cachedBranches[branchIndex]
 
@@ -1976,12 +2031,18 @@ MaxLevel 检测结果: 无冲突
 
             const branchAllRuleBranchSeqs: string[][][] = []
 
-            // 遍历路径中的每个符号，使用预展开的结果
+            // 遍历路径中的每个符号，递归展开
             for (let ruleIndex = 0; ruleIndex < branchSeqRules.length; ruleIndex++) {
                 const subRuleName = branchSeqRules[ruleIndex]
 
-                // 🔧 性能优化：直接使用预展开的结果，避免重复查询缓存
-                const result = subRuleExpandedCache.get(subRuleName)!
+                // 超时检测
+                this.checkTimeout(`expandPathsByBFSCache-${ruleName}-展开符号${ruleIndex + 1}/${branchSeqRules.length}:${subRuleName}`)
+
+                // 展开子规则（会自动使用 bfsLevelCache 缓存）
+                this.writeLog(`展开子规则: ${subRuleName}, 剩余层数: ${remainingLevels}`, depth)
+                this.currentDepth = depth + 1
+                const result = this.expandPathsByBFSCache(subRuleName, remainingLevels)
+                this.currentDepth = depth
                 branchAllRuleBranchSeqs.push(result)
             }
 
@@ -2022,13 +2083,12 @@ MaxLevel 检测结果: 无冲突
     private getDirectChildren(ruleName: string): string[][] {
         // 1. 优先从 bfsLevelCache 获取 level 1 的数据（懒加载缓存）
         const key = `${ruleName}:${EXPANSION_LIMITS.LEVEL_1}`
+        const depth = this.currentDepth
 
-        console.log('zhixing getDirectChildren')
-        console.log(key)
         if (this.bfsLevelCache.has(key)) {
             this.perfAnalyzer.recordCacheHit('getDirectChildren')
-            console.log('getDirectChildren chufa缓存')
             const cached = this.getCacheValue('bfsLevelCache', key)!
+            this.writeLog(`✅ getDirectChildren缓存命中: ${key}, 路径数: ${cached.length}`, depth)
             return cached
         }
 
@@ -2112,6 +2172,9 @@ MaxLevel 检测结果: 无冲突
             // 查找 firstK 缓存（getCacheValue 会自动记录命中/未命中统计）
             const cached = this.getCacheValue('dfsFirstKCache', ruleName)
             if (cached !== undefined) {
+                // 记录 DFS 缓存命中日志
+                const depth = this.currentDepth
+                this.writeLog(`✅ DFS缓存命中: ${ruleName}, 层级: ${curLevel}, 路径数: ${cached.length}`, depth)
                 const duration = Date.now() - t0
                 this.perfAnalyzer.record('subRuleHandler', duration)
                 return cached
