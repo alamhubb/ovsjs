@@ -396,7 +396,7 @@ class PerformanceAnalyzer {
  * - MAX_BRANCHES：仅用于冲突检测时的路径比较优化
  */
 export const EXPANSION_LIMITS = {
-    FIRST_K: 3,
+    FIRST_K: 4,
     FIRST_Max: 100,
 
     LEVEL_1: 1,
@@ -2073,17 +2073,11 @@ MaxLevel 检测结果: 无冲突
 
             const expandChildStartTime = Date.now()
 
-            // 🔧 修复：计算剩余可用长度
-            // 已用长度 = 前面所有子节点的最短长度之和
-            // 剩余可用长度 = firstK - 已用长度
-            const remainingFirstK = Math.max(1, firstK - minLengthSum)
-
             // 展开当前子节点
             // 💡 传递累积的位置信息：父级是第1个 AND 当前也是第1个
-            // 🔧 修复：传入剩余可用长度，而不是固定的 firstK
             let branches = this.expandNode(
                 nodesToExpand[i],
-                remainingFirstK,  // 使用剩余可用长度
+                firstK,
                 curLevel,
                 maxLevel,
                 isFirstPosition && i === 0  // 累积位置：只有当父级和当前都是第1个时才是 true
@@ -2097,9 +2091,9 @@ MaxLevel 检测结果: 无冲突
                 return []
             }
 
-            // 🔧 修复：截取到剩余可用长度，而不是固定的 firstK
-            branches = branches.map(item => item.slice(0, remainingFirstK));
+            branches = branches.map(item => item.slice(0, firstK));
             allBranches.push(branches);
+
 
             // 找到当前子节点的最短分支长度（安全写法）
             let minLength = Infinity;
