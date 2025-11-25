@@ -396,7 +396,7 @@ class PerformanceAnalyzer {
  * - MAX_BRANCHES：仅用于冲突检测时的路径比较优化
  */
 export const EXPANSION_LIMITS = {
-    FIRST_K: 2,
+    FIRST_K: 5,
     FIRST_Max: 100,
 
     LEVEL_1: 1,
@@ -1341,7 +1341,7 @@ MaxLevel 检测结果: 无冲突
         console.log(`\n📊 开始 DFS First(${EXPANSION_LIMITS.FIRST_K}) 缓存生成...`)
 
         // 遍历所有规则
-        const ruleName = 'PropertyName'
+        const ruleName = 'MemberExpression'
 
         // 清空递归检测集合
         this.recursiveDetectionSet.clear()
@@ -1569,24 +1569,7 @@ MaxLevel 检测结果: 无冲突
     }
 
 
-    /**
-     * 计算笛卡尔积（优化版：先截取再拼接 + seq级别去重 + 提前移入最终结果集）
-     * [[a1, a2], [b1, b2]] → [[a1, b1], [a1, b2], [a2, b1], [a2, b2]]
-     *
-     * ⚠️ 重要：空分支处理
-     * - 空分支 [] 参与笛卡尔积时，会被正常拼接
-     * - [...seq, ...[]] = [...seq]，相当于只保留 seq
-     * - 例如：[[a]] × [[], [b]] → [[a], [a,b]]
-     * - 这正是 option/many 需要的行为：可以跳过或执行
-     *
-     * 🔧 优化策略：
-     * 1. 先计算可拼接长度，避免拼接超长数据
-     * 2. seq 级别去重，提前跳过重复分支
-     * 3. 修复循环逻辑，逐个数组处理
-     * 4. 长度达到 firstK 的序列立即移入最终结果集，不再参与后续计算
-     * 5. 所有序列都达到 firstK 时提前结束，跳过剩余数组
-     */
-    private cartesianProduct(arrays: string[][][], firstK: number): string[][] {
+    private cartesianProductInner1(arrays: string[][][], firstK: number): string[][] {
         const callId = this.perfAnalyzer.startMethod('cartesianProduct')
 
         // 空数组，返回包含一个空序列的数组
@@ -1800,6 +1783,54 @@ MaxLevel 检测结果: 无冲突
         }
         // 记录性能数据
         const inputSize = arrays.reduce((sum, arr) => sum + arr.length, 0)
+        this.perfAnalyzer.endMethod(callId, inputSize, deduplicatedFinalArray.length)
+
+        return deduplicatedFinalArray
+    }
+
+    /**
+     * 计算笛卡尔积（优化版：先截取再拼接 + seq级别去重 + 提前移入最终结果集）
+     * [[a1, a2], [b1, b2]] → [[a1, b1], [a1, b2], [a2, b1], [a2, b2]]
+     *
+     * ⚠️ 重要：空分支处理
+     * - 空分支 [] 参与笛卡尔积时，会被正常拼接
+     * - [...seq, ...[]] = [...seq]，相当于只保留 seq
+     * - 例如：[[a]] × [[], [b]] → [[a], [a,b]]
+     * - 这正是 option/many 需要的行为：可以跳过或执行
+     *
+     * 🔧 优化策略：
+     * 1. 先计算可拼接长度，避免拼接超长数据
+     * 2. seq 级别去重，提前跳过重复分支
+     * 3. 修复循环逻辑，逐个数组处理
+     * 4. 长度达到 firstK 的序列立即移入最终结果集，不再参与后续计算
+     * 5. 所有序列都达到 firstK 时提前结束，跳过剩余数组
+     */
+    private cartesianProduct(arrays: string[][][], firstK: number): string[][] {
+        // 将每个组合中的字符串 split 回数组，然后合并成一个完整路径
+        // 最后截取到 firstK 长度
+        let deduplicatedFinalArray = this.cartesianProductInner1(arrays,firstK)
+        // let deduplicatedFinalArray = this.cartesianProductInner2(arrays,firstK)
+
+        return deduplicatedFinalArray
+    }
+
+    private cartesianProductInner2(arrays: string[][][], firstK: number): string[][] {
+        const callId = this.perfAnalyzer.startMethod('cartesianProduct')
+
+
+        const tempr = fastCartesian(arrays)
+
+        // 将每个组合中的字符串 split 回数组，然后合并成一个完整路径
+        // 最后截取到 firstK 长度
+        let deduplicatedFinalArray = tempr.map(item => {
+            // item 是 string[]，每个元素是一个 join 后的路径字符串
+            // 需要 split 每个字符串，然后 flat 成一个完整路径
+            const combinedPath = item.flat()
+            // 截取到 firstK 长度
+            return combinedPath
+        })
+        const inputSize = arrays.reduce((sum, arr) => sum + arr.length, 0)
+
         this.perfAnalyzer.endMethod(callId, inputSize, deduplicatedFinalArray.length)
 
         return deduplicatedFinalArray
@@ -2042,11 +2073,17 @@ MaxLevel 检测结果: 无冲突
 
             const expandChildStartTime = Date.now()
 
+            // 🔧 修复：计算剩余可用长度
+            // 已用长度 = 前面所有子节点的最短长度之和
+            // 剩余可用长度 = firstK - 已用长度
+            const remainingFirstK = Math.max(1, firstK - minLengthSum)
+
             // 展开当前子节点
             // 💡 传递累积的位置信息：父级是第1个 AND 当前也是第1个
+            // 🔧 修复：传入剩余可用长度，而不是固定的 firstK
             let branches = this.expandNode(
                 nodesToExpand[i],
-                firstK,
+                remainingFirstK,  // 使用剩余可用长度
                 curLevel,
                 maxLevel,
                 isFirstPosition && i === 0  // 累积位置：只有当父级和当前都是第1个时才是 true
@@ -2060,7 +2097,8 @@ MaxLevel 检测结果: 无冲突
                 return []
             }
 
-            branches = branches.map(item => item.slice(0, firstK));
+            // 🔧 修复：截取到剩余可用长度，而不是固定的 firstK
+            branches = branches.map(item => item.slice(0, remainingFirstK));
             allBranches.push(branches);
 
             // 找到当前子节点的最短分支长度（安全写法）
@@ -2089,27 +2127,7 @@ MaxLevel 检测结果: 无冲突
 
         // 调用笛卡尔积
         this.checkTimeout('expandSequenceNode-笛卡尔积前')
-        // const result = this.cartesianProduct(allBranches, firstK)
-
-        // 使用 fastCartesian 计算笛卡尔积
-        // allBranches 是 string[][][]，需要转换为 fastCartesian 需要的格式
-        // 每个子节点的分支需要 join 成字符串，以便 fastCartesian 处理
-        const newData = allBranches.map(item => item.map(it => it.join(EXPANSION_LIMITS.RuleJoinSymbol)))
-        
-        // fastCartesian 返回所有组合，每个组合是一个字符串数组
-        const tempr = fastCartesian(newData)
-        
-        // 将每个组合中的字符串 split 回数组，然后合并成一个完整路径
-        // 最后截取到 firstK 长度
-        let result = tempr.map(item => {
-            // item 是 string[]，每个元素是一个 join 后的路径字符串
-            // 需要 split 每个字符串，然后 flat 成一个完整路径
-            const paths = item.map(it => it.split(EXPANSION_LIMITS.RuleJoinSymbol))
-            const combinedPath = paths.flat()
-            // 截取到 firstK 长度
-            return combinedPath.slice(0, firstK)
-        })
-
+        const result = this.cartesianProduct(allBranches, firstK)
         this.checkTimeout('expandSequenceNode-笛卡尔积后')
 
         // 注意：如果某些节点包含空分支，笛卡尔积后可能产生不同长度的路径
