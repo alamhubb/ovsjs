@@ -32,6 +32,8 @@
   "author": "alamhubb",
   "description": "Automatic conversion between two different programming languages through two grammar files that define the same grammar structure and grammar name",
   "dependencies": {
+    "big-cartesian": "^6.1.1",
+    "fast-cartesian": "^9.0.1",
     "lru-cache": "^11.0.0",
     "mnemonist": "^0.40.3"
   }
