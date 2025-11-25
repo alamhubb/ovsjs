@@ -317,7 +317,7 @@ export const EXPANSION_LIMITS = {
     FIRST_Max: 100,
 
     LEVEL_1: 1,
-    LEVEL_K: 4,
+    LEVEL_K: 3,
 
     INFINITY: Infinity,
     RuleJoinSymbol: '\x1F',
@@ -1281,7 +1281,7 @@ MaxLevel 检测结果: 无冲突
         let processedCount = 0
 
 
-        const ruleName = 'PrimaryExpression'
+        const ruleName = 'AssignmentExpression'
         this.startRuleLogging(ruleName)
         this.writeLog(`进入规则: ${ruleName}, 目标层级: ${EXPANSION_LIMITS.LEVEL_K}`, 0)
         const result = this.expandPathsByBFSCache(ruleName, EXPANSION_LIMITS.LEVEL_K)
