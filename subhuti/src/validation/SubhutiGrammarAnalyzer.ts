@@ -1944,6 +1944,28 @@ MaxLevel 检测结果: 无冲突
         const expandedPaths: string[][] = []
         const totalPaths = cachedBranches.length
 
+        // 🔧 性能优化：预先展开所有唯一的子规则，避免重复展开
+        // 收集所有需要展开的子规则（去重）
+        const allSubRulesSet = new Set<string>()
+        for (const branchSeqRules of cachedBranches) {
+            for (const subRuleName of branchSeqRules) {
+                allSubRulesSet.add(subRuleName)
+            }
+        }
+        const allSubRules = Array.from(allSubRulesSet)
+
+        // 🔧 性能优化：预先展开所有唯一的子规则，建立本地缓存
+        const subRuleExpandedCache = new Map<string, string[][]>()
+        for (const subRuleName of allSubRules) {
+            // 超时检测
+            this.checkTimeout(`expandPathsByBFSCache-${ruleName}-预展开子规则${subRuleName}`)
+            
+            // 展开子规则
+            const expanded = this.expandPathsByBFSCache(subRuleName, remainingLevels)
+            subRuleExpandedCache.set(subRuleName, expanded)
+        }
+
+        // 使用预展开的结果，避免重复查询缓存
         for (let branchIndex = 0; branchIndex < cachedBranches.length; branchIndex++) {
             const branchSeqRules = cachedBranches[branchIndex]
 
@@ -1954,16 +1976,12 @@ MaxLevel 检测结果: 无冲突
 
             const branchAllRuleBranchSeqs: string[][][] = []
 
-            // 遍历路径中的每个符号，递归展开
+            // 遍历路径中的每个符号，使用预展开的结果
             for (let ruleIndex = 0; ruleIndex < branchSeqRules.length; ruleIndex++) {
-                const ruleName = branchSeqRules[ruleIndex]
+                const subRuleName = branchSeqRules[ruleIndex]
 
-                // 超时检测
-                this.checkTimeout(`expandPathsByBFSCache-${ruleName}-展开符号${ruleIndex + 1}/${branchSeqRules.length}:${ruleName}`)
-
-                // console.log(`调用expandPathsByBFSCache:${ruleName}--${remainingLevels}`)
-                const result = this.expandPathsByBFSCache(ruleName, remainingLevels)
-
+                // 🔧 性能优化：直接使用预展开的结果，避免重复查询缓存
+                const result = subRuleExpandedCache.get(subRuleName)!
                 branchAllRuleBranchSeqs.push(result)
             }
 
