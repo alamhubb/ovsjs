@@ -1567,13 +1567,13 @@ MaxLevel 检测结果: 无冲突
                 }
 
                 // 计算当前 seq 的可拼接长度
-                const availableLength = EXPANSION_LIMITS.FIRST_K - seq.length
+                const availableLength = firstK - seq.length
 
-                // 情况2：seq 超过 FIRST_K（不应该发生，已有防御检查）
+                // 情况2：seq 超过 firstK（不应该发生，已有防御检查）
                 if (availableLength < 0) {
                     throw new Error('系统错误：序列长度超过限制')
                 } else if (availableLength === 0) {
-                    // 情况1：seq 已达到 FIRST_K，直接放入最终结果集
+                    // 情况1：seq 已达到 firstK，直接放入最终结果集
                     const seqKey = seq.join(EXPANSION_LIMITS.RuleJoinSymbol)
                     finalResultSet.add(seqKey)
                     perfStats.movedToFinal++
@@ -1617,12 +1617,12 @@ MaxLevel 检测结果: 无冲突
                     const combinedLength = seqLength + truncatedLength
 
                     // 检查拼接后的长度
-                    if (combinedLength > EXPANSION_LIMITS.FIRST_K) {
+                    if (combinedLength > firstK) {
                         throw new Error('系统错误：笛卡尔积拼接后长度超过限制')
                     }
 
                     // 判断拼接后是否达到 FIRST_K
-                    if (combinedLength === EXPANSION_LIMITS.FIRST_K) {
+                    if (combinedLength === firstK) {
                         // 达到最大长度，放入最终结果集
                         // 🔧 性能优化：复用已计算的 seqKey 和 branchKey，避免重复 join
                         const combinedKey = seqKey
@@ -1690,7 +1690,7 @@ MaxLevel 检测结果: 无冲突
 
         // 最终验证
         for (const resultElement of deduplicatedFinalArray) {
-            if (resultElement.length > EXPANSION_LIMITS.FIRST_K) {
+            if (resultElement.length > firstK) {
                 throw new Error('系统错误：最终结果长度超过限制')
             }
         }
