@@ -317,7 +317,7 @@ export const EXPANSION_LIMITS = {
     FIRST_Max: 100,
 
     LEVEL_1: 1,
-    LEVEL_K: 100,
+    LEVEL_K: 10,
 
     INFINITY: Infinity,
     RuleJoinSymbol: '\x1F',
@@ -1639,7 +1639,7 @@ MaxLevel 检测结果: 无冲突
             }
 
             // 更新结果为本轮笛卡尔积（只包含未达到 FIRST_K 的）
-            result = temp
+            result = this.deduplicate(temp)
 
             // 更新统计
             perfStats.maxResultSize = Math.max(perfStats.maxResultSize, result.length + finalResultSet.size)
