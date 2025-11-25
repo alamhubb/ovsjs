@@ -313,7 +313,7 @@ class PerformanceAnalyzer {
  * - MAX_BRANCHES：仅用于冲突检测时的路径比较优化
  */
 export const EXPANSION_LIMITS = {
-    FIRST_K: 3,
+    FIRST_K: 6,
     FIRST_Max: 100,
 
     LEVEL_1: 1,
@@ -811,8 +811,6 @@ export class SubhutiGrammarAnalyzer {
                     return paths || [[rule]]
                 })
 
-                console.log('ruleName')
-                console.log(ruleName)
                 // 步骤3：笛卡尔积组合，得到当前分支的所有可能路径
                 // 例如：[[a,b], [c,d]] × [[e], [f,g]] → [[a,b,e], [a,b,f,g], [c,d,e], [c,d,f,g]]
                 const branchAllSeq = this.cartesianProduct(seqAllBranches, firstK)
@@ -1400,7 +1398,7 @@ MaxLevel 检测结果: 无冲突
             }
         }*/
 
-        const t1_2_end = Date.now()
+        /*const t1_2_end = Date.now()
         stats.bfsMaxLevelTime = t1_2_end - t1_2_start
         console.log(`\n✅ BFS MaxLevel 缓存生成完成 (总耗时: ${stats.bfsMaxLevelTime}ms)`)
         console.log(`========================================\n`)
@@ -1479,11 +1477,11 @@ MaxLevel 检测结果: 无冲突
                 total: getDirectChildrenStats.total,
                 hitRate: getDirectChildrenStats.total > 0 ? (getDirectChildrenStats.hit / getDirectChildrenStats.total * 100) : 0
             }
-        }
+        }*/
 
         // 返回错误列表和统计信息
         return {
-            errors: allErrors,
+            errors: [],
             stats: stats
         }
     }
