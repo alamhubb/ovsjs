@@ -81,6 +81,7 @@ import {list} from "@lerna-lite/publish";
 import ArrayTrie from "./ArrayTria.ts";
 import * as fs from 'fs';
 import * as path from 'path';
+import { fileURLToPath } from 'url';
 
 /**
  * 左递归错误类型
@@ -384,12 +385,21 @@ export class SubhutiGrammarAnalyzer {
     private currentDepth: number = 0
 
     /**
-     * 写入日志（使用当前深度控制缩进）
+     * 写入日志（使用当前深度控制缩进，自动添加文件名前缀）
      */
     private writeLog(message: string, depth?: number): void {
-        if (this.currentLogStream) {
+        if (this.currentLogStream && this.currentRuleName) {
             const indent = '  '.repeat(depth !== undefined ? depth : this.currentDepth)
-            this.currentLogStream.write(`${indent}${message}\n`)
+            const logFileName = `${this.currentRuleName}-执行中.log`
+            const logLine = `${indent}[${logFileName}] ${message}\n`
+            try {
+                this.currentLogStream.write(logLine)
+            } catch (error) {
+                console.error(`写入日志失败: ${logFileName}`, error)
+            }
+        } else {
+            // 如果日志流不存在，输出警告（仅在开发时）
+            // console.warn(`日志流不存在，无法写入: ${message}`)
         }
     }
 
@@ -397,6 +407,7 @@ export class SubhutiGrammarAnalyzer {
      * 开始记录规则日志
      */
     private startRuleLogging(ruleName: string): void {
+        console.log(`🔍 startRuleLogging 被调用: ${ruleName}`)
         // 结束之前的日志
         this.endRuleLogging()
 
@@ -404,29 +415,130 @@ export class SubhutiGrammarAnalyzer {
         this.currentRuleName = ruleName
         this.currentDepth = 0
 
-        // 创建日志目录
-        const logDir = path.join(__dirname, '../logall')
+        // 创建日志目录（相对于 subhuti 目录）
+        // 从当前文件位置向上查找，找到 subhuti 目录
+        // 获取当前文件的目录（兼容 CommonJS 和 ES modules）
+        let currentDir: string
+        try {
+            // ES modules 方式
+            const __filename = fileURLToPath(import.meta.url)
+            currentDir = path.dirname(__filename)
+        } catch {
+            // CommonJS 方式（如果 __dirname 可用）
+            currentDir = typeof __dirname !== 'undefined' ? __dirname : process.cwd()
+        }
+        
+        let subhutiDir = currentDir
+        while (subhutiDir !== path.dirname(subhutiDir)) {
+            const dirName = path.basename(subhutiDir)
+            if (dirName === 'subhuti') {
+                break
+            }
+            subhutiDir = path.dirname(subhutiDir)
+        }
+        const logDir = path.join(subhutiDir, 'logall')
         if (!fs.existsSync(logDir)) {
             fs.mkdirSync(logDir, { recursive: true })
+            console.log(`📁 创建日志目录: ${logDir}`)
+        } else {
+            console.log(`📁 使用日志目录: ${logDir}`)
         }
 
-        // 创建日志文件
-        const logFilePath = path.join(logDir, `${ruleName}.log`)
-        this.currentLogStream = fs.createWriteStream(logFilePath, { encoding: 'utf8' })
-
-        // 写入初始信息
-        this.writeLog(`========== 开始处理规则: ${ruleName} ==========`, 0)
-        this.writeLog(`时间: ${new Date().toISOString()}`, 0)
-        this.writeLog('', 0)
+        // 创建日志文件（执行中状态）
+        const logFilePath = path.join(logDir, `${ruleName}-执行中.log`)
+        console.log(`[DEBUG] 准备创建日志文件: ${logFilePath}`)
+        
+        // 使用同步方式创建文件，确保文件立即存在
+        try {
+            console.log(`[DEBUG] 开始写入文件内容...`)
+            const initialContent = `========== 开始处理规则: ${ruleName} ==========\n时间: ${new Date().toISOString()}\n\n`
+            fs.writeFileSync(logFilePath, initialContent, { encoding: 'utf8', flag: 'w' })
+            console.log(`[DEBUG] fs.writeFileSync 执行完成`)
+            
+            // 验证文件是否创建成功
+            console.log(`[DEBUG] 检查文件是否存在...`)
+            if (fs.existsSync(logFilePath)) {
+                const stats = fs.statSync(logFilePath)
+                console.log(`✅ 日志文件已创建: ${logFilePath}, 大小: ${stats.size} bytes`)
+            } else {
+                console.error(`❌ 文件写入后不存在: ${logFilePath}`)
+                this.currentLogStream = null
+                return
+            }
+            
+            // 创建追加模式的写入流（用于后续写入）
+            console.log(`[DEBUG] 创建文件写入流...`)
+            this.currentLogStream = fs.createWriteStream(logFilePath, { encoding: 'utf8', flags: 'a' })
+            
+            if (!this.currentLogStream) {
+                console.error(`❌ 文件流创建失败: ${logFilePath}`)
+                return
+            }
+            console.log(`[DEBUG] 文件写入流创建成功`)
+            
+            // 监听错误事件
+            this.currentLogStream.on('error', (error) => {
+                console.error(`❌ 日志文件写入错误: ${logFilePath}`, error)
+            })
+            
+        } catch (error: any) {
+            console.error(`❌ 创建日志文件失败: ${logFilePath}`)
+            console.error(`错误类型: ${error?.constructor?.name || typeof error}`)
+            console.error(`错误消息: ${error?.message || String(error)}`)
+            if (error?.stack) {
+                console.error(`错误堆栈:`, error.stack)
+            }
+            this.currentLogStream = null
+        }
     }
 
     /**
      * 结束记录规则日志
      */
     private endRuleLogging(): void {
-        if (this.currentLogStream) {
+        if (this.currentLogStream && this.currentRuleName) {
             this.writeLog('', 0)
             this.writeLog(`========== 结束处理规则: ${this.currentRuleName} ==========`, 0)
+            
+            // 保存规则名和文件路径，用于重命名
+            const ruleName = this.currentRuleName
+            // 从当前文件位置向上查找，找到 subhuti 目录
+            // 获取当前文件的目录（兼容 CommonJS 和 ES modules）
+            let currentDir: string
+            try {
+                // ES modules 方式
+                const __filename = fileURLToPath(import.meta.url)
+                currentDir = path.dirname(__filename)
+            } catch {
+                // CommonJS 方式（如果 __dirname 可用）
+                currentDir = typeof __dirname !== 'undefined' ? __dirname : process.cwd()
+            }
+            
+            let subhutiDir = currentDir
+            while (subhutiDir !== path.dirname(subhutiDir)) {
+                const dirName = path.basename(subhutiDir)
+                if (dirName === 'subhuti') {
+                    break
+                }
+                subhutiDir = path.dirname(subhutiDir)
+            }
+            const logDir = path.join(subhutiDir, 'logall')
+            const executingFilePath = path.join(logDir, `${ruleName}-执行中.log`)
+            const completedFilePath = path.join(logDir, `${ruleName}-执行完.log`)
+            
+            // 监听流的 close 事件，确保文件完全关闭后再重命名
+            this.currentLogStream.once('close', () => {
+                if (fs.existsSync(executingFilePath)) {
+                    try {
+                        fs.renameSync(executingFilePath, completedFilePath)
+                    } catch (error) {
+                        // 如果重命名失败（可能文件还在使用中），记录错误但不抛出
+                        console.error(`重命名日志文件失败: ${executingFilePath} -> ${completedFilePath}`, error)
+                    }
+                }
+            })
+            
+            // 关闭当前流
             this.currentLogStream.end()
             this.currentLogStream = null
         }
@@ -491,7 +603,6 @@ export class SubhutiGrammarAnalyzer {
 
         // 统一记录命中/未命中统计
         if (result !== undefined) {
-            console.log('触发缓存:' + key)
             this.perfAnalyzer.recordCacheHit(cacheType)
         } else {
             this.perfAnalyzer.recordCacheMiss(cacheType)
@@ -1135,17 +1246,12 @@ MaxLevel 检测结果: 无冲突
 
         // 🔧 修复：分别统计 DFS First(K) 和 BFS MaxLevel 的耗时
         // 阶段1.1：DFS First(K) 缓存生成（包含左递归检测）
+        // DFS 阶段不需要日志
         const t1_1_start = Date.now()
         for (const ruleName of ruleNames) {
-            // 开始记录当前规则的日志
-            this.startRuleLogging(ruleName)
-            
             // 清空递归检测集合
             this.recursiveDetectionSet.clear()
             this.expandPathsByDFSCache(ruleName, EXPANSION_LIMITS.FIRST_K, 0, EXPANSION_LIMITS.INFINITY, true)
-            
-            // 结束记录当前规则的日志
-            this.endRuleLogging()
         }
         const t1_1_end = Date.now()
         stats.dfsFirstKTime = t1_1_end - t1_1_start
@@ -1158,17 +1264,30 @@ MaxLevel 检测结果: 无冲突
         console.log(`目标层级: Level 1 到 Level ${EXPANSION_LIMITS.LEVEL_K}`)
         console.log(`规则总数: ${ruleNames.length}`)
 
+        console.log(`\n开始 BFS 缓存生成，规则数量: ${ruleNames.length}`)
+        let processedCount = 0
         for (const ruleName of ruleNames) {
+            processedCount++
+            console.log(`\n[${processedCount}/${ruleNames.length}] 开始处理规则: ${ruleName}`)
+            
             // 开始记录当前规则的日志
             this.startRuleLogging(ruleName)
             this.writeLog(`进入规则: ${ruleName}, 目标层级: ${EXPANSION_LIMITS.LEVEL_K}`, 0)
             
-            this.expandPathsByBFSCache(ruleName, EXPANSION_LIMITS.LEVEL_K)
+            try {
+                this.expandPathsByBFSCache(ruleName, EXPANSION_LIMITS.LEVEL_K)
+            } catch (error) {
+                console.error(`处理规则 ${ruleName} 时出错:`, error)
+                throw error
+            }
             
             this.writeLog(`退出规则: ${ruleName}, 目标层级: ${EXPANSION_LIMITS.LEVEL_K}`, 0)
             // 结束记录当前规则的日志
             this.endRuleLogging()
+            
+            console.log(`[${processedCount}/${ruleNames.length}] 完成处理规则: ${ruleName}`)
         }
+        console.log(`\nBFS 缓存生成完成，共处理 ${processedCount} 个规则`)
 
 
         // BFS 缓存预填充
@@ -1406,24 +1525,7 @@ MaxLevel 检测结果: 无冲突
             for (const seq of result) {
                 const pla = currentArray.length * seq.length
                 if (pla > 30000) {
-                    console.log('当前索引')
-                    console.log(i)
 
-                    console.log('arrays.length')
-                    console.log(arrays.length)
-
-
-                    console.log('result.length')
-                    console.log(result.length)
-
-
-                    console.log('currentArray.length')
-                    console.log(currentArray.length)
-
-                    console.log('seq.length')
-                    console.log(seq.length)
-                    console.log('预计结果:')
-                    console.log(pla)
                 }
 
 
@@ -1841,8 +1943,6 @@ MaxLevel 检测结果: 无冲突
             // 左递归情况，返回空分支
             return []
         }
-        console.log('ruleName2')
-        console.log(ruleName)
         const result = this.cartesianProduct(allBranches, firstK)
         // 注意：如果某些节点包含空分支，笛卡尔积后可能产生不同长度的路径
         return this.truncateAndDeduplicate(result, firstK)
@@ -1955,17 +2055,18 @@ MaxLevel 检测结果: 无冲突
                 this.bfsLevelCache.set(key, result)
                 this.writeLog(`📦 存储缓存: ${key}, 路径数: 1 (Token节点)`, depth)
             }
-            this.writeLog(`◀ 返回: expandPathsByBFSCache(${ruleName}, targetLevel=${targetLevel}), Token节点, 路径数: 1`, depth)
+            this.writeLog(`◀ 返回: expandPathsByBFSCache(${ruleName}, targetLevel=${targetLevel}), Token节点, 路径数: 1 [执行完]`, depth)
             return result
         }
 
         // 基础情况：level 1
         if (targetLevel === EXPANSION_LIMITS.LEVEL_1) {
-            this.writeLog(`触发 getDirectChildren(${ruleName})`, depth)
+            this.writeLog(`触发 getDirectChildren(${ruleName}) [执行中]`, depth)
             this.currentDepth = depth + 1
             const result = this.getDirectChildren(ruleName)
             this.currentDepth = depth
-            this.writeLog(`◀ 返回: expandPathsByBFSCache(${ruleName}, targetLevel=1), 路径数: ${result.length}`, depth)
+            this.writeLog(`触发 getDirectChildren(${ruleName}) [执行完]`, depth)
+            this.writeLog(`◀ 返回: expandPathsByBFSCache(${ruleName}, targetLevel=1), 路径数: ${result.length} [执行完]`, depth)
             return result
         }
 
@@ -1981,7 +2082,7 @@ MaxLevel 检测结果: 无冲突
         if (this.bfsLevelCache.has(key)) {
             const cached = this.getCacheValue('bfsLevelCache', key)!
             this.writeLog(`✅ BFS缓存命中: ${key}, 路径数: ${cached.length}`, depth)
-            this.writeLog(`◀ 返回: expandPathsByBFSCache(${ruleName}, targetLevel=${targetLevel}), 缓存命中, 路径数: ${cached.length}`, depth)
+            this.writeLog(`◀ 返回: expandPathsByBFSCache(${ruleName}, targetLevel=${targetLevel}), 缓存命中, 路径数: ${cached.length} [执行完]`, depth)
             return cached
         }
 
@@ -2000,7 +2101,7 @@ MaxLevel 检测结果: 无冲突
 
                 // 提前返回：找到目标层级
                 if (level === targetLevel) {
-                    this.writeLog(`◀ 返回: expandPathsByBFSCache(${ruleName}, targetLevel=${targetLevel}), 使用缓存, 路径数: ${cachedBranches.length}`, depth)
+                    this.writeLog(`◀ 返回: expandPathsByBFSCache(${ruleName}, targetLevel=${targetLevel}), 使用缓存, 路径数: ${cachedBranches.length} [执行完]`, depth)
                     return cachedBranches
                 }
                 break
@@ -2011,11 +2112,12 @@ MaxLevel 检测结果: 无冲突
 
         // 没有找到缓存（不应该发生）
         if (!cachedBranches) {
-            this.writeLog(`触发 getDirectChildren(${ruleName})`, depth)
+            this.writeLog(`触发 getDirectChildren(${ruleName}) [执行中]`, depth)
             cachedLevel = EXPANSION_LIMITS.LEVEL_1
             this.currentDepth = depth + 1
             cachedBranches = this.getDirectChildren(ruleName)
             this.currentDepth = depth
+            this.writeLog(`触发 getDirectChildren(${ruleName}) [执行完]`, depth)
         }
 
         // 计算剩余层数
@@ -2048,14 +2150,23 @@ MaxLevel 检测结果: 无冲突
                 this.checkTimeout(`expandPathsByBFSCache-${ruleName}-展开符号${ruleIndex + 1}/${branchSeqRules.length}:${subRuleName}`)
 
                 // 展开子规则（会自动使用 bfsLevelCache 缓存）
-                this.writeLog(`展开子规则: ${subRuleName}, 剩余层数: ${remainingLevels}`, depth)
+                this.writeLog(`展开子规则: ${subRuleName}, 剩余层数: ${remainingLevels} [执行中]`, depth)
                 this.currentDepth = depth + 1
                 const result = this.expandPathsByBFSCache(subRuleName, remainingLevels)
                 this.currentDepth = depth
                 branchAllRuleBranchSeqs.push(result)
+                this.writeLog(`展开子规则: ${subRuleName}, 剩余层数: ${remainingLevels} [执行完], 结果数: ${result.length}`, depth)
             }
 
+            // 计算笛卡尔积的总计算量
+            const branchSizes = branchAllRuleBranchSeqs.map(b => b.length)
+            const estimatedCombinations = branchSizes.reduce((a, b) => a * b, 1)
+            const totalInputSize = branchSizes.reduce((a, b) => a + b, 0)
+            this.writeLog(`笛卡尔积计算 [执行中]: 分支数: ${branchAllRuleBranchSeqs.length}, 各分支大小: [${branchSizes.join(', ')}], 预计组合数: ${estimatedCombinations}, 总输入大小: ${totalInputSize}`, depth)
+            
             const pathResult = this.cartesianProduct(branchAllRuleBranchSeqs, EXPANSION_LIMITS.INFINITY)
+            
+            this.writeLog(`笛卡尔积计算 [执行完]: 结果数: ${pathResult.length}, 预计组合数: ${estimatedCombinations}`, depth)
 
             // 超时检测
             this.checkTimeout(`expandPathsByBFSCache-${ruleName}-路径${branchIndex + 1}-笛卡尔积后`)
@@ -2073,7 +2184,7 @@ MaxLevel 检测结果: 无冲突
             this.bfsLevelCache.set(key, finalResult)
             this.writeLog(`📦 存储缓存: ${key}, 路径数: ${finalResult.length}`, depth)
         }
-        this.writeLog(`◀ 返回: expandPathsByBFSCache(${ruleName}, targetLevel=${targetLevel}), 路径数: ${finalResult.length}`, depth)
+        this.writeLog(`◀ 返回: expandPathsByBFSCache(${ruleName}, targetLevel=${targetLevel}), 路径数: ${finalResult.length} [执行完]`, depth)
         return finalResult
     }
 
@@ -2100,7 +2211,7 @@ MaxLevel 检测结果: 无冲突
             this.perfAnalyzer.recordCacheHit('getDirectChildren')
             const cached = this.getCacheValue('bfsLevelCache', key)!
             this.writeLog(`✅ getDirectChildren缓存命中: ${key}, 路径数: ${cached.length}`, depth)
-            this.writeLog(`◀ 返回: getDirectChildren(${ruleName}), 缓存命中, 路径数: ${cached.length}`, depth)
+            this.writeLog(`◀ 返回: getDirectChildren(${ruleName}), 缓存命中, 路径数: ${cached.length} [执行完]`, depth)
             return cached
         }
 
@@ -2112,7 +2223,7 @@ MaxLevel 检测结果: 无冲突
         const tokenNode = this.tokenCache?.get(ruleName)
         if (tokenNode && tokenNode.type === 'consume') {
             const result = [[ruleName]]
-            this.writeLog(`◀ 返回: getDirectChildren(${ruleName}), Token节点, 路径数: 1`, depth)
+            this.writeLog(`◀ 返回: getDirectChildren(${ruleName}), Token节点, 路径数: 1 [执行完]`, depth)
             return result
         }
 
@@ -2140,7 +2251,7 @@ MaxLevel 检测结果: 无冲突
             this.writeLog(`📦 存储BFS缓存: ${key}, 路径数: ${result.length}`, depth)
         }
 
-        this.writeLog(`◀ 返回: getDirectChildren(${ruleName}), 路径数: ${result.length}`, depth)
+        this.writeLog(`◀ 返回: getDirectChildren(${ruleName}), 路径数: ${result.length} [执行完]`, depth)
         return result
     }
 
