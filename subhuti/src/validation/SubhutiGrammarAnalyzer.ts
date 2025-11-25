@@ -313,11 +313,11 @@ class PerformanceAnalyzer {
  * - MAX_BRANCHES：仅用于冲突检测时的路径比较优化
  */
 export const EXPANSION_LIMITS = {
-    FIRST_K: 2,
+    FIRST_K: 3,
     FIRST_Max: 100,
 
     LEVEL_1: 1,
-    LEVEL_K: 2,
+    LEVEL_K: 4,
 
     INFINITY: Infinity,
     RuleJoinSymbol: '\x1F',
@@ -1481,8 +1481,8 @@ MaxLevel 检测结果: 无冲突
      * 1. 先计算可拼接长度，避免拼接超长数据
      * 2. seq 级别去重，提前跳过重复分支
      * 3. 修复循环逻辑，逐个数组处理
-     * 4. 长度达到 FIRST_K 的序列立即移入最终结果集，不再参与后续计算
-     * 5. 所有序列都达到 FIRST_K 时提前结束，跳过剩余数组
+     * 4. 长度达到 firstK 的序列立即移入最终结果集，不再参与后续计算
+     * 5. 所有序列都达到 firstK 时提前结束，跳过剩余数组
      */
     private cartesianProduct(arrays: string[][][], firstK: number): string[][] {
         const t0 = Date.now()
@@ -1621,7 +1621,7 @@ MaxLevel 检测结果: 无冲突
                         throw new Error('系统错误：笛卡尔积拼接后长度超过限制')
                     }
 
-                    // 判断拼接后是否达到 FIRST_K
+                    // 判断拼接后是否达到 firstK
                     if (combinedLength === firstK) {
                         // 达到最大长度，放入最终结果集
                         // 🔧 性能优化：复用已计算的 seqKey 和 branchKey，避免重复 join
@@ -1671,7 +1671,7 @@ MaxLevel 检测结果: 无冲突
         }
 
         // 合并最终结果：finalResultSet + result
-        const finalArray: string[][] = []
+        let finalArray: string[][] = []
 
         // 1. 将 Set 中的字符串转回二维数组
         for (const seqStr of finalResultSet) {
@@ -1683,7 +1683,8 @@ MaxLevel 检测结果: 无冲突
         }
 
         // 2. 添加未达到 FIRST_K 的序列
-        finalArray.push(...result)
+        finalArray = finalArray.concat(result)
+
 
         // 3. 统一去重：使用 this.deduplicate 对最终结果去重
         const deduplicatedFinalArray = this.deduplicate(finalArray)
@@ -1840,18 +1841,6 @@ MaxLevel 检测结果: 无冲突
         // 获取规则名（用于日志和错误提示）
         const ruleName = (node as any).ruleName || '(unnamed)'
 
-        // 🔍 调试：记录 firstK 参数
-        const shouldDebugSeq = node.nodes.length >= 3 && curLevel === 1 && maxLevel === 1
-        if (shouldDebugSeq) {
-            const depth = this.currentDepth
-            this.writeLog(`🔍 调试: expandSequenceNode`, depth)
-            this.writeLog(`  ruleName: ${ruleName}`, depth)
-            this.writeLog(`  firstK: ${firstK}`, depth)
-            this.writeLog(`  curLevel: ${curLevel}`, depth)
-            this.writeLog(`  maxLevel: ${maxLevel}`, depth)
-            this.writeLog(`  nodes.length: ${node.nodes.length}`, depth)
-        }
-
         // 检查是否为空序列
         if (node.nodes.length === 0) {
             // 空序列，返回包含一个空分支
@@ -1930,13 +1919,6 @@ MaxLevel 检测结果: 无冲突
         // 使用计算出的索引进行截取（替换原来的简单 firstK）
         // const nodesToExpand = node.nodes.slice(0, firstK)
         const nodesToExpand = node.nodes.slice(0, expandToIndex)
-
-        // 🔍 调试：记录 expandToIndex
-        if (shouldDebugSeq) {
-            const depth = this.currentDepth
-            this.writeLog(`  expandToIndex: ${expandToIndex}`, depth)
-            this.writeLog(`  nodesToExpand.length: ${nodesToExpand.length}`, depth)
-        }
 
         const allBranches: string[][][] = []
         let minLengthSum = 0  // 累加的最短长度
@@ -2172,7 +2154,7 @@ MaxLevel 检测结果: 无冲突
         }
 
         // 对 cachedPaths 的每个路径递归展开
-        const expandedPaths: string[][] = []
+        let expandedPaths: string[][] = []
         const totalPaths = cachedBranches.length
 
         // 如果是最终层级，记录每个分支的结果
@@ -2226,7 +2208,7 @@ MaxLevel 检测结果: 无冲突
                 })
             }
 
-            expandedPaths.push(...pathResult)
+            expandedPaths = expandedPaths.concat(pathResult)
         }
         this.checkTimeout(`expandPathsByBFSCache-${ruleName}-去重前`)
         const finalResult = this.deduplicate(expandedPaths)
@@ -2310,16 +2292,6 @@ MaxLevel 检测结果: 无冲突
         // 4. 动态计算：展开1层
         // expandPathsByDFS → subRuleHandler 会自动缓存到 "ruleName:1"
         const t0 = Date.now()
-
-        // 🔍 调试：记录调用参数
-        if (ruleName === 'CoverParenthesizedExpressionAndArrowParameterList') {
-            this.writeLog(`🔍 调试: getDirectChildren 调用 expandPathsByDFSCache`, depth)
-            this.writeLog(`  ruleName: ${ruleName}`, depth)
-            this.writeLog(`  firstK: ${EXPANSION_LIMITS.INFINITY}`, depth)
-            this.writeLog(`  curLevel: 0`, depth)
-            this.writeLog(`  maxLevel: ${EXPANSION_LIMITS.LEVEL_1}`, depth)
-        }
-
         const result = this.expandPathsByDFSCache(
             ruleName,
             EXPANSION_LIMITS.INFINITY,
@@ -2333,16 +2305,6 @@ MaxLevel 检测结果: 无冲突
         if (!this.bfsLevelCache.has(key)) {
             this.bfsLevelCache.set(key, result)
             this.writeLog(`📦 存储BFS缓存: ${key}, 路径数: ${result.length}`, depth)
-
-            // 🔍 调试：输出 CoverParenthesizedExpressionAndArrowParameterList 的缓存内容
-            if (ruleName === 'CoverParenthesizedExpressionAndArrowParameterList') {
-                this.writeLog(``, depth)
-                this.writeLog(`🔍 调试: ${ruleName}:1 的缓存内容:`, depth)
-                result.forEach((path, index) => {
-                    this.writeLog(`  ${(index + 1).toString().padStart(2, ' ')}. ${path.join(' ')}`, depth)
-                })
-                this.writeLog(``, depth)
-            }
         }
 
         this.writeLog(`◀ 返回: getDirectChildren(${ruleName}), 路径数: ${result.length} [执行完]`, depth)
@@ -2589,17 +2551,6 @@ MaxLevel 检测结果: 无冲突
             throw new Error('系统错误：Or 节点没有分支')
         }
 
-        // 🔍 调试：记录 Or 节点的展开（只在特定条件下）
-        const shouldDebug = alternatives.length === 7 && firstK === Infinity
-        if (shouldDebug) {
-            const depth = this.currentDepth
-            this.writeLog(`🔍 调试: expandOr (7个分支)`, depth)
-            this.writeLog(`  alternatives.length: ${alternatives.length}`, depth)
-            this.writeLog(`  firstK: ${firstK}`, depth)
-            this.writeLog(`  curLevel: ${curLevel}`, depth)
-            this.writeLog(`  maxLevel: ${maxLevel}`, depth)
-        }
-
         // 存储所有分支的展开结果
         let result: string[][] = []
 
@@ -2608,15 +2559,6 @@ MaxLevel 检测结果: 无冲突
             // 🔴 关键：每个 Or 分支都是独立的起点，第一个位置的规则需要检测左递归
             const branches = this.expandNode(alt, firstK, curLevel, maxLevel, isFirstPosition)
             result = result.concat(branches)
-
-            // 🔍 调试：记录每个分支的结果
-            if (shouldDebug) {
-                const depth = this.currentDepth
-                this.writeLog(`  分支结果: ${branches.length} 条路径`, depth)
-                branches.forEach((path, index) => {
-                    this.writeLog(`    ${index + 1}. ${path.join(' ')}`, depth)
-                })
-            }
         }
 
         // 防御：如果所有分支都没有结果
@@ -2624,25 +2566,8 @@ MaxLevel 检测结果: 无冲突
             throw new Error('系统错误：Or 节点所有分支都没有结果')
         }
 
-        // 🔍 调试：去重前的结果
-        if (shouldDebug) {
-            const depth = this.currentDepth
-            this.writeLog(`  去重前: ${result.length} 条路径`, depth)
-        }
-
         // 只去重，不截取（子节点已经处理过截取）
-        const deduplicated = this.deduplicate(result)
-
-        // 🔍 调试：去重后的结果
-        if (shouldDebug) {
-            const depth = this.currentDepth
-            this.writeLog(`  去重后: ${deduplicated.length} 条路径`, depth)
-            deduplicated.forEach((path, index) => {
-                this.writeLog(`    ${index + 1}. ${path.join(' ')}`, depth)
-            })
-        }
-
-        return deduplicated
+        return this.deduplicate(result)
     }
 
 
