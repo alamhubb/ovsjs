@@ -313,7 +313,7 @@ class PerformanceAnalyzer {
  * - MAX_BRANCHES：仅用于冲突检测时的路径比较优化
  */
 export const EXPANSION_LIMITS = {
-    FIRST_K: 6,
+    FIRST_K: 5,
     FIRST_Max: 100,
 
     LEVEL_1: 1,
