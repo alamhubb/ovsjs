@@ -1953,7 +1953,9 @@ MaxLevel 检测结果: 无冲突
             const key = `${ruleName}:${EXPANSION_LIMITS.LEVEL_1}`
             if (!this.bfsLevelCache.has(key)) {
                 this.bfsLevelCache.set(key, result)
+                this.writeLog(`📦 存储缓存: ${key}, 路径数: 1 (Token节点)`, depth)
             }
+            this.writeLog(`◀ 返回: expandPathsByBFSCache(${ruleName}, targetLevel=${targetLevel}), Token节点, 路径数: 1`, depth)
             return result
         }
 
@@ -1963,6 +1965,7 @@ MaxLevel 检测结果: 无冲突
             this.currentDepth = depth + 1
             const result = this.getDirectChildren(ruleName)
             this.currentDepth = depth
+            this.writeLog(`◀ 返回: expandPathsByBFSCache(${ruleName}, targetLevel=1), 路径数: ${result.length}`, depth)
             return result
         }
 
@@ -1978,8 +1981,11 @@ MaxLevel 检测结果: 无冲突
         if (this.bfsLevelCache.has(key)) {
             const cached = this.getCacheValue('bfsLevelCache', key)!
             this.writeLog(`✅ BFS缓存命中: ${key}, 路径数: ${cached.length}`, depth)
+            this.writeLog(`◀ 返回: expandPathsByBFSCache(${ruleName}, targetLevel=${targetLevel}), 缓存命中, 路径数: ${cached.length}`, depth)
             return cached
         }
+
+        this.writeLog(`❌ BFS缓存未命中: ${key}`, depth)
 
         // 查找 ruleName 的最近缓存
         let cachedLevel = 1
@@ -1994,9 +2000,12 @@ MaxLevel 检测结果: 无冲突
 
                 // 提前返回：找到目标层级
                 if (level === targetLevel) {
+                    this.writeLog(`◀ 返回: expandPathsByBFSCache(${ruleName}, targetLevel=${targetLevel}), 使用缓存, 路径数: ${cachedBranches.length}`, depth)
                     return cachedBranches
                 }
                 break
+            } else {
+                this.writeLog(`❌ 没有缓存: ${cacheKey}`, depth)
             }
         }
 
@@ -2062,7 +2071,9 @@ MaxLevel 检测结果: 无冲突
                 throw new Error('系统错误')
             }
             this.bfsLevelCache.set(key, finalResult)
+            this.writeLog(`📦 存储缓存: ${key}, 路径数: ${finalResult.length}`, depth)
         }
+        this.writeLog(`◀ 返回: expandPathsByBFSCache(${ruleName}, targetLevel=${targetLevel}), 路径数: ${finalResult.length}`, depth)
         return finalResult
     }
 
@@ -2089,16 +2100,20 @@ MaxLevel 检测结果: 无冲突
             this.perfAnalyzer.recordCacheHit('getDirectChildren')
             const cached = this.getCacheValue('bfsLevelCache', key)!
             this.writeLog(`✅ getDirectChildren缓存命中: ${key}, 路径数: ${cached.length}`, depth)
+            this.writeLog(`◀ 返回: getDirectChildren(${ruleName}), 缓存命中, 路径数: ${cached.length}`, depth)
             return cached
         }
 
         // 缓存未命中，需要动态计算
         this.perfAnalyzer.recordCacheMiss('getDirectChildren')
+        this.writeLog(`❌ getDirectChildren缓存未命中: ${key}`, depth)
 
         // 2. 检查是否是 token
         const tokenNode = this.tokenCache?.get(ruleName)
         if (tokenNode && tokenNode.type === 'consume') {
-            return [[ruleName]]
+            const result = [[ruleName]]
+            this.writeLog(`◀ 返回: getDirectChildren(${ruleName}), Token节点, 路径数: 1`, depth)
+            return result
         }
 
         // 3. 获取规则的 AST 节点
@@ -2122,8 +2137,10 @@ MaxLevel 检测结果: 无冲突
         // 缓存计算结果（懒加载填充）
         if (!this.bfsLevelCache.has(key)) {
             this.bfsLevelCache.set(key, result)
+            this.writeLog(`📦 存储BFS缓存: ${key}, 路径数: ${result.length}`, depth)
         }
 
+        this.writeLog(`◀ 返回: getDirectChildren(${ruleName}), 路径数: ${result.length}`, depth)
         return result
     }
 
@@ -2172,9 +2189,7 @@ MaxLevel 检测结果: 无冲突
             // 查找 firstK 缓存（getCacheValue 会自动记录命中/未命中统计）
             const cached = this.getCacheValue('dfsFirstKCache', ruleName)
             if (cached !== undefined) {
-                // 记录 DFS 缓存命中日志
-                const depth = this.currentDepth
-                this.writeLog(`✅ DFS缓存命中: ${ruleName}, 层级: ${curLevel}, 路径数: ${cached.length}`, depth)
+                // DFS 不需要日志
                 const duration = Date.now() - t0
                 this.perfAnalyzer.record('subRuleHandler', duration)
                 return cached
