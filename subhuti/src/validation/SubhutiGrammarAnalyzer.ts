@@ -396,7 +396,7 @@ class PerformanceAnalyzer {
  * - MAX_BRANCHES：仅用于冲突检测时的路径比较优化
  */
 export const EXPANSION_LIMITS = {
-    FIRST_K: 6,
+    FIRST_K: 2,
     FIRST_Max: 100,
 
     LEVEL_1: 1,
@@ -1305,80 +1305,6 @@ MaxLevel 检测结果: 无冲突
 
 
     /**
-     * 计算规则树的深度（从根节点到最深叶子节点的距离）
-     *
-     * @param node 规则节点
-     * @param visited 已访问的规则名集合（防止循环引用）
-     * @returns 树的深度
-     */
-    private calculateRuleDepth(node: RuleNode, visited: Set<string> = new Set()): number {
-        switch (node.type) {
-            case 'consume':
-                // Token 节点：深度为 1
-                return 1
-
-            case 'subrule':
-                // 子规则引用：递归计算子规则的深度
-                if (visited.has(node.ruleName)) {
-                    // 循环引用，返回 1（避免无限递归）
-                    return 1
-                }
-                visited.add(node.ruleName)
-                const subRuleNode = this.ruleASTs.get(node.ruleName)
-                if (!subRuleNode) {
-                    return 1
-                }
-                return 1 + this.calculateRuleDepth(subRuleNode, visited)
-
-            case 'or':
-                // Or 节点：取所有分支的最大深度
-                if (node.alternatives.length === 0) {
-                    return 1
-                }
-                return 1 + Math.max(...node.alternatives.map(alt =>
-                    this.calculateRuleDepth(alt, new Set(visited))
-                ))
-
-            case 'sequence':
-                // Sequence 节点：取所有子节点的最大深度
-                if (node.nodes.length === 0) {
-                    return 1
-                }
-                return 1 + Math.max(...node.nodes.map(child =>
-                    this.calculateRuleDepth(child, new Set(visited))
-                ))
-
-            case 'option':
-            case 'many':
-            case 'atLeastOne':
-                // Option/Many/AtLeastOne 节点：递归计算内部节点深度
-                return 1 + this.calculateRuleDepth(node.node, new Set(visited))
-
-            default:
-                return 1
-        }
-    }
-
-    /**
-     * 计算所有规则的深度并排序
-     *
-     * @returns 按深度排序的规则名数组（最浅的在前）
-     */
-    private calculateAndSortRulesByDepth(): Array<{ ruleName: string, depth: number }> {
-        const ruleDepths: Array<{ ruleName: string, depth: number }> = []
-
-        for (const [ruleName, ruleNode] of this.ruleASTs.entries()) {
-            const depth = this.calculateRuleDepth(ruleNode)
-            ruleDepths.push({ruleName, depth})
-        }
-
-        // 按深度排序，最浅的在前
-        ruleDepths.sort((a, b) => a.depth - b.depth)
-
-        return ruleDepths
-    }
-
-    /**
      * 初始化缓存（遍历所有规则，计算直接子节点、First 集合和分层展开）
      *
      * 应该在收集 AST 之后立即调用
@@ -1406,59 +1332,41 @@ MaxLevel 检测结果: 无冲突
             }
         }
 
-        // 1. 计算所有规则的深度并排序（优化：从最浅的开始展开）
-        console.log(`\n📊 ===== 计算规则树深度并排序 =====`)
-        const ruleDepths = this.calculateAndSortRulesByDepth()
-        console.log(`规则总数: ${ruleDepths.length}`)
-        console.log(`深度范围: ${ruleDepths[0]?.depth || 0} ~ ${ruleDepths[ruleDepths.length - 1]?.depth || 0}`)
-        console.log(`前10个最浅的规则:`)
-        ruleDepths.slice(0, 10).forEach(({ruleName, depth}, index) => {
-            console.log(`  ${index + 1}. ${ruleName} (深度: ${depth})`)
-        })
-        console.log(`\n开始按深度顺序展开规则（从最浅开始）...\n`)
-
         // 清空错误 Map
         this.detectedLeftRecursionErrors.clear()
 
         // 🔧 修复：分别统计 DFS First(K) 和 BFS MaxLevel 的耗时
         // 阶段1.1：DFS First(K) 缓存生成（包含左递归检测）
-        // 🚀 优化：按深度排序，从最浅的开始展开
         const t1_1_start = Date.now()
+        console.log(`\n📊 开始 DFS First(${EXPANSION_LIMITS.FIRST_K}) 缓存生成...`)
 
-        // 按深度顺序展开所有规则
-        for (let i = 0; i < ruleDepths.length; i++) {
-            const {ruleName, depth} = ruleDepths[i]
+        // 遍历所有规则
+        const ruleName = 'PropertyName'
 
-            // 清空递归检测集合
-            this.recursiveDetectionSet.clear()
+        // 清空递归检测集合
+        this.recursiveDetectionSet.clear()
 
-            // 启动日志记录
-            this.startRuleLogging(ruleName)
+        // 启动日志记录
+        this.startRuleLogging(ruleName)
 
-            // 调用 DFS 展开
-            const finalResult = this.expandPathsByDFSCache(ruleName, EXPANSION_LIMITS.FIRST_K, 0, EXPANSION_LIMITS.INFINITY, true)
+        // 调用 DFS 展开
+        const finalResult = this.expandPathsByDFSCache(ruleName, EXPANSION_LIMITS.FIRST_K, 0, EXPANSION_LIMITS.INFINITY, true)
 
-            // 输出 DFS 展开结果（所有路径）
-            this.writeLog(``)
-            this.writeLog(`📋 DFS First(${EXPANSION_LIMITS.FIRST_K}) 完整结果 (共 ${finalResult.length} 条路径):`)
-            this.writeLog(`${'='.repeat(80)}`)
+        // 输出 DFS 展开结果（所有路径）
+        this.writeLog(``)
+        this.writeLog(`📋 DFS First(${EXPANSION_LIMITS.FIRST_K}) 完整结果 (共 ${finalResult.length} 条路径):`)
+        this.writeLog(`${'='.repeat(80)}`)
 
-            // 输出所有路径
-            finalResult.forEach((path, index) => {
-                this.writeLog(`  ${(index + 1).toString().padStart(5, ' ')}. ${path.join(' ')}`)
-            })
+        // 输出所有路径
+        finalResult.forEach((path, index) => {
+            this.writeLog(`  ${(index + 1).toString().padStart(5, ' ')}. ${path.join(' ')}`)
+        })
 
-            this.writeLog(`${'='.repeat(80)}`)
-            this.writeLog(``)
+        this.writeLog(`${'='.repeat(80)}`)
+        this.writeLog(``)
 
-            // 结束日志记录
-            this.endRuleLogging()
-
-            // 每处理10个规则输出一次进度
-            if ((i + 1) % 10 === 0 || i === ruleDepths.length - 1) {
-                console.log(`[${i + 1}/${ruleDepths.length}] 已处理: ${ruleName} (深度: ${depth}, 路径数: ${finalResult.length})`)
-            }
-        }
+        // 结束日志记录
+        this.endRuleLogging()
 
         const t1_1_end = Date.now()
         stats.dfsFirstKTime = t1_1_end - t1_1_start
@@ -1469,9 +1377,7 @@ MaxLevel 检测结果: 无冲突
         const t1_2_start = Date.now()
         console.log(`\n📦 ===== BFS MaxLevel 缓存生成开始 =====`)
         console.log(`目标层级: Level 1 到 Level ${EXPANSION_LIMITS.LEVEL_K}`)
-        console.log(`规则总数: ${ruleDepths.length}`)
 
-        console.log(`\n开始 BFS 缓存生成，规则数量: ${ruleDepths.length}`)
         let processedCount = 0
 
 
@@ -2185,15 +2091,24 @@ MaxLevel 检测结果: 无冲突
         this.checkTimeout('expandSequenceNode-笛卡尔积前')
         // const result = this.cartesianProduct(allBranches, firstK)
 
-        console.log(111111)
-
+        // 使用 fastCartesian 计算笛卡尔积
+        // allBranches 是 string[][][]，需要转换为 fastCartesian 需要的格式
+        // 每个子节点的分支需要 join 成字符串，以便 fastCartesian 处理
         const newData = allBranches.map(item => item.map(it => it.join(EXPANSION_LIMITS.RuleJoinSymbol)))
-
-        console.log(newData)
-
+        
+        // fastCartesian 返回所有组合，每个组合是一个字符串数组
         const tempr = fastCartesian(newData)
-
-        let result = tempr.map(item => item.map(it => it.split(EXPANSION_LIMITS.RuleJoinSymbol).slice(0, EXPANSION_LIMITS.FIRST_K))).flat()
+        
+        // 将每个组合中的字符串 split 回数组，然后合并成一个完整路径
+        // 最后截取到 firstK 长度
+        let result = tempr.map(item => {
+            // item 是 string[]，每个元素是一个 join 后的路径字符串
+            // 需要 split 每个字符串，然后 flat 成一个完整路径
+            const paths = item.map(it => it.split(EXPANSION_LIMITS.RuleJoinSymbol))
+            const combinedPath = paths.flat()
+            // 截取到 firstK 长度
+            return combinedPath.slice(0, firstK)
+        })
 
         this.checkTimeout('expandSequenceNode-笛卡尔积后')
 
