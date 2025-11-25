@@ -2396,7 +2396,7 @@ MaxLevel 检测结果: 无冲突
 
                 // 返回空数组，中断当前分支的计算
                 this.perfAnalyzer.cacheStats.recursiveReturn++
-                return []
+                return [[ruleName]]
             } else {
                 // 不在第一个位置递归 → 普通递归
                 // 返回规则名，防止无限递归
