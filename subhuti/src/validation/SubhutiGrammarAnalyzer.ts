@@ -2185,7 +2185,11 @@ MaxLevel 检测结果: 无冲突
         this.checkTimeout('expandSequenceNode-笛卡尔积前')
         // const result = this.cartesianProduct(allBranches, firstK)
 
+        console.log(111111)
+
         const newData = allBranches.map(item => item.map(it => it.join(EXPANSION_LIMITS.RuleJoinSymbol)))
+
+        console.log(newData)
 
         const tempr = fastCartesian(newData)
 
