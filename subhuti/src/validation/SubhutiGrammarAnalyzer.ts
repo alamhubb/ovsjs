@@ -396,7 +396,7 @@ class PerformanceAnalyzer {
  * - MAX_BRANCHES：仅用于冲突检测时的路径比较优化
  */
 export const EXPANSION_LIMITS = {
-    FIRST_K: 5,
+    FIRST_K: 3,
     FIRST_Max: 100,
 
     LEVEL_1: 1,
@@ -2394,8 +2394,14 @@ MaxLevel 检测结果: 无冲突
             if (this.bfsLevelCache.has(key)) {
                 throw new Error('系统错误')
             }
-            this.bfsLevelCache.set(key, finalResult)
-            this.writeLog(`📦 存储缓存: ${key}, 路径数: ${finalResult.length}`, depth)
+            // 🔧 优化：如果结果是规则名本身（未展开），不加入缓存
+            const shouldCache = !this.isRuleNameOnly(finalResult, ruleName)
+            if (shouldCache) {
+                this.bfsLevelCache.set(key, finalResult)
+                this.writeLog(`📦 存储缓存: ${key}, 路径数: ${finalResult.length}`, depth)
+            } else {
+                this.writeLog(`⚠️ 跳过缓存（规则名本身）: ${key}`, depth)
+            }
         } else if (targetLevel === EXPANSION_LIMITS.LEVEL_K) {
             // 输出每个分支的结果
             this.writeLog(``, depth)
@@ -2478,9 +2484,13 @@ MaxLevel 检测结果: 无冲突
         const duration = Date.now() - t0
 
         // 缓存计算结果（懒加载填充）
-        if (!this.bfsLevelCache.has(key)) {
+        // 🔧 优化：如果结果是规则名本身（未展开），不加入缓存
+        const shouldCache = !this.isRuleNameOnly(result, ruleName)
+        if (shouldCache && !this.bfsLevelCache.has(key)) {
             this.bfsLevelCache.set(key, result)
             this.writeLog(`📦 存储BFS缓存: ${key}, 路径数: ${result.length}`, depth)
+        } else if (!shouldCache) {
+            this.writeLog(`⚠️ 跳过缓存（规则名本身）: ${key}`, depth)
         }
 
         this.writeLog(`◀ 返回: getDirectChildren(${ruleName}), 路径数: ${result.length} [执行完]`, depth)
@@ -2601,16 +2611,20 @@ MaxLevel 检测结果: 无冲突
             // 阶段4：DFS 缓存设置（在任何层级都缓存！）
             // ========================================
 
+            // 🔧 优化：如果结果是规则名本身（未展开），不加入缓存
+            // 这样可以避免缓存污染，后续查找缓存时不会返回未展开的规则名
+            const shouldCache = !this.isRuleNameOnly(finalResult, ruleName)
+
             if (firstK === EXPANSION_LIMITS.FIRST_K) {
                 // DFS 主缓存：计算和缓存 firstK
-                if (!this.dfsFirstKCache.has(ruleName)) {
+                if (shouldCache && !this.dfsFirstKCache.has(ruleName)) {
                     // 🔧 注意：这里不应该 recordCacheMiss，因为未命中已经在前面记录过了
                     this.dfsFirstKCache.set(ruleName, finalResult)
                 }
             } else if (firstK === EXPANSION_LIMITS.INFINITY) {
                 if (maxLevel === EXPANSION_LIMITS.LEVEL_1) {
                     const key = ruleName + `:${EXPANSION_LIMITS.LEVEL_1}`
-                    if (!this.bfsLevelCache.has(key)) {
+                    if (shouldCache && !this.bfsLevelCache.has(key)) {
                         this.bfsLevelCache.set(key, finalResult)
                     }
                 }
@@ -2623,6 +2637,23 @@ MaxLevel 检测结果: 无冲突
         }
     }
 
+
+    /**
+     * 判断展开结果是否是规则名本身（未展开）
+     * 
+     * 规则名本身的情况：[[ruleName]] - 只有一个路径，且这个路径只有一个元素，就是这个规则名
+     * 
+     * @param result 展开结果
+     * @param ruleName 规则名
+     * @returns 如果是规则名本身返回 true，否则返回 false
+     */
+    private isRuleNameOnly(result: string[][], ruleName: string): boolean {
+        // 规则名本身的情况：[[ruleName]] - 只有一个路径，且这个路径只有一个元素
+        if (result.length === 1 && result[0].length === 1 && result[0][0] === ruleName) {
+            return true
+        }
+        return false
+    }
 
     /**
      * 去重：移除重复的分支
