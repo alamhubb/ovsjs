@@ -1259,41 +1259,35 @@ MaxLevel 检测结果: 无冲突
 
         // 🔧 修复：分别统计 DFS First(K) 和 BFS MaxLevel 的耗时
         // 阶段1.1：DFS First(K) 缓存生成（包含左递归检测）
-        // DFS 阶段不需要日志
         const t1_1_start = Date.now()
-
         const ruleName = 'AssignmentExpression'
-        this.startRuleLogging(ruleName)
-
         // for (const ruleName of ruleNames) {
             // 清空递归检测集合
             this.recursiveDetectionSet.clear()
 
-            // 清空分支结果收集器
-            this.dfsBranchResults = []
+            // 启动日志记录
+            this.startRuleLogging(ruleName)
 
-            // 调用 DFS 展开，并收集分支结果
-            const finalResult = this.expandPathsByDFSCache(ruleName, EXPANSION_LIMITS.FIRST_K, 0, EXPANSION_LIMITS.INFINITY, true, true)
+            // 调用 DFS 展开
+            const finalResult = this.expandPathsByDFSCache(ruleName, EXPANSION_LIMITS.FIRST_K, 0, EXPANSION_LIMITS.INFINITY, true)
 
-            // 输出每个分支的结果
+            // 输出 DFS 展开结果（所有路径）
             this.writeLog(``)
-            this.writeLog(`📋 完整结果 (共 ${finalResult.length} 条路径, ${this.dfsBranchResults.length} 个语法分支):`)
+            this.writeLog(`📋 DFS First(${EXPANSION_LIMITS.FIRST_K}) 完整结果 (共 ${finalResult.length} 条路径):`)
             this.writeLog(`${'='.repeat(80)}`)
 
-            for (let i = 0; i < this.dfsBranchResults.length; i++) {
-                const branch = this.dfsBranchResults[i]
-                this.writeLog(``)
-                this.writeLog(`分支 ${i + 1}: ${branch.branchName} (${branch.paths.length} 条路径)`)
-                this.writeLog(`${'-'.repeat(80)}`)
-
-                branch.paths.forEach((path, index) => {
-                    this.writeLog(`      ${(index + 1).toString().padStart(2, ' ')}. ${path.join(' ')}`)
-                })
-            }
+            // 输出所有路径
+            finalResult.forEach((path, index) => {
+                this.writeLog(`  ${(index + 1).toString().padStart(5, ' ')}. ${path.join(' ')}`)
+            })
 
             this.writeLog(`${'='.repeat(80)}`)
             this.writeLog(``)
+
+            // 结束日志记录
+            this.endRuleLogging()
         // }
+
         const t1_1_end = Date.now()
         stats.dfsFirstKTime = t1_1_end - t1_1_start
 
@@ -1770,8 +1764,7 @@ MaxLevel 检测结果: 无冲突
         firstK: number,
         curLevel: number,
         maxLevel: number,
-        isFirstPosition: boolean = false,
-        collectBranchResults: boolean = false  // 新增参数：是否收集分支结果
+        isFirstPosition: boolean = false
     ): string[][] {
         // DFS 总是无限展开
         // 根据节点类型分发处理
@@ -1782,12 +1775,12 @@ MaxLevel 检测结果: 无冲突
 
             case 'subrule':
                 // 子规则引用：转发给 subRuleHandler 处理
-                return this.expandPathsByDFSCache(node.ruleName, firstK, curLevel, maxLevel, isFirstPosition, false)
+                return this.expandPathsByDFSCache(node.ruleName, firstK, curLevel, maxLevel, isFirstPosition)
 
             case 'or':
                 // Or 节点：遍历所有分支，合并结果
                 // 🔴 关键：Or 分支中的第一个规则也需要传递 isFirstPosition
-                return this.expandOr(node.alternatives, firstK, curLevel, maxLevel, isFirstPosition, collectBranchResults)
+                return this.expandOr(node.alternatives, firstK, curLevel, maxLevel, isFirstPosition)
 
             case 'sequence':
                 // Sequence 节点：笛卡尔积组合子节点
@@ -1797,12 +1790,12 @@ MaxLevel 检测结果: 无冲突
             case 'many':
                 // Option/Many 节点：0次或多次，添加空分支
                 // 🔴 关键：Option 内的第一个规则也需要传递 isFirstPosition
-                return this.expandOption(node.node, firstK, curLevel, maxLevel, isFirstPosition, collectBranchResults)
+                return this.expandOption(node.node, firstK, curLevel, maxLevel, isFirstPosition)
 
             case 'atLeastOne':
                 // AtLeastOne 节点：1次或多次，添加 double 分支
                 // 🔴 关键：AtLeastOne 内的第一个规则也需要传递 isFirstPosition
-                return this.expandAtLeastOne(node.node, firstK, curLevel, maxLevel, isFirstPosition, collectBranchResults)
+                return this.expandAtLeastOne(node.node, firstK, curLevel, maxLevel, isFirstPosition)
 
             default:
                 // 未知节点类型，抛出错误
@@ -2365,8 +2358,7 @@ MaxLevel 检测结果: 无冲突
         firstK: number,
         curLevel: number,
         maxLevel: number,
-        isFirstPosition: boolean,
-        collectBranchResults: boolean = false  // 新增参数：是否收集分支结果
+        isFirstPosition: boolean
     ): string[][] {
 
         // 记录入口调用
@@ -2457,9 +2449,7 @@ MaxLevel 检测结果: 无冲突
 
             // 使用 DFS 从头展开到 token
             const subNode = this.getRuleNodeByAst(ruleName)
-
-            // 如果需要收集分支结果，传递给 expandNode
-            const finalResult = this.expandNode(subNode, firstK, curLevel, maxLevel, isFirstPosition, collectBranchResults)
+            const finalResult = this.expandNode(subNode, firstK, curLevel, maxLevel, isFirstPosition)
 
             // ========================================
             // 阶段4：DFS 缓存设置（在任何层级都缓存！）
@@ -2581,44 +2571,12 @@ MaxLevel 检测结果: 无冲突
      *   - 第一个分支 A '+' B 中，A 在第一个位置，需要检测
      *   - 第二个分支 C 中，C 也在第一个位置
      */
-    // 用于存储 DFS 分支结果的实例变量
-    private dfsBranchResults: Array<{branchName: string, paths: string[][]}> = []
-
-    /**
-     * 获取分支的名称（用于日志输出）
-     */
-    private getBranchName(node: RuleNode): string {
-        switch (node.type) {
-            case 'consume':
-                return node.tokenName
-            case 'subrule':
-                return node.ruleName
-            case 'sequence':
-                // 取序列的前几个元素作为名称
-                const names: string[] = []
-                for (let i = 0; i < Math.min(3, node.nodes.length); i++) {
-                    names.push(this.getBranchName(node.nodes[i]))
-                }
-                return names.join(' ')
-            case 'or':
-                return '(Or)'
-            case 'option':
-            case 'many':
-                return `(${this.getBranchName(node.node)})?`
-            case 'atLeastOne':
-                return `(${this.getBranchName(node.node)})+`
-            default:
-                return '(unknown)'
-        }
-    }
-
     private expandOr(
         alternatives: RuleNode[],
         firstK: number,
         curLevel: number,
         maxLevel: number,
-        isFirstPosition: boolean = true,  // 🔴 Or 分支中的第一个规则也需要检测
-        collectBranchResults: boolean = false  // 新增参数：是否收集分支结果
+        isFirstPosition: boolean = true  // 🔴 Or 分支中的第一个规则也需要检测
     ): string[][] {
         // 防御：如果 or 没有分支
         if (alternatives.length === 0) {
@@ -2631,17 +2589,7 @@ MaxLevel 检测结果: 无冲突
         // 遍历 Or 的每个选择分支
         for (const alt of alternatives) {
             // 🔴 关键：每个 Or 分支都是独立的起点，第一个位置的规则需要检测左递归
-            const branches = this.expandNode(alt, firstK, curLevel, maxLevel, isFirstPosition, false)
-
-            // 如果需要收集分支结果
-            if (collectBranchResults) {
-                const branchName = this.getBranchName(alt)
-                this.dfsBranchResults.push({
-                    branchName: branchName,
-                    paths: branches
-                })
-            }
-
+            const branches = this.expandNode(alt, firstK, curLevel, maxLevel, isFirstPosition)
             result = result.concat(branches)
         }
 
@@ -2689,11 +2637,10 @@ MaxLevel 检测结果: 无冲突
         firstK: number,
         curLevel: number,
         maxLevel: number,
-        isFirstPosition: boolean = true,  // 🔴 Option 内的第一个规则也需要检测
-        collectBranchResults: boolean = false  // 新增参数
+        isFirstPosition: boolean = true  // 🔴 Option 内的第一个规则也需要检测
     ): string[][] {
         // 递归展开内部节点，传递所有必需参数
-        const innerBranches = this.expandNode(node, firstK, curLevel, maxLevel, isFirstPosition, collectBranchResults)
+        const innerBranches = this.expandNode(node, firstK, curLevel, maxLevel, isFirstPosition)
 
         // ⚠️⚠️⚠️ 关键：添加空分支 [] 表示可以跳过（0次）
         // 空分支必须在第一个位置，表示优先匹配空（PEG 顺序选择）
@@ -2737,11 +2684,10 @@ MaxLevel 检测结果: 无冲突
         firstK: number,
         curLevel: number,
         maxLevel: number,
-        isFirstPosition: boolean = true,  // 🔴 AtLeastOne 内的第一个规则也需要检测
-        collectBranchResults: boolean = false  // 新增参数
+        isFirstPosition: boolean = true  // 🔴 AtLeastOne 内的第一个规则也需要检测
     ): string[][] {
         // 递归展开内部节点（1次的情况），传递所有必需参数
-        const innerBranches = this.expandNode(node, firstK, curLevel, maxLevel, isFirstPosition, collectBranchResults)
+        const innerBranches = this.expandNode(node, firstK, curLevel, maxLevel, isFirstPosition)
 
         // 生成 doubleBranches（2次的情况）
         const doubleBranches = innerBranches.map(branch => {
