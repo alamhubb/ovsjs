@@ -82,6 +82,7 @@ import ArrayTrie from "./ArrayTria.ts";
 import * as fs from 'fs';
 import * as path from 'path';
 import {fileURLToPath} from 'url';
+import fastCartesian from "fast-cartesian";
 
 /**
  * 左递归错误类型
@@ -103,7 +104,7 @@ class PerformanceAnalyzer {
     }>()
 
     // 调用栈跟踪（用于计算净耗时）
-    private callStack: Array<{methodName: string, startTime: number, childTime: number}> = []
+    private callStack: Array<{ methodName: string, startTime: number, childTime: number }> = []
 
     // 缓存统计
     public cacheStats = {
@@ -395,7 +396,7 @@ class PerformanceAnalyzer {
  * - MAX_BRANCHES：仅用于冲突检测时的路径比较优化
  */
 export const EXPANSION_LIMITS = {
-    FIRST_K: 6,
+    FIRST_K: 2,
     FIRST_Max: 100,
 
     LEVEL_1: 1,
@@ -1305,7 +1306,7 @@ MaxLevel 检测结果: 无冲突
 
     /**
      * 计算规则树的深度（从根节点到最深叶子节点的距离）
-     * 
+     *
      * @param node 规则节点
      * @param visited 已访问的规则名集合（防止循环引用）
      * @returns 树的深度
@@ -1334,7 +1335,7 @@ MaxLevel 检测结果: 无冲突
                 if (node.alternatives.length === 0) {
                     return 1
                 }
-                return 1 + Math.max(...node.alternatives.map(alt => 
+                return 1 + Math.max(...node.alternatives.map(alt =>
                     this.calculateRuleDepth(alt, new Set(visited))
                 ))
 
@@ -1343,7 +1344,7 @@ MaxLevel 检测结果: 无冲突
                 if (node.nodes.length === 0) {
                     return 1
                 }
-                return 1 + Math.max(...node.nodes.map(child => 
+                return 1 + Math.max(...node.nodes.map(child =>
                     this.calculateRuleDepth(child, new Set(visited))
                 ))
 
@@ -1360,20 +1361,20 @@ MaxLevel 检测结果: 无冲突
 
     /**
      * 计算所有规则的深度并排序
-     * 
+     *
      * @returns 按深度排序的规则名数组（最浅的在前）
      */
-    private calculateAndSortRulesByDepth(): Array<{ruleName: string, depth: number}> {
-        const ruleDepths: Array<{ruleName: string, depth: number}> = []
-        
+    private calculateAndSortRulesByDepth(): Array<{ ruleName: string, depth: number }> {
+        const ruleDepths: Array<{ ruleName: string, depth: number }> = []
+
         for (const [ruleName, ruleNode] of this.ruleASTs.entries()) {
             const depth = this.calculateRuleDepth(ruleNode)
             ruleDepths.push({ruleName, depth})
         }
-        
+
         // 按深度排序，最浅的在前
         ruleDepths.sort((a, b) => a.depth - b.depth)
-        
+
         return ruleDepths
     }
 
@@ -1423,11 +1424,11 @@ MaxLevel 检测结果: 无冲突
         // 阶段1.1：DFS First(K) 缓存生成（包含左递归检测）
         // 🚀 优化：按深度排序，从最浅的开始展开
         const t1_1_start = Date.now()
-        
+
         // 按深度顺序展开所有规则
         for (let i = 0; i < ruleDepths.length; i++) {
             const {ruleName, depth} = ruleDepths[i]
-            
+
             // 清空递归检测集合
             this.recursiveDetectionSet.clear()
 
@@ -1452,7 +1453,7 @@ MaxLevel 检测结果: 无冲突
 
             // 结束日志记录
             this.endRuleLogging()
-            
+
             // 每处理10个规则输出一次进度
             if ((i + 1) % 10 === 0 || i === ruleDepths.length - 1) {
                 console.log(`[${i + 1}/${ruleDepths.length}] 已处理: ${ruleName} (深度: ${depth}, 路径数: ${finalResult.length})`)
@@ -1472,7 +1473,6 @@ MaxLevel 检测结果: 无冲突
 
         console.log(`\n开始 BFS 缓存生成，规则数量: ${ruleDepths.length}`)
         let processedCount = 0
-
 
 
         // this.startRuleLogging(ruleName)
@@ -1941,7 +1941,7 @@ MaxLevel 检测结果: 无冲突
         isFirstPosition: boolean = false
     ): string[][] {
         const callId = this.perfAnalyzer.startMethod('expandNode')
-        
+
         // DFS 总是无限展开
         // 根据节点类型分发处理
         let result: string[][]
@@ -1984,10 +1984,10 @@ MaxLevel 检测结果: 无冲突
                 // 未知节点类型，抛出错误
                 throw new Error(`未知节点类型: ${(node as any).type}`)
         }
-        
+
         // 记录性能统计
         this.perfAnalyzer.endMethod(callId, undefined, result.length)
-        
+
         return result
     }
 
@@ -2133,7 +2133,7 @@ MaxLevel 检测结果: 无冲突
         // 遍历前 firstK 个子节点，累加最短分支长度
         for (let i = 0; i < nodesToExpand.length; i++) {
             this.checkTimeout(`expandSequenceNode-子节点${i + 1}`)
-            
+
             const expandChildStartTime = Date.now()
 
             // 展开当前子节点
@@ -2145,7 +2145,7 @@ MaxLevel 检测结果: 无冲突
                 maxLevel,
                 isFirstPosition && i === 0  // 累积位置：只有当父级和当前都是第1个时才是 true
             )
-            
+
             const expandChildDuration = Date.now() - expandChildStartTime
 
             // 如果 branches 为空（可能是左递归检测返回的空数组）
@@ -2180,18 +2180,25 @@ MaxLevel 检测结果: 无冲突
             // 左递归情况，返回空分支
             return []
         }
-        
+
         // 调用笛卡尔积
         this.checkTimeout('expandSequenceNode-笛卡尔积前')
-        const result = this.cartesianProduct(allBranches, firstK)
+        // const result = this.cartesianProduct(allBranches, firstK)
+
+        const newData = allBranches.map(item => item.map(it => it.join(EXPANSION_LIMITS.RuleJoinSymbol)))
+
+        const tempr = fastCartesian(newData)
+
+        const result = tempr.map(item => item.map(it => it.split(EXPANSION_LIMITS.RuleJoinSymbol))).flat()
+
         this.checkTimeout('expandSequenceNode-笛卡尔积后')
-        
+
         // 注意：如果某些节点包含空分支，笛卡尔积后可能产生不同长度的路径
         const finalResult = this.truncateAndDeduplicate(result, firstK)
-        
+
         // 记录性能统计
         this.perfAnalyzer.endMethod(callId, node.nodes.length, finalResult.length)
-        
+
         return finalResult
     }
 
@@ -2379,7 +2386,7 @@ MaxLevel 检测结果: 无冲突
         const totalPaths = cachedBranches.length
 
         // 如果是最终层级，记录每个分支的结果
-        const branchResults: Array<{branchName: string, paths: string[][]}> = []
+        const branchResults: Array<{ branchName: string, paths: string[][] }> = []
 
         for (let branchIndex = 0; branchIndex < cachedBranches.length; branchIndex++) {
             const branchSeqRules = cachedBranches[branchIndex]
@@ -2646,7 +2653,7 @@ MaxLevel 检测结果: 无冲突
             // ========================================
 
             this.perfAnalyzer.recordActualCompute()
-            
+
             // 使用 DFS 从头展开到 token
             const expandCallId = this.perfAnalyzer.startMethod('expandPathsByDFSCache')
             const subNode = this.getRuleNodeByAst(ruleName)
@@ -2692,7 +2699,7 @@ MaxLevel 检测结果: 无冲突
      */
     private deduplicate(branches: string[][]): string[][] {
         const callId = this.perfAnalyzer.startMethod('deduplicate')
-        
+
         // 用于记录已经见过的分支（序列化为字符串）
         const seen = new Set<string>()
         // 存储去重后的结果
@@ -2716,7 +2723,7 @@ MaxLevel 检测结果: 无冲突
         // 返回去重后的结果（可能包含空分支 []）
         // 记录性能统计
         this.perfAnalyzer.endMethod(callId, branches.length, result.length)
-        
+
         return result
     }
 
@@ -2736,7 +2743,7 @@ MaxLevel 检测结果: 无冲突
      */
     private truncateAndDeduplicate(branches: string[][], firstK: number): string[][] {
         const callId = this.perfAnalyzer.startMethod('truncateAndDeduplicate')
-        
+
         // 如果 firstK 为 INFINITY，不需要截取，只去重
         if (firstK === EXPANSION_LIMITS.INFINITY) {
             const result = this.deduplicate(branches)
@@ -2749,10 +2756,10 @@ MaxLevel 检测结果: 无冲突
 
         // 去重（截取后可能产生重复分支）
         const result = this.deduplicate(truncated)
-        
+
         // 记录性能统计
         this.perfAnalyzer.endMethod(callId, branches.length, result.length)
-        
+
         return result
     }
 
@@ -2791,7 +2798,7 @@ MaxLevel 检测结果: 无冲突
         isFirstPosition: boolean = true  // 🔴 Or 分支中的第一个规则也需要检测
     ): string[][] {
         const callId = this.perfAnalyzer.startMethod('expandOr')
-        
+
         // 防御：如果 or 没有分支
         if (alternatives.length === 0) {
             throw new Error('系统错误：Or 节点没有分支')
@@ -2814,10 +2821,10 @@ MaxLevel 检测结果: 无冲突
 
         // 只去重，不截取（子节点已经处理过截取）
         const finalResult = this.deduplicate(result)
-        
+
         // 记录性能统计
         this.perfAnalyzer.endMethod(callId, alternatives.length, finalResult.length)
-        
+
         return finalResult
     }
 
@@ -2859,7 +2866,7 @@ MaxLevel 检测结果: 无冲突
         isFirstPosition: boolean = true  // 🔴 Option 内的第一个规则也需要检测
     ): string[][] {
         const callId = this.perfAnalyzer.startMethod('expandOption')
-        
+
         // 递归展开内部节点，传递所有必需参数
         const innerBranches = this.expandNode(node, firstK, curLevel, maxLevel, isFirstPosition)
 
@@ -2869,10 +2876,10 @@ MaxLevel 检测结果: 无冲突
 
         // 只去重，不截取（子节点已经处理过截取）
         const finalResult = this.deduplicate(result)
-        
+
         // 记录性能统计
         this.perfAnalyzer.endMethod(callId, undefined, finalResult.length)
-        
+
         return finalResult
     }
 
@@ -2913,7 +2920,7 @@ MaxLevel 检测结果: 无冲突
         isFirstPosition: boolean = true  // 🔴 AtLeastOne 内的第一个规则也需要检测
     ): string[][] {
         const callId = this.perfAnalyzer.startMethod('expandAtLeastOne')
-        
+
         // 递归展开内部节点（1次的情况），传递所有必需参数
         const innerBranches = this.expandNode(node, firstK, curLevel, maxLevel, isFirstPosition)
 
@@ -2933,10 +2940,10 @@ MaxLevel 检测结果: 无冲突
         // 只去重，不再截取（已经在内部截取过了）
         // ⚠️ deduplicate 不会过滤空分支 []
         const finalResult = this.deduplicate(result)
-        
+
         // 记录性能统计
         this.perfAnalyzer.endMethod(callId, undefined, finalResult.length)
-        
+
         return finalResult
     }
 
