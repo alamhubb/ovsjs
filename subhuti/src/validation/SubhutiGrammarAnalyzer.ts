@@ -81,7 +81,7 @@ import {list} from "@lerna-lite/publish";
 import ArrayTrie from "./ArrayTria.ts";
 import * as fs from 'fs';
 import * as path from 'path';
-import { fileURLToPath } from 'url';
+import {fileURLToPath} from 'url';
 
 /**
  * 左递归错误类型
@@ -317,7 +317,7 @@ export const EXPANSION_LIMITS = {
     FIRST_Max: 100,
 
     LEVEL_1: 1,
-    LEVEL_K: 10,
+    LEVEL_K: 2,
 
     INFINITY: Infinity,
     RuleJoinSymbol: '\x1F',
@@ -429,7 +429,7 @@ export class SubhutiGrammarAnalyzer {
             // CommonJS 方式（如果 __dirname 可用）
             currentDir = typeof __dirname !== 'undefined' ? __dirname : process.cwd()
         }
-        
+
         let subhutiDir = currentDir
         while (subhutiDir !== path.dirname(subhutiDir)) {
             const dirName = path.basename(subhutiDir)
@@ -440,7 +440,7 @@ export class SubhutiGrammarAnalyzer {
         }
         const logDir = path.join(subhutiDir, 'logall')
         if (!fs.existsSync(logDir)) {
-            fs.mkdirSync(logDir, { recursive: true })
+            fs.mkdirSync(logDir, {recursive: true})
             console.log(`📁 创建日志目录: ${logDir}`)
         } else {
             console.log(`📁 使用日志目录: ${logDir}`)
@@ -1279,17 +1279,63 @@ MaxLevel 检测结果: 无冲突
 
         console.log(`\n开始 BFS 缓存生成，规则数量: ${ruleNames.length}`)
         let processedCount = 0
-        for (const ruleName of ruleNames) {
+
+
+        const ruleName = 'PrimaryExpression'
+        this.startRuleLogging(ruleName)
+        this.writeLog(`进入规则: ${ruleName}, 目标层级: ${EXPANSION_LIMITS.LEVEL_K}`, 0)
+        const result = this.expandPathsByBFSCache(ruleName, EXPANSION_LIMITS.LEVEL_K)
+        this.writeLog(`✅ 规则处理完成: ${ruleName}, 结果路径数: ${result.length}`, 0)
+        this.writeLog(`退出规则: ${ruleName}, 目标层级: ${EXPANSION_LIMITS.LEVEL_K}`, 0)
+
+        // 按分支分组显示结果
+        this.writeLog(``, 0)
+        this.writeLog(`📋 完整结果 (共 ${result.length} 条路径):`, 0)
+        this.writeLog(`${'='.repeat(80)}`, 0)
+        if (result.length > 0) {
+            // 按第一个符号分组（即按分支分组）
+            const branchGroups = new Map<string, string[][]>()
+
+            for (const path of result) {
+                const firstSymbol = path[0] || '(空)'
+                if (!branchGroups.has(firstSymbol)) {
+                    branchGroups.set(firstSymbol, [])
+                }
+                branchGroups.get(firstSymbol)!.push(path)
+            }
+
+            // 输出每个分支
+            let branchIndex = 1
+            for (const [firstSymbol, paths] of branchGroups) {
+                this.writeLog(``, 0)
+                this.writeLog(`分支 ${branchIndex}: ${firstSymbol} (${paths.length} 条路径)`, 0)
+                this.writeLog(`${'-'.repeat(80)}`, 0)
+
+                paths.forEach((path, index) => {
+                    this.writeLog(`   ${(index + 1).toString().padStart(4, ' ')}. ${path.join(' ')}`, 0)
+                })
+
+                branchIndex++
+            }
+        } else {
+            this.writeLog(`⚠️ 结果为空`, 0)
+        }
+
+        this.writeLog(`${'='.repeat(80)}`, 0)
+        this.writeLog(``, 0)
+        /*for (const ruleName of ruleNames) {
             processedCount++
             console.log(`\n[${processedCount}/${ruleNames.length}] 开始处理规则: ${ruleName}`)
-            
+
             // 开始记录当前规则的日志
             this.startRuleLogging(ruleName)
             this.writeLog(`进入规则: ${ruleName}, 目标层级: ${EXPANSION_LIMITS.LEVEL_K}`, 0)
-            
+
             try {
-                this.expandPathsByBFSCache(ruleName, EXPANSION_LIMITS.LEVEL_K)
-                this.writeLog(`退出规则: ${ruleName}, 目标层级: ${EXPANSION_LIMITS.LEVEL_K}`, 0)
+                const result = this.expandPathsByBFSCache(ruleName, EXPANSION_LIMITS.LEVEL_K)
+
+
+
             } catch (error) {
                 this.writeLog(`❌ 规则处理异常: ${ruleName}`, 0)
                 this.writeLog(`错误信息: ${error}`, 0)
@@ -1301,7 +1347,7 @@ MaxLevel 检测结果: 无冲突
             }
             
             console.log(`[${processedCount}/${ruleNames.length}] 完成处理规则: ${ruleName}`)
-        }
+        }*/
         console.log(`\nBFS 缓存生成完成，共处理 ${processedCount} 个规则`)
 
 
@@ -2049,7 +2095,6 @@ MaxLevel 检测结果: 无冲突
     private expandPathsByBFSCache(
         ruleName: string,
         targetLevel: number,
-        firstK: number = EXPANSION_LIMITS.LEVEL_K,
     ): string[][] {
         const depth = this.currentDepth
 
@@ -2178,9 +2223,9 @@ MaxLevel 检测结果: 无冲突
             const estimatedCombinations = branchSizes.reduce((a, b) => a * b, 1)
             const totalInputSize = branchSizes.reduce((a, b) => a + b, 0)
             this.writeLog(`笛卡尔积计算 [执行中]: 分支数: ${branchAllRuleBranchSeqs.length}, 各分支大小: [${branchSizes.join(', ')}], 预计组合数: ${estimatedCombinations}, 总输入大小: ${totalInputSize}`, depth)
-            
+
             const pathResult = this.cartesianProduct(branchAllRuleBranchSeqs, EXPANSION_LIMITS.INFINITY)
-            
+
             this.writeLog(`笛卡尔积计算 [执行完]: 结果数: ${pathResult.length}, 预计组合数: ${estimatedCombinations}`, depth)
 
             // 超时检测
