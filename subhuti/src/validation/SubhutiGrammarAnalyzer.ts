@@ -396,7 +396,7 @@ class PerformanceAnalyzer {
  * - MAX_BRANCHES：仅用于冲突检测时的路径比较优化
  */
 export const EXPANSION_LIMITS = {
-    FIRST_K: 2,
+    FIRST_K: 6,
     FIRST_Max: 100,
 
     LEVEL_1: 1,
@@ -2189,7 +2189,7 @@ MaxLevel 检测结果: 无冲突
 
         const tempr = fastCartesian(newData)
 
-        const result = tempr.map(item => item.map(it => it.split(EXPANSION_LIMITS.RuleJoinSymbol))).flat()
+        let result = tempr.map(item => item.map(it => it.split(EXPANSION_LIMITS.RuleJoinSymbol).slice(0, EXPANSION_LIMITS.FIRST_K))).flat()
 
         this.checkTimeout('expandSequenceNode-笛卡尔积后')
 
