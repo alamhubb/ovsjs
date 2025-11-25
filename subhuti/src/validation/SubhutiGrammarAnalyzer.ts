@@ -2236,13 +2236,15 @@ MaxLevel 检测结果: 无冲突
         this.checkTimeout(`expandPathsByBFSCache-${ruleName}-去重前`)
         const finalResult = this.deduplicate(expandedPaths)
 
-        if (targetLevel <= EXPANSION_LIMITS.LEVEL_K) {
+        if (targetLevel < EXPANSION_LIMITS.LEVEL_K) {
             // 复用之前定义的 key 变量
             if (this.bfsLevelCache.has(key)) {
                 throw new Error('系统错误')
             }
             this.bfsLevelCache.set(key, finalResult)
             this.writeLog(`📦 存储缓存: ${key}, 路径数: ${finalResult.length}`, depth)
+        } else if (targetLevel === EXPANSION_LIMITS.LEVEL_K) {
+
         }
         this.writeLog(`◀ 返回: expandPathsByBFSCache(${ruleName}, targetLevel=${targetLevel}), 路径数: ${finalResult.length} [执行完]`, depth)
         return finalResult
