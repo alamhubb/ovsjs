@@ -378,28 +378,30 @@ export class SubhutiGrammarAnalyzer {
     /** 当前规则名（用于日志记录） */
     private currentRuleName: string | null = null
 
-    /** 当前规则的日志文件流 */
-    private currentLogStream: fs.WriteStream | null = null
+    /** 当前规则的日志文件描述符（使用同步写入） */
+    private currentLogFd: number | null = null
+
+    /** 当前规则的日志文件路径 */
+    private currentLogFilePath: string | null = null
 
     /** 当前调用深度（用于缩进） */
     private currentDepth: number = 0
 
     /**
      * 写入日志（使用当前深度控制缩进，自动添加文件名前缀）
+     * 使用同步写入确保日志立即刷新到磁盘
      */
     private writeLog(message: string, depth?: number): void {
-        if (this.currentLogStream && this.currentRuleName) {
+        if (this.currentLogFd !== null && this.currentRuleName) {
             const indent = '  '.repeat(depth !== undefined ? depth : this.currentDepth)
             const logFileName = `${this.currentRuleName}-执行中.log`
             const logLine = `${indent}[${logFileName}] ${message}\n`
             try {
-                this.currentLogStream.write(logLine)
+                // 使用同步写入，确保立即刷新到磁盘
+                fs.writeSync(this.currentLogFd, logLine, null, 'utf8')
             } catch (error) {
                 console.error(`写入日志失败: ${logFileName}`, error)
             }
-        } else {
-            // 如果日志流不存在，输出警告（仅在开发时）
-            // console.warn(`日志流不存在，无法写入: ${message}`)
         }
     }
 
@@ -446,41 +448,34 @@ export class SubhutiGrammarAnalyzer {
 
         // 创建日志文件（执行中状态）
         const logFilePath = path.join(logDir, `${ruleName}-执行中.log`)
+        this.currentLogFilePath = logFilePath
         console.log(`[DEBUG] 准备创建日志文件: ${logFilePath}`)
-        
-        // 使用同步方式创建文件，确保文件立即存在
+
+        // 使用同步方式创建文件并打开文件描述符
         try {
             console.log(`[DEBUG] 开始写入文件内容...`)
             const initialContent = `========== 开始处理规则: ${ruleName} ==========\n时间: ${new Date().toISOString()}\n\n`
-            fs.writeFileSync(logFilePath, initialContent, { encoding: 'utf8', flag: 'w' })
-            console.log(`[DEBUG] fs.writeFileSync 执行完成`)
-            
+
+            // 打开文件描述符（写入模式，如果文件存在则截断）
+            this.currentLogFd = fs.openSync(logFilePath, 'w')
+
+            // 写入初始内容
+            fs.writeSync(this.currentLogFd, initialContent, null, 'utf8')
+            console.log(`[DEBUG] 文件描述符已打开并写入初始内容`)
+
             // 验证文件是否创建成功
-            console.log(`[DEBUG] 检查文件是否存在...`)
             if (fs.existsSync(logFilePath)) {
                 const stats = fs.statSync(logFilePath)
                 console.log(`✅ 日志文件已创建: ${logFilePath}, 大小: ${stats.size} bytes`)
             } else {
                 console.error(`❌ 文件写入后不存在: ${logFilePath}`)
-                this.currentLogStream = null
+                if (this.currentLogFd !== null) {
+                    fs.closeSync(this.currentLogFd)
+                    this.currentLogFd = null
+                }
                 return
             }
-            
-            // 创建追加模式的写入流（用于后续写入）
-            console.log(`[DEBUG] 创建文件写入流...`)
-            this.currentLogStream = fs.createWriteStream(logFilePath, { encoding: 'utf8', flags: 'a' })
-            
-            if (!this.currentLogStream) {
-                console.error(`❌ 文件流创建失败: ${logFilePath}`)
-                return
-            }
-            console.log(`[DEBUG] 文件写入流创建成功`)
-            
-            // 监听错误事件
-            this.currentLogStream.on('error', (error) => {
-                console.error(`❌ 日志文件写入错误: ${logFilePath}`, error)
-            })
-            
+
         } catch (error: any) {
             console.error(`❌ 创建日志文件失败: ${logFilePath}`)
             console.error(`错误类型: ${error?.constructor?.name || typeof error}`)
@@ -488,7 +483,14 @@ export class SubhutiGrammarAnalyzer {
             if (error?.stack) {
                 console.error(`错误堆栈:`, error.stack)
             }
-            this.currentLogStream = null
+            if (this.currentLogFd !== null) {
+                try {
+                    fs.closeSync(this.currentLogFd)
+                } catch (e) {
+                    // 忽略关闭错误
+                }
+                this.currentLogFd = null
+            }
         }
     }
 
@@ -496,14 +498,15 @@ export class SubhutiGrammarAnalyzer {
      * 结束记录规则日志
      */
     private endRuleLogging(): void {
-        if (this.currentLogStream && this.currentRuleName) {
+        if (this.currentLogFd !== null && this.currentRuleName && this.currentLogFilePath) {
             this.writeLog('', 0)
             this.writeLog(`========== 结束处理规则: ${this.currentRuleName} ==========`, 0)
 
             // 保存规则名和文件路径，用于重命名
             const ruleName = this.currentRuleName
+            const executingFilePath = this.currentLogFilePath
+
             // 从当前文件位置向上查找，找到 subhuti 目录
-            // 获取当前文件的目录（兼容 CommonJS 和 ES modules）
             let currentDir: string
             try {
                 // ES modules 方式
@@ -523,28 +526,20 @@ export class SubhutiGrammarAnalyzer {
                 subhutiDir = path.dirname(subhutiDir)
             }
             const logDir = path.join(subhutiDir, 'logall')
-            const executingFilePath = path.join(logDir, `${ruleName}-执行中.log`)
             const completedFilePath = path.join(logDir, `${ruleName}-执行完.log`)
 
-            console.log(`[DEBUG] 准备关闭日志流: ${ruleName}`)
+            console.log(`[DEBUG] 准备关闭日志文件: ${ruleName}`)
 
-            // 同步关闭流并重命名文件
+            // 同步关闭文件描述符并重命名文件
             try {
-                // 关闭当前流（同步方式）
-                this.currentLogStream.end()
-                this.currentLogStream.destroy()
-                this.currentLogStream = null
+                // 关闭文件描述符
+                fs.closeSync(this.currentLogFd)
+                this.currentLogFd = null
+                this.currentLogFilePath = null
 
-                console.log(`[DEBUG] 日志流已关闭，准备重命名文件`)
+                console.log(`[DEBUG] 文件描述符已关闭，准备重命名文件`)
                 console.log(`[DEBUG] 源文件: ${executingFilePath}`)
                 console.log(`[DEBUG] 目标文件: ${completedFilePath}`)
-
-                // 等待一小段时间确保文件句柄释放
-                // 使用同步方式等待
-                const waitStart = Date.now()
-                while (Date.now() - waitStart < 100) {
-                    // 忙等待 100ms
-                }
 
                 // 检查源文件是否存在
                 if (fs.existsSync(executingFilePath)) {
@@ -560,6 +555,8 @@ export class SubhutiGrammarAnalyzer {
         }
         this.currentRuleName = null
         this.currentDepth = 0
+        this.currentLogFd = null
+        this.currentLogFilePath = null
     }
 
     // ========================================
