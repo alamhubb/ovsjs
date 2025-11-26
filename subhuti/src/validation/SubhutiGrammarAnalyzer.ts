@@ -1462,8 +1462,6 @@ MaxLevel 检测结果: 无冲突
                     return depth
                 }
                 depth++
-                console.log(ruleName)
-                console.log(depth)
 
                 // 标记当前规则正在计算（防止循环递归）
                 this.recursiveDetectionSet.add(ruleName)
