@@ -1303,21 +1303,11 @@ MaxLevel 检测结果: 无冲突
         return maxLevelError
     }
 
-    /** 可能性计算缓存：规则名 -> 可能性数量 */
-    private possibilityCache = new Map<string, number>()
-
     private findRuleDepth(
         ruleName: string,
     ) {
-        // ========================================
-        // 阶段1：缓存检查
-        // ========================================
-        if (this.possibilityCache.has(ruleName)) {
-            const cached = this.possibilityCache.get(ruleName)!
-            // console.log(`[缓存命中] ${ruleName} = ${cached}`)
-            return cached
-        }
-
+        // 层级+1（进入子规则）
+        // curLevel++
         // ========================================
         // 阶段2：递归检测（DFS 专属）
         // ========================================
@@ -1325,7 +1315,7 @@ MaxLevel 检测结果: 无冲突
         // 递归检测：如果规则正在计算中
         if (this.recursiveDetectionSet.has(ruleName)) {
             // 记录递归检测返回，用于分析为什么都是1
-            // console.log(`[递归检测] ${ruleName} 已在计算中，返回1 (当前调用栈: ${Array.from(this.recursiveDetectionSet).join(' -> ')})`)
+            console.log(`[递归检测] ${ruleName} 已在计算中，返回1 (当前调用栈: ${Array.from(this.recursiveDetectionSet).join(' -> ')})`)
             return 1
         }
 
@@ -1335,15 +1325,7 @@ MaxLevel 检测结果: 无冲突
         try {
             const node = this.ruleASTs.get(ruleName)
             // 修复：node 不一定是 SequenceNode，应该调用 findNodeDepth 来正确处理所有类型
-            const result = this.findNodeDepth(node)
-            
-            // ========================================
-            // 阶段3：存入缓存
-            // ========================================
-            this.possibilityCache.set(ruleName, result)
-            // console.log(`[缓存存储] ${ruleName} = ${result}`)
-            
-            return result
+            return this.findNodeDepth(node)
         } finally {
             // 清除递归标记（确保即使异常也能清除）
             this.recursiveDetectionSet.delete(ruleName)
@@ -1359,7 +1341,7 @@ MaxLevel 检测结果: 无冲突
 
     atLeastOneDepth(node: AtLeastOneNode) {
         const num = this.findNodeDepth(node.node)
-        return num * num
+        return num + num
     }
 
     seqDepth(seq: SequenceNode) {
@@ -1377,18 +1359,22 @@ MaxLevel 检测结果: 无冲突
 
     orDepth(or: OrNode) {
         if (or.alternatives.length < 1) {
-            throw new Error('系统错误：Or节点没有分支')
+            throw new Error('xitongcuowu')
         }
-        const orPossibility: number[] = []
+        let orPossibility: number = 0
+
+        // 记录 Or 分支数量和计算过程
+        console.log(`[orDepth] 开始计算 ${or.alternatives.length} 个分支的最大深度`)
 
         for (let i = 0; i < or.alternatives.length; i++) {
             const alternative = or.alternatives[i]
+            console.log(`[orDepth] 正在计算分支 ${i + 1}/${or.alternatives.length}`)
             const depth = this.findNodeDepth(alternative)
-            orPossibility.push(depth)
-        }
 
-        const maxDepth = Math.max(...orPossibility)
-        return maxDepth
+            orPossibility += depth
+            console.log(`[orDepth] 分支 ${i + 1} 深度: ${depth}`)
+        }
+        return orPossibility
     }
 
     findNodeDepth(
@@ -1396,50 +1382,56 @@ MaxLevel 检测结果: 无冲突
     ): number {
         // 超时检测
         this.checkTimeout('findNodeDepth')
-        
         const callId = this.perfAnalyzer.startMethod('expandNode')
 
+        // DFS 总是无限展开
         // 根据节点类型分发处理
         let result: number
         switch (node.type) {
             case 'consume':
-                // Token 节点：1 种可能
+                // Token 节点：直接返回 token 名
                 result = 1
                 break
 
             case 'subrule':
-                // 子规则引用：递归计算
+                // 子规则引用：转发给 subRuleHandler 处理
                 result = this.findRuleDepth(node.ruleName)
                 break
 
             case 'or':
-                // Or 节点：取最大可能性
+                // Or 节点：遍历所有分支，合并结果
+                // 🔴 关键：Or 分支中的第一个规则也需要传递 isFirstPosition
                 result = this.orDepth(node)
                 break
 
             case 'sequence':
-                // Sequence 节点：笛卡尔积（乘法）
+                // Sequence 节点：笛卡尔积组合子节点
                 result = this.seqDepth(node)
                 break
 
             case 'option':
             case 'many':
-                // Option/Many 节点
+                // Option/Many 节点：0次或多次，添加空分支
+                // 🔴 关键：Option 内的第一个规则也需要传递 isFirstPosition
                 result = this.manyAndOptionDepth(node)
                 break
 
             case 'atLeastOne':
-                // AtLeastOne 节点
+                // AtLeastOne 节点：1次或多次，添加 double 分支
+                // 🔴 关键：AtLeastOne 内的第一个规则也需要传递 isFirstPosition
                 result = this.atLeastOneDepth(node)
                 break
 
             default:
+                // 未知节点类型，抛出错误
                 throw new Error(`未知节点类型: ${(node as any).type}`)
         }
 
         // 记录性能统计
         this.perfAnalyzer.endMethod(callId, undefined, result)
 
+        // 添加节点类型信息，便于分析
+        console.log(`[findNodeDepth] 节点类型: ${node.type}, 深度: ${result}`)
         return result
     }
 
@@ -1452,51 +1444,18 @@ MaxLevel 检测结果: 无冲突
      * @returns { errors: 验证错误列表, stats: 统计信息 }
      */
     initCacheAndCheckLeftRecursion(): { errors: ValidationError[], stats: any } {
-        console.log('='.repeat(60))
-        console.log('开始计算所有规则的最大可能性')
-        console.log(`规则总数: ${this.ruleASTs.size}`)
-        console.log('='.repeat(60))
-        
-        // 启动超时检测（60秒）
+        // 启动超时检测（20秒）
         this.operationStartTime = Date.now()
-        this.timeoutSeconds = 60
 
-        // 清空递归检测集合
-        this.recursiveDetectionSet.clear()
+        const ruleName = 'AssignmentExpression'
+        const node = this.ruleASTs.get(ruleName)
 
-        // 清空可能性缓存
-        this.possibilityCache.clear()
 
-        // 遍历所有规则，计算可能性
-        console.log('\n' + '='.repeat(60))
-        console.log('开始计算所有规则的可能性...')
-        console.log('='.repeat(60))
-        
-        const ruleNames = Array.from(this.ruleASTs.keys())
-        for (const name of ruleNames) {
-            // 清空递归检测集合（每个规则独立计算）
-            this.recursiveDetectionSet.clear()
-            this.findRuleDepth(name)
-        }
+        const result = this.findNodeDepth(node)
 
-        // 输出所有规则的可能性（按可能性从大到小排序）
-        console.log('\n' + '='.repeat(60))
-        console.log('所有规则的可能性（按可能性从大到小排序）')
-        console.log('='.repeat(60))
-        
-        const sortedRules = Array.from(this.possibilityCache.entries())
-            .sort((a, b) => b[1] - a[1])
-        
-        for (const [name, possibility] of sortedRules) {
-            // 格式化大数字
-            const formattedPossibility = possibility.toLocaleString()
-            console.log(`${name.padEnd(50)} ${formattedPossibility}`)
-        }
-        
-        console.log('='.repeat(60))
-        console.log(`总计 ${sortedRules.length} 个规则`)
-        console.log('='.repeat(60))
-        
+        console.log('可能性')
+        console.log(result)
+
         // 重置超时检测
         this.operationStartTime = 0
 
@@ -1596,7 +1555,7 @@ MaxLevel 检测结果: 无冲突
                 // 无论成功还是失败，都结束日志记录
                 this.endRuleLogging()
             }
-            
+
             console.log(`[${processedCount}/${ruleNames.length}] 完成处理规则: ${ruleName}`)
         }*/
         console.log(`\nBFS 缓存生成完成，共处理 ${processedCount} 个规则`)
