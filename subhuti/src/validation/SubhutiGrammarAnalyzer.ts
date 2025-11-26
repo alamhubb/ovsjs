@@ -84,6 +84,7 @@ import * as path from 'path';
 import {fileURLToPath} from 'url';
 import fastCartesian from "fast-cartesian";
 import { Graph, alg } from '@dagrejs/graphlib'
+import { write } from '@dagrejs/graphlib-dot'
 
 /**
  * 左递归错误类型
@@ -1522,6 +1523,9 @@ MaxLevel 检测结果: 无冲突
     // 递归收集依赖
     collectDependencies(node: RuleNode, fromRule: string) {
         switch (node.type) {
+            case 'consume':
+                this.graph.setEdge(fromRule, node.tokenName)
+                break
             case 'subrule':
                 this.graph.setEdge(fromRule, node.ruleName)
                 break
@@ -1567,15 +1571,34 @@ MaxLevel 检测结果: 无冲突
         for (const key of this.bfsLevelCache.keys()) {
             console.log(key)
         }*/
+
+        this.graph = new Graph({ directed: true })
+
         for (const [ruleName, node] of this.ruleASTs) {
             this.graph.setNode(ruleName)
             this.collectDependencies(node, ruleName)
         }
 
 
+        const dotString = write(this.graph)
+        console.log(dotString)
+
+        // Tarjan 算法找强连通分量
+        const sccs = alg.tarjan(this.graph)
+
+        console.log('=== 强连通分量（循环） ===')
+        for (const scc of sccs) {
+            if (scc.length > 1) {
+                // 多个节点的 SCC = 有循环
+                console.log('====================')
+                console.log(`循环: `)
+                console.log(`${scc.length}`)
+            }
+        }
+
 // 使用
-        const mermaidCode = this.graphToMermaid(this.graph)
-        console.log(mermaidCode)
+//         const mermaidCode = this.graphToMermaid(this.graph)
+//         console.log(mermaidCode)
         // const ruleName = 'AssignmentExpression'
         // const node = this.ruleASTs.get(ruleName)
         // for (const node of this.ruleASTs.values()) {
