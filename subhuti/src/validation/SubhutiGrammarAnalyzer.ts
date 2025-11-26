@@ -1418,6 +1418,7 @@ MaxLevel 检测结果: 无冲突
         // 记录性能统计
         this.perfAnalyzer.endMethod(callId, undefined, result)
 
+        console.log(result)
         return result
     }
 
