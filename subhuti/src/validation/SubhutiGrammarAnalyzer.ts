@@ -1332,19 +1332,21 @@ MaxLevel 检测结果: 无冲突
             if (this.depthMap.has(ruleName)) {
                 const num = this.depthMap.get(ruleName)
                 if (result !== num) {
+                    console.log('更新设置')
                     console.log(ruleName)
                     console.log(result)
                     this.depthMap.set(ruleName, result)
                 }
             } else {
                 this.depthMap.set(ruleName, result)
+                console.log('初次设置')
                 console.log(ruleName)
                 console.log(result)
             }
 
             this.depthMap.set(ruleName, result)
 
-            return
+            return result
         } finally {
             // 清除递归标记（确保即使异常也能清除）
             this.recursiveDetectionSet.delete(ruleName)
