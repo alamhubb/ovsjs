@@ -74,7 +74,7 @@ import type {
     ValidationError,
     SubruleNode,
     ConsumeNode,
-    OrNode
+    OrNode, ManyNode, OptionNode, AtLeastOneNode
 } from "./SubhutiValidationError"
 import {SubhutiValidationLogger} from './SubhutiValidationLogger'
 import {list} from "@lerna-lite/publish";
@@ -1304,6 +1304,134 @@ MaxLevel 检测结果: 无冲突
     }
 
 
+    findDepth() {
+        const ruleName = 'AssignmentExpression'
+        const node = this.ruleASTs.get(ruleName)
+        const result = this.findNodeDepth(node)
+
+        console.log('可能性')
+        console.log(result)
+    }
+
+    private findRuleDepth(
+        ruleName: string,
+    ) {
+        // 层级+1（进入子规则）
+        // curLevel++
+        // ========================================
+        // 阶段2：递归检测（DFS 专属）
+        // ========================================
+
+        // 递归检测：如果规则正在计算中
+        if (this.recursiveDetectionSet.has(ruleName)) {
+            return 1
+        }
+
+        // 标记当前规则正在计算（防止循环递归）
+        this.recursiveDetectionSet.add(ruleName)
+
+        try {
+            const node = this.ruleASTs.get(ruleName)
+            return this.seqDepth(node)
+        } finally {
+            // 清除递归标记（确保即使异常也能清除）
+            this.recursiveDetectionSet.delete(ruleName)
+        }
+    }
+
+    manyAndOptionDepth(node: ManyNode | OptionNode) {
+        const num = this.findNodeDepth(node.node)
+        return num
+    }
+
+
+    atLeastOneDepth(node: AtLeastOneNode) {
+        const num = this.findNodeDepth(node.node)
+        return num * num
+    }
+
+    seqDepth(seq: SequenceNode) {
+        if (seq.nodes.length < 1) {
+            return 1
+        }
+        let all = 1
+        for (const node of seq.nodes) {
+            const depth = this.findNodeDepth(node)
+            all = all * depth
+        }
+        return all
+    }
+
+    orDepth(or: OrNode) {
+        if (or.alternatives.length < 1) {
+            throw new Error('xitongcuowu')
+        }
+        const orPossibility: number[] = []
+
+
+        for (const alternative of or.alternatives) {
+            orPossibility.push(this.findNodeDepth(alternative))
+        }
+
+        const maxDepth = Math.max(...orPossibility)
+        return maxDepth
+    }
+
+    findNodeDepth(
+        node: RuleNode
+    ): number {
+        const callId = this.perfAnalyzer.startMethod('expandNode')
+
+        // DFS 总是无限展开
+        // 根据节点类型分发处理
+        let result: number
+        switch (node.type) {
+            case 'consume':
+                // Token 节点：直接返回 token 名
+                result = 1
+                break
+
+            case 'subrule':
+                // 子规则引用：转发给 subRuleHandler 处理
+                result = this.findRuleDepth(node.ruleName)
+                break
+
+            case 'or':
+                // Or 节点：遍历所有分支，合并结果
+                // 🔴 关键：Or 分支中的第一个规则也需要传递 isFirstPosition
+                result = this.orDepth(node)
+                break
+
+            case 'sequence':
+                // Sequence 节点：笛卡尔积组合子节点
+                result = this.seqDepth(node)
+                break
+
+            case 'option':
+            case 'many':
+                // Option/Many 节点：0次或多次，添加空分支
+                // 🔴 关键：Option 内的第一个规则也需要传递 isFirstPosition
+                result = this.manyAndOptionDepth(node)
+                break
+
+            case 'atLeastOne':
+                // AtLeastOne 节点：1次或多次，添加 double 分支
+                // 🔴 关键：AtLeastOne 内的第一个规则也需要传递 isFirstPosition
+                result = this.atLeastOneDepth(node)
+                break
+
+            default:
+                // 未知节点类型，抛出错误
+                throw new Error(`未知节点类型: ${(node as any).type}`)
+        }
+
+        // 记录性能统计
+        this.perfAnalyzer.endMethod(callId, undefined, result)
+
+        return result
+    }
+
+
     /**
      * 初始化缓存（遍历所有规则，计算直接子节点、First 集合和分层展开）
      *
@@ -1312,7 +1440,15 @@ MaxLevel 检测结果: 无冲突
      * @returns { errors: 验证错误列表, stats: 统计信息 }
      */
     initCacheAndCheckLeftRecursion(): { errors: ValidationError[], stats: any } {
-        const totalStartTime = Date.now()
+
+        const ruleName = 'AssignmentExpression'
+        const node = this.ruleASTs.get(ruleName)
+        const result = this.findNodeDepth(node)
+
+        console.log('可能性')
+        console.log(result)
+
+        /*const totalStartTime = Date.now()
 
         // 统计对象
         const stats: any = {
@@ -1378,7 +1514,7 @@ MaxLevel 检测结果: 无冲突
         console.log(`\n📦 ===== BFS MaxLevel 缓存生成开始 =====`)
         console.log(`目标层级: Level 1 到 Level ${EXPANSION_LIMITS.LEVEL_K}`)
 
-        let processedCount = 0
+        let processedCount = 0*/
 
 
         // this.startRuleLogging(ruleName)
@@ -1808,7 +1944,7 @@ MaxLevel 检测结果: 无冲突
     private cartesianProduct(arrays: string[][][], firstK: number): string[][] {
         // 将每个组合中的字符串 split 回数组，然后合并成一个完整路径
         // 最后截取到 firstK 长度
-        let deduplicatedFinalArray = this.cartesianProductInner1(arrays,firstK)
+        let deduplicatedFinalArray = this.cartesianProductInner1(arrays, firstK)
         // let deduplicatedFinalArray = this.cartesianProductInner2(arrays,firstK)
 
         return deduplicatedFinalArray
@@ -2634,9 +2770,9 @@ MaxLevel 检测结果: 无冲突
 
     /**
      * 判断展开结果是否是规则名本身（未展开）
-     * 
+     *
      * 规则名本身的情况：[[ruleName]] - 只有一个路径，且这个路径只有一个元素，就是这个规则名
-     * 
+     *
      * @param result 展开结果
      * @param ruleName 规则名
      * @returns 如果是规则名本身返回 true，否则返回 false
