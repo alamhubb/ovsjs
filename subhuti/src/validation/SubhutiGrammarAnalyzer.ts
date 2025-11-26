@@ -1322,7 +1322,8 @@ MaxLevel 检测结果: 无冲突
 
         try {
             const node = this.ruleASTs.get(ruleName)
-            return this.seqDepth(node)
+            // 修复：node 不一定是 SequenceNode，应该调用 findNodeDepth 来正确处理所有类型
+            return this.findNodeDepth(node)
         } finally {
             // 清除递归标记（确保即使异常也能清除）
             this.recursiveDetectionSet.delete(ruleName)
@@ -1331,6 +1332,7 @@ MaxLevel 检测结果: 无冲突
 
     manyAndOptionDepth(node: ManyNode | OptionNode) {
         const num = this.findNodeDepth(node.node)
+        // option 和 many 的 0 次都没有意义，只计算匹配的情况
         return num
     }
 
