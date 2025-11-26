@@ -1308,8 +1308,8 @@ MaxLevel 检测结果: 无冲突
     private findRuleDepth(
         ruleName: string,
     ) {
-        console.log('进入子规则')
-        console.log(ruleName)
+        // console.log('进入子规则')
+        // console.log(ruleName)
         // 层级+1（进入子规则）
         // curLevel++
         // ========================================
@@ -1331,6 +1331,10 @@ MaxLevel 检测结果: 无冲突
 
             const result = this.findNodeDepth(node)
 
+            if (result > 1000000) {
+                console.log(ruleName)
+                console.log(result)
+            }
             return result
         } finally {
             // 清除递归标记（确保即使异常也能清除）
@@ -1387,7 +1391,7 @@ MaxLevel 检测结果: 无冲突
     ): number {
         // 超时检测
         this.checkTimeout('findNodeDepth')
-        const callId = this.perfAnalyzer.startMethod('expandNode')
+        const callId = this.perfAnalyzer.startMethod('findNodeDepth')
 
         // DFS 总是无限展开
         // 根据节点类型分发处理
@@ -1428,7 +1432,7 @@ MaxLevel 检测结果: 无冲突
         }
 
         // 记录性能统计
-        this.perfAnalyzer.endMethod(callId, undefined, result)
+        this.perfAnalyzer.endMethod(callId, undefined)
 
         // 添加节点类型信息，便于分析
         return result
@@ -1450,6 +1454,7 @@ MaxLevel 检测结果: 无冲突
         // const node = this.ruleASTs.get(ruleName)
 
         for (const node of this.ruleASTs.values()) {
+            this.recursiveDetectionSet.clear()
             if (!node.ruleName) {
                 throw new Error('系统错误')
             }
@@ -2120,7 +2125,7 @@ MaxLevel 检测结果: 无冲突
         // 超时检测相关
     private operationStartTime: number = 0
     private currentProcessingRule: string = ''
-    private timeoutSeconds: number = 10
+    private timeoutSeconds: number = 10000
 
     private checkTimeout(location: string): void {
         if (!this.operationStartTime) return
