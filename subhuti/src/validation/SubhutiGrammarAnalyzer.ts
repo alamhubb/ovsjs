@@ -1303,16 +1303,6 @@ MaxLevel 检测结果: 无冲突
         return maxLevelError
     }
 
-
-    findDepth() {
-        const ruleName = 'AssignmentExpression'
-        const node = this.ruleASTs.get(ruleName)
-        const result = this.findNodeDepth(node)
-
-        console.log('可能性')
-        console.log(result)
-    }
-
     private findRuleDepth(
         ruleName: string,
     ) {
