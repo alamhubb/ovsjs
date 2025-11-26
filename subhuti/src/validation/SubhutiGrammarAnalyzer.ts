@@ -1457,6 +1457,10 @@ MaxLevel 检测结果: 无冲突
             case 'subrule':
                 const ruleName = (node as SubruleNode).ruleName
 
+                if (this.depmap.has(ruleName)) {
+                    return this.depmap.get(ruleName)
+                }
+
                 if (this.recursiveDetectionSet.has(ruleName)) {
                     // 记录递归检测返回，用于分析为什么都是1
                     return depth
@@ -1508,6 +1512,8 @@ MaxLevel 检测结果: 无冲突
     }
 
 
+    depmap = new Map<string, number>()
+
     /**
      * 初始化缓存（遍历所有规则，计算直接子节点、First 集合和分层展开）
      *
@@ -1526,6 +1532,7 @@ MaxLevel 检测结果: 无冲突
             const result = this.deepDepth(node, 1)
             console.log(node.ruleName)
             console.log(result)
+            this.depmap.set(node.ruleName, result)
         }
 
         /*for (const node of this.ruleASTs.values()) {
@@ -2200,7 +2207,7 @@ MaxLevel 检测结果: 无冲突
         // 超时检测相关
     private operationStartTime: number = 0
     private currentProcessingRule: string = ''
-    private timeoutSeconds: number = 10
+    private timeoutSeconds: number = 1000
 
     private checkTimeout(location: string): void {
         if (!this.operationStartTime) return
