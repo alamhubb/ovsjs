@@ -1439,6 +1439,77 @@ MaxLevel 检测结果: 无冲突
     }
 
 
+    deepDepth(node: RuleNode, depth: number) {
+        // 超时检测
+        this.checkTimeout('deepDepth')
+        const callId = this.perfAnalyzer.startMethod('findNodeDepth')
+
+        // DFS 总是无限展开
+        // 根据节点类型分发处理
+        let result: number
+        let tempary = []
+        switch (node.type) {
+            case 'consume':
+                // Token 节点：直接返回 token 名
+                result = depth
+                break
+
+            case 'subrule':
+                const ruleName = (node as SubruleNode).ruleName
+
+                if (this.recursiveDetectionSet.has(ruleName)) {
+                    // 记录递归检测返回，用于分析为什么都是1
+                    return depth
+                }
+                depth++
+                console.log(ruleName)
+                console.log(depth)
+
+                // 标记当前规则正在计算（防止循环递归）
+                this.recursiveDetectionSet.add(ruleName)
+
+                const subNode = this.ruleASTs.get(ruleName)
+
+                result = this.deepDepth(subNode, depth)
+                // 清除递归标记（确保即使异常也能清除）
+                this.recursiveDetectionSet.delete(ruleName)
+                break
+
+            case 'or':
+                tempary = []
+                for (const alternative of node.alternatives) {
+                    tempary.push(this.deepDepth(alternative, depth))
+                }
+                result = Math.max(...tempary)
+                break
+
+            case 'sequence':
+                tempary = []
+                for (const alternative of node.nodes) {
+                    tempary.push(this.deepDepth(alternative, depth))
+                }
+                result = Math.max(...tempary)
+                break
+
+            case 'option':
+            case 'many':
+            case 'atLeastOne':
+                result = this.deepDepth((node as OptionNode).node, depth)
+                break
+
+            default:
+                // 未知节点类型，抛出错误
+                throw new Error(`未知节点类型: ${(node as any).type}`)
+        }
+
+        // 记录性能统计
+        this.perfAnalyzer.endMethod(callId, undefined)
+
+        // 添加节点类型信息，便于分析
+        return result
+    }
+
+
     /**
      * 初始化缓存（遍历所有规则，计算直接子节点、First 集合和分层展开）
      *
@@ -1452,8 +1523,13 @@ MaxLevel 检测结果: 无冲突
 
         // const ruleName = 'AssignmentExpression'
         // const node = this.ruleASTs.get(ruleName)
-
         for (const node of this.ruleASTs.values()) {
+            const result = this.deepDepth(node, 1)
+            console.log(node.ruleName)
+            console.log(result)
+        }
+
+        /*for (const node of this.ruleASTs.values()) {
             this.recursiveDetectionSet.clear()
             if (!node.ruleName) {
                 throw new Error('系统错误')
@@ -1483,7 +1559,7 @@ MaxLevel 检测结果: 无冲突
 
         for (const [key, value] of this.depthMap) {
             console.log(key, value);
-        }
+        }*/
 
         // 重置超时检测
         this.operationStartTime = 0
