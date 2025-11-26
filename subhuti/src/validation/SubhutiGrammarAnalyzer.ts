@@ -1524,6 +1524,7 @@ MaxLevel 检测结果: 无冲突
         // const ruleName = 'AssignmentExpression'
         // const node = this.ruleASTs.get(ruleName)
         for (const node of this.ruleASTs.values()) {
+            this.recursiveDetectionSet.clear()
             const result = this.deepDepth(node, 1)
             console.log(node.ruleName)
             console.log(result)
@@ -2201,7 +2202,7 @@ MaxLevel 检测结果: 无冲突
         // 超时检测相关
     private operationStartTime: number = 0
     private currentProcessingRule: string = ''
-    private timeoutSeconds: number = 10000
+    private timeoutSeconds: number = 10
 
     private checkTimeout(location: string): void {
         if (!this.operationStartTime) return
