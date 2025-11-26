@@ -1314,6 +1314,8 @@ MaxLevel 检测结果: 无冲突
 
         // 递归检测：如果规则正在计算中
         if (this.recursiveDetectionSet.has(ruleName)) {
+            // 记录递归检测返回，用于分析为什么都是1
+            console.log(`[递归检测] ${ruleName} 已在计算中，返回1 (当前调用栈: ${Array.from(this.recursiveDetectionSet).join(' -> ')})`)
             return 1
         }
 
@@ -1346,11 +1348,16 @@ MaxLevel 检测结果: 无冲突
         if (seq.nodes.length < 1) {
             return 1
         }
+        console.log(`[seqDepth] 开始计算序列深度，包含 ${seq.nodes.length} 个子节点`)
         let all = 1
-        for (const node of seq.nodes) {
+        for (let i = 0; i < seq.nodes.length; i++) {
+            const node = seq.nodes[i]
+            console.log(`[seqDepth] 正在计算子节点 ${i + 1}/${seq.nodes.length}, 类型: ${node.type}`)
             const depth = this.findNodeDepth(node)
             all = all * depth
+            console.log(`[seqDepth] 子节点 ${i + 1} 深度: ${depth}, 累积深度: ${all}`)
         }
+        console.log(`[seqDepth] 序列总深度: ${all}`)
         return all
     }
 
@@ -1360,12 +1367,19 @@ MaxLevel 检测结果: 无冲突
         }
         const orPossibility: number[] = []
 
+        // 记录 Or 分支数量和计算过程
+        console.log(`[orDepth] 开始计算 ${or.alternatives.length} 个分支的最大深度`)
 
-        for (const alternative of or.alternatives) {
-            orPossibility.push(this.findNodeDepth(alternative))
+        for (let i = 0; i < or.alternatives.length; i++) {
+            const alternative = or.alternatives[i]
+            console.log(`[orDepth] 正在计算分支 ${i + 1}/${or.alternatives.length}`)
+            const depth = this.findNodeDepth(alternative)
+            orPossibility.push(depth)
+            console.log(`[orDepth] 分支 ${i + 1} 深度: ${depth}`)
         }
 
         const maxDepth = Math.max(...orPossibility)
+        console.log(`[orDepth] 所有分支深度: [${orPossibility.join(', ')}], 最大值: ${maxDepth}`)
         return maxDepth
     }
 
@@ -1422,7 +1436,8 @@ MaxLevel 检测结果: 无冲突
         // 记录性能统计
         this.perfAnalyzer.endMethod(callId, undefined, result)
 
-        console.log(result)
+        // 添加节点类型信息，便于分析
+        console.log(`[findNodeDepth] 节点类型: ${node.type}, 深度: ${result}`)
         return result
     }
 
