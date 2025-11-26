@@ -1308,6 +1308,8 @@ MaxLevel 检测结果: 无冲突
     private findRuleDepth(
         ruleName: string,
     ) {
+        console.log('进入子规则')
+        console.log(ruleName)
         // 层级+1（进入子规则）
         // curLevel++
         // ========================================
@@ -1328,27 +1330,6 @@ MaxLevel 检测结果: 无冲突
             // 修复：node 不一定是 SequenceNode，应该调用 findNodeDepth 来正确处理所有类型
 
             const result = this.findNodeDepth(node)
-
-            if (this.depthMap.has(ruleName)) {
-                const num = this.depthMap.get(ruleName)
-                if (result !== num) {
-                    console.log('更新设置')
-                    console.log(ruleName)
-                    console.log('jiuzhi')
-                    console.log(num)
-                    console.log('心智')
-                    console.log(result)
-                    this.depthMap.set(ruleName, result)
-                    throw new Error('系统错误')
-                }
-            } else {
-                this.depthMap.set(ruleName, result)
-                console.log('初次设置')
-                console.log(ruleName)
-                console.log(result)
-            }
-
-            this.depthMap.set(ruleName, result)
 
             return result
         } finally {
@@ -1465,14 +1446,39 @@ MaxLevel 检测结果: 无冲突
         // 启动超时检测（20秒）
         this.operationStartTime = Date.now()
 
-        const ruleName = 'AssignmentExpression'
-        const node = this.ruleASTs.get(ruleName)
+        // const ruleName = 'AssignmentExpression'
+        // const node = this.ruleASTs.get(ruleName)
 
+        for (const node of this.ruleASTs.values()) {
+            if (!node.ruleName) {
+                throw new Error('系统错误')
+            }
+            const ruleName = node.ruleName
+            console.log('进入规则：' + ruleName)
+            const result = this.findNodeDepth(node)
+            if (this.depthMap.has(ruleName)) {
+                const num = this.depthMap.get(ruleName)
+                if (result !== num) {
+                    console.log('更新设置')
+                    console.log(ruleName)
+                    console.log('jiuzhi')
+                    console.log(num)
+                    console.log('心智')
+                    console.log(result)
+                    this.depthMap.set(ruleName, result)
+                    throw new Error('系统错误')
+                }
+            } else {
+                this.depthMap.set(ruleName, result)
+                console.log('初次设置')
+                console.log(ruleName)
+                console.log(result)
+            }
+        }
 
-        const result = this.findNodeDepth(node)
-
-        console.log('可能性')
-        console.log(result)
+        for (const [key, value] of this.depthMap) {
+            console.log(key, value);
+        }
 
         // 重置超时检测
         this.operationStartTime = 0
