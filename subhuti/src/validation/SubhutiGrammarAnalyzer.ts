@@ -1303,6 +1303,8 @@ MaxLevel 检测结果: 无冲突
         return maxLevelError
     }
 
+    depthMap = new Map()
+
     private findRuleDepth(
         ruleName: string,
     ) {
@@ -1315,7 +1317,6 @@ MaxLevel 检测结果: 无冲突
         // 递归检测：如果规则正在计算中
         if (this.recursiveDetectionSet.has(ruleName)) {
             // 记录递归检测返回，用于分析为什么都是1
-            console.log(`[递归检测] ${ruleName} 已在计算中，返回1 (当前调用栈: ${Array.from(this.recursiveDetectionSet).join(' -> ')})`)
             return 1
         }
 
@@ -1325,17 +1326,36 @@ MaxLevel 检测结果: 无冲突
         try {
             const node = this.ruleASTs.get(ruleName)
             // 修复：node 不一定是 SequenceNode，应该调用 findNodeDepth 来正确处理所有类型
-            return this.findNodeDepth(node)
+
+            const result = this.findNodeDepth(node)
+
+            if (this.depthMap.has(ruleName)) {
+                const num = this.depthMap.get(ruleName)
+                if (result !== num) {
+                    console.log(ruleName)
+                    console.log(result)
+                    this.depthMap.set(ruleName, result)
+                }
+            } else {
+                this.depthMap.set(ruleName, result)
+                console.log(ruleName)
+                console.log(result)
+            }
+
+            this.depthMap.set(ruleName, result)
+
+            return
         } finally {
             // 清除递归标记（确保即使异常也能清除）
             this.recursiveDetectionSet.delete(ruleName)
         }
     }
 
+    //0和1好 1和2 ，都是两种可能性
     manyAndOptionDepth(node: ManyNode | OptionNode) {
         const num = this.findNodeDepth(node.node)
         // option 和 many 的 0 次都没有意义，只计算匹配的情况
-        return num
+        return num + num
     }
 
 
@@ -1363,16 +1383,14 @@ MaxLevel 检测结果: 无冲突
         }
         let orPossibility: number = 0
 
-        // 记录 Or 分支数量和计算过程
-        console.log(`[orDepth] 开始计算 ${or.alternatives.length} 个分支的最大深度`)
-
         for (let i = 0; i < or.alternatives.length; i++) {
             const alternative = or.alternatives[i]
-            console.log(`[orDepth] 正在计算分支 ${i + 1}/${or.alternatives.length}`)
             const depth = this.findNodeDepth(alternative)
 
             orPossibility += depth
-            console.log(`[orDepth] 分支 ${i + 1} 深度: ${depth}`)
+        }
+        if (orPossibility === 0) {
+            throw new Error('系统错误')
         }
         return orPossibility
     }
@@ -1411,15 +1429,10 @@ MaxLevel 检测结果: 无冲突
 
             case 'option':
             case 'many':
+            case 'atLeastOne':
                 // Option/Many 节点：0次或多次，添加空分支
                 // 🔴 关键：Option 内的第一个规则也需要传递 isFirstPosition
                 result = this.manyAndOptionDepth(node)
-                break
-
-            case 'atLeastOne':
-                // AtLeastOne 节点：1次或多次，添加 double 分支
-                // 🔴 关键：AtLeastOne 内的第一个规则也需要传递 isFirstPosition
-                result = this.atLeastOneDepth(node)
                 break
 
             default:
@@ -1431,7 +1444,6 @@ MaxLevel 检测结果: 无冲突
         this.perfAnalyzer.endMethod(callId, undefined, result)
 
         // 添加节点类型信息，便于分析
-        console.log(`[findNodeDepth] 节点类型: ${node.type}, 深度: ${result}`)
         return result
     }
 
@@ -2096,7 +2108,7 @@ MaxLevel 检测结果: 无冲突
         // 超时检测相关
     private operationStartTime: number = 0
     private currentProcessingRule: string = ''
-    private timeoutSeconds: number = 5
+    private timeoutSeconds: number = 10
 
     private checkTimeout(location: string): void {
         if (!this.operationStartTime) return
