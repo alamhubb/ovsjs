@@ -1334,8 +1334,12 @@ MaxLevel 检测结果: 无冲突
                 if (result !== num) {
                     console.log('更新设置')
                     console.log(ruleName)
+                    console.log('jiuzhi')
+                    console.log(num)
+                    console.log('心智')
                     console.log(result)
                     this.depthMap.set(ruleName, result)
+                    throw new Error('系统错误')
                 }
             } else {
                 this.depthMap.set(ruleName, result)
