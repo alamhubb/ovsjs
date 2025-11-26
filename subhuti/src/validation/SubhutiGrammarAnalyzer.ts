@@ -83,6 +83,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import {fileURLToPath} from 'url';
 import fastCartesian from "fast-cartesian";
+import { Graph, alg } from '@dagrejs/graphlib'
 
 /**
  * 左递归错误类型
@@ -1514,6 +1515,39 @@ MaxLevel 检测结果: 无冲突
 
     depmap = new Map<string, number>()
 
+
+    private graph: Graph
+
+
+    // 递归收集依赖
+    collectDependencies(node: RuleNode, fromRule: string) {
+        switch (node.type) {
+            case 'subrule':
+                this.graph.setEdge(fromRule, node.ruleName)
+                break
+            case 'sequence':
+                node.nodes.forEach(n => this.collectDependencies(n, fromRule))
+                break
+            case 'or':
+                node.alternatives.forEach(alt => this.collectDependencies(alt, fromRule))
+                break
+            case 'option':
+            case 'many':
+            case 'atLeastOne':
+                this.collectDependencies(node.node, fromRule)
+                break
+        }
+    }
+    graphToMermaid(g: Graph): string {
+        const lines = ['graph TD']
+
+        for (const edge of g.edges()) {
+            lines.push(`    ${edge.v} --> ${edge.w}`)
+        }
+
+        return lines.join('\n')
+    }
+
     /**
      * 初始化缓存（遍历所有规则，计算直接子节点、First 集合和分层展开）
      *
@@ -1525,15 +1559,32 @@ MaxLevel 检测结果: 无冲突
         // 启动超时检测（20秒）
         this.operationStartTime = Date.now()
 
+        /*for (const node of this.ruleASTs.values()) {
+            this.recursiveDetectionSet.clear()
+            const res = this.getDirectChildren(node.ruleName)
+        }
+        console.log(this.bfsLevelCache.size)
+        for (const key of this.bfsLevelCache.keys()) {
+            console.log(key)
+        }*/
+        for (const [ruleName, node] of this.ruleASTs) {
+            this.graph.setNode(ruleName)
+            this.collectDependencies(node, ruleName)
+        }
+
+
+// 使用
+        const mermaidCode = this.graphToMermaid(this.graph)
+        console.log(mermaidCode)
         // const ruleName = 'AssignmentExpression'
         // const node = this.ruleASTs.get(ruleName)
-        for (const node of this.ruleASTs.values()) {
-            this.recursiveDetectionSet.clear()
-            const result = this.deepDepth(node, 1)
-            console.log(node.ruleName)
-            console.log(result)
-            this.depmap.set(node.ruleName, result)
-        }
+        // for (const node of this.ruleASTs.values()) {
+        //     this.recursiveDetectionSet.clear()
+        //     const result = this.deepDepth(node, 1)
+        //     console.log(node.ruleName)
+        //     console.log(result)
+        //     this.depmap.set(node.ruleName, result)
+        // }
 
         /*for (const node of this.ruleASTs.values()) {
             this.recursiveDetectionSet.clear()
@@ -3205,5 +3256,6 @@ First(${ruleName}) = {${Array.from(firstSet).slice(0, 5).join(', ')}${firstSet.s
 First(${ruleName}) = {${Array.from(firstSet).slice(0, 5).join(', ')}${firstSet.size > 5 ? ', ...' : ''}}
 包含 ${ruleName} 本身，说明存在左递归。`
     }
+
 }
 
