@@ -1372,6 +1372,8 @@ MaxLevel 检测结果: 无冲突
     findNodeDepth(
         node: RuleNode
     ): number {
+        // 超时检测
+        this.checkTimeout('findNodeDepth')
         const callId = this.perfAnalyzer.startMethod('expandNode')
 
         // DFS 总是无限展开
@@ -1433,13 +1435,20 @@ MaxLevel 检测结果: 无冲突
      * @returns { errors: 验证错误列表, stats: 统计信息 }
      */
     initCacheAndCheckLeftRecursion(): { errors: ValidationError[], stats: any } {
+        // 启动超时检测（20秒）
+        this.operationStartTime = Date.now()
 
         const ruleName = 'AssignmentExpression'
         const node = this.ruleASTs.get(ruleName)
+
+
         const result = this.findNodeDepth(node)
 
         console.log('可能性')
         console.log(result)
+        
+        // 重置超时检测
+        this.operationStartTime = 0
 
         /*const totalStartTime = Date.now()
 
@@ -2078,7 +2087,7 @@ MaxLevel 检测结果: 无冲突
         // 超时检测相关
     private operationStartTime: number = 0
     private currentProcessingRule: string = ''
-    private timeoutSeconds: number = 100
+    private timeoutSeconds: number = 5
 
     private checkTimeout(location: string): void {
         if (!this.operationStartTime) return
