@@ -401,7 +401,7 @@ export const EXPANSION_LIMITS = {
     FIRST_Max: 100,
 
     LEVEL_1: 1,
-    LEVEL_K: 1,
+    LEVEL_K: 2,
 
     INFINITY: Infinity,
     RuleJoinSymbol: '\x1F',
@@ -880,6 +880,7 @@ export class SubhutiGrammarAnalyzer {
         // 存储每个分支的路径集合
         let allOrs: string[][][] = []
 
+        //allor
         // 遍历 Or 的每个分支
         for (const seqNode of orNode.alternatives) {
             // 步骤1：展开分支到第一层（得到规则名序列）
@@ -897,8 +898,10 @@ export class SubhutiGrammarAnalyzer {
 
             let allBranchAllSeq: string[][] = []
 
-            // 遍历第一层展开的每个可能性,每个分支的所有可能性
+            //allbranch/allSeq
             for (const branch of nodeAllBranches) {
+                //branch
+
                 // 步骤2：从 cache 获取每个规则的所有路径
                 // 例如：['If', 'Expression'] → [[If的路径], [Expression的路径]]
                 const seqAllBranches = branch.map(rule => {
@@ -917,11 +920,11 @@ export class SubhutiGrammarAnalyzer {
                 // 例如：[[a,b], [c,d]] × [[e], [f,g]] → [[a,b,e], [a,b,f,g], [c,d,e], [c,d,f,g]]
                 const branchAllSeq = this.cartesianProduct(seqAllBranches, firstK)
 
-                /*if (branchAllSeq.length > 1000 && firstK === EXPANSION_LIMITS.INFINITY) {
+                if (isMore) {
                     console.log(ruleName)
                     console.log('branchAllSeq.length')
                     console.log(branchAllSeq.length)
-                }*/
+                }
 
                 // 合并到结果中
                 allBranchAllSeq = allBranchAllSeq.concat(branchAllSeq)
@@ -1690,9 +1693,11 @@ MaxLevel 检测结果: 无冲突
             this.expandPathsByDFSCache(ruleName, EXPANSION_LIMITS.FIRST_K, 0, EXPANSION_LIMITS.INFINITY, true)
         }
 
+        const startLevel = EXPANSION_LIMITS.LEVEL_K
+
         // BFS 缓存预填充
         // 预填充 level 1 到 level_k
-        for (let level = 1; level <= EXPANSION_LIMITS.LEVEL_K; level++) {
+        for (let level = startLevel; level <= EXPANSION_LIMITS.LEVEL_K; level++) {
             console.log(`\n📊 正在生成 Level ${level} 的缓存...`)
             let levelRuleIndex = 0
             for (const ruleName of ruleNames) {
@@ -1734,7 +1739,7 @@ MaxLevel 检测结果: 无冲突
             const allLevelPaths: string[][] = []
 
             // 收集该规则的所有层级数据
-            for (let level = 1; level <= EXPANSION_LIMITS.LEVEL_K; level++) {
+            for (let level = startLevel; level <= EXPANSION_LIMITS.LEVEL_K; level++) {
                 const key = `${ruleName}:${level}`
                 if (this.bfsLevelCache.has(key)) {
                     const levelPaths = this.getCacheValue('bfsLevelCache', key)!
