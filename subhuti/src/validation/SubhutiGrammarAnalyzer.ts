@@ -83,8 +83,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import {fileURLToPath} from 'url';
 import fastCartesian from "fast-cartesian";
-import { Graph, alg } from '@dagrejs/graphlib'
-import { write } from '@dagrejs/graphlib-dot'
+import {Graph, alg} from '@dagrejs/graphlib'
 
 /**
  * 左递归错误类型
@@ -398,7 +397,7 @@ class PerformanceAnalyzer {
  * - MAX_BRANCHES：仅用于冲突检测时的路径比较优化
  */
 export const EXPANSION_LIMITS = {
-    FIRST_K: 4,
+    FIRST_K: 3,
     FIRST_Max: 100,
 
     LEVEL_1: 1,
@@ -658,6 +657,7 @@ export class SubhutiGrammarAnalyzer {
     // 特点：BFS 只负责按层级展开，不负责截取
     // ========================================
 
+    //todo bfs无法全层展开，优化方向，使用图找到循环点，去环，计算深度，根据深度排序，浅层优先计算和缓存，深层调用的每一个都换存过的方式尝试解决问题
     /** BFS 缓存：key="ruleName"（完整展开，不截取，所有层级聚合） */
     private bfsAllCache = new Map<string, string[][]>()
     /** BFS 缓存：key="ruleName:level"（完整展开，不截取） */
@@ -1153,7 +1153,7 @@ or([A, A, B]) → or([A, B])  // 删除重复的A`
         }
 
         // 获取每个分支的深度展开路径集合
-        const branchPathSets = this.getOrNodeAllBranchRules(ruleName, orNode, EXPANSION_LIMITS.FIRST_Max, 'bfsAllCache')
+        const branchPathSets = this.getOrNodeAllBranchRules(ruleName, orNode, EXPANSION_LIMITS.INFINITY, 'bfsAllCache')
 
         // 统计路径数量（MaxLevel 的路径可能非常多）
         if (ruleStats) {
@@ -1542,6 +1542,7 @@ MaxLevel 检测结果: 无冲突
                 break
         }
     }
+
     graphToMermaid(g: Graph): string {
         const lines = ['graph TD']
 
@@ -1552,26 +1553,7 @@ MaxLevel 检测结果: 无冲突
         return lines.join('\n')
     }
 
-    /**
-     * 初始化缓存（遍历所有规则，计算直接子节点、First 集合和分层展开）
-     *
-     * 应该在收集 AST 之后立即调用
-     *
-     * @returns { errors: 验证错误列表, stats: 统计信息 }
-     */
-    initCacheAndCheckLeftRecursion(): { errors: ValidationError[], stats: any } {
-        // 启动超时检测（20秒）
-        this.operationStartTime = Date.now()
-
-        /*for (const node of this.ruleASTs.values()) {
-            this.recursiveDetectionSet.clear()
-            const res = this.getDirectChildren(node.ruleName)
-        }
-        console.log(this.bfsLevelCache.size)
-        for (const key of this.bfsLevelCache.keys()) {
-            console.log(key)
-        }*/
-
+    grachScc(){
         this.graph = new Graph({ directed: true })
 
         for (const [ruleName, node] of this.ruleASTs) {
@@ -1595,25 +1577,21 @@ MaxLevel 检测结果: 无冲突
                 console.log(`${scc.length}`)
             }
         }
+    }
 
-// 使用
-//         const mermaidCode = this.graphToMermaid(this.graph)
-//         console.log(mermaidCode)
-        // const ruleName = 'AssignmentExpression'
-        // const node = this.ruleASTs.get(ruleName)
-        // for (const node of this.ruleASTs.values()) {
-        //     this.recursiveDetectionSet.clear()
-        //     const result = this.deepDepth(node, 1)
-        //     console.log(node.ruleName)
-        //     console.log(result)
-        //     this.depmap.set(node.ruleName, result)
-        // }
-
-        /*for (const node of this.ruleASTs.values()) {
+    computeRuleDepth() {
+        for (const node of this.ruleASTs.values()) {
             this.recursiveDetectionSet.clear()
-            if (!node.ruleName) {
-                throw new Error('系统错误')
-            }
+            const result = this.deepDepth(node, 1)
+            console.log(node.ruleName)
+            console.log(result)
+            this.depmap.set(node.ruleName, result)
+        }
+    }
+
+    computeRulePossibility(){
+        for (const node of this.ruleASTs.values()) {
+            this.recursiveDetectionSet.clear()
             const ruleName = node.ruleName
             console.log('进入规则：' + ruleName)
             const result = this.findNodeDepth(node)
@@ -1636,15 +1614,20 @@ MaxLevel 检测结果: 无冲突
                 console.log(result)
             }
         }
+    }
 
-        for (const [key, value] of this.depthMap) {
-            console.log(key, value);
-        }*/
+    /**
+     * 初始化缓存（遍历所有规则，计算直接子节点、First 集合和分层展开）
+     *
+     * 应该在收集 AST 之后立即调用
+     *
+     * @returns { errors: 验证错误列表, stats: 统计信息 }
+     */
+    initCacheAndCheckLeftRecursion(): { errors: ValidationError[], stats: any } {
+        // 启动超时检测（20秒）
+        this.operationStartTime = Date.now()
 
-        // 重置超时检测
-        this.operationStartTime = 0
-
-        /*const totalStartTime = Date.now()
+        const totalStartTime = Date.now()
 
         // 统计对象
         const stats: any = {
@@ -1667,42 +1650,6 @@ MaxLevel 检测结果: 无冲突
         // 清空错误 Map
         this.detectedLeftRecursionErrors.clear()
 
-        // 🔧 修复：分别统计 DFS First(K) 和 BFS MaxLevel 的耗时
-        // 阶段1.1：DFS First(K) 缓存生成（包含左递归检测）
-        const t1_1_start = Date.now()
-        console.log(`\n📊 开始 DFS First(${EXPANSION_LIMITS.FIRST_K}) 缓存生成...`)
-
-        // 遍历所有规则
-        const ruleName = 'MemberExpression'
-
-        // 清空递归检测集合
-        this.recursiveDetectionSet.clear()
-
-        // 启动日志记录
-        this.startRuleLogging(ruleName)
-
-        // 调用 DFS 展开
-        const finalResult = this.expandPathsByDFSCache(ruleName, EXPANSION_LIMITS.FIRST_K, 0, EXPANSION_LIMITS.INFINITY, true)
-
-        // 输出 DFS 展开结果（所有路径）
-        this.writeLog(``)
-        this.writeLog(`📋 DFS First(${EXPANSION_LIMITS.FIRST_K}) 完整结果 (共 ${finalResult.length} 条路径):`)
-        this.writeLog(`${'='.repeat(80)}`)
-
-        // 输出所有路径
-        finalResult.forEach((path, index) => {
-            this.writeLog(`  ${(index + 1).toString().padStart(5, ' ')}. ${path.join(' ')}`)
-        })
-
-        this.writeLog(`${'='.repeat(80)}`)
-        this.writeLog(``)
-
-        // 结束日志记录
-        this.endRuleLogging()
-
-        const t1_1_end = Date.now()
-        stats.dfsFirstKTime = t1_1_end - t1_1_start
-
         // 阶段1.2：BFS MaxLevel 缓存生成
         // 启动超时检测（在 BFS 缓存生成阶段）
         this.operationStartTime = Date.now()
@@ -1710,45 +1657,18 @@ MaxLevel 检测结果: 无冲突
         console.log(`\n📦 ===== BFS MaxLevel 缓存生成开始 =====`)
         console.log(`目标层级: Level 1 到 Level ${EXPANSION_LIMITS.LEVEL_K}`)
 
-        let processedCount = 0*/
 
+        const ruleNames = this.ruleASTs.keys()
 
-        // this.startRuleLogging(ruleName)
-        // this.writeLog(`进入规则: ${ruleName}, 目标层级: ${EXPANSION_LIMITS.LEVEL_K}`, 0)
-        // const result = this.expandPathsByBFSCache(ruleName, EXPANSION_LIMITS.LEVEL_K)
-        // this.writeLog(`✅ 规则处理完成: ${ruleName}, 结果路径数: ${result.length}`, 0)
-        // this.writeLog(`退出规则: ${ruleName}, 目标层级: ${EXPANSION_LIMITS.LEVEL_K}`, 0)
-        /*for (const ruleName of ruleNames) {
-            processedCount++
-            console.log(`\n[${processedCount}/${ruleNames.length}] 开始处理规则: ${ruleName}`)
-
-            // 开始记录当前规则的日志
-            this.startRuleLogging(ruleName)
-            this.writeLog(`进入规则: ${ruleName}, 目标层级: ${EXPANSION_LIMITS.LEVEL_K}`, 0)
-
-            try {
-                const result = this.expandPathsByBFSCache(ruleName, EXPANSION_LIMITS.LEVEL_K)
-
-
-
-            } catch (error) {
-                this.writeLog(`❌ 规则处理异常: ${ruleName}`, 0)
-                this.writeLog(`错误信息: ${error}`, 0)
-                console.error(`处理规则 ${ruleName} 时出错:`, error)
-                throw error
-            } finally {
-                // 无论成功还是失败，都结束日志记录
-                this.endRuleLogging()
-            }
-
-            console.log(`[${processedCount}/${ruleNames.length}] 完成处理规则: ${ruleName}`)
-        }*/
-        console.log(`\nBFS 缓存生成完成，共处理 ${processedCount} 个规则`)
-
+        //遍历检查左递归问题
+        for (const ruleName of ruleNames) {
+            this.recursiveDetectionSet.clear()
+            this.expandPathsByDFSCache(ruleName, EXPANSION_LIMITS.FIRST_K, 0, EXPANSION_LIMITS.INFINITY, true)
+        }
 
         // BFS 缓存预填充
         // 预填充 level 1 到 level_k
-        /*for (let level = EXPANSION_LIMITS.LEVEL_K; level <= EXPANSION_LIMITS.LEVEL_K; level++) {
+        for (let level = EXPANSION_LIMITS.LEVEL_K; level <= EXPANSION_LIMITS.LEVEL_K; level++) {
             console.log(`\n📊 正在生成 Level ${level} 的缓存...`)
             let levelRuleIndex = 0
             for (const ruleName of ruleNames) {
@@ -1779,12 +1699,12 @@ MaxLevel 检测结果: 无冲突
                 }
             }
             console.log(`📊 Level ${level} 缓存生成完成`)
-        }*/
+        }
 
         // 聚合所有层级的数据到 bfsAllCache
         console.log(`\n📦 正在聚合所有层级的数据到 bfsAllCache...`)
         let aggregateIndex = 0
-        /*for (const ruleName of ruleNames) {
+        for (const ruleName of ruleNames) {
             aggregateIndex++
             const aggregateStartTime = Date.now()
             const allLevelPaths: string[][] = []
@@ -1807,9 +1727,9 @@ MaxLevel 检测结果: 无冲突
                 const aggregateDuration = Date.now() - aggregateStartTime
                 console.log(`  [${aggregateIndex}/${ruleNames.length}] 聚合完成: ${ruleName} (耗时: ${aggregateDuration}ms, 路径数: ${deduplicated.length})`)
             }
-        }*/
+        }
 
-        /*const t1_2_end = Date.now()
+        const t1_2_end = Date.now()
         stats.bfsMaxLevelTime = t1_2_end - t1_2_start
         console.log(`\n✅ BFS MaxLevel 缓存生成完成 (总耗时: ${stats.bfsMaxLevelTime}ms)`)
         console.log(`========================================\n`)
@@ -1888,7 +1808,7 @@ MaxLevel 检测结果: 无冲突
                 total: getDirectChildrenStats.total,
                 hitRate: getDirectChildrenStats.total > 0 ? (getDirectChildrenStats.hit / getDirectChildrenStats.total * 100) : 0
             }
-        }*/
+        }
 
         // 输出性能分析报告
         this.perfAnalyzer.report()
