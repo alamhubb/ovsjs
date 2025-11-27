@@ -397,11 +397,11 @@ class PerformanceAnalyzer {
  * - MAX_BRANCHES：仅用于冲突检测时的路径比较优化
  */
 export const EXPANSION_LIMITS = {
-    FIRST_K: 1,
+    FIRST_K: 3,
     FIRST_Max: 100,
 
     LEVEL_1: 1,
-    LEVEL_K: 10,
+    LEVEL_K: 1,
 
     INFINITY: Infinity,
     RuleJoinSymbol: '\x1F',
@@ -880,7 +880,6 @@ export class SubhutiGrammarAnalyzer {
         // 存储每个分支的路径集合
         let allOrs: string[][][] = []
 
-
         // 遍历 Or 的每个分支
         for (const seqNode of orNode.alternatives) {
             // 步骤1：展开分支到第一层（得到规则名序列）
@@ -907,7 +906,7 @@ export class SubhutiGrammarAnalyzer {
 
                 // 步骤3：笛卡尔积组合，得到当前分支的所有可能路径
                 // 例如：[[a,b], [c,d]] × [[e], [f,g]] → [[a,b,e], [a,b,f,g], [c,d,e], [c,d,f,g]]
-                const branchAllSeq = this.cartesianProduct(seqAllBranches, firstK, ruleName)
+                const branchAllSeq = this.cartesianProduct(seqAllBranches, firstK)
                 // 合并到结果中
                 allBranchAllSeq = allBranchAllSeq.concat(branchAllSeq)
             }
@@ -2066,7 +2065,7 @@ MaxLevel 检测结果: 无冲突
      * 4. 长度达到 firstK 的序列立即移入最终结果集，不再参与后续计算
      * 5. 所有序列都达到 firstK 时提前结束，跳过剩余数组
      */
-    private cartesianProduct(arrays: string[][][], firstK: number, ruleName?): string[][] {
+    private cartesianProduct(arrays: string[][][], firstK: number): string[][] {
         // 将每个组合中的字符串 split 回数组，然后合并成一个完整路径
         // 最后截取到 firstK 长度
         let deduplicatedFinalArray = this.cartesianProductInner1(arrays, firstK)
@@ -2724,7 +2723,7 @@ MaxLevel 检测结果: 无冲突
         const result = this.expandPathsByDFSCache(
             ruleName,
             EXPANSION_LIMITS.INFINITY,
-            0,
+            1,
             EXPANSION_LIMITS.LEVEL_1,
             false,
         )
@@ -2775,12 +2774,10 @@ MaxLevel 检测结果: 无冲突
         }
 
         // 层级限制检查（BFS 需要）
-        if (curLevel === maxLevel) {
+        if (curLevel > maxLevel) {
             // 返回规则名本身（达到最大深度）
             this.perfAnalyzer.cacheStats.levelLimitReturn++
             return [[ruleName]]
-        } else if (curLevel > maxLevel) {
-            throw new Error('系统错误')
         }
 
         // ========================================
