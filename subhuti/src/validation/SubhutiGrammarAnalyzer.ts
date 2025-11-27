@@ -692,8 +692,6 @@ export class SubhutiGrammarAnalyzer {
                 result = this.dfsFirstKCache.get(key)
                 break
             case 'bfsAllCache':
-                console.log(cacheType)
-                console.log(key)
                 result = this.bfsAllCache.get(key)
                 break
             case 'bfsLevelCache':
@@ -705,6 +703,8 @@ export class SubhutiGrammarAnalyzer {
         if (result !== undefined) {
             this.perfAnalyzer.recordCacheHit(cacheType)
         } else {
+            if (cacheType === 'bfsAllCache'){
+            }
             this.perfAnalyzer.recordCacheMiss(cacheType)
         }
 
@@ -2486,14 +2486,6 @@ MaxLevel 检测结果: 无冲突
         const tokenNode = this.tokenCache?.get(ruleName)
         if (tokenNode && tokenNode.type === 'consume') {
             const result = [[ruleName]]
-            // 🔧 修复：token 也需要设置缓存（无论 targetLevel 是多少，token 的结果都是 [[ruleName]]）
-            // 设置 LEVEL_1 的缓存，因为这是 token 的固定结果
-            const key = `${ruleName}:${EXPANSION_LIMITS.LEVEL_1}`
-            if (!this.bfsLevelCache.has(key)) {
-                this.bfsLevelCache.set(key, result)
-                this.writeLog(`📦 存储缓存: ${key}, 路径数: 1 (Token节点)`, depth)
-            }
-            this.writeLog(`◀ 返回: expandPathsByBFSCache(${ruleName}, targetLevel=${targetLevel}), Token节点, 路径数: 1 [执行完]`, depth)
             return result
         }
 
