@@ -909,12 +909,14 @@ export class SubhutiGrammarAnalyzer {
                         return [[rule]]
                     }
                     const paths = this.getCacheValue(cacheType, rule)
+
                     if (!paths) {
                         throw new Error('系统错误')
                     }
                     // 防御：如果规则不在缓存中，返回 [[rule]]
                     return paths
                 })
+
 
                 // 步骤3：笛卡尔积组合，得到当前分支的所有可能路径
                 // 例如：[[a,b], [c,d]] × [[e], [f,g]] → [[a,b,e], [a,b,f,g], [c,d,e], [c,d,f,g]]
@@ -924,6 +926,11 @@ export class SubhutiGrammarAnalyzer {
                     console.log(ruleName)
                     console.log('branchAllSeq.length')
                     console.log(branchAllSeq.length)
+                    if (branchAllSeq.length > 10000) {
+                        for (const seqAllBranch of seqAllBranches) {
+                            console.log(seqAllBranch.length)
+                        }
+                    }
                 }
 
                 // 合并到结果中
@@ -1758,6 +1765,11 @@ MaxLevel 检测结果: 无冲突
             }
         }
 
+        let ass = this.expandPathsByBFSCache('AssignmentExpression', 2)
+        console.log(ass.length)
+        // ass = this.expandPathsByBFSCache('LeftHandSideExpression', 1)
+        // console.log(ass.length)
+
         // console.log(this.bfsAllCache.size)
         // for (const ruleName of ruleNames) {
         //     console.log(ruleName)
@@ -1788,8 +1800,8 @@ MaxLevel 检测结果: 无冲突
 
         // 2. Or 分支冲突检测
         const t2 = Date.now()
-        // const orConflictErrors = []
-        const orConflictErrors = this.checkAllOrConflicts()
+        const orConflictErrors = []
+        // const orConflictErrors = this.checkAllOrConflicts()
         const t2End = Date.now()
         const stage2Time = t2End - t2
 
