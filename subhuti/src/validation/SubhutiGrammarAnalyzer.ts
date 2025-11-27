@@ -1815,7 +1815,7 @@ MaxLevel 检测结果: 无冲突
 
         // 返回错误列表和统计信息
         return {
-            errors: [],
+            errors: allErrors,
             stats: stats
         }
     }
