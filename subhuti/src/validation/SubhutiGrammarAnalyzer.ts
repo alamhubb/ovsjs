@@ -397,7 +397,7 @@ class PerformanceAnalyzer {
  * - MAX_BRANCHES：仅用于冲突检测时的路径比较优化
  */
 export const EXPANSION_LIMITS = {
-    FIRST_K: 1,
+    FIRST_K: 3,
     FIRST_Max: 100,
 
     LEVEL_1: 1,
@@ -789,6 +789,8 @@ export class SubhutiGrammarAnalyzer {
                 maxPathCount: 0
             }
 
+            console.log('begin check：' + ruleName)
+
             const error = this.checkOrConflictsInNodeSmart(ruleName, ruleAST, ruleStats)
             if (error) {
                 orConflictErrors.push(error)
@@ -923,13 +925,10 @@ export class SubhutiGrammarAnalyzer {
                 const branchAllSeq = this.cartesianProduct(seqAllBranches, firstK)
 
                 if (isMore) {
-                    console.log(ruleName)
-                    console.log('branchAllSeq.length')
-                    console.log(branchAllSeq.length)
                     if (branchAllSeq.length > 10000) {
-                        for (const seqAllBranch of seqAllBranches) {
-                            console.log(seqAllBranch.length)
-                        }
+                        console.log(ruleName)
+                        console.log('branchAllSeq.length')
+                        console.log(branchAllSeq.length)
                     }
                 }
 
@@ -1743,14 +1742,14 @@ MaxLevel 检测结果: 无冲突
         for (const ruleName of ruleNames) {
             aggregateIndex++
             const aggregateStartTime = Date.now()
-            const allLevelPaths: string[][] = []
+            let allLevelPaths: string[][] = []
 
             // 收集该规则的所有层级数据
             for (let level = startLevel; level <= EXPANSION_LIMITS.LEVEL_K; level++) {
                 const key = `${ruleName}:${level}`
                 if (this.bfsLevelCache.has(key)) {
                     const levelPaths = this.getCacheValue('bfsLevelCache', key)!
-                    allLevelPaths.push(...levelPaths)
+                    allLevelPaths = allLevelPaths.concat(levelPaths)
                 }
             }
 
@@ -1764,9 +1763,16 @@ MaxLevel 检测结果: 无冲突
                 console.log(`  [${aggregateIndex}/${ruleNames.length}] 聚合完成: ${ruleName} (耗时: ${aggregateDuration}ms, 路径数: ${deduplicated.length})`)
             }
         }
+        /*ass.forEach((ass1, index) => {
+            console.log('fenzhi:' + index)
+            let temp = ass1.map(string => this.expandPathsByBFSCache(string, 1))
+            const fsaf = this.cartesianProduct(temp, EXPANSION_LIMITS.INFINITY)
+            console.log('posible:' + fsaf.length)
+            for (const fsafElement of fsaf) {
+                console.log(fsafElement.join('->'))
+            }
+        })*/
 
-        let ass = this.expandPathsByBFSCache('AssignmentExpression', 2)
-        console.log(ass.length)
         // ass = this.expandPathsByBFSCache('LeftHandSideExpression', 1)
         // console.log(ass.length)
 
@@ -1800,8 +1806,8 @@ MaxLevel 检测结果: 无冲突
 
         // 2. Or 分支冲突检测
         const t2 = Date.now()
-        const orConflictErrors = []
-        // const orConflictErrors = this.checkAllOrConflicts()
+        // const orConflictErrors = []
+        const orConflictErrors = this.checkAllOrConflicts()
         const t2End = Date.now()
         const stage2Time = t2End - t2
 
