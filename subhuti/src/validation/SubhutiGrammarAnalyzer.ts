@@ -765,6 +765,9 @@ export class SubhutiGrammarAnalyzer {
     public checkAllOrConflicts(): ValidationError[] {
         const orConflictErrors: ValidationError[] = []
 
+        // 重置统计
+        this.compareStats = { firstKDetected: 0, bothDetected: 0, firstKOnlyDetected: 0 }
+
         // 详细的性能统计
         const perfStats = {
             totalTime: 0,
@@ -801,6 +804,12 @@ export class SubhutiGrammarAnalyzer {
         }
 
         perfStats.totalTime = Date.now() - startTime
+
+        // 输出 FirstK vs MaxLevel 检测对比统计
+        console.log(`\n📊 FirstK vs MaxLevel 检测对比统计:`)
+        console.log(`   FirstK 检测到问题: ${this.compareStats.firstKDetected} 个`)
+        console.log(`   两者都检测到: ${this.compareStats.bothDetected} 个`)
+        console.log(`   仅 FirstK 检测到 (MaxLevel 未检测到): ${this.compareStats.firstKOnlyDetected} 个`)
 
         return orConflictErrors
     }
@@ -1211,10 +1220,10 @@ or([A, A, B]) → or([A, B])  // 删除重复的A`
 
                     // 发现前缀遮蔽，报告错误
                     return ({
-                        level: 'ERROR',
-                        type: 'prefix-conflict',
+                        level: 'ERROR' as const,
+                        type: 'prefix-conflict' as const,
                         ruleName,
-                        branchIndices: [i, j],
+                        branchIndices: [i, j] as [number, number],
                         conflictPaths: {
                             pathA: prefixStr,
                             pathB: fullStr
@@ -1287,6 +1296,13 @@ or([A, A, B]) → or([A, B])  // 删除重复的A`
      * @param orNode - Or 节点
      * @returns 检测到的错误，如果没有错误返回 undefined
      */
+    // FirstK vs MaxLevel 检测对比统计（全局属性）
+    private compareStats = {
+        firstKDetected: 0,
+        bothDetected: 0,
+        firstKOnlyDetected: 0,
+    }
+
     detectOrBranchConflictsWithCache(
         ruleName: string,
         orNode: OrNode,
@@ -1303,8 +1319,18 @@ or([A, A, B]) → or([A, B])  // 删除重复的A`
             return
         }
 
+        // FirstK 检测到问题
+        this.compareStats.firstKDetected++
+
         // 情况2：预检发现错误（相同/遮蔽），执行深度检测
         const maxLevelError = this.detectOrBranchPrefixWithMaxLevel(ruleName, orNode, ruleStats)
+
+        // 统计 FirstK vs MaxLevel 结果对比
+        if (maxLevelError) {
+            this.compareStats.bothDetected++
+        } else {
+            this.compareStats.firstKOnlyDetected++
+        }
 
         const orTime = Date.now() - orStartTime
 
