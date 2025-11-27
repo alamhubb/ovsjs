@@ -1690,7 +1690,7 @@ MaxLevel 检测结果: 无冲突
 
                 // 记录开始时间
                 const ruleStartTime = Date.now()
-                console.log(`  [${levelRuleIndex}/${ruleNames.length}] 开始生成: ${ruleName}, Level ${level}, Key: ${key}`)
+                // console.log(`  [${levelRuleIndex}/${ruleNames.length}] 开始生成: ${ruleName}, Level ${level}, Key: ${key}`)
 
                 // 生成缓存
                 this.expandPathsByBFSCache(ruleName, level)
