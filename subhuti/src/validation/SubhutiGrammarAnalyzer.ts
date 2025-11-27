@@ -2723,7 +2723,7 @@ MaxLevel 检测结果: 无冲突
         const result = this.expandPathsByDFSCache(
             ruleName,
             EXPANSION_LIMITS.INFINITY,
-            1,
+            0,
             EXPANSION_LIMITS.LEVEL_1,
             false,
         )
@@ -2774,10 +2774,12 @@ MaxLevel 检测结果: 无冲突
         }
 
         // 层级限制检查（BFS 需要）
-        if (curLevel > maxLevel) {
+        if (curLevel === maxLevel) {
             // 返回规则名本身（达到最大深度）
             this.perfAnalyzer.cacheStats.levelLimitReturn++
             return [[ruleName]]
+        } else if (curLevel > maxLevel) {
+            throw new Error('系统错误')
         }
 
         // ========================================
