@@ -880,11 +880,19 @@ export class SubhutiGrammarAnalyzer {
         // 存储每个分支的路径集合
         let allOrs: string[][][] = []
 
+
+
         // 遍历 Or 的每个分支
         for (const seqNode of orNode.alternatives) {
             // 步骤1：展开分支到第一层（得到规则名序列）
             // 例如：sequence(If, Expression, Block) → [['If', 'Expression', 'Block']]
             const nodeAllBranches = this.expandNode(seqNode, EXPANSION_LIMITS.INFINITY, 0, 1, false)
+
+            if (ruleName === 'ImportCall'){
+                console.log(ruleName)
+                console.log(seqNode)
+                console.log(nodeAllBranches.length)
+            }
 
             let allBranchAllSeq: string[][] = []
 
@@ -2070,14 +2078,14 @@ MaxLevel 检测结果: 无冲突
         for (const array of arrays) {
             possible *= array.length
         }
-        if (possible > 1000000) {
+        /*if (possible > 1000000) {
             console.log(ruleName)
             console.log('arrays.length')
             console.log(arrays.length)
             console.log('可能性')
             console.log(possible)
             console.log(arrays[0])
-        }
+        }*/
         // 将每个组合中的字符串 split 回数组，然后合并成一个完整路径
         // 最后截取到 firstK 长度
         let deduplicatedFinalArray = this.cartesianProductInner1(arrays, firstK)
@@ -2786,10 +2794,12 @@ MaxLevel 检测结果: 无冲突
         }
 
         // 层级限制检查（BFS 需要）
-        if (curLevel > maxLevel) {
+        if (curLevel === maxLevel) {
             // 返回规则名本身（达到最大深度）
             this.perfAnalyzer.cacheStats.levelLimitReturn++
             return [[ruleName]]
+        } else if (curLevel > maxLevel) {
+            throw new Error('系统错误')
         }
 
         // ========================================
