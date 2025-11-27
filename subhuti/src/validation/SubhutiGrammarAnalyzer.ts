@@ -703,7 +703,7 @@ export class SubhutiGrammarAnalyzer {
         if (result !== undefined) {
             this.perfAnalyzer.recordCacheHit(cacheType)
         } else {
-            if (cacheType === 'bfsAllCache'){
+            if (cacheType === 'bfsAllCache') {
             }
             this.perfAnalyzer.recordCacheMiss(cacheType)
         }
@@ -893,9 +893,15 @@ export class SubhutiGrammarAnalyzer {
                 // 步骤2：从 cache 获取每个规则的所有路径
                 // 例如：['If', 'Expression'] → [[If的路径], [Expression的路径]]
                 const seqAllBranches = branch.map(rule => {
+                    if (this.tokenCache.has(rule)) {
+                        return [[rule]]
+                    }
                     const paths = this.getCacheValue(cacheType, rule)
+                    if (!paths) {
+                        throw new Error('系统错误')
+                    }
                     // 防御：如果规则不在缓存中，返回 [[rule]]
-                    return paths || [[rule]]
+                    return paths
                 })
 
                 // 步骤3：笛卡尔积组合，得到当前分支的所有可能路径
@@ -1555,8 +1561,8 @@ MaxLevel 检测结果: 无冲突
         return lines.join('\n')
     }
 
-    grachScc(){
-        this.graph = new Graph({ directed: true })
+    grachScc() {
+        this.graph = new Graph({directed: true})
 
         for (const [ruleName, node] of this.ruleASTs) {
             this.graph.setNode(ruleName)
@@ -1591,7 +1597,7 @@ MaxLevel 检测结果: 无冲突
         }
     }
 
-    computeRulePossibility(){
+    computeRulePossibility() {
         for (const node of this.ruleASTs.values()) {
             this.recursiveDetectionSet.clear()
             const ruleName = node.ruleName
