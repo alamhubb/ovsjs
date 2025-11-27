@@ -886,6 +886,15 @@ export class SubhutiGrammarAnalyzer {
             // 例如：sequence(If, Expression, Block) → [['If', 'Expression', 'Block']]
             const nodeAllBranches = this.expandNode(seqNode, EXPANSION_LIMITS.INFINITY, 0, 1, false)
 
+            const isMore = firstK === EXPANSION_LIMITS.INFINITY
+
+            if (isMore) {
+                if (['ImportCall'].includes(ruleName)) {
+                    console.log(ruleName)
+                    console.log(nodeAllBranches)
+                }
+            }
+
             let allBranchAllSeq: string[][] = []
 
             // 遍历第一层展开的每个可能性,每个分支的所有可能性
@@ -907,6 +916,13 @@ export class SubhutiGrammarAnalyzer {
                 // 步骤3：笛卡尔积组合，得到当前分支的所有可能路径
                 // 例如：[[a,b], [c,d]] × [[e], [f,g]] → [[a,b,e], [a,b,f,g], [c,d,e], [c,d,f,g]]
                 const branchAllSeq = this.cartesianProduct(seqAllBranches, firstK)
+
+                /*if (branchAllSeq.length > 1000 && firstK === EXPANSION_LIMITS.INFINITY) {
+                    console.log(ruleName)
+                    console.log('branchAllSeq.length')
+                    console.log(branchAllSeq.length)
+                }*/
+
                 // 合并到结果中
                 allBranchAllSeq = allBranchAllSeq.concat(branchAllSeq)
             }
@@ -1737,6 +1753,13 @@ MaxLevel 检测结果: 无冲突
             }
         }
 
+        // console.log(this.bfsAllCache.size)
+        // for (const ruleName of ruleNames) {
+        //     console.log(ruleName)
+        //     console.log(this.bfsAllCache.get(ruleName))
+        // }
+
+
         const t1_2_end = Date.now()
         stats.bfsMaxLevelTime = t1_2_end - t1_2_start
         console.log(`\n✅ BFS MaxLevel 缓存生成完成 (总耗时: ${stats.bfsMaxLevelTime}ms)`)
@@ -1760,6 +1783,7 @@ MaxLevel 检测结果: 无冲突
 
         // 2. Or 分支冲突检测
         const t2 = Date.now()
+        // const orConflictErrors = []
         const orConflictErrors = this.checkAllOrConflicts()
         const t2End = Date.now()
         const stage2Time = t2End - t2
