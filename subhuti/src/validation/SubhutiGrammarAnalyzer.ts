@@ -884,7 +884,7 @@ export class SubhutiGrammarAnalyzer {
         for (const seqNode of orNode.alternatives) {
             // 步骤1：展开分支到第一层（得到规则名序列）
             // 例如：sequence(If, Expression, Block) → [['If', 'Expression', 'Block']]
-            const nodeAllBranches = this.expandNode(seqNode, EXPANSION_LIMITS.INFINITY, 0, 1, false)
+            const nodeAllBranches = this.expandNode(seqNode, EXPANSION_LIMITS.INFINITY, 1, 1, false)
 
             const isMore = firstK === EXPANSION_LIMITS.INFINITY
 
