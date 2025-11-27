@@ -2635,20 +2635,22 @@ MaxLevel 检测结果: 无冲突
         this.checkTimeout(`expandPathsByBFSCache-${ruleName}-去重前`)
         const finalResult = this.deduplicate(expandedPaths)
 
-        if (targetLevel < EXPANSION_LIMITS.LEVEL_K) {
-            // 复用之前定义的 key 变量
-            if (this.bfsLevelCache.has(key)) {
-                throw new Error('系统错误')
-            }
-            // 🔧 优化：如果结果是规则名本身（未展开），不加入缓存
-            const shouldCache = !this.isRuleNameOnly(finalResult, ruleName)
-            if (shouldCache) {
-                this.bfsLevelCache.set(key, finalResult)
-                this.writeLog(`📦 存储缓存: ${key}, 路径数: ${finalResult.length}`, depth)
-            } else {
-                this.writeLog(`⚠️ 跳过缓存（规则名本身）: ${key}`, depth)
-            }
-        } else if (targetLevel === EXPANSION_LIMITS.LEVEL_K) {
+        // 存入缓存（无论是否是最终层级）
+        // 复用之前定义的 key 变量
+        if (this.bfsLevelCache.has(key)) {
+            throw new Error('系统错误')
+        }
+        // 🔧 优化：如果结果是规则名本身（未展开），不加入缓存
+        const shouldCache = !this.isRuleNameOnly(finalResult, ruleName)
+        if (shouldCache) {
+            this.bfsLevelCache.set(key, finalResult)
+            this.writeLog(`📦 存储缓存: ${key}, 路径数: ${finalResult.length}`, depth)
+        } else {
+            this.writeLog(`⚠️ 跳过缓存（规则名本身）: ${key}`, depth)
+        }
+
+        // 只在最终层级输出详细日志
+        if (targetLevel === EXPANSION_LIMITS.LEVEL_K) {
             // 输出每个分支的结果
             this.writeLog(``, depth)
             this.writeLog(`📋 完整结果 (共 ${finalResult.length} 条路径, ${branchResults.length} 个语法分支):`, depth)
