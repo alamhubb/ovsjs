@@ -401,7 +401,7 @@ export const EXPANSION_LIMITS = {
     FIRST_Max: 100,
 
     LEVEL_1: 1,
-    LEVEL_K: 1,
+    LEVEL_K: 30,
 
     INFINITY: Infinity,
     RuleJoinSymbol: '\x1F',
