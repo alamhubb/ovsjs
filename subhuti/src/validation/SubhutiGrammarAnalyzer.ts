@@ -401,7 +401,7 @@ export const EXPANSION_LIMITS = {
     FIRST_Max: 100,
 
     LEVEL_1: 1,
-    LEVEL_K: 10,
+    LEVEL_K: 1,
 
     INFINITY: Infinity,
     RuleJoinSymbol: '\x1F',
@@ -1660,7 +1660,7 @@ MaxLevel 检测结果: 无冲突
         console.log(`目标层级: Level 1 到 Level ${EXPANSION_LIMITS.LEVEL_K}`)
 
 
-        const ruleNames = this.ruleASTs.keys()
+        const ruleNames = Array.from(this.ruleASTs.keys())
 
         //遍历检查左递归问题
         for (const ruleName of ruleNames) {
@@ -1670,7 +1670,7 @@ MaxLevel 检测结果: 无冲突
 
         // BFS 缓存预填充
         // 预填充 level 1 到 level_k
-        for (let level = EXPANSION_LIMITS.LEVEL_K; level <= EXPANSION_LIMITS.LEVEL_K; level++) {
+        for (let level = 1; level <= EXPANSION_LIMITS.LEVEL_K; level++) {
             console.log(`\n📊 正在生成 Level ${level} 的缓存...`)
             let levelRuleIndex = 0
             for (const ruleName of ruleNames) {
