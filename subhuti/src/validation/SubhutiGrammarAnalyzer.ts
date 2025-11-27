@@ -397,11 +397,11 @@ class PerformanceAnalyzer {
  * - MAX_BRANCHES：仅用于冲突检测时的路径比较优化
  */
 export const EXPANSION_LIMITS = {
-    FIRST_K: 3,
+    FIRST_K: 1,
     FIRST_Max: 100,
 
     LEVEL_1: 1,
-    LEVEL_K: 1,
+    LEVEL_K: 10,
 
     INFINITY: Infinity,
     RuleJoinSymbol: '\x1F',
@@ -881,18 +881,11 @@ export class SubhutiGrammarAnalyzer {
         let allOrs: string[][][] = []
 
 
-
         // 遍历 Or 的每个分支
         for (const seqNode of orNode.alternatives) {
             // 步骤1：展开分支到第一层（得到规则名序列）
             // 例如：sequence(If, Expression, Block) → [['If', 'Expression', 'Block']]
             const nodeAllBranches = this.expandNode(seqNode, EXPANSION_LIMITS.INFINITY, 0, 1, false)
-
-            if (ruleName === 'ImportCall'){
-                console.log(ruleName)
-                console.log(seqNode)
-                console.log(nodeAllBranches.length)
-            }
 
             let allBranchAllSeq: string[][] = []
 
@@ -2074,18 +2067,6 @@ MaxLevel 检测结果: 无冲突
      * 5. 所有序列都达到 firstK 时提前结束，跳过剩余数组
      */
     private cartesianProduct(arrays: string[][][], firstK: number, ruleName?): string[][] {
-        let possible = 1
-        for (const array of arrays) {
-            possible *= array.length
-        }
-        /*if (possible > 1000000) {
-            console.log(ruleName)
-            console.log('arrays.length')
-            console.log(arrays.length)
-            console.log('可能性')
-            console.log(possible)
-            console.log(arrays[0])
-        }*/
         // 将每个组合中的字符串 split 回数组，然后合并成一个完整路径
         // 最后截取到 firstK 长度
         let deduplicatedFinalArray = this.cartesianProductInner1(arrays, firstK)
