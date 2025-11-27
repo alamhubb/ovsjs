@@ -1668,6 +1668,11 @@ MaxLevel 检测结果: 无冲突
 
         const ruleNames = Array.from(this.ruleASTs.keys())
 
+
+        console.log('LeftHandSideExpression')
+        const refasdfas = this.getDirectChildren('LeftHandSideExpression')
+        console.log(refasdfas)
+
         //遍历检查左递归问题
         for (const ruleName of ruleNames) {
             this.recursiveDetectionSet.clear()
@@ -2689,8 +2694,10 @@ MaxLevel 检测结果: 无冲突
      * - IfStatement → [[If, LParen, Expression, RParen, Statement]]
      */
     private getDirectChildren(ruleName: string): string[][] {
+        const maxLevel = EXPANSION_LIMITS.LEVEL_1
+
         // 1. 优先从 bfsLevelCache 获取 level 1 的数据（懒加载缓存）
-        const key = `${ruleName}:${EXPANSION_LIMITS.LEVEL_1}`
+        const key = `${ruleName}:${maxLevel}`
         const depth = this.currentDepth
 
         if (this.bfsLevelCache.has(key)) {
@@ -2726,7 +2733,7 @@ MaxLevel 检测结果: 无冲突
             ruleName,
             EXPANSION_LIMITS.INFINITY,
             0,
-            EXPANSION_LIMITS.LEVEL_1,
+            maxLevel,
             false,
         )
         const duration = Date.now() - t0
