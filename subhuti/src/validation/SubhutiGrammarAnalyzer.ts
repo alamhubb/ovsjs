@@ -692,6 +692,8 @@ export class SubhutiGrammarAnalyzer {
                 result = this.dfsFirstKCache.get(key)
                 break
             case 'bfsAllCache':
+                console.log(cacheType)
+                console.log(key)
                 result = this.bfsAllCache.get(key)
                 break
             case 'bfsLevelCache':
