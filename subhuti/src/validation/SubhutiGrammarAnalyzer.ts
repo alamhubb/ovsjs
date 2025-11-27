@@ -2774,8 +2774,6 @@ MaxLevel 检测结果: 无冲突
         const t0 = Date.now()
         this.perfAnalyzer.cacheStats.subRuleHandlerTotal++
 
-        // 层级+1（进入子规则）
-        curLevel++
 
         // 防御：规则名不能为空
         if (!ruleName) {
@@ -2790,6 +2788,9 @@ MaxLevel 检测结果: 无冲突
         } else if (curLevel > maxLevel) {
             throw new Error('系统错误')
         }
+
+        // 层级+1（进入子规则）
+        curLevel++
 
         // ========================================
         // 阶段1：DFS 缓存查找（在递归检测之前！）
