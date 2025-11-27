@@ -397,11 +397,11 @@ class PerformanceAnalyzer {
  * - MAX_BRANCHES：仅用于冲突检测时的路径比较优化
  */
 export const EXPANSION_LIMITS = {
-    FIRST_K: 3,
+    FIRST_K: 1,
     FIRST_Max: 100,
 
     LEVEL_1: 1,
-    LEVEL_K: 5,
+    LEVEL_K: 1,
 
     INFINITY: Infinity,
     RuleJoinSymbol: '\x1F',
@@ -1667,11 +1667,6 @@ MaxLevel 检测结果: 无冲突
 
 
         const ruleNames = Array.from(this.ruleASTs.keys())
-
-
-        console.log('LeftHandSideExpression')
-        const refasdfas = this.getDirectChildren('LeftHandSideExpression')
-        console.log(refasdfas)
 
         //遍历检查左递归问题
         for (const ruleName of ruleNames) {
