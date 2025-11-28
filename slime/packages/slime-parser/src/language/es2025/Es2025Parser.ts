@@ -4063,27 +4063,56 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     // ============================================
 
     /**
+     * Program - 统一的解析入口
+     *
+     * 根据 sourceType 参数决定按 Script 还是 Module 模式解析。
+     * Hashbang 注释只能出现在文件开头（参考 Acorn/Babel 实现）。
+     *
+     * @param sourceType - 'script' | 'module'，默认为 'module'
+     */
+    @SubhutiRule
+    Program(sourceType: 'script' | 'module' = 'module'): SubhutiCst | undefined {
+        // Hashbang 注释只能出现在文件开头
+        this.Option(() => this.tokenConsumer.HashbangComment())
+
+        if (sourceType === 'module') {
+            // ModuleBody_opt: ModuleItemList?
+            this.Option(() => this.ModuleItemList())
+        } else {
+            // ScriptBody_opt: StatementList?
+            this.Option(() => this.StatementList({Yield: false, Await: false, Return: false}))
+        }
+        return this.curCst
+    }
+
+    /**
      * Script :
-     *     ScriptBody_opt
+     *     HashbangComment_opt ScriptBody_opt
      *
      * ScriptBody :
      *     StatementList[~Yield, ~Await, ~Return]
      */
     @SubhutiRule
     Script(): SubhutiCst | undefined {
+        // Hashbang 注释只能出现在文件开头
+        this.Option(() => this.tokenConsumer.HashbangComment())
+        // ScriptBody_opt
         this.Option(() => this.StatementList({Yield: false, Await: false, Return: false}))
         return this.curCst
     }
 
     /**
      * Module :
-     *     ModuleBody_opt
+     *     HashbangComment_opt ModuleBody_opt
      *
      * ModuleBody :
      *     ModuleItemList
      */
     @SubhutiRule
     Module(): SubhutiCst | undefined {
+        // Hashbang 注释只能出现在文件开头
+        this.Option(() => this.tokenConsumer.HashbangComment())
+        // ModuleBody_opt
         this.Option(() => this.ModuleItemList())
         return this.curCst
     }

@@ -231,11 +231,11 @@ try {
     // parser.debug()
     // parser.validate()
 
-    // 生成 CST
+    // 生成 CST (使用统一的 Program 入口，默认为 module 模式)
     let cst
     let parseError: any = null
     try {
-        cst = parser.Module()
+        cst = parser.Program('module')
     } catch (error) {
         parseError = error
     } finally {

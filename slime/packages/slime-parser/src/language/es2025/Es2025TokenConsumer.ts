@@ -319,11 +319,23 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
     TemplateTail() {
         return this.consume(es2025TokensObj.TemplateTail)
     }
-    
+
     RegularExpression() {
         return this.consume(es2025TokensObj.RegularExpressionLiteral)
     }
-    
+
+    // ============================================
+    // 注释 (Comments)
+    // ============================================
+
+    /**
+     * Hashbang 注释 (#!...)
+     * 只能出现在文件开头，由 Parser 的 Program 规则显式调用
+     */
+    HashbangComment() {
+        return this.consume(es2025TokensObj.HashbangComment)
+    }
+
     // ============================================
     // 标识符 (Identifiers)
     // ============================================
