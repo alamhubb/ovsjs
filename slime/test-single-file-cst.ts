@@ -150,7 +150,7 @@ function _getCSTStatistics(node: any): {
 }
 
 // 主程序
-const filePath = process.argv[2] || 'tests/test262/built-ins/Function/prototype/toString/unicode.js'
+const filePath = process.argv[2] || 'tests/test262/intl402/DateTimeFormat\\prototype\\formatRangeToParts\\temporal-objects-resolved-time-zone.js'
 // const filePath = process.argv[2] || 'tests/es6rules/AdditiveExpression-001.js'
 
 if (!filePath) {
@@ -228,7 +228,7 @@ try {
 
     // 语法分析和验证
     const parser = new Es2025Parser(tokens)
-    parser.debug()
+    // parser.debug()
     // parser.validate()
 
     // 生成 CST
