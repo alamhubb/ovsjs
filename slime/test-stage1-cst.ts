@@ -29,13 +29,22 @@ function getAllJsFiles(dir: string, baseDir: string = dir): string[] {
   return results
 }
 
-const casesDir = path.join(__dirname, 'tests/test262/built-ins/Function')
+const casesDir = path.join(__dirname, 'tests/test262/built-ins')
 const files = getAllJsFiles(casesDir).sort()
 
-console.log(`🧪 阶段1: CST生成测试 (${files.length} 个用例)`)
+// 支持从指定位置开始测试
+// 用法: npx tsx test-stage1-cst.ts [startIndex]
+// 例如: npx tsx test-stage1-cst.ts 50  -- 从第50个文件开始
+const startIndex = parseInt(process.argv[2] || '0', 10)
+const validStartIndex = 14400
+
+if (startIndex > 0) {
+  console.log(`📍 从第 ${validStartIndex + 1} 个文件开始测试 (跳过前 ${validStartIndex} 个)`)
+}
+console.log(`🧪 阶段1: CST生成测试 (${files.length} 个用例，测试 ${files.length - validStartIndex} 个)`)
 console.log('测试范围: 词法分析 → 语法分析\n')
 
-for (let i = 0; i < files.length; i++) {
+for (let i = validStartIndex; i < files.length; i++) {
   const file = files[i]
   const testName = file.replace('.js', '')
   const filePath = path.join(casesDir, file)
