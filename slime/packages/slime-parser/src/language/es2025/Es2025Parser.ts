@@ -571,10 +571,10 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             // === 7. 符号开头（各有独特首 token，不会互相遮蔽）===
             {alt: () => this.ArrayLiteral(params)},
             {alt: () => this.ObjectLiteral(params)},
-            // 正则表达式分支：如果词法阶段误判为 Slash，尝试 rescan
+            // 正则表达式分支：如果词法阶段误判为 Slash 或 DivideAssign，尝试 rescan
             {alt: () => {
                 const la1 = this.LA(1)
-                if (la1?.tokenName === TokenNames.Slash) {
+                if (la1?.tokenName === TokenNames.Slash || la1?.tokenName === TokenNames.DivideAssign) {
                     // 词法阶段误判为除法，尝试重新扫描为正则表达式
                     if (!this.rescanSlashAsRegExp()) {
                         return this.parserFail()

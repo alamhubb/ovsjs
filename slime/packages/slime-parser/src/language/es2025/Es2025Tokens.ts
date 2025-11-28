@@ -192,20 +192,21 @@ export const ContextualKeywords = {
 // ============================================
 
 // IdentifierStart: UnicodeIDStart | $ | _ | \uXXXX | \u{XXXXX}
-const ID_START = /[\p{ID_Start}$_]|\\u[0-9a-fA-F]{4}|\\u\{[0-9a-fA-F]+\}/
+// 注意：Unicode 属性转义 \p{} 需要 'u' flag 才能正确工作
+const ID_START_SOURCE = String.raw`[\p{ID_Start}$_]|\\u[0-9a-fA-F]{4}|\\u\{[0-9a-fA-F]+\}`
 
 // IdentifierPart: UnicodeIDContinue | $ | \uXXXX | \u{XXXXX} | ZWNJ(\u200C) | ZWJ(\u200D)
-const ID_CONTINUE = /[\p{ID_Continue}$\u200C\u200D]|\\u[0-9a-fA-F]{4}|\\u\{[0-9a-fA-F]+\}/
+const ID_CONTINUE_SOURCE = String.raw`[\p{ID_Continue}$\u200C\u200D]|\\u[0-9a-fA-F]{4}|\\u\{[0-9a-fA-F]+\}`
 
 // IdentifierName: IdentifierStart IdentifierPart*
 const IDENTIFIER_NAME_PATTERN = new RegExp(
-    `(?:${ID_START.source})(?:${ID_CONTINUE.source})*`,
+    `(?:${ID_START_SOURCE})(?:${ID_CONTINUE_SOURCE})*`,
     'u'
 )
 
 // PrivateIdentifier: # IdentifierName
 const PRIVATE_IDENTIFIER_PATTERN = new RegExp(
-    `#(?:${ID_START.source})(?:${ID_CONTINUE.source})*`,
+    `#(?:${ID_START_SOURCE})(?:${ID_CONTINUE_SOURCE})*`,
     'u'
 )
 
@@ -269,7 +270,10 @@ export const es2025TokensObj = {
     // A.1.1 空白符和换行符
     // ============================================
 
-    WhiteSpace: createValueRegToken(TokenNames.WhiteSpace, /[\t\v\f \u00A0\uFEFF]+/, '', true),
+    // ECMAScript 12.2 White Space
+    // 包含: TAB, VT, FF, SP, NBSP, BOM, 以及所有 Unicode Zs 类别字符
+    // Zs 类别包括: U+0020 (SP), U+00A0 (NBSP), U+1680, U+2000-U+200A, U+202F, U+205F, U+3000
+    WhiteSpace: createValueRegToken(TokenNames.WhiteSpace, /[\t\v\f \u00A0\u1680\u2000-\u200A\u202F\u205F\u3000\uFEFF]+/, '', true),
     LineTerminatorCRLF: createValueRegToken(TokenNames.LineTerminator, /\r\n/, '', true),
     LineTerminator: createValueRegToken(TokenNames.LineTerminator, /[\n\r\u2028\u2029]/, '', true),
 
