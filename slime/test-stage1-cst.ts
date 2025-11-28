@@ -33,7 +33,7 @@ for (let i = 0; i < files.length; i++) {
 
     // 语法分析
     const parser = new Es2025Parser(tokens)
-    const cst = parser.Script()
+    const cst = parser.Module()
     console.log(`✅ 语法分析: CST生成成功`)
     console.log(`CST根节点children数: ${cst.children?.length || 0}`)
 
