@@ -298,15 +298,22 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     /**
      * BindingIdentifier[Yield, Await] :
      *     Identifier
-     *     yield
-     *     await
+     *     yield  (只在 [~Yield] 上下文中允许)
+     *     await  (只在 [~Await] 上下文中允许)
+     *
+     * 注意：当 Yield=true 时，yield 是保留字，不能用作标识符
+     *       当 Await=true 时，await 是保留字，不能用作标识符
      */
     @SubhutiRule
     BindingIdentifier(params: ExpressionParams = {}): SubhutiCst | undefined {
+        const {Yield = false, Await = false} = params
+
         return this.Or([
             {alt: () => this.Identifier()},
-            {alt: () => this.tokenConsumer.YieldTok()},
-            {alt: () => this.tokenConsumer.AwaitTok()}
+            // yield 只在 [~Yield] 上下文中允许
+            ...(!Yield ? [{alt: () => this.tokenConsumer.YieldTok()}] : []),
+            // await 只在 [~Await] 上下文中允许
+            ...(!Await ? [{alt: () => this.tokenConsumer.AwaitTok()}] : [])
         ])
     }
 
