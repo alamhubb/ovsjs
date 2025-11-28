@@ -173,7 +173,6 @@ switch (type) {
         break
     default:
         const y = 2
-        return y
 }
 
 // ✅ 测试7：default在中间位置
