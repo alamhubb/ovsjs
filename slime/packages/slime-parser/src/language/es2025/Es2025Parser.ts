@@ -1137,12 +1137,17 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      *     MemberExpression[?Yield, ?Await] OptionalChain[?Yield, ?Await]
      *     CallExpression[?Yield, ?Await] OptionalChain[?Yield, ?Await]
      *     OptionalExpression[?Yield, ?Await] OptionalChain[?Yield, ?Await]
+     *
+     * PEG 实现注意事项：
+     * - CallExpression 必须在 MemberExpression 之前，因为 CallExpression 包含 Arguments
+     * - 例如 `fn()?.value`：CallExpression 匹配 `fn()`，然后 OptionalChain 匹配 `?.value`
+     * - 如果 MemberExpression 在前，它只会匹配 `fn`，导致 `()` 无法消费
      */
     @SubhutiRule
     OptionalExpression(params: ExpressionParams = {}): SubhutiCst | undefined {
         this.Or([
-            {alt: () => this.MemberExpression(params)},
-            {alt: () => this.CallExpression(params)}
+            {alt: () => this.CallExpression(params)},     // CallExpression 在前，包含 Arguments
+            {alt: () => this.MemberExpression(params)}    // MemberExpression 在后
         ])
 
         this.OptionalChain(params)
@@ -1250,8 +1255,9 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      * - 导致解析失败或无限循环
      *
      * 解决方案：调整分支顺序，将"更长"的规则放在前面
-     * - CallExpression 在前：优先匹配函数调用（如 `console.log(x)`）
-     * - OptionalExpression 次之：匹配可选链（如 `obj?.method()`）
+     * - OptionalExpression 在前：最长匹配，包含 CallExpression/MemberExpression + OptionalChain
+     *   例如：`fn()?.value`、`obj?.method()`
+     * - CallExpression 次之：包含 Arguments（如 `console.log(x)`）
      * - NewExpression 最后：匹配其他情况（如 `this`、`obj.prop`）
      *
      * 这与规范顺序不一致，但在 PEG 中是必要的。
@@ -1259,8 +1265,8 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     @SubhutiRule
     LeftHandSideExpression(params: ExpressionParams = {}): SubhutiCst | undefined {
         return this.Or([
-            {alt: () => this.CallExpression(params)},      // 第1位 - 最长，包含 Arguments
-            {alt: () => this.OptionalExpression(params)},  // 第2位 - 包含 OptionalChain
+            {alt: () => this.OptionalExpression(params)},  // 第1位 - 最长，包含 OptionalChain
+            {alt: () => this.CallExpression(params)},      // 第2位 - 包含 Arguments
             {alt: () => this.NewExpression(params)},       // 第3位 - 最短，仅 MemberExpression
         ])
     }
