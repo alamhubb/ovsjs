@@ -54,7 +54,6 @@
   const data = [1, 2, 3]
   data.forEach(item => console.log(item))
   const result = data.map(x => x * 2)
-  return result
 }
 
 // ✅ 测试7：函数/类声明    StatementList -> this.Many() (Many分支3-多个语句)
@@ -73,7 +72,7 @@
       handleError(e)
     }
   }
-  
+
   while (hasMore) {
     processItem()
   }
@@ -104,45 +103,9 @@
     default:
       handleDefault()
   }
-  
+
   for (let key in obj) {
     process(obj[key])
   }
-  
-  return result
+
 }
-
-/* 
- * 规则验证小结：
- * - StatementList规则包含1个Many（可重复匹配StatementListItem）
- * - Many分支1（0个）：已覆盖（测试1）
- * - Many分支2（1个）：已覆盖（测试2）
- * - Many分支3（多个）：已覆盖（测试3-10）
- * - 所有Many的情况都已测试
- */
-
-/**
- * 规则测试：StatementList
- * 
- * 位置：Es2025Parser.ts Line 1726
- * 分类：statements
- * 编号：424
- * 
- * 规则特征：
- * ✓ 包含Many（1处）
- * 
- * 测试目标：
- * - 验证规则的基本功能
-
-
- * - 测试Many的0/1/多种情况
- * 
- * 创建时间：2025-11-01
- * 状态：✅ 已完善（基础测试）
- */
-
-const x = 1
-const y = 2
-console.log(x + y)
-
-/* Es2025Parser.ts: StatementList */
