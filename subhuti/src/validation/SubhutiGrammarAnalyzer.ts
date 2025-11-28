@@ -401,7 +401,7 @@ export const EXPANSION_LIMITS = {
     FIRST_Max: 100,
 
     LEVEL_1: 1,
-    LEVEL_K: 2,
+    LEVEL_K: 1,
 
     INFINITY: Infinity,
     RuleJoinSymbol: '\x1F',
@@ -791,8 +791,6 @@ export class SubhutiGrammarAnalyzer {
                 pathCount: 0,
                 maxPathCount: 0
             }
-
-            console.log('begin check：' + ruleName)
 
             const error = this.checkOrConflictsInNodeSmart(ruleName, ruleAST, ruleStats)
             if (error) {
