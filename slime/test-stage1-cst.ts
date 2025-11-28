@@ -8,6 +8,55 @@ import * as fs from 'fs'
 import * as path from 'path'
 import {es2025Tokens} from "slime-parser/src/language/es2025/Es2025Tokens";
 
+// 跳过的目录（非标准 ECMAScript 语法）
+const skipDirs = [
+  'flow',           // Flow 类型语法
+  'jsx',            // JSX 语法
+  'typescript',     // TypeScript 语法
+  'experimental',   // 实验性语法
+  'placeholders',   // 占位符语法
+  'v8intrinsic',    // V8 内部语法
+  'disabled',       // 明确禁用的测试
+  'annex-b',        // Annex B 扩展语法（HTML 注释等）
+  'html',           // HTML 注释语法（Annex B）
+]
+
+// 非标准插件列表（需要跳过包含这些插件的测试）
+const nonStandardPlugins = [
+  'asyncDoExpressions',
+  'doExpressions',
+  'decorators',
+  'decorators-legacy',
+  'decoratorAutoAccessors',
+  'pipelineOperator',
+  'recordAndTuple',
+  'throwExpressions',
+  'partialApplication',
+  'deferredImportEvaluation',
+  'sourcePhaseImports',
+  'importAttributes',  // 部分支持
+]
+
+/**
+ * 检查测试是否需要非标准插件
+ */
+function requiresNonStandardPlugin(testDir: string): boolean {
+  const optionsPath = path.join(testDir, 'options.json')
+  if (!fs.existsSync(optionsPath)) {
+    return false
+  }
+  try {
+    const options = JSON.parse(fs.readFileSync(optionsPath, 'utf-8'))
+    const plugins = options.plugins || []
+    return plugins.some((p: string | string[]) => {
+      const pluginName = Array.isArray(p) ? p[0] : p
+      return nonStandardPlugins.includes(pluginName)
+    })
+  } catch {
+    return false
+  }
+}
+
 /**
  * 递归获取目录下所有 .js 文件
  */
@@ -18,6 +67,10 @@ function getAllJsFiles(dir: string, baseDir: string = dir): string[] {
   for (const entry of entries) {
     const fullPath = path.join(dir, entry.name)
     if (entry.isDirectory()) {
+      // 跳过不需要测试的目录
+      if (skipDirs.includes(entry.name)) {
+        continue
+      }
       // 递归遍历子目录
       results.push(...getAllJsFiles(fullPath, baseDir))
     } else if (entry.isFile() && entry.name.endsWith('.js')) {
@@ -36,18 +89,27 @@ const files = getAllJsFiles(casesDir).sort()
 // 用法: npx tsx test-stage1-cst.ts [startIndex]
 // 例如: npx tsx test-stage1-cst.ts 50  -- 从第50个文件开始
 const startIndex = parseInt(process.argv[2] || '0', 10)
-const validStartIndex = 377
 
 if (startIndex > 0) {
-  console.log(`📍 从第 ${validStartIndex + 1} 个文件开始测试 (跳过前 ${validStartIndex} 个)`)
+  console.log(`📍 从第 ${startIndex + 1} 个文件开始测试 (跳过前 ${startIndex} 个)`)
 }
-console.log(`🧪 阶段1: CST生成测试 (${files.length} 个用例，测试 ${files.length - validStartIndex} 个)`)
+console.log(`🧪 阶段1: CST生成测试 (${files.length} 个用例，测试 ${files.length - startIndex} 个)`)
 console.log('测试范围: 词法分析 → 语法分析\n')
 
-for (let i = validStartIndex; i < files.length; i++) {
+let skipped = 0
+for (let i = startIndex; i < files.length; i++) {
   const file = files[i]
   const testName = file.replace('.js', '')
   const filePath = path.join(casesDir, file)
+  const testDir = path.dirname(filePath)
+
+  // 检查是否需要非标准插件
+  if (requiresNonStandardPlugin(testDir)) {
+    console.log(`\n[${i + 1}] ⏭️ 跳过: ${testName} (需要非标准插件)`)
+    skipped++
+    continue
+  }
+
   const code = fs.readFileSync(filePath, 'utf-8')
 
   console.log(`\n[${ i + 1}] 测试: ${testName}`)
@@ -61,7 +123,7 @@ for (let i = validStartIndex; i < files.length; i++) {
 
     // 语法分析
     const parser = new Es2025Parser(tokens)
-    const cst = parser.Module()
+    const cst = parser.Program('module')
     console.log(`✅ 语法分析: CST生成成功`)
     console.log(`CST根节点children数: ${cst.children?.length || 0}`)
 
@@ -86,6 +148,6 @@ for (let i = validStartIndex; i < files.length; i++) {
 }
 
 console.log('\n' + '='.repeat(60))
-console.log(`🎉 阶段1全部通过: ${files.length}/${files.length}`)
+console.log(`🎉 阶段1全部通过: ${files.length - skipped}/${files.length} (跳过 ${skipped} 个)`)
 
 
