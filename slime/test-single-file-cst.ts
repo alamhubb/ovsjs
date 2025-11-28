@@ -150,7 +150,7 @@ function _getCSTStatistics(node: any): {
 }
 
 // 主程序
-const filePath = process.argv[2] || 'tests/cases/46-async-await.js'
+const filePath = process.argv[2] || 'tests/cases/55-async-generator.js'
 // const filePath = process.argv[2] || 'tests/es6rules/AdditiveExpression-001.js'
 
 if (!filePath) {

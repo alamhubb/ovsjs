@@ -56,116 +56,6 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     }
 
     // ============================================
-    // 软关键字前瞻方法 (Contextual Keyword Lookahead)
-    // 符合 Babel/Acorn 的 isContextual 设计模式
-    // ============================================
-
-    /**
-     * 检查当前 token 是否是指定的上下文关键字（软关键字）
-     * @param value 软关键字的值（如 ContextualKeywords.LET）
-     */
-    protected isContextual(value: string): boolean {
-        const token = this.curToken
-        return token?.tokenName === TokenNames.IdentifierNameTok && token.tokenValue === value
-    }
-
-    /**
-     * 检查从当前位置开始是否是：上下文关键字 + 后续 token 序列
-     * @param contextualValue 软关键字的值
-     * @param nextTokenNames 后续 token 名称列表
-     */
-    protected isContextualSequence(contextualValue: string, ...nextTokenNames: string[]): boolean {
-        if (!this.isContextual(contextualValue)) return false
-        for (let i = 0; i < nextTokenNames.length; i++) {
-            const token = this.peek(i + 1)
-            if (token?.tokenName !== nextTokenNames[i]) return false
-        }
-        return true
-    }
-
-    /**
-     * 检查从当前位置开始是否是：上下文关键字 + 后续 token 序列（中间无换行符）
-     * @param contextualValue 软关键字的值
-     * @param nextTokenNames 后续 token 名称列表
-     */
-    protected isContextualSequenceNoLT(contextualValue: string, ...nextTokenNames: string[]): boolean {
-        if (!this.isContextual(contextualValue)) return false
-        for (let i = 0; i < nextTokenNames.length; i++) {
-            const token = this.peek(i + 1)
-            if (token?.tokenName !== nextTokenNames[i]) return false
-            if (token.hasLineBreakBefore) return false
-        }
-        return true
-    }
-
-    /**
-     * 断言：当前 token 不能是指定的上下文关键字
-     * @param value 软关键字的值
-     */
-    protected assertNotContextual(value: string): boolean {
-        if (!this._parseSuccess) return false
-        if (this.isContextual(value)) {
-            this._parseSuccess = false
-            return false
-        }
-        return true
-    }
-
-    /**
-     * 断言：不能是上下文关键字 + 后续 token 序列
-     * @param contextualValue 软关键字的值
-     * @param nextTokenNames 后续 token 名称列表
-     */
-    protected assertNotContextualSequence(contextualValue: string, ...nextTokenNames: string[]): boolean {
-        if (!this._parseSuccess) return false
-        if (this.isContextualSequence(contextualValue, ...nextTokenNames)) {
-            this._parseSuccess = false
-            return false
-        }
-        return true
-    }
-
-    /**
-     * 断言：不能是上下文关键字 + 后续 token 序列（考虑换行符约束）
-     * @param contextualValue 软关键字的值
-     * @param nextTokenNames 后续 token 名称列表
-     */
-    protected assertNotContextualSequenceNoLT(contextualValue: string, ...nextTokenNames: string[]): boolean {
-        if (!this._parseSuccess) return false
-        if (this.isContextualSequenceNoLT(contextualValue, ...nextTokenNames)) {
-            this._parseSuccess = false
-            return false
-        }
-        return true
-    }
-
-    /**
-     * 检查从当前位置开始是否是两个连续的上下文关键字
-     * 用于 [lookahead ∉ {async of}] 这样的约束
-     * @param first 第一个软关键字的值
-     * @param second 第二个软关键字的值
-     */
-    protected isContextualPair(first: string, second: string): boolean {
-        if (!this.isContextual(first)) return false
-        const nextToken = this.peek(1)
-        return nextToken?.tokenName === TokenNames.IdentifierNameTok && nextToken.tokenValue === second
-    }
-
-    /**
-     * 断言：不能是两个连续的上下文关键字
-     * @param first 第一个软关键字的值
-     * @param second 第二个软关键字的值
-     */
-    protected assertNotContextualPair(first: string, second: string): boolean {
-        if (!this._parseSuccess) return false
-        if (this.isContextualPair(first, second)) {
-            this._parseSuccess = false
-            return false
-        }
-        return true
-    }
-
-    // ============================================
     // A.2 Expressions
     // ============================================
 
@@ -2322,7 +2212,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     @SubhutiRule
     SemicolonASI(): SubhutiCst | undefined {
         // 检查当前 token 是否是分号
-        if (this.curToken?.tokenName === 'Semicolon') {
+        if (this.match(TokenNames.Semicolon)) {
             this.tokenConsumer.Semicolon()
             return this.curCst
         }
@@ -2353,18 +2243,17 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             return true
         }
 
-        const currentToken = this.curToken
-        if (!currentToken) {
+        if (!this.curToken) {
             return true
         }
 
         // 条件 1：当前 token 前有换行符
-        if (currentToken.hasLineBreakBefore) {
+        if (this.curToken.hasLineBreakBefore) {
             return true
         }
 
         // 条件 2：当前 token 是 }
-        if (currentToken.tokenName === 'RBrace') {
+        if (this.match(TokenNames.RBrace)) {
             return true
         }
 
