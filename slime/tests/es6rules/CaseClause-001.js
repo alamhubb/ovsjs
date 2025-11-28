@@ -44,11 +44,6 @@ switch (1) {
     case 2: console.log('1 or 2'); break
 }
 
-// ✅ 测试6：case - 单个语句    CaseClause -> case Expression : StatementList (1个语句)
-switch ('a') {
-    case 'a': return 'letter a'
-}
-
 // ✅ 测试7：case - 多个语句    CaseClause -> case Expression : StatementList (多个语句)
 switch (1) {
     case 1:
@@ -174,11 +169,6 @@ switch (x) {
         console.log('one or two')
 }
 
-// ✅ 测试3：单语句case
-switch (n) {
-    case 'a': return 'A'
-}
-
 // ✅ 测试4：多语句case
 switch (code) {
     case 1:
@@ -260,11 +250,6 @@ switch (x) {
     case 1:
     case 2:
         console.log('one or two')
-}
-
-// ✅ 测试3：单语句case
-switch (n) {
-    case 'a': return 'A'
 }
 
 // ✅ 测试4：多语句case

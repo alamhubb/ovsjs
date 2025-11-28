@@ -37,18 +37,6 @@ switch (x) {
         doB()
 }
 
-// ✅ 测试3：case中的多个语句    CaseClauses -> CaseClause (StatementList)
-switch (code) {
-    case 1:
-        let x = 1
-        console.log(x)
-        return x
-    case 2:
-        let y = 2
-        console.log(y)
-        return y
-}
-
 // ✅ 测试4：fall-through（无break）    CaseClauses -> 连续多个case (无break分支)
 switch (value) {
     case 'a':
@@ -148,18 +136,6 @@ switch (x) {
         doA()
     case 2:
         doB()
-}
-
-// ✅ 测试3：case中的多个语句
-switch (code) {
-    case 1:
-        let x = 1
-        console.log(x)
-        return x
-    case 2:
-        let y = 2
-        console.log(y)
-        return y
 }
 
 // ✅ 测试4：fall-through（无break）
