@@ -1,0 +1,23 @@
+// 测试37: 基础类
+// 验证: class类定义的映射
+
+class Person {
+  constructor(name, age) {
+    this.name = name
+    this.age = age
+  }
+  
+  greet() {
+    return `Hello, ${this.name}`
+  }
+}
+
+const person = new Person("Alice", 25)
+const greeting = person.greet()
+
+div {
+  p { person.name }
+  p { person.age }
+  p { greeting }
+}
+

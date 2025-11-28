@@ -1,0 +1,13 @@
+// 测试12: 字符串拼接
+// 验证: +运算符拼接字符串的映射
+
+const firstName = "John"
+const lastName = "Doe"
+const fullName = firstName + " " + lastName
+const greeting = "Hello, " + fullName
+
+div {
+  p { fullName }
+  p { greeting }
+}
+

@@ -1,0 +1,16 @@
+// 测试40: 数组高阶函数
+// 验证: map/filter/reduce的映射
+
+const numbers = [1, 2, 3, 4, 5]
+const doubled = numbers.map(n => n * 2)
+const evens = numbers.filter(n => n % 2 === 0)
+const sum = numbers.reduce((acc, n) => acc + n, 0)
+
+div {
+  p { doubled[0] }
+  p { doubled[4] }
+  p { evens[0] }
+  p { evens[1] }
+  p { sum }
+}
+

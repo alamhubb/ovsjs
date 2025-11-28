@@ -1,0 +1,20 @@
+// 测试14: 对象字面量
+// 验证: 对象声明和属性访问的映射
+
+const user = {
+  name: "Alice",
+  age: 25,
+  role: "Developer"
+}
+
+const config = {
+  theme: "dark",
+  lang: "en"
+}
+
+div {
+  p { user.name }
+  p { user.age }
+  p { config.theme }
+}
+

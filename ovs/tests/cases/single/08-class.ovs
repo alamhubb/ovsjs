@@ -1,0 +1,30 @@
+// Case 8: Class基础 - Class声明、constructor、方法、实例化
+
+class Person {
+  constructor(name, age) {
+    this.name = name
+    this.age = age
+  }
+  
+  getName() {
+    return this.name
+  }
+}
+
+const person = new Person("Alice", 25)
+const personName = person.getName()
+
+div {
+  h1 { "Class Demo" }
+  
+  div {
+    p { "Name: " }
+    p { personName }
+  }
+  
+  div {
+    p { "Age: " }
+    p { person.age }
+  }
+}
+

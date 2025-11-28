@@ -177,7 +177,7 @@ importers:
         version: link:../slime/packages/slime-ast
       slime-generator:
         specifier: ^0.0.1
-        version: link:../slime/packages/slime-generator
+        version: 0.0.1
       slime-parser:
         specifier: ^0.0.1
         version: link:../slime/packages/slime-parser
@@ -428,18 +428,6 @@ importers:
       '@types/estree':
         specifier: 1.0.6
         version: 1.0.6
-
-  slime/packages/slime-generator:
-    dependencies:
-      slime-ast:
-        specifier: ^0.0.1
-        version: link:../slime-ast
-      slime-parser:
-        specifier: ^0.0.1
-        version: link:../slime-parser
-      subhuti:
-        specifier: ^0.1.3
-        version: link:../../../subhuti
 
   slime/packages/slime-parser:
     dependencies:

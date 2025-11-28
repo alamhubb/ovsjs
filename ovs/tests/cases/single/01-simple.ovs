@@ -1,0 +1,14 @@
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+div {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+

@@ -1,0 +1,46 @@
+// 测试50: 综合场景
+// 验证: 组合所有特性的映射
+
+const Card = (props) => {
+  const { title, items, status } = props
+  return div {
+    h2 { title }
+    if (status === "active") {
+      ul {
+        for (const item of items) {
+          li { `${item.name}: ${item.count}` }
+        }
+      }
+    } else {
+      p { "Inactive" }
+    }
+  }
+}
+
+const state = {
+  cards: [
+    { id: 1, title: "Card 1", status: "active", items: [
+      { name: "A", count: 10 },
+      { name: "B", count: 20 }
+    ]},
+    { id: 2, title: "Card 2", status: "inactive", items: [] }
+  ]
+}
+
+const processCard = (card) => {
+  const total = card.items.reduce((sum, item) => sum + item.count, 0)
+  return { ...card, total }
+}
+
+const processedCards = state.cards.map(processCard)
+
+div {
+  for (const card of processedCards) {
+    Card({
+      title: card.title,
+      items: card.items,
+      status: card.status
+    })
+  }
+}
+

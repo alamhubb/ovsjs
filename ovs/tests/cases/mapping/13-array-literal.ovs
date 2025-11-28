@@ -1,0 +1,13 @@
+// 测试13: 数组字面量
+// 验证: 数组声明和访问的映射
+
+const numbers = [1, 2, 3, 4, 5]
+const names = ["Alice", "Bob", "Charlie"]
+const mixed = [1, "two", 3]
+
+div {
+  p { numbers[0] }
+  p { names[1] }
+  p { mixed[2] }
+}
+

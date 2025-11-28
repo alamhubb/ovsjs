@@ -1,0 +1,25 @@
+// 测试46: 深层嵌套组件
+// 验证: 多层组件嵌套的映射
+
+const Button = (props) => {
+  return button { props.text }
+}
+
+const Form = (props) => {
+  return div {
+    input { }
+    Button({ text: props.buttonText })
+  }
+}
+
+const Page = (props) => {
+  return div {
+    h1 { props.title }
+    Form({ buttonText: "Submit" })
+  }
+}
+
+div {
+  Page({ title: "Login" })
+}
+

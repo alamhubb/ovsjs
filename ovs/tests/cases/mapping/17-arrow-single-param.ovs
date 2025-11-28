@@ -1,0 +1,17 @@
+// 测试17: 箭头函数（单参数）
+// 验证: 单参数箭头函数的映射
+
+const double = x => x + x
+const square = n => n * n
+const greet = name => "Hello, " + name
+
+const result1 = double(5)
+const result2 = square(4)
+const message = greet("Alice")
+
+div {
+  p { result1 }
+  p { result2 }
+  p { message }
+}
+

@@ -1,0 +1,20 @@
+// 测试21: if-else语句
+// 验证: if-else分支的映射
+
+const score = 85
+const passed = true
+
+div {
+  if (score > 60) {
+    p { "Pass" }
+  } else {
+    p { "Fail" }
+  }
+  
+  if (passed) {
+    p { "Success" }
+  } else {
+    p { "Error" }
+  }
+}
+

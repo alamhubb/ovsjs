@@ -1,0 +1,16 @@
+// 测试45: 循环渲染组件
+// 验证: 循环中组件的映射
+
+const ListItem = (props) => {
+  return li { props.text }
+}
+
+const items = ["Apple", "Banana", "Cherry"]
+
+div {
+  ul {
+    for (const item of items) {
+      ListItem({ text: item })
+    }
+  }
+}

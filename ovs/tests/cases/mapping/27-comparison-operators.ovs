@@ -1,0 +1,19 @@
+// 测试27: 比较运算符
+// 验证: ===, !==, <, >等比较运算符的映射
+
+const a = 10
+const b = 20
+const equal = a === b
+const notEqual = a !== b
+const less = a < b
+const greater = a > b
+const lessEqual = a < 15
+const greaterEqual = b > 15
+
+div {
+  p { equal }
+  p { notEqual }
+  p { less }
+  p { greater }
+}
+

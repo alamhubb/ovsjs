@@ -1,0 +1,17 @@
+// 测试36: 异步函数
+// 验证: async/await的映射
+
+const fetchData = async () => {
+  const result = await Promise.resolve("data")
+  return result
+}
+
+const getData = async () => {
+  const value = await fetchData()
+  return value
+}
+
+div {
+  p { "Async Test" }
+}
+

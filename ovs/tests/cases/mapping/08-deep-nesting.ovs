@@ -1,0 +1,47 @@
+// 测试08: 多层嵌套（3层+）
+// 验证: 深层嵌套时每层的映射准确性
+
+const level1 = "Level 1"
+const level2 = "Level 2"
+const level3 = "Level 3"
+
+div {
+  h1 { level1 }
+  div {
+    h2 { level2 }
+    div {
+      h3 { level3 }
+      p { "Deep content" }
+    }
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

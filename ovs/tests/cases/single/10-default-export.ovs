@@ -1,0 +1,13 @@
+// Default Export - 默认导出
+
+const title = "My App"
+const version = "1.0.0"
+
+export default div {
+  h1 { title }
+  p { version }
+  div {
+    p { "This is the default export" }
+  }
+}
+
