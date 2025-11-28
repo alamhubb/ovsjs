@@ -221,7 +221,7 @@ for (let i = 0; i < files.length; i++) {
 
         // 语法分析
         const parser = new Es2025Parser(tokens)
-        const cst = parser.Script()
+        const cst = parser.Module()
         console.log(`✅ 语法: CST生成`)
 
         // ========== 新增：完整CST结构验证 ==========
