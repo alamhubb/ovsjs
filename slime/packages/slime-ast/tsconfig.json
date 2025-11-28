@@ -13,8 +13,6 @@
       "ES2015",
       "dom"
     ],
-    "types": [
-      "node"
-    ]
+    "types": []
   }
 }
