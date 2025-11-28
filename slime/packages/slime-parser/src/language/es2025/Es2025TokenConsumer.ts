@@ -35,8 +35,8 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
      */
     protected consumeIdentifierValue(value: string) {
         const token = this.parser.curToken
-        if (token?.tokenName === TokenNames.IdentifierName && token.tokenValue === value) {
-            return this.consume(es2025TokensObj.IdentifierName)
+        if (token?.tokenName === TokenNames.IdentifierNameTok && token.tokenValue === value) {
+            return this.consume(es2025TokensObj.IdentifierNameTok)
         }
         return undefined
     }
@@ -309,9 +309,9 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
     // ============================================
     // 标识符 (Identifiers)
     // ============================================
-    
-    IdentifierName() {
-        return this.consume(es2025TokensObj.IdentifierName)
+
+    IdentifierNameTok() {
+        return this.consume(es2025TokensObj.IdentifierNameTok)
     }
     
     PrivateIdentifier() {
