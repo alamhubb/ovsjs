@@ -46,6 +46,101 @@ interface TemplateLiteralParams {
 }
 
 // ============================================
+// Unicode 转义标识符验证
+// 参考 Acorn 实现：https://github.com/acornjs/acorn
+//
+// 根据 ECMAScript 规范 12.7:
+// - IdentifierStart: UnicodeIDStart | $ | _ | \ UnicodeEscapeSequence
+// - IdentifierPart: UnicodeIDContinue | $ | \ UnicodeEscapeSequence | ZWNJ | ZWJ
+//
+// 当标识符包含 \uXXXX 或 \u{XXXXX} 转义时，需要验证解码后的字符
+// 是否满足 ID_Start（第一个字符）或 ID_Continue（后续字符）属性
+// ============================================
+
+// ID_Start 和 ID_Continue 的正则表达式（使用 Unicode 属性）
+const ID_START_REGEX = /^[\p{ID_Start}$_]$/u
+const ID_CONTINUE_REGEX = /^[\p{ID_Continue}$\u200C\u200D]$/u
+
+/**
+ * 解码 Unicode 转义序列
+ * 支持 \uXXXX 和 \u{XXXXX} 格式
+ */
+function decodeUnicodeEscape(escape: string): number | null {
+    if (escape.startsWith('\\u{') && escape.endsWith('}')) {
+        // \u{XXXXX} 格式
+        const hex = escape.slice(3, -1)
+        const codePoint = parseInt(hex, 16)
+        if (isNaN(codePoint) || codePoint > 0x10FFFF) return null
+        return codePoint
+    } else if (escape.startsWith('\\u') && escape.length === 6) {
+        // \uXXXX 格式
+        const hex = escape.slice(2)
+        const codePoint = parseInt(hex, 16)
+        if (isNaN(codePoint)) return null
+        return codePoint
+    }
+    return null
+}
+
+/**
+ * 验证包含 Unicode 转义的标识符是否有效
+ *
+ * 按照 ECMAScript 规范，Unicode 转义解码后的字符必须满足：
+ * - 第一个字符：ID_Start | $ | _
+ * - 后续字符：ID_Continue | $ | ZWNJ | ZWJ
+ */
+function isValidIdentifierWithEscapes(name: string): boolean {
+    // 解析标识符，提取每个字符（包括转义序列）
+    const chars: string[] = []
+    let i = 0
+
+    while (i < name.length) {
+        if (name[i] === '\\' && name[i + 1] === 'u') {
+            // Unicode 转义序列
+            if (name[i + 2] === '{') {
+                // \u{XXXXX} 格式
+                const endBrace = name.indexOf('}', i + 3)
+                if (endBrace === -1) return false
+                const escape = name.slice(i, endBrace + 1)
+                const codePoint = decodeUnicodeEscape(escape)
+                if (codePoint === null) return false
+                chars.push(String.fromCodePoint(codePoint))
+                i = endBrace + 1
+            } else {
+                // \uXXXX 格式
+                if (i + 6 > name.length) return false
+                const escape = name.slice(i, i + 6)
+                const codePoint = decodeUnicodeEscape(escape)
+                if (codePoint === null) return false
+                chars.push(String.fromCodePoint(codePoint))
+                i += 6
+            }
+        } else {
+            // 普通字符（可能是多字节 Unicode）
+            const codePoint = name.codePointAt(i)!
+            chars.push(String.fromCodePoint(codePoint))
+            i += codePoint > 0xFFFF ? 2 : 1
+        }
+    }
+
+    if (chars.length === 0) return false
+
+    // 验证第一个字符是否满足 ID_Start
+    if (!ID_START_REGEX.test(chars[0])) {
+        return false
+    }
+
+    // 验证后续字符是否满足 ID_Continue
+    for (let j = 1; j < chars.length; j++) {
+        if (!ID_CONTINUE_REGEX.test(chars[j])) {
+            return false
+        }
+    }
+
+    return true
+}
+
+// ============================================
 // Es2025Parser 主类
 // ============================================
 
@@ -228,14 +323,30 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     /**
      * Identifier :
      *     IdentifierName but not ReservedWord
+     *
+     * 根据 ECMAScript 规范 12.7，当标识符包含 Unicode 转义序列时，
+     * 解码后的字符必须满足 ID_Start（第一个字符）或 ID_Continue（后续字符）属性。
+     * 参考 Acorn 实现。
      */
     @SubhutiRule
     Identifier(): SubhutiCst | undefined {
         const cst = this.tokenConsumer.IdentifierNameTok()
-        if (cst && ReservedWords.has(cst.value!)) {
-            // 是保留字，解析失败
+        if (!cst) return undefined
+
+        const value = cst.value!
+
+        // 检查是否是保留字
+        if (ReservedWords.has(value)) {
             return this.parserFail()
         }
+
+        // 如果包含 Unicode 转义，验证解码后的字符是否有效
+        if (value.includes('\\u')) {
+            if (!isValidIdentifierWithEscapes(value)) {
+                return this.parserFail()
+            }
+        }
+
         return cst
     }
 
@@ -247,12 +358,25 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      *
      * 注意：词法层的 IdentifierNameTok 只匹配非关键字标识符，
      * 所以这里需要显式包含所有关键字 token
+     *
+     * 同样需要验证 Unicode 转义的有效性
      */
     @SubhutiRule
     IdentifierName(): SubhutiCst | undefined {
         return this.Or([
-            // 普通标识符
-            {alt: () => this.tokenConsumer.IdentifierNameTok()},
+            // 普通标识符（需要验证 Unicode 转义）
+            {alt: () => {
+                const cst = this.tokenConsumer.IdentifierNameTok()
+                if (!cst) return undefined
+                const value = cst.value!
+                // 如果包含 Unicode 转义，验证解码后的字符是否有效
+                if (value.includes('\\u')) {
+                    if (!isValidIdentifierWithEscapes(value)) {
+                        return this.parserFail()
+                    }
+                }
+                return cst
+            }},
             // 所有 ReservedWord 都可以作为 IdentifierName
             {alt: () => this.tokenConsumer.AwaitTok()},
             {alt: () => this.tokenConsumer.BreakTok()},
@@ -2475,6 +2599,11 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     /**
      * DoWhileStatement[Yield, Await, Return] :
      *     do Statement[?Yield, ?Await, ?Return] while ( Expression[+In, ?Yield, ?Await] ) ;
+     *
+     * 注意：根据 ECMAScript 规范 12.10.1 ASI 规则：
+     * "The previous token is ) and the inserted semicolon would then be parsed as
+     *  the terminating semicolon of a do-while statement"
+     * 因此 do-while 语句末尾的分号可以省略（ASI 会自动插入）
      */
     @SubhutiRule
     DoWhileStatement(params: StatementParams = {}): SubhutiCst | undefined {
@@ -2484,7 +2613,9 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
         this.tokenConsumer.LParen()
         this.Expression({...params, In: true})
         this.tokenConsumer.RParen()
-        return this.SemicolonASI()
+        // do-while 特殊 ASI 规则：分号可选
+        this.Option(() => this.tokenConsumer.Semicolon())
+        return this.curCst
     }
 
     /**
