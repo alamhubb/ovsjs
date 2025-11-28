@@ -154,7 +154,7 @@ export default class SubhutiTokenLookahead {
      * // async [no LineTerminator here] function
      * if (this.lookaheadSequenceNoLT(['AsyncTok', 'FunctionTok'])) { ... }
      */
-    private lookaheadSequenceNoLT(tokenNames: string[]): boolean {
+    protected lookaheadSequenceNoLT(tokenNames: string[]): boolean {
         const peeked = this.peekSequence(tokenNames.length)
         if (peeked.length !== tokenNames.length) {
             return false
@@ -184,7 +184,9 @@ export default class SubhutiTokenLookahead {
     }
 
     // ============================================
-    // 层级 2：受保护的断言方法（自动设置 _parseSuccess）
+    // 层级 2：受保护的断言方法
+    // - 自动设置 _parseSuccess
+    // - 返回 boolean，支持灵活组合
     // ============================================
 
     /**
@@ -193,17 +195,20 @@ export default class SubhutiTokenLookahead {
      *
      * @param tokenName - 必须的 token 类型
      * @param offset - 偏移量（默认 1）
+     * @returns 断言是否成功
      *
      * @example
      * // [lookahead = =]
      * this.assertLookahead('Assign')
      */
-    protected assertLookahead(tokenName: string, offset: number = 1): void {
-        if (!this._parseSuccess) return
+    protected assertLookahead(tokenName: string, offset: number = 1): boolean {
+        if (!this._parseSuccess) return false
 
-        if (!this.lookahead(tokenName, offset)) {
+        const result = this.lookahead(tokenName, offset)
+        if (!result) {
             this._parseSuccess = false
         }
+        return result
     }
 
     /**
@@ -212,17 +217,20 @@ export default class SubhutiTokenLookahead {
      *
      * @param tokenName - 不允许的 token 类型
      * @param offset - 偏移量（默认 1）
+     * @returns 断言是否成功
      *
      * @example
      * // [lookahead ≠ else]
      * this.assertLookaheadNot('ElseTok')
      */
-    protected assertLookaheadNot(tokenName: string, offset: number = 1): void {
-        if (!this._parseSuccess) return
+    protected assertLookaheadNot(tokenName: string, offset: number = 1): boolean {
+        if (!this._parseSuccess) return false
 
-        if (this.lookahead(tokenName, offset)) {
+        const result = this.lookaheadNot(tokenName, offset)
+        if (!result) {
             this._parseSuccess = false
         }
+        return result
     }
 
     /**
@@ -231,17 +239,20 @@ export default class SubhutiTokenLookahead {
      *
      * @param tokenNames - 允许的 token 类型列表
      * @param offset - 偏移量（默认 1）
+     * @returns 断言是否成功
      *
      * @example
      * // [lookahead ∈ {8, 9}]
      * this.assertLookaheadIn(['DecimalDigit8', 'DecimalDigit9'])
      */
-    protected assertLookaheadIn(tokenNames: string[], offset: number = 1): void {
-        if (!this._parseSuccess) return
+    protected assertLookaheadIn(tokenNames: string[], offset: number = 1): boolean {
+        if (!this._parseSuccess) return false
 
-        if (!this.lookaheadIn(tokenNames, offset)) {
+        const result = this.lookaheadIn(tokenNames, offset)
+        if (!result) {
             this._parseSuccess = false
         }
+        return result
     }
 
     /**
@@ -250,17 +261,20 @@ export default class SubhutiTokenLookahead {
      *
      * @param tokenNames - 不允许的 token 类型列表
      * @param offset - 偏移量（默认 1）
+     * @returns 断言是否成功
      *
      * @example
      * // [lookahead ∉ {{, function, class}]
      * this.assertLookaheadNotIn(['LBrace', 'FunctionTok', 'ClassTok'])
      */
-    protected assertLookaheadNotIn(tokenNames: string[], offset: number = 1): void {
-        if (!this._parseSuccess) return
+    protected assertLookaheadNotIn(tokenNames: string[], offset: number = 1): boolean {
+        if (!this._parseSuccess) return false
 
-        if (this.lookaheadIn(tokenNames, offset)) {
+        const result = this.lookaheadNotIn(tokenNames, offset)
+        if (!result) {
             this._parseSuccess = false
         }
+        return result
     }
 
     /**
@@ -268,17 +282,20 @@ export default class SubhutiTokenLookahead {
      * 如果不匹配，则标记失败
      *
      * @param tokenNames - token 序列
+     * @returns 断言是否成功
      *
      * @example
      * // [lookahead = async function]
      * this.assertLookaheadSequence(['AsyncTok', 'FunctionTok'])
      */
-    protected assertLookaheadSequence(tokenNames: string[]): void {
-        if (!this._parseSuccess) return
+    protected assertLookaheadSequence(tokenNames: string[]): boolean {
+        if (!this._parseSuccess) return false
 
-        if (!this.lookaheadSequence(tokenNames)) {
+        const result = this.lookaheadSequence(tokenNames)
+        if (!result) {
             this._parseSuccess = false
         }
+        return result
     }
 
     /**
@@ -286,33 +303,61 @@ export default class SubhutiTokenLookahead {
      * 如果匹配，则标记失败
      *
      * @param tokenNames - token 序列
+     * @returns 断言是否成功
      *
      * @example
      * // [lookahead ≠ let []
      * this.assertLookaheadNotSequence(['LetTok', 'LBracket'])
      */
-    protected assertLookaheadNotSequence(tokenNames: string[]): void {
-        if (!this._parseSuccess) return
+    protected assertLookaheadNotSequence(tokenNames: string[]): boolean {
+        if (!this._parseSuccess) return false
 
-        if (this.lookaheadSequence(tokenNames)) {
+        const result = this.lookaheadNotSequence(tokenNames)
+        if (!result) {
             this._parseSuccess = false
         }
+        return result
+    }
+
+    /**
+     * 断言：不能是指定的 token 序列（考虑换行符约束）
+     * 如果序列匹配且中间没有换行符，则标记失败
+     *
+     * @param tokenNames - token 序列
+     * @returns 断言是否成功
+     *
+     * @example
+     * // [lookahead ≠ async [no LineTerminator here] function]
+     * this.assertLookaheadNotSequenceNoLT(['AsyncTok', 'FunctionTok'])
+     */
+    protected assertLookaheadNotSequenceNoLT(tokenNames: string[]): boolean {
+        if (!this._parseSuccess) return false
+
+        const result = !this.lookaheadSequenceNoLT(tokenNames)
+        if (!result) {
+            this._parseSuccess = false
+        }
+        return result
     }
 
     /**
      * 断言：当前 token 前不能有换行符
      * 如果有，则标记失败
      *
+     * @returns 断言是否成功
+     *
      * @example
      * // [no LineTerminator here]
      * this.assertNoLineBreak()
      */
-    protected assertNoLineBreak(): void {
-        if (!this._parseSuccess) return
+    protected assertNoLineBreak(): boolean {
+        if (!this._parseSuccess) return false
 
-        if (this.lookaheadHasLineBreak()) {
+        const result = !this.lookaheadHasLineBreak()
+        if (!result) {
             this._parseSuccess = false
         }
+        return result
     }
 
     /**
@@ -320,18 +365,20 @@ export default class SubhutiTokenLookahead {
      * 如果条件为假，则标记失败
      *
      * @param condition - 要检查的条件
+     * @returns 断言是否成功（即条件本身）
      *
      * @example
      * // 断言：标识符不能是保留字
      * const cst = this.tokenConsumer.Identifier()
      * this.assertCondition(!(cst && ReservedWords.has(cst.value!)))
      */
-    protected assertCondition(condition: boolean): void {
-        if (!this._parseSuccess) return
+    protected assertCondition(condition: boolean): boolean {
+        if (!this._parseSuccess) return false
 
         if (!condition) {
             this._parseSuccess = false
         }
+        return condition
     }
 }
 

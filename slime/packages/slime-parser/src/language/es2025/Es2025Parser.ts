@@ -2211,16 +2211,9 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      */
     @SubhutiRule
     ExpressionStatement(params: StatementParams = {}): SubhutiCst | undefined {
-        // 前瞻检查：[lookahead ∉ {{, function, async [no LineTerminator here] function, class, let [}]
-        // 使用新的前瞻方法，自动设置 _parseSuccess
+        // [lookahead ∉ {{, function, async [no LineTerminator here] function, class, let [}]
         this.assertLookaheadNotIn(['LBrace', 'FunctionTok', 'ClassTok'])
-
-        // 不能是 async [no LineTerminator here] function
-        if (this.lookaheadSequenceNoLT(['AsyncTok', 'FunctionTok'])) {
-            this._parseSuccess = false
-        }
-
-        // 不能是 let [
+        this.assertLookaheadNotSequenceNoLT(['AsyncTok', 'FunctionTok'])
         this.assertLookaheadNotSequence(['LetTok', 'LBracket'])
 
         this.Expression({...params, In: true})
@@ -2354,9 +2347,9 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                 alt: () => {
                     this.tokenConsumer.ForTok()
                     this.tokenConsumer.LParen()
-                    if (this.assertLookaheadNotSequence(['LetTok', 'LBracket'])) {
-                        this.Option(() => this.Expression({...params, In: false}))
-                    }
+                    // [lookahead ≠ let []
+                    this.assertLookaheadNotSequence(['LetTok', 'LBracket'])
+                    this.Option(() => this.Expression({...params, In: false}))
                     this.tokenConsumer.Semicolon()
                     this.Option(() => this.Expression({...params, In: true}))
                     this.tokenConsumer.Semicolon()
@@ -2453,13 +2446,14 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                 alt: () => {
                     this.tokenConsumer.ForTok()
                     this.tokenConsumer.LParen()
-                    if (this.assertLookaheadNotIn(['LetTok'], 1) && !this.lookaheadSequence(['AsyncTok', 'OfTok'])) {
-                        this.LeftHandSideExpression(params)
-                        this.tokenConsumer.OfTok()
-                        this.AssignmentExpression({...params, In: true})
-                        this.tokenConsumer.RParen()
-                        this.Statement(params)
-                    }
+                    // [lookahead ∉ {let, async of}]
+                    this.assertLookaheadNotIn(['LetTok'])
+                    this.assertLookaheadNotSequence(['AsyncTok', 'OfTok'])
+                    this.LeftHandSideExpression(params)
+                    this.tokenConsumer.OfTok()
+                    this.AssignmentExpression({...params, In: true})
+                    this.tokenConsumer.RParen()
+                    this.Statement(params)
                 }
             },
             // [+Await] for await ( var ForBinding[?Yield, ?Await] of AssignmentExpression[+In, ?Yield, ?Await] ) Statement[?Yield, ?Await, ?Return]
@@ -2495,13 +2489,13 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                     this.tokenConsumer.ForTok()
                     this.tokenConsumer.AwaitTok()
                     this.tokenConsumer.LParen()
-                    if (this.assertLookaheadNot('LetTok', 1)) {
-                        this.LeftHandSideExpression(params)
-                        this.tokenConsumer.OfTok()
-                        this.AssignmentExpression({...params, In: true})
-                        this.tokenConsumer.RParen()
-                        this.Statement(params)
-                    }
+                    // [lookahead ≠ let]
+                    this.assertLookaheadNot('LetTok')
+                    this.LeftHandSideExpression(params)
+                    this.tokenConsumer.OfTok()
+                    this.AssignmentExpression({...params, In: true})
+                    this.tokenConsumer.RParen()
+                    this.Statement(params)
                 }
             }] : [])
         ])
@@ -2946,9 +2940,9 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             },
             {
                 alt: () => {
-                    if (this.assertLookaheadNot('LBrace', 1)) {
-                        this.ExpressionBody({...params, Await: false})
-                    }
+                    // [lookahead ≠ {]
+                    this.assertLookaheadNot('LBrace')
+                    this.ExpressionBody({...params, Await: false})
                 }
             }
         ])
@@ -3020,9 +3014,9 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             },
             {
                 alt: () => {
-                    if (this.assertLookaheadNot('LBrace', 1)) {
-                        this.ExpressionBody({...params, Await: true})
-                    }
+                    // [lookahead ≠ {]
+                    this.assertLookaheadNot('LBrace')
+                    this.ExpressionBody({...params, Await: true})
                 }
             }
         ])
@@ -4118,11 +4112,10 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                     this.tokenConsumer.ExportTok()
                     this.tokenConsumer.DefaultTok()
                     // [lookahead ∉ {function, async [no LineTerminator here] function, class}]
-                    if (this.assertLookaheadNotIn(['FunctionTok', 'ClassTok'], 1) &&
-                        !this.lookaheadSequenceNoLT(['AsyncTok', 'FunctionTok'])) {
-                        this.AssignmentExpression({In: true, Yield: false, Await: true})
-                        this.SemicolonASI()
-                    }
+                    this.assertLookaheadNotIn(['FunctionTok', 'ClassTok'])
+                    this.assertLookaheadNotSequenceNoLT(['AsyncTok', 'FunctionTok'])
+                    this.AssignmentExpression({In: true, Yield: false, Await: true})
+                    this.SemicolonASI()
                 }
             }
         ])
