@@ -8,7 +8,7 @@ import * as path from 'path'
 import {es2025Tokens} from "slime-parser/src/language/es2025/Es2025Tokens";
 import Es2025Parser from "slime-parser/src/language/es2025/Es2025Parser";
 
-const casesDir = path.join(__dirname, 'tests/es6rules')
+const casesDir = path.join(__dirname, 'tests/cases')
 // const casesDir = path.join(__dirname, 'tests/cases')
 const files = fs.readdirSync(casesDir)
     .filter(f => f.endsWith('.js'))
