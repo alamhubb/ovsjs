@@ -76,13 +76,10 @@ export const TokenNames = {
     AsyncTok: 'AsyncTok',
     LetTok: 'LetTok',
     StaticTok: 'StaticTok',
-    GetTok: 'GetTok',
-    SetTok: 'SetTok',
-    OfTok: 'OfTok',
-    TargetTok: 'TargetTok',
-    MetaTok: 'MetaTok',
     AsTok: 'AsTok',
-    FromTok: 'FromTok',
+    // 注意：get, set, of, target, meta, from 是软关键字
+    // 按照 ES2025 规范，它们在词法层是 IdentifierName，不是独立的 token
+    // 在 Parser 中通过值检查来识别
 
     // 数字字面量
     BigIntLiteral: 'BigIntLiteral',
@@ -235,13 +232,10 @@ export const es2025TokensObj = {
     AsyncTok: createKeywordToken(TokenNames.AsyncTok, 'async'),
     LetTok: createKeywordToken(TokenNames.LetTok, 'let'),
     StaticTok: createKeywordToken(TokenNames.StaticTok, 'static'),
-    GetTok: createKeywordToken(TokenNames.GetTok, 'get'),
-    SetTok: createKeywordToken(TokenNames.SetTok, 'set'),
-    OfTok: createKeywordToken(TokenNames.OfTok, 'of'),
-    TargetTok: createKeywordToken(TokenNames.TargetTok, 'target'),
-    MetaTok: createKeywordToken(TokenNames.MetaTok, 'meta'),
     AsTok: createKeywordToken(TokenNames.AsTok, 'as'),
-    FromTok: createKeywordToken(TokenNames.FromTok, 'from'),
+    // 注意：get, set, of, target, meta, from 是软关键字
+    // 按照 ES2025 规范，它们在词法层是 IdentifierName，不是独立的 token
+    // 已删除：GetTok, SetTok, OfTok, TargetTok, MetaTok, FromTok
 
     // ============================================
     // A.1.9 数字字面量

@@ -15,9 +15,32 @@
  */
 
 import SubhutiTokenConsumer from "subhuti/src/SubhutiTokenConsumer.ts"
-import { es2025TokensObj } from "./Es2025Tokens.ts"
+import { es2025TokensObj, TokenNames } from "./Es2025Tokens.ts"
 
 export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
+
+    // ============================================
+    // 软关键字消费辅助方法
+    // ============================================
+
+    /**
+     * 消费一个 IdentifierName 并检查其值是否匹配
+     *
+     * 用于软关键字（如 get, set, of, target, meta, from）
+     * 按照 ES2025 规范，这些在词法层是 IdentifierName，
+     * 在语法层通过值检查来识别
+     *
+     * @param value 期望的标识符值
+     * @returns CST 节点或 undefined
+     */
+    protected consumeIdentifierValue(value: string) {
+        const token = this.parser.curToken
+        if (token?.tokenName === TokenNames.IdentifierName && token.tokenValue === value) {
+            return this.consume(es2025TokensObj.IdentifierName)
+        }
+        return undefined
+    }
+
     // ============================================
     // 关键字 (Keywords)
     // ============================================
@@ -189,33 +212,62 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
     StaticTok() {
         return this.consume(es2025TokensObj.StaticTok)
     }
-    
-    GetTok() {
-        return this.consume(es2025TokensObj.GetTok)
-    }
-    
-    SetTok() {
-        return this.consume(es2025TokensObj.SetTok)
-    }
-    
-    OfTok() {
-        return this.consume(es2025TokensObj.OfTok)
-    }
-    
-    TargetTok() {
-        return this.consume(es2025TokensObj.TargetTok)
-    }
-    
-    MetaTok() {
-        return this.consume(es2025TokensObj.MetaTok)
-    }
-    
+
     AsTok() {
         return this.consume(es2025TokensObj.AsTok)
     }
-    
+
+    // ============================================
+    // 软关键字 (Soft Keywords)
+    // 按照 ES2025 规范，这些在词法层是 IdentifierName
+    // ============================================
+
+    /**
+     * 消费 'get' 软关键字
+     * 用于 getter 方法定义
+     */
+    GetTok() {
+        return this.consumeIdentifierValue('get')
+    }
+
+    /**
+     * 消费 'set' 软关键字
+     * 用于 setter 方法定义
+     */
+    SetTok() {
+        return this.consumeIdentifierValue('set')
+    }
+
+    /**
+     * 消费 'of' 软关键字
+     * 用于 for-of 语句
+     */
+    OfTok() {
+        return this.consumeIdentifierValue('of')
+    }
+
+    /**
+     * 消费 'target' 软关键字
+     * 用于 new.target
+     */
+    TargetTok() {
+        return this.consumeIdentifierValue('target')
+    }
+
+    /**
+     * 消费 'meta' 软关键字
+     * 用于 import.meta
+     */
+    MetaTok() {
+        return this.consumeIdentifierValue('meta')
+    }
+
+    /**
+     * 消费 'from' 软关键字
+     * 用于 import/export 语句
+     */
     FromTok() {
-        return this.consume(es2025TokensObj.FromTok)
+        return this.consumeIdentifierValue('from')
     }
     
     // ============================================
