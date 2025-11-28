@@ -1072,9 +1072,9 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     @SubhutiRule
     LeftHandSideExpression(params: ExpressionParams = {}): SubhutiCst | undefined {
         return this.Or([
-            {alt: () => this.OptionalExpression(params)},
-            {alt: () => this.NewExpression(params)},
-            {alt: () => this.CallExpression(params)},
+            {alt: () => this.CallExpression(params)},      // 第1位 - 最长，包含 Arguments
+            {alt: () => this.OptionalExpression(params)},  // 第2位 - 包含 OptionalChain
+            {alt: () => this.NewExpression(params)},       // 第3位 - 最短，仅 MemberExpression
         ])
     }
 
