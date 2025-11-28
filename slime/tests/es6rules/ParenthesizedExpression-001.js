@@ -50,8 +50,7 @@ const complex = ((a + b) * (c - d)) / (e + f)
 // ✅ 测试8：在不同上下文中
 if ((a && b) || (c && d)) {}
 for (let i = (start); i < (end); i++) {}
-return (value)
-/* 
+/*
  * 规则补充信息�?025-11-01�? * 
  * Es2025Parser.ts 实际规则定义�? *   ParenthesizedExpression: ( Expression )
  * 
@@ -112,8 +111,7 @@ const complex = ((a + b) * (c - d)) / (e + f)
 // ✅ 测试8：在不同上下文中
 if ((a && b) || (c && d)) {}
 for (let i = (start); i < (end); i++) {}
-return (value)
-/* 
+/*
  * 规则补充信息�?025-11-01�? * 
  * Es2025Parser.ts 实际规则定义�? *   ParenthesizedExpression: ( Expression )
  * 

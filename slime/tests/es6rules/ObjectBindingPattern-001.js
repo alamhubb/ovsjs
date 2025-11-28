@@ -74,7 +74,7 @@ const extract = ({id, data: {value}}) => value
 const withDefaults = ({x = 0, y = 0} = {}) => x + y
 
 // ✅ 测试11：Rest + 带尾逗号
-const {first1, ...remaining,} = {first1: 1, second: 2, third: 3}
+const {first1, ...remaining} = {first1: 1, second: 2, third: 3}
 
 /* Es2025Parser.ts: { BindingPropertyList? TrailingComma? } */
 
