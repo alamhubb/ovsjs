@@ -150,7 +150,7 @@ function getCSTStatistics(node: any): {
 }
 
 // 主程序
-const filePath = process.argv[2] || 'tests/cases/14-arrow-basic.js'
+const filePath = process.argv[2] || 'tests/cases/19-array-destructuring-basic.js'
 // const filePath = process.argv[2] || 'tests/es6rules/AdditiveExpression-001.js'
 
 if (!filePath) {
