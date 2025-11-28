@@ -36,7 +36,7 @@ const files = getAllJsFiles(casesDir).sort()
 // 用法: npx tsx test-stage1-cst.ts [startIndex]
 // 例如: npx tsx test-stage1-cst.ts 50  -- 从第50个文件开始
 const startIndex = parseInt(process.argv[2] || '0', 10)
-const validStartIndex = 14400
+const validStartIndex = 15964
 
 if (startIndex > 0) {
   console.log(`📍 从第 ${validStartIndex + 1} 个文件开始测试 (跳过前 ${validStartIndex} 个)`)
