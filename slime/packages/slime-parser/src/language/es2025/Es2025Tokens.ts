@@ -217,6 +217,7 @@ export const EXPRESSION_END_TOKENS = new Set([
     // 标识符和字面量
     TokenNames.IdentifierNameTok,
     TokenNames.NumericLiteral,
+    TokenNames.LegacyOctalLiteral,  // 传统八进制字面量 (Annex B)
     TokenNames.BigIntLiteral,
     TokenNames.StringLiteral,
     TokenNames.RegularExpressionLiteral,
@@ -337,8 +338,9 @@ export const es2025TokensObj = {
 
     // 支持行续符 (LineContinuation): \ 后跟 \r\n | \r | \n
     // 参考 ES2025 规范 12.9.4 String Literals 和 Annex B
-    StringDoubleQuote: createEmptyValueRegToken(TokenNames.StringLiteral, /"(?:[^\n\r"\\]|\\(?:\r\n|\r|\n|['"\\bfnrtv]|[^'"\\bfnrtv0-9xu\n\r]|0(?![0-9])|x[0-9a-fA-F]{2}|u(?:[0-9a-fA-F]{4}|\{[0-9a-fA-F]+\})))*"/),
-    StringSingleQuote: createEmptyValueRegToken(TokenNames.StringLiteral, /'(?:[^\n\r'\\]|\\(?:\r\n|\r|\n|['"\\bfnrtv]|[^'"\\bfnrtv0-9xu\n\r]|0(?![0-9])|x[0-9a-fA-F]{2}|u(?:[0-9a-fA-F]{4}|\{[0-9a-fA-F]+\})))*'/),
+    // Annex B: 支持八进制转义序列 \0-\7, \00-\77, \000-\377
+    StringDoubleQuote: createEmptyValueRegToken(TokenNames.StringLiteral, /"(?:[^\n\r"\\]|\\(?:\r\n|\r|\n|['"\\bfnrtv]|[^'"\\bfnrtv\n\r]|x[0-9a-fA-F]{2}|u(?:[0-9a-fA-F]{4}|\{[0-9a-fA-F]+\})))*"/),
+    StringSingleQuote: createEmptyValueRegToken(TokenNames.StringLiteral, /'(?:[^\n\r'\\]|\\(?:\r\n|\r|\n|['"\\bfnrtv]|[^'"\\bfnrtv\n\r]|x[0-9a-fA-F]{2}|u(?:[0-9a-fA-F]{4}|\{[0-9a-fA-F]+\})))*'/),
 
     // ============================================
     // A.1.12 模板字面量
@@ -373,7 +375,16 @@ export const es2025TokensObj = {
     PlusAssign: createValueRegToken(TokenNames.PlusAssign, /\+=/, '+='),
     MinusAssign: createValueRegToken(TokenNames.MinusAssign, /-=/, '-='),
     MultiplyAssign: createValueRegToken(TokenNames.MultiplyAssign, /\*=/, '*='),
-    DivideAssign: createValueRegToken(TokenNames.DivideAssign, /\/=/, '/='),
+    // DivideAssign 有上下文约束，只有前一个 token 是表达式结尾才匹配
+    // 否则 /=xxx/g 会被识别为正则表达式
+    DivideAssign: createValueRegToken(
+        TokenNames.DivideAssign,
+        /\/=/,
+        '/=',
+        false,  // skip
+        undefined,  // lookahead
+        { onlyAfter: EXPRESSION_END_TOKENS }  // 上下文约束
+    ),
     ModuloAssign: createValueRegToken(TokenNames.ModuloAssign, /%=/, '%='),
     LeftShift: createValueRegToken(TokenNames.LeftShift, /<</, '<<'),
     RightShift: createValueRegToken(TokenNames.RightShift, />>/, '>>'),

@@ -293,7 +293,11 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
     // ============================================
     
     Number() {
-        return this.consume(es2025TokensObj.NumericLiteral)
+        // NumericLiteral 或 LegacyOctalLiteral（如 05, 077 等，Annex B）
+        return this.parser.Or([
+            {alt: () => this.consume(es2025TokensObj.NumericLiteral)},
+            {alt: () => this.consume(es2025TokensObj.LegacyOctalLiteral)}
+        ])
     }
     
     BigInt() {

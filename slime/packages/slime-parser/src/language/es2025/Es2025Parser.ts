@@ -274,13 +274,15 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     // ============================================
 
     /**
-     * 将当前 Slash token 重新扫描为 RegularExpressionLiteral
+     * 将当前 Slash 或 DivideAssign token 重新扫描为 RegularExpressionLiteral
      *
      * 当词法分析阶段将正则表达式误判为除法时调用。
-     * 例如: `} /42/i` 中的 `/42/i` 被误判为 Slash, 42, Slash, i
+     * 例如:
+     *   `} /42/i` 中的 `/42/i` 被误判为 Slash, 42, Slash, i
+     *   `x = /=foo/g` 中的 `/=foo/g` 被误判为 DivideAssign, foo, Slash, g
      *
      * 工作原理：
-     * 1. 从当前 Slash token 开始，收集连续的 tokens（无空白间隔）
+     * 1. 从当前 Slash/DivideAssign token 开始，收集连续的 tokens（无空白间隔）
      * 2. 拼接 tokenValue，尝试匹配正则表达式 pattern
      * 3. 如果成功，替换 tokens 数组中的多个 tokens 为一个 RegularExpressionLiteral
      *
@@ -288,7 +290,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      */
     private rescanSlashAsRegExp(): boolean {
         const curToken = this.curToken
-        if (!curToken || curToken.tokenName !== TokenNames.Slash) {
+        if (!curToken || (curToken.tokenName !== TokenNames.Slash && curToken.tokenName !== TokenNames.DivideAssign)) {
             return false
         }
 
@@ -2653,6 +2655,12 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      * IfStatement[Yield, Await, Return] :
      *     if ( Expression[+In, ?Yield, ?Await] ) Statement[?Yield, ?Await, ?Return] else Statement[?Yield, ?Await, ?Return]
      *     if ( Expression[+In, ?Yield, ?Await] ) Statement[?Yield, ?Await, ?Return] [lookahead ≠ else]
+     *
+     * Annex B.3.4:
+     *     if ( Expression ) FunctionDeclaration else Statement
+     *     if ( Expression ) Statement else FunctionDeclaration
+     *     if ( Expression ) FunctionDeclaration else FunctionDeclaration
+     *     if ( Expression ) FunctionDeclaration [lookahead ≠ else]
      */
     @SubhutiRule
     IfStatement(params: StatementParams = {}): SubhutiCst | undefined {
@@ -2663,9 +2671,9 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                     this.tokenConsumer.LParen()
                     this.Expression({...params, In: true})
                     this.tokenConsumer.RParen()
-                    this.Statement(params)
+                    this.IfStatementBody(params)
                     this.tokenConsumer.ElseTok()
-                    this.Statement(params)
+                    this.IfStatementBody(params)
                 }
             },
             {
@@ -2674,10 +2682,23 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                     this.tokenConsumer.LParen()
                     this.Expression({...params, In: true})
                     this.tokenConsumer.RParen()
-                    this.Statement(params)
+                    this.IfStatementBody(params)
                     this.assertLookaheadNot(TokenNames.ElseTok)  // [lookahead ≠ else]
                 }
             }
+        ])
+    }
+
+    /**
+     * IfStatement 的 body，支持 Annex B.3.4
+     * 允许 Statement 或 FunctionDeclaration（非严格模式）
+     */
+    @SubhutiRule
+    IfStatementBody(params: StatementParams = {}): SubhutiCst | undefined {
+        return this.Or([
+            {alt: () => this.Statement(params)},
+            // Annex B.3.4: 非严格模式下允许 FunctionDeclaration
+            {alt: () => this.FunctionDeclaration({...params, Default: false})}
         ])
     }
 
