@@ -4,12 +4,12 @@
  * 前提: 阶段1、2已通过（CST和AST可以正常生成）
  */
 import Es2025Parser from './packages/slime-parser/src/language/es2025/Es2025Parser.ts'
-import { es6Tokens } from './packages/slime-parser/src/language/es2025/Es2025Tokens.ts'
 import SubhutiLexer from 'subhuti/src/SubhutiLexer.ts'
 import { SlimeCstToAst } from './packages/slime-parser/src/language/SlimeCstToAstUtil.ts'
 import SlimeGenerator from './packages/slime-generator/src/SlimeGenerator.ts'
 import * as fs from 'fs'
 import * as path from 'path'
+import {es2025Tokens} from "slime-parser/src/language/es2025/Es2025Tokens";
 
 const casesDir = path.join(__dirname, 'tests/cases')
 const files = fs.readdirSync(casesDir)
@@ -30,7 +30,7 @@ for (let i = 0; i < files.length; i++) {
 
   try {
     // 阶段1-2: 生成AST（假设已通过）
-    const lexer = new SubhutiLexer(es6Tokens)
+    const lexer = new SubhutiLexer(es2025Tokens)
     const tokens = lexer.tokenize(code)
     const parser = new Es2025Parser(tokens)
     const cst = parser.Program()

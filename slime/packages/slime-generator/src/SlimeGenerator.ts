@@ -41,8 +41,6 @@ import {
 import {SlimeAstType} from "slime-ast/src/SlimeAstType.ts";
 import SlimeCodeMapping, {SlimeCodeLocation, type SlimeGeneratorResult} from "./SlimeCodeMapping.ts";
 import type {SubhutiSourceLocation} from "subhuti/src/struct/SubhutiCst.ts";
-import {es6TokenMapObj, Es6TokenName, es6TokensObj} from "slime-parser/src/language/es2015/Es6Tokens.ts";
-import {es5TokensObj} from "slime-parser/src/language/es5/Es5Tokens.ts";
 import {SubhutiCreateToken} from "subhuti/src/struct/SubhutiCreateToken.ts";
 import SubhutiMatchToken from "subhuti/src/struct/SubhutiMatchToken.ts";
 
