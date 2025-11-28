@@ -987,13 +987,20 @@ export class SlimeCstToAst {
 
     createClassTailAst(cst: SubhutiCst): { superClass: SlimeExpression | null; body: SlimeClassBody } {
         const astName = checkCstName(cst, Es6Parser.prototype.ClassTail?.name);
-        let bodyIndex = 1 // 默认 ClassBody 在索引 1
         let superClass: SlimeExpression | null = null // 超类默认为 null
-        if (cst.children[0] && cst.children[0].name === Es6Parser.prototype.ClassHeritage?.name) {
-            superClass = this.createClassHeritageAst(cst.children[0]) // 如果存在 ClassHeritage 则解析 superClass
-            bodyIndex = 2 // ClassBody 顺延到索引 2
+        let body: SlimeClassBody = {type: SlimeAstType.ClassBody as any, body: [], loc: cst.loc} // 默认空类体
+
+        // ClassTail = ClassHeritage? { ClassBody? }
+        // 遍历 children 找到 ClassHeritage 和 ClassBody
+        for (const child of cst.children) {
+            if (child.name === Es6Parser.prototype.ClassHeritage?.name) {
+                superClass = this.createClassHeritageAst(child)
+            } else if (child.name === Es6Parser.prototype.ClassBody?.name) {
+                body = this.createClassBodyAst(child)
+            }
+            // 跳过 LBrace 和 RBrace tokens
         }
-        const body = this.createClassBodyAst(cst.children[bodyIndex]) // 解析类主体
+
         return {superClass, body} // 返回组合结果，方便上层使用
     }
 
@@ -2330,9 +2337,26 @@ export class SlimeCstToAst {
 
     createReturnStatementAst(cst: SubhutiCst): SlimeReturnStatement {
         const astName = checkCstName(cst, Es6Parser.prototype.ReturnStatement?.name);
+
+        // return 语句可能有或没有表达式
+        // children[0] = ReturnTok
+        // children[1] = Expression? | Semicolon | SemicolonASI
+        let argument: any = null
+
+        if (cst.children.length > 1) {
+            const secondChild = cst.children[1]
+            // 跳过分号相关节点
+            if (secondChild &&
+                secondChild.name !== 'Semicolon' &&
+                secondChild.name !== 'SemicolonASI' &&
+                secondChild.name !== 'SemicolonTok') {
+                argument = this.createExpressionAst(secondChild)
+            }
+        }
+
         const ast: SlimeReturnStatement = {
             type: astName as any,
-            argument: this.createExpressionAst(cst.children[1]),
+            argument: argument,
             loc: cst.loc
         } as any
         return ast
@@ -3735,6 +3759,121 @@ export class SlimeCstToAst {
     }
 
     /**
+     * 创建 OptionalExpression AST（ES2020）
+     * 处理可选链语法 ?.
+     *
+     * OptionalExpression:
+     *   MemberExpression OptionalChain
+     *   CallExpression OptionalChain
+     *   OptionalExpression OptionalChain
+     */
+    createOptionalExpressionAst(cst: SubhutiCst): SlimeExpression {
+        // OptionalExpression 结构：
+        // children[0] = MemberExpression | CallExpression
+        // children[1...n] = OptionalChain
+
+        if (!cst.children || cst.children.length === 0) {
+            throw new Error('OptionalExpression: no children')
+        }
+
+        // 首先处理基础表达式（MemberExpression 或 CallExpression）
+        let result = this.createExpressionAst(cst.children[0])
+
+        // 处理 OptionalChain（可能有多个链式调用）
+        for (let i = 1; i < cst.children.length; i++) {
+            const chainCst = cst.children[i]
+            if (chainCst.name === 'OptionalChain') {
+                result = this.createOptionalChainAst(result, chainCst)
+            }
+        }
+
+        return result
+    }
+
+    /**
+     * 创建 OptionalChain AST
+     * 处理 ?. 后的各种访问形式
+     */
+    createOptionalChainAst(object: SlimeExpression, chainCst: SubhutiCst): SlimeExpression {
+        let result = object
+
+        for (const child of chainCst.children) {
+            const name = child.name
+
+            if (name === 'OptionalChainingTok' || child.value === '?.') {
+                // 跳过 ?. token
+                continue
+            } else if (name === 'Arguments') {
+                // ?.() - 可选调用
+                const args = this.createArgumentsAst(child)
+                result = {
+                    type: SlimeAstType.OptionalCallExpression,
+                    callee: result,
+                    arguments: args,
+                    optional: true,
+                    loc: chainCst.loc
+                } as any
+            } else if (name === 'LBracketTok' || child.value === '[') {
+                // ?.[expr] - 可选计算属性访问
+                // 下一个子节点是表达式，跳过 ]
+                const exprIndex = chainCst.children.indexOf(child) + 1
+                if (exprIndex < chainCst.children.length) {
+                    const property = this.createExpressionAst(chainCst.children[exprIndex])
+                    result = {
+                        type: SlimeAstType.OptionalMemberExpression,
+                        object: result,
+                        property: property,
+                        computed: true,
+                        optional: true,
+                        loc: chainCst.loc
+                    } as any
+                }
+            } else if (name === 'IdentifierNameTok' || name === 'IdentifierName') {
+                // ?.prop - 可选属性访问
+                let property: SlimeIdentifier
+                if (name === 'IdentifierName') {
+                    // IdentifierName 内部包含一个 Identifier 或关键字 token
+                    const tokenCst = child.children[0]
+                    property = SlimeAstUtil.createIdentifier(tokenCst.value, tokenCst.loc)
+                } else {
+                    // 直接的 token
+                    property = SlimeAstUtil.createIdentifier(child.value, child.loc)
+                }
+                result = {
+                    type: SlimeAstType.OptionalMemberExpression,
+                    object: result,
+                    property: property,
+                    computed: false,
+                    optional: true,
+                    loc: chainCst.loc
+                } as any
+            } else if (name === 'DotTok' || child.value === '.') {
+                // 跳过 . token
+                continue
+            } else if (name === 'RBracketTok' || child.value === ']') {
+                // 跳过 ] token
+                continue
+            } else if (name === 'PrivateIdentifierTok') {
+                // ?.#prop - 私有属性可选访问
+                const property = this.createPrivateIdentifierAst(child)
+                result = {
+                    type: SlimeAstType.OptionalMemberExpression,
+                    object: result,
+                    property: property,
+                    computed: false,
+                    optional: true,
+                    loc: chainCst.loc
+                } as any
+            } else if (name === 'Expression') {
+                // 计算属性的表达式部分，已在 LBracket 处理中处理
+                continue
+            }
+        }
+
+        return result
+    }
+
+    /**
      * 创建 CoalesceExpression AST（ES2020）
      * 处理 ?? 空值合并运算符
      */
@@ -4142,6 +4281,9 @@ export class SlimeCstToAst {
             const expressionCst = first.children[1]
             const innerExpression = this.createExpressionAst(expressionCst)
             return SlimeAstUtil.createParenthesizedExpression(innerExpression, first.loc)
+        } else if (first.name === 'RegularExpressionLiteral' || first.name === 'RegularExpressionLiteralTok') {
+            // 处理正则表达式字面量
+            return this.createRegExpLiteralAst(first)
         } else {
             throw new Error('未知的createPrimaryExpressionAst：' + first.name)
         }
@@ -4485,6 +4627,29 @@ export class SlimeCstToAst {
             const keyAst = SlimeAstUtil.createPropertyAst(identifier, identifier)
             keyAst.shorthand = true
             return keyAst
+        } else if (first.name === 'CoverInitializedName') {
+            // CoverInitializedName: 带默认值的属性简写 {name = 'default'}
+            // CoverInitializedName -> IdentifierReference + Initializer
+            const identifierRefCst = first.children[0]
+            const initializerCst = first.children[1]
+
+            const identifierCst = identifierRefCst.children[0] // IdentifierReference -> Identifier
+            const identifier = this.createIdentifierAst(identifierCst)
+
+            // Initializer -> Assign + AssignmentExpression
+            const defaultValue = this.createAssignmentExpressionAst(initializerCst.children[1])
+
+            // 创建 AssignmentPattern 作为 value
+            const assignmentPattern = {
+                type: SlimeAstType.AssignmentPattern,
+                left: identifier,
+                right: defaultValue,
+                loc: first.loc
+            }
+
+            const keyAst = SlimeAstUtil.createPropertyAst(identifier, assignmentPattern as any)
+            keyAst.shorthand = true
+            return keyAst
         } else {
             throw new Error(`不支持的PropertyDefinition类型: ${first.name}`)
         }
@@ -4551,15 +4716,65 @@ export class SlimeCstToAst {
 
 
     createNumericLiteralAst(cst: SubhutiCst): SlimeNumericLiteral {
-        const astName = checkCstName(cst, Es6TokenConsumer.prototype.NumericLiteral?.name);
+        // 兼容多种 NumericLiteral 名称：NumericLiteral, NumericLiteralTok, Number
+        const validNames = [
+            Es6TokenConsumer.prototype.NumericLiteral?.name,
+            'NumericLiteral',
+            'NumericLiteralTok',
+            'Number'
+        ]
+        if (!validNames.includes(cst.name)) {
+            throw new Error(`Expected NumericLiteral, got ${cst.name}`)
+        }
         return SlimeAstUtil.createNumericLiteral(Number(cst.value))
     }
 
     createStringLiteralAst(cst: SubhutiCst): SlimeStringLiteral {
-        const astName = checkCstName(cst, Es6TokenConsumer.prototype.StringLiteral?.name);
+        // 兼容多种 StringLiteral 名称：StringLiteral, StringLiteralTok, String
+        const validNames = [
+            Es6TokenConsumer.prototype.StringLiteral?.name,
+            'StringLiteral',
+            'StringLiteralTok',
+            'String'
+        ]
+        if (!validNames.includes(cst.name)) {
+            throw new Error(`Expected StringLiteral, got ${cst.name}`)
+        }
         const value = cst.value
         const ast = SlimeAstUtil.createStringLiteral(value)
         return ast
+    }
+
+    /**
+     * 创建 RegExpLiteral AST
+     * RegularExpressionLiteral: /pattern/flags
+     */
+    createRegExpLiteralAst(cst: SubhutiCst): any {
+        const rawValue = cst.value as string
+        // 解析正则表达式字面量：/pattern/flags
+        // 正则字面量格式：/.../ 后面可能跟着 flags
+        const match = rawValue.match(/^\/(.*)\/([gimsuy]*)$/)
+        if (match) {
+            const pattern = match[1]
+            const flags = match[2]
+            return {
+                type: SlimeAstType.Literal,
+                value: new RegExp(pattern, flags),
+                raw: rawValue,
+                regex: {
+                    pattern: pattern,
+                    flags: flags
+                },
+                loc: cst.loc
+            }
+        }
+        // 如果无法解析，返回原始值
+        return {
+            type: SlimeAstType.Literal,
+            value: rawValue,
+            raw: rawValue,
+            loc: cst.loc
+        }
     }
 
     createLiteralFromToken(token: any): SlimeExpression {

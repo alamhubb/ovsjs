@@ -16,7 +16,8 @@ import Es2025Parser from "slime-parser/src/language/es2025/Es2025Parser"
 import { SlimeCstToAst } from "slime-parser/src/language/SlimeCstToAstUtil"
 
 // 使用与 CST 测试相同的目录
-const casesDir = path.join(__dirname, 'tests/cases')
+const casesDir = path.join(__dirname, 'tests/es6rules')
+// const casesDir = path.join(__dirname, 'tests/cases')
 const files = fs.readdirSync(casesDir)
     .filter(f => f.endsWith('.js'))
     // 排除工具脚本

@@ -75,6 +75,8 @@ export enum SlimeAstType {
     // --- A.2.9 可选链 ---
     OptionalExpression = 'OptionalExpression',
     OptionalChain = 'OptionalChain',
+    OptionalMemberExpression = 'OptionalMemberExpression',
+    OptionalCallExpression = 'OptionalCallExpression',
     LeftHandSideExpression = 'LeftHandSideExpression',
 
     // --- A.2.10 更新表达式 ---
