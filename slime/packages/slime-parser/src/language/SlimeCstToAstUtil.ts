@@ -471,6 +471,13 @@ export class SlimeCstToAst {
             }
             return undefined
         }
+        // IfStatementBody - if/else 语句体包装节点，递归处理子节点
+        else if (cst.name === 'IfStatementBody') {
+            if (cst.children && cst.children.length > 0) {
+                return this.createStatementDeclarationAst(cst.children[0])
+            }
+            return undefined
+        }
         // 变量声明
         else if (cst.name === Es6Parser.prototype.VariableDeclaration?.name) {
             return this.createVariableDeclarationAst(cst)
@@ -2347,18 +2354,16 @@ export class SlimeCstToAst {
      */
     createIfStatementAst(cst: SubhutiCst): any {
         checkCstName(cst, Es6Parser.prototype.IfStatement?.name);
-        // if (Expression) Statement [else Statement]
+        // if (Expression) IfStatementBody [else IfStatementBody]
         const test = this.createExpressionAst(cst.children[2])  // 条件表达式
 
-        // 处理 then 分支
-        const consequentStatements = this.createStatementAst(cst.children[4])
-        const consequent = consequentStatements[0] || null
+        // 处理 then 分支 - 使用 createStatementDeclarationAst 来处理 IfStatementBody
+        const consequent = this.createStatementDeclarationAst(cst.children[4])
 
         // 检查是否有 else 分支
         let alternate = null
         if (cst.children.length > 5 && cst.children[5]) {
-            const alternateStatements = this.createStatementAst(cst.children[6])
-            alternate = alternateStatements[0] || null
+            alternate = this.createStatementDeclarationAst(cst.children[6])
         }
 
         return {
