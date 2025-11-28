@@ -235,7 +235,7 @@ try {
     let cst
     let parseError: any = null
     try {
-        cst = parser.Script()
+        cst = parser.Module()
     } catch (error) {
         parseError = error
     } finally {
