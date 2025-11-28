@@ -3845,7 +3845,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                 alt: () => {
                     this.tokenConsumer.StaticTok()
                     this.FieldDefinition(params)
-                    this.tokenConsumer.Semicolon()
+                    this.SemicolonASI()  // 类字段支持 ASI
                 }
             },
             // ClassStaticBlock
@@ -3854,7 +3854,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             {
                 alt: () => {
                     this.FieldDefinition(params)
-                    this.tokenConsumer.Semicolon()
+                    this.SemicolonASI()  // 类字段支持 ASI
                 }
             },
             // MethodDefinition[?Yield, ?Await]
