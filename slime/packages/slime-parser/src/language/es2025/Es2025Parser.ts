@@ -14,6 +14,7 @@
 import SubhutiParser, {Subhuti, SubhutiRule} from "subhuti/src/SubhutiParser.ts"
 import type SubhutiCst from "subhuti/src/struct/SubhutiCst.ts"
 import type SubhutiMatchToken from "subhuti/src/struct/SubhutiMatchToken.ts"
+import {matchRegExpLiteral} from "subhuti/src/SubhutiLexer.ts"
 import Es2025TokenConsumer from "./Es2025TokenConsumer.ts"
 import {ReservedWords, TokenNames, ContextualKeywords} from "./Es2025Tokens.ts"
 
@@ -268,6 +269,79 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     }
 
     // ============================================
+    // 正则表达式重扫描 (RegExp Rescan)
+    // 解决 `/` 在词法阶段的歧义问题
+    // ============================================
+
+    /**
+     * 将当前 Slash token 重新扫描为 RegularExpressionLiteral
+     *
+     * 当词法分析阶段将正则表达式误判为除法时调用。
+     * 例如: `} /42/i` 中的 `/42/i` 被误判为 Slash, 42, Slash, i
+     *
+     * 工作原理：
+     * 1. 从当前 Slash token 开始，收集连续的 tokens（无空白间隔）
+     * 2. 拼接 tokenValue，尝试匹配正则表达式 pattern
+     * 3. 如果成功，替换 tokens 数组中的多个 tokens 为一个 RegularExpressionLiteral
+     *
+     * @returns 是否成功重新扫描
+     */
+    private rescanSlashAsRegExp(): boolean {
+        const curToken = this.curToken
+        if (!curToken || curToken.tokenName !== TokenNames.Slash) {
+            return false
+        }
+
+        // 1. 从当前 Slash 开始，收集连续的 tokens
+        const startIndex = this.tokenIndex
+        let endIndex = startIndex
+        let concatenated = curToken.tokenValue
+        let expectedNextIndex = curToken.index + curToken.tokenValue.length
+
+        // 向后扫描连续的 tokens（无空白间隔）
+        while (endIndex + 1 < this._tokens.length) {
+            const nextToken = this._tokens[endIndex + 1]
+            // 检查是否连续（无空白）
+            if (nextToken.index !== expectedNextIndex) {
+                break
+            }
+            concatenated += nextToken.tokenValue
+            expectedNextIndex = nextToken.index + nextToken.tokenValue.length
+            endIndex++
+        }
+
+        // 2. 尝试匹配正则表达式
+        const regexpMatch = matchRegExpLiteral(concatenated)
+        if (!regexpMatch) {
+            return false
+        }
+
+        // 3. 创建新的 RegularExpressionLiteral token
+        const newToken: SubhutiMatchToken = {
+            tokenName: TokenNames.RegularExpressionLiteral,
+            tokenValue: regexpMatch,
+            index: curToken.index,
+            rowNum: curToken.rowNum,
+            columnStartNum: curToken.columnStartNum,
+            columnEndNum: curToken.columnStartNum + regexpMatch.length - 1,
+            hasLineBreakBefore: curToken.hasLineBreakBefore
+        }
+
+        // 4. 计算需要替换多少个 tokens
+        let tokensToReplace = 1
+        let coveredLength = curToken.tokenValue.length
+        for (let i = startIndex + 1; i <= endIndex && coveredLength < regexpMatch.length; i++) {
+            coveredLength += this._tokens[i].tokenValue.length
+            tokensToReplace++
+        }
+
+        // 5. 替换 tokens 数组
+        this._tokens.splice(startIndex, tokensToReplace, newToken)
+
+        return true
+    }
+
+    // ============================================
     // A.2 Expressions
     // ============================================
 
@@ -495,7 +569,17 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             // === 7. 符号开头（各有独特首 token，不会互相遮蔽）===
             {alt: () => this.ArrayLiteral(params)},
             {alt: () => this.ObjectLiteral(params)},
-            {alt: () => this.tokenConsumer.RegularExpression()},
+            // 正则表达式分支：如果词法阶段误判为 Slash，尝试 rescan
+            {alt: () => {
+                const la1 = this.LA(1)
+                if (la1?.tokenName === TokenNames.Slash) {
+                    // 词法阶段误判为除法，尝试重新扫描为正则表达式
+                    if (!this.rescanSlashAsRegExp()) {
+                        return this.parserFail()
+                    }
+                }
+                return this.tokenConsumer.RegularExpression()
+            }},
             {alt: () => this.TemplateLiteral({...params, Tagged: false})},
             {alt: () => this.CoverParenthesizedExpressionAndArrowParameterList(params)}
         ])

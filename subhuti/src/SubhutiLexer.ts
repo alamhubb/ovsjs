@@ -1,6 +1,24 @@
 import { SubhutiCreateToken } from './struct/SubhutiCreateToken.ts'
 import SubhutiMatchToken from './struct/SubhutiMatchToken.ts'
 
+/**
+ * 正则表达式字面量的 pattern（用于 Parser 层的 rescan）
+ * 根据 ECMAScript 规范，RegularExpressionFirstChar 不能是 * (避免与 /* 注释冲突)
+ */
+export const REGEXP_LITERAL_PATTERN = /^\/(?:[^\n\r\/\\[*]|\\[^\n\r]|\[(?:[^\n\r\]\\]|\\[^\n\r])*\])(?:[^\n\r\/\\[]|\\[^\n\r]|\[(?:[^\n\r\]\\]|\\[^\n\r])*\])*\/[dgimsuvy]*/
+
+/**
+ * 尝试匹配正则表达式字面量
+ * 用于 Parser 层在需要时重新扫描 Slash 为 RegularExpressionLiteral
+ *
+ * @param text 要匹配的文本（应以 / 开头）
+ * @returns 匹配的正则表达式字面量字符串，或 null
+ */
+export function matchRegExpLiteral(text: string): string | null {
+    const match = text.match(REGEXP_LITERAL_PATTERN)
+    return match ? match[0] : null
+}
+
 export const SubhutiLexerTokenNames = {
     TemplateHead: 'TemplateHead',
     TemplateMiddle: 'TemplateMiddle',

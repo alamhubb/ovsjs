@@ -71,6 +71,21 @@ export default class SubhutiTokenLookahead {
     }
 
     /**
+     * LA (LookAhead) - 前瞻获取 token（不消费）
+     *
+     * 这是 parser 领域的标准术语：
+     * - LA(1) = 当前 token
+     * - LA(2) = 下一个 token
+     * - LA(n) = 第 n 个 token
+     *
+     * @param offset 偏移量（1 = 当前 token，2 = 下一个...）
+     * @returns token 或 undefined（EOF）
+     */
+    protected LA(offset: number = 1): SubhutiMatchToken | undefined {
+        return this.peek(offset)
+    }
+
+    /**
      * 前瞻：获取连续的 N 个 token
      *
      * @param count 要获取的 token 数量
