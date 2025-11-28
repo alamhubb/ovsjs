@@ -83,13 +83,10 @@ function decodeUnicodeEscape(escape: string): number | null {
 }
 
 /**
- * 验证包含 Unicode 转义的标识符是否有效
- *
- * 按照 ECMAScript 规范，Unicode 转义解码后的字符必须满足：
- * - 第一个字符：ID_Start | $ | _
- * - 后续字符：ID_Continue | $ | ZWNJ | ZWJ
+ * 解码标识符中的 Unicode 转义序列
+ * 返回解码后的字符串，如果解码失败返回 null
  */
-function isValidIdentifierWithEscapes(name: string): boolean {
+function decodeIdentifier(name: string): string | null {
     // 解析标识符，提取每个字符（包括转义序列）
     const chars: string[] = []
     let i = 0
@@ -100,18 +97,18 @@ function isValidIdentifierWithEscapes(name: string): boolean {
             if (name[i + 2] === '{') {
                 // \u{XXXXX} 格式
                 const endBrace = name.indexOf('}', i + 3)
-                if (endBrace === -1) return false
+                if (endBrace === -1) return null
                 const escape = name.slice(i, endBrace + 1)
                 const codePoint = decodeUnicodeEscape(escape)
-                if (codePoint === null) return false
+                if (codePoint === null) return null
                 chars.push(String.fromCodePoint(codePoint))
                 i = endBrace + 1
             } else {
                 // \uXXXX 格式
-                if (i + 6 > name.length) return false
+                if (i + 6 > name.length) return null
                 const escape = name.slice(i, i + 6)
                 const codePoint = decodeUnicodeEscape(escape)
-                if (codePoint === null) return false
+                if (codePoint === null) return null
                 chars.push(String.fromCodePoint(codePoint))
                 i += 6
             }
@@ -123,16 +120,28 @@ function isValidIdentifierWithEscapes(name: string): boolean {
         }
     }
 
-    if (chars.length === 0) return false
+    return chars.join('')
+}
+
+/**
+ * 验证包含 Unicode 转义的标识符是否有效
+ *
+ * 按照 ECMAScript 规范，Unicode 转义解码后的字符必须满足：
+ * - 第一个字符：ID_Start | $ | _
+ * - 后续字符：ID_Continue | $ | ZWNJ | ZWJ
+ */
+function isValidIdentifierWithEscapes(name: string): boolean {
+    const decoded = decodeIdentifier(name)
+    if (decoded === null || decoded.length === 0) return false
 
     // 验证第一个字符是否满足 ID_Start
-    if (!ID_START_REGEX.test(chars[0])) {
+    if (!ID_START_REGEX.test(decoded[0])) {
         return false
     }
 
     // 验证后续字符是否满足 ID_Continue
-    for (let j = 1; j < chars.length; j++) {
-        if (!ID_CONTINUE_REGEX.test(chars[j])) {
+    for (let j = 1; j < decoded.length; j++) {
+        if (!ID_CONTINUE_REGEX.test(decoded[j])) {
             return false
         }
     }
@@ -335,14 +344,20 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
 
         const value = cst.value!
 
-        // 检查是否是保留字
+        // 检查是否是保留字（原始值）
         if (ReservedWords.has(value)) {
             return this.parserFail()
         }
 
-        // 如果包含 Unicode 转义，验证解码后的字符是否有效
+        // 如果包含 Unicode 转义
         if (value.includes('\\u')) {
+            // 验证解码后的字符是否有效
             if (!isValidIdentifierWithEscapes(value)) {
+                return this.parserFail()
+            }
+            // 解码后检查是否是保留字（如 bre\u0061k -> break）
+            const decoded = decodeIdentifier(value)
+            if (decoded !== null && ReservedWords.has(decoded)) {
                 return this.parserFail()
             }
         }
