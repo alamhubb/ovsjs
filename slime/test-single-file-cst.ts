@@ -7,7 +7,7 @@
  */
 import * as fs from 'fs'
 import * as path from 'path'
-import SubhutiLexer from 'subhuti/src/SubhutiLexer.ts'
+import SubhutiLexer from 'subhuti/src/SubhutiLexer'
 import {es2025Tokens} from "slime-parser/src/language/es2025/Es2025Tokens";
 import Es2025Parser from "slime-parser/src/language/es2025/Es2025Parser";
 
@@ -29,7 +29,7 @@ function collectTokenValues(node: any): string[] {
 }
 
 // 收集CST中的所有节点名称
-function collectNodeNames(node: any): string[] {
+function _collectNodeNames(node: any): string[] {
     const names: string[] = []
     
     if (node.name) {
@@ -113,7 +113,7 @@ function validateCSTStructure(node: any, path: string = 'root'): CSTValidationEr
 }
 
 // 统计CST节点信息
-function getCSTStatistics(node: any): {
+function _getCSTStatistics(node: any): {
     totalNodes: number
     leafNodes: number
     maxDepth: number
@@ -150,7 +150,7 @@ function getCSTStatistics(node: any): {
 }
 
 // 主程序
-const filePath = process.argv[2] || 'tests/cases/39-export-default.js'
+const filePath = process.argv[2] || 'tests/cases/46-async-await.js'
 // const filePath = process.argv[2] || 'tests/es6rules/AdditiveExpression-001.js'
 
 if (!filePath) {

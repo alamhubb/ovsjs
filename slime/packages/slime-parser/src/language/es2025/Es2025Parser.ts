@@ -15,7 +15,7 @@ import SubhutiParser, {Subhuti, SubhutiRule} from "subhuti/src/SubhutiParser.ts"
 import type SubhutiCst from "subhuti/src/struct/SubhutiCst.ts"
 import type SubhutiMatchToken from "subhuti/src/struct/SubhutiMatchToken.ts"
 import Es2025TokenConsumer from "./Es2025TokenConsumer.ts"
-import {ReservedWords} from "./Es2025Tokens.ts"
+import {ReservedWords, TokenNames, ContextualKeywords} from "./Es2025Tokens.ts"
 
 // ============================================
 // 参数化规则的参数接口
@@ -53,6 +53,116 @@ interface TemplateLiteralParams {
 export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     constructor(tokens: SubhutiMatchToken[] = []) {
         super(tokens, Es2025TokenConsumer)
+    }
+
+    // ============================================
+    // 软关键字前瞻方法 (Contextual Keyword Lookahead)
+    // 符合 Babel/Acorn 的 isContextual 设计模式
+    // ============================================
+
+    /**
+     * 检查当前 token 是否是指定的上下文关键字（软关键字）
+     * @param value 软关键字的值（如 ContextualKeywords.LET）
+     */
+    protected isContextual(value: string): boolean {
+        const token = this.curToken
+        return token?.tokenName === TokenNames.IdentifierNameTok && token.tokenValue === value
+    }
+
+    /**
+     * 检查从当前位置开始是否是：上下文关键字 + 后续 token 序列
+     * @param contextualValue 软关键字的值
+     * @param nextTokenNames 后续 token 名称列表
+     */
+    protected isContextualSequence(contextualValue: string, ...nextTokenNames: string[]): boolean {
+        if (!this.isContextual(contextualValue)) return false
+        for (let i = 0; i < nextTokenNames.length; i++) {
+            const token = this.peek(i + 1)
+            if (token?.tokenName !== nextTokenNames[i]) return false
+        }
+        return true
+    }
+
+    /**
+     * 检查从当前位置开始是否是：上下文关键字 + 后续 token 序列（中间无换行符）
+     * @param contextualValue 软关键字的值
+     * @param nextTokenNames 后续 token 名称列表
+     */
+    protected isContextualSequenceNoLT(contextualValue: string, ...nextTokenNames: string[]): boolean {
+        if (!this.isContextual(contextualValue)) return false
+        for (let i = 0; i < nextTokenNames.length; i++) {
+            const token = this.peek(i + 1)
+            if (token?.tokenName !== nextTokenNames[i]) return false
+            if (token.hasLineBreakBefore) return false
+        }
+        return true
+    }
+
+    /**
+     * 断言：当前 token 不能是指定的上下文关键字
+     * @param value 软关键字的值
+     */
+    protected assertNotContextual(value: string): boolean {
+        if (!this._parseSuccess) return false
+        if (this.isContextual(value)) {
+            this._parseSuccess = false
+            return false
+        }
+        return true
+    }
+
+    /**
+     * 断言：不能是上下文关键字 + 后续 token 序列
+     * @param contextualValue 软关键字的值
+     * @param nextTokenNames 后续 token 名称列表
+     */
+    protected assertNotContextualSequence(contextualValue: string, ...nextTokenNames: string[]): boolean {
+        if (!this._parseSuccess) return false
+        if (this.isContextualSequence(contextualValue, ...nextTokenNames)) {
+            this._parseSuccess = false
+            return false
+        }
+        return true
+    }
+
+    /**
+     * 断言：不能是上下文关键字 + 后续 token 序列（考虑换行符约束）
+     * @param contextualValue 软关键字的值
+     * @param nextTokenNames 后续 token 名称列表
+     */
+    protected assertNotContextualSequenceNoLT(contextualValue: string, ...nextTokenNames: string[]): boolean {
+        if (!this._parseSuccess) return false
+        if (this.isContextualSequenceNoLT(contextualValue, ...nextTokenNames)) {
+            this._parseSuccess = false
+            return false
+        }
+        return true
+    }
+
+    /**
+     * 检查从当前位置开始是否是两个连续的上下文关键字
+     * 用于 [lookahead ∉ {async of}] 这样的约束
+     * @param first 第一个软关键字的值
+     * @param second 第二个软关键字的值
+     */
+    protected isContextualPair(first: string, second: string): boolean {
+        if (!this.isContextual(first)) return false
+        const nextToken = this.peek(1)
+        return nextToken?.tokenName === TokenNames.IdentifierNameTok && nextToken.tokenValue === second
+    }
+
+    /**
+     * 断言：不能是两个连续的上下文关键字
+     * @param first 第一个软关键字的值
+     * @param second 第二个软关键字的值
+     */
+    protected assertNotContextualPair(first: string, second: string): boolean {
+        if (!this._parseSuccess) return false
+        if (this.isContextualPair(first, second)) {
+            this._parseSuccess = false
+            return false
+        }
+        return true
     }
 
     // ============================================
@@ -1379,7 +1489,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
         const {In = false} = params
 
         // 处理 [+In] PrivateIdentifier in ShiftExpression
-        if (In && this.lookahead('PrivateIdentifier', 1)) {
+        if (In && this.lookahead(TokenNames.PrivateIdentifier, 1)) {
             this.tokenConsumer.PrivateIdentifier()
             this.tokenConsumer.InTok()
             this.ShiftExpression(params)
@@ -2278,9 +2388,9 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     @SubhutiRule
     ExpressionStatement(params: StatementParams = {}): SubhutiCst | undefined {
         // [lookahead ∉ {{, function, async [no LineTerminator here] function, class, let [}]
-        this.assertLookaheadNotIn(['LBrace', 'FunctionTok', 'ClassTok'])
-        this.assertLookaheadNotSequenceNoLT(['AsyncTok', 'FunctionTok'])
-        this.assertLookaheadNotSequence(['LetTok', 'LBracket'])
+        this.assertLookaheadNotIn([TokenNames.LBrace, TokenNames.FunctionTok, TokenNames.ClassTok])
+        this.assertNotContextualSequenceNoLT(ContextualKeywords.ASYNC, TokenNames.FunctionTok)
+        this.assertNotContextualSequence(ContextualKeywords.LET, TokenNames.LBracket)
 
         this.Expression({...params, In: true})
         return this.SemicolonASI()
@@ -2316,7 +2426,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                     this.Expression({...params, In: true})
                     this.tokenConsumer.RParen()
                     this.Statement(params)
-                    this.assertLookaheadNot('ElseTok')  // [lookahead ≠ else]
+                    this.assertLookaheadNot(TokenNames.ElseTok)  // [lookahead ≠ else]
                 }
             }
         ])
@@ -2414,7 +2524,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                     this.tokenConsumer.ForTok()
                     this.tokenConsumer.LParen()
                     // [lookahead ≠ let []
-                    this.assertLookaheadNotSequence(['LetTok', 'LBracket'])
+                    this.assertNotContextualSequence(ContextualKeywords.LET, TokenNames.LBracket)
                     this.Option(() => this.Expression({...params, In: false}))
                     this.tokenConsumer.Semicolon()
                     this.Option(() => this.Expression({...params, In: true}))
@@ -2462,7 +2572,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                 alt: () => {
                     this.tokenConsumer.ForTok()
                     this.tokenConsumer.LParen()
-                    this.assertLookaheadNotSequence(['LetTok', 'LBracket'])
+                    this.assertNotContextualSequence(ContextualKeywords.LET, TokenNames.LBracket)
                     this.LeftHandSideExpression(params)
                     this.tokenConsumer.InTok()
                     this.Expression({...params, In: true})
@@ -2513,8 +2623,8 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                     this.tokenConsumer.ForTok()
                     this.tokenConsumer.LParen()
                     // [lookahead ∉ {let, async of}]
-                    this.assertLookaheadNotIn(['LetTok'])
-                    this.assertLookaheadNotSequence(['AsyncTok', 'OfTok'])
+                    this.assertNotContextual(ContextualKeywords.LET)
+                    this.assertNotContextualPair(ContextualKeywords.ASYNC, ContextualKeywords.OF)
                     this.LeftHandSideExpression(params)
                     this.tokenConsumer.OfTok()
                     this.AssignmentExpression({...params, In: true})
@@ -2556,7 +2666,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                     this.tokenConsumer.AwaitTok()
                     this.tokenConsumer.LParen()
                     // [lookahead ≠ let]
-                    this.assertLookaheadNot('LetTok')
+                    this.assertNotContextual(ContextualKeywords.LET)
                     this.LeftHandSideExpression(params)
                     this.tokenConsumer.OfTok()
                     this.AssignmentExpression({...params, In: true})
@@ -3007,7 +3117,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             {
                 alt: () => {
                     // [lookahead ≠ {]
-                    this.assertLookaheadNot('LBrace')
+                    this.assertLookaheadNot(TokenNames.LBrace)
                     this.ExpressionBody({...params, Await: false})
                 }
             }
@@ -3081,7 +3191,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             {
                 alt: () => {
                     // [lookahead ≠ {]
-                    this.assertLookaheadNot('LBrace')
+                    this.assertLookaheadNot(TokenNames.LBrace)
                     this.ExpressionBody({...params, Await: true})
                 }
             }
@@ -4178,8 +4288,8 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                     this.tokenConsumer.ExportTok()
                     this.tokenConsumer.DefaultTok()
                     // [lookahead ∉ {function, async [no LineTerminator here] function, class}]
-                    this.assertLookaheadNotIn(['FunctionTok', 'ClassTok'])
-                    this.assertLookaheadNotSequenceNoLT(['AsyncTok', 'FunctionTok'])
+                    this.assertLookaheadNotIn([TokenNames.FunctionTok, TokenNames.ClassTok])
+                    this.assertNotContextualSequenceNoLT(ContextualKeywords.ASYNC, TokenNames.FunctionTok)
                     this.AssignmentExpression({In: true, Yield: false, Await: true})
                     this.SemicolonASI()
                 }

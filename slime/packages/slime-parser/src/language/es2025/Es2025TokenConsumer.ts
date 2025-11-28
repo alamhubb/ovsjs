@@ -15,7 +15,7 @@
  */
 
 import SubhutiTokenConsumer from "subhuti/src/SubhutiTokenConsumer.ts"
-import { es2025TokensObj, TokenNames } from "./Es2025Tokens.ts"
+import { es2025TokensObj, TokenNames, ContextualKeywords } from "./Es2025Tokens.ts"
 
 export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
 
@@ -38,6 +38,8 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
         if (token?.tokenName === TokenNames.IdentifierNameTok && token.tokenValue === value) {
             return this.consume(es2025TokensObj.IdentifierNameTok)
         }
+        // 标记解析失败
+        this.parser._markParseFail()
         return undefined
     }
 
@@ -198,36 +200,52 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
     }
     
     // ============================================
-    // 上下文关键字 (Contextual Keywords)
-    // ============================================
-    
-    AsyncTok() {
-        return this.consume(es2025TokensObj.AsyncTok)
-    }
-    
-    LetTok() {
-        return this.consume(es2025TokensObj.LetTok)
-    }
-    
-    StaticTok() {
-        return this.consume(es2025TokensObj.StaticTok)
-    }
-
-    AsTok() {
-        return this.consume(es2025TokensObj.AsTok)
-    }
-
-    // ============================================
-    // 软关键字 (Soft Keywords)
+    // 软关键字 (Soft Keywords / Contextual Keywords)
     // 按照 ES2025 规范，这些在词法层是 IdentifierName
+    // 在语法层通过值检查来识别
     // ============================================
+
+    /**
+     * 消费 'async' 软关键字
+     * 用于 async 函数、async 箭头函数、async 方法
+     * 注意：async 可作为标识符使用，如 `let async = 1`
+     */
+    AsyncTok() {
+        return this.consumeIdentifierValue(ContextualKeywords.ASYNC)
+    }
+
+    /**
+     * 消费 'let' 软关键字
+     * 用于 let 声明
+     * 注意：非严格模式下可作为标识符
+     */
+    LetTok() {
+        return this.consumeIdentifierValue(ContextualKeywords.LET)
+    }
+
+    /**
+     * 消费 'static' 软关键字
+     * 用于类的静态成员
+     * 注意：非严格模式下可作为标识符
+     */
+    StaticTok() {
+        return this.consumeIdentifierValue(ContextualKeywords.STATIC)
+    }
+
+    /**
+     * 消费 'as' 软关键字
+     * 用于 import/export 的重命名
+     */
+    AsTok() {
+        return this.consumeIdentifierValue(ContextualKeywords.AS)
+    }
 
     /**
      * 消费 'get' 软关键字
      * 用于 getter 方法定义
      */
     GetTok() {
-        return this.consumeIdentifierValue('get')
+        return this.consumeIdentifierValue(ContextualKeywords.GET)
     }
 
     /**
@@ -235,7 +253,7 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
      * 用于 setter 方法定义
      */
     SetTok() {
-        return this.consumeIdentifierValue('set')
+        return this.consumeIdentifierValue(ContextualKeywords.SET)
     }
 
     /**
@@ -243,7 +261,7 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
      * 用于 for-of 语句
      */
     OfTok() {
-        return this.consumeIdentifierValue('of')
+        return this.consumeIdentifierValue(ContextualKeywords.OF)
     }
 
     /**
@@ -251,7 +269,7 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
      * 用于 new.target
      */
     TargetTok() {
-        return this.consumeIdentifierValue('target')
+        return this.consumeIdentifierValue(ContextualKeywords.TARGET)
     }
 
     /**
@@ -259,7 +277,7 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
      * 用于 import.meta
      */
     MetaTok() {
-        return this.consumeIdentifierValue('meta')
+        return this.consumeIdentifierValue(ContextualKeywords.META)
     }
 
     /**
@@ -267,7 +285,7 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
      * 用于 import/export 语句
      */
     FromTok() {
-        return this.consumeIdentifierValue('from')
+        return this.consumeIdentifierValue(ContextualKeywords.FROM)
     }
     
     // ============================================

@@ -73,13 +73,9 @@ export const TokenNames = {
     WhileTok: 'WhileTok',
     WithTok: 'WithTok',
     YieldTok: 'YieldTok',
-    AsyncTok: 'AsyncTok',
-    LetTok: 'LetTok',
-    StaticTok: 'StaticTok',
-    AsTok: 'AsTok',
-    // 注意：get, set, of, target, meta, from 是软关键字
+    // 注意：async, let, static, as, get, set, of, target, meta, from 是软关键字
     // 按照 ES2025 规范，它们在词法层是 IdentifierName，不是独立的 token
-    // 在 Parser 中通过值检查来识别
+    // 在 Parser 中通过值检查来识别（见 Es2025TokenConsumer）
 
     // 数字字面量
     BigIntLiteral: 'BigIntLiteral',
@@ -166,6 +162,23 @@ export const TokenNames = {
 } as const
 
 // ============================================
+// 软关键字值常量（Contextual Keywords）
+// 这些在词法层是 IdentifierName，在语法层通过值检查识别
+// ============================================
+export const ContextualKeywords = {
+    ASYNC: 'async',
+    LET: 'let',
+    STATIC: 'static',
+    AS: 'as',
+    GET: 'get',
+    SET: 'set',
+    OF: 'of',
+    FROM: 'from',
+    TARGET: 'target',
+    META: 'meta',
+} as const
+
+// ============================================
 // Token 对象（用于 TokenConsumer 复用）
 // ============================================
 export const es2025TokensObj = {
@@ -228,14 +241,8 @@ export const es2025TokensObj = {
     WhileTok: createKeywordToken(TokenNames.WhileTok, 'while'),
     WithTok: createKeywordToken(TokenNames.WithTok, 'with'),
     YieldTok: createKeywordToken(TokenNames.YieldTok, 'yield'),
-
-    AsyncTok: createKeywordToken(TokenNames.AsyncTok, 'async'),
-    LetTok: createKeywordToken(TokenNames.LetTok, 'let'),
-    StaticTok: createKeywordToken(TokenNames.StaticTok, 'static'),
-    AsTok: createKeywordToken(TokenNames.AsTok, 'as'),
-    // 注意：get, set, of, target, meta, from 是软关键字
-    // 按照 ES2025 规范，它们在词法层是 IdentifierName，不是独立的 token
-    // 已删除：GetTok, SetTok, OfTok, TargetTok, MetaTok, FromTok
+    // 软关键字（async, let, static, as, get, set, of, target, meta, from）
+    // 在词法层作为 IdentifierNameTok 处理，在 Parser 中通过值检查识别
 
     // ============================================
     // A.1.9 数字字面量
@@ -358,13 +365,28 @@ export const es2025Tokens: SubhutiCreateToken[] = Object.values(es2025TokensObj)
 
 /**
  * ES2025 保留字集合
- * 来源：ECMAScript® 2025 规范 A.1.5 Keywords and Reserved Words
+ * 来源：ECMAScript® 2025 规范 12.7.2 Keywords and Reserved Words
+ *
+ * 分类说明：
+ * 1. 硬关键字（永久保留，在此集合中）：
+ *    break, case, catch, class, const, continue, debugger, default,
+ *    delete, do, else, enum, export, extends, false, finally, for, function,
+ *    if, import, in, instanceof, new, null, return, super, switch, this,
+ *    throw, true, try, typeof, var, void, while, with, await, yield
+ *    实现方式：createKeywordToken + 独立 Token
+ *
+ * 2. 软关键字（不在此集合中，可作标识符）：
+ *    async, let, static, as, get, set, of, from, target, meta
+ *    - async: 可作变量名，如 `let async = 1`
+ *    - let, static: 非严格模式下可作标识符
+ *    - 其他: 仅在特定语法位置是关键字
+ *    实现方式：识别为 IdentifierNameTok + consumeIdentifierValue()
  *
  * 用途：在 Parser 中验证标识符是否为保留字
- * 实现：自动从所有关键字 token 中提取，确保单一数据源
+ * 实现：自动从所有 isKeyword=true 的 token 中提取（仅包含硬关键字）
  */
 export const ReservedWords = new Set(
     es2025Tokens
-        .filter(token => token.isKeyword)  // 过滤出所有关键字 token
+        .filter(token => token.isKeyword)  // 过滤出所有硬关键字 token
         .map(token => token.value!)        // 提取 value（'await', 'break' 等）
 )

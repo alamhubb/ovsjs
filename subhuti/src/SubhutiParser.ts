@@ -203,6 +203,14 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         return this.consume(tokenName)
     }
 
+    /**
+     * 供 TokenConsumer 使用的标记解析失败方法
+     * 用于软关键字检查失败时标记解析失败
+     */
+    _markParseFail(): void {
+        this._parseSuccess = false
+    }
+
     // ============================================
     // Parser 内部 Getter
     // ============================================
