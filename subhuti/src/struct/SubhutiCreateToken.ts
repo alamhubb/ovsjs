@@ -8,6 +8,15 @@ export interface SubhutiTokenLookahead {
     notIn?: (RegExp | string)[] // 后面不能在集合中
 }
 
+/**
+ * 上下文约束配置
+ * 用于处理词法歧义（如正则表达式 vs 除法）
+ */
+export interface SubhutiTokenContextConstraint {
+    onlyAfter?: Set<string>    // 只有前一个 token 在此集合中才匹配
+    notAfter?: Set<string>     // 前一个 token 不能在此集合中
+}
+
 export class SubhutiCreateToken {
     name: string;
     type: string;  // 添加 type 属性
@@ -16,7 +25,8 @@ export class SubhutiCreateToken {
     skip?: boolean;  // 是否跳过此 token（不加入结果）
     value?: string;
     categories?: any;
-    lookaheadAfter?: SubhutiTokenLookahead;  // 新增：前瞻配置
+    lookaheadAfter?: SubhutiTokenLookahead;  // 前瞻配置
+    contextConstraint?: SubhutiTokenContextConstraint;  // 上下文约束配置
 
     constructor(ovsToken: SubhutiCreateToken) {
         this.name = ovsToken.name;
@@ -30,6 +40,7 @@ export class SubhutiCreateToken {
         this.isKeyword = false;
         this.skip = ovsToken.skip;
         this.lookaheadAfter = ovsToken.lookaheadAfter;  // 复制前瞻配置
+        this.contextConstraint = ovsToken.contextConstraint;  // 复制上下文约束
     }
 }
 
@@ -53,23 +64,33 @@ export function createRegToken(name: string, pattern: RegExp) {
 }
 
 export function createValueRegToken(
-    name: string, 
-    pattern: RegExp, 
-    value: string, 
+    name: string,
+    pattern: RegExp,
+    value: string,
     skip?: boolean,
-    lookahead?: SubhutiTokenLookahead
+    lookahead?: SubhutiTokenLookahead,
+    contextConstraint?: SubhutiTokenContextConstraint
 ) {
     const token = new SubhutiCreateToken({
-        name: name, 
-        pattern: pattern, 
-        value: value, 
+        name: name,
+        pattern: pattern,
+        value: value,
         skip: skip,
-        lookaheadAfter: lookahead
+        lookaheadAfter: lookahead,
+        contextConstraint: contextConstraint
     });
     return token;
 }
 
-export function createEmptyValueRegToken(name: string, pattern: RegExp) {
-    const token = new SubhutiCreateToken({name: name, pattern: pattern});
+export function createEmptyValueRegToken(
+    name: string,
+    pattern: RegExp,
+    contextConstraint?: SubhutiTokenContextConstraint
+) {
+    const token = new SubhutiCreateToken({
+        name: name,
+        pattern: pattern,
+        contextConstraint: contextConstraint
+    });
     return token;
 }

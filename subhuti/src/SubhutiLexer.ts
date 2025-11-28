@@ -55,8 +55,9 @@ export default class SubhutiLexer {
     this._lastRowNum = 1  // 重置上一个 token 的行号
 
     while (index < code.length) {
-      const matched = this._matchToken(code, index, rowNum, columnNum)
-      
+      // 传入已匹配的 tokens，用于上下文约束检查
+      const matched = this._matchToken(code, index, rowNum, columnNum, result)
+
       if (!matched) {
         const errorChar = code[index]
         throw new Error(
@@ -74,7 +75,7 @@ export default class SubhutiLexer {
       // 更新位置
       const valueLength = matched.token.tokenValue.length
       index += valueLength
-      
+
       // 更新行列号
       const lines = matched.token.tokenValue.split('\n')
       if (lines.length > 1) {
@@ -91,22 +92,46 @@ export default class SubhutiLexer {
     return result
   }
 
-  private _matchToken(code: string, index: number, rowNum: number, columnNum: number) {
+  private _matchToken(
+    code: string,
+    index: number,
+    rowNum: number,
+    columnNum: number,
+    matchedTokens: SubhutiMatchToken[]
+  ) {
     const remaining = code.slice(index)
+    // 获取前一个 token 的名称（用于上下文约束检查）
+    const lastTokenName = matchedTokens.length > 0
+      ? matchedTokens[matchedTokens.length - 1].tokenName
+      : null
 
     for (const token of this._getActiveTokens()) {
       const match = remaining.match(token.pattern)
       if (!match) continue
 
+      // 上下文约束检查：onlyAfter - 只有前一个 token 在集合中才匹配
+      if (token.contextConstraint?.onlyAfter) {
+        if (!lastTokenName || !token.contextConstraint.onlyAfter.has(lastTokenName)) {
+          continue  // 不满足条件，跳过这个 token
+        }
+      }
+
+      // 上下文约束检查：notAfter - 前一个 token 不能在集合中
+      if (token.contextConstraint?.notAfter) {
+        if (lastTokenName && token.contextConstraint.notAfter.has(lastTokenName)) {
+          continue  // 不满足条件，跳过这个 token
+        }
+      }
+
       // 词法层 lookahead 检查
       if (token.lookaheadAfter?.not) {
         const afterText = remaining.slice(match[0].length)
         const { not } = token.lookaheadAfter
-        
-        const shouldSkip = not instanceof RegExp 
-          ? not.test(afterText) 
+
+        const shouldSkip = not instanceof RegExp
+          ? not.test(afterText)
           : afterText.startsWith(not)
-        
+
         if (shouldSkip) continue
       }
 
