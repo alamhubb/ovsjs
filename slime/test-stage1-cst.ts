@@ -8,10 +8,29 @@ import * as fs from 'fs'
 import * as path from 'path'
 import {es2025Tokens} from "slime-parser/src/language/es2025/Es2025Tokens";
 
+/**
+ * 递归获取目录下所有 .js 文件
+ */
+function getAllJsFiles(dir: string, baseDir: string = dir): string[] {
+  const results: string[] = []
+  const entries = fs.readdirSync(dir, { withFileTypes: true })
+
+  for (const entry of entries) {
+    const fullPath = path.join(dir, entry.name)
+    if (entry.isDirectory()) {
+      // 递归遍历子目录
+      results.push(...getAllJsFiles(fullPath, baseDir))
+    } else if (entry.isFile() && entry.name.endsWith('.js')) {
+      // 收集 .js 文件的相对路径
+      results.push(path.relative(baseDir, fullPath))
+    }
+  }
+
+  return results
+}
+
 const casesDir = path.join(__dirname, 'tests/test262/annexB')
-const files = fs.readdirSync(casesDir)
-  .filter(f => f.endsWith('.js'))
-  .sort()
+const files = getAllJsFiles(casesDir).sort()
 
 console.log(`🧪 阶段1: CST生成测试 (${files.length} 个用例)`)
 console.log('测试范围: 词法分析 → 语法分析\n')
