@@ -3891,10 +3891,18 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     /**
      * PropertySetParameterList :
      *     FormalParameter[~Yield, ~Await]
+     *
+     * 注意：ES2025 规范中 PropertySetParameterList 直接定义为单个 FormalParameter，
+     * 而不是使用 FormalParameters，这是为了强制 setter 必须恰好有一个参数。
+     * 但现代引擎（V8、SpiderMonkey）和解析器（Babel、Acorn）为了与函数参数尾随逗号
+     * 特性（ES2017）保持一致，都允许 setter 参数后有可选的尾随逗号。
+     * 例如：set foo(a,) {} 是被接受的。
      */
     @SubhutiRule
     PropertySetParameterList(): SubhutiCst | undefined {
-        return this.FormalParameter({Yield: false, Await: false})
+        this.FormalParameter({Yield: false, Await: false})
+        this.Option(() => this.tokenConsumer.Comma())  // 可选尾随逗号（引擎扩展）
+        return this.curCst
     }
 
     // ============================================
