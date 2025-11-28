@@ -40,7 +40,9 @@ export function createToken(osvToken: SubhutiCreateToken) {
 }
 
 export function createKeywordToken(name: string, pattern: string): SubhutiCreateToken {
-    const token = new SubhutiCreateToken({name: name, pattern: new RegExp(pattern), value: pattern});
+    // 添加负向前瞻，确保关键字后不是标识符字符（防止 do 匹配 double）
+    const keywordPattern = new RegExp(pattern + '(?![a-zA-Z0-9_$])')
+    const token = new SubhutiCreateToken({name: name, pattern: keywordPattern, value: pattern});
     token.isKeyword = true;
     return token;
 }
