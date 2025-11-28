@@ -1560,11 +1560,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
         const {Yield = false} = params
 
         return this.Or([
-            {alt: () => this.ConditionalExpression(params)},
-            // [+Yield] YieldExpression - 条件展开
-            ...(Yield ? [{alt: () => this.YieldExpression(params)}] : []),
-            {alt: () => this.ArrowFunction(params)},
-            {alt: () => this.AsyncArrowFunction(params)},
+            // 赋值表达式放在前面，防止 ConditionalExpression 抢先匹配 LeftHandSideExpression
             {
                 alt: () => {
                     this.LeftHandSideExpression(params)
@@ -1599,7 +1595,13 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                     this.tokenConsumer.NullishCoalescingAssign()
                     this.AssignmentExpression(params)
                 }
-            }
+            },
+            // 条件表达式放在最后
+            {alt: () => this.ConditionalExpression(params)},
+            // [+Yield] YieldExpression
+            ...(Yield ? [{alt: () => this.YieldExpression(params)}] : []),
+            {alt: () => this.ArrowFunction(params)},
+            {alt: () => this.AsyncArrowFunction(params)}
         ])
     }
 
