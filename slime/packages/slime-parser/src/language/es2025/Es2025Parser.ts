@@ -325,16 +325,30 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     @SubhutiRule
     PrimaryExpression(params: ExpressionParams = {}): SubhutiCst | undefined {
         return this.Or([
+            // === 1. 硬关键字表达式（不会被标识符遮蔽）===
             {alt: () => this.tokenConsumer.ThisTok()},
+
+            // === 2. async 开头（软关键字，必须在 IdentifierReference 之前）===
+            // 更具体的先匹配：async function* 比 async function 更具体
+            {alt: () => this.AsyncGeneratorExpression()},
+            {alt: () => this.AsyncFunctionExpression()},
+
+            // === 3. 标识符（在所有软关键字表达式之后）===
             {alt: () => this.IdentifierReference(params)},
+
+            // === 4. 字面量（null/true/false 是硬关键字，数字/字符串有独特首 token）===
             {alt: () => this.Literal()},
+
+            // === 5. function 开头（硬关键字，按特异性排序）===
+            {alt: () => this.GeneratorExpression()},
+            {alt: () => this.FunctionExpression()},
+
+            // === 6. class 表达式（硬关键字）===
+            {alt: () => this.ClassExpression(params)},
+
+            // === 7. 符号开头（各有独特首 token，不会互相遮蔽）===
             {alt: () => this.ArrayLiteral(params)},
             {alt: () => this.ObjectLiteral(params)},
-            {alt: () => this.FunctionExpression()},
-            {alt: () => this.ClassExpression(params)},
-            {alt: () => this.GeneratorExpression()},
-            {alt: () => this.AsyncFunctionExpression()},
-            {alt: () => this.AsyncGeneratorExpression()},
             {alt: () => this.tokenConsumer.RegularExpression()},
             {alt: () => this.TemplateLiteral({...params, Tagged: false})},
             {alt: () => this.CoverParenthesizedExpressionAndArrowParameterList(params)}
