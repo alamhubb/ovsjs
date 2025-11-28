@@ -423,9 +423,12 @@ export const es2025TokensObj = {
     ),
 
     // 正则表达式字面量（无约束，作为 Slash 的 fallback）
+    // 根据 ECMAScript 规范，RegularExpressionFirstChar 不能是 * (避免与 /* 注释冲突)
+    // 第一个字符：[^\n\r\/\\[*] 排除 *
+    // 后续字符：[^\n\r\/\\[] 允许 *
     RegularExpressionLiteral: createEmptyValueRegToken(
         TokenNames.RegularExpressionLiteral,
-        /\/(?:[^\n\r\/\\[]|\\[^\n\r]|\[(?:[^\n\r\]\\]|\\[^\n\r])*\])+\/[dgimsuvy]*/
+        /\/(?:[^\n\r\/\\[*]|\\[^\n\r]|\[(?:[^\n\r\]\\]|\\[^\n\r])*\])(?:[^\n\r\/\\[]|\\[^\n\r]|\[(?:[^\n\r\]\\]|\\[^\n\r])*\])*\/[dgimsuvy]*/
     ),
 
     Modulo: createValueRegToken(TokenNames.Modulo, /%/, '%'),
