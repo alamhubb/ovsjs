@@ -29,7 +29,7 @@ function getAllJsFiles(dir: string, baseDir: string = dir): string[] {
   return results
 }
 
-const casesDir = path.join(__dirname, 'tests/test262/annexB')
+const casesDir = path.join(__dirname, 'tests/test262/built-ins/Function')
 const files = getAllJsFiles(casesDir).sort()
 
 console.log(`🧪 阶段1: CST生成测试 (${files.length} 个用例)`)

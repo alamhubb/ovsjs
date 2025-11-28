@@ -150,7 +150,7 @@ function _getCSTStatistics(node: any): {
 }
 
 // 主程序
-const filePath = process.argv[2] || 'tests/es6rules/AssignmentExpressionEmptySemicolon-001.js'
+const filePath = process.argv[2] || 'tests/test262/built-ins/Function/prototype/toString/unicode.js'
 // const filePath = process.argv[2] || 'tests/es6rules/AdditiveExpression-001.js'
 
 if (!filePath) {

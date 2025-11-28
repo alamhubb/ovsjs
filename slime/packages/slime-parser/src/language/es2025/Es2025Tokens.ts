@@ -180,6 +180,36 @@ export const ContextualKeywords = {
 } as const
 
 // ============================================
+// ES2025 规范 12.7 标识符名称正则
+//
+// IdentifierStart ::
+//     UnicodeIDStart | $ | _ | \ UnicodeEscapeSequence
+//
+// IdentifierPart ::
+//     UnicodeIDContinue | $ | \ UnicodeEscapeSequence | <ZWNJ> | <ZWJ>
+//
+// 参考实现：Babel、Acorn、TypeScript
+// ============================================
+
+// IdentifierStart: UnicodeIDStart | $ | _ | \uXXXX | \u{XXXXX}
+const ID_START = /[\p{ID_Start}$_]|\\u[0-9a-fA-F]{4}|\\u\{[0-9a-fA-F]+\}/
+
+// IdentifierPart: UnicodeIDContinue | $ | \uXXXX | \u{XXXXX} | ZWNJ(\u200C) | ZWJ(\u200D)
+const ID_CONTINUE = /[\p{ID_Continue}$\u200C\u200D]|\\u[0-9a-fA-F]{4}|\\u\{[0-9a-fA-F]+\}/
+
+// IdentifierName: IdentifierStart IdentifierPart*
+const IDENTIFIER_NAME_PATTERN = new RegExp(
+    `(?:${ID_START.source})(?:${ID_CONTINUE.source})*`,
+    'u'
+)
+
+// PrivateIdentifier: # IdentifierName
+const PRIVATE_IDENTIFIER_PATTERN = new RegExp(
+    `#(?:${ID_START.source})(?:${ID_CONTINUE.source})*`,
+    'u'
+)
+
+// ============================================
 // 表达式结尾 Token 集合
 // 用于词法歧义处理：/ 在这些 token 后是除法，否则是正则表达式
 // ============================================
@@ -397,9 +427,33 @@ export const es2025TokensObj = {
     // ============================================
     // A.1.5 标识符
     // ============================================
+    // ES2025 规范 12.7 Identifier Names
+    //
+    // IdentifierName ::
+    //     IdentifierStart
+    //     IdentifierName IdentifierPart
+    //
+    // IdentifierStart ::
+    //     UnicodeIDStart
+    //     $
+    //     _
+    //     \ UnicodeEscapeSequence
+    //
+    // IdentifierPart ::
+    //     UnicodeIDContinue
+    //     $
+    //     \ UnicodeEscapeSequence
+    //     <ZWNJ>
+    //     <ZWJ>
+    //
+    // UnicodeIDStart :: any Unicode code point with the Unicode property "ID_Start"
+    // UnicodeIDContinue :: any Unicode code point with the Unicode property "ID_Continue"
+    //
+    // 参考实现：Babel、Acorn、TypeScript
+    // ============================================
 
-    PrivateIdentifier: createEmptyValueRegToken(TokenNames.PrivateIdentifier, /#[a-zA-Z_$][a-zA-Z0-9_$]*/),
-    IdentifierNameTok: createEmptyValueRegToken(TokenNames.IdentifierNameTok, /[a-zA-Z_$][a-zA-Z0-9_$]*/),
+    PrivateIdentifier: createEmptyValueRegToken(TokenNames.PrivateIdentifier, PRIVATE_IDENTIFIER_PATTERN),
+    IdentifierNameTok: createEmptyValueRegToken(TokenNames.IdentifierNameTok, IDENTIFIER_NAME_PATTERN),
 }
 
 export const es2025Tokens: SubhutiCreateToken[] = Object.values(es2025TokensObj)

@@ -39,6 +39,32 @@ import {SlimeAstType} from "slime-ast/src/SlimeAstType.ts";
 const Es6Parser = Es2025Parser;
 const Es6TokenConsumer = Es2025TokenConsumer;
 
+// ============================================
+// Unicode 转义序列解码
+// ES2025 规范 12.9.4 - 将 \uXXXX 和 \u{XXXXX} 转换为实际字符
+// 参考实现：Babel、Acorn、TypeScript
+// ============================================
+
+/**
+ * 将 Unicode 转义序列解码为实际字符
+ * 支持 \uXXXX 和 \u{XXXXX} 格式
+ *
+ * @param str 可能包含 Unicode 转义的字符串
+ * @returns 解码后的字符串
+ */
+function decodeUnicodeEscapes(str: string | undefined): string {
+    // 如果为空或不包含转义序列，直接返回（性能优化）
+    if (!str || !str.includes('\\u')) {
+        return str || ''
+    }
+
+    return str.replace(/\\u\{([0-9a-fA-F]+)\}|\\u([0-9a-fA-F]{4})/g,
+        (match, braceCode, fourDigitCode) => {
+            const codePoint = parseInt(braceCode || fourDigitCode, 16)
+            return String.fromCodePoint(codePoint)
+        }
+    )
+}
 
 export function checkCstName(cst: SubhutiCst, cstName: string) {
     if (cst.name !== cstName) {
@@ -59,7 +85,9 @@ export class SlimeCstToAst {
         if (cst.name !== expectedName && cst.name !== 'Identifier') {
             throw new Error(`Expected Identifier, got ${cst.name}`)
         }
-        const identifier = SlimeAstUtil.createIdentifier(cst.value, cst.loc)
+        // 解码 Unicode 转义序列（如 \u0061 -> a）
+        const decodedName = decodeUnicodeEscapes(cst.value as string)
+        const identifier = SlimeAstUtil.createIdentifier(decodedName, cst.loc)
         return identifier
     }
 
@@ -242,7 +270,9 @@ export class SlimeCstToAst {
     createIdentifierNameAst(cst: SubhutiCst): SlimeIdentifier {
         // IdentifierName -> Identifier or Keyword token
         const token = cst.children[0]
-        return SlimeAstUtil.createIdentifier(token.value, token.loc)
+        // 解码 Unicode 转义序列（如 \u0061 -> a）
+        const decodedName = decodeUnicodeEscapes(token.value as string)
+        return SlimeAstUtil.createIdentifier(decodedName, token.loc)
     }
 
     createExportClauseAst(cst: SubhutiCst): Array<any> {
@@ -300,13 +330,15 @@ export class SlimeCstToAst {
      * 从IdentifierName CST中提取标识符
      * IdentifierName可以是Identifier或任何关键字token
      */
-    createIdentifierNameAst(cst: SubhutiCst): SlimeIdentifier {
+    createIdentifierNameAst2(cst: SubhutiCst): SlimeIdentifier {
         checkCstName(cst, Es6Parser.prototype.IdentifierName?.name)
 
         // IdentifierName的children[0]是实际的token（Identifier或关键字）
         const token = cst.children[0]
         if (token && token.value) {
-            return SlimeAstUtil.createIdentifier(token.value, token.loc)
+            // 解码 Unicode 转义序列（如 \u0061 -> a）
+            const decodedName = decodeUnicodeEscapes(token.value as string)
+            return SlimeAstUtil.createIdentifier(decodedName, token.loc)
         }
 
         throw new Error('IdentifierName has no token')
@@ -1053,25 +1085,28 @@ export class SlimeCstToAst {
         // Es2025Parser: PrivateIdentifier 是一个直接的 token，value 已经包含 #
         // 例如：{ name: 'PrivateIdentifier', value: '#count' }
         if (cst.value) {
-            // 直接使用 token 的 value
-            const name = cst.value as string
+            // 直接使用 token 的 value，解码 Unicode 转义序列
+            const rawName = cst.value as string
+            const decodedName = decodeUnicodeEscapes(rawName)
             // 如果 value 已经以 # 开头，直接使用；否则添加 #
-            return SlimeAstUtil.createIdentifier(name.startsWith('#') ? name : '#' + name)
+            return SlimeAstUtil.createIdentifier(decodedName.startsWith('#') ? decodedName : '#' + decodedName)
         }
 
         // 旧版兼容：PrivateIdentifier -> HashTok + IdentifierName
         if (cst.children && cst.children.length >= 2) {
             const identifierNameCst = cst.children[1]
             const identifierCst = identifierNameCst.children[0]
-            const name = identifierCst.value as string
-            return SlimeAstUtil.createIdentifier('#' + name)
+            const rawName = identifierCst.value as string
+            const decodedName = decodeUnicodeEscapes(rawName)
+            return SlimeAstUtil.createIdentifier('#' + decodedName)
         }
 
         // 如果只有一个子节点，可能是直接的 IdentifierName
         if (cst.children && cst.children.length === 1) {
             const child = cst.children[0]
             if (child.value) {
-                return SlimeAstUtil.createIdentifier('#' + child.value)
+                const decodedName = decodeUnicodeEscapes(child.value as string)
+                return SlimeAstUtil.createIdentifier('#' + decodedName)
             }
         }
 

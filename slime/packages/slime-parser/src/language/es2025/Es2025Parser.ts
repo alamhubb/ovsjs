@@ -461,6 +461,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      *     NullLiteral
      *     BooleanLiteral
      *     NumericLiteral
+     *     BigIntLiteral
      *     StringLiteral
      */
     @SubhutiRule
@@ -470,6 +471,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             {alt: () => this.tokenConsumer.TrueTok()},
             {alt: () => this.tokenConsumer.FalseTok()},
             {alt: () => this.tokenConsumer.Number()},
+            {alt: () => this.tokenConsumer.BigInt()},
             {alt: () => this.tokenConsumer.String()}
         ])
     }
