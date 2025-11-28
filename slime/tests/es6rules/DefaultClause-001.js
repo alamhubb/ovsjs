@@ -35,11 +35,6 @@ switch (x) {
     default:
 }
 
-// ✅ 测试3：单语句default    DefaultClause -> default : (单个Statement)
-switch (status) {
-    default: return 'unknown'
-}
-
 // ✅ 测试4：多语句default    DefaultClause -> default : (多个Statement)
 switch (value) {
     default:
@@ -129,11 +124,6 @@ switch (x) {
 switch (x) {
     case 1: break
     default:
-}
-
-// ✅ 测试3：单语句default
-switch (status) {
-    default: return 'unknown'
 }
 
 // ✅ 测试4：多语句default
