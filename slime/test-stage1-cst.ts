@@ -29,14 +29,14 @@ function getAllJsFiles(dir: string, baseDir: string = dir): string[] {
   return results
 }
 
-const casesDir = path.join(__dirname, 'tests/test262/language')
+const casesDir = path.join(__dirname, 'tests/babel')
 const files = getAllJsFiles(casesDir).sort()
 
 // 支持从指定位置开始测试
 // 用法: npx tsx test-stage1-cst.ts [startIndex]
 // 例如: npx tsx test-stage1-cst.ts 50  -- 从第50个文件开始
 const startIndex = parseInt(process.argv[2] || '0', 10)
-const validStartIndex = 300
+const validStartIndex = 377
 
 if (startIndex > 0) {
   console.log(`📍 从第 ${validStartIndex + 1} 个文件开始测试 (跳过前 ${validStartIndex} 个)`)
