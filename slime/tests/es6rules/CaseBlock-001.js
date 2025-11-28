@@ -85,7 +85,6 @@ switch (type) {
         break
     default:
         const y = 2
-        return y
 }
 
 // ✅ 测试7：default在中间位置    CaseBlock -> DefaultClause在中间 + 后续CaseClauses
