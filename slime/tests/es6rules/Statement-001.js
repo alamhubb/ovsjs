@@ -146,9 +146,6 @@ switch (1) { case 1: break }
 try { } catch (e) { }
 function f() { }
 class C { }
-return 1
-break
-continue
 throw new Error()
 debugger
 
@@ -2085,13 +2082,6 @@ outerLabel: {
 // ✅ 测试13：LabelledItem - FunctionDeclaration
 myFunc: function test() {
     return "labeled function"
-}
-
-// ✅ 测试14：LabelledItem - ClassDeclaration
-myClass: class Test {
-    method() {
-        return "labeled class"
-    }
 }
 
 // ✅ 测试15：LabelledItem - 块语句
