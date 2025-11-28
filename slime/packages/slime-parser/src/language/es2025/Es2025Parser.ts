@@ -1975,6 +1975,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     @SubhutiRule
     ArrayBindingPattern(params: ExpressionParams = {}): SubhutiCst | undefined {
         return this.Or([
+            // [ Elision_opt BindingRestElement_opt ] - 空数组或只有 rest
             {
                 alt: () => {
                     this.tokenConsumer.LBracket()
@@ -1983,6 +1984,15 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                     this.tokenConsumer.RBracket()
                 }
             },
+            // [ BindingElementList ] - 普通解构，必须在带尾逗号的分支之前
+            {
+                alt: () => {
+                    this.tokenConsumer.LBracket()
+                    this.BindingElementList(params)
+                    this.tokenConsumer.RBracket()
+                }
+            },
+            // [ BindingElementList , Elision_opt BindingRestElement_opt ] - 带尾逗号
             {
                 alt: () => {
                     this.tokenConsumer.LBracket()
@@ -1990,13 +2000,6 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                     this.tokenConsumer.Comma()
                     this.Option(() => this.Elision())
                     this.Option(() => this.BindingRestElement(params))
-                    this.tokenConsumer.RBracket()
-                }
-            },
-            {
-                alt: () => {
-                    this.tokenConsumer.LBracket()
-                    this.BindingElementList(params)
                     this.tokenConsumer.RBracket()
                 }
             }
