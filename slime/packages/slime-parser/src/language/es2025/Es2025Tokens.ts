@@ -14,7 +14,8 @@ import {
     createKeywordToken,
     createValueRegToken,
     createEmptyValueRegToken,
-    SubhutiCreateToken
+    SubhutiCreateToken,
+    SubhutiTokenContextConstraint
 } from 'subhuti/src/struct/SubhutiCreateToken.ts'
 import {SubhutiLexerTokenNames} from "subhuti/src/SubhutiLexer.ts";
 
@@ -179,6 +180,36 @@ export const ContextualKeywords = {
 } as const
 
 // ============================================
+// 表达式结尾 Token 集合
+// 用于词法歧义处理：/ 在这些 token 后是除法，否则是正则表达式
+// ============================================
+export const EXPRESSION_END_TOKENS = new Set([
+    // 标识符和字面量
+    TokenNames.IdentifierNameTok,
+    TokenNames.NumericLiteral,
+    TokenNames.BigIntLiteral,
+    TokenNames.StringLiteral,
+    TokenNames.RegularExpressionLiteral,
+    TokenNames.NoSubstitutionTemplate,
+    TokenNames.TemplateTail,
+
+    // 关闭括号
+    TokenNames.RParen,      // )
+    TokenNames.RBracket,    // ]
+    TokenNames.RBrace,      // }
+
+    // 后缀运算符
+    TokenNames.Increment,   // ++
+    TokenNames.Decrement,   // --
+
+    // 关键字字面量
+    TokenNames.ThisTok,
+    TokenNames.TrueTok,
+    TokenNames.FalseTok,
+    TokenNames.NullTok,
+])
+
+// ============================================
 // Token 对象（用于 TokenConsumer 复用）
 // ============================================
 export const es2025TokensObj = {
@@ -332,7 +363,27 @@ export const es2025TokensObj = {
     Plus: createValueRegToken(TokenNames.Plus, /\+/, '+'),
     Minus: createValueRegToken(TokenNames.Minus, /-/, '-'),
     Asterisk: createValueRegToken(TokenNames.Asterisk, /\*/, '*'),
-    Slash: createValueRegToken(TokenNames.Slash, /\//, '/'),
+
+    // ============================================
+    // 除法运算符 vs 正则表达式（词法歧义处理）
+    // Slash 有上下文约束，只有前一个 token 是表达式结尾才匹配
+    // 否则 fallback 到 RegularExpressionLiteral
+    // ============================================
+    Slash: createValueRegToken(
+        TokenNames.Slash,
+        /\//,
+        '/',
+        false,  // skip
+        undefined,  // lookahead
+        { onlyAfter: EXPRESSION_END_TOKENS }  // 上下文约束
+    ),
+
+    // 正则表达式字面量（无约束，作为 Slash 的 fallback）
+    RegularExpressionLiteral: createEmptyValueRegToken(
+        TokenNames.RegularExpressionLiteral,
+        /\/(?:[^\n\r\/\\[]|\\[^\n\r]|\[(?:[^\n\r\]\\]|\\[^\n\r])*\])+\/[dgimsuvy]*/
+    ),
+
     Modulo: createValueRegToken(TokenNames.Modulo, /%/, '%'),
     BitwiseAnd: createValueRegToken(TokenNames.BitwiseAnd, /&/, '&'),
     BitwiseOr: createValueRegToken(TokenNames.BitwiseOr, /\|/, '|'),
@@ -349,12 +400,6 @@ export const es2025TokensObj = {
 
     PrivateIdentifier: createEmptyValueRegToken(TokenNames.PrivateIdentifier, /#[a-zA-Z_$][a-zA-Z0-9_$]*/),
     IdentifierNameTok: createEmptyValueRegToken(TokenNames.IdentifierNameTok, /[a-zA-Z_$][a-zA-Z0-9_$]*/),
-
-    // ============================================
-    // A.1.11 正则字面量
-    // ============================================
-
-    RegularExpressionLiteral: createEmptyValueRegToken(TokenNames.RegularExpressionLiteral, /\/(?:[^\n\r\/\\[]|\\[^\n\r]|\[(?:[^\n\r\]\\]|\\[^\n\r])*\])+\/[dgimsuvy]*/),
 }
 
 export const es2025Tokens: SubhutiCreateToken[] = Object.values(es2025TokensObj)
