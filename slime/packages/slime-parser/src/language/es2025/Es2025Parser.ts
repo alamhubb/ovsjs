@@ -1560,7 +1560,14 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
         const {Yield = false} = params
 
         return this.Or([
-            // 赋值表达式放在前面，防止 ConditionalExpression 抢先匹配 LeftHandSideExpression
+            // ⚠️ 箭头函数必须在 ConditionalExpression 之前！
+            // 因为 (a, b) 可以同时匹配括号表达式和箭头函数参数，
+            // 只有通过后续的 => 才能区分，所以需要先尝试箭头函数
+            {alt: () => this.ArrowFunction(params)},
+            {alt: () => this.AsyncArrowFunction(params)},
+            // [+Yield] YieldExpression
+            ...(Yield ? [{alt: () => this.YieldExpression(params)}] : []),
+            // 赋值表达式放在 ConditionalExpression 之前，防止其抢先匹配 LeftHandSideExpression
             {
                 alt: () => {
                     this.LeftHandSideExpression(params)
@@ -1596,12 +1603,8 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                     this.AssignmentExpression(params)
                 }
             },
-            // 条件表达式放在最后
-            {alt: () => this.ConditionalExpression(params)},
-            // [+Yield] YieldExpression
-            ...(Yield ? [{alt: () => this.YieldExpression(params)}] : []),
-            {alt: () => this.ArrowFunction(params)},
-            {alt: () => this.AsyncArrowFunction(params)}
+            // 条件表达式放在最后作为兜底
+            {alt: () => this.ConditionalExpression(params)}
         ])
     }
 
