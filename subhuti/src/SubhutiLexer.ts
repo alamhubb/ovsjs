@@ -109,6 +109,11 @@ export default class SubhutiLexer {
       const match = remaining.match(token.pattern)
       if (!match) continue
 
+      // 上下文约束检查：onlyAtStart - 只能在文件开头匹配（如 Hashbang）
+      if (token.contextConstraint?.onlyAtStart && index !== 0) {
+        continue  // 不在文件开头，跳过这个 token
+      }
+
       // 上下文约束检查：onlyAfter - 只有前一个 token 在集合中才匹配
       if (token.contextConstraint?.onlyAfter) {
         if (!lastTokenName || !token.contextConstraint.onlyAfter.has(lastTokenName)) {

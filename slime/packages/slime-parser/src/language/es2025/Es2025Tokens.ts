@@ -248,10 +248,18 @@ export const es2025TokensObj = {
     // A.1.2 注释 (Comments)
     // ============================================
 
-    // HashbangComment 只能出现在文件开头，不作为 skip token
+    // HashbangComment 只能出现在文件开头（index === 0），不作为 skip token
     // 由 Parser 的 Program 规则显式处理
     // LineTerminator 包括: LF(\n), CR(\r), LS(\u2028), PS(\u2029)
-    HashbangComment: createValueRegToken(TokenNames.HashbangComment, /#![^\n\r\u2028\u2029]*/, '', false),
+    // 使用 onlyAtStart 约束确保只在文件开头匹配
+    HashbangComment: createValueRegToken(
+        TokenNames.HashbangComment,
+        /#![^\n\r\u2028\u2029]*/,
+        '',
+        false,
+        undefined,  // lookahead
+        { onlyAtStart: true }  // 只在文件开头匹配
+    ),
     // SingleLineComment 和 MultiLineComment 也需要正确处理 LineTerminator
     MultiLineComment: createValueRegToken(TokenNames.MultiLineComment, /\/\*[\s\S]*?\*\//, '', true),
     SingleLineComment: createValueRegToken(TokenNames.SingleLineComment, /\/\/[^\n\r\u2028\u2029]*/, '', true),
