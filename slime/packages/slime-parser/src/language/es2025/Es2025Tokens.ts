@@ -323,8 +323,10 @@ export const es2025TokensObj = {
     // A.1.10 字符串字面量
     // ============================================
 
-    StringDoubleQuote: createEmptyValueRegToken(TokenNames.StringLiteral, /"(?:[^\n\r"\\]|\\(?:['"\\bfnrtv]|[^'"\\bfnrtv0-9xu\n\r]|0(?![0-9])|x[0-9a-fA-F]{2}|u(?:[0-9a-fA-F]{4}|\{[0-9a-fA-F]+\})))*"/),
-    StringSingleQuote: createEmptyValueRegToken(TokenNames.StringLiteral, /'(?:[^\n\r'\\]|\\(?:['"\\bfnrtv]|[^'"\\bfnrtv0-9xu\n\r]|0(?![0-9])|x[0-9a-fA-F]{2}|u(?:[0-9a-fA-F]{4}|\{[0-9a-fA-F]+\})))*'/),
+    // 支持行续符 (LineContinuation): \ 后跟 \r\n | \r | \n
+    // 参考 ES2025 规范 12.9.4 String Literals 和 Annex B
+    StringDoubleQuote: createEmptyValueRegToken(TokenNames.StringLiteral, /"(?:[^\n\r"\\]|\\(?:\r\n|\r|\n|['"\\bfnrtv]|[^'"\\bfnrtv0-9xu\n\r]|0(?![0-9])|x[0-9a-fA-F]{2}|u(?:[0-9a-fA-F]{4}|\{[0-9a-fA-F]+\})))*"/),
+    StringSingleQuote: createEmptyValueRegToken(TokenNames.StringLiteral, /'(?:[^\n\r'\\]|\\(?:\r\n|\r|\n|['"\\bfnrtv]|[^'"\\bfnrtv0-9xu\n\r]|0(?![0-9])|x[0-9a-fA-F]{2}|u(?:[0-9a-fA-F]{4}|\{[0-9a-fA-F]+\})))*'/),
 
     // ============================================
     // A.1.12 模板字面量
