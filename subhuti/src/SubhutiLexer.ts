@@ -77,10 +77,15 @@ export default class SubhutiLexer {
       index += valueLength
 
       // 更新行列号
-      const lines = matched.token.tokenValue.split('\n')
-      if (lines.length > 1) {
-        rowNum += lines.length - 1
-        columnNum = lines[lines.length - 1].length + 1
+      // LineTerminator 包括: LF(\n), CR(\r), LS(\u2028), PS(\u2029)
+      // 注意: \r\n 算作一个换行
+      const lineBreaks = matched.token.tokenValue.match(/\r\n|[\n\r\u2028\u2029]/g)
+      if (lineBreaks && lineBreaks.length > 0) {
+        rowNum += lineBreaks.length
+        // 最后一个换行符之后的内容长度
+        const lastBreakIndex = matched.token.tokenValue.lastIndexOf(lineBreaks[lineBreaks.length - 1])
+        const lastBreakLen = lineBreaks[lineBreaks.length - 1].length
+        columnNum = matched.token.tokenValue.length - lastBreakIndex - lastBreakLen + 1
       } else {
         columnNum += valueLength
       }
