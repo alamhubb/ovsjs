@@ -131,6 +131,69 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
         return cst
     }
 
+    /**
+     * IdentifierName - 语法层规则
+     *
+     * 按照 ES2025 规范，IdentifierName 包括所有标识符字符序列（包括关键字）
+     * 用于：属性名、成员访问、ModuleExportName 等场景
+     *
+     * 注意：词法层的 IdentifierNameTok 只匹配非关键字标识符，
+     * 所以这里需要显式包含所有关键字 token
+     */
+    @SubhutiRule
+    IdentifierName(): SubhutiCst | undefined {
+        return this.Or([
+            // 普通标识符
+            {alt: () => this.tokenConsumer.IdentifierNameTok()},
+            // 所有 ReservedWord 都可以作为 IdentifierName
+            {alt: () => this.tokenConsumer.AwaitTok()},
+            {alt: () => this.tokenConsumer.BreakTok()},
+            {alt: () => this.tokenConsumer.CaseTok()},
+            {alt: () => this.tokenConsumer.CatchTok()},
+            {alt: () => this.tokenConsumer.ClassTok()},
+            {alt: () => this.tokenConsumer.ConstTok()},
+            {alt: () => this.tokenConsumer.ContinueTok()},
+            {alt: () => this.tokenConsumer.DebuggerTok()},
+            {alt: () => this.tokenConsumer.DefaultTok()},
+            {alt: () => this.tokenConsumer.DeleteTok()},
+            {alt: () => this.tokenConsumer.DoTok()},
+            {alt: () => this.tokenConsumer.ElseTok()},
+            {alt: () => this.tokenConsumer.EnumTok()},
+            {alt: () => this.tokenConsumer.ExportTok()},
+            {alt: () => this.tokenConsumer.ExtendsTok()},
+            {alt: () => this.tokenConsumer.FalseTok()},
+            {alt: () => this.tokenConsumer.FinallyTok()},
+            {alt: () => this.tokenConsumer.ForTok()},
+            {alt: () => this.tokenConsumer.FunctionTok()},
+            {alt: () => this.tokenConsumer.IfTok()},
+            {alt: () => this.tokenConsumer.ImportTok()},
+            {alt: () => this.tokenConsumer.InTok()},
+            {alt: () => this.tokenConsumer.InstanceofTok()},
+            {alt: () => this.tokenConsumer.NewTok()},
+            {alt: () => this.tokenConsumer.NullTok()},
+            {alt: () => this.tokenConsumer.ReturnTok()},
+            {alt: () => this.tokenConsumer.SuperTok()},
+            {alt: () => this.tokenConsumer.SwitchTok()},
+            {alt: () => this.tokenConsumer.ThisTok()},
+            {alt: () => this.tokenConsumer.ThrowTok()},
+            {alt: () => this.tokenConsumer.TrueTok()},
+            {alt: () => this.tokenConsumer.TryTok()},
+            {alt: () => this.tokenConsumer.TypeofTok()},
+            {alt: () => this.tokenConsumer.VarTok()},
+            {alt: () => this.tokenConsumer.VoidTok()},
+            {alt: () => this.tokenConsumer.WhileTok()},
+            {alt: () => this.tokenConsumer.WithTok()},
+            {alt: () => this.tokenConsumer.YieldTok()},
+            // 上下文关键字（虽然在词法层是 keyword token，但也可能出现在这些场景）
+            {alt: () => this.tokenConsumer.AsyncTok()},
+            {alt: () => this.tokenConsumer.LetTok()},
+            {alt: () => this.tokenConsumer.StaticTok()},
+            {alt: () => this.tokenConsumer.AsTok()},
+            // 软关键字（get, set, of, target, meta, from）
+            // 这些已经返回 IdentifierNameTok，所以被第一个分支覆盖
+        ])
+    }
+
     // ----------------------------------------
     // A.2.2 Primary Expressions
     // ----------------------------------------
@@ -494,7 +557,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     @SubhutiRule
     LiteralPropertyName(): SubhutiCst | undefined {
         return this.Or([
-            {alt: () => this.tokenConsumer.IdentifierNameTok()},
+            {alt: () => this.IdentifierName()},
             {alt: () => this.tokenConsumer.String()},
             {alt: () => this.tokenConsumer.Number()}
         ])
@@ -640,7 +703,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             {
                 alt: () => {
                     this.tokenConsumer.Dot()
-                    this.tokenConsumer.IdentifierNameTok()
+                    this.IdentifierName()
                 }
             },
             // TemplateLiteral[?Yield, ?Await, +Tagged]
@@ -677,7 +740,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                 alt: () => {
                     this.tokenConsumer.SuperTok()
                     this.tokenConsumer.Dot()
-                    this.tokenConsumer.IdentifierNameTok()
+                    this.IdentifierName()
                 }
             }
         ])
@@ -776,7 +839,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             {
                 alt: () => {
                     this.tokenConsumer.Dot()
-                    this.tokenConsumer.IdentifierNameTok()
+                    this.IdentifierName()
                 }
             },
             // TemplateLiteral[?Yield, ?Await, +Tagged]
@@ -999,7 +1062,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             {
                 alt: () => {
                     this.tokenConsumer.OptionalChaining()
-                    this.tokenConsumer.IdentifierNameTok()
+                    this.IdentifierName()
                 }
             },
             {
@@ -1029,7 +1092,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             {
                 alt: () => {
                     this.tokenConsumer.Dot()
-                    this.tokenConsumer.IdentifierNameTok()
+                    this.IdentifierName()
                 }
             },
             {alt: () => this.TemplateLiteral({...params, Tagged: true})},
@@ -4039,7 +4102,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     @SubhutiRule
     AttributeKey(): SubhutiCst | undefined {
         return this.Or([
-            {alt: () => this.tokenConsumer.IdentifierNameTok()},
+            {alt: () => this.IdentifierName()},
             {alt: () => this.tokenConsumer.String()}
         ])
     }
@@ -4228,7 +4291,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     @SubhutiRule
     ModuleExportName(): SubhutiCst | undefined {
         return this.Or([
-            {alt: () => this.tokenConsumer.IdentifierNameTok()},
+            {alt: () => this.IdentifierName()},
             {alt: () => this.tokenConsumer.String()}
         ])
     }
