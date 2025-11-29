@@ -118,7 +118,7 @@ export interface SlimeBlockStatement extends ESTree.BlockStatement, SlimeBaseSta
     innerComments?: Comment[] | undefined;
 }
 
-export interface SlimeStaticBlock extends ESTree.StaticBlock, Omit<ESTree.BlockStatement, "type"> {
+export interface SlimeStaticBlock extends ESTree.StaticBlock, Omit<SlimeBlockStatement, "type"> {
     type: "StaticBlock";
 }
 
@@ -645,7 +645,7 @@ export interface SlimeExportNamedDeclaration extends ESTree.ExportNamedDeclarati
     source?: SlimeLiteral | null | undefined;
 }
 
-export interface SlimeExportSpecifier extends ESTree.ExportSpecifier, Omit<ESTree.BaseModuleSpecifier, "local"> {
+export interface SlimeExportSpecifier extends ESTree.ExportSpecifier, Omit<SlimeBaseModuleSpecifier, "local"> {
     type: "ExportSpecifier";
     local: SlimeIdentifier | SlimeLiteral;
     exported: SlimeIdentifier | SlimeLiteral;
