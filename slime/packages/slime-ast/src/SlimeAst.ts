@@ -50,7 +50,7 @@ import {
   type SlimeExportNamedDeclaration,
   type SlimeDeclaration,
   type SlimeExportSpecifier, type SlimeVariableDeclarationKind, type SlimeExportToken, type SlimeClassExpression,
-} from "./SlimeAstInterface.ts";
+} from "./SlimeESTree.ts";
 
 import {SlimeAstType} from "./SlimeAstType.ts";
 import SubhutiCst, {type SubhutiSourceLocation} from "subhuti/src/struct/SubhutiCst.ts";
