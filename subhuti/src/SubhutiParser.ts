@@ -749,10 +749,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * 尝试执行一次，失败则回溯，不影响整体解析状态
      */
     Option(fn: RuleFunction): void {
-        if (!this._parseSuccess) {
-            return
-        }
-
         this.tryAndRestore(fn)
     }
 
@@ -767,9 +763,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         }
 
         fn()
-        if (!this._parseSuccess) {
-            return
-        }
 
         while (this.tryAndRestore(fn)) {
             // 继续循环
