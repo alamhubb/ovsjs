@@ -19,16 +19,14 @@ import { LRUCache } from "lru-cache";
  * SubhutiPackratCache Parsing 缓存结果（完整状态）
  *
  * 关键字段：
- * - success: 解析是否成功
  * - endTokenIndex: 解析结束位置
- * - cst: 成功时的 CST 节点
- * - parseSuccess: parseSuccess 状态（必须缓存）
+ * - cst: CST 节点（成功时有值）
+ * - parseSuccess: 解析是否成功
  */
 export interface SubhutiPackratCacheResult {
-    success: boolean                      // 解析是否成功
     endTokenIndex: number                 // 解析结束位置
-    cst?: SubhutiCst                      // 成功时的 CST 节点
-    parseSuccess: boolean                 // parseSuccess 状态（必须缓存）
+    cst: SubhutiCst                       // CST 节点
+    parseSuccess: boolean                 // 解析是否成功
 }
 
 /**

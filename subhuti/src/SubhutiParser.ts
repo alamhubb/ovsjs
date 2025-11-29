@@ -415,7 +415,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
     /**
      * 规则执行入口（由 @SubhutiRule 装饰器调用）
-     * 职责：前置检查 → 顶层/非顶层分支 → Packrat 缓存 → 核心执行 → 后置处理
+     * 职责：前置检查 → 循环检测 → Packrat 缓存 → 核心执行 → 后置处理
      */
     private executeRuleWrapper(targetFun: Function, ruleName: string, className: string, ...args: any[]): SubhutiCst | undefined {
         const isTopLevel = this.cstStack.length === 0
@@ -423,30 +423,10 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             return undefined
         }
 
-        // 顶层规则：直接执行（无需缓存和循环检测）
-        if (isTopLevel) {
-            const startTime = this._debugger?.onRuleEnter(ruleName, this.tokenIndex)
-            const cst = this.executeRuleCore(ruleName, targetFun, ...args)
-            this.onRuleExitDebugHandler(ruleName, cst, isTopLevel, startTime)
-            return cst
-        }
-
-        // 非顶层规则：缓存 + 循环检测
-        return this.executeRuleWithCacheAndLoopDetection(ruleName, targetFun, ...args)
-    }
-
-    /**
-     * 非顶层规则执行（带缓存和循环检测）
-     * 职责：循环检测 → Packrat 缓存查询 → 核心执行 → 缓存存储
-     *
-     * ✅ RAII 模式：自动管理循环检测（进入检测、执行、退出清理）
-     */
-    private executeRuleWithCacheAndLoopDetection(ruleName: string, targetFun: Function, ...args: any[]): SubhutiCst | undefined {
         const key = `${ruleName}:${this.tokenIndex}`
 
-        // O(1) 快速检测是否重复
+        // O(1) 快速检测是否重复（循环检测）
         if (this.loopDetectionSet.has(key)) {
-            // 发现循环！抛出错误
             this.throwLoopError(ruleName)
         }
 
@@ -461,11 +441,11 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
                 const cached = this._cache.get(ruleName, this.tokenIndex)
                 if (cached !== undefined) {
                     this._debugger?.onRuleExit(ruleName, true, startTime)
-                    const result = this.applyCachedResult(cached)
-                    if (result && !result.children?.length) {
-                        result.children = undefined
+                    const cst = this.applyCachedResult(cached)
+                    if (!cst.children?.length) {
+                        cst.children = undefined
                     }
-                    return result
+                    return cst
                 }
             }
 
@@ -476,15 +456,17 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             // 缓存存储
             if (this.enableMemoization) {
                 this._cache.set(ruleName, startTokenIndex, {
-                    success: cst !== undefined,
                     endTokenIndex: this.tokenIndex,
                     cst: cst,
                     parseSuccess: this._parseSuccess
                 })
             }
 
-            this.onRuleExitDebugHandler(ruleName, cst, false, startTime)
+            this.onRuleExitDebugHandler(ruleName, cst, isTopLevel, startTime)
 
+            if (!cst.children?.length) {
+                cst.children = undefined
+            }
             return cst
         } finally {
             // 出栈（无论成功、return、异常都会执行）
@@ -547,7 +529,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * 执行规则函数核心逻辑
      * 职责：创建 CST → 执行规则 → 成功则添加到父节点
      */
-    private executeRuleCore(ruleName: string, targetFun: Function, ...args: any[]): SubhutiCst | undefined {
+    private executeRuleCore(ruleName: string, targetFun: Function, ...args: any[]): SubhutiCst {
         const cst = new SubhutiCst()
         cst.name = ruleName
         cst.children = []
@@ -568,17 +550,16 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
         this.cstStack.pop()
 
+        // 成功时添加到父节点并设置位置
         if (this._parseSuccess) {
             const parentCst = this.cstStack[this.cstStack.length - 1]
             if (parentCst) {
                 parentCst.children.push(cst)
             }
-
             this.setLocation(cst)
-            return cst
         }
 
-        return undefined
+        return cst
     }
 
     private setLocation(cst: SubhutiCst): void {
@@ -992,17 +973,19 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     /**
      * 应用缓存结果（恢复状态）
      */
-    private applyCachedResult(cached: SubhutiPackratCacheResult): SubhutiCst | undefined {
+    private applyCachedResult(cached: SubhutiPackratCacheResult): SubhutiCst {
         this.tokenIndex = cached.endTokenIndex
         this._parseSuccess = cached.parseSuccess
 
-        const parentCst = this.cstStack[this.cstStack.length - 1]
-        if (cached.success && cached.cst && parentCst) {
-            parentCst.children.push(cached.cst)
-            return cached.cst
+        // 成功时添加到父节点
+        if (cached.parseSuccess) {
+            const parentCst = this.cstStack[this.cstStack.length - 1]
+            if (parentCst) {
+                parentCst.children.push(cached.cst)
+            }
         }
 
-        return undefined
+        return cached.cst
     }
 
     // ============================================
