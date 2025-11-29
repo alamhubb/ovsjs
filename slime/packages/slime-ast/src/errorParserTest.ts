@@ -18,5 +18,8 @@ parser.enableErrorRecovery()
 
 const res = parser.Program()
 
+const ast = slimeCstToAstUtil.toProgram(res)
 
-console.log('Result:', JSON.stringify(res, null, 2))
+console.log(ast)
+
+console.log('Result:', JSON.stringify(ast, null, 2))
