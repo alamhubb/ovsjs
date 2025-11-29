@@ -189,30 +189,13 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      */
     private readonly loopDetectionSet: Set<string> = new Set()
 
-    // allowError 机制（智能错误管理）
-    /**
-     * allowError 深度计数器
-     * - 深度 > 0：允许错误（Or/Many/Option 内部）
-     * - 深度 = 0：不允许错误（最后分支抛详细错误）
-     */
-    private allowErrorDepth = 0
-
-    get allowError(): boolean {
-        return this.allowErrorDepth > 0
-    }
-
     /**
      * RAII 模式：自动管理 allowError 状态
      * - 进入时 allowErrorDepth++
      * - 退出时自动恢复（try-finally 保证）
      */
     private withAllowError<T>(fn: () => T): T {
-        this.allowErrorDepth++
-        try {
-            return fn()
-        } finally {
-            this.allowErrorDepth--
-        }
+        return fn()
     }
 
     // Packrat Parsing（默认 LRU 缓存）
@@ -531,7 +514,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             // 重置 Parser 的内部状态
             this._parseSuccess = true
             this.cstStack.length = 0
-            this.allowErrorDepth = 0
             this.loopDetectionSet.clear()
             this.tokenIndex = 0  // ✅ 重置 tokenIndex
 
@@ -662,16 +644,8 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             // 进入 Or 分支
             this._debugger?.onOrBranch?.(i, totalCount, parentRuleName)
 
-            // 前 N-1 个分支：允许失败
-            if (!isLast) {
-                this.allowErrorDepth++
-            }
 
             alt.alt()
-
-            if (!isLast) {
-                this.allowErrorDepth--
-            }
 
             // 退出 Or 分支（无论成功还是失败）
             this._debugger?.onOrBranchExit?.(parentRuleName, i)
