@@ -596,7 +596,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         }
 
         const savedState = this.saveState()
-        const startTokenIndex = this.tokenIndex
         const totalCount = alternatives.length
         const parentRuleName = this.curCst?.name || 'Unknown'
 
@@ -621,15 +620,12 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
                 return
             }
 
-            // 只有消费了 token 才需要回溯（没消费 = 状态没变）
-            if (this.tokenIndex > startTokenIndex) {
-                this.restoreState(savedState)
-            }
-
-            // 前 N-1 个分支失败后重置状态，继续尝试下一个
+            // 前 N-1 个分支：失败后回溯并重置状态，继续尝试下一个
             if (!isLast) {
+                this.restoreState(savedState)
                 this._parseSuccess = true
             }
+            // 最后一个分支：失败后不回溯，保持失败状态
         }
 
         // 退出 Or（整个 Or 调用失败结束）
@@ -657,7 +653,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             throw new Error('非容错模式不应该进入 ManyWithRecovery')
         }
 
-        while (this._parseSuccess) {
+        while (this._parseSuccess && this.tokenIndex < this._tokens.length) {
             const startTokenIndex = this.tokenIndex
             const success = this.tryAndRestore(fn)
 
@@ -668,11 +664,14 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             // 容错模式：找到下一个同步点
             const syncIndex = this.findNextSyncPoint(startTokenIndex + 1)
 
-            // 创建 ErrorNode，包含 [startTokenIndex, syncIndex) 的 token
-            if (syncIndex > startTokenIndex) {
-                const errorNode = this.createErrorNode(startTokenIndex, syncIndex)
-                this.curCst.children.push(errorNode)
+            // 没找到同步点或已到末尾，退出循环
+            if (syncIndex <= startTokenIndex) {
+                break
             }
+
+            // 创建 ErrorNode，包含 [startTokenIndex, syncIndex) 的 token
+            const errorNode = this.createErrorNode(startTokenIndex, syncIndex)
+            this.curCst.children.push(errorNode)
 
             // 跳到同步点
             this.tokenIndex = syncIndex
@@ -788,11 +787,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * @param startTokenIndex 规则开始时的 tokenIndex
      */
     private handleTopLevelError(ruleName: string, startTokenIndex: number): void {
-        // 容错模式：不抛错，错误已经通过 ErrorNode 处理
-        if (this._errorRecoveryMode) {
-            return
-        }
-
         // 分析模式：不抛错，用于语法验证
         if (this._analysisMode) {
             return
