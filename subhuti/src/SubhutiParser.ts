@@ -813,9 +813,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
     /**
      * 消费 token（智能错误管理）
-     * - allowError=true: 失败返回 undefined
-     * - allowError=false: 失败抛详细错误
-     * - analysisMode=true: 失败返回 undefined（不抛异常）
+     * - 失败时返回 undefined，不抛异常
      */
     consume(tokenName: string): SubhutiCst | undefined {
         if (!this._parseSuccess) {
@@ -835,27 +833,9 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
                 false
             )
 
-            // 🔍 分析模式、allowError 模式：不抛异常，返回 undefined
-            if (this._analysisMode || this.allowError) {
-                return undefined
-            }
-
-            throw this._errorHandler.createError({
-                expected: tokenName,
-                found: token,
-                position: token ? {
-                    tokenIndex: this.tokenIndex,
-                    charIndex: token.index || 0,
-                    line: token.rowNum || 0,
-                    column: token.columnStartNum || 0
-                } : {
-                    tokenIndex: this._tokens.length,
-                    charIndex: this._tokens[this._tokens.length - 1]?.index || 0,
-                    line: this._tokens[this._tokens.length - 1]?.rowNum || 0,
-                    column: this._tokens[this._tokens.length - 1]?.columnEndNum || 0
-                },
-                ruleStack: [...this.getRuleStack()]
-            })
+            // TODO: 研究如何处理解析错误（收集错误信息、错误恢复等）
+            // 目前先不抛异常，直接返回 undefined
+            return undefined
         }
 
         this._debugger?.onTokenConsume(
