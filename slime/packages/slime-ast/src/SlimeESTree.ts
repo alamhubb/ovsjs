@@ -10,8 +10,8 @@ export interface SlimeBaseNodeWithoutComments extends ESTree.BaseNodeWithoutComm
 }
 
 export interface SlimeBaseNode extends ESTree.BaseNode, SlimeBaseNodeWithoutComments {
-    leadingComments?: Comment[] | undefined;
-    trailingComments?: Comment[] | undefined;
+    leadingComments?: SlimeComment[] | undefined;
+    trailingComments?: SlimeComment[] | undefined;
 }
 
 export interface SlimeNodeMap {
