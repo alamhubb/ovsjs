@@ -823,28 +823,27 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             return
         }
 
-        const token = this.curToken
+        // 已经检查了 EOF，token 一定存在
+        const token = this.curToken!
 
-        if (!token || token.tokenName !== tokenName) {
+        if (token.tokenName !== tokenName) {
             this._parseSuccess = false
 
             this._debugger?.onTokenConsume(
                 this.tokenIndex,
-                token?.tokenValue || 'EOF',
-                token?.tokenName || 'EOF',
+                token.tokenValue,
+                token.tokenName,
                 tokenName,
                 false
             )
 
-            // TODO: 研究如何处理解析错误（收集错误信息、错误恢复等）
-            // 目前先不抛异常，直接返回 undefined
             return
         }
 
         this._debugger?.onTokenConsume(
             this.tokenIndex,
-            token?.tokenValue,
-            token?.tokenName,
+            token.tokenValue,
+            token.tokenName,
             tokenName,
             true
         )
