@@ -447,8 +447,17 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * 职责：前置检查 → 循环检测 → Packrat 缓存 → 核心执行 → 后置处理
      */
     private executeRuleWrapper(targetFun: Function, ruleName: string, className: string, ...args: any[]): SubhutiCst | undefined {
+        if (this.checkRuleIsThisClass(ruleName, className)) {
+            return
+        }
         const isTopLevel = this.cstStack.length === 0
-        if (this._preCheckRuleAndInit(ruleName, className, isTopLevel) || this.parserFail) {
+
+        if (isTopLevel) {
+            this.initTopLevelData()
+            return
+        }
+
+        if (this.parserFail) {
             return
         }
 
@@ -518,28 +527,27 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         }
     }
 
-    private _preCheckRuleAndInit(ruleName: string, className: string, isTopLevel: boolean): boolean {
+    private initTopLevelData(): boolean {
+        // 【顶层规则开始】重置解析器状态
+        // 重置 Parser 的内部状态
+        this._parseSuccess = true
+        this.cstStack.length = 0
+        this.loopDetectionSet.clear()
+        this.tokenIndex = 0  // ✅ 重置 tokenIndex
+
+        // ============================================
+        // 【新增】重置调试器的缓存和统计
+        // ============================================
+        // 这样每次新的顶层解析都有干净的环境
+        this._debugger?.resetForNewParse?.(this._tokens)
+    }
+
+    private checkRuleIsThisClass(ruleName: string, className: string): boolean {
         if (this.hasOwnProperty(ruleName)) {
             if (className !== this.className) {
                 return true
             }
         }
-
-        // 【顶层规则开始】重置解析器状态
-        if (isTopLevel) {
-            // 重置 Parser 的内部状态
-            this._parseSuccess = true
-            this.cstStack.length = 0
-            this.loopDetectionSet.clear()
-            this.tokenIndex = 0  // ✅ 重置 tokenIndex
-
-            // ============================================
-            // 【新增】重置调试器的缓存和统计
-            // ============================================
-            // 这样每次新的顶层解析都有干净的环境
-            this._debugger?.resetForNewParse?.(this._tokens)
-        }
-        return false
     }
 
     private onRuleExitDebugHandler(
