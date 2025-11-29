@@ -65,35 +65,17 @@ export interface SlimeBaseNodeWithoutComments extends ESTree.BaseNodeWithoutComm
 export interface SlimeBaseNode extends ESTree.BaseNode, SlimeBaseNodeWithoutComments {}
 
 // --- 基础类型（继承 ESTree 对应类型）---
+// 注意：不重新声明复杂字段，避免类型冲突。具体类型再声明 Slime 版本的字段。
 export interface SlimeBaseStatement extends ESTree.BaseStatement, SlimeBaseNode {}
 export interface SlimeBaseExpression extends ESTree.BaseExpression, SlimeBaseNode {}
 export interface SlimeBasePattern extends ESTree.BasePattern, SlimeBaseNode {}
 export interface SlimeBaseDeclaration extends ESTree.BaseDeclaration, SlimeBaseStatement {}
 export interface SlimeBaseModuleDeclaration extends ESTree.BaseModuleDeclaration, SlimeBaseNode {}
-export interface SlimeBaseModuleSpecifier extends ESTree.BaseModuleSpecifier, SlimeBaseNode {
-    local: SlimeIdentifier
-}
-
-export interface SlimeBaseFunction extends ESTree.BaseFunction, SlimeBaseNode {
-    params: SlimePattern[]
-    body: SlimeBlockStatement | SlimeExpression
-}
-
-export interface SlimeBaseForXStatement extends ESTree.BaseForXStatement, SlimeBaseStatement {
-    left: SlimeVariableDeclaration | SlimePattern
-    right: SlimeExpression
-    body: SlimeStatement
-}
-
-export interface SlimeBaseCallExpression extends ESTree.BaseCallExpression, SlimeBaseExpression {
-    callee: SlimeExpression | SlimeSuper
-    arguments: (SlimeExpression | SlimeSpreadElement)[]
-}
-
-export interface SlimeBaseClass extends ESTree.BaseClass, SlimeBaseNode {
-    superClass?: SlimeExpression | null
-    body: SlimeClassBody
-}
+export interface SlimeBaseModuleSpecifier extends ESTree.BaseModuleSpecifier, SlimeBaseNode {}
+export interface SlimeBaseFunction extends ESTree.BaseFunction, SlimeBaseNode {}
+export interface SlimeBaseForXStatement extends ESTree.BaseForXStatement, SlimeBaseStatement {}
+export interface SlimeBaseCallExpression extends ESTree.BaseCallExpression, SlimeBaseExpression {}
+export interface SlimeBaseClass extends ESTree.BaseClass, SlimeBaseNode {}
 
 // --- Program ---
 export interface SlimeProgram extends ESTree.Program, SlimeBaseNode {
@@ -788,5 +770,31 @@ export type SlimeLogicalOperator = ESTree.LogicalOperator
 export type SlimeAssignmentOperator = ESTree.AssignmentOperator
 export type SlimeUpdateOperator = ESTree.UpdateOperator
 
-// --- Function 联合类型 ---
+// --- 联合类型（与 ESTree 一致）---
 export type SlimeFunction = SlimeFunctionDeclaration | SlimeFunctionExpression | SlimeArrowFunctionExpression
+export type SlimeClass = SlimeClassDeclaration | SlimeClassExpression
+export type SlimeChainElement = SlimeSimpleCallExpression | SlimeMemberExpression
+export type SlimeLiteral = SlimeSimpleLiteral | SlimeRegExpLiteral | SlimeBigIntLiteral
+export type SlimeModuleSpecifier = SlimeImportSpecifier | SlimeImportDefaultSpecifier | SlimeImportNamespaceSpecifier | SlimeExportSpecifier
+
+// --- Node 联合类型（所有节点类型）---
+export type SlimeNode =
+    | SlimeProgram
+    | SlimeStatement
+    | SlimeExpression
+    | SlimePattern
+    | SlimeModuleDeclaration
+    | SlimeModuleSpecifier
+    | SlimeSwitchCase
+    | SlimeCatchClause
+    | SlimeVariableDeclarator
+    | SlimeProperty
+    | SlimeAssignmentProperty
+    | SlimeTemplateElement
+    | SlimeSpreadElement
+    | SlimeClassBody
+    | SlimeMethodDefinition
+    | SlimePropertyDefinition
+    | SlimeStaticBlock
+    | SlimeSuper
+    | SlimePrivateIdentifier
