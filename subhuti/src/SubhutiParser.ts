@@ -464,6 +464,16 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
             this.onRuleExitDebugHandler(ruleName, cst, isTopLevel, startTime)
 
+            // 顶层规则：检查是否所有 token 都被消费
+            // 如果成功但还有剩余 token，说明解析器逻辑有问题，直接抛错
+            if (isTopLevel && this._parseSuccess && this.tokenIndex < this._tokens.length) {
+                const remainingToken = this.curToken!
+                throw new Error(
+                    `Parser internal error: parsing succeeded but ${this._tokens.length - this.tokenIndex} tokens remain unconsumed. ` +
+                    `Next token: "${remainingToken.tokenValue}" (${remainingToken.tokenName}) at line ${remainingToken.rowNum}, column ${remainingToken.columnStartNum}`
+                )
+            }
+
             // 顶层规则失败时的错误处理
             if (isTopLevel && this.parserFail) {
                 this.handleTopLevelError(ruleName, startTokenIndex)
@@ -541,20 +551,8 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
         this.cstStack.push(cst)
 
-        // 记录开始位置
-        const startTokenIndex = this.tokenIndex
-
-        // 判断是否是顶层规则（cstStack.length = 1 表示只有当前规则在栈中）
-        const isTopLevel = this.cstStack.length === 1
-
         // 执行规则函数
         targetFun.apply(this, args)
-
-        // 顶层规则：检查是否所有 token 都被消费（EOF 检测）
-        if (this._parseSuccess && isTopLevel && this.tokenIndex < this._tokens.length) {
-            this._parseSuccess = false
-            // 分析模式下不做额外处理，后续可扩展错误报告
-        }
 
         this.cstStack.pop()
 
