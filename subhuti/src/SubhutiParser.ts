@@ -696,51 +696,23 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
                 continue  // 成功，继续下一个
             }
 
-            // 先找下一个同步点
+            // 解析失败，尝试恢复部分匹配
             const syncIndex = this.findNextSyncPoint(startTokenIndex + 1)
-
-            // 没找到同步点或已到末尾，退出循环
-            if (syncIndex <= startTokenIndex) {
-                break
-            }
-
-            // 尝试恢复最长部分匹配（未写完的代码，不是错误）
-            // 部分匹配的 endTokenIndex 不能超过同步点
             const bestMatch = this.getBestPartialMatch(startTokenIndex, syncIndex)
+
             if (bestMatch && bestMatch.children.length > 0) {
                 // 恢复部分匹配的 CST 到记录的父节点
                 bestMatch.parentCst.children.push(...bestMatch.children)
-
-                // 对未解析的 tokens（从 bestMatch.endTokenIndex 到 syncIndex）逐个尝试解析
-                for (let i = bestMatch.endTokenIndex; i < syncIndex; i++) {
-                    this.tokenIndex = i
-                    this._parseSuccess = true
-                    const parsed = this.tryAndRestore(fn)
-                    if (!parsed) {
-                        // 解析失败，记录这个未解析的 token
-                        this._unparsedTokens.push(this._tokens[i])
-                    }
+                // 从部分匹配结束位置继续（让 while 循环尝试解析）
+                this.tokenIndex = bestMatch.endTokenIndex
+            } else {
+                // 没有部分匹配，记录当前 token 为未解析，跳过继续
+                if (this.tokenIndex < this._tokens.length) {
+                    this._unparsedTokens.push(this._tokens[this.tokenIndex])
                 }
-
-                // 跳到同步点继续
-                this.tokenIndex = syncIndex
-                this._parseSuccess = true
-                continue
+                this.tokenIndex++
             }
 
-            // 没有部分匹配，对 [startTokenIndex, syncIndex) 的每个 token 逐个尝试解析
-            for (let i = startTokenIndex; i < syncIndex; i++) {
-                this.tokenIndex = i
-                this._parseSuccess = true
-                const parsed = this.tryAndRestore(fn)
-                if (!parsed) {
-                    // 解析失败，记录这个未解析的 token
-                    this._unparsedTokens.push(this._tokens[i])
-                }
-            }
-
-            // 跳到同步点
-            this.tokenIndex = syncIndex
             this._parseSuccess = true
         }
 
