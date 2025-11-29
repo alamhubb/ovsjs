@@ -532,8 +532,8 @@ export interface SlimeTemplateElement extends SlimeBaseNode, ESTree.TemplateElem
     };
 }
 
-export interface SlimeAssignmentProperty extends SlimeProperty, ESTree.AssignmentProperty {
-    value: Pattern;
+export interface SlimeAssignmentProperty extends SlimeProperty, Omit<ESTree.AssignmentProperty, 'key'> {
+    value: SlimePattern;
     kind: "init";
     method: boolean; // false
 }
@@ -580,17 +580,17 @@ export interface SlimeMethodDefinition extends SlimeBaseNode, ESTree.MethodDefin
     static: boolean;
 }
 
-export interface SlimeMaybeNamedClassDeclaration extends SlimeBaseClass, SlimeBaseDeclaration, ESTree.MaybeNamedClassDeclaration {
+export interface SlimeMaybeNamedClassDeclaration extends SlimeBaseClass, SlimeBaseDeclaration, Omit<ESTree.MaybeNamedClassDeclaration, 'body' | 'superClass'> {
     type: "ClassDeclaration";
     /** It is null when a class declaration is a part of the `export default class` statement */
     id: SlimeIdentifier | null;
 }
 
-export interface SlimeClassDeclaration extends SlimeMaybeNamedClassDeclaration, ESTree.ClassDeclaration {
+export interface SlimeClassDeclaration extends SlimeMaybeNamedClassDeclaration, Omit<ESTree.ClassDeclaration, 'body' | 'superClass'> {
     id: SlimeIdentifier;
 }
 
-export interface SlimeClassExpression extends SlimeBaseClass, SlimeBaseExpression, ESTree.ClassExpression {
+export interface SlimeClassExpression extends SlimeBaseClass, SlimeBaseExpression, Omit<ESTree.ClassExpression, 'body' | 'superClass'> {
     type: "ClassExpression";
     id?: SlimeIdentifier | null | undefined;
 }
