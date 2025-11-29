@@ -560,21 +560,8 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         // 判断是否是顶层规则（cstStack.length = 1 表示只有当前规则在栈中）
         const isTopLevel = this.cstStack.length === 1
 
-        // 🔍 不变式检查：规则成功时不应该返回 undefined
-        // 这通常是因为使用了 "return undefined" 但没有设置 _parseSuccess = false
-        const ruleReturnValue = targetFun.apply(this, args)
-        if (this._parseSuccess && ruleReturnValue === undefined) {
-            // 分析模式：不抛异常
-            if (!this._analysisMode) {
-                throw this.createInfiniteLoopError(
-                    ruleName,
-                    '使用 this.parserFail() 代替 return undefined'
-                )
-            } else {
-                // 分析模式：标记失败
-                this._parseSuccess = false
-            }
-        }
+        // 执行规则函数
+        targetFun.apply(this, args)
 
         // ✅ 统一的规则成功检测（合并循环检测和 EOF 检测）
         this.checkRuleSuccess(ruleName, startTokenIndex, isTopLevel)
@@ -609,13 +596,14 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * Or 规则 - 顺序选择（PEG 风格）
      *
      * 核心逻辑：
-     * - 最后一个分支：不允许失败（可能报详细错误）
+     * - 依次尝试每个分支，第一个成功的分支生效
+     * - 所有分支都失败则整体失败
      *
      * 优化：只有消费了 token 才需要回溯（没消费 = 状态没变）
      */
-    Or(alternatives: SubhutiParserOr[]): SubhutiCst | undefined {
+    Or(alternatives: SubhutiParserOr[]): void {
         if (!this._parseSuccess) {
-            return undefined
+            return
         }
 
         const savedState = this.saveState()
@@ -633,7 +621,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             // 进入 Or 分支
             this._debugger?.onOrBranch?.(i, totalCount, parentRuleName)
 
-
             alt.alt()
 
             // 退出 Or 分支（无论成功还是失败）
@@ -642,7 +629,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             if (this._parseSuccess) {
                 // 退出 Or（整个 Or 调用成功结束）
                 this._debugger?.onOrExit?.(parentRuleName)
-                return this.curCst
+                return
             }
 
             // 只有消费了 token 才需要回溯（没消费 = 状态没变）
@@ -658,23 +645,21 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
         // 退出 Or（整个 Or 调用失败结束）
         this._debugger?.onOrExit?.(parentRuleName)
-        return undefined
     }
 
     /**
      * Many 规则 - 0次或多次（EBNF { ... }）
      *
-     * ⚠️ 使用默认 checkLoop: true，自动检测循环
+     * 循环执行直到失败或没消费 token
      */
-    Many(fn: RuleFunction): SubhutiCst | undefined {
+    Many(fn: RuleFunction): void {
         if (!this._parseSuccess) {
-            return undefined
+            return
         }
 
         while (this.tryAndRestore(fn)) {
-            // 使用默认 checkLoop: true，自动检测循环
+            // 继续循环
         }
-        return this.curCst
     }
 
     /**
@@ -682,14 +667,13 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * - 当全局 errorRecoveryMode 开启时，解析失败会创建 ErrorNode 并跳到下一个同步点继续尝试
      * @param fn 要执行的规则函数
      */
-    ManyWithRecovery(fn: RuleFunction): SubhutiCst | undefined {
-        // 失败了
+    ManyWithRecovery(fn: RuleFunction): void {
         if (!this._errorRecoveryMode) {
-            throw new Error('非容错模式不应该进入')
+            throw new Error('非容错模式不应该进入 ManyWithRecovery')
         }
 
         if (!this._parseSuccess) {
-            return undefined
+            return
         }
 
         while (this.curToken) {
@@ -713,7 +697,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             this.tokenIndex = syncIndex
             this._parseSuccess = true  // 重置状态
         }
-        return this.curCst
     }
 
     /**
@@ -782,37 +765,34 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     /**
      * Option 规则 - 0次或1次（EBNF [ ... ]）
      *
-     * ⚠️ 注意：Option 允许成功但不消费 token（匹配 0 次），不检测循环
+     * 尝试执行一次，失败则回溯，不影响整体解析状态
      */
-    Option(fn: RuleFunction): SubhutiCst | undefined {
+    Option(fn: RuleFunction): void {
         if (!this._parseSuccess) {
-            return undefined
+            return
         }
 
-        // checkLoop: false - Option 允许匹配 0 次（不消费 token）
         this.tryAndRestore(fn)
-        return this.curCst
     }
 
     /**
-     * AtLeastOne 规则 - 1次或多次（第一次必须成功）
+     * AtLeastOne 规则 - 1次或多次
      *
-     * ⚠️ 使用默认 checkLoop: true，自动检测循环
+     * 第一次必须成功，后续循环执行直到失败
      */
-    AtLeastOne(fn: RuleFunction): SubhutiCst | undefined {
+    AtLeastOne(fn: RuleFunction): void {
         if (!this._parseSuccess) {
-            return undefined
+            return
         }
 
         fn()
         if (!this._parseSuccess) {
-            return undefined
+            return
         }
 
         while (this.tryAndRestore(fn)) {
-            // 使用默认 checkLoop: true，自动检测循环
+            // 继续循环
         }
-        return this.curCst
     }
 
     /**
@@ -990,9 +970,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * 尝试执行函数，失败时自动回溯并重置状态
      *
      * @param fn 要执行的函数
-     * @param checkLoop 是否检测循环（成功但不消费 token）
-     *                  - true: 检测循环，用于 Many/AtLeastOne（防止无限循环）
-     *                  - false: 不检测，用于 Option（允许匹配 0 次）
+     * @returns true: 成功且消费了 token，false: 失败或没消费 token
      */
     private tryAndRestore(fn: () => void): boolean {
         const savedState = this.saveState()
@@ -1001,15 +979,14 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         fn()
 
         if (this.parserFail) {
-            // ❌ 失败：回溯
+            // 失败：回溯并重置状态
             this.restoreState(savedState)
             this._parseSuccess = true
             return false
         }
 
-        // 如果需要检测循环，没消耗token，则返回false，防止无限循环
-        return this.tokenIndex !== startTokenIndex;
-
+        // 成功但没消费 token → 返回 false（防止无限循环）
+        return this.tokenIndex !== startTokenIndex
     }
 
     /**
