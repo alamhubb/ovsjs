@@ -106,7 +106,7 @@ export interface SlimeBlockStatement extends SlimeBaseStatement, ESTree.BlockSta
     innerComments?: SlimeComment[] | undefined;
 }
 
-export interface SlimeStaticBlock extends ESTree.StaticBlock, Omit<SlimeBlockStatement, "type"> {
+export interface SlimeStaticBlock extends ESTree.StaticBlock, Omit<SlimeBlockStatement, 'type' | 'body'> {
     type: "StaticBlock";
 }
 
@@ -193,7 +193,7 @@ export interface SlimeBaseForXStatement extends SlimeBaseStatement, ESTree.BaseF
     body: SlimeStatement;
 }
 
-export interface SlimeForInStatement extends SlimeBaseForXStatement, ESTree.ForInStatement {
+export interface SlimeForInStatement extends SlimeBaseForXStatement, Omit<ESTree.ForInStatement, 'body' | 'left' | 'right'> {
     type: "ForInStatement";
 }
 
@@ -206,14 +206,14 @@ export type SlimeDeclaration = SlimeFunctionDeclaration | SlimeVariableDeclarati
 export interface SlimeBaseDeclaration extends SlimeBaseStatement, ESTree.BaseDeclaration {
 }
 
-export interface SlimeMaybeNamedFunctionDeclaration extends SlimeBaseFunction, SlimeBaseDeclaration, ESTree.MaybeNamedFunctionDeclaration {
+export interface SlimeMaybeNamedFunctionDeclaration extends SlimeBaseFunction, SlimeBaseDeclaration, Omit<ESTree.MaybeNamedFunctionDeclaration, 'params'> {
     type: "FunctionDeclaration";
     /** It is null when a function declaration is a part of the `export default function` statement */
     id: SlimeIdentifier | null;
     body: SlimeBlockStatement;
 }
 
-export interface SlimeFunctionDeclaration extends SlimeMaybeNamedFunctionDeclaration, ESTree.FunctionDeclaration {
+export interface SlimeFunctionDeclaration extends SlimeMaybeNamedFunctionDeclaration, Omit<ESTree.FunctionDeclaration, 'body' | 'params'> {
     id: SlimeIdentifier;
 }
 
@@ -306,7 +306,7 @@ export interface SlimePropertyDefinition extends SlimeBaseNode, ESTree.PropertyD
     static: boolean;
 }
 
-export interface SlimeFunctionExpression extends SlimeBaseFunction, SlimeBaseExpression, ESTree.FunctionExpression {
+export interface SlimeFunctionExpression extends SlimeBaseFunction, SlimeBaseExpression, Omit<ESTree.FunctionExpression, 'params'> {
     id?: SlimeIdentifier | null | undefined;
     type: "FunctionExpression";
     body: SlimeBlockStatement;
@@ -366,12 +366,12 @@ export interface SlimeBaseCallExpression extends SlimeBaseExpression, ESTree.Bas
 
 export type SlimeCallExpression = SlimeSimpleCallExpression | SlimeNewExpression;
 
-export interface SlimeSimpleCallExpression extends SlimeBaseCallExpression, ESTree.SimpleCallExpression {
+export interface SlimeSimpleCallExpression extends SlimeBaseCallExpression, Omit<ESTree.SimpleCallExpression, 'arguments' | 'callee'> {
     type: "CallExpression";
     optional: boolean;
 }
 
-export interface SlimeNewExpression extends SlimeBaseCallExpression, ESTree.NewExpression {
+export interface SlimeNewExpression extends SlimeBaseCallExpression, Omit<ESTree.NewExpression, 'arguments' | 'callee'> {
     type: "NewExpression";
 }
 
@@ -484,7 +484,7 @@ export type SlimeAssignmentOperator =
 
 export type SlimeUpdateOperator = "++" | "--";
 
-export interface SlimeForOfStatement extends SlimeBaseForXStatement, ESTree.ForOfStatement {
+export interface SlimeForOfStatement extends SlimeBaseForXStatement, Omit<ESTree.ForOfStatement, 'body' | 'left' | 'right'> {
     type: "ForOfStatement";
     await: boolean;
 }
@@ -498,7 +498,7 @@ export interface SlimeSpreadElement extends SlimeBaseNode, ESTree.SpreadElement 
     argument: SlimeExpression;
 }
 
-export interface SlimeArrowFunctionExpression extends SlimeBaseExpression, SlimeBaseFunction, ESTree.ArrowFunctionExpression {
+export interface SlimeArrowFunctionExpression extends SlimeBaseExpression, SlimeBaseFunction, Omit<ESTree.ArrowFunctionExpression, 'params'> {
     type: "ArrowFunctionExpression";
     expression: boolean;
     body: SlimeBlockStatement | SlimeExpression;
