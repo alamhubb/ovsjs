@@ -124,7 +124,7 @@ export interface SlimeStaticBlock extends ESTree.StaticBlock, Omit<SlimeBlockSta
 
 export interface SlimeExpressionStatement extends ESTree.ExpressionStatement, SlimeBaseStatement {
     type: "ExpressionStatement";
-    Slimeexpression: SlimeSlimeexpression;
+    expression: SlimeExpression;
 }
 
 export interface SlimeIfStatement extends ESTree.IfStatement, SlimeBaseStatement {
