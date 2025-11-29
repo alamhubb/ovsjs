@@ -8,7 +8,6 @@
  */
 
 import { SlimeAstType } from './SlimeAstType.ts'
-import type { SubhutiSourceLocation } from '../../../../subhuti/src/struct/SubhutiCst.ts'
 
 // ============================================
 // 基础接口
