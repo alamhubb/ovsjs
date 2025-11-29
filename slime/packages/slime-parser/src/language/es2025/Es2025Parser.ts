@@ -2200,7 +2200,12 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      */
     @SubhutiRule
     StatementList(params: StatementParams = {}): SubhutiCst | undefined {
-        this.AtLeastOne(() => this.StatementListItem(params))
+        // 根据容错模式选择解析方式
+        if (this.errorRecoveryMode) {
+            this.ManyWithRecovery(() => this.StatementListItem(params))
+        } else {
+            this.Many(() => this.StatementListItem(params))
+        }
         return this.curCst
     }
 
@@ -4212,10 +4217,10 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
 
         if (sourceType === 'module') {
             // ModuleBody_opt: ModuleItemList?
-            this.Module()
+            this.ModuleItemList()
         } else {
             // ScriptBody_opt: StatementList?
-            this.Script()
+            this.StatementList({Yield: false, Await: false, Return: false})
         }
         return this.curCst
     }
@@ -4259,7 +4264,12 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      */
     @SubhutiRule
     ModuleItemList(): SubhutiCst | undefined {
-        this.AtLeastOne(() => this.ModuleItem())
+        // 根据容错模式选择解析方式
+        if (this.errorRecoveryMode) {
+            this.ManyWithRecovery(() => this.ModuleItem())
+        } else {
+            this.Many(() => this.ModuleItem())
+        }
         return this.curCst
     }
 

@@ -112,6 +112,36 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      */
     private _analysisMode: boolean = false
 
+    /**
+     * 容错模式标志
+     * - true: 启用容错（解析失败时跳过 token 继续解析）
+     * - false: 不启用容错（解析失败时停止）
+     */
+    private _errorRecoveryMode: boolean = false
+
+    /**
+     * 启用容错模式
+     */
+    enableErrorRecovery(): this {
+        this._errorRecoveryMode = true
+        return this
+    }
+
+    /**
+     * 禁用容错模式
+     */
+    disableErrorRecovery(): this {
+        this._errorRecoveryMode = false
+        return this
+    }
+
+    /**
+     * 获取容错模式状态
+     */
+    get errorRecoveryMode(): boolean {
+        return this._errorRecoveryMode
+    }
+
     getRuleStack() {
         return this.cstStack.map(item => item.name)
     }
@@ -648,10 +678,10 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
     /**
      * 带容错的 Many 规则
+     * - 当全局 errorRecoveryMode 开启时，解析失败会跳过 token 继续尝试
      * @param fn 要执行的规则函数
-     * @param enableRecovery 是否启用容错（失败时跳过 token 继续解析）
      */
-    ManyWithRecovery(fn: RuleFunction, enableRecovery: boolean = false): SubhutiCst | undefined {
+    ManyWithRecovery(fn: RuleFunction): SubhutiCst | undefined {
         if (!this._parseSuccess) {
             return undefined
         }
@@ -665,7 +695,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
                 }
 
                 // 失败了
-                if (!enableRecovery) {
+                if (!this._errorRecoveryMode) {
                     break  // 不容错，退出循环
                 }
 
