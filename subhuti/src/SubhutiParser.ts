@@ -139,10 +139,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         return this.allowErrorDepth > 0
     }
 
-    get outerHasAllowError(): boolean {
-        return this.allowErrorDepth > 1
-    }
-
     /**
      * RAII 模式：自动管理 allowError 状态
      * - 进入时 allowErrorDepth++
@@ -840,7 +836,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             )
 
             // 🔍 分析模式、allowError 模式：不抛异常，返回 undefined
-            if (this._analysisMode || this.outerHasAllowError || this.allowError) {
+            if (this._analysisMode || this.allowError) {
                 return undefined
             }
 
