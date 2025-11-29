@@ -50,7 +50,7 @@ export interface SlimeProgram extends SlimeBaseNode, ESTree.Program {
     type: "Program";
     sourceType: "script" | "module";
     body: Array<SlimeDirective | SlimeStatement | SlimeModuleDeclaration>;
-    comments?: Comment[] | undefined;
+    comments?: SlimeComment[] | undefined;
 }
 
 export interface SlimeDirective extends SlimeBaseNode, ESTree.Directive {
@@ -103,7 +103,7 @@ export interface SlimeEmptyStatement extends SlimeBaseStatement, ESTree.EmptySta
 export interface SlimeBlockStatement extends SlimeBaseStatement, ESTree.BlockStatement {
     type: "BlockStatement";
     body: SlimeStatement[];
-    innerComments?: Comment[] | undefined;
+    innerComments?: SlimeComment[] | undefined;
 }
 
 export interface SlimeStaticBlock extends ESTree.StaticBlock, Omit<SlimeBlockStatement, "type"> {
@@ -257,7 +257,7 @@ export interface SlimeExpressionMap {
     SlimeYieldExpression: SlimeYieldExpression;
 }
 
-export type SlimeExpression = SlimeExpressionMap[keyof SlimeExpressionMap];
+export type SlimeExpression = ESTree.Expression & SlimeExpressionMap[keyof SlimeExpressionMap];
 
 export interface SlimeBaseExpression extends SlimeBaseNode, ESTree.BaseExpression {
 }
