@@ -3,7 +3,7 @@ import {es2025Tokens} from "slime-parser/src/language/es2025/Es2025Tokens.ts";
 import Es2025Parser from "slime-parser/src/language/es2025/Es2025Parser.ts";
 
 // 测试：第一个语句不完整，第二个语句完整
-const code = 'let a = { let b = 1'
+const code = 'let a = {'
 
 const lexer = new SubhutiLexer(es2025Tokens)
 const tokens = lexer.tokenize(code)

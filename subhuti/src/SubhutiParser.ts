@@ -170,14 +170,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     }
 
     /**
-     * 禁用容错模式
-     */
-    disableErrorRecovery(): this {
-        this._errorRecoveryMode = false
-        return this
-    }
-
-    /**
      * 获取容错模式状态
      */
     get errorRecoveryMode(): boolean {
@@ -208,6 +200,26 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * 记录在回溯时被删除但消费了 token 的 CST 片段
      */
     private _partialMatchCandidates: PartialMatchRecord[] = []
+
+    /**
+     * 未被解析的 tokens 列表（容错模式专用）
+     * 用于最终判断解析是否完全成功
+     */
+    private _unparsedTokens: SubhutiMatchToken[] = []
+
+    /**
+     * 获取未被解析的 tokens 列表
+     */
+    get unparsedTokens(): SubhutiMatchToken[] {
+        return this._unparsedTokens
+    }
+
+    /**
+     * 是否有未被解析的 tokens
+     */
+    get hasUnparsedTokens(): boolean {
+        return this._unparsedTokens.length > 0
+    }
 
     constructor(
         tokens: SubhutiMatchToken[] = [],
@@ -661,17 +673,20 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
     /**
      * 带容错的 Many 规则
-     * - 当全局 errorRecoveryMode 开启时，解析失败会创建 ErrorNode 并跳到下一个同步点继续尝试
-     * - 优先恢复最长部分匹配的 CST，然后从部分匹配结束位置找同步点
+     * - 当全局 errorRecoveryMode 开启时，解析失败会尝试恢复并继续
+     * - 优先恢复最长部分匹配的 CST
+     * - 对未解析的 tokens 逐个尝试解析
+     * - 解析失败的 tokens 记录到 _unparsedTokens 列表
      * @param fn 要执行的规则函数
      */
     ManyWithRecovery(fn: RuleFunction): void {
-        if (!this._errorRecoveryMode) {
+        if (!this.errorRecoveryMode) {
             throw new Error('非容错模式不应该进入 ManyWithRecovery')
         }
 
-        // 清理部分匹配记录
+        // 清理记录
         this._partialMatchCandidates.length = 0
+        this._unparsedTokens.length = 0
 
         while (!this.parserFailOrIsEof) {
             const startTokenIndex = this.tokenIndex
@@ -681,25 +696,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
                 continue  // 成功，继续下一个
             }
 
-            // 尝试恢复最长部分匹配
-            const bestMatch = this.getBestPartialMatch(startTokenIndex)
-            if (bestMatch && bestMatch.children.length > 0) {
-                // 恢复部分匹配的 CST 到记录的父节点
-                bestMatch.parentCst.children.push(...bestMatch.children)
-
-                // 从部分匹配结束位置找同步点
-                const syncIndex = this.findNextSyncPoint(bestMatch.endTokenIndex)
-                if (syncIndex > bestMatch.endTokenIndex) {
-                    const errorNode = this.createErrorNode(bestMatch.endTokenIndex, syncIndex)
-                    bestMatch.parentCst.children.push(errorNode)
-                }
-
-                this.tokenIndex = syncIndex
-                this._parseSuccess = true
-                continue
-            }
-
-            // 没有部分匹配，使用原有逻辑
+            // 先找下一个同步点
             const syncIndex = this.findNextSyncPoint(startTokenIndex + 1)
 
             // 没找到同步点或已到末尾，退出循环
@@ -707,25 +704,67 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
                 break
             }
 
-            // 创建 ErrorNode，包含 [startTokenIndex, syncIndex) 的 token
-            const errorNode = this.createErrorNode(startTokenIndex, syncIndex)
-            this.curCst.children.push(errorNode)
+            // 尝试恢复最长部分匹配（未写完的代码，不是错误）
+            // 部分匹配的 endTokenIndex 不能超过同步点
+            const bestMatch = this.getBestPartialMatch(startTokenIndex, syncIndex)
+            if (bestMatch && bestMatch.children.length > 0) {
+                // 恢复部分匹配的 CST 到记录的父节点
+                bestMatch.parentCst.children.push(...bestMatch.children)
+
+                // 对未解析的 tokens（从 bestMatch.endTokenIndex 到 syncIndex）逐个尝试解析
+                for (let i = bestMatch.endTokenIndex; i < syncIndex; i++) {
+                    this.tokenIndex = i
+                    this._parseSuccess = true
+                    const parsed = this.tryAndRestore(fn)
+                    if (!parsed) {
+                        // 解析失败，记录这个未解析的 token
+                        this._unparsedTokens.push(this._tokens[i])
+                    }
+                }
+
+                // 跳到同步点继续
+                this.tokenIndex = syncIndex
+                this._parseSuccess = true
+                continue
+            }
+
+            // 没有部分匹配，对 [startTokenIndex, syncIndex) 的每个 token 逐个尝试解析
+            for (let i = startTokenIndex; i < syncIndex; i++) {
+                this.tokenIndex = i
+                this._parseSuccess = true
+                const parsed = this.tryAndRestore(fn)
+                if (!parsed) {
+                    // 解析失败，记录这个未解析的 token
+                    this._unparsedTokens.push(this._tokens[i])
+                }
+            }
 
             // 跳到同步点
             this.tokenIndex = syncIndex
-            this._parseSuccess = true  // 重置状态
+            this._parseSuccess = true
+        }
+
+        // 出口：如果有未解析的 tokens，标记解析失败
+        if (this._unparsedTokens.length > 0) {
+            this._parseSuccess = false
         }
     }
 
     /**
-     * 获取从指定位置开始的最长部分匹配
+     * 获取从指定位置开始的最佳部分匹配
+     * - 部分匹配的 endTokenIndex 不能超过 maxEndTokenIndex（同步点）
+     * - 在满足条件的候选中，选择 endTokenIndex 最大的（最接近同步点）
+     *
      * @param fromTokenIndex 起始位置
-     * @returns 最长的部分匹配记录，如果没有返回 undefined
+     * @param maxEndTokenIndex 最大结束位置（同步点），部分匹配不能超过这个位置
+     * @returns 最佳部分匹配记录，如果没有返回 undefined
      */
-    private getBestPartialMatch(fromTokenIndex: number): PartialMatchRecord | undefined {
+    private getBestPartialMatch(fromTokenIndex: number, maxEndTokenIndex: number): PartialMatchRecord | undefined {
         let best: PartialMatchRecord | undefined
         for (const record of this._partialMatchCandidates) {
-            if (record.startTokenIndex === fromTokenIndex) {
+            // 必须从指定位置开始，且不能超过同步点
+            if (record.startTokenIndex === fromTokenIndex && record.endTokenIndex <= maxEndTokenIndex) {
+                // 选择 endTokenIndex 最大的（最接近同步点）
                 if (!best || record.endTokenIndex > best.endTokenIndex) {
                     best = record
                 }
@@ -957,7 +996,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      */
     private recordPartialMatchAndRestore(savedState: SubhutiBackData, startTokenIndex: number): void {
         // 容错模式下，回溯前记录部分匹配（直接获取引用，不拷贝）
-        if (this._errorRecoveryMode && this.tokenIndex > startTokenIndex) {
+        if (this.errorRecoveryMode && this.tokenIndex > startTokenIndex) {
             const currentCst = this.curCst
             if (currentCst?.children) {
                 const removedChildren = currentCst.children.slice(savedState.curCstChildrenLength)
