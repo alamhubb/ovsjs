@@ -200,7 +200,7 @@ export interface SlimeForStatement extends ESTree.ForStatement, SlimeBaseStateme
 }
 
 export interface SlimeBaseForXStatement extends ESTree.BaseForXStatement, SlimeBaseStatement {
-    left: SlimeVariableDeclaration | Pattern;
+    left: SlimeVariableDeclaration | SlimePattern;
     right: SlimeExpression;
     body: SlimeStatement;
 }
