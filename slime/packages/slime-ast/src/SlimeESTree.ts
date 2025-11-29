@@ -1,7 +1,7 @@
 /**
- * SlimeESTree.ts - ESTree 兼容�?AST 接口定义
+ * SlimeESTree.ts - ESTree 兼容�?AST 接口定义
  *
- * 设计原则�?
+ * 设计原则�?
  * 1. 核心字段完全兼容 ESTree 规范
  * 2. type 使用 SlimeAstType 枚举常量
  * 3. Token 信息作为可选字段展平到节点上（不嵌套）
@@ -25,9 +25,9 @@ export type SlimePosition = ESTree.Position
 export type SlimeComment = ESTree.Comment
 
 // ============================================
-// Slime 通用 Token 扩展字段（mixin 接口�?// ============================================
+// Slime 通用 Token 扩展字段（mixin 接口�?// ============================================
 
-/** 通用的括�?Token 字段 */
+/** 通用的括�?Token 字段 */
 export interface SlimeParenTokens {
     lParen?: SlimeTokenNode
     rParen?: SlimeTokenNode
@@ -52,20 +52,20 @@ export interface SlimeCommaListTokens {
 }
 
 // ============================================
-// Slime 扩展�?ESTree 类型
+// Slime 扩展�?ESTree 类型
 // 双继承：ESTree 类型 + SlimeBaseNode（位置信息）
-// Token 信息展平为可选字�?
+// Token 信息展平为可选字�?
 // ============================================
 
-// --- 基础节点（继�?ESTree 对应类型�?--
+// --- 基础节点（继�?ESTree 对应类型�?--
 export interface SlimeBaseNodeWithoutComments extends ESTree.BaseNodeWithoutComments {
     type: SlimeAstType | string
 }
 
 export interface SlimeBaseNode extends ESTree.BaseNode, SlimeBaseNodeWithoutComments {}
 
-// --- 基础类型（继�?ESTree 对应类型�?--
-// 注意：不重新声明复杂字段，避免类型冲突。具体类型再声明 Slime 版本的字段�?
+// --- 基础类型（继�?ESTree 对应类型�?--
+// 注意：不重新声明复杂字段，避免类型冲突。具体类型再声明 Slime 版本的字段�?
 export interface SlimeBaseStatement extends ESTree.BaseStatement, SlimeBaseNode {}
 export interface SlimeBaseExpression extends ESTree.BaseExpression, SlimeBaseNode {}
 export interface SlimeBasePattern extends ESTree.BasePattern, SlimeBaseNode {}
@@ -104,7 +104,7 @@ export interface SlimePrivateIdentifier extends ESTree.PrivateIdentifier, SlimeB
 }
 
 // --- Literals ---
-// SlimeLiteral 是联合类型，定义在文件末�?
+// SlimeLiteral 是联合类型，定义在文件末�?
 export interface SlimeSimpleLiteral extends ESTree.SimpleLiteral, SlimeBaseExpression {
     type: typeof SlimeAstType.Literal
     token?: SlimeTokenNode
@@ -137,7 +137,7 @@ export interface SlimeStringLiteral extends SlimeSimpleLiteral {
 }
 
 // --- Statements ---
-export type SlimeStatement =
+export type SlimeStatement = ESTree.Statement & (
     | SlimeExpressionStatement
     | SlimeBlockStatement
     | SlimeEmptyStatement
@@ -159,6 +159,7 @@ export type SlimeStatement =
     | SlimeVariableDeclaration
     | SlimeFunctionDeclaration
     | SlimeClassDeclaration
+)
 
 export interface SlimeExpressionStatement extends ESTree.ExpressionStatement, SlimeBaseStatement {
     type: typeof SlimeAstType.ExpressionStatement
@@ -319,10 +320,11 @@ export interface SlimeForOfStatement extends ESTree.ForOfStatement, SlimeBaseFor
 }
 
 // --- Declarations ---
-export type SlimeDeclaration =
+export type SlimeDeclaration = ESTree.Declaration & (
     | SlimeFunctionDeclaration
     | SlimeVariableDeclaration
     | SlimeClassDeclaration
+)
 
 export interface SlimeFunctionDeclaration extends ESTree.FunctionDeclaration, SlimeBaseDeclaration, SlimeParenTokens, SlimeBraceTokens {
     type: typeof SlimeAstType.FunctionDeclaration
@@ -359,7 +361,7 @@ export interface SlimeClassDeclaration extends ESTree.ClassDeclaration, SlimeBas
 }
 
 // --- Expressions ---
-export type SlimeExpression =
+export type SlimeExpression = ESTree.Expression & (
     | SlimeIdentifier
     | SlimeLiteral
     | SlimeThisExpression
@@ -385,6 +387,7 @@ export type SlimeExpression =
     | SlimeImportExpression
     | SlimeChainExpression
     | SlimeMetaProperty
+)
 
 export interface SlimeThisExpression extends ESTree.ThisExpression, SlimeBaseExpression {
     type: typeof SlimeAstType.ThisExpression
@@ -393,7 +396,7 @@ export interface SlimeThisExpression extends ESTree.ThisExpression, SlimeBaseExp
 
 export interface SlimeArrayExpression extends ESTree.ArrayExpression, SlimeBaseExpression, SlimeBracketTokens, SlimeCommaListTokens {
     type: typeof SlimeAstType.ArrayExpression
-    elements: (SlimeExpression | SlimeSpreadElement | null)[]
+    // elements 从 ESTree.ArrayExpression 继承
 }
 
 export interface SlimeObjectExpression extends ESTree.ObjectExpression, SlimeBaseExpression, SlimeBraceTokens, SlimeCommaListTokens {
@@ -403,7 +406,7 @@ export interface SlimeObjectExpression extends ESTree.ObjectExpression, SlimeBas
 
 export interface SlimeProperty extends ESTree.Property, SlimeBaseNode {
     type: typeof SlimeAstType.Property
-    key: SlimeExpression
+    key: SlimeExpression | SlimePrivateIdentifier  // 与 ESTree 一致
     value: SlimeExpression | SlimePattern
     kind: "init" | "get" | "set"
     method: boolean
@@ -459,14 +462,14 @@ export interface SlimeUpdateExpression extends ESTree.UpdateExpression, SlimeBas
 
 export interface SlimeBinaryExpression extends ESTree.BinaryExpression, SlimeBaseExpression {
     type: typeof SlimeAstType.BinaryExpression
-    left: SlimeExpression
+    left: SlimeExpression | SlimePrivateIdentifier  // 与 ESTree 一致
     right: SlimeExpression
     operatorToken?: SlimeTokenNode
 }
 
 export interface SlimeAssignmentExpression extends ESTree.AssignmentExpression, SlimeBaseExpression {
     type: typeof SlimeAstType.AssignmentExpression
-    left: SlimePattern | SlimeExpression
+    left: SlimePattern | SlimeMemberExpression  // 与 ESTree 一致：Pattern | MemberExpression
     right: SlimeExpression
     operatorToken?: SlimeTokenNode
 }
@@ -500,14 +503,12 @@ export interface SlimeConditionalExpression extends ESTree.ConditionalExpression
     colon?: SlimeTokenNode
 }
 
-export interface SlimeCallExpression extends ESTree.SimpleCallExpression, SlimeBaseExpression, SlimeParenTokens, SlimeCommaListTokens {
+export interface SlimeSimpleCallExpression extends ESTree.SimpleCallExpression, SlimeBaseCallExpression, SlimeParenTokens, SlimeCommaListTokens {
     type: typeof SlimeAstType.CallExpression
     callee: SlimeExpression | SlimeSuper
     arguments: (SlimeExpression | SlimeSpreadElement)[]
     optional: boolean
 }
-
-export interface SlimeSimpleCallExpression extends SlimeCallExpression {}
 
 export interface SlimeNewExpression extends ESTree.NewExpression, SlimeBaseExpression, SlimeParenTokens, SlimeCommaListTokens {
     type: typeof SlimeAstType.NewExpression
@@ -566,7 +567,7 @@ export interface SlimeImportExpression extends ESTree.ImportExpression, SlimeBas
 
 export interface SlimeChainExpression extends ESTree.ChainExpression, SlimeBaseExpression {
     type: typeof SlimeAstType.ChainExpression
-    expression: SlimeCallExpression | SlimeMemberExpression
+    expression: SlimeSimpleCallExpression | SlimeMemberExpression  // 与 ESTree ChainElement 一致
 }
 
 export interface SlimeMetaProperty extends ESTree.MetaProperty, SlimeBaseExpression {
@@ -584,13 +585,14 @@ export interface SlimeSuper extends ESTree.Super, SlimeBaseNode {
 
 
 // --- Patterns ---
-export type SlimePattern =
+export type SlimePattern = ESTree.Pattern & (
     | SlimeIdentifier
     | SlimeObjectPattern
     | SlimeArrayPattern
     | SlimeRestElement
     | SlimeAssignmentPattern
     | SlimeMemberExpression
+)
 
 export interface SlimeObjectPattern extends ESTree.ObjectPattern, SlimeBasePattern, SlimeBraceTokens, SlimeCommaListTokens {
     type: typeof SlimeAstType.ObjectPattern
@@ -617,7 +619,7 @@ export interface SlimeAssignmentPattern extends ESTree.AssignmentPattern, SlimeB
 
 export interface SlimeAssignmentProperty extends ESTree.AssignmentProperty, SlimeBaseNode {
     type: typeof SlimeAstType.Property
-    key: SlimeExpression
+    key: SlimeExpression | SlimePrivateIdentifier  // 与 ESTree Property 一致
     value: SlimePattern
     shorthand: boolean
     computed: boolean
@@ -627,13 +629,7 @@ export interface SlimeAssignmentProperty extends ESTree.AssignmentProperty, Slim
 }
 
 // --- Classes ---
-export interface SlimeClass extends ESTree.Class, SlimeBaseNode, SlimeBraceTokens {
-    id: SlimeIdentifier | null
-    superClass: SlimeExpression | null
-    body: SlimeClassBody
-    classKeyword?: SlimeTokenNode
-    extendsKeyword?: SlimeTokenNode
-}
+// SlimeClass 是联合类型，定义在文件末尾
 
 export interface SlimeClassBody extends ESTree.ClassBody, SlimeBaseNode, SlimeBraceTokens {
     type: typeof SlimeAstType.ClassBody
@@ -675,11 +671,12 @@ export interface SlimePropertyDefinition extends ESTree.PropertyDefinition, Slim
 }
 
 // --- Modules ---
-export type SlimeModuleDeclaration =
+export type SlimeModuleDeclaration = ESTree.ModuleDeclaration & (
     | SlimeImportDeclaration
     | SlimeExportNamedDeclaration
     | SlimeExportDefaultDeclaration
     | SlimeExportAllDeclaration
+)
 
 export interface SlimeImportDeclaration extends ESTree.ImportDeclaration, SlimeBaseNode, SlimeBraceTokens, SlimeCommaListTokens {
     type: typeof SlimeAstType.ImportDeclaration
@@ -764,14 +761,42 @@ export type SlimeAssignmentOperator = ESTree.AssignmentOperator
 export type SlimeUpdateOperator = ESTree.UpdateOperator
 
 // --- 联合类型（与 ESTree 一致）---
-export type SlimeFunction = SlimeFunctionDeclaration | SlimeFunctionExpression | SlimeArrowFunctionExpression
-export type SlimeClass = SlimeClassDeclaration | SlimeClassExpression
-export type SlimeChainElement = SlimeSimpleCallExpression | SlimeMemberExpression
-export type SlimeLiteral = SlimeSimpleLiteral | SlimeRegExpLiteral | SlimeBigIntLiteral
-export type SlimeModuleSpecifier = SlimeImportSpecifier | SlimeImportDefaultSpecifier | SlimeImportNamespaceSpecifier | SlimeExportSpecifier
+export type SlimeFunction = ESTree.Function & (
+    | SlimeFunctionDeclaration
+    | SlimeFunctionExpression
+    | SlimeArrowFunctionExpression
+)
+
+export type SlimeClass = ESTree.Class & (
+    | SlimeClassDeclaration
+    | SlimeClassExpression
+)
+
+export type SlimeChainElement = ESTree.ChainElement & (
+    | SlimeSimpleCallExpression
+    | SlimeMemberExpression
+)
+
+export type SlimeLiteral = ESTree.Literal & (
+    | SlimeSimpleLiteral
+    | SlimeRegExpLiteral
+    | SlimeBigIntLiteral
+)
+
+export type SlimeModuleSpecifier = ESTree.ModuleSpecifier & (
+    | SlimeImportSpecifier
+    | SlimeImportDefaultSpecifier
+    | SlimeImportNamespaceSpecifier
+    | SlimeExportSpecifier
+)
+
+export type SlimeCallExpression = ESTree.CallExpression & (
+    | SlimeSimpleCallExpression
+    | SlimeNewExpression
+)
 
 // --- Node 联合类型（所有节点类型）---
-export type SlimeNode =
+export type SlimeNode = ESTree.Node & (
     | SlimeProgram
     | SlimeStatement
     | SlimeExpression
@@ -791,3 +816,4 @@ export type SlimeNode =
     | SlimeStaticBlock
     | SlimeSuper
     | SlimePrivateIdentifier
+)
