@@ -568,7 +568,7 @@ export interface SlimeBaseClass extends SlimeBaseNode, ESTree.BaseClass {
 
 export interface SlimeClassBody extends SlimeBaseNode, ESTree.ClassBody {
     type: "ClassBody";
-    body: Array<SlimeMethodDefinition | PropertyDefinition | SlimeStaticBlock>;
+    body: Array<SlimeMethodDefinition | SlimePropertyDefinition | SlimeStaticBlock>;
 }
 
 export interface SlimeMethodDefinition extends SlimeBaseNode, ESTree.MethodDefinition {
