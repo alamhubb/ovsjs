@@ -104,14 +104,7 @@ export interface SlimePrivateIdentifier extends ESTree.PrivateIdentifier, SlimeB
 }
 
 // --- Literals ---
-// ESTree: Literal extends BaseNode, BaseExpression
-export interface SlimeLiteral extends ESTree.Literal, SlimeBaseExpression {
-    type: SlimeAstType.Literal
-    // ESTree: value, raw
-    // Slime 扩展
-    token?: SlimeTokenNode
-}
-
+// SlimeLiteral 是联合类型，定义在文件末尾
 export interface SlimeSimpleLiteral extends ESTree.SimpleLiteral, SlimeBaseExpression {
     type: SlimeAstType.Literal
     token?: SlimeTokenNode
