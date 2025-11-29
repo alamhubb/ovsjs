@@ -1,11 +1,8 @@
 /**
- * SlimeESTree.ts - ESTree 兼容的 AST 接口定义
+ * SlimeESTree.ts - ESTree 兼容�?AST 接口定义
  *
- * 设计原则：
- * 1. 核心字段完全兼容 ESTree 规范
- * 2. type 字符串使用 ESTree 标准值（如 "Identifier"）
- * 3. Token 信息作为可选字段**展平**到节点上（不嵌套）
- * 4. 双继承：同时继承 ESTree 类型 + Slime 基础类型
+ * 设计原则�? * 1. 核心字段完全兼容 ESTree 规范
+ * 2. type 字符串使�?ESTree 标准值（�?"Identifier"�? * 3. Token 信息作为可选字�?*展平**到节点上（不嵌套�? * 4. 双继承：同时继承 ESTree 类型 + Slime 基础类型
  *
  * @see https://github.com/estree/estree
  */
@@ -23,10 +20,9 @@ export type SlimePosition = ESTree.Position
 export type SlimeComment = ESTree.Comment
 
 // ============================================
-// Slime 通用 Token 扩展字段（mixin 接口）
-// ============================================
+// Slime 通用 Token 扩展字段（mixin 接口�?// ============================================
 
-/** 通用的括号 Token 字段 */
+/** 通用的括�?Token 字段 */
 export interface SlimeParenTokens {
     lParen?: SlimeTokenNode
     rParen?: SlimeTokenNode
@@ -51,16 +47,14 @@ export interface SlimeCommaListTokens {
 }
 
 // ============================================
-// Slime 扩展的 ESTree 类型
+// Slime 扩展�?ESTree 类型
 // 双继承：ESTree 类型 + SlimeBaseNode（位置信息）
-// Token 信息展平为可选字段
-// ============================================
+// Token 信息展平为可选字�?// ============================================
 
-// --- 基础节点（双继承） ---
+// --- 基础节点（双继承�?---
 export interface SlimeNode extends ESTree.BaseNode, SlimeBaseNode {
     type: string
-    loc: SubhutiSourceLocation  // Slime 的位置信息（必需）
-}
+    loc: SubhutiSourceLocation  // Slime 的位置信息（必需�?}
 
 // --- Program ---
 export interface SlimeProgram extends ESTree.Program, SlimeNode {
@@ -178,7 +172,7 @@ export interface SlimeDebuggerStatement extends ESTree.DebuggerStatement, SlimeN
     semicolon?: SlimeTokenNode
 }
 
-export interface SlimeReturnStatement extends Omit<ESTree.ReturnStatement, 'argument'>, SlimeNode {
+export interface SlimeReturnStatement extends ESTree.ReturnStatement, SlimeNode {
     type: "ReturnStatement"
     argument: SlimeExpression | null
     returnKeyword?: SlimeTokenNode
@@ -206,14 +200,14 @@ export interface SlimeLabeledStatement extends ESTree.LabeledStatement, SlimeNod
     colon?: SlimeTokenNode
 }
 
-export interface SlimeWithStatement extends Omit<ESTree.WithStatement, 'object' | 'body'>, SlimeNode, SlimeParenTokens {
+export interface SlimeWithStatement extends ESTree.WithStatement, SlimeNode, SlimeParenTokens {
     type: "WithStatement"
     object: SlimeExpression
     body: SlimeStatement
     withKeyword?: SlimeTokenNode
 }
 
-export interface SlimeIfStatement extends Omit<ESTree.IfStatement, 'test' | 'consequent' | 'alternate'>, SlimeNode, SlimeParenTokens {
+export interface SlimeIfStatement extends ESTree.IfStatement, SlimeNode, SlimeParenTokens {
     type: "IfStatement"
     test: SlimeExpression
     consequent: SlimeStatement
@@ -222,14 +216,14 @@ export interface SlimeIfStatement extends Omit<ESTree.IfStatement, 'test' | 'con
     elseKeyword?: SlimeTokenNode
 }
 
-export interface SlimeSwitchStatement extends Omit<ESTree.SwitchStatement, 'discriminant' | 'cases'>, SlimeNode, SlimeParenTokens, SlimeBraceTokens {
+export interface SlimeSwitchStatement extends ESTree.SwitchStatement, SlimeNode, SlimeParenTokens, SlimeBraceTokens {
     type: "SwitchStatement"
     discriminant: SlimeExpression
     cases: SlimeSwitchCase[]
     switchKeyword?: SlimeTokenNode
 }
 
-export interface SlimeSwitchCase extends Omit<ESTree.SwitchCase, 'test' | 'consequent'>, SlimeNode {
+export interface SlimeSwitchCase extends ESTree.SwitchCase, SlimeNode {
     type: "SwitchCase"
     test: SlimeExpression | null
     consequent: SlimeStatement[]
@@ -238,14 +232,14 @@ export interface SlimeSwitchCase extends Omit<ESTree.SwitchCase, 'test' | 'conse
     colon?: SlimeTokenNode
 }
 
-export interface SlimeThrowStatement extends Omit<ESTree.ThrowStatement, 'argument'>, SlimeNode {
+export interface SlimeThrowStatement extends ESTree.ThrowStatement, SlimeNode {
     type: "ThrowStatement"
     argument: SlimeExpression
     throwKeyword?: SlimeTokenNode
     semicolon?: SlimeTokenNode
 }
 
-export interface SlimeTryStatement extends Omit<ESTree.TryStatement, 'block' | 'handler' | 'finalizer'>, SlimeNode {
+export interface SlimeTryStatement extends ESTree.TryStatement, SlimeNode {
     type: "TryStatement"
     block: SlimeBlockStatement
     handler: SlimeCatchClause | null
@@ -254,21 +248,21 @@ export interface SlimeTryStatement extends Omit<ESTree.TryStatement, 'block' | '
     finallyKeyword?: SlimeTokenNode
 }
 
-export interface SlimeCatchClause extends Omit<ESTree.CatchClause, 'param' | 'body'>, SlimeNode, SlimeParenTokens {
+export interface SlimeCatchClause extends ESTree.CatchClause, SlimeNode, SlimeParenTokens {
     type: "CatchClause"
     param: SlimePattern | null
     body: SlimeBlockStatement
     catchKeyword?: SlimeTokenNode
 }
 
-export interface SlimeWhileStatement extends Omit<ESTree.WhileStatement, 'test' | 'body'>, SlimeNode, SlimeParenTokens {
+export interface SlimeWhileStatement extends ESTree.WhileStatement, SlimeNode, SlimeParenTokens {
     type: "WhileStatement"
     test: SlimeExpression
     body: SlimeStatement
     whileKeyword?: SlimeTokenNode
 }
 
-export interface SlimeDoWhileStatement extends Omit<ESTree.DoWhileStatement, 'body' | 'test'>, SlimeNode, SlimeParenTokens {
+export interface SlimeDoWhileStatement extends ESTree.DoWhileStatement, SlimeNode, SlimeParenTokens {
     type: "DoWhileStatement"
     body: SlimeStatement
     test: SlimeExpression
@@ -277,7 +271,7 @@ export interface SlimeDoWhileStatement extends Omit<ESTree.DoWhileStatement, 'bo
     semicolon?: SlimeTokenNode
 }
 
-export interface SlimeForStatement extends Omit<ESTree.ForStatement, 'init' | 'test' | 'update' | 'body'>, SlimeNode, SlimeParenTokens {
+export interface SlimeForStatement extends ESTree.ForStatement, SlimeNode, SlimeParenTokens {
     type: "ForStatement"
     init: SlimeVariableDeclaration | SlimeExpression | null
     test: SlimeExpression | null
@@ -288,7 +282,7 @@ export interface SlimeForStatement extends Omit<ESTree.ForStatement, 'init' | 't
     semicolon2?: SlimeTokenNode
 }
 
-export interface SlimeForInStatement extends Omit<ESTree.ForInStatement, 'left' | 'right' | 'body'>, SlimeNode, SlimeParenTokens {
+export interface SlimeForInStatement extends ESTree.ForInStatement, SlimeNode, SlimeParenTokens {
     type: "ForInStatement"
     left: SlimeVariableDeclaration | SlimePattern
     right: SlimeExpression
@@ -297,7 +291,7 @@ export interface SlimeForInStatement extends Omit<ESTree.ForInStatement, 'left' 
     inKeyword?: SlimeTokenNode
 }
 
-export interface SlimeForOfStatement extends Omit<ESTree.ForOfStatement, 'left' | 'right' | 'body'>, SlimeNode, SlimeParenTokens {
+export interface SlimeForOfStatement extends ESTree.ForOfStatement, SlimeNode, SlimeParenTokens {
     type: "ForOfStatement"
     left: SlimeVariableDeclaration | SlimePattern
     right: SlimeExpression
@@ -314,7 +308,7 @@ export type SlimeDeclaration =
     | SlimeVariableDeclaration
     | SlimeClassDeclaration
 
-export interface SlimeFunctionDeclaration extends Omit<ESTree.FunctionDeclaration, 'id' | 'params' | 'body'>, SlimeNode, SlimeParenTokens, SlimeBraceTokens {
+export interface SlimeFunctionDeclaration extends ESTree.FunctionDeclaration, SlimeNode, SlimeParenTokens, SlimeBraceTokens {
     type: "FunctionDeclaration"
     id: SlimeIdentifier | null
     params: SlimePattern[]
@@ -325,21 +319,21 @@ export interface SlimeFunctionDeclaration extends Omit<ESTree.FunctionDeclaratio
     commas?: SlimeTokenNode[]
 }
 
-export interface SlimeVariableDeclaration extends Omit<ESTree.VariableDeclaration, 'declarations'>, SlimeNode, SlimeCommaListTokens {
+export interface SlimeVariableDeclaration extends ESTree.VariableDeclaration, SlimeNode, SlimeCommaListTokens {
     type: "VariableDeclaration"
     declarations: SlimeVariableDeclarator[]
     keyword?: SlimeTokenNode  // var/let/const
     semicolon?: SlimeTokenNode
 }
 
-export interface SlimeVariableDeclarator extends Omit<ESTree.VariableDeclarator, 'id' | 'init'>, SlimeNode {
+export interface SlimeVariableDeclarator extends ESTree.VariableDeclarator, SlimeNode {
     type: "VariableDeclarator"
     id: SlimePattern
     init: SlimeExpression | null
     equals?: SlimeTokenNode
 }
 
-export interface SlimeClassDeclaration extends Omit<ESTree.ClassDeclaration, 'id' | 'superClass' | 'body'>, SlimeNode, SlimeBraceTokens {
+export interface SlimeClassDeclaration extends ESTree.ClassDeclaration, SlimeNode, SlimeBraceTokens {
     type: "ClassDeclaration"
     id: SlimeIdentifier | null
     superClass: SlimeExpression | null
@@ -381,17 +375,17 @@ export interface SlimeThisExpression extends ESTree.ThisExpression, SlimeNode {
     thisKeyword?: SlimeTokenNode
 }
 
-export interface SlimeArrayExpression extends Omit<ESTree.ArrayExpression, 'elements'>, SlimeNode, SlimeBracketTokens, SlimeCommaListTokens {
+export interface SlimeArrayExpression extends ESTree.ArrayExpression, SlimeNode, SlimeBracketTokens, SlimeCommaListTokens {
     type: "ArrayExpression"
     elements: (SlimeExpression | SlimeSpreadElement | null)[]
 }
 
-export interface SlimeObjectExpression extends Omit<ESTree.ObjectExpression, 'properties'>, SlimeNode, SlimeBraceTokens, SlimeCommaListTokens {
+export interface SlimeObjectExpression extends ESTree.ObjectExpression, SlimeNode, SlimeBraceTokens, SlimeCommaListTokens {
     type: "ObjectExpression"
     properties: (SlimeProperty | SlimeSpreadElement)[]
 }
 
-export interface SlimeProperty extends Omit<ESTree.Property, 'key' | 'value'>, SlimeNode {
+export interface SlimeProperty extends ESTree.Property, SlimeNode {
     type: "Property"
     key: SlimeExpression
     value: SlimeExpression | SlimePattern
@@ -406,7 +400,7 @@ export interface SlimeProperty extends Omit<ESTree.Property, 'key' | 'value'>, S
     rBracket?: SlimeTokenNode
 }
 
-export interface SlimeFunctionExpression extends Omit<ESTree.FunctionExpression, 'id' | 'params' | 'body'>, SlimeNode, SlimeParenTokens, SlimeBraceTokens {
+export interface SlimeFunctionExpression extends ESTree.FunctionExpression, SlimeNode, SlimeParenTokens, SlimeBraceTokens {
     type: "FunctionExpression"
     id: SlimeIdentifier | null
     params: SlimePattern[]
@@ -417,7 +411,7 @@ export interface SlimeFunctionExpression extends Omit<ESTree.FunctionExpression,
     commas?: SlimeTokenNode[]
 }
 
-export interface SlimeArrowFunctionExpression extends Omit<ESTree.ArrowFunctionExpression, 'params' | 'body'>, SlimeNode, SlimeParenTokens {
+export interface SlimeArrowFunctionExpression extends ESTree.ArrowFunctionExpression, SlimeNode, SlimeParenTokens {
     type: "ArrowFunctionExpression"
     params: SlimePattern[]
     body: SlimeBlockStatement | SlimeExpression
@@ -426,7 +420,7 @@ export interface SlimeArrowFunctionExpression extends Omit<ESTree.ArrowFunctionE
     commas?: SlimeTokenNode[]
 }
 
-export interface SlimeClassExpression extends Omit<ESTree.ClassExpression, 'id' | 'superClass' | 'body'>, SlimeNode, SlimeBraceTokens {
+export interface SlimeClassExpression extends ESTree.ClassExpression, SlimeNode, SlimeBraceTokens {
     type: "ClassExpression"
     id: SlimeIdentifier | null
     superClass: SlimeExpression | null
@@ -435,40 +429,40 @@ export interface SlimeClassExpression extends Omit<ESTree.ClassExpression, 'id' 
     extendsKeyword?: SlimeTokenNode
 }
 
-export interface SlimeUnaryExpression extends Omit<ESTree.UnaryExpression, 'argument'>, SlimeNode {
+export interface SlimeUnaryExpression extends ESTree.UnaryExpression, SlimeNode {
     type: "UnaryExpression"
     argument: SlimeExpression
     operatorToken?: SlimeTokenNode
 }
 
-export interface SlimeUpdateExpression extends Omit<ESTree.UpdateExpression, 'argument'>, SlimeNode {
+export interface SlimeUpdateExpression extends ESTree.UpdateExpression, SlimeNode {
     type: "UpdateExpression"
     argument: SlimeExpression
     operatorToken?: SlimeTokenNode
 }
 
-export interface SlimeBinaryExpression extends Omit<ESTree.BinaryExpression, 'left' | 'right'>, SlimeNode {
+export interface SlimeBinaryExpression extends ESTree.BinaryExpression, SlimeNode {
     type: "BinaryExpression"
     left: SlimeExpression
     right: SlimeExpression
     operatorToken?: SlimeTokenNode
 }
 
-export interface SlimeAssignmentExpression extends Omit<ESTree.AssignmentExpression, 'left' | 'right'>, SlimeNode {
+export interface SlimeAssignmentExpression extends ESTree.AssignmentExpression, SlimeNode {
     type: "AssignmentExpression"
     left: SlimePattern | SlimeExpression
     right: SlimeExpression
     operatorToken?: SlimeTokenNode
 }
 
-export interface SlimeLogicalExpression extends Omit<ESTree.LogicalExpression, 'left' | 'right'>, SlimeNode {
+export interface SlimeLogicalExpression extends ESTree.LogicalExpression, SlimeNode {
     type: "LogicalExpression"
     left: SlimeExpression
     right: SlimeExpression
     operatorToken?: SlimeTokenNode
 }
 
-export interface SlimeMemberExpression extends Omit<ESTree.MemberExpression, 'object' | 'property'>, SlimeNode {
+export interface SlimeMemberExpression extends ESTree.MemberExpression, SlimeNode {
     type: "MemberExpression"
     object: SlimeExpression | SlimeSuper
     property: SlimeExpression | SlimePrivateIdentifier
@@ -480,7 +474,7 @@ export interface SlimeMemberExpression extends Omit<ESTree.MemberExpression, 'ob
     rBracket?: SlimeTokenNode
 }
 
-export interface SlimeConditionalExpression extends Omit<ESTree.ConditionalExpression, 'test' | 'consequent' | 'alternate'>, SlimeNode {
+export interface SlimeConditionalExpression extends ESTree.ConditionalExpression, SlimeNode {
     type: "ConditionalExpression"
     test: SlimeExpression
     consequent: SlimeExpression
@@ -489,7 +483,7 @@ export interface SlimeConditionalExpression extends Omit<ESTree.ConditionalExpre
     colon?: SlimeTokenNode
 }
 
-export interface SlimeCallExpression extends Omit<ESTree.SimpleCallExpression, 'callee' | 'arguments'>, SlimeNode, SlimeParenTokens, SlimeCommaListTokens {
+export interface SlimeCallExpression extends ESTree.SimpleCallExpression, SlimeNode, SlimeParenTokens, SlimeCommaListTokens {
     type: "CallExpression"
     callee: SlimeExpression | SlimeSuper
     arguments: (SlimeExpression | SlimeSpreadElement)[]
@@ -498,25 +492,25 @@ export interface SlimeCallExpression extends Omit<ESTree.SimpleCallExpression, '
 
 export interface SlimeSimpleCallExpression extends SlimeCallExpression {}
 
-export interface SlimeNewExpression extends Omit<ESTree.NewExpression, 'callee' | 'arguments'>, SlimeNode, SlimeParenTokens, SlimeCommaListTokens {
+export interface SlimeNewExpression extends ESTree.NewExpression, SlimeNode, SlimeParenTokens, SlimeCommaListTokens {
     type: "NewExpression"
     callee: SlimeExpression
     arguments: (SlimeExpression | SlimeSpreadElement)[]
     newKeyword?: SlimeTokenNode
 }
 
-export interface SlimeSequenceExpression extends Omit<ESTree.SequenceExpression, 'expressions'>, SlimeNode, SlimeCommaListTokens {
+export interface SlimeSequenceExpression extends ESTree.SequenceExpression, SlimeNode, SlimeCommaListTokens {
     type: "SequenceExpression"
     expressions: SlimeExpression[]
 }
 
-export interface SlimeTemplateLiteral extends Omit<ESTree.TemplateLiteral, 'quasis' | 'expressions'>, SlimeNode {
+export interface SlimeTemplateLiteral extends ESTree.TemplateLiteral, SlimeNode {
     type: "TemplateLiteral"
     quasis: SlimeTemplateElement[]
     expressions: SlimeExpression[]
 }
 
-export interface SlimeTaggedTemplateExpression extends Omit<ESTree.TaggedTemplateExpression, 'tag' | 'quasi'>, SlimeNode {
+export interface SlimeTaggedTemplateExpression extends ESTree.TaggedTemplateExpression, SlimeNode {
     type: "TaggedTemplateExpression"
     tag: SlimeExpression
     quasi: SlimeTemplateLiteral
@@ -527,13 +521,13 @@ export interface SlimeTemplateElement extends ESTree.TemplateElement, SlimeNode 
     token?: SlimeTokenNode
 }
 
-export interface SlimeSpreadElement extends Omit<ESTree.SpreadElement, 'argument'>, SlimeNode {
+export interface SlimeSpreadElement extends ESTree.SpreadElement, SlimeNode {
     type: "SpreadElement"
     argument: SlimeExpression
     ellipsis?: SlimeTokenNode
 }
 
-export interface SlimeYieldExpression extends Omit<ESTree.YieldExpression, 'argument'>, SlimeNode {
+export interface SlimeYieldExpression extends ESTree.YieldExpression, SlimeNode {
     type: "YieldExpression"
     argument: SlimeExpression | null
     delegate: boolean
@@ -541,24 +535,24 @@ export interface SlimeYieldExpression extends Omit<ESTree.YieldExpression, 'argu
     asterisk?: SlimeTokenNode
 }
 
-export interface SlimeAwaitExpression extends Omit<ESTree.AwaitExpression, 'argument'>, SlimeNode {
+export interface SlimeAwaitExpression extends ESTree.AwaitExpression, SlimeNode {
     type: "AwaitExpression"
     argument: SlimeExpression
     awaitKeyword?: SlimeTokenNode
 }
 
-export interface SlimeImportExpression extends Omit<ESTree.ImportExpression, 'source'>, SlimeNode, SlimeParenTokens {
+export interface SlimeImportExpression extends ESTree.ImportExpression, SlimeNode, SlimeParenTokens {
     type: "ImportExpression"
     source: SlimeExpression
     importKeyword?: SlimeTokenNode
 }
 
-export interface SlimeChainExpression extends Omit<ESTree.ChainExpression, 'expression'>, SlimeNode {
+export interface SlimeChainExpression extends ESTree.ChainExpression, SlimeNode {
     type: "ChainExpression"
     expression: SlimeCallExpression | SlimeMemberExpression
 }
 
-export interface SlimeMetaProperty extends Omit<ESTree.MetaProperty, 'meta' | 'property'>, SlimeNode {
+export interface SlimeMetaProperty extends ESTree.MetaProperty, SlimeNode {
     type: "MetaProperty"
     meta: SlimeIdentifier
     property: SlimeIdentifier
@@ -581,30 +575,30 @@ export type SlimePattern =
     | SlimeAssignmentPattern
     | SlimeMemberExpression
 
-export interface SlimeObjectPattern extends Omit<ESTree.ObjectPattern, 'properties'>, SlimeNode, SlimeBraceTokens, SlimeCommaListTokens {
+export interface SlimeObjectPattern extends ESTree.ObjectPattern, SlimeNode, SlimeBraceTokens, SlimeCommaListTokens {
     type: "ObjectPattern"
     properties: (SlimeAssignmentProperty | SlimeRestElement)[]
 }
 
-export interface SlimeArrayPattern extends Omit<ESTree.ArrayPattern, 'elements'>, SlimeNode, SlimeBracketTokens, SlimeCommaListTokens {
+export interface SlimeArrayPattern extends ESTree.ArrayPattern, SlimeNode, SlimeBracketTokens, SlimeCommaListTokens {
     type: "ArrayPattern"
     elements: (SlimePattern | null)[]
 }
 
-export interface SlimeRestElement extends Omit<ESTree.RestElement, 'argument'>, SlimeNode {
+export interface SlimeRestElement extends ESTree.RestElement, SlimeNode {
     type: "RestElement"
     argument: SlimePattern
     ellipsis?: SlimeTokenNode
 }
 
-export interface SlimeAssignmentPattern extends Omit<ESTree.AssignmentPattern, 'left' | 'right'>, SlimeNode {
+export interface SlimeAssignmentPattern extends ESTree.AssignmentPattern, SlimeNode {
     type: "AssignmentPattern"
     left: SlimePattern
     right: SlimeExpression
     equals?: SlimeTokenNode
 }
 
-export interface SlimeAssignmentProperty extends Omit<ESTree.AssignmentProperty, 'key' | 'value'>, SlimeNode {
+export interface SlimeAssignmentProperty extends ESTree.AssignmentProperty, SlimeNode {
     type: "Property"
     key: SlimeExpression
     value: SlimePattern
@@ -616,7 +610,7 @@ export interface SlimeAssignmentProperty extends Omit<ESTree.AssignmentProperty,
 }
 
 // --- Classes ---
-export interface SlimeClass extends Omit<ESTree.Class, 'id' | 'superClass' | 'body'>, SlimeNode, SlimeBraceTokens {
+export interface SlimeClass extends ESTree.Class, SlimeNode, SlimeBraceTokens {
     id: SlimeIdentifier | null
     superClass: SlimeExpression | null
     body: SlimeClassBody
@@ -624,7 +618,7 @@ export interface SlimeClass extends Omit<ESTree.Class, 'id' | 'superClass' | 'bo
     extendsKeyword?: SlimeTokenNode
 }
 
-export interface SlimeClassBody extends Omit<ESTree.ClassBody, 'body'>, SlimeNode, SlimeBraceTokens {
+export interface SlimeClassBody extends ESTree.ClassBody, SlimeNode, SlimeBraceTokens {
     type: "ClassBody"
     body: SlimeClassElement[]
 }
@@ -634,7 +628,7 @@ export type SlimeClassElement =
     | SlimePropertyDefinition
     | SlimeStaticBlock
 
-export interface SlimeMethodDefinition extends Omit<ESTree.MethodDefinition, 'key' | 'value'>, SlimeNode, SlimeParenTokens, SlimeBraceTokens {
+export interface SlimeMethodDefinition extends ESTree.MethodDefinition, SlimeNode, SlimeParenTokens, SlimeBraceTokens {
     type: "MethodDefinition"
     key: SlimeExpression | SlimePrivateIdentifier
     value: SlimeFunctionExpression
@@ -650,7 +644,7 @@ export interface SlimeMethodDefinition extends Omit<ESTree.MethodDefinition, 'ke
     rBracketKey?: SlimeTokenNode
 }
 
-export interface SlimePropertyDefinition extends Omit<ESTree.PropertyDefinition, 'key' | 'value'>, SlimeNode {
+export interface SlimePropertyDefinition extends ESTree.PropertyDefinition, SlimeNode {
     type: "PropertyDefinition"
     key: SlimeExpression | SlimePrivateIdentifier
     value: SlimeExpression | null
@@ -670,7 +664,7 @@ export type SlimeModuleDeclaration =
     | SlimeExportDefaultDeclaration
     | SlimeExportAllDeclaration
 
-export interface SlimeImportDeclaration extends Omit<ESTree.ImportDeclaration, 'specifiers' | 'source'>, SlimeNode, SlimeBraceTokens, SlimeCommaListTokens {
+export interface SlimeImportDeclaration extends ESTree.ImportDeclaration, SlimeNode, SlimeBraceTokens, SlimeCommaListTokens {
     type: "ImportDeclaration"
     specifiers: (SlimeImportSpecifier | SlimeImportDefaultSpecifier | SlimeImportNamespaceSpecifier)[]
     source: SlimeLiteral
@@ -679,26 +673,26 @@ export interface SlimeImportDeclaration extends Omit<ESTree.ImportDeclaration, '
     semicolon?: SlimeTokenNode
 }
 
-export interface SlimeImportSpecifier extends Omit<ESTree.ImportSpecifier, 'imported' | 'local'>, SlimeNode {
+export interface SlimeImportSpecifier extends ESTree.ImportSpecifier, SlimeNode {
     type: "ImportSpecifier"
     imported: SlimeIdentifier | SlimeLiteral
     local: SlimeIdentifier
     asKeyword?: SlimeTokenNode
 }
 
-export interface SlimeImportDefaultSpecifier extends Omit<ESTree.ImportDefaultSpecifier, 'local'>, SlimeNode {
+export interface SlimeImportDefaultSpecifier extends ESTree.ImportDefaultSpecifier, SlimeNode {
     type: "ImportDefaultSpecifier"
     local: SlimeIdentifier
 }
 
-export interface SlimeImportNamespaceSpecifier extends Omit<ESTree.ImportNamespaceSpecifier, 'local'>, SlimeNode {
+export interface SlimeImportNamespaceSpecifier extends ESTree.ImportNamespaceSpecifier, SlimeNode {
     type: "ImportNamespaceSpecifier"
     local: SlimeIdentifier
     asterisk?: SlimeTokenNode
     asKeyword?: SlimeTokenNode
 }
 
-export interface SlimeExportNamedDeclaration extends Omit<ESTree.ExportNamedDeclaration, 'declaration' | 'specifiers' | 'source'>, SlimeNode, SlimeBraceTokens, SlimeCommaListTokens {
+export interface SlimeExportNamedDeclaration extends ESTree.ExportNamedDeclaration, SlimeNode, SlimeBraceTokens, SlimeCommaListTokens {
     type: "ExportNamedDeclaration"
     declaration: SlimeDeclaration | null
     specifiers: SlimeExportSpecifier[]
@@ -708,14 +702,14 @@ export interface SlimeExportNamedDeclaration extends Omit<ESTree.ExportNamedDecl
     semicolon?: SlimeTokenNode
 }
 
-export interface SlimeExportSpecifier extends Omit<ESTree.ExportSpecifier, 'local' | 'exported'>, SlimeNode {
+export interface SlimeExportSpecifier extends ESTree.ExportSpecifier, SlimeNode {
     type: "ExportSpecifier"
     local: SlimeIdentifier | SlimeLiteral
     exported: SlimeIdentifier | SlimeLiteral
     asKeyword?: SlimeTokenNode
 }
 
-export interface SlimeExportDefaultDeclaration extends Omit<ESTree.ExportDefaultDeclaration, 'declaration'>, SlimeNode {
+export interface SlimeExportDefaultDeclaration extends ESTree.ExportDefaultDeclaration, SlimeNode {
     type: "ExportDefaultDeclaration"
     declaration: SlimeMaybeNamedFunctionDeclaration | SlimeMaybeNamedClassDeclaration | SlimeExpression
     exportKeyword?: SlimeTokenNode
@@ -723,7 +717,7 @@ export interface SlimeExportDefaultDeclaration extends Omit<ESTree.ExportDefault
     semicolon?: SlimeTokenNode
 }
 
-export interface SlimeExportAllDeclaration extends Omit<ESTree.ExportAllDeclaration, 'source' | 'exported'>, SlimeNode {
+export interface SlimeExportAllDeclaration extends ESTree.ExportAllDeclaration, SlimeNode {
     type: "ExportAllDeclaration"
     source: SlimeLiteral
     exported: SlimeIdentifier | SlimeLiteral | null
@@ -735,12 +729,12 @@ export interface SlimeExportAllDeclaration extends Omit<ESTree.ExportAllDeclarat
 }
 
 // --- MaybeNamed (for export default) ---
-export interface SlimeMaybeNamedFunctionDeclaration extends Omit<SlimeFunctionDeclaration, 'id'> {
+export interface SlimeMaybeNamedFunctionDeclaration extends SlimeFunctionDeclaration {
     type: "FunctionDeclaration"
     id: SlimeIdentifier | null
 }
 
-export interface SlimeMaybeNamedClassDeclaration extends Omit<SlimeClassDeclaration, 'id'> {
+export interface SlimeMaybeNamedClassDeclaration extends SlimeClassDeclaration {
     type: "ClassDeclaration"
     id: SlimeIdentifier | null
 }

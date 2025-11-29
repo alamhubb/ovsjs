@@ -41,5 +41,8 @@
     "fast-cartesian": "^9.0.1",
     "lru-cache": "^11.0.0",
     "mnemonist": "^0.40.3"
+  },
+  "devDependencies": {
+    "@types/estree": "1.0.6"
   }
 }
