@@ -1,4 +1,3 @@
-import SubhutiMatchToken from "./SubhutiMatchToken.ts";
 import type { SourceLocation, Position } from "estree";
 
 export interface SubhutiSourceLocation extends SourceLocation {
