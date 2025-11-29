@@ -824,26 +824,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
                 //     ...
                 // })
             }
-        } else {
-            // ========================================
-            // 非顶层规则：检查是否会导致无限循环（循环检测）
-            // ========================================
-
-            // 只在非 allowError 上下文中检测
-            // allowErrorDepth = 0: 普通规则、AtLeastOne 第一次执行
-            // allowErrorDepth > 0: Option/Many/Or 分支、AtLeastOne 后续循环
-            if (noTokenConsumed && this.allowErrorDepth === 0) {
-                // 🔍 分析模式：不抛异常
-                if (!this._analysisMode) {
-                    throw this.createInfiniteLoopError(
-                        ruleName,
-                        '规则成功时必须消费至少一个 token，或使用 this.parserFail() 标记失败'
-                    )
-                } else {
-                    // 分析模式：标记失败
-                    this._parseSuccess = false
-                }
-            }
         }
     }
 
