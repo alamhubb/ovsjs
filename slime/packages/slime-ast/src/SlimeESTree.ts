@@ -46,19 +46,6 @@ export interface SlimeComment extends SlimeBaseNodeWithoutComments, ESTree.Comme
     value: string;
 }
 
-export interface SourceLocation {
-    source?: string | null | undefined;
-    start: Position;
-    end: Position;
-}
-
-export interface Position {
-    /** >= 1 */
-    line: number;
-    /** >= 0 */
-    column: number;
-}
-
 export interface SlimeProgram extends SlimeBaseNode, ESTree.Program {
     type: "Program";
     sourceType: "script" | "module";
@@ -242,7 +229,7 @@ export interface SlimeVariableDeclarator extends SlimeBaseNode, ESTree.VariableD
     init?: SlimeExpression | null | undefined;
 }
 
-export interface ExpressionMap {
+export interface SlimeExpressionMap {
     SlimeArrayExpression: SlimeArrayExpression;
     SlimeArrowFunctionExpression: SlimeArrowFunctionExpression;
     SlimeAssignmentExpression: SlimeAssignmentExpression;
@@ -270,7 +257,7 @@ export interface ExpressionMap {
     SlimeYieldExpression: SlimeYieldExpression;
 }
 
-export type SlimeExpression = ExpressionMap[keyof ExpressionMap];
+export type SlimeExpression = SlimeExpressionMap[keyof SlimeExpressionMap];
 
 export interface SlimeBaseExpression extends SlimeBaseNode, ESTree.BaseExpression {
 }
