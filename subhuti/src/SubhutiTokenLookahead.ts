@@ -44,9 +44,14 @@ export default class SubhutiTokenLookahead {
         return !this._parseSuccess
     }
 
-
-    // SubhutiParser，前瞻失败返回 undefined，应该同时设置解析失败
-    protected parserFailFun(): never {
+    /**
+     * 标记解析失败（用于手动失败）
+     *
+     * 用于自定义验证逻辑中标记解析失败
+     *
+     * @returns never (实际返回 undefined，但类型声明为 never 以便链式调用)
+     */
+    protected setParseFail(): never {
         this._parseSuccess = false
         return undefined as never
     }

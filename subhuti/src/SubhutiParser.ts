@@ -767,18 +767,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     }
 
     /**
-     * 标记解析失败（用于手动失败）
-     *
-     * 用于自定义验证逻辑中标记解析失败
-     *
-     * @returns undefined
-     */
-    parserFailFun(): undefined {
-        this._parseSuccess = false
-        return undefined
-    }
-
-    /**
      * 顶层规则失败时的错误处理
      *
      * @param ruleName 规则名
