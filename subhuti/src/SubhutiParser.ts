@@ -736,8 +736,8 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         for (const record of this._partialMatchCandidates) {
             // 必须从指定位置开始，且不能超过同步点
             if (record.startTokenIndex === fromTokenIndex && record.endTokenIndex <= maxEndTokenIndex) {
-                // 选择 endTokenIndex 最大的（最接近同步点）
-                if (!best || record.endTokenIndex > best.endTokenIndex) {
+                // 选择 endTokenIndex 最大的，如果相同则选择后记录的（后尝试的分支更通用）
+                if (!best || record.endTokenIndex >= best.endTokenIndex) {
                     best = record
                 }
             }
