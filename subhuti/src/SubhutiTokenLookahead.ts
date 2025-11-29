@@ -1,18 +1,18 @@
 /**
  * Subhuti Token Lookahead - Token 前瞻基础类（抽象）
- * 
+ *
  * 职责：
  * 1. Token 前瞻（只读查询）
  * 2. 行终止符检查
  * 3. 对应 ECMAScript® 2025 规范中的所有 [lookahead ...] 约束
- * 
+ *
  * 设计模式：
  * - 抽象类，定义访问接口（tokens, currentIndex, curToken）
  * - 子类（SubhutiParser）实现具体访问逻辑
  * - 避免循环依赖，实现依赖倒置
- * 
+ *
  * 规范地址：https://tc39.es/ecma262/2025/#sec-grammar-summary
- * 
+ *
  * @version 3.0.0
  */
 
@@ -22,12 +22,12 @@ export default class SubhutiTokenLookahead {
     // ============================================
     // Token 数据（protected，子类可访问）
     // ============================================
-    
+
     /**
      * Token 数组
      */
     protected _tokens: SubhutiMatchToken[] = []
-    
+
     /**
      * 当前 token 索引
      */
@@ -40,9 +40,13 @@ export default class SubhutiTokenLookahead {
      */
     protected _parseSuccess = true
 
+    get parserFail() {
+        return !this._parseSuccess
+    }
+
 
     // SubhutiParser，前瞻失败返回 undefined，应该同时设置解析失败
-    protected parserFail(): never {
+    protected parserFailFun(): never {
         this._parseSuccess = false
         return undefined as never
     }
@@ -53,10 +57,11 @@ export default class SubhutiTokenLookahead {
     get curToken(): SubhutiMatchToken | undefined {
         return this._tokens[this.tokenIndex]
     }
+
     // ============================================
     // 层级 1：私有查询方法（内部实现，返回 boolean）
     // ============================================
-    
+
     /**
      * 前瞻：获取未来的 token（不消费）
      *
@@ -100,7 +105,7 @@ export default class SubhutiTokenLookahead {
         }
         return result
     }
-    
+
     /**
      * [lookahead = token]
      * 规范：正向前瞻，检查下一个 token 是否匹配
@@ -118,7 +123,7 @@ export default class SubhutiTokenLookahead {
         // EOF 时返回 true（认为"不是任何具体 token"）
         return token ? token.tokenName !== tokenName : true
     }
-    
+
     /**
      * [lookahead ∈ {t1, t2, ...}]
      * 规范：正向集合前瞻，检查下一个 token 是否在集合中
@@ -137,7 +142,7 @@ export default class SubhutiTokenLookahead {
         // EOF 时返回 true（认为"不在任何集合中"）
         return token ? !tokenNames.includes(token.tokenName) : true
     }
-    
+
     /**
      * [lookahead = t1 t2 ...]
      * 规范：序列前瞻，检查连续的 token 序列是否匹配
@@ -157,7 +162,7 @@ export default class SubhutiTokenLookahead {
     private lookaheadNotSequence(tokenNames: string[]): boolean {
         return !this.lookaheadSequence(tokenNames)
     }
-    
+
 
     /**
      * 检查：token 序列匹配且中间无换行符

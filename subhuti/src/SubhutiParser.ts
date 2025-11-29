@@ -609,7 +609,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * Or 规则 - 顺序选择（PEG 风格）
      *
      * 核心逻辑：
-     * - 前 N-1 个分支：允许失败（allowErrorDepth +1）
      * - 最后一个分支：不允许失败（可能报详细错误）
      *
      * 优化：只有消费了 token 才需要回溯（没消费 = 状态没变）
@@ -823,7 +822,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      *
      * @returns undefined
      */
-    parserFail(): undefined {
+    parserFailFun(): undefined {
         this._parseSuccess = false
         return undefined
     }
@@ -1001,47 +1000,18 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
         fn()
 
-        if (!this._parseSuccess) {
+        if (this.parserFail) {
             // ❌ 失败：回溯
             this.restoreState(savedState)
             this._parseSuccess = true
             return false
         }
 
-        // ✅ 成功：检查是否需要验证循环
+        // 如果需要检测循环，没消耗token，则返回false，防止无限循环
         if (checkLoop && this.tokenIndex === startTokenIndex) {
-            // 成功但没消费 token → 回溯并返回 false，让循环退出
-            this.restoreState(savedState)  // 建议加上这行
+            // 成功但没消费 token → 返回 false，让循环退出
+            // 状态没变，不需要回溯
             return false
-            /*const currentRuleName = this.cstStack[this.cstStack.length - 1].name || 'Unknown'
-            throw this._errorHandler.createError({
-                type: 'infinite-loop',
-                expected: '',
-                found: this.curToken,
-                position: this.curToken ? {
-                    tokenIndex: this.tokenIndex,
-                    charIndex: this.curToken.index || 0,
-                    line: this.curToken.rowNum || 0,
-                    column: this.curToken.columnStartNum || 0
-                } : {
-                    tokenIndex: this._tokens.length,
-                    charIndex: this._tokens[this._tokens.length - 1]?.index || 0,
-                    line: this._tokens[this._tokens.length - 1]?.rowNum || 0,
-                    column: this._tokens[this._tokens.length - 1]?.columnEndNum || 0
-                },
-                ruleStack: [...this.getRuleStack()],
-                loopRuleName: currentRuleName,
-                loopDetectionSet: Array.from(this.loopDetectionSet),
-                loopCstDepth: this.cstStack.length,
-                loopCacheStats: {
-                    hits: 0,
-                    misses: 0,
-                    hitRate: '0%',
-                    currentSize: 0
-                },
-                loopTokenContext: [],
-                hint: '可能原因：规则中使用了 return undefined 但未设置失败状态。建议使用 this.BACKTRACK() 或调整 Or 分支顺序。'
-            })*/
         }
         return true
     }

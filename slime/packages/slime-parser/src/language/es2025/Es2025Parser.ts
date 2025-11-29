@@ -429,19 +429,19 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
 
         // 检查是否是保留字（原始值）
         if (ReservedWords.has(value)) {
-            return this.parserFail()
+            return this.parserFailFun()
         }
 
         // 如果包含 Unicode 转义
         if (value.includes('\\u')) {
             // 验证解码后的字符是否有效
             if (!isValidIdentifierWithEscapes(value)) {
-                return this.parserFail()
+                return this.parserFailFun()
             }
             // 解码后检查是否是保留字（如 bre\u0061k -> break）
             const decoded = decodeIdentifier(value)
             if (decoded !== null && ReservedWords.has(decoded)) {
-                return this.parserFail()
+                return this.parserFailFun()
             }
         }
 
@@ -470,7 +470,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                 // 如果包含 Unicode 转义，验证解码后的字符是否有效
                 if (value.includes('\\u')) {
                     if (!isValidIdentifierWithEscapes(value)) {
-                        return this.parserFail()
+                        return this.parserFailFun()
                     }
                 }
                 return cst
@@ -577,7 +577,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                 if (la1?.tokenName === TokenNames.Slash || la1?.tokenName === TokenNames.DivideAssign) {
                     // 词法阶段误判为除法，尝试重新扫描为正则表达式
                     if (!this.rescanSlashAsRegExp()) {
-                        return this.parserFail()
+                        return this.parserFailFun()
                     }
                 }
                 return this.tokenConsumer.RegularExpression()
@@ -2589,7 +2589,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
 
         if (!canInsertSemicolon) {
             // 不满足 ASI 条件，标记失败
-            return this.parserFail()
+            return this.parserFailFun()
         }
 
         // 满足 ASI 条件，返回成功
