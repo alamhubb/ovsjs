@@ -833,7 +833,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      */
     consume(tokenName: string): SubhutiCst | undefined {
         if (!this._parseSuccess) {
-            return undefined
+            return
         }
 
         const token = this.curToken
