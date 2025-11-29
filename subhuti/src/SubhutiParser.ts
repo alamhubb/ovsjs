@@ -961,12 +961,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
         // ✅ 成功：检查是否需要验证循环
         if (checkLoop && this.tokenIndex === startTokenIndex) {
-            // ❌ 成功但没消费 token → 在 Many/AtLeastOne 中会无限循环
-            // 🔍 分析模式：不抛异常，标记失败并返回 false
             // 成功但没消费 token → 回溯并返回 false，让循环退出
-            if (this._analysisMode) {
-                this._parseSuccess = false
-            }
             this.restoreState(savedState)  // 建议加上这行
             return false
             /*const currentRuleName = this.cstStack[this.cstStack.length - 1].name || 'Unknown'
