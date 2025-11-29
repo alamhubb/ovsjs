@@ -552,7 +552,7 @@ export interface SlimeArrayPattern extends ESTree.ArrayPattern, SlimeBasePattern
 
 export interface SlimeRestElement extends ESTree.RestElement, SlimeBasePattern {
     type: "RestElement";
-    argument: Pattern;
+    argument: SlimePattern;
 }
 
 export interface SlimeAssignmentPattern extends ESTree.AssignmentPattern, SlimeBasePattern {
