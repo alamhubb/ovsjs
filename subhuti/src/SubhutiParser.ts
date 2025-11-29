@@ -500,7 +500,8 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             const startTime = this._debugger?.onRuleEnter(ruleName, this.tokenIndex)
 
             // Packrat Parsing 缓存查询
-            if (this.enableMemoization) {
+            // 注意：在解析记录模式下跳过缓存，确保所有路径都被记录
+            if (this.enableMemoization && !this._parseRecordEnabled) {
                 const cached = this._cache.get(ruleName, this.tokenIndex)
                 if (cached !== undefined) {
                     this._debugger?.onRuleExit(ruleName, true, startTime)
@@ -552,7 +553,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         }
     }
 
-    private initTopLevelData(): boolean {
+    private initTopLevelData() {
         // 【顶层规则开始】重置解析器状态
         // 重置 Parser 的内部状态
         this._parseSuccess = true
@@ -843,10 +844,10 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         // 对每组选择最优节点
         const selectedNodes: ParseRecordNode[] = []
         for (const [startIdx, group] of groups) {
-            // 选择 endTokenIndex 最大的，如果相同则选最后一个
+            // 选择 endTokenIndex 最大的，如果相同则选第一个（更通用的分支）
             let best: ParseRecordNode | null = null
             for (const node of group) {
-                if (!best || node.endTokenIndex >= best.endTokenIndex) {
+                if (!best || node.endTokenIndex > best.endTokenIndex) {
                     best = node
                 }
             }
