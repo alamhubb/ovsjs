@@ -70,11 +70,38 @@ export interface SlimeBaseNode {
 }
 
 // --- 基础类型（与 ESTree 继承层次一致）---
-// 只继承 SlimeNode，通过结构化类型保持 ESTree 兼容
 export interface SlimeBaseStatement extends SlimeBaseNode {}
 export interface SlimeBaseExpression extends SlimeBaseNode {}
 export interface SlimeBasePattern extends SlimeBaseNode {}
 export interface SlimeBaseDeclaration extends SlimeBaseStatement {}
+export interface SlimeBaseModuleDeclaration extends SlimeBaseNode {}
+
+export interface SlimeBaseFunction extends SlimeBaseNode {
+    params: SlimePattern[]
+    generator?: boolean
+    async?: boolean
+    body: SlimeBlockStatement | SlimeExpression
+}
+
+export interface SlimeBaseForXStatement extends SlimeBaseStatement {
+    left: SlimeVariableDeclaration | SlimePattern
+    right: SlimeExpression
+    body: SlimeStatement
+}
+
+export interface SlimeBaseCallExpression extends SlimeBaseExpression {
+    callee: SlimeExpression | SlimeSuper
+    arguments: (SlimeExpression | SlimeSpreadElement)[]
+}
+
+export interface SlimeBaseClass extends SlimeBaseNode {
+    superClass?: SlimeExpression | null
+    body: SlimeClassBody
+}
+
+export interface SlimeBaseModuleSpecifier extends SlimeBaseNode {
+    local: SlimeIdentifier
+}
 
 // --- Program ---
 export interface SlimeProgram extends ESTree.Program, SlimeBaseNode {
@@ -304,7 +331,7 @@ export interface SlimeForStatement extends ESTree.ForStatement, SlimeBaseStateme
     semicolon2?: SlimeTokenNode
 }
 
-export interface SlimeForInStatement extends ESTree.ForInStatement, SlimeBaseStatement, SlimeParenTokens {
+export interface SlimeForInStatement extends ESTree.ForInStatement, SlimeBaseForXStatement, SlimeParenTokens {
     type: SlimeAstType.ForInStatement
     left: SlimeVariableDeclaration | SlimePattern
     right: SlimeExpression
@@ -313,7 +340,7 @@ export interface SlimeForInStatement extends ESTree.ForInStatement, SlimeBaseSta
     inKeyword?: SlimeTokenNode
 }
 
-export interface SlimeForOfStatement extends ESTree.ForOfStatement, SlimeBaseStatement, SlimeParenTokens {
+export interface SlimeForOfStatement extends ESTree.ForOfStatement, SlimeBaseForXStatement, SlimeParenTokens {
     type: SlimeAstType.ForOfStatement
     left: SlimeVariableDeclaration | SlimePattern
     right: SlimeExpression
