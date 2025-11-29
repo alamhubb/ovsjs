@@ -215,12 +215,13 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
     }
 
     /**
-     * 消费 'let' 软关键字
+     * 消费 'let' 关键字
      * 用于 let 声明
-     * 注意：非严格模式下可作为标识符
+     * 注意：在严格模式下是保留字，非严格模式下可作为标识符（为向后兼容）
+     * 但我们将其作为独立 token 处理，与 const/var 保持一致
      */
     LetTok() {
-        return this.consumeIdentifierValue(ContextualKeywords.LET)
+        return this.consume(es2025TokensObj.LetTok)
     }
 
     /**

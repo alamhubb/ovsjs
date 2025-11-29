@@ -43,6 +43,39 @@ import SlimeCodeMapping, {SlimeCodeLocation, type SlimeGeneratorResult} from "./
 import type {SubhutiSourceLocation} from "subhuti/src/struct/SubhutiCst.ts";
 import {SubhutiCreateToken} from "subhuti/src/struct/SubhutiCreateToken.ts";
 import SubhutiMatchToken from "subhuti/src/struct/SubhutiMatchToken.ts";
+import {es2025TokensObj, TokenNames} from "slime-parser/src/language/es2025/Es2025Tokens.ts";
+
+// 兼容别名
+const Es6TokenName = TokenNames;
+
+// 创建软关键字的 token 对象（用于代码生成）
+const createSoftKeywordToken = (name: string, value: string): SubhutiCreateToken => ({
+    name,
+    type: name,
+    value,
+} as SubhutiCreateToken);
+
+// 扩展 es2025TokensObj，添加软关键字和别名
+const es6TokensObj = {
+    ...es2025TokensObj,
+    // 软关键字（在 ES2025 中作为 IdentifierName 处理）
+    OfTok: createSoftKeywordToken('OfTok', 'of'),
+    AsyncTok: createSoftKeywordToken('AsyncTok', 'async'),
+    StaticTok: createSoftKeywordToken('StaticTok', 'static'),
+    AsTok: createSoftKeywordToken('AsTok', 'as'),
+    GetTok: createSoftKeywordToken('GetTok', 'get'),
+    SetTok: createSoftKeywordToken('SetTok', 'set'),
+    FromTok: createSoftKeywordToken('FromTok', 'from'),
+    // 别名（ES2025 使用不同的名称）
+    Eq: es2025TokensObj.Assign,  // = 等号
+};
+
+// 关键字到 Token 的映射（用于 VariableDeclaration 的 kind）
+const es6TokenMapObj: Record<string, SubhutiCreateToken> = {
+    'const': es2025TokensObj.ConstTok,
+    'let': es2025TokensObj.LetTok,
+    'var': es2025TokensObj.VarTok,
+};
 
 export default class SlimeGenerator {
     static mappings: SlimeCodeMapping[] = null
@@ -282,28 +315,30 @@ export default class SlimeGenerator {
 
     private static generatorTemplateLiteral(node: any) {
         // 生成模板字符串：`part1 ${expr1} part2 ${expr2} part3`
-        this.addString('`')
-
         const quasis = node.quasis || []
         const expressions = node.expressions || []
+
+        // 如果没有插值表达式，且有原始值，直接输出
+        if (expressions.length === 0 && quasis.length === 1 && quasis[0].value?.raw) {
+            // 简单模板字符串，直接输出原始 token
+            this.addString(quasis[0].value.raw)
+            return
+        }
 
         // quasis和expressions交替出现，quasis总是比expressions多1个
         for (let i = 0; i < quasis.length; i++) {
             const quasi = quasis[i]
-            // 输出模板元素的内容
-            if (quasi.value && quasi.value.cooked !== undefined) {
-                this.addString(quasi.value.cooked)
+            // 输出模板元素的内容（使用 raw 保持原始格式）
+            if (quasi.value) {
+                const raw = quasi.value.raw || ''
+                this.addString(raw)
             }
 
             // 如果不是最后一个quasi，输出对应的expression
             if (i < expressions.length) {
-                this.addString('${')
                 this.generatorNode(expressions[i])
-                this.addString('}')
             }
         }
-
-        this.addString('`')
     }
 
     private static generatorCallExpression(node: SlimeCallExpression) {
@@ -349,11 +384,21 @@ export default class SlimeGenerator {
             this.addSpacing()
             this.generatorNode(node.id)
         }
-        // params可能是FunctionParams对象或空数组[]
-        if (node.params && node.params.type === SlimeAstType.FunctionParams) {
-            this.generatorNode(node.params)
+        // params可能是FunctionParams对象或SlimePattern[]数组
+        if (node.params && (node.params as any).type === SlimeAstType.FunctionParams) {
+            this.generatorNode(node.params as any)
+        } else if (Array.isArray(node.params) && node.params.length > 0) {
+            // params是数组形式
+            this.addLParen()
+            node.params.forEach((param: any, index: number) => {
+                if (index > 0) {
+                    this.addComma()
+                }
+                this.generatorNode(param)
+            })
+            this.addRParen()
         } else {
-            // 空参数列表或无效params
+            // 空参数列表
             this.addLParen()
             this.addRParen()
         }
@@ -552,7 +597,11 @@ export default class SlimeGenerator {
         // name: token 名称
         // value: 实际的标识符名称（动态内容）
         // 注意：这里使用 addCodeAndMappings()，需要 source map 映射，所以必须提供完整的 token 对象
-        const identifier = {type: Es6TokenName.Identifier, name: Es6TokenName.Identifier, value: node.name}
+        const identifierName = node.name || ''
+        if (!identifierName) {
+            console.error('generatorIdentifier: node.name is undefined', JSON.stringify(node, null, 2))
+        }
+        const identifier = {type: Es6TokenName.IdentifierNameTok, name: Es6TokenName.IdentifierNameTok, value: identifierName}
         this.addCodeAndMappings(identifier, node.loc)
     }
 
@@ -1065,7 +1114,7 @@ export default class SlimeGenerator {
     }
 
     private static addSpacing() {
-        this.addCode(es6TokensObj.Spacing)
+        this.addString(' ')
     }
 
     private static addDot(loc?: SubhutiSourceLocation) {
@@ -1130,7 +1179,12 @@ export default class SlimeGenerator {
      * @param addSemicolonAndNewLine 是否添加分号和换行（默认 true）
      */
     private static generatorVariableDeclarationCore(node: SlimeVariableDeclaration, addSemicolonAndNewLine: boolean) {
-        this.addCodeAndMappings(es6TokenMapObj[node.kind.value.valueOf()], node.kind.loc)
+        // 兼容两种 kind 格式：
+        // 1. 对象格式: { value: 'const', loc: ... }
+        // 2. 字符串格式: 'const'
+        const kindValue = typeof node.kind === 'string' ? node.kind : node.kind?.value?.valueOf()
+        const kindLoc = typeof node.kind === 'string' ? undefined : node.kind?.loc
+        this.addCodeAndMappings(es6TokenMapObj[kindValue], kindLoc)
         this.addSpacing()
         for (let i = 0; i < node.declarations.length; i++) {
             this.generatorNode(node.declarations[i])
@@ -1164,12 +1218,16 @@ export default class SlimeGenerator {
 
     private static generatorVariableDeclarator(node: SlimeVariableDeclarator) {
         this.generatorNode(node.id)
-        this.addSpacing()
-        if (node.equal) {
-            this.addCodeAndMappings(es6TokensObj.Eq, node.equal.loc)
-            this.addSpacing()
-        }
+        // 如果有初始化表达式，生成等号和初始化表达式
         if (node.init) {
+            this.addSpacing()
+            // 优先使用 node.equal，如果没有则使用默认的等号 token
+            if (node.equal) {
+                this.addCodeAndMappings(es6TokensObj.Eq, node.equal.loc)
+            } else {
+                this.addCode(es6TokensObj.Eq)
+            }
+            this.addSpacing()
             this.generatorNode(node.init)
         }
     }
@@ -1178,14 +1236,19 @@ export default class SlimeGenerator {
         // 数字字面量需要完整的 SubhutiCreateToken 接口（包含 type 属性）
         // 原因：调用 addCodeAndMappings() 需要创建 source map 映射
         // 这样可以在调试时准确定位到原始代码中的数字字面量位置
-        this.addCodeAndMappings({type: Es6TokenName.NumericLiteral, name: Es6TokenName.NumericLiteral, value: String(node.value)}, node.loc)
+        // 注意：优先使用 raw 值保持原始格式（如十六进制 0xFF）
+        const numValue = node.raw || String(node.value)
+        this.addCodeAndMappings({type: Es6TokenName.NumericLiteral, name: Es6TokenName.NumericLiteral, value: numValue}, node.loc)
     }
 
     private static generatorStringLiteral(node: SlimeStringLiteral) {
         // 字符串字面量需要完整的 SubhutiCreateToken 接口（包含 type 属性）
         // 原因：调用 addCodeAndMappings() 需要创建 source map 映射
         // 这样可以在调试时准确定位到原始代码中的字符串字面量位置
-        this.addCodeAndMappings({type: Es6TokenName.StringLiteral, name: Es6TokenName.StringLiteral, value: `'${node.value}'`}, node.loc)
+        // 注意：优先使用 raw 值保持原始格式（保留原始引号类型）
+        // 如果没有 raw，使用单引号包裹 value
+        const strValue = node.raw || `'${node.value}'`
+        this.addCodeAndMappings({type: Es6TokenName.StringLiteral, name: Es6TokenName.StringLiteral, value: strValue}, node.loc)
     }
 
     static cstLocationToSlimeLocation(cstLocation: SubhutiSourceLocation) {

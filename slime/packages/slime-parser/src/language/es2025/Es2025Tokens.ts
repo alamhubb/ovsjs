@@ -59,6 +59,7 @@ export const TokenNames = {
     ImportTok: 'ImportTok',
     InTok: 'InTok',
     InstanceofTok: 'InstanceofTok',
+    LetTok: 'LetTok',
     NewTok: 'NewTok',
     NullTok: 'NullTok',
     ReturnTok: 'ReturnTok',
@@ -74,9 +75,10 @@ export const TokenNames = {
     WhileTok: 'WhileTok',
     WithTok: 'WithTok',
     YieldTok: 'YieldTok',
-    // 注意：async, let, static, as, get, set, of, target, meta, from 是软关键字
+    // 注意：async, static, as, get, set, of, target, meta, from 是软关键字
     // 按照 ES2025 规范，它们在词法层是 IdentifierName，不是独立的 token
     // 在 Parser 中通过值检查来识别（见 Es2025TokenConsumer）
+    // let 虽然在非严格模式下可作为标识符，但为简化实现，作为独立 token 处理
 
     // 数字字面量
     BigIntLiteral: 'BigIntLiteral',
@@ -165,10 +167,10 @@ export const TokenNames = {
 // ============================================
 // 软关键字值常量（Contextual Keywords）
 // 这些在词法层是 IdentifierName，在语法层通过值检查识别
+// 注意：let 已作为独立 token 处理（LetTok）
 // ============================================
 export const ContextualKeywords = {
     ASYNC: 'async',
-    LET: 'let',
     STATIC: 'static',
     AS: 'as',
     GET: 'get',
@@ -304,6 +306,7 @@ export const es2025TokensObj = {
     ImportTok: createKeywordToken(TokenNames.ImportTok, 'import'),
     InTok: createKeywordToken(TokenNames.InTok, 'in'),
     InstanceofTok: createKeywordToken(TokenNames.InstanceofTok, 'instanceof'),
+    LetTok: createKeywordToken(TokenNames.LetTok, 'let'),
     NewTok: createKeywordToken(TokenNames.NewTok, 'new'),
     NullTok: createKeywordToken(TokenNames.NullTok, 'null'),
     ReturnTok: createKeywordToken(TokenNames.ReturnTok, 'return'),
@@ -319,7 +322,7 @@ export const es2025TokensObj = {
     WhileTok: createKeywordToken(TokenNames.WhileTok, 'while'),
     WithTok: createKeywordToken(TokenNames.WithTok, 'with'),
     YieldTok: createKeywordToken(TokenNames.YieldTok, 'yield'),
-    // 软关键字（async, let, static, as, get, set, of, target, meta, from）
+    // 软关键字（async, static, as, get, set, of, target, meta, from）
     // 在词法层作为 IdentifierNameTok 处理，在 Parser 中通过值检查识别
 
     // ============================================

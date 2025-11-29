@@ -372,18 +372,20 @@ class SlimeAst {
   }
 
 
-  createStringLiteral(value: string, loc?: SubhutiSourceLocation): SlimeStringLiteral {
+  createStringLiteral(value: string, loc?: SubhutiSourceLocation, raw?: string): SlimeStringLiteral {
     return this.commonLocType({
       type: SlimeAstType.StringLiteral,
       value: value.replace(/^['"]|['"]$/g, ''),
+      raw: raw || value,  // 保存原始值（包含引号）
       loc: loc
     })
   }
 
-  createNumericLiteral(value: number): SlimeNumericLiteral {
+  createNumericLiteral(value: number, raw?: string): SlimeNumericLiteral {
     return this.commonLocType({
       type: SlimeAstType.NumericLiteral,
-      value: value
+      value: value,
+      raw: raw || String(value)  // 保存原始值（保留格式如 0xFF）
     })
   }
 
