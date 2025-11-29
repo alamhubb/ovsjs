@@ -57,55 +57,42 @@ export interface SlimeCommaListTokens {
 // Token 信息展平为可选字段
 // ============================================
 
-// --- 基础节点（与 ESTree.BaseNode 一致）---
-export interface SlimeBaseNodeWithoutComments {
-    /** 节点类型 */
+// --- 基础节点（继承 ESTree 对应类型）---
+export interface SlimeBaseNodeWithoutComments extends ESTree.BaseNodeWithoutComments {
     type: SlimeAstType | string
-    /** 位置信息（使用 ESTree.SourceLocation 保持兼容）*/
-    loc?: ESTree.SourceLocation | null
-    /** 字符范围 */
-    range?: [number, number]
 }
 
-export interface SlimeBaseNode extends SlimeBaseNodeWithoutComments {
-    /** 前导注释 */
-    leadingComments?: SlimeComment[]
-    /** 尾随注释 */
-    trailingComments?: SlimeComment[]
+export interface SlimeBaseNode extends ESTree.BaseNode, SlimeBaseNodeWithoutComments {}
+
+// --- 基础类型（继承 ESTree 对应类型）---
+export interface SlimeBaseStatement extends ESTree.BaseStatement, SlimeBaseNode {}
+export interface SlimeBaseExpression extends ESTree.BaseExpression, SlimeBaseNode {}
+export interface SlimeBasePattern extends ESTree.BasePattern, SlimeBaseNode {}
+export interface SlimeBaseDeclaration extends ESTree.BaseDeclaration, SlimeBaseStatement {}
+export interface SlimeBaseModuleDeclaration extends ESTree.BaseModuleDeclaration, SlimeBaseNode {}
+export interface SlimeBaseModuleSpecifier extends ESTree.BaseModuleSpecifier, SlimeBaseNode {
+    local: SlimeIdentifier
 }
 
-// --- 基础类型（与 ESTree 继承层次一致）---
-export interface SlimeBaseStatement extends SlimeBaseNode {}
-export interface SlimeBaseExpression extends SlimeBaseNode {}
-export interface SlimeBasePattern extends SlimeBaseNode {}
-export interface SlimeBaseDeclaration extends SlimeBaseStatement {}
-export interface SlimeBaseModuleDeclaration extends SlimeBaseNode {}
-
-export interface SlimeBaseFunction extends SlimeBaseNode {
+export interface SlimeBaseFunction extends ESTree.BaseFunction, SlimeBaseNode {
     params: SlimePattern[]
-    generator?: boolean
-    async?: boolean
     body: SlimeBlockStatement | SlimeExpression
 }
 
-export interface SlimeBaseForXStatement extends SlimeBaseStatement {
+export interface SlimeBaseForXStatement extends ESTree.BaseForXStatement, SlimeBaseStatement {
     left: SlimeVariableDeclaration | SlimePattern
     right: SlimeExpression
     body: SlimeStatement
 }
 
-export interface SlimeBaseCallExpression extends SlimeBaseExpression {
+export interface SlimeBaseCallExpression extends ESTree.BaseCallExpression, SlimeBaseExpression {
     callee: SlimeExpression | SlimeSuper
     arguments: (SlimeExpression | SlimeSpreadElement)[]
 }
 
-export interface SlimeBaseClass extends SlimeBaseNode {
+export interface SlimeBaseClass extends ESTree.BaseClass, SlimeBaseNode {
     superClass?: SlimeExpression | null
     body: SlimeClassBody
-}
-
-export interface SlimeBaseModuleSpecifier extends SlimeBaseNode {
-    local: SlimeIdentifier
 }
 
 // --- Program ---
