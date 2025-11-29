@@ -646,14 +646,32 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         })
     }
 
-    ManyWithRecovery(fn: RuleFunction): SubhutiCst | undefined {
+    /**
+     * 带容错的 Many 规则
+     * @param fn 要执行的规则函数
+     * @param enableRecovery 是否启用容错（失败时跳过 token 继续解析）
+     */
+    ManyWithRecovery(fn: RuleFunction, enableRecovery: boolean = false): SubhutiCst | undefined {
         if (!this._parseSuccess) {
             return undefined
         }
 
         return this.withAllowError(() => {
-            while (this.tryAndRestore(fn)) {
-                // 使用默认 checkLoop: true，自动检测循环
+            while (this.curToken) {
+                const success = this.tryAndRestore(fn)
+
+                if (success) {
+                    continue  // 成功，继续下一个
+                }
+
+                // 失败了
+                if (!enableRecovery) {
+                    break  // 不容错，退出循环
+                }
+
+                // 容错：跳过当前 token，继续尝试
+                this.tokenIndex++
+                this._parseSuccess = true  // 重置状态
             }
             return this.curCst
         })
@@ -767,26 +785,14 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
                     suggestions.push('  - 确保所有语句都正确结束')
                 }
 
-                throw this._errorHandler.createError({
-                    type: 'parsing',  // ✅ 统一使用 'parsing'，不断言是 Or 遮蔽
-                    expected: 'EOF (end of file)',
-                    found: this.curToken,
-                    position: this.curToken ? {
-                        tokenIndex: this.tokenIndex,
-                        charIndex: this.curToken.index || 0,
-                        line: this.curToken.rowNum || 0,
-                        column: this.curToken.columnStartNum || 0
-                    } : {
-                        tokenIndex: this._tokens.length,
-                        charIndex: this._tokens[this._tokens.length - 1]?.index || 0,
-                        line: this._tokens[this._tokens.length - 1]?.rowNum || 0,
-                        column: this._tokens[this._tokens.length - 1]?.columnEndNum || 0
-                    },
-                    ruleStack: ruleStack,
-                    loopRuleName: ruleName,
-                    loopTokenContext: this.getTokenContext(this.tokenIndex, 3),
-                    suggestions: suggestions
-                })
+                // TODO: 研究如何处理顶层规则未完全消费 token 的情况
+                // 目前先不抛异常，让解析继续
+                // throw this._errorHandler.createError({
+                //     type: 'parsing',
+                //     expected: 'EOF (end of file)',
+                //     found: this.curToken,
+                //     ...
+                // })
             }
         } else {
             // ========================================

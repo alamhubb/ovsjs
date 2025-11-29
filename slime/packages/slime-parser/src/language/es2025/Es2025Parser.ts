@@ -4212,10 +4212,10 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
 
         if (sourceType === 'module') {
             // ModuleBody_opt: ModuleItemList?
-            this.Option(() => this.ModuleItemList())
+            this.Module()
         } else {
             // ScriptBody_opt: StatementList?
-            this.Option(() => this.StatementList({Yield: false, Await: false, Return: false}))
+            this.Script()
         }
         return this.curCst
     }
@@ -4232,7 +4232,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
         // Hashbang 注释只能出现在文件开头
         this.Option(() => this.tokenConsumer.HashbangComment())
         // ScriptBody_opt
-        this.Option(() => this.StatementList({Yield: false, Await: false, Return: false}))
+        this.StatementList({Yield: false, Await: false, Return: false})
         return this.curCst
     }
 
@@ -4248,7 +4248,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
         // Hashbang 注释只能出现在文件开头
         this.Option(() => this.tokenConsumer.HashbangComment())
         // ModuleBody_opt
-        this.Option(() => this.ModuleItemList())
+        this.ModuleItemList()
         return this.curCst
     }
 
