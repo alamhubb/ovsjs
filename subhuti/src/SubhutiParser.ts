@@ -465,7 +465,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             this.onRuleExitDebugHandler(ruleName, cst, isTopLevel, startTime)
 
             // 顶层规则失败时的错误处理
-            if (isTopLevel && !this._parseSuccess) {
+            if (isTopLevel && this.parserFail) {
                 this.handleTopLevelError(ruleName, startTokenIndex)
             }
 
