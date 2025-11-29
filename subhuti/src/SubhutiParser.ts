@@ -851,7 +851,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
             // TODO: 研究如何处理解析错误（收集错误信息、错误恢复等）
             // 目前先不抛异常，直接返回 undefined
-            return undefined
+            return
         }
 
         this._debugger?.onTokenConsume(
@@ -863,7 +863,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         )
 
         this.tokenIndex++
-        return this.generateCstByToken(token)
+        this.generateCstByToken(token)
     }
 
     private generateCstByToken(token: SubhutiMatchToken): SubhutiCst {
