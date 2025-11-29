@@ -19,6 +19,8 @@ export interface SlimeNodeMap {
     CatchClause: CatchClause;
     Class: Class;
     ClassBody: ClassBody;
+
+
     Expression: Expression;
     Function: Function;
     Identifier: Identifier;
