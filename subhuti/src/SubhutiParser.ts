@@ -3,7 +3,6 @@
  *
  * 核心特性：
  * - Packrat Parsing（线性时间复杂度，LRU 缓存）
- * - allowError 机制（Or 前 N-1 分支允许失败，最后分支抛详细错误）
  * - 返回值语义（成功返回 CST，失败返回 undefined）
  *
  * 架构设计：
@@ -188,15 +187,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * 格式: "ruleName:position"
      */
     private readonly loopDetectionSet: Set<string> = new Set()
-
-    /**
-     * RAII 模式：自动管理 allowError 状态
-     * - 进入时 allowErrorDepth++
-     * - 退出时自动恢复（try-finally 保证）
-     */
-    private withAllowError<T>(fn: () => T): T {
-        return fn()
-    }
 
     // Packrat Parsing（默认 LRU 缓存）
     enableMemoization: boolean = true
@@ -682,12 +672,10 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             return undefined
         }
 
-        return this.withAllowError(() => {
-            while (this.tryAndRestore(fn)) {
-                // 使用默认 checkLoop: true，自动检测循环
-            }
-            return this.curCst
-        })
+        while (this.tryAndRestore(fn)) {
+            // 使用默认 checkLoop: true，自动检测循环
+        }
+        return this.curCst
     }
 
     /**
@@ -705,31 +693,28 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             return undefined
         }
 
-        return this.withAllowError(() => {
+        while (this.curToken) {
+            const startTokenIndex = this.tokenIndex
+            const success = this.tryAndRestore(fn)
 
-            while (this.curToken) {
-                const startTokenIndex = this.tokenIndex
-                const success = this.tryAndRestore(fn)
-
-                if (success) {
-                    continue  // 成功，继续下一个
-                }
-
-                // 容错模式：找到下一个同步点
-                const syncIndex = this.findNextSyncPoint(startTokenIndex + 1)
-
-                // 创建 ErrorNode，包含 [startTokenIndex, syncIndex) 的 token
-                if (syncIndex > startTokenIndex) {
-                    const errorNode = this.createErrorNode(startTokenIndex, syncIndex)
-                    this.curCst.children.push(errorNode)
-                }
-
-                // 跳到同步点
-                this.tokenIndex = syncIndex
-                this._parseSuccess = true  // 重置状态
+            if (success) {
+                continue  // 成功，继续下一个
             }
-            return this.curCst
-        })
+
+            // 容错模式：找到下一个同步点
+            const syncIndex = this.findNextSyncPoint(startTokenIndex + 1)
+
+            // 创建 ErrorNode，包含 [startTokenIndex, syncIndex) 的 token
+            if (syncIndex > startTokenIndex) {
+                const errorNode = this.createErrorNode(startTokenIndex, syncIndex)
+                this.curCst.children.push(errorNode)
+            }
+
+            // 跳到同步点
+            this.tokenIndex = syncIndex
+            this._parseSuccess = true  // 重置状态
+        }
+        return this.curCst
     }
 
     /**
@@ -805,11 +790,9 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             return undefined
         }
 
-        return this.withAllowError(() => {
-            // checkLoop: false - Option 允许匹配 0 次（不消费 token）
-            this.tryAndRestore(fn, false)
-            return this.curCst
-        })
+        // checkLoop: false - Option 允许匹配 0 次（不消费 token）
+        this.tryAndRestore(fn, false)
+        return this.curCst
     }
 
     /**
@@ -827,12 +810,10 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             return undefined
         }
 
-        return this.withAllowError(() => {
-            while (this.tryAndRestore(fn)) {
-                // 使用默认 checkLoop: true，自动检测循环
-            }
-            return this.curCst
-        })
+        while (this.tryAndRestore(fn)) {
+            // 使用默认 checkLoop: true，自动检测循环
+        }
+        return this.curCst
     }
 
     /**
