@@ -448,8 +448,8 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      */
     private executeRuleWrapper(targetFun: Function, ruleName: string, className: string, ...args: any[]): SubhutiCst | undefined {
         const isTopLevel = this.cstStack.length === 0
-        if (!this._preCheckRuleAndInit(ruleName, className, isTopLevel)) {
-            return undefined
+        if (this._preCheckRuleAndInit(ruleName, className, isTopLevel) || this.parserFail) {
+            return
         }
 
         const key = `${ruleName}:${this.tokenIndex}`
@@ -521,7 +521,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     private _preCheckRuleAndInit(ruleName: string, className: string, isTopLevel: boolean): boolean {
         if (this.hasOwnProperty(ruleName)) {
             if (className !== this.className) {
-                return false
+                return true
             }
         }
 
@@ -538,12 +538,8 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             // ============================================
             // 这样每次新的顶层解析都有干净的环境
             this._debugger?.resetForNewParse?.(this._tokens)
-
-            return true
         }
-
-        // 非顶层规则继续执行
-        return this._parseSuccess
+        return false
     }
 
     private onRuleExitDebugHandler(
@@ -618,7 +614,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * 优化：只有消费了 token 才需要回溯（没消费 = 状态没变）
      */
     Or(alternatives: SubhutiParserOr[]): void {
-        if (this.parserFailOrIsEof) {
+        if (this.parserFail) {
             return
         }
 
