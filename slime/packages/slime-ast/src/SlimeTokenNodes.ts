@@ -1,26 +1,18 @@
 /**
  * SlimeTokenNodes.ts - Token 节点定义
- * 
+ *
  * 定义所有 Token（终结符）节点接口
  * 完全保留源码位置信息
- * 
+ *
  * @see SlimeAstType.ts 中的 Token 类型定义
  */
 
 import { SlimeAstType } from './SlimeAstType.ts'
+import type { SlimeBaseNode } from './SlimeESTree'
 
 // ============================================
-// 基础接口
+// Token 基础接口
 // ============================================
-
-/**
- * 所有 AST 节点的基础接口
- */
-export interface SlimeBaseNode {
-    /** 节点类型 */
-    type: SlimeAstType | string
-    // loc 从 ESTree.BaseNode 继承，运行时可赋值 SubhutiSourceLocation（子类型）
-}
 
 /**
  * Token 节点基础接口（终结符）
