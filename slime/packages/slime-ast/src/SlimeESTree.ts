@@ -57,16 +57,21 @@ export interface SlimeCommaListTokens {
 // Token 信息展平为可选字段
 // ============================================
 
-// --- 基础节点 ---
-/**
- * 所有 Slime AST 节点的基础接口
- * 包含 type 和 loc 位置信息
- */
-export interface SlimeBaseNode {
+// --- 基础节点（与 ESTree.BaseNode 一致）---
+export interface SlimeBaseNodeWithoutComments {
     /** 节点类型 */
     type: SlimeAstType | string
-    /** 位置信息（与 ESTree 兼容） */
+    /** 位置信息 */
     loc?: SubhutiSourceLocation | null
+    /** 字符范围 */
+    range?: [number, number]
+}
+
+export interface SlimeBaseNode extends SlimeBaseNodeWithoutComments {
+    /** 前导注释 */
+    leadingComments?: SlimeComment[]
+    /** 尾随注释 */
+    trailingComments?: SlimeComment[]
 }
 
 // --- 基础类型（与 ESTree 继承层次一致）---
