@@ -591,7 +591,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * 优化：只有消费了 token 才需要回溯（没消费 = 状态没变）
      */
     Or(alternatives: SubhutiParserOr[]): void {
-        if (!this._parseSuccess) {
+        if (this.parserFailOrIsEof) {
             return
         }
 
@@ -757,7 +757,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * 第一次必须成功，后续循环执行直到失败
      */
     AtLeastOne(fn: RuleFunction): void {
-        if (!this._parseSuccess) {
+        if (this.parserFail) {
             return
         }
 
@@ -810,12 +810,16 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         })
     }
 
+    get parserFailOrIsEof(){
+        return this.parserFail || this.isEof
+    }
+
     /**
      * 消费 token（智能错误管理）
      * - 失败时返回 undefined，不抛异常
      */
     consume(tokenName: string): SubhutiCst | undefined {
-        if (!this._parseSuccess) {
+        if (this.parserFailOrIsEof) {
             return
         }
 
@@ -901,6 +905,10 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         }
     }
 
+    get isEof() {
+        return this.tokenIndex === this._tokens.length
+    }
+
     /**
      * 尝试执行函数，失败时自动回溯并重置状态
      *
@@ -908,7 +916,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * @returns true: 成功且消费了 token，false: 失败或没消费 token
      */
     private tryAndRestore(fn: () => void): boolean {
-        if (!this._parseSuccess) {
+        if (this.parserFailOrIsEof) {
             return false
         }
         const savedState = this.saveState()
