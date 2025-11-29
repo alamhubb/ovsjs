@@ -408,20 +408,20 @@ export interface SlimeCatchClause extends ESTree.CatchClause, SlimeBaseNode {
     body: SlimeBlockStatement;
 }
 
-export interface SlimeIdentifier extends ESTree.Identifier, SlimeIdentifier, SlimeBaseNode, SlimeBaseExpression, SlimeBasePattern {
+export interface SlimeIdentifier extends ESTree.Identifier, SlimeBaseNode, SlimeBaseExpression, SlimeBasePattern {
     type: "Identifier";
     name: string;
 }
 
 export type SlimeLiteral =  SlimeSimpleLiteral | SlimeRegExpLiteral | SlimeBigIntLiteral;
 
-export interface SlimeSimpleLiteral extends ESTree.SimpleLiteral, SlimeSimpleLiteral, SlimeBaseNode, SlimeBaseExpression {
+export interface SlimeSimpleLiteral extends ESTree.SimpleLiteral, SlimeBaseNode, SlimeBaseExpression {
     type: "Literal";
     value: string | boolean | number | null;
     raw?: string | undefined;
 }
 
-export interface SlimeRegExpLiteral extends ESTree.RegExpLiteral, SlimeRegExpLiteral, SlimeBaseNode, SlimeBaseExpression {
+export interface SlimeRegExpLiteral extends ESTree.RegExpLiteral, SlimeBaseNode, SlimeBaseExpression {
     type: "Literal";
     value?: RegExp | null | undefined;
     regex: {
@@ -431,7 +431,7 @@ export interface SlimeRegExpLiteral extends ESTree.RegExpLiteral, SlimeRegExpLit
     raw?: string | undefined;
 }
 
-export interface SlimeBigIntLiteral extends ESTree.BigIntLiteral, SlimeBigIntLiteral, SlimeBaseNode, SlimeBaseExpression {
+export interface SlimeBigIntLiteral extends ESTree.BigIntLiteral, SlimeBaseNode, SlimeBaseExpression {
     type: "Literal";
     value?: bigint | null | undefined;
     bigint: string;
