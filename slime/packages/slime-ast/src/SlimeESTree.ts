@@ -1,6 +1,6 @@
 import type * as ESTree from "estree";
 
-export interface BaseNodeWithoutComments {
+export interface SlimeBaseNodeWithoutComments extends ESTree.BaseNodeWithoutComments {
     // Every leaf interface Slimethat extends ESTree.that, SlimeBaseNode must specify a type property.
     // The type property should be a string literal. For example, Identifier
     // has: `type: "Identifier"`
