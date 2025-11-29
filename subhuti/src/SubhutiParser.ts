@@ -657,11 +657,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             throw new Error('非容错模式不应该进入 ManyWithRecovery')
         }
 
-        if (!this._parseSuccess) {
-            return
-        }
-
-        while (this.curToken) {
+        while (this._parseSuccess) {
             const startTokenIndex = this.tokenIndex
             const success = this.tryAndRestore(fn)
 
@@ -925,8 +921,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * @returns true: 成功且消费了 token，false: 失败或没消费 token
      */
     private tryAndRestore(fn: () => void): boolean {
-
-
         if (!this._parseSuccess) {
             return false
         }
