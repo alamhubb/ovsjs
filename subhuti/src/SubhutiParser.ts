@@ -902,8 +902,8 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             true
         )
 
-        this.tokenIndex++
         this.generateCstByToken(token)
+        this.tokenIndex++
     }
 
     private generateCstByToken(token: SubhutiMatchToken): SubhutiCst {
