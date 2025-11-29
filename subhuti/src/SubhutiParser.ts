@@ -790,7 +790,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         }
 
         // checkLoop: false - Option 允许匹配 0 次（不消费 token）
-        this.tryAndRestore(fn, false)
+        this.tryAndRestore(fn)
         return this.curCst
     }
 
@@ -994,7 +994,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      *                  - true: 检测循环，用于 Many/AtLeastOne（防止无限循环）
      *                  - false: 不检测，用于 Option（允许匹配 0 次）
      */
-    private tryAndRestore(fn: () => void, checkLoop: boolean = true): boolean {
+    private tryAndRestore(fn: () => void): boolean {
         const savedState = this.saveState()
         const startTokenIndex = this.tokenIndex
 
@@ -1008,12 +1008,8 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         }
 
         // 如果需要检测循环，没消耗token，则返回false，防止无限循环
-        if (checkLoop && this.tokenIndex === startTokenIndex) {
-            // 成功但没消费 token → 返回 false，让循环退出
-            // 状态没变，不需要回溯
-            return false
-        }
-        return true
+        return this.tokenIndex !== startTokenIndex;
+
     }
 
     /**
