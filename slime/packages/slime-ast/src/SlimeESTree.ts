@@ -1,4 +1,5 @@
 import type * as ESTree from "./estree";
+import {SlimeAstType} from "./SlimeAstType.ts";
 
 export interface SlimeBaseNodeWithoutComments extends ESTree.BaseNodeWithoutComments {
     // Every leaf interface Slimethat extends ESTree.that, SlimeBaseNode must specify a type property.
@@ -47,7 +48,7 @@ export interface SlimeComment extends SlimeBaseNodeWithoutComments, ESTree.Comme
 }
 
 export interface SlimeProgram extends SlimeBaseNode, ESTree.Program {
-    type: "Program";
+    type: typeof SlimeAstType.Program;
     sourceType: "script" | "module";
     body: Array<SlimeDirective | SlimeStatement | SlimeModuleDeclaration>;
     comments?: SlimeComment[] | undefined;
