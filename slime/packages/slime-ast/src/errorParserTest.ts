@@ -20,8 +20,8 @@ const res = parser.Program()
 
 console.log('CST:', JSON.stringify(res, null, 2))
 
-console.log('Unparsed tokens:', parser.unparsedTokens)
-console.log('Has unparsed tokens:', parser.hasUnparsedTokens)
-
-const ast = slimeCstToAstUtil.toProgram(res)
-console.log('AST:', JSON.stringify(ast, null, 2))
+// console.log('Unparsed tokens:', parser.unparsedTokens)
+// console.log('Has unparsed tokens:', parser.hasUnparsedTokens)
+//
+// const ast = slimeCstToAstUtil.toProgram(res)
+// console.log('AST:', JSON.stringify(ast, null, 2))
