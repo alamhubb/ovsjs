@@ -635,7 +635,11 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
     /**
      * Or 规则 - 顺序选择（PEG 风格）
-     * 核心：前 N-1 分支允许失败，最后分支抛详细错误
+     *
+     * 核心逻辑：
+     * - 前 N-1 个分支：允许失败（allowErrorDepth +1）
+     * - 最后一个分支：不允许失败（可能报详细错误）
+     *
      * 优化：只有消费了 token 才需要回溯（没消费 = 状态没变）
      */
     Or(alternatives: SubhutiParserOr[]): SubhutiCst | undefined {
@@ -643,55 +647,55 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             return undefined
         }
 
-        return this.withAllowError(() => {
-            const savedState = this.saveState()
-            const startTokenIndex = this.tokenIndex
-            const totalCount = alternatives.length
-            const parentRuleName = this.curCst?.name || 'Unknown'
+        const savedState = this.saveState()
+        const startTokenIndex = this.tokenIndex
+        const totalCount = alternatives.length
+        const parentRuleName = this.curCst?.name || 'Unknown'
 
-            // 进入 Or（整个 Or 调用开始）
-            this._debugger?.onOrEnter?.(parentRuleName, this.tokenIndex)
+        // 进入 Or（整个 Or 调用开始）
+        this._debugger?.onOrEnter?.(parentRuleName, this.tokenIndex)
 
-            for (let i = 0; i < totalCount; i++) {
-                const alt = alternatives[i]
-                const isLast = i === totalCount - 1
+        for (let i = 0; i < totalCount; i++) {
+            const alt = alternatives[i]
+            const isLast = i === totalCount - 1
 
-                // 进入 Or 分支
-                this._debugger?.onOrBranch?.(i, totalCount, parentRuleName)
+            // 进入 Or 分支
+            this._debugger?.onOrBranch?.(i, totalCount, parentRuleName)
 
-                if (isLast) {
-                    this.allowErrorDepth--
-                }
-
-                alt.alt()
-
-                if (isLast) {
-                    this.allowErrorDepth++
-                }
-
-                // 退出 Or 分支（无论成功还是失败）
-                this._debugger?.onOrBranchExit?.(parentRuleName, i)
-
-                if (this._parseSuccess) {
-                    // 退出 Or（整个 Or 调用成功结束）
-                    this._debugger?.onOrExit?.(parentRuleName)
-                    return this.curCst
-                }
-
-                // 只有消费了 token 才需要回溯（没消费 = 状态没变）
-                if (this.tokenIndex > startTokenIndex) {
-                    this.restoreState(savedState)
-                }
-
-                if (!isLast) {
-                    this._parseSuccess = true
-                }
+            // 前 N-1 个分支：允许失败
+            if (!isLast) {
+                this.allowErrorDepth++
             }
 
-            // 退出 Or（整个 Or 调用失败结束）
-            this._debugger?.onOrExit?.(parentRuleName)
-            return undefined
-        })
+            alt.alt()
+
+            if (!isLast) {
+                this.allowErrorDepth--
+            }
+
+            // 退出 Or 分支（无论成功还是失败）
+            this._debugger?.onOrBranchExit?.(parentRuleName, i)
+
+            if (this._parseSuccess) {
+                // 退出 Or（整个 Or 调用成功结束）
+                this._debugger?.onOrExit?.(parentRuleName)
+                return this.curCst
+            }
+
+            // 只有消费了 token 才需要回溯（没消费 = 状态没变）
+            if (this.tokenIndex > startTokenIndex) {
+                this.restoreState(savedState)
+            }
+
+            // 前 N-1 个分支失败后重置状态，继续尝试下一个
+            if (!isLast) {
+                this._parseSuccess = true
+            }
+        }
+
+        // 退出 Or（整个 Or 调用失败结束）
+        this._debugger?.onOrExit?.(parentRuleName)
+        return undefined
     }
 
     /**
