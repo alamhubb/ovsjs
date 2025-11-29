@@ -10,7 +10,7 @@
  * @see https://github.com/estree/estree
  */
 
-import type * as ESTree from './estree'
+import type * as ESTree from "estree";
 import type { SlimeTokenNode, SlimeBaseNode } from './SlimeTokenNodes'
 import type { SubhutiSourceLocation } from '../../../../subhuti/src/struct/SubhutiCst'
 import { SlimeAstType } from './SlimeAstType'
@@ -57,17 +57,19 @@ export interface SlimeCommaListTokens {
 // Token 信息展平为可选字段
 // ============================================
 
-// --- 基础节点（双继承）---
-export interface SlimeNode extends ESTree.BaseNode, SlimeBaseNode {
+// --- 基础节点 ---
+// 注意：不再双继承 ESTree.BaseNode，避免 loc 类型冲突
+// SlimeBaseNode 已经提供了所有必要的基础字段
+export interface SlimeNode extends SlimeBaseNode {
     type: string
-    loc?: SubhutiSourceLocation | null  // 与 ESTree 兼容
 }
 
 // --- 基础类型（与 ESTree 继承层次一致）---
-export interface SlimeBaseStatement extends ESTree.BaseStatement, SlimeNode {}
-export interface SlimeBaseExpression extends ESTree.BaseExpression, SlimeNode {}
-export interface SlimeBasePattern extends ESTree.BasePattern, SlimeNode {}
-export interface SlimeBaseDeclaration extends ESTree.BaseDeclaration, SlimeBaseStatement {}
+// 只继承 SlimeNode，通过结构化类型保持 ESTree 兼容
+export interface SlimeBaseStatement extends SlimeNode {}
+export interface SlimeBaseExpression extends SlimeNode {}
+export interface SlimeBasePattern extends SlimeNode {}
+export interface SlimeBaseDeclaration extends SlimeBaseStatement {}
 
 // --- Program ---
 export interface SlimeProgram extends ESTree.Program, SlimeNode {
