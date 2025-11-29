@@ -120,6 +120,38 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     private _errorRecoveryMode: boolean = false
 
     /**
+     * 同步点 Token 名称集合
+     * 这些 token 通常是语句的开始，用于容错模式下的恢复点
+     */
+    protected _syncTokens: Set<string> = new Set([
+        'LetTok', 'ConstTok', 'VarTok',
+        'FunctionTok', 'ClassTok', 'AsyncTok',
+        'IfTok', 'ForTok', 'WhileTok', 'DoTok', 'SwitchTok',
+        'TryTok', 'ThrowTok', 'ReturnTok', 'BreakTok', 'ContinueTok',
+        'ImportTok', 'ExportTok',
+        'DebuggerTok',
+        'Semicolon',
+    ])
+
+    /**
+     * 设置同步点 Token
+     */
+    setSyncTokens(tokens: string[]): this {
+        this._syncTokens = new Set(tokens)
+        return this
+    }
+
+    /**
+     * 添加同步点 Token
+     */
+    addSyncTokens(tokens: string[]): this {
+        for (const token of tokens) {
+            this._syncTokens.add(token)
+        }
+        return this
+    }
+
+    /**
      * 启用容错模式
      */
     enableErrorRecovery(): this {
@@ -678,33 +710,107 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
     /**
      * 带容错的 Many 规则
-     * - 当全局 errorRecoveryMode 开启时，解析失败会跳过 token 继续尝试
+     * - 当全局 errorRecoveryMode 开启时，解析失败会创建 ErrorNode 并跳到下一个同步点继续尝试
      * @param fn 要执行的规则函数
      */
     ManyWithRecovery(fn: RuleFunction): SubhutiCst | undefined {
+        // 失败了
+        if (!this._errorRecoveryMode) {
+            throw new Error('非容错模式不应该进入')
+        }
+
         if (!this._parseSuccess) {
             return undefined
         }
 
         return this.withAllowError(() => {
+
             while (this.curToken) {
+                const startTokenIndex = this.tokenIndex
                 const success = this.tryAndRestore(fn)
 
                 if (success) {
                     continue  // 成功，继续下一个
                 }
 
-                // 失败了
-                if (!this._errorRecoveryMode) {
-                    break  // 不容错，退出循环
+                // 容错模式：找到下一个同步点
+                const syncIndex = this.findNextSyncPoint(startTokenIndex + 1)
+
+                // 创建 ErrorNode，包含 [startTokenIndex, syncIndex) 的 token
+                if (syncIndex > startTokenIndex) {
+                    const errorNode = this.createErrorNode(startTokenIndex, syncIndex)
+                    this.curCst.children.push(errorNode)
                 }
 
-                // 容错：跳过当前 token，继续尝试
-                this.tokenIndex++
+                // 跳到同步点
+                this.tokenIndex = syncIndex
                 this._parseSuccess = true  // 重置状态
             }
             return this.curCst
         })
+    }
+
+    /**
+     * 找到下一个同步点（语句开始 token）
+     * @param fromIndex 从哪个索引开始查找
+     * @returns 同步点的 token 索引，如果没找到返回 token 列表末尾
+     */
+    protected findNextSyncPoint(fromIndex: number): number {
+        for (let i = fromIndex; i < this._tokens.length; i++) {
+            const token = this._tokens[i]
+            if (this._syncTokens.has(token.tokenName)) {
+                return i
+            }
+        }
+        return this._tokens.length  // 没找到，返回末尾
+    }
+
+    /**
+     * 创建 ErrorNode，包含指定范围内的 token
+     * @param startIndex 起始 token 索引（包含）
+     * @param endIndex 结束 token 索引（不包含）
+     * @returns ErrorNode CST 节点
+     */
+    protected createErrorNode(startIndex: number, endIndex: number): SubhutiCst {
+        const errorNode = new SubhutiCst()
+        errorNode.name = 'ErrorNode'
+        errorNode.children = []
+
+        // 将每个 token 转为叶子节点
+        for (let i = startIndex; i < endIndex; i++) {
+            const token = this._tokens[i]
+            const tokenNode = new SubhutiCst()
+            tokenNode.name = token.tokenName
+            tokenNode.value = token.tokenValue
+            tokenNode.loc = {
+                type: token.tokenName,
+                value: token.tokenValue,
+                start: {
+                    index: token.index,
+                    line: token.rowNum,
+                    column: token.columnStartNum
+                },
+                end: {
+                    index: token.index + (token.tokenValue?.length || 0),
+                    line: token.rowNum,
+                    column: token.columnEndNum
+                }
+            }
+            errorNode.children.push(tokenNode)
+        }
+
+        // 设置 ErrorNode 的位置信息
+        if (errorNode.children.length > 0) {
+            const first = errorNode.children[0]
+            const last = errorNode.children[errorNode.children.length - 1]
+            errorNode.loc = {
+                type: 'ErrorNode',
+                start: first.loc.start,
+                end: last.loc.end
+            }
+        }
+
+        return errorNode
     }
 
     /**
