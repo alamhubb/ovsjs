@@ -1,4 +1,4 @@
-import type * as ESTree from "estree";
+import type * as ESTree from "./estree";
 
 export interface SlimeBaseNodeWithoutComments extends ESTree.BaseNodeWithoutComments {
     // Every leaf interface Slimethat extends ESTree.that, SlimeBaseNode must specify a type property.
