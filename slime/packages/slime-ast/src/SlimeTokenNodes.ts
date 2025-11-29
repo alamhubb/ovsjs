@@ -20,8 +20,8 @@ import type { SubhutiSourceLocation } from '../../../../subhuti/src/struct/Subhu
 export interface SlimeBaseNode {
     /** 节点类型 */
     type: SlimeAstType | string
-    /** 位置信息 */
-    loc: SubhutiSourceLocation
+    /** 位置信息（与 ESTree 兼容，支持 null） */
+    loc?: SubhutiSourceLocation | null
 }
 
 /**

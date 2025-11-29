@@ -60,7 +60,7 @@ export interface SlimeCommaListTokens {
 // --- 基础节点（双继承）---
 export interface SlimeNode extends ESTree.BaseNode, SlimeBaseNode {
     type: string
-    loc: SubhutiSourceLocation  // Slime 的位置信息（必需）
+    loc?: SubhutiSourceLocation | null  // 与 ESTree 兼容
 }
 
 // --- 基础类型（与 ESTree 继承层次一致）---
