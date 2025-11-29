@@ -419,7 +419,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      */
     private executeRuleWrapper(targetFun: Function, ruleName: string, className: string, ...args: any[]): SubhutiCst | undefined {
         const isTopLevel = this.cstStack.length === 0
-        if (!this._preCheckRule(ruleName, className, isTopLevel)) {
+        if (!this._preCheckRuleAndInit(ruleName, className, isTopLevel)) {
             return undefined
         }
 
@@ -492,7 +492,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         }
     }
 
-    private _preCheckRule(ruleName: string, className: string, isTopLevel: boolean): boolean {
+    private _preCheckRuleAndInit(ruleName: string, className: string, isTopLevel: boolean): boolean {
         if (this.hasOwnProperty(ruleName)) {
             if (className !== this.className) {
                 return false
