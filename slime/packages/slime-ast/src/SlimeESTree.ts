@@ -9,7 +9,7 @@ export interface SlimeBaseNodeWithoutComments extends ESTree.BaseNodeWithoutComm
     range?: [number, number] | undefined;
 }
 
-export interface SlimeBaseNode extends ESTree.BaseNode, SlimeBaseNodeWithoutComments {
+export interface SlimeBaseNode extends SlimeBaseNodeWithoutComments, ESTree.BaseNode {
     leadingComments?: SlimeComment[] | undefined;
     trailingComments?: SlimeComment[] | undefined;
 }
@@ -41,7 +41,7 @@ export interface SlimeNodeMap {
 
 export type SlimeNode = SlimeNodeMap[keyof SlimeNodeMap];
 
-export interface SlimeComment extends ESTree.Comment, SlimeBaseNodeWithoutComments {
+export interface SlimeComment extends SlimeBaseNodeWithoutComments, ESTree.Comment {
     type: "Line" | "Block";
     value: string;
 }
@@ -59,20 +59,20 @@ export interface Position {
     column: number;
 }
 
-export interface SlimeProgram extends ESTree.Program, SlimeBaseNode {
+export interface SlimeProgram extends SlimeBaseNode, ESTree.Program {
     type: "Program";
     sourceType: "script" | "module";
     body: Array<SlimeDirective | SlimeStatement | SlimeModuleDeclaration>;
     comments?: Comment[] | undefined;
 }
 
-export interface SlimeDirective extends ESTree.Directive, SlimeBaseNode {
+export interface SlimeDirective extends SlimeBaseNode, ESTree.Directive {
     type: "ExpressionStatement";
     expression: SlimeLiteral;
     directive: string;
 }
 
-export interface SlimeBaseFunction extends ESTree.BaseFunction, SlimeBaseNode {
+export interface SlimeBaseFunction extends SlimeBaseNode, ESTree.BaseFunction {
     params: SlimePattern[];
     generator?: boolean | undefined;
     async?: boolean | undefined;
@@ -106,14 +106,14 @@ export type SlimeStatement =
     | SlimeForOfStatement
     | SlimeDeclaration;
 
-export interface SlimeBaseStatement extends ESTree.BaseStatement, SlimeBaseNode {
+export interface SlimeBaseStatement extends SlimeBaseNode, ESTree.BaseStatement {
 }
 
-export interface SlimeEmptyStatement extends ESTree.EmptyStatement, SlimeBaseStatement {
+export interface SlimeEmptyStatement extends SlimeBaseStatement, ESTree.EmptyStatement {
     type: "EmptyStatement";
 }
 
-export interface SlimeBlockStatement extends ESTree.BlockStatement, SlimeBaseStatement {
+export interface SlimeBlockStatement extends SlimeBaseStatement, ESTree.BlockStatement {
     type: "BlockStatement";
     body: SlimeStatement[];
     innerComments?: Comment[] | undefined;
@@ -123,76 +123,76 @@ export interface SlimeStaticBlock extends ESTree.StaticBlock, Omit<SlimeBlockSta
     type: "StaticBlock";
 }
 
-export interface SlimeExpressionStatement extends ESTree.ExpressionStatement, SlimeBaseStatement {
+export interface SlimeExpressionStatement extends SlimeBaseStatement, ESTree.ExpressionStatement {
     type: "ExpressionStatement";
     expression: SlimeExpression;
 }
 
-export interface SlimeIfStatement extends ESTree.IfStatement, SlimeBaseStatement {
+export interface SlimeIfStatement extends SlimeBaseStatement, ESTree.IfStatement {
     type: "IfStatement";
     test: SlimeExpression;
     consequent: SlimeStatement;
     alternate?: SlimeStatement | null | undefined;
 }
 
-export interface SlimeLabeledStatement extends ESTree.LabeledStatement, SlimeBaseStatement {
+export interface SlimeLabeledStatement extends SlimeBaseStatement, ESTree.LabeledStatement {
     type: "LabeledStatement";
     label: SlimeIdentifier;
     body: SlimeStatement;
 }
 
-export interface SlimeBreakStatement extends ESTree.BreakStatement, SlimeBaseStatement {
+export interface SlimeBreakStatement extends SlimeBaseStatement, ESTree.BreakStatement {
     type: "BreakStatement";
     label?: SlimeIdentifier | null | undefined;
 }
 
-export interface SlimeContinueStatement extends ESTree.ContinueStatement, SlimeBaseStatement {
+export interface SlimeContinueStatement extends SlimeBaseStatement, ESTree.ContinueStatement {
     type: "ContinueStatement";
     label?: SlimeIdentifier | null | undefined;
 }
 
-export interface SlimeWithStatement extends ESTree.WithStatement, SlimeBaseStatement {
+export interface SlimeWithStatement extends SlimeBaseStatement, ESTree.WithStatement {
     type: "WithStatement";
     object: SlimeExpression;
     body: SlimeStatement;
 }
 
-export interface SlimeSwitchStatement extends ESTree.SwitchStatement, SlimeBaseStatement {
+export interface SlimeSwitchStatement extends SlimeBaseStatement, ESTree.SwitchStatement {
     type: "SwitchStatement";
     discriminant: SlimeExpression;
     cases: SlimeSwitchCase[];
 }
 
-export interface SlimeReturnStatement extends ESTree.ReturnStatement, SlimeBaseStatement {
+export interface SlimeReturnStatement extends SlimeBaseStatement, ESTree.ReturnStatement {
     type: "ReturnStatement";
     argument?: SlimeExpression | null | undefined;
 }
 
-export interface SlimeThrowStatement extends ESTree.ThrowStatement, SlimeBaseStatement {
+export interface SlimeThrowStatement extends SlimeBaseStatement, ESTree.ThrowStatement {
     type: "ThrowStatement";
     argument: SlimeExpression;
 }
 
-export interface SlimeTryStatement extends ESTree.TryStatement, SlimeBaseStatement {
+export interface SlimeTryStatement extends SlimeBaseStatement, ESTree.TryStatement {
     type: "TryStatement";
     block: SlimeBlockStatement;
     handler?: SlimeCatchClause | null | undefined;
     finalizer?: SlimeBlockStatement | null | undefined;
 }
 
-export interface SlimeWhileStatement extends ESTree.WhileStatement, SlimeBaseStatement {
+export interface SlimeWhileStatement extends SlimeBaseStatement, ESTree.WhileStatement {
     type: "WhileStatement";
     test: SlimeExpression;
     body: SlimeStatement;
 }
 
-export interface SlimeDoWhileStatement extends ESTree.DoWhileStatement, SlimeBaseStatement {
+export interface SlimeDoWhileStatement extends SlimeBaseStatement, ESTree.DoWhileStatement {
     type: "DoWhileStatement";
     body: SlimeStatement;
     test: SlimeExpression;
 }
 
-export interface SlimeForStatement extends ESTree.ForStatement, SlimeBaseStatement {
+export interface SlimeForStatement extends SlimeBaseStatement, ESTree.ForStatement {
     type: "ForStatement";
     init?: SlimeVariableDeclaration | SlimeExpression | null | undefined;
     test?: SlimeExpression | null | undefined;
@@ -200,23 +200,23 @@ export interface SlimeForStatement extends ESTree.ForStatement, SlimeBaseStateme
     body: SlimeStatement;
 }
 
-export interface SlimeBaseForXStatement extends ESTree.BaseForXStatement, SlimeBaseStatement {
+export interface SlimeBaseForXStatement extends SlimeBaseStatement, ESTree.BaseForXStatement {
     left: SlimeVariableDeclaration | SlimePattern;
     right: SlimeExpression;
     body: SlimeStatement;
 }
 
-export interface SlimeForInStatement extends ESTree.ForInStatement, SlimeBaseForXStatement {
+export interface SlimeForInStatement extends SlimeBaseForXStatement, ESTree.ForInStatement {
     type: "ForInStatement";
 }
 
-export interface SlimeDebuggerStatement extends ESTree.DebuggerStatement, SlimeBaseStatement {
+export interface SlimeDebuggerStatement extends SlimeBaseStatement, ESTree.DebuggerStatement {
     type: "DebuggerStatement";
 }
 
 export type SlimeDeclaration = SlimeFunctionDeclaration | SlimeVariableDeclaration | SlimeClassDeclaration;
 
-export interface SlimeBaseDeclaration extends ESTree.BaseDeclaration, SlimeBaseStatement {
+export interface SlimeBaseDeclaration extends SlimeBaseStatement, ESTree.BaseDeclaration {
 }
 
 export interface SlimeMaybeNamedFunctionDeclaration extends SlimeBaseFunction, SlimeBaseDeclaration, ESTree.MaybeNamedFunctionDeclaration {
@@ -226,17 +226,17 @@ export interface SlimeMaybeNamedFunctionDeclaration extends SlimeBaseFunction, S
     body: SlimeBlockStatement;
 }
 
-export interface SlimeFunctionDeclaration extends ESTree.FunctionDeclaration, SlimeMaybeNamedFunctionDeclaration {
+export interface SlimeFunctionDeclaration extends SlimeMaybeNamedFunctionDeclaration, ESTree.FunctionDeclaration {
     id: SlimeIdentifier;
 }
 
-export interface SlimeVariableDeclaration extends ESTree.VariableDeclaration, SlimeBaseDeclaration {
+export interface SlimeVariableDeclaration extends SlimeBaseDeclaration, ESTree.VariableDeclaration {
     type: "VariableDeclaration";
     declarations: SlimeVariableDeclarator[];
     kind: "var" | "let" | "const";
 }
 
-export interface SlimeVariableDeclarator extends ESTree.VariableDeclarator, SlimeBaseNode {
+export interface SlimeVariableDeclarator extends SlimeBaseNode, ESTree.VariableDeclarator {
     type: "VariableDeclarator";
     id: SlimePattern;
     init?: SlimeExpression | null | undefined;
@@ -272,36 +272,36 @@ export interface ExpressionMap {
 
 export type SlimeExpression = ExpressionMap[keyof ExpressionMap];
 
-export interface SlimeBaseExpression extends ESTree.BaseExpression, SlimeBaseNode {
+export interface SlimeBaseExpression extends SlimeBaseNode, ESTree.BaseExpression {
 }
 
 export type SlimeChainElement = SlimeSimpleCallExpression | SlimeMemberExpression;
 
-export interface SlimeChainExpression extends ESTree.ChainExpression, SlimeBaseExpression {
+export interface SlimeChainExpression extends SlimeBaseExpression, ESTree.ChainExpression {
     type: "ChainExpression";
     expression: SlimeChainElement;
 }
 
-export interface SlimeThisExpression extends ESTree.ThisExpression, SlimeBaseExpression {
+export interface SlimeThisExpression extends SlimeBaseExpression, ESTree.ThisExpression {
     type: "ThisExpression";
 }
 
-export interface SlimeArrayExpression extends ESTree.ArrayExpression, SlimeBaseExpression {
+export interface SlimeArrayExpression extends SlimeBaseExpression, ESTree.ArrayExpression {
     type: "ArrayExpression";
     elements: Array<SlimeExpression | SlimeSpreadElement | null>;
 }
 
-export interface SlimeObjectExpression extends ESTree.ObjectExpression, SlimeBaseExpression {
+export interface SlimeObjectExpression extends SlimeBaseExpression, ESTree.ObjectExpression {
     type: "ObjectExpression";
     properties: Array<SlimeProperty | SlimeSpreadElement>;
 }
 
-export interface SlimePrivateIdentifier extends ESTree.PrivateIdentifier, SlimeBaseNode {
+export interface SlimePrivateIdentifier extends SlimeBaseNode, ESTree.PrivateIdentifier {
     type: "PrivateIdentifier";
     name: string;
 }
 
-export interface SlimeProperty extends ESTree.Property, SlimeBaseNode {
+export interface SlimeProperty extends SlimeBaseNode, ESTree.Property {
     type: "Property";
     key: SlimeExpression | SlimePrivateIdentifier;
     value: SlimeExpression | SlimePattern; // Could be an AssignmentProperty
@@ -311,7 +311,7 @@ export interface SlimeProperty extends ESTree.Property, SlimeBaseNode {
     computed: boolean;
 }
 
-export interface SlimePropertyDefinition extends ESTree.PropertyDefinition, SlimeBaseNode {
+export interface SlimePropertyDefinition extends SlimeBaseNode, ESTree.PropertyDefinition {
     type: "PropertyDefinition";
     key: SlimeExpression | SlimePrivateIdentifier;
     value?: SlimeExpression | null | undefined;
@@ -325,66 +325,66 @@ export interface SlimeFunctionExpression extends SlimeBaseFunction, SlimeBaseExp
     body: SlimeBlockStatement;
 }
 
-export interface SlimeSequenceExpression extends ESTree.SequenceExpression, SlimeBaseExpression {
+export interface SlimeSequenceExpression extends SlimeBaseExpression, ESTree.SequenceExpression {
     type: "SequenceExpression";
     expressions: SlimeExpression[];
 }
 
-export interface SlimeUnaryExpression extends ESTree.UnaryExpression, SlimeBaseExpression {
+export interface SlimeUnaryExpression extends SlimeBaseExpression, ESTree.UnaryExpression {
     type: "UnaryExpression";
     operator: SlimeUnaryOperator;
     prefix: true;
     argument: SlimeExpression;
 }
 
-export interface SlimeBinaryExpression extends ESTree.BinaryExpression, SlimeBaseExpression {
+export interface SlimeBinaryExpression extends SlimeBaseExpression, ESTree.BinaryExpression {
     type: "BinaryExpression";
     operator: SlimeBinaryOperator;
     left: SlimeExpression | SlimePrivateIdentifier;
     right: SlimeExpression;
 }
 
-export interface SlimeAssignmentExpression extends ESTree.AssignmentExpression, SlimeBaseExpression {
+export interface SlimeAssignmentExpression extends SlimeBaseExpression, ESTree.AssignmentExpression {
     type: "AssignmentExpression";
     operator: SlimeAssignmentOperator;
     left: SlimePattern | SlimeMemberExpression;
     right: SlimeExpression;
 }
 
-export interface SlimeUpdateExpression extends ESTree.UpdateExpression, SlimeBaseExpression {
+export interface SlimeUpdateExpression extends SlimeBaseExpression, ESTree.UpdateExpression {
     type: "UpdateExpression";
     operator: SlimeUpdateOperator;
     argument: SlimeExpression;
     prefix: boolean;
 }
 
-export interface SlimeLogicalExpression extends ESTree.LogicalExpression, SlimeBaseExpression {
+export interface SlimeLogicalExpression extends SlimeBaseExpression, ESTree.LogicalExpression {
     type: "LogicalExpression";
     operator: SlimeLogicalOperator;
     left: SlimeExpression;
     right: SlimeExpression;
 }
 
-export interface SlimeConditionalExpression extends ESTree.ConditionalExpression, SlimeBaseExpression {
+export interface SlimeConditionalExpression extends SlimeBaseExpression, ESTree.ConditionalExpression {
     type: "ConditionalExpression";
     test: SlimeExpression;
     alternate: SlimeExpression;
     consequent: SlimeExpression;
 }
 
-export interface SlimeBaseCallExpression extends ESTree.BaseCallExpression, SlimeBaseExpression {
+export interface SlimeBaseCallExpression extends SlimeBaseExpression, ESTree.BaseCallExpression {
     callee: SlimeExpression | SlimeSuper;
     arguments: Array<SlimeExpression | SlimeSpreadElement>;
 }
 
 export type SlimeCallExpression = SlimeSimpleCallExpression | SlimeNewExpression;
 
-export interface SlimeSimpleCallExpression extends ESTree.SimpleCallExpression, SlimeBaseCallExpression {
+export interface SlimeSimpleCallExpression extends SlimeBaseCallExpression, ESTree.SimpleCallExpression {
     type: "CallExpression";
     optional: boolean;
 }
 
-export interface SlimeNewExpression extends ESTree.NewExpression, SlimeBaseCallExpression {
+export interface SlimeNewExpression extends SlimeBaseCallExpression, ESTree.NewExpression {
     type: "NewExpression";
 }
 
@@ -404,16 +404,16 @@ export type SlimePattern =
     | SlimeAssignmentPattern
     | SlimeMemberExpression;
 
-export interface SlimeBasePattern extends ESTree.BasePattern, SlimeBaseNode {
+export interface SlimeBasePattern extends SlimeBaseNode, ESTree.BasePattern {
 }
 
-export interface SlimeSwitchCase extends ESTree.SwitchCase, SlimeBaseNode {
+export interface SlimeSwitchCase extends SlimeBaseNode, ESTree.SwitchCase {
     type: "SwitchCase";
     test?: SlimeExpression | null | undefined;
     consequent: SlimeStatement[];
 }
 
-export interface SlimeCatchClause extends ESTree.CatchClause, SlimeBaseNode {
+export interface SlimeCatchClause extends SlimeBaseNode, ESTree.CatchClause {
     type: "CatchClause";
     param: SlimePattern | null;
     body: SlimeBlockStatement;
@@ -497,16 +497,16 @@ export type SlimeAssignmentOperator =
 
 export type SlimeUpdateOperator = "++" | "--";
 
-export interface SlimeForOfStatement extends ESTree.ForOfStatement, SlimeBaseForXStatement {
+export interface SlimeForOfStatement extends SlimeBaseForXStatement, ESTree.ForOfStatement {
     type: "ForOfStatement";
     await: boolean;
 }
 
-export interface SlimeSuper extends ESTree.Super, SlimeBaseNode {
+export interface SlimeSuper extends SlimeBaseNode, ESTree.Super {
     type: "Super";
 }
 
-export interface SlimeSpreadElement extends ESTree.SpreadElement, SlimeBaseNode {
+export interface SlimeSpreadElement extends SlimeBaseNode, ESTree.SpreadElement {
     type: "SpreadElement";
     argument: SlimeExpression;
 }
@@ -517,25 +517,25 @@ export interface SlimeArrowFunctionExpression extends SlimeBaseExpression, Slime
     body: SlimeBlockStatement | SlimeExpression;
 }
 
-export interface SlimeYieldExpression extends ESTree.YieldExpression, SlimeBaseExpression {
+export interface SlimeYieldExpression extends SlimeBaseExpression, ESTree.YieldExpression {
     type: "YieldExpression";
     argument?: SlimeExpression | null | undefined;
     delegate: boolean;
 }
 
-export interface SlimeTemplateLiteral extends ESTree.TemplateLiteral, SlimeBaseExpression {
+export interface SlimeTemplateLiteral extends SlimeBaseExpression, ESTree.TemplateLiteral {
     type: "TemplateLiteral";
     quasis: SlimeTemplateElement[];
     expressions: SlimeExpression[];
 }
 
-export interface SlimeTaggedTemplateExpression extends ESTree.TaggedTemplateExpression, SlimeBaseExpression {
+export interface SlimeTaggedTemplateExpression extends SlimeBaseExpression, ESTree.TaggedTemplateExpression {
     type: "TaggedTemplateExpression";
     tag: SlimeExpression;
     quasi: SlimeTemplateLiteral;
 }
 
-export interface SlimeTemplateElement extends ESTree.TemplateElement, SlimeBaseNode {
+export interface SlimeTemplateElement extends SlimeBaseNode, ESTree.TemplateElement {
     type: "TemplateElement";
     tail: boolean;
     value: {
@@ -545,28 +545,28 @@ export interface SlimeTemplateElement extends ESTree.TemplateElement, SlimeBaseN
     };
 }
 
-export interface SlimeAssignmentProperty extends ESTree.AssignmentProperty, SlimeProperty {
+export interface SlimeAssignmentProperty extends SlimeProperty, ESTree.AssignmentProperty {
     value: Pattern;
     kind: "init";
     method: boolean; // false
 }
 
-export interface SlimeObjectPattern extends ESTree.ObjectPattern, SlimeBasePattern {
+export interface SlimeObjectPattern extends SlimeBasePattern, ESTree.ObjectPattern {
     type: "ObjectPattern";
     properties: Array<SlimeAssignmentProperty | SlimeRestElement>;
 }
 
-export interface SlimeArrayPattern extends ESTree.ArrayPattern, SlimeBasePattern {
+export interface SlimeArrayPattern extends SlimeBasePattern, ESTree.ArrayPattern {
     type: "ArrayPattern";
     elements: Array<SlimePattern | null>;
 }
 
-export interface SlimeRestElement extends ESTree.RestElement, SlimeBasePattern {
+export interface SlimeRestElement extends SlimeBasePattern, ESTree.RestElement {
     type: "RestElement";
     argument: SlimePattern;
 }
 
-export interface SlimeAssignmentPattern extends ESTree.AssignmentPattern, SlimeBasePattern {
+export interface SlimeAssignmentPattern extends SlimeBasePattern, ESTree.AssignmentPattern {
     type: "AssignmentPattern";
     left: SlimePattern;
     right: SlimeExpression;
@@ -574,17 +574,17 @@ export interface SlimeAssignmentPattern extends ESTree.AssignmentPattern, SlimeB
 
 export type SlimeClass = SlimeClassDeclaration | SlimeClassExpression;
 
-export interface SlimeBaseClass extends ESTree.BaseClass, SlimeBaseNode {
+export interface SlimeBaseClass extends SlimeBaseNode, ESTree.BaseClass {
     superClass?: SlimeExpression | null | undefined;
     body: SlimeClassBody;
 }
 
-export interface SlimeClassBody extends ESTree.ClassBody, SlimeBaseNode {
+export interface SlimeClassBody extends SlimeBaseNode, ESTree.ClassBody {
     type: "ClassBody";
     body: Array<SlimeMethodDefinition | PropertyDefinition | SlimeStaticBlock>;
 }
 
-export interface SlimeMethodDefinition extends ESTree.MethodDefinition, SlimeBaseNode {
+export interface SlimeMethodDefinition extends SlimeBaseNode, ESTree.MethodDefinition {
     type: "MethodDefinition";
     key: SlimeExpression | SlimePrivateIdentifier;
     value: SlimeFunctionExpression;
@@ -599,7 +599,7 @@ export interface SlimeMaybeNamedClassDeclaration extends SlimeBaseClass, SlimeBa
     id: SlimeIdentifier | null;
 }
 
-export interface SlimeClassDeclaration extends ESTree.ClassDeclaration, SlimeMaybeNamedClassDeclaration {
+export interface SlimeClassDeclaration extends SlimeMaybeNamedClassDeclaration, ESTree.ClassDeclaration {
     id: SlimeIdentifier;
 }
 
@@ -608,7 +608,7 @@ export interface SlimeClassExpression extends SlimeBaseClass, SlimeBaseExpressio
     id?: SlimeIdentifier | null | undefined;
 }
 
-export interface SlimeMetaProperty extends ESTree.MetaProperty, SlimeBaseExpression {
+export interface SlimeMetaProperty extends SlimeBaseExpression, ESTree.MetaProperty {
     type: "MetaProperty";
     meta: SlimeIdentifier;
     property: SlimeIdentifier;
@@ -620,7 +620,7 @@ export type SlimeModuleDeclaration =
     | SlimeExportDefaultDeclaration
     | SlimeExportAllDeclaration;
 
-export interface SlimeBaseModuleDeclaration extends ESTree.BaseModuleDeclaration, SlimeBaseNode {
+export interface SlimeBaseModuleDeclaration extends SlimeBaseNode, ESTree.BaseModuleDeclaration {
 }
 
 export type SlimeModuleSpecifier =
@@ -629,35 +629,35 @@ export type SlimeModuleSpecifier =
     | SlimeImportNamespaceSpecifier
     | SlimeExportSpecifier;
 
-export interface SlimeBaseModuleSpecifier extends ESTree.BaseModuleSpecifier, SlimeBaseNode {
+export interface SlimeBaseModuleSpecifier extends SlimeBaseNode, ESTree.BaseModuleSpecifier {
     local: SlimeIdentifier;
 }
 
-export interface SlimeImportDeclaration extends ESTree.ImportDeclaration, SlimeBaseModuleDeclaration {
+export interface SlimeImportDeclaration extends SlimeBaseModuleDeclaration, ESTree.ImportDeclaration {
     type: "ImportDeclaration";
     specifiers: Array<SlimeImportSpecifier | SlimeImportDefaultSpecifier | SlimeImportNamespaceSpecifier>;
     source: SlimeLiteral;
 }
 
-export interface SlimeImportSpecifier extends ESTree.ImportSpecifier, SlimeBaseModuleSpecifier {
+export interface SlimeImportSpecifier extends SlimeBaseModuleSpecifier, ESTree.ImportSpecifier {
     type: "ImportSpecifier";
     imported: SlimeIdentifier | SlimeLiteral;
 }
 
-export interface SlimeImportExpression extends ESTree.ImportExpression, SlimeBaseExpression {
+export interface SlimeImportExpression extends SlimeBaseExpression, ESTree.ImportExpression {
     type: "ImportExpression";
     source: SlimeExpression;
 }
 
-export interface SlimeImportDefaultSpecifier extends ESTree.ImportDefaultSpecifier, SlimeBaseModuleSpecifier {
+export interface SlimeImportDefaultSpecifier extends SlimeBaseModuleSpecifier, ESTree.ImportDefaultSpecifier {
     type: "ImportDefaultSpecifier";
 }
 
-export interface SlimeImportNamespaceSpecifier extends ESTree.ImportNamespaceSpecifier, SlimeBaseModuleSpecifier {
+export interface SlimeImportNamespaceSpecifier extends SlimeBaseModuleSpecifier, ESTree.ImportNamespaceSpecifier {
     type: "ImportNamespaceSpecifier";
 }
 
-export interface SlimeExportNamedDeclaration extends ESTree.ExportNamedDeclaration, SlimeBaseModuleDeclaration {
+export interface SlimeExportNamedDeclaration extends SlimeBaseModuleDeclaration, ESTree.ExportNamedDeclaration {
     type: "ExportNamedDeclaration";
     declaration?: SlimeDeclaration | null | undefined;
     specifiers: SlimeExportSpecifier[];
@@ -670,18 +670,18 @@ export interface SlimeExportSpecifier extends ESTree.ExportSpecifier, Omit<Slime
     exported: SlimeIdentifier | SlimeLiteral;
 }
 
-export interface SlimeExportDefaultDeclaration extends ESTree.ExportDefaultDeclaration, SlimeBaseModuleDeclaration {
+export interface SlimeExportDefaultDeclaration extends SlimeBaseModuleDeclaration, ESTree.ExportDefaultDeclaration {
     type: "ExportDefaultDeclaration";
     declaration: SlimeMaybeNamedFunctionDeclaration | SlimeMaybeNamedClassDeclaration | SlimeExpression;
 }
 
-export interface SlimeExportAllDeclaration extends ESTree.ExportAllDeclaration, SlimeBaseModuleDeclaration {
+export interface SlimeExportAllDeclaration extends SlimeBaseModuleDeclaration, ESTree.ExportAllDeclaration {
     type: "ExportAllDeclaration";
     exported: SlimeIdentifier | SlimeLiteral | null;
     source: SlimeLiteral;
 }
 
-export interface SlimeAwaitExpression extends ESTree.AwaitExpression, SlimeBaseExpression {
+export interface SlimeAwaitExpression extends SlimeBaseExpression, ESTree.AwaitExpression {
     type: "AwaitExpression";
     argument: SlimeExpression;
 }
