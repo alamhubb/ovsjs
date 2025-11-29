@@ -636,6 +636,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     /**
      * Or 规则 - 顺序选择（PEG 风格）
      * 核心：前 N-1 分支允许失败，最后分支抛详细错误
+     * 优化：只有消费了 token 才需要回溯（没消费 = 状态没变）
      */
     Or(alternatives: SubhutiParserOr[]): SubhutiCst | undefined {
         if (!this._parseSuccess) {
@@ -644,6 +645,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
         return this.withAllowError(() => {
             const savedState = this.saveState()
+            const startTokenIndex = this.tokenIndex
             const totalCount = alternatives.length
             const parentRuleName = this.curCst?.name || 'Unknown'
 
@@ -676,11 +678,13 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
                     return this.curCst
                 }
 
+                // 只有消费了 token 才需要回溯（没消费 = 状态没变）
+                if (this.tokenIndex > startTokenIndex) {
+                    this.restoreState(savedState)
+                }
+
                 if (!isLast) {
-                    this.restoreState(savedState)
                     this._parseSuccess = true
-                } else {
-                    this.restoreState(savedState)
                 }
             }
 
