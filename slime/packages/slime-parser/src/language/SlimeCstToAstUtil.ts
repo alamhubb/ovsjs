@@ -5474,8 +5474,31 @@ export class SlimeCstToAst {
             }
         }
 
+        // 容错模式：如果找不到 Arrow token，尝试从不完整的 CST 中提取信息
         if (arrowIndex === -1) {
-            throw new Error('createAsyncArrowFunctionAst: 找不到 Arrow token')
+            // 尝试从 CoverCallExpressionAndAsyncArrowHead 提取参数
+            for (const child of cst.children) {
+                if (child.name === 'CoverCallExpressionAndAsyncArrowHead') {
+                    params = this.createAsyncArrowParamsFromCover(child)
+                    break
+                } else if (child.name === 'AsyncTok') {
+                    continue
+                } else if (child.name === 'BindingIdentifier' || child.name === Es6Parser.prototype.BindingIdentifier?.name) {
+                    params = [this.createBindingIdentifierAst(child)]
+                    break
+                }
+            }
+            // 返回不完整的箭头函数（没有 body）
+            return {
+                type: SlimeAstType.ArrowFunctionExpression,
+                id: null,
+                params: params,
+                body: SlimeAstUtil.createBlockStatement(null, null, []),
+                generator: false,
+                async: true,
+                expression: false,
+                loc: cst.loc
+            } as any
         }
 
         // 解析参数（Arrow 之前的部分）
