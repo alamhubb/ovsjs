@@ -12,15 +12,15 @@
 
 import type * as ESTree from "estree";
 import type { SlimeTokenNode } from './SlimeTokenNodes'
-import type { SubhutiSourceLocation } from '../../../../subhuti/src/struct/SubhutiCst'
 import { SlimeAstType } from './SlimeAstType'
 
 // ============================================
 // 重新导出基础类型
 // ============================================
 export type { SlimeTokenNode } from './SlimeTokenNodes'
-export type { SubhutiSourceLocation } from '../../../../subhuti/src/struct/SubhutiCst'
 export { SlimeAstType } from './SlimeAstType'
+// 直接使用 ESTree 类型
+export type SlimeSourceLocation = ESTree.SourceLocation
 export type SlimePosition = ESTree.Position
 export type SlimeComment = ESTree.Comment
 
@@ -61,8 +61,8 @@ export interface SlimeCommaListTokens {
 export interface SlimeBaseNodeWithoutComments {
     /** 节点类型 */
     type: SlimeAstType | string
-    /** 位置信息 */
-    loc?: SubhutiSourceLocation | null
+    /** 位置信息（使用 ESTree.SourceLocation 保持兼容）*/
+    loc?: ESTree.SourceLocation | null
     /** 字符范围 */
     range?: [number, number]
 }
