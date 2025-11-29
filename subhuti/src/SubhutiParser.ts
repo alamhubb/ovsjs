@@ -46,6 +46,7 @@ export interface SubhutiBackData {
  */
 export interface PartialMatchRecord {
     children: SubhutiCst[]    // 部分匹配的 children（引用）
+    parentCst: SubhutiCst     // 父节点（恢复时把 children 放到这里）
     endTokenIndex: number     // 消耗到的 token 位置
     startTokenIndex: number   // 起始 token 位置
 }
@@ -610,6 +611,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         }
 
         const savedState = this.saveState()
+        const startTokenIndex = this.tokenIndex
         const totalCount = alternatives.length
         const parentRuleName = this.curCst?.name || 'Unknown'
 
@@ -636,7 +638,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
             // 前 N-1 个分支：失败后回溯并重置状态，继续尝试下一个
             if (!isLast) {
-                this.restoreState(savedState)
+                this.recordPartialMatchAndRestore(savedState, startTokenIndex)
                 this._parseSuccess = true
             }
             // 最后一个分支：失败后不回溯，保持失败状态
@@ -682,14 +684,14 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             // 尝试恢复最长部分匹配
             const bestMatch = this.getBestPartialMatch(startTokenIndex)
             if (bestMatch && bestMatch.children.length > 0) {
-                // 恢复部分匹配的 CST
-                this.curCst.children.push(...bestMatch.children)
+                // 恢复部分匹配的 CST 到记录的父节点
+                bestMatch.parentCst.children.push(...bestMatch.children)
 
                 // 从部分匹配结束位置找同步点
                 const syncIndex = this.findNextSyncPoint(bestMatch.endTokenIndex)
                 if (syncIndex > bestMatch.endTokenIndex) {
                     const errorNode = this.createErrorNode(bestMatch.endTokenIndex, syncIndex)
-                    this.curCst.children.push(errorNode)
+                    bestMatch.parentCst.children.push(errorNode)
                 }
 
                 this.tokenIndex = syncIndex
@@ -945,6 +947,35 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         }
     }
 
+    /**
+     * 【容错模式】记录部分匹配并回溯
+     * - 先记录被回溯删除但消费了 token 的 CST 片段
+     * - 再执行回溯
+     *
+     * @param savedState 保存的状态
+     * @param startTokenIndex 起始 token 位置
+     */
+    private recordPartialMatchAndRestore(savedState: SubhutiBackData, startTokenIndex: number): void {
+        // 容错模式下，回溯前记录部分匹配（直接获取引用，不拷贝）
+        if (this._errorRecoveryMode && this.tokenIndex > startTokenIndex) {
+            const currentCst = this.curCst
+            if (currentCst?.children) {
+                const removedChildren = currentCst.children.slice(savedState.curCstChildrenLength)
+                if (removedChildren.length > 0) {
+                    this._partialMatchCandidates.push({
+                        children: removedChildren,
+                        parentCst: currentCst,
+                        startTokenIndex,
+                        endTokenIndex: this.tokenIndex
+                    })
+                }
+            }
+        }
+
+        // 回溯
+        this.restoreState(savedState)
+    }
+
     get isEof() {
         return this.tokenIndex === this._tokens.length
     }
@@ -965,23 +996,8 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         fn()
 
         if (this.parserFail) {
-            // 【容错模式】回溯前记录部分匹配（直接获取引用，不拷贝）
-            if (this._errorRecoveryMode && this.tokenIndex > startTokenIndex) {
-                const currentCst = this.curCst
-                if (currentCst?.children) {
-                    const removedChildren = currentCst.children.slice(savedState.curCstChildrenLength)
-                    if (removedChildren.length > 0) {
-                        this._partialMatchCandidates.push({
-                            children: removedChildren,
-                            startTokenIndex,
-                            endTokenIndex: this.tokenIndex
-                        })
-                    }
-                }
-            }
-
-            // 失败：回溯并重置状态
-            this.restoreState(savedState)
+            // 记录部分匹配并回溯
+            this.recordPartialMatchAndRestore(savedState, startTokenIndex)
             this._parseSuccess = true
             return false
         }
