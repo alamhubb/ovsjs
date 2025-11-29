@@ -408,7 +408,7 @@ export interface SlimeCatchClause extends ESTree.CatchClause, SlimeBaseNode {
     body: SlimeBlockStatement;
 }
 
-export interface SlimeIdentifier extends ESTree.SlimeIdentifier, SlimeIdentifier, SlimeBaseNode, SlimeBaseExpression, SlimeBasePattern {
+export interface SlimeIdentifier extends SlimeIdentifier, SlimeBaseNode, SlimeBaseExpression, SlimeBasePattern, ESTree.SlimeIdentifier {
     type: "Identifier";
     name: string;
 }
