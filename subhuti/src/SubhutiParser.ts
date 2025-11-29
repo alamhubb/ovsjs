@@ -464,6 +464,11 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
             this.onRuleExitDebugHandler(ruleName, cst, isTopLevel, startTime)
 
+            // 顶层规则失败时的错误处理
+            if (isTopLevel && !this._parseSuccess) {
+                this.handleTopLevelError(ruleName, startTokenIndex)
+            }
+
             if (!cst.children?.length) {
                 cst.children = undefined
             }
@@ -545,8 +550,11 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         // 执行规则函数
         targetFun.apply(this, args)
 
-        // ✅ 统一的规则成功检测（合并循环检测和 EOF 检测）
-        this.checkRuleSuccess(ruleName, startTokenIndex, isTopLevel)
+        // 顶层规则：检查是否所有 token 都被消费（EOF 检测）
+        if (this._parseSuccess && isTopLevel && this.tokenIndex < this._tokens.length) {
+            this._parseSuccess = false
+            // 分析模式下不做额外处理，后续可扩展错误报告
+        }
 
         this.cstStack.pop()
 
@@ -634,10 +642,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * 循环执行直到失败或没消费 token
      */
     Many(fn: RuleFunction): void {
-        if (!this._parseSuccess) {
-            return
-        }
-
         while (this.tryAndRestore(fn)) {
             // 继续循环
         }
@@ -789,71 +793,38 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     }
 
     /**
-     * 统一的规则成功检测（合并循环检测和 EOF 检测）
+     * 顶层规则失败时的错误处理
      *
      * @param ruleName 规则名
      * @param startTokenIndex 规则开始时的 tokenIndex
-     * @param isTopLevel 是否是顶层规则
-     * @throws ParsingError 如果检测到问题（分析模式下不抛异常）
      */
-    private checkRuleSuccess(ruleName: string, startTokenIndex: number, isTopLevel: boolean): void {
-        if (!this._parseSuccess) {
+    private handleTopLevelError(ruleName: string, startTokenIndex: number): void {
+        // 容错模式：不抛错，错误已经通过 ErrorNode 处理
+        if (this._errorRecoveryMode) {
             return
         }
 
-        // 检测1：规则成功但不消费 token
-        const noTokenConsumed = this.tokenIndex === startTokenIndex
-
-        if (isTopLevel) {
-            // ========================================
-            // 顶层规则：检查是否所有 token 都被消费（EOF 检测）
-            // ========================================
-
-            if (this.tokenIndex < this._tokens.length) {
-                this._parseSuccess = false
-
-                // 🔍 分析模式：不抛异常，直接返回
-                if (this._analysisMode) {
-                    return
-                }
-
-                // 获取当前规则名（从规则栈）
-                const ruleStack = this.getRuleStack()
-
-                // 构建建议列表
-                const suggestions: string[] = []
-
-                if (noTokenConsumed) {
-                    // tokenIndex = 0：完全没有消费任何 token
-                    suggestions.push('解析完全失败，没有消费任何 token')
-                    suggestions.push('可能的原因：')
-                    suggestions.push('  1. Or 分支顺序错误（前面的分支可能遮蔽了后面的分支）')
-                    suggestions.push('  2. 语法错误导致所有分支都无法匹配')
-                    suggestions.push('  3. 规则实现错误')
-                    suggestions.push('建议：')
-                    suggestions.push('  - 运行语法验证工具检查 Or 分支顺序')
-                    suggestions.push('  - 检查输入代码是否符合语法规范')
-                } else {
-                    // tokenIndex > 0：消费了部分 token
-                    suggestions.push('解析部分成功，但有剩余 token 无法解析')
-                    suggestions.push('可能的原因：')
-                    suggestions.push('  1. 语法错误（如缺少分号、括号不匹配等）')
-                    suggestions.push('  2. 不支持的语法特性')
-                    suggestions.push('建议：')
-                    suggestions.push('  - 检查剩余 token 附近的语法')
-                    suggestions.push('  - 确保所有语句都正确结束')
-                }
-
-                // TODO: 研究如何处理顶层规则未完全消费 token 的情况
-                // 目前先不抛异常，让解析继续
-                // throw this._errorHandler.createError({
-                //     type: 'parsing',
-                //     expected: 'EOF (end of file)',
-                //     found: this.curToken,
-                //     ...
-                // })
-            }
+        // 分析模式：不抛错，用于语法验证
+        if (this._analysisMode) {
+            return
         }
+
+        // 正常模式：抛出解析错误
+        const noTokenConsumed = this.tokenIndex === startTokenIndex
+        const found = this.curToken
+
+        throw this._errorHandler.createError({
+            type: 'parsing',
+            expected: noTokenConsumed ? 'valid syntax' : 'EOF (end of file)',
+            found: found,
+            position: {
+                tokenIndex: this.tokenIndex,
+                charIndex: found?.index ?? this._tokens[this._tokens.length - 1]?.index ?? 0,
+                line: found?.rowNum ?? 1,
+                column: found?.columnStartNum ?? 1
+            },
+            ruleStack: this.getRuleStack().length > 0 ? this.getRuleStack() : [ruleName]
+        })
     }
 
     /**
@@ -954,6 +925,11 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * @returns true: 成功且消费了 token，false: 失败或没消费 token
      */
     private tryAndRestore(fn: () => void): boolean {
+
+
+        if (!this._parseSuccess) {
+            return false
+        }
         const savedState = this.saveState()
         const startTokenIndex = this.tokenIndex
 
