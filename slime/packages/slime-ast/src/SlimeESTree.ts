@@ -5,7 +5,7 @@ export interface SlimeBaseNodeWithoutComments extends ESTree.BaseNodeWithoutComm
     // The type property should be a string literal. For example, Identifier
     // has: `type: "Identifier"`
     type: string;
-    loc?: SourceLocation | null | undefined;
+    loc?: ESTree.SourceLocation | null | undefined;
     range?: [number, number] | undefined;
 }
 
