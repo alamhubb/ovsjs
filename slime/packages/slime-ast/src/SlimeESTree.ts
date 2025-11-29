@@ -25,6 +25,62 @@ export type SlimePosition = ESTree.Position
 export type SlimeComment = ESTree.Comment
 
 // ============================================
+// 类型映射（与 ESTree 一致的方式）
+// ============================================
+export interface SlimeNodeMap {
+    AssignmentProperty: SlimeAssignmentProperty
+    CatchClause: SlimeCatchClause
+    Class: SlimeClass
+    ClassBody: SlimeClassBody
+    Expression: SlimeExpression
+    Function: SlimeFunction
+    Identifier: SlimeIdentifier
+    Literal: SlimeLiteral
+    MethodDefinition: SlimeMethodDefinition
+    ModuleDeclaration: SlimeModuleDeclaration
+    ModuleSpecifier: SlimeModuleSpecifier
+    Pattern: SlimePattern
+    PrivateIdentifier: SlimePrivateIdentifier
+    Program: SlimeProgram
+    Property: SlimeProperty
+    PropertyDefinition: SlimePropertyDefinition
+    SpreadElement: SlimeSpreadElement
+    Statement: SlimeStatement
+    Super: SlimeSuper
+    SwitchCase: SlimeSwitchCase
+    TemplateElement: SlimeTemplateElement
+    VariableDeclarator: SlimeVariableDeclarator
+}
+
+export interface SlimeExpressionMap {
+    ArrayExpression: SlimeArrayExpression
+    ArrowFunctionExpression: SlimeArrowFunctionExpression
+    AssignmentExpression: SlimeAssignmentExpression
+    AwaitExpression: SlimeAwaitExpression
+    BinaryExpression: SlimeBinaryExpression
+    CallExpression: SlimeCallExpression
+    ChainExpression: SlimeChainExpression
+    ClassExpression: SlimeClassExpression
+    ConditionalExpression: SlimeConditionalExpression
+    FunctionExpression: SlimeFunctionExpression
+    Identifier: SlimeIdentifier
+    ImportExpression: SlimeImportExpression
+    Literal: SlimeLiteral
+    LogicalExpression: SlimeLogicalExpression
+    MemberExpression: SlimeMemberExpression
+    MetaProperty: SlimeMetaProperty
+    NewExpression: SlimeNewExpression
+    ObjectExpression: SlimeObjectExpression
+    SequenceExpression: SlimeSequenceExpression
+    TaggedTemplateExpression: SlimeTaggedTemplateExpression
+    TemplateLiteral: SlimeTemplateLiteral
+    ThisExpression: SlimeThisExpression
+    UnaryExpression: SlimeUnaryExpression
+    UpdateExpression: SlimeUpdateExpression
+    YieldExpression: SlimeYieldExpression
+}
+
+// ============================================
 // Slime 通用 Token 扩展字段（mixin 接口�?// ============================================
 
 /** 通用的括�?Token 字段 */
@@ -137,7 +193,7 @@ export interface SlimeStringLiteral extends SlimeSimpleLiteral {
 }
 
 // --- Statements ---
-export type SlimeStatement = ESTree.Statement & (
+export type SlimeStatement =
     | SlimeExpressionStatement
     | SlimeBlockStatement
     | SlimeEmptyStatement
@@ -156,10 +212,7 @@ export type SlimeStatement = ESTree.Statement & (
     | SlimeForOfStatement
     | SlimeLabeledStatement
     | SlimeWithStatement
-    | SlimeVariableDeclaration
-    | SlimeFunctionDeclaration
-    | SlimeClassDeclaration
-)
+    | SlimeDeclaration
 
 export interface SlimeExpressionStatement extends ESTree.ExpressionStatement, SlimeBaseStatement {
     type: typeof SlimeAstType.ExpressionStatement
@@ -320,11 +373,10 @@ export interface SlimeForOfStatement extends ESTree.ForOfStatement, SlimeBaseFor
 }
 
 // --- Declarations ---
-export type SlimeDeclaration = ESTree.Declaration & (
+export type SlimeDeclaration =
     | SlimeFunctionDeclaration
     | SlimeVariableDeclaration
     | SlimeClassDeclaration
-)
 
 export interface SlimeFunctionDeclaration extends ESTree.FunctionDeclaration, SlimeBaseDeclaration, SlimeParenTokens, SlimeBraceTokens {
     type: typeof SlimeAstType.FunctionDeclaration
@@ -361,33 +413,7 @@ export interface SlimeClassDeclaration extends ESTree.ClassDeclaration, SlimeBas
 }
 
 // --- Expressions ---
-export type SlimeExpression = ESTree.Expression & (
-    | SlimeIdentifier
-    | SlimeLiteral
-    | SlimeThisExpression
-    | SlimeArrayExpression
-    | SlimeObjectExpression
-    | SlimeFunctionExpression
-    | SlimeArrowFunctionExpression
-    | SlimeClassExpression
-    | SlimeUnaryExpression
-    | SlimeUpdateExpression
-    | SlimeBinaryExpression
-    | SlimeAssignmentExpression
-    | SlimeLogicalExpression
-    | SlimeMemberExpression
-    | SlimeConditionalExpression
-    | SlimeCallExpression
-    | SlimeNewExpression
-    | SlimeSequenceExpression
-    | SlimeTemplateLiteral
-    | SlimeTaggedTemplateExpression
-    | SlimeYieldExpression
-    | SlimeAwaitExpression
-    | SlimeImportExpression
-    | SlimeChainExpression
-    | SlimeMetaProperty
-)
+export type SlimeExpression = SlimeExpressionMap[keyof SlimeExpressionMap]
 
 export interface SlimeThisExpression extends ESTree.ThisExpression, SlimeBaseExpression {
     type: typeof SlimeAstType.ThisExpression
@@ -585,14 +611,13 @@ export interface SlimeSuper extends ESTree.Super, SlimeBaseNode {
 
 
 // --- Patterns ---
-export type SlimePattern = ESTree.Pattern & (
+export type SlimePattern =
     | SlimeIdentifier
     | SlimeObjectPattern
     | SlimeArrayPattern
     | SlimeRestElement
     | SlimeAssignmentPattern
     | SlimeMemberExpression
-)
 
 export interface SlimeObjectPattern extends ESTree.ObjectPattern, SlimeBasePattern, SlimeBraceTokens, SlimeCommaListTokens {
     type: typeof SlimeAstType.ObjectPattern
@@ -671,12 +696,11 @@ export interface SlimePropertyDefinition extends ESTree.PropertyDefinition, Slim
 }
 
 // --- Modules ---
-export type SlimeModuleDeclaration = ESTree.ModuleDeclaration & (
+export type SlimeModuleDeclaration =
     | SlimeImportDeclaration
     | SlimeExportNamedDeclaration
     | SlimeExportDefaultDeclaration
     | SlimeExportAllDeclaration
-)
 
 export interface SlimeImportDeclaration extends ESTree.ImportDeclaration, SlimeBaseNode, SlimeBraceTokens, SlimeCommaListTokens {
     type: typeof SlimeAstType.ImportDeclaration
@@ -761,59 +785,33 @@ export type SlimeAssignmentOperator = ESTree.AssignmentOperator
 export type SlimeUpdateOperator = ESTree.UpdateOperator
 
 // --- 联合类型（与 ESTree 一致）---
-export type SlimeFunction = ESTree.Function & (
+export type SlimeFunction =
     | SlimeFunctionDeclaration
     | SlimeFunctionExpression
     | SlimeArrowFunctionExpression
-)
 
-export type SlimeClass = ESTree.Class & (
+export type SlimeClass =
     | SlimeClassDeclaration
     | SlimeClassExpression
-)
 
-export type SlimeChainElement = ESTree.ChainElement & (
+export type SlimeChainElement =
     | SlimeSimpleCallExpression
     | SlimeMemberExpression
-)
 
-export type SlimeLiteral = ESTree.Literal & (
+export type SlimeLiteral =
     | SlimeSimpleLiteral
     | SlimeRegExpLiteral
     | SlimeBigIntLiteral
-)
 
-export type SlimeModuleSpecifier = ESTree.ModuleSpecifier & (
+export type SlimeModuleSpecifier =
     | SlimeImportSpecifier
     | SlimeImportDefaultSpecifier
     | SlimeImportNamespaceSpecifier
     | SlimeExportSpecifier
-)
 
-export type SlimeCallExpression = ESTree.CallExpression & (
+export type SlimeCallExpression =
     | SlimeSimpleCallExpression
     | SlimeNewExpression
-)
 
 // --- Node 联合类型（所有节点类型）---
-export type SlimeNode = ESTree.Node & (
-    | SlimeProgram
-    | SlimeStatement
-    | SlimeExpression
-    | SlimePattern
-    | SlimeModuleDeclaration
-    | SlimeModuleSpecifier
-    | SlimeSwitchCase
-    | SlimeCatchClause
-    | SlimeVariableDeclarator
-    | SlimeProperty
-    | SlimeAssignmentProperty
-    | SlimeTemplateElement
-    | SlimeSpreadElement
-    | SlimeClassBody
-    | SlimeMethodDefinition
-    | SlimePropertyDefinition
-    | SlimeStaticBlock
-    | SlimeSuper
-    | SlimePrivateIdentifier
-)
+export type SlimeNode = SlimeNodeMap[keyof SlimeNodeMap]
