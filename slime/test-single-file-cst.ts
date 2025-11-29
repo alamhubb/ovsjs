@@ -150,7 +150,8 @@ function _getCSTStatistics(node: any): {
 }
 
 // 主程序
-const filePath = process.argv[2] || 'tests/test262/intl402/DateTimeFormat\\prototype\\formatRangeToParts\\temporal-objects-resolved-time-zone.js'
+const filePath = process.argv[2] || 'tests/es6rules/fix-duplicates.js'
+// const filePath = process.argv[2] || 'tests/test262/intl402/DateTimeFormat\\prototype\\formatRangeToParts\\temporal-objects-resolved-time-zone.js'
 // const filePath = process.argv[2] || 'tests/es6rules/AdditiveExpression-001.js'
 
 if (!filePath) {
