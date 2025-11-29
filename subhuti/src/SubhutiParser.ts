@@ -873,7 +873,12 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * - 失败时返回 undefined，不抛异常
      */
     consume(tokenName: string): SubhutiCst | undefined {
-        if (this.parserFailOrIsEof) {
+        if (this.parserFail) {
+            return
+        }
+
+        if (this.isEof) {
+            this._parseSuccess = false
             return
         }
 
