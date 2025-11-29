@@ -650,6 +650,19 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         })
     }
 
+    ManyWithRecovery(fn: RuleFunction): SubhutiCst | undefined {
+        if (!this._parseSuccess) {
+            return undefined
+        }
+
+        return this.withAllowError(() => {
+            while (this.tryAndRestore(fn)) {
+                // 使用默认 checkLoop: true，自动检测循环
+            }
+            return this.curCst
+        })
+    }
+
     /**
      * Option 规则 - 0次或1次（EBNF [ ... ]）
      *
