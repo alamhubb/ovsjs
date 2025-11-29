@@ -952,55 +952,54 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
         fn()
 
-        if (this._parseSuccess) {
-            // ✅ 成功：检查是否需要验证循环
-            if (checkLoop && this.tokenIndex === startTokenIndex) {
-                // ❌ 成功但没消费 token → 在 Many/AtLeastOne 中会无限循环
-
-                // 🔍 分析模式：不抛异常，标记失败并返回 false
-                if (this._analysisMode) {
-                    this._parseSuccess = false
-                    this.restoreState(savedState)
-                    return false
-                }
-
-                const currentRuleName = this.cstStack[this.cstStack.length - 1].name || 'Unknown'
-                throw this._errorHandler.createError({
-                    type: 'infinite-loop',
-                    expected: '',
-                    found: this.curToken,
-                    position: this.curToken ? {
-                        tokenIndex: this.tokenIndex,
-                        charIndex: this.curToken.index || 0,
-                        line: this.curToken.rowNum || 0,
-                        column: this.curToken.columnStartNum || 0
-                    } : {
-                        tokenIndex: this._tokens.length,
-                        charIndex: this._tokens[this._tokens.length - 1]?.index || 0,
-                        line: this._tokens[this._tokens.length - 1]?.rowNum || 0,
-                        column: this._tokens[this._tokens.length - 1]?.columnEndNum || 0
-                    },
-                    ruleStack: [...this.getRuleStack()],
-                    loopRuleName: currentRuleName,
-                    loopDetectionSet: Array.from(this.loopDetectionSet),
-                    loopCstDepth: this.cstStack.length,
-                    loopCacheStats: {
-                        hits: 0,
-                        misses: 0,
-                        hitRate: '0%',
-                        currentSize: 0
-                    },
-                    loopTokenContext: [],
-                    hint: '可能原因：规则中使用了 return undefined 但未设置失败状态。建议使用 this.BACKTRACK() 或调整 Or 分支顺序。'
-                })
-            }
-            return true
+        if (!this._parseSuccess) {
+            // ❌ 失败：回溯
+            this.restoreState(savedState)
+            this._parseSuccess = true
+            return false
         }
 
-        // ❌ 失败：回溯
-        this.restoreState(savedState)
-        this._parseSuccess = true
-        return false
+        // ✅ 成功：检查是否需要验证循环
+        if (checkLoop && this.tokenIndex === startTokenIndex) {
+            // ❌ 成功但没消费 token → 在 Many/AtLeastOne 中会无限循环
+            // 🔍 分析模式：不抛异常，标记失败并返回 false
+            // 成功但没消费 token → 回溯并返回 false，让循环退出
+            if (this._analysisMode) {
+                this._parseSuccess = false
+            }
+            this.restoreState(savedState)  // 建议加上这行
+            return false
+            /*const currentRuleName = this.cstStack[this.cstStack.length - 1].name || 'Unknown'
+            throw this._errorHandler.createError({
+                type: 'infinite-loop',
+                expected: '',
+                found: this.curToken,
+                position: this.curToken ? {
+                    tokenIndex: this.tokenIndex,
+                    charIndex: this.curToken.index || 0,
+                    line: this.curToken.rowNum || 0,
+                    column: this.curToken.columnStartNum || 0
+                } : {
+                    tokenIndex: this._tokens.length,
+                    charIndex: this._tokens[this._tokens.length - 1]?.index || 0,
+                    line: this._tokens[this._tokens.length - 1]?.rowNum || 0,
+                    column: this._tokens[this._tokens.length - 1]?.columnEndNum || 0
+                },
+                ruleStack: [...this.getRuleStack()],
+                loopRuleName: currentRuleName,
+                loopDetectionSet: Array.from(this.loopDetectionSet),
+                loopCstDepth: this.cstStack.length,
+                loopCacheStats: {
+                    hits: 0,
+                    misses: 0,
+                    hitRate: '0%',
+                    currentSize: 0
+                },
+                loopTokenContext: [],
+                hint: '可能原因：规则中使用了 return undefined 但未设置失败状态。建议使用 this.BACKTRACK() 或调整 Or 分支顺序。'
+            })*/
+        }
+        return true
     }
 
     /**
