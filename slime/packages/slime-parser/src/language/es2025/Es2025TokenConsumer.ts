@@ -258,7 +258,7 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
      * 用于 setter 方法定义
      */
     Set() {
-        return this.consumeIdentifierValue(SlimeContextualKeywordTokenTypes.Static)
+        return this.consumeIdentifierValue(SlimeContextualKeywordTokenTypes.Set)
     }
 
     /**
@@ -330,7 +330,7 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
         return this.consume(TokenNames.TemplateTail)
     }
 
-    RegularExpression() {
+    RegularExpressionLiteral() {
         return this.consume(TokenNames.RegularExpressionLiteral)
     }
 
@@ -398,7 +398,7 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
         return this.consume(TokenNames.LeftShiftAssign)
     }
 
-    SignedRightShiftAssign() {
+    RightShiftAssign() {
         return this.consume(TokenNames.RightShiftAssign)
     }
 
@@ -450,15 +450,15 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
         return this.consume(TokenNames.LeftShift)
     }
 
-    SignedRightShift() {
+    RightShift() {
         return this.consume(TokenNames.RightShift)
     }
 
-    LessThanOrEqual() {
+    LessEqual() {
         return this.consume(TokenNames.LessEqual)
     }
 
-    GreaterThanOrEqual() {
+    GreaterEqual() {
         return this.consume(TokenNames.GreaterEqual)
     }
 
@@ -550,11 +550,11 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
         return this.consume(TokenNames.Comma)
     }
 
-    LessThan() {
+    Less() {
         return this.consume(TokenNames.Less)
     }
 
-    GreaterThan() {
+    Greater() {
         return this.consume(TokenNames.Greater)
     }
 
