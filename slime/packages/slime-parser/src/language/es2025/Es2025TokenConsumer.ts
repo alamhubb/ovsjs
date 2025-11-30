@@ -605,11 +605,5 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
     Assign() {
         return this.consume(TokenNames.Assign)
     }
-
-    Hash() {
-        // Hash 用于私有标识符的 # 符号，但词法上已经合并到 PrivateIdentifier 中
-        // 这里保留方法以防 Parser 中有单独使用的场景
-        return this.consume(TokenNames.PrivateIdentifier)
-    }
 }
 
