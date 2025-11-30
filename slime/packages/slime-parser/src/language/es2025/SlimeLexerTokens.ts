@@ -4,7 +4,6 @@
 import {
     createEmptyValueRegToken, createKeywordToken,
     createValueRegToken,
-    SubhutiCreateToken
 } from "subhuti/src/struct/SubhutiCreateToken.ts";
 import {TokenNames} from "slime-token/src/SlimeTokensName.ts";
 
