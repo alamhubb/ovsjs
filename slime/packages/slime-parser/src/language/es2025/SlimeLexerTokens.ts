@@ -2,7 +2,7 @@
 // Token 对象（用于 TokenConsumer 复用）
 // ============================================
 import {
-    createEmptyValueRegToken,
+    createEmptyValueRegToken, createKeywordToken,
     createValueRegToken,
     SubhutiCreateToken
 } from "subhuti/src/struct/SubhutiCreateToken.ts";
