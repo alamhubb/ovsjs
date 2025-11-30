@@ -1,5 +1,5 @@
 {
-  "name": "slime-parser",
+  "name": "slime-token",
   "version": "0.0.1",
   "main": "index.js",
   "scripts": {

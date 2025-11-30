@@ -1,13 +1,16 @@
 import type * as ESTree from "estree";
 import {
-    SlimeAstType,
+    SlimeAstType
+} from "./SlimeAstType.ts";
+
+import {
     SlimeTokenType,
     SlimeUpdateOperatorTokenTypes,
     SlimeUnaryOperatorTokenTypes,
     SlimeBinaryOperatorTokenTypes,
     SlimeLogicalOperatorTokenTypes,
     SlimeAssignmentOperatorTokenTypes,
-} from "./SlimeAstType.ts";
+} from "slime-token/src/SlimeTokensName";
 import type {SubhutiSourceLocation} from "subhuti/src/struct/SubhutiCst.ts";
 
 /**
