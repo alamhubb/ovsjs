@@ -13,7 +13,7 @@ import {
   type SlimeModuleDeclaration,
   type SlimePropertyDefinition
 } from "slime-ast/src/SlimeAstInterface.ts";
-import SlimeAstUtil from "slime-ast/src/SlimeAst.ts";
+import SlimeAstUtil from "slime-ast/src/SlimeAstCreate.ts";
 import ObjectScriptParser from "../parser/ObjectScriptParser.ts";
 import {SubhutiUtil} from "subhuti/src/parser/SubhutiParser.ts";
 import Es2025Parser from "slime-parser/src/language/es2025/Es2025Parser.ts";
