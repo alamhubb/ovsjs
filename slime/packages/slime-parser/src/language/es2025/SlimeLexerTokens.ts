@@ -350,5 +350,3 @@ export const SlimeLexerTokensObj = {
     PrivateIdentifier: createEmptyValueRegToken(TokenNames.PrivateIdentifier, PRIVATE_IDENTIFIER_PATTERN),
     IdentifierName: createEmptyValueRegToken(TokenNames.IdentifierName, IDENTIFIER_NAME_PATTERN),
 }
-
-export const es2025Tokens: SubhutiCreateToken[] = Object.values(SlimeLexerTokensObj)

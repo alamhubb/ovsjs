@@ -10,7 +10,6 @@
  *
  * @version 1.0.0
  */
-
 import SubhutiParser, {Subhuti, SubhutiRule} from "subhuti/src/SubhutiParser.ts"
 import type SubhutiCst from "subhuti/src/struct/SubhutiCst.ts"
 import type SubhutiMatchToken from "subhuti/src/struct/SubhutiMatchToken.ts"
@@ -48,6 +47,10 @@ import {
  * 用途：在 Parser 中验证标识符是否为保留字
  * 实现：自动从所有 isKeyword=true 的 token 中提取（仅包含硬关键字）
  */
+
+
+export const es2025Tokens: SubhutiCreateToken[] = Object.values(SlimeLexerTokensObj)
+
 export const ReservedWords = new Set(
     es2025Tokens
         .filter(token => token.isKeyword)  // 过滤出所有硬关键字 token
