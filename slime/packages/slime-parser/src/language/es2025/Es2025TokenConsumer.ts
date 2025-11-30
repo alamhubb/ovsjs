@@ -35,8 +35,8 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
      */
     protected consumeIdentifierValue(value: string) {
         const token = this.parser.curToken
-        if (token?.tokenName === TokenNames.IdentifierNameTok && token.tokenValue === value) {
-            return this.consume(TokenNames.IdentifierNameTok)
+        if (token?.tokenName === TokenNames.IdentifierName && token.tokenValue === value) {
+            return this.consume(TokenNames.IdentifierName)
         }
         // 标记解析失败
         this.parser._markParseFail()
@@ -293,16 +293,17 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
     // 字面量 (Literals)
     // ============================================
 
-    Number() {
-        // NumericLiteral 或 LegacyOctalLiteral（如 05, 077 等，Annex B）
-        return this.parser.Or([
-            {alt: () => this.consume(TokenNames.NumericLiteral)},
-            {alt: () => this.consume(TokenNames.LegacyOctalLiteral)}
-        ])
-    }
-
-    BigInt() {
-        return this.consume(TokenNames.BigIntLiteral)
+    /**
+     * NumericLiteral
+     * 规范中 NumericLiteral 包含所有数字变体：
+     * - DecimalLiteral (如 123, 1.5, .5, 1e10)
+     * - DecimalBigIntegerLiteral (如 123n)
+     * - NonDecimalIntegerLiteral (如 0xFF, 0b11, 0o77)
+     * - NonDecimalIntegerLiteral BigIntLiteralSuffix (如 0xFFn, 0b11n, 0o77n)
+     * - LegacyOctalIntegerLiteral (如 077, Annex B)
+     */
+    NumericLiteral() {
+        return this.consume(TokenNames.NumericLiteral)
     }
 
     StringLiteral() {
@@ -345,10 +346,18 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
     // 标识符 (Identifiers)
     // ============================================
 
-    IdentifierNameTok() {
-        return this.consume(TokenNames.IdentifierNameTok)
+    /**
+     * IdentifierName
+     * 规范: IdentifierName :: IdentifierStart | IdentifierName IdentifierPart
+     */
+    IdentifierName() {
+        return this.consume(TokenNames.IdentifierName)
     }
 
+    /**
+     * PrivateIdentifier
+     * 规范: PrivateIdentifier :: # IdentifierName
+     */
     PrivateIdentifier() {
         return this.consume(TokenNames.PrivateIdentifier)
     }

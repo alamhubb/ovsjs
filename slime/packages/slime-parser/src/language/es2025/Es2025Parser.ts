@@ -169,7 +169,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      * @param value 软关键字的值（如 ContextualKeywords.LET）
      */
     protected isContextual(value: string): boolean {
-        return this.match(TokenNames.IdentifierNameTok) && this.curToken?.tokenValue === value
+        return this.match(TokenNames.IdentifierName) && this.curToken?.tokenValue === value
     }
 
     /**
@@ -251,7 +251,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     protected isContextualPair(first: string, second: string): boolean {
         if (!this.isContextual(first)) return false
         const nextToken = this.peek(1)
-        return nextToken?.tokenName === TokenNames.IdentifierNameTok && nextToken.tokenValue === second
+        return nextToken?.tokenName === TokenNames.IdentifierName && nextToken.tokenValue === second
     }
 
     /**
@@ -419,7 +419,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      */
     @SubhutiRule
     Identifier(): SubhutiCst | undefined {
-        const cst = this.tokenConsumer.IdentifierNameTok()
+        const cst = this.tokenConsumer.IdentifierName()
         if (!cst) return undefined
 
         const value = cst.value!
@@ -451,7 +451,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      * 按照 ES2025 规范，IdentifierName 包括所有标识符字符序列（包括关键字）
      * 用于：属性名、成员访问、ModuleExportName 等场景
      *
-     * 注意：词法层的 IdentifierNameTok 只匹配非关键字标识符，
+     * 注意：词法层的 IdentifierName token 只匹配非关键字标识符，
      * 所以这里需要显式包含所有关键字 token
      *
      * 同样需要验证 Unicode 转义的有效性
@@ -461,7 +461,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
         return this.Or([
             // 普通标识符（需要验证 Unicode 转义）
             {alt: () => {
-                const cst = this.tokenConsumer.IdentifierNameTok()
+                const cst = this.tokenConsumer.IdentifierName()
                 if (!cst) return undefined
                 const value = cst.value!
                 // 如果包含 Unicode 转义，验证解码后的字符是否有效
@@ -517,7 +517,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             {alt: () => this.tokenConsumer.StaticTok()},
             {alt: () => this.tokenConsumer.AsTok()},
             // 软关键字（get, set, of, target, meta, from）
-            // 这些已经返回 IdentifierNameTok，所以被第一个分支覆盖
+            // 这些已经返回 IdentifierName，所以被第一个分支覆盖
         ])
     }
 
@@ -741,14 +741,11 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      *     LegacyOctalIntegerLiteral
      *     NonDecimalIntegerLiteral BigIntLiteralSuffix
      *
-     * 注意：词法层将 Number 和 BigInt 分开，这里合并以符合规范
+     * 注意：词法层所有数字变体都输出为 NumericLiteral token
      */
     @SubhutiRule
     NumericLiteral(): SubhutiCst | undefined {
-        return this.Or([
-            {alt: () => this.tokenConsumer.Number()},
-            {alt: () => this.tokenConsumer.BigInt()}
-        ])
+        return this.tokenConsumer.NumericLiteral()
     }
 
     /**

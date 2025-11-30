@@ -6,7 +6,56 @@ import {
     createValueRegToken,
     SubhutiCreateToken
 } from "subhuti/src/struct/SubhutiCreateToken.ts";
-import {EXPRESSION_END_TOKENS, TokenNames} from "./Es2025Tokens";
+import {TokenNames} from "./Es2025Tokens";
+
+
+
+// ============================================
+// 软关键字值常量（Contextual Keywords）
+// 这些在词法层是 IdentifierName，在语法层通过值检查识别
+// 注意：let 已作为独立 token 处理（LetTok）
+// ============================================
+export const ContextualKeywords = {
+    ASYNC: 'async',
+    STATIC: 'static',
+    AS: 'as',
+    GET: 'get',
+    SET: 'set',
+    OF: 'of',
+    FROM: 'from',
+    TARGET: 'target',
+    META: 'meta',
+} as const
+
+
+// ============================================
+// 表达式结尾 Token 集合
+// 用于词法歧义处理：/ 在这些 token 后是除法，否则是正则表达式
+// ============================================
+export const EXPRESSION_END_TOKENS = new Set([
+    // 标识符和字面量
+    TokenNames.IdentifierName,
+    TokenNames.NumericLiteral,  // 包含所有数字变体（十进制、BigInt、十六进制等）
+    TokenNames.StringLiteral,
+    TokenNames.RegularExpressionLiteral,
+    TokenNames.NoSubstitutionTemplate,
+    TokenNames.TemplateTail,
+
+    // 关闭括号
+    TokenNames.RParen,      // )
+    TokenNames.RBracket,    // ]
+    TokenNames.RBrace,      // }
+
+    // 后缀运算符
+    TokenNames.Increment,   // ++
+    TokenNames.Decrement,   // --
+
+    // 关键字字面量
+    TokenNames.ThisTok,
+    TokenNames.TrueTok,
+    TokenNames.FalseTok,
+    TokenNames.NullTok,
+])
 
 // ============================================
 // ES2025 规范 12.7 标识符名称正则
@@ -55,7 +104,7 @@ export const SlimeLexerTokensObj = {
         '',
         false,
         undefined,  // lookahead
-        { onlyAtStart: true }  // 只在文件开头匹配
+        {onlyAtStart: true}  // 只在文件开头匹配
     ),
     // SingleLineComment 和 MultiLineComment 也需要正确处理 LineTerminator
     MultiLineComment: createValueRegToken(TokenNames.MultiLineComment, /\/\*[\s\S]*?\*\//, '', true),
@@ -116,21 +165,27 @@ export const SlimeLexerTokensObj = {
     WithTok: createKeywordToken(TokenNames.WithTok, 'with'),
     YieldTok: createKeywordToken(TokenNames.YieldTok, 'yield'),
     // 软关键字（async, static, as, get, set, of, target, meta, from）
-    // 在词法层作为 IdentifierNameTok 处理，在 Parser 中通过值检查识别
+    // 在词法层作为 IdentifierName 处理，在 Parser 中通过值检查识别
 
     // ============================================
     // A.1.9 数字字面量
+    // 规范: NumericLiteral :: DecimalLiteral | DecimalBigIntegerLiteral | NonDecimalIntegerLiteral | ...
+    // 所有数字变体都映射到 NumericLiteral
     // ============================================
 
-    BigIntHex: createEmptyValueRegToken(TokenNames.BigIntLiteral, /0[xX][0-9a-fA-F](_?[0-9a-fA-F])*n/),
-    BigIntBinary: createEmptyValueRegToken(TokenNames.BigIntLiteral, /0[bB][01](_?[01])*n/),
-    BigIntOctal: createEmptyValueRegToken(TokenNames.BigIntLiteral, /0[oO][0-7](_?[0-7])*n/),
-    BigIntDecimal: createEmptyValueRegToken(TokenNames.BigIntLiteral, /(?:0|[1-9](_?[0-9])*)n/),
-    NumericHex: createEmptyValueRegToken(TokenNames.NumericLiteral, /0[xX][0-9a-fA-F](_?[0-9a-fA-F])*/),
-    NumericBinary: createEmptyValueRegToken(TokenNames.NumericLiteral, /0[bB][01](_?[01])*/),
-    NumericOctal: createEmptyValueRegToken(TokenNames.NumericLiteral, /0[oO][0-7](_?[0-7])*/),
-    LegacyOctalLiteral: createEmptyValueRegToken(TokenNames.LegacyOctalLiteral, /0[0-7]+/),
-    NumericLiteral: createEmptyValueRegToken(TokenNames.NumericLiteral, /(?:[0-9](_?[0-9])*\.([0-9](_?[0-9])*)?|\.[0-9](_?[0-9])*|[0-9](_?[0-9])*)([eE][+-]?[0-9](_?[0-9])*)?/),
+    // BigInt 变体 (DecimalBigIntegerLiteral, NonDecimalIntegerLiteral BigIntLiteralSuffix)
+    NumericLiteralBigIntHex: createEmptyValueRegToken(TokenNames.NumericLiteral, /0[xX][0-9a-fA-F](_?[0-9a-fA-F])*n/),
+    NumericLiteralBigIntBinary: createEmptyValueRegToken(TokenNames.NumericLiteral, /0[bB][01](_?[01])*n/),
+    NumericLiteralBigIntOctal: createEmptyValueRegToken(TokenNames.NumericLiteral, /0[oO][0-7](_?[0-7])*n/),
+    NumericLiteralBigIntDecimal: createEmptyValueRegToken(TokenNames.NumericLiteral, /(?:0|[1-9](_?[0-9])*)n/),
+    // 非十进制整数 (NonDecimalIntegerLiteral)
+    NumericLiteralHex: createEmptyValueRegToken(TokenNames.NumericLiteral, /0[xX][0-9a-fA-F](_?[0-9a-fA-F])*/),
+    NumericLiteralBinary: createEmptyValueRegToken(TokenNames.NumericLiteral, /0[bB][01](_?[01])*/),
+    NumericLiteralOctal: createEmptyValueRegToken(TokenNames.NumericLiteral, /0[oO][0-7](_?[0-7])*/),
+    // 传统八进制 (LegacyOctalIntegerLiteral, Annex B)
+    NumericLiteralLegacyOctal: createEmptyValueRegToken(TokenNames.NumericLiteral, /0[0-7]+/),
+    // 十进制 (DecimalLiteral)
+    NumericLiteralDecimal: createEmptyValueRegToken(TokenNames.NumericLiteral, /(?:[0-9](_?[0-9])*\.([0-9](_?[0-9])*)?|\.[0-9](_?[0-9])*|[0-9](_?[0-9])*)([eE][+-]?[0-9](_?[0-9])*)?/),
 
     // ============================================
     // A.1.10 字符串字面量
@@ -190,7 +245,7 @@ export const SlimeLexerTokensObj = {
         '/=',
         false,  // skip
         undefined,  // lookahead
-        { onlyAfter: EXPRESSION_END_TOKENS }  // 上下文约束
+        {onlyAfter: EXPRESSION_END_TOKENS}  // 上下文约束
     ),
     ModuloAssign: createValueRegToken(TokenNames.ModuloAssign, /%=/, '%='),
     LeftShift: createValueRegToken(TokenNames.LeftShift, /<</, '<<'),
@@ -237,7 +292,7 @@ export const SlimeLexerTokensObj = {
         '/',
         false,  // skip
         undefined,  // lookahead
-        { onlyAfter: EXPRESSION_END_TOKENS }  // 上下文约束
+        {onlyAfter: EXPRESSION_END_TOKENS}  // 上下文约束
     ),
 
     // 正则表达式字面量（无约束，作为 Slash 的 fallback）
@@ -288,7 +343,40 @@ export const SlimeLexerTokensObj = {
     // ============================================
 
     PrivateIdentifier: createEmptyValueRegToken(TokenNames.PrivateIdentifier, PRIVATE_IDENTIFIER_PATTERN),
-    IdentifierNameTok: createEmptyValueRegToken(TokenNames.IdentifierNameTok, IDENTIFIER_NAME_PATTERN),
+    IdentifierName: createEmptyValueRegToken(TokenNames.IdentifierName, IDENTIFIER_NAME_PATTERN),
 }
 
 export const es2025Tokens: SubhutiCreateToken[] = Object.values(SlimeLexerTokensObj)
+
+
+// ============================================
+// 保留字集合（用于 Identifier 验证）
+// ============================================
+
+/**
+ * ES2025 保留字集合
+ * 来源：ECMAScript® 2025 规范 12.7.2 Keywords and Reserved Words
+ *
+ * 分类说明：
+ * 1. 硬关键字（永久保留，在此集合中）：
+ *    break, case, catch, class, const, continue, debugger, default,
+ *    delete, do, else, enum, export, extends, false, finally, for, function,
+ *    if, import, in, instanceof, new, null, return, super, switch, this,
+ *    throw, true, try, typeof, var, void, while, with, await, yield
+ *    实现方式：createKeywordToken + 独立 Token
+ *
+ * 2. 软关键字（不在此集合中，可作标识符）：
+ *    async, let, static, as, get, set, of, from, target, meta
+ *    - async: 可作变量名，如 `let async = 1`
+ *    - let, static: 非严格模式下可作标识符
+ *    - 其他: 仅在特定语法位置是关键字
+ *    实现方式：识别为 IdentifierName + consumeIdentifierValue()
+ *
+ * 用途：在 Parser 中验证标识符是否为保留字
+ * 实现：自动从所有 isKeyword=true 的 token 中提取（仅包含硬关键字）
+ */
+export const ReservedWords = new Set(
+    es2025Tokens
+        .filter(token => token.isKeyword)  // 过滤出所有硬关键字 token
+        .map(token => token.value!)        // 提取 value（'await', 'break' 等）
+)
