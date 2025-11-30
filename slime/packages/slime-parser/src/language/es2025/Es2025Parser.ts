@@ -16,6 +16,11 @@ import type SubhutiCst from "subhuti/src/struct/SubhutiCst.ts"
 import type SubhutiMatchToken from "subhuti/src/struct/SubhutiMatchToken.ts"
 import {matchRegExpLiteral} from "subhuti/src/SubhutiLexer.ts"
 import Es2025TokenConsumer from "./Es2025TokenConsumer.ts"
+import {
+    SlimeContextualKeywordTokenTypes,
+    SlimeReservedWordTokenTypes,
+    TokenNames
+} from "slime-token/src/SlimeTokensName.ts";
 
 // ============================================
 // 参数化规则的参数接口
@@ -165,7 +170,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     // ============================================
     /**
      * 检查当前 token 是否是指定的上下文关键字（软关键字）
-     * @param value 软关键字的值（如 ContextualKeywords.LET）
+     * @param value 软关键字的值（如 SlimeContextualKeywordTokenTypes.LET）
      */
     protected isContextual(value: string): boolean {
         return this.match(TokenNames.IdentifierName) && this.curToken?.tokenValue === value
@@ -1854,10 +1859,10 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
 
         this.Many(() => {
             this.Or([
-                {alt: () => this.tokenConsumer.LessThan()},
-                {alt: () => this.tokenConsumer.GreaterThan()},
-                {alt: () => this.tokenConsumer.LessThanOrEqual()},
-                {alt: () => this.tokenConsumer.GreaterThanOrEqual()},
+                {alt: () => this.tokenConsumer.Less()},
+                {alt: () => this.tokenConsumer.Greater()},
+                {alt: () => this.tokenConsumer.LessEqual()},
+                {alt: () => this.tokenConsumer.GreaterEqual()},
                 {alt: () => this.tokenConsumer.Instanceof()},
                 // [+In] in - 条件展开，只在 In=true 时才有这个分支
                 ...(In ? [{alt: () => this.tokenConsumer.In()}] : [])
@@ -2759,9 +2764,9 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     @SubhutiRule
     ExpressionStatement(params: StatementParams = {}): SubhutiCst | undefined {
         // [lookahead ∉ {{, function, async [no LineTerminator here] function, class, let [}]
-        this.assertLookaheadNotIn([TokenNames.LBrace, TokenNames.FunctionTok, TokenNames.ClassTok])
-        this.assertNotContextualSequenceNoLT(ContextualKeywords.ASYNC, TokenNames.FunctionTok)
-        this.assertNotContextualSequence(ContextualKeywords.LET, TokenNames.LBracket)
+        this.assertLookaheadNotIn([TokenNames.LBrace, TokenNames.Function, TokenNames.Class])
+        this.assertNotContextualSequenceNoLT(SlimeContextualKeywordTokenTypes.Async, TokenNames.Function)
+        this.assertNotContextualSequence(SlimeReservedWordTokenTypes.Let, TokenNames.LBracket)
 
         this.Expression({...params, In: true})
         return this.SemicolonASI()
@@ -2803,7 +2808,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                     this.Expression({...params, In: true})
                     this.tokenConsumer.RParen()
                     this.IfStatementBody(params)
-                    this.assertLookaheadNot(TokenNames.ElseTok)  // [lookahead ≠ else]
+                    this.assertLookaheadNot(TokenNames.Else)  // [lookahead ≠ else]
                 }
             }
         ])
@@ -2933,7 +2938,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                     this.tokenConsumer.For()
                     this.tokenConsumer.LParen()
                     // [lookahead ≠ let []
-                    this.assertNotContextualSequence(ContextualKeywords.LET, TokenNames.LBracket)
+                    this.assertNotContextualSequence(SlimeContextualKeywordTokenTypes.LET, TokenNames.LBracket)
                     this.Option(() => this.Expression({...params, In: false}))
                     this.tokenConsumer.Semicolon()
                     this.Option(() => this.Expression({...params, In: true}))
@@ -2981,7 +2986,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                 alt: () => {
                     this.tokenConsumer.For()
                     this.tokenConsumer.LParen()
-                    this.assertNotContextualSequence(ContextualKeywords.LET, TokenNames.LBracket)
+                    this.assertNotContextualSequence(SlimeContextualKeywordTokenTypes.LET, TokenNames.LBracket)
                     this.LeftHandSideExpression(params)
                     this.tokenConsumer.In()
                     this.Expression({...params, In: true})
@@ -3032,8 +3037,8 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                     this.tokenConsumer.For()
                     this.tokenConsumer.LParen()
                     // [lookahead ∉ {let, async of}]
-                    this.assertNotContextual(ContextualKeywords.LET)
-                    this.assertNotContextualPair(ContextualKeywords.ASYNC, ContextualKeywords.OF)
+                    this.assertNotContextual(SlimeContextualKeywordTokenTypes.LET)
+                    this.assertNotContextualPair(SlimeContextualKeywordTokenTypes.ASYNC, SlimeContextualKeywordTokenTypes.OF)
                     this.LeftHandSideExpression(params)
                     this.tokenConsumer.Of()
                     this.AssignmentExpression({...params, In: true})
@@ -3075,7 +3080,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                     this.tokenConsumer.Await()
                     this.tokenConsumer.LParen()
                     // [lookahead ≠ let]
-                    this.assertNotContextual(ContextualKeywords.LET)
+                    this.assertNotContextual(SlimeContextualKeywordTokenTypes.LET)
                     this.LeftHandSideExpression(params)
                     this.tokenConsumer.Of()
                     this.AssignmentExpression({...params, In: true})
@@ -4751,8 +4756,8 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                     this.tokenConsumer.Export()
                     this.tokenConsumer.Default()
                     // [lookahead ∉ {function, async [no LineTerminator here] function, class}]
-                    this.assertLookaheadNotIn([TokenNames.FunctionTok, TokenNames.ClassTok])
-                    this.assertNotContextualSequenceNoLT(ContextualKeywords.ASYNC, TokenNames.FunctionTok)
+                    this.assertLookaheadNotIn([TokenNames.Function, TokenNames.Class])
+                    this.assertNotContextualSequenceNoLT(SlimeContextualKeywordTokenTypes.ASYNC, TokenNames.Function)
                     this.AssignmentExpression({In: true, Yield: false, Await: true})
                     this.SemicolonASI()
                 }
