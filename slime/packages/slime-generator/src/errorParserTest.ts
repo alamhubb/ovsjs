@@ -1,6 +1,5 @@
 import SubhutiLexer from "subhuti/src/SubhutiLexer.ts";
-import {es2025Tokens} from "slime-parser/src/language/es2025/SlimeTokensName.ts";
-import Es2025Parser from "slime-parser/src/language/es2025/Es2025Parser.ts";
+import Es2025Parser, {slimeTokens} from "slime-parser/src/language/es2025/Es2025Parser.ts";
 import {SubhutiDebugUtils} from "subhuti/src/SubhutiDebug.ts";
 import slimeCstToAstUtil from "slime-parser/src/language/SlimeCstToAstUtil.ts";
 import SlimeAstPrintUtil from "./SlimeAstPrintUtil.ts";
@@ -8,7 +7,7 @@ import SlimeAstPrintUtil from "./SlimeAstPrintUtil.ts";
 // 测试：第一个语句不完整
 const code = 'let a = {'
 
-const lexer = new SubhutiLexer(es2025Tokens)
+const lexer = new SubhutiLexer(slimeTokens)
 const tokens = lexer.tokenize(code)
 
 console.log('Tokens:', tokens.map(t => t.tokenValue).join(' '))
