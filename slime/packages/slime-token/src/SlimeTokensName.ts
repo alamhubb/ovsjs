@@ -107,7 +107,7 @@ export const SlimeLogicalOperatorTokenTypes = {
 // Token 名称常量（与规范 A.1 词法规则名一致）
 // ============================================
 
-export const SlimeTokenType = {
+export const TokenNames = {
 
     // ============================================
     // A.1.2 White Space
@@ -193,6 +193,7 @@ export const SlimeTokenType = {
     Var: 'Var',
     While: 'While',
     With: 'With',
+    Yield: 'Yield',
 
     // ============================================
     // 软关键字（Contextual Keywords）

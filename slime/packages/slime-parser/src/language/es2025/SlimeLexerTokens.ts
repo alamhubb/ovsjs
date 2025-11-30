@@ -6,7 +6,7 @@ import {
     createValueRegToken,
     SubhutiCreateToken
 } from "subhuti/src/struct/SubhutiCreateToken.ts";
-import {TokenNames} from "./SlimeTokensName.ts";
+import {TokenNames} from "slime-token/src/SlimeTokensName.ts";
 
 
 
@@ -51,10 +51,10 @@ export const EXPRESSION_END_TOKENS = new Set([
     TokenNames.Decrement,   // --
 
     // 关键字字面量
-    TokenNames.ThisTok,
-    TokenNames.TrueTok,
-    TokenNames.FalseTok,
-    TokenNames.NullTok,
+    TokenNames.This,
+    TokenNames.True,
+    TokenNames.False,
+    TokenNames.Null,
 ])
 
 // ============================================
@@ -125,45 +125,45 @@ export const SlimeLexerTokensObj = {
     // A.1.5 关键字和保留字
     // ============================================
 
-    AwaitTok: createKeywordToken(TokenNames.AwaitTok, 'await'),
-    BreakTok: createKeywordToken(TokenNames.BreakTok, 'break'),
-    CaseTok: createKeywordToken(TokenNames.CaseTok, 'case'),
-    CatchTok: createKeywordToken(TokenNames.CatchTok, 'catch'),
-    ClassTok: createKeywordToken(TokenNames.ClassTok, 'class'),
-    ConstTok: createKeywordToken(TokenNames.ConstTok, 'const'),
-    ContinueTok: createKeywordToken(TokenNames.ContinueTok, 'continue'),
-    DebuggerTok: createKeywordToken(TokenNames.DebuggerTok, 'debugger'),
-    DefaultTok: createKeywordToken(TokenNames.DefaultTok, 'default'),
-    DeleteTok: createKeywordToken(TokenNames.DeleteTok, 'delete'),
-    DoTok: createKeywordToken(TokenNames.DoTok, 'do'),
-    ElseTok: createKeywordToken(TokenNames.ElseTok, 'else'),
-    EnumTok: createKeywordToken(TokenNames.EnumTok, 'enum'),
-    ExportTok: createKeywordToken(TokenNames.ExportTok, 'export'),
-    ExtendsTok: createKeywordToken(TokenNames.ExtendsTok, 'extends'),
-    FalseTok: createKeywordToken(TokenNames.FalseTok, 'false'),
-    FinallyTok: createKeywordToken(TokenNames.FinallyTok, 'finally'),
-    ForTok: createKeywordToken(TokenNames.ForTok, 'for'),
-    FunctionTok: createKeywordToken(TokenNames.FunctionTok, 'function'),
-    IfTok: createKeywordToken(TokenNames.IfTok, 'if'),
-    ImportTok: createKeywordToken(TokenNames.ImportTok, 'import'),
-    InTok: createKeywordToken(TokenNames.InTok, 'in'),
-    InstanceofTok: createKeywordToken(TokenNames.InstanceofTok, 'instanceof'),
-    LetTok: createKeywordToken(TokenNames.LetTok, 'let'),
-    NewTok: createKeywordToken(TokenNames.NewTok, 'new'),
-    NullTok: createKeywordToken(TokenNames.NullTok, 'null'),
-    ReturnTok: createKeywordToken(TokenNames.ReturnTok, 'return'),
-    SuperTok: createKeywordToken(TokenNames.SuperTok, 'super'),
-    SwitchTok: createKeywordToken(TokenNames.SwitchTok, 'switch'),
-    ThisTok: createKeywordToken(TokenNames.ThisTok, 'this'),
-    ThrowTok: createKeywordToken(TokenNames.ThrowTok, 'throw'),
-    TrueTok: createKeywordToken(TokenNames.TrueTok, 'true'),
-    TryTok: createKeywordToken(TokenNames.TryTok, 'try'),
-    TypeofTok: createKeywordToken(TokenNames.TypeofTok, 'typeof'),
-    VarTok: createKeywordToken(TokenNames.VarTok, 'var'),
-    VoidTok: createKeywordToken(TokenNames.VoidTok, 'void'),
-    WhileTok: createKeywordToken(TokenNames.WhileTok, 'while'),
-    WithTok: createKeywordToken(TokenNames.WithTok, 'with'),
-    YieldTok: createKeywordToken(TokenNames.YieldTok, 'yield'),
+    AwaitTok: createKeywordToken(TokenNames.Await, 'await'),
+    BreakTok: createKeywordToken(TokenNames.Break, 'break'),
+    CaseTok: createKeywordToken(TokenNames.Case, 'case'),
+    CatchTok: createKeywordToken(TokenNames.Catch, 'catch'),
+    ClassTok: createKeywordToken(TokenNames.Class, 'class'),
+    ConstTok: createKeywordToken(TokenNames.Const, 'const'),
+    ContinueTok: createKeywordToken(TokenNames.Continue, 'continue'),
+    DebuggerTok: createKeywordToken(TokenNames.Debugger, 'debugger'),
+    DefaultTok: createKeywordToken(TokenNames.Default, 'default'),
+    DeleteTok: createKeywordToken(TokenNames.Delete, 'delete'),
+    DoTok: createKeywordToken(TokenNames.Do, 'do'),
+    ElseTok: createKeywordToken(TokenNames.Else, 'else'),
+    EnumTok: createKeywordToken(TokenNames.Enum, 'enum'),
+    ExportTok: createKeywordToken(TokenNames.Export, 'export'),
+    ExtendsTok: createKeywordToken(TokenNames.Extends, 'extends'),
+    FalseTok: createKeywordToken(TokenNames.False, 'false'),
+    FinallyTok: createKeywordToken(TokenNames.Finally, 'finally'),
+    ForTok: createKeywordToken(TokenNames.For, 'for'),
+    FunctionTok: createKeywordToken(TokenNames.Function, 'function'),
+    IfTok: createKeywordToken(TokenNames.If, 'if'),
+    ImportTok: createKeywordToken(TokenNames.Import, 'import'),
+    InTok: createKeywordToken(TokenNames.In, 'in'),
+    InstanceofTok: createKeywordToken(TokenNames.Instanceof, 'instanceof'),
+    LetTok: createKeywordToken(TokenNames.Let, 'let'),
+    NewTok: createKeywordToken(TokenNames.New, 'new'),
+    NullTok: createKeywordToken(TokenNames.Null, 'null'),
+    ReturnTok: createKeywordToken(TokenNames.Return, 'return'),
+    SuperTok: createKeywordToken(TokenNames.Super, 'super'),
+    SwitchTok: createKeywordToken(TokenNames.Switch, 'switch'),
+    ThisTok: createKeywordToken(TokenNames.This, 'this'),
+    ThrowTok: createKeywordToken(TokenNames.Throw, 'throw'),
+    TrueTok: createKeywordToken(TokenNames.True, 'true'),
+    TryTok: createKeywordToken(TokenNames.Try, 'try'),
+    TypeofTok: createKeywordToken(TokenNames.Typeof, 'typeof'),
+    VarTok: createKeywordToken(TokenNames.Var, 'var'),
+    VoidTok: createKeywordToken(TokenNames.Void, 'void'),
+    WhileTok: createKeywordToken(TokenNames.While, 'while'),
+    WithTok: createKeywordToken(TokenNames.With, 'with'),
+    YieldTok: createKeywordToken(TokenNames.Yield, 'yield'),
     // 软关键字（async, static, as, get, set, of, target, meta, from）
     // 在词法层作为 IdentifierName 处理，在 Parser 中通过值检查识别
 
