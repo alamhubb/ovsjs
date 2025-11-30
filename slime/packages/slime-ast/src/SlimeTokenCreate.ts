@@ -138,7 +138,6 @@ class SlimeTokenFactory {
     createColonToken(loc?: SubhutiSourceLocation): SlimeColonToken {
         return { type: SlimeTokenType.Colon, value: ":", loc } as SlimeColonToken;
     }
-}
 
     // ============================================
     // 函数/类关键字 Token
