@@ -178,8 +178,8 @@ export interface SlimeAsyncToken extends SlimeTokenNode {
     value: "async";
 }
 
-export interface SlimeStarToken extends SlimeTokenNode {
-    type: typeof SlimeTokenType.Star;
+export interface SlimeAsteriskToken extends SlimeTokenNode {
+    type: typeof SlimeTokenType.Asterisk;
     value: "*";
 }
 
@@ -367,9 +367,9 @@ export interface SlimeAsToken extends SlimeTokenNode {
     value: "as";
 }
 
-// 展开运算符
-export interface SlimeSpreadToken extends SlimeTokenNode {
-    type: typeof SlimeTokenType.Spread;
+// 展开运算符 (Ellipsis)
+export interface SlimeEllipsisToken extends SlimeTokenNode {
+    type: typeof SlimeTokenType.Ellipsis;
     value: "...";
 }
 
@@ -380,8 +380,8 @@ export interface SlimeDotToken extends SlimeTokenNode {
 }
 
 // 可选链
-export interface SlimeOptionalChainToken extends SlimeTokenNode {
-    type: typeof SlimeTokenType.OptionalChain;
+export interface SlimeOptionalChainingToken extends SlimeTokenNode {
+    type: typeof SlimeTokenType.OptionalChaining;
     value: "?.";
 }
 
@@ -479,7 +479,7 @@ export interface SlimeBaseFunction extends SlimeBaseNode, Omit<SlimeExtends<ESTr
     /** async 关键字 Token */
     asyncToken?: SlimeAsyncToken;
     /** generator * Token */
-    starToken?: SlimeStarToken;
+    asteriskToken?: SlimeAsteriskToken;
     /** 参数之间的逗号 */
     commaTokens?: (SlimeCommaToken | undefined)[];
     // The body is either BlockStatement or Expression because arrow functions
@@ -765,7 +765,7 @@ export interface SlimeProperty extends SlimeBaseNode, Omit<SlimeExtends<ESTree.P
     /** async 关键字 Token */
     asyncToken?: SlimeAsyncToken;
     /** * Token (generator) */
-    starToken?: SlimeStarToken;
+    asteriskToken?: SlimeAsteriskToken;
     shorthand: boolean;
     computed: boolean;
 }
@@ -867,7 +867,7 @@ export interface SlimeMemberExpression extends SlimeBaseExpression, SlimeBasePat
     /** 点号 Token (非计算属性) */
     dotToken?: SlimeDotToken;
     /** 可选链 Token ?. */
-    optionalChainToken?: SlimeOptionalChainToken;
+    optionalChainingToken?: SlimeOptionalChainingToken;
 }
 
 export type SlimePattern =
@@ -994,7 +994,7 @@ export interface SlimeSpreadElement extends SlimeBaseNode, Omit<SlimeExtends<EST
     type: typeof SlimeAstType.SpreadElement;
     argument: SlimeExpression;
     /** ... 展开运算符 Token */
-    spreadToken?: SlimeSpreadToken;
+    ellipsisToken?: SlimeEllipsisToken;
 }
 
 export interface SlimeArrowFunctionExpression extends SlimeBaseExpression, SlimeBaseFunction, Omit<SlimeExtends<ESTree.ArrowFunctionExpression>, 'params' | 'body'> {
@@ -1012,7 +1012,7 @@ export interface SlimeYieldExpression extends SlimeBaseExpression, Omit<SlimeExt
     /** yield 关键字 Token */
     yieldToken?: SlimeYieldToken;
     /** * Token (delegate yield) */
-    starToken?: SlimeStarToken;
+    asteriskToken?: SlimeAsteriskToken;
 }
 
 export interface SlimeTemplateLiteral extends SlimeBaseExpression, Omit<SlimeExtends<ESTree.TemplateLiteral>, 'quasis' | 'expressions'> {
@@ -1061,7 +1061,7 @@ export interface SlimeRestElement extends SlimeBasePattern, Omit<SlimeExtends<ES
     type: typeof SlimeAstType.RestElement;
     argument: SlimePattern;
     /** ... 展开运算符 Token */
-    spreadToken?: SlimeSpreadToken;
+    ellipsisToken?: SlimeEllipsisToken;
 }
 
 export interface SlimeAssignmentPattern extends SlimeBasePattern, Omit<SlimeExtends<ESTree.AssignmentPattern>, 'left' | 'right'> {
@@ -1102,7 +1102,7 @@ export interface SlimeMethodDefinition extends SlimeBaseNode, Omit<SlimeExtends<
     /** async 关键字 Token */
     asyncToken?: SlimeAsyncToken;
     /** generator * Token */
-    starToken?: SlimeStarToken;
+    asteriskToken?: SlimeAsteriskToken;
 }
 
 export interface SlimeMaybeNamedClassDeclaration extends SlimeBaseClass, SlimeBaseDeclaration, Omit<SlimeExtends<ESTree.MaybeNamedClassDeclaration>, 'body' | 'superClass'> {
@@ -1178,7 +1178,7 @@ export interface SlimeImportDefaultSpecifier extends SlimeBaseModuleSpecifier, S
 export interface SlimeImportNamespaceSpecifier extends SlimeBaseModuleSpecifier, SlimeExtends<ESTree.ImportNamespaceSpecifier, 'local'> {
     type: typeof SlimeAstType.ImportNamespaceSpecifier;
     /** * Token */
-    starToken?: SlimeStarToken;
+    asteriskToken?: SlimeAsteriskToken;
     /** as 关键字 Token */
     asToken?: SlimeAsToken;
 }
@@ -1220,7 +1220,7 @@ export interface SlimeExportAllDeclaration extends SlimeBaseModuleDeclaration, O
     /** export 关键字 Token */
     exportToken?: SlimeExportToken;
     /** * Token */
-    starToken?: SlimeStarToken;
+    asteriskToken?: SlimeAsteriskToken;
     /** as 关键字 Token */
     asToken?: SlimeAsToken;
     /** from 关键字 Token */

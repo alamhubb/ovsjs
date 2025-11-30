@@ -15,10 +15,6 @@
 export const TokenNames = {
 
     // ============================================
-    // ✅ 正确的 Token 名称（与规范一致）
-    // ============================================
-
-    // ============================================
     // A.1.2 White Space
     // 规范: WhiteSpace :: <TAB> | <VT> | <FF> | <SP> | <NBSP> | <ZWNBSP> | <USP>
     // ============================================
@@ -45,33 +41,24 @@ export const TokenNames = {
     // ============================================
 
     // --- IdentifierName ---
-    // 规范: IdentifierName :: IdentifierStart | IdentifierName IdentifierPart
     IdentifierName: 'IdentifierName',
 
     // --- PrivateIdentifier ---
-    // 规范: PrivateIdentifier :: # IdentifierName
     PrivateIdentifier: 'PrivateIdentifier',
 
     // --- NumericLiteral ---
-    // 规范: NumericLiteral :: DecimalLiteral | DecimalBigIntegerLiteral | NonDecimalIntegerLiteral[+Sep] | NonDecimalIntegerLiteral[+Sep] BigIntLiteralSuffix | LegacyOctalIntegerLiteral
-    // 实现：所有数字变体（十进制、十六进制、二进制、八进制、BigInt、传统八进制）都映射到 NumericLiteral
     NumericLiteral: 'NumericLiteral',
 
     // --- StringLiteral ---
-    // 规范: StringLiteral :: " DoubleStringCharacters_opt " | ' SingleStringCharacters_opt '
-    // 实现：双引号和单引号字符串都映射到 StringLiteral
     StringLiteral: 'StringLiteral',
 
     // --- Template ---
-    // 规范: Template :: NoSubstitutionTemplate | TemplateHead
-    // 规范: TemplateSubstitutionTail :: TemplateMiddle | TemplateTail
     NoSubstitutionTemplate: 'NoSubstitutionTemplate',
     TemplateHead: 'TemplateHead',
     TemplateMiddle: 'TemplateMiddle',
     TemplateTail: 'TemplateTail',
 
     // --- RegularExpressionLiteral ---
-    // 规范: RegularExpressionLiteral :: / RegularExpressionBody / RegularExpressionFlags
     RegularExpressionLiteral: 'RegularExpressionLiteral',
 
     // ============================================
@@ -116,7 +103,6 @@ export const TokenNames = {
     BitwiseAndAssign: 'BitwiseAndAssign',                   // &=
     BitwiseOrAssign: 'BitwiseOrAssign',                     // |=
     BitwiseXorAssign: 'BitwiseXorAssign',                   // ^=
-    // 规范: OptionalChainingPunctuator :: ?. [lookahead ∉ DecimalDigit]
     OptionalChaining: 'OptionalChaining',                   // ?.
 
     // 1字符运算符
@@ -176,7 +162,6 @@ export const TokenNames = {
     Import: 'Import',
     In: 'In',
     Instanceof: 'Instanceof',
-    // 注意：let 在规范中不是 ReservedWord，但为简化实现作为独立 token
     Let: 'Let',
     New: 'New',
     Null: 'Null',
@@ -194,19 +179,117 @@ export const TokenNames = {
     With: 'With',
     Yield: 'Yield',
 
-
     // ============================================
-    // ❌ 以下应该删除 - 软关键字不应作为独立 Token
+    // 软关键字（Contextual Keywords）
     // 规范中这些在词法层是 IdentifierName，在语法层通过值检查识别
-    // 见 Es2025TokenConsumer.consumeIdentifierValue()
     // ============================================
-    Async: "Async",                         // ❌ 删除：软关键字，应作为 IdentifierName 处理
-    Static: "Static",                       // ❌ 删除：软关键字，应作为 IdentifierName 处理
-    Get: "Get",                             // ❌ 删除：软关键字，应作为 IdentifierName 处理
-    Set: "Set",                             // ❌ 删除：软关键字，应作为 IdentifierName 处理
-    Of: "Of",                               // ❌ 删除：软关键字，应作为 IdentifierName 处理
-    From: "From",                           // ❌ 删除：软关键字，应作为 IdentifierName 处理
-    As: "As",                               // ❌ 删除：软关键字，应作为 IdentifierName 处理
+    Async: 'Async',
+    Static: 'Static',
+    Get: 'Get',
+    Set: 'Set',
+    Of: 'Of',
+    From: 'From',
+    As: 'As',
 
-} as const
+} as const;
+
+// ============================================
+// SlimeTokenType 别名（供外部使用）
+// ============================================
+export const SlimeTokenType = TokenNames;
+
+// ============================================
+// 运算符 Token 类型分组
+// ============================================
+
+/**
+ * 赋值运算符 Token 类型
+ * 对应: = += -= *= /= %= **= <<= >>= >>>= &= |= ^= &&= ||= ??=
+ */
+export const SlimeAssignmentOperatorTokenTypes = {
+    Assign: TokenNames.Assign,                                       // =
+    PlusAssign: TokenNames.PlusAssign,                               // +=
+    MinusAssign: TokenNames.MinusAssign,                             // -=
+    MultiplyAssign: TokenNames.MultiplyAssign,                       // *=
+    DivideAssign: TokenNames.DivideAssign,                           // /=
+    ModuloAssign: TokenNames.ModuloAssign,                           // %=
+    ExponentiationAssign: TokenNames.ExponentiationAssign,           // **=
+    LeftShiftAssign: TokenNames.LeftShiftAssign,                     // <<=
+    RightShiftAssign: TokenNames.RightShiftAssign,                   // >>=
+    UnsignedRightShiftAssign: TokenNames.UnsignedRightShiftAssign,   // >>>=
+    BitwiseAndAssign: TokenNames.BitwiseAndAssign,                   // &=
+    BitwiseOrAssign: TokenNames.BitwiseOrAssign,                     // |=
+    BitwiseXorAssign: TokenNames.BitwiseXorAssign,                   // ^=
+    LogicalAndAssign: TokenNames.LogicalAndAssign,                   // &&=
+    LogicalOrAssign: TokenNames.LogicalOrAssign,                     // ||=
+    NullishCoalescingAssign: TokenNames.NullishCoalescingAssign,     // ??=
+} as const;
+
+/**
+ * 更新运算符 Token 类型
+ * 对应: ++ --
+ */
+export const SlimeUpdateOperatorTokenTypes = {
+    Increment: TokenNames.Increment,   // ++
+    Decrement: TokenNames.Decrement,   // --
+} as const;
+
+/**
+ * 一元运算符 Token 类型
+ * 对应: - + ! ~ typeof void delete
+ */
+export const SlimeUnaryOperatorTokenTypes = {
+    Minus: TokenNames.Minus,           // -
+    Plus: TokenNames.Plus,             // +
+    LogicalNot: TokenNames.LogicalNot, // !
+    BitwiseNot: TokenNames.BitwiseNot, // ~
+    Typeof: TokenNames.Typeof,         // typeof
+    Void: TokenNames.Void,             // void
+    Delete: TokenNames.Delete,         // delete
+} as const;
+
+/**
+ * 二元运算符 Token 类型
+ * 对应: == != === !== < > <= >= << >> >>> + - * / % ** | ^ & in instanceof
+ */
+export const SlimeBinaryOperatorTokenTypes = {
+    // 相等运算符
+    Equal: TokenNames.Equal,                       // ==
+    NotEqual: TokenNames.NotEqual,                 // !=
+    StrictEqual: TokenNames.StrictEqual,           // ===
+    StrictNotEqual: TokenNames.StrictNotEqual,     // !==
+    // 关系运算符
+    Less: TokenNames.Less,                         // <
+    Greater: TokenNames.Greater,                   // >
+    LessEqual: TokenNames.LessEqual,               // <=
+    GreaterEqual: TokenNames.GreaterEqual,         // >=
+    // 移位运算符
+    LeftShift: TokenNames.LeftShift,               // <<
+    RightShift: TokenNames.RightShift,             // >>
+    UnsignedRightShift: TokenNames.UnsignedRightShift, // >>>
+    // 算术运算符
+    Plus: TokenNames.Plus,                         // +
+    Minus: TokenNames.Minus,                       // -
+    Asterisk: TokenNames.Asterisk,                 // *
+    Slash: TokenNames.Slash,                       // /
+    Modulo: TokenNames.Modulo,                     // %
+    Exponentiation: TokenNames.Exponentiation,     // **
+    // 位运算符
+    BitwiseOr: TokenNames.BitwiseOr,               // |
+    BitwiseXor: TokenNames.BitwiseXor,             // ^
+    BitwiseAnd: TokenNames.BitwiseAnd,             // &
+    // 关系关键字运算符
+    In: TokenNames.In,                             // in
+    Instanceof: TokenNames.Instanceof,             // instanceof
+} as const;
+
+/**
+ * 逻辑运算符 Token 类型
+ * 对应: || && ??
+ */
+export const SlimeLogicalOperatorTokenTypes = {
+    LogicalOr: TokenNames.LogicalOr,               // ||
+    LogicalAnd: TokenNames.LogicalAnd,             // &&
+    NullishCoalescing: TokenNames.NullishCoalescing, // ??
+} as const;
 
