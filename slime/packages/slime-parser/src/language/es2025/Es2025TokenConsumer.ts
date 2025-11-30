@@ -14,8 +14,8 @@
  * @version 1.0.0
  */
 
+import { TokenNames } from "slime-token/src/SlimeTokensName"
 import SubhutiTokenConsumer from "subhuti/src/SubhutiTokenConsumer.ts"
-import { TokenNames, ContextualKeywords } from "./SlimeTokensName.ts"
 
 export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
 
@@ -48,155 +48,155 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
     // ============================================
 
     AwaitTok() {
-        return this.consume(TokenNames.AwaitTok)
+        return this.consume(TokenNames.Await)
     }
 
     BreakTok() {
-        return this.consume(TokenNames.BreakTok)
+        return this.consume(TokenNames.Break)
     }
 
     CaseTok() {
-        return this.consume(TokenNames.CaseTok)
+        return this.consume(TokenNames.Case)
     }
 
     CatchTok() {
-        return this.consume(TokenNames.CatchTok)
+        return this.consume(TokenNames.Catch)
     }
 
     ClassTok() {
-        return this.consume(TokenNames.ClassTok)
+        return this.consume(TokenNames.Class)
     }
 
     ConstTok() {
-        return this.consume(TokenNames.ConstTok)
+        return this.consume(TokenNames.Const)
     }
 
     ContinueTok() {
-        return this.consume(TokenNames.ContinueTok)
+        return this.consume(TokenNames.Continue)
     }
 
     DebuggerTok() {
-        return this.consume(TokenNames.DebuggerTok)
+        return this.consume(TokenNames.Debugger)
     }
 
     DefaultTok() {
-        return this.consume(TokenNames.DefaultTok)
+        return this.consume(TokenNames.Default)
     }
 
     DeleteTok() {
-        return this.consume(TokenNames.DeleteTok)
+        return this.consume(TokenNames.Delete)
     }
 
     DoTok() {
-        return this.consume(TokenNames.DoTok)
+        return this.consume(TokenNames.Do)
     }
 
     ElseTok() {
-        return this.consume(TokenNames.ElseTok)
+        return this.consume(TokenNames.Else)
     }
 
     EnumTok() {
-        return this.consume(TokenNames.EnumTok)
+        return this.consume(TokenNames.Enum)
     }
 
     ExportTok() {
-        return this.consume(TokenNames.ExportTok)
+        return this.consume(TokenNames.Export)
     }
 
     ExtendsTok() {
-        return this.consume(TokenNames.ExtendsTok)
+        return this.consume(TokenNames.Extends)
     }
 
     FalseTok() {
-        return this.consume(TokenNames.FalseTok)
+        return this.consume(TokenNames.False)
     }
 
     FinallyTok() {
-        return this.consume(TokenNames.FinallyTok)
+        return this.consume(TokenNames.Finally)
     }
 
     ForTok() {
-        return this.consume(TokenNames.ForTok)
+        return this.consume(TokenNames.For)
     }
 
     FunctionTok() {
-        return this.consume(TokenNames.FunctionTok)
+        return this.consume(TokenNames.Function)
     }
 
     IfTok() {
-        return this.consume(TokenNames.IfTok)
+        return this.consume(TokenNames.If)
     }
 
     ImportTok() {
-        return this.consume(TokenNames.ImportTok)
+        return this.consume(TokenNames.Import)
     }
 
     InTok() {
-        return this.consume(TokenNames.InTok)
+        return this.consume(TokenNames.In)
     }
 
     InstanceofTok() {
-        return this.consume(TokenNames.InstanceofTok)
+        return this.consume(TokenNames.Instanceof)
     }
 
     NewTok() {
-        return this.consume(TokenNames.NewTok)
+        return this.consume(TokenNames.New)
     }
 
     NullTok() {
-        return this.consume(TokenNames.NullTok)
+        return this.consume(TokenNames.Null)
     }
 
     ReturnTok() {
-        return this.consume(TokenNames.ReturnTok)
+        return this.consume(TokenNames.Return)
     }
 
     SuperTok() {
-        return this.consume(TokenNames.SuperTok)
+        return this.consume(TokenNames.Super)
     }
 
     SwitchTok() {
-        return this.consume(TokenNames.SwitchTok)
+        return this.consume(TokenNames.Switch)
     }
 
     ThisTok() {
-        return this.consume(TokenNames.ThisTok)
+        return this.consume(TokenNames.This)
     }
 
     ThrowTok() {
-        return this.consume(TokenNames.ThrowTok)
+        return this.consume(TokenNames.Throw)
     }
 
     TrueTok() {
-        return this.consume(TokenNames.TrueTok)
+        return this.consume(TokenNames.True)
     }
 
     TryTok() {
-        return this.consume(TokenNames.TryTok)
+        return this.consume(TokenNames.Try)
     }
 
     TypeofTok() {
-        return this.consume(TokenNames.TypeofTok)
+        return this.consume(TokenNames.Typeof)
     }
 
     VarTok() {
-        return this.consume(TokenNames.VarTok)
+        return this.consume(TokenNames.Var)
     }
 
     VoidTok() {
-        return this.consume(TokenNames.VoidTok)
+        return this.consume(TokenNames.Void)
     }
 
     WhileTok() {
-        return this.consume(TokenNames.WhileTok)
+        return this.consume(TokenNames.While)
     }
 
     WithTok() {
-        return this.consume(TokenNames.WithTok)
+        return this.consume(TokenNames.With)
     }
 
     YieldTok() {
-        return this.consume(TokenNames.YieldTok)
+        return this.consume(TokenNames.Yield)
     }
     
     // ============================================
@@ -221,7 +221,7 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
      * 但我们将其作为独立 token 处理，与 const/var 保持一致
      */
     LetTok() {
-        return this.consume(TokenNames.LetTok)
+        return this.consume(TokenNames.Let)
     }
 
     /**
