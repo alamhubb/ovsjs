@@ -308,7 +308,7 @@ export class SubhutiDebugUtils {
      * console.log(tokens)  // ['const', 'obj', '=', '{', 'sum', ':', '5', '+', '6', '}']
      * ```
      */
-    static collectTokens(node: any): string[] {
+    static collectTokens(node: SubhutiCst): string[] {
         const values: string[] = []
 
         if (!node) return values
@@ -503,7 +503,7 @@ export class SubhutiDebugUtils {
      * @param isLast - 是否为最后一个子节点（递归使用）
      * @returns 树形结构字符串
      */
-    static formatCst(cst: any, prefix: string = '', isLast: boolean = true): string {
+    static formatCst(cst: SubhutiCst, prefix: string = '', isLast: boolean = true): string {
         const lines: string[] = []
 
         // 当前节点行
@@ -527,7 +527,7 @@ export class SubhutiDebugUtils {
     /**
      * 格式化单个节点（使用 TreeFormatHelper）
      */
-    private static formatNode(cst: any, prefix: string, connector: string): string {
+    private static formatNode(cst: SubhutiCst, prefix: string, connector: string): string {
         const isToken = cst.value !== undefined
 
         if (isToken) {
@@ -1421,7 +1421,7 @@ export class SubhutiTraceDebugger {
     /**
      * 收集所有 token 值（内部调用 SubhutiDebugUtils）
      */
-    private collectTokenValues(node: any): string[] {
+    private collectTokenValues(node: SubhutiCst): string[] {
         return SubhutiDebugUtils.collectTokens(node)
     }
 

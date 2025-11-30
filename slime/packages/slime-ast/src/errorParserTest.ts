@@ -1,7 +1,7 @@
 import SubhutiLexer from "subhuti/src/SubhutiLexer.ts";
 import {es2025Tokens} from "slime-parser/src/language/es2025/Es2025Tokens.ts";
 import Es2025Parser from "slime-parser/src/language/es2025/Es2025Parser.ts";
-import slimeCstToAstUtil from "slime-parser/src/language/SlimeCstToAstUtil.ts";
+import {SubhutiDebugUtils} from "subhuti/src/SubhutiDebug.ts";
 
 // 测试：第一个语句不完整
 const code = 'let a = {'
@@ -15,36 +15,15 @@ const parser = new Es2025Parser(tokens)
 // parser.debug()  // 暂时关闭 debug
 parser.enableErrorRecovery()
 
-
-
 const res = parser.Program()
 
-// 打印 CST 结构（简化版）
-function printCst(node: any, depth = 0, maxDepth = 50) {
-    if (!node || depth > maxDepth) return
-    const indent = '  '.repeat(depth)
-    const value = node.value ? ` = "${node.value}"` : ''
-    console.log(`${indent}${node.name}${value}`)
-    for (const child of node.children || []) {
-        printCst(child, depth + 1, maxDepth)
-    }
-}
-
+// 打印 CST 结构
 console.log('\n=== CST 结构 ===')
-printCst(res)
+console.log(SubhutiDebugUtils.formatCst(res))
 
 // 提取所有 token 值
-function getTokens(node: any): string[] {
-    if (!node) return []
-    const result: string[] = []
-    if (node.value) result.push(node.value)
-    for (const child of node.children || []) {
-        result.push(...getTokens(child))
-    }
-    return result
-}
 console.log('\n=== 所有 tokens ===')
-console.log(getTokens(res).join(' '))
+console.log(SubhutiDebugUtils.collectTokens(res).join(' '))
 
 // console.log('Unparsed tokens:', parser.unparsedTokens)
 // console.log('Has unparsed tokens:', parser.hasUnparsedTokens)
