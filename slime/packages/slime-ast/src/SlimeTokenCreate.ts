@@ -53,8 +53,9 @@ import type {
     SlimeImportToken,
     SlimeExportToken,
     SlimeFromToken,
-    SlimeAsToken,
+    SlimeAsToken, SlimeEllipsisToken,
 } from "./SlimeESTree.ts";
+import {SlimeTokenType} from "slime-token/src/SlimeTokensName.ts";
 
 class SlimeTokenFactory {
     // ============================================
@@ -121,8 +122,8 @@ class SlimeTokenFactory {
         return { type: SlimeTokenType.Dot, value: ".", loc } as SlimeDotToken;
     }
 
-    createSpreadToken(loc?: SubhutiSourceLocation): SlimeSpreadToken {
-        return { type: SlimeTokenType.Spread, value: "...", loc } as SlimeSpreadToken;
+    createSpreadToken(loc?: SubhutiSourceLocation): SlimeEllipsisToken {
+        return { type: SlimeTokenType.Ellipsis, value: "...", loc } as SlimeEllipsisToken;
     }
 
     createArrowToken(loc?: SubhutiSourceLocation): SlimeArrowToken {
