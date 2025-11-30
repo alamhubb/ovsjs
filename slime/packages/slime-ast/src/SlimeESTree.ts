@@ -148,6 +148,11 @@ export interface SlimeColonTokens {
     colonToken?: SlimeColonToken;
 }
 
+/** 包含分号的节点 */
+export interface SlimeSemicolonTokens {
+    semicolonToken?: SlimeSemicolonToken;
+}
+
 // ============================================
 // 关键字 Token
 // ============================================
@@ -499,10 +504,8 @@ export type SlimeStatement =
 export interface SlimeBaseStatement extends SlimeBaseNode, SlimeExtends<ESTree.BaseStatement> {
 }
 
-export interface SlimeEmptyStatement extends SlimeBaseStatement, SlimeExtends<ESTree.EmptyStatement> {
+export interface SlimeEmptyStatement extends SlimeBaseStatement, SlimeExtends<ESTree.EmptyStatement>, SlimeSemicolonTokens {
     type: typeof SlimeAstType.EmptyStatement;
-    /** 分号 Token，包含位置信息 */
-    semicolonToken?: SlimeSemicolonToken;
 }
 
 export interface SlimeBlockStatement extends SlimeBaseStatement, SlimeExtends<ESTree.BlockStatement>, SlimeBraceTokens {
@@ -515,11 +518,9 @@ export interface SlimeStaticBlock extends SlimeExtends<ESTree.StaticBlock, 'inne
     type: typeof SlimeAstType.StaticBlock;
 }
 
-export interface SlimeExpressionStatement extends SlimeBaseStatement, SlimeExtends<ESTree.ExpressionStatement> {
+export interface SlimeExpressionStatement extends SlimeBaseStatement, SlimeExtends<ESTree.ExpressionStatement>, SlimeSemicolonTokens {
     type: typeof SlimeAstType.ExpressionStatement;
     expression: SlimeExpression;
-    /** 分号 Token，包含位置信息 */
-    semicolonToken?: SlimeSemicolonToken;
 }
 
 export interface SlimeIfStatement extends SlimeBaseStatement, SlimeExtends<ESTree.IfStatement>, SlimeParenTokens {
@@ -539,20 +540,16 @@ export interface SlimeLabeledStatement extends SlimeBaseStatement, SlimeExtends<
     body: SlimeStatement;
 }
 
-export interface SlimeBreakStatement extends SlimeBaseStatement, SlimeExtends<ESTree.BreakStatement> {
+export interface SlimeBreakStatement extends SlimeBaseStatement, SlimeExtends<ESTree.BreakStatement>, SlimeSemicolonTokens {
     type: typeof SlimeAstType.BreakStatement;
     label?: SlimeIdentifier | null | undefined;
-    /** 分号 Token，包含位置信息 */
-    semicolonToken?: SlimeSemicolonToken;
     /** break 关键字 Token */
     breakToken?: SlimeBreakToken;
 }
 
-export interface SlimeContinueStatement extends SlimeBaseStatement, SlimeExtends<ESTree.ContinueStatement> {
+export interface SlimeContinueStatement extends SlimeBaseStatement, SlimeExtends<ESTree.ContinueStatement>, SlimeSemicolonTokens {
     type: typeof SlimeAstType.ContinueStatement;
     label?: SlimeIdentifier | null | undefined;
-    /** 分号 Token，包含位置信息 */
-    semicolonToken?: SlimeSemicolonToken;
     /** continue 关键字 Token */
     continueToken?: SlimeContinueToken;
 }
@@ -573,20 +570,16 @@ export interface SlimeSwitchStatement extends SlimeBaseStatement, SlimeExtends<E
     switchToken?: SlimeSwitchToken;
 }
 
-export interface SlimeReturnStatement extends SlimeBaseStatement, SlimeExtends<ESTree.ReturnStatement> {
+export interface SlimeReturnStatement extends SlimeBaseStatement, SlimeExtends<ESTree.ReturnStatement>, SlimeSemicolonTokens {
     type: typeof SlimeAstType.ReturnStatement;
     argument?: SlimeExpression | null | undefined;
-    /** 分号 Token，包含位置信息 */
-    semicolonToken?: SlimeSemicolonToken;
     /** return 关键字 Token */
     returnToken?: SlimeReturnToken;
 }
 
-export interface SlimeThrowStatement extends SlimeBaseStatement, SlimeExtends<ESTree.ThrowStatement> {
+export interface SlimeThrowStatement extends SlimeBaseStatement, SlimeExtends<ESTree.ThrowStatement>, SlimeSemicolonTokens {
     type: typeof SlimeAstType.ThrowStatement;
     argument: SlimeExpression;
-    /** 分号 Token，包含位置信息 */
-    semicolonToken?: SlimeSemicolonToken;
     /** throw 关键字 Token */
     throwToken?: SlimeThrowToken;
 }
@@ -610,12 +603,10 @@ export interface SlimeWhileStatement extends SlimeBaseStatement, SlimeExtends<ES
     whileToken?: SlimeWhileToken;
 }
 
-export interface SlimeDoWhileStatement extends SlimeBaseStatement, SlimeExtends<ESTree.DoWhileStatement>, SlimeParenTokens {
+export interface SlimeDoWhileStatement extends SlimeBaseStatement, SlimeExtends<ESTree.DoWhileStatement>, SlimeParenTokens, SlimeSemicolonTokens {
     type: typeof SlimeAstType.DoWhileStatement;
     body: SlimeStatement;
     test: SlimeExpression;
-    /** 分号 Token，包含位置信息 */
-    semicolonToken?: SlimeSemicolonToken;
     /** do 关键字 Token */
     doToken?: SlimeDoToken;
     /** while 关键字 Token */
@@ -650,10 +641,8 @@ export interface SlimeForInStatement extends SlimeBaseForXStatement, Omit<SlimeE
     inToken?: SlimeInToken;
 }
 
-export interface SlimeDebuggerStatement extends SlimeBaseStatement, SlimeExtends<ESTree.DebuggerStatement> {
+export interface SlimeDebuggerStatement extends SlimeBaseStatement, SlimeExtends<ESTree.DebuggerStatement>, SlimeSemicolonTokens {
     type: typeof SlimeAstType.DebuggerStatement;
-    /** 分号 Token，包含位置信息 */
-    semicolonToken?: SlimeSemicolonToken;
     /** debugger 关键字 Token */
     debuggerToken?: SlimeDebuggerToken;
 }
@@ -674,14 +663,12 @@ export interface SlimeFunctionDeclaration extends SlimeMaybeNamedFunctionDeclara
     id: SlimeIdentifier;
 }
 
-export interface SlimeVariableDeclaration extends SlimeBaseDeclaration, SlimeExtends<ESTree.VariableDeclaration> {
+export interface SlimeVariableDeclaration extends SlimeBaseDeclaration, SlimeExtends<ESTree.VariableDeclaration>, SlimeSemicolonTokens {
     type: typeof SlimeAstType.VariableDeclaration;
     declarations: SlimeVariableDeclarator[];
     kind: "var" | "let" | "const";
     /** 变量声明关键字 Token，包含位置信息 */
     kindToken?: SlimeVariableDeclarationKindToken;
-    /** 分号 Token，包含位置信息 */
-    semicolonToken?: SlimeSemicolonToken;
 }
 
 export interface SlimeVariableDeclarator extends SlimeBaseNode, SlimeExtends<ESTree.VariableDeclarator> {
@@ -755,7 +742,7 @@ export interface SlimePrivateIdentifier extends SlimeBaseNode, SlimeExtends<ESTr
     name: string;
 }
 
-export interface SlimeProperty extends SlimeBaseNode, SlimeExtends<ESTree.Property>, SlimeColonTokens {
+export interface SlimeProperty extends SlimeBaseNode, SlimeExtends<ESTree.Property>, SlimeColonTokens, SlimeBracketTokens {
     type: typeof SlimeAstType.Property;
     key: SlimeExpression | SlimePrivateIdentifier;
     value: SlimeExpression | SlimePattern; // Could be an AssignmentProperty
@@ -769,10 +756,6 @@ export interface SlimeProperty extends SlimeBaseNode, SlimeExtends<ESTree.Proper
     asyncToken?: SlimeAsyncToken;
     /** * Token (generator) */
     starToken?: SlimeStarToken;
-    /** 左中括号 (计算属性) */
-    lBracketToken?: SlimeLBracketToken;
-    /** 右中括号 (计算属性) */
-    rBracketToken?: SlimeRBracketToken;
     shorthand: boolean;
     computed: boolean;
 }
@@ -841,15 +824,13 @@ export interface SlimeLogicalExpression extends SlimeBaseExpression, SlimeExtend
     operatorToken?: SlimeLogicalOperatorToken;
 }
 
-export interface SlimeConditionalExpression extends SlimeBaseExpression, SlimeExtends<ESTree.ConditionalExpression> {
+export interface SlimeConditionalExpression extends SlimeBaseExpression, SlimeExtends<ESTree.ConditionalExpression>, SlimeColonTokens {
     type: typeof SlimeAstType.ConditionalExpression;
     test: SlimeExpression;
     alternate: SlimeExpression;
     consequent: SlimeExpression;
     /** ? Token */
     questionToken?: SlimeQuestionToken;
-    /** : Token */
-    colonToken?: SlimeColonToken;
 }
 
 export interface SlimeBaseCallExpression extends SlimeBaseExpression, SlimeExtends<ESTree.BaseCallExpression>, SlimeParenTokens {
@@ -872,7 +853,7 @@ export interface SlimeNewExpression extends SlimeBaseCallExpression, Omit<SlimeE
     newToken?: SlimeNewToken;
 }
 
-export interface SlimeMemberExpression extends SlimeBaseExpression, SlimeBasePattern, SlimeExtends<ESTree.MemberExpression> {
+export interface SlimeMemberExpression extends SlimeBaseExpression, SlimeBasePattern, SlimeExtends<ESTree.MemberExpression>, SlimeBracketTokens {
     type: typeof SlimeAstType.MemberExpression;
     object: SlimeExpression | SlimeSuper;
     property: SlimeExpression | SlimePrivateIdentifier;
@@ -882,10 +863,6 @@ export interface SlimeMemberExpression extends SlimeBaseExpression, SlimeBasePat
     dotToken?: SlimeDotToken;
     /** 可选链 Token ?. */
     optionalChainToken?: SlimeOptionalChainToken;
-    /** 左中括号 (计算属性) */
-    lBracketToken?: SlimeLBracketToken;
-    /** 右中括号 (计算属性) */
-    rBracketToken?: SlimeRBracketToken;
 }
 
 export type SlimePattern =
@@ -1163,12 +1140,10 @@ export interface SlimeBaseModuleSpecifier extends SlimeBaseNode, SlimeExtends<ES
     local: SlimeIdentifier;
 }
 
-export interface SlimeImportDeclaration extends SlimeBaseModuleDeclaration, SlimeExtends<ESTree.ImportDeclaration>, SlimeBraceTokens {
+export interface SlimeImportDeclaration extends SlimeBaseModuleDeclaration, SlimeExtends<ESTree.ImportDeclaration>, SlimeBraceTokens, SlimeSemicolonTokens {
     type: typeof SlimeAstType.ImportDeclaration;
     specifiers: Array<SlimeImportSpecifier | SlimeImportDefaultSpecifier | SlimeImportNamespaceSpecifier>;
     source: SlimeLiteral;
-    /** 分号 Token，包含位置信息 */
-    semicolonToken?: SlimeSemicolonToken;
     /** import 关键字 Token */
     importToken?: SlimeImportToken;
     /** from 关键字 Token */
@@ -1203,13 +1178,11 @@ export interface SlimeImportNamespaceSpecifier extends SlimeBaseModuleSpecifier,
     asToken?: SlimeAsToken;
 }
 
-export interface SlimeExportNamedDeclaration extends SlimeBaseModuleDeclaration, SlimeExtends<ESTree.ExportNamedDeclaration>, SlimeBraceTokens {
+export interface SlimeExportNamedDeclaration extends SlimeBaseModuleDeclaration, SlimeExtends<ESTree.ExportNamedDeclaration>, SlimeBraceTokens, SlimeSemicolonTokens {
     type: typeof SlimeAstType.ExportNamedDeclaration;
     declaration?: SlimeDeclaration | null | undefined;
     specifiers: SlimeExportSpecifier[];
     source?: SlimeLiteral | null | undefined;
-    /** 分号 Token，包含位置信息 */
-    semicolonToken?: SlimeSemicolonToken;
     /** export 关键字 Token */
     exportToken?: SlimeExportToken;
     /** from 关键字 Token */
@@ -1235,12 +1208,10 @@ export interface SlimeExportDefaultDeclaration extends SlimeBaseModuleDeclaratio
     defaultToken?: SlimeDefaultToken;
 }
 
-export interface SlimeExportAllDeclaration extends SlimeBaseModuleDeclaration, SlimeExtends<ESTree.ExportAllDeclaration> {
+export interface SlimeExportAllDeclaration extends SlimeBaseModuleDeclaration, SlimeExtends<ESTree.ExportAllDeclaration>, SlimeSemicolonTokens {
     type: typeof SlimeAstType.ExportAllDeclaration;
     exported: SlimeIdentifier | SlimeLiteral | null;
     source: SlimeLiteral;
-    /** 分号 Token，包含位置信息 */
-    semicolonToken?: SlimeSemicolonToken;
     /** export 关键字 Token */
     exportToken?: SlimeExportToken;
     /** * Token */
