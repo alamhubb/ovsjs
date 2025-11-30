@@ -96,9 +96,6 @@ export const SlimeAstType = {
     ExportAllDeclaration: "ExportAllDeclaration",
 } as const;
 
-// 提取所有类型值的联合类型
-export type SlimeAstType = typeof SlimeAstType[keyof typeof SlimeAstType];
-
 
 /**
  * Slime Token 类型常量
@@ -258,6 +255,4 @@ export const SlimeTokenType = {
     ...SlimeBinaryOperatorTokenTypes,
     ...SlimeLogicalOperatorTokenTypes,
 } as const;
-
-export type SlimeTokenValueType = typeof SlimeTokenType[keyof typeof SlimeTokenType];
 
