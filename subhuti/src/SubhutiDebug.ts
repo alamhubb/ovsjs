@@ -513,7 +513,7 @@ export class SubhutiDebugUtils {
 
         // 子节点
         if (cst.children && cst.children.length > 0) {
-            const childPrefix = prefix + (isLast ? '    ' : '│   ')
+            const childPrefix = prefix + (isLast ? '   ' : '│  ')
 
             cst.children.forEach((child: any, index: number) => {
                 const isLastChild = index === cst.children.length - 1
