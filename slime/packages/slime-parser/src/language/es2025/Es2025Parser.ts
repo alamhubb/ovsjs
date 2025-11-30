@@ -465,9 +465,10 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
 
         const value = cst.value!
 
-        // 检查是否是保留字（原始值）
+        // 防御性检查：如果词法器正确实现，保留字应该被识别为独立 token，不会到达这里
+        // 如果触发此条件，说明词法器存在 bug
         if (ReservedWords.has(value)) {
-            return this.setParseFail()
+            throw new Error(`[Lexer Bug] 保留字 "${value}" 被错误识别为 IdentifierName，应该是独立的关键字 token`)
         }
 
         // 如果包含 Unicode 转义
