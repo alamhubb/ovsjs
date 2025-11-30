@@ -1,12 +1,6 @@
 import type * as ESTree from "./estree";
 import {SlimeAstType} from "./SlimeAstType.ts";
 
-/**
- * 辅助类型：排除 ESTree 类型中与 Slime 冲突的属性
- * 主要是 loc（位置信息类型不同）和 comments（注释类型不同）
- */
-type SlimeExtends<T> = Omit<T, 'loc' | 'leadingComments' | 'trailingComments'>
-
 export interface SubhutiSourceLocation extends ESTree.SourceLocation {
     // index?: number;
     value?: string;
@@ -22,16 +16,16 @@ export interface SubhutiPosition extends ESTree.Position {
     index: number;
 }
 
-export interface SlimeBaseNodeWithoutComments extends SlimeExtends<ESTree.BaseNodeWithoutComments> {
+export interface SlimeBaseNodeWithoutComments extends ESTree.BaseNodeWithoutComments {
     // Every leaf interface Slimethat extends ESTree.that, SlimeBaseNode must specify a type property.
     // The type property should be a string literal. For example, Identifier
     // has: `type: "Identifier"`
     type: string;
-    loc?: SubhutiSourceLocation | null | undefined;
+    loc?: ESTree.SourceLocation | null | undefined;
     range?: [number, number] | undefined;
 }
 
-export interface SlimeBaseNode extends SlimeBaseNodeWithoutComments, SlimeExtends<ESTree.BaseNode> {
+export interface SlimeBaseNode extends SlimeBaseNodeWithoutComments, ESTree.BaseNode {
     leadingComments?: SlimeComment[] | undefined;
     trailingComments?: SlimeComment[] | undefined;
 }
@@ -63,25 +57,25 @@ export interface SlimeNodeMap {
 
 export type SlimeNode = SlimeNodeMap[keyof SlimeNodeMap];
 
-export interface SlimeComment extends SlimeBaseNodeWithoutComments, SlimeExtends<ESTree.Comment> {
+export interface SlimeComment extends SlimeBaseNodeWithoutComments, ESTree.Comment {
     type: "Line" | "Block";
     value: string;
 }
 
-export interface SlimeProgram extends SlimeBaseNode, SlimeExtends<ESTree.Program> {
+export interface SlimeProgram extends SlimeBaseNode, ESTree.Program {
     type: typeof SlimeAstType.Program;
     sourceType: "script" | "module";
     body: Array<SlimeDirective | SlimeStatement | SlimeModuleDeclaration>;
     comments?: SlimeComment[] | undefined;
 }
 
-export interface SlimeDirective extends SlimeBaseNode, SlimeExtends<ESTree.Directive> {
+export interface SlimeDirective extends SlimeBaseNode, ESTree.Directive {
     type: typeof SlimeAstType.ExpressionStatement;
     expression: SlimeLiteral;
     directive: string;
 }
 
-export interface SlimeBaseFunction extends SlimeBaseNode, SlimeExtends<ESTree.BaseFunction> {
+export interface SlimeBaseFunction extends SlimeBaseNode, ESTree.BaseFunction {
     params: SlimePattern[];
     generator?: boolean | undefined;
     async?: boolean | undefined;
@@ -115,29 +109,29 @@ export type SlimeStatement =
     | SlimeForOfStatement
     | SlimeDeclaration;
 
-export interface SlimeBaseStatement extends SlimeBaseNode, SlimeExtends<ESTree.BaseStatement> {
+export interface SlimeBaseStatement extends SlimeBaseNode, ESTree.BaseStatement {
 }
 
-export interface SlimeEmptyStatement extends SlimeBaseStatement, SlimeExtends<ESTree.EmptyStatement> {
+export interface SlimeEmptyStatement extends SlimeBaseStatement, ESTree.EmptyStatement {
     type: typeof SlimeAstType.EmptyStatement;
 }
 
-export interface SlimeBlockStatement extends SlimeBaseStatement, SlimeExtends<ESTree.BlockStatement> {
+export interface SlimeBlockStatement extends SlimeBaseStatement, ESTree.BlockStatement {
     type: typeof SlimeAstType.BlockStatement;
     body: SlimeStatement[];
     innerComments?: SlimeComment[] | undefined;
 }
 
-export interface SlimeStaticBlock extends SlimeExtends<ESTree.StaticBlock>, Omit<SlimeBlockStatement, 'type' | 'body'> {
+export interface SlimeStaticBlock extends ESTree.StaticBlock, Omit<SlimeBlockStatement, 'type' | 'body'> {
     type: typeof SlimeAstType.StaticBlock;
 }
 
-export interface SlimeExpressionStatement extends SlimeBaseStatement, SlimeExtends<ESTree.ExpressionStatement> {
+export interface SlimeExpressionStatement extends SlimeBaseStatement, ESTree.ExpressionStatement {
     type: typeof SlimeAstType.ExpressionStatement;
     expression: SlimeExpression;
 }
 
-export interface SlimeIfStatement extends SlimeBaseStatement, SlimeExtends<ESTree.IfStatement> {
+export interface SlimeIfStatement extends SlimeBaseStatement, ESTree.IfStatement {
     type: typeof SlimeAstType.IfStatement;
     test: SlimeExpression;
     consequent: SlimeStatement;
