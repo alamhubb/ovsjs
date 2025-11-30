@@ -663,12 +663,11 @@ export interface SlimeFunctionDeclaration extends SlimeMaybeNamedFunctionDeclara
     id: SlimeIdentifier;
 }
 
-export interface SlimeVariableDeclaration extends SlimeBaseDeclaration, SlimeExtends<ESTree.VariableDeclaration>, SlimeSemicolonTokens {
+export interface SlimeVariableDeclaration extends SlimeBaseDeclaration, Omit<SlimeExtends<ESTree.VariableDeclaration>, 'kind'>, SlimeSemicolonTokens {
     type: typeof SlimeAstType.VariableDeclaration;
     declarations: SlimeVariableDeclarator[];
-    kind: "var" | "let" | "const";
-    /** 变量声明关键字 Token，包含位置信息 */
-    kindToken?: SlimeVariableDeclarationKindToken;
+    /** 变量声明关键字 Token (var/let/const) */
+    kind: SlimeVariableDeclarationKindToken;
 }
 
 export interface SlimeVariableDeclarator extends SlimeBaseNode, SlimeExtends<ESTree.VariableDeclarator> {
@@ -779,48 +778,45 @@ export interface SlimeSequenceExpression extends SlimeBaseExpression, SlimeExten
     expressions: SlimeExpression[];
 }
 
-export interface SlimeUnaryExpression extends SlimeBaseExpression, SlimeExtends<ESTree.UnaryExpression> {
+export interface SlimeUnaryExpression extends SlimeBaseExpression, Omit<SlimeExtends<ESTree.UnaryExpression>, 'operator'> {
     type: typeof SlimeAstType.UnaryExpression;
-    operator: SlimeUnaryOperator;
+    /** 运算符 Token */
+    operator: SlimeUnaryOperatorToken;
     prefix: true;
     argument: SlimeExpression;
-    /** 运算符 Token */
-    operatorToken?: SlimeUnaryOperatorToken;
 }
 
-export interface SlimeBinaryExpression extends SlimeBaseExpression, SlimeExtends<ESTree.BinaryExpression> {
+export interface SlimeBinaryExpression extends SlimeBaseExpression, Omit<SlimeExtends<ESTree.BinaryExpression>, 'operator'> {
     type: typeof SlimeAstType.BinaryExpression;
-    operator: SlimeBinaryOperator;
+    /** 运算符 Token */
+    operator: SlimeBinaryOperatorToken;
     left: SlimeExpression | SlimePrivateIdentifier;
     right: SlimeExpression;
-    /** 运算符 Token */
-    operatorToken?: SlimeBinaryOperatorToken;
 }
 
-export interface SlimeAssignmentExpression extends SlimeBaseExpression, SlimeExtends<ESTree.AssignmentExpression> {
+export interface SlimeAssignmentExpression extends SlimeBaseExpression, Omit<SlimeExtends<ESTree.AssignmentExpression>, 'operator'> {
     type: typeof SlimeAstType.AssignmentExpression;
-    operator: SlimeAssignmentOperator;
+    /** 运算符 Token */
+    operator: SlimeAssignmentOperatorToken;
     left: SlimePattern | SlimeMemberExpression;
     right: SlimeExpression;
-    /** 运算符 Token */
-    operatorToken?: SlimeAssignmentOperatorToken;
 }
 
-export interface SlimeUpdateExpression extends SlimeBaseExpression, SlimeExtends<ESTree.UpdateExpression> {
+export interface SlimeUpdateExpression extends SlimeBaseExpression, Omit<SlimeExtends<ESTree.UpdateExpression>, 'operator'> {
     type: typeof SlimeAstType.UpdateExpression;
-    operator: SlimeUpdateOperator;
+    /** 运算符 Token */
+    operator: SlimeUpdateOperatorToken;
     argument: SlimeExpression;
     prefix: boolean;
-    /** 运算符 Token */
-    operatorToken?: SlimeUpdateOperatorToken;
 }
 
-export interface SlimeLogicalExpression extends SlimeBaseExpression, SlimeExtends<ESTree.LogicalExpression> {
+export interface SlimeLogicalExpression extends SlimeBaseExpression, Omit<SlimeExtends<ESTree.LogicalExpression>, 'operator'> {
     type: typeof SlimeAstType.LogicalExpression;
-    operator: SlimeLogicalOperator;
+    /** 运算符 Token */
+    operator: SlimeLogicalOperatorToken;
     left: SlimeExpression;
     right: SlimeExpression;
-    /** 运算符 Token */
+}
     operatorToken?: SlimeLogicalOperatorToken;
 }
 
