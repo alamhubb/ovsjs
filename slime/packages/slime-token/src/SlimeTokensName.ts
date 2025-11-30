@@ -318,15 +318,6 @@ export const TokenNames = {
     TemplateTail: "TemplateTail",           // }...`
     NoSubstitutionTemplate: "NoSubstitutionTemplate", // `...`
 
-    // ============ 运算符（引用独立定义）============
-    ...SlimeAssignmentOperatorTokenTypes,
-    ...SlimeUpdateOperatorTokenTypes,
-    ...SlimeUnaryOperatorTokenTypes,
-    ...SlimeBinaryOperatorTokenTypes,
-    ...SlimeLogicalOperatorTokenTypes,
-
-    ...SubhutiLexerTokenNames,
-
     // ============================================
     // A.1.1 Unicode Format-Control Characters
     // (内部使用，不产生 token)
