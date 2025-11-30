@@ -16,7 +16,6 @@ import type SubhutiCst from "subhuti/src/struct/SubhutiCst.ts"
 import type SubhutiMatchToken from "subhuti/src/struct/SubhutiMatchToken.ts"
 import {matchRegExpLiteral} from "subhuti/src/SubhutiLexer.ts"
 import Es2025TokenConsumer from "./Es2025TokenConsumer.ts"
-import {ReservedWords, TokenNames, ContextualKeywords} from "./SlimeTokensName.ts"
 
 // ============================================
 // 参数化规则的参数接口
@@ -365,9 +364,9 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             // Identifier (排除保留字)
             {alt: () => this.Identifier()},
             // [~Yield] yield - 条件展开
-            ...(!Yield ? [{alt: () => this.tokenConsumer.YieldTok()}] : []),
+            ...(!Yield ? [{alt: () => this.tokenConsumer.Yield()}] : []),
             // [~Await] await - 条件展开
-            ...(!Await ? [{alt: () => this.tokenConsumer.AwaitTok()}] : [])
+            ...(!Await ? [{alt: () => this.tokenConsumer.Await()}] : [])
         ])
     }
 
@@ -385,8 +384,8 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     BindingIdentifier(params: ExpressionParams = {}): SubhutiCst | undefined {
         return this.Or([
             {alt: () => this.Identifier()},
-            {alt: () => this.tokenConsumer.YieldTok()},
-            {alt: () => this.tokenConsumer.AwaitTok()}
+            {alt: () => this.tokenConsumer.Yield()},
+            {alt: () => this.tokenConsumer.Await()}
         ])
     }
 
@@ -403,9 +402,9 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
         return this.Or([
             {alt: () => this.Identifier()},
             // [~Yield] yield - 条件展开
-            ...(!Yield ? [{alt: () => this.tokenConsumer.YieldTok()}] : []),
+            ...(!Yield ? [{alt: () => this.tokenConsumer.Yield()}] : []),
             // [~Await] await - 条件展开
-            ...(!Await ? [{alt: () => this.tokenConsumer.AwaitTok()}] : [])
+            ...(!Await ? [{alt: () => this.tokenConsumer.Await()}] : [])
         ])
     }
 
@@ -473,49 +472,49 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                 return cst
             }},
             // 所有 ReservedWord 都可以作为 IdentifierName
-            {alt: () => this.tokenConsumer.AwaitTok()},
-            {alt: () => this.tokenConsumer.BreakTok()},
-            {alt: () => this.tokenConsumer.CaseTok()},
-            {alt: () => this.tokenConsumer.CatchTok()},
-            {alt: () => this.tokenConsumer.ClassTok()},
-            {alt: () => this.tokenConsumer.ConstTok()},
-            {alt: () => this.tokenConsumer.ContinueTok()},
-            {alt: () => this.tokenConsumer.DebuggerTok()},
-            {alt: () => this.tokenConsumer.DefaultTok()},
-            {alt: () => this.tokenConsumer.DeleteTok()},
-            {alt: () => this.tokenConsumer.DoTok()},
-            {alt: () => this.tokenConsumer.ElseTok()},
-            {alt: () => this.tokenConsumer.EnumTok()},
-            {alt: () => this.tokenConsumer.ExportTok()},
-            {alt: () => this.tokenConsumer.ExtendsTok()},
-            {alt: () => this.tokenConsumer.FalseTok()},
-            {alt: () => this.tokenConsumer.FinallyTok()},
-            {alt: () => this.tokenConsumer.ForTok()},
-            {alt: () => this.tokenConsumer.FunctionTok()},
-            {alt: () => this.tokenConsumer.IfTok()},
-            {alt: () => this.tokenConsumer.ImportTok()},
-            {alt: () => this.tokenConsumer.InTok()},
-            {alt: () => this.tokenConsumer.InstanceofTok()},
-            {alt: () => this.tokenConsumer.NewTok()},
-            {alt: () => this.tokenConsumer.NullTok()},
-            {alt: () => this.tokenConsumer.ReturnTok()},
-            {alt: () => this.tokenConsumer.SuperTok()},
-            {alt: () => this.tokenConsumer.SwitchTok()},
-            {alt: () => this.tokenConsumer.ThisTok()},
-            {alt: () => this.tokenConsumer.ThrowTok()},
-            {alt: () => this.tokenConsumer.TrueTok()},
-            {alt: () => this.tokenConsumer.TryTok()},
-            {alt: () => this.tokenConsumer.TypeofTok()},
-            {alt: () => this.tokenConsumer.VarTok()},
-            {alt: () => this.tokenConsumer.VoidTok()},
-            {alt: () => this.tokenConsumer.WhileTok()},
-            {alt: () => this.tokenConsumer.WithTok()},
-            {alt: () => this.tokenConsumer.YieldTok()},
+            {alt: () => this.tokenConsumer.Await()},
+            {alt: () => this.tokenConsumer.Break()},
+            {alt: () => this.tokenConsumer.Case()},
+            {alt: () => this.tokenConsumer.Catch()},
+            {alt: () => this.tokenConsumer.Class()},
+            {alt: () => this.tokenConsumer.Const()},
+            {alt: () => this.tokenConsumer.Continue()},
+            {alt: () => this.tokenConsumer.Debugger()},
+            {alt: () => this.tokenConsumer.Default()},
+            {alt: () => this.tokenConsumer.Delete()},
+            {alt: () => this.tokenConsumer.Do()},
+            {alt: () => this.tokenConsumer.Else()},
+            {alt: () => this.tokenConsumer.Enum()},
+            {alt: () => this.tokenConsumer.Export()},
+            {alt: () => this.tokenConsumer.Extends()},
+            {alt: () => this.tokenConsumer.False()},
+            {alt: () => this.tokenConsumer.Finally()},
+            {alt: () => this.tokenConsumer.For()},
+            {alt: () => this.tokenConsumer.Function()},
+            {alt: () => this.tokenConsumer.If()},
+            {alt: () => this.tokenConsumer.Import()},
+            {alt: () => this.tokenConsumer.In()},
+            {alt: () => this.tokenConsumer.Instanceof()},
+            {alt: () => this.tokenConsumer.New()},
+            {alt: () => this.tokenConsumer.Null()},
+            {alt: () => this.tokenConsumer.Return()},
+            {alt: () => this.tokenConsumer.Super()},
+            {alt: () => this.tokenConsumer.Switch()},
+            {alt: () => this.tokenConsumer.This()},
+            {alt: () => this.tokenConsumer.Throw()},
+            {alt: () => this.tokenConsumer.True()},
+            {alt: () => this.tokenConsumer.Try()},
+            {alt: () => this.tokenConsumer.Typeof()},
+            {alt: () => this.tokenConsumer.Var()},
+            {alt: () => this.tokenConsumer.Void()},
+            {alt: () => this.tokenConsumer.While()},
+            {alt: () => this.tokenConsumer.With()},
+            {alt: () => this.tokenConsumer.Yield()},
             // 上下文关键字（虽然在词法层是 keyword token，但也可能出现在这些场景）
-            {alt: () => this.tokenConsumer.AsyncTok()},
-            {alt: () => this.tokenConsumer.LetTok()},
-            {alt: () => this.tokenConsumer.StaticTok()},
-            {alt: () => this.tokenConsumer.AsTok()},
+            {alt: () => this.tokenConsumer.Async()},
+            {alt: () => this.tokenConsumer.Let()},
+            {alt: () => this.tokenConsumer.Static()},
+            {alt: () => this.tokenConsumer.As()},
             // 软关键字（get, set, of, target, meta, from）
             // 这些已经返回 IdentifierName，所以被第一个分支覆盖
         ])
@@ -554,7 +553,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     PrimaryExpression(params: ExpressionParams = {}): SubhutiCst | undefined {
         return this.Or([
             // === 1. 硬关键字表达式（不会被标识符遮蔽）===
-            {alt: () => this.tokenConsumer.ThisTok()},
+            {alt: () => this.tokenConsumer.This()},
 
             // === 2. async 开头（软关键字，必须在 IdentifierReference 之前）===
             // 更具体的先匹配：async function* 比 async function 更具体
@@ -717,7 +716,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      */
     @SubhutiRule
     NullLiteral(): SubhutiCst | undefined {
-        return this.tokenConsumer.NullTok()
+        return this.tokenConsumer.Null()
     }
 
     /**
@@ -728,8 +727,8 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     @SubhutiRule
     BooleanLiteral(): SubhutiCst | undefined {
         return this.Or([
-            {alt: () => this.tokenConsumer.TrueTok()},
-            {alt: () => this.tokenConsumer.FalseTok()}
+            {alt: () => this.tokenConsumer.True()},
+            {alt: () => this.tokenConsumer.False()}
         ])
     }
 
@@ -1135,7 +1134,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             {alt: () => this.MetaProperty()},
             {
                 alt: () => {
-                    this.tokenConsumer.NewTok()
+                    this.tokenConsumer.New()
                     this.MemberExpression(params)
                     this.Arguments(params)
                 }
@@ -1183,7 +1182,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
         return this.Or([
             {
                 alt: () => {
-                    this.tokenConsumer.SuperTok()
+                    this.tokenConsumer.Super()
                     this.tokenConsumer.LBracket()
                     this.Expression({...params, In: true})
                     this.tokenConsumer.RBracket()
@@ -1191,7 +1190,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             },
             {
                 alt: () => {
-                    this.tokenConsumer.SuperTok()
+                    this.tokenConsumer.Super()
                     this.tokenConsumer.Dot()
                     this.IdentifierName()
                 }
@@ -1218,9 +1217,9 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      */
     @SubhutiRule
     NewTarget(): SubhutiCst | undefined {
-        this.tokenConsumer.NewTok()
+        this.tokenConsumer.New()
         this.tokenConsumer.Dot()
-        return this.tokenConsumer.TargetTok()
+        return this.tokenConsumer.Target()
     }
 
     /**
@@ -1229,9 +1228,9 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      */
     @SubhutiRule
     ImportMeta(): SubhutiCst | undefined {
-        this.tokenConsumer.ImportTok()
+        this.tokenConsumer.Import()
         this.tokenConsumer.Dot()
-        return this.tokenConsumer.MetaTok()
+        return this.tokenConsumer.Meta()
     }
 
     /**
@@ -1245,7 +1244,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             {alt: () => this.MemberExpression(params)},
             {
                 alt: () => {
-                    this.tokenConsumer.NewTok()
+                    this.tokenConsumer.New()
                     this.NewExpression(params)
                 }
             }
@@ -1347,7 +1346,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      */
     @SubhutiRule
     SuperCall(params: ExpressionParams = {}): SubhutiCst | undefined {
-        this.tokenConsumer.SuperTok()
+        this.tokenConsumer.Super()
         return this.Arguments(params)
     }
 
@@ -1362,7 +1361,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             // import ( AssignmentExpression[+In, ?Yield, ?Await] , AssignmentExpression[+In, ?Yield, ?Await] ,_opt )
             {
                 alt: () => {
-                    this.tokenConsumer.ImportTok()
+                    this.tokenConsumer.Import()
                     this.tokenConsumer.LParen()
                     this.AssignmentExpression({...params, In: true})
                     this.tokenConsumer.Comma()
@@ -1374,7 +1373,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             // import ( AssignmentExpression[+In, ?Yield, ?Await] ,_opt )
             {
                 alt: () => {
-                    this.tokenConsumer.ImportTok()
+                    this.tokenConsumer.Import()
                     this.tokenConsumer.LParen()
                     this.AssignmentExpression({...params, In: true})
                     this.Option(() => this.tokenConsumer.Comma())
@@ -1676,19 +1675,19 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             {alt: () => this.UpdateExpression(params)},
             {
                 alt: () => {
-                    this.tokenConsumer.DeleteTok()
+                    this.tokenConsumer.Delete()
                     this.UnaryExpression(params)
                 }
             },
             {
                 alt: () => {
-                    this.tokenConsumer.VoidTok()
+                    this.tokenConsumer.Void()
                     this.UnaryExpression(params)
                 }
             },
             {
                 alt: () => {
-                    this.tokenConsumer.TypeofTok()
+                    this.tokenConsumer.Typeof()
                     this.UnaryExpression(params)
                 }
             },
@@ -1727,7 +1726,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      */
     @SubhutiRule
     AwaitExpression(params: ExpressionParams = {}): SubhutiCst | undefined {
-        this.tokenConsumer.AwaitTok()
+        this.tokenConsumer.Await()
         return this.UnaryExpression({...params, Await: true})
     }
 
@@ -1846,7 +1845,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
         // 处理 [+In] PrivateIdentifier in ShiftExpression
         if (In && this.lookahead(TokenNames.PrivateIdentifier, 1)) {
             this.PrivateIdentifier()
-            this.tokenConsumer.InTok()
+            this.tokenConsumer.In()
             this.ShiftExpression(params)
             return this.curCst
         }
@@ -1859,9 +1858,9 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                 {alt: () => this.tokenConsumer.GreaterThan()},
                 {alt: () => this.tokenConsumer.LessThanOrEqual()},
                 {alt: () => this.tokenConsumer.GreaterThanOrEqual()},
-                {alt: () => this.tokenConsumer.InstanceofTok()},
+                {alt: () => this.tokenConsumer.Instanceof()},
                 // [+In] in - 条件展开，只在 In=true 时才有这个分支
-                ...(In ? [{alt: () => this.tokenConsumer.InTok()}] : [])
+                ...(In ? [{alt: () => this.tokenConsumer.In()}] : [])
             ])
             this.ShiftExpression(params)
         })
@@ -2361,8 +2360,8 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     @SubhutiRule
     LetOrConst(): SubhutiCst | undefined {
         return this.Or([
-            {alt: () => this.tokenConsumer.LetTok()},
-            {alt: () => this.tokenConsumer.ConstTok()}
+            {alt: () => this.tokenConsumer.Let()},
+            {alt: () => this.tokenConsumer.Const()}
         ])
     }
 
@@ -2410,7 +2409,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      */
     @SubhutiRule
     VariableStatement(params: ExpressionParams = {}): SubhutiCst | undefined {
-        this.tokenConsumer.VarTok()
+        this.tokenConsumer.Var()
         this.VariableDeclarationList({...params, In: true})
         return this.SemicolonASI()
     }
@@ -2788,18 +2787,18 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
         return this.Or([
             {
                 alt: () => {
-                    this.tokenConsumer.IfTok()
+                    this.tokenConsumer.If()
                     this.tokenConsumer.LParen()
                     this.Expression({...params, In: true})
                     this.tokenConsumer.RParen()
                     this.IfStatementBody(params)
-                    this.tokenConsumer.ElseTok()
+                    this.tokenConsumer.Else()
                     this.IfStatementBody(params)
                 }
             },
             {
                 alt: () => {
-                    this.tokenConsumer.IfTok()
+                    this.tokenConsumer.If()
                     this.tokenConsumer.LParen()
                     this.Expression({...params, In: true})
                     this.tokenConsumer.RParen()
@@ -2869,9 +2868,9 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      */
     @SubhutiRule
     DoWhileStatement(params: StatementParams = {}): SubhutiCst | undefined {
-        this.tokenConsumer.DoTok()
+        this.tokenConsumer.Do()
         this.Statement(params)
-        this.tokenConsumer.WhileTok()
+        this.tokenConsumer.While()
         this.tokenConsumer.LParen()
         this.Expression({...params, In: true})
         this.tokenConsumer.RParen()
@@ -2884,7 +2883,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      */
     @SubhutiRule
     WhileStatement(params: StatementParams = {}): SubhutiCst | undefined {
-        this.tokenConsumer.WhileTok()
+        this.tokenConsumer.While()
         this.tokenConsumer.LParen()
         this.Expression({...params, In: true})
         this.tokenConsumer.RParen()
@@ -2903,9 +2902,9 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             // for ( var VariableDeclarationList[~In, ?Yield, ?Await] ; Expression[+In, ?Yield, ?Await]_opt ; Expression[+In, ?Yield, ?Await]_opt ) Statement[?Yield, ?Await, ?Return]
             {
                 alt: () => {
-                    this.tokenConsumer.ForTok()
+                    this.tokenConsumer.For()
                     this.tokenConsumer.LParen()
-                    this.tokenConsumer.VarTok()
+                    this.tokenConsumer.Var()
                     this.VariableDeclarationList({...params, In: false})
                     this.tokenConsumer.Semicolon()
                     this.Option(() => this.Expression({...params, In: true}))
@@ -2918,7 +2917,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             // for ( LexicalDeclaration[~In, ?Yield, ?Await] Expression[+In, ?Yield, ?Await]_opt ; Expression[+In, ?Yield, ?Await]_opt ) Statement[?Yield, ?Await, ?Return]
             {
                 alt: () => {
-                    this.tokenConsumer.ForTok()
+                    this.tokenConsumer.For()
                     this.tokenConsumer.LParen()
                     this.LexicalDeclaration({...params, In: false})
                     this.Option(() => this.Expression({...params, In: true}))
@@ -2931,7 +2930,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             // for ( [lookahead ≠ let [] Expression[~In, ?Yield, ?Await]_opt ; Expression[+In, ?Yield, ?Await]_opt ; Expression[+In, ?Yield, ?Await]_opt ) Statement[?Yield, ?Await, ?Return]
             {
                 alt: () => {
-                    this.tokenConsumer.ForTok()
+                    this.tokenConsumer.For()
                     this.tokenConsumer.LParen()
                     // [lookahead ≠ let []
                     this.assertNotContextualSequence(ContextualKeywords.LET, TokenNames.LBracket)
@@ -2967,11 +2966,11 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             // for ( var ForBinding[?Yield, ?Await] in Expression[+In, ?Yield, ?Await] ) Statement[?Yield, ?Await, ?Return]
             {
                 alt: () => {
-                    this.tokenConsumer.ForTok()
+                    this.tokenConsumer.For()
                     this.tokenConsumer.LParen()
-                    this.tokenConsumer.VarTok()
+                    this.tokenConsumer.Var()
                     this.ForBinding(params)
-                    this.tokenConsumer.InTok()
+                    this.tokenConsumer.In()
                     this.Expression({...params, In: true})
                     this.tokenConsumer.RParen()
                     this.Statement(params)
@@ -2980,11 +2979,11 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             // for ( [lookahead ≠ let [] LeftHandSideExpression[?Yield, ?Await] in Expression[+In, ?Yield, ?Await] ) Statement[?Yield, ?Await, ?Return]
             {
                 alt: () => {
-                    this.tokenConsumer.ForTok()
+                    this.tokenConsumer.For()
                     this.tokenConsumer.LParen()
                     this.assertNotContextualSequence(ContextualKeywords.LET, TokenNames.LBracket)
                     this.LeftHandSideExpression(params)
-                    this.tokenConsumer.InTok()
+                    this.tokenConsumer.In()
                     this.Expression({...params, In: true})
                     this.tokenConsumer.RParen()
                     this.Statement(params)
@@ -2993,10 +2992,10 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             // for ( ForDeclaration[?Yield, ?Await] in Expression[+In, ?Yield, ?Await] ) Statement[?Yield, ?Await, ?Return]
             {
                 alt: () => {
-                    this.tokenConsumer.ForTok()
+                    this.tokenConsumer.For()
                     this.tokenConsumer.LParen()
                     this.ForDeclaration(params)
-                    this.tokenConsumer.InTok()
+                    this.tokenConsumer.In()
                     this.Expression({...params, In: true})
                     this.tokenConsumer.RParen()
                     this.Statement(params)
@@ -3005,11 +3004,11 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             // for ( var ForBinding[?Yield, ?Await] of AssignmentExpression[+In, ?Yield, ?Await] ) Statement[?Yield, ?Await, ?Return]
             {
                 alt: () => {
-                    this.tokenConsumer.ForTok()
+                    this.tokenConsumer.For()
                     this.tokenConsumer.LParen()
-                    this.tokenConsumer.VarTok()
+                    this.tokenConsumer.Var()
                     this.ForBinding(params)
-                    this.tokenConsumer.OfTok()
+                    this.tokenConsumer.Of()
                     this.AssignmentExpression({...params, In: true})
                     this.tokenConsumer.RParen()
                     this.Statement(params)
@@ -3018,10 +3017,10 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             // for ( ForDeclaration[?Yield, ?Await] of AssignmentExpression[+In, ?Yield, ?Await] ) Statement[?Yield, ?Await, ?Return]
             {
                 alt: () => {
-                    this.tokenConsumer.ForTok()
+                    this.tokenConsumer.For()
                     this.tokenConsumer.LParen()
                     this.ForDeclaration(params)
-                    this.tokenConsumer.OfTok()
+                    this.tokenConsumer.Of()
                     this.AssignmentExpression({...params, In: true})
                     this.tokenConsumer.RParen()
                     this.Statement(params)
@@ -3030,13 +3029,13 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             // for ( [lookahead ∉ {let, async of}] LeftHandSideExpression[?Yield, ?Await] of AssignmentExpression[+In, ?Yield, ?Await] ) Statement[?Yield, ?Await, ?Return]
             {
                 alt: () => {
-                    this.tokenConsumer.ForTok()
+                    this.tokenConsumer.For()
                     this.tokenConsumer.LParen()
                     // [lookahead ∉ {let, async of}]
                     this.assertNotContextual(ContextualKeywords.LET)
                     this.assertNotContextualPair(ContextualKeywords.ASYNC, ContextualKeywords.OF)
                     this.LeftHandSideExpression(params)
-                    this.tokenConsumer.OfTok()
+                    this.tokenConsumer.Of()
                     this.AssignmentExpression({...params, In: true})
                     this.tokenConsumer.RParen()
                     this.Statement(params)
@@ -3045,12 +3044,12 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             // [+Await] for await ( var ForBinding[?Yield, ?Await] of AssignmentExpression[+In, ?Yield, ?Await] ) Statement[?Yield, ?Await, ?Return]
             ...(Await ? [{
                 alt: () => {
-                    this.tokenConsumer.ForTok()
-                    this.tokenConsumer.AwaitTok()
+                    this.tokenConsumer.For()
+                    this.tokenConsumer.Await()
                     this.tokenConsumer.LParen()
-                    this.tokenConsumer.VarTok()
+                    this.tokenConsumer.Var()
                     this.ForBinding(params)
-                    this.tokenConsumer.OfTok()
+                    this.tokenConsumer.Of()
                     this.AssignmentExpression({...params, In: true})
                     this.tokenConsumer.RParen()
                     this.Statement(params)
@@ -3059,11 +3058,11 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             // [+Await] for await ( ForDeclaration[?Yield, ?Await] of AssignmentExpression[+In, ?Yield, ?Await] ) Statement[?Yield, ?Await, ?Return]
             ...(Await ? [{
                 alt: () => {
-                    this.tokenConsumer.ForTok()
-                    this.tokenConsumer.AwaitTok()
+                    this.tokenConsumer.For()
+                    this.tokenConsumer.Await()
                     this.tokenConsumer.LParen()
                     this.ForDeclaration(params)
-                    this.tokenConsumer.OfTok()
+                    this.tokenConsumer.Of()
                     this.AssignmentExpression({...params, In: true})
                     this.tokenConsumer.RParen()
                     this.Statement(params)
@@ -3072,13 +3071,13 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             // [+Await] for await ( [lookahead ≠ let] LeftHandSideExpression[?Yield, ?Await] of AssignmentExpression[+In, ?Yield, ?Await] ) Statement[?Yield, ?Await, ?Return]
             ...(Await ? [{
                 alt: () => {
-                    this.tokenConsumer.ForTok()
-                    this.tokenConsumer.AwaitTok()
+                    this.tokenConsumer.For()
+                    this.tokenConsumer.Await()
                     this.tokenConsumer.LParen()
                     // [lookahead ≠ let]
                     this.assertNotContextual(ContextualKeywords.LET)
                     this.LeftHandSideExpression(params)
-                    this.tokenConsumer.OfTok()
+                    this.tokenConsumer.Of()
                     this.AssignmentExpression({...params, In: true})
                     this.tokenConsumer.RParen()
                     this.Statement(params)
@@ -3124,7 +3123,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
         return this.Or([
             {
                 alt: () => {
-                    this.tokenConsumer.ContinueTok()
+                    this.tokenConsumer.Continue()
                     this.assertNoLineBreak()  // [no LineTerminator here]
                     this.LabelIdentifier(params)
                     this.SemicolonASI()
@@ -3132,7 +3131,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             },
             {
                 alt: () => {
-                    this.tokenConsumer.ContinueTok()
+                    this.tokenConsumer.Continue()
                     this.SemicolonASI()
                 }
             }
@@ -3149,7 +3148,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
         return this.Or([
             {
                 alt: () => {
-                    this.tokenConsumer.BreakTok()
+                    this.tokenConsumer.Break()
                     this.assertNoLineBreak()  // [no LineTerminator here]
                     this.LabelIdentifier(params)
                     this.SemicolonASI()
@@ -3157,7 +3156,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             },
             {
                 alt: () => {
-                    this.tokenConsumer.BreakTok()
+                    this.tokenConsumer.Break()
                     this.SemicolonASI()
                 }
             }
@@ -3174,7 +3173,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
         return this.Or([
             {
                 alt: () => {
-                    this.tokenConsumer.ReturnTok()
+                    this.tokenConsumer.Return()
                     this.assertNoLineBreak()  // [no LineTerminator here]
                     this.Expression({...params, In: true})
                     this.SemicolonASI()
@@ -3182,7 +3181,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             },
             {
                 alt: () => {
-                    this.tokenConsumer.ReturnTok()
+                    this.tokenConsumer.Return()
                     this.SemicolonASI()
                 }
             }
@@ -3199,7 +3198,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      */
     @SubhutiRule
     WithStatement(params: StatementParams = {}): SubhutiCst | undefined {
-        this.tokenConsumer.WithTok()
+        this.tokenConsumer.With()
         this.tokenConsumer.LParen()
         this.Expression({...params, In: true})
         this.tokenConsumer.RParen()
@@ -3216,7 +3215,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      */
     @SubhutiRule
     SwitchStatement(params: StatementParams = {}): SubhutiCst | undefined {
-        this.tokenConsumer.SwitchTok()
+        this.tokenConsumer.Switch()
         this.tokenConsumer.LParen()
         this.Expression({...params, In: true})
         this.tokenConsumer.RParen()
@@ -3267,7 +3266,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      */
     @SubhutiRule
     CaseClause(params: StatementParams = {}): SubhutiCst | undefined {
-        this.tokenConsumer.CaseTok()
+        this.tokenConsumer.Case()
         this.Expression({...params, In: true})
         this.tokenConsumer.Colon()
         this.Option(() => this.StatementList(params))
@@ -3280,7 +3279,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      */
     @SubhutiRule
     DefaultClause(params: StatementParams = {}): SubhutiCst | undefined {
-        this.tokenConsumer.DefaultTok()
+        this.tokenConsumer.Default()
         this.tokenConsumer.Colon()
         this.Option(() => this.StatementList(params))
         return this.curCst
@@ -3324,7 +3323,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      */
     @SubhutiRule
     ThrowStatement(params: StatementParams = {}): SubhutiCst | undefined {
-        this.tokenConsumer.ThrowTok()
+        this.tokenConsumer.Throw()
         this.assertNoLineBreak()  // [no LineTerminator here]
         this.Expression({...params, In: true})
         return this.SemicolonASI()
@@ -3345,7 +3344,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
         return this.Or([
             {
                 alt: () => {
-                    this.tokenConsumer.TryTok()
+                    this.tokenConsumer.Try()
                     this.Block(params)
                     this.Catch(params)
                     this.Finally(params)
@@ -3353,14 +3352,14 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             },
             {
                 alt: () => {
-                    this.tokenConsumer.TryTok()
+                    this.tokenConsumer.Try()
                     this.Block(params)
                     this.Catch(params)
                 }
             },
             {
                 alt: () => {
-                    this.tokenConsumer.TryTok()
+                    this.tokenConsumer.Try()
                     this.Block(params)
                     this.Finally(params)
                 }
@@ -3378,7 +3377,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
         return this.Or([
             {
                 alt: () => {
-                    this.tokenConsumer.CatchTok()
+                    this.tokenConsumer.Catch()
                     this.tokenConsumer.LParen()
                     this.CatchParameter(params)
                     this.tokenConsumer.RParen()
@@ -3387,7 +3386,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             },
             {
                 alt: () => {
-                    this.tokenConsumer.CatchTok()
+                    this.tokenConsumer.Catch()
                     this.Block(params)
                 }
             }
@@ -3400,7 +3399,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      */
     @SubhutiRule
     Finally(params: StatementParams = {}): SubhutiCst | undefined {
-        this.tokenConsumer.FinallyTok()
+        this.tokenConsumer.Finally()
         return this.Block(params)
     }
 
@@ -3427,7 +3426,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      */
     @SubhutiRule
     DebuggerStatement(): SubhutiCst | undefined {
-        this.tokenConsumer.DebuggerTok()
+        this.tokenConsumer.Debugger()
         return this.SemicolonASI()
     }
 
@@ -3447,7 +3446,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             // yield [no LineTerminator here] * AssignmentExpression[?In, +Yield, ?Await]
             {
                 alt: () => {
-                    this.tokenConsumer.YieldTok()
+                    this.tokenConsumer.Yield()
                     this.assertNoLineBreak()  // [no LineTerminator here]
                     this.tokenConsumer.Asterisk()
                     this.AssignmentExpression({...params, Yield: true})
@@ -3456,13 +3455,13 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             // yield [no LineTerminator here] AssignmentExpression[?In, +Yield, ?Await]
             {
                 alt: () => {
-                    this.tokenConsumer.YieldTok()
+                    this.tokenConsumer.Yield()
                     this.assertNoLineBreak()  // [no LineTerminator here]
                     this.AssignmentExpression({...params, Yield: true})
                 }
             },
             // yield
-            {alt: () => this.tokenConsumer.YieldTok()}
+            {alt: () => this.tokenConsumer.Yield()}
         ])
     }
 
@@ -3554,7 +3553,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             // async [no LineTerminator here] AsyncArrowBindingIdentifier[?Yield] [no LineTerminator here] => AsyncConciseBody[?In]
             {
                 alt: () => {
-                    this.tokenConsumer.AsyncTok()
+                    this.tokenConsumer.Async()
                     this.assertNoLineBreak()  // [no LineTerminator here]
                     this.AsyncArrowBindingIdentifier(params)
                     this.assertNoLineBreak()  // [no LineTerminator here]
@@ -3620,7 +3619,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      */
     @SubhutiRule
     AsyncArrowHead(): SubhutiCst | undefined {
-        this.tokenConsumer.AsyncTok()
+        this.tokenConsumer.Async()
         this.assertNoLineBreak()  // [no LineTerminator here]
         this.ArrowFormalParameters({Yield: false, Await: true})
         return this.curCst
@@ -3742,7 +3741,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      */
     @SubhutiRule
     FunctionExpression(): SubhutiCst | undefined {
-        this.tokenConsumer.FunctionTok()
+        this.tokenConsumer.Function()
         this.Option(() => this.BindingIdentifier({Yield: false, Await: false}))
         this.tokenConsumer.LParen()
         this.FormalParameters({Yield: false, Await: false})
@@ -3765,7 +3764,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             // function BindingIdentifier[?Yield, ?Await] ( FormalParameters[~Yield, ~Await] ) { FunctionBody[~Yield, ~Await] }
             {
                 alt: () => {
-                    this.tokenConsumer.FunctionTok()
+                    this.tokenConsumer.Function()
                     this.BindingIdentifier(params)
                     this.tokenConsumer.LParen()
                     this.FormalParameters({Yield: false, Await: false})
@@ -3778,7 +3777,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             // [+Default] function ( FormalParameters[~Yield, ~Await] ) { FunctionBody[~Yield, ~Await] } - 条件展开
             ...(Default ? [{
                 alt: () => {
-                    this.tokenConsumer.FunctionTok()
+                    this.tokenConsumer.Function()
                     this.tokenConsumer.LParen()
                     this.FormalParameters({Yield: false, Await: false})
                     this.tokenConsumer.RParen()
@@ -3807,7 +3806,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             // function * BindingIdentifier[?Yield, ?Await] ( FormalParameters[+Yield, ~Await] ) { GeneratorBody }
             {
                 alt: () => {
-                    this.tokenConsumer.FunctionTok()
+                    this.tokenConsumer.Function()
                     this.tokenConsumer.Asterisk()
                     this.BindingIdentifier(params)
                     this.tokenConsumer.LParen()
@@ -3821,7 +3820,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             // [+Default] function * ( FormalParameters[+Yield, ~Await] ) { GeneratorBody } - 条件展开
             ...(Default ? [{
                 alt: () => {
-                    this.tokenConsumer.FunctionTok()
+                    this.tokenConsumer.Function()
                     this.tokenConsumer.Asterisk()
                     this.tokenConsumer.LParen()
                     this.FormalParameters({Yield: true, Await: false})
@@ -3840,7 +3839,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      */
     @SubhutiRule
     GeneratorExpression(): SubhutiCst | undefined {
-        this.tokenConsumer.FunctionTok()
+        this.tokenConsumer.Function()
         this.tokenConsumer.Asterisk()
         this.Option(() => this.BindingIdentifier({Yield: true, Await: false}))
         this.tokenConsumer.LParen()
@@ -3893,9 +3892,9 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             // async [no LineTerminator here] function BindingIdentifier[?Yield, ?Await] ( FormalParameters[~Yield, +Await] ) { AsyncFunctionBody }
             {
                 alt: () => {
-                    this.tokenConsumer.AsyncTok()
+                    this.tokenConsumer.Async()
                     this.assertNoLineBreak()  // [no LineTerminator here]
-                    this.tokenConsumer.FunctionTok()
+                    this.tokenConsumer.Function()
                     this.BindingIdentifier(params)
                     this.tokenConsumer.LParen()
                     this.FormalParameters({Yield: false, Await: true})
@@ -3908,9 +3907,9 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             // [+Default] async [no LineTerminator here] function ( FormalParameters[~Yield, +Await] ) { AsyncFunctionBody } - 条件展开
             ...(Default ? [{
                 alt: () => {
-                    this.tokenConsumer.AsyncTok()
+                    this.tokenConsumer.Async()
                     this.assertNoLineBreak()  // [no LineTerminator here]
-                    this.tokenConsumer.FunctionTok()
+                    this.tokenConsumer.Function()
                     this.tokenConsumer.LParen()
                     this.FormalParameters({Yield: false, Await: true})
                     this.tokenConsumer.RParen()
@@ -3928,9 +3927,9 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      */
     @SubhutiRule
     AsyncFunctionExpression(): SubhutiCst | undefined {
-        this.tokenConsumer.AsyncTok()
+        this.tokenConsumer.Async()
         this.assertNoLineBreak()  // [no LineTerminator here]
-        this.tokenConsumer.FunctionTok()
+        this.tokenConsumer.Function()
         this.Option(() => this.BindingIdentifier({Yield: false, Await: true}))
         this.tokenConsumer.LParen()
         this.FormalParameters({Yield: false, Await: true})
@@ -3947,7 +3946,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      */
     @SubhutiRule
     AsyncMethod(params: ExpressionParams = {}): SubhutiCst | undefined {
-        this.tokenConsumer.AsyncTok()
+        this.tokenConsumer.Async()
         this.assertNoLineBreak()  // [no LineTerminator here]
         this.ClassElementName(params)
         this.tokenConsumer.LParen()
@@ -3985,9 +3984,9 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             // async [no LineTerminator here] function * BindingIdentifier[?Yield, ?Await] ( FormalParameters[+Yield, +Await] ) { AsyncGeneratorBody }
             {
                 alt: () => {
-                    this.tokenConsumer.AsyncTok()
+                    this.tokenConsumer.Async()
                     this.assertNoLineBreak()  // [no LineTerminator here]
-                    this.tokenConsumer.FunctionTok()
+                    this.tokenConsumer.Function()
                     this.tokenConsumer.Asterisk()
                     this.BindingIdentifier(params)
                     this.tokenConsumer.LParen()
@@ -4001,9 +4000,9 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             // [+Default] async [no LineTerminator here] function * ( FormalParameters[+Yield, +Await] ) { AsyncGeneratorBody } - 条件展开
             ...(Default ? [{
                 alt: () => {
-                    this.tokenConsumer.AsyncTok()
+                    this.tokenConsumer.Async()
                     this.assertNoLineBreak()  // [no LineTerminator here]
-                    this.tokenConsumer.FunctionTok()
+                    this.tokenConsumer.Function()
                     this.tokenConsumer.Asterisk()
                     this.tokenConsumer.LParen()
                     this.FormalParameters({Yield: true, Await: true})
@@ -4022,9 +4021,9 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      */
     @SubhutiRule
     AsyncGeneratorExpression(): SubhutiCst | undefined {
-        this.tokenConsumer.AsyncTok()
+        this.tokenConsumer.Async()
         this.assertNoLineBreak()  // [no LineTerminator here]
-        this.tokenConsumer.FunctionTok()
+        this.tokenConsumer.Function()
         this.tokenConsumer.Asterisk()
         this.Option(() => this.BindingIdentifier({Yield: true, Await: true}))
         this.tokenConsumer.LParen()
@@ -4042,7 +4041,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      */
     @SubhutiRule
     AsyncGeneratorMethod(params: ExpressionParams = {}): SubhutiCst | undefined {
-        this.tokenConsumer.AsyncTok()
+        this.tokenConsumer.Async()
         this.assertNoLineBreak()  // [no LineTerminator here]
         this.tokenConsumer.Asterisk()
         this.ClassElementName(params)
@@ -4089,7 +4088,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             // get ClassElementName[?Yield, ?Await] ( ) { FunctionBody[~Yield, ~Await] }
             {
                 alt: () => {
-                    this.tokenConsumer.GetTok()
+                    this.tokenConsumer.Get()
                     this.ClassElementName(params)
                     this.tokenConsumer.LParen()
                     this.tokenConsumer.RParen()
@@ -4101,7 +4100,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             // set ClassElementName[?Yield, ?Await] ( PropertySetParameterList ) { FunctionBody[~Yield, ~Await] }
             {
                 alt: () => {
-                    this.tokenConsumer.SetTok()
+                    this.tokenConsumer.Set()
                     this.ClassElementName(params)
                     this.tokenConsumer.LParen()
                     this.PropertySetParameterList()
@@ -4160,7 +4159,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             // class BindingIdentifier[?Yield, ?Await] ClassTail[?Yield, ?Await]
             {
                 alt: () => {
-                    this.tokenConsumer.ClassTok()
+                    this.tokenConsumer.Class()
                     this.BindingIdentifier(params)
                     this.ClassTail(params)
                 }
@@ -4168,7 +4167,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             // [+Default] class ClassTail[?Yield, ?Await] - 条件展开
             ...(Default ? [{
                 alt: () => {
-                    this.tokenConsumer.ClassTok()
+                    this.tokenConsumer.Class()
                     this.ClassTail(params)
                 }
             }] : [])
@@ -4181,7 +4180,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      */
     @SubhutiRule
     ClassExpression(params: ExpressionParams = {}): SubhutiCst | undefined {
-        this.tokenConsumer.ClassTok()
+        this.tokenConsumer.Class()
         this.Option(() => this.BindingIdentifier(params))
         return this.ClassTail(params)
     }
@@ -4204,7 +4203,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      */
     @SubhutiRule
     ClassHeritage(params: ExpressionParams = {}): SubhutiCst | undefined {
-        this.tokenConsumer.ExtendsTok()
+        this.tokenConsumer.Extends()
         return this.LeftHandSideExpression(params)
     }
 
@@ -4243,14 +4242,14 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             // static MethodDefinition[?Yield, ?Await]
             {
                 alt: () => {
-                    this.tokenConsumer.StaticTok()
+                    this.tokenConsumer.Static()
                     this.MethodDefinition(params)
                 }
             },
             // static FieldDefinition[?Yield, ?Await] ;
             {
                 alt: () => {
-                    this.tokenConsumer.StaticTok()
+                    this.tokenConsumer.Static()
                     this.FieldDefinition(params)
                     this.SemicolonASI()  // 类字段支持 ASI
                 }
@@ -4301,7 +4300,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      */
     @SubhutiRule
     ClassStaticBlock(): SubhutiCst | undefined {
-        this.tokenConsumer.StaticTok()
+        this.tokenConsumer.Static()
         this.tokenConsumer.LBrace()
         this.ClassStaticBlockBody()
         return this.tokenConsumer.RBrace()
@@ -4443,7 +4442,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             // import ImportClause FromClause WithClause_opt ;
             {
                 alt: () => {
-                    this.tokenConsumer.ImportTok()
+                    this.tokenConsumer.Import()
                     this.ImportClause()
                     this.FromClause()
                     this.Option(() => this.WithClause())
@@ -4453,7 +4452,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             // import ModuleSpecifier WithClause_opt ;
             {
                 alt: () => {
-                    this.tokenConsumer.ImportTok()
+                    this.tokenConsumer.Import()
                     this.ModuleSpecifier()
                     this.Option(() => this.WithClause())
                     this.SemicolonASI()
@@ -4514,7 +4513,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     @SubhutiRule
     NameSpaceImport(): SubhutiCst | undefined {
         this.tokenConsumer.Asterisk()
-        this.tokenConsumer.AsTok()
+        this.tokenConsumer.As()
         return this.ImportedBinding()
     }
 
@@ -4560,7 +4559,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      */
     @SubhutiRule
     FromClause(): SubhutiCst | undefined {
-        this.tokenConsumer.FromTok()
+        this.tokenConsumer.From()
         return this.ModuleSpecifier()
     }
 
@@ -4591,7 +4590,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             {
                 alt: () => {
                     this.ModuleExportName()
-                    this.tokenConsumer.AsTok()
+                    this.tokenConsumer.As()
                     this.ImportedBinding()
                 }
             },
@@ -4629,7 +4628,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             // with { }
             {
                 alt: () => {
-                    this.tokenConsumer.WithTok()
+                    this.tokenConsumer.With()
                     this.tokenConsumer.LBrace()
                     this.tokenConsumer.RBrace()
                 }
@@ -4637,7 +4636,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             // with { WithEntries ,_opt }
             {
                 alt: () => {
-                    this.tokenConsumer.WithTok()
+                    this.tokenConsumer.With()
                     this.tokenConsumer.LBrace()
                     this.WithEntries()
                     this.Option(() => this.tokenConsumer.Comma())
@@ -4701,7 +4700,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             // export ExportFromClause FromClause WithClause_opt ;
             {
                 alt: () => {
-                    this.tokenConsumer.ExportTok()
+                    this.tokenConsumer.Export()
                     this.ExportFromClause()
                     this.FromClause()
                     this.Option(() => this.WithClause())
@@ -4711,7 +4710,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             // export NamedExports ;
             {
                 alt: () => {
-                    this.tokenConsumer.ExportTok()
+                    this.tokenConsumer.Export()
                     this.NamedExports()
                     this.SemicolonASI()
                 }
@@ -4719,38 +4718,38 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             // export VariableStatement[~Yield, +Await]
             {
                 alt: () => {
-                    this.tokenConsumer.ExportTok()
+                    this.tokenConsumer.Export()
                     this.VariableStatement({Yield: false, Await: true})
                 }
             },
             // export Declaration[~Yield, +Await]
             {
                 alt: () => {
-                    this.tokenConsumer.ExportTok()
+                    this.tokenConsumer.Export()
                     this.Declaration({Yield: false, Await: true})
                 }
             },
             // export default HoistableDeclaration[~Yield, +Await, +Default]
             {
                 alt: () => {
-                    this.tokenConsumer.ExportTok()
-                    this.tokenConsumer.DefaultTok()
+                    this.tokenConsumer.Export()
+                    this.tokenConsumer.Default()
                     this.HoistableDeclaration({Yield: false, Await: true, Default: true})
                 }
             },
             // export default ClassDeclaration[~Yield, +Await, +Default]
             {
                 alt: () => {
-                    this.tokenConsumer.ExportTok()
-                    this.tokenConsumer.DefaultTok()
+                    this.tokenConsumer.Export()
+                    this.tokenConsumer.Default()
                     this.ClassDeclaration({Yield: false, Await: true, Default: true})
                 }
             },
             // export default [lookahead ∉ {function, async [no LineTerminator here] function, class}] AssignmentExpression[+In, ~Yield, +Await] ;
             {
                 alt: () => {
-                    this.tokenConsumer.ExportTok()
-                    this.tokenConsumer.DefaultTok()
+                    this.tokenConsumer.Export()
+                    this.tokenConsumer.Default()
                     // [lookahead ∉ {function, async [no LineTerminator here] function, class}]
                     this.assertLookaheadNotIn([TokenNames.FunctionTok, TokenNames.ClassTok])
                     this.assertNotContextualSequenceNoLT(ContextualKeywords.ASYNC, TokenNames.FunctionTok)
@@ -4774,7 +4773,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             {
                 alt: () => {
                     this.tokenConsumer.Asterisk()
-                    this.tokenConsumer.AsTok()
+                    this.tokenConsumer.As()
                     this.ModuleExportName()
                 }
             },
@@ -4848,7 +4847,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             {
                 alt: () => {
                     this.ModuleExportName()
-                    this.tokenConsumer.AsTok()
+                    this.tokenConsumer.As()
                     this.ModuleExportName()
                 }
             },
