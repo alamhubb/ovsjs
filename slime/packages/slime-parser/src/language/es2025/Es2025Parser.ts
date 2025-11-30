@@ -20,6 +20,8 @@ import {
     SlimeReservedWordTokenTypes,
     TokenNames
 } from "slime-token/src/SlimeTokensName.ts";
+import {SlimeTokensObj} from "./SlimeLexerTokens.ts";
+import type {SubhutiCreateToken} from "subhuti/src/struct/SubhutiCreateToken.ts";
 
 // ============================================
 // 保留字集合（用于 Identifier 验证）
@@ -49,10 +51,10 @@ import {
  */
 
 
-export const es2025Tokens: SubhutiCreateToken[] = Object.values(SlimeLexerTokensObj)
+export const slimeTokens: SubhutiCreateToken[] = Object.values(SlimeTokensObj)
 
 export const ReservedWords = new Set(
-    es2025Tokens
+    slimeTokens
         .filter(token => token.isKeyword)  // 过滤出所有硬关键字 token
         .map(token => token.value!)        // 提取 value（'await', 'break' 等）
 )

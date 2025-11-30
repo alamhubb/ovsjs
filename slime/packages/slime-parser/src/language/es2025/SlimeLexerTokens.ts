@@ -67,7 +67,7 @@ const PRIVATE_IDENTIFIER_PATTERN = new RegExp(
     'u'
 )
 
-export const SlimeLexerTokensObj = {
+export const SlimeTokensObj = {
 
     // ============================================
     // A.1.2 注释 (Comments)
