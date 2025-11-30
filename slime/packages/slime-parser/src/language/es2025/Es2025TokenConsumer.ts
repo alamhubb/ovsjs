@@ -136,8 +136,12 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
         return this.consume(SlimeReservedWordTokenTypes.New)
     }
 
-    Null() {
-        return this.consume(SlimeReservedWordTokenTypes.Null)
+    /**
+     * NullLiteral
+     * 规范 A.1: NullLiteral :: null
+     */
+    NullLiteral() {
+        return this.consume(SlimeReservedWordTokenTypes.NullLiteral)
     }
 
     Return() {

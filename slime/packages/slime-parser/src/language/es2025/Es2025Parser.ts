@@ -502,7 +502,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             {alt: () => this.tokenConsumer.In()},
             {alt: () => this.tokenConsumer.Instanceof()},
             {alt: () => this.tokenConsumer.New()},
-            {alt: () => this.tokenConsumer.Null()},
+            {alt: () => this.tokenConsumer.NullLiteral()},
             {alt: () => this.tokenConsumer.Return()},
             {alt: () => this.tokenConsumer.Super()},
             {alt: () => this.tokenConsumer.Switch()},
@@ -706,8 +706,8 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     @SubhutiRule
     Literal(): SubhutiCst | undefined {
         return this.Or([
-            // NullLiteral 是词法规则，直接消费 token
-            {alt: () => this.tokenConsumer.Null()},
+            // NullLiteral 是词法规则（A.1 Lexical Grammar），直接消费 token
+            {alt: () => this.tokenConsumer.NullLiteral()},
             {alt: () => this.BooleanLiteral()},
             // NumericLiteral 是词法规则，直接消费 token
             {alt: () => this.tokenConsumer.NumericLiteral()},

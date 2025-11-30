@@ -9,24 +9,6 @@ import {
 import {TokenNames} from "slime-token/src/SlimeTokensName.ts";
 
 // ============================================
-// 软关键字值常量（Contextual Keywords）
-// 这些在词法层是 IdentifierName，在语法层通过值检查识别
-// 注意：let 已作为独立 token 处理（LetTok）
-// ============================================
-export const ContextualKeywords = {
-    ASYNC: 'async',
-    STATIC: 'static',
-    AS: 'as',
-    GET: 'get',
-    SET: 'set',
-    OF: 'of',
-    FROM: 'from',
-    TARGET: 'target',
-    META: 'meta',
-} as const
-
-
-// ============================================
 // 表达式结尾 Token 集合
 // 用于词法歧义处理：/ 在这些 token 后是除法，否则是正则表达式
 // ============================================
@@ -52,7 +34,7 @@ export const EXPRESSION_END_TOKENS = new Set([
     TokenNames.This,
     TokenNames.True,
     TokenNames.False,
-    TokenNames.Null,
+    TokenNames.NullLiteral,
 ])
 
 // ============================================
@@ -148,7 +130,7 @@ export const SlimeLexerTokensObj = {
     InstanceofTok: createKeywordToken(TokenNames.Instanceof, 'instanceof'),
     LetTok: createKeywordToken(TokenNames.Let, 'let'),
     NewTok: createKeywordToken(TokenNames.New, 'new'),
-    NullTok: createKeywordToken(TokenNames.Null, 'null'),
+    NullTok: createKeywordToken(TokenNames.NullLiteral, 'null'),
     ReturnTok: createKeywordToken(TokenNames.Return, 'return'),
     SuperTok: createKeywordToken(TokenNames.Super, 'super'),
     SwitchTok: createKeywordToken(TokenNames.Switch, 'switch'),

@@ -168,7 +168,7 @@ export const SlimeReservedWordTokenTypes = {
     Import: 'Import',
     Let: 'Let',         // 严格模式下作为保留字
     New: 'New',
-    Null: 'Null',
+    NullLiteral: 'NullLiteral',  // 规范 A.1: NullLiteral :: null
     Return: 'Return',
     Super: 'Super',
     Switch: 'Switch',
