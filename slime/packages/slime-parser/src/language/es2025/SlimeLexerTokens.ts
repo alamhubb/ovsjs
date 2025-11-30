@@ -315,12 +315,16 @@ export const SlimeLexerTokensObj = {
     ),
 
     // 正则表达式字面量（无约束，作为 Slash 的 fallback）
-    // 根据 ECMAScript 规范，RegularExpressionFirstChar 不能是 * (避免与 /* 注释冲突)
-    // 第一个字符：[^\n\r\/\\[*] 排除 *
-    // 后续字符：[^\n\r\/\\[] 允许 *
+    // 规范: RegularExpressionLiteral :: / RegularExpressionBody / RegularExpressionFlags
+    //
+    // RegularExpressionFirstChar :: 不能是 * \ / [ (避免与 /* 注释冲突)
+    // RegularExpressionChar :: 不能是 \ / [
+    // RegularExpressionFlags :: IdentifierPartChar* (任意标识符字符)
+    //
+    // 注意：无效标志（如 /x/abc）会在语义分析时报错，词法层面只需贪婪匹配
     RegularExpressionLiteral: createEmptyValueRegToken(
         TokenNames.RegularExpressionLiteral,
-        /\/(?:[^\n\r\/\\[*]|\\[^\n\r]|\[(?:[^\n\r\]\\]|\\[^\n\r])*\])(?:[^\n\r\/\\[]|\\[^\n\r]|\[(?:[^\n\r\]\\]|\\[^\n\r])*\])*\/[dgimsuvy]*/
+        /\/(?:[^\n\r\/\\[*]|\\[^\n\r]|\[(?:[^\n\r\]\\]|\\[^\n\r])*\])(?:[^\n\r\/\\[]|\\[^\n\r]|\[(?:[^\n\r\]\\]|\\[^\n\r])*\])*\/[a-zA-Z$_]*/
     ),
 
     Modulo: createValueRegToken(TokenNames.Modulo, /%/, '%'),
