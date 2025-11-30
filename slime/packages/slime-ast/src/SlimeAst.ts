@@ -1,10 +1,16 @@
+/**
+ * SlimeAst.ts - AST 节点创建工厂
+ *
+ * 为每个 AST 节点类型提供创建方法
+ * Token 创建方法请使用 SlimeTokenCreate.ts
+ */
+
 import {
   type SlimeArrayExpression,
   type SlimeBaseNode,
   type SlimeBlockStatement,
   type SlimeBooleanLiteral,
   type SlimeCallExpression,
-  type SlimeEqualOperator,
   type SlimeFunctionExpression,
   type SlimeMemberExpression,
   type SlimeMethodDefinition,
@@ -17,7 +23,6 @@ import {
   type SlimeSimpleCallExpression,
   type SlimeSpreadElement,
   type SlimeSuper,
-  SlimeVariableDeclarationKindValue,
   type SlimeDirective,
   type SlimeExpression,
   type SlimeIdentifier,
@@ -30,18 +35,11 @@ import {
   type SlimeStringLiteral,
   type SlimeVariableDeclaration,
   type SlimeVariableDeclarator,
-  type SlimeDotOperator,
   type SlimeNullLiteral,
-  type SlimeFunctionParams,
-  type SlimeLParen,
-  type SlimeRParen,
-  type SlimeLBrace,
-  type SlimeRBrace,
   type SlimeImportSpecifier,
   type SlimeImportDefaultSpecifier,
   type SlimeImportNamespaceSpecifier,
   type SlimeImportDeclaration,
-  type SlimeFromKeyword,
   type SlimeExportDefaultDeclaration,
   type SlimeMaybeNamedFunctionDeclaration,
   type SlimeMaybeNamedClassDeclaration,
@@ -49,125 +47,27 @@ import {
   type SlimeClassBody,
   type SlimeExportNamedDeclaration,
   type SlimeDeclaration,
-  type SlimeExportSpecifier, type SlimeVariableDeclarationKind, type SlimeExportToken, type SlimeClassExpression,
+  type SlimeExportSpecifier,
+  type SlimeClassExpression,
+  type SlimeVariableDeclarationKindToken,
+  type SlimeLBraceToken,
+  type SlimeRBraceToken,
+  type SlimeLParenToken,
+  type SlimeRParenToken,
+  type SlimeDotToken,
+  type SlimeFromToken,
+  type SlimeExportToken,
+  type SlimeAssignToken,
+  type SlimePropertyDefinition,
 } from "./SlimeESTree.ts";
 
 import {SlimeAstType} from "./SlimeAstType.ts";
-import SubhutiCst, {type SubhutiSourceLocation} from "subhuti/src/struct/SubhutiCst.ts";
+import type {SubhutiSourceLocation} from "subhuti/src/struct/SubhutiCst.ts";
 
 class SlimeAst {
-  createProgram(body: Array<SlimeDirective | SlimeStatement | SlimeModuleDeclaration>, sourceType: SlimeProgramSourceType = SlimeProgramSourceType.script): SlimeProgram {
-    return this.commonLocType({
-      type: SlimeAstType.Program,
-      sourceType: sourceType,
-      body: body
-    })
-  }
-
-
-  createFromKeyword(loc?: SubhutiSourceLocation): SlimeFromKeyword {
-    return this.commonLocType({
-      type: SlimeAstType.From,
-      value: 'from',
-      loc: loc
-    })
-  }
-
-  createDotOperator(loc?: SubhutiSourceLocation): SlimeDotOperator {
-    return this.commonLocType({
-      type: SlimeAstType.Dot,
-      value: '.',
-      loc: loc
-    })
-  }
-
-  createImportDeclaration(specifiers: Array<SlimeImportSpecifier | SlimeImportDefaultSpecifier | SlimeImportNamespaceSpecifier>, from: SlimeFromKeyword, source: SlimeStringLiteral, loc?: SubhutiSourceLocation): SlimeImportDeclaration {
-    return this.commonLocType({
-      type: SlimeAstType.ImportDeclaration,
-      source: source,
-      from: from,
-      specifiers: specifiers,
-      loc: loc
-    })
-  }
-
-  createExportDefaultDeclaration(declaration: SlimeMaybeNamedFunctionDeclaration | SlimeMaybeNamedClassDeclaration | SlimeExpression, loc?: SubhutiSourceLocation): SlimeExportDefaultDeclaration {
-    return this.commonLocType({
-      type: SlimeAstType.ExportDefaultDeclaration,
-      declaration: declaration,
-      loc: loc
-    })
-  }
-
-
-  createExportToken(loc?: SubhutiSourceLocation): SlimeExportToken {
-    return this.commonLocType({
-      type: SlimeAstType.Export,
-      loc: loc
-    })
-  }
-
-  createExportNamedDeclaration(exportNode: SlimeExportToken, declaration: SlimeDeclaration, specifiers: SlimeExportSpecifier[], source?: SlimeLiteral, loc?: SubhutiSourceLocation): SlimeExportNamedDeclaration {
-    return this.commonLocType({
-      type: SlimeAstType.ExportNamedDeclaration,
-      declaration: declaration,
-      specifiers: specifiers,
-      export: exportNode,
-      source: source,
-      loc: loc
-    })
-  }
-
-  createClassDeclaration(id: SlimeIdentifier | null, body: SlimeClassBody, loc?: SubhutiSourceLocation): SlimeClassDeclaration {
-    return this.commonLocType({
-      type: SlimeAstType.ClassDeclaration,
-      id: id,
-      body: body,
-      loc: loc
-    })
-  }
-
-  createImportDefaultSpecifier(local: SlimeIdentifier, loc?: SubhutiSourceLocation): SlimeImportDefaultSpecifier {
-    return this.commonLocType({
-      type: SlimeAstType.ImportDefaultSpecifier,
-      local: local,
-      loc: loc
-    })
-  }
-
-  createLParen(loc?: SubhutiSourceLocation): SlimeLParen {
-    return this.commonLocType({
-      type: SlimeAstType.LParen,
-      value: '(',
-      loc: loc
-    })
-  }
-
-  createRParen(loc?: SubhutiSourceLocation): SlimeRParen {
-    return this.commonLocType({
-      type: SlimeAstType.RParen,
-      value: ')',
-      loc: loc
-    })
-  }
-
-  creatLBrace(loc?: SubhutiSourceLocation): SlimeLBrace {
-    return this.commonLocType({
-      type: SlimeAstType.LBrace,
-      value: '{',
-      loc: loc
-    })
-  }
-
-
-  createRBrace(loc?: SubhutiSourceLocation): SlimeRBrace {
-    return this.commonLocType({
-      type: SlimeAstType.RBrace,
-      value: '}',
-      loc: loc
-    })
-  }
-
+  // ============================================
+  // 通用辅助方法
+  // ============================================
 
   commonLocType<T extends SlimeBaseNode>(node: T): T {
     if (!node.loc) {
@@ -189,7 +89,23 @@ class SlimeAst {
     return node
   }
 
-  createMemberExpression(object: SlimeExpression | SlimeSuper, dot: SlimeDotOperator, property?: SlimeExpression | SlimePrivateIdentifier): SlimeMemberExpression {
+  // ============================================
+  // Program
+  // ============================================
+
+  createProgram(body: Array<SlimeDirective | SlimeStatement | SlimeModuleDeclaration>, sourceType: SlimeProgramSourceType = SlimeProgramSourceType.script): SlimeProgram {
+    return this.commonLocType({
+      type: SlimeAstType.Program,
+      sourceType: sourceType,
+      body: body
+    })
+  }
+
+  // ============================================
+  // Expressions
+  // ============================================
+
+  createMemberExpression(object: SlimeExpression | SlimeSuper, dot: SlimeDotToken, property?: SlimeExpression | SlimePrivateIdentifier): SlimeMemberExpression {
     return this.commonLocType({
       type: SlimeAstType.MemberExpression,
       object: object,
@@ -263,38 +179,39 @@ class SlimeAst {
     })
   }
 
-  createBlockStatement(lBrace: SlimeLBrace, rBrace: SlimeRBrace, body: Array<SlimeStatement>, loc?: SubhutiSourceLocation): SlimeBlockStatement {
+  // ============================================
+  // Statements
+  // ============================================
+
+  createBlockStatement(lBrace: SlimeLBraceToken, rBrace: SlimeRBraceToken, body: Array<SlimeStatement>, loc?: SubhutiSourceLocation): SlimeBlockStatement {
     return this.commonLocType({
-      lBrace: lBrace,
-      rBrace: rBrace,
+      lBraceToken: lBrace,
+      rBraceToken: rBrace,
       type: SlimeAstType.BlockStatement,
       body: body,
       loc: loc
     })
   }
 
-  createFunctionExpression(body: SlimeBlockStatement, id?: SlimeIdentifier | null, params?: SlimeFunctionParams, loc?: SubhutiSourceLocation): SlimeFunctionExpression {
+  // ============================================
+  // Functions
+  // ============================================
+
+  createFunctionExpression(body: SlimeBlockStatement, id?: SlimeIdentifier | null, params?: SlimePattern[], loc?: SubhutiSourceLocation): SlimeFunctionExpression {
     return this.commonLocType({
       type: SlimeAstType.FunctionExpression,
-      params: params,
+      params: params || [],
       id: id,
       body: body,
       loc: loc
     })
   }
 
-  createFunctionParams(lParen: SlimeLParen, rParen: SlimeRParen, loc?: SubhutiSourceLocation, params?: SlimePattern[]): SlimeFunctionParams {
-    return this.commonLocType({
-      type: SlimeAstType.FunctionParams,
-      lParen: lParen,
-      rParen: rParen,
-      params: params,
-      loc: loc
-    })
-  }
+  // ============================================
+  // Declarations
+  // ============================================
 
-
-  createVariableDeclaration(kind: SlimeVariableDeclarationKind, declarations: SlimeVariableDeclarator[], loc?: SubhutiSourceLocation): SlimeVariableDeclaration {
+  createVariableDeclaration(kind: SlimeVariableDeclarationKindToken, declarations: SlimeVariableDeclarator[], loc?: SubhutiSourceLocation): SlimeVariableDeclaration {
     return this.commonLocType({
       type: SlimeAstType.VariableDeclaration,
       declarations: declarations,
@@ -302,6 +219,19 @@ class SlimeAst {
       loc: loc
     })
   }
+
+  createVariableDeclarator(id: SlimePattern, init?: SlimeExpression | null, loc?: SubhutiSourceLocation): SlimeVariableDeclarator {
+    return this.commonLocType({
+      type: SlimeAstType.VariableDeclarator,
+      id: id,
+      init: init,
+      loc: loc
+    })
+  }
+
+  // ============================================
+  // Patterns
+  // ============================================
 
   createRestElement(argument: SlimePattern): SlimeRestElement {
     return this.commonLocType({
@@ -317,29 +247,57 @@ class SlimeAst {
     })
   }
 
+  // ============================================
+  // Modules
+  // ============================================
 
-  createVariableDeclarationKind(value: SlimeVariableDeclarationKindValue, loc?: SubhutiSourceLocation): SlimeVariableDeclarationKind {
+  createImportDeclaration(specifiers: Array<SlimeImportSpecifier | SlimeImportDefaultSpecifier | SlimeImportNamespaceSpecifier>, fromToken: SlimeFromToken, source: SlimeStringLiteral, loc?: SubhutiSourceLocation): SlimeImportDeclaration {
     return this.commonLocType({
-      type: SlimeAstType.VariableDeclarationKind,
-      value: value,
+      type: SlimeAstType.ImportDeclaration,
+      source: source,
+      fromToken: fromToken,
+      specifiers: specifiers,
       loc: loc
     })
   }
 
-  createEqualOperator(loc?: SubhutiSourceLocation): SlimeEqualOperator {
+  createImportDefaultSpecifier(local: SlimeIdentifier, loc?: SubhutiSourceLocation): SlimeImportDefaultSpecifier {
     return this.commonLocType({
-      type: SlimeAstType.EqualOperator,
-      value: '=',
+      type: SlimeAstType.ImportDefaultSpecifier,
+      local: local,
       loc: loc
     })
   }
 
-  createVariableDeclarator(id: SlimePattern, operator?: SlimeEqualOperator, init?: SlimeExpression): SlimeVariableDeclarator {
+  createExportDefaultDeclaration(declaration: SlimeMaybeNamedFunctionDeclaration | SlimeMaybeNamedClassDeclaration | SlimeExpression, loc?: SubhutiSourceLocation): SlimeExportDefaultDeclaration {
     return this.commonLocType({
-      type: SlimeAstType.VariableDeclarator,
+      type: SlimeAstType.ExportDefaultDeclaration,
+      declaration: declaration,
+      loc: loc
+    })
+  }
+
+  createExportNamedDeclaration(exportToken: SlimeExportToken, declaration: SlimeDeclaration | null, specifiers: SlimeExportSpecifier[], source?: SlimeLiteral | null, loc?: SubhutiSourceLocation): SlimeExportNamedDeclaration {
+    return this.commonLocType({
+      type: SlimeAstType.ExportNamedDeclaration,
+      declaration: declaration,
+      specifiers: specifiers,
+      exportToken: exportToken,
+      source: source,
+      loc: loc
+    })
+  }
+
+  // ============================================
+  // Classes
+  // ============================================
+
+  createClassDeclaration(id: SlimeIdentifier | null, body: SlimeClassBody, loc?: SubhutiSourceLocation): SlimeClassDeclaration {
+    return this.commonLocType({
+      type: SlimeAstType.ClassDeclaration,
       id: id,
-      equal: operator,
-      init: init,
+      body: body,
+      loc: loc
     })
   }
 
