@@ -304,9 +304,13 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
     BigInt() {
         return this.consume(es2025TokensObj.BigIntDecimal)
     }
-    
-    String() {
-        return this.consume(es2025TokensObj.StringDoubleQuote)
+
+    DoubleStringCharacters() {
+        return this.consume(es2025TokensObj.DoubleStringCharacters)
+    }
+
+    SingleStringCharacters() {
+        return this.consume(es2025TokensObj.SingleStringCharacters)
     }
     
     NoSubstitutionTemplate() {

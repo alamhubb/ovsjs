@@ -758,7 +758,10 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      */
     @SubhutiRule
     StringLiteral(): SubhutiCst | undefined {
-        return this.tokenConsumer.String()
+        return this.Or([
+            {alt: () => this.tokenConsumer.DoubleStringCharacters()},
+            {alt: () => this.tokenConsumer.SingleStringCharacters()}
+        ])
     }
 
     /**
