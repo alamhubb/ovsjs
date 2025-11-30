@@ -1,18 +1,11 @@
 /**
- * ES2025 Tokens - 完全符合 ECMAScript® 2025 规范
+ * ES2025 Token 名称 - 完全符合 ECMAScript® 2025 规范 A.1 词法语法
  * 规范：https://tc39.es/ecma262/2025/#sec-grammar-summary
  *
  * 设计原则：
- * 1. 完全独立，不继承任何其他版本
- * 2. 按规范 A.1 词法语法组织
- * 3. 只在词法层实现字符级 lookahead
- * 4. 长 token 在前，短 token 在后
- * 5. YAGNI - 只导出 tokens 数组，不需要对象、Map、Consumer 类
- *
- * TokenNames 命名规则：
- * - 与规范 A.1 词法语法中的顶层规则名称一致
- * - 如 StringLiteral, NumericLiteral, IdentifierName 等
- * - 关键字使用 xxxTok 后缀以区分语法规则
+ * 1. TokenNames 属性名和值与规范 A.1 顶层规则名称完全一致
+ * 2. 关键字名与规范 ReservedWord 一致（首字母大写）
+ * 3. 标点符号使用语义化名称
  */
 
 import {SubhutiLexerTokenNames} from "subhuti/src/SubhutiLexer.ts";
@@ -31,16 +24,20 @@ export const TokenNames = {
 
     // ============================================
     // A.1.2 White Space
+    // 规范: WhiteSpace :: <TAB> | <VT> | <FF> | <SP> | <NBSP> | <ZWNBSP> | <USP>
     // ============================================
     WhiteSpace: 'WhiteSpace',
 
     // ============================================
     // A.1.3 Line Terminators
+    // 规范: LineTerminator :: <LF> | <CR> | <LS> | <PS>
     // ============================================
     LineTerminator: 'LineTerminator',
 
     // ============================================
     // A.1.4 Comments
+    // 规范: Comment :: MultiLineComment | SingleLineComment
+    // 规范: HashbangComment :: #! SingleLineCommentChars_opt
     // ============================================
     HashbangComment: 'HashbangComment',
     MultiLineComment: 'MultiLineComment',
@@ -48,6 +45,7 @@ export const TokenNames = {
 
     // ============================================
     // A.1.5 Tokens (CommonToken)
+    // 规范: CommonToken :: IdentifierName | PrivateIdentifier | Punctuator | NumericLiteral | StringLiteral | Template
     // ============================================
 
     // --- IdentifierName ---
@@ -59,9 +57,8 @@ export const TokenNames = {
     PrivateIdentifier: 'PrivateIdentifier',
 
     // --- NumericLiteral ---
-    // 规范: NumericLiteral :: DecimalLiteral | DecimalBigIntegerLiteral | NonDecimalIntegerLiteral | ...
-    // 实现：所有数字变体（十进制、十六进制、二进制、八进制、BigInt、传统八进制）
-    //       都映射到 NumericLiteral，Parser 通过 token 值区分
+    // 规范: NumericLiteral :: DecimalLiteral | DecimalBigIntegerLiteral | NonDecimalIntegerLiteral[+Sep] | NonDecimalIntegerLiteral[+Sep] BigIntLiteralSuffix | LegacyOctalIntegerLiteral
+    // 实现：所有数字变体（十进制、十六进制、二进制、八进制、BigInt、传统八进制）都映射到 NumericLiteral
     NumericLiteral: 'NumericLiteral',
 
     // --- StringLiteral ---
@@ -87,117 +84,126 @@ export const TokenNames = {
     // ============================================
 
     // 4字符运算符
-    UnsignedRightShiftAssign: '>>>=',   // >>>=
+    UnsignedRightShiftAssign: 'UnsignedRightShiftAssign',   // >>>=
 
     // 3字符运算符
-    Ellipsis: '...',                    // ...
-    UnsignedRightShift: '>>>',          // >>>
-    StrictEqual: '===',                 // ===
-    StrictNotEqual: '!==',              // !==
-    LeftShiftAssign: '<<=',             // <<=
-    RightShiftAssign: '>>=',            // >>=
-    ExponentiationAssign: '**=',        // **=
-    LogicalAndAssign: '&&=',            // &&=
-    LogicalOrAssign: '||=',             // ||=
-    NullishCoalescingAssign: '??=',     // ??=
+    Ellipsis: 'Ellipsis',                                   // ...
+    UnsignedRightShift: 'UnsignedRightShift',               // >>>
+    StrictEqual: 'StrictEqual',                             // ===
+    StrictNotEqual: 'StrictNotEqual',                       // !==
+    LeftShiftAssign: 'LeftShiftAssign',                     // <<=
+    RightShiftAssign: 'RightShiftAssign',                   // >>=
+    ExponentiationAssign: 'ExponentiationAssign',           // **=
+    LogicalAndAssign: 'LogicalAndAssign',                   // &&=
+    LogicalOrAssign: 'LogicalOrAssign',                     // ||=
+    NullishCoalescingAssign: 'NullishCoalescingAssign',     // ??=
 
     // 2字符运算符
-    Arrow: '=>',                        // =>
-    PlusAssign: '+=',                   // +=
-    MinusAssign: '-=',                  // -=
-    MultiplyAssign: '*=',               // *=
-    DivideAssign: '/=',                 // /=
-    ModuloAssign: '%=',                 // %=
-    LeftShift: '<<',                    // <<
-    RightShift: '>>',                   // >>
-    LessEqual: '<=',                    // <=
-    GreaterEqual: '>=',                 // >=
-    Equal: '==',                        // ==
-    NotEqual: '!=',                     // !=
-    LogicalAnd: '&&',                   // &&
-    LogicalOr: '||',                    // ||
-    NullishCoalescing: '??',            // ??
-    Increment: '++',                    // ++
-    Decrement: '--',                    // --
-    Exponentiation: '**',               // **
-    BitwiseAndAssign: '&=',             // &=
-    BitwiseOrAssign: '|=',              // |=
-    BitwiseXorAssign: '^=',             // ^=
-    OptionalChaining: '?.',             // ?.
+    Arrow: 'Arrow',                                         // =>
+    PlusAssign: 'PlusAssign',                               // +=
+    MinusAssign: 'MinusAssign',                             // -=
+    MultiplyAssign: 'MultiplyAssign',                       // *=
+    DivideAssign: 'DivideAssign',                           // /=
+    ModuloAssign: 'ModuloAssign',                           // %=
+    LeftShift: 'LeftShift',                                 // <<
+    RightShift: 'RightShift',                               // >>
+    LessEqual: 'LessEqual',                                 // <=
+    GreaterEqual: 'GreaterEqual',                           // >=
+    Equal: 'Equal',                                         // ==
+    NotEqual: 'NotEqual',                                   // !=
+    LogicalAnd: 'LogicalAnd',                               // &&
+    LogicalOr: 'LogicalOr',                                 // ||
+    NullishCoalescing: 'NullishCoalescing',                 // ??
+    Increment: 'Increment',                                 // ++
+    Decrement: 'Decrement',                                 // --
+    Exponentiation: 'Exponentiation',                       // **
+    BitwiseAndAssign: 'BitwiseAndAssign',                   // &=
+    BitwiseOrAssign: 'BitwiseOrAssign',                     // |=
+    BitwiseXorAssign: 'BitwiseXorAssign',                   // ^=
+    // 规范: OptionalChainingPunctuator :: ?. [lookahead ∉ DecimalDigit]
+    OptionalChaining: 'OptionalChaining',                   // ?.
 
     // 1字符运算符
-    LBrace: '{',                        // {
-    RBrace: '}',                        // }
-    LParen: '(',                        // (
-    RParen: ')',                        // )
-    LBracket: '[',                      // [
-    RBracket: ']',                      // ]
-    Dot: '.',                           // .
-    Semicolon: ';',                     // ;
-    Comma: ',',                         // ,
-    Less: '<',                          // <
-    Greater: '>',                       // >
-    Plus: '+',                          // +
-    Minus: '-',                         // -
-    Asterisk: '*',                      // *
-    Slash: '/',                         // /
-    Modulo: '%',                        // %
-    BitwiseAnd: '&',                    // &
-    BitwiseOr: '|',                     // |
-    BitwiseXor: '^',                    // ^
-    BitwiseNot: '~',                    // ~
-    LogicalNot: '!',                    // !
-    Question: '?',                      // ?
-    Colon: ':',                         // :
-    Assign: '=',                        // =
+    LBrace: 'LBrace',                                       // {
+    RBrace: 'RBrace',                                       // }
+    LParen: 'LParen',                                       // (
+    RParen: 'RParen',                                       // )
+    LBracket: 'LBracket',                                   // [
+    RBracket: 'RBracket',                                   // ]
+    Dot: 'Dot',                                             // .
+    Semicolon: 'Semicolon',                                 // ;
+    Comma: 'Comma',                                         // ,
+    Less: 'Less',                                           // <
+    Greater: 'Greater',                                     // >
+    Plus: 'Plus',                                           // +
+    Minus: 'Minus',                                         // -
+    Asterisk: 'Asterisk',                                   // *
+    Slash: 'Slash',                                         // /
+    Modulo: 'Modulo',                                       // %
+    BitwiseAnd: 'BitwiseAnd',                               // &
+    BitwiseOr: 'BitwiseOr',                                 // |
+    BitwiseXor: 'BitwiseXor',                               // ^
+    BitwiseNot: 'BitwiseNot',                               // ~
+    LogicalNot: 'LogicalNot',                               // !
+    Question: 'Question',                                   // ?
+    Colon: 'Colon',                                         // :
+    Assign: 'Assign',                                       // =
 
     // ============================================
     // A.1.7 Reserved Words (关键字)
-    // 规范: ReservedWord :: one of await break case ...
-    // 使用 xxxTok 后缀以区分语法规则
+    // 规范: ReservedWord :: one of
+    //   await break case catch class const continue debugger default
+    //   delete do else enum export extends false finally for function
+    //   if import in instanceof new null return super switch this
+    //   throw true try typeof var void while with yield
     // ============================================
-    Await: 'await',
-    Break: 'break',
-    Case: 'case',
-    Catch: 'catch',
-    Class: 'class',
-    Const: 'const',
-    Continue: 'continue',
-    Debugger: 'debugger',
-    Default: 'default',
-    Delete: 'delete',
-    Do: 'do',
-    Else: 'else',
-    Enum: 'enum',
-    Export: 'export',
-    Extends: 'extends',
-    False: 'false',
-    Finally: 'finally',
-    For: 'for',
-    Function: 'function',
-    If: 'if',
-    Import: 'import',
-    In: 'in',
-    Instanceof: 'instanceof',
-    Let: 'let',          // 注意：严格来说 let 是软关键字，但为简化实现作为独立 token
-    New: 'new',
-    Null: 'null',
-    Return: 'return',
-    Super: 'super',
-    Switch: 'switch',
-    This: 'this',
-    Throw: 'throw',
-    True: 'true',
-    Try: 'try',
-    Typeof: 'typeof',
-    Var: 'var',
-    Void: 'void',
-    While: 'while',
-    With: 'with',
-    Yield: 'yield',
-    // 注意：async, static, as, get, set, of, target, meta, from 是软关键字
-    // 按照 ES2025 规范，它们在词法层是 IdentifierName，不是独立的 token
-    // 在 Parser 中通过值检查来识别（见 Es2025TokenConsumer.consumeIdentifierValue）
+    Await: 'Await',
+    Break: 'Break',
+    Case: 'Case',
+    Catch: 'Catch',
+    Class: 'Class',
+    Const: 'Const',
+    Continue: 'Continue',
+    Debugger: 'Debugger',
+    Default: 'Default',
+    Delete: 'Delete',
+    Do: 'Do',
+    Else: 'Else',
+    Enum: 'Enum',
+    Export: 'Export',
+    Extends: 'Extends',
+    False: 'False',
+    Finally: 'Finally',
+    For: 'For',
+    Function: 'Function',
+    If: 'If',
+    Import: 'Import',
+    In: 'In',
+    Instanceof: 'Instanceof',
+    // 注意：let 在规范中不是 ReservedWord，但为简化实现作为独立 token
+    Let: 'Let',
+    New: 'New',
+    Null: 'Null',
+    Return: 'Return',
+    Super: 'Super',
+    Switch: 'Switch',
+    This: 'This',
+    Throw: 'Throw',
+    True: 'True',
+    Try: 'Try',
+    Typeof: 'Typeof',
+    Var: 'Var',
+    Void: 'Void',
+    While: 'While',
+    With: 'With',
+    Yield: 'Yield',
+
+    // ============================================
+    // 软关键字 (Contextual Keywords)
+    // 规范中这些在词法层是 IdentifierName，在语法层通过值检查识别
+    // async, static, as, get, set, of, target, meta, from
+    // 不作为独立 token，见 Es2025TokenConsumer.consumeIdentifierValue()
+    // ============================================
 } as const
 
 
