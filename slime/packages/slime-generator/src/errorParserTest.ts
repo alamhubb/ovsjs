@@ -3,6 +3,7 @@ import {es2025Tokens} from "slime-parser/src/language/es2025/Es2025Tokens.ts";
 import Es2025Parser from "slime-parser/src/language/es2025/Es2025Parser.ts";
 import {SubhutiDebugUtils} from "subhuti/src/SubhutiDebug.ts";
 import slimeCstToAstUtil from "slime-parser/src/language/SlimeCstToAstUtil.ts";
+import SlimeAstPrintUtil from "./SlimeAstPrintUtil.ts";
 
 // 测试：第一个语句不完整
 const code = 'let a = {'
@@ -30,4 +31,10 @@ console.log(SubhutiDebugUtils.collectTokens(res).join(' '))
 // console.log('Has unparsed tokens:', parser.hasUnparsedTokens)
 //
 const ast = slimeCstToAstUtil.toProgram(res)
-console.log('AST:', JSON.stringify(ast, null, 2))
+
+// 打印 AST 树形结构
+console.log('\n=== AST 树形结构 ===')
+console.log(SlimeAstPrintUtil.formatAst(ast))
+
+console.log('\n=== AST JSON ===')
+console.log(JSON.stringify(ast, null, 2))
