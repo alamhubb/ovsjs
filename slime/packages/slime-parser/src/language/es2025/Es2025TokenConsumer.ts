@@ -14,7 +14,12 @@
  * @version 1.0.0
  */
 
-import {SlimeContextualKeywordTokenTypes, TokenNames} from "slime-token/src/SlimeTokensName"
+import {
+    SlimeBinaryOperatorTokenTypes,
+    SlimeContextualKeywordTokenTypes,
+    SlimeReservedWordTokenTypes, SlimeUnaryOperatorTokenTypes,
+    TokenNames
+} from "slime-token/src/SlimeTokensName"
 import SubhutiTokenConsumer from "subhuti/src/SubhutiTokenConsumer.ts"
 
 export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
@@ -48,155 +53,135 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
     // ============================================
 
     AwaitTok() {
-        return this.consume(TokenNames.Await)
+        return this.consume(SlimeReservedWordTokenTypes.Await)
     }
 
     BreakTok() {
-        return this.consume(TokenNames.Break)
+        return this.consume(SlimeReservedWordTokenTypes.Break)
     }
 
     CaseTok() {
-        return this.consume(TokenNames.Case)
+        return this.consume(SlimeReservedWordTokenTypes.Case)
     }
 
     CatchTok() {
-        return this.consume(TokenNames.Catch)
+        return this.consume(SlimeReservedWordTokenTypes.Catch)
     }
 
     ClassTok() {
-        return this.consume(TokenNames.Class)
+        return this.consume(SlimeReservedWordTokenTypes.Class)
     }
 
     ConstTok() {
-        return this.consume(TokenNames.Const)
+        return this.consume(SlimeReservedWordTokenTypes.Const)
     }
 
     ContinueTok() {
-        return this.consume(TokenNames.Continue)
+        return this.consume(SlimeReservedWordTokenTypes.Continue)
     }
 
     DebuggerTok() {
-        return this.consume(TokenNames.Debugger)
+        return this.consume(SlimeReservedWordTokenTypes.Debugger)
     }
 
     DefaultTok() {
-        return this.consume(TokenNames.Default)
-    }
-
-    DeleteTok() {
-        return this.consume(TokenNames.Delete)
+        return this.consume(SlimeReservedWordTokenTypes.Default)
     }
 
     DoTok() {
-        return this.consume(TokenNames.Do)
+        return this.consume(SlimeReservedWordTokenTypes.Do)
     }
 
     ElseTok() {
-        return this.consume(TokenNames.Else)
+        return this.consume(SlimeReservedWordTokenTypes.Else)
     }
 
     EnumTok() {
-        return this.consume(TokenNames.Enum)
+        return this.consume(SlimeReservedWordTokenTypes.Enum)
     }
 
     ExportTok() {
-        return this.consume(TokenNames.Export)
+        return this.consume(SlimeReservedWordTokenTypes.Export)
     }
 
     ExtendsTok() {
-        return this.consume(TokenNames.Extends)
+        return this.consume(SlimeReservedWordTokenTypes.Extends)
     }
 
     FalseTok() {
-        return this.consume(TokenNames.False)
+        return this.consume(SlimeReservedWordTokenTypes.False)
     }
 
     FinallyTok() {
-        return this.consume(TokenNames.Finally)
+        return this.consume(SlimeReservedWordTokenTypes.Finally)
     }
 
     ForTok() {
-        return this.consume(TokenNames.For)
+        return this.consume(SlimeReservedWordTokenTypes.For)
     }
 
     FunctionTok() {
-        return this.consume(TokenNames.Function)
+        return this.consume(SlimeReservedWordTokenTypes.Function)
     }
 
     IfTok() {
-        return this.consume(TokenNames.If)
+        return this.consume(SlimeReservedWordTokenTypes.If)
     }
 
     ImportTok() {
-        return this.consume(TokenNames.Import)
-    }
-
-    InTok() {
-        return this.consume(TokenNames.In)
-    }
-
-    InstanceofTok() {
-        return this.consume(TokenNames.Instanceof)
+        return this.consume(SlimeReservedWordTokenTypes.Import)
     }
 
     NewTok() {
-        return this.consume(TokenNames.New)
+        return this.consume(SlimeReservedWordTokenTypes.New)
     }
 
     NullTok() {
-        return this.consume(TokenNames.Null)
+        return this.consume(SlimeReservedWordTokenTypes.Null)
     }
 
     ReturnTok() {
-        return this.consume(TokenNames.Return)
+        return this.consume(SlimeReservedWordTokenTypes.Return)
     }
 
     SuperTok() {
-        return this.consume(TokenNames.Super)
+        return this.consume(SlimeReservedWordTokenTypes.Super)
     }
 
     SwitchTok() {
-        return this.consume(TokenNames.Switch)
+        return this.consume(SlimeReservedWordTokenTypes.Switch)
     }
 
     ThisTok() {
-        return this.consume(TokenNames.This)
+        return this.consume(SlimeReservedWordTokenTypes.This)
     }
 
     ThrowTok() {
-        return this.consume(TokenNames.Throw)
+        return this.consume(SlimeReservedWordTokenTypes.Throw)
     }
 
     TrueTok() {
-        return this.consume(TokenNames.True)
+        return this.consume(SlimeReservedWordTokenTypes.True)
     }
 
     TryTok() {
-        return this.consume(TokenNames.Try)
+        return this.consume(SlimeReservedWordTokenTypes.Try)
     }
 
-    TypeofTok() {
-        return this.consume(TokenNames.Typeof)
-    }
 
     VarTok() {
-        return this.consume(TokenNames.Var)
+        return this.consume(SlimeReservedWordTokenTypes.Var)
     }
-
-    VoidTok() {
-        return this.consume(TokenNames.Void)
-    }
-
     WhileTok() {
-        return this.consume(TokenNames.While)
+        return this.consume(SlimeReservedWordTokenTypes.While)
     }
 
     WithTok() {
-        return this.consume(TokenNames.With)
+        return this.consume(SlimeReservedWordTokenTypes.With)
     }
 
     YieldTok() {
-        return this.consume(TokenNames.Yield)
+        return this.consume(SlimeReservedWordTokenTypes.Yield)
     }
     
     // ============================================
@@ -204,6 +189,34 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
     // 按照 ES2025 规范，这些在词法层是 IdentifierName
     // 在语法层通过值检查来识别
     // ============================================
+    /**
+     * 消费 'let' 关键字
+     * 用于 let 声明
+     * 注意：在严格模式下是保留字，非严格模式下可作为标识符（为向后兼容）
+     * 但我们将其作为独立 token 处理，与 const/var 保持一致
+     */
+    LetTok() {
+        return this.consume(SlimeReservedWordTokenTypes.Let)
+    }
+
+    VoidTok() {
+        return this.consume(SlimeUnaryOperatorTokenTypes.Void)
+    }
+
+    TypeofTok() {
+        return this.consume(SlimeUnaryOperatorTokenTypes.Typeof)
+    }
+
+    InTok() {
+        return this.consume(SlimeBinaryOperatorTokenTypes.In)
+    }
+
+    InstanceofTok() {
+        return this.consume(SlimeBinaryOperatorTokenTypes.Instanceof)
+    }
+    DeleteTok() {
+        return this.consume(SlimeUnaryOperatorTokenTypes.Delete)
+    }
 
     /**
      * 消费 'async' 软关键字
@@ -212,16 +225,6 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
      */
     AsyncTok() {
         return this.consumeIdentifierValue(SlimeContextualKeywordTokenTypes.Async)
-    }
-
-    /**
-     * 消费 'let' 关键字
-     * 用于 let 声明
-     * 注意：在严格模式下是保留字，非严格模式下可作为标识符（为向后兼容）
-     * 但我们将其作为独立 token 处理，与 const/var 保持一致
-     */
-    LetTok() {
-        return this.consume(SlimeContextualKeywordTokenTypes)
     }
 
     /**

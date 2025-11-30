@@ -237,43 +237,9 @@ export const TokenNames = {
     Colon: 'Colon',                       // :
 
     // ============================================
-    // A.1.7 Reserved Words (关键字)
-    // 注意：本解析器按严格模式处理，let 作为保留字
+    // A.1.7 Reserved Words（从分组常量引入）
     // ============================================
-    Await: 'Await',
-    Break: 'Break',
-    Case: 'Case',
-    Catch: 'Catch',
-    Class: 'Class',
-    Const: 'Const',
-    Continue: 'Continue',
-    Debugger: 'Debugger',
-    Default: 'Default',
-    Do: 'Do',
-    Else: 'Else',
-    Enum: 'Enum',
-    Export: 'Export',
-    Extends: 'Extends',
-    False: 'False',
-    Finally: 'Finally',
-    For: 'For',
-    Function: 'Function',
-    If: 'If',
-    Import: 'Import',
-    Let: 'Let',                 // 严格模式下为保留字
-    New: 'New',
-    Null: 'Null',
-    Return: 'Return',
-    Super: 'Super',
-    Switch: 'Switch',
-    This: 'This',
-    Throw: 'Throw',
-    True: 'True',
-    Try: 'Try',
-    Var: 'Var',
-    While: 'While',
-    With: 'With',
-    Yield: 'Yield',
+    ...SlimeReservedWordTokenTypes,
 
     // ============================================
     // 运算符 Token（从分组常量引入）
