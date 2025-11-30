@@ -2,12 +2,11 @@ import type * as ESTree from "estree";
 import {SlimeAstType} from "./SlimeAstType.ts";
 import {
     SlimeTokenType,
-    type SlimeTokenTypeValue,
-    type SlimeUpdateOperatorTokenType,
-    type SlimeUnaryOperatorTokenType,
-    type SlimeBinaryOperatorTokenType,
-    type SlimeLogicalOperatorTokenType,
-    type SlimeAssignmentOperatorTokenType,
+    SlimeUpdateOperatorTokenTypes,
+    SlimeUnaryOperatorTokenTypes,
+    SlimeBinaryOperatorTokenTypes,
+    SlimeLogicalOperatorTokenTypes,
+    SlimeAssignmentOperatorTokenTypes,
 } from "./SlimeTokenType.ts";
 import type {SubhutiSourceLocation} from "subhuti/src/struct/SubhutiCst.ts";
 
@@ -394,31 +393,31 @@ export interface SlimeQuestionToken extends SlimeTokenNode {
 
 /** 二元运算符 Token */
 export interface SlimeBinaryOperatorToken extends SlimeTokenNode {
-    type: SlimeBinaryOperatorTokenType;
+    type: typeof SlimeBinaryOperatorTokenTypes[keyof typeof SlimeBinaryOperatorTokenTypes];
     value: SlimeBinaryOperator;
 }
 
 /** 一元运算符 Token */
 export interface SlimeUnaryOperatorToken extends SlimeTokenNode {
-    type: SlimeUnaryOperatorTokenType;
+    type: typeof SlimeUnaryOperatorTokenTypes[keyof typeof SlimeUnaryOperatorTokenTypes];
     value: SlimeUnaryOperator;
 }
 
 /** 逻辑运算符 Token */
 export interface SlimeLogicalOperatorToken extends SlimeTokenNode {
-    type: SlimeLogicalOperatorTokenType;
+    type: typeof SlimeLogicalOperatorTokenTypes[keyof typeof SlimeLogicalOperatorTokenTypes];
     value: SlimeLogicalOperator;
 }
 
 /** 赋值运算符 Token */
 export interface SlimeAssignmentOperatorToken extends SlimeTokenNode {
-    type: SlimeAssignmentOperatorTokenType;
+    type: typeof SlimeAssignmentOperatorTokenTypes[keyof typeof SlimeAssignmentOperatorTokenTypes];
     value: SlimeAssignmentOperator;
 }
 
 /** 更新运算符 Token */
 export interface SlimeUpdateOperatorToken extends SlimeTokenNode {
-    type: SlimeUpdateOperatorTokenType;
+    type: typeof SlimeUpdateOperatorTokenTypes[keyof typeof SlimeUpdateOperatorTokenTypes];
     value: SlimeUpdateOperator;
 }
 
