@@ -21,6 +21,7 @@ import {
     SlimeReservedWordTokenTypes,
     TokenNames
 } from "slime-token/src/SlimeTokensName.ts";
+import {ReservedWords} from "./SlimeLexerTokens.ts";
 
 // ============================================
 // 参数化规则的参数接口
@@ -525,18 +526,11 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
         ])
     }
 
-    /**
-     * PrivateIdentifier ::
-     *     # IdentifierName
-     */
-    @SubhutiRule
-    PrivateIdentifier(): SubhutiCst | undefined {
-        return this.tokenConsumer.PrivateIdentifier()
-    }
-
     // ----------------------------------------
     // A.2.2 Primary Expressions
     // ----------------------------------------
+    // 注意：PrivateIdentifier 是词法规则（A.1 Lexical Grammar），
+    // 直接使用 tokenConsumer.PrivateIdentifier() 消费 token，不需要定义语法规则方法
 
     /**
      * PrimaryExpression[Yield, Await] :
@@ -582,6 +576,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             {alt: () => this.ArrayLiteral(params)},
             {alt: () => this.ObjectLiteral(params)},
             // 正则表达式分支：如果词法阶段误判为 Slash 或 DivideAssign，尝试 rescan
+            // RegularExpressionLiteral 是词法规则（A.1 Lexical Grammar），直接消费 token
             {alt: () => {
                 const la1 = this.LA(1)
                 if (la1?.tokenName === TokenNames.Slash || la1?.tokenName === TokenNames.DivideAssign) {
@@ -590,7 +585,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                         return this.setParseFail()
                     }
                 }
-                return this.RegularExpressionLiteral()
+                return this.tokenConsumer.RegularExpressionLiteral()
             }},
             {alt: () => this.TemplateLiteral({...params, Tagged: false})},
             {alt: () => this.CoverParenthesizedExpressionAndArrowParameterList(params)}
@@ -704,24 +699,21 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      *     BooleanLiteral
      *     NumericLiteral
      *     StringLiteral
+     *
+     * 注意：NullLiteral、NumericLiteral、StringLiteral 是词法规则（A.1 Lexical Grammar），
+     * 直接使用 tokenConsumer 消费 token
      */
     @SubhutiRule
     Literal(): SubhutiCst | undefined {
         return this.Or([
-            {alt: () => this.NullLiteral()},
+            // NullLiteral 是词法规则，直接消费 token
+            {alt: () => this.tokenConsumer.Null()},
             {alt: () => this.BooleanLiteral()},
-            {alt: () => this.NumericLiteral()},
-            {alt: () => this.StringLiteral()}
+            // NumericLiteral 是词法规则，直接消费 token
+            {alt: () => this.tokenConsumer.NumericLiteral()},
+            // StringLiteral 是词法规则，直接消费 token
+            {alt: () => this.tokenConsumer.StringLiteral()}
         ])
-    }
-
-    /**
-     * NullLiteral :
-     *     null
-     */
-    @SubhutiRule
-    NullLiteral(): SubhutiCst | undefined {
-        return this.tokenConsumer.Null()
     }
 
     /**
@@ -735,42 +727,6 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             {alt: () => this.tokenConsumer.True()},
             {alt: () => this.tokenConsumer.False()}
         ])
-    }
-
-    /**
-     * NumericLiteral :
-     *     DecimalLiteral
-     *     DecimalBigIntegerLiteral
-     *     NonDecimalIntegerLiteral
-     *     LegacyOctalIntegerLiteral
-     *     NonDecimalIntegerLiteral BigIntLiteralSuffix
-     *
-     * 注意：词法层所有数字变体都输出为 NumericLiteral token
-     */
-    @SubhutiRule
-    NumericLiteral(): SubhutiCst | undefined {
-        return this.tokenConsumer.NumericLiteral()
-    }
-
-    /**
-     * StringLiteral :
-     *     " DoubleStringCharacters_opt "
-     *     ' SingleStringCharacters_opt '
-     *
-     * 注意：Lexer 会将双引号和单引号字符串都输出为 StringLiteral token
-     */
-    @SubhutiRule
-    StringLiteral(): SubhutiCst | undefined {
-        return this.tokenConsumer.StringLiteral()
-    }
-
-    /**
-     * RegularExpressionLiteral :
-     *     / RegularExpressionBody / RegularExpressionFlags
-     */
-    @SubhutiRule
-    RegularExpressionLiteral(): SubhutiCst | undefined {
-        return this.tokenConsumer.RegularExpressionLiteral()
     }
 
     /**
@@ -974,13 +930,17 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      *     IdentifierName
      *     StringLiteral
      *     NumericLiteral
+     *
+     * 注意：StringLiteral、NumericLiteral 是词法规则（A.1 Lexical Grammar），直接消费 token
      */
     @SubhutiRule
     LiteralPropertyName(): SubhutiCst | undefined {
         return this.Or([
             {alt: () => this.IdentifierName()},
-            {alt: () => this.StringLiteral()},
-            {alt: () => this.NumericLiteral()}
+            // StringLiteral 是词法规则，直接消费 token
+            {alt: () => this.tokenConsumer.StringLiteral()},
+            // NumericLiteral 是词法规则，直接消费 token
+            {alt: () => this.tokenConsumer.NumericLiteral()}
         ])
     }
 
@@ -1027,19 +987,17 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     @SubhutiRule
     TemplateLiteral(params: TemplateLiteralParams = {}): SubhutiCst | undefined {
         return this.Or([
-            {alt: () => this.NoSubstitutionTemplate()},
+            // NoSubstitutionTemplate 是词法规则，直接消费 token
+            {alt: () => this.tokenConsumer.NoSubstitutionTemplate()},
             {alt: () => this.SubstitutionTemplate(params)}
         ])
     }
 
-    /**
-     * NoSubstitutionTemplate :
-     *     ` TemplateCharacters_opt `
-     */
-    @SubhutiRule
-    NoSubstitutionTemplate(): SubhutiCst | undefined {
-        return this.tokenConsumer.NoSubstitutionTemplate()
-    }
+    // 注意：以下是词法规则（A.1 Lexical Grammar），直接使用 tokenConsumer 消费 token：
+    // - NoSubstitutionTemplate -> tokenConsumer.NoSubstitutionTemplate()
+    // - TemplateHead -> tokenConsumer.TemplateHead()
+    // - TemplateTail -> tokenConsumer.TemplateTail()
+    // - TemplateMiddle -> tokenConsumer.TemplateMiddle()
 
     /**
      * SubstitutionTemplate[Yield, Await, Tagged] :
@@ -1047,18 +1005,10 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      */
     @SubhutiRule
     SubstitutionTemplate(params: TemplateLiteralParams = {}): SubhutiCst | undefined {
-        this.TemplateHead()
+        // TemplateHead 是词法规则，直接消费 token
+        this.tokenConsumer.TemplateHead()
         this.Expression({...params, In: true})
         return this.TemplateSpans(params)
-    }
-
-    /**
-     * TemplateHead :
-     *     ` TemplateCharacters_opt ${
-     */
-    @SubhutiRule
-    TemplateHead(): SubhutiCst | undefined {
-        return this.tokenConsumer.TemplateHead()
     }
 
     /**
@@ -1069,32 +1019,16 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     @SubhutiRule
     TemplateSpans(params: TemplateLiteralParams = {}): SubhutiCst | undefined {
         return this.Or([
-            {alt: () => this.TemplateTail()},
+            // TemplateTail 是词法规则，直接消费 token
+            {alt: () => this.tokenConsumer.TemplateTail()},
             {
                 alt: () => {
                     this.TemplateMiddleList(params)
-                    this.TemplateTail()
+                    // TemplateTail 是词法规则，直接消费 token
+                    this.tokenConsumer.TemplateTail()
                 }
             }
         ])
-    }
-
-    /**
-     * TemplateTail :
-     *     } TemplateCharacters_opt `
-     */
-    @SubhutiRule
-    TemplateTail(): SubhutiCst | undefined {
-        return this.tokenConsumer.TemplateTail()
-    }
-
-    /**
-     * TemplateMiddle :
-     *     } TemplateCharacters_opt ${
-     */
-    @SubhutiRule
-    TemplateMiddle(): SubhutiCst | undefined {
-        return this.tokenConsumer.TemplateMiddle()
     }
 
     /**
@@ -1104,11 +1038,13 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      */
     @SubhutiRule
     TemplateMiddleList(params: TemplateLiteralParams = {}): SubhutiCst | undefined {
-        this.TemplateMiddle()
+        // TemplateMiddle 是词法规则，直接消费 token
+        this.tokenConsumer.TemplateMiddle()
         this.Expression({...params, In: true})
 
         this.Many(() => {
-            this.TemplateMiddle()
+            // TemplateMiddle 是词法规则，直接消费 token
+            this.tokenConsumer.TemplateMiddle()
             this.Expression({...params, In: true})
         })
 
@@ -1166,10 +1102,11 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             // TemplateLiteral[?Yield, ?Await, +Tagged]
             {alt: () => this.TemplateLiteral({...params, Tagged: true})},
             // . PrivateIdentifier
+            // PrivateIdentifier 是词法规则（A.1 Lexical Grammar），直接消费 token
             {
                 alt: () => {
                     this.tokenConsumer.Dot()
-                    this.PrivateIdentifier()
+                    this.tokenConsumer.PrivateIdentifier()
                 }
             }
         ]))
@@ -1302,10 +1239,11 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             // TemplateLiteral[?Yield, ?Await, +Tagged]
             {alt: () => this.TemplateLiteral({...params, Tagged: true})},
             // . PrivateIdentifier
+            // PrivateIdentifier 是词法规则（A.1 Lexical Grammar），直接消费 token
             {
                 alt: () => {
                     this.tokenConsumer.Dot()
-                    this.PrivateIdentifier()
+                    this.tokenConsumer.PrivateIdentifier()
                 }
             }
         ]))
@@ -1533,10 +1471,11 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                     this.TemplateLiteral({...params, Tagged: true})
                 }
             },
+            // PrivateIdentifier 是词法规则（A.1 Lexical Grammar），直接消费 token
             {
                 alt: () => {
                     this.tokenConsumer.OptionalChaining()
-                    this.PrivateIdentifier()
+                    this.tokenConsumer.PrivateIdentifier()
                 }
             }
         ])
@@ -1558,10 +1497,11 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                 }
             },
             {alt: () => this.TemplateLiteral({...params, Tagged: true})},
+            // PrivateIdentifier 是词法规则（A.1 Lexical Grammar），直接消费 token
             {
                 alt: () => {
                     this.tokenConsumer.Dot()
-                    this.PrivateIdentifier()
+                    this.tokenConsumer.PrivateIdentifier()
                 }
             }
         ]))
@@ -1848,8 +1788,9 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
         const {In = false} = params
 
         // 处理 [+In] PrivateIdentifier in ShiftExpression
+        // PrivateIdentifier 是词法规则（A.1 Lexical Grammar），直接消费 token
         if (In && this.lookahead(TokenNames.PrivateIdentifier, 1)) {
-            this.PrivateIdentifier()
+            this.tokenConsumer.PrivateIdentifier()
             this.tokenConsumer.In()
             this.ShiftExpression(params)
             return this.curCst
@@ -4290,12 +4231,15 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      * ClassElementName[Yield, Await] :
      *     PropertyName[?Yield, ?Await]
      *     PrivateIdentifier
+     *
+     * 注意：PrivateIdentifier 是词法规则（A.1 Lexical Grammar），直接消费 token
      */
     @SubhutiRule
     ClassElementName(params: ExpressionParams = {}): SubhutiCst | undefined {
         return this.Or([
             {alt: () => this.PropertyName(params)},
-            {alt: () => this.PrivateIdentifier()}
+            // PrivateIdentifier 是词法规则，直接消费 token
+            {alt: () => this.tokenConsumer.PrivateIdentifier()}
         ])
     }
 
@@ -4607,10 +4551,12 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     /**
      * ModuleSpecifier :
      *     StringLiteral
+     *
+     * 注意：StringLiteral 是词法规则（A.1 Lexical Grammar），直接消费 token
      */
     @SubhutiRule
     ModuleSpecifier(): SubhutiCst | undefined {
-        return this.StringLiteral()
+        return this.tokenConsumer.StringLiteral()
     }
 
     /**
@@ -4655,18 +4601,22 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      * WithEntries :
      *     AttributeKey : StringLiteral
      *     AttributeKey : StringLiteral , WithEntries
+     *
+     * 注意：StringLiteral 是词法规则（A.1 Lexical Grammar），直接消费 token
      */
     @SubhutiRule
     WithEntries(): SubhutiCst | undefined {
         this.AttributeKey()
         this.tokenConsumer.Colon()
-        this.StringLiteral()
+        // StringLiteral 是词法规则，直接消费 token
+        this.tokenConsumer.StringLiteral()
 
         this.Many(() => {
             this.tokenConsumer.Comma()
             this.AttributeKey()
             this.tokenConsumer.Colon()
-            this.StringLiteral()
+            // StringLiteral 是词法规则，直接消费 token
+            this.tokenConsumer.StringLiteral()
         })
 
         return this.curCst
@@ -4676,12 +4626,15 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      * AttributeKey :
      *     IdentifierName
      *     StringLiteral
+     *
+     * 注意：StringLiteral 是词法规则（A.1 Lexical Grammar），直接消费 token
      */
     @SubhutiRule
     AttributeKey(): SubhutiCst | undefined {
         return this.Or([
             {alt: () => this.IdentifierName()},
-            {alt: () => this.StringLiteral()}
+            // StringLiteral 是词法规则，直接消费 token
+            {alt: () => this.tokenConsumer.StringLiteral()}
         ])
     }
 
@@ -4865,12 +4818,15 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      * ModuleExportName :
      *     IdentifierName
      *     StringLiteral
+     *
+     * 注意：StringLiteral 是词法规则（A.1 Lexical Grammar），直接消费 token
      */
     @SubhutiRule
     ModuleExportName(): SubhutiCst | undefined {
         return this.Or([
             {alt: () => this.IdentifierName()},
-            {alt: () => this.StringLiteral()}
+            // StringLiteral 是词法规则，直接消费 token
+            {alt: () => this.tokenConsumer.StringLiteral()}
         ])
     }
 
