@@ -755,13 +755,12 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      * StringLiteral :
      *     " DoubleStringCharacters_opt "
      *     ' SingleStringCharacters_opt '
+     *
+     * 注意：Lexer 会将双引号和单引号字符串都输出为 StringLiteral token
      */
     @SubhutiRule
     StringLiteral(): SubhutiCst | undefined {
-        return this.Or([
-            {alt: () => this.tokenConsumer.DoubleStringCharacters()},
-            {alt: () => this.tokenConsumer.SingleStringCharacters()}
-        ])
+        return this.tokenConsumer.StringLiteral()
     }
 
     /**

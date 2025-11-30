@@ -1,21 +1,21 @@
 /**
  * ES2025 Token Consumer - Token 消费封装
- * 
+ *
  * 职责：
  * 1. 为每个 ES2025 token 提供类型安全的消费方法
  * 2. 提供语义化的 API（方法名即文档）
  * 3. 支持 IDE 自动补全和编译时检查
- * 
+ *
  * 设计模式：
  * - 继承 SubhutiTokenConsumer（基于接口依赖）
  * - 为每个 TokenNames 提供对应的消费方法
  * - 方法名与 token 名一致，易于理解
- * 
+ *
  * @version 1.0.0
  */
 
 import SubhutiTokenConsumer from "subhuti/src/SubhutiTokenConsumer.ts"
-import { es2025TokensObj, TokenNames, ContextualKeywords } from "./Es2025Tokens.ts"
+import { TokenNames, ContextualKeywords } from "./Es2025Tokens.ts"
 
 export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
 
@@ -36,7 +36,7 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
     protected consumeIdentifierValue(value: string) {
         const token = this.parser.curToken
         if (token?.tokenName === TokenNames.IdentifierNameTok && token.tokenValue === value) {
-            return this.consume(es2025TokensObj.IdentifierNameTok)
+            return this.consume(TokenNames.IdentifierNameTok)
         }
         // 标记解析失败
         this.parser._markParseFail()
@@ -46,157 +46,157 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
     // ============================================
     // 关键字 (Keywords)
     // ============================================
-    
+
     AwaitTok() {
-        return this.consume(es2025TokensObj.AwaitTok)
+        return this.consume(TokenNames.AwaitTok)
     }
-    
+
     BreakTok() {
-        return this.consume(es2025TokensObj.BreakTok)
+        return this.consume(TokenNames.BreakTok)
     }
-    
+
     CaseTok() {
-        return this.consume(es2025TokensObj.CaseTok)
+        return this.consume(TokenNames.CaseTok)
     }
-    
+
     CatchTok() {
-        return this.consume(es2025TokensObj.CatchTok)
+        return this.consume(TokenNames.CatchTok)
     }
-    
+
     ClassTok() {
-        return this.consume(es2025TokensObj.ClassTok)
+        return this.consume(TokenNames.ClassTok)
     }
-    
+
     ConstTok() {
-        return this.consume(es2025TokensObj.ConstTok)
+        return this.consume(TokenNames.ConstTok)
     }
-    
+
     ContinueTok() {
-        return this.consume(es2025TokensObj.ContinueTok)
+        return this.consume(TokenNames.ContinueTok)
     }
-    
+
     DebuggerTok() {
-        return this.consume(es2025TokensObj.DebuggerTok)
+        return this.consume(TokenNames.DebuggerTok)
     }
-    
+
     DefaultTok() {
-        return this.consume(es2025TokensObj.DefaultTok)
+        return this.consume(TokenNames.DefaultTok)
     }
-    
+
     DeleteTok() {
-        return this.consume(es2025TokensObj.DeleteTok)
+        return this.consume(TokenNames.DeleteTok)
     }
-    
+
     DoTok() {
-        return this.consume(es2025TokensObj.DoTok)
+        return this.consume(TokenNames.DoTok)
     }
-    
+
     ElseTok() {
-        return this.consume(es2025TokensObj.ElseTok)
+        return this.consume(TokenNames.ElseTok)
     }
-    
+
     EnumTok() {
-        return this.consume(es2025TokensObj.EnumTok)
+        return this.consume(TokenNames.EnumTok)
     }
-    
+
     ExportTok() {
-        return this.consume(es2025TokensObj.ExportTok)
+        return this.consume(TokenNames.ExportTok)
     }
-    
+
     ExtendsTok() {
-        return this.consume(es2025TokensObj.ExtendsTok)
+        return this.consume(TokenNames.ExtendsTok)
     }
-    
+
     FalseTok() {
-        return this.consume(es2025TokensObj.FalseTok)
+        return this.consume(TokenNames.FalseTok)
     }
-    
+
     FinallyTok() {
-        return this.consume(es2025TokensObj.FinallyTok)
+        return this.consume(TokenNames.FinallyTok)
     }
-    
+
     ForTok() {
-        return this.consume(es2025TokensObj.ForTok)
+        return this.consume(TokenNames.ForTok)
     }
-    
+
     FunctionTok() {
-        return this.consume(es2025TokensObj.FunctionTok)
+        return this.consume(TokenNames.FunctionTok)
     }
-    
+
     IfTok() {
-        return this.consume(es2025TokensObj.IfTok)
+        return this.consume(TokenNames.IfTok)
     }
-    
+
     ImportTok() {
-        return this.consume(es2025TokensObj.ImportTok)
+        return this.consume(TokenNames.ImportTok)
     }
-    
+
     InTok() {
-        return this.consume(es2025TokensObj.InTok)
+        return this.consume(TokenNames.InTok)
     }
-    
+
     InstanceofTok() {
-        return this.consume(es2025TokensObj.InstanceofTok)
+        return this.consume(TokenNames.InstanceofTok)
     }
-    
+
     NewTok() {
-        return this.consume(es2025TokensObj.NewTok)
+        return this.consume(TokenNames.NewTok)
     }
-    
+
     NullTok() {
-        return this.consume(es2025TokensObj.NullTok)
+        return this.consume(TokenNames.NullTok)
     }
-    
+
     ReturnTok() {
-        return this.consume(es2025TokensObj.ReturnTok)
+        return this.consume(TokenNames.ReturnTok)
     }
-    
+
     SuperTok() {
-        return this.consume(es2025TokensObj.SuperTok)
+        return this.consume(TokenNames.SuperTok)
     }
-    
+
     SwitchTok() {
-        return this.consume(es2025TokensObj.SwitchTok)
+        return this.consume(TokenNames.SwitchTok)
     }
-    
+
     ThisTok() {
-        return this.consume(es2025TokensObj.ThisTok)
+        return this.consume(TokenNames.ThisTok)
     }
-    
+
     ThrowTok() {
-        return this.consume(es2025TokensObj.ThrowTok)
+        return this.consume(TokenNames.ThrowTok)
     }
-    
+
     TrueTok() {
-        return this.consume(es2025TokensObj.TrueTok)
+        return this.consume(TokenNames.TrueTok)
     }
-    
+
     TryTok() {
-        return this.consume(es2025TokensObj.TryTok)
+        return this.consume(TokenNames.TryTok)
     }
-    
+
     TypeofTok() {
-        return this.consume(es2025TokensObj.TypeofTok)
+        return this.consume(TokenNames.TypeofTok)
     }
-    
+
     VarTok() {
-        return this.consume(es2025TokensObj.VarTok)
+        return this.consume(TokenNames.VarTok)
     }
-    
+
     VoidTok() {
-        return this.consume(es2025TokensObj.VoidTok)
+        return this.consume(TokenNames.VoidTok)
     }
-    
+
     WhileTok() {
-        return this.consume(es2025TokensObj.WhileTok)
+        return this.consume(TokenNames.WhileTok)
     }
-    
+
     WithTok() {
-        return this.consume(es2025TokensObj.WithTok)
+        return this.consume(TokenNames.WithTok)
     }
-    
+
     YieldTok() {
-        return this.consume(es2025TokensObj.YieldTok)
+        return this.consume(TokenNames.YieldTok)
     }
     
     // ============================================
@@ -221,7 +221,7 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
      * 但我们将其作为独立 token 处理，与 const/var 保持一致
      */
     LetTok() {
-        return this.consume(es2025TokensObj.LetTok)
+        return this.consume(TokenNames.LetTok)
     }
 
     /**
@@ -288,49 +288,45 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
     FromTok() {
         return this.consumeIdentifierValue(ContextualKeywords.FROM)
     }
-    
+
     // ============================================
     // 字面量 (Literals)
     // ============================================
-    
+
     Number() {
         // NumericLiteral 或 LegacyOctalLiteral（如 05, 077 等，Annex B）
         return this.parser.Or([
-            {alt: () => this.consume(es2025TokensObj.NumericLiteral)},
-            {alt: () => this.consume(es2025TokensObj.LegacyOctalLiteral)}
+            {alt: () => this.consume(TokenNames.NumericLiteral)},
+            {alt: () => this.consume(TokenNames.LegacyOctalLiteral)}
         ])
     }
-    
+
     BigInt() {
-        return this.consume(es2025TokensObj.BigIntDecimal)
+        return this.consume(TokenNames.BigIntLiteral)
     }
 
-    DoubleStringCharacters() {
-        return this.consume(es2025TokensObj.DoubleStringCharacters)
+    StringLiteral() {
+        return this.consume(TokenNames.StringLiteral)
     }
 
-    SingleStringCharacters() {
-        return this.consume(es2025TokensObj.SingleStringCharacters)
-    }
-    
     NoSubstitutionTemplate() {
-        return this.consume(es2025TokensObj.NoSubstitutionTemplate)
+        return this.consume(TokenNames.NoSubstitutionTemplate)
     }
-    
+
     TemplateHead() {
-        return this.consume(es2025TokensObj.TemplateHead)
+        return this.consume(TokenNames.TemplateHead)
     }
-    
+
     TemplateMiddle() {
-        return this.consume(es2025TokensObj.TemplateMiddle)
+        return this.consume(TokenNames.TemplateMiddle)
     }
-    
+
     TemplateTail() {
-        return this.consume(es2025TokensObj.TemplateTail)
+        return this.consume(TokenNames.TemplateTail)
     }
 
     RegularExpression() {
-        return this.consume(es2025TokensObj.RegularExpressionLiteral)
+        return this.consume(TokenNames.RegularExpressionLiteral)
     }
 
     // ============================================
@@ -342,7 +338,7 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
      * 只能出现在文件开头，由 Parser 的 Program 规则显式调用
      */
     HashbangComment() {
-        return this.consume(es2025TokensObj.HashbangComment)
+        return this.consume(TokenNames.HashbangComment)
     }
 
     // ============================================
@@ -350,261 +346,261 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
     // ============================================
 
     IdentifierNameTok() {
-        return this.consume(es2025TokensObj.IdentifierNameTok)
+        return this.consume(TokenNames.IdentifierNameTok)
     }
-    
+
     PrivateIdentifier() {
-        return this.consume(es2025TokensObj.PrivateIdentifier)
+        return this.consume(TokenNames.PrivateIdentifier)
     }
     
     // ============================================
     // 运算符 - 4字符 (4-character Operators)
     // ============================================
-    
+
     UnsignedRightShiftAssign() {
-        return this.consume(es2025TokensObj.UnsignedRightShiftAssign)
+        return this.consume(TokenNames.UnsignedRightShiftAssign)
     }
-    
+
     // ============================================
     // 运算符 - 3字符 (3-character Operators)
     // ============================================
-    
+
     Ellipsis() {
-        return this.consume(es2025TokensObj.Ellipsis)
+        return this.consume(TokenNames.Ellipsis)
     }
-    
+
     UnsignedRightShift() {
-        return this.consume(es2025TokensObj.UnsignedRightShift)
+        return this.consume(TokenNames.UnsignedRightShift)
     }
-    
+
     StrictEqual() {
-        return this.consume(es2025TokensObj.StrictEqual)
+        return this.consume(TokenNames.StrictEqual)
     }
-    
+
     StrictNotEqual() {
-        return this.consume(es2025TokensObj.StrictNotEqual)
+        return this.consume(TokenNames.StrictNotEqual)
     }
-    
+
     LeftShiftAssign() {
-        return this.consume(es2025TokensObj.LeftShiftAssign)
+        return this.consume(TokenNames.LeftShiftAssign)
     }
-    
+
     SignedRightShiftAssign() {
-        return this.consume(es2025TokensObj.RightShiftAssign)
+        return this.consume(TokenNames.RightShiftAssign)
     }
-    
+
     ExponentiationAssign() {
-        return this.consume(es2025TokensObj.ExponentiationAssign)
+        return this.consume(TokenNames.ExponentiationAssign)
     }
-    
+
     LogicalAndAssign() {
-        return this.consume(es2025TokensObj.LogicalAndAssign)
+        return this.consume(TokenNames.LogicalAndAssign)
     }
-    
+
     LogicalOrAssign() {
-        return this.consume(es2025TokensObj.LogicalOrAssign)
+        return this.consume(TokenNames.LogicalOrAssign)
     }
-    
+
     NullishCoalescingAssign() {
-        return this.consume(es2025TokensObj.NullishCoalescingAssign)
+        return this.consume(TokenNames.NullishCoalescingAssign)
     }
-    
+
     // ============================================
     // 运算符 - 2字符 (2-character Operators)
     // ============================================
-    
+
     Arrow() {
-        return this.consume(es2025TokensObj.Arrow)
+        return this.consume(TokenNames.Arrow)
     }
-    
+
     PlusAssign() {
-        return this.consume(es2025TokensObj.PlusAssign)
+        return this.consume(TokenNames.PlusAssign)
     }
-    
+
     MinusAssign() {
-        return this.consume(es2025TokensObj.MinusAssign)
+        return this.consume(TokenNames.MinusAssign)
     }
-    
+
     MultiplyAssign() {
-        return this.consume(es2025TokensObj.MultiplyAssign)
+        return this.consume(TokenNames.MultiplyAssign)
     }
-    
+
     DivideAssign() {
-        return this.consume(es2025TokensObj.DivideAssign)
+        return this.consume(TokenNames.DivideAssign)
     }
-    
+
     ModuloAssign() {
-        return this.consume(es2025TokensObj.ModuloAssign)
+        return this.consume(TokenNames.ModuloAssign)
     }
-    
+
     LeftShift() {
-        return this.consume(es2025TokensObj.LeftShift)
+        return this.consume(TokenNames.LeftShift)
     }
-    
+
     SignedRightShift() {
-        return this.consume(es2025TokensObj.RightShift)
+        return this.consume(TokenNames.RightShift)
     }
-    
+
     LessThanOrEqual() {
-        return this.consume(es2025TokensObj.LessEqual)
+        return this.consume(TokenNames.LessEqual)
     }
-    
+
     GreaterThanOrEqual() {
-        return this.consume(es2025TokensObj.GreaterEqual)
+        return this.consume(TokenNames.GreaterEqual)
     }
-    
+
     Equal() {
-        return this.consume(es2025TokensObj.Equal)
+        return this.consume(TokenNames.Equal)
     }
-    
+
     NotEqual() {
-        return this.consume(es2025TokensObj.NotEqual)
+        return this.consume(TokenNames.NotEqual)
     }
-    
+
     LogicalAnd() {
-        return this.consume(es2025TokensObj.LogicalAnd)
+        return this.consume(TokenNames.LogicalAnd)
     }
-    
+
     LogicalOr() {
-        return this.consume(es2025TokensObj.LogicalOr)
+        return this.consume(TokenNames.LogicalOr)
     }
-    
+
     NullishCoalescing() {
-        return this.consume(es2025TokensObj.NullishCoalescing)
+        return this.consume(TokenNames.NullishCoalescing)
     }
-    
+
     Increment() {
-        return this.consume(es2025TokensObj.Increment)
+        return this.consume(TokenNames.Increment)
     }
-    
+
     Decrement() {
-        return this.consume(es2025TokensObj.Decrement)
+        return this.consume(TokenNames.Decrement)
     }
-    
+
     Exponentiation() {
-        return this.consume(es2025TokensObj.Exponentiation)
+        return this.consume(TokenNames.Exponentiation)
     }
-    
+
     BitwiseAndAssign() {
-        return this.consume(es2025TokensObj.BitwiseAndAssign)
+        return this.consume(TokenNames.BitwiseAndAssign)
     }
-    
+
     BitwiseOrAssign() {
-        return this.consume(es2025TokensObj.BitwiseOrAssign)
+        return this.consume(TokenNames.BitwiseOrAssign)
     }
-    
+
     BitwiseXorAssign() {
-        return this.consume(es2025TokensObj.BitwiseXorAssign)
+        return this.consume(TokenNames.BitwiseXorAssign)
     }
-    
+
     OptionalChaining() {
-        return this.consume(es2025TokensObj.OptionalChaining)
+        return this.consume(TokenNames.OptionalChaining)
     }
     
     // ============================================
     // 运算符 - 1字符 (1-character Operators)
     // ============================================
-    
+
     LBrace() {
-        return this.consume(es2025TokensObj.LBrace)
+        return this.consume(TokenNames.LBrace)
     }
-    
+
     RBrace() {
-        return this.consume(es2025TokensObj.RBrace)
+        return this.consume(TokenNames.RBrace)
     }
-    
+
     LParen() {
-        return this.consume(es2025TokensObj.LParen)
+        return this.consume(TokenNames.LParen)
     }
-    
+
     RParen() {
-        return this.consume(es2025TokensObj.RParen)
+        return this.consume(TokenNames.RParen)
     }
-    
+
     LBracket() {
-        return this.consume(es2025TokensObj.LBracket)
+        return this.consume(TokenNames.LBracket)
     }
-    
+
     RBracket() {
-        return this.consume(es2025TokensObj.RBracket)
+        return this.consume(TokenNames.RBracket)
     }
-    
+
     Dot() {
-        return this.consume(es2025TokensObj.Dot)
+        return this.consume(TokenNames.Dot)
     }
-    
+
     Semicolon() {
-        return this.consume(es2025TokensObj.Semicolon)
+        return this.consume(TokenNames.Semicolon)
     }
-    
+
     Comma() {
-        return this.consume(es2025TokensObj.Comma)
+        return this.consume(TokenNames.Comma)
     }
-    
+
     LessThan() {
-        return this.consume(es2025TokensObj.Less)
+        return this.consume(TokenNames.Less)
     }
-    
+
     GreaterThan() {
-        return this.consume(es2025TokensObj.Greater)
+        return this.consume(TokenNames.Greater)
     }
-    
+
     Plus() {
-        return this.consume(es2025TokensObj.Plus)
+        return this.consume(TokenNames.Plus)
     }
-    
+
     Minus() {
-        return this.consume(es2025TokensObj.Minus)
+        return this.consume(TokenNames.Minus)
     }
-    
+
     Asterisk() {
-        return this.consume(es2025TokensObj.Asterisk)
+        return this.consume(TokenNames.Asterisk)
     }
-    
+
     Slash() {
-        return this.consume(es2025TokensObj.Slash)
+        return this.consume(TokenNames.Slash)
     }
-    
+
     Modulo() {
-        return this.consume(es2025TokensObj.Modulo)
+        return this.consume(TokenNames.Modulo)
     }
-    
+
     BitwiseAnd() {
-        return this.consume(es2025TokensObj.BitwiseAnd)
+        return this.consume(TokenNames.BitwiseAnd)
     }
-    
+
     BitwiseOr() {
-        return this.consume(es2025TokensObj.BitwiseOr)
+        return this.consume(TokenNames.BitwiseOr)
     }
-    
+
     BitwiseXor() {
-        return this.consume(es2025TokensObj.BitwiseXor)
+        return this.consume(TokenNames.BitwiseXor)
     }
-    
+
     BitwiseNot() {
-        return this.consume(es2025TokensObj.BitwiseNot)
+        return this.consume(TokenNames.BitwiseNot)
     }
-    
+
     LogicalNot() {
-        return this.consume(es2025TokensObj.LogicalNot)
+        return this.consume(TokenNames.LogicalNot)
     }
-    
+
     Question() {
-        return this.consume(es2025TokensObj.Question)
+        return this.consume(TokenNames.Question)
     }
-    
+
     Colon() {
-        return this.consume(es2025TokensObj.Colon)
+        return this.consume(TokenNames.Colon)
     }
-    
+
     Assign() {
-        return this.consume(es2025TokensObj.Assign)
+        return this.consume(TokenNames.Assign)
     }
-    
+
     Hash() {
         // Hash 用于私有标识符的 # 符号，但词法上已经合并到 PrivateIdentifier 中
         // 这里保留方法以防 Parser 中有单独使用的场景
-        return this.consume(es2025TokensObj.PrivateIdentifier)
+        return this.consume(TokenNames.PrivateIdentifier)
     }
 }
 

@@ -18,12 +18,20 @@ import SubhutiMatchToken from "../../src/struct/SubhutiMatchToken.ts"
 // 定义Token集
 // ============================================
 
+const TokenNames = {
+  LetTok: 'LetTok',
+  VarTok: 'VarTok',
+  ConstTok: 'ConstTok',
+  Identifier: 'Identifier',
+  WhiteSpace: 'WhiteSpace',
+} as const
+
 const testTokensObj = {
-  LetTok: createKeywordToken('LetTok', 'let'),
-  VarTok: createKeywordToken('VarTok', 'var'),
-  ConstTok: createKeywordToken('ConstTok', 'const'),
-  Identifier: createRegToken('Identifier', /[a-zA-Z_][a-zA-Z0-9_]*/),
-  WhiteSpace: createValueRegToken('WhiteSpace', /[ \t\r\n]+/, '', true),
+  LetTok: createKeywordToken(TokenNames.LetTok, 'let'),
+  VarTok: createKeywordToken(TokenNames.VarTok, 'var'),
+  ConstTok: createKeywordToken(TokenNames.ConstTok, 'const'),
+  Identifier: createRegToken(TokenNames.Identifier, /[a-zA-Z_][a-zA-Z0-9_]*/),
+  WhiteSpace: createValueRegToken(TokenNames.WhiteSpace, /[ \t\r\n]+/, '', true),
 }
 
 const testTokens = Object.values(testTokensObj)
@@ -34,19 +42,19 @@ const testTokens = Object.values(testTokensObj)
 
 class TestTokenConsumer extends SubhutiTokenConsumer {
   LetTok() {
-    return this.consume(testTokensObj.LetTok)
+    return this.consume(TokenNames.LetTok)
   }
-  
+
   VarTok() {
-    return this.consume(testTokensObj.VarTok)
+    return this.consume(TokenNames.VarTok)
   }
-  
+
   ConstTok() {
-    return this.consume(testTokensObj.ConstTok)
+    return this.consume(TokenNames.ConstTok)
   }
-  
+
   Identifier() {
-    return this.consume(testTokensObj.Identifier)
+    return this.consume(TokenNames.Identifier)
   }
 }
 

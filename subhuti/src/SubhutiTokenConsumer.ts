@@ -1,20 +1,19 @@
 /**
  * Subhuti Token Consumer - Token 消费扩展基类
- * 
+ *
  * 职责：
  * 1. 提供高级 token 消费方法
  * 2. 封装 consume 调用，避免子类重复代码
  * 3. 支持用户自定义扩展
- * 
+ *
  * 设计模式：
  * - 直接依赖 SubhutiParser
  * - 可被继承，添加自定义消费方法（如 Semicolon/Comma）
- * 
+ *
  * @version 3.0.0
  */
 
 import type SubhutiParser from "./SubhutiParser.ts"
-import type {SubhutiCreateToken} from "./struct/SubhutiCreateToken.ts"
 import type SubhutiCst from "./struct/SubhutiCst.ts"
 
 export default class SubhutiTokenConsumer {
@@ -30,12 +29,13 @@ export default class SubhutiTokenConsumer {
     // ============================================
     // Token 消费功能（修改状态）
     // ============================================
-    
+
     /**
      * 消费一个 token（修改 Parser 状态）
+     * @param tokenName token 名称（来自 TokenNames）
      */
-    protected consume(token: SubhutiCreateToken): SubhutiCst | undefined {
-        return this.parser._consumeToken(token.name)
+    protected consume(tokenName: string): SubhutiCst | undefined {
+        return this.parser._consumeToken(tokenName)
     }
 }
 
