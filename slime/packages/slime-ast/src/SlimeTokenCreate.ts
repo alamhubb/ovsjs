@@ -4,7 +4,6 @@
  * 为每个 Token 类型提供创建方法
  */
 
-import { SlimeTokenType } from "./SlimeAstType.ts";
 import type { SubhutiSourceLocation } from "subhuti/src/struct/SubhutiCst.ts";
 import type {
     SlimeVarToken,
@@ -20,7 +19,6 @@ import type {
     SlimeSemicolonToken,
     SlimeCommaToken,
     SlimeDotToken,
-    SlimeSpreadToken,
     SlimeArrowToken,
     SlimeQuestionToken,
     SlimeColonToken,

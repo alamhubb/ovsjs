@@ -186,7 +186,7 @@ export const SlimeReservedWordTokenTypes = {
 // Token 名称常量（与规范 A.1 词法规则名一致）
 // ============================================
 
-export const TokenNames = {
+export const SlimeTokenType = {
 
     // ============================================
     // A.1.2 White Space

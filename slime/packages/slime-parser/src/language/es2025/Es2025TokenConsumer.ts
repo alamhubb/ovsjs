@@ -18,7 +18,7 @@ import {
     SlimeBinaryOperatorTokenTypes,
     SlimeContextualKeywordTokenTypes,
     SlimeReservedWordTokenTypes, SlimeUnaryOperatorTokenTypes,
-    TokenNames
+    SlimeTokenType
 } from "slime-token/src/SlimeTokensName"
 import SubhutiTokenConsumer from "subhuti/src/SubhutiTokenConsumer.ts"
 
@@ -40,8 +40,8 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
      */
     protected consumeIdentifierValue(value: string) {
         const token = this.parser.curToken
-        if (token?.tokenName === TokenNames.IdentifierName && token.tokenValue === value) {
-            return this.consume(TokenNames.IdentifierName)
+        if (token?.tokenName === SlimeTokenType.IdentifierName && token.tokenValue === value) {
+            return this.consume(SlimeTokenType.IdentifierName)
         }
         // 标记解析失败
         this.parser._markParseFail()
@@ -311,31 +311,31 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
      * - LegacyOctalIntegerLiteral (如 077, Annex B)
      */
     NumericLiteral() {
-        return this.consume(TokenNames.NumericLiteral)
+        return this.consume(SlimeTokenType.NumericLiteral)
     }
 
     StringLiteral() {
-        return this.consume(TokenNames.StringLiteral)
+        return this.consume(SlimeTokenType.StringLiteral)
     }
 
     NoSubstitutionTemplate() {
-        return this.consume(TokenNames.NoSubstitutionTemplate)
+        return this.consume(SlimeTokenType.NoSubstitutionTemplate)
     }
 
     TemplateHead() {
-        return this.consume(TokenNames.TemplateHead)
+        return this.consume(SlimeTokenType.TemplateHead)
     }
 
     TemplateMiddle() {
-        return this.consume(TokenNames.TemplateMiddle)
+        return this.consume(SlimeTokenType.TemplateMiddle)
     }
 
     TemplateTail() {
-        return this.consume(TokenNames.TemplateTail)
+        return this.consume(SlimeTokenType.TemplateTail)
     }
 
     RegularExpressionLiteral() {
-        return this.consume(TokenNames.RegularExpressionLiteral)
+        return this.consume(SlimeTokenType.RegularExpressionLiteral)
     }
 
     // ============================================
@@ -347,7 +347,7 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
      * 只能出现在文件开头，由 Parser 的 Program 规则显式调用
      */
     HashbangComment() {
-        return this.consume(TokenNames.HashbangComment)
+        return this.consume(SlimeTokenType.HashbangComment)
     }
 
     // ============================================
@@ -359,7 +359,7 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
      * 规范: IdentifierName :: IdentifierStart | IdentifierName IdentifierPart
      */
     IdentifierName() {
-        return this.consume(TokenNames.IdentifierName)
+        return this.consume(SlimeTokenType.IdentifierName)
     }
 
     /**
@@ -367,7 +367,7 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
      * 规范: PrivateIdentifier :: # IdentifierName
      */
     PrivateIdentifier() {
-        return this.consume(TokenNames.PrivateIdentifier)
+        return this.consume(SlimeTokenType.PrivateIdentifier)
     }
     
     // ============================================
@@ -375,7 +375,7 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
     // ============================================
 
     UnsignedRightShiftAssign() {
-        return this.consume(TokenNames.UnsignedRightShiftAssign)
+        return this.consume(SlimeTokenType.UnsignedRightShiftAssign)
     }
 
     // ============================================
@@ -383,43 +383,43 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
     // ============================================
 
     Ellipsis() {
-        return this.consume(TokenNames.Ellipsis)
+        return this.consume(SlimeTokenType.Ellipsis)
     }
 
     UnsignedRightShift() {
-        return this.consume(TokenNames.UnsignedRightShift)
+        return this.consume(SlimeTokenType.UnsignedRightShift)
     }
 
     StrictEqual() {
-        return this.consume(TokenNames.StrictEqual)
+        return this.consume(SlimeTokenType.StrictEqual)
     }
 
     StrictNotEqual() {
-        return this.consume(TokenNames.StrictNotEqual)
+        return this.consume(SlimeTokenType.StrictNotEqual)
     }
 
     LeftShiftAssign() {
-        return this.consume(TokenNames.LeftShiftAssign)
+        return this.consume(SlimeTokenType.LeftShiftAssign)
     }
 
     RightShiftAssign() {
-        return this.consume(TokenNames.RightShiftAssign)
+        return this.consume(SlimeTokenType.RightShiftAssign)
     }
 
     ExponentiationAssign() {
-        return this.consume(TokenNames.ExponentiationAssign)
+        return this.consume(SlimeTokenType.ExponentiationAssign)
     }
 
     LogicalAndAssign() {
-        return this.consume(TokenNames.LogicalAndAssign)
+        return this.consume(SlimeTokenType.LogicalAndAssign)
     }
 
     LogicalOrAssign() {
-        return this.consume(TokenNames.LogicalOrAssign)
+        return this.consume(SlimeTokenType.LogicalOrAssign)
     }
 
     NullishCoalescingAssign() {
-        return this.consume(TokenNames.NullishCoalescingAssign)
+        return this.consume(SlimeTokenType.NullishCoalescingAssign)
     }
 
     // ============================================
@@ -427,91 +427,91 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
     // ============================================
 
     Arrow() {
-        return this.consume(TokenNames.Arrow)
+        return this.consume(SlimeTokenType.Arrow)
     }
 
     PlusAssign() {
-        return this.consume(TokenNames.PlusAssign)
+        return this.consume(SlimeTokenType.PlusAssign)
     }
 
     MinusAssign() {
-        return this.consume(TokenNames.MinusAssign)
+        return this.consume(SlimeTokenType.MinusAssign)
     }
 
     MultiplyAssign() {
-        return this.consume(TokenNames.MultiplyAssign)
+        return this.consume(SlimeTokenType.MultiplyAssign)
     }
 
     DivideAssign() {
-        return this.consume(TokenNames.DivideAssign)
+        return this.consume(SlimeTokenType.DivideAssign)
     }
 
     ModuloAssign() {
-        return this.consume(TokenNames.ModuloAssign)
+        return this.consume(SlimeTokenType.ModuloAssign)
     }
 
     LeftShift() {
-        return this.consume(TokenNames.LeftShift)
+        return this.consume(SlimeTokenType.LeftShift)
     }
 
     RightShift() {
-        return this.consume(TokenNames.RightShift)
+        return this.consume(SlimeTokenType.RightShift)
     }
 
     LessEqual() {
-        return this.consume(TokenNames.LessEqual)
+        return this.consume(SlimeTokenType.LessEqual)
     }
 
     GreaterEqual() {
-        return this.consume(TokenNames.GreaterEqual)
+        return this.consume(SlimeTokenType.GreaterEqual)
     }
 
     Equal() {
-        return this.consume(TokenNames.Equal)
+        return this.consume(SlimeTokenType.Equal)
     }
 
     NotEqual() {
-        return this.consume(TokenNames.NotEqual)
+        return this.consume(SlimeTokenType.NotEqual)
     }
 
     LogicalAnd() {
-        return this.consume(TokenNames.LogicalAnd)
+        return this.consume(SlimeTokenType.LogicalAnd)
     }
 
     LogicalOr() {
-        return this.consume(TokenNames.LogicalOr)
+        return this.consume(SlimeTokenType.LogicalOr)
     }
 
     NullishCoalescing() {
-        return this.consume(TokenNames.NullishCoalescing)
+        return this.consume(SlimeTokenType.NullishCoalescing)
     }
 
     Increment() {
-        return this.consume(TokenNames.Increment)
+        return this.consume(SlimeTokenType.Increment)
     }
 
     Decrement() {
-        return this.consume(TokenNames.Decrement)
+        return this.consume(SlimeTokenType.Decrement)
     }
 
     Exponentiation() {
-        return this.consume(TokenNames.Exponentiation)
+        return this.consume(SlimeTokenType.Exponentiation)
     }
 
     BitwiseAndAssign() {
-        return this.consume(TokenNames.BitwiseAndAssign)
+        return this.consume(SlimeTokenType.BitwiseAndAssign)
     }
 
     BitwiseOrAssign() {
-        return this.consume(TokenNames.BitwiseOrAssign)
+        return this.consume(SlimeTokenType.BitwiseOrAssign)
     }
 
     BitwiseXorAssign() {
-        return this.consume(TokenNames.BitwiseXorAssign)
+        return this.consume(SlimeTokenType.BitwiseXorAssign)
     }
 
     OptionalChaining() {
-        return this.consume(TokenNames.OptionalChaining)
+        return this.consume(SlimeTokenType.OptionalChaining)
     }
     
     // ============================================
@@ -519,99 +519,99 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
     // ============================================
 
     LBrace() {
-        return this.consume(TokenNames.LBrace)
+        return this.consume(SlimeTokenType.LBrace)
     }
 
     RBrace() {
-        return this.consume(TokenNames.RBrace)
+        return this.consume(SlimeTokenType.RBrace)
     }
 
     LParen() {
-        return this.consume(TokenNames.LParen)
+        return this.consume(SlimeTokenType.LParen)
     }
 
     RParen() {
-        return this.consume(TokenNames.RParen)
+        return this.consume(SlimeTokenType.RParen)
     }
 
     LBracket() {
-        return this.consume(TokenNames.LBracket)
+        return this.consume(SlimeTokenType.LBracket)
     }
 
     RBracket() {
-        return this.consume(TokenNames.RBracket)
+        return this.consume(SlimeTokenType.RBracket)
     }
 
     Dot() {
-        return this.consume(TokenNames.Dot)
+        return this.consume(SlimeTokenType.Dot)
     }
 
     Semicolon() {
-        return this.consume(TokenNames.Semicolon)
+        return this.consume(SlimeTokenType.Semicolon)
     }
 
     Comma() {
-        return this.consume(TokenNames.Comma)
+        return this.consume(SlimeTokenType.Comma)
     }
 
     Less() {
-        return this.consume(TokenNames.Less)
+        return this.consume(SlimeTokenType.Less)
     }
 
     Greater() {
-        return this.consume(TokenNames.Greater)
+        return this.consume(SlimeTokenType.Greater)
     }
 
     Plus() {
-        return this.consume(TokenNames.Plus)
+        return this.consume(SlimeTokenType.Plus)
     }
 
     Minus() {
-        return this.consume(TokenNames.Minus)
+        return this.consume(SlimeTokenType.Minus)
     }
 
     Asterisk() {
-        return this.consume(TokenNames.Asterisk)
+        return this.consume(SlimeTokenType.Asterisk)
     }
 
     Slash() {
-        return this.consume(TokenNames.Slash)
+        return this.consume(SlimeTokenType.Slash)
     }
 
     Modulo() {
-        return this.consume(TokenNames.Modulo)
+        return this.consume(SlimeTokenType.Modulo)
     }
 
     BitwiseAnd() {
-        return this.consume(TokenNames.BitwiseAnd)
+        return this.consume(SlimeTokenType.BitwiseAnd)
     }
 
     BitwiseOr() {
-        return this.consume(TokenNames.BitwiseOr)
+        return this.consume(SlimeTokenType.BitwiseOr)
     }
 
     BitwiseXor() {
-        return this.consume(TokenNames.BitwiseXor)
+        return this.consume(SlimeTokenType.BitwiseXor)
     }
 
     BitwiseNot() {
-        return this.consume(TokenNames.BitwiseNot)
+        return this.consume(SlimeTokenType.BitwiseNot)
     }
 
     LogicalNot() {
-        return this.consume(TokenNames.LogicalNot)
+        return this.consume(SlimeTokenType.LogicalNot)
     }
 
     Question() {
-        return this.consume(TokenNames.Question)
+        return this.consume(SlimeTokenType.Question)
     }
 
     Colon() {
-        return this.consume(TokenNames.Colon)
+        return this.consume(SlimeTokenType.Colon)
     }
 
     Assign() {
-        return this.consume(TokenNames.Assign)
+        return this.consume(SlimeTokenType.Assign)
     }
 }
 

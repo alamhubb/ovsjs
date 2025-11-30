@@ -4,7 +4,7 @@ import {
 } from "./SlimeAstType.ts";
 
 import {
-    TokenNames,
+    SlimeTokenType,
     SlimeUpdateOperatorTokenTypes,
     SlimeUnaryOperatorTokenTypes,
     SlimeBinaryOperatorTokenTypes,
@@ -53,17 +53,17 @@ export interface SlimeTokenNode extends SlimeBaseNodeWithoutComments {
 // ============================================
 
 export interface SlimeVarToken extends SlimeTokenNode {
-    type: typeof TokenNames.Var;
+    type: typeof SlimeTokenType.Var;
     value: "var";
 }
 
 export interface SlimeLetToken extends SlimeTokenNode {
-    type: typeof TokenNames.Let;
+    type: typeof SlimeTokenType.Let;
     value: "let";
 }
 
 export interface SlimeConstToken extends SlimeTokenNode {
-    type: typeof TokenNames.Const;
+    type: typeof SlimeTokenType.Const;
     value: "const";
 }
 
@@ -75,7 +75,7 @@ export type SlimeVariableDeclarationKindToken = SlimeVarToken | SlimeLetToken | 
 // ============================================
 
 export interface SlimeAssignToken extends SlimeTokenNode {
-    type: typeof TokenNames.Assign;
+    type: typeof SlimeTokenType.Assign;
     value: "=";
 }
 
@@ -84,47 +84,47 @@ export interface SlimeAssignToken extends SlimeTokenNode {
 // ============================================
 
 export interface SlimeSemicolonToken extends SlimeTokenNode {
-    type: typeof TokenNames.Semicolon;
+    type: typeof SlimeTokenType.Semicolon;
     value: ";";
 }
 
 export interface SlimeLBraceToken extends SlimeTokenNode {
-    type: typeof TokenNames.LBrace;
+    type: typeof SlimeTokenType.LBrace;
     value: "{";
 }
 
 export interface SlimeRBraceToken extends SlimeTokenNode {
-    type: typeof TokenNames.RBrace;
+    type: typeof SlimeTokenType.RBrace;
     value: "}";
 }
 
 export interface SlimeLBracketToken extends SlimeTokenNode {
-    type: typeof TokenNames.LBracket;
+    type: typeof SlimeTokenType.LBracket;
     value: "[";
 }
 
 export interface SlimeRBracketToken extends SlimeTokenNode {
-    type: typeof TokenNames.RBracket;
+    type: typeof SlimeTokenType.RBracket;
     value: "]";
 }
 
 export interface SlimeLParenToken extends SlimeTokenNode {
-    type: typeof TokenNames.LParen;
+    type: typeof SlimeTokenType.LParen;
     value: "(";
 }
 
 export interface SlimeRParenToken extends SlimeTokenNode {
-    type: typeof TokenNames.RParen;
+    type: typeof SlimeTokenType.RParen;
     value: ")";
 }
 
 export interface SlimeCommaToken extends SlimeTokenNode {
-    type: typeof TokenNames.Comma;
+    type: typeof SlimeTokenType.Comma;
     value: ",";
 }
 
 export interface SlimeColonToken extends SlimeTokenNode {
-    type: typeof TokenNames.Colon;
+    type: typeof SlimeTokenType.Colon;
     value: ":";
 }
 
@@ -169,225 +169,225 @@ export interface SlimeSemicolonTokens {
 // ============================================
 
 export interface SlimeFunctionToken extends SlimeTokenNode {
-    type: typeof TokenNames.Function;
+    type: typeof SlimeTokenType.Function;
     value: "function";
 }
 
 export interface SlimeAsyncToken extends SlimeTokenNode {
-    type: typeof TokenNames.Async;
+    type: typeof SlimeTokenType.Async;
     value: "async";
 }
 
 export interface SlimeAsteriskToken extends SlimeTokenNode {
-    type: typeof TokenNames.Asterisk;
+    type: typeof SlimeTokenType.Asterisk;
     value: "*";
 }
 
 export interface SlimeArrowToken extends SlimeTokenNode {
-    type: typeof TokenNames.Arrow;
+    type: typeof SlimeTokenType.Arrow;
     value: "=>";
 }
 
 // 控制流关键字
 export interface SlimeIfToken extends SlimeTokenNode {
-    type: typeof TokenNames.If;
+    type: typeof SlimeTokenType.If;
     value: "if";
 }
 
 export interface SlimeElseToken extends SlimeTokenNode {
-    type: typeof TokenNames.Else;
+    type: typeof SlimeTokenType.Else;
     value: "else";
 }
 
 export interface SlimeForToken extends SlimeTokenNode {
-    type: typeof TokenNames.For;
+    type: typeof SlimeTokenType.For;
     value: "for";
 }
 
 export interface SlimeWhileToken extends SlimeTokenNode {
-    type: typeof TokenNames.While;
+    type: typeof SlimeTokenType.While;
     value: "while";
 }
 
 export interface SlimeDoToken extends SlimeTokenNode {
-    type: typeof TokenNames.Do;
+    type: typeof SlimeTokenType.Do;
     value: "do";
 }
 
 export interface SlimeInToken extends SlimeTokenNode {
-    type: typeof TokenNames.In;
+    type: typeof SlimeTokenType.In;
     value: "in";
 }
 
 export interface SlimeOfToken extends SlimeTokenNode {
-    type: typeof TokenNames.Of;
+    type: typeof SlimeTokenType.Of;
     value: "of";
 }
 
 export interface SlimeSwitchToken extends SlimeTokenNode {
-    type: typeof TokenNames.Switch;
+    type: typeof SlimeTokenType.Switch;
     value: "switch";
 }
 
 export interface SlimeCaseToken extends SlimeTokenNode {
-    type: typeof TokenNames.Case;
+    type: typeof SlimeTokenType.Case;
     value: "case";
 }
 
 export interface SlimeDefaultToken extends SlimeTokenNode {
-    type: typeof TokenNames.Default;
+    type: typeof SlimeTokenType.Default;
     value: "default";
 }
 
 export interface SlimeBreakToken extends SlimeTokenNode {
-    type: typeof TokenNames.Break;
+    type: typeof SlimeTokenType.Break;
     value: "break";
 }
 
 export interface SlimeContinueToken extends SlimeTokenNode {
-    type: typeof TokenNames.Continue;
+    type: typeof SlimeTokenType.Continue;
     value: "continue";
 }
 
 export interface SlimeReturnToken extends SlimeTokenNode {
-    type: typeof TokenNames.Return;
+    type: typeof SlimeTokenType.Return;
     value: "return";
 }
 
 export interface SlimeThrowToken extends SlimeTokenNode {
-    type: typeof TokenNames.Throw;
+    type: typeof SlimeTokenType.Throw;
     value: "throw";
 }
 
 export interface SlimeTryToken extends SlimeTokenNode {
-    type: typeof TokenNames.Try;
+    type: typeof SlimeTokenType.Try;
     value: "try";
 }
 
 export interface SlimeCatchToken extends SlimeTokenNode {
-    type: typeof TokenNames.Catch;
+    type: typeof SlimeTokenType.Catch;
     value: "catch";
 }
 
 export interface SlimeFinallyToken extends SlimeTokenNode {
-    type: typeof TokenNames.Finally;
+    type: typeof SlimeTokenType.Finally;
     value: "finally";
 }
 
 export interface SlimeWithToken extends SlimeTokenNode {
-    type: typeof TokenNames.With;
+    type: typeof SlimeTokenType.With;
     value: "with";
 }
 
 export interface SlimeDebuggerToken extends SlimeTokenNode {
-    type: typeof TokenNames.Debugger;
+    type: typeof SlimeTokenType.Debugger;
     value: "debugger";
 }
 
 export interface SlimeAwaitToken extends SlimeTokenNode {
-    type: typeof TokenNames.Await;
+    type: typeof SlimeTokenType.Await;
     value: "await";
 }
 
 export interface SlimeYieldToken extends SlimeTokenNode {
-    type: typeof TokenNames.Yield;
+    type: typeof SlimeTokenType.Yield;
     value: "yield";
 }
 
 // 类相关关键字
 export interface SlimeClassToken extends SlimeTokenNode {
-    type: typeof TokenNames.Class;
+    type: typeof SlimeTokenType.Class;
     value: "class";
 }
 
 export interface SlimeExtendsToken extends SlimeTokenNode {
-    type: typeof TokenNames.Extends;
+    type: typeof SlimeTokenType.Extends;
     value: "extends";
 }
 
 export interface SlimeStaticToken extends SlimeTokenNode {
-    type: typeof TokenNames.Static;
+    type: typeof SlimeTokenType.Static;
     value: "static";
 }
 
 export interface SlimeGetToken extends SlimeTokenNode {
-    type: typeof TokenNames.Get;
+    type: typeof SlimeTokenType.Get;
     value: "get";
 }
 
 export interface SlimeSetToken extends SlimeTokenNode {
-    type: typeof TokenNames.Set;
+    type: typeof SlimeTokenType.Set;
     value: "set";
 }
 
 // 操作符关键字
 export interface SlimeNewToken extends SlimeTokenNode {
-    type: typeof TokenNames.New;
+    type: typeof SlimeTokenType.New;
     value: "new";
 }
 
 export interface SlimeTypeofToken extends SlimeTokenNode {
-    type: typeof TokenNames.Typeof;
+    type: typeof SlimeTokenType.Typeof;
     value: "typeof";
 }
 
 export interface SlimeVoidToken extends SlimeTokenNode {
-    type: typeof TokenNames.Void;
+    type: typeof SlimeTokenType.Void;
     value: "void";
 }
 
 export interface SlimeDeleteToken extends SlimeTokenNode {
-    type: typeof TokenNames.Delete;
+    type: typeof SlimeTokenType.Delete;
     value: "delete";
 }
 
 export interface SlimeInstanceofToken extends SlimeTokenNode {
-    type: typeof TokenNames.Instanceof;
+    type: typeof SlimeTokenType.Instanceof;
     value: "instanceof";
 }
 
 // 模块关键字
 export interface SlimeImportToken extends SlimeTokenNode {
-    type: typeof TokenNames.Import;
+    type: typeof SlimeTokenType.Import;
     value: "import";
 }
 
 export interface SlimeExportToken extends SlimeTokenNode {
-    type: typeof TokenNames.Export;
+    type: typeof SlimeTokenType.Export;
     value: "export";
 }
 
 export interface SlimeFromToken extends SlimeTokenNode {
-    type: typeof TokenNames.From;
+    type: typeof SlimeTokenType.From;
     value: "from";
 }
 
 export interface SlimeAsToken extends SlimeTokenNode {
-    type: typeof TokenNames.As;
+    type: typeof SlimeTokenType.As;
     value: "as";
 }
 
 // 展开运算符 (Ellipsis)
 export interface SlimeEllipsisToken extends SlimeTokenNode {
-    type: typeof TokenNames.Ellipsis;
+    type: typeof SlimeTokenType.Ellipsis;
     value: "...";
 }
 
 // 点号
 export interface SlimeDotToken extends SlimeTokenNode {
-    type: typeof TokenNames.Dot;
+    type: typeof SlimeTokenType.Dot;
     value: ".";
 }
 
 // 可选链
 export interface SlimeOptionalChainingToken extends SlimeTokenNode {
-    type: typeof TokenNames.OptionalChaining;
+    type: typeof SlimeTokenType.OptionalChaining;
     value: "?.";
 }
 
 // 问号
 export interface SlimeQuestionToken extends SlimeTokenNode {
-    type: typeof TokenNames.Question;
+    type: typeof SlimeTokenType.Question;
     value: "?";
 }
 
