@@ -8,8 +8,6 @@ import {
 } from "subhuti/src/struct/SubhutiCreateToken.ts";
 import {TokenNames} from "slime-token/src/SlimeTokensName.ts";
 
-
-
 // ============================================
 // 软关键字值常量（Contextual Keywords）
 // 这些在词法层是 IdentifierName，在语法层通过值检查识别
@@ -169,23 +167,44 @@ export const SlimeLexerTokensObj = {
 
     // ============================================
     // A.1.9 数字字面量
-    // 规范: NumericLiteral :: DecimalLiteral | DecimalBigIntegerLiteral | NonDecimalIntegerLiteral | ...
+    // 规范: NumericLiteral :: DecimalLiteral | DecimalBigIntegerLiteral | NonDecimalIntegerLiteral | LegacyOctalIntegerLiteral
     // 所有数字变体都映射到 NumericLiteral
     // ============================================
 
     // BigInt 变体 (DecimalBigIntegerLiteral, NonDecimalIntegerLiteral BigIntLiteralSuffix)
+    // DecimalBigIntegerLiteral :: 0n | NonZeroDigit DecimalDigits_opt n
     NumericLiteralBigIntHex: createEmptyValueRegToken(TokenNames.NumericLiteral, /0[xX][0-9a-fA-F](_?[0-9a-fA-F])*n/),
     NumericLiteralBigIntBinary: createEmptyValueRegToken(TokenNames.NumericLiteral, /0[bB][01](_?[01])*n/),
     NumericLiteralBigIntOctal: createEmptyValueRegToken(TokenNames.NumericLiteral, /0[oO][0-7](_?[0-7])*n/),
     NumericLiteralBigIntDecimal: createEmptyValueRegToken(TokenNames.NumericLiteral, /(?:0|[1-9](_?[0-9])*)n/),
+
     // 非十进制整数 (NonDecimalIntegerLiteral)
+    // HexIntegerLiteral :: 0x HexDigits | 0X HexDigits
+    // BinaryIntegerLiteral :: 0b BinaryDigits | 0B BinaryDigits
+    // OctalIntegerLiteral :: 0o OctalDigits | 0O OctalDigits
     NumericLiteralHex: createEmptyValueRegToken(TokenNames.NumericLiteral, /0[xX][0-9a-fA-F](_?[0-9a-fA-F])*/),
     NumericLiteralBinary: createEmptyValueRegToken(TokenNames.NumericLiteral, /0[bB][01](_?[01])*/),
     NumericLiteralOctal: createEmptyValueRegToken(TokenNames.NumericLiteral, /0[oO][0-7](_?[0-7])*/),
+
     // 传统八进制 (LegacyOctalIntegerLiteral, Annex B)
+    // LegacyOctalIntegerLiteral :: 0 OctalDigit | LegacyOctalIntegerLiteral OctalDigit
     NumericLiteralLegacyOctal: createEmptyValueRegToken(TokenNames.NumericLiteral, /0[0-7]+/),
+
     // 十进制 (DecimalLiteral)
-    NumericLiteralDecimal: createEmptyValueRegToken(TokenNames.NumericLiteral, /(?:[0-9](_?[0-9])*\.([0-9](_?[0-9])*)?|\.[0-9](_?[0-9])*|[0-9](_?[0-9])*)([eE][+-]?[0-9](_?[0-9])*)?/),
+    // DecimalLiteral ::
+    //     DecimalIntegerLiteral . DecimalDigits_opt ExponentPart_opt
+    //     . DecimalDigits ExponentPart_opt
+    //     DecimalIntegerLiteral ExponentPart_opt
+    // DecimalIntegerLiteral ::
+    //     0                                           -- 单独的 0
+    //     NonZeroDigit                                -- 1-9
+    //     NonZeroDigit NumericLiteralSeparator_opt DecimalDigits  -- 12, 1_2, 123
+    //     NonOctalDecimalIntegerLiteral               -- 08, 09, 0189 (以0开头但包含8或9)
+    //
+    // 正则说明：
+    // - DecimalIntegerLiteral = 0 | [1-9](_?[0-9])* | 0[0-7]*[89][0-9]*
+    // - 注意：0 后面不能直接接 _ (如 0_1 是非法的)
+    NumericLiteralDecimal: createEmptyValueRegToken(TokenNames.NumericLiteral, /(?:(?:0|[1-9](_?[0-9])*|0[0-7]*[89][0-9]*)\.([0-9](_?[0-9])*)?|\.[0-9](_?[0-9])*|(?:0|[1-9](_?[0-9])*|0[0-7]*[89][0-9]*))([eE][+-]?[0-9](_?[0-9])*)?/),
 
     // ============================================
     // A.1.10 字符串字面量
