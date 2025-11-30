@@ -1,13 +1,13 @@
 import type * as ESTree from "estree";
-import {SlimeAstType} from "./SlimeAstType.ts";
 import {
+    SlimeAstType,
     SlimeTokenType,
     SlimeUpdateOperatorTokenTypes,
     SlimeUnaryOperatorTokenTypes,
     SlimeBinaryOperatorTokenTypes,
     SlimeLogicalOperatorTokenTypes,
     SlimeAssignmentOperatorTokenTypes,
-} from "./SlimeTokenType.ts";
+} from "./SlimeAstType.ts";
 import type {SubhutiSourceLocation} from "subhuti/src/struct/SubhutiCst.ts";
 
 /**
@@ -148,7 +148,8 @@ export interface SlimeParenTokens {
 }
 
 /** 函数结构：小括号 + 大括号 */
-export interface SlimeFunctionTokens extends SlimeParenTokens, SlimeBraceTokens {}
+export interface SlimeFunctionTokens extends SlimeParenTokens, SlimeBraceTokens {
+}
 
 /** 包含冒号的节点 */
 export interface SlimeColonTokens {
