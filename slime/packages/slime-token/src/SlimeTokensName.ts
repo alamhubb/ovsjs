@@ -7,18 +7,15 @@
  * 2. 关键字名与规范 ReservedWord 一致（首字母大写）
  * 3. 标点符号使用语义化名称
  */
+
 // ============================================
 // Token 名称常量（与规范 A.1 词法规则名一致）
 // ============================================
 
 export const TokenNames = {
-    TemplateHead: 'TemplateHead',
-    TemplateMiddle: 'TemplateMiddle',
-    TemplateTail: 'TemplateTail',
 
     // ============================================
-    // A.1.1 Unicode Format-Control Characters
-    // (内部使用，不产生 token)
+    // ✅ 正确的 Token 名称（与规范一致）
     // ============================================
 
     // ============================================
@@ -69,6 +66,9 @@ export const TokenNames = {
     // 规范: Template :: NoSubstitutionTemplate | TemplateHead
     // 规范: TemplateSubstitutionTail :: TemplateMiddle | TemplateTail
     NoSubstitutionTemplate: 'NoSubstitutionTemplate',
+    TemplateHead: 'TemplateHead',
+    TemplateMiddle: 'TemplateMiddle',
+    TemplateTail: 'TemplateTail',
 
     // --- RegularExpressionLiteral ---
     // 规范: RegularExpressionLiteral :: / RegularExpressionBody / RegularExpressionFlags
@@ -193,56 +193,20 @@ export const TokenNames = {
     While: 'While',
     With: 'With',
     Yield: 'Yield',
-    StarAssign: "StarAssign",               // *=
-    SlashAssign: "SlashAssign",             // /=
-    PercentAssign: "PercentAssign",         // %=
-    StarStarAssign: "StarStarAssign",       // **=
-    LShiftAssign: "LShiftAssign",           // <<=
-    RShiftAssign: "RShiftAssign",           // >>=
-    URShiftAssign: "URShiftAssign",         // >>>=
-    BitAndAssign: "BitAndAssign",           // &=
-    BitOrAssign: "BitOrAssign",             // |=
-    BitXorAssign: "BitXorAssign",           // ^=
-    AndAssign: "AndAssign",                 // &&=
-    OrAssign: "OrAssign",                   // ||=
-    NullishAssign: "NullishAssign",         // ??=
 
-    PlusPlus: "PlusPlus",                   // ++
-    MinusMinus: "MinusMinus",               // --
 
-    Not: "Not",                             // !
-    BitNot: "BitNot",                       // ~
-    Star: "Star",                           // *
-    Percent: "Percent",                     // %
-    StarStar: "StarStar",                   // **
-    EqEq: "EqEq",                           // ==
-    NotEq: "NotEq",                         // !=
-    EqEqEq: "EqEqEq",                       // ===
-    NotEqEq: "NotEqEq",                     // !==
-    Lt: "Lt",                               // <
-    Gt: "Gt",                               // >
-    LtEq: "LtEq",                           // <=
-    GtEq: "GtEq",                           // >=
-    LShift: "LShift",                       // <<
-    RShift: "RShift",                       // >>
-    URShift: "URShift",                     // >>>
-    BitAnd: "BitAnd",                       // &
-    BitOr: "BitOr",                         // |
-    BitXor: "BitXor",                       // ^
+    // ============================================
+    // ❌ 以下应该删除 - 软关键字不应作为独立 Token
+    // 规范中这些在词法层是 IdentifierName，在语法层通过值检查识别
+    // 见 Es2025TokenConsumer.consumeIdentifierValue()
+    // ============================================
+    Async: "Async",                         // ❌ 删除：软关键字，应作为 IdentifierName 处理
+    Static: "Static",                       // ❌ 删除：软关键字，应作为 IdentifierName 处理
+    Get: "Get",                             // ❌ 删除：软关键字，应作为 IdentifierName 处理
+    Set: "Set",                             // ❌ 删除：软关键字，应作为 IdentifierName 处理
+    Of: "Of",                               // ❌ 删除：软关键字，应作为 IdentifierName 处理
+    From: "From",                           // ❌ 删除：软关键字，应作为 IdentifierName 处理
+    As: "As",                               // ❌ 删除：软关键字，应作为 IdentifierName 处理
 
-    And: "And",                             // &&
-    Or: "Or",                               // ||
-
-    Async: "Async",
-    Static: "Static",
-    Get: "Get",
-    Set: "Set",
-
-     Of: "Of",
-    From: "From",
-    As: "As",
-    Spread: "Spread",                       // ...
-    OptionalChain: "OptionalChain",         // ?.
-
-}
+} as const
 
