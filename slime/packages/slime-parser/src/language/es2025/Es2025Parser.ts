@@ -374,22 +374,19 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     /**
      * BindingIdentifier[Yield, Await] :
      *     Identifier
-     *     yield  (只在 [~Yield] 上下文中允许)
-     *     await  (只在 [~Await] 上下文中允许)
+     *     yield
+     *     await
      *
-     * 注意：当 Yield=true 时，yield 是保留字，不能用作标识符
-     *       当 Await=true 时，await 是保留字，不能用作标识符
+     * 注意：根据 ES2025 规范，BindingIdentifier 语法上允许 yield 和 await 作为标识符。
+     * 与 LabelIdentifier 不同，这里没有 [~Yield]/[~Await] 条件限制。
+     * yield/await 在特定上下文中是否合法，由静态语义（Static Semantics）检查决定。
      */
     @SubhutiRule
     BindingIdentifier(params: ExpressionParams = {}): SubhutiCst | undefined {
-        const {Yield = false, Await = false} = params
-
         return this.Or([
             {alt: () => this.Identifier()},
-            // yield 只在 [~Yield] 上下文中允许
-            ...(!Yield ? [{alt: () => this.tokenConsumer.YieldTok()}] : []),
-            // await 只在 [~Await] 上下文中允许
-            ...(!Await ? [{alt: () => this.tokenConsumer.AwaitTok()}] : [])
+            {alt: () => this.tokenConsumer.YieldTok()},
+            {alt: () => this.tokenConsumer.AwaitTok()}
         ])
     }
 
@@ -524,6 +521,15 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
         ])
     }
 
+    /**
+     * PrivateIdentifier ::
+     *     # IdentifierName
+     */
+    @SubhutiRule
+    PrivateIdentifier(): SubhutiCst | undefined {
+        return this.tokenConsumer.PrivateIdentifier()
+    }
+
     // ----------------------------------------
     // A.2.2 Primary Expressions
     // ----------------------------------------
@@ -580,7 +586,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
                         return this.setParseFail()
                     }
                 }
-                return this.tokenConsumer.RegularExpression()
+                return this.RegularExpressionLiteral()
             }},
             {alt: () => this.TemplateLiteral({...params, Tagged: false})},
             {alt: () => this.CoverParenthesizedExpressionAndArrowParameterList(params)}
@@ -693,19 +699,75 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      *     NullLiteral
      *     BooleanLiteral
      *     NumericLiteral
-     *     BigIntLiteral
      *     StringLiteral
      */
     @SubhutiRule
     Literal(): SubhutiCst | undefined {
         return this.Or([
-            {alt: () => this.tokenConsumer.NullTok()},
-            {alt: () => this.tokenConsumer.TrueTok()},
-            {alt: () => this.tokenConsumer.FalseTok()},
-            {alt: () => this.tokenConsumer.Number()},
-            {alt: () => this.tokenConsumer.BigInt()},
-            {alt: () => this.tokenConsumer.String()}
+            {alt: () => this.NullLiteral()},
+            {alt: () => this.BooleanLiteral()},
+            {alt: () => this.NumericLiteral()},
+            {alt: () => this.StringLiteral()}
         ])
+    }
+
+    /**
+     * NullLiteral :
+     *     null
+     */
+    @SubhutiRule
+    NullLiteral(): SubhutiCst | undefined {
+        return this.tokenConsumer.NullTok()
+    }
+
+    /**
+     * BooleanLiteral :
+     *     true
+     *     false
+     */
+    @SubhutiRule
+    BooleanLiteral(): SubhutiCst | undefined {
+        return this.Or([
+            {alt: () => this.tokenConsumer.TrueTok()},
+            {alt: () => this.tokenConsumer.FalseTok()}
+        ])
+    }
+
+    /**
+     * NumericLiteral :
+     *     DecimalLiteral
+     *     DecimalBigIntegerLiteral
+     *     NonDecimalIntegerLiteral
+     *     LegacyOctalIntegerLiteral
+     *     NonDecimalIntegerLiteral BigIntLiteralSuffix
+     *
+     * 注意：词法层将 Number 和 BigInt 分开，这里合并以符合规范
+     */
+    @SubhutiRule
+    NumericLiteral(): SubhutiCst | undefined {
+        return this.Or([
+            {alt: () => this.tokenConsumer.Number()},
+            {alt: () => this.tokenConsumer.BigInt()}
+        ])
+    }
+
+    /**
+     * StringLiteral :
+     *     " DoubleStringCharacters_opt "
+     *     ' SingleStringCharacters_opt '
+     */
+    @SubhutiRule
+    StringLiteral(): SubhutiCst | undefined {
+        return this.tokenConsumer.String()
+    }
+
+    /**
+     * RegularExpressionLiteral :
+     *     / RegularExpressionBody / RegularExpressionFlags
+     */
+    @SubhutiRule
+    RegularExpressionLiteral(): SubhutiCst | undefined {
+        return this.tokenConsumer.RegularExpression()
     }
 
     /**
@@ -914,8 +976,8 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     LiteralPropertyName(): SubhutiCst | undefined {
         return this.Or([
             {alt: () => this.IdentifierName()},
-            {alt: () => this.tokenConsumer.String()},
-            {alt: () => this.tokenConsumer.Number()}
+            {alt: () => this.StringLiteral()},
+            {alt: () => this.NumericLiteral()}
         ])
     }
 
@@ -962,9 +1024,18 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     @SubhutiRule
     TemplateLiteral(params: TemplateLiteralParams = {}): SubhutiCst | undefined {
         return this.Or([
-            {alt: () => this.tokenConsumer.NoSubstitutionTemplate()},
+            {alt: () => this.NoSubstitutionTemplate()},
             {alt: () => this.SubstitutionTemplate(params)}
         ])
+    }
+
+    /**
+     * NoSubstitutionTemplate :
+     *     ` TemplateCharacters_opt `
+     */
+    @SubhutiRule
+    NoSubstitutionTemplate(): SubhutiCst | undefined {
+        return this.tokenConsumer.NoSubstitutionTemplate()
     }
 
     /**
@@ -973,9 +1044,18 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      */
     @SubhutiRule
     SubstitutionTemplate(params: TemplateLiteralParams = {}): SubhutiCst | undefined {
-        this.tokenConsumer.TemplateHead()
+        this.TemplateHead()
         this.Expression({...params, In: true})
         return this.TemplateSpans(params)
+    }
+
+    /**
+     * TemplateHead :
+     *     ` TemplateCharacters_opt ${
+     */
+    @SubhutiRule
+    TemplateHead(): SubhutiCst | undefined {
+        return this.tokenConsumer.TemplateHead()
     }
 
     /**
@@ -986,14 +1066,32 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     @SubhutiRule
     TemplateSpans(params: TemplateLiteralParams = {}): SubhutiCst | undefined {
         return this.Or([
-            {alt: () => this.tokenConsumer.TemplateTail()},
+            {alt: () => this.TemplateTail()},
             {
                 alt: () => {
                     this.TemplateMiddleList(params)
-                    this.tokenConsumer.TemplateTail()
+                    this.TemplateTail()
                 }
             }
         ])
+    }
+
+    /**
+     * TemplateTail :
+     *     } TemplateCharacters_opt `
+     */
+    @SubhutiRule
+    TemplateTail(): SubhutiCst | undefined {
+        return this.tokenConsumer.TemplateTail()
+    }
+
+    /**
+     * TemplateMiddle :
+     *     } TemplateCharacters_opt ${
+     */
+    @SubhutiRule
+    TemplateMiddle(): SubhutiCst | undefined {
+        return this.tokenConsumer.TemplateMiddle()
     }
 
     /**
@@ -1003,11 +1101,11 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      */
     @SubhutiRule
     TemplateMiddleList(params: TemplateLiteralParams = {}): SubhutiCst | undefined {
-        this.tokenConsumer.TemplateMiddle()
+        this.TemplateMiddle()
         this.Expression({...params, In: true})
 
         this.Many(() => {
-            this.tokenConsumer.TemplateMiddle()
+            this.TemplateMiddle()
             this.Expression({...params, In: true})
         })
 
@@ -1068,7 +1166,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             {
                 alt: () => {
                     this.tokenConsumer.Dot()
-                    this.tokenConsumer.PrivateIdentifier()
+                    this.PrivateIdentifier()
                 }
             }
         ]))
@@ -1204,7 +1302,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             {
                 alt: () => {
                     this.tokenConsumer.Dot()
-                    this.tokenConsumer.PrivateIdentifier()
+                    this.PrivateIdentifier()
                 }
             }
         ]))
@@ -1435,7 +1533,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             {
                 alt: () => {
                     this.tokenConsumer.OptionalChaining()
-                    this.tokenConsumer.PrivateIdentifier()
+                    this.PrivateIdentifier()
                 }
             }
         ])
@@ -1460,7 +1558,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
             {
                 alt: () => {
                     this.tokenConsumer.Dot()
-                    this.tokenConsumer.PrivateIdentifier()
+                    this.PrivateIdentifier()
                 }
             }
         ]))
@@ -1661,24 +1759,30 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      * MultiplicativeExpression[Yield, Await] :
      *     ExponentiationExpression[?Yield, ?Await]
      *     MultiplicativeExpression[?Yield, ?Await] MultiplicativeOperator ExponentiationExpression[?Yield, ?Await]
-     *
-     * MultiplicativeOperator : one of
-     *     * / %
      */
     @SubhutiRule
     MultiplicativeExpression(params: ExpressionParams = {}): SubhutiCst | undefined {
         this.ExponentiationExpression(params)
 
         this.Many(() => {
-            this.Or([
-                {alt: () => this.tokenConsumer.Asterisk()},
-                {alt: () => this.tokenConsumer.Slash()},
-                {alt: () => this.tokenConsumer.Modulo()}
-            ])
+            this.MultiplicativeOperator()
             this.ExponentiationExpression(params)
         })
 
         return this.curCst
+    }
+
+    /**
+     * MultiplicativeOperator : one of
+     *     * / %
+     */
+    @SubhutiRule
+    MultiplicativeOperator(): SubhutiCst | undefined {
+        return this.Or([
+            {alt: () => this.tokenConsumer.Asterisk()},
+            {alt: () => this.tokenConsumer.Slash()},
+            {alt: () => this.tokenConsumer.Modulo()}
+        ])
     }
 
     /**
@@ -1742,7 +1846,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
 
         // 处理 [+In] PrivateIdentifier in ShiftExpression
         if (In && this.lookahead(TokenNames.PrivateIdentifier, 1)) {
-            this.tokenConsumer.PrivateIdentifier()
+            this.PrivateIdentifier()
             this.tokenConsumer.InTok()
             this.ShiftExpression(params)
             return this.curCst
@@ -1919,15 +2023,28 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      *     CoalesceExpression[?In, ?Yield, ?Await]
      *     BitwiseORExpression[?In, ?Yield, ?Await]
      *
-     * ⚠️ 已废弃：此规则仅用于规范中的左递归表达
-     * 在 PEG 实现中，CoalesceExpression 直接使用 Many 改写，不再需要此规则。
+     * ⚠️ PEG 改写说明：
      *
-     * 保留此方法仅为文档目的，实际不会被调用。
+     * 在 ECMAScript 规范中，CoalesceExpressionHead 用于表达左递归：
+     *   CoalesceExpression : CoalesceExpressionHead ?? BitwiseORExpression
+     *   CoalesceExpressionHead : CoalesceExpression | BitwiseORExpression
+     *
+     * 这种左递归形式在 PEG 解析器中无法直接使用。
+     *
+     * 解决方案：将左递归改写为迭代形式
+     *   CoalesceExpression → BitwiseORExpression ( ?? BitwiseORExpression )*
+     *
+     * 改写后，CoalesceExpressionHead 的功能已被 CoalesceExpression 中的
+     * Many 循环吸收，因此此规则不再需要独立实现。
+     *
+     * 保留此方法是为了：
+     * 1. 保持与规范的一一对应关系（便于代码审查）
+     * 2. 作为文档说明 PEG 改写的原因
      */
     @SubhutiRule
     CoalesceExpressionHead(params: ExpressionParams = {}): SubhutiCst | undefined {
-        // 此方法已废弃，不应被调用
-        throw new Error('CoalesceExpressionHead 已废弃，请使用 CoalesceExpression')
+        // 此方法在 PEG 实现中不会被调用，功能已合并到 CoalesceExpression
+        throw new Error('CoalesceExpressionHead 在 PEG 实现中已被 CoalesceExpression 吸收，不应直接调用')
     }
 
     /**
@@ -2695,8 +2812,22 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     }
 
     /**
-     * IfStatement 的 body，支持 Annex B.3.4
-     * 允许 Statement 或 FunctionDeclaration（非严格模式）
+     * IfStatementBody - 辅助规则（非规范正式定义）
+     *
+     * ⚠️ 注意：此规则不是 ECMAScript 规范的正式语法规则，
+     * 而是为了支持 Annex B.3.4（Web 兼容性附录）而添加的辅助规则。
+     *
+     * Annex B.3.4 规定，在非严格模式的 Web 浏览器环境中，
+     * IfStatement 的 body 位置允许直接放置 FunctionDeclaration：
+     *
+     *   if ( Expression ) FunctionDeclaration else Statement
+     *   if ( Expression ) Statement else FunctionDeclaration
+     *   if ( Expression ) FunctionDeclaration else FunctionDeclaration
+     *   if ( Expression ) FunctionDeclaration [lookahead ≠ else]
+     *
+     * 这是历史遗留行为，严格模式下不允许。
+     *
+     * 参考：ECMAScript 2025 Annex B.3.4 FunctionDeclarations in IfStatement Statement Clauses
      */
     @SubhutiRule
     IfStatementBody(params: StatementParams = {}): SubhutiCst | undefined {
@@ -2732,10 +2863,10 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      * DoWhileStatement[Yield, Await, Return] :
      *     do Statement[?Yield, ?Await, ?Return] while ( Expression[+In, ?Yield, ?Await] ) ;
      *
-     * 注意：根据 ECMAScript 规范 12.10.1 ASI 规则：
+     * 注意：根据 ECMAScript 规范 11.9.1 ASI 规则：
      * "The previous token is ) and the inserted semicolon would then be parsed as
      *  the terminating semicolon of a do-while statement"
-     * 因此 do-while 语句末尾的分号可以省略（ASI 会自动插入）
+     * 因此 do-while 语句末尾的分号支持 ASI
      */
     @SubhutiRule
     DoWhileStatement(params: StatementParams = {}): SubhutiCst | undefined {
@@ -2745,9 +2876,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
         this.tokenConsumer.LParen()
         this.Expression({...params, In: true})
         this.tokenConsumer.RParen()
-        // do-while 特殊 ASI 规则：分号可选
-        this.Option(() => this.tokenConsumer.Semicolon())
-        return this.curCst
+        return this.SemicolonASI()
     }
 
     /**
@@ -4163,7 +4292,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     ClassElementName(params: ExpressionParams = {}): SubhutiCst | undefined {
         return this.Or([
             {alt: () => this.PropertyName(params)},
-            {alt: () => this.tokenConsumer.PrivateIdentifier()}
+            {alt: () => this.PrivateIdentifier()}
         ])
     }
 
@@ -4216,45 +4345,57 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
         this.Option(() => this.tokenConsumer.HashbangComment())
 
         if (sourceType === 'module') {
-            // ModuleBody_opt: ModuleItemList?
-            this.ModuleItemList()
+            // ModuleBody_opt
+            this.Option(() => this.ModuleBody())
         } else {
-            // ScriptBody_opt: StatementList?
-            this.StatementList({Yield: false, Await: false, Return: false})
+            // ScriptBody_opt
+            this.Option(() => this.ScriptBody())
         }
         return this.curCst
     }
 
     /**
      * Script :
-     *     HashbangComment_opt ScriptBody_opt
-     *
-     * ScriptBody :
-     *     StatementList[~Yield, ~Await, ~Return]
+     *     ScriptBody_opt
      */
     @SubhutiRule
     Script(): SubhutiCst | undefined {
         // Hashbang 注释只能出现在文件开头
         this.Option(() => this.tokenConsumer.HashbangComment())
         // ScriptBody_opt
-        this.StatementList({Yield: false, Await: false, Return: false})
+        this.Option(() => this.ScriptBody())
         return this.curCst
     }
 
     /**
+     * ScriptBody :
+     *     StatementList[~Yield, ~Await, ~Return]
+     */
+    @SubhutiRule
+    ScriptBody(): SubhutiCst | undefined {
+        return this.StatementList({Yield: false, Await: false, Return: false})
+    }
+
+    /**
      * Module :
-     *     HashbangComment_opt ModuleBody_opt
-     *
-     * ModuleBody :
-     *     ModuleItemList
+     *     ModuleBody_opt
      */
     @SubhutiRule
     Module(): SubhutiCst | undefined {
         // Hashbang 注释只能出现在文件开头
         this.Option(() => this.tokenConsumer.HashbangComment())
         // ModuleBody_opt
-        this.ModuleItemList()
+        this.Option(() => this.ModuleBody())
         return this.curCst
+    }
+
+    /**
+     * ModuleBody :
+     *     ModuleItemList
+     */
+    @SubhutiRule
+    ModuleBody(): SubhutiCst | undefined {
+        return this.ModuleItemList()
     }
 
     /**
@@ -4466,7 +4607,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      */
     @SubhutiRule
     ModuleSpecifier(): SubhutiCst | undefined {
-        return this.tokenConsumer.String()
+        return this.StringLiteral()
     }
 
     /**
@@ -4516,13 +4657,13 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     WithEntries(): SubhutiCst | undefined {
         this.AttributeKey()
         this.tokenConsumer.Colon()
-        this.tokenConsumer.String()
+        this.StringLiteral()
 
         this.Many(() => {
             this.tokenConsumer.Comma()
             this.AttributeKey()
             this.tokenConsumer.Colon()
-            this.tokenConsumer.String()
+            this.StringLiteral()
         })
 
         return this.curCst
@@ -4537,7 +4678,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     AttributeKey(): SubhutiCst | undefined {
         return this.Or([
             {alt: () => this.IdentifierName()},
-            {alt: () => this.tokenConsumer.String()}
+            {alt: () => this.StringLiteral()}
         ])
     }
 
@@ -4726,7 +4867,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
     ModuleExportName(): SubhutiCst | undefined {
         return this.Or([
             {alt: () => this.IdentifierName()},
-            {alt: () => this.tokenConsumer.String()}
+            {alt: () => this.StringLiteral()}
         ])
     }
 

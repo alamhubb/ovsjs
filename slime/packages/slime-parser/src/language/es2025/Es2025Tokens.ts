@@ -14,8 +14,7 @@ import {
     createKeywordToken,
     createValueRegToken,
     createEmptyValueRegToken,
-    SubhutiCreateToken,
-    SubhutiTokenContextConstraint
+    SubhutiCreateToken
 } from 'subhuti/src/struct/SubhutiCreateToken.ts'
 import {SubhutiLexerTokenNames} from "subhuti/src/SubhutiLexer.ts";
 

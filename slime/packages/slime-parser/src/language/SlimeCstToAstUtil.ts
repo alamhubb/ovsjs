@@ -128,9 +128,27 @@ export class SlimeCstToAst {
             return SlimeAstUtil.createProgram([], isModule ? 'module' : 'script')
         }
 
-        if (first.name === Es6Parser.prototype.ModuleItemList?.name || first.name === 'ModuleItemList') {
+        // 处理 ModuleBody 中间层（ES2025 规范）
+        if (first.name === 'ModuleBody') {
+            const moduleItemList = first.children?.[0]
+            if (moduleItemList && (moduleItemList.name === 'ModuleItemList' || moduleItemList.name === Es6Parser.prototype.ModuleItemList?.name)) {
+                const body = this.createModuleItemListAst(moduleItemList)
+                program = SlimeAstUtil.createProgram(body, 'module')
+            } else {
+                program = SlimeAstUtil.createProgram([], 'module')
+            }
+        } else if (first.name === Es6Parser.prototype.ModuleItemList?.name || first.name === 'ModuleItemList') {
             const body = this.createModuleItemListAst(first)
             program = SlimeAstUtil.createProgram(body, 'module')
+        } else if (first.name === 'ScriptBody') {
+            // 处理 ScriptBody 中间层（ES2025 规范）
+            const statementList = first.children?.[0]
+            if (statementList && (statementList.name === 'StatementList' || statementList.name === Es6Parser.prototype.StatementList?.name)) {
+                const body = this.createStatementListAst(statementList)
+                program = SlimeAstUtil.createProgram(body, 'script')
+            } else {
+                program = SlimeAstUtil.createProgram([], 'script')
+            }
         } else if (first.name === Es6Parser.prototype.StatementList?.name || first.name === 'StatementList') {
             const body = this.createStatementListAst(first)
             program = SlimeAstUtil.createProgram(body, 'script')
