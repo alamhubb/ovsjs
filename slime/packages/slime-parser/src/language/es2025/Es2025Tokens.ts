@@ -245,7 +245,7 @@ export const EXPRESSION_END_TOKENS = new Set([
 // ============================================
 // Token 对象（用于 TokenConsumer 复用）
 // ============================================
-export const es2025TokensObj = {
+export const SlimeLexerTokensObj = {
 
     // ============================================
     // A.1.2 注释 (Comments)
@@ -497,7 +497,7 @@ export const es2025TokensObj = {
     IdentifierNameTok: createEmptyValueRegToken(TokenNames.IdentifierNameTok, IDENTIFIER_NAME_PATTERN),
 }
 
-export const es2025Tokens: SubhutiCreateToken[] = Object.values(es2025TokensObj)
+export const es2025Tokens: SubhutiCreateToken[] = Object.values(SlimeLexerTokensObj)
 
 // ============================================
 // 保留字集合（用于 Identifier 验证）

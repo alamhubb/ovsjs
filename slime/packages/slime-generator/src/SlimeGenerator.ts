@@ -43,7 +43,7 @@ import SlimeCodeMapping, {SlimeCodeLocation, type SlimeGeneratorResult} from "./
 import type {SubhutiSourceLocation} from "subhuti/src/struct/SubhutiCst.ts";
 import {SubhutiCreateToken} from "subhuti/src/struct/SubhutiCreateToken.ts";
 import SubhutiMatchToken from "subhuti/src/struct/SubhutiMatchToken.ts";
-import {es2025TokensObj, TokenNames} from "slime-parser/src/language/es2025/Es2025Tokens.ts";
+import {SlimeLexerTokensObj, TokenNames} from "slime-parser/src/language/es2025/Es2025Tokens.ts";
 
 // 兼容别名
 const Es6TokenName = TokenNames;
@@ -57,7 +57,7 @@ const createSoftKeywordToken = (name: string, value: string): SubhutiCreateToken
 
 // 扩展 es2025TokensObj，添加软关键字和别名
 const es6TokensObj = {
-    ...es2025TokensObj,
+    ...SlimeLexerTokensObj,
     // 软关键字（在 ES2025 中作为 IdentifierName 处理）
     OfTok: createSoftKeywordToken('OfTok', 'of'),
     AsyncTok: createSoftKeywordToken('AsyncTok', 'async'),
@@ -67,14 +67,14 @@ const es6TokensObj = {
     SetTok: createSoftKeywordToken('SetTok', 'set'),
     FromTok: createSoftKeywordToken('FromTok', 'from'),
     // 别名（ES2025 使用不同的名称）
-    Eq: es2025TokensObj.Assign,  // = 等号
+    Eq: SlimeLexerTokensObj.Assign,  // = 等号
 };
 
 // 关键字到 Token 的映射（用于 VariableDeclaration 的 kind）
 const es6TokenMapObj: Record<string, SubhutiCreateToken> = {
-    'const': es2025TokensObj.ConstTok,
-    'let': es2025TokensObj.LetTok,
-    'var': es2025TokensObj.VarTok,
+    'const': SlimeLexerTokensObj.ConstTok,
+    'let': SlimeLexerTokensObj.LetTok,
+    'var': SlimeLexerTokensObj.VarTok,
 };
 
 export default class SlimeGenerator {
