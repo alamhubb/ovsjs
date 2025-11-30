@@ -52,135 +52,135 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
     // 关键字 (Keywords)
     // ============================================
 
-    AwaitTok() {
+    Await() {
         return this.consume(SlimeReservedWordTokenTypes.Await)
     }
 
-    BreakTok() {
+    Break() {
         return this.consume(SlimeReservedWordTokenTypes.Break)
     }
 
-    CaseTok() {
+    Case() {
         return this.consume(SlimeReservedWordTokenTypes.Case)
     }
 
-    CatchTok() {
+    Catch() {
         return this.consume(SlimeReservedWordTokenTypes.Catch)
     }
 
-    ClassTok() {
+    Class() {
         return this.consume(SlimeReservedWordTokenTypes.Class)
     }
 
-    ConstTok() {
+    Const() {
         return this.consume(SlimeReservedWordTokenTypes.Const)
     }
 
-    ContinueTok() {
+    Continue() {
         return this.consume(SlimeReservedWordTokenTypes.Continue)
     }
 
-    DebuggerTok() {
+    Debugger() {
         return this.consume(SlimeReservedWordTokenTypes.Debugger)
     }
 
-    DefaultTok() {
+    Default() {
         return this.consume(SlimeReservedWordTokenTypes.Default)
     }
 
-    DoTok() {
+    Do() {
         return this.consume(SlimeReservedWordTokenTypes.Do)
     }
 
-    ElseTok() {
+    Else() {
         return this.consume(SlimeReservedWordTokenTypes.Else)
     }
 
-    EnumTok() {
+    Enum() {
         return this.consume(SlimeReservedWordTokenTypes.Enum)
     }
 
-    ExportTok() {
+    Export() {
         return this.consume(SlimeReservedWordTokenTypes.Export)
     }
 
-    ExtendsTok() {
+    Extends() {
         return this.consume(SlimeReservedWordTokenTypes.Extends)
     }
 
-    FalseTok() {
+    False() {
         return this.consume(SlimeReservedWordTokenTypes.False)
     }
 
-    FinallyTok() {
+    Finally() {
         return this.consume(SlimeReservedWordTokenTypes.Finally)
     }
 
-    ForTok() {
+    For() {
         return this.consume(SlimeReservedWordTokenTypes.For)
     }
 
-    FunctionTok() {
+    Function() {
         return this.consume(SlimeReservedWordTokenTypes.Function)
     }
 
-    IfTok() {
+    If() {
         return this.consume(SlimeReservedWordTokenTypes.If)
     }
 
-    ImportTok() {
+    Import() {
         return this.consume(SlimeReservedWordTokenTypes.Import)
     }
 
-    NewTok() {
+    New() {
         return this.consume(SlimeReservedWordTokenTypes.New)
     }
 
-    NullTok() {
+    Null() {
         return this.consume(SlimeReservedWordTokenTypes.Null)
     }
 
-    ReturnTok() {
+    Return() {
         return this.consume(SlimeReservedWordTokenTypes.Return)
     }
 
-    SuperTok() {
+    Super() {
         return this.consume(SlimeReservedWordTokenTypes.Super)
     }
 
-    SwitchTok() {
+    Switch() {
         return this.consume(SlimeReservedWordTokenTypes.Switch)
     }
 
-    ThisTok() {
+    This() {
         return this.consume(SlimeReservedWordTokenTypes.This)
     }
 
-    ThrowTok() {
+    Throw() {
         return this.consume(SlimeReservedWordTokenTypes.Throw)
     }
 
-    TrueTok() {
+    True() {
         return this.consume(SlimeReservedWordTokenTypes.True)
     }
 
-    TryTok() {
+    Try() {
         return this.consume(SlimeReservedWordTokenTypes.Try)
     }
 
 
-    VarTok() {
+    Var() {
         return this.consume(SlimeReservedWordTokenTypes.Var)
     }
-    WhileTok() {
+    While() {
         return this.consume(SlimeReservedWordTokenTypes.While)
     }
 
-    WithTok() {
+    With() {
         return this.consume(SlimeReservedWordTokenTypes.With)
     }
 
-    YieldTok() {
+    Yield() {
         return this.consume(SlimeReservedWordTokenTypes.Yield)
     }
 
@@ -190,26 +190,26 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
      * 注意：在严格模式下是保留字，非严格模式下可作为标识符（为向后兼容）
      * 但我们将其作为独立 token 处理，与 const/var 保持一致
      */
-    LetTok() {
+    Let() {
         return this.consume(SlimeReservedWordTokenTypes.Let)
     }
 
-    VoidTok() {
+    Void() {
         return this.consume(SlimeUnaryOperatorTokenTypes.Void)
     }
 
-    TypeofTok() {
+    Typeof() {
         return this.consume(SlimeUnaryOperatorTokenTypes.Typeof)
     }
 
-    InTok() {
+    In() {
         return this.consume(SlimeBinaryOperatorTokenTypes.In)
     }
 
-    InstanceofTok() {
+    Instanceof() {
         return this.consume(SlimeBinaryOperatorTokenTypes.Instanceof)
     }
-    DeleteTok() {
+    Delete() {
         return this.consume(SlimeUnaryOperatorTokenTypes.Delete)
     }
 
@@ -224,7 +224,7 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
      * 用于 async 函数、async 箭头函数、async 方法
      * 注意：async 可作为标识符使用，如 `let async = 1`
      */
-    AsyncTok() {
+    Async() {
         return this.consumeIdentifierValue(SlimeContextualKeywordTokenTypes.Async)
     }
 
@@ -233,7 +233,7 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
      * 用于类的静态成员
      * 注意：非严格模式下可作为标识符
      */
-    StaticTok() {
+    Static() {
         return this.consumeIdentifierValue(SlimeContextualKeywordTokenTypes.Static)
     }
 
@@ -241,7 +241,7 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
      * 消费 'as' 软关键字
      * 用于 import/export 的重命名
      */
-    AsTok() {
+    As() {
         return this.consumeIdentifierValue(SlimeContextualKeywordTokenTypes.As)
     }
 
@@ -249,7 +249,7 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
      * 消费 'get' 软关键字
      * 用于 getter 方法定义
      */
-    GetTok() {
+    Get() {
         return this.consumeIdentifierValue(SlimeContextualKeywordTokenTypes.Get)
     }
 
@@ -257,7 +257,7 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
      * 消费 'set' 软关键字
      * 用于 setter 方法定义
      */
-    SetTok() {
+    Set() {
         return this.consumeIdentifierValue(SlimeContextualKeywordTokenTypes.Static)
     }
 
@@ -265,7 +265,7 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
      * 消费 'of' 软关键字
      * 用于 for-of 语句
      */
-    OfTok() {
+    Of() {
         return this.consumeIdentifierValue(SlimeContextualKeywordTokenTypes.Of)
     }
 
@@ -273,7 +273,7 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
      * 消费 'target' 软关键字
      * 用于 new.target
      */
-    TargetTok() {
+    Target() {
         return this.consumeIdentifierValue(SlimeContextualKeywordTokenTypes.Target)
     }
 
@@ -281,7 +281,7 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
      * 消费 'meta' 软关键字
      * 用于 import.meta
      */
-    MetaTok() {
+    Meta() {
         return this.consumeIdentifierValue(SlimeContextualKeywordTokenTypes.Meta)
     }
 
@@ -289,7 +289,7 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
      * 消费 'from' 软关键字
      * 用于 import/export 语句
      */
-    FromTok() {
+    From() {
         return this.consumeIdentifierValue(SlimeContextualKeywordTokenTypes.From)
     }
 
