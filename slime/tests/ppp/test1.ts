@@ -2,7 +2,7 @@ import SubhutiLexer from "subhuti/src/SubhutiLexer";
 import JsonUtil from "subhuti/src/utils/JsonUtil";
 import {traverseClearLoc, traverseClearTokens} from "../utils/parserTestUtils";
 import {LogUtil} from "../../src/logutil";
-import {es2025Tokens} from "slime-parser/src/language/es2025/Es2025Tokens";
+import {es2025Tokens} from "slime-parser/src/language/es2025/SlimeTokensName";
 
 const code = `const [first, ...[second, third]] = arr
 `

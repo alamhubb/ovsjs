@@ -1,5 +1,5 @@
 {
-  "name": "slime-token",
+  "name": "slime-parser",
   "version": "0.0.1",
   "main": "index.js",
   "scripts": {
@@ -8,5 +8,8 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": ""
+  "description": "",
+  "dependencies": {
+    "subhuti": "^0.1.3"
+  }
 }

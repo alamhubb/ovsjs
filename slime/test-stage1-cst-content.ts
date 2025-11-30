@@ -5,7 +5,7 @@
 import SubhutiLexer from 'subhuti/src/SubhutiLexer.ts'
 import * as fs from 'fs'
 import * as path from 'path'
-import {es2025Tokens} from "slime-parser/src/language/es2025/Es2025Tokens";
+import {es2025Tokens} from "slime-parser/src/language/es2025/SlimeTokensName";
 import Es2025Parser from "slime-parser/src/language/es2025/Es2025Parser";
 
 const casesDir = path.join(__dirname, 'tests/cases')

@@ -6,7 +6,7 @@ import Es2025Parser from './packages/slime-parser/src/language/es2025/Es2025Pars
 import SubhutiLexer from 'subhuti/src/SubhutiLexer.ts'
 import * as fs from 'fs'
 import * as path from 'path'
-import {es2025Tokens} from "slime-parser/src/language/es2025/Es2025Tokens";
+import {es2025Tokens} from "slime-parser/src/language/es2025/SlimeTokensName";
 
 // 跳过的目录（非标准 ECMAScript 语法）
 const skipDirs = [

@@ -4,7 +4,7 @@
 
 import Es2025Parser from "./packages/slime-parser/src/language/es2025/Es2025Parser.ts"
 import SubhutiLexer from "subhuti/src/SubhutiLexer.ts"
-import { es2025Tokens } from "./packages/slime-parser/src/language/es2025/Es2025Tokens.ts"
+import { es2025Tokens } from "slime-parser/src/language/es2025/SlimeTokensName.ts"
 
 function test(code: string, ruleName: string, description: string, shouldFail: boolean) {
     try {

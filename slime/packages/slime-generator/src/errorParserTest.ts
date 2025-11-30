@@ -1,5 +1,5 @@
 import SubhutiLexer from "subhuti/src/SubhutiLexer.ts";
-import {es2025Tokens} from "slime-parser/src/language/es2025/Es2025Tokens.ts";
+import {es2025Tokens} from "slime-parser/src/language/es2025/SlimeTokensName.ts";
 import Es2025Parser from "slime-parser/src/language/es2025/Es2025Parser.ts";
 import {SubhutiDebugUtils} from "subhuti/src/SubhutiDebug.ts";
 import slimeCstToAstUtil from "slime-parser/src/language/SlimeCstToAstUtil.ts";

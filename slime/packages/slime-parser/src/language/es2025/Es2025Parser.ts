@@ -16,7 +16,7 @@ import type SubhutiCst from "subhuti/src/struct/SubhutiCst.ts"
 import type SubhutiMatchToken from "subhuti/src/struct/SubhutiMatchToken.ts"
 import {matchRegExpLiteral} from "subhuti/src/SubhutiLexer.ts"
 import Es2025TokenConsumer from "./Es2025TokenConsumer.ts"
-import {ReservedWords, TokenNames, ContextualKeywords} from "./Es2025Tokens.ts"
+import {ReservedWords, TokenNames, ContextualKeywords} from "./SlimeTokensName.ts"
 
 // ============================================
 // 参数化规则的参数接口

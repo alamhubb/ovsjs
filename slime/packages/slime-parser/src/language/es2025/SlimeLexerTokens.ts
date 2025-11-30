@@ -6,7 +6,7 @@ import {
     createValueRegToken,
     SubhutiCreateToken
 } from "subhuti/src/struct/SubhutiCreateToken.ts";
-import {TokenNames} from "./Es2025Tokens";
+import {TokenNames} from "./SlimeTokensName.ts";
 
 
 

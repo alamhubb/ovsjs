@@ -15,7 +15,7 @@
  */
 
 import SubhutiTokenConsumer from "subhuti/src/SubhutiTokenConsumer.ts"
-import { TokenNames, ContextualKeywords } from "./Es2025Tokens.ts"
+import { TokenNames, ContextualKeywords } from "./SlimeTokensName.ts"
 
 export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
 

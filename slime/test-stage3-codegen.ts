@@ -10,7 +10,7 @@ import { SlimeCstToAst } from './packages/slime-parser/src/language/SlimeCstToAs
 import SlimeGenerator from './packages/slime-generator/src/SlimeGenerator.ts'
 import * as fs from 'fs'
 import * as path from 'path'
-import {es2025Tokens} from "slime-parser/src/language/es2025/Es2025Tokens";
+import {es2025Tokens} from "slime-parser/src/language/es2025/SlimeTokensName";
 import SubhutiMatchToken from 'subhuti/src/struct/SubhutiMatchToken.ts'
 
 // ============================================
