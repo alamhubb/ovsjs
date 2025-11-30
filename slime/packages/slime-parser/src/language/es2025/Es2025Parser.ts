@@ -770,7 +770,7 @@ export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
      */
     @SubhutiRule
     RegularExpressionLiteral(): SubhutiCst | undefined {
-        return this.tokenConsumer.RegularExpression()
+        return this.tokenConsumer.RegularExpressionLiteral()
     }
 
     /**
