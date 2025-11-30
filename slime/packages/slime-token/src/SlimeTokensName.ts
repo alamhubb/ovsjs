@@ -103,6 +103,85 @@ export const SlimeLogicalOperatorTokenTypes = {
     NullishCoalescing: 'NullishCoalescing', // ??
 } as const;
 
+/**
+ * 软关键字（Contextual Keywords）Token 类型
+ *
+ * 这些标识符在词法层是 IdentifierName，在特定语法位置作为关键字处理。
+ * 规范中没有作为 ReservedWord，可以作为变量名使用。
+ *
+ * 使用场景：
+ * - async: 异步函数声明 `async function`、异步方法、异步箭头函数
+ * - static: 类静态成员 `static method()` / `static field`
+ * - get: 访问器 `get prop()` (MethodDefinition)
+ * - set: 访问器 `set prop(v)` (MethodDefinition)
+ * - of: for-of 循环 `for (x of iterable)`
+ * - from: 模块导入导出 `import x from 'module'` / `export * from 'module'`
+ * - as: 模块重命名 `import { x as y }` / `export { x as y }`
+ * - target: 元属性 `new.target` (NewTarget)
+ * - meta: 元属性 `import.meta` (ImportMeta)
+ */
+export const SlimeContextualKeywordTokenTypes = {
+    Async: 'Async',     // async function, async () =>
+    Static: 'Static',   // static method(), static field
+    Get: 'Get',         // get prop()
+    Set: 'Set',         // set prop(v)
+    Of: 'Of',           // for (x of iterable)
+    From: 'From',       // import/export from
+    As: 'As',           // import/export as
+    Target: 'Target',   // new.target
+    Meta: 'Meta',       // import.meta
+} as const;
+
+/**
+ * 保留字（Reserved Words）Token 类型
+ *
+ * 规范 A.1.7: ReservedWord :: one of
+ *   await break case catch class const continue debugger default
+ *   delete do else enum export extends false finally for function
+ *   if import in instanceof new null return super switch this
+ *   throw true try typeof var void while with yield
+ *
+ * 注意：
+ * - let 在规范中不是 ReservedWord，但本解析器按严格模式处理，将其作为保留字
+ * - delete, typeof, void, in, instanceof 同时也是运算符（已在运算符分组中定义）
+ */
+export const SlimeReservedWordTokenTypes = {
+    Await: 'Await',
+    Break: 'Break',
+    Case: 'Case',
+    Catch: 'Catch',
+    Class: 'Class',
+    Const: 'Const',
+    Continue: 'Continue',
+    Debugger: 'Debugger',
+    Default: 'Default',
+    Do: 'Do',
+    Else: 'Else',
+    Enum: 'Enum',
+    Export: 'Export',
+    Extends: 'Extends',
+    False: 'False',
+    Finally: 'Finally',
+    For: 'For',
+    Function: 'Function',
+    If: 'If',
+    Import: 'Import',
+    Let: 'Let',         // 严格模式下作为保留字
+    New: 'New',
+    Null: 'Null',
+    Return: 'Return',
+    Super: 'Super',
+    Switch: 'Switch',
+    This: 'This',
+    Throw: 'Throw',
+    True: 'True',
+    Try: 'Try',
+    Var: 'Var',
+    While: 'While',
+    With: 'With',
+    Yield: 'Yield',
+} as const;
+
 // ============================================
 // Token 名称常量（与规范 A.1 词法规则名一致）
 // ============================================
@@ -159,6 +238,7 @@ export const TokenNames = {
 
     // ============================================
     // A.1.7 Reserved Words (关键字)
+    // 注意：本解析器按严格模式处理，let 作为保留字
     // ============================================
     Await: 'Await',
     Break: 'Break',
@@ -180,7 +260,7 @@ export const TokenNames = {
     Function: 'Function',
     If: 'If',
     Import: 'Import',
-    Let: 'Let',
+    Let: 'Let',                 // 严格模式下为保留字
     New: 'New',
     Null: 'Null',
     Return: 'Return',
@@ -196,17 +276,6 @@ export const TokenNames = {
     Yield: 'Yield',
 
     // ============================================
-    // 软关键字（Contextual Keywords）
-    // ============================================
-    Async: 'Async',
-    Static: 'Static',
-    Get: 'Get',
-    Set: 'Set',
-    Of: 'Of',
-    From: 'From',
-    As: 'As',
-
-    // ============================================
     // 运算符 Token（从分组常量引入）
     // ============================================
     ...SlimeAssignmentOperatorTokenTypes,
@@ -214,6 +283,11 @@ export const TokenNames = {
     ...SlimeUnaryOperatorTokenTypes,
     ...SlimeBinaryOperatorTokenTypes,
     ...SlimeLogicalOperatorTokenTypes,
+
+    // ============================================
+    // 软关键字（从分组常量引入）
+    // ============================================
+    ...SlimeContextualKeywordTokenTypes,
 
 } as const;
 

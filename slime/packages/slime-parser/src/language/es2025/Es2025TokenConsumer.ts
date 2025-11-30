@@ -14,7 +14,7 @@
  * @version 1.0.0
  */
 
-import { TokenNames } from "slime-token/src/SlimeTokensName"
+import {SlimeContextualKeywordTokenTypes, TokenNames} from "slime-token/src/SlimeTokensName"
 import SubhutiTokenConsumer from "subhuti/src/SubhutiTokenConsumer.ts"
 
 export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
@@ -211,7 +211,7 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
      * 注意：async 可作为标识符使用，如 `let async = 1`
      */
     AsyncTok() {
-        return this.consumeIdentifierValue(ContextualKeywords.ASYNC)
+        return this.consumeIdentifierValue(SlimeContextualKeywordTokenTypes.Async)
     }
 
     /**
@@ -221,7 +221,7 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
      * 但我们将其作为独立 token 处理，与 const/var 保持一致
      */
     LetTok() {
-        return this.consume(TokenNames.Let)
+        return this.consume(SlimeContextualKeywordTokenTypes)
     }
 
     /**
@@ -230,7 +230,7 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
      * 注意：非严格模式下可作为标识符
      */
     StaticTok() {
-        return this.consumeIdentifierValue(ContextualKeywords.STATIC)
+        return this.consumeIdentifierValue(SlimeContextualKeywordTokenTypes.Static)
     }
 
     /**
@@ -238,7 +238,7 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
      * 用于 import/export 的重命名
      */
     AsTok() {
-        return this.consumeIdentifierValue(ContextualKeywords.AS)
+        return this.consumeIdentifierValue(SlimeContextualKeywordTokenTypes.As)
     }
 
     /**
@@ -246,7 +246,7 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
      * 用于 getter 方法定义
      */
     GetTok() {
-        return this.consumeIdentifierValue(ContextualKeywords.GET)
+        return this.consumeIdentifierValue(SlimeContextualKeywordTokenTypes.Get)
     }
 
     /**
@@ -254,7 +254,7 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
      * 用于 setter 方法定义
      */
     SetTok() {
-        return this.consumeIdentifierValue(ContextualKeywords.SET)
+        return this.consumeIdentifierValue(SlimeContextualKeywordTokenTypes.Static)
     }
 
     /**
@@ -262,7 +262,7 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
      * 用于 for-of 语句
      */
     OfTok() {
-        return this.consumeIdentifierValue(ContextualKeywords.OF)
+        return this.consumeIdentifierValue(SlimeContextualKeywordTokenTypes.Of)
     }
 
     /**
@@ -270,7 +270,7 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
      * 用于 new.target
      */
     TargetTok() {
-        return this.consumeIdentifierValue(ContextualKeywords.TARGET)
+        return this.consumeIdentifierValue(SlimeContextualKeywordTokenTypes.Target)
     }
 
     /**
@@ -278,7 +278,7 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
      * 用于 import.meta
      */
     MetaTok() {
-        return this.consumeIdentifierValue(ContextualKeywords.META)
+        return this.consumeIdentifierValue(SlimeContextualKeywordTokenTypes.Meta)
     }
 
     /**
@@ -286,7 +286,7 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
      * 用于 import/export 语句
      */
     FromTok() {
-        return this.consumeIdentifierValue(ContextualKeywords.FROM)
+        return this.consumeIdentifierValue(SlimeContextualKeywordTokenTypes.From)
     }
 
     // ============================================
