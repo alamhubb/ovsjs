@@ -183,12 +183,7 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
     YieldTok() {
         return this.consume(SlimeReservedWordTokenTypes.Yield)
     }
-    
-    // ============================================
-    // 软关键字 (Soft Keywords / Contextual Keywords)
-    // 按照 ES2025 规范，这些在词法层是 IdentifierName
-    // 在语法层通过值检查来识别
-    // ============================================
+
     /**
      * 消费 'let' 关键字
      * 用于 let 声明
@@ -217,6 +212,12 @@ export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
     DeleteTok() {
         return this.consume(SlimeUnaryOperatorTokenTypes.Delete)
     }
+
+    // ============================================
+    // 软关键字 (Soft Keywords / Contextual Keywords)
+    // 按照 ES2025 规范，这些在词法层是 IdentifierName
+    // 在语法层通过值检查来识别
+    // ============================================
 
     /**
      * 消费 'async' 软关键字
