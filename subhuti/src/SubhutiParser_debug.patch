@@ -1,0 +1,49 @@
+--- a/subhuti/src/SubhutiParser.ts
++++ b/subhuti/src/SubhutiParser.ts
+@@ -228,6 +228,20 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToke
+     private throwLoopError(ruleName: string): never {
+         // 获取当前 token 信息
+         const currentToken = this.curToken
++        
++        // 🔍 调试信息：打印循环检测的详细信息
++        console.error('\n' + '='.repeat(80))
++        console.error('🔴 左递归检测触发！')
++        console.error('='.repeat(80))
++        console.error(`规则名称: ${ruleName}`)
++        console.error(`当前 tokenIndex: ${this.tokenIndex}`)
++        console.error(`检测键: ${ruleName}:${this.tokenIndex}`)
++        console.error(`loopDetectionSet 内容:`)
++        Array.from(this.loopDetectionSet).forEach((key, index) => {
++            console.error(`  [${index}] ${key}`)
++        })
++        console.error(`规则调用栈 (ruleStack):`)
++        this.ruleStack.forEach((rule, index) => { console.error(`  [${index}] ${rule}`) })
++        console.error('='.repeat(80) + '\n')
+ 
+         // 获取 token 上下文（前后各 2 个）
+         const tokenContext: SubhutiMatchToken[] = []
+@@ -305,10 +319,22 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToke
+     private executeRuleWithCacheAndLoopDetection(ruleName: string, targetFun: Function): SubhutiCst | undefined {
+         const key = `${ruleName}:${this.tokenIndex}`
+ 
++        // 🔍 调试：StatementList 规则
++        if (ruleName === 'StatementList') {
++            console.log(`🔍 [StatementList] 进入，tokenIndex=${this.tokenIndex}, key=${key}`)
++            console.log(`   loopDetectionSet:`, Array.from(this.loopDetectionSet))
++        }
++
+         // O(1) 快速检测是否重复
++        if (ruleName === 'StatementList') {
++            console.log(`🔍 [StatementList] 检查循环 has(${key})=${this.loopDetectionSet.has(key)}`)
++        }
+         if (this.loopDetectionSet.has(key)) {
+             // 发现循环！抛出错误
+             this.throwLoopError(ruleName)
+         }
+ 
+         // 入栈
+         this.loopDetectionSet.add(key)
++        if (ruleName === 'StatementList') {
++            console.log(`🔍 [StatementList] 添加: ${key}, 更新后:`, Array.from(this.loopDetectionSet))
++        }
+
