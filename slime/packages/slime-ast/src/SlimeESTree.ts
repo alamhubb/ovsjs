@@ -1077,7 +1077,7 @@ export interface SlimeClassBody extends SlimeBaseNode, SlimeExtends<ESTree.Class
     body: Array<SlimeMethodDefinition | SlimePropertyDefinition | SlimeStaticBlock>;
 }
 
-export interface SlimeMethodDefinition extends SlimeBaseNode, SlimeExtends<ESTree.MethodDefinition> {
+export interface SlimeMethodDefinition extends SlimeBaseNode, Omit<SlimeExtends<ESTree.MethodDefinition>, 'value' | 'key'> {
     type: typeof SlimeAstType.MethodDefinition;
     key: SlimeExpression | SlimePrivateIdentifier;
     value: SlimeFunctionExpression;
@@ -1174,7 +1174,7 @@ export interface SlimeImportNamespaceSpecifier extends SlimeBaseModuleSpecifier,
     asToken?: SlimeAsToken;
 }
 
-export interface SlimeExportNamedDeclaration extends SlimeBaseModuleDeclaration, SlimeExtends<ESTree.ExportNamedDeclaration>, SlimeBraceTokens, SlimeSemicolonTokens {
+export interface SlimeExportNamedDeclaration extends SlimeBaseModuleDeclaration, Omit<SlimeExtends<ESTree.ExportNamedDeclaration>, 'declaration'>, SlimeBraceTokens, SlimeSemicolonTokens {
     type: typeof SlimeAstType.ExportNamedDeclaration;
     declaration?: SlimeDeclaration | null | undefined;
     specifiers: SlimeExportSpecifier[];
@@ -1195,7 +1195,7 @@ export interface SlimeExportSpecifier extends SlimeExtends<ESTree.ExportSpecifie
     asToken?: SlimeAsToken;
 }
 
-export interface SlimeExportDefaultDeclaration extends SlimeBaseModuleDeclaration, SlimeExtends<ESTree.ExportDefaultDeclaration> {
+export interface SlimeExportDefaultDeclaration extends SlimeBaseModuleDeclaration, Omit<SlimeExtends<ESTree.ExportDefaultDeclaration>, 'declaration'> {
     type: typeof SlimeAstType.ExportDefaultDeclaration;
     declaration: SlimeMaybeNamedFunctionDeclaration | SlimeMaybeNamedClassDeclaration | SlimeExpression;
     /** export 关键字 Token */
