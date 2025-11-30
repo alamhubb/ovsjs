@@ -1,6 +1,14 @@
 import type * as ESTree from "estree";
 import {SlimeAstType} from "./SlimeAstType.ts";
-import {SlimeTokenType} from "./SlimeTokenType.ts";
+import {
+    SlimeTokenType,
+    type SlimeTokenTypeValue,
+    type SlimeUpdateOperatorTokenType,
+    type SlimeUnaryOperatorTokenType,
+    type SlimeBinaryOperatorTokenType,
+    type SlimeLogicalOperatorTokenType,
+    type SlimeAssignmentOperatorTokenType,
+} from "./SlimeTokenType.ts";
 import type {SubhutiSourceLocation} from "subhuti/src/struct/SubhutiCst.ts";
 
 /**
@@ -386,31 +394,31 @@ export interface SlimeQuestionToken extends SlimeTokenNode {
 
 /** 二元运算符 Token */
 export interface SlimeBinaryOperatorToken extends SlimeTokenNode {
-    type: typeof SlimeTokenType[keyof typeof SlimeTokenType];
+    type: SlimeBinaryOperatorTokenType;
     value: SlimeBinaryOperator;
 }
 
 /** 一元运算符 Token */
 export interface SlimeUnaryOperatorToken extends SlimeTokenNode {
-    type: typeof SlimeTokenType[keyof typeof SlimeTokenType];
+    type: SlimeUnaryOperatorTokenType;
     value: SlimeUnaryOperator;
 }
 
 /** 逻辑运算符 Token */
 export interface SlimeLogicalOperatorToken extends SlimeTokenNode {
-    type: typeof SlimeTokenType[keyof typeof SlimeTokenType];
+    type: SlimeLogicalOperatorTokenType;
     value: SlimeLogicalOperator;
 }
 
 /** 赋值运算符 Token */
 export interface SlimeAssignmentOperatorToken extends SlimeTokenNode {
-    type: typeof SlimeTokenType[keyof typeof SlimeTokenType];
+    type: SlimeAssignmentOperatorTokenType;
     value: SlimeAssignmentOperator;
 }
 
 /** 更新运算符 Token */
 export interface SlimeUpdateOperatorToken extends SlimeTokenNode {
-    type: typeof SlimeTokenType[keyof typeof SlimeTokenType];
+    type: SlimeUpdateOperatorTokenType;
     value: SlimeUpdateOperator;
 }
 
