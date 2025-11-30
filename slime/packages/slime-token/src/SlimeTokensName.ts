@@ -107,7 +107,7 @@ export const SlimeLogicalOperatorTokenTypes = {
 // Token 名称常量（与规范 A.1 词法规则名一致）
 // ============================================
 
-export const TokenNames = {
+export const SlimeTokenType = {
 
     // ============================================
     // A.1.2 White Space
@@ -215,9 +215,4 @@ export const TokenNames = {
     ...SlimeLogicalOperatorTokenTypes,
 
 } as const;
-
-// ============================================
-// SlimeTokenType 别名（供外部使用）
-// ============================================
-export const SlimeTokenType = TokenNames;
 
