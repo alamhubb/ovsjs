@@ -504,15 +504,12 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
                     // 解析记录模式：缓存命中时也要记录节点，并更新整个祖先链的 endTokenIndex
                     if (this.errorRecoveryMode && cached.endTokenIndex > this.tokenIndex) {
-                        // 从缓存的 CST 中获取 recordNode（如果有的话）
-                        const cachedRecordNode = (cached.cst as any).__recordNode as ParseRecordNode | undefined
-
                         // 创建记录节点，复制缓存中的 children
                         const recordNode: ParseRecordNode = {
                             name: ruleName,
                             startTokenIndex: this.tokenIndex,
                             endTokenIndex: cached.endTokenIndex,
-                            children: cachedRecordNode?.children ? [...cachedRecordNode.children] : [],
+                            children: cached.recordNode?.children ? [...cached.recordNode.children] : [],
                             token: false
                         }
                         const recordParent = this._parseRecordStack[this._parseRecordStack.length - 1]
@@ -538,17 +535,41 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
             // 核心执行
             const startTokenIndex = this.tokenIndex
+
+            // 解析记录树：创建节点并入栈（在 executeRuleCore 之前）
+            let recordNode: ParseRecordNode | null = null
+            if (this.errorRecoveryMode) {
+                recordNode = {
+                    name: ruleName,
+                    children: [],
+                    startTokenIndex: this.tokenIndex,
+                    endTokenIndex: this.tokenIndex
+                }
+                this._parseRecordStack.push(recordNode)
+            }
+
             const cst = this.executeRuleCore(ruleName, targetFun, ...args)
 
+            // 解析记录树：出栈，只有消费了 token 才添加到父节点
+            if (this.errorRecoveryMode && recordNode) {
+                this._parseRecordStack.pop()
+                if (recordNode.endTokenIndex > recordNode.startTokenIndex) {
+                    const recordParent = this._parseRecordStack[this._parseRecordStack.length - 1]
+                    if (recordParent) {
+                        recordParent.children.push(recordNode)
+                    }
+                }
+            }
+
             // 缓存存储
-            // 注意：使用解析记录树的 endTokenIndex（如果有），因为 this.tokenIndex 可能已被 Or 回滚
+            // 注意：使用 recordNode.endTokenIndex（如果有），因为 this.tokenIndex 可能已被 Or 回滚
             if (this.enableMemoization) {
-                const recordEndIndex = (cst as any).__recordEndTokenIndex
-                const endTokenIndex = recordEndIndex !== undefined ? Math.max(recordEndIndex, this.tokenIndex) : this.tokenIndex
+                const endTokenIndex = recordNode ? Math.max(recordNode.endTokenIndex, this.tokenIndex) : this.tokenIndex
                 this._cache.set(ruleName, startTokenIndex, {
                     endTokenIndex: endTokenIndex,
                     cst: cst,
-                    parseSuccess: this._parseSuccess
+                    parseSuccess: this._parseSuccess,
+                    recordNode: recordNode  // 直接存储 recordNode
                 })
             }
 
@@ -636,38 +657,10 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
         this.cstStack.push(cst)
 
-        // 解析记录树：创建节点并入栈（但不添加到父节点）
-        let recordNode: ParseRecordNode | null = null
-        if (this.errorRecoveryMode) {
-            recordNode = {
-                name: ruleName,
-                children: [],
-                startTokenIndex: this.tokenIndex,
-                endTokenIndex: this.tokenIndex
-            }
-            // 只入栈，不添加到父节点（等规则结束后判断是否消费了 token）
-            this._parseRecordStack.push(recordNode)
-        }
-
         // 执行规则函数
         targetFun.apply(this, args)
 
         this.cstStack.pop()
-
-        // 解析记录树：出栈，只有消费了 token 才添加到父节点
-        if (this.errorRecoveryMode && recordNode) {
-            this._parseRecordStack.pop()
-            // 只有消费了 token（endTokenIndex > startTokenIndex）才添加到父节点
-            if (recordNode.endTokenIndex > recordNode.startTokenIndex) {
-                const recordParent = this._parseRecordStack[this._parseRecordStack.length - 1]
-                if (recordParent) {
-                    recordParent.children.push(recordNode)
-                }
-            }
-            // 记录解析记录节点（用于缓存命中时复制）
-            ;(cst as any).__recordEndTokenIndex = recordNode.endTokenIndex
-            ;(cst as any).__recordNode = recordNode
-        }
 
         // 成功时添加到父节点并设置位置
         if (this._parseSuccess) {

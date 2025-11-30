@@ -9,6 +9,7 @@
  */
 
 import type SubhutiCst from "./struct/SubhutiCst.ts";
+import type { ParseRecordNode } from "./SubhutiParser.ts";
 import { LRUCache } from "lru-cache";
 
 // ============================================
@@ -22,11 +23,13 @@ import { LRUCache } from "lru-cache";
  * - endTokenIndex: 解析结束位置
  * - cst: CST 节点（成功时有值）
  * - parseSuccess: 解析是否成功
+ * - recordNode: 解析记录节点（容错模式下使用）
  */
 export interface SubhutiPackratCacheResult {
     endTokenIndex: number                 // 解析结束位置
     cst: SubhutiCst                       // CST 节点
     parseSuccess: boolean                 // 解析是否成功
+    recordNode?: ParseRecordNode | null   // 解析记录节点（容错模式）
 }
 
 /**
