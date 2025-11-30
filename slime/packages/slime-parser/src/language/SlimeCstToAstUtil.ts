@@ -32,7 +32,7 @@ import {
 import SubhutiCst, {type SubhutiSourceLocation} from "subhuti/src/struct/SubhutiCst.ts";
 import Es2025Parser from "./es2025/Es2025Parser.ts";
 import Es2025TokenConsumer from "./es2025/Es2025TokenConsumer.ts";
-import SlimeAstUtil from "slime/packages/slime-ast/src/SlimeAstCreate.ts";
+import SlimeAstUtil from "slime-ast/src/SlimeAstCreate.ts";
 import {SlimeAstType} from "slime-ast/src/SlimeAstType.ts";
 
 // Alias for backward compatibility

@@ -1,15 +1,19 @@
 /**
  * SlimeTokenCreate.ts - Token 节点创建工厂
- * 
+ *
  * 为每个 Token 类型提供创建方法
+ * 与 SlimeESTree.ts 中的 Token 类型一一对应
  */
 
 import type { SubhutiSourceLocation } from "subhuti/src/struct/SubhutiCst.ts";
 import type {
+    // 变量声明关键字 Token
     SlimeVarToken,
     SlimeLetToken,
     SlimeConstToken,
+    // 赋值运算符 Token
     SlimeAssignToken,
+    // 标点符号 Token
     SlimeLParenToken,
     SlimeRParenToken,
     SlimeLBraceToken,
@@ -22,6 +26,10 @@ import type {
     SlimeArrowToken,
     SlimeQuestionToken,
     SlimeColonToken,
+    SlimeEllipsisToken,
+    SlimeOptionalChainingToken,
+    SlimeAsteriskToken,
+    // 函数/类关键字 Token
     SlimeFunctionToken,
     SlimeAsyncToken,
     SlimeClassToken,
@@ -29,6 +37,7 @@ import type {
     SlimeStaticToken,
     SlimeGetToken,
     SlimeSetToken,
+    // 控制流关键字 Token
     SlimeIfToken,
     SlimeElseToken,
     SlimeSwitchToken,
@@ -37,6 +46,7 @@ import type {
     SlimeForToken,
     SlimeWhileToken,
     SlimeDoToken,
+    SlimeInToken,
     SlimeOfToken,
     SlimeBreakToken,
     SlimeContinueToken,
@@ -47,15 +57,40 @@ import type {
     SlimeFinallyToken,
     SlimeWithToken,
     SlimeDebuggerToken,
+    // 操作符关键字 Token
     SlimeNewToken,
     SlimeYieldToken,
     SlimeAwaitToken,
+    SlimeTypeofToken,
+    SlimeVoidToken,
+    SlimeDeleteToken,
+    SlimeInstanceofToken,
+    // 模块关键字 Token
     SlimeImportToken,
     SlimeExportToken,
     SlimeFromToken,
-    SlimeAsToken, SlimeEllipsisToken,
+    SlimeAsToken,
+    // 运算符 Token
+    SlimeBinaryOperatorToken,
+    SlimeUnaryOperatorToken,
+    SlimeLogicalOperatorToken,
+    SlimeAssignmentOperatorToken,
+    SlimeUpdateOperatorToken,
+    // 运算符值类型
+    SlimeBinaryOperator,
+    SlimeUnaryOperator,
+    SlimeLogicalOperator,
+    SlimeAssignmentOperator,
+    SlimeUpdateOperator,
 } from "./SlimeESTree.ts";
-import {SlimeTokenType} from "slime-token/src/SlimeTokensName.ts";
+import {
+    SlimeTokenType,
+    SlimeBinaryOperatorTokenTypes,
+    SlimeUnaryOperatorTokenTypes,
+    SlimeLogicalOperatorTokenTypes,
+    SlimeAssignmentOperatorTokenTypes,
+    SlimeUpdateOperatorTokenTypes,
+} from "slime-token/src/SlimeTokensName.ts";
 
 class SlimeTokenFactory {
     // ============================================
@@ -136,6 +171,18 @@ class SlimeTokenFactory {
 
     createColonToken(loc?: SubhutiSourceLocation): SlimeColonToken {
         return { type: SlimeTokenType.Colon, value: ":", loc } as SlimeColonToken;
+    }
+
+    createEllipsisToken(loc?: SubhutiSourceLocation): SlimeEllipsisToken {
+        return { type: SlimeTokenType.Ellipsis, value: "...", loc } as SlimeEllipsisToken;
+    }
+
+    createOptionalChainingToken(loc?: SubhutiSourceLocation): SlimeOptionalChainingToken {
+        return { type: SlimeTokenType.OptionalChaining, value: "?.", loc } as SlimeOptionalChainingToken;
+    }
+
+    createAsteriskToken(loc?: SubhutiSourceLocation): SlimeAsteriskToken {
+        return { type: SlimeTokenType.Asterisk, value: "*", loc } as SlimeAsteriskToken;
     }
 
     // ============================================
@@ -262,6 +309,22 @@ class SlimeTokenFactory {
         return { type: SlimeTokenType.Await, value: "await", loc } as SlimeAwaitToken;
     }
 
+    createTypeofToken(loc?: SubhutiSourceLocation): SlimeTypeofToken {
+        return { type: SlimeTokenType.Typeof, value: "typeof", loc } as SlimeTypeofToken;
+    }
+
+    createVoidToken(loc?: SubhutiSourceLocation): SlimeVoidToken {
+        return { type: SlimeTokenType.Void, value: "void", loc } as SlimeVoidToken;
+    }
+
+    createDeleteToken(loc?: SubhutiSourceLocation): SlimeDeleteToken {
+        return { type: SlimeTokenType.Delete, value: "delete", loc } as SlimeDeleteToken;
+    }
+
+    createInstanceofToken(loc?: SubhutiSourceLocation): SlimeInstanceofToken {
+        return { type: SlimeTokenType.Instanceof, value: "instanceof", loc } as SlimeInstanceofToken;
+    }
+
     // ============================================
     // 模块关键字 Token
     // ============================================
@@ -280,6 +343,114 @@ class SlimeTokenFactory {
 
     createAsToken(loc?: SubhutiSourceLocation): SlimeAsToken {
         return { type: SlimeTokenType.As, value: "as", loc } as SlimeAsToken;
+    }
+
+    createInToken(loc?: SubhutiSourceLocation): SlimeInToken {
+        return { type: SlimeTokenType.In, value: "in", loc } as SlimeInToken;
+    }
+
+    // ============================================
+    // 运算符 Token
+    // ============================================
+
+    /**
+     * 创建二元运算符 Token
+     * 支持: == != === !== < <= > >= << >> >>> + - * / % ** | ^ & in instanceof
+     */
+    createBinaryOperatorToken(operator: SlimeBinaryOperator, loc?: SubhutiSourceLocation): SlimeBinaryOperatorToken {
+        const typeMap: Record<SlimeBinaryOperator, string> = {
+            "==": SlimeBinaryOperatorTokenTypes.Equal,
+            "!=": SlimeBinaryOperatorTokenTypes.NotEqual,
+            "===": SlimeBinaryOperatorTokenTypes.StrictEqual,
+            "!==": SlimeBinaryOperatorTokenTypes.StrictNotEqual,
+            "<": SlimeBinaryOperatorTokenTypes.LessThan,
+            "<=": SlimeBinaryOperatorTokenTypes.LessEqual,
+            ">": SlimeBinaryOperatorTokenTypes.GreaterThan,
+            ">=": SlimeBinaryOperatorTokenTypes.GreaterEqual,
+            "<<": SlimeBinaryOperatorTokenTypes.LeftShift,
+            ">>": SlimeBinaryOperatorTokenTypes.RightShift,
+            ">>>": SlimeBinaryOperatorTokenTypes.UnsignedRightShift,
+            "+": SlimeBinaryOperatorTokenTypes.Plus,
+            "-": SlimeBinaryOperatorTokenTypes.Minus,
+            "*": SlimeBinaryOperatorTokenTypes.Multiply,
+            "/": SlimeBinaryOperatorTokenTypes.Divide,
+            "%": SlimeBinaryOperatorTokenTypes.Modulo,
+            "**": SlimeBinaryOperatorTokenTypes.Exponentiation,
+            "|": SlimeBinaryOperatorTokenTypes.BitwiseOr,
+            "^": SlimeBinaryOperatorTokenTypes.BitwiseXor,
+            "&": SlimeBinaryOperatorTokenTypes.BitwiseAnd,
+            "in": SlimeBinaryOperatorTokenTypes.In,
+            "instanceof": SlimeBinaryOperatorTokenTypes.Instanceof,
+        };
+        return { type: typeMap[operator], value: operator, loc } as SlimeBinaryOperatorToken;
+    }
+
+    /**
+     * 创建一元运算符 Token
+     * 支持: - + ! ~ typeof void delete
+     */
+    createUnaryOperatorToken(operator: SlimeUnaryOperator, loc?: SubhutiSourceLocation): SlimeUnaryOperatorToken {
+        const typeMap: Record<SlimeUnaryOperator, string> = {
+            "-": SlimeUnaryOperatorTokenTypes.Minus,
+            "+": SlimeUnaryOperatorTokenTypes.Plus,
+            "!": SlimeUnaryOperatorTokenTypes.Not,
+            "~": SlimeUnaryOperatorTokenTypes.BitwiseNot,
+            "typeof": SlimeUnaryOperatorTokenTypes.Typeof,
+            "void": SlimeUnaryOperatorTokenTypes.Void,
+            "delete": SlimeUnaryOperatorTokenTypes.Delete,
+        };
+        return { type: typeMap[operator], value: operator, loc } as SlimeUnaryOperatorToken;
+    }
+
+    /**
+     * 创建逻辑运算符 Token
+     * 支持: || && ??
+     */
+    createLogicalOperatorToken(operator: SlimeLogicalOperator, loc?: SubhutiSourceLocation): SlimeLogicalOperatorToken {
+        const typeMap: Record<SlimeLogicalOperator, string> = {
+            "||": SlimeLogicalOperatorTokenTypes.Or,
+            "&&": SlimeLogicalOperatorTokenTypes.And,
+            "??": SlimeLogicalOperatorTokenTypes.NullishCoalescing,
+        };
+        return { type: typeMap[operator], value: operator, loc } as SlimeLogicalOperatorToken;
+    }
+
+    /**
+     * 创建赋值运算符 Token
+     * 支持: = += -= *= /= %= **= <<= >>= >>>= |= ^= &= ||= &&= ??=
+     */
+    createAssignmentOperatorToken(operator: SlimeAssignmentOperator, loc?: SubhutiSourceLocation): SlimeAssignmentOperatorToken {
+        const typeMap: Record<SlimeAssignmentOperator, string> = {
+            "=": SlimeAssignmentOperatorTokenTypes.Assign,
+            "+=": SlimeAssignmentOperatorTokenTypes.PlusAssign,
+            "-=": SlimeAssignmentOperatorTokenTypes.MinusAssign,
+            "*=": SlimeAssignmentOperatorTokenTypes.MultiplyAssign,
+            "/=": SlimeAssignmentOperatorTokenTypes.DivideAssign,
+            "%=": SlimeAssignmentOperatorTokenTypes.ModuloAssign,
+            "**=": SlimeAssignmentOperatorTokenTypes.ExponentiationAssign,
+            "<<=": SlimeAssignmentOperatorTokenTypes.LeftShiftAssign,
+            ">>=": SlimeAssignmentOperatorTokenTypes.RightShiftAssign,
+            ">>>=": SlimeAssignmentOperatorTokenTypes.UnsignedRightShiftAssign,
+            "|=": SlimeAssignmentOperatorTokenTypes.BitwiseOrAssign,
+            "^=": SlimeAssignmentOperatorTokenTypes.BitwiseXorAssign,
+            "&=": SlimeAssignmentOperatorTokenTypes.BitwiseAndAssign,
+            "||=": SlimeAssignmentOperatorTokenTypes.OrAssign,
+            "&&=": SlimeAssignmentOperatorTokenTypes.AndAssign,
+            "??=": SlimeAssignmentOperatorTokenTypes.NullishCoalescingAssign,
+        };
+        return { type: typeMap[operator], value: operator, loc } as SlimeAssignmentOperatorToken;
+    }
+
+    /**
+     * 创建更新运算符 Token
+     * 支持: ++ --
+     */
+    createUpdateOperatorToken(operator: SlimeUpdateOperator, loc?: SubhutiSourceLocation): SlimeUpdateOperatorToken {
+        const typeMap: Record<SlimeUpdateOperator, string> = {
+            "++": SlimeUpdateOperatorTokenTypes.Increment,
+            "--": SlimeUpdateOperatorTokenTypes.Decrement,
+        };
+        return { type: typeMap[operator], value: operator, loc } as SlimeUpdateOperatorToken;
     }
 }
 
