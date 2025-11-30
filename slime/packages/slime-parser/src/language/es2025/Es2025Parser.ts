@@ -21,7 +21,38 @@ import {
     SlimeReservedWordTokenTypes,
     TokenNames
 } from "slime-token/src/SlimeTokensName.ts";
-import {ReservedWords} from "./SlimeLexerTokens.ts";
+
+// ============================================
+// 保留字集合（用于 Identifier 验证）
+// ============================================
+
+/**
+ * ES2025 保留字集合
+ * 来源：ECMAScript® 2025 规范 12.7.2 Keywords and Reserved Words
+ *
+ * 分类说明：
+ * 1. 硬关键字（永久保留，在此集合中）：
+ *    break, case, catch, class, const, continue, debugger, default,
+ *    delete, do, else, enum, export, extends, false, finally, for, function,
+ *    if, import, in, instanceof, new, null, return, super, switch, this,
+ *    throw, true, try, typeof, var, void, while, with, await, yield
+ *    实现方式：createKeywordToken + 独立 Token
+ *
+ * 2. 软关键字（不在此集合中，可作标识符）：
+ *    async, let, static, as, get, set, of, from, target, meta
+ *    - async: 可作变量名，如 `let async = 1`
+ *    - let, static: 非严格模式下可作标识符
+ *    - 其他: 仅在特定语法位置是关键字
+ *    实现方式：识别为 IdentifierName + consumeIdentifierValue()
+ *
+ * 用途：在 Parser 中验证标识符是否为保留字
+ * 实现：自动从所有 isKeyword=true 的 token 中提取（仅包含硬关键字）
+ */
+export const ReservedWords = new Set(
+    es2025Tokens
+        .filter(token => token.isKeyword)  // 过滤出所有硬关键字 token
+        .map(token => token.value!)        // 提取 value（'await', 'break' 等）
+)
 
 // ============================================
 // 参数化规则的参数接口
