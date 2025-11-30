@@ -342,6 +342,13 @@ export const es2025TokensObj = {
     // A.1.10 字符串字面量
     // ============================================
 
+    /**
+     * StringLiteral :
+     *     " DoubleStringCharacters_opt "
+     *     ' SingleStringCharacters_opt '
+     *
+     * 注意：Lexer 会将双引号和单引号字符串都输出为 StringLiteral token
+     */
     // 支持行续符 (LineContinuation): \ 后跟 \r\n | \r | \n
     // 参考 ES2025 规范 12.9.4 String Literals 和 Annex B
     // Annex B: 支持八进制转义序列 \0-\7, \00-\77, \000-\377
