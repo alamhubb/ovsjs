@@ -28,7 +28,7 @@ import {
     type SlimeImportDeclaration,
     type SlimeImportSpecifier,
     type SlimeClassExpression
-} from "slime-ast/src/SlimeAstInterface.ts";
+} from "slime-ast/src/SlimeESTree.ts";
 import SubhutiCst, {type SubhutiSourceLocation} from "subhuti/src/struct/SubhutiCst.ts";
 import Es2025Parser from "./es2025/Es2025Parser.ts";
 import Es2025TokenConsumer from "./es2025/Es2025TokenConsumer.ts";
