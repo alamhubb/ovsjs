@@ -536,13 +536,13 @@ export class SubhutiDebugUtils {
             const location = cst.loc ? TreeFormatHelper.formatLocation(cst.loc) : null
 
             return TreeFormatHelper.formatLine(
-                [connector, cst.name + ':', `"${value}"`, location].join(' '),
+                [connector, cst.name + ':', `"${value}"`, location].join(''),
                 {prefix}
             )
         } else {
             // Rule 节点：只显示名称
             return TreeFormatHelper.formatLine(
-                [connector, cst.name].join(' '),
+                [connector, cst.name].join(''),
                 {prefix}
             )
         }
