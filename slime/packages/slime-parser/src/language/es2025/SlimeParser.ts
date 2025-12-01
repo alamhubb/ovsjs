@@ -2706,7 +2706,7 @@ export default class SlimeParser extends SubhutiParser<SlimeTokenConsumer> {
      */
     private canAutoInsertSemicolon(): boolean {
         // 条件 3：EOF
-        if (this.tokenIndex >= this._tokens.length) {
+        if (this.isEof) {
             return true
         }
 

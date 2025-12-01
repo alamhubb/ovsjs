@@ -519,8 +519,9 @@ export default class SubhutiLexer {
 
       // skip 类型的 token 继续读取下一个
       if (matched.skip) {
-        // 更新 lastRowNum 用于 hasLineBreakBefore 计算
-        lastRowNum = nextRowNum
+        // 注意：不更新 lastRowNum！
+        // lastRowNum 应该保持为上一个非 skip token 的行号
+        // 这样 hasLineBreakBefore 才能正确计算
         pos = nextPos
         rowNum = nextRowNum
         columnNum = nextColumnNum
