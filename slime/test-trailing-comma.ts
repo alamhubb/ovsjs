@@ -4,7 +4,7 @@
  */
 
 import SlimeParser from 'slime-parser/src/language/es2025/SlimeParser.ts'
-import { es2025Tokens } from 'slime-parser/src/language/es2025/SlimeTokensName.ts'
+import { es2025Tokens } from 'slime-parser/src/language/es2025/SlimeTokenTypes.ts'
 import SubhutiLexer from '../subhuti/src/SubhutiLexer.ts'
 
 interface TestCase {

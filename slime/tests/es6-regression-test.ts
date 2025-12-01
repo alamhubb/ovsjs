@@ -3,7 +3,7 @@
  */
 import SlimeParser from 'slime-parser/src/language/es2025/SlimeParser.ts'
 import SubhutiLexer from 'subhuti/src/SubhutiLexer.ts'
-import { es2025Tokens } from 'slime-parser/src/language/es2025/SlimeTokensName.ts'
+import { es2025Tokens } from 'slime-parser/src/language/es2025/SlimeTokenTypes.ts'
 
 function test(name: string, code: string): boolean {
     try {

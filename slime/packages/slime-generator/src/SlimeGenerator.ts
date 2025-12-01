@@ -43,7 +43,7 @@ import SlimeCodeMapping, {SlimeCodeLocation, type SlimeGeneratorResult} from "./
 import type {SubhutiSourceLocation} from "subhuti/src/struct/SubhutiCst.ts";
 import {SubhutiCreateToken} from "subhuti/src/struct/SubhutiCreateToken.ts";
 import SubhutiMatchToken from "subhuti/src/struct/SubhutiMatchToken.ts";
-import {SlimeLexerTokensObj, TokenNames} from "slime-parser/src/language/es2025/SlimeTokensName.ts";
+import {SlimeLexerTokensObj, TokenNames} from "slime-parser/src/language/es2025/SlimeTokenTypes.ts";
 
 // 兼容别名
 const Es6TokenName = TokenNames;

@@ -19,7 +19,7 @@ import {
     SlimeContextualKeywordTokenTypes,
     SlimeReservedWordTokenTypes,
     SlimeTokenType
-} from "slime-token/src/SlimeTokensName.ts";
+} from "slime-token/src/SlimeTokenTypes.ts";
 import {SlimeTokensObj} from "./SlimeLexerTokens.ts";
 import type {SubhutiCreateToken} from "subhuti/src/struct/SubhutiCreateToken.ts";
 

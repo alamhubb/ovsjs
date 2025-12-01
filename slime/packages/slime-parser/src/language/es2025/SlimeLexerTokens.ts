@@ -5,7 +5,7 @@ import {
     createEmptyValueRegToken, createKeywordToken,
     createValueRegToken,
 } from "subhuti/src/struct/SubhutiCreateToken.ts";
-import {SlimeTokenType} from "slime-token/src/SlimeTokensName.ts";
+import {SlimeTokenType} from "slime-token/src/SlimeTokenTypes.ts";
 
 // ============================================
 // 表达式结尾 Token 集合

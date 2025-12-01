@@ -8,7 +8,7 @@
 import * as fs from 'fs'
 import * as path from 'path'
 import SlimeParser from 'slime-parser/src/language/es2025/SlimeParser.ts'
-import { es2025Tokens } from 'slime-parser/src/language/es2025/SlimeTokensName.ts'
+import { es2025Tokens } from 'slime-parser/src/language/es2025/SlimeTokenTypes.ts'
 import SubhutiLexer from 'subhuti/src/SubhutiLexer.ts'
 import { SlimeCstToAst } from '../../packages/slime-parser/src/language/SlimeCstToAstUtil.ts'
 import SlimeGenerator from '../../packages/slime-generator/src/SlimeGenerator.ts'
