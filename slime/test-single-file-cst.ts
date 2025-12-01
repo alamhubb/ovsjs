@@ -201,11 +201,11 @@ try {
     const lexer = new SubhutiLexer(slimeTokens)
     const tokens = lexer.tokenize(code)
 
-    console.log(tokens)
+    // console.log(tokens)
 
     // 语法分析和验证
     const parser = new SlimeParser(tokens)
-    // parser.debug()
+    parser.debug()
     // parser.validate()
 
     // 生成 CST (使用统一的 Program 入口，默认为 module 模式)
