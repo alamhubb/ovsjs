@@ -5775,8 +5775,7 @@ export class SlimeCstToAst {
             // 方法定义（对象中的方法没有static）
             const SlimeMethodDefinition = this.createMethodDefinitionAst(null, first)
 
-            // 注意：SlimeFunctionExpression 是 SlimeExpression 的子类型，但 TypeScript 推断链较深，需要类型断言
-            const keyAst = SlimeAstUtil.createPropertyAst(SlimeMethodDefinition.key, SlimeMethodDefinition.value as SlimeExpression)
+            const keyAst = SlimeAstUtil.createPropertyAst(SlimeMethodDefinition.key, SlimeMethodDefinition.value)
 
             // 继承MethodDefinition的computed标志
             if (SlimeMethodDefinition.computed) {
@@ -6103,8 +6102,7 @@ export class SlimeCstToAst {
             const child = cst.children[0]
             // 检查是否是箭头函数
             if (child.name === Es2025Parser.prototype.ArrowFunction?.name) {
-                // 类型断言：SlimeArrowFunctionExpression 是 SlimeExpression 的子类型
-                return this.createArrowFunctionAst(child) as SlimeExpression
+                return this.createArrowFunctionAst(child)
             }
             // 否则作为表达式处理
             return this.createExpressionAst(child)
@@ -6128,8 +6126,7 @@ export class SlimeCstToAst {
             right: right,
             loc: cst.loc
         }
-        // 类型断言：SlimeAssignmentExpression 是 SlimeExpression 的子类型
-        return ast as SlimeExpression
+        return ast
     }
 
     /**

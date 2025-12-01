@@ -776,7 +776,7 @@ export interface SlimeExpressionMap {
     SlimeYieldExpression: SlimeYieldExpression;
 }
 
-export type SlimeExpression = ESTree.Expression & SlimeExpressionMap[keyof SlimeExpressionMap];
+export type SlimeExpression = SlimeExpressionMap[keyof SlimeExpressionMap];
 
 export interface SlimeBaseExpression extends SlimeBaseNode, SlimeExtends<ESTree.BaseExpression> {
 }
@@ -846,7 +846,7 @@ export interface SlimeSequenceExpression extends SlimeBaseExpression, Omit<Slime
     expressions: SlimeExpression[];
 }
 
-export interface SlimeUnaryExpression extends SlimeBaseExpression, Omit<SlimeExtends<ESTree.UnaryExpression>, 'operator'> {
+export interface SlimeUnaryExpression extends SlimeBaseExpression, Omit<SlimeExtends<ESTree.UnaryExpression>, 'operator' | 'argument'> {
     type: typeof SlimeAstType.UnaryExpression;
     /** 运算符 Token */
     operator: SlimeUnaryOperatorToken;
@@ -854,7 +854,7 @@ export interface SlimeUnaryExpression extends SlimeBaseExpression, Omit<SlimeExt
     argument: SlimeExpression;
 }
 
-export interface SlimeBinaryExpression extends SlimeBaseExpression, Omit<SlimeExtends<ESTree.BinaryExpression>, 'operator'> {
+export interface SlimeBinaryExpression extends SlimeBaseExpression, Omit<SlimeExtends<ESTree.BinaryExpression>, 'operator' | 'left' | 'right'> {
     type: typeof SlimeAstType.BinaryExpression;
     /** 运算符 Token */
     operator: SlimeBinaryOperatorToken;
@@ -862,7 +862,7 @@ export interface SlimeBinaryExpression extends SlimeBaseExpression, Omit<SlimeEx
     right: SlimeExpression;
 }
 
-export interface SlimeAssignmentExpression extends SlimeBaseExpression, Omit<SlimeExtends<ESTree.AssignmentExpression>, 'operator' | 'left'> {
+export interface SlimeAssignmentExpression extends SlimeBaseExpression, Omit<SlimeExtends<ESTree.AssignmentExpression>, 'operator' | 'left' | 'right'> {
     type: typeof SlimeAstType.AssignmentExpression;
     /** 运算符 Token */
     operator: SlimeAssignmentOperatorToken;
@@ -870,7 +870,7 @@ export interface SlimeAssignmentExpression extends SlimeBaseExpression, Omit<Sli
     right: SlimeExpression;
 }
 
-export interface SlimeUpdateExpression extends SlimeBaseExpression, Omit<SlimeExtends<ESTree.UpdateExpression>, 'operator'> {
+export interface SlimeUpdateExpression extends SlimeBaseExpression, Omit<SlimeExtends<ESTree.UpdateExpression>, 'operator' | 'argument'> {
     type: typeof SlimeAstType.UpdateExpression;
     /** 运算符 Token */
     operator: SlimeUpdateOperatorToken;
