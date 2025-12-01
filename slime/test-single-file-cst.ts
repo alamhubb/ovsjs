@@ -200,28 +200,6 @@ try {
     // 词法分析
     const lexer = new SubhutiLexer(slimeTokens)
     const tokens = lexer.tokenize(code)
-
-    // 调试：打印所有 token
-    console.log('\n📋 Token 列表:')
-    tokens.filter((t: any) => {
-        const tokenName = t.tokenType?.name || ''
-        return tokenName !== 'Spacing' && tokenName !== 'LineBreak'
-    }).forEach((t: any, i: number) => {
-        console.log(`  ${i}: ${t.tokenType?.name || 'UNKNOWN'} = ${JSON.stringify(t.tokenValue)}`)
-    })
-    console.log('')
-
-    const inputTokens = tokens
-        .filter((t: any) => {
-            const tokenName = t.tokenType?.name || ''
-            return tokenName !== 'SingleLineComment' &&
-                tokenName !== 'MultiLineComment' &&
-                tokenName !== 'Spacing' &&
-                tokenName !== 'LineBreak'
-        })
-        .map((t: any) => t.tokenValue)
-        .filter((v: any) => v !== undefined)
-
     // 语法分析和验证
     const parser = new SlimeParser(tokens)
     // parser.debug()
