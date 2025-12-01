@@ -84,9 +84,9 @@ function getAllJsFiles(dir: string, baseDir: string = dir): string[] {
   return results
 }
 
-// const casesDir = path.join(__dirname, 'tests/cases')
+const casesDir = path.join(__dirname, 'tests/cases')
 // const casesDir = path.join(__dirname, 'tests/es6rules')
-const casesDir = path.join(__dirname, 'tests/babel')
+// const casesDir = path.join(__dirname, 'tests/babel')
 const files = getAllJsFiles(casesDir).sort()
 
 // 支持从指定位置开始测试
