@@ -4,12 +4,17 @@
  * 验证方式: 比较输入代码和输出代码的 token 序列是否一致
  * 前提: 阶段1、2已通过（CST和AST可以正常生成）
  */
-import SlimeParser from './packages/slime-parser/src/language/es2025/SlimeParser.ts'
-import { SlimeCstToAst } from './packages/slime-parser/src/language/SlimeCstToAstUtil.ts'
-import SlimeGenerator from './packages/slime-generator/src/SlimeGenerator.ts'
+import SlimeParser from './packages/slime-parser/src/language/es2025/SlimeParser'
+import { SlimeCstToAst } from './packages/slime-parser/src/language/SlimeCstToAstUtil'
+import SlimeGenerator from './packages/slime-generator/src/SlimeGenerator'
 import * as fs from 'fs'
 import * as path from 'path'
-import SubhutiMatchToken from 'subhuti/src/struct/SubhutiMatchToken.ts'
+import SubhutiMatchToken from 'subhuti/src/struct/SubhutiMatchToken'
+import {
+  getAllJsFiles,
+  getParseMode,
+  shouldSkipTest
+} from './test-utils'
 
 // ============================================
 // Token 序列比较工具
@@ -106,33 +111,20 @@ function compareTokenSequences(
 // 测试配置
 // ============================================
 
-const casesDir = path.join(__dirname, 'tests/cases')
-const files = fs.readdirSync(casesDir)
-  .filter(f => f.endsWith('.js'))
-  .sort()
+// 使用 Babel 测试目录（与 stage1 一致）
+const casesDir = path.join(__dirname, 'tests/babel')
+const files = getAllJsFiles(casesDir).sort()
 
-// 命令行参数
-const args = process.argv.slice(2)
-const verboseMode = args.includes('-v') || args.includes('--verbose')
-const stopOnFirstError = !args.includes('--continue')
-const filterPattern = args.find(a => !a.startsWith('-'))
+// 支持从指定位置开始测试
+// 用法: npx tsx test-stage3-codegen.ts [startIndex]
+const startIndex = parseInt(process.argv[2] || '0', 10)
 
-// 过滤测试用例
-const filteredFiles = filterPattern
-  ? files.filter(f => f.includes(filterPattern))
-  : files
-
-console.log(`🧪 阶段3: 代码生成测试 (${filteredFiles.length} 个用例)`)
+if (startIndex > 0) {
+  console.log(`📍 从第 ${startIndex + 1} 个文件开始测试 (跳过前 ${startIndex} 个)`)
+}
+console.log(`🧪 阶段3: 代码生成测试 (${files.length} 个用例，测试 ${files.length - startIndex} 个)`)
 console.log('测试范围: AST → JavaScript代码')
 console.log('验证方式: 比较输入/输出代码的 token 序列\n')
-
-if (verboseMode) {
-  console.log('📝 详细模式已启用')
-}
-if (!stopOnFirstError) {
-  console.log('📝 继续模式：遇到错误不停止')
-}
-console.log()
 
 // ============================================
 // 测试执行
@@ -140,20 +132,33 @@ console.log()
 
 let passCount = 0
 let failCount = 0
-const failures: { name: string; error: any }[] = []
+let skipped = 0
 
-for (let i = 0; i < filteredFiles.length; i++) {
-  const file = filteredFiles[i]
+for (let i = startIndex; i < files.length; i++) {
+  const file = files[i]
   const testName = file.replace('.js', '')
   const filePath = path.join(casesDir, file)
+  const testDir = path.dirname(filePath)
+
+  // 统一跳过检查
+  const skipResult = shouldSkipTest(testName, testDir)
+  if (skipResult.skip) {
+    console.log(`\n[${i + 1}] ⏭️ 跳过: ${testName} (${skipResult.reason})`)
+    skipped++
+    continue
+  }
+
+  // 确定解析模式
+  const parseMode = getParseMode(testDir, filePath)
   const code = fs.readFileSync(filePath, 'utf-8')
 
-  console.log(`[${i + 1}] 测试: ${testName}`)
+  console.log(`\n[${i + 1}] 测试: ${testName} (${parseMode} 模式)`)
+  console.log('='.repeat(60))
 
   try {
     // 阶段1-2: 输入代码 → AST
     const parser = new SlimeParser(code)
-    const cst = parser.Program('module')
+    const cst = parser.Program(parseMode)
     const inputTokens = parser.parsedTokens
     const slimeCstToAst = new SlimeCstToAst()
     const ast = slimeCstToAst.toProgram(cst)
@@ -164,65 +169,46 @@ for (let i = 0; i < filteredFiles.length; i++) {
 
     // 阶段4: 输出代码 → tokens（用于验证）
     const outputParser = new SlimeParser(generatedCode)
-    outputParser.Program('module')
+    outputParser.Program(parseMode)
     const outputTokens = outputParser.parsedTokens
 
     // 比较 token 序列
     const comparison = compareTokenSequences(inputTokens, outputTokens)
 
     if (comparison.success) {
-      console.log(`  ✅ 通过 (${inputTokens.length} tokens)`)
+      console.log(`✅ 通过 (${inputTokens.length} tokens)`)
       passCount++
-
-      if (verboseMode) {
-        console.log(`     输入: ${code.substring(0, 50).replace(/\n/g, ' ')}...`)
-        console.log(`     输出: ${generatedCode.substring(0, 50).replace(/\n/g, ' ')}...`)
-      }
     } else {
-      console.log(`  ❌ 失败: ${comparison.message}`)
-      failCount++
+      console.log(`❌ 失败: ${comparison.message}`)
+      console.log('\n--- 输入代码 ---')
+      console.log(code)
+      console.log('\n--- 生成代码 ---')
+      console.log(generatedCode)
+      console.log('\n--- 输入 tokens ---')
+      console.log(extractTokenValues(inputTokens).join(' '))
+      console.log('\n--- 输出 tokens ---')
+      console.log(extractTokenValues(outputTokens).join(' '))
 
-      if (verboseMode || stopOnFirstError) {
-        console.log('\n--- 输入代码 ---')
-        console.log(code)
-        console.log('\n--- 生成代码 ---')
-        console.log(generatedCode)
-        console.log('\n--- 输入 tokens ---')
-        console.log(extractTokenValues(inputTokens).join(' '))
-        console.log('\n--- 输出 tokens ---')
-        console.log(extractTokenValues(outputTokens).join(' '))
-
-        if (comparison.details) {
-          console.log('\n--- 详细信息 ---')
-          console.log(JSON.stringify(comparison.details, null, 2))
-        }
+      if (comparison.details) {
+        console.log('\n--- 详细信息 ---')
+        console.log(JSON.stringify(comparison.details, null, 2))
       }
 
-      failures.push({ name: testName, error: comparison })
-
-      if (stopOnFirstError) {
-        console.log(`\n⚠️ 测试在第 ${i + 1} 个用例停止`)
-        break
-      }
+      console.log(`\n⚠️ 测试在第 ${i + 1} 个用例停止`)
+      console.log(`当前进度: ${passCount}/${files.length} 通过 (跳过 ${skipped} 个)\n`)
+      process.exit(1)
     }
 
   } catch (error: any) {
-    console.log(`  ❌ 异常: ${error.message}`)
-    failCount++
+    console.log(`❌ 异常: ${error.message}`)
+    console.log('\n--- 输入代码 ---')
+    console.log(code)
+    console.log('\n--- 错误栈 ---')
+    console.log(error.stack)
 
-    if (verboseMode || stopOnFirstError) {
-      console.log('\n--- 输入代码 ---')
-      console.log(code)
-      console.log('\n--- 错误栈 ---')
-      console.log(error.stack)
-    }
-
-    failures.push({ name: testName, error })
-
-    if (stopOnFirstError) {
-      console.log(`\n⚠️ 测试在第 ${i + 1} 个用例停止`)
-      break
-    }
+    console.log(`\n⚠️ 测试在第 ${i + 1} 个用例停止`)
+    console.log(`当前进度: ${passCount}/${files.length} 通过 (跳过 ${skipped} 个)\n`)
+    process.exit(1)
   }
 }
 
@@ -233,17 +219,6 @@ for (let i = 0; i < filteredFiles.length; i++) {
 console.log('\n' + '='.repeat(60))
 console.log('📊 测试结果汇总')
 console.log('='.repeat(60))
-console.log(`通过: ${passCount}/${filteredFiles.length}`)
-console.log(`失败: ${failCount}/${filteredFiles.length}`)
-
-if (failures.length > 0) {
-  console.log('\n❌ 失败的测试用例:')
-  failures.forEach((f, i) => {
-    console.log(`  ${i + 1}. ${f.name}`)
-  })
-  process.exit(1)
-} else {
-  console.log(`\n🎉 全部通过!`)
-}
-
-
+console.log(`通过: ${passCount}/${files.length}`)
+console.log(`跳过: ${skipped}/${files.length}`)
+console.log(`\n🎉 阶段3测试全部通过!`)

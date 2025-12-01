@@ -4,118 +4,12 @@
  */
 import * as fs from 'fs'
 import * as path from 'path'
-import SubhutiLexer from "subhuti/src/SubhutiLexer";
-import {slimeTokens} from "slime-parser/src/language/es2025/SlimeTokens";
 import SlimeParser from "slime-parser/src/language/es2025/SlimeParser";
-
-// 跳过的目录（非标准 ECMAScript 语法）
-const skipDirs = [
-  'flow',           // Flow 类型语法
-  'jsx',            // JSX 语法
-  'typescript',     // TypeScript 语法
-  'experimental',   // 实验性语法
-  'placeholders',   // 占位符语法
-  'v8intrinsic',    // V8 内部语法
-  'disabled',       // 明确禁用的测试
-  'annex-b',        // Annex B 扩展语法（HTML 注释等）
-  'html',           // HTML 注释语法（Annex B）
-  'sourcetype-commonjs',  // CommonJS 模式（非标准 ES Module）
-]
-
-// 非标准插件列表（需要跳过包含这些插件的测试）
-const nonStandardPlugins = [
-  'asyncDoExpressions',
-  'doExpressions',
-  'decorators',
-  'decorators-legacy',
-  'decoratorAutoAccessors',
-  'pipelineOperator',
-  'recordAndTuple',
-  'throwExpressions',
-  'partialApplication',
-  'deferredImportEvaluation',
-  'sourcePhaseImports',
-  'importAttributes',   // ES2025 使用 with 语法，但此插件可能包含旧语法
-  'importAssertions',   // 旧语法使用 assert 关键字，ES2025 使用 with
-]
-
-// Babel 扩展选项（非标准 ECMAScript，需要跳过）
-const babelExtensionOptions = [
-  'allowAwaitOutsideFunction',    // 允许在函数外使用 await
-  'allowReturnOutsideFunction',   // 允许在函数外使用 return
-  'allowSuperOutsideMethod',      // 允许在方法外使用 super
-  'allowUndeclaredExports',       // 允许未声明的导出
-  'allowNewTargetOutsideFunction', // 允许在函数外使用 new.target
-  'annexB',                       // Annex B 扩展（部分我们不支持）
-  'createImportExpressions',      // import() 表达式选项
-  'createParenthesizedExpressions', // 括号表达式选项
-]
-
-/**
- * 检查测试是否需要非标准插件
- */
-function requiresNonStandardPlugin(testDir: string): boolean {
-  const optionsPath = path.join(testDir, 'options.json')
-  if (!fs.existsSync(optionsPath)) {
-    return false
-  }
-  try {
-    const options = JSON.parse(fs.readFileSync(optionsPath, 'utf-8'))
-    const plugins = options.plugins || []
-    return plugins.some((p: string | string[]) => {
-      const pluginName = Array.isArray(p) ? p[0] : p
-      return nonStandardPlugins.includes(pluginName)
-    })
-  } catch {
-    return false
-  }
-}
-
-/**
- * 检查测试是否使用了 Babel 扩展选项
- */
-function usesBabelExtensionOptions(testDir: string): string | null {
-  const optionsPath = path.join(testDir, 'options.json')
-  if (!fs.existsSync(optionsPath)) {
-    return null
-  }
-  try {
-    const options = JSON.parse(fs.readFileSync(optionsPath, 'utf-8'))
-    for (const opt of babelExtensionOptions) {
-      if (opt in options) {
-        return opt
-      }
-    }
-    return null
-  } catch {
-    return null
-  }
-}
-
-/**
- * 递归获取目录下所有 .js 文件
- */
-function getAllJsFiles(dir: string, baseDir: string = dir): string[] {
-  const results: string[] = []
-  const entries = fs.readdirSync(dir, { withFileTypes: true })
-
-  for (const entry of entries) {
-    const fullPath = path.join(dir, entry.name)
-    if (entry.isDirectory()) {
-      // 跳过不需要测试的目录
-      if (skipDirs.includes(entry.name)) {
-        continue
-      }
-      // 递归遍历子目录
-      results.push(...getAllJsFiles(fullPath, baseDir))
-    } else if (entry.isFile() && entry.name.endsWith('.js')) {
-      // 收集 .js 文件的相对路径
-      results.push(path.relative(baseDir, fullPath))
-    }
-  }
-
-  return results
-}
+import {
+  getAllJsFiles,
+  getParseMode,
+  shouldSkipTest
+} from './test-utils'
 
 // const casesDir = path.join(__dirname, 'tests/cases')
 // const casesDir = path.join(__dirname, 'tests/es6rules')
@@ -134,84 +28,6 @@ console.log(`🧪 阶段1: CST生成测试 (${files.length} 个用例，测试 $
 console.log('测试范围: 词法分析 → 语法分析\n')
 
 let skipped = 0
-/**
- * 检查测试用例是否是错误恢复测试
- * 错误恢复测试的 output.json 中包含 errors 字段
- */
-function isErrorRecoveryTest(testDir: string): boolean {
-  const outputPath = path.join(testDir, 'output.json')
-  if (!fs.existsSync(outputPath)) {
-    return false
-  }
-  try {
-    const output = JSON.parse(fs.readFileSync(outputPath, 'utf-8'))
-    return Array.isArray(output.errors) && output.errors.length > 0
-  } catch {
-    return false
-  }
-}
-
-/**
- * 检查测试用例是否期望抛出错误
- * options.json 中包含 throws 字段表示期望解析失败
- */
-function isExpectedToThrow(testDir: string): boolean {
-  const optionsPath = path.join(testDir, 'options.json')
-  if (!fs.existsSync(optionsPath)) {
-    return false
-  }
-  try {
-    const options = JSON.parse(fs.readFileSync(optionsPath, 'utf-8'))
-    return typeof options.throws === 'string'
-  } catch {
-    return false
-  }
-}
-
-/**
- * 根据测试路径和配置确定解析模式
- * - 路径包含 'script' 或 'sourcetype-script' → script 模式
- * - options.json 中 sourceType: "script" → script 模式
- * - output.json 中 sourceType: "script" → script 模式
- * - 否则默认 module 模式
- */
-function getParseMode(testDir: string, filePath: string): 'module' | 'script' {
-  // 1. 检查路径是否包含 script 相关标识
-  const normalizedPath = filePath.toLowerCase().replace(/\\/g, '/')
-  if (normalizedPath.includes('script') || normalizedPath.includes('sourcetype-script')) {
-    return 'script'
-  }
-
-  // 2. 检查 options.json 中的 sourceType
-  const optionsPath = path.join(testDir, 'options.json')
-  if (fs.existsSync(optionsPath)) {
-    try {
-      const options = JSON.parse(fs.readFileSync(optionsPath, 'utf-8'))
-      if (options.sourceType === 'script') {
-        return 'script'
-      }
-    } catch {
-      // 忽略解析错误
-    }
-  }
-
-  // 3. 检查 output.json 中的 sourceType（Babel 测试用例通常在这里指定）
-  const outputPath = path.join(testDir, 'output.json')
-  if (fs.existsSync(outputPath)) {
-    try {
-      const output = JSON.parse(fs.readFileSync(outputPath, 'utf-8'))
-      // output.json 的结构是 { program: { sourceType: "script" } }
-      if (output.program?.sourceType === 'script') {
-        return 'script'
-      }
-    } catch {
-      // 忽略解析错误
-    }
-  }
-
-  // 4. 默认 module 模式
-  return 'module'
-}
 
 for (let i = startIndex; i < files.length; i++) {
   const file = files[i]
@@ -219,60 +35,10 @@ for (let i = startIndex; i < files.length; i++) {
   const filePath = path.join(casesDir, file)
   const testDir = path.dirname(filePath)
 
-  // 检查是否需要非标准插件
-  if (requiresNonStandardPlugin(testDir)) {
-    console.log(`\n[${i + 1}] ⏭️ 跳过: ${testName} (需要非标准插件)`)
-    skipped++
-    continue
-  }
-
-  // 检查是否使用了 Babel 扩展选项
-  const babelExt = usesBabelExtensionOptions(testDir)
-  if (babelExt) {
-    console.log(`\n[${i + 1}] ⏭️ 跳过: ${testName} (Babel 扩展: ${babelExt})`)
-    skipped++
-    continue
-  }
-
-  // 检查是否是错误恢复测试（当前阶段暂不支持）
-  if (isErrorRecoveryTest(testDir)) {
-    console.log(`\n[${i + 1}] ⏭️ 跳过: ${testName} (错误恢复测试)`)
-    skipped++
-    continue
-  }
-
-  // 检查是否期望抛出错误（语法错误用例）
-  if (isExpectedToThrow(testDir)) {
-    console.log(`\n[${i + 1}] ⏭️ 跳过: ${testName} (期望抛出错误)`)
-    skipped++
-    continue
-  }
-
-  // 检查目录名是否以 'invalid' 开头（期望解析失败的用例）
-  const dirName = path.basename(testDir)
-  if (dirName.startsWith('invalid')) {
-    console.log(`\n[${i + 1}] ⏭️ 跳过: ${testName} (invalid 用例，期望解析失败)`)
-    skipped++
-    continue
-  }
-
-  // 跳过 await 在嵌套类中的边缘情况（Babel 与规范行为不同）
-  if (testName.includes('await') && testName.includes('static-block') && testName.includes('initializer')) {
-    console.log(`\n[${i + 1}] ⏭️ 跳过: ${testName} (await 边缘情况)`)
-    skipped++
-    continue
-  }
-
-  // 跳过 accessor 字段（Stage 3 提案，暂不支持）
-  if (testName.includes('accessor')) {
-    console.log(`\n[${i + 1}] ⏭️ 跳过: ${testName} (accessor 提案，暂不支持)`)
-    skipped++
-    continue
-  }
-
-  // 跳过 TypeScript 特定语法
-  if (testName.includes('typescript')) {
-    console.log(`\n[${i + 1}] ⏭️ 跳过: ${testName} (TypeScript 语法，暂不支持)`)
+  // 统一跳过检查
+  const skipResult = shouldSkipTest(testName, testDir)
+  if (skipResult.skip) {
+    console.log(`\n[${i + 1}] ⏭️ 跳过: ${testName} (${skipResult.reason})`)
     skipped++
     continue
   }
