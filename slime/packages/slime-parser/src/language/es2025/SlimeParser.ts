@@ -4224,15 +4224,28 @@ export default class SlimeParser extends SubhutiParser<SlimeTokenConsumer> {
      *     static FieldDefinition[?Yield, ?Await] ;
      *     ClassStaticBlock
      *     ;
+     *
+     * ⚠️ 规范顺序：MethodDefinition 必须在 FieldDefinition 之前尝试！
+     * 因为 getter/setter 方法以 get/set 开头，如果先尝试 FieldDefinition，
+     * 会把 get/set 匹配为字段名，导致 "get\na" 被解析为两个字段而不是一个 getter。
      */
     @SubhutiRule
     ClassElement(params: ExpressionParams = {}): SubhutiCst | undefined {
         return this.Or([
+            // MethodDefinition[?Yield, ?Await]
+            {alt: () => this.MethodDefinition(params)},
             // static MethodDefinition[?Yield, ?Await]
             {
                 alt: () => {
                     this.tokenConsumer.Static()
                     this.MethodDefinition(params)
+                }
+            },
+            // FieldDefinition[?Yield, ?Await] ;
+            {
+                alt: () => {
+                    this.FieldDefinition(params)
+                    this.SemicolonASI()  // 类字段支持 ASI
                 }
             },
             // static FieldDefinition[?Yield, ?Await] ;
@@ -4245,15 +4258,6 @@ export default class SlimeParser extends SubhutiParser<SlimeTokenConsumer> {
             },
             // ClassStaticBlock
             {alt: () => this.ClassStaticBlock()},
-            // FieldDefinition[?Yield, ?Await] ;
-            {
-                alt: () => {
-                    this.FieldDefinition(params)
-                    this.SemicolonASI()  // 类字段支持 ASI
-                }
-            },
-            // MethodDefinition[?Yield, ?Await]
-            {alt: () => this.MethodDefinition(params)},
             // ;
             {alt: () => this.tokenConsumer.Semicolon()}
         ])
