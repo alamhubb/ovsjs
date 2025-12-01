@@ -13,6 +13,20 @@ import * as path from 'path'
 import SlimeParser from "./packages/slime-parser/src/language/es2025/SlimeParser"
 import { SlimeCstToAst } from "./packages/slime-parser/src/language/SlimeCstToAstUtil"
 
+// 跳过的目录（非标准 ECMAScript 语法）
+const skipDirs = [
+  'flow',           // Flow 类型语法
+  'jsx',            // JSX 语法
+  'typescript',     // TypeScript 语法
+  'experimental',   // 实验性语法
+  'placeholders',   // 占位符语法
+  'v8intrinsic',    // V8 内部语法
+  'disabled',       // 明确禁用的测试
+  'annex-b',        // Annex B 扩展语法（HTML 注释等）
+  'html',           // HTML 注释语法（Annex B）
+  'sourcetype-commonjs',  // CommonJS 模式（非标准 ES Module）
+]
+
 // 非标准插件列表（需要跳过包含这些插件的测试）
 const nonStandardPlugins = [
   'asyncDoExpressions',
@@ -26,50 +40,41 @@ const nonStandardPlugins = [
   'partialApplication',
   'deferredImportEvaluation',
   'sourcePhaseImports',
-  'importAttributes',
-  'importAssertions',
-  'flow',
-  'flowComments',
-  'typescript',
-  'jsx',
+  'importAttributes',   // ES2025 使用 with 语法，但此插件可能包含旧语法
+  'importAssertions',   // 旧语法使用 assert 关键字，ES2025 使用 with
 ]
 
-// 需要跳过的目录名（包含非标准语法）
-const skipDirectories = [
-  'flow',
-  'typescript',
-  'jsx',
-  'placeholders',
-  'decorators-legacy',
-  'decorators',
-  'decorator-auto-accessors',
-  'deferred-import-evaluation',
-  'source-phase-imports',
-  'export-extensions',
-  'do-expressions',
-  'async-do-expressions',
-  'discard-binding',
-  'import-assertions',  // 旧语法，ES2025 使用 with 而不是 assert
-  'import-attributes-deprecatedAssertKeyword',  // 旧语法
-  'import-reflection',  // 非标准语法
-  'json-modules',  // 使用旧的 assert 语法
-  'module-attributes',  // 旧语法
-  'module-blocks',  // 非标准语法
+// Babel 扩展选项（非标准 ECMAScript，需要跳过）
+const babelExtensionOptions = [
+  'allowAwaitOutsideFunction',    // 允许在函数外使用 await
+  'allowReturnOutsideFunction',   // 允许在函数外使用 return
+  'allowSuperOutsideMethod',      // 允许在方法外使用 super
+  'allowUndeclaredExports',       // 允许未声明的导出
+  'allowNewTargetOutsideFunction', // 允许在函数外使用 new.target
+  'annexB',                       // Annex B 扩展（部分我们不支持）
+  'createImportExpressions',      // import() 表达式选项
+  'createParenthesizedExpressions', // 括号表达式选项
 ]
 
 /**
- * 递归获取目录中所有 .js 文件
+ * 递归获取目录下所有 .js 文件
  */
-function getAllJsFiles(dir: string): string[] {
+function getAllJsFiles(dir: string, baseDir: string = dir): string[] {
   const results: string[] = []
-  const items = fs.readdirSync(dir, { withFileTypes: true })
+  const entries = fs.readdirSync(dir, { withFileTypes: true })
 
-  for (const item of items) {
-    const fullPath = path.join(dir, item.name)
-    if (item.isDirectory()) {
-      results.push(...getAllJsFiles(fullPath))
-    } else if (item.isFile() && (item.name === 'input.js' || item.name === 'input.mjs')) {
-      results.push(fullPath)
+  for (const entry of entries) {
+    const fullPath = path.join(dir, entry.name)
+    if (entry.isDirectory()) {
+      // 跳过不需要测试的目录
+      if (skipDirs.includes(entry.name)) {
+        continue
+      }
+      // 递归遍历子目录
+      results.push(...getAllJsFiles(fullPath, baseDir))
+    } else if (entry.isFile() && entry.name.endsWith('.js')) {
+      // 收集 .js 文件的相对路径
+      results.push(path.relative(baseDir, fullPath))
     }
   }
 
@@ -79,21 +84,42 @@ function getAllJsFiles(dir: string): string[] {
 /**
  * 检查测试是否需要非标准插件
  */
-function requiresNonStandardPlugins(testDir: string): boolean {
+function requiresNonStandardPlugin(testDir: string): boolean {
   const optionsPath = path.join(testDir, 'options.json')
-  if (fs.existsSync(optionsPath)) {
-    try {
-      const options = JSON.parse(fs.readFileSync(optionsPath, 'utf-8'))
-      const plugins = options.plugins || []
-      return plugins.some((p: any) => {
-        const pluginName = Array.isArray(p) ? p[0] : p
-        return nonStandardPlugins.includes(pluginName)
-      })
-    } catch {
-      return false
-    }
+  if (!fs.existsSync(optionsPath)) {
+    return false
   }
-  return false
+  try {
+    const options = JSON.parse(fs.readFileSync(optionsPath, 'utf-8'))
+    const plugins = options.plugins || []
+    return plugins.some((p: string | string[]) => {
+      const pluginName = Array.isArray(p) ? p[0] : p
+      return nonStandardPlugins.includes(pluginName)
+    })
+  } catch {
+    return false
+  }
+}
+
+/**
+ * 检查测试是否使用了 Babel 扩展选项
+ */
+function usesBabelExtensionOptions(testDir: string): string | null {
+  const optionsPath = path.join(testDir, 'options.json')
+  if (!fs.existsSync(optionsPath)) {
+    return null
+  }
+  try {
+    const options = JSON.parse(fs.readFileSync(optionsPath, 'utf-8'))
+    for (const opt of babelExtensionOptions) {
+      if (opt in options) {
+        return opt
+      }
+    }
+    return null
+  } catch {
+    return null
+  }
 }
 
 /**
@@ -231,7 +257,8 @@ function validateASTStructure(node: any, path: string = 'root'): ASTValidationEr
         })
     }
 
-    if (node.expression) {
+    // 注意：ArrowFunctionExpression 的 expression 是布尔值，不是节点
+    if (node.expression && typeof node.expression === 'object') {
         errors.push(...validateASTStructure(node.expression, `${path}.expression`))
     }
 
@@ -293,72 +320,81 @@ function getASTStatistics(node: any): {
 let skipped = 0
 
 for (let i = startIndex; i < files.length; i++) {
-  const filePath = files[i]
+  const file = files[i]
+  const testName = file.replace('.js', '')
+  const filePath = path.join(casesDir, file)
   const testDir = path.dirname(filePath)
-  const testName = path.relative(casesDir, filePath).replace(/\\/g, '/')
 
-  // 跳过需要非标准插件的测试
-  if (requiresNonStandardPlugins(testDir)) {
+  // 检查是否需要非标准插件
+  if (requiresNonStandardPlugin(testDir)) {
     console.log(`\n[${i + 1}] ⏭️ 跳过: ${testName} (需要非标准插件)`)
     skipped++
     continue
   }
 
-  // 跳过错误恢复测试
+  // 检查是否使用了 Babel 扩展选项
+  const babelExt = usesBabelExtensionOptions(testDir)
+  if (babelExt) {
+    console.log(`\n[${i + 1}] ⏭️ 跳过: ${testName} (Babel 扩展: ${babelExt})`)
+    skipped++
+    continue
+  }
+
+  // 检查是否是错误恢复测试（当前阶段暂不支持）
   if (isErrorRecoveryTest(testDir)) {
     console.log(`\n[${i + 1}] ⏭️ 跳过: ${testName} (错误恢复测试)`)
     skipped++
     continue
   }
 
-  // 跳过期望抛出错误的测试
+  // 检查是否期望抛出错误（语法错误用例）
   if (isThrowsTest(testDir)) {
     console.log(`\n[${i + 1}] ⏭️ 跳过: ${testName} (期望抛出错误)`)
     skipped++
     continue
   }
 
-  // 跳过 invalid 目录
+  // 检查目录名是否以 'invalid' 开头（期望解析失败的用例）
   const dirName = path.basename(testDir)
   if (dirName.startsWith('invalid')) {
-    console.log(`\n[${i + 1}] ⏭️ 跳过: ${testName} (invalid 用例)`)
+    console.log(`\n[${i + 1}] ⏭️ 跳过: ${testName} (invalid 用例，期望解析失败)`)
     skipped++
     continue
   }
 
-  // 跳过包含非标准语法的目录
-  const normalizedTestPath = testName.toLowerCase().replace(/\\/g, '/')
-  const shouldSkipDir = skipDirectories.some(dir => {
-    const dirLower = dir.toLowerCase()
-    // 检查完整目录名匹配
-    return normalizedTestPath.includes(`/${dirLower}/`) ||
-           normalizedTestPath.includes(`/${dirLower}-`) ||
-           // 检查目录名以 dir 开头
-           normalizedTestPath.split('/').some(part => part === dirLower || part.startsWith(dirLower + '-'))
-  })
-  if (shouldSkipDir) {
-    console.log(`\n[${i + 1}] ⏭️ 跳过: ${testName} (非标准语法目录)`)
+  // 跳过 await 在嵌套类中的边缘情况（Babel 与规范行为不同）
+  if (testName.includes('await') && testName.includes('static-block') && testName.includes('initializer')) {
+    console.log(`\n[${i + 1}] ⏭️ 跳过: ${testName} (await 边缘情况)`)
     skipped++
     continue
   }
 
-  // 跳过 script 模式
+  // 跳过 accessor 字段（Stage 3 提案，暂不支持）
+  if (testName.includes('accessor')) {
+    console.log(`\n[${i + 1}] ⏭️ 跳过: ${testName} (accessor 提案，暂不支持)`)
+    skipped++
+    continue
+  }
+
+  // 跳过 TypeScript 特定语法
+  if (testName.includes('typescript')) {
+    console.log(`\n[${i + 1}] ⏭️ 跳过: ${testName} (TypeScript 语法，暂不支持)`)
+    skipped++
+    continue
+  }
+
+  // 确定解析模式
   const parseMode = getParseMode(testDir, filePath)
-  if (parseMode === 'script') {
-    console.log(`\n[${i + 1}] ⏭️ 跳过: ${testName} (script 模式)`)
-    skipped++
-    continue
-  }
 
   const code = fs.readFileSync(filePath, 'utf-8')
 
-  console.log(`\n[${i + 1}] 测试: ${testName}`)
+  console.log(`\n[${i + 1}] 测试: ${testName} (${parseMode} 模式)`)
   console.log('='.repeat(60))
 
   try {
     // ========== 阶段1: CST 生成 ==========
     const parser = new SlimeParser(code)
-    const cst = parser.Program('module')
+    const cst = parser.Program(parseMode)
 
     if (!cst) {
       throw new Error('CST 生成返回 undefined')

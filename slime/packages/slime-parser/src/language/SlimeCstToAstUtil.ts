@@ -112,16 +112,38 @@ export function throwNewError(errorMsg: string = 'syntax error') {
 //应该根据cst名称命名，转换为ast
 export class SlimeCstToAst {
     createIdentifierAst(cst: SubhutiCst): SlimeIdentifier {
-        // Support both Es2025TokenConsumer.Identifier and direct 'Identifier' name
+        // Support Identifier, IdentifierName, and contextual keywords (yield, await) used as identifiers
         const expectedName = SlimeParser.prototype.Identifier?.name || 'Identifier'
-        if (cst.name !== expectedName && cst.name !== 'Identifier') {
-            throw new Error(`Expected Identifier, got ${cst.name}`)
-        }
+        const isIdentifier = cst.name === expectedName || cst.name === 'Identifier'
+        const isIdentifierName = cst.name === 'IdentifierName' || cst.name === SlimeParser.prototype.IdentifierName?.name
+        const isYield = cst.name === 'Yield'
+        const isAwait = cst.name === 'Await'
 
         // ES2025 Parser: Identifier 规则内部调用 IdentifierNameTok()
         // 所以 CST 结构是：Identifier -> IdentifierNameTok (token with value)
         let value: string
-        if (cst.value !== undefined && cst.value !== null) {
+
+        // 处理 yield/await 作为标识符的情况
+        if (isYield || isAwait) {
+            // 这是一个 token，直接使用其值
+            value = cst.value as string || cst.name.toLowerCase()
+        } else if (isIdentifierName) {
+            // IdentifierName 结构：IdentifierName -> token (with value)
+            if (cst.value !== undefined && cst.value !== null) {
+                value = cst.value as string
+            } else if (cst.children && cst.children.length > 0) {
+                const tokenCst = cst.children[0]
+                if (tokenCst.value !== undefined) {
+                    value = tokenCst.value as string
+                } else {
+                    throw new Error(`createIdentifierAst: Cannot extract value from IdentifierName CST`)
+                }
+            } else {
+                throw new Error(`createIdentifierAst: Invalid IdentifierName CST structure`)
+            }
+        } else if (!isIdentifier) {
+            throw new Error(`Expected Identifier, got ${cst.name}`)
+        } else if (cst.value !== undefined && cst.value !== null) {
             // 直接是 token（旧版兼容）
             value = cst.value as string
         } else if (cst.children && cst.children.length > 0) {
@@ -3922,16 +3944,16 @@ export class SlimeCstToAst {
                     // LabelledItem 内部是 Statement 或 FunctionDeclaration
                     const itemChild = child.children?.[0]
                     if (itemChild) {
-                        const stmts = this.createStatementAst(itemChild)
-                        body = Array.isArray(stmts) ? stmts[0] : stmts
+                        // 使用 createStatementDeclarationAst 而不是 createStatementAst
+                        // 因为 LabelledItem 可能直接包含 FunctionDeclaration
+                        body = this.createStatementDeclarationAst(itemChild)
                     }
                     continue
                 }
 
                 // 旧版兼容：直接是 Statement
                 if (name === SlimeParser.prototype.Statement?.name || name === 'Statement') {
-                    const stmts = this.createStatementAst(child)
-                    body = Array.isArray(stmts) ? stmts[0] : stmts
+                    body = this.createStatementDeclarationAst(child)
                     continue
                 }
 
@@ -4675,8 +4697,25 @@ export class SlimeCstToAst {
                 newToken, lParenToken, rParenToken
             )
         } else {
-            // NewExpression -> 递归处理
-            return this.createExpressionAst(cst.children[0])
+            // NewExpression 有两种形式：
+            // 1. MemberExpression - 直接委托给 MemberExpression
+            // 2. new NewExpression - 创建 NewExpression（无参数）
+
+            const firstChild = cst.children[0]
+            if (firstChild.name === 'New' || firstChild.value === 'new') {
+                // 这是 `new NewExpression` 形式，创建无参数的 NewExpression
+                const newToken = SlimeTokenCreate.createNewToken(firstChild.loc)
+                const innerNewExpr = cst.children[1]
+                const calleeExpression = this.createNewExpressionAst(innerNewExpr)
+
+                return SlimeAstUtil.createNewExpression(
+                    calleeExpression, [], cst.loc,
+                    newToken, undefined, undefined
+                )
+            } else {
+                // 这是 MemberExpression 形式，递归处理
+                return this.createExpressionAst(firstChild)
+            }
         }
     }
 
@@ -4949,6 +4988,9 @@ export class SlimeCstToAst {
         } else if (astName === SlimeParser.prototype.ImportCall?.name || astName === 'ImportCall') {
             // ES2020: 动态 import()
             left = this.createImportCallAst(cst)
+        } else if (astName === SlimeParser.prototype.PrivateIdentifier?.name || astName === 'PrivateIdentifier') {
+            // ES2022: PrivateIdentifier (e.g. #x in `#x in obj`)
+            left = this.createPrivateIdentifierAst(cst)
         } else {
             throw new Error('Unsupported expression type: ' + cst.name)
         }
