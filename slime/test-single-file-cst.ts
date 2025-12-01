@@ -7,8 +7,6 @@
  */
 import * as fs from 'fs'
 import * as path from 'path'
-import SubhutiLexer from 'subhuti/src/SubhutiLexer'
-import {slimeTokens} from "slime-parser/src/language/es2025/SlimeTokens";
 import SlimeParser from "slime-parser/src/language/es2025/SlimeParser";
 
 // 收集CST中的所有token值
@@ -198,15 +196,12 @@ try {
     }
     console.log('='.repeat(60))
 
-    // 词法分析
-    const lexer = new SubhutiLexer(slimeTokens)
-    const tokens = lexer.tokenize(code)
-
-    // console.log(tokens)
-
-    // 语法分析和验证
-    const parser = new SlimeParser(tokens)
+    // 语法分析和验证（SlimeParser 内部会自动 tokenize）
+    const parser = new SlimeParser(code)
     parser.debug()
+
+    // 获取 parser 内部的 tokens（可能经过 rescan 修正）
+    const inputTokens = (parser as any)._tokens as Array<{tokenValue: string}>
     // parser.validate()
 
     // 生成 CST (使用统一的 Program 入口，默认为 module 模式)
@@ -244,13 +239,13 @@ try {
     // Token值验证
     const cstTokens = collectTokenValues(cst)
     const missingTokens: string[] = []
-    
+
     for (const inputToken of inputTokens) {
-        if (!cstTokens.includes(inputToken)) {
-            missingTokens.push(inputToken)
+        if (!cstTokens.includes(inputToken.tokenValue)) {
+            missingTokens.push(inputToken.tokenValue)
         }
     }
-    
+
     if (missingTokens.length > 0) {
         console.log(`\n❌ CST丢失了${missingTokens.length}个token值:`, missingTokens)
         throw new Error('Token值未完整保留')

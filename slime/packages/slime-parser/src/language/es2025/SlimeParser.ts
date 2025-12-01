@@ -13,7 +13,7 @@
 import SubhutiParser, {Subhuti, SubhutiRule} from "subhuti/src/SubhutiParser.ts"
 import type SubhutiCst from "subhuti/src/struct/SubhutiCst.ts"
 import type SubhutiMatchToken from "subhuti/src/struct/SubhutiMatchToken.ts"
-import {matchRegExpLiteral} from "subhuti/src/SubhutiLexer.ts"
+import SubhutiLexer, {matchRegExpLiteral} from "subhuti/src/SubhutiLexer.ts"
 import SlimeTokenConsumer from "./SlimeTokenConsumer.ts"
 import {
     SlimeContextualKeywordTokenTypes,
@@ -194,8 +194,19 @@ function isValidIdentifierWithEscapes(name: string): boolean {
 
 @Subhuti
 export default class SlimeParser extends SubhutiParser<SlimeTokenConsumer> {
-    constructor(tokens: SubhutiMatchToken[] = []) {
+    /** 原始源码（用于 rescan 正则表达式） */
+    private _sourceCode: string = ''
+
+    /**
+     * 构造函数
+     * @param sourceCode 原始源码，内部自动进行词法分析
+     */
+    constructor(sourceCode: string = '') {
+        // 内部使用 SubhutiLexer 解析 tokens
+        const lexer = new SubhutiLexer(slimeTokens)
+        const tokens = lexer.tokenize(sourceCode)
         super(tokens, SlimeTokenConsumer)
+        this._sourceCode = sourceCode
     }
 
     // ============================================
@@ -316,13 +327,14 @@ export default class SlimeParser extends SubhutiParser<SlimeTokenConsumer> {
      *
      * 当词法分析阶段将正则表达式误判为除法时调用。
      * 例如:
+     *   `if(1)/  foo/` 中的 `/  foo/` 被误判为 Slash, foo, Slash
      *   `} /42/i` 中的 `/42/i` 被误判为 Slash, 42, Slash, i
      *   `x = /=foo/g` 中的 `/=foo/g` 被误判为 DivideAssign, foo, Slash, g
      *
      * 工作原理：
-     * 1. 从当前 Slash/DivideAssign token 开始，收集连续的 tokens（无空白间隔）
-     * 2. 拼接 tokenValue，尝试匹配正则表达式 pattern
-     * 3. 如果成功，替换 tokens 数组中的多个 tokens 为一个 RegularExpressionLiteral
+     * 1. 从原始源码的当前 token 位置开始，直接匹配正则表达式
+     * 2. 如果匹配成功，计算覆盖了多少个原始 tokens
+     * 3. 替换这些 tokens 为一个 RegularExpressionLiteral
      *
      * @returns 是否成功重新扫描
      */
@@ -332,31 +344,30 @@ export default class SlimeParser extends SubhutiParser<SlimeTokenConsumer> {
             return false
         }
 
-        // 1. 从当前 Slash 开始，收集连续的 tokens
-        const startIndex = this.tokenIndex
-        let endIndex = startIndex
-        let concatenated = curToken.tokenValue
-        let expectedNextIndex = curToken.index + curToken.tokenValue.length
-
-        // 向后扫描连续的 tokens（无空白间隔）
-        while (endIndex + 1 < this._tokens.length) {
-            const nextToken = this._tokens[endIndex + 1]
-            // 检查是否连续（无空白）
-            if (nextToken.index !== expectedNextIndex) {
-                break
-            }
-            concatenated += nextToken.tokenValue
-            expectedNextIndex = nextToken.index + nextToken.tokenValue.length
-            endIndex++
-        }
-
-        // 2. 尝试匹配正则表达式
-        const regexpMatch = matchRegExpLiteral(concatenated)
+        // 1. 从源码位置直接匹配正则表达式
+        const sourceFromSlash = this._sourceCode.slice(curToken.index)
+        const regexpMatch = matchRegExpLiteral(sourceFromSlash)
         if (!regexpMatch) {
             return false
         }
 
-        // 3. 创建新的 RegularExpressionLiteral token
+        // 2. 计算正则表达式结束位置（在源码中的绝对位置）
+        const regexpEndIndex = curToken.index + regexpMatch.length
+
+        // 3. 计算需要替换多少个 tokens（覆盖到 regexpEndIndex 之前的所有 tokens）
+        const startTokenIndex = this.tokenIndex
+        let tokensToReplace = 1
+        for (let i = startTokenIndex + 1; i < this._tokens.length; i++) {
+            const token = this._tokens[i]
+            // 如果 token 的起始位置在正则表达式范围内，需要替换
+            if (token.index < regexpEndIndex) {
+                tokensToReplace++
+            } else {
+                break
+            }
+        }
+
+        // 4. 创建新的 RegularExpressionLiteral token
         const newToken: SubhutiMatchToken = {
             tokenName: SlimeTokenType.RegularExpressionLiteral,
             tokenValue: regexpMatch,
@@ -367,16 +378,8 @@ export default class SlimeParser extends SubhutiParser<SlimeTokenConsumer> {
             hasLineBreakBefore: curToken.hasLineBreakBefore
         }
 
-        // 4. 计算需要替换多少个 tokens
-        let tokensToReplace = 1
-        let coveredLength = curToken.tokenValue.length
-        for (let i = startIndex + 1; i <= endIndex && coveredLength < regexpMatch.length; i++) {
-            coveredLength += this._tokens[i].tokenValue.length
-            tokensToReplace++
-        }
-
         // 5. 替换 tokens 数组
-        this._tokens.splice(startIndex, tokensToReplace, newToken)
+        this._tokens.splice(startTokenIndex, tokensToReplace, newToken)
 
         return true
     }
