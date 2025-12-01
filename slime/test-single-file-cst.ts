@@ -8,7 +8,7 @@
 import * as fs from 'fs'
 import * as path from 'path'
 import SubhutiLexer from 'subhuti/src/SubhutiLexer'
-import {es2025Tokens} from "slime-parser/src/language/es2025/SlimeTokensName";
+import {slimeTokens} from "slime-parser/src/language/es2025/SlimeTokens";
 import SlimeParser from "slime-parser/src/language/es2025/SlimeParser";
 
 // 收集CST中的所有token值
@@ -28,22 +28,6 @@ function collectTokenValues(node: any): string[] {
     return values
 }
 
-// 收集CST中的所有节点名称
-function _collectNodeNames(node: any): string[] {
-    const names: string[] = []
-    
-    if (node.name) {
-        names.push(node.name)
-    }
-    
-    if (node.children) {
-        for (const child of node.children) {
-            names.push(...collectNodeNames(child))
-        }
-    }
-    
-    return names
-}
 
 // 验证CST结构完整性
 interface CSTValidationError {
@@ -150,7 +134,8 @@ function _getCSTStatistics(node: any): {
 }
 
 // 主程序
-const filePath = process.argv[2] || 'tests/es6rules/fix-duplicates.js'
+const filePath = process.argv[2] || 'tests/cases/17-rest-parameters.js'
+// const filePath = process.argv[2] || 'tests/es6rules/fix-duplicates.js'
 // const filePath = process.argv[2] || 'tests/test262/intl402/DateTimeFormat\\prototype\\formatRangeToParts\\temporal-objects-resolved-time-zone.js'
 // const filePath = process.argv[2] || 'tests/es6rules/AdditiveExpression-001.js'
 
@@ -213,7 +198,7 @@ try {
     console.log('='.repeat(60))
 
     // 词法分析
-    const lexer = new SubhutiLexer(es2025Tokens)
+    const lexer = new SubhutiLexer(slimeTokens)
     const tokens = lexer.tokenize(code)
 
     // 调试：打印所有 token
