@@ -39,7 +39,8 @@ import {
     type SlimeArrayPatternElement,
     type SlimeObjectPatternProperty,
     type SlimeImportSpecifierItem,
-    type SlimeExportSpecifierItem, type SlimeFunctionDeclaration, type SlimeImportDefaultSpecifier
+    type SlimeExportSpecifierItem, type SlimeFunctionDeclaration, type SlimeImportDefaultSpecifier,
+    type SlimeImportNamespaceSpecifier
 } from "slime-ast/src/SlimeESTree.ts";
 import SubhutiCst, {type SubhutiSourceLocation} from "subhuti/src/struct/SubhutiCst.ts";
 import Es2025Parser from "./es2025/Es2025Parser.ts";
@@ -90,7 +91,7 @@ export function throwNewError(errorMsg: string = 'syntax error') {
 export class SlimeCstToAst {
     createIdentifierAst(cst: SubhutiCst): SlimeIdentifier {
         // Support both Es2025TokenConsumer.Identifier and direct 'Identifier' name
-        const expectedName = Es2025TokenConsumer.prototype.Identifier?.name || 'Identifier'
+        const expectedName = Es2025Parser.prototype.Identifier?.name || 'Identifier'
         if (cst.name !== expectedName && cst.name !== 'Identifier') {
             throw new Error(`Expected Identifier, got ${cst.name}`)
         }
