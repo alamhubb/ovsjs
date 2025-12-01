@@ -189,13 +189,12 @@ export default class SlimeTokenConsumer extends SubhutiTokenConsumer {
     }
 
     /**
-     * 消费 'let' 关键字
+     * 消费 'let' 软关键字
      * 用于 let 声明
-     * 注意：在严格模式下是保留字，非严格模式下可作为标识符（为向后兼容）
-     * 但我们将其作为独立 token 处理，与 const/var 保持一致
+     * 注意：let 在非严格模式下可作为标识符，因此作为软关键字处理
      */
     Let() {
-        return this.consume(SlimeReservedWordTokenTypes.Let)
+        return this.consumeIdentifierValue(SlimeContextualKeywordTokenTypes.Let)
     }
 
     Void() {

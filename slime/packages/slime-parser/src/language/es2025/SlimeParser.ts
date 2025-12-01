@@ -2768,7 +2768,7 @@ export default class SlimeParser extends SubhutiParser<SlimeTokenConsumer> {
         // [lookahead ∉ {{, function, async [no LineTerminator here] function, class, let [}]
         this.assertLookaheadNotIn([SlimeTokenType.LBrace, SlimeTokenType.Function, SlimeTokenType.Class])
         this.assertNotContextualSequenceNoLT(SlimeContextualKeywordTokenTypes.Async, SlimeTokenType.Function)
-        this.assertNotContextualSequence(SlimeReservedWordTokenTypes.Let, SlimeTokenType.LBracket)
+        this.assertNotContextualSequence(SlimeContextualKeywordTokenTypes.Let, SlimeTokenType.LBracket)
 
         this.Expression({...params, In: true})
         return this.SemicolonASI()
@@ -2940,8 +2940,7 @@ export default class SlimeParser extends SubhutiParser<SlimeTokenConsumer> {
                     this.tokenConsumer.For()
                     this.tokenConsumer.LParen()
                     // [lookahead ≠ let []
-                    // 注意：let 在本解析器中按严格模式处理，作为保留字定义在 SlimeReservedWordTokenTypes
-                    this.assertNotContextualSequence(SlimeReservedWordTokenTypes.Let, SlimeTokenType.LBracket)
+                    this.assertNotContextualSequence(SlimeContextualKeywordTokenTypes.Let, SlimeTokenType.LBracket)
                     this.Option(() => this.Expression({...params, In: false}))
                     this.tokenConsumer.Semicolon()
                     this.Option(() => this.Expression({...params, In: true}))
@@ -3009,8 +3008,7 @@ export default class SlimeParser extends SubhutiParser<SlimeTokenConsumer> {
                 alt: () => {
                     this.tokenConsumer.For()
                     this.tokenConsumer.LParen()
-                    // 注意：let 在本解析器中按严格模式处理，作为保留字定义在 SlimeReservedWordTokenTypes
-                    this.assertNotContextualSequence(SlimeReservedWordTokenTypes.Let, SlimeTokenType.LBracket)
+                    this.assertNotContextualSequence(SlimeContextualKeywordTokenTypes.Let, SlimeTokenType.LBracket)
                     this.LeftHandSideExpression(params)
                     this.tokenConsumer.In()
                     this.Expression({...params, In: true})
@@ -3061,8 +3059,7 @@ export default class SlimeParser extends SubhutiParser<SlimeTokenConsumer> {
                     this.tokenConsumer.For()
                     this.tokenConsumer.LParen()
                     // [lookahead ∉ {let, async of}]
-                    // 注意：let 在本解析器中按严格模式处理，作为保留字定义在 SlimeReservedWordTokenTypes
-                    this.assertNotContextual(SlimeReservedWordTokenTypes.Let)
+                    this.assertNotContextual(SlimeContextualKeywordTokenTypes.Let)
                     this.assertNotContextualPair(SlimeContextualKeywordTokenTypes.Async, SlimeContextualKeywordTokenTypes.Of)
                     this.LeftHandSideExpression(params)
                     this.tokenConsumer.Of()
@@ -3105,8 +3102,7 @@ export default class SlimeParser extends SubhutiParser<SlimeTokenConsumer> {
                     this.tokenConsumer.Await()
                     this.tokenConsumer.LParen()
                     // [lookahead ≠ let]
-                    // 注意：let 在本解析器中按严格模式处理，作为保留字定义在 SlimeReservedWordTokenTypes
-                    this.assertNotContextual(SlimeReservedWordTokenTypes.Let)
+                    this.assertNotContextual(SlimeContextualKeywordTokenTypes.Let)
                     this.LeftHandSideExpression(params)
                     this.tokenConsumer.Of()
                     this.AssignmentExpression({...params, In: true})

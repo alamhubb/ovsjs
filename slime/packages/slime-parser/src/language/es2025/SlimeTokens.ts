@@ -134,7 +134,8 @@ export const SlimeTokensObj = {
     ImportTok: createKeywordToken(SlimeTokenType.Import, 'import'),
     InTok: createKeywordToken(SlimeTokenType.In, 'in'),
     InstanceofTok: createKeywordToken(SlimeTokenType.Instanceof, 'instanceof'),
-    LetTok: createKeywordToken(SlimeTokenType.Let, 'let'),
+    // let 作为软关键字处理，不再定义为硬关键字 token
+    // LetTok: createKeywordToken(SlimeTokenType.Let, 'let'),
     NewTok: createKeywordToken(SlimeTokenType.New, 'new'),
     NullTok: createKeywordToken(SlimeTokenType.NullLiteral, 'null'),
     ReturnTok: createKeywordToken(SlimeTokenType.Return, 'return'),

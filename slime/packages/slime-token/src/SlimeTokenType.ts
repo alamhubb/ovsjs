@@ -125,6 +125,7 @@ export const SlimeContextualKeywordTokenTypes = {
     // consumeIdentifierValue() 会比较 token.tokenValue === value
     Async: 'async',     // async function, async () =>
     Static: 'static',   // static method(), static field
+    Let: 'let',         // let x = 1 (非严格模式下可作为标识符)
     Get: 'get',         // get prop()
     Set: 'set',         // set prop(v)
     Of: 'of',           // for (x of iterable)
@@ -144,10 +145,8 @@ export const SlimeContextualKeywordTokenTypes = {
  *   throw true try typeof var void while with yield
  *
  * 注意：
- * - let 在 ES2025 规范中不是 ReservedWord，但本解析器按严格模式处理，将其作为保留字
- *   参考规范 13.3.1: 在严格模式代码中，let 和 const 被视为保留字
- *   这意味着在 for 语句的 lookahead 检查中，应使用 SlimeReservedWordTokenTypes.Let
- *   而非 SlimeContextualKeywordTokenTypes（let 不在软关键字列表中）
+ * - let 在 ES2025 规范中不是 ReservedWord，在非严格模式下可作为标识符
+ *   因此 let 被放在 SlimeContextualKeywordTokenTypes 作为软关键字处理
  * - delete, typeof, void, in, instanceof 同时也是运算符（已在运算符分组中定义）
  */
 export const SlimeReservedWordTokenTypes = {
@@ -171,20 +170,6 @@ export const SlimeReservedWordTokenTypes = {
     Function: 'Function',
     If: 'If',
     Import: 'Import',
-    /**
-     * let 关键字
-     *
-     * ES2025 规范说明：
-     * - 在非严格模式下，let 不是保留字，可以作为标识符使用
-     * - 在严格模式下，let 被视为保留字（参考规范 13.3.1）
-     * - 本解析器统一按严格模式处理，因此将 let 放在 SlimeReservedWordTokenTypes
-     *
-     * 使用场景：
-     * - LetOrConst: let | const (变量声明)
-     * - ForStatement: [lookahead ≠ let [] 检查
-     * - ForInOfStatement: [lookahead ∉ {let, async of}] 检查
-     */
-    Let: 'Let',
     New: 'New',
     NullLiteral: 'NullLiteral',  // 规范 A.1: NullLiteral :: null
     Return: 'Return',

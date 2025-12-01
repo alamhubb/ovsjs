@@ -39,6 +39,18 @@ const nonStandardPlugins = [
   'importAssertions',   // 旧语法使用 assert 关键字，ES2025 使用 with
 ]
 
+// Babel 扩展选项（非标准 ECMAScript，需要跳过）
+const babelExtensionOptions = [
+  'allowAwaitOutsideFunction',    // 允许在函数外使用 await
+  'allowReturnOutsideFunction',   // 允许在函数外使用 return
+  'allowSuperOutsideMethod',      // 允许在方法外使用 super
+  'allowUndeclaredExports',       // 允许未声明的导出
+  'allowNewTargetOutsideFunction', // 允许在函数外使用 new.target
+  'annexB',                       // Annex B 扩展（部分我们不支持）
+  'createImportExpressions',      // import() 表达式选项
+  'createParenthesizedExpressions', // 括号表达式选项
+]
+
 /**
  * 检查测试是否需要非标准插件
  */
@@ -56,6 +68,27 @@ function requiresNonStandardPlugin(testDir: string): boolean {
     })
   } catch {
     return false
+  }
+}
+
+/**
+ * 检查测试是否使用了 Babel 扩展选项
+ */
+function usesBabelExtensionOptions(testDir: string): string | null {
+  const optionsPath = path.join(testDir, 'options.json')
+  if (!fs.existsSync(optionsPath)) {
+    return null
+  }
+  try {
+    const options = JSON.parse(fs.readFileSync(optionsPath, 'utf-8'))
+    for (const opt of babelExtensionOptions) {
+      if (opt in options) {
+        return opt
+      }
+    }
+    return null
+  } catch {
+    return null
   }
 }
 
@@ -193,6 +226,14 @@ for (let i = startIndex; i < files.length; i++) {
     continue
   }
 
+  // 检查是否使用了 Babel 扩展选项
+  const babelExt = usesBabelExtensionOptions(testDir)
+  if (babelExt) {
+    console.log(`\n[${i + 1}] ⏭️ 跳过: ${testName} (Babel 扩展: ${babelExt})`)
+    skipped++
+    continue
+  }
+
   // 检查是否是错误恢复测试（当前阶段暂不支持）
   if (isErrorRecoveryTest(testDir)) {
     console.log(`\n[${i + 1}] ⏭️ 跳过: ${testName} (错误恢复测试)`)
@@ -218,22 +259,15 @@ for (let i = startIndex; i < files.length; i++) {
   // 确定解析模式
   const parseMode = getParseMode(testDir, filePath)
 
-  // 跳过 script 模式的测试用例（我们只支持严格模式/module 模式）
-  if (parseMode === 'script') {
-    console.log(`\n[${i + 1}] ⏭️ 跳过: ${testName} (script 模式，不支持)`)
-    skipped++
-    continue
-  }
-
   const code = fs.readFileSync(filePath, 'utf-8')
 
-  console.log(`\n[${ i + 1}] 测试: ${testName}`)
+  console.log(`\n[${ i + 1}] 测试: ${testName} (${parseMode} 模式)`)
   console.log('='.repeat(60))
 
   try {
-    // 词法分析 + 语法分析（仅支持 module 模式）
+    // 词法分析 + 语法分析
     const parser = new SlimeParser(code)
-    const cst = parser.Program('module')
+    const cst = parser.Program(parseMode)
     console.log(`✅ 语法分析: CST生成成功`)
     console.log(`CST根节点children数: ${cst.children?.length || 0}`)
 
