@@ -10,7 +10,7 @@ import {
     SlimeBinaryOperatorTokenTypes,
     SlimeLogicalOperatorTokenTypes,
     SlimeAssignmentOperatorTokenTypes,
-} from "slime/packages/slime-token/src/SlimeTokenType.ts";
+} from "slime-token/src/SlimeTokenType.ts";
 import type {SubhutiSourceLocation} from "subhuti/src/struct/SubhutiCst.ts";
 
 /**
