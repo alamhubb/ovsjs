@@ -230,7 +230,7 @@ export class SlimeCstToAst {
         let semicolonToken: any = undefined
 
         // 提取 import token
-        if (first && (first.name === 'ImportTok' || first.value === 'import')) {
+        if (first && (first.name === 'Import' || first.value === 'import')) {
             importToken = SlimeTokenCreate.createImportToken(first.loc)
         }
 
@@ -266,7 +266,7 @@ export class SlimeCstToAst {
 
         // 提取 from token
         let fromToken: any = undefined
-        if (first && (first.name === 'FromTok' || first.value === 'from')) {
+        if (first && (first.name === 'From' || first.value === 'from')) {
             fromToken = SlimeTokenCreate.createFromToken(first.loc)
         }
 
@@ -325,7 +325,7 @@ export class SlimeCstToAst {
         for (const child of cst.children) {
             if (child.name === 'Asterisk' || child.value === '*') {
                 asteriskToken = SlimeTokenCreate.createAsteriskToken(child.loc)
-            } else if (child.name === 'AsTok' || child.value === 'as') {
+            } else if (child.name === 'As' || child.value === 'as') {
                 asToken = SlimeTokenCreate.createAsToken(child.loc)
             }
         }
@@ -956,11 +956,11 @@ export class SlimeCstToAst {
             }
 
             // 直接是 LetTok 或 ConstTok (ES2025 可能直接使用)
-            if (name === 'LetTok' || child.value === 'let') {
+            if (name === 'Let' || child.value === 'let') {
                 kind = 'let'
                 continue
             }
-            if (name === 'ConstTok' || child.value === 'const') {
+            if (name === 'Const' || child.value === 'const') {
                 kind = 'const'
                 continue
             }
@@ -1333,7 +1333,7 @@ export class SlimeCstToAst {
         let classToken: any = undefined
 
         // 提取 class token
-        const classTokCst = cst.children.find(ch => ch.name === 'ClassTok' || ch.value === 'class')
+        const classTokCst = cst.children.find(ch => ch.name === 'Class' || ch.value === 'class')
         if (classTokCst) {
             classToken = SlimeTokenCreate.createClassToken(classTokCst.loc)
         }
@@ -1401,7 +1401,7 @@ export class SlimeCstToAst {
         let extendsToken: any = undefined
 
         // ClassHeritage: extends LeftHandSideExpression
-        const extendsCst = cst.children.find(ch => ch.name === 'ExtendsTok' || ch.value === 'extends')
+        const extendsCst = cst.children.find(ch => ch.name === 'Extends' || ch.value === 'extends')
         if (extendsCst) {
             extendsToken = SlimeTokenCreate.createExtendsToken(extendsCst.loc)
         }
@@ -1558,11 +1558,11 @@ export class SlimeCstToAst {
     isStaticModifier(cst: SubhutiCst | null): boolean {
         if (!cst) return false
         // 方式1：直接是 Static
-        if (cst.name === Es2025TokenConsumer.prototype.Static?.name || cst.name === 'Static' || cst.name === 'StaticTok') {
+        if (cst.name === Es2025TokenConsumer.prototype.Static?.name || cst.name === 'Static' || cst.name === 'Static') {
             return true
         }
         // 方式2：是 IdentifierNameTok 且 value 为 'static'
-        if ((cst.name === 'IdentifierNameTok' || cst.name === 'IdentifierName') && cst.value === 'static') {
+        if ((cst.name === 'IdentifierName' || cst.name === 'IdentifierName') && cst.value === 'static') {
             return true
         }
         return false
@@ -1776,7 +1776,7 @@ export class SlimeCstToAst {
         // 检查是否有async
         let offset = 0;
         let isAsync = false;
-        if (cst.children[0] && cst.children[0].name === 'AsyncTok') {
+        if (cst.children[0] && cst.children[0].name === 'Async') {
             isAsync = true;
             offset = 1;
         }
@@ -1955,7 +1955,7 @@ export class SlimeCstToAst {
             // 旧版兼容：PropertyNameMethodDefinition
             // 检查是否有async
             let offset = 0;
-            if (first.children[0] && first.children[0].name === 'AsyncTok') {
+            if (first.children[0] && first.children[0].name === 'Async') {
                 offset = 1;
             }
 
@@ -2004,11 +2004,11 @@ export class SlimeCstToAst {
             // Es2025Parser: ClassElementName ( UniqueFormalParameters ) { FunctionBody }
             // children: [ClassElementName, LParen, UniqueFormalParameters?, RParen, LBrace, FunctionBody?, RBrace]
             return this.createEs2025MethodDefinitionAst(staticCst, cst)
-        } else if (first.name === 'GetTok') {
+        } else if (first.name === 'Get') {
             // Es2025Parser: get ClassElementName ( ) { FunctionBody }
             // children: [GetTok, ClassElementName, LParen, RParen, LBrace, FunctionBody?, RBrace]
             return this.createEs2025GetterMethodAst(staticCst, cst)
-        } else if (first.name === 'SetTok') {
+        } else if (first.name === 'Set') {
             // Es2025Parser: set ClassElementName ( PropertySetParameterList ) { FunctionBody }
             return this.createEs2025SetterMethodAst(staticCst, cst)
         } else if (first.name === Es2025Parser.prototype.GeneratorMethod?.name || first.name === 'GeneratorMethod') {
@@ -2024,11 +2024,11 @@ export class SlimeCstToAst {
             // Es2025Parser: * ClassElementName ( UniqueFormalParameters ) { GeneratorBody }
             // 这种情况下整个cst就是GeneratorMethod的children
             return this.createEs2025GeneratorMethodFromChildren(staticCst, cst)
-        } else if (first.name === 'AsyncTok') {
+        } else if (first.name === 'Async') {
             // Es2025Parser: async [no LineTerminator here] ClassElementName ( ... ) { ... }
             // 可能是 AsyncMethod 或 AsyncGeneratorMethod
             return this.createEs2025AsyncMethodFromChildren(staticCst, cst)
-        } else if (first.name === 'IdentifierNameTok' || first.name === 'IdentifierName' ||
+        } else if (first.name === 'IdentifierName' || first.name === 'IdentifierName' ||
                    first.name === 'PropertyName' || first.name === 'LiteralPropertyName') {
             // 检查是否是 getter/setter
             if (first.value === 'get' && cst.children[1]?.name === 'ClassElementName') {
@@ -2062,7 +2062,7 @@ export class SlimeCstToAst {
         let rBraceToken: any = undefined
 
         // 检查 static token
-        if (staticCst && (staticCst.name === 'StaticTok' || staticCst.value === 'static')) {
+        if (staticCst && (staticCst.name === 'Static' || staticCst.value === 'static')) {
             staticToken = SlimeTokenCreate.createStaticToken(staticCst.loc)
         }
 
@@ -2070,7 +2070,7 @@ export class SlimeCstToAst {
         const firstChild = children[i++]
         let key: SlimeIdentifier | SlimeLiteral | SlimeExpression
 
-        if (firstChild.name === 'IdentifierNameTok') {
+        if (firstChild.name === 'IdentifierName') {
             // 直接的 token
             key = SlimeAstUtil.createIdentifier(firstChild.value, firstChild.loc)
         } else if (firstChild.name === 'IdentifierName') {
@@ -2868,11 +2868,11 @@ export class SlimeCstToAst {
             const name = child.name
             const value = child.value
 
-            if (name === 'FunctionTok' || value === 'function') {
+            if (name === 'Function' || value === 'function') {
                 functionToken = SlimeTokenCreate.createFunctionToken(child.loc)
                 continue
             }
-            if (name === 'AsyncTok' || value === 'async') {
+            if (name === 'Async' || value === 'async') {
                 asyncToken = SlimeTokenCreate.createAsyncToken(child.loc)
                 isAsync = true
                 continue
@@ -3005,7 +3005,7 @@ export class SlimeCstToAst {
 
         // 提取 return token
         const returnCst = cst.children[0]
-        if (returnCst && (returnCst.name === 'ReturnTok' || returnCst.value === 'return')) {
+        if (returnCst && (returnCst.name === 'Return' || returnCst.value === 'return')) {
             returnToken = SlimeTokenCreate.createReturnToken(returnCst.loc)
         }
 
@@ -3014,7 +3014,7 @@ export class SlimeCstToAst {
                 const child = cst.children[i]
                 // 跳过分号相关节点
                 if (child.name === 'Semicolon' || child.name === 'SemicolonASI' ||
-                    child.name === 'SemicolonTok' || child.value === ';') {
+                    child.name === 'Semicolon' || child.value === ';') {
                     semicolonToken = SlimeTokenCreate.createSemicolonToken(child.loc)
                 } else if (!argument) {
                     argument = this.createExpressionAst(child)
@@ -3068,7 +3068,7 @@ export class SlimeCstToAst {
             const name = child.name
 
             // if token
-            if (name === 'IfTok' || child.value === 'if') {
+            if (name === 'If' || child.value === 'if') {
                 ifToken = SlimeTokenCreate.createIfToken(child.loc)
                 continue
             }
@@ -3084,7 +3084,7 @@ export class SlimeCstToAst {
             }
 
             // else token
-            if (name === 'ElseTok' || child.value === 'else') {
+            if (name === 'Else' || child.value === 'else') {
                 elseToken = SlimeTokenCreate.createElseToken(child.loc)
                 foundElse = true
                 continue
@@ -3180,7 +3180,7 @@ export class SlimeCstToAst {
             const name = child.name
 
             // for token
-            if (name === 'ForTok' || child.value === 'for') {
+            if (name === 'For' || child.value === 'for') {
                 forToken = SlimeTokenCreate.createForToken(child.loc)
                 continue
             }
@@ -3195,7 +3195,7 @@ export class SlimeCstToAst {
                 continue
             }
             // var token - skip (kind handled separately)
-            if (name === 'VarTok' || child.value === 'var') continue
+            if (name === 'Var' || child.value === 'var') continue
             // Semicolon token
             if (name === 'Semicolon' || child.value === ';' || child.loc?.type === 'Semicolon') {
                 semicolonTokens.push(SlimeTokenCreate.createSemicolonToken(child.loc))
@@ -3300,7 +3300,7 @@ export class SlimeCstToAst {
         // for await: [ForTok, AwaitTok, LParen, ForDeclaration, OfTok, AssignmentExpression, RParen, Statement]
 
         // 检查是否是 for await
-        const hasAwait = cst.children.some(ch => ch.name === 'AwaitTok')
+        const hasAwait = cst.children.some(ch => ch.name === 'Await')
 
         // 动态查找各个部分
         let left: any = null
@@ -3378,7 +3378,7 @@ export class SlimeCstToAst {
                 kind: {
                     type: 'VariableDeclarationKind',
                     value: 'var',
-                    loc: cst.children.find(ch => ch.name === 'VarTok')?.loc
+                    loc: cst.children.find(ch => ch.name === 'Var')?.loc
                 },
                 loc: varBindingCst.loc
             }
@@ -3386,7 +3386,7 @@ export class SlimeCstToAst {
 
         // 查找 in/of token
         const inOrOfCst = cst.children.find(ch =>
-            ch.name === 'InTok' || ch.name === 'OfTok' ||
+            ch.name === 'In' || ch.name === 'Of' ||
             ch.value === 'in' || ch.value === 'of'
         )
         isForOf = inOrOfCst?.value === 'of' || inOrOfCst?.name === 'OfTok'
@@ -3441,7 +3441,7 @@ export class SlimeCstToAst {
 
         for (const child of cst.children) {
             if (!child) continue
-            if (child.name === 'WhileTok' || child.value === 'while') {
+            if (child.name === 'While' || child.value === 'while') {
                 whileToken = SlimeTokenCreate.createWhileToken(child.loc)
             } else if (child.name === 'LParen' || child.value === '(') {
                 lParenToken = SlimeTokenCreate.createLParenToken(child.loc)
@@ -3480,9 +3480,9 @@ export class SlimeCstToAst {
             if (!child) continue
             const name = child.name
 
-            if (name === 'DoTok' || child.value === 'do') {
+            if (name === 'Do' || child.value === 'do') {
                 doToken = SlimeTokenCreate.createDoToken(child.loc)
-            } else if (name === 'WhileTok' || child.value === 'while') {
+            } else if (name === 'While' || child.value === 'while') {
                 whileToken = SlimeTokenCreate.createWhileToken(child.loc)
             } else if (name === 'LParen' || child.value === '(') {
                 lParenToken = SlimeTokenCreate.createLParenToken(child.loc)
@@ -3516,7 +3516,7 @@ export class SlimeCstToAst {
 
         for (const child of cst.children) {
             if (!child) continue
-            if (child.name === 'SwitchTok' || child.value === 'switch') {
+            if (child.name === 'Switch' || child.value === 'switch') {
                 switchToken = SlimeTokenCreate.createSwitchToken(child.loc)
             } else if (child.name === 'LParen' || child.value === '(') {
                 lParenToken = SlimeTokenCreate.createLParenToken(child.loc)
@@ -3598,7 +3598,7 @@ export class SlimeCstToAst {
             // children[3]: StatementList（可选）
 
             for (const child of cst.children || []) {
-                if (child.name === 'CaseTok' || child.value === 'case') {
+                if (child.name === 'Case' || child.value === 'case') {
                     caseToken = SlimeTokenCreate.createCaseToken(child.loc)
                 } else if (child.name === 'Colon' || child.value === ':') {
                     colonToken = SlimeTokenCreate.createColonToken(child.loc)
@@ -3617,7 +3617,7 @@ export class SlimeCstToAst {
             // children[2]: StatementList（可选）
 
             for (const child of cst.children || []) {
-                if (child.name === 'DefaultTok' || child.value === 'default') {
+                if (child.name === 'Default' || child.value === 'default') {
                     defaultToken = SlimeTokenCreate.createDefaultToken(child.loc)
                 } else if (child.name === 'Colon' || child.value === ':') {
                     colonToken = SlimeTokenCreate.createColonToken(child.loc)
@@ -3645,9 +3645,9 @@ export class SlimeCstToAst {
 
         for (const child of cst.children) {
             if (!child) continue
-            if (child.name === 'TryTok' || child.value === 'try') {
+            if (child.name === 'Try' || child.value === 'try') {
                 tryToken = SlimeTokenCreate.createTryToken(child.loc)
-            } else if (child.name === 'FinallyTok' || child.value === 'finally') {
+            } else if (child.name === 'Finally' || child.value === 'finally') {
                 finallyToken = SlimeTokenCreate.createFinallyToken(child.loc)
             }
         }
@@ -3706,7 +3706,7 @@ export class SlimeCstToAst {
 
         for (const child of cst.children) {
             if (!child) continue
-            if (child.name === 'CatchTok' || child.value === 'catch') {
+            if (child.name === 'Catch' || child.value === 'catch') {
                 catchToken = SlimeTokenCreate.createCatchToken(child.loc)
             } else if (child.name === 'LParen' || child.value === '(') {
                 lParenToken = SlimeTokenCreate.createLParenToken(child.loc)
@@ -3764,7 +3764,7 @@ export class SlimeCstToAst {
         let argument: any = null
 
         for (const child of cst.children || []) {
-            if (child.name === 'ThrowTok' || child.value === 'throw') {
+            if (child.name === 'Throw' || child.value === 'throw') {
                 throwToken = SlimeTokenCreate.createThrowToken(child.loc)
             } else if (child.name === 'Semicolon' || child.value === ';') {
                 semicolonToken = SlimeTokenCreate.createSemicolonToken(child.loc)
@@ -3788,7 +3788,7 @@ export class SlimeCstToAst {
         let label: any = null
 
         for (const child of cst.children || []) {
-            if (child.name === 'BreakTok' || child.value === 'break') {
+            if (child.name === 'Break' || child.value === 'break') {
                 breakToken = SlimeTokenCreate.createBreakToken(child.loc)
             } else if (child.name === 'Semicolon' || child.value === ';') {
                 semicolonToken = SlimeTokenCreate.createSemicolonToken(child.loc)
@@ -3816,7 +3816,7 @@ export class SlimeCstToAst {
         let label: any = null
 
         for (const child of cst.children || []) {
-            if (child.name === 'ContinueTok' || child.value === 'continue') {
+            if (child.name === 'Continue' || child.value === 'continue') {
                 continueToken = SlimeTokenCreate.createContinueToken(child.loc)
             } else if (child.name === 'Semicolon' || child.value === ';') {
                 semicolonToken = SlimeTokenCreate.createSemicolonToken(child.loc)
@@ -3922,7 +3922,7 @@ export class SlimeCstToAst {
         let semicolonToken: any = undefined
 
         for (const child of cst.children || []) {
-            if (child.name === 'DebuggerTok' || child.value === 'debugger') {
+            if (child.name === 'Debugger' || child.value === 'debugger') {
                 debuggerToken = SlimeTokenCreate.createDebuggerToken(child.loc)
             } else if (child.name === 'Semicolon' || child.value === ';') {
                 semicolonToken = SlimeTokenCreate.createSemicolonToken(child.loc)
@@ -3987,7 +3987,7 @@ export class SlimeCstToAst {
             const value = child.value || child.loc?.value
 
             // Collect tokens
-            if (name === 'FunctionTok' || value === 'function') {
+            if (name === 'Function' || value === 'function') {
                 functionToken = SlimeTokenCreate.createFunctionToken(child.loc)
                 continue
             }
@@ -4007,7 +4007,7 @@ export class SlimeCstToAst {
                 rBraceToken = SlimeTokenCreate.createRBraceToken(child.loc)
                 continue
             }
-            if (name === 'AsyncTok' || value === 'async') {
+            if (name === 'Async' || value === 'async') {
                 asyncToken = SlimeTokenCreate.createAsyncToken(child.loc)
                 isAsync = true
                 continue
@@ -4514,7 +4514,7 @@ export class SlimeCstToAst {
         for (let i = 0; i < cst.children.length; i++) {
             const child = cst.children[i]
 
-            if (child.name === 'Ellipsis' || child.name === 'EllipsisTok') {
+            if (child.name === 'Ellipsis' || child.name === 'Ellipsis') {
                 // 记录 ellipsis，下一个表达式是 spread
                 pendingEllipsis = child
             } else if (child.name === Es2025Parser.prototype.AssignmentExpression?.name) {
@@ -4568,7 +4568,7 @@ export class SlimeCstToAst {
             return this.createMetaPropertyAst(cst)
         } else if (cst.name === 'NewMemberExpressionArguments') {
             return this.createNewExpressionAst(cst)
-        } else if (cst.name === 'NewTok') {
+        } else if (cst.name === 'New') {
             // Es2025Parser: new MemberExpression Arguments 是直接的 token 序列
             // 这种情况应该在 createMemberExpressionAst 中处理
             throw new Error('createMemberExpressionFirstOr: NewTok should be handled in createMemberExpressionAst')
@@ -4595,7 +4595,7 @@ export class SlimeCstToAst {
 
             // 提取 new token
             const newCst = cst.children[0]
-            if (newCst && (newCst.name === 'NewTok' || newCst.value === 'new')) {
+            if (newCst && (newCst.name === 'New' || newCst.value === 'new')) {
                 newToken = SlimeTokenCreate.createNewToken(newCst.loc)
             }
 
@@ -4641,7 +4641,7 @@ export class SlimeCstToAst {
 
         // Es2025Parser: 检查是否是 new MemberExpression Arguments 模式
         // 第一个子节点是 NewTok
-        if (cst.children[0].name === 'NewTok') {
+        if (cst.children[0].name === 'New') {
             // new MemberExpression Arguments
             // children: [NewTok, MemberExpression, Arguments]
             const memberExprCst = cst.children[1]
@@ -4938,7 +4938,7 @@ export class SlimeCstToAst {
         for (const child of chainCst.children) {
             const name = child.name
 
-            if (name === 'OptionalChainingTok' || child.value === '?.') {
+            if (name === 'OptionalChaining' || child.value === '?.') {
                 // 跳过 ?. token
                 continue
             } else if (name === 'Arguments') {
@@ -4951,7 +4951,7 @@ export class SlimeCstToAst {
                     optional: true,
                     loc: chainCst.loc
                 } as any
-            } else if (name === 'LBracketTok' || child.value === '[') {
+            } else if (name === 'LBracket' || child.value === '[') {
                 // ?.[expr] - 可选计算属性访问
                 // 下一个子节点是表达式，跳过 ]
                 const exprIndex = chainCst.children.indexOf(child) + 1
@@ -4966,7 +4966,7 @@ export class SlimeCstToAst {
                         loc: chainCst.loc
                     } as any
                 }
-            } else if (name === 'IdentifierNameTok' || name === 'IdentifierName') {
+            } else if (name === 'IdentifierName' || name === 'IdentifierName') {
                 // ?.prop - 可选属性访问
                 let property: SlimeIdentifier
                 if (name === 'IdentifierName') {
@@ -4985,13 +4985,13 @@ export class SlimeCstToAst {
                     optional: true,
                     loc: chainCst.loc
                 } as any
-            } else if (name === 'DotTok' || child.value === '.') {
+            } else if (name === 'Dot' || child.value === '.') {
                 // 跳过 . token
                 continue
-            } else if (name === 'RBracketTok' || child.value === ']') {
+            } else if (name === 'RBracket' || child.value === ']') {
                 // 跳过 ] token
                 continue
-            } else if (name === 'PrivateIdentifierTok') {
+            } else if (name === 'PrivateIdentifier') {
                 // ?.#prop - 私有属性可选访问
                 const property = this.createPrivateIdentifierAst(child)
                 result = {
@@ -5242,9 +5242,9 @@ export class SlimeCstToAst {
             'Plus': '+',
             'Minus': '-',
             'Tilde': '~',
-            'TypeofTok': 'typeof',
-            'VoidTok': 'void',
-            'DeleteTok': 'delete',
+            'Typeof': 'typeof',
+            'Void': 'void',
+            'Delete': 'delete',
             'PlusPlus': '++',
             'MinusMinus': '--',
         }
@@ -5419,7 +5419,7 @@ export class SlimeCstToAst {
             const expressionCst = first.children[1]
             const innerExpression = this.createExpressionAst(expressionCst)
             return SlimeAstUtil.createParenthesizedExpression(innerExpression, first.loc)
-        } else if (first.name === 'RegularExpressionLiteral' || first.name === 'RegularExpressionLiteralTok') {
+        } else if (first.name === 'RegularExpressionLiteral' || first.name === 'RegularExpressionLiteral') {
             // 处理正则表达式字面量
             return this.createRegExpLiteralAst(first)
         } else {
@@ -5743,8 +5743,8 @@ export class SlimeCstToAst {
         const first = cst.children[0]
 
         // ES2018: 对象spread {...obj}
-        // 检查first是否是Ellipsis token（name为'EllipsisTok'）
-        if (first.name === 'EllipsisTok' || first.value === '...') {
+        // 检查first是否是Ellipsis token（name为'Ellipsis'）
+        if (first.name === 'Ellipsis' || first.value === '...') {
             // PropertyDefinition -> Ellipsis + AssignmentExpression
             const AssignmentExpressionCst = cst.children[1]
             const argument = this.createAssignmentExpressionAst(AssignmentExpressionCst)
@@ -5883,7 +5883,7 @@ export class SlimeCstToAst {
         const validNames = [
             Es2025TokenConsumer.prototype.NumericLiteral?.name,
             'NumericLiteral',
-            'NumericLiteralTok',
+            'NumericLiteral',
             'Number'
         ]
         if (!validNames.includes(cst.name)) {
@@ -5899,7 +5899,7 @@ export class SlimeCstToAst {
         const validNames = [
             Es2025TokenConsumer.prototype.StringLiteral?.name,
             'StringLiteral',
-            'StringLiteralTok',
+            'StringLiteral',
             'String'
         ]
         if (!validNames.includes(cst.name)) {
@@ -6051,7 +6051,7 @@ export class SlimeCstToAst {
         // 提取 Ellipsis token
         let ellipsisToken: any = undefined
         const ellipsisCst = cst.children.find(ch =>
-            ch.name === 'Ellipsis' || ch.name === 'EllipsisTok' || ch.value === '...'
+            ch.name === 'Ellipsis' || ch.name === 'Ellipsis' || ch.value === '...'
         )
         if (ellipsisCst) {
             ellipsisToken = SlimeTokenCreate.createEllipsisToken(ellipsisCst.loc)
@@ -6150,7 +6150,7 @@ export class SlimeCstToAst {
         // 检查是否有async
         let offset = 0;
         let isAsync = false;
-        if (cst.children[0] && cst.children[0].name === 'AsyncTok') {
+        if (cst.children[0] && cst.children[0].name === 'Async') {
             asyncToken = SlimeTokenCreate.createAsyncToken(cst.children[0].loc)
             isAsync = true;
             offset = 1;
@@ -6242,7 +6242,7 @@ export class SlimeCstToAst {
                 if (child.name === 'CoverCallExpressionAndAsyncArrowHead') {
                     params = this.createAsyncArrowParamsFromCover(child)
                     break
-                } else if (child.name === 'AsyncTok') {
+                } else if (child.name === 'Async') {
                     continue
                 } else if (child.name === 'BindingIdentifier' || child.name === Es2025Parser.prototype.BindingIdentifier?.name) {
                     params = [this.createBindingIdentifierAst(child)]
@@ -6265,7 +6265,7 @@ export class SlimeCstToAst {
         // 解析参数（Arrow 之前的部分）
         for (let i = 0; i < arrowIndex; i++) {
             const child = cst.children[i]
-            if (child.name === 'AsyncTok') {
+            if (child.name === 'Async') {
                 continue // 跳过 async 关键字
             }
             if (child.name === Es2025Parser.prototype.BindingIdentifier?.name || child.name === 'BindingIdentifier') {
@@ -6413,7 +6413,7 @@ export class SlimeCstToAst {
 
         // 检查是否有 rest 参数（Ellipsis + BindingIdentifier）
         const hasEllipsis = cst.children.some(
-            child => child.name === 'Ellipsis' || child.name === 'EllipsisTok'
+            child => child.name === 'Ellipsis' || child.name === 'Ellipsis'
         )
         if (hasEllipsis) {
             const bindingIdentifierCst = cst.children.find(
@@ -6659,7 +6659,7 @@ export class SlimeCstToAst {
         let startIndex = 1
 
         // 提取 yield token
-        if (cst.children[0] && (cst.children[0].name === 'YieldTok' || cst.children[0].value === 'yield')) {
+        if (cst.children[0] && (cst.children[0].name === 'Yield' || cst.children[0].value === 'yield')) {
             yieldToken = SlimeTokenCreate.createYieldToken(cst.children[0].loc)
         }
 
@@ -6683,7 +6683,7 @@ export class SlimeCstToAst {
         let awaitToken: any = undefined
 
         // 提取 await token
-        if (cst.children[0] && (cst.children[0].name === 'AwaitTok' || cst.children[0].value === 'await')) {
+        if (cst.children[0] && (cst.children[0].name === 'Await' || cst.children[0].value === 'await')) {
             awaitToken = SlimeTokenCreate.createAwaitToken(cst.children[0].loc)
         }
 
