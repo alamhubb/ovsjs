@@ -2,11 +2,10 @@
  * 阶段1: CST生成测试
  * 测试范围: 词法分析 → 语法分析（生成CST）
  */
-import Es2025Parser from './packages/slime-parser/src/language/es2025/Es2025Parser.ts'
-import SubhutiLexer from 'subhuti/src/SubhutiLexer.ts'
 import * as fs from 'fs'
 import * as path from 'path'
-import {es2025Tokens} from "slime-parser/src/language/es2025/SlimeTokensName";
+import SubhutiLexer from "subhuti/src/SubhutiLexer";
+import Es2025Parser, {slimeTokens} from "slime-parser/src/language/es2025/Es2025Parser";
 
 // 跳过的目录（非标准 ECMAScript 语法）
 const skipDirs = [
@@ -167,7 +166,7 @@ for (let i = startIndex; i < files.length; i++) {
 
   try {
     // 词法分析
-    const lexer = new SubhutiLexer(es2025Tokens)
+    const lexer = new SubhutiLexer(slimeTokens)
     const tokens = lexer.tokenize(code)
     console.log(`✅ 词法分析: ${tokens.length} tokens`)
 
