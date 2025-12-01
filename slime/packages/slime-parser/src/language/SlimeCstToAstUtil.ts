@@ -122,19 +122,23 @@ export class SlimeCstToAst {
         // ES2025 Parser: Identifier 规则内部调用 IdentifierNameTok()
         // 所以 CST 结构是：Identifier -> IdentifierNameTok (token with value)
         let value: string
+        let tokenLoc: SubhutiSourceLocation | undefined = undefined
 
         // 处理 yield/await 作为标识符的情况
         if (isYield || isAwait) {
             // 这是一个 token，直接使用其值
             value = cst.value as string || cst.name.toLowerCase()
+            tokenLoc = cst.loc
         } else if (isIdentifierName) {
             // IdentifierName 结构：IdentifierName -> token (with value)
             if (cst.value !== undefined && cst.value !== null) {
                 value = cst.value as string
+                tokenLoc = cst.loc
             } else if (cst.children && cst.children.length > 0) {
                 const tokenCst = cst.children[0]
                 if (tokenCst.value !== undefined) {
                     value = tokenCst.value as string
+                    tokenLoc = tokenCst.loc || cst.loc
                 } else {
                     throw new Error(`createIdentifierAst: Cannot extract value from IdentifierName CST`)
                 }
@@ -146,11 +150,13 @@ export class SlimeCstToAst {
         } else if (cst.value !== undefined && cst.value !== null) {
             // 直接是 token（旧版兼容）
             value = cst.value as string
+            tokenLoc = cst.loc
         } else if (cst.children && cst.children.length > 0) {
             // ES2025: Identifier 规则，子节点是 IdentifierNameTok
             const tokenCst = cst.children[0]
             if (tokenCst.value !== undefined) {
                 value = tokenCst.value as string
+                tokenLoc = tokenCst.loc || cst.loc
             } else {
                 throw new Error(`createIdentifierAst: Cannot extract value from Identifier CST`)
             }
@@ -160,7 +166,8 @@ export class SlimeCstToAst {
 
         // 解码 Unicode 转义序列（如 \u0061 -> a）
         const decodedName = decodeUnicodeEscapes(value)
-        const identifier = SlimeAstUtil.createIdentifier(decodedName, cst.loc)
+        // 使用 token 的 loc（包含原始值），而不是规则的 loc
+        const identifier = SlimeAstUtil.createIdentifier(decodedName, tokenLoc || cst.loc)
         return identifier
     }
 
@@ -633,8 +640,15 @@ export class SlimeCstToAst {
      * 处理所有 ES6 语句类型
      */
     createStatementDeclarationAst(cst: SubhutiCst) {
+        // Statement - 包装节点，递归处理子节点
+        if (cst.name === SlimeParser.prototype.Statement?.name || cst.name === 'Statement') {
+            if (cst.children && cst.children.length > 0) {
+                return this.createStatementDeclarationAst(cst.children[0])
+            }
+            return undefined
+        }
         // BreakableStatement - 包装节点，递归处理子节点
-        if (cst.name === SlimeParser.prototype.BreakableStatement?.name) {
+        else if (cst.name === SlimeParser.prototype.BreakableStatement?.name) {
             if (cst.children && cst.children.length > 0) {
                 return this.createStatementDeclarationAst(cst.children[0])
             }
@@ -1656,11 +1670,29 @@ export class SlimeCstToAst {
                 if (!elementChildren.length) {
                     continue // 没有内容的 ClassElement 直接忽略
                 }
-                const staticCst = elementChildren.length > 1 ? elementChildren[0] : null // 如果有多个子节点，第一个通常是 static 修饰
-                const targetCst = elementChildren[elementChildren.length - 1] // 最后一个节点是真正的成员定义
-                const item = this.createClassBodyItemAst(staticCst, targetCst) // 根据成员类型生成 AST
-                if (item && item.type) { // 过滤掉返回 undefined 或type为undefined的情况
-                    body.push(item)
+
+                // 找到真正的成员定义（跳过 static 和 SemicolonASI）
+                let staticCst: SubhutiCst | null = null
+                let targetCst: SubhutiCst | null = null
+
+                for (const child of elementChildren) {
+                    if (child.name === 'Static' || child.value === 'static') {
+                        staticCst = child
+                    } else if (child.name === 'SemicolonASI' || child.name === 'Semicolon' || child.value === ';') {
+                        // 跳过分号
+                        continue
+                    } else if (child.name === SlimeParser.prototype.MethodDefinition?.name ||
+                               child.name === SlimeParser.prototype.FieldDefinition?.name ||
+                               child.name === 'MethodDefinition' || child.name === 'FieldDefinition') {
+                        targetCst = child
+                    }
+                }
+
+                if (targetCst) {
+                    const item = this.createClassBodyItemAst(staticCst, targetCst) // 根据成员类型生成 AST
+                    if (item && item.type) { // 过滤掉返回 undefined 或type为undefined的情况
+                        body.push(item)
+                    }
                 }
             }
         }
@@ -4734,30 +4766,55 @@ export class SlimeCstToAst {
             throw new Error('MemberExpression has no children')
         }
 
+        // 从第一个child创建base对象
+        let current: SlimeExpression
+        let startIdx = 1
+
         // Es2025Parser: 检查是否是 new MemberExpression Arguments 模式
         // 第一个子节点是 NewTok
         if (cst.children[0].name === 'New') {
-            // new MemberExpression Arguments
-            // children: [NewTok, MemberExpression, Arguments]
+            // new MemberExpression Arguments [后续成员访问]
+            // children: [NewTok, MemberExpression, Arguments, Dot?, IdentifierName?, ...]
+            const newCst = cst.children[0]
             const memberExprCst = cst.children[1]
             const argsCst = cst.children[2]
 
             const callee = this.createMemberExpressionAst(memberExprCst)
             const args = argsCst ? this.createArgumentsAst(argsCst) : []
 
-            return {
+            // 提取 tokens
+            const newToken = SlimeTokenCreate.createNewToken(newCst.loc)
+            let lParenToken: any = undefined
+            let rParenToken: any = undefined
+
+            if (argsCst && argsCst.children) {
+                for (const child of argsCst.children) {
+                    if (child.name === 'LParen' || child.value === '(') {
+                        lParenToken = SlimeTokenCreate.createLParenToken(child.loc)
+                    } else if (child.name === 'RParen' || child.value === ')') {
+                        rParenToken = SlimeTokenCreate.createRParenToken(child.loc)
+                    }
+                }
+            }
+
+            current = {
                 type: 'NewExpression',
                 callee: callee,
                 arguments: args,
+                newToken: newToken,
+                lParenToken: lParenToken,
+                rParenToken: rParenToken,
                 loc: cst.loc
             } as any
+
+            // 从 Arguments 之后继续处理（如 .bar）
+            startIdx = 3
+        } else {
+            current = this.createMemberExpressionFirstOr(cst.children[0]) as SlimeExpression
         }
 
-        // 从第一个child创建base对象
-        let current: SlimeExpression = this.createMemberExpressionFirstOr(cst.children[0]) as SlimeExpression
-
         // 循环处理剩余的children（Dot+IdentifierName、LBracket+Expression+RBracket、Arguments、TemplateLiteral）
-        for (let i = 1; i < cst.children.length; i++) {
+        for (let i = startIdx; i < cst.children.length; i++) {
             const child = cst.children[i]
 
             if (child.name === 'DotIdentifier') {
@@ -4988,8 +5045,18 @@ export class SlimeCstToAst {
             left = this.createMetaPropertyAst(cst)
         } else if (astName === 'ShortCircuitExpression') {
             // ES2020: ShortCircuitExpression = LogicalORExpression | CoalesceExpression
-            // 递归处理第一个child
+            // ShortCircuitExpression: LogicalANDExpression ShortCircuitExpressionTail?
             left = this.createExpressionAst(cst.children[0])
+
+            // 检查是否有 ShortCircuitExpressionTail (|| 运算符)
+            if (cst.children.length > 1 && cst.children[1]) {
+                const tailCst = cst.children[1]
+                if (tailCst.name === 'ShortCircuitExpressionTail' ||
+                    tailCst.name === 'LogicalORExpressionTail') {
+                    // 处理尾部：可能是 LogicalORExpressionTail 或 CoalesceExpressionTail
+                    left = this.createShortCircuitExpressionTailAst(left, tailCst)
+                }
+            }
         } else if (astName === 'CoalesceExpression') {
             // ES2020: CoalesceExpression (处理 ?? 运算符)
             left = this.createCoalesceExpressionAst(cst)
@@ -5186,7 +5253,24 @@ export class SlimeCstToAst {
     createLogicalORExpressionAst(cst: SubhutiCst): SlimeExpression {
         const astName = checkCstName(cst, SlimeParser.prototype.LogicalORExpression?.name);
         if (cst.children.length > 1) {
+            // 有运算符，创建 LogicalExpression
+            // 支持多个运算符：a || b || c
+            let left = this.createExpressionAst(cst.children[0])
 
+            for (let i = 1; i < cst.children.length; i += 2) {
+                const operatorNode = cst.children[i]
+                const operator = operatorNode.children ? operatorNode.children[0].value : operatorNode.value
+                const right = this.createExpressionAst(cst.children[i + 1])
+
+                left = {
+                    type: SlimeNodeType.LogicalExpression,
+                    operator: operator,
+                    left: left,
+                    right: right,
+                    loc: cst.loc
+                } as any
+            }
+            return left
         }
         return this.createExpressionAst(cst.children[0])
     }
@@ -5194,7 +5278,24 @@ export class SlimeCstToAst {
     createLogicalANDExpressionAst(cst: SubhutiCst): SlimeExpression {
         const astName = checkCstName(cst, SlimeParser.prototype.LogicalANDExpression?.name);
         if (cst.children.length > 1) {
+            // 有运算符，创建 LogicalExpression
+            // 支持多个运算符：a && b && c
+            let left = this.createExpressionAst(cst.children[0])
 
+            for (let i = 1; i < cst.children.length; i += 2) {
+                const operatorNode = cst.children[i]
+                const operator = operatorNode.children ? operatorNode.children[0].value : operatorNode.value
+                const right = this.createExpressionAst(cst.children[i + 1])
+
+                left = {
+                    type: SlimeNodeType.LogicalExpression,
+                    operator: operator,
+                    left: left,
+                    right: right,
+                    loc: cst.loc
+                } as any
+            }
+            return left
         }
         return this.createExpressionAst(cst.children[0])
     }
@@ -5202,7 +5303,23 @@ export class SlimeCstToAst {
     createBitwiseORExpressionAst(cst: SubhutiCst): SlimeExpression {
         const astName = checkCstName(cst, SlimeParser.prototype.BitwiseORExpression?.name);
         if (cst.children.length > 1) {
+            // 有运算符，创建 BinaryExpression（支持链式：a | b | c）
+            let left = this.createExpressionAst(cst.children[0])
 
+            for (let i = 1; i < cst.children.length; i += 2) {
+                const operatorNode = cst.children[i]
+                const operator = operatorNode.children ? operatorNode.children[0].value : operatorNode.value
+                const right = this.createExpressionAst(cst.children[i + 1])
+
+                left = {
+                    type: SlimeNodeType.BinaryExpression,
+                    operator: operator,
+                    left: left,
+                    right: right,
+                    loc: cst.loc
+                } as any
+            }
+            return left
         }
         return this.createExpressionAst(cst.children[0])
     }
@@ -5210,7 +5327,23 @@ export class SlimeCstToAst {
     createBitwiseXORExpressionAst(cst: SubhutiCst): SlimeExpression {
         const astName = checkCstName(cst, SlimeParser.prototype.BitwiseXORExpression?.name);
         if (cst.children.length > 1) {
+            // 有运算符，创建 BinaryExpression（支持链式：a ^ b ^ c）
+            let left = this.createExpressionAst(cst.children[0])
 
+            for (let i = 1; i < cst.children.length; i += 2) {
+                const operatorNode = cst.children[i]
+                const operator = operatorNode.children ? operatorNode.children[0].value : operatorNode.value
+                const right = this.createExpressionAst(cst.children[i + 1])
+
+                left = {
+                    type: SlimeNodeType.BinaryExpression,
+                    operator: operator,
+                    left: left,
+                    right: right,
+                    loc: cst.loc
+                } as any
+            }
+            return left
         }
         return this.createExpressionAst(cst.children[0])
     }
@@ -5218,7 +5351,23 @@ export class SlimeCstToAst {
     createBitwiseANDExpressionAst(cst: SubhutiCst): SlimeExpression {
         const astName = checkCstName(cst, SlimeParser.prototype.BitwiseANDExpression?.name);
         if (cst.children.length > 1) {
+            // 有运算符，创建 BinaryExpression（支持链式：a & b & c）
+            let left = this.createExpressionAst(cst.children[0])
 
+            for (let i = 1; i < cst.children.length; i += 2) {
+                const operatorNode = cst.children[i]
+                const operator = operatorNode.children ? operatorNode.children[0].value : operatorNode.value
+                const right = this.createExpressionAst(cst.children[i + 1])
+
+                left = {
+                    type: SlimeNodeType.BinaryExpression,
+                    operator: operator,
+                    left: left,
+                    right: right,
+                    loc: cst.loc
+                } as any
+            }
+            return left
         }
         return this.createExpressionAst(cst.children[0])
     }
@@ -5246,17 +5395,24 @@ export class SlimeCstToAst {
         const astName = checkCstName(cst, SlimeParser.prototype.RelationalExpression?.name);
         if (cst.children.length > 1) {
             // 有运算符，创建 BinaryExpression
-            const left = this.createExpressionAst(cst.children[0])
-            const operator = cst.children[1].value as any  // <, >, <=, >= 运算符
-            const right = this.createExpressionAst(cst.children[2])
+            // 支持多个运算符：x < y < z => BinaryExpression(BinaryExpression(x, <, y), <, z)
+            let left = this.createExpressionAst(cst.children[0])
 
-            return {
-                type: SlimeNodeType.BinaryExpression,
-                operator: operator,
-                left: left,
-                right: right,
-                loc: cst.loc
-            } as any
+            // 循环处理剩余的 (operator, operand) 对
+            for (let i = 1; i < cst.children.length; i += 2) {
+                const operatorNode = cst.children[i]
+                const operator = operatorNode.children ? operatorNode.children[0].value : operatorNode.value
+                const right = this.createExpressionAst(cst.children[i + 1])
+
+                left = {
+                    type: SlimeNodeType.BinaryExpression,
+                    operator: operator,
+                    left: left,
+                    right: right,
+                    loc: cst.loc
+                } as any
+            }
+            return left
         }
         return this.createExpressionAst(cst.children[0])
     }
@@ -5264,7 +5420,25 @@ export class SlimeCstToAst {
     createShiftExpressionAst(cst: SubhutiCst): SlimeExpression {
         const astName = checkCstName(cst, SlimeParser.prototype.ShiftExpression?.name);
         if (cst.children.length > 1) {
+            // 有运算符，创建 BinaryExpression
+            // 支持多个运算符：x << y << z => BinaryExpression(BinaryExpression(x, <<, y), <<, z)
+            let left = this.createExpressionAst(cst.children[0])
 
+            // 循环处理剩余的 (operator, operand) 对
+            for (let i = 1; i < cst.children.length; i += 2) {
+                const operatorNode = cst.children[i]
+                const operator = operatorNode.children ? operatorNode.children[0].value : operatorNode.value
+                const right = this.createExpressionAst(cst.children[i + 1])
+
+                left = {
+                    type: SlimeNodeType.BinaryExpression,
+                    operator: operator,
+                    left: left,
+                    right: right,
+                    loc: cst.loc
+                } as any
+            }
+            return left
         }
         return this.createExpressionAst(cst.children[0])
     }
@@ -6869,6 +7043,78 @@ export class SlimeCstToAst {
         const argument = this.createExpressionAst(argumentCst)
 
         return SlimeAstUtil.createAwaitExpression(argument, cst.loc, awaitToken)
+    }
+
+    /**
+     * 处理 ShortCircuitExpressionTail (|| 和 ?? 运算符的尾部)
+     * CST 结构：ShortCircuitExpressionTail -> LogicalORExpressionTail | CoalesceExpressionTail
+     * LogicalORExpressionTail -> LogicalOr LogicalANDExpression LogicalORExpressionTail?
+     */
+    createShortCircuitExpressionTailAst(left: SlimeExpression, tailCst: SubhutiCst): SlimeExpression {
+        const tailChildren = tailCst.children || []
+
+        // 如果是 ShortCircuitExpressionTail，获取内部的 tail
+        if (tailCst.name === 'ShortCircuitExpressionTail' && tailChildren.length > 0) {
+            const innerTail = tailChildren[0]
+            return this.createShortCircuitExpressionTailAst(left, innerTail)
+        }
+
+        // LogicalORExpressionTail: (LogicalOr LogicalANDExpression)+
+        // 结构是平坦的：[LogicalOr, expr, LogicalOr, expr, ...]
+        if (tailCst.name === 'LogicalORExpressionTail') {
+            let result = left
+
+            // 循环处理 (operator, operand) 对
+            for (let i = 0; i < tailChildren.length; i += 2) {
+                const operatorNode = tailChildren[i]
+                const operator = operatorNode.value || '||'
+
+                const rightCst = tailChildren[i + 1]
+                if (!rightCst) break
+
+                const right = this.createExpressionAst(rightCst)
+
+                result = {
+                    type: SlimeNodeType.LogicalExpression,
+                    operator: operator,
+                    left: result,
+                    right: right,
+                    loc: tailCst.loc
+                } as any
+            }
+
+            return result
+        }
+
+        // CoalesceExpressionTail: (?? BitwiseORExpression)+
+        // 结构是平坦的：[??, expr, ??, expr, ...]
+        if (tailCst.name === 'CoalesceExpressionTail') {
+            let result = left
+
+            for (let i = 0; i < tailChildren.length; i += 2) {
+                const operatorNode = tailChildren[i]
+                const operator = operatorNode.value || '??'
+
+                const rightCst = tailChildren[i + 1]
+                if (!rightCst) break
+
+                const right = this.createExpressionAst(rightCst)
+
+                result = {
+                    type: SlimeNodeType.LogicalExpression,
+                    operator: operator,
+                    left: result,
+                    right: right,
+                    loc: tailCst.loc
+                } as any
+            }
+
+            return result
+        }
+
+        // 未知的 tail 类型，返回左操作数
+        console.warn('Unknown ShortCircuitExpressionTail type:', tailCst.name)
+        return left
     }
 }
 

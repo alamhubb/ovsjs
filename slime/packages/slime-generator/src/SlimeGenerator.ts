@@ -364,10 +364,12 @@ export default class SlimeGenerator {
         // 直接输出括号与参数（不依赖token定位，兼容合成AST）
         this.addLParen()
         if (node.arguments.length) {
-            node.arguments.forEach((argument, index) => {
+            node.arguments.forEach((item, index) => {
                 if (index !== 0) {
                     this.addComma()
                 }
+                // 处理包装结构：{ argument: {...}, commaToken?: {...} }
+                const argument = (item as any).argument || item
                 // 检查是否是SpreadElement
                 if (argument.type === SlimeNodeType.SpreadElement) {
                     this.generatorSpreadElement(argument as SlimeSpreadElement)
@@ -392,18 +394,24 @@ export default class SlimeGenerator {
             this.generatorNode(node.id)
         }
         // params可能是FunctionParams对象或SlimePattern[]数组
-        if (node.params && (node.params as any).type === SlimeNodeType.FunctionParams) {
-            this.generatorNode(node.params as any)
-        } else if (Array.isArray(node.params) && node.params.length > 0) {
+        // 注意：先检查数组，因为数组也可能有 type 属性
+        if (Array.isArray(node.params) && node.params.length > 0) {
             // params是数组形式
             this.addLParen()
             node.params.forEach((param: any, index: number) => {
                 if (index > 0) {
                     this.addComma()
                 }
-                this.generatorNode(param)
+                // 处理 { param: Identifier, commaToken: ... } 结构
+                if (param.param) {
+                    this.generatorNode(param.param)
+                } else {
+                    this.generatorNode(param)
+                }
             })
             this.addRParen()
+        } else if (node.params && (node.params as any).type === SlimeNodeType.FunctionParams) {
+            this.generatorNode(node.params as any)
         } else {
             // 空参数列表
             this.addLParen()
@@ -493,7 +501,7 @@ export default class SlimeGenerator {
     }
 
     private static generatorFunctionParams(node: SlimeFunctionParams) {
-        this.addLParen(node.lParen.loc)
+        this.addLParen(node.lParen?.loc)
         if (node.params) {
             node.params.forEach((param, index) => {
                 if (index !== 0) {
@@ -502,7 +510,7 @@ export default class SlimeGenerator {
                 this.generatorNode(param)
             })
         }
-        this.addRParen(node.rParen.loc)
+        this.addRParen(node.rParen?.loc)
     }
 
     private static generatorArrayExpression(node: SlimeArrayExpression) {
@@ -614,7 +622,10 @@ export default class SlimeGenerator {
         // name: token 名称
         // value: 实际的标识符名称（动态内容）
         // 注意：这里使用 addCodeAndMappings()，需要 source map 映射，所以必须提供完整的 token 对象
-        const identifierName = node.name || ''
+
+        // 优先使用 loc.value（保留原始值，包括 Unicode 转义序列）
+        // 如果不存在，则使用 node.name（解码后的值）
+        const identifierName = (node.loc as any)?.value || node.name || ''
         if (!identifierName) {
             console.error('generatorIdentifier: node.name is undefined', JSON.stringify(node, null, 2))
         }
@@ -652,11 +663,16 @@ export default class SlimeGenerator {
                 // 如果params是数组（Generator函数的情况）
                 this.addLParen()
                 if (Array.isArray(node.params) && node.params.length > 0) {
-                    (node.params as SlimePattern[]).forEach((param, index) => {
+                    (node.params as SlimePattern[]).forEach((param: any, index) => {
                         if (index !== 0) {
                             this.addComma()
                         }
-                        this.generatorNode(param)
+                        // 处理 { param: Identifier, commaToken: ... } 结构
+                        if (param.param) {
+                            this.generatorNode(param.param)
+                        } else {
+                            this.generatorNode(param)
+                        }
                     })
                 }
                 this.addRParen()
@@ -812,18 +828,21 @@ export default class SlimeGenerator {
             this.generatorNode(node.callee)
         }
 
-        // 处理 arguments
-        this.addLParen()
-        if (node.arguments && node.arguments.length > 0) {
-            node.arguments.forEach((arg: any, index: number) => {
-                if (index > 0) {
-                    this.addComma()
-                    this.addSpacing()
-                }
-                this.generatorNode(arg)
-            })
+        // 只有当有 lParenToken 或有参数时才添加括号
+        // 这样可以保留 `new foo` vs `new foo()` 的区别
+        if (node.lParenToken || (node.arguments && node.arguments.length > 0)) {
+            this.addLParen()
+            if (node.arguments && node.arguments.length > 0) {
+                node.arguments.forEach((arg: any, index: number) => {
+                    if (index > 0) {
+                        this.addComma()
+                        this.addSpacing()
+                    }
+                    this.generatorNode(arg)
+                })
+            }
+            this.addRParen()
         }
-        this.addRParen()
     }
 
     /**
@@ -843,6 +862,8 @@ export default class SlimeGenerator {
             this.generatorPrivateIdentifier(node as SlimePrivateIdentifier)
         } else if (node.type === SlimeNodeType.Identifier) {
             this.generatorIdentifier(node as SlimeIdentifier)
+        } else if (node.type === SlimeNodeType.ThisExpression || node.type === 'ThisExpression') {
+            this.addCode(es6TokensObj.ThisTok)
         } else if (node.type === SlimeNodeType.NumericLiteral) {
             this.generatorNumberLiteral(node as SlimeNumericLiteral)
         } else if (node.type === SlimeNodeType.Literal) {
@@ -857,6 +878,9 @@ export default class SlimeGenerator {
         } else if (node.type === SlimeNodeType.ArrowFunctionExpression) {
             this.generatorArrowFunctionExpression(node as any)
         } else if (node.type === SlimeNodeType.BinaryExpression) {
+            this.generatorBinaryExpression(node as any)
+        } else if (node.type === SlimeNodeType.LogicalExpression || node.type === 'LogicalExpression') {
+            // LogicalExpression 和 BinaryExpression 结构相同，复用同一个生成器
             this.generatorBinaryExpression(node as any)
         } else if (node.type === SlimeNodeType.StringLiteral) {
             this.generatorStringLiteral(node as SlimeStringLiteral)
@@ -1129,8 +1153,13 @@ export default class SlimeGenerator {
 
     private static generatorReturnStatement(node: SlimeReturnStatement) {
         this.addCode(es6TokensObj.ReturnTok)
-        this.addSpacing()
-        this.generatorNode(node.argument)
+        if (node.argument) {
+            this.addSpacing()
+            this.generatorNode(node.argument)
+        }
+        // 添加分号和换行
+        this.addCode(es6TokensObj.Semicolon)
+        this.addNewLine()
     }
 
     private static addSpacing() {
@@ -1501,11 +1530,19 @@ export default class SlimeGenerator {
         this.generatorNode(node.test)
         this.addCode(es6TokensObj.RParen)
 
+        // 如果 consequent 不是 BlockStatement，需要添加空格
+        if (node.consequent.type !== SlimeNodeType.BlockStatement) {
+            this.addSpacing()
+        }
         // 阶段2：if 语句后需要换行，传 true
         this.generatorNode(node.consequent, true)
 
         if (node.alternate) {
             this.addCode(es6TokensObj.ElseTok)
+            // 如果 alternate 不是 BlockStatement，需要在 else 后添加空格
+            if (node.alternate.type !== SlimeNodeType.BlockStatement) {
+                this.addSpacing()
+            }
             // 阶段2：else 语句后需要换行，传 true
             this.generatorNode(node.alternate, true)
         }
