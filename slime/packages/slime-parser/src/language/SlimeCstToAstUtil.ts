@@ -4909,7 +4909,31 @@ export class SlimeCstToAst {
         const astName = cst.name
         let left
         if (astName === SlimeParser.prototype.Expression?.name) {
-            left = this.createExpressionAst(cst.children[0])
+            // Expression 可能是逗号表达式 (SequenceExpression)
+            // 结构: Expression -> AssignmentExpression | Expression, AssignmentExpression
+            // 收集所有表达式
+            const expressions: SlimeExpression[] = []
+            for (const child of cst.children || []) {
+                if (child.name === 'Comma' || child.value === ',') {
+                    // 跳过逗号 token
+                    continue
+                }
+                expressions.push(this.createExpressionAst(child))
+            }
+
+            if (expressions.length === 1) {
+                // 单个表达式，直接返回
+                left = expressions[0]
+            } else if (expressions.length > 1) {
+                // 多个表达式，创建 SequenceExpression
+                left = {
+                    type: 'SequenceExpression',
+                    expressions: expressions,
+                    loc: cst.loc
+                } as any
+            } else {
+                throw new Error('Expression has no children')
+            }
         } else if (astName === SlimeParser.prototype.Statement?.name) {
             left = this.createStatementAst(cst)
         } else if (astName === SlimeParser.prototype.AssignmentExpression?.name) {

@@ -72,9 +72,10 @@ const es6TokensObj = {
 };
 
 // 关键字到 Token 的映射（用于 VariableDeclaration 的 kind）
+// 注意：'let' 是软关键字，需要手动创建 token
 const es6TokenMapObj: Record<string, SubhutiCreateToken> = {
     'const': SlimeTokensObj.ConstTok,
-    'let': SlimeTokensObj.LetTok,
+    'let': createSoftKeywordToken('Let', 'let'),
     'var': SlimeTokensObj.VarTok,
 };
 
@@ -228,11 +229,13 @@ export default class SlimeGenerator {
         } else if (node.specifiers && node.specifiers.length > 0) {
             // export {name} 或 export {name as userName}
             this.addLBrace()
-            node.specifiers.forEach((spec, index) => {
+            node.specifiers.forEach((item, index) => {
                 if (index > 0) {
                     this.addComma()
                     this.addSpacing()
                 }
+                // specifiers 是包装结构: { specifier: {...}, commaToken?: {...} }
+                const spec = item.specifier || item
                 this.generatorExportSpecifier(spec)
             })
             this.addRBrace()
@@ -244,6 +247,9 @@ export default class SlimeGenerator {
                 this.addSpacing()
                 this.generatorNode(node.source)
             }
+            // 添加分号和换行
+            this.addCode(es6TokensObj.Semicolon)
+            this.addNewLine()
         }
     }
 
@@ -501,7 +507,9 @@ export default class SlimeGenerator {
 
     private static generatorArrayExpression(node: SlimeArrayExpression) {
         this.addLBracket(node.loc)
-        for (const element of node.elements) {
+        for (const item of node.elements) {
+            // elements 是 SlimeArrayElement[] 类型，每个元素是 { element, commaToken }
+            const element = item.element
             if (element === null || element === undefined) {
                 // 空元素：[1, , 3]，只添加逗号
             } else if (element.type === SlimeNodeType.SpreadElement) {
@@ -511,7 +519,10 @@ export default class SlimeGenerator {
                 // 普通表达式
                 this.generatorNode(element as SlimeExpression)
             }
-            this.addComma()
+            // 使用关联的逗号 token，如果有的话
+            if (item.commaToken) {
+                this.addComma()
+            }
         }
         this.addRBracket(node.loc)
     }
@@ -519,13 +530,18 @@ export default class SlimeGenerator {
     private static generatorObjectExpression(node: SlimeObjectExpression) {
         this.addLBrace()
         node.properties.forEach((item, index) => {
+            // properties 是 SlimeObjectPropertyItem[] 类型，每个元素是 { property, commaToken }
+            const property = item.property
             // ES2018: SpreadElement需要特殊处理
-            if (item.type === SlimeNodeType.SpreadElement) {
-                this.generatorSpreadElement(item as SlimeSpreadElement)
-                this.addComma()
+            if (property.type === SlimeNodeType.SpreadElement) {
+                this.generatorSpreadElement(property as SlimeSpreadElement)
             } else {
-                // Property类型会自己添加逗号
-                this.generatorNode(item)
+                // Property类型
+                this.generatorNode(property)
+            }
+            // 使用关联的逗号 token，如果有的话
+            if (item.commaToken) {
+                this.addComma()
             }
         })
         this.addRBrace()
@@ -1350,6 +1366,11 @@ export default class SlimeGenerator {
      * 注意：如果不需要 source map，使用 addString() 更高效
      */
     private static addCodeAndMappings(token: SubhutiCreateToken, cstLocation: SubhutiSourceLocation = null) {
+        // 空值检查
+        if (!token) {
+            console.warn('SlimeGenerator.addCodeAndMappings: token is undefined')
+            return
+        }
         if (cstLocation) {
             const sourcePosition = this.cstLocationToSlimeLocation(cstLocation)
             if (sourcePosition) {
