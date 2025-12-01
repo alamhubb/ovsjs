@@ -1,4 +1,4 @@
-import {SlimeAstType} from "slime-ast/src/SlimeAstType";
+import {SlimeNodeType} from "slime-ast/src/SlimeNodeType";
 import SubhutiCst from "subhuti/src/struct/SubhutiCst.ts";
 
 /**

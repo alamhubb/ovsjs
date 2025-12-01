@@ -14,7 +14,7 @@ import {
 import OvsParser from "../parser/OvsParser.ts";
 import SlimeAstUtil from "slime/packages/slime-ast/src/SlimeAstCreate.ts";
 import Es6Parser from "slime-parser/src/language/es2015/Es6Parser.ts";
-import {SlimeAstType} from "slime-ast/src/SlimeAstType.ts";
+import {SlimeNodeType} from "slime-ast/src/SlimeNodeType.ts";
 
 export function checkCstName(cst: SubhutiCst, cstName: string) {
   if (cst.name !== cstName) {
@@ -160,7 +160,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     // 根据视图类型展开到函数体（内部 children 数组不会与参数 child 冲突）
     let functionBodyStatements: SlimeStatement[] = []
 
-    if (viewExpression.type === SlimeAstType.CallExpression) {
+    if (viewExpression.type === SlimeNodeType.CallExpression) {
       const iife = viewExpression as SlimeCallExpression
       const iifeFunc = iife.callee
 
@@ -173,7 +173,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
         const statementsWithoutReturn = iifeBody.slice(0, -1)
         const lastReturn = iifeBody[iifeBody.length - 1]
 
-        if (lastReturn && lastReturn.type === SlimeAstType.ReturnStatement) {
+        if (lastReturn && lastReturn.type === SlimeNodeType.ReturnStatement) {
           const returnExpr = (lastReturn as any).argument
           functionBodyStatements = [
             ...statementsWithoutReturn,
@@ -366,7 +366,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
           [expr]
         )
         return {
-          type: SlimeAstType.ExpressionStatement,
+          type: SlimeNodeType.ExpressionStatement,
           expression: pushCall,
           loc: cst.loc
         } as SlimeExpressionStatement
@@ -375,7 +375,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
       // 2. 在 #{} 内 → 不渲染，保持原样
       if (this.noRenderDepth > 0) {
         return {
-          type: SlimeAstType.ExpressionStatement,
+          type: SlimeNodeType.ExpressionStatement,
           expression: expr,
           loc: cst.loc
         } as SlimeExpressionStatement
@@ -391,7 +391,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
         [expr]
       )
       return {
-        type: SlimeAstType.ExpressionStatement,
+        type: SlimeNodeType.ExpressionStatement,
         expression: pushCall,
         loc: cst.loc
       } as SlimeExpressionStatement
@@ -399,7 +399,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     
     // 不在 div {} 内 → 保持原样
     return {
-      type: SlimeAstType.ExpressionStatement,
+      type: SlimeNodeType.ExpressionStatement,
       expression: expr,
       loc: cst.loc
     } as SlimeExpressionStatement
@@ -517,7 +517,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
       // - 高度稳定：未来改变渲染方式时，此逻辑无需改动
       const hasComplexStatements = bodyStatements.some(stmt => {
         // 情况1: 非 ExpressionStatement（声明/控制流）
-        if (stmt.type !== SlimeAstType.ExpressionStatement) {
+        if (stmt.type !== SlimeNodeType.ExpressionStatement) {
           return true
         }
         
@@ -570,7 +570,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     const childExpressions: SlimeExpression[] = statements.map(stmt => {
       const exprStmt = stmt as SlimeExpressionStatement
       const pushCall = exprStmt.expression as SlimeCallExpression
-      if (pushCall && pushCall.type === SlimeAstType.CallExpression && pushCall.arguments.length > 0) {
+      if (pushCall && pushCall.type === SlimeNodeType.CallExpression && pushCall.arguments.length > 0) {
         return pushCall.arguments[0] as SlimeExpression
       }
       return exprStmt.expression

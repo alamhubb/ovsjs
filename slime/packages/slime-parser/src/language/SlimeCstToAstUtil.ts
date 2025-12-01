@@ -69,7 +69,7 @@ import SlimeParser from "./es2025/SlimeParser.ts";
 import Es2025TokenConsumer from "./es2025/Es2025TokenConsumer.ts";
 import SlimeAstUtil from "slime-ast/src/SlimeAstCreate.ts";
 import SlimeTokenCreate from "slime-ast/src/SlimeTokenCreate.ts";
-import {SlimeAstType} from "slime-ast/src/SlimeAstType.ts";
+import {SlimeNodeType} from "slime-ast/src/SlimeNodeType.ts";
 
 // ============================================
 // Unicode 转义序列解码
@@ -359,7 +359,7 @@ export class SlimeCstToAst {
                     const imported = this.createIdentifierNameAst(identifierName)
                     const local = this.createImportedBindingAst(binding)
                     specifiers.push({
-                        type: SlimeAstType.ImportSpecifier,
+                        type: SlimeNodeType.ImportSpecifier,
                         imported: imported,
                         local: local,
                         loc: child.loc
@@ -368,7 +368,7 @@ export class SlimeCstToAst {
                     // import {name} - 简写形式
                     const id = this.createImportedBindingAst(binding)
                     specifiers.push({
-                        type: SlimeAstType.ImportSpecifier,
+                        type: SlimeNodeType.ImportSpecifier,
                         imported: id,
                         local: id,
                         loc: child.loc
@@ -407,7 +407,7 @@ export class SlimeCstToAst {
                     const imported = this.createIdentifierNameAst(identifierName)
                     const local = this.createImportedBindingAst(binding)
                     currentSpec = {
-                        type: SlimeAstType.ImportSpecifier,
+                        type: SlimeNodeType.ImportSpecifier,
                         imported: imported,
                         local: local,
                         loc: child.loc
@@ -415,7 +415,7 @@ export class SlimeCstToAst {
                 } else if (binding) {
                     const id = this.createImportedBindingAst(binding)
                     currentSpec = {
-                        type: SlimeAstType.ImportSpecifier,
+                        type: SlimeNodeType.ImportSpecifier,
                         imported: id,
                         local: id,
                         loc: child.loc
@@ -514,15 +514,15 @@ export class SlimeCstToAst {
 
             // 检查是否是命名的 FunctionExpression 或 ClassExpression（应该转为 Declaration）
             return result.map(stmt => {
-                if (stmt.type === SlimeAstType.ExpressionStatement) {
+                if (stmt.type === SlimeNodeType.ExpressionStatement) {
                     const expr = (stmt as SlimeExpressionStatement).expression
 
                     // 命名的 FunctionExpression → FunctionDeclaration
-                    if (expr.type === SlimeAstType.FunctionExpression) {
+                    if (expr.type === SlimeNodeType.FunctionExpression) {
                         const funcExpr = expr as SlimeFunctionExpression
                         if (funcExpr.id) {
                             return {
-                                type: SlimeAstType.FunctionDeclaration,
+                                type: SlimeNodeType.FunctionDeclaration,
                                 id: funcExpr.id,
                                 params: funcExpr.params,
                                 body: funcExpr.body,
@@ -534,11 +534,11 @@ export class SlimeCstToAst {
                     }
 
                     // ClassExpression → ClassDeclaration
-                    if (expr.type === SlimeAstType.ClassExpression) {
+                    if (expr.type === SlimeNodeType.ClassExpression) {
                         const classExpr = expr as any
                         if (classExpr.id) {
                             return {
-                                type: SlimeAstType.ClassDeclaration,
+                                type: SlimeNodeType.ClassDeclaration,
                                 id: classExpr.id,
                                 superClass: classExpr.superClass,
                                 body: classExpr.body,
@@ -984,7 +984,7 @@ export class SlimeCstToAst {
         }
 
         return {
-            type: SlimeAstType.VariableDeclaration,
+            type: SlimeNodeType.VariableDeclaration,
             kind: kind as any,
             declarations: declarations,
             loc: cst.loc
@@ -1046,7 +1046,7 @@ export class SlimeCstToAst {
         }
 
         return {
-            type: SlimeAstType.VariableDeclaration,
+            type: SlimeNodeType.VariableDeclaration,
             kind: 'var' as any,
             declarations: declarations,
             loc: cst.loc
@@ -1076,7 +1076,7 @@ export class SlimeCstToAst {
         }
 
         return {
-            type: SlimeAstType.VariableDeclarator,
+            type: SlimeNodeType.VariableDeclarator,
             id: id,
             init: init,
             loc: cst.loc
@@ -1142,7 +1142,7 @@ export class SlimeCstToAst {
         }
 
         return {
-            type: SlimeAstType.FunctionDeclaration,
+            type: SlimeNodeType.FunctionDeclaration,
             id: id,
             params: params,
             body: body,
@@ -1233,7 +1233,7 @@ export class SlimeCstToAst {
         }
 
         return {
-            type: SlimeAstType.FunctionDeclaration,
+            type: SlimeNodeType.FunctionDeclaration,
             id: id,
             params: params,
             body: body,
@@ -1361,7 +1361,7 @@ export class SlimeCstToAst {
     } {
         const astName = checkCstName(cst, SlimeParser.prototype.ClassTail?.name);
         let superClass: SlimeExpression | null = null // 超类默认为 null
-        let body: SlimeClassBody = {type: SlimeAstType.ClassBody as any, body: [], loc: cst.loc} // 默认空类体
+        let body: SlimeClassBody = {type: SlimeNodeType.ClassBody as any, body: [], loc: cst.loc} // 默认空类体
         let extendsToken: any = undefined
         let lBraceToken: any = undefined
         let rBraceToken: any = undefined
@@ -1658,7 +1658,7 @@ export class SlimeCstToAst {
         }
 
         return {
-            type: SlimeAstType.RestElement,
+            type: SlimeNodeType.RestElement,
             argument: argument,
             loc: cst.loc
         } as any
@@ -1727,7 +1727,7 @@ export class SlimeCstToAst {
             // 有默认值，创建AssignmentPattern
             const init = this.createInitializerAst(initializer)
             return {
-                type: SlimeAstType.AssignmentPattern,
+                type: SlimeNodeType.AssignmentPattern,
                 left: id,
                 right: init,
                 loc: cst.loc
@@ -2721,7 +2721,7 @@ export class SlimeCstToAst {
         }
 
         return {
-            type: SlimeAstType.ArrayPattern,
+            type: SlimeNodeType.ArrayPattern,
             elements,
             lBracketToken,
             rBracketToken,
@@ -2771,7 +2771,7 @@ export class SlimeCstToAst {
 
                         properties.push({
                             property: {
-                                type: SlimeAstType.Property,
+                                type: SlimeNodeType.Property,
                                 key: key,
                                 value: value,
                                 kind: 'init',
@@ -2793,7 +2793,7 @@ export class SlimeCstToAst {
 
                             properties.push({
                                 property: {
-                                    type: SlimeAstType.Property,
+                                    type: SlimeNodeType.Property,
                                     key: key,
                                     value: value,
                                     kind: 'init',
@@ -2826,7 +2826,7 @@ export class SlimeCstToAst {
                 const ellipsisCst = restElement.children.find((ch: any) => ch.value === '...')
                 const ellipsisToken = ellipsisCst ? SlimeTokenCreate.createEllipsisToken(ellipsisCst.loc) : undefined
                 const restNode: SlimeRestElement = {
-                    type: SlimeAstType.RestElement,
+                    type: SlimeNodeType.RestElement,
                     argument: restId,
                     ellipsisToken,
                     loc: restElement.loc
@@ -2836,7 +2836,7 @@ export class SlimeCstToAst {
         }
 
         return {
-            type: SlimeAstType.ObjectPattern,
+            type: SlimeNodeType.ObjectPattern,
             properties,
             lBraceToken,
             rBraceToken,
@@ -3282,7 +3282,7 @@ export class SlimeCstToAst {
         }
 
         return {
-            type: SlimeAstType.VariableDeclaration,
+            type: SlimeNodeType.VariableDeclaration,
             kind: kind as any,
             declarations: declarations,
             loc: cst.loc
@@ -3342,9 +3342,9 @@ export class SlimeCstToAst {
             const kind = letOrConstCst.children[0].value  // 'let' or 'const'
 
             left = {
-                type: SlimeAstType.VariableDeclaration,
+                type: SlimeNodeType.VariableDeclaration,
                 declarations: [{
-                    type: SlimeAstType.VariableDeclarator,
+                    type: SlimeNodeType.VariableDeclarator,
                     id: id,
                     init: null,
                     loc: forBindingCst.loc
@@ -3368,9 +3368,9 @@ export class SlimeCstToAst {
                 id = this.createBindingIdentifierAst(actualBinding);
             }
             left = {
-                type: SlimeAstType.VariableDeclaration,
+                type: SlimeNodeType.VariableDeclaration,
                 declarations: [{
-                    type: SlimeAstType.VariableDeclarator,
+                    type: SlimeNodeType.VariableDeclarator,
                     id: id,
                     init: null,
                     loc: varBindingCst.loc
@@ -3413,7 +3413,7 @@ export class SlimeCstToAst {
         }
 
         const result: any = {
-            type: isForOf ? SlimeAstType.ForOfStatement : SlimeAstType.ForInStatement,
+            type: isForOf ? SlimeNodeType.ForOfStatement : SlimeNodeType.ForInStatement,
             left: left,
             right: right,
             body: body,
@@ -3892,7 +3892,7 @@ export class SlimeCstToAst {
         }
 
         return {
-            type: SlimeAstType.LabeledStatement,
+            type: SlimeNodeType.LabeledStatement,
             label: label,
             body: body,
             loc: cst.loc
@@ -3905,7 +3905,7 @@ export class SlimeCstToAst {
     createWithStatementAst(cst: SubhutiCst): any {
         checkCstName(cst, SlimeParser.prototype.WithStatement?.name);
         return {
-            type: SlimeAstType.WithStatement,
+            type: SlimeNodeType.WithStatement,
             object: null,  // TODO
             body: null,  // TODO
             loc: cst.loc
@@ -4221,7 +4221,7 @@ export class SlimeCstToAst {
         }
 
         return {
-            type: SlimeAstType.RestElement,
+            type: SlimeNodeType.RestElement,
             argument: argument,
             loc: cst.loc
         } as any
@@ -4310,7 +4310,7 @@ export class SlimeCstToAst {
                 // [expr] - computed property (旧版兼容)
                 const propertyExpression = this.createExpressionAst(child.children[1])
                 current = {
-                    type: SlimeAstType.MemberExpression,
+                    type: SlimeNodeType.MemberExpression,
                     object: current,
                     property: propertyExpression,
                     computed: true,
@@ -4324,7 +4324,7 @@ export class SlimeCstToAst {
                 if (expressionChild && expressionChild.name !== 'RBracket') {
                     const propertyExpression = this.createExpressionAst(expressionChild)
                     current = {
-                        type: SlimeAstType.MemberExpression,
+                        type: SlimeNodeType.MemberExpression,
                         object: current,
                         property: propertyExpression,
                         computed: true,
@@ -4409,7 +4409,7 @@ export class SlimeCstToAst {
             // super[expression] - 旧版兼容
             const propertyExpression = this.createExpressionAst(second.children[1])
             return {
-                type: SlimeAstType.MemberExpression,
+                type: SlimeNodeType.MemberExpression,
                 object: superNode,
                 property: propertyExpression,
                 computed: true,
@@ -4422,7 +4422,7 @@ export class SlimeCstToAst {
             const expressionCst = cst.children[2]
             const propertyExpression = this.createExpressionAst(expressionCst)
             return {
-                type: SlimeAstType.MemberExpression,
+                type: SlimeNodeType.MemberExpression,
                 object: superNode,
                 property: propertyExpression,
                 computed: true,
@@ -4443,7 +4443,7 @@ export class SlimeCstToAst {
             }
 
             return {
-                type: SlimeAstType.MemberExpression,
+                type: SlimeNodeType.MemberExpression,
                 object: superNode,
                 property: property,
                 computed: false,
@@ -4457,7 +4457,7 @@ export class SlimeCstToAst {
             const property = SlimeAstUtil.createIdentifier(propToken.value, propToken.loc)
 
             return {
-                type: SlimeAstType.MemberExpression,
+                type: SlimeNodeType.MemberExpression,
                 object: superNode,
                 property: property,
                 computed: false,
@@ -4714,7 +4714,7 @@ export class SlimeCstToAst {
                 // [expression] - computed property access (旧版兼容)
                 const propertyExpression = this.createExpressionAst(child.children[1])
                 current = {
-                    type: SlimeAstType.MemberExpression,
+                    type: SlimeNodeType.MemberExpression,
                     object: current,
                     property: propertyExpression,
                     computed: true,
@@ -4729,7 +4729,7 @@ export class SlimeCstToAst {
                 if (expressionChild) {
                     const propertyExpression = this.createExpressionAst(expressionChild)
                     current = {
-                        type: SlimeAstType.MemberExpression,
+                        type: SlimeNodeType.MemberExpression,
                         object: current,
                         property: propertyExpression,
                         computed: true,
@@ -4945,7 +4945,7 @@ export class SlimeCstToAst {
                 // ?.() - 可选调用
                 const args = this.createArgumentsAst(child)
                 result = {
-                    type: SlimeAstType.OptionalCallExpression,
+                    type: SlimeNodeType.OptionalCallExpression,
                     callee: result,
                     arguments: args,
                     optional: true,
@@ -4958,7 +4958,7 @@ export class SlimeCstToAst {
                 if (exprIndex < chainCst.children.length) {
                     const property = this.createExpressionAst(chainCst.children[exprIndex])
                     result = {
-                        type: SlimeAstType.OptionalMemberExpression,
+                        type: SlimeNodeType.OptionalMemberExpression,
                         object: result,
                         property: property,
                         computed: true,
@@ -4978,7 +4978,7 @@ export class SlimeCstToAst {
                     property = SlimeAstUtil.createIdentifier(child.value, child.loc)
                 }
                 result = {
-                    type: SlimeAstType.OptionalMemberExpression,
+                    type: SlimeNodeType.OptionalMemberExpression,
                     object: result,
                     property: property,
                     computed: false,
@@ -4995,7 +4995,7 @@ export class SlimeCstToAst {
                 // ?.#prop - 私有属性可选访问
                 const property = this.createPrivateIdentifierAst(child)
                 result = {
-                    type: SlimeAstType.OptionalMemberExpression,
+                    type: SlimeNodeType.OptionalMemberExpression,
                     object: result,
                     property: property,
                     computed: false,
@@ -5027,7 +5027,7 @@ export class SlimeCstToAst {
             const operator = cst.children[i]  // ?? token
             const right = this.createExpressionAst(cst.children[i + 1])
             left = {
-                type: SlimeAstType.LogicalExpression,
+                type: SlimeNodeType.LogicalExpression,
                 operator: '??',
                 left: left,
                 right: right
@@ -5051,7 +5051,7 @@ export class SlimeCstToAst {
         const operator = cst.children[1]  // ** token
         const right = this.createExponentiationExpressionAst(cst.children[2])  // 递归处理右侧
         return {
-            type: SlimeAstType.BinaryExpression,
+            type: SlimeNodeType.BinaryExpression,
             operator: '**',
             left: left,
             right: right
@@ -5107,7 +5107,7 @@ export class SlimeCstToAst {
             const right = this.createExpressionAst(cst.children[2])
 
             return {
-                type: SlimeAstType.BinaryExpression,
+                type: SlimeNodeType.BinaryExpression,
                 operator: operator,
                 left: left,
                 right: right,
@@ -5126,7 +5126,7 @@ export class SlimeCstToAst {
             const right = this.createExpressionAst(cst.children[2])
 
             return {
-                type: SlimeAstType.BinaryExpression,
+                type: SlimeNodeType.BinaryExpression,
                 operator: operator,
                 left: left,
                 right: right,
@@ -5161,7 +5161,7 @@ export class SlimeCstToAst {
                 const right = this.createExpressionAst(cst.children[i + 1])
 
                 left = {
-                    type: SlimeAstType.BinaryExpression,
+                    type: SlimeNodeType.BinaryExpression,
                     operator: operator,
                     left: left,
                     right: right,
@@ -5190,7 +5190,7 @@ export class SlimeCstToAst {
                 const right = this.createExpressionAst(cst.children[i + 1])
 
                 left = {
-                    type: SlimeAstType.BinaryExpression,
+                    type: SlimeNodeType.BinaryExpression,
                     operator: operator,
                     left: left,
                     right: right,
@@ -5256,7 +5256,7 @@ export class SlimeCstToAst {
 
         // 创建 UnaryExpression AST
         return {
-            type: SlimeAstType.UnaryExpression,
+            type: SlimeNodeType.UnaryExpression,
             operator: operator,
             prefix: true,  // 前缀运算符
             argument: argument,
@@ -5279,7 +5279,7 @@ export class SlimeCstToAst {
                 const operator = first.value || first.loc?.value
                 const argument = this.createExpressionAst(cst.children[1])
                 return {
-                    type: SlimeAstType.UpdateExpression,
+                    type: SlimeNodeType.UpdateExpression,
                     operator: operator,
                     argument: argument,
                     prefix: true,
@@ -5299,7 +5299,7 @@ export class SlimeCstToAst {
                 }
                 if (operator) {
                     return {
-                        type: SlimeAstType.UpdateExpression,
+                        type: SlimeNodeType.UpdateExpression,
                         operator: operator,
                         argument: argument,
                         prefix: false,
@@ -5389,7 +5389,7 @@ export class SlimeCstToAst {
             // If it's FormalParameterList, convert to expression
             if (middleCst.name === SlimeParser.prototype.FormalParameterList?.name || middleCst.name === 'FormalParameterList') {
                 const params = this.createFormalParameterListAst(middleCst)
-                if (params.length === 1 && params[0].type === SlimeAstType.Identifier) {
+                if (params.length === 1 && params[0].type === SlimeNodeType.Identifier) {
                     return SlimeAstUtil.createParenthesizedExpression(params[0] as any, first.loc)
                 }
                 if (params.length > 1) {
@@ -5751,7 +5751,7 @@ export class SlimeCstToAst {
 
             // 返回SpreadElement（作为Property的一种特殊形式）
             return {
-                type: SlimeAstType.SpreadElement,
+                type: SlimeNodeType.SpreadElement,
                 argument: argument,
                 loc: cst.loc
             } as any
@@ -5804,7 +5804,7 @@ export class SlimeCstToAst {
 
             // 创建 AssignmentPattern 作为 value
             const assignmentPattern = {
-                type: SlimeAstType.AssignmentPattern,
+                type: SlimeNodeType.AssignmentPattern,
                 left: identifier,
                 right: defaultValue,
                 loc: first.loc
@@ -5924,7 +5924,7 @@ export class SlimeCstToAst {
             const pattern = match[1]
             const flags = match[2]
             return {
-                type: SlimeAstType.Literal,
+                type: SlimeNodeType.Literal,
                 value: new RegExp(pattern, flags),
                 raw: rawValue,
                 regex: {
@@ -5936,7 +5936,7 @@ export class SlimeCstToAst {
         }
         // 如果无法解析，返回原始值
         return {
-            type: SlimeAstType.Literal,
+            type: SlimeNodeType.Literal,
             value: rawValue,
             raw: rawValue,
             loc: cst.loc
@@ -6208,7 +6208,7 @@ export class SlimeCstToAst {
         // 注意：createArrowFunctionExpression 参数顺序是 (body, params, expression, async, loc, arrowToken, asyncToken, lParenToken, rParenToken)
         // commaTokens 目前函数签名不支持，暂时忽略
         return SlimeAstUtil.createArrowFunctionExpression(
-            body, params, body.type !== SlimeAstType.BlockStatement, isAsync, cst.loc,
+            body, params, body.type !== SlimeNodeType.BlockStatement, isAsync, cst.loc,
             arrowToken, asyncToken, lParenToken, rParenToken
         )
     }
@@ -6251,7 +6251,7 @@ export class SlimeCstToAst {
             }
             // 返回不完整的箭头函数（没有 body）
             return {
-                type: SlimeAstType.ArrowFunctionExpression,
+                type: SlimeNodeType.ArrowFunctionExpression,
                 id: null,
                 params: params,
                 body: SlimeAstUtil.createBlockStatement([]),
@@ -6292,13 +6292,13 @@ export class SlimeCstToAst {
         }
 
         return {
-            type: SlimeAstType.ArrowFunctionExpression,
+            type: SlimeNodeType.ArrowFunctionExpression,
             id: null,
             params: params,
             body: body,
             generator: false,
             async: true,
-            expression: body.type !== SlimeAstType.BlockStatement,
+            expression: body.type !== SlimeNodeType.BlockStatement,
             loc: cst.loc
         } as any
     }
@@ -6322,7 +6322,7 @@ export class SlimeCstToAst {
                             if (arg.name === 'AssignmentExpression' || arg.name === SlimeParser.prototype.AssignmentExpression?.name) {
                                 // 尝试将表达式转换为参数
                                 const expr = this.createExpressionAst(arg)
-                                if (expr.type === SlimeAstType.Identifier) {
+                                if (expr.type === SlimeNodeType.Identifier) {
                                     params.push(expr as any)
                                 }
                             } else if (arg.name === SlimeParser.prototype.BindingIdentifier?.name || arg.name === 'BindingIdentifier') {
@@ -6421,7 +6421,7 @@ export class SlimeCstToAst {
             )
             if (bindingIdentifierCst) {
                 params.push({
-                    type: SlimeAstType.RestElement,
+                    type: SlimeNodeType.RestElement,
                     argument: this.createBindingIdentifierAst(bindingIdentifierCst)
                 } as any)
             }
@@ -6452,11 +6452,11 @@ export class SlimeCstToAst {
         if (expressionCst.name === SlimeParser.prototype.AssignmentExpression?.name) {
             const assignmentAst = this.createAssignmentExpressionAst(expressionCst)
             // 如果是简单的identifier，返回它
-            if (assignmentAst.type === SlimeAstType.Identifier) {
+            if (assignmentAst.type === SlimeNodeType.Identifier) {
                 return [assignmentAst as any]
             }
             // 如果是赋值（默认参数），返回AssignmentPattern
-            if (assignmentAst.type === SlimeAstType.AssignmentExpression) {
+            if (assignmentAst.type === SlimeNodeType.AssignmentExpression) {
                 return [{
                     type: 'AssignmentPattern',
                     left: assignmentAst.left,
@@ -6475,9 +6475,9 @@ export class SlimeCstToAst {
                 if (child.name === SlimeParser.prototype.AssignmentExpression?.name) {
                     const assignmentAst = this.createAssignmentExpressionAst(child)
                     // 转换为参数
-                    if (assignmentAst.type === SlimeAstType.Identifier) {
+                    if (assignmentAst.type === SlimeNodeType.Identifier) {
                         params.push(assignmentAst as any)
-                    } else if (assignmentAst.type === SlimeAstType.AssignmentExpression) {
+                    } else if (assignmentAst.type === SlimeNodeType.AssignmentExpression) {
                         // 默认参数
                         params.push({
                             type: 'AssignmentPattern',

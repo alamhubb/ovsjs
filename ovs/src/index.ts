@@ -23,7 +23,7 @@ import {
     SlimeVariableDeclarationKindValue
 } from "slime-ast/src/SlimeAstInterface.ts";
 import SlimeAstUtil from "slime/packages/slime-ast/src/SlimeAstCreate.ts";
-import {SlimeAstType} from "slime-ast/src/SlimeAstType.ts";
+import {SlimeNodeType} from "slime-ast/src/SlimeNodeType.ts";
 import SubhutiMatchToken from "subhuti/src/struct/SubhutiMatchToken.ts";
 
 export interface SourceMapSourceGenerateIndexLength {
@@ -40,12 +40,12 @@ export interface SourceMapSourceGenerateIndexLength {
  */
 function isDeclaration(node: any): boolean {
     return [
-        SlimeAstType.VariableDeclaration,    // const/let/var
-        SlimeAstType.FunctionDeclaration,
-        SlimeAstType.ClassDeclaration,
-        SlimeAstType.ImportDeclaration,
-        SlimeAstType.ExportNamedDeclaration,
-        SlimeAstType.ExportDefaultDeclaration,
+        SlimeNodeType.VariableDeclaration,    // const/let/var
+        SlimeNodeType.FunctionDeclaration,
+        SlimeNodeType.ClassDeclaration,
+        SlimeNodeType.ImportDeclaration,
+        SlimeNodeType.ExportNamedDeclaration,
+        SlimeNodeType.ExportDefaultDeclaration,
     ].includes(node.type)
 }
 
@@ -66,23 +66,23 @@ function isDeclaration(node: any): boolean {
 function hasNonRenderStatements(statements: SlimeStatement[]): boolean {
     return statements.some(stmt => {
         // Declaration（如 const x = 1）→ 复杂
-        if (stmt.type === SlimeAstType.VariableDeclaration ||
-            stmt.type === SlimeAstType.FunctionDeclaration ||
-            stmt.type === SlimeAstType.ClassDeclaration) {
+        if (stmt.type === SlimeNodeType.VariableDeclaration ||
+            stmt.type === SlimeNodeType.FunctionDeclaration ||
+            stmt.type === SlimeNodeType.ClassDeclaration) {
             return true
         }
 
         // IfStatement、ForStatement 等 → 复杂
-        if (stmt.type === SlimeAstType.IfStatement ||
-            stmt.type === SlimeAstType.ForStatement ||
-            stmt.type === SlimeAstType.WhileStatement) {
+        if (stmt.type === SlimeNodeType.IfStatement ||
+            stmt.type === SlimeNodeType.ForStatement ||
+            stmt.type === SlimeNodeType.WhileStatement) {
             return true
         }
 
         // ExpressionStatement 但不是 children.push → 复杂
-        if (stmt.type === SlimeAstType.ExpressionStatement) {
+        if (stmt.type === SlimeNodeType.ExpressionStatement) {
             const exprStmt = stmt as SlimeExpressionStatement
-            if (exprStmt.expression.type !== SlimeAstType.CallExpression) {
+            if (exprStmt.expression.type !== SlimeNodeType.CallExpression) {
                 return true
             }
             const callExpr = exprStmt.expression as SlimeCallExpression
@@ -103,20 +103,20 @@ function hasNonRenderStatements(statements: SlimeStatement[]): boolean {
  * @returns 是否是 OVS 视图
  */
 function isOvsRenderDomView(statement: SlimeStatement): boolean {
-    if (statement.type !== SlimeAstType.ExpressionStatement) return false
+    if (statement.type !== SlimeNodeType.ExpressionStatement) return false
     const expr = (statement as SlimeExpressionStatement).expression
 
     // 复杂视图：IIFE 形式
-    if (expr.type === SlimeAstType.CallExpression && expr.callee.type === SlimeAstType.FunctionExpression) {
+    if (expr.type === SlimeNodeType.CallExpression && expr.callee.type === SlimeNodeType.FunctionExpression) {
         return true
     }
 
     // 简单视图：直接的 createReactiveVNode() 调用
-    if (expr.type === SlimeAstType.CallExpression) {
+    if (expr.type === SlimeNodeType.CallExpression) {
         const callExpr = expr as SlimeCallExpression
 
         // 检查 createReactiveVNode() 函数调用
-        if (callExpr.callee.type === SlimeAstType.Identifier) {
+        if (callExpr.callee.type === SlimeNodeType.Identifier) {
             const identifier = callExpr.callee as any
             if (identifier.name === 'createReactiveVNode') {
                 return true
@@ -148,17 +148,17 @@ function wrapTopLevelExpressions(ast: SlimeProgram): SlimeProgram {
     // 1. 分类
     for (const statement of ast.body) {
         // Import 语句必须在模块顶层
-        if (statement.type === SlimeAstType.ImportDeclaration) {
+        if (statement.type === SlimeNodeType.ImportDeclaration) {
             imports.push(statement)
         }
         // 检查是否有任何导出（export default 或 export named）
-        else if (statement.type === SlimeAstType.ExportDefaultDeclaration ||
-            statement.type === SlimeAstType.ExportNamedDeclaration) {
+        else if (statement.type === SlimeNodeType.ExportDefaultDeclaration ||
+            statement.type === SlimeNodeType.ExportNamedDeclaration) {
             hasAnyExport = true
             exports.push(statement)
         } else if (isDeclaration(statement)) {
             declarations.push(statement)
-        } else if (statement.type === SlimeAstType.ExpressionStatement) {
+        } else if (statement.type === SlimeNodeType.ExpressionStatement) {
             expressions.push(statement as SlimeStatement)
         } else {
             // 其他类型的语句（如 if、for 等）也归类为表达式
@@ -212,13 +212,13 @@ function wrapTopLevelExpressions(ast: SlimeProgram): SlimeProgram {
                 [vnodeExpr]
             )
             expressionStatements.push({
-                type: SlimeAstType.ExpressionStatement,
+                type: SlimeNodeType.ExpressionStatement,
                 expression: pushCall
             } as SlimeExpressionStatement)
         } else {
             // 其他表达式：也应该 push 到 children（规则4的完整实现）
             // 如果是 ExpressionStatement，提取 expression 并 push
-            if (expr.type === SlimeAstType.ExpressionStatement) {
+            if (expr.type === SlimeNodeType.ExpressionStatement) {
                 const exprStmt = expr as SlimeExpressionStatement
                 const pushCall = SlimeAstUtil.createCallExpression(
                     SlimeAstUtil.createMemberExpression(
@@ -229,7 +229,7 @@ function wrapTopLevelExpressions(ast: SlimeProgram): SlimeProgram {
                     [exprStmt.expression]
                 )
                 expressionStatements.push({
-                    type: SlimeAstType.ExpressionStatement,
+                    type: SlimeNodeType.ExpressionStatement,
                     expression: pushCall
                 } as SlimeExpressionStatement)
             } else {
@@ -265,13 +265,13 @@ function ensureOvsAPIImport(ast: SlimeProgram): SlimeProgram {
 
     // 检查是否已经有了所需的导入
     for (const statement of ast.body) {
-        if (statement.type === SlimeAstType.ImportDeclaration) {
+        if (statement.type === SlimeNodeType.ImportDeclaration) {
             const importDecl = statement as SlimeImportDeclaration
             if (importDecl.source.value === '../utils/ReactiveVNode') {
                 // 检查是否已导入 createComponentVNode
                 const specs = importDecl.specifiers || []
                 const hasCreateComponentVNode = specs.some(spec =>
-                    spec.type === SlimeAstType.ImportSpecifier &&
+                    spec.type === SlimeNodeType.ImportSpecifier &&
                     spec.imported.name === 'createComponentVNode'
                 )
                 if (hasCreateComponentVNode) {
@@ -286,13 +286,13 @@ function ensureOvsAPIImport(ast: SlimeProgram): SlimeProgram {
     if (!hasImport) {
         // 手动创建 ImportSpecifier
         const specifier1: SlimeImportSpecifier = {
-            type: SlimeAstType.ImportSpecifier,
+            type: SlimeNodeType.ImportSpecifier,
             local: SlimeAstUtil.createIdentifier('createComponentVNode'),
             imported: SlimeAstUtil.createIdentifier('createComponentVNode')
         }
 
         const specifier2: SlimeImportSpecifier = {
-            type: SlimeAstType.ImportSpecifier,
+            type: SlimeNodeType.ImportSpecifier,
             local: SlimeAstUtil.createIdentifier('createElementVNode'),
             imported: SlimeAstUtil.createIdentifier('createElementVNode')
         }

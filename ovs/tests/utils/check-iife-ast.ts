@@ -1,5 +1,5 @@
 import SlimeAstUtil from "slime/packages/slime-ast/src/SlimeAstCreate.ts"
-import {SlimeAstType} from "slime-ast/src/SlimeAstType.ts"
+import {SlimeNodeType} from "slime-ast/src/SlimeNodeType.ts"
 
 // 检查我们创建 IIFE 时的 AST 结构
 
