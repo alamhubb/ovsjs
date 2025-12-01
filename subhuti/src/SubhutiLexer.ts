@@ -70,12 +70,15 @@ export default class SubhutiLexer {
 
   constructor(tokens: SubhutiCreateToken[]) {
     // 预编译：给所有正则加 ^ 锚点，并保留原有 flags
+    // 注意：必须用 (?:...) 包裹整个正则，否则 ^A|B 只会锚定 A 分支
+    // 例如：^abc|\.14 匹配 "float = 3.14" 会在位置 9 匹配到 .14（错误）
+    //       ^(?:abc|\.14) 则不会匹配（正确）
     this._allTokens = tokens.map(token => {
       if (!token.pattern) return token
-      
+
       return {
         ...token,
-        pattern: new RegExp('^' + token.pattern.source, token.pattern.flags)
+        pattern: new RegExp('^(?:' + token.pattern.source + ')', token.pattern.flags)
       }
     })
     
