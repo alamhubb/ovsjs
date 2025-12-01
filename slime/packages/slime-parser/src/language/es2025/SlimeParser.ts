@@ -2335,12 +2335,16 @@ export default class SlimeParser extends SubhutiParser<SlimeTokenConsumer> {
      * StatementListItem[Yield, Await, Return] :
      *     Statement[?Yield, ?Await, ?Return]
      *     Declaration[?Yield, ?Await]
+     *
+     * PEG 实现注意：Declaration 必须在 Statement 之前尝试
+     * 原因：let 是软关键字，在 ExpressionStatement 中会被当作标识符消费
+     * 如果先尝试 Statement，`let { a } = 1` 会被错误解析为表达式语句
      */
     @SubhutiRule
     StatementListItem(params: StatementParams = {}): SubhutiCst | undefined {
         return this.Or([
-            {alt: () => this.Statement(params)},
-            {alt: () => this.Declaration(params)}
+            {alt: () => this.Declaration(params)},
+            {alt: () => this.Statement(params)}
         ])
     }
 
@@ -2871,7 +2875,7 @@ export default class SlimeParser extends SubhutiParser<SlimeTokenConsumer> {
      * 注意：根据 ECMAScript 规范 11.9.1 ASI 规则：
      * "The previous token is ) and the inserted semicolon would then be parsed as
      *  the terminating semicolon of a do-while statement"
-     * 因此 do-while 语句末尾的分号支持 ASI
+     * 因此 do-while 语句末尾的分号支持 ASI，即使下一个 token 不满足通常的 ASI 条件
      */
     @SubhutiRule
     DoWhileStatement(params: StatementParams = {}): SubhutiCst | undefined {
@@ -2881,7 +2885,10 @@ export default class SlimeParser extends SubhutiParser<SlimeTokenConsumer> {
         this.tokenConsumer.LParen()
         this.Expression({...params, In: true})
         this.tokenConsumer.RParen()
-        return this.SemicolonASI()
+        // do-while 语句的分号是特殊的 ASI 场景：总是可以省略
+        // 如果有分号则消费，否则直接继续
+        this.Option(() => this.tokenConsumer.Semicolon())
+        return this.curCst
     }
 
     /**

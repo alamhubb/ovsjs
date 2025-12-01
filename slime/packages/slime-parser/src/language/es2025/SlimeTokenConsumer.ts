@@ -21,6 +21,7 @@ import {
     SlimeTokenType
 } from "slime-token/src/SlimeTokenType.ts"
 import SubhutiTokenConsumer from "subhuti/src/SubhutiTokenConsumer.ts"
+import {LexicalGoal} from "subhuti/src/SubhutiLexer.ts"
 
 export default class SlimeTokenConsumer extends SubhutiTokenConsumer {
 
@@ -325,12 +326,20 @@ export default class SlimeTokenConsumer extends SubhutiTokenConsumer {
         return this.consume(SlimeTokenType.TemplateHead)
     }
 
+    /**
+     * 消费 TemplateMiddle token (}...${)
+     * 使用 InputElementTemplateTail 词法目标，确保 } 被识别为模板部分而非 RBrace
+     */
     TemplateMiddle() {
-        return this.consume(SlimeTokenType.TemplateMiddle)
+        return this.consume(SlimeTokenType.TemplateMiddle, LexicalGoal.InputElementTemplateTail)
     }
 
+    /**
+     * 消费 TemplateTail token (}...`)
+     * 使用 InputElementTemplateTail 词法目标，确保 } 被识别为模板部分而非 RBrace
+     */
     TemplateTail() {
-        return this.consume(SlimeTokenType.TemplateTail)
+        return this.consume(SlimeTokenType.TemplateTail, LexicalGoal.InputElementTemplateTail)
     }
 
     RegularExpressionLiteral() {

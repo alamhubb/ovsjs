@@ -15,6 +15,7 @@
 
 import type SubhutiParser from "./SubhutiParser.ts"
 import type SubhutiCst from "./struct/SubhutiCst.ts"
+import type {LexicalGoal} from "./SubhutiLexer.ts"
 
 export default class SubhutiTokenConsumer {
     /**
@@ -33,9 +34,10 @@ export default class SubhutiTokenConsumer {
     /**
      * 消费一个 token（修改 Parser 状态）
      * @param tokenName token 名称（来自 TokenNames）
+     * @param goal 可选的词法目标（用于模板尾部等场景）
      */
-    protected consume(tokenName: string): SubhutiCst | undefined {
-        return this.parser._consumeToken(tokenName)
+    protected consume(tokenName: string, goal?: LexicalGoal): SubhutiCst | undefined {
+        return this.parser._consumeToken(tokenName, goal)
     }
 }
 

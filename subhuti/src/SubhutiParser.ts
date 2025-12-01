@@ -462,9 +462,11 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
     /**
      * 供 TokenConsumer 使用的 consume 方法
+     * @param tokenName token 名称
+     * @param goal 可选的词法目标（用于模板尾部等场景）
      */
-    _consumeToken(tokenName: string): SubhutiCst | undefined {
-        return this.consume(tokenName)
+    _consumeToken(tokenName: string, goal?: LexicalGoal): SubhutiCst | undefined {
+        return this.consume(tokenName, goal)
     }
 
     /**

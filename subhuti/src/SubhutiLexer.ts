@@ -27,6 +27,8 @@ export enum LexicalGoal {
     InputElementDiv = 'InputElementDiv',
     /** InputElementRegExp - 期望正则表达式 */
     InputElementRegExp = 'InputElementRegExp',
+    /** InputElementTemplateTail - 期望模板尾部（} 开头的模板部分） */
+    InputElementTemplateTail = 'InputElementTemplateTail',
 }
 
 /**
@@ -259,6 +261,40 @@ export default class SubhutiLexer {
     }
   }
 
+  /**
+   * 尝试匹配模板 token (TemplateMiddle 或 TemplateTail)
+   * 仅在 InputElementTemplateTail 模式下使用
+   */
+  private _matchTemplateToken(
+    remaining: string,
+    index: number,
+    rowNum: number,
+    columnNum: number
+  ) {
+    for (const token of this._allTokens) {
+      if (token.name !== SubhutiLexerTokenNames.TemplateMiddle &&
+          token.name !== SubhutiLexerTokenNames.TemplateTail) {
+        continue
+      }
+
+      const match = remaining.match(token.pattern)
+      if (match) {
+        return {
+          token: this._createMatchTokenWithLastRow(
+            token.name,
+            match[0],
+            index,
+            rowNum,
+            columnNum,
+            rowNum
+          ),
+          skip: false
+        }
+      }
+    }
+    return null
+  }
+
   // ============================================
   // 按需词法分析 API（On-Demand Lexing）
   // 符合 ECMAScript 规范的 InputElement 切换机制
@@ -392,11 +428,22 @@ export default class SubhutiLexer {
     const remaining = code.slice(index)
 
     // 获取活跃的 tokens
-    const activeTokens = templateDepth > 0
-      ? this._allTokens
-      : this._tokensOutsideTemplate
+    // 注意：即使 templateDepth > 0，默认情况下也不应该匹配 TemplateMiddle/TemplateTail
+    // 只有在 InputElementTemplateTail 模式下才匹配它们
+    const activeTokens = this._tokensOutsideTemplate
 
     for (const token of activeTokens) {
+      // InputElementTemplateTail 模式：只匹配 TemplateMiddle 或 TemplateTail
+      // 这是模板表达式结束后，需要匹配 } 开头的模板部分
+      if (lexicalGoal === LexicalGoal.InputElementTemplateTail) {
+        // 在这个模式下，优先尝试匹配模板 token
+        const templateMatch = this._matchTemplateToken(remaining, index, rowNum, columnNum)
+        if (templateMatch) {
+          return templateMatch
+        }
+        // 如果没有匹配，继续正常匹配
+      }
+
       // 根据词法目标处理 Slash
       if (token.name === 'Slash' || token.name === 'DivideAssign') {
         if (lexicalGoal === LexicalGoal.InputElementRegExp && remaining.startsWith('/')) {
