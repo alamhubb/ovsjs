@@ -235,10 +235,20 @@ class SlimeAstCreate {
     })
   }
 
-  createArrayExpression(elements?: Array<SlimeExpression | SlimeSpreadElement | null>): SlimeArrayExpression {
+  createArrayExpression(
+    elements?: Array<SlimeExpression | SlimeSpreadElement | null>,
+    loc?: SubhutiSourceLocation,
+    lBracketToken?: SlimeLBracketToken,
+    rBracketToken?: SlimeRBracketToken,
+    commaTokens?: (SlimeCommaToken | undefined)[]
+  ): SlimeArrayExpression {
     return this.commonLocType({
       type: SlimeAstType.ArrayExpression,
       elements: elements,
+      lBracketToken: lBracketToken,
+      rBracketToken: rBracketToken,
+      commaTokens: commaTokens,
+      loc: loc
     })
   }
 
@@ -255,10 +265,20 @@ class SlimeAstCreate {
     })
   }
 
-  createObjectExpression(properties: Array<SlimeProperty> = []): SlimeObjectExpression {
+  createObjectExpression(
+    properties: Array<SlimeProperty | SlimeSpreadElement> = [],
+    loc?: SubhutiSourceLocation,
+    lBraceToken?: SlimeLBraceToken,
+    rBraceToken?: SlimeRBraceToken,
+    commaTokens?: (SlimeCommaToken | undefined)[]
+  ): SlimeObjectExpression {
     return this.commonLocType({
       type: SlimeAstType.ObjectExpression,
-      properties: properties
+      properties: properties,
+      lBraceToken: lBraceToken,
+      rBraceToken: rBraceToken,
+      commaTokens: commaTokens,
+      loc: loc
     })
   }
 
@@ -909,10 +929,11 @@ class SlimeAstCreate {
     })
   }
 
-  createVariableDeclarator(id: SlimePattern, init?: SlimeExpression | null, loc?: SubhutiSourceLocation): SlimeVariableDeclarator {
+  createVariableDeclarator(id: SlimePattern, assignToken?: SlimeAssignToken, init?: SlimeExpression | null, loc?: SubhutiSourceLocation): SlimeVariableDeclarator {
     return this.commonLocType({
       type: SlimeAstType.VariableDeclarator,
       id: id,
+      assignToken: assignToken,
       init: init,
       loc: loc
     })
