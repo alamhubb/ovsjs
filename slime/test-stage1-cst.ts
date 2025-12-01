@@ -168,12 +168,8 @@ for (let i = startIndex; i < files.length; i++) {
 
   try {
     // 词法分析
-    const lexer = new SubhutiLexer(slimeTokens)
-    const tokens = lexer.tokenize(code)
-    console.log(`✅ 词法分析: ${tokens.length} tokens`)
-
     // 语法分析
-    const parser = new SlimeParser(tokens)
+    const parser = new SlimeParser(code)
     const cst = parser.Program('module')
     console.log(`✅ 语法分析: CST生成成功`)
     console.log(`CST根节点children数: ${cst.children?.length || 0}`)
