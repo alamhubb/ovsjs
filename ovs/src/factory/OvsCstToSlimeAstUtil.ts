@@ -12,7 +12,7 @@ import {
   SlimeVariableDeclarationKindValue
 } from "slime-ast/src/SlimeAstInterface.ts";
 import OvsParser from "../parser/OvsParser.ts";
-import SlimeAstUtil from "slime/packages/slime-ast/src/SlimeAstCreate.ts";
+import SlimeAstUtil from "slime/packages/slime-ast/src/SlimeNodeCreate.ts";
 import Es6Parser from "slime-parser/src/language/es2015/Es6Parser.ts";
 import {SlimeNodeType} from "slime-ast/src/SlimeNodeType.ts";
 

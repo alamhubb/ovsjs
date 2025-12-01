@@ -19,7 +19,7 @@ import {
     SlimeContextualKeywordTokenTypes,
     SlimeReservedWordTokenTypes, SlimeUnaryOperatorTokenTypes,
     SlimeTokenType
-} from "slime-token/src/SlimeTokenTypes.ts"
+} from "slime-token/src/SlimeTokenType.ts"
 import SubhutiTokenConsumer from "subhuti/src/SubhutiTokenConsumer.ts"
 
 export default class Es2025TokenConsumer extends SubhutiTokenConsumer {

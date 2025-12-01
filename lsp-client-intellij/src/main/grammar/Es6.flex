@@ -10,7 +10,7 @@ import static com.alamhubb.ovs.testovs.lexer.Es6TokenTypes.*;
  * 
  * 参考:
  * - https://262.ecma-international.org/6.0/index.html
- * - slime-parser/src/language/es2025/SlimeTokenTypes.ts
+ * - slime-parser/src/language/es2025/SlimeTokenType.ts
  * - slime-parser/src/language/es5/Es5Tokens.ts
  */
 

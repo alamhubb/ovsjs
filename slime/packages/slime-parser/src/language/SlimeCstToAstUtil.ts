@@ -67,7 +67,7 @@ import {
 import SubhutiCst, {type SubhutiSourceLocation} from "subhuti/src/struct/SubhutiCst.ts";
 import SlimeParser from "./es2025/SlimeParser.ts";
 import Es2025TokenConsumer from "./es2025/Es2025TokenConsumer.ts";
-import SlimeAstUtil from "slime-ast/src/SlimeAstCreate.ts";
+import SlimeAstUtil from "slime-ast/src/SlimeNodeCreate.ts";
 import SlimeTokenCreate from "slime-ast/src/SlimeTokenCreate.ts";
 import {SlimeNodeType} from "slime-ast/src/SlimeNodeType.ts";
 

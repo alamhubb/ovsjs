@@ -1,5 +1,5 @@
 /**
- * SlimeAstCreate.ts - AST 节点创建工厂
+ * SlimeNodeCreate.ts - AST 节点创建工厂
  *
  * 为每个 AST 节点类型提供创建方法
  * Token 创建方法请使用 SlimeTokenCreate.ts
@@ -192,7 +192,7 @@ import {
 import {SlimeNodeType} from "./SlimeNodeType.ts";
 import type {SubhutiSourceLocation} from "subhuti/src/struct/SubhutiCst.ts";
 
-class SlimeAstCreate {
+class SlimeNodeCreate {
   // ============================================
   // 通用辅助方法
   // ============================================
@@ -1512,6 +1512,6 @@ class SlimeAstCreate {
   }
 }
 
-const SlimeAstCreateUtil = new SlimeAstCreate()
+const SlimeAstCreateUtil = new SlimeNodeCreate()
 export default SlimeAstCreateUtil
 

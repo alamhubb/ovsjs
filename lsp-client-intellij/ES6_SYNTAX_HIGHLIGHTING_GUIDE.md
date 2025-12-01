@@ -354,7 +354,7 @@ Es6TokenTypes.MY_NEW_KEYWORD -> arrayOf(KEYWORD)
 - 项目文件：`slime-parser/docs/es6-syntax-reference.md`
 
 ### 项目 Token 定义
-- `slime-parser/src/language/es2025/SlimeTokenTypes.ts`
+- `slime-parser/src/language/es2025/SlimeTokenType.ts`
 - `slime-parser/src/language/es5/Es5Tokens.ts`
 
 ---

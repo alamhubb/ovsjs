@@ -22,7 +22,7 @@ import {
     SlimeProgramSourceType,
     SlimeVariableDeclarationKindValue
 } from "slime-ast/src/SlimeAstInterface.ts";
-import SlimeAstUtil from "slime/packages/slime-ast/src/SlimeAstCreate.ts";
+import SlimeAstUtil from "slime/packages/slime-ast/src/SlimeNodeCreate.ts";
 import {SlimeNodeType} from "slime-ast/src/SlimeNodeType.ts";
 import SubhutiMatchToken from "subhuti/src/struct/SubhutiMatchToken.ts";
 

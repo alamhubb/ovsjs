@@ -4,7 +4,7 @@
  */
 
 import SlimeParser from './slime/packages/slime-parser/src/language/es2025/SlimeParser.ts'
-import { es2025Tokens } from './slime/packages/slime-parser/src/language/es2025/SlimeTokenTypes.ts'
+import { es2025Tokens } from './slime/packages/slime-parser/src/language/es2025/SlimeTokenType.ts'
 import SubhutiLexer from './subhuti/src/SubhutiLexer.ts'
 
 const code = 'const x = {a: 1, b: 2,}'

@@ -90,7 +90,7 @@ import {
     SlimeLogicalOperatorTokenTypes,
     SlimeAssignmentOperatorTokenTypes,
     SlimeUpdateOperatorTokenTypes,
-} from "slime-token/src/SlimeTokenTypes.ts";
+} from "slime/packages/slime-token/src/SlimeTokenType.ts";
 
 class SlimeTokenFactory {
     // ============================================
