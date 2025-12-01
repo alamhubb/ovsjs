@@ -223,6 +223,7 @@ export const SlimeTokenType = {
     MultiLineComment: 'MultiLineComment',
     SingleLineComment: 'SingleLineComment',
     // B.1.1 HTML-like Comments (Web 兼容性扩展)
+    SingleLineHTMLOpenComment: 'SingleLineHTMLOpenComment',    // <!--
     SingleLineHTMLCloseComment: 'SingleLineHTMLCloseComment',  // --> at line start
 
     // ============================================
