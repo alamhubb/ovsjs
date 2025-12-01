@@ -22,7 +22,7 @@ import {
 } from "slime-token/src/SlimeTokenType.ts"
 import SubhutiTokenConsumer from "subhuti/src/SubhutiTokenConsumer.ts"
 
-export default class Es2025TokenConsumer extends SubhutiTokenConsumer {
+export default class SlimeTokenConsumer extends SubhutiTokenConsumer {
 
     // ============================================
     // 软关键字消费辅助方法

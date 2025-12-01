@@ -14,7 +14,7 @@ import SubhutiParser, {Subhuti, SubhutiRule} from "subhuti/src/SubhutiParser.ts"
 import type SubhutiCst from "subhuti/src/struct/SubhutiCst.ts"
 import type SubhutiMatchToken from "subhuti/src/struct/SubhutiMatchToken.ts"
 import {matchRegExpLiteral} from "subhuti/src/SubhutiLexer.ts"
-import Es2025TokenConsumer from "./Es2025TokenConsumer.ts"
+import SlimeTokenConsumer from "./SlimeTokenConsumer.ts"
 import {
     SlimeContextualKeywordTokenTypes,
     SlimeReservedWordTokenTypes,
@@ -193,9 +193,9 @@ function isValidIdentifierWithEscapes(name: string): boolean {
 // ============================================
 
 @Subhuti
-export default class SlimeParser extends SubhutiParser<Es2025TokenConsumer> {
+export default class SlimeParser extends SubhutiParser<SlimeTokenConsumer> {
     constructor(tokens: SubhutiMatchToken[] = []) {
-        super(tokens, Es2025TokenConsumer)
+        super(tokens, SlimeTokenConsumer)
     }
 
     // ============================================
