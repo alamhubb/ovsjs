@@ -200,6 +200,9 @@ try {
     // 词法分析
     const lexer = new SubhutiLexer(slimeTokens)
     const tokens = lexer.tokenize(code)
+
+    console.log(tokens)
+
     // 语法分析和验证
     const parser = new SlimeParser(tokens)
     // parser.debug()
