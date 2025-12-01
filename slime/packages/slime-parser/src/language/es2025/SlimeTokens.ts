@@ -148,16 +148,22 @@ export const SlimeTokensObj = {
     // A.1.9 数字字面量
     // 规范: NumericLiteral :: DecimalLiteral | DecimalBigIntegerLiteral | NonDecimalIntegerLiteral | LegacyOctalIntegerLiteral
     // 所有数字变体都映射到 NumericLiteral
+    //
+    // 设计说明（参考 Babel 的实现）：
+    // 1. 词法层：用正则匹配所有数字字面量，不区分 legacy octal 和 non-octal decimal
+    // 2. 语义层（Parser/AST）：判断具体类型并检查语法错误
+    // 3. 这样避免了多个正则规则之间的优先级和冲突问题
     // ============================================
 
-    // BigInt 变体 (DecimalBigIntegerLiteral, NonDecimalIntegerLiteral BigIntLiteralSuffix)
+    // BigInt 变体 - 必须在普通数字之前匹配（因为后缀 n）
     // DecimalBigIntegerLiteral :: 0n | NonZeroDigit DecimalDigits_opt n
+    // NonDecimalIntegerLiteral BigIntLiteralSuffix
     NumericLiteralBigIntHex: createEmptyValueRegToken(SlimeTokenType.NumericLiteral, /0[xX][0-9a-fA-F](_?[0-9a-fA-F])*n/),
     NumericLiteralBigIntBinary: createEmptyValueRegToken(SlimeTokenType.NumericLiteral, /0[bB][01](_?[01])*n/),
     NumericLiteralBigIntOctal: createEmptyValueRegToken(SlimeTokenType.NumericLiteral, /0[oO][0-7](_?[0-7])*n/),
     NumericLiteralBigIntDecimal: createEmptyValueRegToken(SlimeTokenType.NumericLiteral, /(?:0|[1-9](_?[0-9])*)n/),
 
-    // 非十进制整数 (NonDecimalIntegerLiteral)
+    // 非十进制整数 (NonDecimalIntegerLiteral) - 必须在十进制之前匹配
     // HexIntegerLiteral :: 0x HexDigits | 0X HexDigits
     // BinaryIntegerLiteral :: 0b BinaryDigits | 0B BinaryDigits
     // OctalIntegerLiteral :: 0o OctalDigits | 0O OctalDigits
@@ -165,25 +171,21 @@ export const SlimeTokensObj = {
     NumericLiteralBinary: createEmptyValueRegToken(SlimeTokenType.NumericLiteral, /0[bB][01](_?[01])*/),
     NumericLiteralOctal: createEmptyValueRegToken(SlimeTokenType.NumericLiteral, /0[oO][0-7](_?[0-7])*/),
 
-    // 传统八进制 (LegacyOctalIntegerLiteral, Annex B)
-    // LegacyOctalIntegerLiteral :: 0 OctalDigit | LegacyOctalIntegerLiteral OctalDigit
-    NumericLiteralLegacyOctal: createEmptyValueRegToken(SlimeTokenType.NumericLiteral, /0[0-7]+/),
-
-    // 十进制 (DecimalLiteral)
-    // DecimalLiteral ::
-    //     DecimalIntegerLiteral . DecimalDigits_opt ExponentPart_opt
-    //     . DecimalDigits ExponentPart_opt
-    //     DecimalIntegerLiteral ExponentPart_opt
-    // DecimalIntegerLiteral ::
-    //     0                                           -- 单独的 0
-    //     NonZeroDigit                                -- 1-9
-    //     NonZeroDigit NumericLiteralSeparator_opt DecimalDigits  -- 12, 1_2, 123
-    //     NonOctalDecimalIntegerLiteral               -- 08, 09, 0189 (以0开头但包含8或9)
+    // 十进制数字（统一匹配，包括 LegacyOctal 和 NonOctalDecimal）
+    // 参考 Babel 的 readNumber 实现：先匹配所有数字，语义层再区分类型
     //
-    // 正则说明：
-    // - DecimalIntegerLiteral = 0 | [1-9](_?[0-9])* | 0[0-7]*[89][0-9]*
-    // - 注意：0 后面不能直接接 _ (如 0_1 是非法的)
-    NumericLiteralDecimal: createEmptyValueRegToken(SlimeTokenType.NumericLiteral, /(?:(?:0|[1-9](_?[0-9])*|0[0-7]*[89][0-9]*)\.([0-9](_?[0-9])*)?|\.[0-9](_?[0-9])*|(?:0|[1-9](_?[0-9])*|0[0-7]*[89][0-9]*))([eE][+-]?[0-9](_?[0-9])*)?/),
+    // 匹配规则：
+    // 1. 0[0-9]* - 以 0 开头的数字序列（可能是 legacy octal 如 07，或 non-octal decimal 如 09）
+    // 2. [1-9](_?[0-9])* - 以 1-9 开头的数字序列（支持 numeric separator）
+    // 3. \.([0-9](_?[0-9])*)? - 可选的小数部分
+    // 4. ([eE][+-]?[0-9](_?[0-9])*)? - 可选的指数部分
+    // 5. \.[0-9]... - 单独的 .xxx 形式
+    //
+    // 语义层检查（在 Parser 中处理）：
+    // - LegacyOctalIntegerLiteral (07, 077): 严格模式报错
+    // - NonOctalDecimalIntegerLiteral (08, 09): 严格模式报错，非严格模式当十进制
+    // - 以 0 开头的数字不能有小数点或指数（如 07.5 是语法错误）
+    NumericLiteralDecimal: createEmptyValueRegToken(SlimeTokenType.NumericLiteral, /(?:0[0-9]*|[1-9](_?[0-9])*)(?:\.([0-9](_?[0-9])*)?)?([eE][+-]?[0-9](_?[0-9])*)?|\.[0-9](_?[0-9])*([eE][+-]?[0-9](_?[0-9])*)?/),
 
     // ============================================
     // A.1.10 字符串字面量
