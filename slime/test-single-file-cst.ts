@@ -134,7 +134,7 @@ function _getCSTStatistics(node: any): {
 // 主程序
 // const filePath = process.argv[2] || 'tests/cases/17-rest-parameters.js'
 // const filePath = process.argv[2] || 'tests/babel/fixtures\\core\\uncategorised\\324\\input.js'
-const filePath = process.argv[2] || 'tests/babel/fixtures\\comments\\attachComment-false\\array-expression-trailing-comma\\input.js'
+const filePath = process.argv[2] || 'tests/babel/fixtures\\core\\uncategorised\\326\\input.js'
 // const filePath = process.argv[2] || 'tests/es6rules/fix-duplicates.js'
 // const filePath = process.argv[2] || 'tests/test262/intl402/DateTimeFormat\\prototype\\formatRangeToParts\\temporal-objects-resolved-time-zone.js'
 // const filePath = process.argv[2] || 'tests/es6rules/AdditiveExpression-001.js'
