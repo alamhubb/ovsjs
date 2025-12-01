@@ -20,6 +20,7 @@ import {
     SlimeReservedWordTokenTypes,
     SlimeTokenType
 } from "slime-token/src/SlimeTokenType.ts";
+import {slimeTokens} from "./SlimeTokens.ts";
 
 // ============================================
 // 保留字集合（用于 Identifier 验证）
