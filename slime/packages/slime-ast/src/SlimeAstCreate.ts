@@ -99,6 +99,16 @@ import {
   type SlimePropertyDefinition,
   type SlimeSpreadElement,
 
+  // Wrapper types (for comma token association)
+  type SlimeArrayElement,
+  type SlimeObjectPropertyItem,
+  type SlimeFunctionParam,
+  type SlimeCallArgument,
+  type SlimeArrayPatternElement,
+  type SlimeObjectPatternProperty,
+  type SlimeImportSpecifierItem,
+  type SlimeExportSpecifierItem,
+
   // Classes
   type SlimeClassBody,
   type SlimeMethodDefinition,
@@ -211,7 +221,7 @@ class SlimeAstCreate {
   // Program
   // ============================================
 
-  createProgram(body: Array<SlimeDirective | SlimeStatement | SlimeModuleDeclaration>, sourceType: SlimeProgramSourceType = SlimeProgramSourceType.script): SlimeProgram {
+  createProgram(body: Array<SlimeDirective | SlimeStatement | SlimeModuleDeclaration>, sourceType: SlimeProgramSourceType = SlimeProgramSourceType.Script): SlimeProgram {
     return this.commonLocType({
       type: SlimeAstType.Program,
       sourceType: sourceType,
@@ -236,22 +246,27 @@ class SlimeAstCreate {
   }
 
   createArrayExpression(
-    elements?: Array<SlimeExpression | SlimeSpreadElement | null>,
+    elements?: Array<SlimeArrayElement>,
     loc?: SubhutiSourceLocation,
     lBracketToken?: SlimeLBracketToken,
-    rBracketToken?: SlimeRBracketToken,
-    commaTokens?: (SlimeCommaToken | undefined)[]
+    rBracketToken?: SlimeRBracketToken
   ): SlimeArrayExpression {
     return this.commonLocType({
       type: SlimeAstType.ArrayExpression,
-      elements: elements,
+      elements: elements || [],
       lBracketToken: lBracketToken,
       rBracketToken: rBracketToken,
-      commaTokens: commaTokens,
       loc: loc
     })
   }
 
+  /** 创建数组元素包装 */
+  createArrayElement(
+    element: SlimeExpression | SlimeSpreadElement | null,
+    commaToken?: SlimeCommaToken
+  ): SlimeArrayElement {
+    return { element, commaToken }
+  }
 
   createPropertyAst(key: SlimeExpression | SlimePrivateIdentifier, value: SlimeExpression | SlimePattern): SlimeProperty {
     return this.commonLocType({
@@ -266,20 +281,26 @@ class SlimeAstCreate {
   }
 
   createObjectExpression(
-    properties: Array<SlimeProperty | SlimeSpreadElement> = [],
+    properties: Array<SlimeObjectPropertyItem> = [],
     loc?: SubhutiSourceLocation,
     lBraceToken?: SlimeLBraceToken,
-    rBraceToken?: SlimeRBraceToken,
-    commaTokens?: (SlimeCommaToken | undefined)[]
+    rBraceToken?: SlimeRBraceToken
   ): SlimeObjectExpression {
     return this.commonLocType({
       type: SlimeAstType.ObjectExpression,
       properties: properties,
       lBraceToken: lBraceToken,
       rBraceToken: rBraceToken,
-      commaTokens: commaTokens,
       loc: loc
     })
+  }
+
+  /** 创建对象属性包装 */
+  createObjectPropertyItem(
+    property: SlimeProperty | SlimeSpreadElement,
+    commaToken?: SlimeCommaToken
+  ): SlimeObjectPropertyItem {
+    return { property, commaToken }
   }
 
   createParenthesizedExpression(expression: SlimeExpression, loc?: SubhutiSourceLocation): any {
@@ -302,11 +323,10 @@ class SlimeAstCreate {
 
   createCallExpression(
     callee: SlimeExpression | SlimeSuper,
-    args: Array<SlimeExpression | SlimeSpreadElement>,
+    args: Array<SlimeCallArgument>,
     loc?: SubhutiSourceLocation,
     lParenToken?: SlimeLParenToken,
-    rParenToken?: SlimeRParenToken,
-    commaTokens?: (SlimeCommaToken | undefined)[]
+    rParenToken?: SlimeRParenToken
   ): SlimeSimpleCallExpression {
     return this.commonLocType({
       type: SlimeAstType.CallExpression,
@@ -315,9 +335,24 @@ class SlimeAstCreate {
       optional: false,
       lParenToken: lParenToken,
       rParenToken: rParenToken,
-      commaTokens: commaTokens,
       loc: loc
     })
+  }
+
+  /** 创建调用参数包装 */
+  createCallArgument(
+    argument: SlimeExpression | SlimeSpreadElement,
+    commaToken?: SlimeCommaToken
+  ): SlimeCallArgument {
+    return { argument, commaToken }
+  }
+
+  /** 创建函数参数包装 */
+  createFunctionParam(
+    param: SlimePattern,
+    commaToken?: SlimeCommaToken
+  ): SlimeFunctionParam {
+    return { param, commaToken }
   }
 
   createThisExpression(loc?: SubhutiSourceLocation): SlimeThisExpression {
@@ -438,12 +473,11 @@ class SlimeAstCreate {
 
   createNewExpression(
     callee: SlimeExpression,
-    args: Array<SlimeExpression | SlimeSpreadElement>,
+    args: Array<SlimeCallArgument>,
     loc?: SubhutiSourceLocation,
     newToken?: SlimeNewToken,
     lParenToken?: SlimeLParenToken,
-    rParenToken?: SlimeRParenToken,
-    commaTokens?: (SlimeCommaToken | undefined)[]
+    rParenToken?: SlimeRParenToken
   ): SlimeNewExpression {
     return this.commonLocType({
       type: SlimeAstType.NewExpression,
@@ -452,22 +486,20 @@ class SlimeAstCreate {
       newToken: newToken,
       lParenToken: lParenToken,
       rParenToken: rParenToken,
-      commaTokens: commaTokens,
       loc: loc
     })
   }
 
   createArrowFunctionExpression(
     body: SlimeBlockStatement | SlimeExpression,
-    params: SlimePattern[],
+    params: SlimeFunctionParam[],
     expression: boolean,
     async: boolean = false,
     loc?: SubhutiSourceLocation,
     arrowToken?: SlimeArrowToken,
     asyncToken?: SlimeAsyncToken,
     lParenToken?: SlimeLParenToken,
-    rParenToken?: SlimeRParenToken,
-    commaTokens?: (SlimeCommaToken | undefined)[]
+    rParenToken?: SlimeRParenToken
   ): SlimeArrowFunctionExpression {
     return this.commonLocType({
       type: SlimeAstType.ArrowFunctionExpression,
@@ -479,7 +511,6 @@ class SlimeAstCreate {
       asyncToken: asyncToken,
       lParenToken: lParenToken,
       rParenToken: rParenToken,
-      commaTokens: commaTokens,
       loc: loc
     })
   }
@@ -906,12 +937,35 @@ class SlimeAstCreate {
   // Functions
   // ============================================
 
-  createFunctionExpression(body: SlimeBlockStatement, id?: SlimeIdentifier | null, params?: SlimePattern[], loc?: SubhutiSourceLocation): SlimeFunctionExpression {
+  createFunctionExpression(
+    body: SlimeBlockStatement,
+    id?: SlimeIdentifier | null,
+    params?: SlimeFunctionParam[],
+    generator?: boolean,
+    async?: boolean,
+    loc?: SubhutiSourceLocation,
+    functionToken?: SlimeFunctionToken,
+    asyncToken?: SlimeAsyncToken,
+    asteriskToken?: SlimeAsteriskToken,
+    lParenToken?: SlimeLParenToken,
+    rParenToken?: SlimeRParenToken,
+    lBraceToken?: SlimeLBraceToken,
+    rBraceToken?: SlimeRBraceToken
+  ): SlimeFunctionExpression {
     return this.commonLocType({
       type: SlimeAstType.FunctionExpression,
       params: params || [],
       id: id,
       body: body,
+      generator: generator || false,
+      async: async || false,
+      functionToken: functionToken,
+      asyncToken: asyncToken,
+      asteriskToken: asteriskToken,
+      lParenToken: lParenToken,
+      rParenToken: rParenToken,
+      lBraceToken: lBraceToken,
+      rBraceToken: rBraceToken,
       loc: loc
     })
   }
@@ -970,37 +1024,49 @@ class SlimeAstCreate {
   }
 
   createObjectPattern(
-    properties: Array<SlimeAssignmentProperty | SlimeRestElement>,
+    properties: Array<SlimeObjectPatternProperty>,
     loc?: SubhutiSourceLocation,
     lBraceToken?: SlimeLBraceToken,
-    rBraceToken?: SlimeRBraceToken,
-    commaTokens?: (SlimeCommaToken | undefined)[]
+    rBraceToken?: SlimeRBraceToken
   ): SlimeObjectPattern {
     return this.commonLocType({
       type: SlimeAstType.ObjectPattern,
       properties: properties,
       lBraceToken: lBraceToken,
       rBraceToken: rBraceToken,
-      commaTokens: commaTokens,
       loc: loc
     })
   }
 
+  /** 创建解构对象属性包装 */
+  createObjectPatternProperty(
+    property: SlimeAssignmentProperty | SlimeRestElement,
+    commaToken?: SlimeCommaToken
+  ): SlimeObjectPatternProperty {
+    return { property, commaToken }
+  }
+
   createArrayPattern(
-    elements: Array<SlimePattern | null>,
+    elements: Array<SlimeArrayPatternElement>,
     loc?: SubhutiSourceLocation,
     lBracketToken?: SlimeLBracketToken,
-    rBracketToken?: SlimeRBracketToken,
-    commaTokens?: (SlimeCommaToken | undefined)[]
+    rBracketToken?: SlimeRBracketToken
   ): SlimeArrayPattern {
     return this.commonLocType({
       type: SlimeAstType.ArrayPattern,
       elements: elements,
       lBracketToken: lBracketToken,
       rBracketToken: rBracketToken,
-      commaTokens: commaTokens,
       loc: loc
     })
+  }
+
+  /** 创建解构数组元素包装 */
+  createArrayPatternElement(
+    element: SlimePattern | null,
+    commaToken?: SlimeCommaToken
+  ): SlimeArrayPatternElement {
+    return { element, commaToken }
   }
 
   createAssignmentPattern(
@@ -1046,15 +1112,14 @@ class SlimeAstCreate {
   // ============================================
 
   createImportDeclaration(
-    specifiers: Array<SlimeImportSpecifier | SlimeImportDefaultSpecifier | SlimeImportNamespaceSpecifier>,
+    specifiers: Array<SlimeImportSpecifierItem>,
     source: SlimeStringLiteral,
     loc?: SubhutiSourceLocation,
     importToken?: SlimeImportToken,
     fromToken?: SlimeFromToken,
     lBraceToken?: SlimeLBraceToken,
     rBraceToken?: SlimeRBraceToken,
-    semicolonToken?: SlimeSemicolonToken,
-    commaTokens?: (SlimeCommaToken | undefined)[]
+    semicolonToken?: SlimeSemicolonToken
   ): SlimeImportDeclaration {
     return this.commonLocType({
       type: SlimeAstType.ImportDeclaration,
@@ -1065,9 +1130,16 @@ class SlimeAstCreate {
       lBraceToken: lBraceToken,
       rBraceToken: rBraceToken,
       semicolonToken: semicolonToken,
-      commaTokens: commaTokens,
       loc: loc
     })
+  }
+
+  /** 创建 import specifier 包装 */
+  createImportSpecifierItem(
+    specifier: SlimeImportSpecifier | SlimeImportDefaultSpecifier | SlimeImportNamespaceSpecifier,
+    commaToken?: SlimeCommaToken
+  ): SlimeImportSpecifierItem {
+    return { specifier, commaToken }
   }
 
   createImportSpecifier(
@@ -1125,15 +1197,14 @@ class SlimeAstCreate {
 
   createExportNamedDeclaration(
     declaration: SlimeDeclaration | null,
-    specifiers: SlimeExportSpecifier[],
+    specifiers: SlimeExportSpecifierItem[],
     source?: SlimeLiteral | null,
     loc?: SubhutiSourceLocation,
     exportToken?: SlimeExportToken,
     fromToken?: SlimeFromToken,
     lBraceToken?: SlimeLBraceToken,
     rBraceToken?: SlimeRBraceToken,
-    semicolonToken?: SlimeSemicolonToken,
-    commaTokens?: (SlimeCommaToken | undefined)[]
+    semicolonToken?: SlimeSemicolonToken
   ): SlimeExportNamedDeclaration {
     return this.commonLocType({
       type: SlimeAstType.ExportNamedDeclaration,
@@ -1145,9 +1216,16 @@ class SlimeAstCreate {
       lBraceToken: lBraceToken,
       rBraceToken: rBraceToken,
       semicolonToken: semicolonToken,
-      commaTokens: commaTokens,
       loc: loc
     })
+  }
+
+  /** 创建 export specifier 包装 */
+  createExportSpecifierItem(
+    specifier: SlimeExportSpecifier,
+    commaToken?: SlimeCommaToken
+  ): SlimeExportSpecifierItem {
+    return { specifier, commaToken }
   }
 
   createExportSpecifier(
@@ -1241,7 +1319,7 @@ class SlimeAstCreate {
 
   createFunctionDeclaration(
     id: SlimeIdentifier | null,
-    params: SlimePattern[],
+    params: SlimeFunctionParam[],
     body: SlimeBlockStatement,
     generator: boolean = false,
     async: boolean = false,
@@ -1250,8 +1328,7 @@ class SlimeAstCreate {
     asyncToken?: SlimeAsyncToken,
     asteriskToken?: SlimeAsteriskToken,
     lParenToken?: SlimeLParenToken,
-    rParenToken?: SlimeRParenToken,
-    commaTokens?: (SlimeCommaToken | undefined)[]
+    rParenToken?: SlimeRParenToken
   ): SlimeFunctionDeclaration {
     return this.commonLocType({
       type: SlimeAstType.FunctionDeclaration,
@@ -1265,7 +1342,6 @@ class SlimeAstCreate {
       asteriskToken: asteriskToken,
       lParenToken: lParenToken,
       rParenToken: rParenToken,
-      commaTokens: commaTokens,
       loc: loc
     })
   }
@@ -1293,7 +1369,7 @@ class SlimeAstCreate {
 
   createNullLiteralToken(): SlimeNullLiteral {
     return this.commonLocType({
-      type: SlimeAstType.NullLiteral,
+      type: SlimeAstType.Literal,
       value: null
     })
   }
@@ -1301,7 +1377,7 @@ class SlimeAstCreate {
 
   createStringLiteral(value: string, loc?: SubhutiSourceLocation, raw?: string): SlimeStringLiteral {
     return this.commonLocType({
-      type: SlimeAstType.StringLiteral,
+      type: SlimeAstType.Literal,
       value: value.replace(/^['"]|['"]$/g, ''),
       raw: raw || value,  // 保存原始值（包含引号）
       loc: loc
@@ -1310,7 +1386,7 @@ class SlimeAstCreate {
 
   createNumericLiteral(value: number, raw?: string): SlimeNumericLiteral {
     return this.commonLocType({
-      type: SlimeAstType.NumericLiteral,
+      type: SlimeAstType.Literal,
       value: value,
       raw: raw || String(value)  // 保存原始值（保留格式如 0xFF）
     })
@@ -1318,7 +1394,7 @@ class SlimeAstCreate {
 
   createBooleanLiteral(value: boolean, loc?: SubhutiSourceLocation): SlimeBooleanLiteral {
     return this.commonLocType({
-      type: SlimeAstType.BooleanLiteral,
+      type: SlimeAstType.Literal,
       value: value,
       loc: loc
     })

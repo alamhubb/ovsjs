@@ -15,6 +15,10 @@ export const SlimeAstType = {
 
     // --- Literal ---
     Literal: "Literal",
+    NullLiteral: "NullLiteral",
+    StringLiteral: "StringLiteral",
+    NumericLiteral: "NumericLiteral",
+    BooleanLiteral: "BooleanLiteral",
 
     // --- Statements ---
     ExpressionStatement: "ExpressionStatement",
@@ -73,6 +77,7 @@ export const SlimeAstType = {
     ChainExpression: "ChainExpression",
     MetaProperty: "MetaProperty",
     Super: "Super",
+    ParenthesizedExpression: "ParenthesizedExpression",
 
     // --- Patterns ---
     ObjectPattern: "ObjectPattern",

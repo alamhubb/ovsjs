@@ -363,17 +363,17 @@ class SlimeTokenFactory {
             "!=": SlimeBinaryOperatorTokenTypes.NotEqual,
             "===": SlimeBinaryOperatorTokenTypes.StrictEqual,
             "!==": SlimeBinaryOperatorTokenTypes.StrictNotEqual,
-            "<": SlimeBinaryOperatorTokenTypes.LessThan,
+            "<": SlimeBinaryOperatorTokenTypes.Less,
             "<=": SlimeBinaryOperatorTokenTypes.LessEqual,
-            ">": SlimeBinaryOperatorTokenTypes.GreaterThan,
+            ">": SlimeBinaryOperatorTokenTypes.Greater,
             ">=": SlimeBinaryOperatorTokenTypes.GreaterEqual,
             "<<": SlimeBinaryOperatorTokenTypes.LeftShift,
             ">>": SlimeBinaryOperatorTokenTypes.RightShift,
             ">>>": SlimeBinaryOperatorTokenTypes.UnsignedRightShift,
             "+": SlimeBinaryOperatorTokenTypes.Plus,
             "-": SlimeBinaryOperatorTokenTypes.Minus,
-            "*": SlimeBinaryOperatorTokenTypes.Multiply,
-            "/": SlimeBinaryOperatorTokenTypes.Divide,
+            "*": SlimeBinaryOperatorTokenTypes.Asterisk,
+            "/": SlimeBinaryOperatorTokenTypes.Slash,
             "%": SlimeBinaryOperatorTokenTypes.Modulo,
             "**": SlimeBinaryOperatorTokenTypes.Exponentiation,
             "|": SlimeBinaryOperatorTokenTypes.BitwiseOr,
@@ -393,7 +393,7 @@ class SlimeTokenFactory {
         const typeMap: Record<SlimeUnaryOperator, string> = {
             "-": SlimeUnaryOperatorTokenTypes.Minus,
             "+": SlimeUnaryOperatorTokenTypes.Plus,
-            "!": SlimeUnaryOperatorTokenTypes.Not,
+            "!": SlimeUnaryOperatorTokenTypes.LogicalNot,
             "~": SlimeUnaryOperatorTokenTypes.BitwiseNot,
             "typeof": SlimeUnaryOperatorTokenTypes.Typeof,
             "void": SlimeUnaryOperatorTokenTypes.Void,
@@ -408,8 +408,8 @@ class SlimeTokenFactory {
      */
     createLogicalOperatorToken(operator: SlimeLogicalOperator, loc?: SubhutiSourceLocation): SlimeLogicalOperatorToken {
         const typeMap: Record<SlimeLogicalOperator, string> = {
-            "||": SlimeLogicalOperatorTokenTypes.Or,
-            "&&": SlimeLogicalOperatorTokenTypes.And,
+            "||": SlimeLogicalOperatorTokenTypes.LogicalOr,
+            "&&": SlimeLogicalOperatorTokenTypes.LogicalAnd,
             "??": SlimeLogicalOperatorTokenTypes.NullishCoalescing,
         };
         return { type: typeMap[operator], value: operator, loc } as SlimeLogicalOperatorToken;
@@ -434,8 +434,8 @@ class SlimeTokenFactory {
             "|=": SlimeAssignmentOperatorTokenTypes.BitwiseOrAssign,
             "^=": SlimeAssignmentOperatorTokenTypes.BitwiseXorAssign,
             "&=": SlimeAssignmentOperatorTokenTypes.BitwiseAndAssign,
-            "||=": SlimeAssignmentOperatorTokenTypes.OrAssign,
-            "&&=": SlimeAssignmentOperatorTokenTypes.AndAssign,
+            "||=": SlimeAssignmentOperatorTokenTypes.LogicalOrAssign,
+            "&&=": SlimeAssignmentOperatorTokenTypes.LogicalAndAssign,
             "??=": SlimeAssignmentOperatorTokenTypes.NullishCoalescingAssign,
         };
         return { type: typeMap[operator], value: operator, loc } as SlimeAssignmentOperatorToken;

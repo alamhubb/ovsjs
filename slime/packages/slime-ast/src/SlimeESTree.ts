@@ -425,6 +425,58 @@ export interface SlimeUpdateOperatorToken extends SlimeTokenNode {
     value: SlimeUpdateOperator;
 }
 
+// ============================================
+// 元素/参数包装类型（用于精确关联逗号 Token）
+// ============================================
+
+/** 数组元素包装 - 用于 SlimeArrayExpression */
+export interface SlimeArrayElement {
+    element: SlimeExpression | SlimeSpreadElement | null;
+    commaToken?: SlimeCommaToken;
+}
+
+/** 对象属性包装 - 用于 SlimeObjectExpression */
+export interface SlimeObjectPropertyItem {
+    property: SlimeProperty | SlimeSpreadElement;
+    commaToken?: SlimeCommaToken;
+}
+
+/** 函数参数包装 - 用于 SlimeBaseFunction.params */
+export interface SlimeFunctionParam {
+    param: SlimePattern;
+    commaToken?: SlimeCommaToken;
+}
+
+/** 调用参数包装 - 用于 SlimeBaseCallExpression.arguments */
+export interface SlimeCallArgument {
+    argument: SlimeExpression | SlimeSpreadElement;
+    commaToken?: SlimeCommaToken;
+}
+
+/** 解构数组元素包装 - 用于 SlimeArrayPattern */
+export interface SlimeArrayPatternElement {
+    element: SlimePattern | null;
+    commaToken?: SlimeCommaToken;
+}
+
+/** 解构对象属性包装 - 用于 SlimeObjectPattern */
+export interface SlimeObjectPatternProperty {
+    property: SlimeAssignmentProperty | SlimeRestElement;
+    commaToken?: SlimeCommaToken;
+}
+
+/** Import specifier 包装 - 用于 SlimeImportDeclaration */
+export interface SlimeImportSpecifierItem {
+    specifier: SlimeImportSpecifier | SlimeImportDefaultSpecifier | SlimeImportNamespaceSpecifier;
+    commaToken?: SlimeCommaToken;
+}
+
+/** Export specifier 包装 - 用于 SlimeExportNamedDeclaration */
+export interface SlimeExportSpecifierItem {
+    specifier: SlimeExportSpecifier;
+    commaToken?: SlimeCommaToken;
+}
+
 export interface SlimeNodeMap {
     SlimeAssignmentProperty: SlimeAssignmentProperty;
     SlimeCatchClause: SlimeCatchClause;
@@ -457,9 +509,16 @@ export interface SlimeComment extends SlimeBaseNodeWithoutComments, SlimeExtends
     value: string;
 }
 
+/** Program source type */
+export const SlimeProgramSourceType = {
+    Script: "script",
+    Module: "module"
+} as const;
+export type SlimeProgramSourceType = typeof SlimeProgramSourceType[keyof typeof SlimeProgramSourceType];
+
 export interface SlimeProgram extends SlimeBaseNode, Omit<SlimeExtends<ESTree.Program>, 'body'> {
     type: typeof SlimeAstType.Program;
-    sourceType: "script" | "module";
+    sourceType: SlimeProgramSourceType;
     body: Array<SlimeDirective | SlimeStatement | SlimeModuleDeclaration>;
     comments?: SlimeComment[] | undefined;
 }
@@ -471,7 +530,8 @@ export interface SlimeDirective extends SlimeBaseNode, Omit<SlimeExtends<ESTree.
 }
 
 export interface SlimeBaseFunction extends SlimeBaseNode, Omit<SlimeExtends<ESTree.BaseFunction>, 'params' | 'body'>, SlimeFunctionTokens {
-    params: SlimePattern[];
+    /** 函数参数列表（包装类型，每个参数可关联其后的逗号） */
+    params: SlimeFunctionParam[];
     generator?: boolean | undefined;
     async?: boolean | undefined;
     /** function 关键字 Token */
@@ -480,8 +540,6 @@ export interface SlimeBaseFunction extends SlimeBaseNode, Omit<SlimeExtends<ESTr
     asyncToken?: SlimeAsyncToken;
     /** generator * Token */
     asteriskToken?: SlimeAsteriskToken;
-    /** 参数之间的逗号 */
-    commaTokens?: (SlimeCommaToken | undefined)[];
     // The body is either BlockStatement or Expression because arrow functions
     // can have a body that's either. FunctionDeclarations and
     // FunctionExpressions have only BlockStatement bodies.
@@ -525,8 +583,9 @@ export interface SlimeBlockStatement extends SlimeBaseStatement, Omit<SlimeExten
     innerComments?: SlimeComment[] | undefined;
 }
 
-export interface SlimeStaticBlock extends SlimeExtends<ESTree.StaticBlock, 'innerComments'>, Omit<SlimeBlockStatement, 'type' | 'body'> {
+export interface SlimeStaticBlock extends Omit<SlimeExtends<ESTree.StaticBlock, 'innerComments'>, 'body'>, Omit<SlimeBlockStatement, 'type' | 'body'> {
     type: typeof SlimeAstType.StaticBlock;
+    body: SlimeStatement[];
 }
 
 export interface SlimeExpressionStatement extends SlimeBaseStatement, Omit<SlimeExtends<ESTree.ExpressionStatement>, 'expression'>, SlimeSemicolonTokens {
@@ -674,7 +733,7 @@ export interface SlimeFunctionDeclaration extends SlimeMaybeNamedFunctionDeclara
     id: SlimeIdentifier;
 }
 
-export interface SlimeVariableDeclaration extends SlimeBaseDeclaration, Omit<SlimeExtends<ESTree.VariableDeclaration>, 'kind'>, SlimeSemicolonTokens {
+export interface SlimeVariableDeclaration extends SlimeBaseDeclaration, Omit<SlimeExtends<ESTree.VariableDeclaration>, 'kind' | 'declarations'>, SlimeSemicolonTokens {
     type: typeof SlimeAstType.VariableDeclaration;
     declarations: SlimeVariableDeclarator[];
     /** 变量声明关键字 Token (var/let/const) */
@@ -735,16 +794,14 @@ export interface SlimeThisExpression extends SlimeBaseExpression, SlimeExtends<E
 
 export interface SlimeArrayExpression extends SlimeBaseExpression, Omit<SlimeExtends<ESTree.ArrayExpression>, 'elements'>, SlimeBracketTokens {
     type: typeof SlimeAstType.ArrayExpression;
-    elements: Array<SlimeExpression | SlimeSpreadElement | null>;
-    /** commaTokens[i] 对应 elements[i] 后面的逗号 */
-    commaTokens?: (SlimeCommaToken | undefined)[];
+    /** 数组元素列表（包装类型，每个元素可关联其后的逗号） */
+    elements: Array<SlimeArrayElement>;
 }
 
 export interface SlimeObjectExpression extends SlimeBaseExpression, Omit<SlimeExtends<ESTree.ObjectExpression>, 'properties'>, SlimeBraceTokens {
     type: typeof SlimeAstType.ObjectExpression;
-    properties: Array<SlimeProperty | SlimeSpreadElement>;
-    /** commaTokens[i] 对应 properties[i] 后面的逗号 */
-    commaTokens?: (SlimeCommaToken | undefined)[];
+    /** 对象属性列表（包装类型，每个属性可关联其后的逗号） */
+    properties: Array<SlimeObjectPropertyItem>;
 }
 
 export interface SlimePrivateIdentifier extends SlimeBaseNode, SlimeExtends<ESTree.PrivateIdentifier> {
@@ -805,7 +862,7 @@ export interface SlimeBinaryExpression extends SlimeBaseExpression, Omit<SlimeEx
     right: SlimeExpression;
 }
 
-export interface SlimeAssignmentExpression extends SlimeBaseExpression, Omit<SlimeExtends<ESTree.AssignmentExpression>, 'operator'> {
+export interface SlimeAssignmentExpression extends SlimeBaseExpression, Omit<SlimeExtends<ESTree.AssignmentExpression>, 'operator' | 'left'> {
     type: typeof SlimeAstType.AssignmentExpression;
     /** 运算符 Token */
     operator: SlimeAssignmentOperatorToken;
@@ -840,9 +897,8 @@ export interface SlimeConditionalExpression extends SlimeBaseExpression, Omit<Sl
 
 export interface SlimeBaseCallExpression extends SlimeBaseExpression, Omit<SlimeExtends<ESTree.BaseCallExpression>, 'callee' | 'arguments'>, SlimeParenTokens {
     callee: SlimeExpression | SlimeSuper;
-    arguments: Array<SlimeExpression | SlimeSpreadElement>;
-    /** 参数之间的逗号 */
-    commaTokens?: (SlimeCommaToken | undefined)[];
+    /** 调用参数列表（包装类型，每个参数可关联其后的逗号） */
+    arguments: Array<SlimeCallArgument>;
 }
 
 export type SlimeCallExpression = SlimeSimpleCallExpression | SlimeNewExpression;
@@ -927,6 +983,26 @@ export interface SlimeBigIntLiteral extends SlimeBaseNode, SlimeBaseExpression, 
     value?: bigint | null | undefined;
     bigint: string;
     raw?: string | undefined;
+}
+
+/** String literal - 字符串字面量 */
+export interface SlimeStringLiteral extends SlimeSimpleLiteral {
+    value: string;
+}
+
+/** Numeric literal - 数字字面量 */
+export interface SlimeNumericLiteral extends SlimeSimpleLiteral {
+    value: number;
+}
+
+/** Boolean literal - 布尔字面量 */
+export interface SlimeBooleanLiteral extends SlimeSimpleLiteral {
+    value: boolean;
+}
+
+/** Null literal - 空值字面量 */
+export interface SlimeNullLiteral extends SlimeSimpleLiteral {
+    value: null;
 }
 
 export type SlimeUnaryOperator = "-" | "+" | "!" | "~" | "typeof" | "void" | "delete";
@@ -1037,7 +1113,7 @@ export interface SlimeTemplateElement extends SlimeBaseNode, SlimeExtends<ESTree
     };
 }
 
-export interface SlimeAssignmentProperty extends SlimeProperty, Omit<SlimeExtends<ESTree.AssignmentProperty>, 'key'> {
+export interface SlimeAssignmentProperty extends SlimeProperty, Omit<SlimeExtends<ESTree.AssignmentProperty>, 'key' | 'value'> {
     value: SlimePattern;
     kind: "init";
     method: boolean; // false
@@ -1045,16 +1121,14 @@ export interface SlimeAssignmentProperty extends SlimeProperty, Omit<SlimeExtend
 
 export interface SlimeObjectPattern extends SlimeBasePattern, Omit<SlimeExtends<ESTree.ObjectPattern>, 'properties'>, SlimeBraceTokens {
     type: typeof SlimeAstType.ObjectPattern;
-    properties: Array<SlimeAssignmentProperty | SlimeRestElement>;
-    /** commaTokens[i] 对应 properties[i] 后面的逗号 */
-    commaTokens?: (SlimeCommaToken | undefined)[];
+    /** 解构属性列表（包装类型，每个属性可关联其后的逗号） */
+    properties: Array<SlimeObjectPatternProperty>;
 }
 
 export interface SlimeArrayPattern extends SlimeBasePattern, Omit<SlimeExtends<ESTree.ArrayPattern>, 'elements'>, SlimeBracketTokens {
     type: typeof SlimeAstType.ArrayPattern;
-    elements: Array<SlimePattern | null>;
-    /** commaTokens[i] 对应 elements[i] 后面的逗号 */
-    commaTokens?: (SlimeCommaToken | undefined)[];
+    /** 解构元素列表（包装类型，每个元素可关联其后的逗号） */
+    elements: Array<SlimeArrayPatternElement>;
 }
 
 export interface SlimeRestElement extends SlimeBasePattern, Omit<SlimeExtends<ESTree.RestElement>, 'argument'> {
@@ -1147,14 +1221,13 @@ export interface SlimeBaseModuleSpecifier extends SlimeBaseNode, SlimeExtends<ES
 
 export interface SlimeImportDeclaration extends SlimeBaseModuleDeclaration, Omit<SlimeExtends<ESTree.ImportDeclaration>, 'specifiers' | 'source'>, SlimeBraceTokens, SlimeSemicolonTokens {
     type: typeof SlimeAstType.ImportDeclaration;
-    specifiers: Array<SlimeImportSpecifier | SlimeImportDefaultSpecifier | SlimeImportNamespaceSpecifier>;
+    /** import specifiers 列表（包装类型，每个 specifier 可关联其后的逗号） */
+    specifiers: Array<SlimeImportSpecifierItem>;
     source: SlimeLiteral;
     /** import 关键字 Token */
     importToken?: SlimeImportToken;
     /** from 关键字 Token */
     fromToken?: SlimeFromToken;
-    /** specifiers 之间的逗号 */
-    commaTokens?: (SlimeCommaToken | undefined)[];
 }
 
 export interface SlimeImportSpecifier extends SlimeBaseModuleSpecifier, SlimeExtends<ESTree.ImportSpecifier, 'local'> {
@@ -1183,17 +1256,16 @@ export interface SlimeImportNamespaceSpecifier extends SlimeBaseModuleSpecifier,
     asToken?: SlimeAsToken;
 }
 
-export interface SlimeExportNamedDeclaration extends SlimeBaseModuleDeclaration, Omit<SlimeExtends<ESTree.ExportNamedDeclaration>, 'declaration'>, SlimeBraceTokens, SlimeSemicolonTokens {
+export interface SlimeExportNamedDeclaration extends SlimeBaseModuleDeclaration, Omit<SlimeExtends<ESTree.ExportNamedDeclaration>, 'declaration' | 'specifiers'>, SlimeBraceTokens, SlimeSemicolonTokens {
     type: typeof SlimeAstType.ExportNamedDeclaration;
     declaration?: SlimeDeclaration | null | undefined;
-    specifiers: SlimeExportSpecifier[];
+    /** export specifiers 列表（包装类型，每个 specifier 可关联其后的逗号） */
+    specifiers: SlimeExportSpecifierItem[];
     source?: SlimeLiteral | null | undefined;
     /** export 关键字 Token */
     exportToken?: SlimeExportToken;
     /** from 关键字 Token */
     fromToken?: SlimeFromToken;
-    /** specifiers 之间的逗号 */
-    commaTokens?: (SlimeCommaToken | undefined)[];
 }
 
 export interface SlimeExportSpecifier extends Omit<SlimeExtends<ESTree.ExportSpecifier>, 'local' | 'exported'>, Omit<SlimeBaseModuleSpecifier, 'local'> {
