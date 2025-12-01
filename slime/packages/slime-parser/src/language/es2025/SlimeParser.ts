@@ -13,7 +13,7 @@
 import SubhutiParser, {Subhuti, SubhutiRule} from "subhuti/src/SubhutiParser.ts"
 import type SubhutiCst from "subhuti/src/struct/SubhutiCst.ts"
 import type SubhutiMatchToken from "subhuti/src/struct/SubhutiMatchToken.ts"
-import SubhutiLexer, {matchRegExpLiteral} from "subhuti/src/SubhutiLexer.ts"
+import SubhutiLexer, {matchRegExpLiteral, LexicalGoal} from "subhuti/src/SubhutiLexer.ts"
 import SlimeTokenConsumer from "./SlimeTokenConsumer.ts"
 import {
     SlimeContextualKeywordTokenTypes,
@@ -194,19 +194,18 @@ function isValidIdentifierWithEscapes(name: string): boolean {
 
 @Subhuti
 export default class SlimeParser extends SubhutiParser<SlimeTokenConsumer> {
-    /** 原始源码（用于 rescan 正则表达式） */
-    private _sourceCode: string = ''
-
     /**
      * 构造函数
-     * @param sourceCode 原始源码，内部自动进行词法分析
+     * @param sourceCode 原始源码，使用按需词法分析模式
      */
     constructor(sourceCode: string = '') {
-        // 内部使用 SubhutiLexer 解析 tokens
-        const lexer = new SubhutiLexer(slimeTokens)
-        const tokens = lexer.tokenize(sourceCode)
-        super(tokens, SlimeTokenConsumer)
-        this._sourceCode = sourceCode
+        // 使用按需词法分析模式（On-Demand Lexing）
+        // Parser 在需要 token 时告诉 Lexer 期望什么（InputElementDiv 或 InputElementRegExp）
+        super([], {
+            tokenConsumer: SlimeTokenConsumer,
+            sourceCode: sourceCode,
+            tokenDefinitions: slimeTokens
+        })
     }
 
     // ============================================
@@ -587,6 +586,10 @@ export default class SlimeParser extends SubhutiParser<SlimeTokenConsumer> {
      */
     @SubhutiRule
     PrimaryExpression(params: ExpressionParams = {}): SubhutiCst | undefined {
+        // 新架构：在 PrimaryExpression 中，使用 InputElementRegExp 模式前瞻
+        // 这样词法分析器遇到 `/` 时会尝试匹配正则表达式而不是除法
+        // 通过 LA(1, [InputElementRegExp]) 实现
+
         return this.Or([
             // === 1. 硬关键字表达式（不会被标识符遮蔽）===
             {alt: () => this.tokenConsumer.This()},
@@ -612,21 +615,18 @@ export default class SlimeParser extends SubhutiParser<SlimeTokenConsumer> {
             // === 7. 符号开头（各有独特首 token，不会互相遮蔽）===
             {alt: () => this.ArrayLiteral(params)},
             {alt: () => this.ObjectLiteral(params)},
-            // 正则表达式分支：如果词法阶段误判为 Slash 或 DivideAssign，尝试 rescan
-            // RegularExpressionLiteral 是词法规则（A.1 Lexical Grammar），直接消费 token
-            {alt: () => {
-                const la1 = this.LA(1)
-                if (la1?.tokenName === SlimeTokenType.Slash || la1?.tokenName === SlimeTokenType.DivideAssign) {
-                    // 词法阶段误判为除法，尝试重新扫描为正则表达式
-                    if (!this.rescanSlashAsRegExp()) {
-                        return this.setParseFail()
-                    }
-                }
-                return this.tokenConsumer.RegularExpressionLiteral()
-            }},
+            // RegularExpressionLiteral - 使用 InputElementRegExp 模式消费
+            {alt: () => this.consumeRegularExpressionLiteral()},
             {alt: () => this.TemplateLiteral({...params, Tagged: false})},
             {alt: () => this.CoverParenthesizedExpressionAndArrowParameterList(params)}
         ])
+    }
+
+    /**
+     * 消费正则表达式字面量（使用 InputElementRegExp 模式）
+     */
+    private consumeRegularExpressionLiteral(): SubhutiCst | undefined {
+        return this.consume(SlimeTokenType.RegularExpressionLiteral, LexicalGoal.InputElementRegExp)
     }
 
     /**
@@ -1118,6 +1118,8 @@ export default class SlimeParser extends SubhutiParser<SlimeTokenConsumer> {
                 }
             }
         ])
+
+        // 新架构：默认词法目标就是 InputElementDiv，不需要显式设置
 
         // 后缀操作符 (0个或多个)
         this.Many(() => this.Or([

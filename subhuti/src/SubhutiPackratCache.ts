@@ -24,12 +24,14 @@ import { LRUCache } from "lru-cache";
  * - cst: CST 节点（成功时有值）
  * - parseSuccess: 解析是否成功
  * - recordNode: 解析记录节点（容错模式下使用）
+ * - parsedTokens: 消费的 token 列表（新架构使用）
  */
 export interface SubhutiPackratCacheResult {
     endTokenIndex: number                 // 解析结束位置
     cst: SubhutiCst                       // CST 节点
     parseSuccess: boolean                 // 解析是否成功
     recordNode?: ParseRecordNode | null   // 解析记录节点（容错模式）
+    parsedTokens?: any[]                  // 消费的 token 列表（新架构使用）
 }
 
 /**

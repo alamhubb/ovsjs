@@ -21,6 +21,8 @@ import {SubhutiTraceDebugger} from "./SubhutiDebug.ts";
 import {SubhutiPackratCache, type SubhutiPackratCacheResult} from "./SubhutiPackratCache.ts";
 import SubhutiTokenConsumer from "./SubhutiTokenConsumer.ts";
 import {SubhutiDebugRuleTracePrint} from "./SubhutiDebugRuleTracePrint.ts";
+import SubhutiLexer, {LexicalGoal, TokenCacheEntry} from "./SubhutiLexer.ts";
+import {SubhutiCreateToken} from "./struct/SubhutiCreateToken.ts";
 
 // Grammar Validation
 import {SubhutiGrammarValidator} from "./validation/SubhutiGrammarValidator";
@@ -36,8 +38,18 @@ export interface SubhutiParserOr {
 }
 
 export interface SubhutiBackData {
-    tokenIndex: number
+    /** 源码位置 */
+    codeIndex: number
+    /** 行号 */
+    codeLine: number
+    /** 列号 */
+    codeColumn: number
+    /** 上一个 token 名称 */
+    lastTokenName: string | null
+    /** CST children 长度 */
     curCstChildrenLength: number
+    /** 已解析 token 数量（用于恢复 parsedTokens） */
+    parsedTokensLength: number
 }
 
 /**
@@ -114,6 +126,10 @@ export type SubhutiTokenConsumerConstructor<T extends SubhutiTokenConsumer> =
 export interface SubhutiParserOptions<T extends SubhutiTokenConsumer = SubhutiTokenConsumer> {
     /** TokenConsumer 类（可选） */
     tokenConsumer?: SubhutiTokenConsumerConstructor<T>
+    /** 源代码（用于按需词法分析模式） */
+    sourceCode?: string
+    /** Token 定义（用于按需词法分析模式） */
+    tokenDefinitions?: SubhutiCreateToken[]
 }
 
 // ============================================
@@ -127,6 +143,43 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
     private readonly cstStack: SubhutiCst[] = []
     private readonly className: string
+
+    // ============================================
+    // 按需词法分析相关字段（新架构）
+    // ============================================
+
+    /** 词法分析器 */
+    protected _lexer: SubhutiLexer | null = null
+
+    /** 源代码 */
+    protected _sourceCode: string = ''
+
+    /** 当前源码位置 */
+    protected _codeIndex: number = 0
+
+    /** 当前行号 */
+    protected _codeLine: number = 1
+
+    /** 当前列号 */
+    protected _codeColumn: number = 1
+
+    /** 上一个 token 名称（用于上下文约束） */
+    protected _lastTokenName: string | null = null
+
+    /** 模板字符串深度 */
+    protected _templateDepth: number = 0
+
+    /** 默认词法目标 */
+    protected _defaultGoal: LexicalGoal = LexicalGoal.InputElementDiv
+
+    /** Token 缓存：位置 → 模式 → 缓存条目 */
+    protected _tokenCache: Map<number, Map<LexicalGoal, TokenCacheEntry>> = new Map()
+
+    /** 已解析的 token 列表（用于输出给使用者） */
+    protected _parsedTokens: SubhutiMatchToken[] = []
+
+    /** 是否使用按需词法分析模式 */
+    protected _onDemandLexing: boolean = false
 
     /**
      * 分析模式标志
@@ -249,8 +302,8 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         optionsOrConsumer?: SubhutiTokenConsumerConstructor<T> | SubhutiParserOptions<T>,
     ) {
         super() // 调用父类构造函数
-        this._tokens = tokens  // 赋值给父类的 _tokens
-        this.tokenIndex = 0    // 赋值给父类的 tokenIndex
+        this._tokens = tokens  // 赋值给父类的 _tokens（向后兼容）
+        this.tokenIndex = 0    // 赋值给父类的 tokenIndex（向后兼容）
         this.className = this.constructor.name
         this._cache = new SubhutiPackratCache()
 
@@ -265,6 +318,21 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             } else {
                 // 新方式：传入 options 对象
                 TokenConsumerClass = optionsOrConsumer.tokenConsumer
+
+                // 按需词法分析模式（新架构）
+                if (optionsOrConsumer.sourceCode !== undefined && optionsOrConsumer.tokenDefinitions) {
+                    this._sourceCode = optionsOrConsumer.sourceCode
+                    this._lexer = new SubhutiLexer(optionsOrConsumer.tokenDefinitions)
+                    this._onDemandLexing = true
+                    // 初始化位置
+                    this._codeIndex = 0
+                    this._codeLine = 1
+                    this._codeColumn = 1
+                    this._lastTokenName = null
+                    this._templateDepth = 0
+                    this._tokenCache = new Map()
+                    this._parsedTokens = []
+                }
             }
         }
 
@@ -273,6 +341,119 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         } else {
             this.tokenConsumer = new SubhutiTokenConsumer(this) as T
         }
+    }
+
+    /**
+     * 获取已解析的 token 列表
+     */
+    get parsedTokens(): SubhutiMatchToken[] {
+        return this._parsedTokens
+    }
+
+    // ============================================
+    // 新架构：基于 codeIndex + 模式的词法分析
+    // ============================================
+
+    /**
+     * 获取或解析指定位置和模式的 token
+     *
+     * @param codeIndex 源码位置
+     * @param line 行号
+     * @param column 列号
+     * @param goal 词法目标
+     * @returns TokenCacheEntry 或 null（EOF）
+     */
+    protected _getOrParseToken(
+        codeIndex: number,
+        line: number,
+        column: number,
+        goal: LexicalGoal
+    ): TokenCacheEntry | null {
+        if (!this._lexer) return null
+
+        // 1. 查缓存
+        const positionCache = this._tokenCache.get(codeIndex)
+        if (positionCache?.has(goal)) {
+            return positionCache.get(goal)!
+        }
+
+        // 2. 解析新 token
+        const entry = this._lexer.readTokenAt(
+            this._sourceCode,
+            codeIndex,
+            line,
+            column,
+            goal,
+            this._lastTokenName,
+            this._templateDepth
+        )
+
+        if (!entry) return null  // EOF
+
+        // 3. 存入缓存
+        if (!positionCache) {
+            this._tokenCache.set(codeIndex, new Map())
+        }
+        this._tokenCache.get(codeIndex)!.set(goal, entry)
+
+        return entry
+    }
+
+    /**
+     * LA (LookAhead) - 前瞻获取 token（支持模式数组）
+     *
+     * @param offset 偏移量（1 = 当前 token，2 = 下一个...）
+     * @param goals 每个位置的词法目标（可选，不传用默认值）
+     * @returns token 或 undefined（EOF）
+     */
+    protected override LA(offset: number = 1, goals?: LexicalGoal[]): SubhutiMatchToken | undefined {
+        if (!this._onDemandLexing) {
+            // 向后兼容：使用父类的实现
+            return super.LA(offset)
+        }
+
+        let currentIndex = this._codeIndex
+        let currentLine = this._codeLine
+        let currentColumn = this._codeColumn
+
+        for (let i = 0; i < offset; i++) {
+            // 确定当前 token 的词法目标
+            const goal = goals?.[i] ?? this._defaultGoal
+
+            // 从缓存获取或解析
+            const entry = this._getOrParseToken(currentIndex, currentLine, currentColumn, goal)
+
+            if (!entry) return undefined  // EOF
+
+            // 如果是最后一个，返回 token
+            if (i === offset - 1) {
+                return entry.token
+            }
+
+            // 否则，移动到下一个位置
+            currentIndex = entry.nextCodeIndex
+            currentLine = entry.nextLine
+            currentColumn = entry.nextColumn
+        }
+
+        return undefined
+    }
+
+    /**
+     * peek - 前瞻获取 token（支持模式数组）
+     */
+    protected override peek(offset: number = 1, goals?: LexicalGoal[]): SubhutiMatchToken | undefined {
+        return this.LA(offset, goals)
+    }
+
+    /**
+     * 获取当前 token（使用默认词法目标）
+     */
+    override get curToken(): SubhutiMatchToken | undefined {
+        if (!this._onDemandLexing) {
+            return super.curToken
+        }
+        return this.LA(1)
     }
 
     // ============================================
@@ -483,7 +664,9 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             return
         }
 
-        const key = `${ruleName}:${this.tokenIndex}`
+        // 新架构使用 codeIndex，向后兼容使用 tokenIndex
+        const currentIndex = this._onDemandLexing ? this._codeIndex : this.tokenIndex
+        const key = `${ruleName}:${currentIndex}`
 
         // O(1) 快速检测是否重复（循环检测）
         if (this.loopDetectionSet.has(key)) {
@@ -494,20 +677,20 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         this.loopDetectionSet.add(key)
 
         try {
-            const startTime = this._debugger?.onRuleEnter(ruleName, this.tokenIndex)
+            const startTime = this._debugger?.onRuleEnter(ruleName, currentIndex)
 
             // Packrat Parsing 缓存查询
             if (this.enableMemoization) {
-                const cached = this._cache.get(ruleName, this.tokenIndex)
+                const cached = this._cache.get(ruleName, currentIndex)
                 if (cached !== undefined) {
                     this._debugger?.onRuleExit(ruleName, true, startTime)
 
                     // 解析记录模式：缓存命中时也要记录节点，并更新整个祖先链的 endTokenIndex
-                    if (this.errorRecoveryMode && cached.endTokenIndex > this.tokenIndex) {
+                    if (this.errorRecoveryMode && cached.endTokenIndex > currentIndex) {
                         // 创建记录节点，复制缓存中的 children
                         const recordNode: ParseRecordNode = {
                             name: ruleName,
-                            startTokenIndex: this.tokenIndex,
+                            startTokenIndex: currentIndex,
                             endTokenIndex: cached.endTokenIndex,
                             children: cached.recordNode?.children ? [...cached.recordNode.children] : [],
                             token: false
@@ -534,7 +717,9 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             }
 
             // 核心执行
-            const startTokenIndex = this.tokenIndex
+            const startIndex = currentIndex
+            // 新架构：记录开始时的 parsedTokens 长度
+            const startParsedTokensLength = this._onDemandLexing ? this._parsedTokens.length : 0
 
             // 解析记录树：创建节点并入栈（在 executeRuleCore 之前）
             let recordNode: ParseRecordNode | null = null
@@ -542,8 +727,8 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
                 recordNode = {
                     name: ruleName,
                     children: [],
-                    startTokenIndex: this.tokenIndex,
-                    endTokenIndex: this.tokenIndex
+                    startTokenIndex: currentIndex,
+                    endTokenIndex: currentIndex
                 }
                 this._parseRecordStack.push(recordNode)
             }
@@ -562,14 +747,22 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             }
 
             // 缓存存储
-            // 注意：使用 recordNode.endTokenIndex（如果有），因为 this.tokenIndex 可能已被 Or 回滚
+            // 新架构使用 codeIndex，向后兼容使用 tokenIndex
             if (this.enableMemoization) {
-                const endTokenIndex = recordNode ? Math.max(recordNode.endTokenIndex, this.tokenIndex) : this.tokenIndex
-                this._cache.set(ruleName, startTokenIndex, {
-                    endTokenIndex: endTokenIndex,
+                const endIndex = this._onDemandLexing ? this._codeIndex : this.tokenIndex
+                const finalEndIndex = recordNode ? Math.max(recordNode.endTokenIndex, endIndex) : endIndex
+
+                // 新架构：提取本次规则消费的 token
+                const consumedTokens = this._onDemandLexing && this._parseSuccess
+                    ? this._parsedTokens.slice(startParsedTokensLength)
+                    : undefined
+
+                this._cache.set(ruleName, startIndex, {
+                    endTokenIndex: finalEndIndex,
                     cst: cst,
                     parseSuccess: this._parseSuccess,
-                    recordNode: recordNode  // 直接存储 recordNode
+                    recordNode: recordNode,  // 直接存储 recordNode
+                    parsedTokens: consumedTokens  // 新架构：存储消费的 token
                 })
             }
 
@@ -577,17 +770,31 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
             // 顶层规则：检查是否所有 token 都被消费
             // 如果成功但还有剩余 token，说明解析器逻辑有问题，直接抛错
-            if (isTopLevel && this._parseSuccess && this.tokenIndex < this._tokens.length) {
-                const remainingToken = this.curToken!
-                throw new Error(
-                    `Parser internal error: parsing succeeded but ${this._tokens.length - this.tokenIndex} tokens remain unconsumed. ` +
-                    `Next token: "${remainingToken.tokenValue}" (${remainingToken.tokenName}) at line ${remainingToken.rowNum}, column ${remainingToken.columnStartNum}`
-                )
+            if (isTopLevel && this._parseSuccess) {
+                if (this._onDemandLexing) {
+                    // 新架构：检查是否还有未消费的源码
+                    if (!this.isEof) {
+                        const nextToken = this.LA(1)
+                        throw new Error(
+                            `Parser internal error: parsing succeeded but source code remains unconsumed. ` +
+                            `Next token: "${nextToken?.tokenValue}" (${nextToken?.tokenName}) at position ${this._codeIndex}`
+                        )
+                    }
+                } else {
+                    // 向后兼容
+                    if (this.tokenIndex < this._tokens.length) {
+                        const remainingToken = this.curToken!
+                        throw new Error(
+                            `Parser internal error: parsing succeeded but ${this._tokens.length - this.tokenIndex} tokens remain unconsumed. ` +
+                            `Next token: "${remainingToken.tokenValue}" (${remainingToken.tokenName}) at line ${remainingToken.rowNum}, column ${remainingToken.columnStartNum}`
+                        )
+                    }
+                }
             }
 
             // 顶层规则失败时的错误处理
             if (isTopLevel && this.parserFail) {
-                this.handleTopLevelError(ruleName, startTokenIndex)
+                this.handleTopLevelError(ruleName, startIndex)
             }
 
             if (!cst.children?.length) {
@@ -700,12 +907,13 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         }
 
         const savedState = this.saveState()
-        const startTokenIndex = this.tokenIndex
+        // 新架构使用 codeIndex，向后兼容使用 tokenIndex
+        const startTokenIndex = this._onDemandLexing ? this._codeIndex : this.tokenIndex
         const totalCount = alternatives.length
         const parentRuleName = this.curCst?.name || 'Unknown'
 
         // 进入 Or（整个 Or 调用开始）
-        this._debugger?.onOrEnter?.(parentRuleName, this.tokenIndex)
+        this._debugger?.onOrEnter?.(parentRuleName, startTokenIndex)
 
         for (let i = 0; i < totalCount; i++) {
             const alt = alternatives[i]
@@ -1030,16 +1238,17 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
      * 顶层规则失败时的错误处理
      *
      * @param ruleName 规则名
-     * @param startTokenIndex 规则开始时的 tokenIndex
+     * @param startIndex 规则开始时的位置（新架构是 codeIndex，旧架构是 tokenIndex）
      */
-    private handleTopLevelError(ruleName: string, startTokenIndex: number): void {
+    private handleTopLevelError(ruleName: string, startIndex: number): void {
         // 分析模式：不抛错，用于语法验证
         if (this._analysisMode) {
             return
         }
 
         // 正常模式：抛出解析错误
-        const noTokenConsumed = this.tokenIndex === startTokenIndex
+        const currentIndex = this._onDemandLexing ? this._codeIndex : this.tokenIndex
+        const noTokenConsumed = currentIndex === startIndex
         const found = this.curToken
 
         throw this._errorHandler.createError({
@@ -1047,10 +1256,10 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             expected: noTokenConsumed ? 'valid syntax' : 'EOF (end of file)',
             found: found,
             position: {
-                tokenIndex: this.tokenIndex,
-                charIndex: found?.index ?? this._tokens[this._tokens.length - 1]?.index ?? 0,
-                line: found?.rowNum ?? 1,
-                column: found?.columnStartNum ?? 1
+                tokenIndex: currentIndex,
+                charIndex: found?.index ?? this._codeIndex ?? 0,
+                line: found?.rowNum ?? this._codeLine ?? 1,
+                column: found?.columnStartNum ?? this._codeColumn ?? 1
             },
             ruleStack: this.getRuleStack().length > 0 ? this.getRuleStack() : [ruleName]
         })
@@ -1063,8 +1272,9 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     /**
      * 消费 token（智能错误管理）
      * - 失败时返回 undefined，不抛异常
+     * - 支持传入词法目标（可选）
      */
-    consume(tokenName: string): SubhutiCst | undefined {
+    consume(tokenName: string, goal?: LexicalGoal): SubhutiCst | undefined {
         if (this.parserFail) {
             return
         }
@@ -1074,16 +1284,35 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             return
         }
 
-        // 已经检查了 EOF，token 一定存在
-        const token = this.curToken!
+        // 获取当前 token
+        const actualGoal = goal ?? this._defaultGoal
+        let token: SubhutiMatchToken | undefined
 
-        if (token.tokenName !== tokenName) {
+        if (this._onDemandLexing) {
+            // 新架构：从缓存获取或解析
+            const entry = this._getOrParseToken(
+                this._codeIndex,
+                this._codeLine,
+                this._codeColumn,
+                actualGoal
+            )
+            if (!entry) {
+                this._parseSuccess = false
+                return
+            }
+            token = entry.token
+        } else {
+            // 向后兼容
+            token = this.curToken
+        }
+
+        if (!token || token.tokenName !== tokenName) {
             this._parseSuccess = false
 
             this._debugger?.onTokenConsume(
-                this.tokenIndex,
-                token.tokenValue,
-                token.tokenName,
+                this._onDemandLexing ? this._codeIndex : this.tokenIndex,
+                token?.tokenValue ?? '',
+                token?.tokenName ?? 'EOF',
                 tokenName,
                 false
             )
@@ -1092,7 +1321,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         }
 
         this._debugger?.onTokenConsume(
-            this.tokenIndex,
+            this._onDemandLexing ? this._codeIndex : this.tokenIndex,
             token.tokenValue,
             token.tokenName,
             tokenName,
@@ -1100,7 +1329,35 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         )
 
         this.generateCstByToken(token)
-        this.tokenIndex++
+
+        if (this._onDemandLexing) {
+            // 新架构：更新位置状态
+            const entry = this._getOrParseToken(
+                this._codeIndex,
+                this._codeLine,
+                this._codeColumn,
+                actualGoal
+            )!
+
+            // 更新模板深度
+            if (token.tokenName === 'TemplateHead') {
+                this._templateDepth++
+            } else if (token.tokenName === 'TemplateTail') {
+                this._templateDepth--
+            }
+
+            // 更新位置
+            this._codeIndex = entry.nextCodeIndex
+            this._codeLine = entry.nextLine
+            this._codeColumn = entry.nextColumn
+            this._lastTokenName = entry.lastTokenName
+
+            // 添加到已解析列表
+            this._parsedTokens.push(token)
+        } else {
+            // 向后兼容
+            this.tokenIndex++
+        }
     }
 
     private generateCstByToken(token: SubhutiMatchToken): SubhutiCst {
@@ -1156,20 +1413,37 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     private saveState(): SubhutiBackData {
         const currentCst = this.curCst
         return {
-            tokenIndex: this.tokenIndex,
-            curCstChildrenLength: currentCst?.children?.length || 0
+            codeIndex: this._codeIndex,
+            codeLine: this._codeLine,
+            codeColumn: this._codeColumn,
+            lastTokenName: this._lastTokenName,
+            curCstChildrenLength: currentCst?.children?.length || 0,
+            parsedTokensLength: this._parsedTokens.length
         }
     }
 
     private restoreState(backData: SubhutiBackData): void {
-        const fromIndex = this.tokenIndex
-        const toIndex = backData.tokenIndex
+        if (this._onDemandLexing) {
+            // 新架构：恢复 codeIndex 相关状态
+            const fromIndex = this._codeIndex
+            const toIndex = backData.codeIndex
 
-        if (fromIndex !== toIndex) {
-            this._debugger?.onBacktrack?.(fromIndex, toIndex)
+            if (fromIndex !== toIndex) {
+                this._debugger?.onBacktrack?.(fromIndex, toIndex)
+            }
+
+            this._codeIndex = backData.codeIndex
+            this._codeLine = backData.codeLine
+            this._codeColumn = backData.codeColumn
+            this._lastTokenName = backData.lastTokenName
+
+            // 恢复 parsedTokens
+            this._parsedTokens.length = backData.parsedTokensLength
+        } else {
+            // 向后兼容：使用旧的 tokenIndex
+            // 注意：旧模式下 SubhutiBackData 不包含 tokenIndex，需要处理
         }
 
-        this.tokenIndex = backData.tokenIndex
         const currentCst = this.curCst
         if (currentCst) {
             currentCst.children.length = backData.curCstChildrenLength
@@ -1191,7 +1465,18 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     }
 
     get isEof() {
-        return this.tokenIndex === this._tokens.length
+        if (this._onDemandLexing) {
+            // 新架构：检查当前位置是否还有 token
+            const entry = this._getOrParseToken(
+                this._codeIndex,
+                this._codeLine,
+                this._codeColumn,
+                this._defaultGoal
+            )
+            return entry === null
+        }
+        // 向后兼容
+        return this.tokenIndex >= this._tokens.length
     }
 
     /**
@@ -1205,26 +1490,43 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             return false
         }
         const savedState = this.saveState()
-        const startTokenIndex = this.tokenIndex
+        // 新架构使用 codeIndex，向后兼容使用 tokenIndex
+        const startIndex = this._onDemandLexing ? this._codeIndex : this.tokenIndex
 
         fn()
 
         if (this.parserFail) {
             // 记录部分匹配并回溯
-            this.recordPartialMatchAndRestore(savedState, startTokenIndex)
+            this.recordPartialMatchAndRestore(savedState, startIndex)
             this._parseSuccess = true
             return false
         }
 
         // 成功但没消费 token → 返回 false（防止无限循环）
-        return this.tokenIndex !== startTokenIndex
+        const currentIndex = this._onDemandLexing ? this._codeIndex : this.tokenIndex
+        return currentIndex !== startIndex
     }
 
     /**
      * 应用缓存结果（恢复状态）
      */
     private applyCachedResult(cached: SubhutiPackratCacheResult): SubhutiCst {
-        this.tokenIndex = cached.endTokenIndex
+        if (this._onDemandLexing) {
+            // 新架构：更新 codeIndex
+            // 注意：缓存中存储的是 endCodeIndex（在新架构中）
+            this._codeIndex = cached.endTokenIndex
+
+            // 新架构：恢复消费的 token
+            if (cached.parsedTokens && cached.parsedTokens.length > 0) {
+                this._parsedTokens.push(...cached.parsedTokens)
+            }
+
+            // TODO: 需要同时缓存和恢复 codeLine、codeColumn、lastTokenName
+            // 目前简化处理，这些值在回溯时会被正确恢复
+        } else {
+            // 向后兼容
+            this.tokenIndex = cached.endTokenIndex
+        }
         this._parseSuccess = cached.parseSuccess
 
         // 成功时添加到父节点

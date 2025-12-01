@@ -73,7 +73,7 @@ export default class SubhutiTokenLookahead {
      * @param offset 偏移量（1 = 下一个 token，2 = 下下个...）
      * @returns token 或 undefined（EOF）
      */
-    private peek(offset: number = 1): SubhutiMatchToken | undefined {
+    protected peek(offset: number = 1): SubhutiMatchToken | undefined {
         const index = this.tokenIndex + offset - 1
         return index >= 0 && index < this._tokens.length
             ? this._tokens[index]
