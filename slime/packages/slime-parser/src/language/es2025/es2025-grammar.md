@@ -2010,8 +2010,185 @@ ClassSetReservedPunctuator :: one of
 
 ---
 
-**提取完成时间：** 2025-11-04  
-**规范版本：** ECMAScript® 2025  
-**提取方式：** 手动提取，保持规则完整一致  
+## Annex B - Additional ECMAScript Features for Web Browsers
+
+> 本附录定义了 Web 浏览器所需的额外 ECMAScript 语法和语义。这些是规范性的但可选的（如果宿主不是 Web 浏览器）。
+
+### B.1.1 HTML-like Comments
+
+HTML 风格的注释语法扩展。**注意：在 Module 模式下不允许使用。**
+
+```
+InputElementHashbangOrRegExp ::
+    WhiteSpace
+    LineTerminator
+    Comment
+    CommonToken
+    HashbangComment
+    RegularExpressionLiteral
+    HTMLCloseComment
+
+Comment ::
+    MultiLineComment
+    SingleLineComment
+    SingleLineHTMLOpenComment
+    SingleLineHTMLCloseComment
+    SingleLineDelimitedComment
+
+MultiLineComment ::
+    /* FirstCommentLine_opt LineTerminator MultiLineCommentChars_opt */ HTMLCloseComment_opt
+
+FirstCommentLine ::
+    SingleLineDelimitedCommentChars
+
+SingleLineHTMLOpenComment ::
+    <!-- SingleLineCommentChars_opt
+
+SingleLineHTMLCloseComment ::
+    LineTerminatorSequence HTMLCloseComment
+
+SingleLineDelimitedComment ::
+    /* SingleLineDelimitedCommentChars_opt */
+
+HTMLCloseComment ::
+    WhiteSpaceSequence_opt SingleLineDelimitedCommentSequence_opt --> SingleLineCommentChars_opt
+
+SingleLineDelimitedCommentChars ::
+    SingleLineNotAsteriskChar SingleLineDelimitedCommentChars_opt
+    * SingleLinePostAsteriskCommentChars_opt
+
+SingleLineNotAsteriskChar ::
+    SourceCharacter but not one of * or LineTerminator
+
+SingleLinePostAsteriskCommentChars ::
+    SingleLineNotForwardSlashOrAsteriskChar SingleLineDelimitedCommentChars_opt
+    * SingleLinePostAsteriskCommentChars_opt
+
+SingleLineNotForwardSlashOrAsteriskChar ::
+    SourceCharacter but not one of / or * or LineTerminator
+
+WhiteSpaceSequence ::
+    WhiteSpace WhiteSpaceSequence_opt
+
+SingleLineDelimitedCommentSequence ::
+    SingleLineDelimitedComment WhiteSpaceSequence_opt SingleLineDelimitedCommentSequence_opt
+```
+
+### B.1.2 Regular Expressions Patterns
+
+正则表达式模式的扩展语法。这些扩展仅适用于非 Unicode 模式（`[~UnicodeMode]`）。
+
+```
+Term[UnicodeMode, UnicodeSetsMode, NamedCaptureGroups] ::
+    [+UnicodeMode] Assertion[+UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups]
+    [+UnicodeMode] Atom[+UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] Quantifier
+    [+UnicodeMode] Atom[+UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups]
+    [~UnicodeMode] QuantifiableAssertion[?NamedCaptureGroups] Quantifier
+    [~UnicodeMode] Assertion[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups]
+    [~UnicodeMode] ExtendedAtom[?NamedCaptureGroups] Quantifier
+    [~UnicodeMode] ExtendedAtom[?NamedCaptureGroups]
+
+Assertion[UnicodeMode, UnicodeSetsMode, NamedCaptureGroups] ::
+    ^
+    $
+    \b
+    \B
+    [+UnicodeMode] (?= Disjunction[+UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
+    [+UnicodeMode] (?! Disjunction[+UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
+    [~UnicodeMode] QuantifiableAssertion[?NamedCaptureGroups]
+    (?<= Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
+    (?<! Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
+
+QuantifiableAssertion[NamedCaptureGroups] ::
+    (?= Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
+    (?! Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
+
+ExtendedAtom[NamedCaptureGroups] ::
+    .
+    \ AtomEscape[~UnicodeMode, ?NamedCaptureGroups]
+    \ [lookahead = c]
+    CharacterClass[~UnicodeMode, ~UnicodeSetsMode]
+    ( GroupSpecifier[~UnicodeMode]_opt Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
+    (? RegularExpressionModifiers : Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
+    (? RegularExpressionModifiers - RegularExpressionModifiers : Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
+    InvalidBracedQuantifier
+    ExtendedPatternCharacter
+
+InvalidBracedQuantifier ::
+    { DecimalDigits[~Sep] }
+    { DecimalDigits[~Sep] ,}
+    { DecimalDigits[~Sep] , DecimalDigits[~Sep] }
+
+ExtendedPatternCharacter ::
+    SourceCharacter but not one of ^ $ \ . * + ? ( ) [ |
+
+AtomEscape[UnicodeMode, NamedCaptureGroups] ::
+    [+UnicodeMode] DecimalEscape
+    [~UnicodeMode] DecimalEscape but only if the CapturingGroupNumber of DecimalEscape is ≤ CountLeftCapturingParensWithin(the Pattern containing DecimalEscape)
+    CharacterClassEscape[?UnicodeMode]
+    CharacterEscape[?UnicodeMode, ?NamedCaptureGroups]
+    [+NamedCaptureGroups] k GroupName[?UnicodeMode]
+
+CharacterEscape[UnicodeMode, NamedCaptureGroups] ::
+    ControlEscape
+    c AsciiLetter
+    0 [lookahead ∉ DecimalDigit]
+    HexEscapeSequence
+    RegExpUnicodeEscapeSequence[?UnicodeMode]
+    [~UnicodeMode] LegacyOctalEscapeSequence
+    IdentityEscape[?UnicodeMode, ?NamedCaptureGroups]
+
+IdentityEscape[UnicodeMode, NamedCaptureGroups] ::
+    [+UnicodeMode] SyntaxCharacter
+    [+UnicodeMode] /
+    [~UnicodeMode] SourceCharacterIdentityEscape[?NamedCaptureGroups]
+
+SourceCharacterIdentityEscape[NamedCaptureGroups] ::
+    [~NamedCaptureGroups] SourceCharacter but not c
+    [+NamedCaptureGroups] SourceCharacter but not one of c or k
+
+ClassAtomNoDash[UnicodeMode, NamedCaptureGroups] ::
+    SourceCharacter but not one of \ or ] or -
+    \ ClassEscape[?UnicodeMode, ?NamedCaptureGroups]
+    \ [lookahead = c]
+
+ClassEscape[UnicodeMode, NamedCaptureGroups] ::
+    b
+    [+UnicodeMode] -
+    [~UnicodeMode] c ClassControlLetter
+    CharacterClassEscape[?UnicodeMode]
+    CharacterEscape[?UnicodeMode, ?NamedCaptureGroups]
+
+ClassControlLetter ::
+    DecimalDigit
+    _
+```
+
+### B.3.3 FunctionDeclarations in IfStatement Statement Clauses
+
+IfStatement 的扩展产生式。**仅适用于非严格模式代码。**
+
+```
+IfStatement[Yield, Await, Return] :
+    if ( Expression[+In, ?Yield, ?Await] ) FunctionDeclaration[?Yield, ?Await, ~Default] else Statement[?Yield, ?Await, ?Return]
+    if ( Expression[+In, ?Yield, ?Await] ) Statement[?Yield, ?Await, ?Return] else FunctionDeclaration[?Yield, ?Await, ~Default]
+    if ( Expression[+In, ?Yield, ?Await] ) FunctionDeclaration[?Yield, ?Await, ~Default] else FunctionDeclaration[?Yield, ?Await, ~Default]
+    if ( Expression[+In, ?Yield, ?Await] ) FunctionDeclaration[?Yield, ?Await, ~Default] [lookahead ≠ else]
+```
+
+### B.3.5 Initializers in ForIn Statement Heads
+
+ForInOfStatement 的扩展产生式。**仅适用于非严格模式代码。**
+
+```
+ForInOfStatement[Yield, Await, Return] :
+    for ( var BindingIdentifier[?Yield, ?Await] Initializer[~In, ?Yield, ?Await] in Expression[+In, ?Yield, ?Await] ) Statement[?Yield, ?Await, ?Return]
+```
+
+---
+
+**提取完成时间：** 2025-11-04
+**规范版本：** ECMAScript® 2025
+**提取方式：** 手动提取，保持规则完整一致
 **用途：** 用于 PEG Parser 开发参考
 
