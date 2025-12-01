@@ -5,7 +5,8 @@
 import * as fs from 'fs'
 import * as path from 'path'
 import SubhutiLexer from "subhuti/src/SubhutiLexer";
-import SlimeParser, {slimeTokens} from "slime-parser/src/language/es2025/SlimeParser";
+import {slimeTokens} from "slime-parser/src/language/es2025/SlimeTokens";
+import SlimeParser from "slime-parser/src/language/es2025/SlimeParser";
 
 // 跳过的目录（非标准 ECMAScript 语法）
 const skipDirs = [
@@ -83,7 +84,8 @@ function getAllJsFiles(dir: string, baseDir: string = dir): string[] {
 }
 
 // const casesDir = path.join(__dirname, 'tests/babel')
-const casesDir = path.join(__dirname, 'tests/es6rules')
+const casesDir = path.join(__dirname, 'tests/cases')
+// const casesDir = path.join(__dirname, 'tests/es6rules')
 const files = getAllJsFiles(casesDir).sort()
 
 // 支持从指定位置开始测试
