@@ -1328,7 +1328,9 @@ class SlimeAstCreate {
     asyncToken?: SlimeAsyncToken,
     asteriskToken?: SlimeAsteriskToken,
     lParenToken?: SlimeLParenToken,
-    rParenToken?: SlimeRParenToken
+    rParenToken?: SlimeRParenToken,
+    lBraceToken?: SlimeLBraceToken,
+    rBraceToken?: SlimeRBraceToken
   ): SlimeFunctionDeclaration {
     return this.commonLocType({
       type: SlimeAstType.FunctionDeclaration,
@@ -1342,6 +1344,8 @@ class SlimeAstCreate {
       asteriskToken: asteriskToken,
       lParenToken: lParenToken,
       rParenToken: rParenToken,
+      lBraceToken: lBraceToken,
+      rBraceToken: rBraceToken,
       loc: loc
     })
   }
