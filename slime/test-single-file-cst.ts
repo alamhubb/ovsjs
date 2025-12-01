@@ -132,7 +132,7 @@ function _getCSTStatistics(node: any): {
 }
 
 // 主程序
-const filePath = process.argv[2] || 'tests/cases/33-class-basic.js'
+const filePath = process.argv[2] || 'tests/babel/fixtures\\core\\uncategorised\\343\\input.js'
 // const filePath = process.argv[2] || 'tests/babel/fixtures\\core\\uncategorised\\324\\input.js'
 // const filePath = process.argv[2] || 'tests/babel/fixtures\\comments\\basic\\class-accessor-computed\\input.js'
 // const filePath = process.argv[2] || 'tests/es6rules/fix-duplicates.js'
@@ -199,7 +199,7 @@ try {
 
     // 语法分析和验证（SlimeParser 内部会自动 tokenize）
     const parser = new SlimeParser(code)
-    parser.debug()
+    // parser.debug()
 
     // 获取 parser 内部的 tokens（可能经过 rescan 修正）
     const inputTokens = (parser as any)._tokens as Array<{tokenValue: string}>
