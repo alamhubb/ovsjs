@@ -164,6 +164,12 @@ export default class SubhutiLexer {
         continue  // 不在文件开头，跳过这个 token
       }
 
+      // 上下文约束检查：onlyAtLineStart - 只能在行首匹配（如 HTMLCloseComment -->）
+      // 条件：当前行号 > 上一个非 skip token 的行号，说明在新行开始
+      if (token.contextConstraint?.onlyAtLineStart && rowNum <= this._lastRowNum) {
+        continue  // 不在行首，跳过这个 token
+      }
+
       // 上下文约束检查：onlyAfter - 只有前一个 token 在集合中才匹配
       if (token.contextConstraint?.onlyAfter) {
         if (!lastTokenName || !token.contextConstraint.onlyAfter.has(lastTokenName)) {
@@ -415,6 +421,11 @@ export default class SubhutiLexer {
 
       // 上下文约束检查：onlyAtStart
       if (token.contextConstraint?.onlyAtStart && index !== 0) {
+        continue
+      }
+
+      // 上下文约束检查：onlyAtLineStart - 只能在行首匹配（如 HTMLCloseComment -->）
+      if (token.contextConstraint?.onlyAtLineStart && rowNum <= this._lastRowNum) {
         continue
       }
 

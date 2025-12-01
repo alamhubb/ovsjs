@@ -222,6 +222,8 @@ export const SlimeTokenType = {
     HashbangComment: 'HashbangComment',
     MultiLineComment: 'MultiLineComment',
     SingleLineComment: 'SingleLineComment',
+    // B.1.1 HTML-like Comments (Web 兼容性扩展)
+    SingleLineHTMLCloseComment: 'SingleLineHTMLCloseComment',  // --> at line start
 
     // ============================================
     // A.1.5 Tokens (CommonToken)

@@ -16,6 +16,7 @@ export interface SubhutiTokenContextConstraint {
     onlyAfter?: Set<string>    // 只有前一个 token 在此集合中才匹配
     notAfter?: Set<string>     // 前一个 token 不能在此集合中
     onlyAtStart?: boolean      // 只能在文件开头（index === 0）匹配（如 Hashbang）
+    onlyAtLineStart?: boolean  // 只能在行首匹配（前一个非 skip token 在上一行，如 HTMLCloseComment -->）
 }
 
 export class SubhutiCreateToken {

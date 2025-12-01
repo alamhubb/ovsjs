@@ -73,6 +73,20 @@ export const SlimeTokensObj = {
     MultiLineComment: createValueRegToken(SlimeTokenType.MultiLineComment, /\/\*[\s\S]*?\*\//, '', true),
     SingleLineComment: createValueRegToken(SlimeTokenType.SingleLineComment, /\/\/[^\n\r\u2028\u2029]*/, '', true),
 
+    // B.1.1 HTML-like Comments (Web 兼容性扩展)
+    // SingleLineHTMLCloseComment: --> 在行首时作为单行注释
+    // 规范: HTMLCloseComment :: WhiteSpaceSequence_opt SingleLineDelimitedCommentSequence_opt --> SingleLineCommentChars_opt
+    // 使用 onlyAtLineStart 约束：只有当前行号 > 上一个非 skip token 的行号时才匹配
+    // 这确保 `x = y-->10;` 中的 --> 被解析为 -- 和 >，而 ` --> nothing` 被解析为注释
+    SingleLineHTMLCloseComment: createValueRegToken(
+        SlimeTokenType.SingleLineHTMLCloseComment,
+        /-->[^\n\r\u2028\u2029]*/,  // --> 后跟到行尾的所有字符
+        '',
+        true,  // skip = true，作为注释跳过
+        undefined,  // lookahead
+        {onlyAtLineStart: true}  // 只在行首匹配
+    ),
+
     // ============================================
     // A.1.1 空白符和换行符
     // ============================================
