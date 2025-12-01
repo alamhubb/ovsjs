@@ -3,7 +3,7 @@
 // ============================================
 import {
     createEmptyValueRegToken, createKeywordToken,
-    createValueRegToken,
+    createValueRegToken, type SubhutiCreateToken,
 } from "subhuti/src/struct/SubhutiCreateToken.ts";
 import {SlimeTokenType} from "slime-token/src/SlimeTokenType.ts";
 
@@ -349,3 +349,5 @@ export const SlimeTokensObj = {
     PrivateIdentifier: createEmptyValueRegToken(SlimeTokenType.PrivateIdentifier, PRIVATE_IDENTIFIER_PATTERN),
     IdentifierName: createEmptyValueRegToken(SlimeTokenType.IdentifierName, IDENTIFIER_NAME_PATTERN),
 }
+
+export const slimeTokens: SubhutiCreateToken[] = Object.values(SlimeTokensObj)

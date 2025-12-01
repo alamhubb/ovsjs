@@ -20,8 +20,6 @@ import {
     SlimeReservedWordTokenTypes,
     SlimeTokenType
 } from "slime-token/src/SlimeTokenType.ts";
-import {SlimeTokensObj} from "./SlimeLexerTokens.ts";
-import type {SubhutiCreateToken} from "subhuti/src/struct/SubhutiCreateToken.ts";
 
 // ============================================
 // 保留字集合（用于 Identifier 验证）
@@ -50,8 +48,6 @@ import type {SubhutiCreateToken} from "subhuti/src/struct/SubhutiCreateToken.ts"
  * 实现：自动从所有 isKeyword=true 的 token 中提取（仅包含硬关键字）
  */
 
-
-export const slimeTokens: SubhutiCreateToken[] = Object.values(SlimeTokensObj)
 
 export const ReservedWords = new Set(
     slimeTokens
