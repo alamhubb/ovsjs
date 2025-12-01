@@ -43,7 +43,7 @@ const skipFilePatterns = [
 
 import * as fs from 'fs'
 import * as path from 'path'
-import Es2025Parser from './packages/slime-parser/src/language/es2025/Es2025Parser'
+import SlimeParser from 'slime-parser/src/language/es2025/SlimeParser'
 import SubhutiLexer from 'subhuti/src/SubhutiLexer'
 import { es2025Tokens } from 'slime-parser/src/language/es2025/SlimeTokensName'
 
@@ -113,7 +113,7 @@ function runTest(filePath: string): TestResult {
     try {
         const lexer = new SubhutiLexer(es2025Tokens)
         const tokens = lexer.tokenize(code)
-        const parser = new Es2025Parser(tokens)
+        const parser = new SlimeParser(tokens)
 
         // 使用统一的 Program 入口
         parser.Program(sourceType)

@@ -1,5 +1,5 @@
 import SubhutiLexer from "subhuti/src/SubhutiLexer.ts";
-import Es2025Parser, {slimeTokens} from "slime-parser/src/language/es2025/Es2025Parser.ts";
+import SlimeParser, {slimeTokens} from "slime-parser/src/language/es2025/SlimeParser.ts";
 import {SubhutiDebugUtils} from "subhuti/src/SubhutiDebug.ts";
 import slimeCstToAstUtil from "slime-parser/src/language/SlimeCstToAstUtil.ts";
 import SlimeAstPrintUtil from "./SlimeAstPrintUtil.ts";
@@ -12,7 +12,7 @@ const tokens = lexer.tokenize(code)
 
 console.log('Tokens:', tokens.map(t => t.tokenValue).join(' '))
 
-const parser = new Es2025Parser(tokens)
+const parser = new SlimeParser(tokens)
 // parser.debug()  // 暂时关闭 debug
 parser.enableErrorRecovery()
 

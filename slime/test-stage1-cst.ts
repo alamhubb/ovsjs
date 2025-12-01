@@ -5,7 +5,7 @@
 import * as fs from 'fs'
 import * as path from 'path'
 import SubhutiLexer from "subhuti/src/SubhutiLexer";
-import Es2025Parser, {slimeTokens} from "slime-parser/src/language/es2025/Es2025Parser";
+import SlimeParser, {slimeTokens} from "slime-parser/src/language/es2025/SlimeParser";
 
 // 跳过的目录（非标准 ECMAScript 语法）
 const skipDirs = [
@@ -171,7 +171,7 @@ for (let i = startIndex; i < files.length; i++) {
     console.log(`✅ 词法分析: ${tokens.length} tokens`)
 
     // 语法分析
-    const parser = new Es2025Parser(tokens)
+    const parser = new SlimeParser(tokens)
     const cst = parser.Program('module')
     console.log(`✅ 语法分析: CST生成成功`)
     console.log(`CST根节点children数: ${cst.children?.length || 0}`)

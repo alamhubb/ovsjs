@@ -6,7 +6,7 @@ import SubhutiLexer from 'subhuti/src/SubhutiLexer.ts'
 import * as fs from 'fs'
 import * as path from 'path'
 import {es2025Tokens} from "slime-parser/src/language/es2025/SlimeTokensName";
-import Es2025Parser from "slime-parser/src/language/es2025/Es2025Parser";
+import SlimeParser from "slime-parser/src/language/es2025/SlimeParser";
 
 const casesDir = path.join(__dirname, 'tests/cases')
 // const casesDir = path.join(__dirname, 'tests/cases')
@@ -220,7 +220,7 @@ for (let i = 0; i < files.length; i++) {
         console.log(`✅ 词法: ${tokens.length} tokens (有效token: ${inputTokens.length})`)
 
         // 语法分析
-        const parser = new Es2025Parser(tokens)
+        const parser = new SlimeParser(tokens)
         const cst = parser.Module()
         console.log(`✅ 语法: CST生成`)
 

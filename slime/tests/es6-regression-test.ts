@@ -1,7 +1,7 @@
 /**
  * Es2025Parser 回归测试 - 验证 Packrat Parsing 没有破坏 Es2025Parser
  */
-import Es2025Parser from '../packages/slime-parser/src/language/es2025/Es2025Parser.ts'
+import SlimeParser from 'slime-parser/src/language/es2025/SlimeParser.ts'
 import SubhutiLexer from 'subhuti/src/SubhutiLexer.ts'
 import { es2025Tokens } from 'slime-parser/src/language/es2025/SlimeTokensName.ts'
 
@@ -9,7 +9,7 @@ function test(name: string, code: string): boolean {
     try {
         const lexer = new SubhutiLexer(es2025Tokens)
         const tokens = lexer.tokenize(code)
-        const parser = new Es2025Parser(tokens)
+        const parser = new SlimeParser(tokens)
         const cst = parser.Program()
         
         if (!cst || !cst.children || cst.children.length === 0) {

@@ -5,7 +5,7 @@
 
 import SubhutiLexer from 'subhuti/src/SubhutiLexer.ts'
 import { es2025Tokens } from "slime-parser/src/language/es2025/SlimeTokensName"
-import Es2025Parser from "slime-parser/src/language/es2025/Es2025Parser"
+import SlimeParser from "slime-parser/src/language/es2025/SlimeParser"
 
 const code = `let a = 1`
 
@@ -27,7 +27,7 @@ tokens.forEach((t: any, i: number) => {
 console.log(`\n📋 语法分析（启用 SubhutiDebug）`)
 console.log('-'.repeat(80))
 
-const parser = new Es2025Parser(tokens).debug()
+const parser = new SlimeParser(tokens).debug()
 
 // Hook 到 onOrBranchExit，打印 Or 包裹节点的 childs
 const debug = (parser as any)._debugger

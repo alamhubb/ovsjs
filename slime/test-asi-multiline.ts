@@ -4,7 +4,7 @@
 
 import SubhutiLexer from 'subhuti/src/SubhutiLexer'
 import { es2025Tokens } from 'slime-parser/src/language/es2025/SlimeTokensName'
-import Es2025Parser from 'slime-parser/src/language/es2025/Es2025Parser'
+import SlimeParser from 'slime-parser/src/language/es2025/SlimeParser'
 
 // 测试代码：两个字符串字面量之间有包含换行的多行注释
 const code = `''/*
@@ -20,7 +20,7 @@ for (const t of tokens) {
 
 console.log('\nParsing...')
 try {
-    const parser = new Es2025Parser(tokens)
+    const parser = new SlimeParser(tokens)
     const cst = parser.Program('script')
     console.log('Success!')
     console.log('CST:', JSON.stringify(cst, null, 2))

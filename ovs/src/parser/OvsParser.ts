@@ -2,10 +2,10 @@ import OvsTokenConsumer from "./OvsConsumer.ts"
 import {Subhuti, SubhutiRule} from 'subhuti/src/SubhutiParser.ts'
 import OvsVueRenderFactory from "../factory/OvsVueRenderFactory.ts";
 import SubhutiCst from "subhuti/src/struct/SubhutiCst.ts";
-import Es2025Parser from "slime-parser/src/language/es2025/Es2025Parser.ts";
+import SlimeParser from "slime-parser/src/language/es2025/SlimeParser.ts";
 
 @Subhuti
-export default class OvsParser extends Es2025Parser<OvsTokenConsumer> {
+export default class OvsParser extends SlimeParser<OvsTokenConsumer> {
   @SubhutiRule
   OvsRenderFunction() {
     // this.Option(() => {

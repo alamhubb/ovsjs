@@ -15,7 +15,7 @@
 import SubhutiLexer from 'subhuti/src/SubhutiLexer.ts'
 import { SubhutiDebugUtils } from 'subhuti/src/SubhutiDebug.ts'
 import { es2025Tokens } from "slime-parser/src/language/es2025/SlimeTokensName"
-import Es2025Parser from "slime-parser/src/language/es2025/Es2025Parser"
+import SlimeParser from "slime-parser/src/language/es2025/SlimeParser"
 
 // ============================================
 // Es2025Parser 特定的测试层级配置
@@ -61,7 +61,7 @@ function testCode(code: string, entryRule: string = 'Script') {
         console.log('-'.repeat(80))
         console.log('注意：以下输出由 SubhutiDebug 自动生成\n')
         
-        const parser = new Es2025Parser(tokens).debug()
+        const parser = new SlimeParser(tokens).debug()
 
         // 调用指定的入口规则
         let cst: any
@@ -110,7 +110,7 @@ if (mode === 'bisect') {
     console.log(`✅ 词法分析: ${tokens.length} tokens`)
     
     // 调用 SubhutiDebugUtils.bisectDebug
-    SubhutiDebugUtils.bisectDebug(tokens, Es2025Parser, ES2025_TEST_LEVELS)
+    SubhutiDebugUtils.bisectDebug(tokens, SlimeParser, ES2025_TEST_LEVELS)
 } else {
     // 普通测试模式（支持指定入口规则）
     testCode(code, mode)

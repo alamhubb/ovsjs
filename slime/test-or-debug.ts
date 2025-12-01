@@ -1,6 +1,6 @@
 import SubhutiLexer from 'subhuti/src/SubhutiLexer.ts'
 import { es2025Tokens } from "slime-parser/src/language/es2025/SlimeTokensName"
-import Es2025Parser from "slime-parser/src/language/es2025/Es2025Parser"
+import SlimeParser from "slime-parser/src/language/es2025/SlimeParser"
 
 const code = `{ }`
 const lexer = new SubhutiLexer(es2025Tokens)
@@ -13,7 +13,7 @@ console.log(`代码: ${code}`)
 console.log(`Tokens: ${tokens.map((t: any) => t.tokenValue).join(', ')}`)
 console.log()
 
-const parser = new Es2025Parser(tokens).debug()
+const parser = new SlimeParser(tokens).debug()
 parser.PrimaryExpression()
 
 console.log()

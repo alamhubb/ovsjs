@@ -1,4 +1,4 @@
-import Es2025Parser from './packages/slime-parser/src/language/es2025/Es2025Parser.ts'
+import SlimeParser from 'slime-parser/src/language/es2025/SlimeParser.ts'
 import SubhutiLexer from 'subhuti/src/SubhutiLexer.ts'
 import { SlimeCstToAst } from './packages/slime-parser/src/language/SlimeCstToAstUtil.ts'
 import {es2025Tokens} from 'slime-parser/src/language/es2025/SlimeTokensName'
@@ -6,7 +6,7 @@ import {es2025Tokens} from 'slime-parser/src/language/es2025/SlimeTokensName'
 const code = 'export {privateValue as value}'
 const lexer = new SubhutiLexer(es2025Tokens)
 const tokens = lexer.tokenize(code)
-const parser = new Es2025Parser(tokens)
+const parser = new SlimeParser(tokens)
 const cst = parser.Program()
 
 // 递归打印 CST 结构

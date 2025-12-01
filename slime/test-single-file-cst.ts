@@ -9,7 +9,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 import SubhutiLexer from 'subhuti/src/SubhutiLexer'
 import {es2025Tokens} from "slime-parser/src/language/es2025/SlimeTokensName";
-import Es2025Parser from "slime-parser/src/language/es2025/Es2025Parser";
+import SlimeParser from "slime-parser/src/language/es2025/SlimeParser";
 
 // 收集CST中的所有token值
 function collectTokenValues(node: any): string[] {
@@ -238,7 +238,7 @@ try {
         .filter((v: any) => v !== undefined)
 
     // 语法分析和验证
-    const parser = new Es2025Parser(tokens)
+    const parser = new SlimeParser(tokens)
     // parser.debug()
     // parser.validate()
 

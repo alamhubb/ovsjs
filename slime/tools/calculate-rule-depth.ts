@@ -43,7 +43,7 @@
 import * as path from 'path'
 import * as fs from 'fs'
 import {fileURLToPath} from 'url'
-import Es2025Parser from '../packages/slime-parser/src/language/es2025/Es2025Parser.ts'
+import SlimeParser from 'slime-parser/src/language/es2025/SlimeParser.ts'
 import {SubhutiRuleCollector} from '../../subhuti/src/validation/SubhutiRuleCollector.ts'
 import type {RuleNode, SequenceNode, OrNode, OptionNode, ManyNode, AtLeastOneNode, SubruleNode, ConsumeNode} from '../../subhuti/src/validation/SubhutiValidationError.ts'
 
@@ -373,7 +373,7 @@ function main() {
         logger.log('🔍 开始计算规则深度...\n')
 
     // 创建 Parser 实例
-    const parser = new Es2025Parser([])
+    const parser = new SlimeParser([])
 
         // 收集规则 AST
         logger.log('📦 收集规则 AST...')

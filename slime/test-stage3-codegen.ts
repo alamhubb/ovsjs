@@ -4,7 +4,7 @@
  * 验证方式: 比较输入代码和输出代码的 token 序列是否一致
  * 前提: 阶段1、2已通过（CST和AST可以正常生成）
  */
-import Es2025Parser from './packages/slime-parser/src/language/es2025/Es2025Parser.ts'
+import SlimeParser from 'slime-parser/src/language/es2025/SlimeParser.ts'
 import SubhutiLexer from 'subhuti/src/SubhutiLexer.ts'
 import { SlimeCstToAst } from './packages/slime-parser/src/language/SlimeCstToAstUtil.ts'
 import SlimeGenerator from './packages/slime-generator/src/SlimeGenerator.ts'
@@ -156,7 +156,7 @@ for (let i = 0; i < filteredFiles.length; i++) {
     // 阶段1-2: 输入代码 → AST
     const lexer = new SubhutiLexer(es2025Tokens)
     const inputTokens = lexer.tokenize(code)
-    const parser = new Es2025Parser(inputTokens)
+    const parser = new SlimeParser(inputTokens)
     const cst = parser.Program()
     const slimeCstToAst = new SlimeCstToAst()
     const ast = slimeCstToAst.toProgram(cst)

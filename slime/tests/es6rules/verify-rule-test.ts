@@ -7,7 +7,7 @@
 
 import * as fs from 'fs'
 import * as path from 'path'
-import Es2025Parser from '../../packages/slime-parser/src/language/es2025/Es2025Parser.ts'
+import SlimeParser from 'slime-parser/src/language/es2025/SlimeParser.ts'
 import { es2025Tokens } from 'slime-parser/src/language/es2025/SlimeTokensName.ts'
 import SubhutiLexer from 'subhuti/src/SubhutiLexer.ts'
 import { SlimeCstToAst } from '../../packages/slime-parser/src/language/SlimeCstToAstUtil.ts'
@@ -91,7 +91,7 @@ function verifyTestCase(code: string, ruleName: string): { success: boolean; err
     }
     
     // 2. 语法分析
-    const parser = new Es2025Parser(tokens)
+    const parser = new SlimeParser(tokens)
     const cst = parser.Program()
     
     if (!cst || !cst.children || cst.children.length === 0) {

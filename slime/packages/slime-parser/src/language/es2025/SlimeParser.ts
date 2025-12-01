@@ -196,7 +196,7 @@ function isValidIdentifierWithEscapes(name: string): boolean {
 // ============================================
 
 @Subhuti
-export default class Es2025Parser extends SubhutiParser<Es2025TokenConsumer> {
+export default class SlimeParser extends SubhutiParser<Es2025TokenConsumer> {
     constructor(tokens: SubhutiMatchToken[] = []) {
         super(tokens, Es2025TokenConsumer)
     }

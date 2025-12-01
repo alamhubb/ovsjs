@@ -7,7 +7,7 @@
  */
 import SubhutiLexer from 'subhuti/src/SubhutiLexer.ts'
 import {es2025Tokens} from "slime-parser/src/language/es2025/SlimeTokensName";
-import Es2025Parser from "slime-parser/src/language/es2025/Es2025Parser";
+import SlimeParser from "slime-parser/src/language/es2025/SlimeParser";
 
 // 收集CST中的所有token值
 function collectTokenValues(node: any): string[] {
@@ -196,7 +196,7 @@ for (let i = 0; i < testCases.length; i++) {
         console.log(`  ✅ 词法分析: ${tokens.length} tokens (有效: ${inputTokens.length})`)
         
         // 语法分析
-        const parser = new Es2025Parser(tokens).debug()
+        const parser = new SlimeParser(tokens).debug()
         const cst = parser.Program()
         console.log(`  ✅ 语法分析: CST生成成功`)
         
@@ -249,7 +249,7 @@ for (let i = 0; i < testCases.length; i++) {
                 try {
                     const lexer = new SubhutiLexer(es2025Tokens)
                     const tokens = lexer.tokenize(testCase.code)
-                    const parser = new Es2025Parser(tokens)
+                    const parser = new SlimeParser(tokens)
                     const cst = parser.Program()
                     
                     console.log('\n🌳 完整CST结构（失败的测试）:')

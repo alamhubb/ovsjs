@@ -3,7 +3,7 @@
  * 验证哪些规则存在"更宽泛模式在前，更具体模式在后"的顺序问题
  */
 
-import Es2025Parser from './packages/slime-parser/src/language/es2025/Es2025Parser.ts'
+import SlimeParser from 'slime-parser/src/language/es2025/SlimeParser.ts'
 import { es2025Tokens } from 'slime-parser/src/language/es2025/SlimeTokensName.ts'
 import SubhutiLexer from '../subhuti/src/SubhutiLexer.ts'
 
@@ -155,7 +155,7 @@ for (const testCase of testCases) {
     try {
         const lexer = new SubhutiLexer(es2025Tokens)
         const tokens = lexer.tokenize(testCase.code)
-        const parser = new Es2025Parser(tokens)
+        const parser = new SlimeParser(tokens)
         const result = parser.Module()
         
         const success = result !== undefined

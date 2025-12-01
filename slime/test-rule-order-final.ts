@@ -2,7 +2,7 @@
  * 最终测试：验证所有规则顺序修复
  */
 
-import Es2025Parser from "./packages/slime-parser/src/language/es2025/Es2025Parser.ts"
+import SlimeParser from "slime-parser/src/language/es2025/SlimeParser.ts"
 import SubhutiLexer from "subhuti/src/SubhutiLexer.ts"
 import { es2025Tokens } from "slime-parser/src/language/es2025/SlimeTokensName.ts"
 
@@ -11,7 +11,7 @@ function testParse(code: string, ruleName: string, description: string) {
         const lexer = new SubhutiLexer(es2025Tokens)
         const tokens = lexer.tokenize(code)
         
-        const parser = new Es2025Parser(tokens)
+        const parser = new SlimeParser(tokens)
         const ast = (parser as any)[ruleName]()
         
         if (ast) {

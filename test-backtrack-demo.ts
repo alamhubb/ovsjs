@@ -3,7 +3,7 @@
  * 验证即使"宽泛模式在前"，Parser 也能正确处理
  */
 
-import Es2025Parser from './slime/packages/slime-parser/src/language/es2025/Es2025Parser.ts'
+import SlimeParser from './slime/packages/slime-parser/src/language/es2025/SlimeParser.ts'
 import { es2025Tokens } from './slime/packages/slime-parser/src/language/es2025/SlimeTokensName.ts'
 import SubhutiLexer from './subhuti/src/SubhutiLexer.ts'
 
@@ -23,7 +23,7 @@ tokens.forEach((token, i) => {
 })
 console.log()
 
-const parser = new Es2025Parser(tokens)
+const parser = new SlimeParser(tokens)
 
 // 开启调试模式
 parser.debug()

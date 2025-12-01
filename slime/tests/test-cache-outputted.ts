@@ -5,7 +5,7 @@
 
 import SubhutiLexer from 'subhuti/src/SubhutiLexer.ts'
 import { es2025Tokens } from "slime-parser/src/language/es2025/SlimeTokensName"
-import Es2025Parser from "slime-parser/src/language/es2025/Es2025Parser"
+import SlimeParser from "slime-parser/src/language/es2025/SlimeParser"
 
 const code = `let a = 1`
 
@@ -21,7 +21,7 @@ const tokens = lexer.tokenize(code)
 console.log(`\n✅ 词法分析: ${tokens.length} tokens`)
 
 // 语法分析（启用 debug）
-const parser = new Es2025Parser(tokens).debug()
+const parser = new SlimeParser(tokens).debug()
 
 // Hook 到 onRuleEnter
 const debug = (parser as any)._debugger

@@ -12,7 +12,7 @@ import SubhutiLexer from 'subhuti/src/SubhutiLexer.ts'
 import * as fs from 'fs'
 import * as path from 'path'
 import { es2025Tokens } from "slime-parser/src/language/es2025/SlimeTokensName"
-import Es2025Parser from "slime-parser/src/language/es2025/Es2025Parser"
+import SlimeParser from "slime-parser/src/language/es2025/SlimeParser"
 import { SlimeCstToAst } from "slime-parser/src/language/SlimeCstToAstUtil"
 
 // 使用与 CST 测试相同的目录
@@ -149,7 +149,7 @@ for (let i = 0; i < files.length; i++) {
         const lexer = new SubhutiLexer(es2025Tokens)
         const tokens = lexer.tokenize(code)
 
-        const parser = new Es2025Parser(tokens)
+        const parser = new SlimeParser(tokens)
         const cst = parser.Module()
 
         if (!cst) {
