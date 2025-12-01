@@ -728,6 +728,16 @@ class SlimeAstCreate {
     })
   }
 
+  createReturnStatement(argument: SlimeExpression | null | undefined, loc?: SubhutiSourceLocation, returnToken?: SlimeReturnToken, semicolonToken?: SlimeSemicolonToken): SlimeReturnStatement {
+    return this.commonLocType({
+      type: SlimeAstType.ReturnStatement,
+      argument: argument,
+      returnToken: returnToken,
+      semicolonToken: semicolonToken,
+      loc: loc
+    })
+  }
+
   createThrowStatement(argument: SlimeExpression, loc?: SubhutiSourceLocation, throwToken?: SlimeThrowToken, semicolonToken?: SlimeSemicolonToken): SlimeThrowStatement {
     return this.commonLocType({
       type: SlimeAstType.ThrowStatement,

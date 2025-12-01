@@ -78,6 +78,8 @@ export const SlimeAstType = {
     MetaProperty: "MetaProperty",
     Super: "Super",
     ParenthesizedExpression: "ParenthesizedExpression",
+    OptionalCallExpression: "OptionalCallExpression",
+    OptionalMemberExpression: "OptionalMemberExpression",
 
     // --- Patterns ---
     ObjectPattern: "ObjectPattern",
