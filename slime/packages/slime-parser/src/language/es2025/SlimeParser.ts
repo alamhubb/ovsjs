@@ -1950,55 +1950,64 @@ export default class SlimeParser extends SubhutiParser<SlimeTokenConsumer> {
      * LogicalORExpression[In, Yield, Await] :
      *     LogicalANDExpression[?In, ?Yield, ?Await]
      *     LogicalORExpression[?In, ?Yield, ?Await] || LogicalANDExpression[?In, ?Yield, ?Await]
+     *
+     * ⚠️ PEG 改写说明：
+     *
+     * LogicalORExpression 和 CoalesceExpression 共享 BitwiseORExpression 作为基础。
+     * 在 PEG 有序选择中，如果先尝试 LogicalORExpression，它会成功匹配基础表达式后返回，
+     * 导致后续的 ?? 运算符无法被 CoalesceExpression 处理。
+     *
+     * 解决方案：将两者的功能合并到 ShortCircuitExpression 中：
+     *   1. 先解析公共基础（LogicalANDExpression）
+     *   2. 根据后续 token（|| 或 ??）决定走哪条路径
+     *
+     * 此规则的功能已被 ShortCircuitExpression + LogicalORExpressionTail 吸收。
      */
     @SubhutiRule
     LogicalORExpression(params: ExpressionParams = {}): SubhutiCst | undefined {
-        this.LogicalANDExpression(params)
+        throw new Error('LogicalORExpression 在 PEG 实现中已被 ShortCircuitExpression 吸收，不应直接调用')
+    }
 
-        this.Many(() => {
+    /**
+     * LogicalORExpressionTail - LogicalORExpression 的后续部分
+     *
+     * 对应规范：( || LogicalANDExpression )+
+     * 注意：基础表达式已在 ShortCircuitExpression 中解析
+     */
+    @SubhutiRule
+    LogicalORExpressionTail(params: ExpressionParams = {}): SubhutiCst | undefined {
+        return this.AtLeastOne(() => {
             this.tokenConsumer.LogicalOr()
             this.LogicalANDExpression(params)
         })
-
-        return this.curCst
     }
 
     /**
      * CoalesceExpression[In, Yield, Await] :
      *     CoalesceExpressionHead[?In, ?Yield, ?Await] ?? BitwiseORExpression[?In, ?Yield, ?Await]
      *
-     * CoalesceExpressionHead[In, Yield, Await] :
-     *     CoalesceExpression[?In, ?Yield, ?Await]
-     *     BitwiseORExpression[?In, ?Yield, ?Await]
+     * ⚠️ PEG 改写说明：
      *
-     * ⚠️ 左递归改写说明：
-     *
-     * 规范使用左递归表达左结合性：
-     *   CoalesceExpression → CoalesceExpressionHead → CoalesceExpression (循环！)
-     *
-     * PEG Parser 不支持左递归，需改写为迭代形式：
-     *   原语义：a ?? b ?? c ?? d  (左结合)
-     *   PEG改写：BaseExpression ( ?? BaseExpression )*
-     *
-     * 改写方案：
-     *   1. 先匹配基础表达式（BitwiseORExpression）
-     *   2. 使用 Many 循环匹配后续的 ?? BitwiseORExpression
-     *   3. 删除 CoalesceExpressionHead（不再需要）
-     *
-     * 这样既符合 PEG 语法，又保持了左结合语义。
+     * 与 LogicalORExpression 相同，此规则的功能已被 ShortCircuitExpression 吸收。
+     * 参见 LogicalORExpression 的注释。
      */
     @SubhutiRule
     CoalesceExpression(params: ExpressionParams = {}): SubhutiCst | undefined {
-        // 基础表达式
-        this.BitwiseORExpression(params)
+        throw new Error('CoalesceExpression 在 PEG 实现中已被 ShortCircuitExpression 吸收，不应直接调用')
+    }
 
-        // 后续的 ?? 运算符（0次或多次）
-        this.Many(() => {
-            this.tokenConsumer.NullishCoalescing()  // ??
-            this.BitwiseORExpression(params)        // 右操作数
+    /**
+     * CoalesceExpressionTail - CoalesceExpression 的后续部分
+     *
+     * 对应规范：( ?? BitwiseORExpression )+
+     * 注意：基础表达式已在 ShortCircuitExpression 中解析
+     */
+    @SubhutiRule
+    CoalesceExpressionTail(params: ExpressionParams = {}): SubhutiCst | undefined {
+        return this.AtLeastOne(() => {
+            this.tokenConsumer.NullishCoalescing()
+            this.BitwiseORExpression(params)
         })
-
-        return this.curCst
     }
 
     /**
@@ -2007,39 +2016,52 @@ export default class SlimeParser extends SubhutiParser<SlimeTokenConsumer> {
      *     BitwiseORExpression[?In, ?Yield, ?Await]
      *
      * ⚠️ PEG 改写说明：
-     *
-     * 在 ECMAScript 规范中，CoalesceExpressionHead 用于表达左递归：
-     *   CoalesceExpression : CoalesceExpressionHead ?? BitwiseORExpression
-     *   CoalesceExpressionHead : CoalesceExpression | BitwiseORExpression
-     *
-     * 这种左递归形式在 PEG 解析器中无法直接使用。
-     *
-     * 解决方案：将左递归改写为迭代形式
-     *   CoalesceExpression → BitwiseORExpression ( ?? BitwiseORExpression )*
-     *
-     * 改写后，CoalesceExpressionHead 的功能已被 CoalesceExpression 中的
-     * Many 循环吸收，因此此规则不再需要独立实现。
-     *
-     * 保留此方法是为了：
-     * 1. 保持与规范的一一对应关系（便于代码审查）
-     * 2. 作为文档说明 PEG 改写的原因
+     * 此规则用于规范中的左递归表达，在 PEG 实现中已被吸收。
      */
     @SubhutiRule
     CoalesceExpressionHead(params: ExpressionParams = {}): SubhutiCst | undefined {
-        // 此方法在 PEG 实现中不会被调用，功能已合并到 CoalesceExpression
-        throw new Error('CoalesceExpressionHead 在 PEG 实现中已被 CoalesceExpression 吸收，不应直接调用')
+        throw new Error('CoalesceExpressionHead 在 PEG 实现中已被吸收，不应直接调用')
     }
 
     /**
      * ShortCircuitExpression[In, Yield, Await] :
      *     LogicalORExpression[?In, ?Yield, ?Await]
      *     CoalesceExpression[?In, ?Yield, ?Await]
+     *
+     * ⚠️ PEG 改写说明：
+     *
+     * LogicalORExpression 和 CoalesceExpression 共享公共前缀（BitwiseORExpression）。
+     * 在 PEG 有序选择中，必须先解析公共部分，再根据后续 token 分发：
+     *
+     * 改写结构：
+     *   ShortCircuitExpression → LogicalANDExpression ShortCircuitExpressionTail?
+     *   ShortCircuitExpressionTail → LogicalORExpressionTail | CoalesceExpressionTail
+     *   LogicalORExpressionTail → ( || LogicalANDExpression )+
+     *   CoalesceExpressionTail → ( ?? BitwiseORExpression )+
      */
     @SubhutiRule
     ShortCircuitExpression(params: ExpressionParams = {}): SubhutiCst | undefined {
+        // 解析公共基础（LogicalANDExpression 包含 BitwiseORExpression）
+        this.LogicalANDExpression(params)
+
+        // 根据后续 token 决定走哪条路径（可选）
+        this.Option(() => this.ShortCircuitExpressionTail(params))
+
+        return this.curCst
+    }
+
+    /**
+     * ShortCircuitExpressionTail - 短路表达式的尾部分发
+     *
+     * 根据后续 token（|| 或 ??）决定走 LogicalOR 还是 Coalesce 路径
+     */
+    @SubhutiRule
+    ShortCircuitExpressionTail(params: ExpressionParams = {}): SubhutiCst | undefined {
         return this.Or([
-            {alt: () => this.LogicalORExpression(params)},
-            {alt: () => this.CoalesceExpression(params)}
+            // || 链：LogicalORExpressionTail
+            {alt: () => this.LogicalORExpressionTail(params)},
+            // ?? 链：CoalesceExpressionTail
+            {alt: () => this.CoalesceExpressionTail(params)}
         ])
     }
 
@@ -2943,12 +2965,32 @@ export default class SlimeParser extends SubhutiParser<SlimeTokenConsumer> {
      *     [+Await] for await ( [lookahead ≠ let] LeftHandSideExpression[?Yield, ?Await] of AssignmentExpression[+In, ?Yield, ?Await] ) Statement[?Yield, ?Await, ?Return]
      *     [+Await] for await ( var ForBinding[?Yield, ?Await] of AssignmentExpression[+In, ?Yield, ?Await] ) Statement[?Yield, ?Await, ?Return]
      *     [+Await] for await ( ForDeclaration[?Yield, ?Await] of AssignmentExpression[+In, ?Yield, ?Await] ) Statement[?Yield, ?Await, ?Return]
+     *
+     * B.3.5 Initializers in ForIn Statement Heads (非严格模式扩展):
+     *     for ( var BindingIdentifier[?Yield, ?Await] Initializer[~In, ?Yield, ?Await] in Expression[+In, ?Yield, ?Await] ) Statement[?Yield, ?Await, ?Return]
      */
     @SubhutiRule
     ForInOfStatement(params: StatementParams = {}): SubhutiCst | undefined {
         const {Await = false} = params
 
         return this.Or([
+            // B.3.5: for ( var BindingIdentifier Initializer in Expression ) Statement
+            // ⚠️ Annex B 扩展：仅非严格模式，允许 for-in 变量声明中包含初始化器
+            // 例如：for (var a = 1 in obj) { ... }
+            // 必须放在 "for ( var ForBinding in ...)" 之前，因为它更具体（有 Initializer）
+            {
+                alt: () => {
+                    this.tokenConsumer.For()
+                    this.tokenConsumer.LParen()
+                    this.tokenConsumer.Var()
+                    this.BindingIdentifier(params)
+                    this.Initializer({...params, In: false})  // Initializer[~In]
+                    this.tokenConsumer.In()
+                    this.Expression({...params, In: true})
+                    this.tokenConsumer.RParen()
+                    this.Statement(params)
+                }
+            },
             // for ( var ForBinding[?Yield, ?Await] in Expression[+In, ?Yield, ?Await] ) Statement[?Yield, ?Await, ?Return]
             {
                 alt: () => {

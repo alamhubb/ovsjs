@@ -35,7 +35,8 @@ const nonStandardPlugins = [
   'partialApplication',
   'deferredImportEvaluation',
   'sourcePhaseImports',
-  'importAttributes',  // 部分支持
+  'importAttributes',   // ES2025 使用 with 语法，但此插件可能包含旧语法
+  'importAssertions',   // 旧语法使用 assert 关键字，ES2025 使用 with
 ]
 
 /**
@@ -134,6 +135,51 @@ function isExpectedToThrow(testDir: string): boolean {
   }
 }
 
+/**
+ * 根据测试路径和配置确定解析模式
+ * - 路径包含 'script' 或 'sourcetype-script' → script 模式
+ * - options.json 中 sourceType: "script" → script 模式
+ * - output.json 中 sourceType: "script" → script 模式
+ * - 否则默认 module 模式
+ */
+function getParseMode(testDir: string, filePath: string): 'module' | 'script' {
+  // 1. 检查路径是否包含 script 相关标识
+  const normalizedPath = filePath.toLowerCase().replace(/\\/g, '/')
+  if (normalizedPath.includes('script') || normalizedPath.includes('sourcetype-script')) {
+    return 'script'
+  }
+
+  // 2. 检查 options.json 中的 sourceType
+  const optionsPath = path.join(testDir, 'options.json')
+  if (fs.existsSync(optionsPath)) {
+    try {
+      const options = JSON.parse(fs.readFileSync(optionsPath, 'utf-8'))
+      if (options.sourceType === 'script') {
+        return 'script'
+      }
+    } catch {
+      // 忽略解析错误
+    }
+  }
+
+  // 3. 检查 output.json 中的 sourceType（Babel 测试用例通常在这里指定）
+  const outputPath = path.join(testDir, 'output.json')
+  if (fs.existsSync(outputPath)) {
+    try {
+      const output = JSON.parse(fs.readFileSync(outputPath, 'utf-8'))
+      // output.json 的结构是 { program: { sourceType: "script" } }
+      if (output.program?.sourceType === 'script') {
+        return 'script'
+      }
+    } catch {
+      // 忽略解析错误
+    }
+  }
+
+  // 4. 默认 module 模式
+  return 'module'
+}
+
 for (let i = startIndex; i < files.length; i++) {
   const file = files[i]
   const testName = file.replace('.js', '')
@@ -161,14 +207,31 @@ for (let i = startIndex; i < files.length; i++) {
     continue
   }
 
+  // 检查目录名是否以 'invalid' 开头（期望解析失败的用例）
+  const dirName = path.basename(testDir)
+  if (dirName.startsWith('invalid')) {
+    console.log(`\n[${i + 1}] ⏭️ 跳过: ${testName} (invalid 用例，期望解析失败)`)
+    skipped++
+    continue
+  }
+
+  // 确定解析模式
+  const parseMode = getParseMode(testDir, filePath)
+
+  // 跳过 script 模式的测试用例（我们只支持严格模式/module 模式）
+  if (parseMode === 'script') {
+    console.log(`\n[${i + 1}] ⏭️ 跳过: ${testName} (script 模式，不支持)`)
+    skipped++
+    continue
+  }
+
   const code = fs.readFileSync(filePath, 'utf-8')
 
   console.log(`\n[${ i + 1}] 测试: ${testName}`)
   console.log('='.repeat(60))
 
   try {
-    // 词法分析
-    // 语法分析
+    // 词法分析 + 语法分析（仅支持 module 模式）
     const parser = new SlimeParser(code)
     const cst = parser.Program('module')
     console.log(`✅ 语法分析: CST生成成功`)

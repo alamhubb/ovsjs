@@ -132,7 +132,7 @@ function _getCSTStatistics(node: any): {
 }
 
 // 主程序
-const filePath = process.argv[2] || 'tests/babel/fixtures\\es2015\\for-in\\nonstrict-initializer\\input.js'
+const filePath = process.argv[2] || 'tests/babel/fixtures\\es2015\\for-of\\valid-script-await-as-lhs\\input.js'
 // const filePath = process.argv[2] || 'tests/babel/fixtures\\core\\uncategorised\\324\\input.js'
 // const filePath = process.argv[2] || 'tests/babel/fixtures\\comments\\basic\\class-accessor-computed\\input.js'
 // const filePath = process.argv[2] || 'tests/es6rules/fix-duplicates.js'

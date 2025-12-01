@@ -43,10 +43,11 @@ import SlimeCodeMapping, {SlimeCodeLocation, type SlimeGeneratorResult} from "./
 import type {SubhutiSourceLocation} from "subhuti/src/struct/SubhutiCst.ts";
 import {SubhutiCreateToken} from "subhuti/src/struct/SubhutiCreateToken.ts";
 import SubhutiMatchToken from "subhuti/src/struct/SubhutiMatchToken.ts";
-import {SlimeLexerTokensObj, TokenNames} from "slime-parser/src/language/es2025/SlimeTokenType.ts";
+import {SlimeTokensObj} from "slime-parser/src/language/es2025/SlimeTokens.ts";
+import {SlimeTokenType} from "../../slime-token/src/SlimeTokenType.ts";
 
 // 兼容别名
-const Es6TokenName = TokenNames;
+const Es6TokenName = SlimeTokenType;
 
 // 创建软关键字的 token 对象（用于代码生成）
 const createSoftKeywordToken = (name: string, value: string): SubhutiCreateToken => ({
@@ -57,7 +58,7 @@ const createSoftKeywordToken = (name: string, value: string): SubhutiCreateToken
 
 // 扩展 es2025TokensObj，添加软关键字和别名
 const es6TokensObj = {
-    ...SlimeLexerTokensObj,
+    ...SlimeTokensObj,
     // 软关键字（在 ES2025 中作为 IdentifierName 处理）
     OfTok: createSoftKeywordToken('OfTok', 'of'),
     AsyncTok: createSoftKeywordToken('AsyncTok', 'async'),
@@ -67,14 +68,14 @@ const es6TokensObj = {
     SetTok: createSoftKeywordToken('SetTok', 'set'),
     FromTok: createSoftKeywordToken('FromTok', 'from'),
     // 别名（ES2025 使用不同的名称）
-    Eq: SlimeLexerTokensObj.Assign,  // = 等号
+    Eq: SlimeTokensObj.Assign,  // = 等号
 };
 
 // 关键字到 Token 的映射（用于 VariableDeclaration 的 kind）
 const es6TokenMapObj: Record<string, SubhutiCreateToken> = {
-    'const': SlimeLexerTokensObj.ConstTok,
-    'let': SlimeLexerTokensObj.LetTok,
-    'var': SlimeLexerTokensObj.VarTok,
+    'const': SlimeTokensObj.ConstTok,
+    'let': SlimeTokensObj.LetTok,
+    'var': SlimeTokensObj.VarTok,
 };
 
 export default class SlimeGenerator {
@@ -828,6 +829,9 @@ export default class SlimeGenerator {
             this.generatorIdentifier(node as SlimeIdentifier)
         } else if (node.type === SlimeNodeType.NumericLiteral) {
             this.generatorNumberLiteral(node as SlimeNumericLiteral)
+        } else if (node.type === SlimeNodeType.Literal) {
+            // ESTree 标准的 Literal 类型（包含 number, string, boolean, null, RegExp, BigInt）
+            this.generatorLiteral(node as SlimeLiteral)
         } else if (node.type === SlimeNodeType.MemberExpression) {
             this.generatorMemberExpression(node as SlimeMemberExpression)
         } else if (node.type === SlimeNodeType.CallExpression) {
@@ -1249,6 +1253,44 @@ export default class SlimeGenerator {
         // 如果没有 raw，使用单引号包裹 value
         const strValue = node.raw || `'${node.value}'`
         this.addCodeAndMappings({type: Es6TokenName.StringLiteral, name: Es6TokenName.StringLiteral, value: strValue}, node.loc)
+    }
+
+    /**
+     * 生成 ESTree 标准的 Literal 节点
+     * Literal 可以是：number, string, boolean, null, RegExp, BigInt
+     */
+    private static generatorLiteral(node: SlimeLiteral) {
+        const value = node.value
+        const raw = (node as any).raw
+
+        if (value === null) {
+            // null 字面量
+            this.addCodeAndMappings({type: 'NullLiteral', name: 'NullLiteral', value: 'null'}, node.loc)
+        } else if (typeof value === 'boolean') {
+            // boolean 字面量
+            const boolValue = value ? 'true' : 'false'
+            this.addCodeAndMappings({type: 'BooleanLiteral', name: 'BooleanLiteral', value: boolValue}, node.loc)
+        } else if (typeof value === 'number') {
+            // number 字面量（优先使用 raw 保持原始格式）
+            const numValue = raw || String(value)
+            this.addCodeAndMappings({type: Es6TokenName.NumericLiteral, name: Es6TokenName.NumericLiteral, value: numValue}, node.loc)
+        } else if (typeof value === 'string') {
+            // string 字面量（优先使用 raw 保持原始引号格式）
+            const strValue = raw || `'${value}'`
+            this.addCodeAndMappings({type: Es6TokenName.StringLiteral, name: Es6TokenName.StringLiteral, value: strValue}, node.loc)
+        } else if (typeof value === 'bigint' || (raw && raw.endsWith('n'))) {
+            // BigInt 字面量
+            const bigintValue = raw || `${value}n`
+            this.addCodeAndMappings({type: 'BigIntLiteral', name: 'BigIntLiteral', value: bigintValue}, node.loc)
+        } else if (value instanceof RegExp || (node as any).regex) {
+            // RegExp 字面量
+            const regexValue = raw || String(value)
+            this.addCodeAndMappings({type: 'RegularExpressionLiteral', name: 'RegularExpressionLiteral', value: regexValue}, node.loc)
+        } else {
+            // 未知类型，尝试使用 raw 或 String(value)
+            const fallbackValue = raw || String(value)
+            this.addString(fallbackValue)
+        }
     }
 
     static cstLocationToSlimeLocation(cstLocation: SubhutiSourceLocation) {
