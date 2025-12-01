@@ -8,33 +8,17 @@ import {
 import {SlimeTokenType} from "slime-token/src/SlimeTokenType.ts";
 
 // ============================================
-// 表达式结尾 Token 集合
-// 用于词法歧义处理：/ 在这些 token 后是除法，否则是正则表达式
+// 词法歧义处理说明
 // ============================================
-export const EXPRESSION_END_TOKENS = new Set([
-    // 标识符和字面量
-    SlimeTokenType.IdentifierName,
-    SlimeTokenType.NumericLiteral,  // 包含所有数字变体（十进制、BigInt、十六进制等）
-    SlimeTokenType.StringLiteral,
-    SlimeTokenType.RegularExpressionLiteral,
-    SlimeTokenType.NoSubstitutionTemplate,
-    SlimeTokenType.TemplateTail,
-
-    // 关闭括号
-    SlimeTokenType.RParen,      // )
-    SlimeTokenType.RBracket,    // ]
-    SlimeTokenType.RBrace,      // }
-
-    // 后缀运算符
-    SlimeTokenType.Increment,   // ++
-    SlimeTokenType.Decrement,   // --
-
-    // 关键字字面量
-    SlimeTokenType.This,
-    SlimeTokenType.True,
-    SlimeTokenType.False,
-    SlimeTokenType.NullLiteral,
-])
+// ECMAScript 规范中，`/` 可以是除法运算符或正则表达式起始。
+// 规范通过 InputElementDiv 和 InputElementRegExp 两种词法目标来区分。
+//
+// 我们的实现策略（方案 B：始终 Slash + 语法层 Rescan）：
+// 1. 词法层：`/` 始终解析为 Slash（除法运算符）
+// 2. 语法层：当期望表达式但遇到 Slash 时，调用 rescanSlashAsRegExp() 重新扫描
+//
+// 这种方式确保 100% 正确，因为只有语法分析器知道当前期望的是表达式还是运算符。
+// ============================================
 
 // ============================================
 // ES2025 规范 12.7 标识符名称正则
@@ -237,16 +221,9 @@ export const SlimeTokensObj = {
     PlusAssign: createValueRegToken(SlimeTokenType.PlusAssign, /\+=/, '+='),
     MinusAssign: createValueRegToken(SlimeTokenType.MinusAssign, /-=/, '-='),
     MultiplyAssign: createValueRegToken(SlimeTokenType.MultiplyAssign, /\*=/, '*='),
-    // DivideAssign 有上下文约束，只有前一个 token 是表达式结尾才匹配
-    // 否则 /=xxx/g 会被识别为正则表达式
-    DivideAssign: createValueRegToken(
-        SlimeTokenType.DivideAssign,
-        /\/=/,
-        '/=',
-        false,  // skip
-        undefined,  // lookahead
-        {onlyAfter: EXPRESSION_END_TOKENS}  // 上下文约束
-    ),
+    // DivideAssign 词法层始终匹配（无上下文约束）
+    // /=xxx/g 的情况由语法层 rescanSlashAsRegExp() 处理
+    DivideAssign: createValueRegToken(SlimeTokenType.DivideAssign, /\/=/, '/='),
     ModuloAssign: createValueRegToken(SlimeTokenType.ModuloAssign, /%=/, '%='),
     LeftShift: createValueRegToken(SlimeTokenType.LeftShift, /<</, '<<'),
     RightShift: createValueRegToken(SlimeTokenType.RightShift, />>/, '>>'),
@@ -282,31 +259,14 @@ export const SlimeTokensObj = {
     Asterisk: createValueRegToken(SlimeTokenType.Asterisk, /\*/, '*'),
 
     // ============================================
-    // 除法运算符 vs 正则表达式（词法歧义处理）
-    // Slash 有上下文约束，只有前一个 token 是表达式结尾才匹配
-    // 否则 fallback 到 RegularExpressionLiteral
+    // 除法运算符（词法层始终匹配为 Slash）
+    // 正则表达式由语法层 rescanSlashAsRegExp() 处理
     // ============================================
-    Slash: createValueRegToken(
-        SlimeTokenType.Slash,
-        /\//,
-        '/',
-        false,  // skip
-        undefined,  // lookahead
-        {onlyAfter: EXPRESSION_END_TOKENS}  // 上下文约束
-    ),
+    Slash: createValueRegToken(SlimeTokenType.Slash, /\//, '/'),
 
-    // 正则表达式字面量（无约束，作为 Slash 的 fallback）
-    // 规范: RegularExpressionLiteral :: / RegularExpressionBody / RegularExpressionFlags
-    //
-    // RegularExpressionFirstChar :: 不能是 * \ / [ (避免与 /* 注释冲突)
-    // RegularExpressionChar :: 不能是 \ / [
-    // RegularExpressionFlags :: IdentifierPartChar* (任意标识符字符)
-    //
-    // 注意：无效标志（如 /x/abc）会在语义分析时报错，词法层面只需贪婪匹配
-    RegularExpressionLiteral: createEmptyValueRegToken(
-        SlimeTokenType.RegularExpressionLiteral,
-        /\/(?:[^\n\r\/\\[*]|\\[^\n\r]|\[(?:[^\n\r\]\\]|\\[^\n\r])*\])(?:[^\n\r\/\\[]|\\[^\n\r]|\[(?:[^\n\r\]\\]|\\[^\n\r])*\])*\/[a-zA-Z$_]*/
-    ),
+    // 注意：RegularExpressionLiteral 不在词法层定义
+    // 正则表达式完全由语法层的 rescanSlashAsRegExp() 方法处理
+    // 这确保了 100% 正确性，因为只有语法分析器知道当前上下文
 
     Modulo: createValueRegToken(SlimeTokenType.Modulo, /%/, '%'),
     BitwiseAnd: createValueRegToken(SlimeTokenType.BitwiseAnd, /&/, '&'),

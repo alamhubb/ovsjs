@@ -134,7 +134,7 @@ function _getCSTStatistics(node: any): {
 // 主程序
 // const filePath = process.argv[2] || 'tests/cases/17-rest-parameters.js'
 // const filePath = process.argv[2] || 'tests/babel/fixtures\\core\\uncategorised\\324\\input.js'
-const filePath = process.argv[2] || 'tests/babel/fixtures\\core\\uncategorised\\326\\input.js'
+const filePath = process.argv[2] || 'tests/babel/fixtures\\core\\uncategorised\\324\\input.js'
 // const filePath = process.argv[2] || 'tests/es6rules/fix-duplicates.js'
 // const filePath = process.argv[2] || 'tests/test262/intl402/DateTimeFormat\\prototype\\formatRangeToParts\\temporal-objects-resolved-time-zone.js'
 // const filePath = process.argv[2] || 'tests/es6rules/AdditiveExpression-001.js'
@@ -199,7 +199,7 @@ try {
 
     // 语法分析和验证（SlimeParser 内部会自动 tokenize）
     const parser = new SlimeParser(code)
-    parser.debug()
+    // parser.debug()
 
     // 获取 parser 内部的 tokens（可能经过 rescan 修正）
     const inputTokens = (parser as any)._tokens as Array<{tokenValue: string}>
