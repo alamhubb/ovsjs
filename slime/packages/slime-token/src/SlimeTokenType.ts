@@ -121,15 +121,17 @@ export const SlimeLogicalOperatorTokenTypes = {
  * - meta: 元属性 `import.meta` (ImportMeta)
  */
 export const SlimeContextualKeywordTokenTypes = {
-    Async: 'Async',     // async function, async () =>
-    Static: 'Static',   // static method(), static field
-    Get: 'Get',         // get prop()
-    Set: 'Set',         // set prop(v)
-    Of: 'Of',           // for (x of iterable)
-    From: 'From',       // import/export from
-    As: 'As',           // import/export as
-    Target: 'Target',   // new.target
-    Meta: 'Meta',       // import.meta
+    // 注意：值必须使用小写，与实际源码中的写法一致
+    // consumeIdentifierValue() 会比较 token.tokenValue === value
+    Async: 'async',     // async function, async () =>
+    Static: 'static',   // static method(), static field
+    Get: 'get',         // get prop()
+    Set: 'set',         // set prop(v)
+    Of: 'of',           // for (x of iterable)
+    From: 'from',       // import/export from
+    As: 'as',           // import/export as
+    Target: 'target',   // new.target
+    Meta: 'meta',       // import.meta
 } as const;
 
 /**
