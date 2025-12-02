@@ -30,7 +30,7 @@ function testStage1(ctx: TestContext): TestResult {
 runTests(testStage1, {
     stageName: '阶段1: CST生成测试',
     description: '词法分析 → 语法分析',
-    startFrom: 3120,
+    startFrom: 1,
     stopOnFail: true,
 })
 
