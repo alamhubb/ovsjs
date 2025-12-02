@@ -1129,9 +1129,11 @@ class SlimeNodeCreate {
     fromToken?: SlimeFromToken,
     lBraceToken?: SlimeLBraceToken,
     rBraceToken?: SlimeRBraceToken,
-    semicolonToken?: SlimeSemicolonToken
+    semicolonToken?: SlimeSemicolonToken,
+    attributes?: any[],  // ES2025 Import Attributes
+    withToken?: any
   ): SlimeImportDeclaration {
-    return this.commonLocType({
+    const decl: any = {
       type: SlimeNodeType.ImportDeclaration,
       source: source,
       specifiers: specifiers,
@@ -1141,7 +1143,13 @@ class SlimeNodeCreate {
       rBraceToken: rBraceToken,
       semicolonToken: semicolonToken,
       loc: loc
-    })
+    }
+    // ES2025: 添加 attributes（如果有 withToken，即使 attributes 为空也要添加）
+    if (withToken) {
+      decl.attributes = attributes || []
+      decl.withToken = withToken
+    }
+    return this.commonLocType(decl)
   }
 
   /** 创建 import specifier 包装 */

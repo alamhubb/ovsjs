@@ -292,6 +292,18 @@ export class SlimeCstToAst {
             semicolonToken = SlimeTokenCreate.createSemicolonToken(semicolonCst.loc)
         }
 
+        // 查找 WithClause (ES2025 Import Attributes)
+        const withClauseCst = cst.children.find(ch =>
+            ch.name === SlimeParser.prototype.WithClause?.name || ch.name === 'WithClause'
+        )
+        let attributes: any[] = []
+        let withToken: any = undefined
+        if (withClauseCst) {
+            const parsed = this.createWithClauseAst(withClauseCst)
+            attributes = parsed.attributes
+            withToken = parsed.withToken
+        }
+
         if (first1.name === SlimeParser.prototype.ImportClause?.name) {
             const clauseResult = this.createImportClauseAst(first1)
             const fromClause = this.createFromClauseAst(cst.children[2])
@@ -299,19 +311,67 @@ export class SlimeCstToAst {
                 clauseResult.specifiers, fromClause.source, cst.loc,
                 importToken, fromClause.fromToken,
                 clauseResult.lBraceToken, clauseResult.rBraceToken,
-                semicolonToken
+                semicolonToken, attributes, withToken
             )
         } else if (first1.name === SlimeParser.prototype.ModuleSpecifier?.name) {
-            // import 'module' (side effect import)
+            // import 'module' (side effect import) 或 import 'module' with {...}
             const source = this.createModuleSpecifierAst(first1)
             importDeclaration = SlimeAstUtil.createImportDeclaration(
                 [], source, cst.loc,
                 importToken, undefined,
                 undefined, undefined,
-                semicolonToken
+                semicolonToken, attributes, withToken
             )
         }
         return importDeclaration
+    }
+
+    /** 解析 WithClause: with { type: "json" } */
+    createWithClauseAst(cst: SubhutiCst): { attributes: any[], withToken: any } {
+        // WithClause: With, LBrace, WithEntries?, RBrace
+        let withToken: any = undefined
+        const attributes: any[] = []
+
+        for (const child of cst.children || []) {
+            if (child.name === 'With' || child.value === 'with') {
+                withToken = { type: 'With', value: 'with', loc: child.loc }
+            } else if (child.name === SlimeParser.prototype.WithEntries?.name || child.name === 'WithEntries') {
+                // WithEntries 包含 AttributeKey, Colon, StringLiteral, 可能有多个用逗号分隔
+                let currentKey: any = null
+                for (const entry of child.children || []) {
+                    if (entry.name === SlimeParser.prototype.AttributeKey?.name || entry.name === 'AttributeKey') {
+                        // AttributeKey 可能是 IdentifierName 或 StringLiteral
+                        const keyChild = entry.children?.[0]
+                        if (keyChild) {
+                            if (keyChild.name === 'IdentifierName' || keyChild.name === SlimeParser.prototype.IdentifierName?.name) {
+                                const nameToken = keyChild.children?.[0]
+                                currentKey = {
+                                    type: SlimeNodeType.Identifier,
+                                    name: nameToken?.value || keyChild.value,
+                                    loc: keyChild.loc
+                                }
+                            } else if (keyChild.name === 'StringLiteral' || keyChild.value?.startsWith('"') || keyChild.value?.startsWith("'")) {
+                                currentKey = this.createStringLiteralAst(keyChild)
+                            }
+                        }
+                    } else if (entry.name === 'StringLiteral' || entry.value?.startsWith('"') || entry.value?.startsWith("'")) {
+                        // 这是 attribute 的值
+                        if (currentKey) {
+                            attributes.push({
+                                type: SlimeNodeType.ImportAttribute,
+                                key: currentKey,
+                                value: this.createStringLiteralAst(entry),
+                                loc: { ...currentKey.loc, end: entry.loc?.end }
+                            })
+                            currentKey = null
+                        }
+                    }
+                    // 跳过 Colon 和 Comma
+                }
+            }
+        }
+
+        return { attributes, withToken }
     }
 
 
@@ -819,6 +879,7 @@ export class SlimeCstToAst {
         let hoistableDeclaration: SubhutiCst | null = null
         let classDeclaration: SubhutiCst | null = null
         let assignmentExpression: SubhutiCst | null = null
+        let withClauseCst: SubhutiCst | null = null
         let isDefault = false
 
         for (const child of children) {
@@ -850,7 +911,18 @@ export class SlimeCstToAst {
                 classDeclaration = child
             } else if (name === SlimeParser.prototype.AssignmentExpression?.name) {
                 assignmentExpression = child
+            } else if (name === SlimeParser.prototype.WithClause?.name || name === 'WithClause') {
+                withClauseCst = child
             }
+        }
+
+        // 解析 WithClause (ES2025 Import Attributes)
+        let attributes: any[] = []
+        let withToken: any = undefined
+        if (withClauseCst) {
+            const parsed = this.createWithClauseAst(withClauseCst)
+            attributes = parsed.attributes
+            withToken = parsed.withToken
         }
 
         // export default ...
@@ -882,10 +954,16 @@ export class SlimeCstToAst {
                 if (moduleExportName) {
                     exported = this.createModuleExportNameAst(moduleExportName)
                 }
-                return SlimeAstUtil.createExportAllDeclaration(
+                const result = SlimeAstUtil.createExportAllDeclaration(
                     fromClauseResult.source, exported, cst.loc,
                     exportToken, asteriskToken, asToken, fromClauseResult.fromToken, semicolonToken
                 ) as any
+                // 添加 attributes（如果有 withToken，即使 attributes 为空也要添加）
+                if (withToken) {
+                    result.attributes = attributes
+                    result.withToken = withToken
+                }
+                return result
             } else {
                 // export { ... } from ...
                 // exportFromClause 的结构是 [NamedExports]，需要从中提取 NamedExports
@@ -895,10 +973,16 @@ export class SlimeCstToAst {
                 const specifiers = namedExportsCst
                     ? this.createNamedExportsAst(namedExportsCst)
                     : []
-                return SlimeAstUtil.createExportNamedDeclaration(
+                const result = SlimeAstUtil.createExportNamedDeclaration(
                     null, specifiers, fromClauseResult.source, cst.loc,
                     exportToken, fromClauseResult.fromToken, semicolonToken
                 )
+                // 添加 attributes（如果有 withToken，即使 attributes 为空也要添加）
+                if (withToken) {
+                    (result as any).attributes = attributes;
+                    (result as any).withToken = withToken
+                }
+                return result
             }
         }
 
@@ -1668,13 +1752,19 @@ export class SlimeCstToAst {
      */
     createPrivateIdentifierAst(cst: SubhutiCst): SlimeIdentifier {
         // Es2025Parser: PrivateIdentifier 是一个直接的 token，value 已经包含 #
-        // 例如：{ name: 'PrivateIdentifier', value: '#count' }
+        // 例如：{ name: 'PrivateIdentifier', value: '#count' } 或 value: '#\u{61}'
         if (cst.value) {
-            // 直接使用 token 的 value，解码 Unicode 转义序列
             const rawName = cst.value as string
             const decodedName = decodeUnicodeEscapes(rawName)
-            // 如果 value 已经以 # 开头，直接使用；否则添加 #
-            return SlimeAstUtil.createIdentifier(decodedName.startsWith('#') ? decodedName : '#' + decodedName)
+            // 保存原始值和解码后的值
+            const name = decodedName.startsWith('#') ? decodedName : '#' + decodedName
+            const raw = rawName.startsWith('#') ? rawName : '#' + rawName
+            const identifier = SlimeAstUtil.createIdentifier(name, cst.loc)
+            // 如果原始值与解码值不同，保存 raw 以便生成器使用
+            if (raw !== name) {
+                (identifier as any).raw = raw
+            }
+            return identifier
         }
 
         // 旧版兼容：PrivateIdentifier -> HashTok + IdentifierName
@@ -1683,15 +1773,25 @@ export class SlimeCstToAst {
             const identifierCst = identifierNameCst.children[0]
             const rawName = identifierCst.value as string
             const decodedName = decodeUnicodeEscapes(rawName)
-            return SlimeAstUtil.createIdentifier('#' + decodedName)
+            const identifier = SlimeAstUtil.createIdentifier('#' + decodedName)
+            // 保存原始值
+            if (rawName !== decodedName) {
+                (identifier as any).raw = '#' + rawName
+            }
+            return identifier
         }
 
         // 如果只有一个子节点，可能是直接的 IdentifierName
         if (cst.children && cst.children.length === 1) {
             const child = cst.children[0]
             if (child.value) {
-                const decodedName = decodeUnicodeEscapes(child.value as string)
-                return SlimeAstUtil.createIdentifier('#' + decodedName)
+                const rawName = child.value as string
+                const decodedName = decodeUnicodeEscapes(rawName)
+                const identifier = SlimeAstUtil.createIdentifier('#' + decodedName)
+                if (rawName !== decodedName) {
+                    (identifier as any).raw = '#' + rawName
+                }
+                return identifier
             }
         }
 
@@ -3651,6 +3751,16 @@ export class SlimeCstToAst {
             ch.name === 'ForBinding'
         )
 
+        // 检查是否是 ES5 遗留语法: for (var x = init in expr)
+        // CST 结构: [For, LParen, Var, BindingIdentifier, Initializer, In, Expression, RParen, Statement]
+        const varTokenCst = cst.children.find(ch => ch.name === 'Var' || ch.value === 'var')
+        const bindingIdCst = cst.children.find(ch =>
+            ch.name === SlimeParser.prototype.BindingIdentifier?.name || ch.name === 'BindingIdentifier'
+        )
+        const initializerCst = cst.children.find(ch =>
+            ch.name === SlimeParser.prototype.Initializer?.name || ch.name === 'Initializer'
+        )
+
         if (forDeclarationCst) {
             // ForDeclaration 内部是 LetOrConst + ForBinding
             const letOrConstCst = forDeclarationCst.children[0]
@@ -3684,6 +3794,31 @@ export class SlimeCstToAst {
                     loc: letOrConstCst.loc
                 },
                 loc: forDeclarationCst.loc
+            }
+        } else if (varTokenCst && bindingIdCst && initializerCst) {
+            // ES5 遗留语法: for (var x = init in expr) - 非严格模式下允许
+            const id = this.createBindingIdentifierAst(bindingIdCst)
+            const init = this.createInitializerAst(initializerCst)
+            left = {
+                type: SlimeNodeType.VariableDeclaration,
+                declarations: [{
+                    type: SlimeNodeType.VariableDeclarator,
+                    id: id,
+                    init: init,
+                    loc: {
+                        ...bindingIdCst.loc,
+                        end: initializerCst.loc.end
+                    }
+                }],
+                kind: {
+                    type: 'VariableDeclarationKind',
+                    value: 'var',
+                    loc: varTokenCst.loc
+                },
+                loc: {
+                    ...varTokenCst.loc,
+                    end: initializerCst.loc.end
+                }
             }
         } else if (leftHandSideCst) {
             left = this.createLeftHandSideExpressionAst(leftHandSideCst)
@@ -7052,6 +7187,20 @@ export class SlimeCstToAst {
      * 注意：这个方法处理 CST 节点，convertExpressionToPattern 处理 AST 节点
      */
     convertCstToPattern(cst: SubhutiCst): SlimePattern | null {
+        // 首先检查是否是 AssignmentExpression (默认参数 options = {})
+        // 这必须在 findInnerExpr 之前处理，否则会丢失 = 和默认值
+        if (cst.name === 'AssignmentExpression' || cst.name === SlimeParser.prototype.AssignmentExpression?.name) {
+            // 检查是否有 Assign token (=)
+            const hasAssign = cst.children?.some(ch => ch.name === 'Assign' || ch.value === '=')
+            if (hasAssign && cst.children && cst.children.length >= 3) {
+                // 这是默认参数: left = right
+                const expr = this.createAssignmentExpressionAst(cst)
+                if (expr.type === SlimeNodeType.AssignmentExpression) {
+                    return this.convertAssignmentExpressionToPattern(expr)
+                }
+            }
+        }
+
         // 递归查找最内层的表达式
         const findInnerExpr = (node: SubhutiCst): SubhutiCst => {
             if (!node.children || node.children.length === 0) return node

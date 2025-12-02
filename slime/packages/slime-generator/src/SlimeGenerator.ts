@@ -202,10 +202,42 @@ export default class SlimeGenerator {
 
         // source 总是需要
         this.generatorNode(node.source)
+
+        // ES2025 Import Attributes: with { type: "json" }
+        this.generatorAttributes((node as any).attributes)
+
         // 添加分号
         this.addCode(es6TokensObj.Semicolon)
         this.addNewLine()  // 阶段1：分号后换行
         // 注意：addIndent() 由 generatorNodes 根据是否是最后一个节点来决定
+    }
+
+    /** 生成 ES2025 Import Attributes: with { type: "json" } 或 with {} */
+    private static generatorAttributes(attrs: any[] | undefined) {
+        // 如果 attrs 是 undefined，不输出任何内容
+        // 如果 attrs 是空数组，输出 with {}
+        if (attrs === undefined) return
+
+        this.addSpacing()
+        this.addCode({type: 'With', name: 'With', value: 'with'})
+        this.addSpacing()
+        this.addLBrace()
+        attrs.forEach((attr: any, index: number) => {
+            if (index > 0) {
+                this.addComma()
+                this.addSpacing()
+            }
+            // key: Identifier 或 Literal
+            if (attr.key.type === SlimeNodeType.Identifier) {
+                this.generatorIdentifier(attr.key)
+            } else {
+                this.generatorNode(attr.key)
+            }
+            this.addCode(es6TokensObj.Colon)
+            this.addSpacing()
+            this.generatorNode(attr.value)
+        })
+        this.addRBrace()
     }
 
     private static generatorImportSpecifier(node: SlimeImportSpecifier) {
@@ -269,6 +301,10 @@ export default class SlimeGenerator {
                 this.addSpacing()
                 this.generatorNode(node.source)
             }
+
+            // ES2025 Import Attributes: with { type: "json" }
+            this.generatorAttributes((node as any).attributes)
+
             // 添加分号和换行
             this.addCode(es6TokensObj.Semicolon)
             this.addNewLine()
@@ -315,6 +351,10 @@ export default class SlimeGenerator {
         this.addCode(es6TokensObj.FromTok)
         this.addSpacing()
         this.generatorNode(node.source)
+
+        // ES2025 Import Attributes: with { type: "json" }
+        this.generatorAttributes(node.attributes)
+
         // 添加分号和换行
         this.addCode(es6TokensObj.Semicolon)
         this.addNewLine()
@@ -716,9 +756,9 @@ export default class SlimeGenerator {
         // value: 实际的标识符名称（动态内容）
         // 注意：这里使用 addCodeAndMappings()，需要 source map 映射，所以必须提供完整的 token 对象
 
-        // 优先使用 loc.value（保留原始值，包括 Unicode 转义序列）
-        // 如果不存在，则使用 node.name（解码后的值）
-        const identifierName = (node.loc as any)?.value || node.name || ''
+        // 优先级：1. node.raw（保留原始转义序列）2. loc.value 3. node.name
+        // 这确保 #\u{61} 不会被解码为 #a
+        const identifierName = (node as any).raw || (node.loc as any)?.value || node.name || ''
         if (!identifierName) {
             console.error('generatorIdentifier: node.name is undefined', JSON.stringify(node, null, 2))
         }
@@ -1756,9 +1796,17 @@ export default class SlimeGenerator {
         } else if (node.left.type === SlimeNodeType.VariableDeclaration) {
             this.addCode(es6TokenMapObj[node.left.kind.value.valueOf()])
             this.addSpacing()
-            // 只生成第一个声明的 id
+            // 生成第一个声明的 id
             if (node.left.declarations && node.left.declarations.length > 0) {
-                this.generatorNode(node.left.declarations[0].id)
+                const decl = node.left.declarations[0]
+                this.generatorNode(decl.id)
+                // ES5 遗留语法: for (var x = init in expr) - 非严格模式允许
+                if (decl.init) {
+                    this.addSpacing()
+                    this.addCode(es6TokensObj.Assign)
+                    this.addSpacing()
+                    this.generatorNode(decl.init)
+                }
             }
         } else {
             this.generatorNode(node.left)
