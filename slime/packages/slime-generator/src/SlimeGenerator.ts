@@ -152,13 +152,17 @@ export default class SlimeGenerator {
         this.addSpacing()
 
         if (node.specifiers && node.specifiers.length > 0) {
-            const hasDefault = node.specifiers.some((s: any) => s.type === SlimeNodeType.ImportDefaultSpecifier)
-            const hasNamed = node.specifiers.some((s: any) => s.type === SlimeNodeType.ImportSpecifier)
-            const hasNamespace = node.specifiers.some((s: any) => s.type === SlimeNodeType.ImportNamespaceSpecifier)
+            // 辅助函数：获取 specifier 的实际类型（处理包装和非包装两种情况）
+            const getSpecType = (s: any) => s.specifier?.type || s.type
+            const getSpec = (s: any) => s.specifier || s
+
+            const hasDefault = node.specifiers.some((s: any) => getSpecType(s) === SlimeNodeType.ImportDefaultSpecifier)
+            const hasNamed = node.specifiers.some((s: any) => getSpecType(s) === SlimeNodeType.ImportSpecifier)
+            const hasNamespace = node.specifiers.some((s: any) => getSpecType(s) === SlimeNodeType.ImportNamespaceSpecifier)
 
             if (hasDefault) {
-                const defaultSpec = node.specifiers.find((s: any) => s.type === SlimeNodeType.ImportDefaultSpecifier)
-                this.generatorNode(defaultSpec)
+                const defaultItem = node.specifiers.find((s: any) => getSpecType(s) === SlimeNodeType.ImportDefaultSpecifier)
+                this.generatorNode(getSpec(defaultItem))
                 if (hasNamed || hasNamespace) {
                     this.addComma()
                     this.addSpacing()
@@ -166,15 +170,15 @@ export default class SlimeGenerator {
             }
 
             if (hasNamespace) {
-                const nsSpec = node.specifiers.find((s: any) => s.type === SlimeNodeType.ImportNamespaceSpecifier)
-                this.generatorNode(nsSpec)
+                const nsItem = node.specifiers.find((s: any) => getSpecType(s) === SlimeNodeType.ImportNamespaceSpecifier)
+                this.generatorNode(getSpec(nsItem))
             } else if (hasNamed) {
                 // import {name, greet}
-                const namedSpecs = node.specifiers.filter((s: any) => s.type === SlimeNodeType.ImportSpecifier)
+                const namedItems = node.specifiers.filter((s: any) => getSpecType(s) === SlimeNodeType.ImportSpecifier)
                 this.addLBrace()
-                namedSpecs.forEach((specifier: any, index) => {
+                namedItems.forEach((item: any, index) => {
                     if (index > 0) this.addComma()
-                    this.generatorNode(specifier)
+                    this.generatorNode(getSpec(item))
                 })
                 this.addRBrace()
             }
@@ -272,14 +276,24 @@ export default class SlimeGenerator {
     }
 
     private static generatorExportAllDeclaration(node: any) {
-        // export * from './module.js'
+        // export * from './module.js' 或 export * as name from './module.js'
         this.addCode(es6TokensObj.ExportTok)
         this.addSpacing()
         this.addCode(es6TokensObj.Asterisk)
         this.addSpacing()
+        // 如果有导出名称，添加 as name
+        if (node.exported) {
+            this.addCode(es6TokensObj.AsTok)
+            this.addSpacing()
+            this.generatorNode(node.exported)
+            this.addSpacing()
+        }
         this.addCode(es6TokensObj.FromTok)
         this.addSpacing()
         this.generatorNode(node.source)
+        // 添加分号和换行
+        this.addCode(es6TokensObj.Semicolon)
+        this.addNewLine()
     }
 
 

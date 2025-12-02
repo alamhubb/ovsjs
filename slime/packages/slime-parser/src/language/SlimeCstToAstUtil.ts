@@ -337,21 +337,42 @@ export class SlimeCstToAst {
 
     createImportClauseAst(cst: SubhutiCst): Array<SlimeImportSpecifierItem> {
         let astName = checkCstName(cst, SlimeParser.prototype.ImportClause?.name);
+        const result: Array<SlimeImportSpecifierItem> = []
         const first = cst.children[0]
+
         if (first.name === SlimeParser.prototype.ImportedDefaultBinding?.name) {
+            // 默认导入
             const specifier = this.createImportedDefaultBindingAst(first)
             // 查找后面的逗号
             const commaCst = cst.children.find(ch => ch.name === 'Comma' || ch.value === ',')
             const commaToken = commaCst ? SlimeTokenCreate.createCommaToken(commaCst.loc) : undefined
-            return [SlimeAstUtil.createImportSpecifierItem(specifier, commaToken)]
+            result.push(SlimeAstUtil.createImportSpecifierItem(specifier, commaToken))
+
+            // 检查是否还有 NamedImports 或 NameSpaceImport（混合导入）
+            const namedImportsCst = cst.children.find(ch =>
+                ch.name === SlimeParser.prototype.NamedImports?.name || ch.name === 'NamedImports'
+            )
+            const namespaceImportCst = cst.children.find(ch =>
+                ch.name === SlimeParser.prototype.NameSpaceImport?.name || ch.name === 'NameSpaceImport'
+            )
+
+            if (namedImportsCst) {
+                const namedSpecs = this.createNamedImportsListAstWrapped(namedImportsCst)
+                result.push(...namedSpecs)
+            } else if (namespaceImportCst) {
+                result.push(SlimeAstUtil.createImportSpecifierItem(
+                    this.createNameSpaceImportSpecifierAst(namespaceImportCst), undefined
+                ))
+            }
         } else if (first.name === SlimeParser.prototype.NameSpaceImport?.name) {
             // import * as name from 'module'
-            return [SlimeAstUtil.createImportSpecifierItem(this.createNameSpaceImportSpecifierAst(first), undefined)]
+            result.push(SlimeAstUtil.createImportSpecifierItem(this.createNameSpaceImportSpecifierAst(first), undefined))
         } else if (first.name === SlimeParser.prototype.NamedImports?.name) {
             // import {name, greet} from 'module'
-            return this.createNamedImportsListAstWrapped(first)
+            result.push(...this.createNamedImportsListAstWrapped(first))
         }
-        return []
+
+        return result
     }
 
     createImportedDefaultBindingAst(cst: SubhutiCst): SlimeImportDefaultSpecifier {
@@ -843,7 +864,13 @@ export class SlimeCstToAst {
                 ) as any
             } else {
                 // export { ... } from ...
-                const specifiers = this.createNamedExportsAst(exportFromClause)
+                // exportFromClause 的结构是 [NamedExports]，需要从中提取 NamedExports
+                const namedExportsCst = exportFromClause.children?.find((ch: any) =>
+                    ch.name === SlimeParser.prototype.NamedExports?.name || ch.name === 'NamedExports'
+                )
+                const specifiers = namedExportsCst
+                    ? this.createNamedExportsAst(namedExportsCst)
+                    : []
                 return SlimeAstUtil.createExportNamedDeclaration(
                     null, specifiers, fromClauseResult.source, cst.loc,
                     exportToken, fromClauseResult.fromToken, semicolonToken
