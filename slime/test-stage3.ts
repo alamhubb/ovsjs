@@ -99,8 +99,8 @@ function testStage3(ctx: TestContext): TestResult {
 // 注：如需单独配置，可添加 startFrom 和 stopOnFail 参数覆盖通用配置
 runTests(testStage3, {
   stageName: '阶段3: 代码生成测试',
-  description: 'AST → JavaScript代码，比较输入/输出的 token 序列'
-  // startFrom: 100,      // 取消注释可覆盖通用配置
-  // stopOnFail: false,   // 取消注释可覆盖通用配置
+  description: 'AST → JavaScript代码，比较输入/输出的 token 序列',
+  startFrom: 2190,      // 取消注释可覆盖通用配置
+  stopOnFail: false,   // 取消注释可覆盖通用配置
 })
 
