@@ -30,7 +30,9 @@ function testStage1(ctx: TestContext): TestResult {
 runTests(testStage1, {
     stageName: '阶段1: CST生成测试',
     description: '词法分析 → 语法分析',
-    startFrom: 1990,      // 取消注释可覆盖通用配置
-    stopOnFail: false,   // 取消注释可覆盖通用配置
+    // 取消注释可覆盖通用配置
+    startFrom: 1990,
+    // 取消注释可覆盖通用配置
+    stopOnFail: true,
 })
 
