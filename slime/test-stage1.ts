@@ -8,7 +8,7 @@
  *   npx tsx slime/test-stage1.ts 100 -s       # 从第100个开始，遇错停止
  */
 import SlimeParser from './packages/slime-parser/src/language/es2025/SlimeParser'
-import { runTests, TestContext, TestResult } from './test-runner'
+import { runTests, TestContext, TestResult } from './test-framework'
 
 // 阶段1测试逻辑：解析代码生成 CST
 function testStage1(ctx: TestContext): TestResult {

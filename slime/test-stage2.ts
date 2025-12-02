@@ -10,7 +10,7 @@
  */
 import SlimeParser from './packages/slime-parser/src/language/es2025/SlimeParser'
 import { SlimeCstToAst } from './packages/slime-parser/src/language/SlimeCstToAstUtil'
-import { runTests, TestContext, TestResult } from './test-runner'
+import { runTests, TestContext, TestResult } from './test-framework'
 
 // ============================================
 // AST 验证工具

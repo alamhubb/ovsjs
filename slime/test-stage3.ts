@@ -13,7 +13,7 @@ import SlimeParser from './packages/slime-parser/src/language/es2025/SlimeParser
 import { SlimeCstToAst } from './packages/slime-parser/src/language/SlimeCstToAstUtil'
 import SlimeGenerator from './packages/slime-generator/src/SlimeGenerator'
 import SubhutiMatchToken from 'subhuti/src/struct/SubhutiMatchToken'
-import { runTests, TestContext, TestResult } from './test-runner'
+import { runTests, TestContext, TestResult } from './test-framework'
 
 // ============================================
 // Token 比较工具
