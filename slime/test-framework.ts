@@ -180,11 +180,11 @@ export function shouldSkipTest(testName: string, testDir: string): SkipResult {
   if (isExpectedToThrow(testDir)) return { skip: true, reason: '期望抛出错误' }
   const dirName = path.basename(testDir)
   if (dirName.startsWith('invalid')) return { skip: true, reason: 'invalid 用例，期望解析失败' }
-  if (testName.includes('await') && testName.includes('static-block') && testName.includes('initializer'))
-    return { skip: true, reason: 'await 边缘情况' }
-  if (testName.includes('accessor')) return { skip: true, reason: 'accessor 提案，暂不支持' }
-  if (testName.includes('typescript')) return { skip: true, reason: 'TypeScript 语法，暂不支持' }
-  if (testName.includes('nested-cover-grammar')) return { skip: true, reason: '深度嵌套，性能边缘情况' }
+  // if (testName.includes('await') && testName.includes('static-block') && testName.includes('initializer'))
+  //   return { skip: true, reason: 'await 边缘情况' }
+  // if (testName.includes('accessor')) return { skip: true, reason: 'accessor 提案，暂不支持' }
+  // if (testName.includes('typescript')) return { skip: true, reason: 'TypeScript 语法，暂不支持' }
+  // if (testName.includes('nested-cover-grammar')) return { skip: true, reason: '深度嵌套，性能边缘情况' }
   return { skip: false }
 }
 
