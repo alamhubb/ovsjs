@@ -1711,31 +1711,52 @@ export class SlimeCstToAst {
         }
 
         const params: SlimePattern[] = []
-        const firstChild = cst.children[0]
 
-        // FormalParameterList有两种情况：
-        // 1. FunctionRestParameter - 只有rest参数
-        // 2. FormalParameterListFormalsList - 包含普通参数列表和可选rest参数
+        for (const child of cst.children) {
+            const name = child.name
 
-        if (firstChild.name === 'FunctionRestParameter') {
-            // 情况1: 只有rest参数 (...args)
-            const restElement = this.createBindingRestElementAst(firstChild.children[0])
-            params.push(restElement)
-        } else if (firstChild.name === 'FormalParameterListFormalsList') {
-            // 情况2: 普通参数列表 + 可选rest参数
-            // FormalParameterListFormalsList包含: FormalsList [, FunctionRestParameter]
-            for (const child of firstChild.children) {
-                if (child.name === 'FormalsList') {
-                    // 处理普通参数列表
-                    params.push(...this.createFormalsListAst(child))
-                } else if (child.name === 'CommaFunctionRestParameter') {
-                    // 处理结尾的rest参数
-                    const functionRestParam = child.children.find((c: any) => c.name === 'FunctionRestParameter')
-                    if (functionRestParam) {
-                        const restElement = this.createBindingRestElementAst(functionRestParam.children[0])
-                        params.push(restElement)
+            // FunctionRestParameter - rest参数
+            if (name === 'FunctionRestParameter' || name === SlimeParser.prototype.FunctionRestParameter?.name) {
+                params.push(this.createFunctionRestParameterAst(child))
+                continue
+            }
+
+            // FormalParameterListFormalsList - 包含普通参数列表和可选rest参数
+            if (name === 'FormalParameterListFormalsList') {
+                for (const subChild of child.children) {
+                    if (subChild.name === 'FormalsList') {
+                        params.push(...this.createFormalsListAst(subChild))
+                    } else if (subChild.name === 'CommaFunctionRestParameter') {
+                        const functionRestParam = subChild.children.find((c: any) => c.name === 'FunctionRestParameter')
+                        if (functionRestParam) {
+                            params.push(this.createFunctionRestParameterAst(functionRestParam))
+                        }
                     }
                 }
+                continue
+            }
+
+            // FormalParameter - 直接的参数
+            if (name === 'FormalParameter' || name === SlimeParser.prototype.FormalParameter?.name) {
+                params.push(this.createFormalParameterAst(child))
+                continue
+            }
+
+            // BindingElement
+            if (name === 'BindingElement' || name === SlimeParser.prototype.BindingElement?.name) {
+                params.push(this.createBindingElementAst(child))
+                continue
+            }
+
+            // BindingIdentifier
+            if (name === 'BindingIdentifier' || name === SlimeParser.prototype.BindingIdentifier?.name) {
+                params.push(this.createBindingIdentifierAst(child))
+                continue
+            }
+
+            // 跳过逗号
+            if (child.value === ',') {
+                continue
             }
         }
 
@@ -1818,9 +1839,32 @@ export class SlimeCstToAst {
 
         if (first.name === SlimeParser.prototype.SingleNameBinding?.name) {
             return this.createSingleNameBindingAst(first)
-        } else if (first.name === SlimeParser.prototype.BindingPattern?.name) {
+        } else if (first.name === SlimeParser.prototype.BindingPattern?.name ||
+                   first.name === SlimeParser.prototype.ArrayBindingPattern?.name ||
+                   first.name === SlimeParser.prototype.ObjectBindingPattern?.name) {
             // 解构参数：function({name, age}) 或 function([a, b])
-            return this.createBindingPatternAst(first)
+            // 检查是否有 Initializer（默认值）
+            const initializer = cst.children.find(ch => ch.name === SlimeParser.prototype.Initializer?.name || ch.name === 'Initializer')
+            let pattern: SlimePattern
+            if (first.name === SlimeParser.prototype.BindingPattern?.name) {
+                pattern = this.createBindingPatternAst(first)
+            } else if (first.name === SlimeParser.prototype.ArrayBindingPattern?.name) {
+                pattern = this.createArrayBindingPatternAst(first)
+            } else {
+                pattern = this.createObjectBindingPatternAst(first)
+            }
+
+            if (initializer) {
+                // 有默认值，创建 AssignmentPattern
+                const init = this.createInitializerAst(initializer)
+                return {
+                    type: SlimeNodeType.AssignmentPattern,
+                    left: pattern,
+                    right: init,
+                    loc: cst.loc
+                }
+            }
+            return pattern
         }
         return this.createSingleNameBindingAst(first)
     }
@@ -2320,6 +2364,7 @@ export class SlimeCstToAst {
 
         const classElementNameCst = children[i++]
         const key = this.createClassElementNameOrPropertyNameAst(classElementNameCst)
+        const isComputed = this.isComputedPropertyName(classElementNameCst)
 
         // 跳过 LParen, RParen, LBrace
         while (i < children.length && ['LParen', 'RParen', 'LBrace'].includes(children[i]?.name)) i++
@@ -2340,6 +2385,7 @@ export class SlimeCstToAst {
             body: body
         } as any)
         methodDef.kind = 'get'
+        methodDef.computed = isComputed
 
         if (this.isStaticModifier(staticCst)) {
             methodDef.static = true
@@ -2358,6 +2404,7 @@ export class SlimeCstToAst {
 
         const classElementNameCst = children[i++]
         const key = this.createClassElementNameOrPropertyNameAst(classElementNameCst)
+        const isComputed = this.isComputedPropertyName(classElementNameCst)
 
         // 跳过 LParen
         if (children[i]?.name === 'LParen') i++
@@ -2388,6 +2435,7 @@ export class SlimeCstToAst {
             body: body
         } as any)
         methodDef.kind = 'set'
+        methodDef.computed = isComputed
 
         if (this.isStaticModifier(staticCst)) {
             methodDef.static = true
@@ -2406,6 +2454,7 @@ export class SlimeCstToAst {
 
         const classElementNameCst = children[i++]
         const key = this.createClassElementNameOrPropertyNameAst(classElementNameCst)
+        const isComputed = this.isComputedPropertyName(classElementNameCst)
 
         // 跳过 LParen, RParen
         while (i < children.length && ['LParen', 'RParen'].includes(children[i]?.name)) i++
@@ -2429,6 +2478,7 @@ export class SlimeCstToAst {
             body: body
         } as any)
         methodDef.kind = 'get'
+        methodDef.computed = isComputed
 
         if (this.isStaticModifier(staticCst)) {
             methodDef.static = true
@@ -2447,6 +2497,7 @@ export class SlimeCstToAst {
 
         const classElementNameCst = children[i++]
         const key = this.createClassElementNameOrPropertyNameAst(classElementNameCst)
+        const isComputed = this.isComputedPropertyName(classElementNameCst)
 
         // 跳过 LParen
         if (children[i]?.name === 'LParen') i++
@@ -2481,6 +2532,7 @@ export class SlimeCstToAst {
             body: body
         } as any)
         methodDef.kind = 'set'
+        methodDef.computed = isComputed
 
         if (this.isStaticModifier(staticCst)) {
             methodDef.static = true
@@ -2499,6 +2551,7 @@ export class SlimeCstToAst {
 
         const classElementNameCst = children[i++]
         const key = this.createClassElementNameOrPropertyNameAst(classElementNameCst)
+        const isComputed = this.isComputedPropertyName(classElementNameCst)
 
         // 跳过 LParen
         if (children[i]?.name === 'LParen') i++
@@ -2535,6 +2588,7 @@ export class SlimeCstToAst {
 
         const methodDef = SlimeAstUtil.createMethodDefinition(key, functionExpression)
         methodDef.kind = 'method'
+        methodDef.computed = isComputed
 
         if (this.isStaticModifier(staticCst)) {
             methodDef.static = true
@@ -2558,6 +2612,7 @@ export class SlimeCstToAst {
 
         const classElementNameCst = children[i++]
         const key = this.createClassElementNameOrPropertyNameAst(classElementNameCst)
+        const isComputed = this.isComputedPropertyName(classElementNameCst)
 
         // 跳过 LParen
         if (children[i]?.name === 'LParen') i++
@@ -2594,6 +2649,7 @@ export class SlimeCstToAst {
 
         const methodDef = SlimeAstUtil.createMethodDefinition(key, functionExpression)
         methodDef.kind = 'method'
+        methodDef.computed = isComputed
 
         if (this.isStaticModifier(staticCst)) {
             methodDef.static = true
@@ -2621,6 +2677,7 @@ export class SlimeCstToAst {
 
         const classElementNameCst = children[i++]
         const key = this.createClassElementNameOrPropertyNameAst(classElementNameCst)
+        const isComputed = this.isComputedPropertyName(classElementNameCst)
 
         // 跳过 LParen
         if (children[i]?.name === 'LParen') i++
@@ -2657,6 +2714,7 @@ export class SlimeCstToAst {
 
         const methodDef = SlimeAstUtil.createMethodDefinition(key, functionExpression)
         methodDef.kind = 'method'
+        methodDef.computed = isComputed
 
         if (this.isStaticModifier(staticCst)) {
             methodDef.static = true
@@ -2900,6 +2958,7 @@ export class SlimeCstToAst {
                         if (propName && bindingElement) {
                             const key = this.createPropertyNameAst(propName)
                             const value = this.createBindingElementAst(bindingElement)
+                            const isComputed = this.isComputedPropertyName(propName)
 
                             properties.push({
                                 property: {
@@ -2907,7 +2966,7 @@ export class SlimeCstToAst {
                                     key: key,
                                     value: value,
                                     kind: 'init',
-                                    computed: false,
+                                    computed: isComputed,
                                     shorthand: false,
                                     loc: child.loc
                                 } as SlimeAssignmentProperty
@@ -3050,13 +3109,47 @@ export class SlimeCstToAst {
             return []
         }
 
-        const first = cst.children[0]
-        if (first.name === SlimeParser.prototype.FormalParameterList?.name || first.name === 'FormalParameterList') {
-            return this.createFormalParameterListAst(first)
+        const params: SlimePattern[] = []
+
+        for (const child of cst.children) {
+            const name = child.name
+
+            // FormalParameterList
+            if (name === SlimeParser.prototype.FormalParameterList?.name || name === 'FormalParameterList') {
+                return this.createFormalParameterListAst(child)
+            }
+
+            // FormalParameter
+            if (name === SlimeParser.prototype.FormalParameter?.name || name === 'FormalParameter') {
+                params.push(this.createFormalParameterAst(child))
+                continue
+            }
+
+            // BindingIdentifier - 直接作为参数
+            if (name === SlimeParser.prototype.BindingIdentifier?.name || name === 'BindingIdentifier') {
+                params.push(this.createBindingIdentifierAst(child))
+                continue
+            }
+
+            // BindingElement
+            if (name === SlimeParser.prototype.BindingElement?.name || name === 'BindingElement') {
+                params.push(this.createBindingElementAst(child))
+                continue
+            }
+
+            // FunctionRestParameter
+            if (name === SlimeParser.prototype.FunctionRestParameter?.name || name === 'FunctionRestParameter') {
+                params.push(this.createFunctionRestParameterAst(child))
+                continue
+            }
+
+            // 跳过逗号和括号
+            if (child.value === ',' || child.value === '(' || child.value === ')') {
+                continue
+            }
         }
 
-        // 尝试直接处理为参数列表
-        return this.createFormalParameterListAst(cst)
+        return params
     }
 
 
@@ -5936,27 +6029,31 @@ export class SlimeCstToAst {
         }
     }
 
-    // 处理TemplateMiddleList：递归处理多个TemplateMiddle+Expression
+    // 处理TemplateMiddleList：处理多个TemplateMiddle+Expression对
     processTemplateMiddleList(cst: SubhutiCst, quasis: any[], expressions: SlimeExpression[]): void {
-        // TemplateMiddleList结构：
+        // TemplateMiddleList结构（Es2025）：
+        // - children = [TemplateMiddle, Expression, TemplateMiddle, Expression, ...]
+        // 或者递归结构：
         // - children[0] = TemplateMiddle (token)
         // - children[1] = Expression
         // - children[2] = TemplateMiddleList (递归，可选)
 
-        if (cst.children[0] && cst.children[0].name === SlimeTokenConsumer.prototype.TemplateMiddle?.name) {
-            const middle = cst.children[0]
-            const raw = middle.value || ''
-            const cooked = raw.slice(1, -2) // 去掉 } 和 ${
-            quasis.push(SlimeAstUtil.createTemplateElement(false, raw, cooked, middle.loc))
-        }
+        for (let i = 0; i < cst.children.length; i++) {
+            const child = cst.children[i]
 
-        if (cst.children[1] && cst.children[1].name === SlimeParser.prototype.Expression?.name) {
-            expressions.push(this.createExpressionAst(cst.children[1]))
-        }
-
-        // 递归处理下一个TemplateMiddleList
-        if (cst.children[2] && cst.children[2].name === SlimeParser.prototype.TemplateMiddleList?.name) {
-            this.processTemplateMiddleList(cst.children[2], quasis, expressions)
+            if (child.name === SlimeTokenConsumer.prototype.TemplateMiddle?.name ||
+                child.name === 'TemplateMiddle') {
+                const raw = child.value || ''
+                const cooked = raw.slice(1, -2) // 去掉 } 和 ${
+                quasis.push(SlimeAstUtil.createTemplateElement(false, raw, cooked, child.loc))
+            } else if (child.name === SlimeParser.prototype.Expression?.name ||
+                       child.name === 'Expression') {
+                expressions.push(this.createExpressionAst(child))
+            } else if (child.name === SlimeParser.prototype.TemplateMiddleList?.name ||
+                       child.name === 'TemplateMiddleList') {
+                // 递归处理嵌套的 TemplateMiddleList
+                this.processTemplateMiddleList(child, quasis, expressions)
+            }
         }
     }
 
@@ -6079,6 +6176,14 @@ export class SlimeCstToAst {
             // 继承MethodDefinition的computed标志
             if (SlimeMethodDefinition.computed) {
                 keyAst.computed = true
+            }
+
+            // 继承MethodDefinition的kind标志（getter/setter/method）
+            if (SlimeMethodDefinition.kind === 'get' || SlimeMethodDefinition.kind === 'set') {
+                keyAst.kind = SlimeMethodDefinition.kind
+            } else {
+                // 普通方法使用 method: true
+                keyAst.method = true
             }
 
             return keyAst
@@ -6547,9 +6652,25 @@ export class SlimeCstToAst {
                 commaToken: commaTokens[i] // 为每个参数关联逗号 token（最后一个参数无逗号）
             }))
         } else if (arrowParametersCst.name === SlimeParser.prototype.ArrowParameters?.name) {
-            // 旧版：使用ArrowParameters规则
+            // ArrowParameters 规则：其子节点可能是 CoverParenthesizedExpressionAndArrowParameterList 或 BindingIdentifier
+            const firstChild = arrowParametersCst.children?.[0]
+            if (firstChild?.name === SlimeParser.prototype.CoverParenthesizedExpressionAndArrowParameterList?.name) {
+                // 从 CoverParenthesizedExpressionAndArrowParameterList 提取括号 tokens
+                for (const child of firstChild.children || []) {
+                    if (child.name === 'LParen' || child.value === '(') {
+                        lParenToken = SlimeTokenCreate.createLParenToken(child.loc)
+                    } else if (child.name === 'RParen' || child.value === ')') {
+                        rParenToken = SlimeTokenCreate.createRParenToken(child.loc)
+                    } else if (child.name === 'Comma' || child.value === ',') {
+                        commaTokens.push(SlimeTokenCreate.createCommaToken(child.loc))
+                    }
+                }
+            }
             const rawParams = this.createArrowParametersAst(arrowParametersCst)
-            params = rawParams.map(p => ({ param: p }))
+            params = rawParams.map((p, i) => ({
+                param: p,
+                commaToken: commaTokens[i] // 为每个参数关联逗号 token（最后一个参数无逗号）
+            }))
         } else {
             throw new Error(`createArrowFunctionAst: 不支持的参数类型 ${arrowParametersCst.name}`)
         }
@@ -6763,11 +6884,12 @@ export class SlimeCstToAst {
             params.push(...this.extractParametersFromExpression(expressionCst))
         }
 
-        // 检查是否有 rest 参数（Ellipsis + BindingIdentifier）
+        // 检查是否有 rest 参数（Ellipsis + BindingIdentifier 或 BindingPattern）
         const hasEllipsis = cst.children.some(
             child => child.name === 'Ellipsis' || child.name === 'Ellipsis'
         )
         if (hasEllipsis) {
+            // 首先查找 BindingIdentifier
             const bindingIdentifierCst = cst.children.find(
                 child => child.name === SlimeParser.prototype.BindingIdentifier?.name
             )
@@ -6776,6 +6898,32 @@ export class SlimeCstToAst {
                     type: SlimeNodeType.RestElement,
                     argument: this.createBindingIdentifierAst(bindingIdentifierCst)
                 } as any)
+            } else {
+                // 查找 BindingPattern（解构模式）
+                const bindingPatternCst = cst.children.find(
+                    child => child.name === SlimeParser.prototype.BindingPattern?.name ||
+                             child.name === 'BindingPattern' ||
+                             child.name === SlimeParser.prototype.ArrayBindingPattern?.name ||
+                             child.name === 'ArrayBindingPattern' ||
+                             child.name === SlimeParser.prototype.ObjectBindingPattern?.name ||
+                             child.name === 'ObjectBindingPattern'
+                )
+                if (bindingPatternCst) {
+                    let pattern: SlimePattern
+                    if (bindingPatternCst.name === SlimeParser.prototype.BindingPattern?.name ||
+                        bindingPatternCst.name === 'BindingPattern') {
+                        pattern = this.createBindingPatternAst(bindingPatternCst)
+                    } else if (bindingPatternCst.name === SlimeParser.prototype.ArrayBindingPattern?.name ||
+                               bindingPatternCst.name === 'ArrayBindingPattern') {
+                        pattern = this.createArrayBindingPatternAst(bindingPatternCst)
+                    } else {
+                        pattern = this.createObjectBindingPatternAst(bindingPatternCst)
+                    }
+                    params.push({
+                        type: SlimeNodeType.RestElement,
+                        argument: pattern
+                    } as any)
+                }
             }
         } else if (params.length === 0) {
             // 没有 Expression 也没有 rest，检查是否有单独的 BindingIdentifier
@@ -6836,6 +6984,14 @@ export class SlimeCstToAst {
                             left: assignmentAst.left,
                             right: assignmentAst.right
                         } as any)
+                    } else if (assignmentAst.type === SlimeNodeType.ObjectExpression) {
+                        // 对象解构参数：({ a, b }) => ...
+                        // 需要将 ObjectExpression 转换为 ObjectPattern
+                        params.push(this.convertExpressionToPattern(assignmentAst) as any)
+                    } else if (assignmentAst.type === SlimeNodeType.ArrayExpression) {
+                        // 数组解构参数：([a, b]) => ...
+                        // 需要将 ArrayExpression 转换为 ArrayPattern
+                        params.push(this.convertExpressionToPattern(assignmentAst) as any)
                     } else {
                         // 其他复杂情况，尝试提取identifier
                         const identifier = this.findFirstIdentifierInExpression(child)
@@ -6874,6 +7030,114 @@ export class SlimeCstToAst {
             }
         }
         return null
+    }
+
+    /**
+     * 将表达式转换为模式（用于箭头函数参数解构）
+     * ObjectExpression -> ObjectPattern
+     * ArrayExpression -> ArrayPattern
+     * Identifier -> Identifier
+     * SpreadElement -> RestElement
+     */
+    convertExpressionToPattern(expr: any): SlimePattern {
+        if (!expr) return expr
+
+        if (expr.type === SlimeNodeType.Identifier) {
+            return expr
+        }
+
+        if (expr.type === SlimeNodeType.ObjectExpression) {
+            // 将 ObjectExpression 转换为 ObjectPattern
+            const properties: any[] = []
+            for (const item of expr.properties || []) {
+                const prop = item.property !== undefined ? item.property : item
+                if (prop.type === SlimeNodeType.SpreadElement) {
+                    // SpreadElement -> RestElement
+                    properties.push({
+                        property: {
+                            type: SlimeNodeType.RestElement,
+                            argument: this.convertExpressionToPattern(prop.argument),
+                            loc: prop.loc
+                        },
+                        commaToken: item.commaToken
+                    })
+                } else if (prop.type === SlimeNodeType.Property) {
+                    // 转换 Property 的 value
+                    const convertedValue = this.convertExpressionToPattern(prop.value)
+                    properties.push({
+                        property: {
+                            ...prop,
+                            value: convertedValue
+                        },
+                        commaToken: item.commaToken
+                    })
+                } else {
+                    properties.push(item)
+                }
+            }
+            return {
+                type: SlimeNodeType.ObjectPattern,
+                properties: properties,
+                loc: expr.loc,
+                lBraceToken: expr.lBraceToken,
+                rBraceToken: expr.rBraceToken
+            } as any
+        }
+
+        if (expr.type === SlimeNodeType.ArrayExpression) {
+            // 将 ArrayExpression 转换为 ArrayPattern
+            const elements: any[] = []
+            for (const item of expr.elements || []) {
+                const elem = item.element !== undefined ? item.element : item
+                if (elem === null) {
+                    elements.push(item)
+                } else if (elem.type === SlimeNodeType.SpreadElement) {
+                    // SpreadElement -> RestElement
+                    elements.push({
+                        element: {
+                            type: SlimeNodeType.RestElement,
+                            argument: this.convertExpressionToPattern(elem.argument),
+                            loc: elem.loc
+                        },
+                        commaToken: item.commaToken
+                    })
+                } else {
+                    elements.push({
+                        element: this.convertExpressionToPattern(elem),
+                        commaToken: item.commaToken
+                    })
+                }
+            }
+            return {
+                type: SlimeNodeType.ArrayPattern,
+                elements: elements,
+                loc: expr.loc,
+                lBracketToken: expr.lBracketToken,
+                rBracketToken: expr.rBracketToken
+            } as any
+        }
+
+        if (expr.type === SlimeNodeType.AssignmentExpression) {
+            // 将 AssignmentExpression 转换为 AssignmentPattern
+            return {
+                type: SlimeNodeType.AssignmentPattern,
+                left: this.convertExpressionToPattern(expr.left),
+                right: expr.right,
+                loc: expr.loc
+            } as any
+        }
+
+        if (expr.type === SlimeNodeType.SpreadElement) {
+            // SpreadElement -> RestElement
+            return {
+                type: SlimeNodeType.RestElement,
+                argument: this.convertExpressionToPattern(expr.argument),
+                loc: expr.loc
+            } as any
+        }
+
+        // 其他类型直接返回
+        return expr
     }
 
     /**
