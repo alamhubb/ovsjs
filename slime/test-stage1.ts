@@ -12,7 +12,7 @@ import {runTests, TestContext, TestResult} from './test-framework'
 
 // 阶段1测试逻辑：解析代码生成 CST
 function testStage1(ctx: TestContext): TestResult {
-    const parser = new SlimeParser(ctx.code).debug(false)
+    const parser = new SlimeParser(ctx.code)
     const cst = parser.Program(ctx.parseMode)
 
     if (!cst) {
@@ -30,7 +30,7 @@ function testStage1(ctx: TestContext): TestResult {
 runTests(testStage1, {
     stageName: '阶段1: CST生成测试',
     description: '词法分析 → 语法分析',
-    startFrom: 2052,
+    startFrom: 1800,
     stopOnFail: true,
 })
 
