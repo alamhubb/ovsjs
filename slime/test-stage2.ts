@@ -112,7 +112,7 @@ function testStage2(ctx: TestContext): TestResult {
 runTests(testStage2, {
   stageName: '阶段2: AST生成测试',
   description: 'CST → AST 转换，验证 AST 结构完整性',
-    startFrom: 1,
+    startFrom: 2192,
     stopOnFail: true,
 })
 
