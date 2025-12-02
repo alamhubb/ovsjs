@@ -4311,11 +4311,21 @@ export default class SlimeParser extends SubhutiParser<SlimeTokenConsumer> {
     /**
      * FieldDefinition[Yield, Await] :
      *     ClassElementName[?Yield, ?Await] Initializer[+In, ?Yield, ?Await]_opt
+     *
+     * 注意：根据 ECMAScript 规范的静态语义（Early Errors），
+     * 类字段的 Initializer 中不能使用 await 作为 AwaitExpression。
+     * 这是因为字段初始化器在类实例化时执行，而不是在声明时执行。
+     * 所以这里将 Initializer 的 Await 参数设为 false，
+     * 使得 await 可以作为标识符使用。Yield 同理。
+     *
+     * 但是 ClassElementName（包括 ComputedPropertyName）继承外部的 Await 参数，
+     * 因为计算属性名在类声明时求值，此时外部的 await 上下文是有效的。
      */
     @SubhutiRule
     FieldDefinition(params: ExpressionParams = {}): SubhutiCst | undefined {
         this.ClassElementName(params)
-        this.Option(() => this.Initializer({...params, In: true}))
+        // Initializer 中的 await/yield 不能作为表达式使用，只能作为标识符
+        this.Option(() => this.Initializer({...params, In: true, Yield: false, Await: false}))
         return this.curCst
     }
 
