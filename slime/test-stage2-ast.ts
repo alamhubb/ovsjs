@@ -19,6 +19,8 @@ import {
 } from './test-utils'
 
 // 使用 Babel 测试目录
+// const casesDir = path.join(__dirname, 'tests/cases')
+// const casesDir = path.join(__dirname, 'tests/es6rules')
 const casesDir = path.join(__dirname, 'tests/babel')
 const files = getAllJsFiles(casesDir).sort()
 
