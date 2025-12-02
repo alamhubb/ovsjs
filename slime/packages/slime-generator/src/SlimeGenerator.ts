@@ -403,6 +403,12 @@ export default class SlimeGenerator {
         }
 
         this.addCodeAndMappings(es6TokensObj.FunctionTok, node.loc)
+
+        // 如果是生成器函数，输出*
+        if (node.generator) {
+            this.addCode(es6TokensObj.Asterisk)
+        }
+
         if (node.id) {
             this.addSpacing()
             this.generatorNode(node.id)
@@ -834,6 +840,9 @@ export default class SlimeGenerator {
             this.addSpacing()
             this.generatorNode(node.value)
         }
+
+        // 添加分号
+        this.addCode(es6TokensObj.Semicolon)
     }
 
     private static generatorNewExpression(node: any) {
@@ -1631,6 +1640,13 @@ export default class SlimeGenerator {
      */
     private static generatorForInOfStatement(node: any) {
         this.addCode(es6TokensObj.ForTok)
+
+        // 如果是 for await...of，输出 await
+        if (node.await) {
+            this.addSpacing()
+            this.addCode(es6TokensObj.AwaitTok)
+        }
+
         this.addSpacing()
         this.addCode(es6TokensObj.LParen)
 
