@@ -7147,26 +7147,10 @@ export class SlimeCstToAst {
                                 hasEllipsis = true
                                 continue
                             }
-                            if (arg.name === 'AssignmentExpression' || arg.name === SlimeParser.prototype.AssignmentExpression?.name) {
-                                // 将表达式转换为参数（cover grammar）
-                                const param = this.convertCstToPattern(arg)
-                                if (param) {
-                                    if (hasEllipsis) {
-                                        // 创建 RestElement
-                                        params.push(SlimeAstUtil.createRestElement(param))
-                                        hasEllipsis = false
-                                    } else {
-                                        params.push(param)
-                                    }
-                                }
-                            } else if (arg.name === SlimeParser.prototype.BindingIdentifier?.name || arg.name === 'BindingIdentifier') {
-                                const param = this.createBindingIdentifierAst(arg)
-                                if (hasEllipsis) {
-                                    params.push(SlimeAstUtil.createRestElement(param))
-                                    hasEllipsis = false
-                                } else {
-                                    params.push(param)
-                                }
+                            const param = this.convertCoverParameterCstToPattern(arg, hasEllipsis)
+                            if (param) {
+                                params.push(param)
+                                hasEllipsis = false
                             }
                         }
                     }
@@ -7252,6 +7236,48 @@ export class SlimeCstToAst {
         // 如果仍然无法转换，返回 null（不要返回原始 CST）
         return null
     }
+
+    /**
+     * Cover 语法下，将单个参数相关的 CST 节点转换为 Pattern
+     * 仅在“参数位置”调用，用于 Arrow / AsyncArrow 等场景
+     */
+    convertCoverParameterCstToPattern(cst: SubhutiCst, hasEllipsis: boolean): SlimePattern | null {
+        let basePattern: SlimePattern | null = null
+
+        // 1. 已经是 BindingIdentifier / BindingPattern 系列的，直接走绑定模式基础方法
+        if (cst.name === SlimeParser.prototype.BindingIdentifier?.name || cst.name === 'BindingIdentifier') {
+            basePattern = this.createBindingIdentifierAst(cst)
+        } else if (cst.name === SlimeParser.prototype.BindingPattern?.name || cst.name === 'BindingPattern') {
+            basePattern = this.createBindingPatternAst(cst)
+        } else if (cst.name === SlimeParser.prototype.ArrayBindingPattern?.name || cst.name === 'ArrayBindingPattern') {
+            basePattern = this.createArrayBindingPatternAst(cst)
+        } else if (cst.name === SlimeParser.prototype.ObjectBindingPattern?.name || cst.name === 'ObjectBindingPattern') {
+            basePattern = this.createObjectBindingPatternAst(cst)
+        }
+
+        // 2. 其它情况（AssignmentExpression / ObjectLiteral / ArrayLiteral 等），使用通用的 CST→Pattern 逻辑
+        if (!basePattern) {
+            basePattern = this.convertCstToPattern(cst)
+        }
+
+        // 3. 兼容兜底：仍然无法转换时，尝试从表达式中提取第一个 Identifier
+        if (!basePattern) {
+            const identifierCst = this.findFirstIdentifierInExpression(cst)
+            if (identifierCst) {
+                basePattern = this.createIdentifierAst(identifierCst) as any
+            }
+        }
+
+        if (!basePattern) return null
+
+        // 4. 处理 rest 参数：根据调用方传入的 hasEllipsis 决定是否包装为 RestElement
+        if (hasEllipsis) {
+            return SlimeAstUtil.createRestElement(basePattern)
+        }
+
+        return basePattern
+    }
+
 
     /**
      * 将 ObjectLiteral CST 转换为 ObjectPattern
@@ -7569,9 +7595,15 @@ export class SlimeCstToAst {
         const expressionCst = cst.children.find(
             child => child.name === SlimeParser.prototype.Expression?.name
         )
-        if (expressionCst) {
-            // 从Expression中提取参数列表
-            params.push(...this.extractParametersFromExpression(expressionCst))
+        if (expressionCst && expressionCst.children?.length) {
+            // 直接在 Expression 的 children 上遍历 AssignmentExpression 等候选参数节点
+            for (const child of expressionCst.children) {
+                if (child.name === 'Comma' || child.value === ',') continue
+                const param = this.convertCoverParameterCstToPattern(child, false)
+                if (param) {
+                    params.push(param)
+                }
+            }
         }
 
         // 检查是否有 rest 参数（Ellipsis + BindingIdentifier 或 BindingPattern）
@@ -7579,18 +7611,13 @@ export class SlimeCstToAst {
             child => child.name === 'Ellipsis' || child.name === 'Ellipsis'
         )
         if (hasEllipsis) {
-            // 首先查找 BindingIdentifier
+            // 首先查找 BindingIdentifier / BindingPattern 作为 rest 的目标
             const bindingIdentifierCst = cst.children.find(
-                child => child.name === SlimeParser.prototype.BindingIdentifier?.name
+                child => child.name === SlimeParser.prototype.BindingIdentifier?.name || child.name === 'BindingIdentifier'
             )
-            if (bindingIdentifierCst) {
-                params.push({
-                    type: SlimeNodeType.RestElement,
-                    argument: this.createBindingIdentifierAst(bindingIdentifierCst)
-                } as any)
-            } else {
-                // 查找 BindingPattern（解构模式）
-                const bindingPatternCst = cst.children.find(
+            const bindingPatternCst = bindingIdentifierCst
+                ? null
+                : cst.children.find(
                     child => child.name === SlimeParser.prototype.BindingPattern?.name ||
                              child.name === 'BindingPattern' ||
                              child.name === SlimeParser.prototype.ArrayBindingPattern?.name ||
@@ -7598,27 +7625,18 @@ export class SlimeCstToAst {
                              child.name === SlimeParser.prototype.ObjectBindingPattern?.name ||
                              child.name === 'ObjectBindingPattern'
                 )
-                if (bindingPatternCst) {
-                    let pattern: SlimePattern
-                    if (bindingPatternCst.name === SlimeParser.prototype.BindingPattern?.name ||
-                        bindingPatternCst.name === 'BindingPattern') {
-                        pattern = this.createBindingPatternAst(bindingPatternCst)
-                    } else if (bindingPatternCst.name === SlimeParser.prototype.ArrayBindingPattern?.name ||
-                               bindingPatternCst.name === 'ArrayBindingPattern') {
-                        pattern = this.createArrayBindingPatternAst(bindingPatternCst)
-                    } else {
-                        pattern = this.createObjectBindingPatternAst(bindingPatternCst)
-                    }
-                    params.push({
-                        type: SlimeNodeType.RestElement,
-                        argument: pattern
-                    } as any)
+
+            const restTarget = bindingIdentifierCst || bindingPatternCst
+            if (restTarget) {
+                const restParam = this.convertCoverParameterCstToPattern(restTarget, true)
+                if (restParam) {
+                    params.push(restParam)
                 }
             }
         } else if (params.length === 0) {
             // 没有 Expression 也没有 rest，检查是否有单独的 BindingIdentifier
             const bindingIdentifierCst = cst.children.find(
-                child => child.name === SlimeParser.prototype.BindingIdentifier?.name
+                child => child.name === SlimeParser.prototype.BindingIdentifier?.name || child.name === 'BindingIdentifier'
             )
             if (bindingIdentifierCst) {
                 params.push(this.createBindingIdentifierAst(bindingIdentifierCst))
