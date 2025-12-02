@@ -125,7 +125,8 @@ function compareTokenSequences(
 
 // 使用 Babel 测试目录（与 stage1 一致）
 // const casesDir = path.join(__dirname, 'tests/babel')
-const casesDir = path.join(__dirname, 'tests/cases')
+// const casesDir = path.join(__dirname, 'tests/cases')
+const casesDir = path.join(__dirname, 'tests/es6rules')
 const files = getAllJsFiles(casesDir).sort()
 
 // 支持从指定位置开始测试
