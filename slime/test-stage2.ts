@@ -39,9 +39,11 @@ function validateAST(node: any, path: string = 'root'): ValidationError[] {
     if (node[prop] && Array.isArray(node[prop])) {
       node[prop].forEach((child: any, i: number) => {
         if (child && typeof child === 'object') {
-          // 处理包装结构 { element: ..., commaToken: ... }
-          const actualNode = child.element !== undefined ? child.element : 
-                            child.specifier !== undefined ? child.specifier : child
+          // 处理包装结构 { element/param/property/specifier: ..., commaToken: ... }
+          const actualNode = child.element !== undefined ? child.element :
+                            child.specifier !== undefined ? child.specifier :
+                            child.param !== undefined ? child.param :
+                            child.property !== undefined ? child.property : child
           if (actualNode !== null) {
             errors.push(...validateAST(actualNode, `${path}.${prop}[${i}]`))
           }
