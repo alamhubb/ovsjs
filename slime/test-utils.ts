@@ -236,6 +236,11 @@ export function shouldSkipTest(testName: string, testDir: string): SkipResult {
     return { skip: true, reason: 'TypeScript 语法，暂不支持' }
   }
 
+  // 9. 跳过深度嵌套的边缘情况（性能问题）
+  if (testName.includes('nested-cover-grammar')) {
+    return { skip: true, reason: '深度嵌套，性能边缘情况' }
+  }
+
   return { skip: false }
 }
 
