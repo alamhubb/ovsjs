@@ -9,7 +9,7 @@ import { getAllJsFiles, getParseMode, shouldSkipTest } from './test-utils'
 // ============================================
 // 通用配置 - 直接修改这里
 // ============================================
-export const DEFAULT_START_FROM = 2067    // 从第几个测试开始（0 表示从头开始）
+export const DEFAULT_START_FROM = 0    // 从第几个测试开始（0 表示从头开始）
 export const DEFAULT_STOP_ON_FAIL = true  // 遇到第一个失败就停止
 
 // ============================================
