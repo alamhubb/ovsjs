@@ -207,7 +207,9 @@ export async function runTests(
   const args = process.argv.slice(2)
   const cmdStartIndex = args.find(a => !a.startsWith('-'))
   // 用户输入 1-based，内部转 0-based
-  const startIndex = cmdStartIndex ? parseInt(cmdStartIndex, 10) - 1 : (startFrom ?? DEFAULT_START_FROM)
+  const startIndex = cmdStartIndex
+    ? parseInt(cmdStartIndex, 10) - 1
+    : (startFrom !== undefined ? startFrom - 1 : DEFAULT_START_FROM)
   const stopOnFail = args.includes('--stop-on-fail') || args.includes('-s') || (stopOnFailConfig ?? DEFAULT_STOP_ON_FAIL)
 
   const files = getAllJsFiles(casesDir).sort()
