@@ -152,6 +152,8 @@ export default class SlimeGenerator {
         this.addSpacing()
 
         const hasSpecifiers = node.specifiers && node.specifiers.length > 0
+        // 检查是否有空命名导入 {} （通过 brace tokens 判断）
+        const hasEmptyNamedImport = !hasSpecifiers && node.lBraceToken && node.rBraceToken
 
         if (hasSpecifiers) {
             // 辅助函数：获取 specifier 的实际类型（处理包装和非包装两种情况）
@@ -186,6 +188,13 @@ export default class SlimeGenerator {
             }
 
             // 有 specifiers 时才需要 from
+            this.addSpacing()
+            this.addCodeAndMappings(es6TokensObj.FromTok, node.loc)
+            this.addSpacing()
+        } else if (hasEmptyNamedImport) {
+            // 空命名导入: import {} from "foo"
+            this.addLBrace()
+            this.addRBrace()
             this.addSpacing()
             this.addCodeAndMappings(es6TokensObj.FromTok, node.loc)
             this.addSpacing()
@@ -268,10 +277,20 @@ export default class SlimeGenerator {
 
     private static generatorExportSpecifier(spec: any) {
         // local: 本地名称, exported: 导出名称
+        // ES2022: local 和 exported 可以是 Identifier 或 Literal（字符串字面量）
         this.generatorNode(spec.local)
-        // 比较名称而不是对象引用
-        if (spec.local.name !== spec.exported.name) {
-            // export {name as userName}
+
+        // 获取比较值：Identifier 用 name，Literal 用 value
+        const localValue = spec.local.type === SlimeNodeType.Literal
+            ? spec.local.value
+            : spec.local.name
+        const exportedValue = spec.exported.type === SlimeNodeType.Literal
+            ? spec.exported.value
+            : spec.exported.name
+
+        // 比较值而不是对象引用
+        if (localValue !== exportedValue) {
+            // export {name as userName} 或 export {"string" as "alias"}
             this.addSpacing()
             this.addCode(es6TokensObj.AsTok)
             this.addSpacing()
@@ -1155,20 +1174,25 @@ export default class SlimeGenerator {
     }
 
     private static generatorArrayPattern(node: SlimeArrayPattern) {
-        // 输出数组解构：[a, b, c] 或 [a, , c]（跳过元素）
+        // 输出数组解构：[a, b, c] 或 [a, , c]（跳过元素）或 [a,,]（尾部空位）
         // elements 是 SlimeArrayPatternElement[] 类型，每个元素是 { element, commaToken }
         this.addLBracket()
         node.elements.forEach((item, index) => {
             // 处理包装结构
-            const element = (item as any).element !== undefined ? (item as any).element : item
+            const wrapped = item as any
+            const element = wrapped.element !== undefined ? wrapped.element : item
+            const commaToken = wrapped.commaToken
+
             if (element) {
                 this.generatorNode(element)
             }
             // null元素表示跳过（Elision），如 [a, , c]
             // 只输出逗号，不输出内容
 
-            // 添加逗号（除了最后一个元素）
-            if (index < node.elements.length - 1) {
+            // 添加逗号：使用 commaToken 或者非最后一个元素
+            if (commaToken) {
+                this.addComma()
+            } else if (index < node.elements.length - 1) {
                 this.addComma()
             }
         })

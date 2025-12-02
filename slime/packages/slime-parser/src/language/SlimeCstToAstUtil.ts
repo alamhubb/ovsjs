@@ -293,18 +293,22 @@ export class SlimeCstToAst {
         }
 
         if (first1.name === SlimeParser.prototype.ImportClause?.name) {
-            const specifierItems = this.createImportClauseAst(first1)
+            const clauseResult = this.createImportClauseAst(first1)
             const fromClause = this.createFromClauseAst(cst.children[2])
             importDeclaration = SlimeAstUtil.createImportDeclaration(
-                specifierItems, fromClause.source, cst.loc,
-                importToken, fromClause.fromToken, semicolonToken
+                clauseResult.specifiers, fromClause.source, cst.loc,
+                importToken, fromClause.fromToken,
+                clauseResult.lBraceToken, clauseResult.rBraceToken,
+                semicolonToken
             )
         } else if (first1.name === SlimeParser.prototype.ModuleSpecifier?.name) {
             // import 'module' (side effect import)
             const source = this.createModuleSpecifierAst(first1)
             importDeclaration = SlimeAstUtil.createImportDeclaration(
                 [], source, cst.loc,
-                importToken, undefined, semicolonToken
+                importToken, undefined,
+                undefined, undefined,
+                semicolonToken
             )
         }
         return importDeclaration
@@ -335,9 +339,11 @@ export class SlimeCstToAst {
         return ast
     }
 
-    createImportClauseAst(cst: SubhutiCst): Array<SlimeImportSpecifierItem> {
+    createImportClauseAst(cst: SubhutiCst): { specifiers: Array<SlimeImportSpecifierItem>, lBraceToken?: any, rBraceToken?: any } {
         let astName = checkCstName(cst, SlimeParser.prototype.ImportClause?.name);
         const result: Array<SlimeImportSpecifierItem> = []
+        let lBraceToken: any = undefined
+        let rBraceToken: any = undefined
         const first = cst.children[0]
 
         if (first.name === SlimeParser.prototype.ImportedDefaultBinding?.name) {
@@ -357,8 +363,10 @@ export class SlimeCstToAst {
             )
 
             if (namedImportsCst) {
-                const namedSpecs = this.createNamedImportsListAstWrapped(namedImportsCst)
-                result.push(...namedSpecs)
+                const namedResult = this.createNamedImportsListAstWrapped(namedImportsCst)
+                result.push(...namedResult.specifiers)
+                lBraceToken = namedResult.lBraceToken
+                rBraceToken = namedResult.rBraceToken
             } else if (namespaceImportCst) {
                 result.push(SlimeAstUtil.createImportSpecifierItem(
                     this.createNameSpaceImportSpecifierAst(namespaceImportCst), undefined
@@ -369,10 +377,13 @@ export class SlimeCstToAst {
             result.push(SlimeAstUtil.createImportSpecifierItem(this.createNameSpaceImportSpecifierAst(first), undefined))
         } else if (first.name === SlimeParser.prototype.NamedImports?.name) {
             // import {name, greet} from 'module'
-            result.push(...this.createNamedImportsListAstWrapped(first))
+            const namedResult = this.createNamedImportsListAstWrapped(first)
+            result.push(...namedResult.specifiers)
+            lBraceToken = namedResult.lBraceToken
+            rBraceToken = namedResult.rBraceToken
         }
 
-        return result
+        return { specifiers: result, lBraceToken, rBraceToken }
     }
 
     createImportedDefaultBindingAst(cst: SubhutiCst): SlimeImportDefaultSpecifier {
@@ -452,11 +463,24 @@ export class SlimeCstToAst {
         return specifiers
     }
 
-    /** 返回包装类型的版本 */
-    createNamedImportsListAstWrapped(cst: SubhutiCst): Array<SlimeImportSpecifierItem> {
+    /** 返回包装类型的版本，包含 brace tokens */
+    createNamedImportsListAstWrapped(cst: SubhutiCst): { specifiers: Array<SlimeImportSpecifierItem>, lBraceToken?: any, rBraceToken?: any } {
         // NamedImports: {LBrace, ImportsList?, RBrace}
+        let lBraceToken: any = undefined
+        let rBraceToken: any = undefined
+
+        // 提取 brace tokens
+        for (const child of cst.children || []) {
+            if (child.name === 'LBrace' || child.value === '{') {
+                lBraceToken = SlimeTokenCreate.createLBraceToken(child.loc)
+            } else if (child.name === 'RBrace' || child.value === '}') {
+                rBraceToken = SlimeTokenCreate.createRBraceToken(child.loc)
+            }
+        }
+
         const importsList = cst.children.find(ch => ch.name === SlimeParser.prototype.ImportsList?.name)
-        if (!importsList) return []
+        // 空命名导入 import {} from "foo" - 返回空 specifiers 但有 brace tokens
+        if (!importsList) return { specifiers: [], lBraceToken, rBraceToken }
 
         const specifiers: Array<SlimeImportSpecifierItem> = []
         let currentSpec: SlimeImportSpecifier | null = null
@@ -516,7 +540,7 @@ export class SlimeCstToAst {
             specifiers.push(SlimeAstUtil.createImportSpecifierItem(currentSpec!, undefined))
         }
 
-        return specifiers
+        return { specifiers, lBraceToken, rBraceToken }
     }
 
     createIdentifierNameAst(cst: SubhutiCst): SlimeIdentifier {
@@ -1694,7 +1718,7 @@ export class SlimeCstToAst {
     createClassBodyAst(cst: SubhutiCst): SlimeClassBody {
         const astName = checkCstName(cst, SlimeParser.prototype.ClassBody?.name);
         const elementsWrapper = cst.children && cst.children[0] // ClassBody -> ClassElementList?，第一项为列表容器
-        const body: Array<SlimeMethodDefinition | SlimePropertyDefinition> = [] // 收集类成员
+        const body: Array<SlimeMethodDefinition | SlimePropertyDefinition | SlimeStaticBlock> = [] // 收集类成员
         if (elementsWrapper && Array.isArray(elementsWrapper.children)) {
             for (const element of elementsWrapper.children) { // 遍历 ClassElement
                 const elementChildren = element.children ?? [] // 兼容无子节点情况
@@ -1705,6 +1729,7 @@ export class SlimeCstToAst {
                 // 找到真正的成员定义（跳过 static 和 SemicolonASI）
                 let staticCst: SubhutiCst | null = null
                 let targetCst: SubhutiCst | null = null
+                let classStaticBlockCst: SubhutiCst | null = null
 
                 for (const child of elementChildren) {
                     if (child.name === 'Static' || child.value === 'static') {
@@ -1712,11 +1737,23 @@ export class SlimeCstToAst {
                     } else if (child.name === 'SemicolonASI' || child.name === 'Semicolon' || child.value === ';') {
                         // 跳过分号
                         continue
+                    } else if (child.name === 'ClassStaticBlock') {
+                        // ES2022 静态块
+                        classStaticBlockCst = child
                     } else if (child.name === SlimeParser.prototype.MethodDefinition?.name ||
                                child.name === SlimeParser.prototype.FieldDefinition?.name ||
                                child.name === 'MethodDefinition' || child.name === 'FieldDefinition') {
                         targetCst = child
                     }
+                }
+
+                // 处理静态块
+                if (classStaticBlockCst) {
+                    const staticBlock = this.createClassStaticBlockAst(classStaticBlockCst)
+                    if (staticBlock) {
+                        body.push(staticBlock)
+                    }
+                    continue
                 }
 
                 if (targetCst) {
@@ -1732,6 +1769,40 @@ export class SlimeCstToAst {
             body: body, // 挂载类成员数组
             loc: cst.loc // 透传位置信息
         }
+    }
+
+    /**
+     * 创建 ClassStaticBlock AST (ES2022)
+     * ClassStaticBlock: static { ClassStaticBlockBody }
+     */
+    createClassStaticBlockAst(cst: SubhutiCst): SlimeStaticBlock {
+        // CST 结构: ClassStaticBlock -> [IdentifierName:"static", LBrace, ClassStaticBlockBody, RBrace]
+        let lBraceToken: any = undefined
+        let rBraceToken: any = undefined
+        let bodyStatements: SlimeStatement[] = []
+
+        for (const child of cst.children || []) {
+            if (child.name === 'LBrace' || child.value === '{') {
+                lBraceToken = SlimeTokenCreate.createLBraceToken(child.loc)
+            } else if (child.name === 'RBrace' || child.value === '}') {
+                rBraceToken = SlimeTokenCreate.createRBraceToken(child.loc)
+            } else if (child.name === 'ClassStaticBlockBody') {
+                // ClassStaticBlockBody -> ClassStaticBlockStatementList -> StatementList
+                const stmtListCst = child.children?.find((c: any) =>
+                    c.name === 'ClassStaticBlockStatementList' || c.name === 'StatementList'
+                )
+                if (stmtListCst) {
+                    const actualStatementList = stmtListCst.name === 'ClassStaticBlockStatementList'
+                        ? stmtListCst.children?.find((c: any) => c.name === 'StatementList')
+                        : stmtListCst
+                    if (actualStatementList) {
+                        bodyStatements = this.createStatementListAst(actualStatementList)
+                    }
+                }
+            }
+        }
+
+        return SlimeAstUtil.createStaticBlock(bodyStatements, cst.loc, lBraceToken, rBraceToken)
     }
 
     createFormalParameterListAst(cst: SubhutiCst): SlimePattern[] {
@@ -2844,7 +2915,7 @@ export class SlimeCstToAst {
     createArrayBindingPatternAst(cst: SubhutiCst): SlimeArrayPattern {
         checkCstName(cst, SlimeParser.prototype.ArrayBindingPattern?.name)
 
-        // CST结构：[LBracket, BindingElementList?, RBracket]
+        // CST结构：[LBracket, BindingElementList?, Comma?, Elision?, BindingRestElement?, RBracket]
         const elements: SlimeArrayPatternElement[] = []
 
         // 提取 LBracket 和 RBracket tokens
@@ -2899,6 +2970,38 @@ export class SlimeCstToAst {
                         if (element) {
                             elements.push({ element })
                         }
+                    }
+                }
+            }
+        }
+
+        // 处理 ArrayBindingPattern 直接子节点中的 Comma 和 Elision（尾部空位）
+        // CST: [LBracket, BindingElementList, Comma, Elision, RBracket]
+        for (let i = 0; i < cst.children.length; i++) {
+            const child = cst.children[i]
+            // 跳过 LBracket, RBracket, BindingElementList（已处理）
+            if (child.value === '[' || child.value === ']' ||
+                child.name === SlimeParser.prototype.BindingElementList?.name ||
+                child.name === SlimeParser.prototype.BindingRestElement?.name) {
+                continue
+            }
+
+            // 处理 BindingElementList 之后的 Comma
+            if (child.value === ',') {
+                // 将逗号关联到最后一个元素
+                if (elements.length > 0 && !elements[elements.length - 1].commaToken) {
+                    elements[elements.length - 1].commaToken = SlimeTokenCreate.createCommaToken(child.loc)
+                }
+            }
+
+            // 处理尾部的 Elision
+            if (child.name === SlimeParser.prototype.Elision?.name || child.name === 'Elision') {
+                for (const elisionChild of child.children || []) {
+                    if (elisionChild.value === ',') {
+                        elements.push({
+                            element: null,
+                            commaToken: SlimeTokenCreate.createCommaToken(elisionChild.loc)
+                        })
                     }
                 }
             }
@@ -5266,28 +5369,35 @@ export class SlimeCstToAst {
     /**
      * 创建 OptionalChain AST
      * 处理 ?. 后的各种访问形式
+     *
+     * 注意：只有紧跟在 ?. 后面的操作是 optional: true
+     * 链式的后续操作（如 foo?.().bar() 中的 .bar()）是 optional: false
      */
     createOptionalChainAst(object: SlimeExpression, chainCst: SubhutiCst): SlimeExpression {
         let result = object
+        // 追踪是否刚遇到 ?. token，下一个操作是 optional
+        let nextIsOptional = false
 
         for (const child of chainCst.children) {
             const name = child.name
 
             if (name === 'OptionalChaining' || child.value === '?.') {
-                // 跳过 ?. token
+                // 遇到 ?. token，下一个操作是 optional
+                nextIsOptional = true
                 continue
             } else if (name === 'Arguments') {
-                // ?.() - 可选调用
+                // ()调用 - 可能是可选调用或普通调用
                 const args = this.createArgumentsAst(child)
                 result = {
                     type: SlimeNodeType.OptionalCallExpression,
                     callee: result,
                     arguments: args,
-                    optional: true,
+                    optional: nextIsOptional,
                     loc: chainCst.loc
                 } as any
+                nextIsOptional = false
             } else if (name === 'LBracket' || child.value === '[') {
-                // ?.[expr] - 可选计算属性访问
+                // [expr] 计算属性访问 - 可能是可选或普通
                 // 下一个子节点是表达式，跳过 ]
                 const exprIndex = chainCst.children.indexOf(child) + 1
                 if (exprIndex < chainCst.children.length) {
@@ -5297,46 +5407,44 @@ export class SlimeCstToAst {
                         object: result,
                         property: property,
                         computed: true,
-                        optional: true,
+                        optional: nextIsOptional,
                         loc: chainCst.loc
                     } as any
+                    nextIsOptional = false
                 }
-            } else if (name === 'IdentifierName' || name === 'IdentifierName') {
-                // ?.prop - 可选属性访问
+            } else if (name === 'IdentifierName') {
+                // .prop 属性访问 - 可能是可选或普通
                 let property: SlimeIdentifier
-                if (name === 'IdentifierName') {
-                    // IdentifierName 内部包含一个 Identifier 或关键字 token
-                    const tokenCst = child.children[0]
-                    property = SlimeAstUtil.createIdentifier(tokenCst.value, tokenCst.loc)
-                } else {
-                    // 直接的 token
-                    property = SlimeAstUtil.createIdentifier(child.value, child.loc)
-                }
+                // IdentifierName 内部包含一个 Identifier 或关键字 token
+                const tokenCst = child.children[0]
+                property = SlimeAstUtil.createIdentifier(tokenCst.value, tokenCst.loc)
                 result = {
                     type: SlimeNodeType.OptionalMemberExpression,
                     object: result,
                     property: property,
                     computed: false,
-                    optional: true,
+                    optional: nextIsOptional,
                     loc: chainCst.loc
                 } as any
+                nextIsOptional = false
             } else if (name === 'Dot' || child.value === '.') {
-                // 跳过 . token
+                // 普通 . token 不改变 optional 状态
                 continue
             } else if (name === 'RBracket' || child.value === ']') {
                 // 跳过 ] token
                 continue
             } else if (name === 'PrivateIdentifier') {
-                // ?.#prop - 私有属性可选访问
+                // #prop - 私有属性访问
                 const property = this.createPrivateIdentifierAst(child)
                 result = {
                     type: SlimeNodeType.OptionalMemberExpression,
                     object: result,
                     property: property,
                     computed: false,
-                    optional: true,
+                    optional: nextIsOptional,
                     loc: chainCst.loc
                 } as any
+                nextIsOptional = false
             } else if (name === 'Expression') {
                 // 计算属性的表达式部分，已在 LBracket 处理中处理
                 continue
