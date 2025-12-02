@@ -6376,7 +6376,7 @@ export class SlimeCstToAst {
 
     createArrayExpressionAst(cst: SubhutiCst): SlimeArrayExpression {
         const astName = checkCstName(cst, SlimeParser.prototype.ArrayLiteral?.name);
-        // ArrayLiteral: [LBracket, ElementList?, RBracket]
+        // ArrayLiteral: [LBracket, ElementList?, Comma?, Elision?, RBracket]
 
         // 提取 LBracket 和 RBracket tokens
         let lBracketToken: any = undefined
@@ -6396,6 +6396,23 @@ export class SlimeCstToAst {
 
         const elementList = cst.children.find(ch => ch.name === SlimeParser.prototype.ElementList?.name)
         const elements = elementList ? this.createElementListAst(elementList) : []
+
+        // 处理 ArrayLiteral 顶层的 Comma 和 Elision（尾随逗号和省略）
+        // 例如 [x,,] -> ElementList 后面有 Comma 和 Elision
+        let hasTrailingComma = false
+        for (const child of cst.children) {
+            if (child.name === 'Comma' || child.value === ',') {
+                // 顶层逗号，表示尾随逗号
+                hasTrailingComma = true
+            } else if (child.name === SlimeParser.prototype.Elision?.name || child.name === 'Elision') {
+                // 顶层 Elision，添加空元素
+                const elisionCommas = child.children?.filter((c: any) => c.name === 'Comma' || c.value === ',') || []
+                for (let j = 0; j < elisionCommas.length; j++) {
+                    const commaToken = SlimeTokenCreate.createCommaToken(elisionCommas[j].loc)
+                    elements.push(SlimeAstUtil.createArrayElement(null, commaToken))
+                }
+            }
+        }
 
         return SlimeAstUtil.createArrayExpression(elements, cst.loc, lBracketToken, rBracketToken)
     }
@@ -6738,11 +6755,19 @@ export class SlimeCstToAst {
         // 解析参数（Arrow 之前的部分）
         for (let i = 0; i < arrowIndex; i++) {
             const child = cst.children[i]
-            if (child.name === 'Async') {
+            if (child.name === 'Async' || child.name === 'IdentifierName' && child.value === 'async') {
                 continue // 跳过 async 关键字
             }
             if (child.name === SlimeParser.prototype.BindingIdentifier?.name || child.name === 'BindingIdentifier') {
                 params = [this.createBindingIdentifierAst(child)]
+            } else if (child.name === 'AsyncArrowBindingIdentifier' || child.name === SlimeParser.prototype.AsyncArrowBindingIdentifier?.name) {
+                // AsyncArrowBindingIdentifier 包含一个 BindingIdentifier
+                const bindingId = child.children?.find((c: any) =>
+                    c.name === 'BindingIdentifier' || c.name === SlimeParser.prototype.BindingIdentifier?.name
+                ) || child.children?.[0]
+                if (bindingId) {
+                    params = [this.createBindingIdentifierAst(bindingId)]
+                }
             } else if (child.name === 'CoverCallExpressionAndAsyncArrowHead') {
                 // 从 CoverCallExpressionAndAsyncArrowHead 提取参数
                 params = this.createAsyncArrowParamsFromCover(child)
@@ -7201,11 +7226,12 @@ export class SlimeCstToAst {
         const first = cst.children[0]
 
         // Es2025Parser: { FunctionBody } 格式
-        // children: [LBrace, FunctionBody, RBrace]
+        // children: [LBrace, FunctionBody/AsyncFunctionBody, RBrace]
         if (first.name === 'LBrace') {
-            // 找到 FunctionBody
+            // 找到 FunctionBody 或 AsyncFunctionBody
             const functionBodyCst = cst.children.find(child =>
-                child.name === 'FunctionBody' || child.name === SlimeParser.prototype.FunctionBody?.name
+                child.name === 'FunctionBody' || child.name === SlimeParser.prototype.FunctionBody?.name ||
+                child.name === 'AsyncFunctionBody' || child.name === SlimeParser.prototype.AsyncFunctionBody?.name
             )
             if (functionBodyCst) {
                 const bodyStatements = this.createFunctionBodyAst(functionBodyCst)

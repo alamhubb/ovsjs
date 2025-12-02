@@ -841,7 +841,12 @@ export default class SlimeGenerator {
                         this.addComma()
                         this.addSpacing()
                     }
-                    this.generatorNode(arg)
+                    // 参数可能是 SlimeCallArgument（包含 argument 属性）或直接的表达式
+                    if (arg && arg.argument) {
+                        this.generatorNode(arg.argument)
+                    } else {
+                        this.generatorNode(arg)
+                    }
                 })
             }
             this.addRParen()
