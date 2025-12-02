@@ -7,6 +7,12 @@ import * as path from 'path'
 import { getAllJsFiles, getParseMode, shouldSkipTest } from './test-utils'
 
 // ============================================
+// 通用配置 - 直接修改这里
+// ============================================
+export const DEFAULT_START_FROM = 2067    // 从第几个测试开始（0 表示从头开始）
+export const DEFAULT_STOP_ON_FAIL = true  // 遇到第一个失败就停止
+
+// ============================================
 // 类型定义
 // ============================================
 
@@ -41,6 +47,10 @@ export interface TestRunnerOptions {
   casesDir?: string
   /** 是否在失败时打印详细错误（默认 true） */
   verboseOnFail?: boolean
+  /** 从第几个测试开始（文件中配置，优先级低于命令行参数） */
+  startFrom?: number
+  /** 遇到第一个失败就停止（文件中配置，优先级低于命令行参数） */
+  stopOnFail?: boolean
 }
 
 export interface TestStats {
@@ -63,13 +73,19 @@ export async function runTests(
     stageName,
     description,
     casesDir = path.join(__dirname, 'tests/babel'),
-    verboseOnFail = true
+    verboseOnFail = true,
+    startFrom,      // undefined 表示使用通用配置
+    stopOnFail: stopOnFailConfig  // undefined 表示使用通用配置
   } = options
 
-  // 解析命令行参数
+  // 优先级: 命令行参数 > stage文件配置 > 通用配置
   const args = process.argv.slice(2)
-  const startIndex = parseInt(args.find(a => !a.startsWith('-')) || '0', 10)
+  const cmdStartIndex = args.find(a => !a.startsWith('-'))
+  const startIndex = cmdStartIndex
+    ? parseInt(cmdStartIndex, 10)
+    : (startFrom ?? DEFAULT_START_FROM)
   const stopOnFail = args.includes('--stop-on-fail') || args.includes('-s')
+    || (stopOnFailConfig ?? DEFAULT_STOP_ON_FAIL)
 
   // 获取测试文件
   const files = getAllJsFiles(casesDir).sort()
