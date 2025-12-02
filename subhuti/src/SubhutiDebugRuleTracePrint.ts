@@ -12,7 +12,28 @@
  * - 直接基于 RuleStackItem[] 进行输出
  * - 可以修改传入的状态对象（副作用）
  * - 直接输出到控制台
+ *
+ * 配置：
+ * - showRulePath: 控制是否输出规则执行路径（默认 true）
  */
+
+// 全局配置：是否显示规则执行路径
+let _showRulePath = true
+
+/**
+ * 设置是否显示规则执行路径
+ * @param show - true 显示，false 不显示
+ */
+export function setShowRulePath(show: boolean): void {
+    _showRulePath = show
+}
+
+/**
+ * 获取当前是否显示规则执行路径
+ */
+export function getShowRulePath(): boolean {
+    return _showRulePath
+}
 
 // ============================================
 // TreeFormatHelper - 树形输出格式化辅助
@@ -223,6 +244,7 @@ export class SubhutiDebugRuleTracePrint {
 
 
     public static consoleLog(...strs) {
+        if (!_showRulePath) return  // 如果关闭了规则路径输出，直接返回
         console.log(...strs)  // 恢复实时输出
         // LogUtil.log(strs[0])  // 可选：同时写入文件
     }

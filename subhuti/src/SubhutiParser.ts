@@ -20,7 +20,7 @@ import {SubhutiErrorHandler, ParsingError} from "./SubhutiError.ts";
 import {SubhutiTraceDebugger} from "./SubhutiDebug.ts";
 import {SubhutiPackratCache, type SubhutiPackratCacheResult} from "./SubhutiPackratCache.ts";
 import SubhutiTokenConsumer from "./SubhutiTokenConsumer.ts";
-import {SubhutiDebugRuleTracePrint} from "./SubhutiDebugRuleTracePrint.ts";
+import {SubhutiDebugRuleTracePrint, setShowRulePath} from "./SubhutiDebugRuleTracePrint.ts";
 import SubhutiLexer, {LexicalGoal, TokenCacheEntry} from "./SubhutiLexer.ts";
 import {SubhutiCreateToken} from "./struct/SubhutiCreateToken.ts";
 
@@ -499,7 +499,13 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         return this
     }
 
-    debug(): this {
+    /**
+     * 启用调试模式
+     * @param showRulePath - 是否显示规则执行路径（默认 true）
+     *                       传入 false 时只显示性能统计和 CST 验证报告
+     */
+    debug(showRulePath: boolean = true): this {
+        setShowRulePath(showRulePath)
         this._debugger = new SubhutiTraceDebugger(this._tokens)
         return this
     }
