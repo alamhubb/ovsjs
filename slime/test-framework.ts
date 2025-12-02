@@ -212,12 +212,12 @@ export async function runTests(
   const files = getAllJsFiles(casesDir).sort()
 
   console.log('='.repeat(60))
-  if (startIndex > 0) console.log(`📍 从第 ${startIndex + 1} 个文件开始测试 (跳过前 ${startIndex} 个)`)
+  if (startIndex > 0) console.log(`📍 从 ${startIndex} 开始测试 (跳过 0~${startIndex - 1})`)
   if (stopOnFail) console.log(`🛑 模式: 遇到第一个失败就停止`)
   console.log(`🧪 ${stageName}`)
   console.log(`📝 ${description}`)
   console.log(`📁 测试目录: ${path.relative(process.cwd(), casesDir)}`)
-  console.log(`📊 共 ${files.length} 个用例，测试 ${files.length - startIndex} 个`)
+  console.log(`📊 共 ${files.length} 个用例 (0~${files.length - 1})，测试 ${files.length - startIndex} 个`)
   console.log('='.repeat(60))
 
   const stats: TestStats = { total: files.length - startIndex, passed: 0, failed: 0, skipped: 0, firstFailIndex: -1 }
@@ -230,7 +230,7 @@ export async function runTests(
 
     const skipResult = shouldSkipTest(testName, testDir)
     if (skipResult.skip) {
-      console.log(`[${i + 1}] ⏭️  ${testName} (${skipResult.reason})`)
+      console.log(`[${i}] ⏭️  ${testName} (${skipResult.reason})`)
       stats.skipped++
       continue
     }
@@ -242,21 +242,21 @@ export async function runTests(
     try {
       const result = await testFn(ctx)
       if (result.success) {
-        console.log(`[${i + 1}] ✅ ${testName} - ${result.message}`)
+        console.log(`[${i}] ✅ ${testName} - ${result.message}`)
         stats.passed++
       } else {
-        console.log(`[${i + 1}] ❌ ${testName} - ${result.message}`)
+        console.log(`[${i}] ❌ ${testName} - ${result.message}`)
         if (verboseOnFail && result.details) console.log(result.details)
         if (stats.firstFailIndex === -1) stats.firstFailIndex = i
         stats.failed++
-        if (stopOnFail) { console.log(`\n🛑 在第 ${i + 1} 个用例停止 (--stop-on-fail)`); break }
+        if (stopOnFail) { console.log(`\n🛑 在 ${i} 停止 (--stop-on-fail)`); break }
       }
     } catch (error: any) {
-      console.log(`[${i + 1}] ❌ ${testName} - 异常: ${error.message}`)
+      console.log(`[${i}] ❌ ${testName} - 异常: ${error.message}`)
       if (verboseOnFail) console.log(`    ${error.stack?.split('\n').slice(0, 3).join('\n    ')}`)
       if (stats.firstFailIndex === -1) stats.firstFailIndex = i
       stats.failed++
-      if (stopOnFail) { console.log(`\n🛑 在第 ${i + 1} 个用例停止 (--stop-on-fail)`); break }
+      if (stopOnFail) { console.log(`\n🛑 在 ${i} 停止 (--stop-on-fail)`); break }
     }
   }
 
@@ -278,9 +278,8 @@ function printSummary(stats: TestStats, stageName: string) {
   } else {
     console.log(`\n⚠️  有 ${stats.failed} 个测试失败`)
     if (stats.firstFailIndex !== -1) {
-      console.log(`\n📍 第一个失败位置: ${stats.firstFailIndex + 1}`)
-      console.log(`💡 从失败位置重新测试: npx tsx slime/${scriptName}.ts ${stats.firstFailIndex}`)
-      console.log(`💡 从失败位置重新测试(遇错停止): npx tsx slime/${scriptName}.ts ${stats.firstFailIndex} -s`)
+      console.log(`\n📍 第一个失败: ${stats.firstFailIndex}`)
+      console.log(`💡 重新测试: npx tsx slime/${scriptName}.ts ${stats.firstFailIndex}`)
     }
   }
   console.log('='.repeat(60))
