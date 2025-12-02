@@ -6839,7 +6839,7 @@ export class SlimeCstToAst {
                             if (arg.value === ',') continue // 跳过逗号
                             if (arg.name === 'AssignmentExpression' || arg.name === SlimeParser.prototype.AssignmentExpression?.name) {
                                 // 将表达式转换为参数（cover grammar）
-                                const param = this.convertExpressionToPattern(arg)
+                                const param = this.convertCstToPattern(arg)
                                 if (param) {
                                     params.push(param)
                                 }
@@ -6859,7 +6859,12 @@ export class SlimeCstToAst {
      * 将表达式 CST 转换为 Pattern（用于 cover grammar）
      * 这用于处理 async (expr) => body 中的 expr 到 pattern 的转换
      */
-    convertExpressionToPattern(cst: SubhutiCst): SlimePattern | null {
+    /**
+     * 将 CST 表达式转换为 Pattern（用于 cover grammar）
+     * 这用于处理 async (expr) => body 中的 expr 到 pattern 的转换
+     * 注意：这个方法处理 CST 节点，convertExpressionToPattern 处理 AST 节点
+     */
+    convertCstToPattern(cst: SubhutiCst): SlimePattern | null {
         // 递归查找最内层的表达式
         const findInnerExpr = (node: SubhutiCst): SubhutiCst => {
             if (!node.children || node.children.length === 0) return node
