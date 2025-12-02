@@ -1556,6 +1556,9 @@ export class SlimeCstToAst {
         const elementNameCst = cst.children[0]
         const key = this.createClassElementNameOrPropertyNameAst(elementNameCst)
 
+        // 检查是否是计算属性
+        const isComputed = this.isComputedPropertyName(elementNameCst)
+
         // 检查是否有初始化器
         let value: SlimeExpression | null = null
         if (cst.children.length > 1) {
@@ -1568,7 +1571,8 @@ export class SlimeCstToAst {
         // 检查是否有 static 修饰符
         const isStatic = this.isStaticModifier(staticCst)
 
-        return SlimeAstUtil.createPropertyDefinition(key, value, isStatic || false)
+        // 注意参数顺序：(key, value, computed, isStatic, loc)
+        return SlimeAstUtil.createPropertyDefinition(key, value, isComputed, isStatic || false, cst.loc)
     }
 
     /**
@@ -4123,13 +4127,40 @@ export class SlimeCstToAst {
 
     /**
      * 创建 with 语句 AST
+     * WithStatement: with ( Expression ) Statement
      */
     createWithStatementAst(cst: SubhutiCst): any {
         checkCstName(cst, SlimeParser.prototype.WithStatement?.name);
+
+        let object: any = null
+        let body: any = null
+        let withToken: any = undefined
+        let lParenToken: any = undefined
+        let rParenToken: any = undefined
+
+        for (const child of cst.children || []) {
+            if (child.name === 'With' || child.value === 'with') {
+                withToken = child
+            } else if (child.name === 'LParen' || child.value === '(') {
+                lParenToken = child
+            } else if (child.name === 'RParen' || child.value === ')') {
+                rParenToken = child
+            } else if (child.name === SlimeParser.prototype.Expression?.name || child.name === 'Expression') {
+                object = this.createExpressionAst(child)
+            } else if (child.name === SlimeParser.prototype.Statement?.name || child.name === 'Statement') {
+                // createStatementAst 返回数组，取第一个元素
+                const bodyArray = this.createStatementAst(child)
+                body = Array.isArray(bodyArray) && bodyArray.length > 0 ? bodyArray[0] : bodyArray
+            }
+        }
+
         return {
             type: SlimeNodeType.WithStatement,
-            object: null,  // TODO
-            body: null,  // TODO
+            object,
+            body,
+            withToken,
+            lParenToken,
+            rParenToken,
             loc: cst.loc
         }
     }
@@ -6735,10 +6766,15 @@ export class SlimeCstToAst {
         let params: SlimePattern[] = []
         let body: SlimeExpression | SlimeBlockStatement
         let arrowIndex = -1
+        let arrowToken: any = undefined
+        let asyncToken: any = undefined
+        let lParenToken: any = undefined
+        let rParenToken: any = undefined
 
         // 找到 Arrow token 的位置
         for (let i = 0; i < cst.children.length; i++) {
             if (cst.children[i].name === 'Arrow' || cst.children[i].value === '=>') {
+                arrowToken = SlimeTokenCreate.createArrowToken(cst.children[i].loc)
                 arrowIndex = i
                 break
             }
@@ -6774,7 +6810,8 @@ export class SlimeCstToAst {
         // 解析参数（Arrow 之前的部分）
         for (let i = 0; i < arrowIndex; i++) {
             const child = cst.children[i]
-            if (child.name === 'Async' || child.name === 'IdentifierName' && child.value === 'async') {
+            if (child.name === 'Async' || (child.name === 'IdentifierName' && child.value === 'async')) {
+                asyncToken = SlimeTokenCreate.createAsyncToken(child.loc)
                 continue // 跳过 async 关键字
             }
             if (child.name === SlimeParser.prototype.BindingIdentifier?.name || child.name === 'BindingIdentifier') {
@@ -6788,10 +6825,30 @@ export class SlimeCstToAst {
                     params = [this.createBindingIdentifierAst(bindingId)]
                 }
             } else if (child.name === 'CoverCallExpressionAndAsyncArrowHead') {
-                // 从 CoverCallExpressionAndAsyncArrowHead 提取参数
+                // 从 CoverCallExpressionAndAsyncArrowHead 提取参数和括号 tokens
                 params = this.createAsyncArrowParamsFromCover(child)
+                // 提取括号 tokens
+                for (const subChild of child.children || []) {
+                    if (subChild.name === 'Arguments' || subChild.name === SlimeParser.prototype.Arguments?.name) {
+                        for (const argChild of subChild.children || []) {
+                            if (argChild.name === 'LParen' || argChild.value === '(') {
+                                lParenToken = SlimeTokenCreate.createLParenToken(argChild.loc)
+                            } else if (argChild.name === 'RParen' || argChild.value === ')') {
+                                rParenToken = SlimeTokenCreate.createRParenToken(argChild.loc)
+                            }
+                        }
+                    }
+                }
             } else if (child.name === SlimeParser.prototype.ArrowFormalParameters?.name || child.name === 'ArrowFormalParameters') {
                 params = this.createArrowFormalParametersAst(child)
+                // 提取括号 tokens
+                for (const subChild of child.children || []) {
+                    if (subChild.name === 'LParen' || subChild.value === '(') {
+                        lParenToken = SlimeTokenCreate.createLParenToken(subChild.loc)
+                    } else if (subChild.name === 'RParen' || subChild.value === ')') {
+                        rParenToken = SlimeTokenCreate.createRParenToken(subChild.loc)
+                    }
+                }
             }
         }
 
@@ -6816,6 +6873,10 @@ export class SlimeCstToAst {
             generator: false,
             async: true,
             expression: body.type !== SlimeNodeType.BlockStatement,
+            arrowToken: arrowToken,
+            asyncToken: asyncToken,
+            lParenToken: lParenToken,
+            rParenToken: rParenToken,
             loc: cst.loc
         } as any
     }
@@ -6835,16 +6896,34 @@ export class SlimeCstToAst {
                 // 从 Arguments 中提取参数
                 for (const argChild of child.children || []) {
                     if (argChild.name === 'ArgumentList' || argChild.name === SlimeParser.prototype.ArgumentList?.name) {
+                        let hasEllipsis = false // 标记是否遇到了 ...
                         for (const arg of argChild.children || []) {
                             if (arg.value === ',') continue // 跳过逗号
+                            // 处理 rest 参数：...ids
+                            if (arg.name === 'Ellipsis' || arg.value === '...') {
+                                hasEllipsis = true
+                                continue
+                            }
                             if (arg.name === 'AssignmentExpression' || arg.name === SlimeParser.prototype.AssignmentExpression?.name) {
                                 // 将表达式转换为参数（cover grammar）
                                 const param = this.convertCstToPattern(arg)
                                 if (param) {
-                                    params.push(param)
+                                    if (hasEllipsis) {
+                                        // 创建 RestElement
+                                        params.push(SlimeAstUtil.createRestElement(param))
+                                        hasEllipsis = false
+                                    } else {
+                                        params.push(param)
+                                    }
                                 }
                             } else if (arg.name === SlimeParser.prototype.BindingIdentifier?.name || arg.name === 'BindingIdentifier') {
-                                params.push(this.createBindingIdentifierAst(arg))
+                                const param = this.createBindingIdentifierAst(arg)
+                                if (hasEllipsis) {
+                                    params.push(SlimeAstUtil.createRestElement(param))
+                                    hasEllipsis = false
+                                } else {
+                                    params.push(param)
+                                }
                             }
                         }
                     }

@@ -151,7 +151,9 @@ export default class SlimeGenerator {
         this.addCode(es6TokensObj.ImportTok)
         this.addSpacing()
 
-        if (node.specifiers && node.specifiers.length > 0) {
+        const hasSpecifiers = node.specifiers && node.specifiers.length > 0
+
+        if (hasSpecifiers) {
             // 辅助函数：获取 specifier 的实际类型（处理包装和非包装两种情况）
             const getSpecType = (s: any) => s.specifier?.type || s.type
             const getSpec = (s: any) => s.specifier || s
@@ -182,11 +184,14 @@ export default class SlimeGenerator {
                 })
                 this.addRBrace()
             }
+
+            // 有 specifiers 时才需要 from
+            this.addSpacing()
+            this.addCodeAndMappings(es6TokensObj.FromTok, node.loc)
+            this.addSpacing()
         }
 
-        this.addSpacing()
-        this.addCodeAndMappings(es6TokensObj.FromTok, node.loc)
-        this.addSpacing()
+        // source 总是需要
         this.generatorNode(node.source)
         // 添加分号
         this.addCode(es6TokensObj.Semicolon)
@@ -234,8 +239,8 @@ export default class SlimeGenerator {
         if (node.declaration) {
             // export const name = 'Alice'
             this.generatorNode(node.declaration)
-        } else if (node.specifiers && node.specifiers.length > 0) {
-            // export {name} 或 export {name as userName}
+        } else if (node.specifiers) {
+            // export {name} 或 export {name as userName} 或 export {}
             this.addLBrace()
             node.specifiers.forEach((item, index) => {
                 if (index > 0) {
@@ -830,7 +835,14 @@ export default class SlimeGenerator {
 
         // 处理 key（属性名）
         if (node.key) {
-            this.generatorNode(node.key)
+            // 对于计算属性，需要用方括号括起来
+            if (node.computed) {
+                this.addLBracket()
+                this.generatorNode(node.key)
+                this.addRBracket()
+            } else {
+                this.generatorNode(node.key)
+            }
         }
 
         // 处理 value（属性值）
@@ -1047,6 +1059,12 @@ export default class SlimeGenerator {
             this.generatorNode((node as any).meta)
             this.addCode(es6TokensObj.Dot)
             this.generatorNode((node as any).property)
+        } else if (node.type === SlimeNodeType.OptionalCallExpression) {
+            // 可选调用：obj?.method()
+            this.generatorOptionalCallExpression(node as any)
+        } else if (node.type === SlimeNodeType.OptionalMemberExpression) {
+            // 可选成员访问：obj?.prop 或 obj?.[expr]
+            this.generatorOptionalMemberExpression(node as any)
         } else {
             console.error('未知节点:', JSON.stringify(node, null, 2))
             throw new Error('不支持的类型：' + node.type)
@@ -1277,6 +1295,63 @@ export default class SlimeGenerator {
             if (node.property) {
                 this.generatorNode(node.property)
             }
+        }
+    }
+
+    /**
+     * 生成可选调用表达式：obj?.method() 或 obj?.()
+     */
+    private static generatorOptionalCallExpression(node: any) {
+        // 输出 callee
+        this.generatorNode(node.callee)
+
+        // 如果是可选调用（optional: true），输出 ?.
+        if (node.optional) {
+            this.addCode(es6TokensObj.OptionalChaining)  // ?.
+        }
+
+        // 输出参数列表
+        this.addLParen()
+        if (node.arguments && node.arguments.length > 0) {
+            node.arguments.forEach((arg: any, index: number) => {
+                if (index > 0) {
+                    this.addComma()
+                }
+                // 处理包装结构：{ argument: {...}, commaToken?: {...} }
+                const argument = arg.argument || arg
+                if (argument.type === SlimeNodeType.SpreadElement) {
+                    this.generatorSpreadElement(argument as SlimeSpreadElement)
+                } else {
+                    this.generatorNode(argument)
+                }
+            })
+        }
+        this.addRParen()
+    }
+
+    /**
+     * 生成可选成员访问表达式：obj?.prop 或 obj?.[expr]
+     */
+    private static generatorOptionalMemberExpression(node: any) {
+        // 输出 object
+        this.generatorNode(node.object)
+
+        if (node.computed) {
+            // obj?.[expr] - 计算属性访问
+            if (node.optional) {
+                this.addCode(es6TokensObj.OptionalChaining)  // ?.
+            }
+            this.addLBracket()
+            this.generatorNode(node.property)
+            this.addRBracket()
+        } else {
+            // obj?.prop - 普通属性访问
+            if (node.optional) {
+                this.addCode(es6TokensObj.OptionalChaining)  // ?.
+            } else {
+                this.addCode(es6TokensObj.Dot)
+            }
+            this.generatorNode(node.property)
         }
     }
 
@@ -1704,12 +1779,24 @@ export default class SlimeGenerator {
      */
     private static generatorDoWhileStatement(node: any) {
         this.addCode(es6TokensObj.DoTok)
-        this.generatorNode(node.body)
+        // do 后紧跟语句体
+        if (node.body?.type === SlimeNodeType.BlockStatement) {
+            // BlockStatement 自己处理大括号
+            this.generatorNode(node.body)
+        } else {
+            // 非块语句需要空格分隔，如 do x++; while (...)
+            this.addSpacing()
+            // 生成语句但不需要末尾换行（由 ExpressionStatement 负责分号）
+            this.generatorNode(node.body)
+        }
         this.addCode(es6TokensObj.WhileTok)
         this.addSpacing()  // 添加空格：while (
         this.addCode(es6TokensObj.LParen)
         this.generatorNode(node.test)
         this.addCode(es6TokensObj.RParen)
+        // do...while 语句结尾需要分号
+        this.addCode(es6TokensObj.Semicolon)
+        this.addNewLine()
     }
 
     /**
@@ -1762,12 +1849,13 @@ export default class SlimeGenerator {
 
         if (node.handler) {
             this.addCode(es6TokensObj.CatchTok)
-            this.addSpacing()
-            this.addLParen()
+            // ES2019 允许无参数的 catch：catch { ... }
             if (node.handler.param) {
+                this.addSpacing()
+                this.addLParen()
                 this.generatorNode(node.handler.param)
+                this.addRParen()
             }
-            this.addRParen()
 
             // catch block 后：如果没有 finally，需要换行；否则不换行
             const hasFinalizer = !!node.finalizer
@@ -1790,12 +1878,13 @@ export default class SlimeGenerator {
      */
     private static generatorCatchClause(node: any) {
         this.addCode(es6TokensObj.CatchTok)
-        this.addSpacing()
-        this.addLParen()
+        // ES2019 允许无参数的 catch：catch { ... }
         if (node.param) {
+            this.addSpacing()
+            this.addLParen()
             this.generatorNode(node.param)
+            this.addRParen()
         }
-        this.addRParen()
         if (node.body) {
             this.generatorNode(node.body)
         }
@@ -1886,6 +1975,15 @@ export default class SlimeGenerator {
         this.addCode(es6TokensObj.DefaultTok)
         this.addSpacing()  // 添加空格
         this.generatorNode(node.declaration)
+
+        // 如果 declaration 不是 FunctionDeclaration 或 ClassDeclaration，则需要分号和换行
+        // FunctionDeclaration 和 ClassDeclaration 自己会添加换行
+        const declarationType = node.declaration?.type
+        if (declarationType !== SlimeNodeType.FunctionDeclaration &&
+            declarationType !== SlimeNodeType.ClassDeclaration) {
+            this.addCode(es6TokensObj.Semicolon)
+            this.addNewLine()
+        }
     }
 
     /**

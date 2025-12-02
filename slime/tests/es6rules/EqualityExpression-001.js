@@ -58,18 +58,18 @@ const b = 10
 a === b
 
 // ✅ 测试12：函数调用比较
-Math.max(1, 2) === 2
+Math.max(1, 2) === 2;
 
 // ✅ 测试13：对象比较
-const obj1 = {}
-const obj2 = obj1
-obj1 === obj2
+const obj1 = {};
+const obj2 = obj1;
+obj1 === obj2;
 
-// ✅ 测试14：数组比较
-[1, 2] === [1, 2]
+// ✅ 测试14：数组比较 (注意：需要分号防止 ASI 问题，因为 [ 开头会被解析为上一行的下标访问)
+;[1, 2] === [1, 2];
 
 // ✅ 测试15：复杂表达式
-(a + 5) === (b + 5)
+(a + 5) === (b + 5);
 
 /* Es2025Parser.ts: EqualityExpression: EqOp[==|!=|===|!==] */
 
@@ -133,17 +133,17 @@ const b = 10
 a === b
 
 // ✅ 测试12：函数调用比较
-Math.max(1, 2) === 2
+Math.max(1, 2) === 2;
 
 // ✅ 测试13：对象比较
-const obj1 = {}
-const obj2 = obj1
-obj1 === obj2
+const obj1 = {};
+const obj2 = obj1;
+obj1 === obj2;
 
-// ✅ 测试14：数组比较
-[1, 2] === [1, 2]
+// ✅ 测试14：数组比较 (注意：需要分号防止 ASI 问题)
+;[1, 2] === [1, 2];
 
 // ✅ 测试15：复杂表达式
-(a + 5) === (b + 5)
+(a + 5) === (b + 5);
 
 /* Es2025Parser.ts: EqualityExpression: EqOp[==|!=|===|!==] */

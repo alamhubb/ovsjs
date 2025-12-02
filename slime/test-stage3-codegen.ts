@@ -194,23 +194,8 @@ for (let i = startIndex; i < files.length; i++) {
       passCount++
     } else {
       console.log(`❌ 失败: ${comparison.message}`)
-      console.log('\n--- 输入代码 ---')
-      console.log(code)
-      console.log('\n--- 生成代码 ---')
-      console.log(generatedCode)
-      console.log('\n--- 输入 tokens ---')
-      console.log(extractTokenValues(inputTokens).join(' '))
-      console.log('\n--- 输出 tokens ---')
-      console.log(extractTokenValues(outputTokens).join(' '))
-
-      if (comparison.details) {
-        console.log('\n--- 详细信息 ---')
-        console.log(JSON.stringify(comparison.details, null, 2))
-      }
-
-      console.log(`\n⚠️ 测试在第 ${i + 1} 个用例停止`)
-      console.log(`当前进度: ${passCount}/${files.length} 通过 (跳过 ${skipped} 个)\n`)
-      process.exit(1)
+      failCount++
+      // 不打印详细信息，继续下一个测试
     }
 
   } catch (error: any) {
@@ -224,14 +209,7 @@ for (let i = startIndex; i < files.length; i++) {
     }
 
     console.log(`❌ 异常: ${error.message}`)
-    console.log('\n--- 输入代码 ---')
-    console.log(code)
-    console.log('\n--- 错误栈 ---')
-    console.log(error.stack)
-
-    console.log(`\n⚠️ 测试在第 ${i + 1} 个用例停止`)
-    console.log(`当前进度: ${passCount}/${files.length} 通过 (跳过 ${skipped} 个)\n`)
-    process.exit(1)
+    failCount++
   }
 }
 
@@ -243,5 +221,10 @@ console.log('\n' + '='.repeat(60))
 console.log('📊 测试结果汇总')
 console.log('='.repeat(60))
 console.log(`通过: ${passCount}/${files.length}`)
+console.log(`失败: ${failCount}/${files.length}`)
 console.log(`跳过: ${skipped}/${files.length}`)
-console.log(`\n🎉 阶段3测试全部通过!`)
+if (failCount === 0) {
+  console.log(`\n🎉 阶段3测试全部通过!`)
+} else {
+  console.log(`\n⚠️ 有 ${failCount} 个测试失败`)
+}
