@@ -55,6 +55,7 @@
     "js-beautify": "^1.15.4",
     "magic-string": "^0.30.21",
     "slime-ast": "^0.0.1",
+    "slime-token": "^0.0.1",
     "slime-generator": "^0.0.1",
     "slime-parser": "^0.0.1",
     "subhuti": "^0.1.3",
