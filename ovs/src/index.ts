@@ -1,6 +1,5 @@
 // Vite 插件
 import {createFilter, type Plugin} from "vite"
-import SubhutiCst from "subhuti/src/struct/SubhutiCst.ts";
 import SlimeGenerator from "slime-generator/src/SlimeGenerator.ts";
 import OvsParser from "./parser/OvsParser.ts";
 import OvsCstToSlimeAstUtil from "./factory/OvsCstToSlimeAstUtil.ts";
@@ -187,7 +186,7 @@ function wrapTopLevelExpressions(ast: SlimeProgram): SlimeProgram {
 
         return SlimeAstUtil.createProgram(
             [...imports, exportDefault] as any,  // import 必须在最前面
-            SlimeProgramSourceType.module
+            SlimeProgramSourceType.Module
         )
     }
 
@@ -221,7 +220,7 @@ function wrapTopLevelExpressions(ast: SlimeProgram): SlimeProgram {
 
         return SlimeAstUtil.createProgram(
             [...imports, exportDefault] as any,
-            SlimeProgramSourceType.module
+            SlimeProgramSourceType.Module
         )
     }
 
@@ -281,7 +280,7 @@ function wrapTopLevelExpressions(ast: SlimeProgram): SlimeProgram {
     // 返回新的 Program（import 必须在最前面）
     return SlimeAstUtil.createProgram(
         [...imports, exportDefault] as any,
-        SlimeProgramSourceType.module
+        SlimeProgramSourceType.Module
     )
 }
 
