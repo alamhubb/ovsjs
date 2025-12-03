@@ -2,15 +2,13 @@
  * 阶段2: AST生成测试
  * 测试范围: CST → AST转换
  * 前提: 阶段1已通过（CST可以正常生成）
- * 
+ *
  * 用法:
  *   npx tsx slime/test-stage2.ts              # 从头开始测试
  *   npx tsx slime/test-stage2.ts 100          # 从第100个开始
  *   npx tsx slime/test-stage2.ts 100 -s       # 从第100个开始，遇错停止
  */
-import SlimeParser from './packages/slime-parser/src/language/es2025/SlimeParser'
-import { SlimeCstToAst } from './packages/slime-parser/src/language/SlimeCstToAstUtil'
-import { runTests, TestContext, TestResult } from './test-framework'
+import { runTests, TestContext, TestResult, parseToAst } from './test-framework'
 
 // ============================================
 // AST 验证工具
@@ -74,18 +72,13 @@ function countNodes(node: any): number {
 // ============================================
 
 function testStage2(ctx: TestContext): TestResult {
-  // 阶段1: CST 生成
-  const parser = new SlimeParser(ctx.code)
-  const cst = parser.Program(ctx.parseMode)
-  
+  // 使用框架的 parseToAst 解析代码
+  const { cst, ast } = parseToAst(ctx.code, ctx.parseMode)
+
   if (!cst) {
     return { success: false, message: 'CST 生成返回 undefined' }
   }
-  
-  // 阶段2: CST → AST
-  const converter = new SlimeCstToAst()
-  const ast = converter.toProgram(cst)
-  
+
   if (!ast) {
     return { success: false, message: 'AST 转换返回 null/undefined' }
   }

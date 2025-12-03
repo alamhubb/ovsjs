@@ -5,6 +5,29 @@
 import * as fs from 'fs'
 import * as path from 'path'
 import { performance } from 'perf_hooks'
+import SlimeParser from './packages/slime-parser/src/language/es2025/SlimeParser'
+import { SlimeCstToAst } from './packages/slime-parser/src/language/SlimeCstToAstUtil'
+
+// ============================================
+// Parser 工具（供各阶段测试使用）
+// ============================================
+export { SlimeParser, SlimeCstToAst }
+
+/** 创建解析器并解析为 CST */
+export function parseToCst(code: string, parseMode: 'module' | 'script') {
+  const parser = new SlimeParser(code)
+  return parser.Program(parseMode)
+}
+
+/** 创建解析器并解析为 AST（包含中间 CST） */
+export function parseToAst(code: string, parseMode: 'module' | 'script') {
+  const parser = new SlimeParser(code)
+  const cst = parser.Program(parseMode)
+  if (!cst) return { cst: null, ast: null }
+  const converter = new SlimeCstToAst()
+  const ast = converter.toProgram(cst)
+  return { cst, ast }
+}
 
 // ============================================
 // 通用配置 - 直接修改这里
