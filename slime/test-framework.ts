@@ -12,6 +12,7 @@ import { performance } from 'perf_hooks'
 export const DEFAULT_START_FROM = 0       // 从第几个测试开始（0 表示从头开始）
 export const DEFAULT_STOP_ON_FAIL = true  // 遇到第一个失败就停止
 export const DEFAULT_TIMEOUT_MS = 3000    // 单个测试文件超时时间（毫秒）
+export const DEFAULT_USE_SUBPROCESS = false // 是否使用子进程（启用超时中断，但会慢很多）
 
 // ============================================
 // 跳过规则配置
@@ -63,6 +64,7 @@ export interface TestRunnerOptions {
   verboseOnFail?: boolean
   startFrom?: number
   stopOnFail?: boolean
+  useSubprocess?: boolean  // 是否使用子进程（启用超时中断，但会慢很多）
 }
 
 export interface TestStats {
@@ -203,7 +205,8 @@ export async function runTests(
     casesDir = path.join(__dirname, 'tests/babel'),
     verboseOnFail = true,
     startFrom,
-    stopOnFail: stopOnFailConfig
+    stopOnFail: stopOnFailConfig,
+    useSubprocess: useSubprocessConfig
   } = options
 
   const args = process.argv.slice(2)
@@ -212,12 +215,15 @@ export async function runTests(
     ? parseInt(cmdStartIndex, 10) - 1
     : (startFrom !== undefined ? startFrom - 1 : DEFAULT_START_FROM)
   const stopOnFail = args.includes('--stop-on-fail') || args.includes('-s') || (stopOnFailConfig ?? DEFAULT_STOP_ON_FAIL)
+  const useSubprocess = args.includes('--subprocess') || args.includes('-p') || (useSubprocessConfig ?? DEFAULT_USE_SUBPROCESS)
 
   const files = getAllJsFiles(casesDir).sort()
 
   console.log('='.repeat(60))
   if (startIndex > 0) console.log(`📍 从 ${startIndex + 1} 开始测试 (跳过 1~${startIndex})`)
   if (stopOnFail) console.log(`🛑 模式: 遇到第一个失败就停止`)
+  if (useSubprocess) console.log(`🐢 模式: 子进程运行 (支持超时中断，较慢)`)
+  else console.log(`🚀 模式: 主进程运行 (快速)`)
   console.log(`🧪 ${stageName}`)
   console.log(`📝 ${description}`)
   console.log(`📁 测试目录: ${path.relative(process.cwd(), casesDir)}`)
@@ -246,7 +252,10 @@ export async function runTests(
     const startTime = performance.now()
 
     try {
-      const result = await runTestWithTimeout(testFn, ctx, DEFAULT_TIMEOUT_MS)
+      // 根据配置选择运行方式
+      const result = useSubprocess
+        ? await runTestWithTimeout(testFn, ctx, DEFAULT_TIMEOUT_MS)
+        : await runTestDirect(testFn, ctx)
       const elapsed = performance.now() - startTime
 
       if (result.timeout) {
@@ -257,7 +266,7 @@ export async function runTests(
       }
 
       if (result.success) {
-        const timeInfo = elapsed > 1000 ? ` (${elapsed.toFixed(0)}ms)` : ''
+        const timeInfo = elapsed > 100 ? ` (${elapsed.toFixed(0)}ms)` : ''
         console.log(`[${i + 1}] ✅ ${testName} - ${result.message}${timeInfo}`)
         stats.passed++
       } else {
@@ -285,6 +294,15 @@ export async function runTests(
 
   printSummary(stats, stageName)
   return stats
+}
+
+/** 直接在主进程运行测试（快速，但无法中断超时） */
+async function runTestDirect(
+  testFn: (ctx: TestContext) => TestResult | Promise<TestResult>,
+  ctx: TestContext
+): Promise<TestResult & { timeout?: boolean }> {
+  const result = await testFn(ctx)
+  return result
 }
 
 /** 使用子进程运行测试，支持真正的超时中断 */
