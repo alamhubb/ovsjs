@@ -126,8 +126,6 @@ export type SubhutiTokenConsumerConstructor<T extends SubhutiTokenConsumer> =
 export interface SubhutiParserOptions<T extends SubhutiTokenConsumer = SubhutiTokenConsumer> {
     /** TokenConsumer 类（可选） */
     tokenConsumer?: SubhutiTokenConsumerConstructor<T>
-    /** 源代码（用于按需词法分析模式） */
-    sourceCode?: string
     /** Token 定义（用于按需词法分析模式） */
     tokenDefinitions?: SubhutiCreateToken[]
 }
@@ -329,6 +327,28 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
         } else {
             this.tokenConsumer = new SubhutiTokenConsumer(this) as T
         }
+    }
+
+    /**
+     * 重新初始化词法分析器和 tokenConsumer
+     * 子类可以调用此方法来使用不同的 tokens 和 tokenConsumer
+     *
+     * @param tokenDefinitions token 定义
+     * @param TokenConsumerClass TokenConsumer 类
+     */
+    protected reinitialize<U extends SubhutiTokenConsumer>(
+        tokenDefinitions: SubhutiCreateToken[],
+        TokenConsumerClass: new (parser: SubhutiParser<any>) => U
+    ): void {
+        this._lexer = new SubhutiLexer(tokenDefinitions)
+        this._tokenCache = new Map()
+        this._parsedTokens = []
+        this._codeIndex = 0
+        this._codeLine = 1
+        this._codeColumn = 1
+        this._lastTokenName = null
+        this._templateDepth = 0
+        this.tokenConsumer = new TokenConsumerClass(this) as unknown as T
     }
 
     /**

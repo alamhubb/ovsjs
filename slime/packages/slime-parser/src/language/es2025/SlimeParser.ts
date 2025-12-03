@@ -201,9 +201,8 @@ export default class SlimeParser extends SubhutiParser<SlimeTokenConsumer> {
     constructor(sourceCode: string = '') {
         // 使用按需词法分析模式（On-Demand Lexing）
         // Parser 在需要 token 时告诉 Lexer 期望什么（InputElementDiv 或 InputElementRegExp）
-        super([], {
+        super(sourceCode, {
             tokenConsumer: SlimeTokenConsumer,
-            sourceCode: sourceCode,
             tokenDefinitions: slimeTokens
         })
     }

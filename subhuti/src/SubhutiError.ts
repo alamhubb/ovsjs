@@ -74,7 +74,7 @@ export class ParsingError extends Error {
         readonly column: number
     }
     readonly ruleStack: readonly string[]
-    readonly type: 'parsing' | 'left-recursion' | 'infinite-loop'
+    readonly type: 'parsing' | 'left-recursion' | 'infinite-loop' | 'or-branch-shadowing'
     
     // Loop 错误专用字段（平铺）
     readonly loopRuleName?: string
