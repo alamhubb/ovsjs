@@ -165,35 +165,250 @@ export class SlimeCstToAst {
     private readonly expressionAstCache = new WeakMap<SubhutiCst, SlimeExpression>()
 
     /**
-     * 中心转发方法：根据 CST 节点类型自动分发到对应的转换方法
+     * 中心转发方法：根据 CST 节点类型显式分发到对应的转换方法
      *
      * 这是 CST 转 AST 两层架构的核心入口：
      * - 第一层：AST 工厂层 (SlimeNodeCreate.ts) - 纯粹的 AST 节点创建
      * - 第二层：CST 转换层 (本类) - 解析 CST 结构，调用 AST 工厂层
      *
-     * 使用方式：
-     * ```typescript
-     * const ast = cstToAst.createAstFromCst(cst);
-     * ```
-     *
      * @param cst CST 节点
      * @returns 对应的 AST 节点
      */
     createAstFromCst(cst: SubhutiCst): any {
-        const methodName = `create${cst.name}Ast` as keyof this;
-        const method = this[methodName];
+        const name = cst.name
 
-        if (typeof method === 'function') {
-            return (method as Function).call(this, cst);
-        }
+        // ==================== 标识符相关 ====================
+        if (name === SlimeParser.prototype.IdentifierReference?.name) return this.createIdentifierReferenceAst(cst)
+        if (name === SlimeParser.prototype.BindingIdentifier?.name) return this.createBindingIdentifierAst(cst)
+        if (name === SlimeParser.prototype.LabelIdentifier?.name) return this.createLabelIdentifierAst(cst)
+        if (name === SlimeParser.prototype.Identifier?.name) return this.createIdentifierAst(cst)
+        if (name === SlimeParser.prototype.IdentifierName?.name) return this.createIdentifierNameAst(cst)
 
-        // 对于没有专门方法的 CST 节点，尝试使用通用表达式处理
-        // 这通常是中间规则节点，直接处理其子节点
+        // ==================== 字面量相关 ====================
+        if (name === SlimeParser.prototype.Literal?.name) return this.createLiteralAst(cst)
+        if (name === SlimeParser.prototype.BooleanLiteral?.name) return this.createBooleanLiteralAst(cst)
+        if (name === SlimeParser.prototype.ArrayLiteral?.name) return this.createArrayLiteralAst(cst)
+        if (name === SlimeParser.prototype.ObjectLiteral?.name) return this.createObjectLiteralAst(cst)
+        if (name === SlimeParser.prototype.TemplateLiteral?.name) return this.createTemplateLiteralAst(cst)
+        if (name === SlimeParser.prototype.LiteralPropertyName?.name) return this.createLiteralPropertyNameAst(cst)
+        if (name === SlimeTokenConsumer.prototype.NumericLiteral?.name) return this.createNumericLiteralAst(cst)
+        if (name === SlimeTokenConsumer.prototype.StringLiteral?.name) return this.createStringLiteralAst(cst)
+        if (name === SlimeTokenConsumer.prototype.RegularExpressionLiteral?.name) return this.createRegExpLiteralAst(cst)
+
+        // ==================== 表达式相关 ====================
+        if (name === SlimeParser.prototype.PrimaryExpression?.name) return this.createPrimaryExpressionAst(cst)
+        if (name === SlimeParser.prototype.Expression?.name) return this.createExpressionAst(cst)
+        if (name === SlimeParser.prototype.AssignmentExpression?.name) return this.createAssignmentExpressionAst(cst)
+        if (name === SlimeParser.prototype.ConditionalExpression?.name) return this.createConditionalExpressionAst(cst)
+        if (name === SlimeParser.prototype.ShortCircuitExpression?.name) return this.createShortCircuitExpressionAst(cst)
+        if (name === SlimeParser.prototype.LogicalORExpression?.name) return this.createLogicalORExpressionAst(cst)
+        if (name === SlimeParser.prototype.LogicalANDExpression?.name) return this.createLogicalANDExpressionAst(cst)
+        if (name === SlimeParser.prototype.BitwiseORExpression?.name) return this.createBitwiseORExpressionAst(cst)
+        if (name === SlimeParser.prototype.BitwiseXORExpression?.name) return this.createBitwiseXORExpressionAst(cst)
+        if (name === SlimeParser.prototype.BitwiseANDExpression?.name) return this.createBitwiseANDExpressionAst(cst)
+        if (name === SlimeParser.prototype.EqualityExpression?.name) return this.createEqualityExpressionAst(cst)
+        if (name === SlimeParser.prototype.RelationalExpression?.name) return this.createRelationalExpressionAst(cst)
+        if (name === SlimeParser.prototype.ShiftExpression?.name) return this.createShiftExpressionAst(cst)
+        if (name === SlimeParser.prototype.AdditiveExpression?.name) return this.createAdditiveExpressionAst(cst)
+        if (name === SlimeParser.prototype.MultiplicativeExpression?.name) return this.createMultiplicativeExpressionAst(cst)
+        if (name === SlimeParser.prototype.ExponentiationExpression?.name) return this.createExponentiationExpressionAst(cst)
+        if (name === SlimeParser.prototype.UnaryExpression?.name) return this.createUnaryExpressionAst(cst)
+        if (name === SlimeParser.prototype.UpdateExpression?.name) return this.createUpdateExpressionAst(cst)
+        if (name === SlimeParser.prototype.LeftHandSideExpression?.name) return this.createLeftHandSideExpressionAst(cst)
+        if (name === SlimeParser.prototype.NewExpression?.name) return this.createNewExpressionAst(cst)
+        if (name === SlimeParser.prototype.CallExpression?.name) return this.createCallExpressionAst(cst)
+        if (name === SlimeParser.prototype.CallMemberExpression?.name) return this.createCallMemberExpressionAst(cst)
+        if (name === SlimeParser.prototype.MemberExpression?.name) return this.createMemberExpressionAst(cst)
+        if (name === SlimeParser.prototype.OptionalExpression?.name) return this.createOptionalExpressionAst(cst)
+        if (name === SlimeParser.prototype.OptionalChain?.name) return this.createOptionalChainAst(cst)
+        if (name === SlimeParser.prototype.CoalesceExpression?.name) return this.createCoalesceExpressionAst(cst)
+        if (name === SlimeParser.prototype.CoalesceExpressionHead?.name) return this.createCoalesceExpressionHeadAst(cst)
+        if (name === SlimeParser.prototype.ShortCircuitExpressionTail?.name) return this.createShortCircuitExpressionTailAst(cst)
+        if (name === SlimeParser.prototype.ParenthesizedExpression?.name) return this.createParenthesizedExpressionAst(cst)
+        if (name === SlimeParser.prototype.AwaitExpression?.name) return this.createAwaitExpressionAst(cst)
+        if (name === SlimeParser.prototype.YieldExpression?.name) return this.createYieldExpressionAst(cst)
+        if (name === SlimeParser.prototype.MetaProperty?.name) return this.createMetaPropertyAst(cst)
+        if (name === SlimeParser.prototype.SuperProperty?.name) return this.createSuperPropertyAst(cst)
+        if (name === SlimeParser.prototype.SuperCall?.name) return this.createSuperCallAst(cst)
+        if (name === SlimeParser.prototype.ImportCall?.name) return this.createImportCallAst(cst)
+        if (name === SlimeParser.prototype.SpreadElement?.name) return this.createSpreadElementAst(cst)
+        if (name === SlimeParser.prototype.CoverParenthesizedExpressionAndArrowParameterList?.name) return this.createCoverParenthesizedExpressionAndArrowParameterListAst(cst)
+        if (name === SlimeParser.prototype.CoverCallExpressionAndAsyncArrowHead?.name) return this.createCoverCallExpressionAndAsyncArrowHeadAst(cst)
+        if (name === SlimeParser.prototype.CoverInitializedName?.name) return this.createCoverInitializedNameAst(cst)
+
+        // ==================== 语句相关 ====================
+        if (name === SlimeParser.prototype.Statement?.name) return this.createStatementAst(cst)
+        if (name === SlimeParser.prototype.StatementList?.name) return this.createStatementListAst(cst)
+        if (name === SlimeParser.prototype.StatementListItem?.name) return this.createStatementListItemAst(cst)
+        if (name === SlimeParser.prototype.Block?.name) return this.createBlockAst(cst)
+        if (name === SlimeParser.prototype.BlockStatement?.name) return this.createBlockStatementAst(cst)
+        if (name === SlimeParser.prototype.EmptyStatement?.name) return this.createEmptyStatementAst(cst)
+        if (name === SlimeParser.prototype.ExpressionStatement?.name) return this.createExpressionStatementAst(cst)
+        if (name === SlimeParser.prototype.IfStatement?.name) return this.createIfStatementAst(cst)
+        if (name === SlimeParser.prototype.IfStatementBody?.name) return this.createIfStatementBodyAst(cst)
+        if (name === SlimeParser.prototype.BreakableStatement?.name) return this.createBreakableStatementAst(cst)
+        if (name === SlimeParser.prototype.IterationStatement?.name) return this.createIterationStatementAst(cst)
+        if (name === SlimeParser.prototype.ForStatement?.name) return this.createForStatementAst(cst)
+        if (name === SlimeParser.prototype.ForInOfStatement?.name) return this.createForInOfStatementAst(cst)
+        if (name === SlimeParser.prototype.ForDeclaration?.name) return this.createForDeclarationAst(cst)
+        if (name === SlimeParser.prototype.ForBinding?.name) return this.createForBindingAst(cst)
+        if (name === SlimeParser.prototype.WhileStatement?.name) return this.createWhileStatementAst(cst)
+        if (name === SlimeParser.prototype.DoWhileStatement?.name) return this.createDoWhileStatementAst(cst)
+        if (name === SlimeParser.prototype.SwitchStatement?.name) return this.createSwitchStatementAst(cst)
+        if (name === SlimeParser.prototype.CaseBlock?.name) return this.createCaseBlockAst(cst)
+        if (name === SlimeParser.prototype.CaseClauses?.name) return this.createCaseClausesAst(cst)
+        if (name === SlimeParser.prototype.CaseClause?.name) return this.createCaseClauseAst(cst)
+        if (name === SlimeParser.prototype.DefaultClause?.name) return this.createDefaultClauseAst(cst)
+        if (name === SlimeParser.prototype.BreakStatement?.name) return this.createBreakStatementAst(cst)
+        if (name === SlimeParser.prototype.ContinueStatement?.name) return this.createContinueStatementAst(cst)
+        if (name === SlimeParser.prototype.ReturnStatement?.name) return this.createReturnStatementAst(cst)
+        if (name === SlimeParser.prototype.WithStatement?.name) return this.createWithStatementAst(cst)
+        if (name === SlimeParser.prototype.LabelledStatement?.name) return this.createLabelledStatementAst(cst)
+        if (name === SlimeParser.prototype.LabelledItem?.name) return this.createLabelledItemAst(cst)
+        if (name === SlimeParser.prototype.ThrowStatement?.name) return this.createThrowStatementAst(cst)
+        if (name === SlimeParser.prototype.TryStatement?.name) return this.createTryStatementAst(cst)
+        if (name === SlimeParser.prototype.Catch?.name) return this.createCatchAst(cst)
+        if (name === SlimeParser.prototype.CatchParameter?.name) return this.createCatchParameterAst(cst)
+        if (name === SlimeParser.prototype.Finally?.name) return this.createFinallyAst(cst)
+        if (name === SlimeParser.prototype.DebuggerStatement?.name) return this.createDebuggerStatementAst(cst)
+        if (name === SlimeParser.prototype.SemicolonASI?.name) return this.createSemicolonASIAst(cst)
+        if (name === SlimeParser.prototype.ExpressionBody?.name) return this.createExpressionBodyAst(cst)
+
+        // ==================== 声明相关 ====================
+        if (name === SlimeParser.prototype.Declaration?.name) return this.createDeclarationAst(cst)
+        if (name === SlimeParser.prototype.HoistableDeclaration?.name) return this.createHoistableDeclarationAst(cst)
+        if (name === SlimeParser.prototype.VariableStatement?.name) return this.createVariableStatementAst(cst)
+        if (name === SlimeParser.prototype.VariableDeclaration?.name) return this.createVariableDeclarationAst(cst)
+        if (name === SlimeParser.prototype.VariableDeclarationList?.name) return this.createVariableDeclarationListAst(cst)
+        if (name === SlimeParser.prototype.LexicalDeclaration?.name) return this.createLexicalDeclarationAst(cst)
+        if (name === SlimeParser.prototype.LetOrConst?.name) return this.createLetOrConstAst(cst)
+        if (name === SlimeParser.prototype.LexicalBinding?.name) return this.createLexicalBindingAst(cst)
+        if (name === SlimeParser.prototype.Initializer?.name) return this.createInitializerAst(cst)
+
+        // ==================== 函数相关 ====================
+        if (name === SlimeParser.prototype.FunctionDeclaration?.name) return this.createFunctionDeclarationAst(cst)
+        if (name === SlimeParser.prototype.FunctionExpression?.name) return this.createFunctionExpressionAst(cst)
+        if (name === SlimeParser.prototype.FunctionBody?.name) return this.createFunctionBodyAst(cst)
+        if (name === SlimeParser.prototype.FunctionStatementList?.name) return this.createFunctionStatementListAst(cst)
+        if (name === SlimeParser.prototype.FormalParameters?.name) return this.createFormalParametersAst(cst)
+        if (name === SlimeParser.prototype.FormalParameterList?.name) return this.createFormalParameterListAst(cst)
+        if (name === SlimeParser.prototype.FormalParameter?.name) return this.createFormalParameterAst(cst)
+        if (name === SlimeParser.prototype.FunctionRestParameter?.name) return this.createFunctionRestParameterAst(cst)
+        if (name === SlimeParser.prototype.UniqueFormalParameters?.name) return this.createUniqueFormalParametersAst(cst)
+        if (name === SlimeParser.prototype.ArrowFunction?.name) return this.createArrowFunctionAst(cst)
+        if (name === SlimeParser.prototype.ArrowParameters?.name) return this.createArrowParametersAst(cst)
+        if (name === SlimeParser.prototype.ArrowFormalParameters?.name) return this.createArrowFormalParametersAst(cst)
+        if (name === SlimeParser.prototype.ConciseBody?.name) return this.createConciseBodyAst(cst)
+        if (name === SlimeParser.prototype.AsyncFunctionDeclaration?.name) return this.createAsyncFunctionDeclarationAst(cst)
+        if (name === SlimeParser.prototype.AsyncFunctionExpression?.name) return this.createAsyncFunctionExpressionAst(cst)
+        if (name === SlimeParser.prototype.AsyncFunctionBody?.name) return this.createAsyncFunctionBodyAst(cst)
+        if (name === SlimeParser.prototype.AsyncArrowFunction?.name) return this.createAsyncArrowFunctionAst(cst)
+        if (name === SlimeParser.prototype.AsyncArrowHead?.name) return this.createAsyncArrowHeadAst(cst)
+        if (name === SlimeParser.prototype.AsyncArrowBindingIdentifier?.name) return this.createAsyncArrowBindingIdentifierAst(cst)
+        if (name === SlimeParser.prototype.AsyncConciseBody?.name) return this.createAsyncConciseBodyAst(cst)
+        if (name === SlimeParser.prototype.GeneratorDeclaration?.name) return this.createGeneratorDeclarationAst(cst)
+        if (name === SlimeParser.prototype.GeneratorExpression?.name) return this.createGeneratorExpressionAst(cst)
+        if (name === SlimeParser.prototype.GeneratorBody?.name) return this.createGeneratorBodyAst(cst)
+        if (name === SlimeParser.prototype.AsyncGeneratorDeclaration?.name) return this.createAsyncGeneratorDeclarationAst(cst)
+        if (name === SlimeParser.prototype.AsyncGeneratorExpression?.name) return this.createAsyncGeneratorExpressionAst(cst)
+        if (name === SlimeParser.prototype.AsyncGeneratorBody?.name) return this.createAsyncGeneratorBodyAst(cst)
+
+        // ==================== 类相关 ====================
+        if (name === SlimeParser.prototype.ClassDeclaration?.name) return this.createClassDeclarationAst(cst)
+        if (name === SlimeParser.prototype.ClassExpression?.name) return this.createClassExpressionAst(cst)
+        if (name === SlimeParser.prototype.ClassTail?.name) return this.createClassTailAst(cst)
+        if (name === SlimeParser.prototype.ClassHeritage?.name) return this.createClassHeritageAst(cst)
+        if (name === SlimeParser.prototype.ClassBody?.name) return this.createClassBodyAst(cst)
+        if (name === SlimeParser.prototype.ClassElementList?.name) return this.createClassElementListAst(cst)
+        if (name === SlimeParser.prototype.ClassElement?.name) return this.createClassElementAst(cst)
+        if (name === SlimeParser.prototype.ClassElementName?.name) return this.createClassElementNameAst(cst)
+        if (name === SlimeParser.prototype.ClassStaticBlock?.name) return this.createClassStaticBlockAst(cst)
+        if (name === SlimeParser.prototype.ClassStaticBlockBody?.name) return this.createClassStaticBlockBodyAst(cst)
+        if (name === SlimeParser.prototype.ClassStaticBlockStatementList?.name) return this.createClassStaticBlockStatementListAst(cst)
+        if (name === SlimeParser.prototype.MethodDefinition?.name) return this.createMethodDefinitionAst(cst)
+        if (name === SlimeParser.prototype.FieldDefinition?.name) return this.createFieldDefinitionAst(cst)
+        if (name === SlimeParser.prototype.GeneratorMethod?.name) return this.createGeneratorMethodAst(cst)
+        if (name === SlimeParser.prototype.AsyncMethod?.name) return this.createAsyncMethodAst(cst)
+        if (name === SlimeParser.prototype.AsyncGeneratorMethod?.name) return this.createAsyncGeneratorMethodAst(cst)
+        if (name === SlimeParser.prototype.PrivateIdentifier?.name) return this.createPrivateIdentifierAst(cst)
+
+        // ==================== 对象属性相关 ====================
+        if (name === SlimeParser.prototype.PropertyDefinition?.name) return this.createPropertyDefinitionAst(cst)
+        if (name === SlimeParser.prototype.PropertyName?.name) return this.createPropertyNameAst(cst)
+        if (name === SlimeParser.prototype.ComputedPropertyName?.name) return this.createComputedPropertyNameAst(cst)
+        if (name === SlimeParser.prototype.PropertySetParameterList?.name) return this.createPropertySetParameterListAst(cst)
+
+        // ==================== 解构相关 ====================
+        if (name === SlimeParser.prototype.BindingPattern?.name) return this.createBindingPatternAst(cst)
+        if (name === SlimeParser.prototype.ObjectBindingPattern?.name) return this.createObjectBindingPatternAst(cst)
+        if (name === SlimeParser.prototype.ArrayBindingPattern?.name) return this.createArrayBindingPatternAst(cst)
+        if (name === SlimeParser.prototype.BindingPropertyList?.name) return this.createBindingPropertyListAst(cst)
+        if (name === SlimeParser.prototype.BindingProperty?.name) return this.createBindingPropertyAst(cst)
+        if (name === SlimeParser.prototype.BindingElementList?.name) return this.createBindingElementListAst(cst)
+        if (name === SlimeParser.prototype.BindingElisionElement?.name) return this.createBindingElisionElementAst(cst)
+        if (name === SlimeParser.prototype.BindingElement?.name) return this.createBindingElementAst(cst)
+        if (name === SlimeParser.prototype.BindingRestElement?.name) return this.createBindingRestElementAst(cst)
+        if (name === SlimeParser.prototype.BindingRestProperty?.name) return this.createBindingRestPropertyAst(cst)
+        if (name === SlimeParser.prototype.SingleNameBinding?.name) return this.createSingleNameBindingAst(cst)
+        if (name === SlimeParser.prototype.AssignmentPattern?.name) return this.createAssignmentPatternAst(cst)
+        if (name === SlimeParser.prototype.ObjectAssignmentPattern?.name) return this.createObjectAssignmentPatternAst(cst)
+        if (name === SlimeParser.prototype.ArrayAssignmentPattern?.name) return this.createArrayAssignmentPatternAst(cst)
+        if (name === SlimeParser.prototype.AssignmentPropertyList?.name) return this.createAssignmentPropertyListAst(cst)
+        if (name === SlimeParser.prototype.AssignmentProperty?.name) return this.createAssignmentPropertyAst(cst)
+        if (name === SlimeParser.prototype.AssignmentElementList?.name) return this.createAssignmentElementListAst(cst)
+        if (name === SlimeParser.prototype.AssignmentElisionElement?.name) return this.createAssignmentElisionElementAst(cst)
+        if (name === SlimeParser.prototype.AssignmentElement?.name) return this.createAssignmentElementAst(cst)
+        if (name === SlimeParser.prototype.AssignmentRestElement?.name) return this.createAssignmentRestElementAst(cst)
+        if (name === SlimeParser.prototype.AssignmentRestProperty?.name) return this.createAssignmentRestPropertyAst(cst)
+        if (name === SlimeParser.prototype.Elision?.name) return this.createElisionAst(cst)
+        if (name === SlimeParser.prototype.ElementList?.name) return this.createElementListAst(cst)
+
+        // ==================== 模块相关 ====================
+        if (name === SlimeParser.prototype.Module?.name) return this.createModuleAst(cst)
+        if (name === SlimeParser.prototype.ModuleBody?.name) return this.createModuleBodyAst(cst)
+        if (name === SlimeParser.prototype.ModuleItem?.name) return this.createModuleItemAst(cst)
+        if (name === SlimeParser.prototype.ModuleItemList?.name) return this.createModuleItemListAst(cst)
+        if (name === SlimeParser.prototype.ImportDeclaration?.name) return this.createImportDeclarationAst(cst)
+        if (name === SlimeParser.prototype.ImportClause?.name) return this.createImportClauseAst(cst)
+        if (name === SlimeParser.prototype.ImportedDefaultBinding?.name) return this.createImportedDefaultBindingAst(cst)
+        if (name === SlimeParser.prototype.NameSpaceImport?.name) return this.createNameSpaceImportAst(cst)
+        if (name === SlimeParser.prototype.NamedImports?.name) return this.createNamedImportsAst(cst)
+        if (name === SlimeParser.prototype.ImportsList?.name) return this.createImportsListAst(cst)
+        if (name === SlimeParser.prototype.ImportSpecifier?.name) return this.createImportSpecifierAst(cst)
+        if (name === SlimeParser.prototype.ImportedBinding?.name) return this.createImportedBindingAst(cst)
+        if (name === SlimeParser.prototype.ModuleSpecifier?.name) return this.createModuleSpecifierAst(cst)
+        if (name === SlimeParser.prototype.FromClause?.name) return this.createFromClauseAst(cst)
+        if (name === SlimeParser.prototype.ModuleExportName?.name) return this.createModuleExportNameAst(cst)
+        if (name === SlimeParser.prototype.ExportDeclaration?.name) return this.createExportDeclarationAst(cst)
+        if (name === SlimeParser.prototype.ExportFromClause?.name) return this.createExportFromClauseAst(cst)
+        if (name === SlimeParser.prototype.NamedExports?.name) return this.createNamedExportsAst(cst)
+        if (name === SlimeParser.prototype.ExportsList?.name) return this.createExportsListAst(cst)
+        if (name === SlimeParser.prototype.ExportSpecifier?.name) return this.createExportSpecifierAst(cst)
+        if (name === SlimeParser.prototype.WithClause?.name) return this.createWithClauseAst(cst)
+        if (name === SlimeParser.prototype.WithEntries?.name) return this.createWithEntriesAst(cst)
+        if (name === SlimeParser.prototype.AttributeKey?.name) return this.createAttributeKeyAst(cst)
+
+        // ==================== 程序入口 ====================
+        if (name === SlimeParser.prototype.Program?.name) return this.createProgramAst(cst)
+        if (name === SlimeParser.prototype.Script?.name) return this.createScriptAst(cst)
+        if (name === SlimeParser.prototype.ScriptBody?.name) return this.createScriptBodyAst(cst)
+
+        // ==================== 参数列表相关 ====================
+        if (name === SlimeParser.prototype.Arguments?.name) return this.createArgumentsAst(cst)
+        if (name === SlimeParser.prototype.ArgumentList?.name) return this.createArgumentListAst(cst)
+        if (name === SlimeParser.prototype.FormalsList?.name) return this.createFormalsListAst(cst)
+        if (name === SlimeParser.prototype.RestParameter?.name) return this.createRestParameterAst(cst)
+
+        // ==================== 运算符相关 ====================
+        if (name === SlimeParser.prototype.AssignmentOperator?.name) return this.createAssignmentOperatorAst(cst)
+        if (name === SlimeParser.prototype.MultiplicativeOperator?.name) return this.createMultiplicativeOperatorAst(cst)
+
+        // ==================== 对于没有专门方法的 CST 节点，透传到子节点 ====================
         if (cst.children && cst.children.length === 1) {
-            return this.createAstFromCst(cst.children[0]);
+            return this.createAstFromCst(cst.children[0])
         }
 
-        throw new Error(`No conversion method found for CST node: ${cst.name}. Expected method: ${String(methodName)}`);
+        throw new Error(`No conversion method found for CST node: ${name}`)
     }
 
     /**
