@@ -2,8 +2,14 @@
 
 const appName = "Hello OVS"
 const version = "1.0"
+let a = 0
+
+const timer = setInterval(() => {
+    a += 1;
+  }, 1000);
 
 div {
+  h1 { a }
   h1 { appName }
   p { version }
 }
