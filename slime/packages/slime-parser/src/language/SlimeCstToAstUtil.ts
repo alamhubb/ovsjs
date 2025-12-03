@@ -2818,46 +2818,41 @@ export class SlimeCstToAst {
         }
 
         if (first.name === 'ClassElementName') {
-            // Es2025Parser: ClassElementName ( UniqueFormalParameters ) { FunctionBody }
-            // children: [ClassElementName, LParen, UniqueFormalParameters?, RParen, LBrace, FunctionBody?, RBrace]
-            return this.createMethodDefinitionClassElementNameAst(staticCst, cst)
+            // MethodDefinition 分支: ClassElementName ( UniqueFormalParameters ) { FunctionBody }
+            return this.createMethodDefinitionNormalAst(staticCst, cst)
         } else if (first.name === 'Get') {
-            // Es2025Parser: get ClassElementName ( ) { FunctionBody }
-            // children: [GetTok, ClassElementName, LParen, RParen, LBrace, FunctionBody?, RBrace]
-            return this.createMethodDefinitionGetterMethodAst(staticCst, cst)
+            // MethodDefinition 分支: get ClassElementName ( ) { FunctionBody }
+            return this.createMethodDefinitionGetterAst(staticCst, cst)
         } else if (first.name === 'Set') {
-            // Es2025Parser: set ClassElementName ( PropertySetParameterList ) { FunctionBody }
-            return this.createMethodDefinitionSetterMethodAst(staticCst, cst)
+            // MethodDefinition 分支: set ClassElementName ( PropertySetParameterList ) { FunctionBody }
+            return this.createMethodDefinitionSetterAst(staticCst, cst)
         } else if (first.name === SlimeParser.prototype.GeneratorMethod?.name || first.name === 'GeneratorMethod') {
-            // generator方法�?methodName() { yield ... }
+            // MethodDefinition 分支: GeneratorMethod
             return this.createMethodDefinitionGeneratorMethodAst(staticCst, first)
         } else if (first.name === 'AsyncMethod' || first.name === SlimeParser.prototype.AsyncMethod?.name) {
-            // async方法
+            // MethodDefinition 分支: AsyncMethod
             return this.createMethodDefinitionAsyncMethodAst(staticCst, first)
         } else if (first.name === 'AsyncGeneratorMethod' || first.name === SlimeParser.prototype.AsyncGeneratorMethod?.name) {
-            // async generator方法
+            // MethodDefinition 分支: AsyncGeneratorMethod
             return this.createMethodDefinitionAsyncGeneratorMethodAst(staticCst, first)
         } else if (first.name === 'Asterisk') {
-            // Es2025Parser: * ClassElementName ( UniqueFormalParameters ) { GeneratorBody }
-            // 这种情况下整个cst就是GeneratorMethod的children
-            return this.createMethodDefinitionGeneratorMethodFromChildren(staticCst, cst)
+            // MethodDefinition 分支: * ClassElementName ( UniqueFormalParameters ) { GeneratorBody }
+            return this.createMethodDefinitionGeneratorMethodAst(staticCst, cst)
         } else if (first.name === 'Async') {
-            // Es2025Parser: async [no LineTerminator here] ClassElementName ( ... ) { ... }
-            // 可能�?AsyncMethod �?AsyncGeneratorMethod
-            return this.createMethodDefinitionAsyncMethodFromChildren(staticCst, cst)
+            // MethodDefinition 分支: async [no LineTerminator here] ClassElementName ( ... ) { ... }
+            return this.createMethodDefinitionAsyncFromTokenAst(staticCst, cst)
         } else if (first.name === 'IdentifierName' || first.name === 'IdentifierName' ||
                    first.name === 'PropertyName' || first.name === 'LiteralPropertyName') {
             // 检查是否是 getter/setter
             if (first.value === 'get' && cst.children[1]?.name === 'ClassElementName') {
                 // getter方法：get ClassElementName ( ) { FunctionBody }
-                return this.createMethodDefinitionGetterMethodFromIdentifier(staticCst, cst)
+                return this.createMethodDefinitionGetterFromIdentifierAst(staticCst, cst)
             } else if (first.value === 'set' && cst.children[1]?.name === 'ClassElementName') {
                 // setter方法：set ClassElementName ( PropertySetParameterList ) { FunctionBody }
-                return this.createMethodDefinitionSetterMethodFromIdentifier(staticCst, cst)
+                return this.createMethodDefinitionSetterFromIdentifierAst(staticCst, cst)
             }
-            // Es2025Parser: 直接的标识符作为方法�?
-            // 这种情况下，第一个子节点是方法名，后面是 LParen, UniqueFormalParameters, RParen, LBrace, FunctionBody, RBrace
-            return this.createMethodDefinitionMethodDefinitionFromIdentifier(staticCst, cst)
+            // MethodDefinition 分支: 直接的标识符作为方法名
+            return this.createMethodDefinitionFromIdentifierAst(staticCst, cst)
         } else {
             throw new Error('不支持的类型: ' + first.name)
         }
