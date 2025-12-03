@@ -3659,3 +3659,373 @@ export default (function(){
 })();
 
 ================================================================================
+
+[2025-12-03T16:30:47.531Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-12-03T16:30:47.531Z]
+3333
+================================================================================
+
+[2025-12-03T16:30:47.552Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-03T16:30:47.552Z]
+import { ref } from 'vue';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = b
+
+
+d() {
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-03T16:30:47.552Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+import {ref} from 'vue';
+export default (function(){
+  const appName = "Hello OVS";
+  const version = "1.0";
+  let a = 1;
+  let b = a;
+  let c = b;
+  return createComponentVNode('d',{},[(function(){
+    const children = [];
+    const temp$$attrs$$8tmnxova = {};
+    let a = ref(0);
+    const timer = setInterval(() => {
+      a.value = a.value + 1;
+      console.log(a);
+    },1000);
+    children.push(a);
+    return createComponentVNode('h1',{onClick:() => {
+      children.push(console.log('clicked'));
+    }},children);
+  })(),createComponentVNode('h1',{},[appName]),createComponentVNode('p',{},[version])]);
+})();
+
+================================================================================
+
+[2025-12-03T16:30:47.741Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-12-03T16:30:47.741Z]
+3333
+================================================================================
+
+[2025-12-03T16:30:47.754Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-03T16:30:47.754Z]
+import { ref } from 'vue';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = b
+
+
+di() {
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-03T16:30:47.754Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+import {ref} from 'vue';
+export default (function(){
+  const appName = "Hello OVS";
+  const version = "1.0";
+  let a = 1;
+  let b = a;
+  let c = b;
+  return createComponentVNode('di',{},[(function(){
+    const children = [];
+    const temp$$attrs$$pxbovkza = {};
+    let a = ref(0);
+    const timer = setInterval(() => {
+      a.value = a.value + 1;
+      console.log(a);
+    },1000);
+    children.push(a);
+    return createComponentVNode('h1',{onClick:() => {
+      children.push(console.log('clicked'));
+    }},children);
+  })(),createComponentVNode('h1',{},[appName]),createComponentVNode('p',{},[version])]);
+})();
+
+================================================================================
+
+[2025-12-03T16:30:47.938Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-12-03T16:30:47.939Z]
+3333
+================================================================================
+
+[2025-12-03T16:30:47.953Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-03T16:30:47.953Z]
+import { ref } from 'vue';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = b
+
+
+div() {
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-03T16:30:47.953Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+import {ref} from 'vue';
+export default (function(){
+  const appName = "Hello OVS";
+  const version = "1.0";
+  let a = 1;
+  let b = a;
+  let c = b;
+  return createComponentVNode('div',{},[(function(){
+    const children = [];
+    const temp$$attrs$$01jy3u53 = {};
+    let a = ref(0);
+    const timer = setInterval(() => {
+      a.value = a.value + 1;
+      console.log(a);
+    },1000);
+    children.push(a);
+    return createComponentVNode('h1',{onClick:() => {
+      children.push(console.log('clicked'));
+    }},children);
+  })(),createComponentVNode('h1',{},[appName]),createComponentVNode('p',{},[version])]);
+})();
+
+================================================================================
+
+[2025-12-03T16:30:49.003Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-12-03T16:30:49.003Z]
+3333
+================================================================================
+
+[2025-12-03T16:30:49.021Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-03T16:30:49.021Z]
+import { ref } from 'vue';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = b
+
+
+di() {
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-03T16:30:49.021Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+import {ref} from 'vue';
+export default (function(){
+  const appName = "Hello OVS";
+  const version = "1.0";
+  let a = 1;
+  let b = a;
+  let c = b;
+  return createComponentVNode('di',{},[(function(){
+    const children = [];
+    const temp$$attrs$$tidcoq4p = {};
+    let a = ref(0);
+    const timer = setInterval(() => {
+      a.value = a.value + 1;
+      console.log(a);
+    },1000);
+    children.push(a);
+    return createComponentVNode('h1',{onClick:() => {
+      children.push(console.log('clicked'));
+    }},children);
+  })(),createComponentVNode('h1',{},[appName]),createComponentVNode('p',{},[version])]);
+})();
+
+================================================================================
+
+[2025-12-03T16:30:49.470Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-12-03T16:30:49.470Z]
+3333
+================================================================================
+
+[2025-12-03T16:30:49.484Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-03T16:30:49.484Z]
+import { ref } from 'vue';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = b
+
+
+div() {
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-03T16:30:49.484Z]
+import {createComponentVNode,createElementVNode} from '../utils/ReactiveVNode';
+
+import {ref} from 'vue';
+export default (function(){
+  const appName = "Hello OVS";
+  const version = "1.0";
+  let a = 1;
+  let b = a;
+  let c = b;
+  return createComponentVNode('div',{},[(function(){
+    const children = [];
+    const temp$$attrs$$dh2m4d1r = {};
+    let a = ref(0);
+    const timer = setInterval(() => {
+      a.value = a.value + 1;
+      console.log(a);
+    },1000);
+    children.push(a);
+    return createComponentVNode('h1',{onClick:() => {
+      children.push(console.log('clicked'));
+    }},children);
+  })(),createComponentVNode('h1',{},[appName]),createComponentVNode('p',{},[version])]);
+})();
+
+================================================================================
