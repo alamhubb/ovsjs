@@ -1,8 +1,6 @@
 import OvsTokenConsumer, {ovs6Tokens} from "./OvsConsumer.ts"
 import {Subhuti, SubhutiRule} from 'subhuti/src/SubhutiParser.ts'
-import OvsVueRenderFactory from "../factory/OvsVueRenderFactory.ts";
-import SubhutiCst from "subhuti/src/struct/SubhutiCst.ts";
-import SlimeParser, {ExpressionParams} from "slime-parser/src/language/es2025/SlimeParser.ts";
+import SlimeParser, {ExpressionParams, StatementParams, DeclarationParams} from "slime-parser/src/language/es2025/SlimeParser.ts";
 
 @Subhuti
 export default class OvsParser extends SlimeParser<OvsTokenConsumer> {
@@ -20,14 +18,11 @@ export default class OvsParser extends SlimeParser<OvsTokenConsumer> {
 
     @SubhutiRule
     OvsRenderFunction() {
-        // this.Option(() => {
         this.tokenConsumer.IdentifierName()
-        // })
         this.Option(() => {
             this.Arguments()
         })
         this.tokenConsumer.LBrace()
-        //这里要改一下，支持三种，一种是嵌套的，一种是元素，一种是命名=的
         this.Option(() => {
             this.StatementList()
         })
@@ -39,7 +34,7 @@ export default class OvsParser extends SlimeParser<OvsTokenConsumer> {
     OvsViewDeclaration() {
         // ovsView + ovsRenderDomClassDeclaration + OvsRenderDomViewDeclaration
         this.tokenConsumer.OvsViewToken()
-        this.ovsRenderDomClassDeclaration()  // 复用：Identifier, FunctionFormalParameters?, Colon
+        this.OvsRenderDomClassDeclaration()  // 复用：Identifier, FunctionFormalParameters?, Colon
         this.OvsRenderFunction()   // 视图内容
     }
 
@@ -48,7 +43,7 @@ export default class OvsParser extends SlimeParser<OvsTokenConsumer> {
      * 格式: ComponentName(params)?:
      */
     @SubhutiRule
-    ovsRenderDomClassDeclaration() {
+    OvsRenderDomClassDeclaration() {
         this.tokenConsumer.IdentifierName()
         this.Option(() => {
             // 使用 ArrowFormalParameters 而不是 FormalParameters
@@ -56,16 +51,6 @@ export default class OvsParser extends SlimeParser<OvsTokenConsumer> {
             this.ArrowFormalParameters()
         })
         this.tokenConsumer.Colon()
-    }
-
-    /**
-     * @deprecated 此规则未被任何语法调用，是旧代码路径的一部分
-     * 保留仅供向后兼容，新代码应使用 OvsCstToSlimeAstUtil 进行转换
-     */
-    @SubhutiRule
-    OvsLexicalBinding() {
-        this.BindingIdentifier()
-        this.Initializer()
     }
 
     @SubhutiRule
@@ -81,10 +66,9 @@ export default class OvsParser extends SlimeParser<OvsTokenConsumer> {
 
     /**
      * Statement - 覆盖父类，添加 NoRenderBlock 支持
-     * 修复：使用 VariableStatement 而非 VariableDeclaration
      */
     @SubhutiRule
-    Statement(params: { Yield?: boolean; Await?: boolean; Return?: boolean } = {}) {
+    Statement(params: StatementParams = {}) {
         const {Return = false} = params
         return this.Or([
             { alt: () => this.NoRenderBlock() },        // 新增：#{}块优先
@@ -107,10 +91,9 @@ export default class OvsParser extends SlimeParser<OvsTokenConsumer> {
 
     /**
      * Declaration - 覆盖父类，添加 OvsViewDeclaration 支持
-     * 修复：使用 LexicalDeclaration 而非 VariableDeclaration
      */
     @SubhutiRule
-    Declaration(params: { Yield?: boolean; Await?: boolean } = {}) {
+    Declaration(params: DeclarationParams = {}) {
         return this.Or([
             { alt: () => this.OvsViewDeclaration() },  // 添加 ovsView 组件声明
             { alt: () => this.HoistableDeclaration({ ...params, Default: false }) },
@@ -161,98 +144,5 @@ export default class OvsParser extends SlimeParser<OvsTokenConsumer> {
         ])
     }
 
-    /**
-     * AssignmentExpression - 覆盖父类，完整复制 SlimeParser 的实现
-     * 注意：OvsRenderFunction 已移到 PrimaryExpression 中，这里不再需要
-     */
-    @SubhutiRule
-    AssignmentExpression(params: { Yield?: boolean; Await?: boolean; In?: boolean } = {}) {
-        const {Yield = false} = params
-
-        return this.Or([
-            // ⚠️ 箭头函数必须在 ConditionalExpression 之前！
-            // 因为 (a, b) 可以同时匹配括号表达式和箭头函数参数，
-            // 只有通过后续的 => 才能区分，所以需要先尝试箭头函数
-            {alt: () => this.ArrowFunction(params)},
-            {alt: () => this.AsyncArrowFunction(params)},
-            // [+Yield] YieldExpression
-            ...(Yield ? [{alt: () => this.YieldExpression(params)}] : []),
-            // 赋值表达式放在 ConditionalExpression 之前，防止其抢先匹配 LeftHandSideExpression
-            {
-                alt: () => {
-                    this.LeftHandSideExpression(params)
-                    this.tokenConsumer.Assign()
-                    this.AssignmentExpression(params)
-                }
-            },
-            {
-                alt: () => {
-                    this.LeftHandSideExpression(params)
-                    this.AssignmentOperator()
-                    this.AssignmentExpression(params)
-                }
-            },
-            {
-                alt: () => {
-                    this.LeftHandSideExpression(params)
-                    this.tokenConsumer.LogicalAndAssign()
-                    this.AssignmentExpression(params)
-                }
-            },
-            {
-                alt: () => {
-                    this.LeftHandSideExpression(params)
-                    this.tokenConsumer.LogicalOrAssign()
-                    this.AssignmentExpression(params)
-                }
-            },
-            {
-                alt: () => {
-                    this.LeftHandSideExpression(params)
-                    this.tokenConsumer.NullishCoalescingAssign()
-                    this.AssignmentExpression(params)
-                }
-            },
-            // 条件表达式作为兜底
-            {alt: () => this.ConditionalExpression(params)}
-        ])
-    }
-
-    /**
-     * @deprecated 旧的代码生成方法，新代码应使用 OvsCstToSlimeAstUtil + SlimeGenerator
-     * 保留仅供向后兼容
-     */
-    exec(curCst: SubhutiCst = this.getCurCst(), code: string = ''): string {
-        if (curCst.name === 'Program') {
-            //递归执行这个
-            curCst = this.transCst(curCst)
-        }
-        return super.exec(curCst, code);
-    }
-
-    /**
-     * @deprecated 旧的 CST 转换方法，新代码应使用 OvsCstToSlimeAstUtil
-     * 保留仅供向后兼容
-     */
-    transCst(curCst: SubhutiCst) {
-        if (curCst.children) {
-            const children = []
-            for (let child of curCst.children) {
-                if (child) {
-                    child = this.transCst(child)
-                    children.push(child)
-                }
-            }
-            curCst.children = children
-        }
-
-        //将ovs view转为自执行函数
-        if (curCst.name === this.OvsLexicalBinding.name) {
-            curCst = OvsVueRenderFactory.createInitializerVueRenderCst(curCst)
-        } else if (curCst.name === this.OvsRenderFunction.name) {
-            curCst = OvsVueRenderFactory.createOvsVueRenderCst(curCst)
-        }
-        return curCst
-    }
 }
 

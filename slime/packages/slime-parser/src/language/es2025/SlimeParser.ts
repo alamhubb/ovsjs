@@ -61,19 +61,19 @@ export const ReservedWords = new Set(
 // 参数化规则的参数接口
 // ============================================
 
-interface ExpressionParams {
+export interface ExpressionParams {
     In?: boolean      // 是否允许 in 运算符
     Yield?: boolean   // 是否在 Generator 上下文
     Await?: boolean   // 是否在 Async 上下文
 }
 
-interface StatementParams {
+export interface StatementParams {
     Yield?: boolean   // 是否在 Generator 上下文
     Await?: boolean   // 是否在 Async 上下文
     Return?: boolean  // 是否允许 return 语句
 }
 
-interface DeclarationParams {
+export interface DeclarationParams {
     Yield?: boolean   // 是否在 Generator 上下文
     Await?: boolean   // 是否在 Async 上下文
     Default?: boolean // 是否是默认导出
