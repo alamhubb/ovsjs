@@ -5,7 +5,7 @@ import {SlimeNodeType} from "slime-ast/src/SlimeNodeType.ts";
 import {
     type SlimeCallExpression,
     type SlimeExpression,
-    type SlimeExpressionStatement,
+    type SlimeExpressionStatement, type SlimeIdentifier,
     type SlimeModuleDeclaration,
     type SlimeProgram,
     SlimeProgramSourceType,
@@ -14,6 +14,7 @@ import {
 import SlimeParser from "slime-parser/src/language/es2025/SlimeParser.ts";
 import SlimeNodeCreate from "slime-ast/src/SlimeNodeCreate.ts";
 import slimeTokenCreate from "slime-ast/src/SlimeTokenCreate.ts";
+import SlimeTokenCreate from "slime-ast/src/SlimeTokenCreate.ts";
 
 export function checkCstName(cst: SubhutiCst, cstName: string) {
   if (cst.name !== cstName) {
@@ -359,7 +360,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
         const pushCall = SlimeNodeCreate.createCallExpression(
           SlimeNodeCreate.createMemberExpression(
             SlimeNodeCreate.createIdentifier('children'),
-            SlimeNodeCreate.createDotOperator(cst.loc),
+            SlimeTokenCreate.createDotOperator(cst.loc),
             SlimeNodeCreate.createIdentifier('push')
           ),
           [expr]
@@ -628,7 +629,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
       // 1. 声明 children 数组：const children = []
       // 注意：这是自动生成的代码，不传递loc（避免创建错误映射）
       SlimeNodeCreate.createVariableDeclaration(
-        SlimeNodeCreate.createVariableDeclarationKind(SlimeVariableDeclarationKindValue.const),
+          SlimeTokenCreate.createVariableDeclarationKind(SlimeVariableDeclarationKindValue.const),
         [
           SlimeNodeCreate.createVariableDeclarator(
             SlimeNodeCreate.createIdentifier('children'),
@@ -643,11 +644,11 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     // 注意：这也是自动生成的代码，不传递loc（避免创建错误映射）
     if (attrsVarName) {
       const attrsDeclaration = SlimeNodeCreate.createVariableDeclaration(
-        SlimeNodeCreate.createVariableDeclarationKind(SlimeVariableDeclarationKindValue.const),
+          SlimeTokenCreate.createVariableDeclarationKind(SlimeVariableDeclarationKindValue.const),
         [
           SlimeNodeCreate.createVariableDeclarator(
             SlimeNodeCreate.createIdentifier(attrsVarName),
-            SlimeNodeCreate.createEqualOperator(),
+              SlimeTokenCreate.createEqualOperator(),
             SlimeNodeCreate.createObjectExpression([])
           )
         ]
@@ -716,11 +717,11 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     // 2. 如果有attrs，声明 attrs 对象
     if (attrsVarName) {
       const attrsDeclaration = SlimeNodeCreate.createVariableDeclaration(
-        SlimeNodeCreate.createVariableDeclarationKind(SlimeVariableDeclarationKindValue.const),
+          SlimeTokenCreate.createVariableDeclarationKind(SlimeVariableDeclarationKindValue.const),
         [
           SlimeNodeCreate.createVariableDeclarator(
             SlimeNodeCreate.createIdentifier(attrsVarName),
-            SlimeNodeCreate.createEqualOperator(),
+              SlimeTokenCreate.createEqualOperator(),
             SlimeNodeCreate.createObjectExpression([])
           )
         ]
@@ -816,9 +817,9 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     )
 
     // 创建函数参数（空参数）
-    const lp = SlimeNodeCreate.createLParen(loc)
-    const rp = SlimeNodeCreate.createRParen(loc)
-    const functionParams = SlimeNodeCreate.createFunctionParams(lp, rp)
+    const lp = SlimeTokenCreate.createLParen(loc)
+    const rp = SlimeTokenCreate.createRParen(loc)
+    const functionParams = SlimeTokenCreate.createFunctionParams(lp, rp)
 
     // 创建函数表达式
     const functionExpression = SlimeNodeCreate.createFunctionExpression(blockStatement, null, functionParams, loc)

@@ -107,14 +107,14 @@ function isOvsRenderDomView(statement: SlimeStatement): boolean {
         return true
     }
 
-    // 简单视图：直接的 createReactiveVNode() 调用
+    // 简单视图：直接的 createComponentVNode() 调用
     if (expr.type === SlimeNodeType.CallExpression) {
         const callExpr = expr as SlimeCallExpression
 
-        // 检查 createReactiveVNode() 函数调用
+        // 检查 createComponentVNode() 函数调用
         if (callExpr.callee.type === SlimeNodeType.Identifier) {
             const identifier = callExpr.callee as any
-            if (identifier.name === 'createReactiveVNode') {
+            if (identifier.name === 'createComponentVNode') {
                 return true
             }
         }
@@ -295,8 +295,7 @@ function ensureOvsAPIImport(ast: SlimeProgram): SlimeProgram {
 
         const importDecl = SlimeAstUtil.createImportDeclaration(
             [specifier1, specifier2],
-            SlimeAstUtil.createFromKeyword(),
-            SlimeAstUtil.createStringLiteral('../utils/ReactiveVNode')
+            SlimeAstUtil.createStringLiteral("'../utils/ReactiveVNode'")
         )
 
         // 设置换行标记
