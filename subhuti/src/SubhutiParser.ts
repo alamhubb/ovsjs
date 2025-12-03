@@ -330,28 +330,6 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
     }
 
     /**
-     * 重新初始化词法分析器和 tokenConsumer
-     * 子类可以调用此方法来使用不同的 tokens 和 tokenConsumer
-     *
-     * @param tokenDefinitions token 定义
-     * @param TokenConsumerClass TokenConsumer 类
-     */
-    protected reinitialize<U extends SubhutiTokenConsumer>(
-        tokenDefinitions: SubhutiCreateToken[],
-        TokenConsumerClass: new (parser: SubhutiParser<any>) => U
-    ): void {
-        this._lexer = new SubhutiLexer(tokenDefinitions)
-        this._tokenCache = new Map()
-        this._parsedTokens = []
-        this._codeIndex = 0
-        this._codeLine = 1
-        this._codeColumn = 1
-        this._lastTokenName = null
-        this._templateDepth = 0
-        this.tokenConsumer = new TokenConsumerClass(this) as unknown as T
-    }
-
-    /**
      * 获取已解析的 token 列表
      */
     get parsedTokens(): SubhutiMatchToken[] {
@@ -1308,7 +1286,7 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
             true
         )
 
-        this.generateCstByToken(token)
+        const cst = this.generateCstByToken(token)
 
         // 更新模板深度
         if (token.tokenName === 'TemplateHead') {
@@ -1325,6 +1303,8 @@ export default class SubhutiParser<T extends SubhutiTokenConsumer = SubhutiToken
 
         // 添加到已解析列表
         this._parsedTokens.push(token)
+
+        return cst
     }
 
     private generateCstByToken(token: SubhutiMatchToken): SubhutiCst {

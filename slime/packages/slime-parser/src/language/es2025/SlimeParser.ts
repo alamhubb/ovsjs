@@ -10,11 +10,12 @@
  *
  * @version 1.0.0
  */
-import SubhutiParser, {Subhuti, SubhutiRule} from "subhuti/src/SubhutiParser.ts"
+import SubhutiParser, {Subhuti, SubhutiRule, SubhutiParserOptions} from "subhuti/src/SubhutiParser.ts"
 import type SubhutiCst from "subhuti/src/struct/SubhutiCst.ts"
 import type SubhutiMatchToken from "subhuti/src/struct/SubhutiMatchToken.ts"
 import SubhutiLexer, {matchRegExpLiteral, LexicalGoal} from "subhuti/src/SubhutiLexer.ts"
 import SlimeTokenConsumer from "./SlimeTokenConsumer.ts"
+import SubhutiTokenConsumer from "subhuti/src/SubhutiTokenConsumer.ts"
 import {
     SlimeContextualKeywordTokenTypes,
     SlimeReservedWordTokenTypes,
@@ -193,17 +194,18 @@ function isValidIdentifierWithEscapes(name: string): boolean {
 // ============================================
 
 @Subhuti
-export default class SlimeParser extends SubhutiParser<SlimeTokenConsumer> {
+export default class SlimeParser<T extends SubhutiTokenConsumer = SlimeTokenConsumer> extends SubhutiParser<T> {
     /**
      * 构造函数
      * @param sourceCode 原始源码，使用按需词法分析模式
+     * @param options 可选配置，子类可以覆盖 tokenConsumer 和 tokenDefinitions
      */
-    constructor(sourceCode: string = '') {
+    constructor(sourceCode: string = '', options?: SubhutiParserOptions<T>) {
         // 使用按需词法分析模式（On-Demand Lexing）
         // Parser 在需要 token 时告诉 Lexer 期望什么（InputElementDiv 或 InputElementRegExp）
         super(sourceCode, {
-            tokenConsumer: SlimeTokenConsumer,
-            tokenDefinitions: slimeTokens
+            tokenConsumer: options?.tokenConsumer ?? SlimeTokenConsumer as any,
+            tokenDefinitions: options?.tokenDefinitions ?? slimeTokens
         })
     }
 

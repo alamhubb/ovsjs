@@ -5,19 +5,16 @@ import SubhutiCst from "subhuti/src/struct/SubhutiCst.ts";
 import SlimeParser from "slime-parser/src/language/es2025/SlimeParser.ts";
 
 @Subhuti
-export default class OvsParser extends SlimeParser {
-    // 声明 tokenConsumer 类型为 OvsTokenConsumer
-    declare tokenConsumer: OvsTokenConsumer
-
+export default class OvsParser extends SlimeParser<OvsTokenConsumer> {
     /**
      * 构造函数 - 使用按需词法分析模式
      * @param sourceCode 原始源码
      */
     constructor(sourceCode: string = '') {
-        // 先调用 SlimeParser 构造函数（获取所有 ES2025 规则）
-        super(sourceCode)
-        // 然后重新初始化为 OVS 的 tokens 和 tokenConsumer
-        this.reinitialize(ovs6Tokens, OvsTokenConsumer)
+        super(sourceCode, {
+            tokenConsumer: OvsTokenConsumer,
+            tokenDefinitions: ovs6Tokens
+        })
     }
 
 
