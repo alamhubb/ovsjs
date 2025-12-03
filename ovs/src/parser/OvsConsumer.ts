@@ -11,7 +11,7 @@ export const ovsTokenName = {
 export const ovsTokensObj = {
   ...SlimeTokensObj,
   OvsViewToken: createKeywordToken(ovsTokenName.OvsViewToken, "ovsView"),
-  Hash: createRegToken(ovsTokenName.Hash, /^#/)
+  Hash: createRegToken(ovsTokenName.Hash, /#/)
 }
 export const ovs6Tokens = Object.values(ovsTokensObj)
 
