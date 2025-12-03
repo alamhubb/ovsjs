@@ -5,8 +5,8 @@
 import * as fs from 'fs'
 import * as path from 'path'
 import { performance } from 'perf_hooks'
-import SlimeParser from './packages/slime-parser/src/language/es2025/SlimeParser'
-import { SlimeCstToAst } from './packages/slime-parser/src/language/SlimeCstToAstUtil'
+import SlimeParser from 'slime-parser/src/language/es2025/SlimeParser'
+import { SlimeCstToAst } from 'slime-parser/src/language/SlimeCstToAstUtil'
 
 // ============================================
 // Parser 工具（供各阶段测试使用）
