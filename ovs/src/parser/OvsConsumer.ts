@@ -8,12 +8,18 @@ export const ovsTokenName = {
   OvsViewToken: "OvsViewToken",
   Hash: "Hash"
 }
-export const ovsTokensObj = {
-  ...SlimeTokensObj,
-  OvsViewToken: createKeywordToken(ovsTokenName.OvsViewToken, "ovsView"),
-  Hash: createRegToken(ovsTokenName.Hash, /#/)
-}
-export const ovs6Tokens = Object.values(ovsTokensObj)
+
+// OVS 特有的 tokens - 放在 SlimeTokens 之前
+const ovsSpecificTokens = [
+  createKeywordToken(ovsTokenName.OvsViewToken, "ovsView"),
+  createRegToken(ovsTokenName.Hash, /#/)
+]
+
+// 合并 tokens: OVS tokens 放前面，确保优先级高于 IdentifierName
+export const ovs6Tokens = [
+  ...ovsSpecificTokens,
+  ...Object.values(SlimeTokensObj)
+]
 
 export default class OvsTokenConsumer extends SlimeTokenConsumer {
   OvsViewToken() {
