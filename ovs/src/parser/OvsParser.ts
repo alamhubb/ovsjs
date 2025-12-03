@@ -69,88 +69,71 @@ export default class OvsParser extends SlimeParser<OvsTokenConsumer> {
         this.tokenConsumer.RBrace()
     }
 
+    /**
+     * Statement - 覆盖父类，添加 NoRenderBlock 支持
+     * 修复：使用 VariableStatement 而非 VariableDeclaration
+     */
     @SubhutiRule
-    Statement() {
-        this.Or([
+    Statement(params: { Yield?: boolean; Await?: boolean; Return?: boolean } = {}) {
+        const {Return = false} = params
+        return this.Or([
             { alt: () => this.NoRenderBlock() },        // 新增：#{}块优先
-            { alt: () => this.BlockStatement() },
-            { alt: () => this.VariableDeclaration() },
+            { alt: () => this.BlockStatement(params) },
+            { alt: () => this.VariableStatement(params) },
             { alt: () => this.EmptyStatement() },
-            { alt: () => this.ExpressionStatement() },
-            { alt: () => this.IfStatement() },
-            { alt: () => this.BreakableStatement() },
-            { alt: () => this.ContinueStatement() },
-            { alt: () => this.BreakStatement() },
-            { alt: () => this.ReturnStatement() },
-            { alt: () => this.WithStatement() },
-            { alt: () => this.LabelledStatement() },
-            { alt: () => this.ThrowStatement() },
-            { alt: () => this.TryStatement() },
+            { alt: () => this.ExpressionStatement(params) },
+            { alt: () => this.IfStatement(params) },
+            { alt: () => this.BreakableStatement(params) },
+            { alt: () => this.ContinueStatement(params) },
+            { alt: () => this.BreakStatement(params) },
+            ...(Return ? [{ alt: () => this.ReturnStatement(params) }] : []),
+            { alt: () => this.WithStatement(params) },
+            { alt: () => this.LabelledStatement(params) },
+            { alt: () => this.ThrowStatement(params) },
+            { alt: () => this.TryStatement(params) },
             { alt: () => this.DebuggerStatement() }
         ])
     }
 
+    /**
+     * Declaration - 覆盖父类，添加 OvsViewDeclaration 支持
+     * 修复：使用 LexicalDeclaration 而非 VariableDeclaration
+     */
     @SubhutiRule
-    Declaration() {
-        this.Or([
-            {
-                alt: () => {
-                    this.OvsViewDeclaration()  // 添加 ovsView 组件声明
-                }
-            },
-            {
-                alt: () => {
-                    this.HoistableDeclaration()
-                }
-            },
-            {
-                alt: () => {
-                    this.ClassDeclaration()
-                }
-            },
-            {
-                alt: () => {
-                    this.VariableDeclaration()
-                }
-            }
+    Declaration(params: { Yield?: boolean; Await?: boolean } = {}) {
+        return this.Or([
+            { alt: () => this.OvsViewDeclaration() },  // 添加 ovsView 组件声明
+            { alt: () => this.HoistableDeclaration({ ...params, Default: false }) },
+            { alt: () => this.ClassDeclaration({ ...params, Default: false }) },
+            { alt: () => this.LexicalDeclaration({ ...params, In: true }) }
         ])
     }
 
+    /**
+     * AssignmentExpression - 覆盖父类，添加 OvsRenderFunction 支持
+     */
     @SubhutiRule
-    AssignmentExpression() {
-        this.Or([
+    AssignmentExpression(params: { Yield?: boolean; Await?: boolean; In?: boolean } = {}) {
+        return this.Or([
+            { alt: () => this.YieldExpression(params) },
+            { alt: () => this.ArrowFunction(params) },
             {
                 alt: () => {
-                    this.YieldExpression()
-                }
-            },
-            {alt: () => this.ArrowFunction()},
-            {
-                alt: () => {
-                    this.LeftHandSideExpression()
+                    this.LeftHandSideExpression(params)
                     this.tokenConsumer.Assign()
-                    this.AssignmentExpression()
+                    this.AssignmentExpression(params)
                 }
             },
             {
                 alt: () => {
-                    this.LeftHandSideExpression()
+                    this.LeftHandSideExpression(params)
                     this.AssignmentOperator()
-                    this.AssignmentExpression()
+                    this.AssignmentExpression(params)
                 }
             },
-            {
-                alt: () => {
-                    this.ConditionalExpression()
-                }
-            },
+            { alt: () => this.ConditionalExpression(params) },
             // OvsRenderFunction 移到最后 - 避免与普通函数调用冲突
-            // 只有其他所有规则都失败后，才尝试解析为 OVS 特殊语法
-            {
-                alt: () => {
-                    this.OvsRenderFunction()
-                }
-            }
+            { alt: () => this.OvsRenderFunction() }
         ])
     }
 
