@@ -209,7 +209,7 @@ export class SlimeCstToAst {
         if (name === SlimeParser.prototype.CallMemberExpression?.name) return this.createCallMemberExpressionAst(cst)
         if (name === SlimeParser.prototype.MemberExpression?.name) return this.createMemberExpressionAst(cst)
         if (name === SlimeParser.prototype.OptionalExpression?.name) return this.createOptionalExpressionAst(cst)
-        if (name === SlimeParser.prototype.OptionalChain?.name) return this.createOptionalChainAst(cst)
+        // OptionalChain 需要 object 参数，不能直接从中心分发调用，应通过 OptionalExpression 处理
         if (name === SlimeParser.prototype.CoalesceExpression?.name) return this.createCoalesceExpressionAst(cst)
         if (name === SlimeParser.prototype.CoalesceExpressionHead?.name) return this.createCoalesceExpressionHeadAst(cst)
         if (name === SlimeParser.prototype.ShortCircuitExpressionTail?.name) return this.createShortCircuitExpressionTailAst(cst)
@@ -3824,72 +3824,7 @@ export class SlimeCstToAst {
     }
 
     /**
-     * BindingElement CST �?AST
-     * BindingElement -> SingleNameBinding | BindingPattern Initializer?
-     */
-    createBindingElementAst(cst: SubhutiCst): any {
-        const firstChild = cst.children?.[0]
-        if (!firstChild) return null
-
-        if (firstChild.name === SlimeParser.prototype.SingleNameBinding?.name ||
-            firstChild.name === 'SingleNameBinding') {
-            return this.createSingleNameBindingAst(firstChild)
-        } else if (firstChild.name === SlimeParser.prototype.BindingPattern?.name ||
-            firstChild.name === 'BindingPattern') {
-            const pattern = this.createBindingPatternAst(firstChild)
-
-            // 检查是否有 Initializer
-            const initializer = cst.children?.find(ch =>
-                ch.name === SlimeParser.prototype.Initializer?.name ||
-                ch.name === 'Initializer'
-            )
-            if (initializer) {
-                const init = this.createInitializerAst(initializer)
-                return {
-                    type: SlimeNodeType.AssignmentPattern,
-                    left: pattern,
-                    right: init,
-                    loc: cst.loc
-                }
-            }
-            return pattern
-        }
-
-        // 直接�?BindingIdentifier
-        return this.createBindingIdentifierAst(firstChild)
-    }
-
-    /**
-     * SingleNameBinding CST �?AST
-     * SingleNameBinding -> BindingIdentifier Initializer?
-     */
-    createSingleNameBindingAst(cst: SubhutiCst): any {
-        const bindingId = cst.children?.find(ch =>
-            ch.name === SlimeParser.prototype.BindingIdentifier?.name ||
-            ch.name === 'BindingIdentifier'
-        )
-        const initializer = cst.children?.find(ch =>
-            ch.name === SlimeParser.prototype.Initializer?.name ||
-            ch.name === 'Initializer'
-        )
-
-        const id = bindingId ? this.createBindingIdentifierAst(bindingId) : null
-
-        if (initializer) {
-            const init = this.createInitializerAst(initializer)
-            return {
-                type: SlimeNodeType.AssignmentPattern,
-                left: id,
-                right: init,
-                loc: cst.loc
-            }
-        }
-
-        return id
-    }
-
-    /**
-     * BindingPropertyList CST �?AST
+     * BindingPropertyList CST 转 AST
      */
     createBindingPropertyListAst(cst: SubhutiCst): any[] {
         const properties: any[] = []
