@@ -3,17 +3,15 @@
  * 测试范围: AST → JavaScript代码
  * 验证方式: 比较输入代码和输出代码的 token 序列是否一致
  * 前提: 阶段1、2已通过（CST和AST可以正常生成）
- * 
+ *
  * 用法:
  *   npx tsx slime/test-stage3.ts              # 从头开始测试
  *   npx tsx slime/test-stage3.ts 100          # 从第100个开始
  *   npx tsx slime/test-stage3.ts 100 -s       # 从第100个开始，遇错停止
  */
-import SlimeParser from './packages/slime-parser/src/language/es2025/SlimeParser'
-import { SlimeCstToAst } from './packages/slime-parser/src/language/SlimeCstToAstUtil'
 import SlimeGenerator from './packages/slime-generator/src/SlimeGenerator'
 import SubhutiMatchToken from 'subhuti/src/struct/SubhutiMatchToken'
-import { runTests, TestContext, TestResult } from './test-framework'
+import { runTests, TestContext, TestResult, parseToAstWithTokens } from './test-framework'
 
 // ============================================
 // Token 比较工具
@@ -73,24 +71,20 @@ function isTrailingComma(values: string[], idx: number): boolean {
 // ============================================
 
 function testStage3(ctx: TestContext): TestResult {
-  // 阶段1: 解析输入代码
-  const parser = new SlimeParser(ctx.code)
-  const cst = parser.Program(ctx.parseMode)
-  const inputTokens = parser.parsedTokens
-  
-  // 阶段2: CST → AST
-  const converter = new SlimeCstToAst()
-  const ast = converter.toProgram(cst)
-  
+  // 使用框架的 parseToAstWithTokens 解析代码
+  const { ast, tokens: inputTokens } = parseToAstWithTokens(ctx.code, ctx.parseMode)
+
+  if (!ast) {
+    return { success: false, message: 'AST 转换失败' }
+  }
+
   // 阶段3: AST → 代码
   const result = SlimeGenerator.generator(ast, inputTokens)
   const generatedCode = result.code
-  
+
   // 阶段4: 重新解析生成的代码
-  const outputParser = new SlimeParser(generatedCode)
-  outputParser.Program(ctx.parseMode)
-  const outputTokens = outputParser.parsedTokens
-  
+  const { tokens: outputTokens } = parseToAstWithTokens(generatedCode, ctx.parseMode)
+
   // 比较 token 序列
   return compareTokens(inputTokens, outputTokens)
 }

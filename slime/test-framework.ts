@@ -29,6 +29,17 @@ export function parseToAst(code: string, parseMode: 'module' | 'script') {
   return { cst, ast }
 }
 
+/** 创建解析器并解析为 AST，同时返回 tokens（供代码生成使用） */
+export function parseToAstWithTokens(code: string, parseMode: 'module' | 'script') {
+  const parser = new SlimeParser(code)
+  const cst = parser.Program(parseMode)
+  const tokens = parser.parsedTokens
+  if (!cst) return { cst: null, ast: null, tokens }
+  const converter = new SlimeCstToAst()
+  const ast = converter.toProgram(cst)
+  return { cst, ast, tokens }
+}
+
 // ============================================
 // 通用配置 - 直接修改这里
 // ============================================
