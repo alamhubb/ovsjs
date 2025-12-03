@@ -236,7 +236,7 @@ export async function runTests(
 ): Promise<TestStats> {
   const {
     stageName, description,
-    casesDir = path.join(__dirname, 'tests/babel'),
+    casesDir = path.join(__dirname, '../babel'),
     verboseOnFail = true,
     startFrom,
     stopOnFail: stopOnFailConfig,
