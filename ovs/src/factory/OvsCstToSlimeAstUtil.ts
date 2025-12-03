@@ -2,6 +2,8 @@ import {SlimeCstToAst} from "slime-parser/src/language/SlimeCstToAstUtil.ts";
 import SubhutiCst from "subhuti/src/struct/SubhutiCst.ts";
 import OvsParser from "../parser/OvsParser.ts";
 import {SlimeNodeType} from "slime-ast/src/SlimeNodeType.ts";
+import {type SlimeProgram, SlimeProgramSourceType} from "slime-ast/src/SlimeESTree.ts";
+import SlimeParser from "slime-parser/src/language/es2025/SlimeParser.ts";
 
 export function checkCstName(cst: SubhutiCst, cstName: string) {
   if (cst.name !== cstName) {
@@ -57,7 +59,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
    * @returns Program AST
    */
   toProgram(cst: SubhutiCst): SlimeProgram {
-    checkCstName(cst, Es6Parser.prototype.Program.name);
+    checkCstName(cst, SlimeParser.prototype.Program.name);
 
     // 获取第一个子节点（ModuleItemList 或 StatementList）
     const first = cst.children?.[0]
@@ -67,16 +69,16 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
 
     // 根据子节点类型转换为 AST
     let body: Array<SlimeStatement | SlimeModuleDeclaration> = []
-    if (first.name === Es6Parser.prototype.ModuleItemList.name) {
+    if (first.name === SlimeParser.prototype.ModuleItemList.name) {
       // 模块代码（包含 import/export）
       body = this.createModuleItemListAst(first)
-    } else if (first.name === Es6Parser.prototype.StatementList.name) {
+    } else if (first.name === SlimeParser.prototype.StatementList.name) {
       // 脚本代码（不包含 import/export）
       body = this.createStatementListAst(first)
     }
 
     // 创建 Program AST
-    const program = SlimeAstUtil.createProgram(body, SlimeProgramSourceType.module)
+    const program = SlimeAstUtil.createProgram(body, SlimeProgramSourceType.Module)
     program.loc = cst.loc
 
     return program
@@ -214,7 +216,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
    * - 退出时 noRenderDepth--
    */
   createStatementListAst(cst: SubhutiCst): SlimeStatement[] {
-    checkCstName(cst, Es6Parser.prototype.StatementList.name)
+    checkCstName(cst, SlimeParser.prototype.StatementList.name)
     
     const statements: SlimeStatement[] = []
     
@@ -239,7 +241,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
    * Override: 处理 StatementListItem，支持 NoRenderBlock 展开
    */
   createStatementListItemAst(cst: SubhutiCst): SlimeStatement[] {
-    checkCstName(cst, Es6Parser.prototype.StatementListItem.name)
+    checkCstName(cst, SlimeParser.prototype.StatementListItem.name)
     
     if (!cst.children || cst.children.length === 0) {
       return []
@@ -248,7 +250,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     const child = cst.children[0]
     
     // 检查是否是 Statement -> NoRenderBlock
-    if (child.name === Es6Parser.prototype.Statement.name) {
+    if (child.name === SlimeParser.prototype.Statement.name) {
       const statementChild = child.children?.[0]
       
       if (statementChild && statementChild.name === OvsParser.prototype.NoRenderBlock.name) {
@@ -258,7 +260,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
         try {
           // 找到内部的 StatementList
           const innerList = statementChild.children?.find(
-            c => c.name === Es6Parser.prototype.StatementList.name
+            c => c.name === SlimeParser.prototype.StatementList.name
           )
           
           if (innerList) {
