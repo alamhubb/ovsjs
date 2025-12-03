@@ -2,6 +2,12 @@ import OvsTokenConsumer, {ovs6Tokens} from "./OvsConsumer.ts"
 import {Subhuti, SubhutiRule} from 'subhuti/src/SubhutiParser.ts'
 import SlimeParser, {ExpressionParams, StatementParams, DeclarationParams} from "slime-parser/src/language/es2025/SlimeParser.ts";
 
+/** OVS 扩展的表达式参数 */
+interface OvsExpressionParams extends ExpressionParams {
+    /** 禁用 OvsRenderFunction（用于 ClassHeritage 等上下文） */
+    DisableOvsRender?: boolean
+}
+
 @Subhuti
 export default class OvsParser extends SlimeParser<OvsTokenConsumer> {
     /**
@@ -16,9 +22,19 @@ export default class OvsParser extends SlimeParser<OvsTokenConsumer> {
     }
 
 
+    /**
+     * OvsRenderFunction - OVS 视图渲染函数
+     * 语法: IdentifierReference Arguments? { StatementList? }
+     *
+     * 采用和普通方法调用一样的策略：
+     * - 使用 IdentifierReference 并正确传递 params
+     * - 在 async 上下文中，await 是关键字，不会被匹配为标签名
+     * - 在非 async 上下文中，await 可以作为标识符（虽然不常见）
+     */
     @SubhutiRule
-    OvsRenderFunction() {
-        this.tokenConsumer.IdentifierName()
+    OvsRenderFunction(params: OvsExpressionParams = {}) {
+        // 使用 IdentifierReference 并传递 params，和普通方法调用一样
+        this.IdentifierReference(params)
         this.Option(() => {
             this.Arguments()
         })
@@ -28,6 +44,18 @@ export default class OvsParser extends SlimeParser<OvsTokenConsumer> {
         })
         this.tokenConsumer.RBrace()
         return this.curCst
+    }
+
+    /**
+     * ClassHeritage - 覆盖父类，禁用 OvsRenderFunction
+     *
+     * 在 `class A extends B {}` 中，`B {}` 不应该被解析为 OvsRenderFunction。
+     * 通过传递 DisableOvsRender: true 参数来禁用。
+     */
+    @SubhutiRule
+    ClassHeritage(params: OvsExpressionParams = {}): any {
+        this.tokenConsumer.Extends()
+        return this.LeftHandSideExpression({...params, DisableOvsRender: true} as any)
     }
 
     @SubhutiRule
@@ -106,9 +134,14 @@ export default class OvsParser extends SlimeParser<OvsTokenConsumer> {
      * PrimaryExpression - 覆盖父类，添加 OvsRenderFunction 支持
      * OvsRenderFunction 放在 IdentifierReference 之前，因为都以 IdentifierName 开头
      * 依靠 Or 的回溯机制：OvsRenderFunction 失败时会回溯并尝试 IdentifierReference
+     *
+     * 注意：当 DisableOvsRender 为 true 时，跳过 OvsRenderFunction 分支。
+     * 这用于 ClassHeritage 等上下文，避免 `class A extends B {}` 中的 `B {}` 被误解析。
      */
     @SubhutiRule
-    PrimaryExpression(params: ExpressionParams = {}) {
+    PrimaryExpression(params: OvsExpressionParams = {}) {
+        const { DisableOvsRender = false } = params
+
         return this.Or([
             // === 1. 硬关键字表达式（不会被标识符遮蔽）===
             {alt: () => this.tokenConsumer.This()},
@@ -119,7 +152,9 @@ export default class OvsParser extends SlimeParser<OvsTokenConsumer> {
 
             // === 3. OvsRenderFunction（OVS 特有语法，放在 IdentifierReference 之前）===
             // 因为 div { } 以 IdentifierName 开头，需要先尝试 OvsRenderFunction
-            {alt: () => this.OvsRenderFunction()},
+            // 当 DisableOvsRender 为 true 时跳过此分支
+            // 传递 params 确保 await/yield 在正确的上下文中被处理
+            ...(!DisableOvsRender ? [{alt: () => this.OvsRenderFunction(params)}] : []),
 
             // === 4. 标识符（在所有软关键字表达式之后）===
             {alt: () => this.IdentifierReference(params)},
