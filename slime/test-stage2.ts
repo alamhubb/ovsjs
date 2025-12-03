@@ -112,10 +112,6 @@ function testStage2(ctx: TestContext): TestResult {
 runTests(testStage2, {
   stageName: '阶段2: AST生成测试',
   description: 'CST → AST 转换，验证 AST 结构完整性',
-  startFrom: 2193,
+  startFrom: 1,
   stopOnFail: true,
-}).catch((err) => {
-  console.error(err)
-  process.exit(1)
 })
-
