@@ -19,10 +19,9 @@ import {
     type SlimeCallExpression,
     type SlimeImportDeclaration,
     type SlimeImportSpecifier,
-    SlimeProgramSourceType,
-    SlimeVariableDeclarationKindValue
-} from "slime-ast/src/SlimeAstInterface.ts";
-import SlimeAstUtil from "slime/packages/slime-ast/src/SlimeNodeCreate.ts";
+    SlimeProgramSourceType
+} from "slime-ast/src/SlimeESTree.ts";
+import SlimeAstUtil from "slime-ast/src/SlimeNodeCreate.ts";
 import {SlimeNodeType} from "slime-ast/src/SlimeNodeType.ts";
 import SubhutiMatchToken from "subhuti/src/struct/SubhutiMatchToken.ts";
 

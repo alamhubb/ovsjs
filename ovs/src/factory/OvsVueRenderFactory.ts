@@ -1,7 +1,7 @@
 import SubhutiCst from "subhuti/src/struct/SubhutiCst.ts"
 import { ovsTokenName, ovsTokensObj } from "../parser/OvsConsumer.ts"
 import OvsParser, { ovsParserInstance } from "../parser/OvsParser.ts"
-import Es6Parser from "slime-parser/src/language/es2015/Es6Parser.ts";
+import SlimeParser from "slime-parser/src/language/es2025/SlimeParser.ts";
 
 const htmlTag = {
   'div': 'div'
@@ -117,17 +117,17 @@ export default class OvsVueRenderFactory {
 
   static createCallExpressionCst(MemberExpression: SubhutiCst, Arguments: SubhutiCst) {
     const cst = new SubhutiCst()
-    cst.name = Es6Parser.prototype.CallExpression.name
+    cst.name = SlimeParser.prototype.CallExpression.name
     cst.children = [MemberExpression, Arguments]
     return cst
   }
 
   static createArgumentsCst(ArgumentListChildren: SubhutiCst[]) {
     const cst = new SubhutiCst()
-    cst.name = Es6Parser.prototype.Arguments.name
+    cst.name = SlimeParser.prototype.Arguments.name
 
     const ArgumentListCst = new SubhutiCst()
-    ArgumentListCst.name = Es6Parser.prototype.ArgumentList.name
+    ArgumentListCst.name = SlimeParser.prototype.ArgumentList.name
     ArgumentListCst.children = ArgumentListChildren
 
     cst.children = [OvsVueRenderFactory.createLParenCst(), ArgumentListCst, OvsVueRenderFactory.createRParenCst()]
@@ -136,28 +136,28 @@ export default class OvsVueRenderFactory {
 
   static createMemberExpressionCst(children: SubhutiCst[]) {
     const cst = new SubhutiCst()
-    cst.name = Es6Parser.prototype.MemberExpression.name
+    cst.name = SlimeParser.prototype.MemberExpression.name
     cst.children = children
     return cst
   }
 
   static createPrimaryExpressionCst(child: SubhutiCst) {
     const cst = new SubhutiCst()
-    cst.name = Es6Parser.prototype.PrimaryExpression.name
+    cst.name = SlimeParser.prototype.PrimaryExpression.name
     cst.children = [child]
     return cst
   }
 
   static createIdentifierReferenceCst(IdentifierName: string) {
     const cst = new SubhutiCst()
-    cst.name = Es6Parser.prototype.IdentifierReference.name
+    cst.name = SlimeParser.prototype.IdentifierReference.name
     cst.children = [this.createIdentifierCst(IdentifierName)]
     return cst
   }
 
   static createIdentifierCst(IdentifierName: string) {
     const cst = new SubhutiCst()
-    cst.name = Es6Parser.prototype.tokenConsumer.Identifier.name
+    cst.name = SlimeParser.prototype.tokenConsumer.Identifier.name
     cst.children = [this.createIdentifierNameCst(IdentifierName)]
     return cst
   }
