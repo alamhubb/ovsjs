@@ -100,7 +100,7 @@ function testStage3(ctx: TestContext): TestResult {
 runTests(testStage3, {
   stageName: '阶段3: 代码生成测试',
   description: 'AST → JavaScript代码，比较输入/输出的 token 序列',
-  startFrom: 2190,      // 取消注释可覆盖通用配置
-  stopOnFail: false,   // 取消注释可覆盖通用配置
+  startFrom: 1,      // 取消注释可覆盖通用配置
+  stopOnFail: true,   // 取消注释可覆盖通用配置
 })
 
