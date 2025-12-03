@@ -66,30 +66,67 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
    * - import 添加（移到外层 ensureOvsAPIImport - 导入 createComponentVNode）
    * - 组件包装（移到外层 wrapAsVueComponent）
    *
+   * 支持的 CST 结构（与 SlimeParser 保持一致）：
+   * - Program -> ModuleBody -> ModuleItemList（模块代码）
+   * - Program -> ScriptBody -> StatementList（脚本代码）
+   * - Program -> ModuleItemList（兼容旧结构）
+   * - Program -> StatementList（兼容旧结构）
+   *
    * @param cst Program CST 节点
    * @returns Program AST
    */
   toProgram(cst: SubhutiCst): SlimeProgram {
     checkCstName(cst, SlimeParser.prototype.Program.name);
 
-    // 获取第一个子节点（ModuleItemList 或 StatementList）
-    const first = cst.children?.[0]
-    if (!first) {
-      throw new Error('Program has no children')
+    // 如果没有子节点，返回空程序
+    if (!cst.children || cst.children.length === 0) {
+      return SlimeNodeCreate.createProgram([], SlimeProgramSourceType.Module)
+    }
+
+    // 查找主体内容（跳过 HashbangComment）
+    let bodyChild: SubhutiCst | null = null
+    for (const child of cst.children) {
+      if (child.name === 'HashbangComment') {
+        continue  // 跳过 hashbang 注释
+      }
+      bodyChild = child
+      break
+    }
+
+    if (!bodyChild) {
+      return SlimeNodeCreate.createProgram([], SlimeProgramSourceType.Module)
     }
 
     // 根据子节点类型转换为 AST
     let body: Array<SlimeStatement | SlimeModuleDeclaration> = []
-    if (first.name === SlimeParser.prototype.ModuleItemList.name) {
-      // 模块代码（包含 import/export）
-      body = this.createModuleItemListAst(first)
-    } else if (first.name === SlimeParser.prototype.StatementList.name) {
-      // 脚本代码（不包含 import/export）
-      body = this.createStatementListAst(first)
+    let sourceType: SlimeProgramSourceType = SlimeProgramSourceType.Module
+
+    if (bodyChild.name === 'ModuleBody') {
+      // 新结构：Program -> ModuleBody -> ModuleItemList
+      const moduleItemList = bodyChild.children?.[0]
+      if (moduleItemList && moduleItemList.name === SlimeParser.prototype.ModuleItemList?.name) {
+        body = this.createModuleItemListAst(moduleItemList)
+      }
+      sourceType = SlimeProgramSourceType.Module
+    } else if (bodyChild.name === SlimeParser.prototype.ModuleItemList?.name) {
+      // 兼容旧结构：Program -> ModuleItemList
+      body = this.createModuleItemListAst(bodyChild)
+      sourceType = SlimeProgramSourceType.Module
+    } else if (bodyChild.name === 'ScriptBody') {
+      // 新结构：Program -> ScriptBody -> StatementList
+      const statementList = bodyChild.children?.[0]
+      if (statementList && statementList.name === SlimeParser.prototype.StatementList?.name) {
+        body = this.createStatementListAst(statementList)
+      }
+      sourceType = SlimeProgramSourceType.Script
+    } else if (bodyChild.name === SlimeParser.prototype.StatementList?.name) {
+      // 兼容旧结构：Program -> StatementList
+      body = this.createStatementListAst(bodyChild)
+      sourceType = SlimeProgramSourceType.Script
     }
 
     // 创建 Program AST
-    const program = SlimeNodeCreate.createProgram(body, SlimeProgramSourceType.Module)
+    const program = SlimeNodeCreate.createProgram(body, sourceType)
     program.loc = cst.loc
 
     return program
@@ -308,6 +345,24 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
   }
 
   /**
+   * 重写 PrimaryExpression 处理
+   *
+   * 添加对 OvsRenderFunction 的支持
+   * OvsRenderFunction 在 OvsParser 中被放在 PrimaryExpression 层级
+   */
+  createPrimaryExpressionAst(cst: SubhutiCst): SlimeExpression {
+    const first = cst.children?.[0]
+
+    // 处理 OvsRenderFunction
+    if (first && first.name === OvsParser.prototype.OvsRenderFunction.name) {
+      return this.createOvsRenderDomViewDeclarationAst(first)
+    }
+
+    // 其他情况调用父类处理
+    return super.createPrimaryExpressionAst(cst)
+  }
+
+  /**
    * 重写 ExpressionStatement 处理
    *
    * 核心逻辑（新版本）：
@@ -360,7 +415,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
         const pushCall = SlimeNodeCreate.createCallExpression(
           SlimeNodeCreate.createMemberExpression(
             SlimeNodeCreate.createIdentifier('children'),
-            SlimeTokenCreate.createDotOperator(cst.loc),
+            SlimeTokenCreate.createDotToken(cst.loc),
             SlimeNodeCreate.createIdentifier('push')
           ),
           [expr]
@@ -385,7 +440,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
       const pushCall = SlimeNodeCreate.createCallExpression(
         SlimeNodeCreate.createMemberExpression(
           SlimeNodeCreate.createIdentifier('children'),
-          SlimeNodeCreate.createDotOperator(cst.loc),
+          SlimeTokenCreate.createDotToken(cst.loc),
           SlimeNodeCreate.createIdentifier('push')
         ),
         [expr]
@@ -629,11 +684,11 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
       // 1. 声明 children 数组：const children = []
       // 注意：这是自动生成的代码，不传递loc（避免创建错误映射）
       SlimeNodeCreate.createVariableDeclaration(
-          SlimeTokenCreate.createVariableDeclarationKind(SlimeVariableDeclarationKindValue.const),
+          SlimeTokenCreate.createConstToken(),
         [
           SlimeNodeCreate.createVariableDeclarator(
             SlimeNodeCreate.createIdentifier('children'),
-            slimeTokenCreate.createEqualOperator(),
+            SlimeTokenCreate.createAssignToken(),
             SlimeNodeCreate.createArrayExpression([])
           )
         ]
@@ -644,11 +699,11 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     // 注意：这也是自动生成的代码，不传递loc（避免创建错误映射）
     if (attrsVarName) {
       const attrsDeclaration = SlimeNodeCreate.createVariableDeclaration(
-          SlimeTokenCreate.createVariableDeclarationKind(SlimeVariableDeclarationKindValue.const),
+          SlimeTokenCreate.createConstToken(),
         [
           SlimeNodeCreate.createVariableDeclarator(
             SlimeNodeCreate.createIdentifier(attrsVarName),
-              SlimeTokenCreate.createEqualOperator(),
+              SlimeTokenCreate.createAssignToken(),
             SlimeNodeCreate.createObjectExpression([])
           )
         ]
@@ -703,11 +758,11 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     const iifeFunctionBody: SlimeStatement[] = [
       // 1. 声明 children 数组：const children = []
       SlimeNodeCreate.createVariableDeclaration(
-        SlimeNodeCreate.createVariableDeclarationKind(SlimeVariableDeclarationKindValue.const),
+        SlimeTokenCreate.createConstToken(),
         [
           SlimeNodeCreate.createVariableDeclarator(
             SlimeNodeCreate.createIdentifier('children'),
-            SlimeNodeCreate.createEqualOperator(),
+            SlimeTokenCreate.createAssignToken(),
             SlimeNodeCreate.createArrayExpression([])
           )
         ]
@@ -717,11 +772,11 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     // 2. 如果有attrs，声明 attrs 对象
     if (attrsVarName) {
       const attrsDeclaration = SlimeNodeCreate.createVariableDeclaration(
-          SlimeTokenCreate.createVariableDeclarationKind(SlimeVariableDeclarationKindValue.const),
+          SlimeTokenCreate.createConstToken(),
         [
           SlimeNodeCreate.createVariableDeclarator(
             SlimeNodeCreate.createIdentifier(attrsVarName),
-              SlimeTokenCreate.createEqualOperator(),
+              SlimeTokenCreate.createAssignToken(),
             SlimeNodeCreate.createObjectExpression([])
           )
         ]
@@ -810,19 +865,26 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
 
     // 创建函数体的 BlockStatement
     const blockStatement = SlimeNodeCreate.createBlockStatement(
-      { type: 'LBrace', value: '{', loc } as any,
-      { type: 'RBrace', value: '}', loc } as any,
       body,
-      loc
+      loc,
+      SlimeTokenCreate.createLBraceToken(loc),
+      SlimeTokenCreate.createRBraceToken(loc)
     )
 
-    // 创建函数参数（空参数）
-    const lp = SlimeTokenCreate.createLParen(loc)
-    const rp = SlimeTokenCreate.createRParen(loc)
-    const functionParams = SlimeTokenCreate.createFunctionParams(lp, rp)
-
     // 创建函数表达式
-    const functionExpression = SlimeNodeCreate.createFunctionExpression(blockStatement, null, functionParams, loc)
+    const functionExpression = SlimeNodeCreate.createFunctionExpression(
+      blockStatement,
+      null,  // id
+      [],    // params (空参数)
+      false, // generator
+      false, // async
+      loc,
+      undefined, // functionToken
+      undefined, // asyncToken
+      undefined, // asteriskToken
+      SlimeTokenCreate.createLParenToken(loc),  // lParenToken
+      SlimeTokenCreate.createRParenToken(loc)   // rParenToken
+    )
 
     // 创建函数调用（立即执行）
     const callExpression = SlimeNodeCreate.createCallExpression(functionExpression, [])

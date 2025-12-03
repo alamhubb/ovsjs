@@ -19,6 +19,7 @@ import {
     SlimeProgramSourceType
 } from "slime-ast/src/SlimeESTree.ts";
 import SlimeAstUtil from "slime-ast/src/SlimeNodeCreate.ts";
+import SlimeTokenCreate from "slime-ast/src/SlimeTokenCreate.ts";
 import {SlimeNodeType} from "slime-ast/src/SlimeNodeType.ts";
 import SubhutiMatchToken from "subhuti/src/struct/SubhutiMatchToken.ts";
 
@@ -202,7 +203,7 @@ function wrapTopLevelExpressions(ast: SlimeProgram): SlimeProgram {
             const pushCall = SlimeAstUtil.createCallExpression(
                 SlimeAstUtil.createMemberExpression(
                     SlimeAstUtil.createIdentifier('children'),
-                    SlimeAstUtil.createDotOperator(),
+                    SlimeTokenCreate.createDotToken(),
                     SlimeAstUtil.createIdentifier('push')
                 ),
                 [vnodeExpr]
@@ -219,7 +220,7 @@ function wrapTopLevelExpressions(ast: SlimeProgram): SlimeProgram {
                 const pushCall = SlimeAstUtil.createCallExpression(
                     SlimeAstUtil.createMemberExpression(
                         SlimeAstUtil.createIdentifier('children'),
-                        SlimeAstUtil.createDotOperator(),
+                        SlimeTokenCreate.createDotToken(),
                         SlimeAstUtil.createIdentifier('push')
                     ),
                     [exprStmt.expression]
