@@ -1,3 +1,4 @@
+import { ref } from 'vue';
 // Hello OVS - 简单示例
 
 const appName = "Hello OVS"
@@ -16,7 +17,11 @@ div() {
      }) {
 
   #{
-  let a = 0
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
   }
 
   a

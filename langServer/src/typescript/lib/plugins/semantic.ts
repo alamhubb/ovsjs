@@ -350,21 +350,6 @@ export function create(
           }
 
           const info = safeCall(() => ctx.languageService.getCompletionsAtPosition(fileName, offset, opts));
-          // const info = null
-          LogUtil.log('languageService.getCompletionsAtPosition(')
-          LogUtil.log('offset：' + offset)
-          LogUtil.log('triggerKind：' + completeContext.triggerKind)
-          if (info) {
-            LogUtil.log("存在info")
-            LogUtil.log(document.getText())
-            LogUtil.log(info?.entries?.length)
-          } else {
-            LogUtil.log('没有提示的文本')
-            LogUtil.log(document.getText())
-          }
-          // LogUtil.log(info.entries)
-          // LogUtil.log(info.entries.map(item => item.name))
-          // LogUtil.log(info.entries.map(item => item.sortText))
           if (info) {
             return convertCompletionInfo<CompletionItemData>(
               ts,
@@ -402,6 +387,26 @@ export function create(
             getUserPreferences(ctx, document),
           ]);
           const details = safeCall(() => ctx.languageService.getCompletionEntryDetails(fileName, offset, data.originalItem.name, formatOptions, data.originalItem.source, preferences, data.originalItem.data));
+
+          // 调试自动导入
+          LogUtil.log('=== resolveCompletionItem ===')
+          LogUtil.log('completionName: ' + data.originalItem.name)
+          LogUtil.log('importSource: ' + (data.originalItem.source || 'null'))
+          LogUtil.log('hasCodeActions: ' + !!(details?.codeActions?.length))
+          if (details?.codeActions?.length) {
+            LogUtil.log('codeActions:')
+            for (const action of details.codeActions) {
+              LogUtil.log('  description: ' + action.description)
+              for (const change of action.changes) {
+                LogUtil.log('  file: ' + change.fileName)
+                for (const textChange of change.textChanges) {
+                  LogUtil.log('    span: ' + JSON.stringify(textChange.span))
+                  LogUtil.log('    newText: ' + textChange.newText.substring(0, 100))
+                }
+              }
+            }
+          }
+
           if (!details) {
             return item;
           }
@@ -849,7 +854,6 @@ export function create(
         },
 
         async provideDocumentSemanticTokens(document, range, legend, token) {
-          LogUtil.log('chufa  provideDocumentSemanticTokens')
           const uri = URI.parse(document.uri);
 
           if (!isSemanticDocument(uri, document)) {

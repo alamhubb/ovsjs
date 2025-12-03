@@ -76,9 +76,6 @@ export function register(ts: typeof import('typescript'), ctx: SharedContext) {
             }
         }
 
-        LogUtil.log('反悔了tokens')
-        LogUtil.log(tokens)
-
         return tokens;
 
         function tsTokenTypeToServerTokenType(tokenType: number) {

@@ -313,6 +313,15 @@ function ensureOvsAPIImport(ast: SlimeProgram): SlimeProgram {
 
     // 如果没有导入，添加 import { createComponentVNode, createElementVNode } from '../utils/ReactiveVNode'
     if (!hasImport) {
+        // 创建一个指向源文件开头的 loc（offset 0）
+        // 这样生成的 import 语句会有一个映射到源文件开头的 mapping
+        // 用于支持自动导入功能（TypeScript 会在虚拟文件开头插入 import）
+        const sourceStartLoc: any = {
+            value: 'import',  // 必须有值，否则会被 mapping 过滤掉
+            start: { line: 1, column: 0, index: 0 },
+            end: { line: 1, column: 6, index: 6 }
+        }
+
         // 手动创建 ImportSpecifier
         const specifier1: SlimeImportSpecifier = {
             type: SlimeNodeType.ImportSpecifier,
@@ -328,7 +337,8 @@ function ensureOvsAPIImport(ast: SlimeProgram): SlimeProgram {
 
         const importDecl = SlimeAstUtil.createImportDeclaration(
             [specifier1, specifier2],
-            SlimeAstUtil.createStringLiteral("'../utils/ReactiveVNode'")
+            SlimeAstUtil.createStringLiteral("'../utils/ReactiveVNode'"),
+            sourceStartLoc  // 添加 loc，让生成器创建正确的 mapping
         )
 
         // 设置换行标记

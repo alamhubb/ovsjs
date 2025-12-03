@@ -176,7 +176,6 @@ export function convertCompletionInfo<T>(
 ): vscode.CompletionList {
 	const lt_320 = semver.lt(ts.version, '3.2.0');
 	const gte_300 = semver.gte(ts.version, '3.0.0');
-	LogUtil.log('convertCompletionInfo')
 	const wordRange: vscode.Range | undefined = completionContext.optionalReplacementSpan
 		? convertTextSpan(completionContext.optionalReplacementSpan, document)
 		: undefined;

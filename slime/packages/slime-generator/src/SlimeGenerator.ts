@@ -148,7 +148,7 @@ export default class SlimeGenerator {
     }
 
     private static generatorImportDeclaration(node: SlimeImportDeclaration) {
-        this.addCode(es6TokensObj.ImportTok)
+        this.addCodeAndMappings(es6TokensObj.ImportTok, node.loc)
         this.addSpacing()
 
         const hasSpecifiers = node.specifiers && node.specifiers.length > 0
