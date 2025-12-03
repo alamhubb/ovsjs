@@ -1179,6 +1179,7 @@ export default class SlimeGenerator {
         node.properties.forEach((item: any, index) => {
             // 处理包装结构
             const prop = item.property !== undefined ? item.property : item
+            const commaToken = item.commaToken
             // ES2018: 检查是否是RestElement
             if (prop.type === SlimeNodeType.RestElement) {
                 this.generatorRestElement(prop as SlimeRestElement)
@@ -1205,8 +1206,10 @@ export default class SlimeGenerator {
                 this.addSpacing()
                 this.generatorNode(prop.value)
             }
-            // 添加逗号（除了最后一个）
-            if (index < node.properties.length - 1) {
+            // 使用 commaToken 决定是否添加逗号，如果没有则回退到位置判断
+            if (commaToken) {
+                this.addComma()
+            } else if (index < node.properties.length - 1) {
                 this.addComma()
             }
         })

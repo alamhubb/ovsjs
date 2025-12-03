@@ -3205,6 +3205,18 @@ export class SlimeCstToAst {
             }
         }
 
+        // 检查外层是否有逗号（在 BindingPropertyList 之后、BindingRestProperty 之前）
+        // CST 结构: { BindingPropertyList , BindingRestProperty }
+        // 逗号是 ObjectBindingPattern 的直接子节点
+        for (const child of cst.children) {
+            if (child.value === ',') {
+                // 将逗号关联到最后一个属性
+                if (properties.length > 0 && !properties[properties.length - 1].commaToken) {
+                    properties[properties.length - 1].commaToken = SlimeTokenCreate.createCommaToken(child.loc)
+                }
+            }
+        }
+
         // ES2018: 检查是否有BindingRestElement 或 BindingRestProperty（...rest）
         const restElement = cst.children.find(ch =>
             ch.name === SlimeParser.prototype.BindingRestElement?.name ||
@@ -7306,11 +7318,38 @@ export class SlimeCstToAst {
                 rBraceToken = SlimeTokenCreate.createRBraceToken(child.loc)
             } else if (child.name === 'PropertyDefinitionList') {
                 for (const prop of child.children || []) {
-                    if (prop.value === ',') continue
+                    if (prop.value === ',') {
+                        // 将逗号关联到前一个属性
+                        if (properties.length > 0 && !properties[properties.length - 1].commaToken) {
+                            properties[properties.length - 1].commaToken = SlimeTokenCreate.createCommaToken(prop.loc)
+                        }
+                        continue
+                    }
                     if (prop.name === 'PropertyDefinition') {
-                        const patternProp = this.convertPropertyDefinitionToPatternProperty(prop)
-                        if (patternProp) {
-                            properties.push({ property: patternProp })
+                        // 检查是否是 SpreadElement (... identifier)
+                        const ellipsis = prop.children?.find((c: any) => c.value === '...' || c.name === 'Ellipsis')
+                        if (ellipsis) {
+                            // 这是一个 RestElement
+                            const assignExpr = prop.children?.find((c: any) => c.name === 'AssignmentExpression')
+                            if (assignExpr) {
+                                // 从 AssignmentExpression 中提取 identifier
+                                const idCst = this.findFirstIdentifierInExpression(assignExpr)
+                                if (idCst) {
+                                    const restId = this.createIdentifierAst(idCst)
+                                    const restNode: SlimeRestElement = {
+                                        type: SlimeNodeType.RestElement,
+                                        argument: restId,
+                                        ellipsisToken: SlimeTokenCreate.createEllipsisToken(ellipsis.loc),
+                                        loc: prop.loc
+                                    }
+                                    properties.push({ property: restNode })
+                                }
+                            }
+                        } else {
+                            const patternProp = this.convertPropertyDefinitionToPatternProperty(prop)
+                            if (patternProp) {
+                                properties.push({ property: patternProp })
+                            }
                         }
                     }
                 }
@@ -7502,15 +7541,40 @@ export class SlimeCstToAst {
         let lBracketToken: any = undefined
         let rBracketToken: any = undefined
 
+        // 辅助函数：处理 Elision 节点
+        const processElision = (elisionNode: SubhutiCst) => {
+            for (const elisionChild of elisionNode.children || []) {
+                if (elisionChild.value === ',') {
+                    // 将逗号关联到前一个元素（如果有）
+                    if (elements.length > 0 && !elements[elements.length - 1].commaToken) {
+                        elements[elements.length - 1].commaToken = SlimeTokenCreate.createCommaToken(elisionChild.loc)
+                    }
+                    // 添加一个省略元素
+                    elements.push({ element: null })
+                }
+            }
+        }
+
         for (const child of cst.children || []) {
             if (child.value === '[') {
                 lBracketToken = SlimeTokenCreate.createLBracketToken(child.loc)
             } else if (child.value === ']') {
                 rBracketToken = SlimeTokenCreate.createRBracketToken(child.loc)
+            } else if (child.name === 'Elision') {
+                // 直接在 ArrayLiteral 下的 Elision（如 [,,]）
+                processElision(child)
             } else if (child.name === 'ElementList') {
-                for (const elem of child.children || []) {
+                const elemChildren = child.children || []
+                for (let i = 0; i < elemChildren.length; i++) {
+                    const elem = elemChildren[i]
                     if (elem.value === ',') {
-                        elements.push({ element: null })
+                        // 将逗号关联到前一个元素
+                        if (elements.length > 0 && !elements[elements.length - 1].commaToken) {
+                            elements[elements.length - 1].commaToken = SlimeTokenCreate.createCommaToken(elem.loc)
+                        }
+                    } else if (elem.name === 'Elision') {
+                        // ElementList 内的 Elision
+                        processElision(elem)
                     } else if (elem.name === 'AssignmentExpression') {
                         const expr = this.createExpressionAst(elem)
                         const pattern = this.convertExpressionToPatternFromAST(expr)
