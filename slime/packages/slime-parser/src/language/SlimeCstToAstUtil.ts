@@ -73,19 +73,19 @@ import {SlimeNodeType} from "slime-ast/src/SlimeNodeType.ts";
 
 // ============================================
 // Unicode 转义序列解码
-// ES2025 规范 12.9.4 - 将 \uXXXX 和 \u{XXXXX} 转换为实际字符
+// ES2025 规范 12.9.4 - �?\uXXXX �?\u{XXXXX} 转换为实际字�?
 // 参考实现：Babel、Acorn、TypeScript
 // ============================================
 
 /**
- * 将 Unicode 转义序列解码为实际字符
- * 支持 \uXXXX 和 \u{XXXXX} 格式
+ * �?Unicode 转义序列解码为实际字�?
+ * 支持 \uXXXX �?\u{XXXXX} 格式
  *
  * @param str 可能包含 Unicode 转义的字符串
- * @returns 解码后的字符串
+ * @returns 解码后的字符�?
  */
 function decodeUnicodeEscapes(str: string | undefined): string {
-    // 如果为空或不包含转义序列，直接返回（性能优化）
+    // 如果为空或不包含转义序列，直接返回（性能优化�?
     if (!str || !str.includes('\\u')) {
         return str || ''
     }
@@ -110,72 +110,70 @@ export function throwNewError(errorMsg: string = 'syntax error') {
 }
 
 /**
- * CST 转 AST 转换器
+ * CST �?AST 转换�?
  *
  * ## 两层架构设计
  *
- * ### 第一层：AST 工厂层 (SlimeNodeCreate.ts / SlimeAstUtil)
- * - 与 ESTree AST 节点类型一一对应的纯粹创建方法
- * - 不依赖 CST 结构，只接收参数创建节点
- * - 示例：createIdentifier(name, loc) → SlimeIdentifier
+ * ### 第一层：AST 工厂�?(SlimeNodeCreate.ts / SlimeAstUtil)
+ * - �?ESTree AST 节点类型一一对应的纯粹创建方�?
+ * - 不依�?CST 结构，只接收参数创建节点
+ * - 示例：createIdentifier(name, loc) �?SlimeIdentifier
  *
- * ### 第二层：CST 转换层 (本类)
- * - 与 CST 规则一一对应的转换方法 (createXxxAst)
- * - 解析 CST 结构，提取信息，调用 AST 工厂层
+ * ### 第二层：CST 转换�?(本类)
+ * - �?CST 规则一一对应的转换方�?(createXxxAst)
+ * - 解析 CST 结构，提取信息，调用 AST 工厂�?
  * - 中心转发方法：createAstFromCst(cst) - 自动根据类型分发
  *
  * ## 方法命名规范
  *
  * | 方法类型 | 命名模式 | 说明 |
  * |----------|----------|------|
- * | CST 规则转换 | createXxxAst | 与 @SubhutiRule 规则一一对应 |
- * | AST 类型映射 | createXxxAst | CST 规则名 ≠ AST 类型名时使用 |
- * | 内部辅助方法 | private createXxxAst | ES2025 专用处理等 |
+ * | CST 规则转换 | createXxxAst | �?@SubhutiRule 规则一一对应 |
+ * | AST 类型映射 | createXxxAst | CST 规则�?�?AST 类型名时使用 |
+ * | 内部辅助方法 | private createXxxAst | ES2025 专用处理�?|
  * | 工具方法 | convertXxx / isXxx | 表达式转模式、检查方法等 |
  *
  * ## 方法命名规范
  *
- * 所有 CST 转换方法命名为 createXxxAst，其中 Xxx 与 CST 规则名一致。
- * 内部调用 SlimeNodeCreate / SlimeAstUtil 中与 AST 类型名一致的工厂方法。
+ * 所�?CST 转换方法命名�?createXxxAst，其�?Xxx �?CST 规则名一致�?
+ * 内部调用 SlimeNodeCreate / SlimeAstUtil 中与 AST 类型名一致的工厂方法�?
  *
- * 例如：
- * - createArrayLiteralAst (CST 规则名) → 内部调用 createArrayExpression (AST 类型名)
- * - createObjectLiteralAst (CST 规则名) → 内部调用 createObjectExpression (AST 类型名)
- * - createCatchAst (CST 规则名) → 内部调用 createCatchClause (AST 类型名)
+ * 例如�?
+ * - createArrayLiteralAst (CST 规则�? �?内部调用 createArrayExpression (AST 类型�?
+ * - createObjectLiteralAst (CST 规则�? �?内部调用 createObjectExpression (AST 类型�?
+ * - createCatchAst (CST 规则�? �?内部调用 createCatchClause (AST 类型�?
  *
  * ## 核心分发方法
- * - createAstFromCst: 中心转发，根据 CST 类型显式分发到对应方法
+ * - createAstFromCst: 中心转发，根�?CST 类型显式分发到对应方�?
  * - createStatementDeclarationAst: 语句/声明分发
  *
  * ## 辅助处理方法
- * - createClassBodyItemAst: 类成员处理（MethodDefinition/FieldDefinition 分发）
- * - createClassElementNameOrPropertyNameAst: 类元素名/属性名处理
  * - toProgram: Program 入口处理
  */
 export class SlimeCstToAst {
     private readonly expressionAstCache = new WeakMap<SubhutiCst, SlimeExpression>()
 
     /**
-     * 中心转发方法：根据 CST 节点类型显式分发到对应的转换方法
+     * 中心转发方法：根�?CST 节点类型显式分发到对应的转换方法
      *
-     * 这是 CST 转 AST 两层架构的核心入口：
-     * - 第一层：AST 工厂层 (SlimeNodeCreate.ts) - 纯粹的 AST 节点创建
-     * - 第二层：CST 转换层 (本类) - 解析 CST 结构，调用 AST 工厂层
+     * 这是 CST �?AST 两层架构的核心入口：
+     * - 第一层：AST 工厂�?(SlimeNodeCreate.ts) - 纯粹�?AST 节点创建
+     * - 第二层：CST 转换�?(本类) - 解析 CST 结构，调�?AST 工厂�?
      *
      * @param cst CST 节点
-     * @returns 对应的 AST 节点
+     * @returns 对应�?AST 节点
      */
     createAstFromCst(cst: SubhutiCst): any {
         const name = cst.name
 
-        // ==================== 标识符相关 ====================
+        // ==================== 标识符相�?====================
         if (name === SlimeParser.prototype.IdentifierReference?.name) return this.createIdentifierReferenceAst(cst)
         if (name === SlimeParser.prototype.BindingIdentifier?.name) return this.createBindingIdentifierAst(cst)
         if (name === SlimeParser.prototype.LabelIdentifier?.name) return this.createLabelIdentifierAst(cst)
         if (name === SlimeParser.prototype.Identifier?.name) return this.createIdentifierAst(cst)
         if (name === SlimeParser.prototype.IdentifierName?.name) return this.createIdentifierNameAst(cst)
 
-        // ==================== 字面量相关 ====================
+        // ==================== 字面量相�?====================
         if (name === SlimeParser.prototype.Literal?.name) return this.createLiteralAst(cst)
         if (name === SlimeParser.prototype.BooleanLiteral?.name) return this.createBooleanLiteralAst(cst)
         if (name === SlimeParser.prototype.ArrayLiteral?.name) return this.createArrayLiteralAst(cst)
@@ -186,7 +184,7 @@ export class SlimeCstToAst {
         if (name === SlimeTokenConsumer.prototype.StringLiteral?.name) return this.createStringLiteralAst(cst)
         if (name === SlimeTokenConsumer.prototype.RegularExpressionLiteral?.name) return this.createRegExpLiteralAst(cst)
 
-        // ==================== 表达式相关 ====================
+        // ==================== 表达式相�?====================
         if (name === SlimeParser.prototype.PrimaryExpression?.name) return this.createPrimaryExpressionAst(cst)
         if (name === SlimeParser.prototype.Expression?.name) return this.createExpressionAst(cst)
         if (name === SlimeParser.prototype.AssignmentExpression?.name) return this.createAssignmentExpressionAst(cst)
@@ -304,7 +302,7 @@ export class SlimeCstToAst {
         if (name === SlimeParser.prototype.AsyncGeneratorExpression?.name) return this.createAsyncGeneratorExpressionAst(cst)
         if (name === SlimeParser.prototype.AsyncGeneratorBody?.name) return this.createAsyncGeneratorBodyAst(cst)
 
-        // ==================== 类相关 ====================
+        // ==================== 类相�?====================
         if (name === SlimeParser.prototype.ClassDeclaration?.name) return this.createClassDeclarationAst(cst)
         if (name === SlimeParser.prototype.ClassExpression?.name) return this.createClassExpressionAst(cst)
         if (name === SlimeParser.prototype.ClassTail?.name) return this.createClassTailAst(cst)
@@ -323,7 +321,7 @@ export class SlimeCstToAst {
         if (name === SlimeParser.prototype.AsyncGeneratorMethod?.name) return this.createAsyncGeneratorMethodAst(cst)
         if (name === SlimeParser.prototype.PrivateIdentifier?.name) return this.createPrivateIdentifierAst(cst)
 
-        // ==================== 对象属性相关 ====================
+        // ==================== 对象属性相�?====================
         if (name === SlimeParser.prototype.PropertyDefinition?.name) return this.createPropertyDefinitionAst(cst)
         if (name === SlimeParser.prototype.PropertyName?.name) return this.createPropertyNameAst(cst)
         if (name === SlimeParser.prototype.ComputedPropertyName?.name) return this.createComputedPropertyNameAst(cst)
@@ -390,11 +388,11 @@ export class SlimeCstToAst {
         if (name === SlimeParser.prototype.FormalsList?.name) return this.createFormalsListAst(cst)
         if (name === SlimeParser.prototype.RestParameter?.name) return this.createRestParameterAst(cst)
 
-        // ==================== 运算符相关 ====================
+        // ==================== 运算符相�?====================
         if (name === SlimeParser.prototype.AssignmentOperator?.name) return this.createAssignmentOperatorAst(cst)
         if (name === SlimeParser.prototype.MultiplicativeOperator?.name) return this.createMultiplicativeOperatorAst(cst)
 
-        // ==================== 对于没有专门方法的 CST 节点，透传到子节点 ====================
+        // ==================== 对于没有专门方法�?CST 节点，透传到子节点 ====================
         if (cst.children && cst.children.length === 1) {
             return this.createAstFromCst(cst.children[0])
         }
@@ -403,12 +401,12 @@ export class SlimeCstToAst {
     }
 
     /**
-     * 创建 IdentifierReference 的 AST
+     * 创建 IdentifierReference �?AST
      *
      * 语法：IdentifierReference -> Identifier | yield | await
      *
      * IdentifierReference 是对 Identifier 的引用包装，
-     * 在 ES 规范中用于区分标识符的不同使用场景。
+     * �?ES 规范中用于区分标识符的不同使用场景�?
      */
     createIdentifierReferenceAst(cst: SubhutiCst): SlimeIdentifier {
         const expectedName = SlimeParser.prototype.IdentifierReference?.name || 'IdentifierReference'
@@ -426,12 +424,12 @@ export class SlimeCstToAst {
     }
 
     /**
-     * 创建 LabelIdentifier 的 AST
+     * 创建 LabelIdentifier �?AST
      *
      * 语法：LabelIdentifier -> Identifier | [~Yield] yield | [~Await] await
      *
-     * LabelIdentifier 用于 break/continue 语句的标签和 LabelledStatement 的标签。
-     * 结构与 IdentifierReference 相同。
+     * LabelIdentifier 用于 break/continue 语句的标签和 LabelledStatement 的标签�?
+     * 结构�?IdentifierReference 相同�?
      */
     createLabelIdentifierAst(cst: SubhutiCst): SlimeIdentifier {
         const expectedName = SlimeParser.prototype.LabelIdentifier?.name || 'LabelIdentifier'
@@ -457,13 +455,13 @@ export class SlimeCstToAst {
         const isAwait = cst.name === 'Await'
 
         // ES2025 Parser: Identifier 规则内部调用 IdentifierNameTok()
-        // 所以 CST 结构是：Identifier -> IdentifierNameTok (token with value)
+        // 所�?CST 结构是：Identifier -> IdentifierNameTok (token with value)
         let value: string
         let tokenLoc: SubhutiSourceLocation | undefined = undefined
 
         // 处理 yield/await 作为标识符的情况
         if (isYield || isAwait) {
-            // 这是一个 token，直接使用其值
+            // 这是一�?token，直接使用其�?
             value = cst.value as string || cst.name.toLowerCase()
             tokenLoc = cst.loc
         } else if (isIdentifierName) {
@@ -485,11 +483,11 @@ export class SlimeCstToAst {
         } else if (!isIdentifier) {
             throw new Error(`Expected Identifier, got ${cst.name}`)
         } else if (cst.value !== undefined && cst.value !== null) {
-            // 直接是 token（旧版兼容）
+            // 直接�?token（旧版兼容）
             value = cst.value as string
             tokenLoc = cst.loc
         } else if (cst.children && cst.children.length > 0) {
-            // ES2025: Identifier 规则，子节点是 IdentifierNameTok
+            // ES2025: Identifier 规则，子节点�?IdentifierNameTok
             const tokenCst = cst.children[0]
             if (tokenCst.value !== undefined) {
                 value = tokenCst.value as string
@@ -501,17 +499,17 @@ export class SlimeCstToAst {
             throw new Error(`createIdentifierAst: Invalid Identifier CST structure`)
         }
 
-        // 解码 Unicode 转义序列（如 \u0061 -> a）
+        // 解码 Unicode 转义序列（如 \u0061 -> a�?
         const decodedName = decodeUnicodeEscapes(value)
-        // 使用 token 的 loc（包含原始值），而不是规则的 loc
+        // 使用 token �?loc（包含原始值），而不是规则的 loc
         const identifier = SlimeAstUtil.createIdentifier(decodedName, tokenLoc || cst.loc)
         return identifier
     }
 
     /**
-     * [入口方法] 将顶层 CST 转换为 Program AST
+     * [入口方法] 将顶�?CST 转换�?Program AST
      *
-     * 存在必要性：这是外部调用的主入口，支持 Module、Script、Program 多种顶层 CST。
+     * 存在必要性：这是外部调用的主入口，支�?Module、Script、Program 多种顶层 CST�?
      */
     toProgram(cst: SubhutiCst): SlimeProgram {
         // Support both Module and Script entry points
@@ -531,11 +529,11 @@ export class SlimeCstToAst {
             return SlimeAstUtil.createProgram([], isModule ? 'module' : 'script')
         }
 
-        // 遍历子节点，处理 HashbangComment 和主体内容
+        // 遍历子节点，处理 HashbangComment 和主体内�?
         let bodyChild: SubhutiCst | null = null
         for (const child of cst.children) {
             if (child.name === 'HashbangComment') {
-                // 提取 Hashbang 注释的值
+                // 提取 Hashbang 注释的�?
                 hashbangComment = child.value || child.children?.[0]?.value || null
             } else if (child.name === 'ModuleBody' || child.name === 'ScriptBody' ||
                        child.name === 'ModuleItemList' || child.name === SlimeParser.prototype.ModuleItemList?.name ||
@@ -572,7 +570,7 @@ export class SlimeCstToAst {
                 throw new Error(`Unexpected body child: ${bodyChild.name}`)
             }
         } else {
-            // 没有主体内容（可能只有 HashbangComment）
+            // 没有主体内容（可能只�?HashbangComment�?
             program = SlimeAstUtil.createProgram([], isModule ? 'module' : 'script')
         }
 
@@ -603,9 +601,9 @@ export class SlimeCstToAst {
     // ==================== 模块相关转换方法 ====================
 
     /**
-     * Program CST 转 AST
+     * Program CST �?AST
      *
-     * 存在必要性：Program 是顶层入口规则，需要处理 Script 或 Module 两种情况。
+     * 存在必要性：Program 是顶层入口规则，需要处�?Script �?Module 两种情况�?
      */
     createProgramAst(cst: SubhutiCst): SlimeProgram {
         // 处理 Program -> Script | Module
@@ -617,12 +615,12 @@ export class SlimeCstToAst {
                 return this.createModuleAst(firstChild)
             }
         }
-        // 如果直接就是内容，调用 toProgram
+        // 如果直接就是内容，调�?toProgram
         return this.toProgram(cst)
     }
 
     /**
-     * Script CST 转 AST
+     * Script CST �?AST
      */
     createScriptAst(cst: SubhutiCst): SlimeProgram {
         const scriptBody = cst.children?.find(ch =>
@@ -635,7 +633,7 @@ export class SlimeCstToAst {
     }
 
     /**
-     * ScriptBody CST 转 AST
+     * ScriptBody CST �?AST
      */
     createScriptBodyAst(cst: SubhutiCst): SlimeProgram {
         const stmtList = cst.children?.find(ch =>
@@ -649,7 +647,7 @@ export class SlimeCstToAst {
     }
 
     /**
-     * Module CST 转 AST
+     * Module CST �?AST
      */
     createModuleAst(cst: SubhutiCst): SlimeProgram {
         const moduleBody = cst.children?.find(ch =>
@@ -662,7 +660,7 @@ export class SlimeCstToAst {
     }
 
     /**
-     * ModuleBody CST 转 AST
+     * ModuleBody CST �?AST
      */
     createModuleBodyAst(cst: SubhutiCst): SlimeProgram {
         const moduleItemList = cst.children?.find(ch =>
@@ -676,7 +674,7 @@ export class SlimeCstToAst {
     }
 
     /**
-     * NameSpaceImport CST 转 AST
+     * NameSpaceImport CST �?AST
      * NameSpaceImport -> * as ImportedBinding
      */
     createNameSpaceImportAst(cst: SubhutiCst): SlimeImportNamespaceSpecifier {
@@ -701,7 +699,7 @@ export class SlimeCstToAst {
     }
 
     /**
-     * NamedImports CST 转 AST
+     * NamedImports CST �?AST
      * NamedImports -> { } | { ImportsList } | { ImportsList , }
      */
     createNamedImportsAst(cst: SubhutiCst): Array<SlimeImportSpecifier> {
@@ -709,7 +707,7 @@ export class SlimeCstToAst {
     }
 
     /**
-     * ImportsList CST 转 AST
+     * ImportsList CST �?AST
      * ImportsList -> ImportSpecifier (, ImportSpecifier)*
      */
     createImportsListAst(cst: SubhutiCst): Array<SlimeImportSpecifier> {
@@ -724,7 +722,7 @@ export class SlimeCstToAst {
     }
 
     /**
-     * ImportSpecifier CST 转 AST
+     * ImportSpecifier CST �?AST
      * ImportSpecifier -> ImportedBinding | ModuleExportName as ImportedBinding
      */
     createImportSpecifierAst(cst: SubhutiCst): SlimeImportSpecifier {
@@ -749,7 +747,7 @@ export class SlimeCstToAst {
             }
         }
 
-        // 如果没有 as，imported 和 local 相同
+        // 如果没有 as，imported �?local 相同
         if (!local && imported) {
             local = { ...imported }
         }
@@ -761,7 +759,7 @@ export class SlimeCstToAst {
     }
 
     /**
-     * AttributeKey CST 转 AST
+     * AttributeKey CST �?AST
      * AttributeKey -> IdentifierName | StringLiteral
      */
     createAttributeKeyAst(cst: SubhutiCst): SlimeIdentifier | SlimeLiteral {
@@ -778,7 +776,7 @@ export class SlimeCstToAst {
     }
 
     /**
-     * ExportFromClause CST 转 AST
+     * ExportFromClause CST �?AST
      * ExportFromClause -> * | * as ModuleExportName | NamedExports
      */
     createExportFromClauseAst(cst: SubhutiCst): any {
@@ -821,7 +819,7 @@ export class SlimeCstToAst {
     }
 
     /**
-     * WithEntries CST 转 AST
+     * WithEntries CST �?AST
      * WithEntries -> AttributeKey : StringLiteral (, AttributeKey : StringLiteral)*
      */
     createWithEntriesAst(cst: SubhutiCst): any[] {
@@ -905,7 +903,7 @@ export class SlimeCstToAst {
                 semicolonToken, attributes, withToken
             )
         } else if (first1.name === SlimeParser.prototype.ModuleSpecifier?.name) {
-            // import 'module' (side effect import) 或 import 'module' with {...}
+            // import 'module' (side effect import) �?import 'module' with {...}
             const source = this.createModuleSpecifierAst(first1)
             importDeclaration = SlimeAstUtil.createImportDeclaration(
                 [], source, cst.loc,
@@ -931,7 +929,7 @@ export class SlimeCstToAst {
                 let currentKey: any = null
                 for (const entry of child.children || []) {
                     if (entry.name === SlimeParser.prototype.AttributeKey?.name || entry.name === 'AttributeKey') {
-                        // AttributeKey 可能是 IdentifierName 或 StringLiteral
+                        // AttributeKey 可能�?IdentifierName �?StringLiteral
                         const keyChild = entry.children?.[0]
                         if (keyChild) {
                             if (keyChild.name === 'IdentifierName' || keyChild.name === SlimeParser.prototype.IdentifierName?.name) {
@@ -946,7 +944,7 @@ export class SlimeCstToAst {
                             }
                         }
                     } else if (entry.name === 'StringLiteral' || entry.value?.startsWith('"') || entry.value?.startsWith("'")) {
-                        // 这是 attribute 的值
+                        // 这是 attribute 的�?
                         if (currentKey) {
                             attributes.push({
                                 type: SlimeNodeType.ImportAttribute,
@@ -957,7 +955,7 @@ export class SlimeCstToAst {
                             currentKey = null
                         }
                     }
-                    // 跳过 Colon 和 Comma
+                    // 跳过 Colon �?Comma
                 }
             }
         }
@@ -1005,7 +1003,7 @@ export class SlimeCstToAst {
             const commaToken = commaCst ? SlimeTokenCreate.createCommaToken(commaCst.loc) : undefined
             result.push(SlimeAstUtil.createImportSpecifierItem(specifier, commaToken))
 
-            // 检查是否还有 NamedImports 或 NameSpaceImport（混合导入）
+            // 检查是否还�?NamedImports �?NameSpaceImport（混合导入）
             const namedImportsCst = cst.children.find(ch =>
                 ch.name === SlimeParser.prototype.NamedImports?.name || ch.name === 'NamedImports'
             )
@@ -1061,7 +1059,7 @@ export class SlimeCstToAst {
             if (child.name === SlimeParser.prototype.ImportSpecifier?.name) {
                 // ImportSpecifier有两种形式：
                 // 1. ImportedBinding （简写）
-                // 2. IdentifierName AsTok ImportedBinding （重命名）
+                // 2. IdentifierName AsTok ImportedBinding （重命名�?
 
                 const identifierName = child.children.find((ch: any) =>
                     ch.name === SlimeParser.prototype.IdentifierName?.name)
@@ -1069,7 +1067,7 @@ export class SlimeCstToAst {
                     ch.name === SlimeParser.prototype.ImportedBinding?.name)
 
                 if (identifierName && binding) {
-                    // import {name as localName} 或 import {default as MyClass} - 重命名形式
+                    // import {name as localName} �?import {default as MyClass} - 重命名形�?
                     const imported = this.createIdentifierNameAst(identifierName)
                     const local = this.createImportedBindingAst(binding)
                     specifiers.push({
@@ -1079,7 +1077,7 @@ export class SlimeCstToAst {
                         loc: child.loc
                     } as any)
                 } else if (binding) {
-                    // import {name} - 简写形式
+                    // import {name} - 简写形�?
                     const id = this.createImportedBindingAst(binding)
                     specifiers.push({
                         type: SlimeNodeType.ImportSpecifier,
@@ -1109,7 +1107,7 @@ export class SlimeCstToAst {
         }
 
         const importsList = cst.children.find(ch => ch.name === SlimeParser.prototype.ImportsList?.name)
-        // 空命名导入 import {} from "foo" - 返回空 specifiers 但有 brace tokens
+        // 空命名导�?import {} from "foo" - 返回�?specifiers 但有 brace tokens
         if (!importsList) return { specifiers: [], lBraceToken, rBraceToken }
 
         const specifiers: Array<SlimeImportSpecifierItem> = []
@@ -1120,14 +1118,14 @@ export class SlimeCstToAst {
             const child = importsList.children[i]
 
             if (child.name === SlimeParser.prototype.ImportSpecifier?.name) {
-                // 如果之前有 specifier 但没有逗号，先推入
+                // 如果之前�?specifier 但没有逗号，先推入
                 if (hasSpec) {
                     specifiers.push(SlimeAstUtil.createImportSpecifierItem(currentSpec!, undefined))
                 }
 
-                // ES2025: ImportSpecifier 结构可能是:
+                // ES2025: ImportSpecifier 结构可能�?
                 // 1. ModuleExportName "as" ImportedBinding (别名形式)
-                // 2. ImportedBinding (简写形式)
+                // 2. ImportedBinding (简写形�?
                 const moduleExportName = child.children.find((ch: any) =>
                     ch.name === SlimeParser.prototype.ModuleExportName?.name || ch.name === 'ModuleExportName')
                 const binding = child.children.find((ch: any) =>
@@ -1144,7 +1142,7 @@ export class SlimeCstToAst {
                         loc: child.loc
                     } as any
                 } else if (binding) {
-                    // 简写形式: import { foo }
+                    // 简写形�? import { foo }
                     const id = this.createImportedBindingAst(binding)
                     currentSpec = {
                         type: SlimeNodeType.ImportSpecifier,
@@ -1165,7 +1163,7 @@ export class SlimeCstToAst {
             }
         }
 
-        // 处理最后一个 specifier（没有尾随逗号）
+        // 处理最后一�?specifier（没有尾随逗号�?
         if (hasSpec) {
             specifiers.push(SlimeAstUtil.createImportSpecifierItem(currentSpec!, undefined))
         }
@@ -1174,11 +1172,11 @@ export class SlimeCstToAst {
     }
 
     createIdentifierNameAst(cst: SubhutiCst): SlimeIdentifier {
-        // IdentifierName 可能是:
-        // 1. 直接带 value 的 token
+        // IdentifierName 可能�?
+        // 1. 直接�?value �?token
         // 2. 包含子节点的规则节点
 
-        // 如果直接有 value，使用它
+        // 如果直接�?value，使用它
         if (cst.value !== undefined) {
             const decodedName = decodeUnicodeEscapes(cst.value as string)
             return SlimeAstUtil.createIdentifier(decodedName, cst.loc)
@@ -1198,24 +1196,14 @@ export class SlimeCstToAst {
         throw new Error(`createIdentifierNameAst: Cannot extract value from IdentifierName`)
     }
 
-    createExportClauseAst(cst: SubhutiCst): Array<SlimeExportSpecifierItem> {
-        // ExportClause: LBrace (ExportsList | RBrace)
-        const exportsList = cst.children.find((ch: any) =>
-            ch.name === SlimeParser.prototype.ExportsList?.name)
-        if (!exportsList) return []
-
-        return this.createExportsListAst(exportsList)
-    }
-
-
     createBindingIdentifierAst(cst: SubhutiCst): SlimeIdentifier {
         const astName = checkCstName(cst, SlimeParser.prototype.BindingIdentifier?.name);
-        // BindingIdentifier 结构：
+        // BindingIdentifier 结构�?
         // ES2025: BindingIdentifier -> Identifier -> IdentifierNameTok
-        // 或者: BindingIdentifier -> YieldTok | AwaitTok
+        // 或�? BindingIdentifier -> YieldTok | AwaitTok
         const first = cst.children[0]
 
-        // 如果第一个子节点是 Identifier 规则
+        // 如果第一个子节点�?Identifier 规则
         if (first.name === 'Identifier' || first.name === SlimeParser.prototype.Identifier?.name) {
             // Identifier 规则内部包含 IdentifierNameTok
             const tokenCst = first.children?.[0]
@@ -1224,7 +1212,7 @@ export class SlimeCstToAst {
             }
         }
 
-        // 直接是 token 的情况（YieldTok, AwaitTok, 或旧版直接的 token）
+        // 直接�?token 的情况（YieldTok, AwaitTok, 或旧版直接的 token�?
         if (first.value !== undefined) {
             return SlimeAstUtil.createIdentifier(first.value, first.loc)
         }
@@ -1252,21 +1240,21 @@ export class SlimeCstToAst {
     createStatementListItemAst(cst: SubhutiCst): Array<SlimeStatement> {
         const astName = checkCstName(cst, SlimeParser.prototype.StatementListItem?.name);
         const statements = cst.children.map(item => {
-            // 如果是 Declaration，直接处理
+            // 如果�?Declaration，直接处�?
             if (item.name === SlimeParser.prototype.Declaration?.name) {
                 return [this.createDeclarationAst(item) as any]
             }
 
-            // 如果是 Statement，需要特殊处理 FunctionExpression 和 ClassExpression
+            // 如果�?Statement，需要特殊处�?FunctionExpression �?ClassExpression
             const statement = this.createStatementAst(item)
             const result = statement.flat()
 
-            // 检查是否是命名的 FunctionExpression 或 ClassExpression（应该转为 Declaration）
+            // 检查是否是命名�?FunctionExpression �?ClassExpression（应该转�?Declaration�?
             return result.map(stmt => {
                 if (stmt.type === SlimeNodeType.ExpressionStatement) {
                     const expr = (stmt as SlimeExpressionStatement).expression
 
-                    // 命名的 FunctionExpression → FunctionDeclaration
+                    // 命名�?FunctionExpression �?FunctionDeclaration
                     if (expr.type === SlimeNodeType.FunctionExpression) {
                         const funcExpr = expr as SlimeFunctionExpression
                         if (funcExpr.id) {
@@ -1282,7 +1270,7 @@ export class SlimeCstToAst {
                         }
                     }
 
-                    // ClassExpression → ClassDeclaration
+                    // ClassExpression �?ClassDeclaration
                     if (expr.type === SlimeNodeType.ClassExpression) {
                         const classExpr = expr as any
                         if (classExpr.id) {
@@ -1306,33 +1294,33 @@ export class SlimeCstToAst {
         const astName = checkCstName(cst, SlimeParser.prototype.Statement?.name);
         const statements: SlimeStatement[] = cst.children
             .map(item => this.createStatementDeclarationAst(item))
-            .filter(stmt => stmt !== undefined)  // 过滤掉 undefined
+            .filter(stmt => stmt !== undefined)  // 过滤�?undefined
         return statements
     }
 
     /**
-     * [核心分发方法] 根据 CST 节点类型创建对应的 Statement/Declaration AST
+     * [核心分发方法] 根据 CST 节点类型创建对应�?Statement/Declaration AST
      *
-     * 存在必要性：ECMAScript 语法中 Statement 和 Declaration 有多种具体类型，
-     * 需要一个统一的分发方法来处理各种语句和声明。
+     * 存在必要性：ECMAScript 语法�?Statement �?Declaration 有多种具体类型，
+     * 需要一个统一的分发方法来处理各种语句和声明�?
      *
      * 处理的节点类型包括：
-     * - Statement 包装节点 → 递归处理子节点
-     * - BreakableStatement → IterationStatement | SwitchStatement
-     * - VariableStatement → VariableDeclaration
-     * - ExpressionStatement → ExpressionStatement
-     * - IfStatement, ForStatement, WhileStatement 等具体语句
-     * - FunctionDeclaration, ClassDeclaration 等声明
+     * - Statement 包装节点 �?递归处理子节�?
+     * - BreakableStatement �?IterationStatement | SwitchStatement
+     * - VariableStatement �?VariableDeclaration
+     * - ExpressionStatement �?ExpressionStatement
+     * - IfStatement, ForStatement, WhileStatement 等具体语�?
+     * - FunctionDeclaration, ClassDeclaration 等声�?
      */
     createStatementDeclarationAst(cst: SubhutiCst) {
-        // Statement - 包装节点，递归处理子节点
+        // Statement - 包装节点，递归处理子节�?
         if (cst.name === SlimeParser.prototype.Statement?.name || cst.name === 'Statement') {
             if (cst.children && cst.children.length > 0) {
                 return this.createStatementDeclarationAst(cst.children[0])
             }
             return undefined
         }
-        // BreakableStatement - 包装节点，递归处理子节点
+        // BreakableStatement - 包装节点，递归处理子节�?
         else if (cst.name === SlimeParser.prototype.BreakableStatement?.name) {
             if (cst.children && cst.children.length > 0) {
                 return this.createStatementDeclarationAst(cst.children[0])
@@ -1346,7 +1334,7 @@ export class SlimeCstToAst {
             }
             return undefined
         }
-        // IfStatementBody - if/else 语句体包装节点，递归处理子节点
+        // IfStatementBody - if/else 语句体包装节点，递归处理子节�?
         else if (cst.name === 'IfStatementBody') {
             if (cst.children && cst.children.length > 0) {
                 return this.createStatementDeclarationAst(cst.children[0])
@@ -1357,11 +1345,11 @@ export class SlimeCstToAst {
         else if (cst.name === SlimeParser.prototype.VariableStatement?.name || cst.name === 'VariableStatement') {
             return this.createVariableStatementAst(cst)
         }
-        // 变量声明 (用于 for 循环等)
+        // 变量声明 (用于 for 循环�?
         else if (cst.name === SlimeParser.prototype.VariableDeclaration?.name) {
             return this.createVariableDeclarationAst(cst)
         }
-        // 表达式语句
+        // 表达式语�?
         else if (cst.name === SlimeParser.prototype.ExpressionStatement?.name) {
             return this.createExpressionStatementAst(cst)
         }
@@ -1389,7 +1377,7 @@ export class SlimeCstToAst {
         else if (cst.name === SlimeParser.prototype.DoWhileStatement?.name) {
             return this.createDoWhileStatementAst(cst)
         }
-        // 块语句
+        // 块语�?
         else if (cst.name === SlimeParser.prototype.BlockStatement?.name) {
             return this.createBlockStatementAst(cst)
         }
@@ -1425,7 +1413,7 @@ export class SlimeCstToAst {
         else if (cst.name === SlimeParser.prototype.DebuggerStatement?.name) {
             return this.createDebuggerStatementAst(cst)
         }
-        // 空语句
+        // 空语�?
         else if (cst.name === SlimeParser.prototype.EmptyStatement?.name) {
             return this.createEmptyStatementAst(cst)
         }
@@ -1433,7 +1421,7 @@ export class SlimeCstToAst {
         else if (cst.name === SlimeParser.prototype.FunctionDeclaration?.name) {
             return this.createFunctionDeclarationAst(cst)
         }
-        // 类声明
+        // 类声�?
         else if (cst.name === SlimeParser.prototype.ClassDeclaration?.name) {
             return this.createClassDeclarationAst(cst)
         }
@@ -1450,7 +1438,7 @@ export class SlimeCstToAst {
         let semicolonToken: any = undefined
         let asToken: any = undefined
 
-        // 遍历子节点提取信息
+        // 遍历子节点提取信�?
         let exportFromClause: SubhutiCst | null = null
         let fromClause: SubhutiCst | null = null
         let namedExports: SubhutiCst | null = null
@@ -1538,7 +1526,7 @@ export class SlimeCstToAst {
                     fromClauseResult.source, exported, cst.loc,
                     exportToken, asteriskToken, asToken, fromClauseResult.fromToken, semicolonToken
                 ) as any
-                // 添加 attributes（如果有 withToken，即使 attributes 为空也要添加）
+                // 添加 attributes（如果有 withToken，即�?attributes 为空也要添加�?
                 if (withToken) {
                     result.attributes = attributes
                     result.withToken = withToken
@@ -1546,7 +1534,7 @@ export class SlimeCstToAst {
                 return result
             } else {
                 // export { ... } from ...
-                // exportFromClause 的结构是 [NamedExports]，需要从中提取 NamedExports
+                // exportFromClause 的结构是 [NamedExports]，需要从中提�?NamedExports
                 const namedExportsCst = exportFromClause.children?.find((ch: any) =>
                     ch.name === SlimeParser.prototype.NamedExports?.name || ch.name === 'NamedExports'
                 )
@@ -1557,7 +1545,7 @@ export class SlimeCstToAst {
                     null, specifiers, fromClauseResult.source, cst.loc,
                     exportToken, fromClauseResult.fromToken, semicolonToken
                 )
-                // 添加 attributes（如果有 withToken，即使 attributes 为空也要添加）
+                // 添加 attributes（如果有 withToken，即�?attributes 为空也要添加�?
                 if (withToken) {
                     (result as any).attributes = attributes;
                     (result as any).withToken = withToken
@@ -1722,7 +1710,7 @@ export class SlimeCstToAst {
         // LexicalBinding: BindingIdentifier Initializer? | BindingPattern Initializer
 
         const children = cst.children || []
-        let kind: string = 'const' // 默认值
+        let kind: string = 'const' // 默认�?
         const declarations: any[] = []
 
         for (const child of children) {
@@ -1736,7 +1724,7 @@ export class SlimeCstToAst {
 
             // LetOrConst 规则
             if (name === SlimeParser.prototype.LetOrConst?.name || name === 'LetOrConst') {
-                // 内部是 LetTok 或 ConstTok
+                // 内部�?LetTok �?ConstTok
                 if (child.children && child.children.length > 0) {
                     const tokenCst = child.children[0]
                     kind = tokenCst.value as string || 'const'
@@ -1744,7 +1732,7 @@ export class SlimeCstToAst {
                 continue
             }
 
-            // 直接是 LetTok 或 ConstTok (ES2025 可能直接使用)
+            // 直接�?LetTok �?ConstTok (ES2025 可能直接使用)
             if (name === 'Let' || child.value === 'let') {
                 kind = 'let'
                 continue
@@ -1798,7 +1786,7 @@ export class SlimeCstToAst {
                 id = this.createBindingPatternAst(child)
             } else if (name === SlimeParser.prototype.Initializer?.name || name === 'Initializer') {
                 // Initializer: = AssignmentExpression
-                // children[0] 是 Assign token，children[1] 是 AssignmentExpression
+                // children[0] �?Assign token，children[1] �?AssignmentExpression
                 if (child.children && child.children[0]) {
                     const assignCst = child.children[0]
                     assignToken = SlimeTokenCreate.createAssignToken(assignCst.loc)
@@ -1843,7 +1831,7 @@ export class SlimeCstToAst {
     }
 
     /**
-     * 从 VariableDeclaration CST 创建 VariableDeclarator AST
+     * �?VariableDeclaration CST 创建 VariableDeclarator AST
      * VariableDeclaration: BindingIdentifier Initializer? | BindingPattern Initializer
      */
     createVariableDeclaratorFromVarDeclaration(cst: SubhutiCst): SlimeVariableDeclarator {
@@ -1878,7 +1866,7 @@ export class SlimeCstToAst {
         if (first.name === SlimeParser.prototype.FunctionDeclaration?.name || first.name === 'FunctionDeclaration') {
             return this.createFunctionDeclarationAst(first)
         } else if (first.name === SlimeParser.prototype.GeneratorDeclaration?.name || first.name === 'GeneratorDeclaration') {
-            // GeneratorDeclaration -> 类似FunctionDeclaration但有*号
+            // GeneratorDeclaration -> 类似FunctionDeclaration但有*�?
             return this.createGeneratorDeclarationAst(first)
         } else if (first.name === SlimeParser.prototype.AsyncFunctionDeclaration?.name || first.name === 'AsyncFunctionDeclaration') {
             // AsyncFunctionDeclaration -> async function
@@ -1907,7 +1895,7 @@ export class SlimeCstToAst {
             id = this.createBindingIdentifierAst(bindingId)
         }
 
-        // 查找 FormalParameters 或 FormalParameterList (使用包装类型)
+        // 查找 FormalParameters �?FormalParameterList (使用包装类型)
         const formalParams = cst.children.find(ch =>
             ch.name === SlimeParser.prototype.FormalParameters?.name || ch.name === 'FormalParameters' ||
             ch.name === SlimeParser.prototype.FormalParameterList?.name || ch.name === 'FormalParameterList')
@@ -1919,7 +1907,7 @@ export class SlimeCstToAst {
             }
         }
 
-        // 查找 GeneratorBody 或 FunctionBody
+        // 查找 GeneratorBody �?FunctionBody
         const bodyNode = cst.children.find(ch =>
             ch.name === 'GeneratorBody' || ch.name === SlimeParser.prototype.GeneratorBody?.name ||
             ch.name === 'FunctionBody' || ch.name === SlimeParser.prototype.FunctionBody?.name)
@@ -1944,7 +1932,7 @@ export class SlimeCstToAst {
     createAsyncFunctionDeclarationAst(cst: SubhutiCst): SlimeFunctionDeclaration {
         // AsyncFunctionDeclaration: async function name(params) { body }
         // CST children: [AsyncTok, FunctionTok, BindingIdentifier, LParen, FormalParameters?, RParen, LBrace, AsyncFunctionBody, RBrace]
-        // 或者旧版: [AsyncTok, FunctionTok, BindingIdentifier, LParen, FormalParameterList?, RParen, FunctionBodyDefine]
+        // 或者旧�? [AsyncTok, FunctionTok, BindingIdentifier, LParen, FormalParameterList?, RParen, FunctionBodyDefine]
 
         let id: SlimeIdentifier | null = null
         let params: SlimeFunctionParam[] = []
@@ -1957,7 +1945,7 @@ export class SlimeCstToAst {
             id = this.createBindingIdentifierAst(bindingId)
         }
 
-        // 查找 FormalParameters 或 FormalParameterList
+        // 查找 FormalParameters �?FormalParameterList
         const formalParams = cst.children.find(ch =>
             ch.name === SlimeParser.prototype.FormalParameters?.name || ch.name === 'FormalParameters' ||
             ch.name === SlimeParser.prototype.FormalParameterList?.name || ch.name === 'FormalParameterList')
@@ -1969,7 +1957,7 @@ export class SlimeCstToAst {
             }
         }
 
-        // 查找 AsyncFunctionBody 或 FunctionBody
+        // 查找 AsyncFunctionBody �?FunctionBody
         const bodyNode = cst.children.find(ch =>
             ch.name === 'AsyncFunctionBody' || ch.name === SlimeParser.prototype.AsyncFunctionBody?.name ||
             ch.name === 'FunctionBody' || ch.name === SlimeParser.prototype.FunctionBody?.name)
@@ -1998,7 +1986,7 @@ export class SlimeCstToAst {
             id = this.createBindingIdentifierAst(bindingId)
         }
 
-        // 查找 FormalParameters 或 FormalParameterList (使用包装类型)
+        // 查找 FormalParameters �?FormalParameterList (使用包装类型)
         const formalParams = cst.children.find(ch =>
             ch.name === SlimeParser.prototype.FormalParameters?.name || ch.name === 'FormalParameters' ||
             ch.name === SlimeParser.prototype.FormalParameterList?.name || ch.name === 'FormalParameterList')
@@ -2010,7 +1998,7 @@ export class SlimeCstToAst {
             }
         }
 
-        // 查找 AsyncGeneratorBody 或 FunctionBody
+        // 查找 AsyncGeneratorBody �?FunctionBody
         const bodyNode = cst.children.find(ch =>
             ch.name === 'AsyncGeneratorBody' || ch.name === SlimeParser.prototype.AsyncGeneratorBody?.name ||
             ch.name === 'FunctionBody' || ch.name === SlimeParser.prototype.FunctionBody?.name)
@@ -2030,40 +2018,6 @@ export class SlimeCstToAst {
             async: true,
             loc: cst.loc
         } as SlimeFunctionDeclaration
-    }
-
-    /**
-     * 创建 export default 的声明部分
-     * 支持：class、function、expression
-     */
-    createDefaultExportDeclarationAst(cst: SubhutiCst): SlimeMaybeNamedFunctionDeclaration | SlimeMaybeNamedClassDeclaration | SlimeExpression {
-        if (!cst) {
-            throw new Error('createDefaultExportDeclarationAst: cst is undefined')
-        }
-
-        // 如果是 AssignmentExpressionEmptySemicolon，提取 AssignmentExpression
-        if (cst.name === 'AssignmentExpressionEmptySemicolon') {
-            // 第一个子节点是 AssignmentExpression
-            const assignmentExpr = cst.children?.[0]
-            if (assignmentExpr) {
-                return this.createAssignmentExpressionAst(assignmentExpr) as SlimeExpression
-            }
-        }
-
-        switch (cst.name) {
-            case SlimeParser.prototype.ClassDeclaration?.name:
-                return this.createClassDeclarationAst(cst);
-            case SlimeParser.prototype.FunctionDeclaration?.name:
-                return this.createFunctionExpressionAst(cst) as any;
-            case SlimeParser.prototype.HoistableDeclaration?.name:
-                // export default function() {} or export default function*() {}
-                return this.createHoistableDeclarationAst(cst) as any;
-            case SlimeParser.prototype.AssignmentExpression?.name:
-                return this.createAssignmentExpressionAst(cst) as SlimeExpression;
-            default:
-                // 尝试作为表达式处理
-                return this.createExpressionAst(cst) as SlimeExpression;
-        }
     }
 
     createVariableDeclarationAst(cst: SubhutiCst): SlimeVariableDeclaration {
@@ -2092,8 +2046,8 @@ export class SlimeCstToAst {
     }
 
     createVariableDeclarationListAst(cst: SubhutiCst): SlimeVariableDeclarator[] {
-        // 过滤出VariableDeclarator节点（跳过Comma token）
-        // 兼容 VariableDeclarator 和 LexicalBinding
+        // 过滤出VariableDeclarator节点（跳过Comma token�?
+        // 兼容 VariableDeclarator �?LexicalBinding
         let declarations = cst.children
             .filter(item =>
                 item.name === SlimeParser.prototype.LexicalBinding?.name ||
@@ -2104,7 +2058,7 @@ export class SlimeCstToAst {
     }
 
     createClassDeclarationAst(cst: SubhutiCst): SlimeClassDeclaration {
-        // 检查 CST 节点名称是否为 ClassDeclaration
+        // 检�?CST 节点名称是否�?ClassDeclaration
         const astName = checkCstName(cst, SlimeParser.prototype.ClassDeclaration?.name);
 
         // Token fields
@@ -2112,7 +2066,7 @@ export class SlimeCstToAst {
         let id: SlimeIdentifier | null = null
         let classTailCst: SubhutiCst | null = null
 
-        // 遍历子节点，提取 class token、标识符和 ClassTail
+        // 遍历子节点，提取 class token、标识符�?ClassTail
         for (const child of cst.children) {
             const name = child.name
             if (name === 'Class' || child.value === 'class') {
@@ -2132,7 +2086,7 @@ export class SlimeCstToAst {
         // 解析 ClassTail，获取类体和父类信息
         const classTailResult = this.createClassTailAst(classTailCst)
 
-        // 创建类声明 AST 节点（id 可能为 null，用于匿名类）
+        // 创建类声�?AST 节点（id 可能�?null，用于匿名类�?
         const ast = SlimeAstUtil.createClassDeclaration(
             id, classTailResult.body, classTailResult.superClass, cst.loc,
             classToken, classTailResult.extendsToken
@@ -2149,14 +2103,14 @@ export class SlimeCstToAst {
         rBraceToken?: any;
     } {
         const astName = checkCstName(cst, SlimeParser.prototype.ClassTail?.name);
-        let superClass: SlimeExpression | null = null // 超类默认为 null
-        let body: SlimeClassBody = {type: SlimeNodeType.ClassBody as any, body: [], loc: cst.loc} // 默认空类体
+        let superClass: SlimeExpression | null = null // 超类默认�?null
+        let body: SlimeClassBody = {type: SlimeNodeType.ClassBody as any, body: [], loc: cst.loc} // 默认空类�?
         let extendsToken: any = undefined
         let lBraceToken: any = undefined
         let rBraceToken: any = undefined
 
         // ClassTail = ClassHeritage? { ClassBody? }
-        // 遍历 children 找到 ClassHeritage 和 ClassBody
+        // 遍历 children 找到 ClassHeritage �?ClassBody
         for (const child of cst.children) {
             if (child.name === SlimeParser.prototype.ClassHeritage?.name) {
                 const heritageResult = this.createClassHeritageAstWithToken(child)
@@ -2171,7 +2125,7 @@ export class SlimeCstToAst {
             }
         }
 
-        // 设置 body 的 brace tokens
+        // 设置 body �?brace tokens
         if (body) {
             body.lBraceToken = lBraceToken
             body.rBraceToken = rBraceToken
@@ -2199,28 +2153,6 @@ export class SlimeCstToAst {
         return { superClass, extendsToken }
     }
 
-    /**
-     * [辅助处理方法] 类成员 CST 转 AST
-     *
-     * 存在必要性：ClassBody 中的成员可能是 MethodDefinition 或 FieldDefinition，
-     * 需要根据具体类型分发到对应的处理方法。这不是直接对应某个 CST 规则，
-     * 而是作为 createClassBodyAst 的辅助方法。
-     *
-     * @param staticCst static 修饰符 CST（如果有）
-     * @param cst 类成员 CST（MethodDefinition 或 FieldDefinition）
-     */
-    createClassBodyItemAst(staticCst: SubhutiCst, cst: SubhutiCst): SlimeMethodDefinition | SlimePropertyDefinition {
-        if (cst.name === SlimeParser.prototype.MethodDefinition?.name) {
-            return this.createMethodDefinitionAst(staticCst, cst)
-        } else if (cst.name === SlimeParser.prototype.FieldDefinition?.name) {
-            return this.createFieldDefinitionAst(staticCst, cst)
-        }
-        // 注意：ES2025 规范中，类体使用 MethodDefinition 和 FieldDefinition，
-        // 而不是 PropertyDefinition（PropertyDefinition 仅用于对象字面量）。
-        // 如果是其他类型，返回undefined（会被过滤）
-        return undefined as any
-    }
-
     createInitializerAst(cst: SubhutiCst): SlimeExpression {
         const astName = checkCstName(cst, SlimeParser.prototype.Initializer?.name);
         // Initializer -> Eq + AssignmentExpression
@@ -2234,9 +2166,9 @@ export class SlimeCstToAst {
         // FieldDefinition -> (ClassElementName | PropertyName) + Initializer?
         // ES2022: ClassElementName = PrivateIdentifier | PropertyName
         const elementNameCst = cst.children[0]
-        const key = this.createClassElementNameOrPropertyNameAst(elementNameCst)
+        const key = this.createClassElementNameAst(elementNameCst)
 
-        // 检查是否是计算属性
+        // 检查是否是计算属�?
         const isComputed = this.isComputedPropertyName(elementNameCst)
 
         // 检查是否有初始化器
@@ -2248,53 +2180,15 @@ export class SlimeCstToAst {
             }
         }
 
-        // 检查是否有 static 修饰符
+        // 检查是否有 static 修饰�?
         const isStatic = this.isStaticModifier(staticCst)
 
-        // 注意参数顺序：(key, value, computed, isStatic, loc)
+        // 注意参数顺序�?key, value, computed, isStatic, loc)
         return SlimeAstUtil.createPropertyDefinition(key, value, isComputed, isStatic || false, cst.loc)
     }
 
     /**
-     * [辅助处理方法] 类元素名/属性名 CST 转 AST
-     *
-     * 存在必要性：ES2022 的 ClassElementName 和 ES6 的 PropertyName 有不同的结构，
-     * 需要一个统一的方法来处理这两种情况，支持：
-     * - PrivateIdentifier (#xxx) - ES2022 私有字段
-     * - PropertyName (字符串/数字/计算属性名)
-     *
-     * ClassElementName (ES2022) :: PrivateIdentifier | PropertyName
-     * PropertyName (ES6) :: LiteralPropertyName | ComputedPropertyName
-     */
-    createClassElementNameOrPropertyNameAst(cst: SubhutiCst): SlimeIdentifier | SlimeLiteral | SlimeExpression {
-        if (!cst || !cst.children) {
-            throw new Error('createClassElementNameOrPropertyNameAst: invalid cst')
-        }
-
-        // ES2022: ClassElementName
-        if (cst.name === 'ClassElementName') {
-            const first = cst.children[0]
-            if (!first) {
-                throw new Error('createClassElementNameOrPropertyNameAst: ClassElementName has no children')
-            }
-            if (first.name === 'PrivateIdentifier') {
-                return this.createPrivateIdentifierAst(first)
-            } else if (first.name === SlimeParser.prototype.PropertyName?.name || first.name === 'PropertyName') {
-                return this.createPropertyNameAst(first)
-            }
-            // 回退：尝试直接作为PropertyName处理
-            return this.createPropertyNameAst(first)
-        }
-        // ES6: PropertyName
-        else if (cst.name === SlimeParser.prototype.PropertyName?.name || cst.name === 'PropertyName') {
-            return this.createPropertyNameAst(cst)
-        }
-        // 未知情况：尝试作为PropertyName处理
-        return this.createPropertyNameAst(cst)
-    }
-
-    /**
-     * 检测 ClassElementName/PropertyName 是否是计算属性名
+     * 检�?ClassElementName/PropertyName 是否是计算属性名
      */
     isComputedPropertyName(cst: SubhutiCst): boolean {
         if (!cst || !cst.children) return false
@@ -2317,25 +2211,25 @@ export class SlimeCstToAst {
     }
 
     /**
-     * [AST 类型映射] PrivateIdentifier 终端符 → Identifier AST
+     * [AST 类型映射] PrivateIdentifier 终端�?�?Identifier AST
      *
-     * 存在必要性：PrivateIdentifier 在 CST 中是一个终端符（token），
-     * 但在 ESTree AST 中需要表示为 Identifier 节点，name 以 # 开头。
+     * 存在必要性：PrivateIdentifier �?CST 中是一个终端符（token），
+     * 但在 ESTree AST 中需要表示为 Identifier 节点，name �?# 开头�?
      *
      * PrivateIdentifier :: # IdentifierName
      * AST 表示：{ type: "Identifier", name: "#count" }
      */
     createPrivateIdentifierAst(cst: SubhutiCst): SlimeIdentifier {
         // Es2025Parser: PrivateIdentifier 是一个直接的 token，value 已经包含 #
-        // 例如：{ name: 'PrivateIdentifier', value: '#count' } 或 value: '#\u{61}'
+        // 例如：{ name: 'PrivateIdentifier', value: '#count' } �?value: '#\u{61}'
         if (cst.value) {
             const rawName = cst.value as string
             const decodedName = decodeUnicodeEscapes(rawName)
-            // 保存原始值和解码后的值
+            // 保存原始值和解码后的�?
             const name = decodedName.startsWith('#') ? decodedName : '#' + decodedName
             const raw = rawName.startsWith('#') ? rawName : '#' + rawName
             const identifier = SlimeAstUtil.createIdentifier(name, cst.loc)
-            // 如果原始值与解码值不同，保存 raw 以便生成器使用
+            // 如果原始值与解码值不同，保存 raw 以便生成器使�?
             if (raw !== name) {
                 (identifier as any).raw = raw
             }
@@ -2349,14 +2243,14 @@ export class SlimeCstToAst {
             const rawName = identifierCst.value as string
             const decodedName = decodeUnicodeEscapes(rawName)
             const identifier = SlimeAstUtil.createIdentifier('#' + decodedName)
-            // 保存原始值
+            // 保存原始�?
             if (rawName !== decodedName) {
                 (identifier as any).raw = '#' + rawName
             }
             return identifier
         }
 
-        // 如果只有一个子节点，可能是直接的 IdentifierName
+        // 如果只有一个子节点，可能是直接�?IdentifierName
         if (cst.children && cst.children.length === 1) {
             const child = cst.children[0]
             if (child.value) {
@@ -2374,8 +2268,8 @@ export class SlimeCstToAst {
     }
 
     /**
-     * 检查 CST 节点是否表示 static 修饰符
-     * 兼容 Static 和 IdentifierNameTok (value='static') 两种情况
+     * 检�?CST 节点是否表示 static 修饰�?
+     * 兼容 Static �?IdentifierNameTok (value='static') 两种情况
      */
     isStaticModifier(cst: SubhutiCst | null): boolean {
         if (!cst) return false
@@ -2383,7 +2277,7 @@ export class SlimeCstToAst {
         if (cst.name === SlimeTokenConsumer.prototype.Static?.name || cst.name === 'Static' || cst.name === 'Static') {
             return true
         }
-        // 方式2：是 IdentifierNameTok 且 value 为 'static'
+        // 方式2：是 IdentifierNameTok �?value �?'static'
         if ((cst.name === 'IdentifierName' || cst.name === 'IdentifierName') && cst.value === 'static') {
             return true
         }
@@ -2393,15 +2287,15 @@ export class SlimeCstToAst {
     createClassBodyAst(cst: SubhutiCst): SlimeClassBody {
         const astName = checkCstName(cst, SlimeParser.prototype.ClassBody?.name);
         const elementsWrapper = cst.children && cst.children[0] // ClassBody -> ClassElementList?，第一项为列表容器
-        const body: Array<SlimeMethodDefinition | SlimePropertyDefinition | SlimeStaticBlock> = [] // 收集类成员
+        const body: Array<SlimeMethodDefinition | SlimePropertyDefinition | SlimeStaticBlock> = [] // 收集类成�?
         if (elementsWrapper && Array.isArray(elementsWrapper.children)) {
             for (const element of elementsWrapper.children) { // 遍历 ClassElement
                 const elementChildren = element.children ?? [] // 兼容无子节点情况
                 if (!elementChildren.length) {
-                    continue // 没有内容的 ClassElement 直接忽略
+                    continue // 没有内容�?ClassElement 直接忽略
                 }
 
-                // 找到真正的成员定义（跳过 static 和 SemicolonASI）
+                // 找到真正的成员定义（跳过 static �?SemicolonASI�?
                 let staticCst: SubhutiCst | null = null
                 let targetCst: SubhutiCst | null = null
                 let classStaticBlockCst: SubhutiCst | null = null
@@ -2432,16 +2326,18 @@ export class SlimeCstToAst {
                 }
 
                 if (targetCst) {
-                    const item = this.createClassBodyItemAst(staticCst, targetCst) // 根据成员类型生成 AST
-                    if (item && item.type) { // 过滤掉返回 undefined 或type为undefined的情况
-                        body.push(item)
+                    // 根据成员类型直接调用对应方法
+                    if (targetCst.name === SlimeParser.prototype.MethodDefinition?.name) {
+                        body.push(this.createMethodDefinitionAst(staticCst, targetCst))
+                    } else if (targetCst.name === SlimeParser.prototype.FieldDefinition?.name) {
+                        body.push(this.createFieldDefinitionAst(staticCst, targetCst))
                     }
                 }
             }
         }
         return {
-            type: astName as any, // 构造 ClassBody AST
-            body: body, // 挂载类成员数组
+            type: astName as any, // 构�?ClassBody AST
+            body: body, // 挂载类成员数�?
             loc: cst.loc // 透传位置信息
         }
     }
@@ -2480,10 +2376,10 @@ export class SlimeCstToAst {
         return SlimeAstUtil.createStaticBlock(bodyStatements, cst.loc, lBraceToken, rBraceToken)
     }
 
-    // ==================== 函数/类相关转换方法 ====================
+    // ==================== 函数/类相关转换方�?====================
 
     /**
-     * GeneratorMethod CST 转 AST
+     * GeneratorMethod CST �?AST
      * GeneratorMethod -> * ClassElementName ( UniqueFormalParameters ) { GeneratorBody }
      */
     createGeneratorMethodAst(cst: SubhutiCst): SlimeMethodDefinition {
@@ -2491,14 +2387,14 @@ export class SlimeCstToAst {
     }
 
     /**
-     * GeneratorBody CST 转 AST（透传到 FunctionBody）
+     * GeneratorBody CST �?AST（透传�?FunctionBody�?
      */
     createGeneratorBodyAst(cst: SubhutiCst): Array<SlimeStatement> {
         return this.createFunctionBodyAst(cst)
     }
 
     /**
-     * AsyncMethod CST 转 AST
+     * AsyncMethod CST �?AST
      * AsyncMethod -> async ClassElementName ( UniqueFormalParameters ) { AsyncFunctionBody }
      */
     createAsyncMethodAst(cst: SubhutiCst): SlimeMethodDefinition {
@@ -2506,35 +2402,35 @@ export class SlimeCstToAst {
     }
 
     /**
-     * AsyncFunctionBody CST 转 AST（透传到 FunctionBody）
+     * AsyncFunctionBody CST �?AST（透传�?FunctionBody�?
      */
     createAsyncFunctionBodyAst(cst: SubhutiCst): Array<SlimeStatement> {
         return this.createFunctionBodyAst(cst)
     }
 
     /**
-     * AsyncGeneratorMethod CST 转 AST
+     * AsyncGeneratorMethod CST �?AST
      */
     createAsyncGeneratorMethodAst(cst: SubhutiCst): SlimeMethodDefinition {
         return this.createMethodDefinitionAstInternal(cst, 'method', true, true)
     }
 
     /**
-     * AsyncGeneratorBody CST 转 AST（透传到 FunctionBody）
+     * AsyncGeneratorBody CST �?AST（透传�?FunctionBody�?
      */
     createAsyncGeneratorBodyAst(cst: SubhutiCst): Array<SlimeStatement> {
         return this.createFunctionBodyAst(cst)
     }
 
     /**
-     * MethodDefinition CST 转 AST（透传）
+     * MethodDefinition CST �?AST（透传�?
      */
     createMethodDefinitionAst(cst: SubhutiCst): SlimeMethodDefinition {
         return this.createMethodDefinitionAstInternal(cst, 'method', false, false)
     }
 
     /**
-     * 内部辅助方法：创建 MethodDefinition AST
+     * 内部辅助方法：创�?MethodDefinition AST
      */
     private createMethodDefinitionAstInternal(cst: SubhutiCst, kind: 'method' | 'get' | 'set', generator: boolean, async: boolean): SlimeMethodDefinition {
         // 查找属性名
@@ -2545,7 +2441,7 @@ export class SlimeCstToAst {
             ch.name === 'PropertyName'
         )
 
-        const key = classElementName ? this.createClassElementNameOrPropertyNameAst(classElementName) : null
+        const key = classElementName ? this.createClassElementNameAst(classElementName) : null
 
         // 查找参数
         const formalParams = cst.children?.find(ch =>
@@ -2556,7 +2452,7 @@ export class SlimeCstToAst {
         )
         const params = formalParams ? this.createFormalParametersAst(formalParams) : []
 
-        // 查找函数体
+        // 查找函数�?
         const bodyNode = cst.children?.find(ch =>
             ch.name === 'GeneratorBody' || ch.name === 'AsyncFunctionBody' ||
             ch.name === 'AsyncGeneratorBody' || ch.name === 'FunctionBody' ||
@@ -2579,7 +2475,7 @@ export class SlimeCstToAst {
     }
 
     /**
-     * ClassElement CST 转 AST
+     * ClassElement CST �?AST
      * ClassElement -> MethodDefinition | static MethodDefinition | FieldDefinition | ...
      */
     createClassElementAst(cst: SubhutiCst): any {
@@ -2615,14 +2511,24 @@ export class SlimeCstToAst {
     }
 
     /**
-     * ClassElementName CST 转 AST（透传）
+     * ClassElementName CST �?AST
+     * ClassElementName :: PropertyName | PrivateIdentifier
      */
-    createClassElementNameAst(cst: SubhutiCst): any {
-        return this.createClassElementNameOrPropertyNameAst(cst)
+    createClassElementNameAst(cst: SubhutiCst): SlimeIdentifier | SlimeLiteral | SlimeExpression {
+        const astName = checkCstName(cst, SlimeParser.prototype.ClassElementName?.name)
+        const first = cst.children[0]
+        if (!first) {
+            throw new Error('createClassElementNameAst: ClassElementName has no children')
+        }
+        if (first.name === 'PrivateIdentifier') {
+            return this.createPrivateIdentifierAst(first)
+        }
+        // PropertyName
+        return this.createPropertyNameAst(first)
     }
 
     /**
-     * ClassElementList CST 转 AST
+     * ClassElementList CST �?AST
      */
     createClassElementListAst(cst: SubhutiCst): any[] {
         const elements: any[] = []
@@ -2638,7 +2544,7 @@ export class SlimeCstToAst {
     }
 
     /**
-     * ClassStaticBlockBody CST 转 AST
+     * ClassStaticBlockBody CST �?AST
      */
     createClassStaticBlockBodyAst(cst: SubhutiCst): Array<SlimeStatement> {
         const stmtList = cst.children?.find(ch =>
@@ -2652,7 +2558,7 @@ export class SlimeCstToAst {
     }
 
     /**
-     * ClassStaticBlockStatementList CST 转 AST
+     * ClassStaticBlockStatementList CST �?AST
      */
     createClassStaticBlockStatementListAst(cst: SubhutiCst): Array<SlimeStatement> {
         const stmtList = cst.children?.find(ch =>
@@ -2665,7 +2571,7 @@ export class SlimeCstToAst {
     }
 
     /**
-     * AsyncArrowBindingIdentifier CST 转 AST
+     * AsyncArrowBindingIdentifier CST �?AST
      */
     createAsyncArrowBindingIdentifierAst(cst: SubhutiCst): SlimeIdentifier {
         const bindingId = cst.children?.find(ch =>
@@ -2684,17 +2590,17 @@ export class SlimeCstToAst {
     }
 
     /**
-     * AsyncConciseBody CST 转 AST
+     * AsyncConciseBody CST �?AST
      */
     createAsyncConciseBodyAst(cst: SubhutiCst): SlimeBlockStatement | SlimeExpression {
         return this.createConciseBodyAst(cst)
     }
 
     /**
-     * AsyncArrowHead CST 转 AST（透传）
+     * AsyncArrowHead CST �?AST（透传�?
      */
     createAsyncArrowHeadAst(cst: SubhutiCst): any {
-        // AsyncArrowHead 主要用于解析，实际 AST 处理在 AsyncArrowFunction 中
+        // AsyncArrowHead 主要用于解析，实�?AST 处理�?AsyncArrowFunction �?
         return cst.children?.[0] ? this.createAstFromCst(cst.children[0]) : null
     }
 
@@ -2731,7 +2637,7 @@ export class SlimeCstToAst {
                 continue
             }
 
-            // FormalParameter - 直接的参数
+            // FormalParameter - 直接的参�?
             if (name === 'FormalParameter' || name === SlimeParser.prototype.FormalParameter?.name) {
                 params.push(this.createFormalParameterAst(child))
                 continue
@@ -2763,7 +2669,7 @@ export class SlimeCstToAst {
      * FunctionRestParameter: BindingRestElement
      */
     createRestParameterAst(cst: SubhutiCst): SlimeRestElement {
-        // 兼容 FunctionRestParameter 和 BindingRestElement
+        // 兼容 FunctionRestParameter �?BindingRestElement
         if (cst.name === SlimeParser.prototype.FunctionRestParameter?.name) {
             return this.createFunctionRestParameterAst(cst)
         }
@@ -2815,7 +2721,7 @@ export class SlimeCstToAst {
         } else if (first.name === SlimeParser.prototype.BindingPattern?.name ||
                    first.name === SlimeParser.prototype.ArrayBindingPattern?.name ||
                    first.name === SlimeParser.prototype.ObjectBindingPattern?.name) {
-            // 解构参数：function({name, age}) 或 function([a, b])
+            // 解构参数：function({name, age}) �?function([a, b])
             // 检查是否有 Initializer（默认值）
             const initializer = cst.children.find(ch => ch.name === SlimeParser.prototype.Initializer?.name || ch.name === 'Initializer')
             let pattern: SlimePattern
@@ -2848,7 +2754,7 @@ export class SlimeCstToAst {
         const first = cst.children[0]
         const id = this.createBindingIdentifierAst(first)
 
-        // 检查是否有默认值（Initializer）
+        // 检查是否有默认值（Initializer�?
         const initializer = cst.children.find(ch => ch.name === SlimeParser.prototype.Initializer?.name)
         if (initializer) {
             // 有默认值，创建AssignmentPattern
@@ -2882,7 +2788,7 @@ export class SlimeCstToAst {
             // 简单情况：...rest
             argument = this.createBindingIdentifierAst(argumentCst)
         } else if (argumentCst.name === SlimeParser.prototype.BindingPattern?.name) {
-            // 嵌套解构：...[a, b] 或 ...{x, y}
+            // 嵌套解构�?..[a, b] �?...{x, y}
             argument = this.createBindingPatternAst(argumentCst)
         } else {
             throw new Error(`BindingRestElement: 不支持的类型 ${argumentCst.name}`)
@@ -2892,7 +2798,7 @@ export class SlimeCstToAst {
     }
 
     /**
-     * [辅助方法] 将 FunctionBody CST 节点转换为 BlockStatement AST
+     * [辅助方法] �?FunctionBody CST 节点转换�?BlockStatement AST
      * 支持 FunctionBody, GeneratorBody, AsyncFunctionBody, AsyncGeneratorBody
      */
     createFunctionBodyToBlockStatementAst(cst: SubhutiCst): SlimeBlockStatement {
@@ -2903,7 +2809,7 @@ export class SlimeCstToAst {
 
     createFunctionBodyAst(cst: SubhutiCst): Array<SlimeStatement> {
         // FunctionBody: FunctionStatementList | StatementList
-        // GeneratorBody, AsyncFunctionBody, AsyncGeneratorBody 都包含 FunctionBody
+        // GeneratorBody, AsyncFunctionBody, AsyncGeneratorBody 都包�?FunctionBody
         const children = cst.children || []
 
         if (children.length === 0) {
@@ -2992,7 +2898,7 @@ export class SlimeCstToAst {
     }
 
     createMethodDefinitionAst(staticCst: SubhutiCst | null, cst: SubhutiCst): SlimeMethodDefinition {
-        // 注意：参数顺序是 (staticCst, cst)，与调用保持一致
+        // 注意：参数顺序是 (staticCst, cst)，与调用保持一�?
         const astName = checkCstName(cst, SlimeParser.prototype.MethodDefinition?.name);
         const first = cst.children?.[0]
 
@@ -3012,7 +2918,7 @@ export class SlimeCstToAst {
             // Es2025Parser: set ClassElementName ( PropertySetParameterList ) { FunctionBody }
             return this.createEs2025SetterMethodAst(staticCst, cst)
         } else if (first.name === SlimeParser.prototype.GeneratorMethod?.name || first.name === 'GeneratorMethod') {
-            // generator方法：*methodName() { yield ... }
+            // generator方法�?methodName() { yield ... }
             return this.createEs2025GeneratorMethodAst(staticCst, first)
         } else if (first.name === 'AsyncMethod' || first.name === SlimeParser.prototype.AsyncMethod?.name) {
             // async方法
@@ -3026,7 +2932,7 @@ export class SlimeCstToAst {
             return this.createEs2025GeneratorMethodFromChildren(staticCst, cst)
         } else if (first.name === 'Async') {
             // Es2025Parser: async [no LineTerminator here] ClassElementName ( ... ) { ... }
-            // 可能是 AsyncMethod 或 AsyncGeneratorMethod
+            // 可能�?AsyncMethod �?AsyncGeneratorMethod
             return this.createEs2025AsyncMethodFromChildren(staticCst, cst)
         } else if (first.name === 'IdentifierName' || first.name === 'IdentifierName' ||
                    first.name === 'PropertyName' || first.name === 'LiteralPropertyName') {
@@ -3038,7 +2944,7 @@ export class SlimeCstToAst {
                 // setter方法：set ClassElementName ( PropertySetParameterList ) { FunctionBody }
                 return this.createEs2025SetterMethodFromIdentifier(staticCst, cst)
             }
-            // Es2025Parser: 直接的标识符作为方法名
+            // Es2025Parser: 直接的标识符作为方法�?
             // 这种情况下，第一个子节点是方法名，后面是 LParen, UniqueFormalParameters, RParen, LBrace, FunctionBody, RBrace
             return this.createEs2025MethodDefinitionFromIdentifier(staticCst, cst)
         } else {
@@ -3047,12 +2953,12 @@ export class SlimeCstToAst {
     }
 
     // ==================== ES2025 内部辅助方法 ====================
-    // 以下方法是处理 ES2025 Parser CST 结构的内部辅助方法，不直接对应 CST 规则。
-    // 存在必要性：ES2025 Parser 的 CST 结构与 ES6 有差异，需要专门的处理逻辑。
+    // 以下方法是处�?ES2025 Parser CST 结构的内部辅助方法，不直接对�?CST 规则�?
+    // 存在必要性：ES2025 Parser �?CST 结构�?ES6 有差异，需要专门的处理逻辑�?
 
     /**
-     * [内部方法] 从直接的标识符创建方法定义
-     * 处理 ES2025 Parser 中 IdentifierNameTok ( UniqueFormalParameters ) { FunctionBody } 结构
+     * [内部方法] 从直接的标识符创建方法定�?
+     * 处理 ES2025 Parser �?IdentifierNameTok ( UniqueFormalParameters ) { FunctionBody } 结构
      * @internal
      */
     private createEs2025MethodDefinitionFromIdentifier(staticCst: SubhutiCst | null, cst: SubhutiCst): SlimeMethodDefinition {
@@ -3066,17 +2972,17 @@ export class SlimeCstToAst {
         let lBraceToken: any = undefined
         let rBraceToken: any = undefined
 
-        // 检查 static token
+        // 检�?static token
         if (staticCst && (staticCst.name === 'Static' || staticCst.value === 'static')) {
             staticToken = SlimeTokenCreate.createStaticToken(staticCst.loc)
         }
 
-        // 第一个子节点是方法名（可能是 IdentifierNameTok, IdentifierName, PropertyName, LiteralPropertyName）
+        // 第一个子节点是方法名（可能是 IdentifierNameTok, IdentifierName, PropertyName, LiteralPropertyName�?
         const firstChild = children[i++]
         let key: SlimeIdentifier | SlimeLiteral | SlimeExpression
 
         if (firstChild.name === 'IdentifierName') {
-            // 直接的 token
+            // 直接�?token
             key = SlimeAstUtil.createIdentifier(firstChild.value, firstChild.loc)
         } else if (firstChild.name === 'IdentifierName') {
             // IdentifierName 规则节点
@@ -3085,7 +2991,7 @@ export class SlimeCstToAst {
         } else if (firstChild.name === 'PropertyName' || firstChild.name === 'LiteralPropertyName') {
             key = this.createPropertyNameAst(firstChild)
         } else {
-            key = this.createClassElementNameOrPropertyNameAst(firstChild)
+            key = this.createClassElementNameAst(firstChild)
         }
 
         // LParen
@@ -3130,7 +3036,7 @@ export class SlimeCstToAst {
             rBraceToken = SlimeTokenCreate.createRBraceToken(children[i].loc)
         }
 
-        // 创建函数表达式
+        // 创建函数表达�?
         const functionExpression = SlimeAstUtil.createFunctionExpression(
             body, null, params, false, false, cst.loc,
             undefined, undefined, undefined, lParenToken, rParenToken, lBraceToken, rBraceToken
@@ -3149,8 +3055,8 @@ export class SlimeCstToAst {
     }
 
     /**
-     * [内部方法] 普通方法定义
-     * 处理 ES2025 Parser 中 ClassElementName ( UniqueFormalParameters ) { FunctionBody } 结构
+     * [内部方法] 普通方法定�?
+     * 处理 ES2025 Parser �?ClassElementName ( UniqueFormalParameters ) { FunctionBody } 结构
      * @internal
      */
     private createEs2025MethodDefinitionAst(staticCst: SubhutiCst | null, cst: SubhutiCst): SlimeMethodDefinition {
@@ -3160,7 +3066,7 @@ export class SlimeCstToAst {
 
         // ClassElementName
         const classElementNameCst = children[i++]
-        const key = this.createClassElementNameOrPropertyNameAst(classElementNameCst)
+        const key = this.createClassElementNameAst(classElementNameCst)
 
         // 跳过 LParen
         if (children[i]?.name === 'LParen') i++
@@ -3188,10 +3094,10 @@ export class SlimeCstToAst {
             body = SlimeAstUtil.createBlockStatement([])
         }
 
-        // 创建函数表达式
+        // 创建函数表达�?
         const functionExpression = SlimeAstUtil.createFunctionExpression(body, null, params, false, false, cst.loc)
 
-        // 检查是否是计算属性
+        // 检查是否是计算属�?
         const isComputed = this.isComputedPropertyName(classElementNameCst)
 
         // 检查是否是 constructor
@@ -3208,7 +3114,7 @@ export class SlimeCstToAst {
 
     /**
      * [内部方法] getter 方法
-     * 处理 ES2025 Parser 中 get ClassElementName ( ) { FunctionBody } 结构
+     * 处理 ES2025 Parser �?get ClassElementName ( ) { FunctionBody } 结构
      * @internal
      */
     private createEs2025GetterMethodAst(staticCst: SubhutiCst | null, cst: SubhutiCst): SlimeMethodDefinition {
@@ -3217,7 +3123,7 @@ export class SlimeCstToAst {
         let i = 1 // 跳过 GetTok
 
         const classElementNameCst = children[i++]
-        const key = this.createClassElementNameOrPropertyNameAst(classElementNameCst)
+        const key = this.createClassElementNameAst(classElementNameCst)
         const isComputed = this.isComputedPropertyName(classElementNameCst)
 
         // 跳过 LParen, RParen, LBrace
@@ -3250,7 +3156,7 @@ export class SlimeCstToAst {
 
     /**
      * [内部方法] setter 方法
-     * 处理 ES2025 Parser 中 set ClassElementName ( PropertySetParameterList ) { FunctionBody } 结构
+     * 处理 ES2025 Parser �?set ClassElementName ( PropertySetParameterList ) { FunctionBody } 结构
      * @internal
      */
     private createEs2025SetterMethodAst(staticCst: SubhutiCst | null, cst: SubhutiCst): SlimeMethodDefinition {
@@ -3259,7 +3165,7 @@ export class SlimeCstToAst {
         let i = 1 // 跳过 SetTok
 
         const classElementNameCst = children[i++]
-        const key = this.createClassElementNameOrPropertyNameAst(classElementNameCst)
+        const key = this.createClassElementNameAst(classElementNameCst)
         const isComputed = this.isComputedPropertyName(classElementNameCst)
 
         // 跳过 LParen
@@ -3301,8 +3207,8 @@ export class SlimeCstToAst {
     }
 
     /**
-     * [内部方法] getter 方法 (从 IdentifierNameTok="get" 开始)
-     * 处理 ES2025 Parser 中 IdentifierNameTok="get" ClassElementName ( ) { FunctionBody } 结构
+     * [内部方法] getter 方法 (�?IdentifierNameTok="get" 开�?
+     * 处理 ES2025 Parser �?IdentifierNameTok="get" ClassElementName ( ) { FunctionBody } 结构
      * @internal
      */
     private createEs2025GetterMethodFromIdentifier(staticCst: SubhutiCst | null, cst: SubhutiCst): SlimeMethodDefinition {
@@ -3310,7 +3216,7 @@ export class SlimeCstToAst {
         let i = 1 // 跳过 IdentifierNameTok="get"
 
         const classElementNameCst = children[i++]
-        const key = this.createClassElementNameOrPropertyNameAst(classElementNameCst)
+        const key = this.createClassElementNameAst(classElementNameCst)
         const isComputed = this.isComputedPropertyName(classElementNameCst)
 
         // 跳过 LParen, RParen
@@ -3345,8 +3251,8 @@ export class SlimeCstToAst {
     }
 
     /**
-     * [内部方法] setter 方法 (从 IdentifierNameTok="set" 开始)
-     * 处理 ES2025 Parser 中 IdentifierNameTok="set" ClassElementName ( ... ) { FunctionBody } 结构
+     * [内部方法] setter 方法 (�?IdentifierNameTok="set" 开�?
+     * 处理 ES2025 Parser �?IdentifierNameTok="set" ClassElementName ( ... ) { FunctionBody } 结构
      * @internal
      */
     private createEs2025SetterMethodFromIdentifier(staticCst: SubhutiCst | null, cst: SubhutiCst): SlimeMethodDefinition {
@@ -3354,7 +3260,7 @@ export class SlimeCstToAst {
         let i = 1 // 跳过 IdentifierNameTok="set"
 
         const classElementNameCst = children[i++]
-        const key = this.createClassElementNameOrPropertyNameAst(classElementNameCst)
+        const key = this.createClassElementNameAst(classElementNameCst)
         const isComputed = this.isComputedPropertyName(classElementNameCst)
 
         // 跳过 LParen
@@ -3401,7 +3307,7 @@ export class SlimeCstToAst {
 
     /**
      * [内部方法] generator 方法
-     * 处理 ES2025 Parser 中 * ClassElementName ( UniqueFormalParameters ) { GeneratorBody } 结构
+     * 处理 ES2025 Parser �?* ClassElementName ( UniqueFormalParameters ) { GeneratorBody } 结构
      * @internal
      */
     private createEs2025GeneratorMethodAst(staticCst: SubhutiCst | null, cst: SubhutiCst): SlimeMethodDefinition {
@@ -3410,7 +3316,7 @@ export class SlimeCstToAst {
         let i = 1 // 跳过 Asterisk
 
         const classElementNameCst = children[i++]
-        const key = this.createClassElementNameOrPropertyNameAst(classElementNameCst)
+        const key = this.createClassElementNameAst(classElementNameCst)
         const isComputed = this.isComputedPropertyName(classElementNameCst)
 
         // 跳过 LParen
@@ -3426,7 +3332,7 @@ export class SlimeCstToAst {
         // 跳过 RParen, LBrace
         while (i < children.length && ['RParen', 'LBrace'].includes(children[i]?.name)) i++
 
-        // GeneratorBody 或 FunctionBody
+        // GeneratorBody �?FunctionBody
         let body: SlimeBlockStatement
         const bodyChild = children[i]
         if (bodyChild?.name === 'GeneratorBody' || bodyChild?.name === SlimeParser.prototype.GeneratorBody?.name ||
@@ -3458,7 +3364,7 @@ export class SlimeCstToAst {
     }
 
     /**
-     * [内部方法] generator 方法 (从 MethodDefinition children 直接处理)
+     * [内部方法] generator 方法 (�?MethodDefinition children 直接处理)
      * @internal
      */
     private createEs2025GeneratorMethodFromChildren(staticCst: SubhutiCst | null, cst: SubhutiCst): SlimeMethodDefinition {
@@ -3467,7 +3373,7 @@ export class SlimeCstToAst {
 
     /**
      * [内部方法] async 方法
-     * 处理 ES2025 Parser 中 async ClassElementName ( UniqueFormalParameters ) { AsyncFunctionBody } 结构
+     * 处理 ES2025 Parser �?async ClassElementName ( UniqueFormalParameters ) { AsyncFunctionBody } 结构
      * @internal
      */
     private createEs2025AsyncMethodAst(staticCst: SubhutiCst | null, cst: SubhutiCst): SlimeMethodDefinition {
@@ -3476,7 +3382,7 @@ export class SlimeCstToAst {
         let i = 1 // 跳过 AsyncTok
 
         const classElementNameCst = children[i++]
-        const key = this.createClassElementNameOrPropertyNameAst(classElementNameCst)
+        const key = this.createClassElementNameAst(classElementNameCst)
         const isComputed = this.isComputedPropertyName(classElementNameCst)
 
         // 跳过 LParen
@@ -3492,7 +3398,7 @@ export class SlimeCstToAst {
         // 跳过 RParen, LBrace
         while (i < children.length && ['RParen', 'LBrace'].includes(children[i]?.name)) i++
 
-        // AsyncFunctionBody 或 FunctionBody
+        // AsyncFunctionBody �?FunctionBody
         let body: SlimeBlockStatement
         const bodyChild = children[i]
         if (bodyChild?.name === 'AsyncFunctionBody' || bodyChild?.name === SlimeParser.prototype.AsyncFunctionBody?.name ||
@@ -3524,7 +3430,7 @@ export class SlimeCstToAst {
     }
 
     /**
-     * [内部方法] async 方法 (从 MethodDefinition children 直接处理)
+     * [内部方法] async 方法 (�?MethodDefinition children 直接处理)
      * @internal
      */
     private createEs2025AsyncMethodFromChildren(staticCst: SubhutiCst | null, cst: SubhutiCst): SlimeMethodDefinition {
@@ -3538,16 +3444,16 @@ export class SlimeCstToAst {
 
     /**
      * [内部方法] async generator 方法
-     * 处理 ES2025 Parser 中 async * ClassElementName ( ... ) { AsyncGeneratorBody } 结构
+     * 处理 ES2025 Parser �?async * ClassElementName ( ... ) { AsyncGeneratorBody } 结构
      * @internal
      */
     private createEs2025AsyncGeneratorMethodAst(staticCst: SubhutiCst | null, cst: SubhutiCst): SlimeMethodDefinition {
         // AsyncGeneratorMethod children: [AsyncTok, Asterisk, ClassElementName, LParen, UniqueFormalParameters?, RParen, LBrace, AsyncGeneratorBody, RBrace]
         const children = cst.children
-        let i = 2 // 跳过 AsyncTok 和 Asterisk
+        let i = 2 // 跳过 AsyncTok �?Asterisk
 
         const classElementNameCst = children[i++]
-        const key = this.createClassElementNameOrPropertyNameAst(classElementNameCst)
+        const key = this.createClassElementNameAst(classElementNameCst)
         const isComputed = this.isComputedPropertyName(classElementNameCst)
 
         // 跳过 LParen
@@ -3563,7 +3469,7 @@ export class SlimeCstToAst {
         // 跳过 RParen, LBrace
         while (i < children.length && ['RParen', 'LBrace'].includes(children[i]?.name)) i++
 
-        // AsyncGeneratorBody 或 FunctionBody
+        // AsyncGeneratorBody �?FunctionBody
         let body: SlimeBlockStatement
         const bodyChild = children[i]
         if (bodyChild?.name === 'AsyncGeneratorBody' || bodyChild?.name === SlimeParser.prototype.AsyncGeneratorBody?.name ||
@@ -3606,11 +3512,11 @@ export class SlimeCstToAst {
         if (first.name === 'FormalParameters' || first.name === SlimeParser.prototype.FormalParameters?.name) {
             return this.createFormalParametersAst(first)
         }
-        // 可能直接是 FormalParameterList
+        // 可能直接�?FormalParameterList
         return this.createFormalParametersAst(cst)
     }
 
-    /** 返回包装类型的版本 */
+    /** 返回包装类型的版�?*/
     createUniqueFormalParametersAstWrapped(cst: SubhutiCst): SlimeFunctionParam[] {
         // UniqueFormalParameters: FormalParameters
         if (!cst.children || cst.children.length === 0) {
@@ -3620,7 +3526,7 @@ export class SlimeCstToAst {
         if (first.name === 'FormalParameters' || first.name === SlimeParser.prototype.FormalParameters?.name) {
             return this.createFormalParametersAstWrapped(first)
         }
-        // 可能直接是 FormalParameterList
+        // 可能直接�?FormalParameterList
         return this.createFormalParametersAstWrapped(cst)
     }
 
@@ -3642,7 +3548,7 @@ export class SlimeCstToAst {
         return []
     }
 
-    /** 返回包装类型的版本 */
+    /** 返回包装类型的版�?*/
     createPropertySetParameterListAstWrapped(cst: SubhutiCst): SlimeFunctionParam[] {
         // PropertySetParameterList: FormalParameter
         if (!cst.children || cst.children.length === 0) {
@@ -3687,7 +3593,7 @@ export class SlimeCstToAst {
         // CST结构：[LBracket, BindingElementList?, Comma?, Elision?, BindingRestElement?, RBracket]
         const elements: SlimeArrayPatternElement[] = []
 
-        // 提取 LBracket 和 RBracket tokens
+        // 提取 LBracket �?RBracket tokens
         let lBracketToken: SlimeLBracketToken | undefined
         let rBracketToken: SlimeRBracketToken | undefined
         for (const child of cst.children) {
@@ -3714,7 +3620,7 @@ export class SlimeCstToAst {
                     }
                 } else if (child.name === SlimeParser.prototype.BindingElisionElement?.name) {
                     // BindingElisionElement可能包含：Elision + BindingElement
-                    // 先检查是否有Elision（跳过的元素）
+                    // 先检查是否有Elision（跳过的元素�?
                     const elision = child.children.find((ch: any) =>
                         ch.name === SlimeParser.prototype.Elision?.name)
                     if (elision) {
@@ -3734,7 +3640,7 @@ export class SlimeCstToAst {
                         ch.name === SlimeParser.prototype.BindingElement?.name)
 
                     if (bindingElement) {
-                        // 使用 createBindingElementAst 正确处理 BindingElement（包括 Initializer）
+                        // 使用 createBindingElementAst 正确处理 BindingElement（包�?Initializer�?
                         const element = this.createBindingElementAst(bindingElement)
                         if (element) {
                             elements.push({ element })
@@ -3744,26 +3650,26 @@ export class SlimeCstToAst {
             }
         }
 
-        // 处理 ArrayBindingPattern 直接子节点中的 Comma 和 Elision（尾部空位）
+        // 处理 ArrayBindingPattern 直接子节点中�?Comma �?Elision（尾部空位）
         // CST: [LBracket, BindingElementList, Comma, Elision, RBracket]
         for (let i = 0; i < cst.children.length; i++) {
             const child = cst.children[i]
-            // 跳过 LBracket, RBracket, BindingElementList（已处理）
+            // 跳过 LBracket, RBracket, BindingElementList（已处理�?
             if (child.value === '[' || child.value === ']' ||
                 child.name === SlimeParser.prototype.BindingElementList?.name ||
                 child.name === SlimeParser.prototype.BindingRestElement?.name) {
                 continue
             }
 
-            // 处理 BindingElementList 之后的 Comma
+            // 处理 BindingElementList 之后�?Comma
             if (child.value === ',') {
-                // 将逗号关联到最后一个元素
+                // 将逗号关联到最后一个元�?
                 if (elements.length > 0 && !elements[elements.length - 1].commaToken) {
                     elements[elements.length - 1].commaToken = SlimeTokenCreate.createCommaToken(child.loc)
                 }
             }
 
-            // 处理尾部的 Elision
+            // 处理尾部�?Elision
             if (child.name === SlimeParser.prototype.Elision?.name || child.name === 'Elision') {
                 for (const elisionChild of child.children || []) {
                     if (elisionChild.value === ',') {
@@ -3776,7 +3682,7 @@ export class SlimeCstToAst {
             }
         }
 
-        // 检查是否有BindingRestElement（...rest 或 ...[a, b]）
+        // 检查是否有BindingRestElement�?..rest �?...[a, b]�?
         const restElement = cst.children.find(ch => ch.name === SlimeParser.prototype.BindingRestElement?.name)
         if (restElement) {
             const restNode = this.createBindingRestElementAst(restElement)
@@ -3798,7 +3704,7 @@ export class SlimeCstToAst {
         // CST结构：[LBrace, BindingPropertyList?, RBrace]
         const properties: SlimeObjectPatternProperty[] = []
 
-        // 提取 LBrace 和 RBrace tokens
+        // 提取 LBrace �?RBrace tokens
         let lBraceToken: SlimeLBraceToken | undefined
         let rBraceToken: SlimeRBraceToken | undefined
         for (const child of cst.children) {
@@ -3816,17 +3722,17 @@ export class SlimeCstToAst {
             for (let i = 0; i < propList.children.length; i++) {
                 const child = propList.children[i]
                 if (child.value === ',') {
-                    // 将逗号关联到前一个属性
+                    // 将逗号关联到前一个属�?
                     if (properties.length > 0 && !properties[properties.length - 1].commaToken) {
                         properties[properties.length - 1].commaToken = SlimeTokenCreate.createCommaToken(child.loc)
                     }
                 } else if (child.name === SlimeParser.prototype.BindingProperty?.name) {
-                    // BindingProperty -> SingleNameBinding (简写) 或 PropertyName + BindingElement (完整)
+                    // BindingProperty -> SingleNameBinding (简�? �?PropertyName + BindingElement (完整)
                     const singleName = child.children.find((ch: any) =>
                         ch.name === SlimeParser.prototype.SingleNameBinding?.name)
 
                     if (singleName) {
-                        // 简写形式：{name} 或 {name = "Guest"}
+                        // 简写形式：{name} �?{name = "Guest"}
                         const value = this.createSingleNameBindingAst(singleName)
                         const identifier = singleName.children.find((ch: any) =>
                             ch.name === SlimeParser.prototype.BindingIdentifier?.name)
@@ -3872,19 +3778,19 @@ export class SlimeCstToAst {
             }
         }
 
-        // 检查外层是否有逗号（在 BindingPropertyList 之后、BindingRestProperty 之前）
+        // 检查外层是否有逗号（在 BindingPropertyList 之后、BindingRestProperty 之前�?
         // CST 结构: { BindingPropertyList , BindingRestProperty }
-        // 逗号是 ObjectBindingPattern 的直接子节点
+        // 逗号�?ObjectBindingPattern 的直接子节点
         for (const child of cst.children) {
             if (child.value === ',') {
-                // 将逗号关联到最后一个属性
+                // 将逗号关联到最后一个属�?
                 if (properties.length > 0 && !properties[properties.length - 1].commaToken) {
                     properties[properties.length - 1].commaToken = SlimeTokenCreate.createCommaToken(child.loc)
                 }
             }
         }
 
-        // ES2018: 检查是否有BindingRestElement 或 BindingRestProperty（...rest）
+        // ES2018: 检查是否有BindingRestElement �?BindingRestProperty�?..rest�?
         const restElement = cst.children.find(ch =>
             ch.name === SlimeParser.prototype.BindingRestElement?.name ||
             ch.name === 'BindingRestElement' ||
@@ -3923,7 +3829,7 @@ export class SlimeCstToAst {
     // ==================== 解构相关转换方法 ====================
 
     /**
-     * AssignmentPattern CST 转 AST
+     * AssignmentPattern CST �?AST
      * AssignmentPattern -> ObjectAssignmentPattern | ArrayAssignmentPattern
      */
     createAssignmentPatternAst(cst: SubhutiCst): SlimeAssignmentPattern {
@@ -3942,21 +3848,21 @@ export class SlimeCstToAst {
     }
 
     /**
-     * ObjectAssignmentPattern CST 转 AST
+     * ObjectAssignmentPattern CST �?AST
      */
     createObjectAssignmentPatternAst(cst: SubhutiCst): SlimeObjectPattern {
         return this.createObjectBindingPatternAst(cst)
     }
 
     /**
-     * ArrayAssignmentPattern CST 转 AST
+     * ArrayAssignmentPattern CST �?AST
      */
     createArrayAssignmentPatternAst(cst: SubhutiCst): SlimeArrayPattern {
         return this.createArrayBindingPatternAst(cst)
     }
 
     /**
-     * BindingProperty CST 转 AST
+     * BindingProperty CST �?AST
      * BindingProperty -> SingleNameBinding | PropertyName : BindingElement
      */
     createBindingPropertyAst(cst: SubhutiCst): any {
@@ -3971,7 +3877,7 @@ export class SlimeCstToAst {
             return this.createSingleNameBindingAst(singleNameBinding)
         }
 
-        // 否则是 PropertyName : BindingElement
+        // 否则�?PropertyName : BindingElement
         const propertyName = children.find(ch =>
             ch.name === SlimeParser.prototype.PropertyName?.name ||
             ch.name === 'PropertyName'
@@ -3997,7 +3903,7 @@ export class SlimeCstToAst {
     }
 
     /**
-     * BindingElement CST 转 AST
+     * BindingElement CST �?AST
      * BindingElement -> SingleNameBinding | BindingPattern Initializer?
      */
     createBindingElementAst(cst: SubhutiCst): any {
@@ -4028,12 +3934,12 @@ export class SlimeCstToAst {
             return pattern
         }
 
-        // 直接是 BindingIdentifier
+        // 直接�?BindingIdentifier
         return this.createBindingIdentifierAst(firstChild)
     }
 
     /**
-     * SingleNameBinding CST 转 AST
+     * SingleNameBinding CST �?AST
      * SingleNameBinding -> BindingIdentifier Initializer?
      */
     createSingleNameBindingAst(cst: SubhutiCst): any {
@@ -4062,7 +3968,7 @@ export class SlimeCstToAst {
     }
 
     /**
-     * BindingPropertyList CST 转 AST
+     * BindingPropertyList CST �?AST
      */
     createBindingPropertyListAst(cst: SubhutiCst): any[] {
         const properties: any[] = []
@@ -4076,7 +3982,7 @@ export class SlimeCstToAst {
     }
 
     /**
-     * BindingElementList CST 转 AST
+     * BindingElementList CST �?AST
      */
     createBindingElementListAst(cst: SubhutiCst): any[] {
         const elements: any[] = []
@@ -4104,7 +4010,7 @@ export class SlimeCstToAst {
     }
 
     /**
-     * BindingElisionElement CST 转 AST
+     * BindingElisionElement CST �?AST
      */
     createBindingElisionElementAst(cst: SubhutiCst): any {
         const bindingElement = cst.children?.find(ch =>
@@ -4118,7 +4024,7 @@ export class SlimeCstToAst {
     }
 
     /**
-     * AssignmentPropertyList CST 转 AST
+     * AssignmentPropertyList CST �?AST
      */
     createAssignmentPropertyListAst(cst: SubhutiCst): any[] {
         const properties: any[] = []
@@ -4132,49 +4038,49 @@ export class SlimeCstToAst {
     }
 
     /**
-     * AssignmentProperty CST 转 AST
+     * AssignmentProperty CST �?AST
      */
     createAssignmentPropertyAst(cst: SubhutiCst): any {
         return this.createBindingPropertyAst(cst)
     }
 
     /**
-     * AssignmentElementList CST 转 AST
+     * AssignmentElementList CST �?AST
      */
     createAssignmentElementListAst(cst: SubhutiCst): any[] {
         return this.createBindingElementListAst(cst)
     }
 
     /**
-     * AssignmentElement CST 转 AST
+     * AssignmentElement CST �?AST
      */
     createAssignmentElementAst(cst: SubhutiCst): any {
         return this.createBindingElementAst(cst)
     }
 
     /**
-     * AssignmentElisionElement CST 转 AST
+     * AssignmentElisionElement CST �?AST
      */
     createAssignmentElisionElementAst(cst: SubhutiCst): any {
         return this.createBindingElisionElementAst(cst)
     }
 
     /**
-     * AssignmentRestElement CST 转 AST
+     * AssignmentRestElement CST �?AST
      */
     createAssignmentRestElementAst(cst: SubhutiCst): any {
         return this.createBindingRestElementAst(cst)
     }
 
     /**
-     * AssignmentRestProperty CST 转 AST
+     * AssignmentRestProperty CST �?AST
      */
     createAssignmentRestPropertyAst(cst: SubhutiCst): any {
         return this.createBindingRestPropertyAst(cst)
     }
 
     /**
-     * BindingRestProperty CST 转 AST
+     * BindingRestProperty CST �?AST
      */
     createBindingRestPropertyAst(cst: SubhutiCst): SlimeRestElement {
         const argument = cst.children?.find(ch =>
@@ -4241,7 +4147,7 @@ export class SlimeCstToAst {
                 continue
             }
 
-            // BindingIdentifier（命名函数表达式）
+            // BindingIdentifier（命名函数表达式�?
             if (name === SlimeParser.prototype.BindingIdentifier?.name || name === 'BindingIdentifier') {
                 functionId = this.createBindingIdentifierAst(child)
                 continue
@@ -4277,7 +4183,7 @@ export class SlimeCstToAst {
      * 处理 FormalParameters CST 节点
      */
     createFormalParametersAst(cst: SubhutiCst): SlimePattern[] {
-        // FormalParameters 可能包含 FormalParameterList 或为空
+        // FormalParameters 可能包含 FormalParameterList 或为�?
         if (!cst.children || cst.children.length === 0) {
             return []
         }
@@ -4316,7 +4222,7 @@ export class SlimeCstToAst {
                 continue
             }
 
-            // 跳过逗号和括号
+            // 跳过逗号和括�?
             if (child.value === ',' || child.value === '(' || child.value === ')') {
                 continue
             }
@@ -4328,18 +4234,18 @@ export class SlimeCstToAst {
 
     /**
      * 创建 BlockStatement AST
-     * 处理两种情况：
-     * 1. 直接是 StatementList（旧的实现）
-     * 2. 是 BlockStatement，需要提取内部的 Block -> StatementList
+     * 处理两种情况�?
+     * 1. 直接�?StatementList（旧的实现）
+     * 2. �?BlockStatement，需要提取内部的 Block -> StatementList
      */
     createBlockStatementAst(cst: SubhutiCst): SlimeBlockStatement {
         let statements: Array<SlimeStatement>
 
-        // 如果是 StatementList，直接转换
+        // 如果�?StatementList，直接转�?
         if (cst.name === SlimeParser.prototype.StatementList?.name) {
             statements = this.createStatementListAst(cst)
         }
-        // 如果是 BlockStatement，需要提取 Block -> StatementList
+        // 如果�?BlockStatement，需要提�?Block -> StatementList
         else if (cst.name === SlimeParser.prototype.BlockStatement?.name) {
             // BlockStatement -> Block -> StatementList
             const blockCst = cst.children?.[0]
@@ -4372,7 +4278,7 @@ export class SlimeCstToAst {
     createReturnStatementAst(cst: SubhutiCst): SlimeReturnStatement {
         const astName = checkCstName(cst, SlimeParser.prototype.ReturnStatement?.name);
 
-        // return 语句可能有或没有表达式
+        // return 语句可能有或没有表达�?
         // children[0] = ReturnTok
         // children[1] = Expression? | Semicolon | SemicolonASI
         let argument: any = null
@@ -4483,7 +4389,7 @@ export class SlimeCstToAst {
                 continue
             }
 
-            // Legacy: 直接是 Statement
+            // Legacy: 直接�?Statement
             if (name === SlimeParser.prototype.Statement?.name || name === 'Statement') {
                 const stmts = this.createStatementAst(child)
                 const body = Array.isArray(stmts) ? stmts[0] : stmts
@@ -4531,7 +4437,7 @@ export class SlimeCstToAst {
      *   for ( LexicalDeclaration Expression_opt ; Expression_opt ) Statement
      *   for ( Expression_opt ; Expression_opt ; Expression_opt ) Statement
      *
-     * 注意：LexicalDeclaration 内部已经包含分号（SemicolonASI）
+     * 注意：LexicalDeclaration 内部已经包含分号（SemicolonASI�?
      */
     createForStatementAst(cst: SubhutiCst): any {
         checkCstName(cst, SlimeParser.prototype.ForStatement?.name);
@@ -4547,7 +4453,7 @@ export class SlimeCstToAst {
 
         const children = cst.children || []
 
-        // 收集所有表达式（可能是 test 或 update）
+        // 收集所有表达式（可能是 test �?update�?
         const expressions: any[] = []
         let hasLexicalDeclaration = false
 
@@ -4585,7 +4491,7 @@ export class SlimeCstToAst {
             }
 
             // LexicalDeclaration (for let/const) - init
-            // 注意：LexicalDeclaration 内部包含了分号
+            // 注意：LexicalDeclaration 内部包含了分�?
             if (name === SlimeParser.prototype.LexicalDeclaration?.name || name === 'LexicalDeclaration') {
                 init = this.createLexicalDeclarationAst(child)
                 hasLexicalDeclaration = true
@@ -4612,19 +4518,19 @@ export class SlimeCstToAst {
             }
         }
 
-        // 根据收集的表达式和是否有 LexicalDeclaration 来分配
+        // 根据收集的表达式和是否有 LexicalDeclaration 来分�?
         if (hasLexicalDeclaration) {
-            // for (let i = 0; test; update) - LexicalDeclaration 已经是 init
-            // 后面两个表达式分别是 test 和 update
+            // for (let i = 0; test; update) - LexicalDeclaration 已经�?init
+            // 后面两个表达式分别是 test �?update
             if (expressions.length >= 1) test = expressions[0]
             if (expressions.length >= 2) update = expressions[1]
         } else if (init) {
-            // for (var i = 0; test; update) - init 已设置
-            // 后面两个表达式分别是 test 和 update
+            // for (var i = 0; test; update) - init 已设�?
+            // 后面两个表达式分别是 test �?update
             if (expressions.length >= 1) test = expressions[0]
             if (expressions.length >= 2) update = expressions[1]
         } else {
-            // for (init; test; update) - 三个表达式
+            // for (init; test; update) - 三个表达�?
             if (expressions.length >= 1) init = expressions[0]
             if (expressions.length >= 2) test = expressions[1]
             if (expressions.length >= 3) update = expressions[2]
@@ -4638,7 +4544,7 @@ export class SlimeCstToAst {
     }
 
     /**
-     * 从 VariableDeclarationList 创建 VariableDeclaration AST
+     * �?VariableDeclarationList 创建 VariableDeclaration AST
      */
     createVariableDeclarationFromList(cst: SubhutiCst, kind: string): SlimeVariableDeclaration {
         const children = cst.children || []
@@ -4671,20 +4577,20 @@ export class SlimeCstToAst {
     createForInOfStatementAst(cst: SubhutiCst): any {
         checkCstName(cst, SlimeParser.prototype.ForInOfStatement?.name);
 
-        // ForInOfStatement 结构（多种形式）：
-        // 普通 for-in/of: [ForTok, LParen, ForDeclaration, InTok/OfTok, Expression, RParen, Statement]
+        // ForInOfStatement 结构（多种形式）�?
+        // 普�?for-in/of: [ForTok, LParen, ForDeclaration, InTok/OfTok, Expression, RParen, Statement]
         // for await: [ForTok, AwaitTok, LParen, ForDeclaration, OfTok, AssignmentExpression, RParen, Statement]
 
         // 检查是否是 for await
         const hasAwait = cst.children.some(ch => ch.name === 'Await')
 
-        // 动态查找各个部分
+        // 动态查找各个部�?
         let left: any = null
         let right: any = null
         let body: any = null
         let isForOf = false
 
-        // 查找 ForDeclaration 或 LeftHandSideExpression
+        // 查找 ForDeclaration �?LeftHandSideExpression
         const forDeclarationCst = cst.children.find(ch =>
             ch.name === SlimeParser.prototype.ForDeclaration?.name ||
             ch.name === 'ForDeclaration'
@@ -4709,7 +4615,7 @@ export class SlimeCstToAst {
         )
 
         if (forDeclarationCst) {
-            // ForDeclaration 内部是 LetOrConst + ForBinding
+            // ForDeclaration 内部�?LetOrConst + ForBinding
             const letOrConstCst = forDeclarationCst.children[0]
             const forBindingCst = forDeclarationCst.children[1]
 
@@ -4802,7 +4708,7 @@ export class SlimeCstToAst {
         )
         isForOf = inOrOfCst?.value === 'of' || inOrOfCst?.name === 'OfTok'
 
-        // 查找 right expression (在 in/of 之后)
+        // 查找 right expression (�?in/of 之后)
         const inOrOfIndex = cst.children.indexOf(inOrOfCst)
         if (inOrOfIndex !== -1 && inOrOfIndex + 1 < cst.children.length) {
             const rightCst = cst.children[inOrOfIndex + 1]
@@ -4831,7 +4737,7 @@ export class SlimeCstToAst {
             loc: cst.loc
         }
 
-        // for await 需要设置 await 属性
+        // for await 需要设�?await 属�?
         if (hasAwait) {
             result.await = true
         }
@@ -4865,7 +4771,7 @@ export class SlimeCstToAst {
         const statement = cst.children.find(ch => ch.name === SlimeParser.prototype.Statement?.name)
 
         const test = expression ? this.createExpressionAst(expression) : null
-        // createStatementAst返回数组，取第一个元素
+        // createStatementAst返回数组，取第一个元�?
         const bodyArray = statement ? this.createStatementAst(statement) : []
         const body = bodyArray.length > 0 ? bodyArray[0] : null
 
@@ -4936,7 +4842,7 @@ export class SlimeCstToAst {
             }
         }
 
-        // 提取 discriminant（判断表达式）
+        // 提取 discriminant（判断表达式�?
         const discriminantCst = cst.children?.find(ch => ch.name === SlimeParser.prototype.Expression?.name)
         const discriminant = discriminantCst ? this.createExpressionAst(discriminantCst) : null
 
@@ -4944,7 +4850,7 @@ export class SlimeCstToAst {
         const caseBlockCst = cst.children?.find(ch => ch.name === SlimeParser.prototype.CaseBlock?.name)
         const cases = caseBlockCst ? this.extractCasesFromCaseBlock(caseBlockCst) : []
 
-        // 从 CaseBlock 提取 brace tokens
+        // �?CaseBlock 提取 brace tokens
         if (caseBlockCst && caseBlockCst.children) {
             const lBraceCst = caseBlockCst.children.find(ch => ch.name === 'LBrace' || ch.value === '{')
             const rBraceCst = caseBlockCst.children.find(ch => ch.name === 'RBrace' || ch.value === '}')
@@ -4961,7 +4867,7 @@ export class SlimeCstToAst {
     // ==================== 语句相关转换方法 ====================
 
     /**
-     * BreakableStatement CST 转 AST（透传）
+     * BreakableStatement CST �?AST（透传�?
      * BreakableStatement -> IterationStatement | SwitchStatement
      */
     createBreakableStatementAst(cst: SubhutiCst): any {
@@ -4973,7 +4879,7 @@ export class SlimeCstToAst {
     }
 
     /**
-     * IterationStatement CST 转 AST（透传）
+     * IterationStatement CST �?AST（透传�?
      * IterationStatement -> DoWhileStatement | WhileStatement | ForStatement | ForInOfStatement
      */
     createIterationStatementAst(cst: SubhutiCst): any {
@@ -4985,7 +4891,7 @@ export class SlimeCstToAst {
     }
 
     /**
-     * CaseBlock CST 转 AST
+     * CaseBlock CST �?AST
      * CaseBlock -> { CaseClauses? DefaultClause? CaseClauses? }
      */
     createCaseBlockAst(cst: SubhutiCst): any[] {
@@ -4993,7 +4899,7 @@ export class SlimeCstToAst {
     }
 
     /**
-     * CaseClauses CST 转 AST
+     * CaseClauses CST �?AST
      * CaseClauses -> CaseClause+
      */
     createCaseClausesAst(cst: SubhutiCst): any[] {
@@ -5007,7 +4913,7 @@ export class SlimeCstToAst {
     }
 
     /**
-     * CaseClause CST 转 AST
+     * CaseClause CST �?AST
      * CaseClause -> case Expression : StatementList?
      */
     createCaseClauseAst(cst: SubhutiCst): any {
@@ -5015,7 +4921,7 @@ export class SlimeCstToAst {
     }
 
     /**
-     * DefaultClause CST 转 AST
+     * DefaultClause CST �?AST
      * DefaultClause -> default : StatementList?
      */
     createDefaultClauseAst(cst: SubhutiCst): any {
@@ -5023,7 +4929,7 @@ export class SlimeCstToAst {
     }
 
     /**
-     * LabelledItem CST 转 AST（透传）
+     * LabelledItem CST �?AST（透传�?
      * LabelledItem -> Statement | FunctionDeclaration
      */
     createLabelledItemAst(cst: SubhutiCst): any {
@@ -5035,7 +4941,7 @@ export class SlimeCstToAst {
     }
 
     /**
-     * Catch CST 转 CatchClause AST
+     * Catch CST �?CatchClause AST
      * Catch -> catch ( CatchParameter ) Block | catch Block
      */
     createCatchAst(cst: SubhutiCst): any {
@@ -5067,16 +4973,16 @@ export class SlimeCstToAst {
     }
 
     /**
-     * SemicolonASI CST 转 AST
+     * SemicolonASI CST �?AST
      * 处理自动分号插入
      */
     createSemicolonASIAst(cst: SubhutiCst): any {
-        // ASI 不产生实际的 AST 节点，返回 null
+        // ASI 不产生实际的 AST 节点，返�?null
         return null
     }
 
     /**
-     * ForDeclaration CST 转 AST
+     * ForDeclaration CST �?AST
      * ForDeclaration -> LetOrConst ForBinding
      */
     createForDeclarationAst(cst: SubhutiCst): any {
@@ -5104,7 +5010,7 @@ export class SlimeCstToAst {
     }
 
     /**
-     * ForBinding CST 转 AST
+     * ForBinding CST �?AST
      * ForBinding -> BindingIdentifier | BindingPattern
      */
     createForBindingAst(cst: SubhutiCst): any {
@@ -5120,7 +5026,7 @@ export class SlimeCstToAst {
     }
 
     /**
-     * LetOrConst CST 转 AST
+     * LetOrConst CST �?AST
      * LetOrConst -> let | const
      */
     createLetOrConstAst(cst: SubhutiCst): string {
@@ -5129,7 +5035,7 @@ export class SlimeCstToAst {
     }
 
     /**
-     * 从 CaseBlock 提取所有 case/default 子句
+     * �?CaseBlock 提取所�?case/default 子句
      * CaseBlock: { CaseClauses? DefaultClause? CaseClauses? }
      */
     private extractCasesFromCaseBlock(caseBlockCst: SubhutiCst): any[] {
@@ -5137,7 +5043,7 @@ export class SlimeCstToAst {
 
         if (!caseBlockCst.children) return cases
 
-        // CaseBlock 的 children:
+        // CaseBlock �?children:
         // [0]: LBrace
         // [1-n]: CaseClauses / DefaultClause（可能有多个，可能没有）
         // [last]: RBrace
@@ -5160,10 +5066,10 @@ export class SlimeCstToAst {
     }
 
     /**
-     * [AST 类型映射] CaseClause/DefaultClause CST → SwitchCase AST
+     * [AST 类型映射] CaseClause/DefaultClause CST �?SwitchCase AST
      *
-     * 存在必要性：CST 中 case 和 default 是分开的规则（CaseClause/DefaultClause），
-     * 但 ESTree AST 统一使用 SwitchCase 类型，通过 test 是否为 null 区分。
+     * 存在必要性：CST �?case �?default 是分开的规则（CaseClause/DefaultClause），
+     * �?ESTree AST 统一使用 SwitchCase 类型，通过 test 是否�?null 区分�?
      *
      * CaseClause: case Expression : StatementList?
      * DefaultClause: default : StatementList?
@@ -5177,7 +5083,7 @@ export class SlimeCstToAst {
         let colonToken: any = undefined
 
         if (cst.name === SlimeParser.prototype.CaseClause?.name) {
-            // CaseClause 结构：
+            // CaseClause 结构�?
             // children[0]: CaseTok
             // children[1]: Expression - test
             // children[2]: Colon
@@ -5197,7 +5103,7 @@ export class SlimeCstToAst {
             const stmtListCst = cst.children?.find(ch => ch.name === SlimeParser.prototype.StatementList?.name)
             consequent = stmtListCst ? this.createStatementListAst(stmtListCst) : []
         } else if (cst.name === SlimeParser.prototype.DefaultClause?.name) {
-            // DefaultClause 结构：
+            // DefaultClause 结构�?
             // children[0]: DefaultTok
             // children[1]: Colon
             // children[2]: StatementList（可选）
@@ -5414,10 +5320,10 @@ export class SlimeCstToAst {
 
                 // LabelledItem -> Statement | FunctionDeclaration
                 if (name === SlimeParser.prototype.LabelledItem?.name || name === 'LabelledItem') {
-                    // LabelledItem 内部是 Statement 或 FunctionDeclaration
+                    // LabelledItem 内部�?Statement �?FunctionDeclaration
                     const itemChild = child.children?.[0]
                     if (itemChild) {
-                        // 使用 createStatementDeclarationAst 而不是 createStatementAst
+                        // 使用 createStatementDeclarationAst 而不�?createStatementAst
                         // 因为 LabelledItem 可能直接包含 FunctionDeclaration
                         body = this.createStatementDeclarationAst(itemChild)
                     }
@@ -5473,7 +5379,7 @@ export class SlimeCstToAst {
             } else if (child.name === SlimeParser.prototype.Expression?.name || child.name === 'Expression') {
                 object = this.createExpressionAst(child)
             } else if (child.name === SlimeParser.prototype.Statement?.name || child.name === 'Statement') {
-                // createStatementAst 返回数组，取第一个元素
+                // createStatementAst 返回数组，取第一个元�?
                 const bodyArray = this.createStatementAst(child)
                 body = Array.isArray(bodyArray) && bodyArray.length > 0 ? bodyArray[0] : bodyArray
             }
@@ -5511,19 +5417,19 @@ export class SlimeCstToAst {
     }
 
     /**
-     * 创建空语句 AST
+     * 创建空语�?AST
      */
     createEmptyStatementAst(cst: SubhutiCst): any {
-        // 兼容 EmptyStatement 和旧版 NotEmptySemicolon
+        // 兼容 EmptyStatement 和旧�?NotEmptySemicolon
         // checkCstName(cst, Es2025Parser.prototype.EmptyStatement?.name);
 
         let semicolonToken: any = undefined
 
-        // EmptyStatement 可能直接是 Semicolon token
+        // EmptyStatement 可能直接�?Semicolon token
         if (cst.value === ';' || cst.name === SlimeTokenConsumer.prototype.Semicolon?.name) {
             semicolonToken = SlimeTokenCreate.createSemicolonToken(cst.loc)
         } else {
-            // 找 semicolon token
+            // �?semicolon token
             const semicolonCst = cst.children?.find(ch => ch.name === 'Semicolon' || ch.value === ';')
             if (semicolonCst) {
                 semicolonToken = SlimeTokenCreate.createSemicolonToken(semicolonCst.loc)
@@ -5665,7 +5571,7 @@ export class SlimeCstToAst {
                 continue
             }
 
-            // FormalParameterList：包含 FormalParameter (多个以逗号分隔)
+            // FormalParameterList：包�?FormalParameter (多个以逗号分隔)
             if (name === SlimeParser.prototype.FormalParameterList?.name || name === 'FormalParameterList') {
                 // 如果之前有参数没处理，先推入
                 if (hasParam) {
@@ -5687,7 +5593,7 @@ export class SlimeCstToAst {
                 continue
             }
 
-            // Direct FormalParameter（ES2025 结构）
+            // Direct FormalParameter（ES2025 结构�?
             if (name === SlimeParser.prototype.FormalParameter?.name || name === 'FormalParameter') {
                 if (hasParam) {
                     params.push(SlimeAstUtil.createFunctionParam(currentParam!, undefined))
@@ -5717,7 +5623,7 @@ export class SlimeCstToAst {
             }
         }
 
-        // 处理最后一个参数（没有尾随逗号）
+        // 处理最后一个参数（没有尾随逗号�?
         if (hasParam) {
             params.push(SlimeAstUtil.createFunctionParam(currentParam!, undefined))
         }
@@ -5726,7 +5632,7 @@ export class SlimeCstToAst {
     }
 
     /**
-     * 从 ES2025 FormalParameterList 创建参数 AST（包装类型）
+     * �?ES2025 FormalParameterList 创建参数 AST（包装类型）
      * FormalParameterList: FormalParameter (, FormalParameter)*
      */
     createFormalParameterListFromEs2025Wrapped(cst: SubhutiCst): SlimeFunctionParam[] {
@@ -5762,7 +5668,7 @@ export class SlimeCstToAst {
             }
         }
 
-        // 处理最后一个参数
+        // 处理最后一个参�?
         if (hasParam) {
             params.push(SlimeAstUtil.createFunctionParam(currentParam!, undefined))
         }
@@ -5772,7 +5678,7 @@ export class SlimeCstToAst {
 
     createFunctionRestParameterAstAlt(cst: SubhutiCst): SlimeRestElement {
         // FunctionRestParameter: ... BindingIdentifier | ... BindingPattern
-        // 或者 FunctionRestParameter -> BindingRestElement
+        // 或�?FunctionRestParameter -> BindingRestElement
         const children = cst.children || []
         let argument: any = null
 
@@ -5783,7 +5689,7 @@ export class SlimeCstToAst {
             if (child.name === SlimeParser.prototype.BindingIdentifier?.name || child.name === 'BindingIdentifier') {
                 argument = this.createBindingIdentifierAst(child)
             } else if (child.name === SlimeParser.prototype.BindingRestElement?.name || child.name === 'BindingRestElement') {
-                // BindingRestElement 已经包含了 RestElement 的完整结构，直接返回
+                // BindingRestElement 已经包含�?RestElement 的完整结构，直接返回
                 return this.createBindingRestElementAst(child)
             } else if (child.name === SlimeParser.prototype.BindingPattern?.name || child.name === 'BindingPattern') {
                 argument = this.createBindingPatternAst(child)
@@ -5816,8 +5722,8 @@ export class SlimeCstToAst {
         }
 
         // 多个children：MemberExpression + Arguments + 可选的链式调用
-        // children[0]: MemberExpression 或 CoverCallExpressionAndAsyncArrowHead
-        // children[1]: Arguments (第一次调用)
+        // children[0]: MemberExpression �?CoverCallExpressionAndAsyncArrowHead
+        // children[1]: Arguments (第一次调�?
         // children[2+]: Dot/Identifier/Arguments（链式调用）
 
         let current: SlimeExpression
@@ -5826,7 +5732,7 @@ export class SlimeCstToAst {
         // 处理第一个子节点
         if (firstChild.name === 'CoverCallExpressionAndAsyncArrowHead') {
             // CoverCallExpressionAndAsyncArrowHead 结构: [MemberExpression, Arguments]
-            // 递归处理它
+            // 递归处理�?
             current = this.createCallExpressionAst(firstChild)
         } else if (firstChild.name === SlimeParser.prototype.MemberExpression?.name || firstChild.name === 'MemberExpression') {
             current = this.createMemberExpressionAst(firstChild)
@@ -5835,7 +5741,7 @@ export class SlimeCstToAst {
         } else if (firstChild.name === SlimeParser.prototype.ImportCall?.name || firstChild.name === 'ImportCall') {
             current = this.createImportCallAst(firstChild)
         } else {
-            // 尝试作为表达式处理
+            // 尝试作为表达式处�?
             current = this.createExpressionAst(firstChild)
         }
 
@@ -5852,13 +5758,13 @@ export class SlimeCstToAst {
                 // DotMemberExpression包含Dot和IdentifierName (旧版兼容)
                 const dotChild = child.children[0]  // Dot token
                 const identifierNameCst = child.children[1]  // IdentifierName
-                const tokenCst = identifierNameCst.children[0]  // 实际的token（Identifier或关键字）
+                const tokenCst = identifierNameCst.children[0]  // 实际的token（Identifier或关键字�?
                 const property = SlimeAstUtil.createIdentifier(tokenCst.value, tokenCst.loc)
                 const dotOp = SlimeTokenCreate.createDotToken(dotChild.loc)
                 current = SlimeAstUtil.createMemberExpression(current, dotOp, property)
 
             } else if (child.name === 'Dot') {
-                // Es2025Parser产生的是直接的 Dot token + IdentifierName
+                // Es2025Parser产生的是直接�?Dot token + IdentifierName
                 const dotOp = SlimeTokenCreate.createDotToken(child.loc)
 
                 // 下一个child应该是IdentifierName或PrivateIdentifier
@@ -5889,7 +5795,7 @@ export class SlimeCstToAst {
                 } as any
 
             } else if (child.name === 'LBracket') {
-                // Es2025Parser产生的是直接的 LBracket + Expression + RBracket
+                // Es2025Parser产生的是直接�?LBracket + Expression + RBracket
                 const expressionChild = cst.children[i + 1]
                 if (expressionChild && expressionChild.name !== 'RBracket') {
                     const propertyExpression = this.createExpressionAst(expressionChild)
@@ -5959,7 +5865,7 @@ export class SlimeCstToAst {
             }
         }
 
-        // 创建 import 标识符作为 callee
+        // 创建 import 标识符作�?callee
         const importIdentifier: SlimeIdentifier = SlimeAstUtil.createIdentifier('import', cst.children[0].loc)
 
         return SlimeAstUtil.createCallExpression(importIdentifier, args) as SlimeExpression
@@ -6075,7 +5981,7 @@ export class SlimeCstToAst {
         const astName = checkCstName(cst, SlimeParser.prototype.ArgumentList?.name);
         const arguments_: Array<SlimeCallArgument> = []
 
-        // 遍历children，处理 Ellipsis + AssignmentExpression + Comma 组合
+        // 遍历children，处�?Ellipsis + AssignmentExpression + Comma 组合
         // 每个参数与其后面的逗号配对
         let currentArg: SlimeExpression | SlimeSpreadElement | null = null
         let hasArg = false
@@ -6085,7 +5991,7 @@ export class SlimeCstToAst {
             const child = cst.children[i]
 
             if (child.name === 'Ellipsis' || child.name === 'Ellipsis') {
-                // 记录 ellipsis，下一个表达式是 spread
+                // 记录 ellipsis，下一个表达式�?spread
                 pendingEllipsis = child
             } else if (child.name === SlimeParser.prototype.AssignmentExpression?.name) {
                 // 如果之前有参数但没有逗号，先推入
@@ -6104,7 +6010,7 @@ export class SlimeCstToAst {
                 }
                 hasArg = true
             } else if (child.name === SlimeParser.prototype.SpreadElement?.name) {
-                // 处理 spread 参数：...args（旧结构兼容）
+                // 处理 spread 参数�?..args（旧结构兼容�?
                 if (hasArg) {
                     arguments_.push(SlimeAstUtil.createCallArgument(currentArg!, undefined))
                 }
@@ -6121,7 +6027,7 @@ export class SlimeCstToAst {
             }
         }
 
-        // 处理最后一个参数（如果没有尾随逗号）
+        // 处理最后一个参数（如果没有尾随逗号�?
         if (hasArg) {
             arguments_.push(SlimeAstUtil.createCallArgument(currentArg!, undefined))
         }
@@ -6140,7 +6046,7 @@ export class SlimeCstToAst {
             return this.createNewExpressionAst(cst)
         } else if (cst.name === 'New') {
             // Es2025Parser: new MemberExpression Arguments 是直接的 token 序列
-            // 这种情况应该在 createMemberExpressionAst 中处理
+            // 这种情况应该�?createMemberExpressionAst 中处�?
             throw new Error('createMemberExpressionFirstOr: NewTok should be handled in createMemberExpressionAst')
         } else {
             throw new Error('createMemberExpressionFirstOr: 不支持的类型: ' + cst.name)
@@ -6148,7 +6054,7 @@ export class SlimeCstToAst {
     }
 
     createNewExpressionAst(cst: SubhutiCst): any {
-        // 支持两种类型：NewExpression 和 NewMemberExpressionArguments
+        // 支持两种类型：NewExpression �?NewMemberExpressionArguments
         const isNewMemberExpr = cst.name === 'NewMemberExpressionArguments'
         const isNewExpr = cst.name === SlimeParser.prototype.NewExpression?.name
 
@@ -6190,12 +6096,12 @@ export class SlimeCstToAst {
             )
         } else {
             // NewExpression 有两种形式：
-            // 1. MemberExpression - 直接委托给 MemberExpression
-            // 2. new NewExpression - 创建 NewExpression（无参数）
+            // 1. MemberExpression - 直接委托�?MemberExpression
+            // 2. new NewExpression - 创建 NewExpression（无参数�?
 
             const firstChild = cst.children[0]
             if (firstChild.name === 'New' || firstChild.value === 'new') {
-                // 这是 `new NewExpression` 形式，创建无参数的 NewExpression
+                // 这是 `new NewExpression` 形式，创建无参数�?NewExpression
                 const newToken = SlimeTokenCreate.createNewToken(firstChild.loc)
                 const innerNewExpr = cst.children[1]
                 const calleeExpression = this.createNewExpressionAst(innerNewExpr)
@@ -6223,7 +6129,7 @@ export class SlimeCstToAst {
         let startIdx = 1
 
         // Es2025Parser: 检查是否是 new MemberExpression Arguments 模式
-        // 第一个子节点是 NewTok
+        // 第一个子节点�?NewTok
         if (cst.children[0].name === 'New') {
             // new MemberExpression Arguments [后续成员访问]
             // children: [NewTok, MemberExpression, Arguments, Dot?, IdentifierName?, ...]
@@ -6259,13 +6165,13 @@ export class SlimeCstToAst {
                 loc: cst.loc
             } as any
 
-            // 从 Arguments 之后继续处理（如 .bar）
+            // �?Arguments 之后继续处理（如 .bar�?
             startIdx = 3
         } else {
             current = this.createMemberExpressionFirstOr(cst.children[0]) as SlimeExpression
         }
 
-        // 循环处理剩余的children（Dot+IdentifierName、LBracket+Expression+RBracket、Arguments、TemplateLiteral）
+        // 循环处理剩余的children（Dot+IdentifierName、LBracket+Expression+RBracket、Arguments、TemplateLiteral�?
         for (let i = startIdx; i < cst.children.length; i++) {
             const child = cst.children[i]
 
@@ -6291,7 +6197,7 @@ export class SlimeCstToAst {
                 current = SlimeAstUtil.createMemberExpression(current, dotToken, property)
 
             } else if (child.name === 'Dot') {
-                // Es2025Parser产生的是直接的 Dot token + IdentifierName
+                // Es2025Parser产生的是直接�?Dot token + IdentifierName
                 // .property - 成员访问
                 const dotToken = SlimeTokenCreate.createDotToken(child.loc)
 
@@ -6305,7 +6211,7 @@ export class SlimeCstToAst {
                         property = SlimeAstUtil.createIdentifier(tokenCst.value, tokenCst.loc)
                         i++ // 跳过已处理的IdentifierName
                     } else if (nextChild.name === 'PrivateIdentifier') {
-                        // 私有标识符 #prop
+                        // 私有标识�?#prop
                         property = SlimeAstUtil.createIdentifier(nextChild.value, nextChild.loc)
                         i++ // 跳过已处理的PrivateIdentifier
                     }
@@ -6327,7 +6233,7 @@ export class SlimeCstToAst {
                 } as any
 
             } else if (child.name === 'LBracket') {
-                // Es2025Parser产生的是直接的 LBracket + Expression + RBracket
+                // Es2025Parser产生的是直接�?LBracket + Expression + RBracket
                 // [expression] - computed property access
                 const expressionChild = cst.children[i + 1]
                 if (expressionChild) {
@@ -6363,7 +6269,7 @@ export class SlimeCstToAst {
                 continue
 
             } else {
-                throw new Error(`未知的MemberExpression子节点类型: ${child.name}`)
+                throw new Error(`未知的MemberExpression子节点类�? ${child.name}`)
             }
         }
 
@@ -6371,7 +6277,7 @@ export class SlimeCstToAst {
     }
 
     createVariableDeclaratorAst(cst: SubhutiCst): SlimeVariableDeclarator {
-        // 兼容 LexicalBinding 和 VariableDeclaration
+        // 兼容 LexicalBinding �?VariableDeclaration
         // const astName = checkCstName(cst, 'LexicalBinding');
 
         // children[0]可能是BindingIdentifier或BindingPattern（解构）
@@ -6414,11 +6320,11 @@ export class SlimeCstToAst {
         return variableDeclarator
     }
 
-    // ==================== 表达式相关转换方法 ====================
+    // ==================== 表达式相关转换方�?====================
 
     /**
-     * CoverParenthesizedExpressionAndArrowParameterList CST 转 AST
-     * 这是一个 cover grammar，根据上下文可能是括号表达式或箭头函数参数
+     * CoverParenthesizedExpressionAndArrowParameterList CST �?AST
+     * 这是一�?cover grammar，根据上下文可能是括号表达式或箭头函数参�?
      */
     createCoverParenthesizedExpressionAndArrowParameterListAst(cst: SubhutiCst): SlimeExpression {
         // 通常作为括号表达式处理，箭头函数参数有专门的处理路径
@@ -6426,11 +6332,11 @@ export class SlimeCstToAst {
     }
 
     /**
-     * ParenthesizedExpression CST 转 AST
+     * ParenthesizedExpression CST �?AST
      * ParenthesizedExpression -> ( Expression )
      */
     createParenthesizedExpressionAst(cst: SubhutiCst): SlimeExpression {
-        // 查找内部的 Expression
+        // 查找内部�?Expression
         for (const child of cst.children || []) {
             if (child.name === SlimeParser.prototype.Expression?.name ||
                 child.name === 'Expression' ||
@@ -6449,7 +6355,7 @@ export class SlimeCstToAst {
     }
 
     /**
-     * ComputedPropertyName CST 转 AST
+     * ComputedPropertyName CST �?AST
      * ComputedPropertyName -> [ AssignmentExpression ]
      */
     createComputedPropertyNameAst(cst: SubhutiCst): SlimeExpression {
@@ -6464,7 +6370,7 @@ export class SlimeCstToAst {
     }
 
     /**
-     * CoverInitializedName CST 转 AST
+     * CoverInitializedName CST �?AST
      * CoverInitializedName -> IdentifierReference Initializer
      */
     createCoverInitializedNameAst(cst: SubhutiCst): any {
@@ -6489,15 +6395,15 @@ export class SlimeCstToAst {
     }
 
     /**
-     * CoverCallExpressionAndAsyncArrowHead CST 转 AST
-     * 这是一个 cover grammar，通常作为 CallExpression 处理
+     * CoverCallExpressionAndAsyncArrowHead CST �?AST
+     * 这是一�?cover grammar，通常作为 CallExpression 处理
      */
     createCoverCallExpressionAndAsyncArrowHeadAst(cst: SubhutiCst): SlimeExpression {
         return this.createCallExpressionAst(cst)
     }
 
     /**
-     * CallMemberExpression CST 转 AST
+     * CallMemberExpression CST �?AST
      * CallMemberExpression -> MemberExpression Arguments
      */
     createCallMemberExpressionAst(cst: SubhutiCst): SlimeExpression {
@@ -6505,7 +6411,7 @@ export class SlimeCstToAst {
     }
 
     /**
-     * ShortCircuitExpression CST 转 AST（透传）
+     * ShortCircuitExpression CST �?AST（透传�?
      * ShortCircuitExpression -> LogicalORExpression | CoalesceExpression
      */
     createShortCircuitExpressionAst(cst: SubhutiCst): SlimeExpression {
@@ -6517,14 +6423,14 @@ export class SlimeCstToAst {
     }
 
     /**
-     * ShortCircuitExpressionTail CST 转 AST（辅助方法）
+     * ShortCircuitExpressionTail CST �?AST（辅助方法）
      */
     createShortCircuitExpressionTailAst(cst: SubhutiCst): SlimeExpression {
         return this.createShortCircuitExpressionAst(cst)
     }
 
     /**
-     * CoalesceExpressionHead CST 转 AST
+     * CoalesceExpressionHead CST �?AST
      * CoalesceExpressionHead -> CoalesceExpression | BitwiseORExpression
      */
     createCoalesceExpressionHeadAst(cst: SubhutiCst): SlimeExpression {
@@ -6536,7 +6442,7 @@ export class SlimeCstToAst {
     }
 
     /**
-     * MultiplicativeOperator CST 转 AST
+     * MultiplicativeOperator CST �?AST
      * MultiplicativeOperator -> * | / | %
      */
     createMultiplicativeOperatorAst(cst: SubhutiCst): string {
@@ -6545,7 +6451,7 @@ export class SlimeCstToAst {
     }
 
     /**
-     * AssignmentOperator CST 转 AST
+     * AssignmentOperator CST �?AST
      * AssignmentOperator -> *= | /= | %= | += | -= | <<= | >>= | >>>= | &= | ^= | |= | **= | &&= | ||= | ??=
      */
     createAssignmentOperatorAst(cst: SubhutiCst): string {
@@ -6554,7 +6460,7 @@ export class SlimeCstToAst {
     }
 
     /**
-     * ExpressionBody CST 转 AST
+     * ExpressionBody CST �?AST
      * ExpressionBody -> AssignmentExpression
      */
     createExpressionBodyAst(cst: SubhutiCst): SlimeExpression {
@@ -6579,7 +6485,7 @@ export class SlimeCstToAst {
         const astName = cst.name
         let left
         if (astName === SlimeParser.prototype.Expression?.name) {
-            // Expression 可能是逗号表达式 (SequenceExpression)
+            // Expression 可能是逗号表达�?(SequenceExpression)
             // 结构: Expression -> AssignmentExpression | Expression, AssignmentExpression
             // 收集所有表达式
             const expressions: SlimeExpression[] = []
@@ -6661,20 +6567,20 @@ export class SlimeCstToAst {
             // ShortCircuitExpression: LogicalANDExpression ShortCircuitExpressionTail?
             left = this.createExpressionAst(cst.children[0])
 
-            // 检查是否有 ShortCircuitExpressionTail (|| 运算符)
+            // 检查是否有 ShortCircuitExpressionTail (|| 运算�?
             if (cst.children.length > 1 && cst.children[1]) {
                 const tailCst = cst.children[1]
                 if (tailCst.name === 'ShortCircuitExpressionTail' ||
                     tailCst.name === 'LogicalORExpressionTail') {
-                    // 处理尾部：可能是 LogicalORExpressionTail 或 CoalesceExpressionTail
+                    // 处理尾部：可能是 LogicalORExpressionTail �?CoalesceExpressionTail
                     left = this.createShortCircuitExpressionTailAst(left, tailCst)
                 }
             }
         } else if (astName === 'CoalesceExpression') {
-            // ES2020: CoalesceExpression (处理 ?? 运算符)
+            // ES2020: CoalesceExpression (处理 ?? 运算�?
             left = this.createCoalesceExpressionAst(cst)
         } else if (astName === 'ExponentiationExpression') {
-            // ES2016: ExponentiationExpression (处理 ** 运算符)
+            // ES2016: ExponentiationExpression (处理 ** 运算�?
             left = this.createExponentiationExpressionAst(cst)
         } else if (astName === 'CoverCallExpressionAndAsyncArrowHead') {
             // ES2017+: Cover grammar for CallExpression and async arrow function
@@ -6690,7 +6596,7 @@ export class SlimeCstToAst {
             // Async 箭头函数
             left = this.createAsyncArrowFunctionAst(cst)
         } else if (astName === SlimeParser.prototype.ImportCall?.name || astName === 'ImportCall') {
-            // ES2020: 动态 import()
+            // ES2020: 动�?import()
             left = this.createImportCallAst(cst)
         } else if (astName === SlimeParser.prototype.PrivateIdentifier?.name || astName === 'PrivateIdentifier') {
             // ES2022: PrivateIdentifier (e.g. #x in `#x in obj`)
@@ -6702,7 +6608,7 @@ export class SlimeCstToAst {
     }
 
     /**
-     * 创建 OptionalExpression AST（ES2020）
+     * 创建 OptionalExpression AST（ES2020�?
      * 处理可选链语法 ?.
      *
      * OptionalExpression:
@@ -6711,7 +6617,7 @@ export class SlimeCstToAst {
      *   OptionalExpression OptionalChain
      */
     createOptionalExpressionAst(cst: SubhutiCst): SlimeExpression {
-        // OptionalExpression 结构：
+        // OptionalExpression 结构�?
         // children[0] = MemberExpression | CallExpression
         // children[1...n] = OptionalChain
 
@@ -6719,10 +6625,10 @@ export class SlimeCstToAst {
             throw new Error('OptionalExpression: no children')
         }
 
-        // 首先处理基础表达式（MemberExpression 或 CallExpression）
+        // 首先处理基础表达式（MemberExpression �?CallExpression�?
         let result = this.createExpressionAst(cst.children[0])
 
-        // 处理 OptionalChain（可能有多个链式调用）
+        // 处理 OptionalChain（可能有多个链式调用�?
         for (let i = 1; i < cst.children.length; i++) {
             const chainCst = cst.children[i]
             if (chainCst.name === 'OptionalChain') {
@@ -6738,11 +6644,11 @@ export class SlimeCstToAst {
      * 处理 ?. 后的各种访问形式
      *
      * 注意：只有紧跟在 ?. 后面的操作是 optional: true
-     * 链式的后续操作（如 foo?.().bar() 中的 .bar()）是 optional: false
+     * 链式的后续操作（�?foo?.().bar() 中的 .bar()）是 optional: false
      */
     createOptionalChainAst(object: SlimeExpression, chainCst: SubhutiCst): SlimeExpression {
         let result = object
-        // 追踪是否刚遇到 ?. token，下一个操作是 optional
+        // 追踪是否刚遇�??. token，下一个操作是 optional
         let nextIsOptional = false
 
         for (const child of chainCst.children) {
@@ -6753,7 +6659,7 @@ export class SlimeCstToAst {
                 nextIsOptional = true
                 continue
             } else if (name === 'Arguments') {
-                // ()调用 - 可能是可选调用或普通调用
+                // ()调用 - 可能是可选调用或普通调�?
                 const args = this.createArgumentsAst(child)
                 result = {
                     type: SlimeNodeType.OptionalCallExpression,
@@ -6764,8 +6670,8 @@ export class SlimeCstToAst {
                 } as any
                 nextIsOptional = false
             } else if (name === 'LBracket' || child.value === '[') {
-                // [expr] 计算属性访问 - 可能是可选或普通
-                // 下一个子节点是表达式，跳过 ]
+                // [expr] 计算属性访�?- 可能是可选或普�?
+                // 下一个子节点是表达式，跳�?]
                 const exprIndex = chainCst.children.indexOf(child) + 1
                 if (exprIndex < chainCst.children.length) {
                     const property = this.createExpressionAst(chainCst.children[exprIndex])
@@ -6780,9 +6686,9 @@ export class SlimeCstToAst {
                     nextIsOptional = false
                 }
             } else if (name === 'IdentifierName') {
-                // .prop 属性访问 - 可能是可选或普通
+                // .prop 属性访�?- 可能是可选或普�?
                 let property: SlimeIdentifier
-                // IdentifierName 内部包含一个 Identifier 或关键字 token
+                // IdentifierName 内部包含一�?Identifier 或关键字 token
                 const tokenCst = child.children[0]
                 property = SlimeAstUtil.createIdentifier(tokenCst.value, tokenCst.loc)
                 result = {
@@ -6795,13 +6701,13 @@ export class SlimeCstToAst {
                 } as any
                 nextIsOptional = false
             } else if (name === 'Dot' || child.value === '.') {
-                // 普通 . token 不改变 optional 状态
+                // 普�?. token 不改�?optional 状�?
                 continue
             } else if (name === 'RBracket' || child.value === ']') {
                 // 跳过 ] token
                 continue
             } else if (name === 'PrivateIdentifier') {
-                // #prop - 私有属性访问
+                // #prop - 私有属性访�?
                 const property = this.createPrivateIdentifierAst(child)
                 result = {
                     type: SlimeNodeType.OptionalMemberExpression,
@@ -6813,7 +6719,7 @@ export class SlimeCstToAst {
                 } as any
                 nextIsOptional = false
             } else if (name === 'Expression') {
-                // 计算属性的表达式部分，已在 LBracket 处理中处理
+                // 计算属性的表达式部分，已在 LBracket 处理中处�?
                 continue
             }
         }
@@ -6822,7 +6728,7 @@ export class SlimeCstToAst {
     }
 
     /**
-     * 创建 CoalesceExpression AST（ES2020）
+     * 创建 CoalesceExpression AST（ES2020�?
      * 处理 ?? 空值合并运算符
      */
     createCoalesceExpressionAst(cst: SubhutiCst): SlimeExpression {
@@ -6831,7 +6737,7 @@ export class SlimeCstToAst {
             return this.createExpressionAst(cst.children[0])
         }
 
-        // 有多个子节点，构建左结合的逻辑表达式
+        // 有多个子节点，构建左结合的逻辑表达�?
         let left = this.createExpressionAst(cst.children[0])
         for (let i = 1; i < cst.children.length; i += 2) {
             const operator = cst.children[i]  // ?? token
@@ -6847,7 +6753,7 @@ export class SlimeCstToAst {
     }
 
     /**
-     * 创建 ExponentiationExpression AST（ES2016）
+     * 创建 ExponentiationExpression AST（ES2016�?
      * 处理 ** 幂运算符
      */
     createExponentiationExpressionAst(cst: SubhutiCst): SlimeExpression {
@@ -6871,7 +6777,7 @@ export class SlimeCstToAst {
     createLogicalORExpressionAst(cst: SubhutiCst): SlimeExpression {
         const astName = checkCstName(cst, SlimeParser.prototype.LogicalORExpression?.name);
         if (cst.children.length > 1) {
-            // 有运算符，创建 LogicalExpression
+            // 有运算符，创�?LogicalExpression
             // 支持多个运算符：a || b || c
             let left = this.createExpressionAst(cst.children[0])
 
@@ -6896,7 +6802,7 @@ export class SlimeCstToAst {
     createLogicalANDExpressionAst(cst: SubhutiCst): SlimeExpression {
         const astName = checkCstName(cst, SlimeParser.prototype.LogicalANDExpression?.name);
         if (cst.children.length > 1) {
-            // 有运算符，创建 LogicalExpression
+            // 有运算符，创�?LogicalExpression
             // 支持多个运算符：a && b && c
             let left = this.createExpressionAst(cst.children[0])
 
@@ -6921,7 +6827,7 @@ export class SlimeCstToAst {
     createBitwiseORExpressionAst(cst: SubhutiCst): SlimeExpression {
         const astName = checkCstName(cst, SlimeParser.prototype.BitwiseORExpression?.name);
         if (cst.children.length > 1) {
-            // 有运算符，创建 BinaryExpression（支持链式：a | b | c）
+            // 有运算符，创�?BinaryExpression（支持链式：a | b | c�?
             let left = this.createExpressionAst(cst.children[0])
 
             for (let i = 1; i < cst.children.length; i += 2) {
@@ -6945,7 +6851,7 @@ export class SlimeCstToAst {
     createBitwiseXORExpressionAst(cst: SubhutiCst): SlimeExpression {
         const astName = checkCstName(cst, SlimeParser.prototype.BitwiseXORExpression?.name);
         if (cst.children.length > 1) {
-            // 有运算符，创建 BinaryExpression（支持链式：a ^ b ^ c）
+            // 有运算符，创�?BinaryExpression（支持链式：a ^ b ^ c�?
             let left = this.createExpressionAst(cst.children[0])
 
             for (let i = 1; i < cst.children.length; i += 2) {
@@ -6969,7 +6875,7 @@ export class SlimeCstToAst {
     createBitwiseANDExpressionAst(cst: SubhutiCst): SlimeExpression {
         const astName = checkCstName(cst, SlimeParser.prototype.BitwiseANDExpression?.name);
         if (cst.children.length > 1) {
-            // 有运算符，创建 BinaryExpression（支持链式：a & b & c）
+            // 有运算符，创�?BinaryExpression（支持链式：a & b & c�?
             let left = this.createExpressionAst(cst.children[0])
 
             for (let i = 1; i < cst.children.length; i += 2) {
@@ -6993,9 +6899,9 @@ export class SlimeCstToAst {
     createEqualityExpressionAst(cst: SubhutiCst): SlimeExpression {
         const astName = checkCstName(cst, SlimeParser.prototype.EqualityExpression?.name);
         if (cst.children.length > 1) {
-            // 有运算符，创建 BinaryExpression
+            // 有运算符，创�?BinaryExpression
             const left = this.createExpressionAst(cst.children[0])
-            const operator = cst.children[1].value as any  // ===, !==, ==, != 运算符
+            const operator = cst.children[1].value as any  // ===, !==, ==, != 运算�?
             const right = this.createExpressionAst(cst.children[2])
 
             return {
@@ -7012,11 +6918,11 @@ export class SlimeCstToAst {
     createRelationalExpressionAst(cst: SubhutiCst): SlimeExpression {
         const astName = checkCstName(cst, SlimeParser.prototype.RelationalExpression?.name);
         if (cst.children.length > 1) {
-            // 有运算符，创建 BinaryExpression
+            // 有运算符，创�?BinaryExpression
             // 支持多个运算符：x < y < z => BinaryExpression(BinaryExpression(x, <, y), <, z)
             let left = this.createExpressionAst(cst.children[0])
 
-            // 循环处理剩余的 (operator, operand) 对
+            // 循环处理剩余�?(operator, operand) �?
             for (let i = 1; i < cst.children.length; i += 2) {
                 const operatorNode = cst.children[i]
                 const operator = operatorNode.children ? operatorNode.children[0].value : operatorNode.value
@@ -7038,11 +6944,11 @@ export class SlimeCstToAst {
     createShiftExpressionAst(cst: SubhutiCst): SlimeExpression {
         const astName = checkCstName(cst, SlimeParser.prototype.ShiftExpression?.name);
         if (cst.children.length > 1) {
-            // 有运算符，创建 BinaryExpression
+            // 有运算符，创�?BinaryExpression
             // 支持多个运算符：x << y << z => BinaryExpression(BinaryExpression(x, <<, y), <<, z)
             let left = this.createExpressionAst(cst.children[0])
 
-            // 循环处理剩余的 (operator, operand) 对
+            // 循环处理剩余�?(operator, operand) �?
             for (let i = 1; i < cst.children.length; i += 2) {
                 const operatorNode = cst.children[i]
                 const operator = operatorNode.children ? operatorNode.children[0].value : operatorNode.value
@@ -7064,14 +6970,14 @@ export class SlimeCstToAst {
     createAdditiveExpressionAst(cst: SubhutiCst): SlimeExpression {
         const astName = checkCstName(cst, SlimeParser.prototype.AdditiveExpression?.name);
         if (cst.children.length > 1) {
-            // 有运算符，创建 BinaryExpression
+            // 有运算符，创�?BinaryExpression
             // 支持多个运算符：x + y + z => BinaryExpression(BinaryExpression(x, +, y), +, z)
             let left = this.createExpressionAst(cst.children[0])
 
-            // 循环处理剩余的 (operator, operand) 对
+            // 循环处理剩余�?(operator, operand) �?
             // CST结构: [operand, operator, operand, operator, operand, ...]
             for (let i = 1; i < cst.children.length; i += 2) {
-                // 获取运算符 - 可能是token也可能是CST节点
+                // 获取运算�?- 可能是token也可能是CST节点
                 const operatorNode = cst.children[i]
                 const operator = operatorNode.children ? operatorNode.children[0].value : operatorNode.value
 
@@ -7094,13 +7000,13 @@ export class SlimeCstToAst {
     createMultiplicativeExpressionAst(cst: SubhutiCst): SlimeExpression {
         const astName = checkCstName(cst, SlimeParser.prototype.MultiplicativeExpression?.name);
         if (cst.children.length > 1) {
-            // 有运算符，创建 BinaryExpression
+            // 有运算符，创�?BinaryExpression
             // 支持多个运算符：a * b * c => BinaryExpression(BinaryExpression(a, *, b), *, c)
             let left = this.createExpressionAst(cst.children[0])
 
-            // 循环处理剩余的 (operator, operand) 对
+            // 循环处理剩余�?(operator, operand) �?
             for (let i = 1; i < cst.children.length; i += 2) {
-                // 获取运算符 - 可能是token也可能是CST节点
+                // 获取运算�?- 可能是token也可能是CST节点
                 const operatorNode = cst.children[i]
                 const operator = operatorNode.children ? operatorNode.children[0].value : operatorNode.value
 
@@ -7123,7 +7029,7 @@ export class SlimeCstToAst {
     createUnaryExpressionAst(cst: SubhutiCst): SlimeExpression {
         const astName = checkCstName(cst, SlimeParser.prototype.UnaryExpression?.name);
 
-        // 防御性检查：如果没有children，抛出更详细的错误
+        // 防御性检查：如果没有children，抛出更详细的错�?
         if (!cst.children || cst.children.length === 0) {
             console.error('UnaryExpression CST没有children:', JSON.stringify(cst, null, 2))
             throw new Error(`UnaryExpression CST没有children，可能是Parser生成的CST不完整`)
@@ -7133,9 +7039,9 @@ export class SlimeCstToAst {
         if (cst.children.length === 1) {
             const child = cst.children[0]
 
-            // 检查是否是token（token有value属性但没有children）
+            // 检查是否是token（token有value属性但没有children�?
             if (child.value !== undefined && !child.children) {
-                // 这是一个token，说明Parser层生成的CST不完整
+                // 这是一个token，说明Parser层生成的CST不完�?
                 // UnaryExpression应该有运算符+操作数两个子节点，或者直接是PostfixExpression
                 throw new Error(
                     `UnaryExpression CST不完整：只有运算符token '${child.name}' (${child.value})，缺少操作数。` +
@@ -7147,13 +7053,13 @@ export class SlimeCstToAst {
             return this.createExpressionAst(child)
         }
 
-        // 如果有两个子节点，是一元运算符表达式
-        // children[0]: 运算符 token (!, +, -, ~, typeof, void, delete等)
-        // children[1]: UnaryExpression（操作数）
+        // 如果有两个子节点，是一元运算符表达�?
+        // children[0]: 运算�?token (!, +, -, ~, typeof, void, delete�?
+        // children[1]: UnaryExpression（操作数�?
         const operatorToken = cst.children[0]
         const argumentCst = cst.children[1]
 
-        // 获取运算符类型
+        // 获取运算符类�?
         const operatorMap: {[key: string]: string} = {
             'Exclamation': '!',
             'Plus': '+',
@@ -7168,14 +7074,14 @@ export class SlimeCstToAst {
 
         const operator = operatorMap[operatorToken.name] || operatorToken.value
 
-        // 递归处理操作数
+        // 递归处理操作�?
         const argument = this.createExpressionAst(argumentCst)
 
         // 创建 UnaryExpression AST
         return {
             type: SlimeNodeType.UnaryExpression,
             operator: operator,
-            prefix: true,  // 前缀运算符
+            prefix: true,  // 前缀运算�?
             argument: argument,
             loc: cst.loc
         } as any
@@ -7230,7 +7136,7 @@ export class SlimeCstToAst {
 
     createLeftHandSideExpressionAst(cst: SubhutiCst): SlimeExpression {
         const astName = checkCstName(cst, SlimeParser.prototype.LeftHandSideExpression?.name);
-        // 容错：Parser在ASI场景下可能生成不完整的CST，返回空标识符
+        // 容错：Parser在ASI场景下可能生成不完整的CST，返回空标识�?
         if (!cst.children || cst.children.length === 0) {
             return SlimeAstUtil.createIdentifier('', cst.loc)
         }
@@ -7256,19 +7162,19 @@ export class SlimeCstToAst {
         } else if (first.name === SlimeParser.prototype.ClassExpression?.name) {
             return this.createClassExpressionAst(first) as SlimeExpression
         } else if (first.name === SlimeTokenConsumer.prototype.This?.name) {
-            // 处理 this 关键字
+            // 处理 this 关键�?
             return SlimeAstUtil.createThisExpression(first.loc)
         } else if (first.name === SlimeTokenConsumer.prototype.RegularExpressionLiteral?.name) {
             // 处理正则表达式字面量
             return SlimeAstUtil.createStringLiteral(first.value)  // 暂时处理为字符串
         } else if (first.name === SlimeParser.prototype.GeneratorExpression?.name || first.name === 'GeneratorExpression') {
-            // 处理 function* 表达式
+            // 处理 function* 表达�?
             return this.createGeneratorExpressionAst(first) as SlimeExpression
         } else if (first.name === SlimeParser.prototype.AsyncFunctionExpression?.name || first.name === 'AsyncFunctionExpression') {
-            // 处理 async function 表达式
+            // 处理 async function 表达�?
             return this.createAsyncFunctionExpressionAst(first) as SlimeExpression
         } else if (first.name === SlimeParser.prototype.AsyncGeneratorExpression?.name || first.name === 'AsyncGeneratorExpression') {
-            // 处理 async function* 表达式
+            // 处理 async function* 表达�?
             return this.createAsyncGeneratorExpressionAst(first) as SlimeExpression
         } else if (first.name === SlimeParser.prototype.CoverParenthesizedExpressionAndArrowParameterList?.name ||
                    first.name === 'CoverParenthesizedExpressionAndArrowParameterList') {
@@ -7328,10 +7234,10 @@ export class SlimeCstToAst {
                 return SlimeAstUtil.createIdentifier('undefined', first.loc)
             }
         } else if (first.name === SlimeParser.prototype.TemplateLiteral?.name) {
-            // 处理模板字符串
+            // 处理模板字符�?
             return this.createTemplateLiteralAst(first)
         } else if (first.name === SlimeParser.prototype.ParenthesizedExpression?.name) {
-            // 处理普通括号表达式：( Expression )
+            // 处理普通括号表达式�? Expression )
             // children[0]=LParen, children[1]=Expression, children[2]=RParen
             const expressionCst = first.children[1]
             const innerExpression = this.createExpressionAst(expressionCst)
@@ -7340,7 +7246,7 @@ export class SlimeCstToAst {
             // 处理正则表达式字面量
             return this.createRegExpLiteralAst(first)
         } else {
-            throw new Error('未知的createPrimaryExpressionAst：' + first.name)
+            throw new Error('未知的 PrimaryExpression 类型: ' + first.name)
         }
     }
 
@@ -7361,7 +7267,7 @@ export class SlimeCstToAst {
             id = this.createBindingIdentifierAst(bindingId)
         }
 
-        // 查找 FormalParameters 或 FormalParameterList (使用包装类型)
+        // 查找 FormalParameters �?FormalParameterList (使用包装类型)
         const formalParams = cst.children.find(ch =>
             ch.name === SlimeParser.prototype.FormalParameters?.name || ch.name === 'FormalParameters' ||
             ch.name === SlimeParser.prototype.FormalParameterList?.name || ch.name === 'FormalParameterList')
@@ -7373,7 +7279,7 @@ export class SlimeCstToAst {
             }
         }
 
-        // 查找 GeneratorBody 或 FunctionBody
+        // 查找 GeneratorBody �?FunctionBody
         const bodyNode = cst.children.find(ch =>
             ch.name === 'GeneratorBody' || ch.name === SlimeParser.prototype.GeneratorBody?.name ||
             ch.name === 'FunctionBody' || ch.name === SlimeParser.prototype.FunctionBody?.name)
@@ -7404,7 +7310,7 @@ export class SlimeCstToAst {
             id = this.createBindingIdentifierAst(bindingId)
         }
 
-        // 查找 FormalParameters 或 FormalParameterList (使用包装类型)
+        // 查找 FormalParameters �?FormalParameterList (使用包装类型)
         const formalParams = cst.children.find(ch =>
             ch.name === SlimeParser.prototype.FormalParameters?.name || ch.name === 'FormalParameters' ||
             ch.name === SlimeParser.prototype.FormalParameterList?.name || ch.name === 'FormalParameterList')
@@ -7416,7 +7322,7 @@ export class SlimeCstToAst {
             }
         }
 
-        // 查找 AsyncFunctionBody 或 FunctionBody
+        // 查找 AsyncFunctionBody �?FunctionBody
         const bodyNode = cst.children.find(ch =>
             ch.name === 'AsyncFunctionBody' || ch.name === SlimeParser.prototype.AsyncFunctionBody?.name ||
             ch.name === 'FunctionBody' || ch.name === SlimeParser.prototype.FunctionBody?.name)
@@ -7447,7 +7353,7 @@ export class SlimeCstToAst {
             id = this.createBindingIdentifierAst(bindingId)
         }
 
-        // 查找 FormalParameters 或 FormalParameterList (使用包装类型)
+        // 查找 FormalParameters �?FormalParameterList (使用包装类型)
         const formalParams = cst.children.find(ch =>
             ch.name === SlimeParser.prototype.FormalParameters?.name || ch.name === 'FormalParameters' ||
             ch.name === SlimeParser.prototype.FormalParameterList?.name || ch.name === 'FormalParameterList')
@@ -7459,7 +7365,7 @@ export class SlimeCstToAst {
             }
         }
 
-        // 查找 AsyncGeneratorBody 或 FunctionBody
+        // 查找 AsyncGeneratorBody �?FunctionBody
         const bodyNode = cst.children.find(ch =>
             ch.name === 'AsyncGeneratorBody' || ch.name === SlimeParser.prototype.AsyncGeneratorBody?.name ||
             ch.name === 'FunctionBody' || ch.name === SlimeParser.prototype.FunctionBody?.name)
@@ -7474,23 +7380,23 @@ export class SlimeCstToAst {
         return func
     }
 
-    // 模板字符串处理
+    // 模板字符串处�?
     createTemplateLiteralAst(cst: SubhutiCst): SlimeExpression {
         checkCstName(cst, SlimeParser.prototype.TemplateLiteral?.name)
 
         const first = cst.children[0]
 
-        // 简单模板：`hello` (无插值)
+        // 简单模板：`hello` (无插�?
         if (first.name === SlimeTokenConsumer.prototype.NoSubstitutionTemplate?.name ||
             first.name === 'NoSubstitutionTemplate') {
-            // 返回 TemplateLiteral AST，保持原始格式
+            // 返回 TemplateLiteral AST，保持原始格�?
             const raw = first.value as string || '``'
-            const cooked = raw.slice(1, -1) // 去掉 ` 和 `
+            const cooked = raw.slice(1, -1) // 去掉 ` �?`
             const quasis = [SlimeAstUtil.createTemplateElement(true, raw, cooked, first.loc)]
             return SlimeAstUtil.createTemplateLiteral(quasis, [], cst.loc)
         }
 
-        // 带插值模板：`hello ${name}` 或 `a ${x} b ${y} c`
+        // 带插值模板：`hello ${name}` �?`a ${x} b ${y} c`
         // ES2025 结构: TemplateLiteral -> SubstitutionTemplate -> [TemplateHead, Expression, TemplateSpans]
         // 检查是否是 SubstitutionTemplate 包装
         let targetCst = cst
@@ -7510,7 +7416,7 @@ export class SlimeCstToAst {
             if (child.name === SlimeTokenConsumer.prototype.TemplateHead?.name ||
                 child.name === 'TemplateHead') {
                 const raw = child.value as string || ''
-                const cooked = raw.slice(1, -2) // 去掉 ` 和 ${
+                const cooked = raw.slice(1, -2) // 去掉 ` �?${
                 quasis.push(SlimeAstUtil.createTemplateElement(false, raw, cooked, child.loc))
             }
             // Expression
@@ -7535,12 +7441,12 @@ export class SlimeCstToAst {
         // 情况1：直接是TemplateTail -> }` 结束
         if (first.name === SlimeTokenConsumer.prototype.TemplateTail?.name) {
             const raw = first.value || ''
-            const cooked = raw.slice(1, -1) // 去掉 } 和 `
+            const cooked = raw.slice(1, -1) // 去掉 } �?`
             quasis.push(SlimeAstUtil.createTemplateElement(true, raw, cooked, first.loc))
             return
         }
 
-        // 情况2：TemplateMiddleList -> 有更多插值
+        // 情况2：TemplateMiddleList -> 有更多插�?
         if (first.name === SlimeParser.prototype.TemplateMiddleList?.name) {
             this.processTemplateMiddleList(first, quasis, expressions)
 
@@ -7548,20 +7454,20 @@ export class SlimeCstToAst {
             if (cst.children[1] && cst.children[1].name === SlimeTokenConsumer.prototype.TemplateTail?.name) {
                 const tail = cst.children[1]
                 const raw = tail.value || ''
-                const cooked = raw.slice(1, -1) // 去掉 } 和 `
+                const cooked = raw.slice(1, -1) // 去掉 } �?`
                 quasis.push(SlimeAstUtil.createTemplateElement(true, raw, cooked, tail.loc))
             }
         }
     }
 
-    // 处理TemplateMiddleList：处理多个TemplateMiddle+Expression对
+    // 处理TemplateMiddleList：处理多个TemplateMiddle+Expression�?
     processTemplateMiddleList(cst: SubhutiCst, quasis: any[], expressions: SlimeExpression[]): void {
         // TemplateMiddleList结构（Es2025）：
         // - children = [TemplateMiddle, Expression, TemplateMiddle, Expression, ...]
-        // 或者递归结构：
+        // 或者递归结构�?
         // - children[0] = TemplateMiddle (token)
         // - children[1] = Expression
-        // - children[2] = TemplateMiddleList (递归，可选)
+        // - children[2] = TemplateMiddleList (递归，可�?
 
         for (let i = 0; i < cst.children.length; i++) {
             const child = cst.children[i]
@@ -7569,14 +7475,14 @@ export class SlimeCstToAst {
             if (child.name === SlimeTokenConsumer.prototype.TemplateMiddle?.name ||
                 child.name === 'TemplateMiddle') {
                 const raw = child.value || ''
-                const cooked = raw.slice(1, -2) // 去掉 } 和 ${
+                const cooked = raw.slice(1, -2) // 去掉 } �?${
                 quasis.push(SlimeAstUtil.createTemplateElement(false, raw, cooked, child.loc))
             } else if (child.name === SlimeParser.prototype.Expression?.name ||
                        child.name === 'Expression') {
                 expressions.push(this.createExpressionAst(child))
             } else if (child.name === SlimeParser.prototype.TemplateMiddleList?.name ||
                        child.name === 'TemplateMiddleList') {
-                // 递归处理嵌套的 TemplateMiddleList
+                // 递归处理嵌套�?TemplateMiddleList
                 this.processTemplateMiddleList(child, quasis, expressions)
             }
         }
@@ -7585,12 +7491,12 @@ export class SlimeCstToAst {
     createClassExpressionAst(cst: SubhutiCst): SlimeClassExpression {
         const astName = checkCstName(cst, SlimeParser.prototype.ClassExpression?.name);
 
-        let id: SlimeIdentifier | null = null // class 表达式可选的标识符
+        let id: SlimeIdentifier | null = null // class 表达式可选的标识�?
         let tailStartIndex = 1 // 默认 ClassTail 位于索引 1
         const nextChild = cst.children[1]
         if (nextChild && nextChild.name === SlimeParser.prototype.BindingIdentifier?.name) {
-            id = this.createBindingIdentifierAst(nextChild) // 若存在标识符则解析
-            tailStartIndex = 2 // ClassTail 的位置后移
+            id = this.createBindingIdentifierAst(nextChild) // 若存在标识符则解�?
+            tailStartIndex = 2 // ClassTail 的位置后�?
         }
         const classTail = this.createClassTailAst(cst.children[tailStartIndex]) // 统一解析 ClassTail
 
@@ -7600,7 +7506,7 @@ export class SlimeCstToAst {
     createPropertyDefinitionAst(cst: SubhutiCst): SlimeProperty {
         const astName = checkCstName(cst, SlimeParser.prototype.PropertyDefinition?.name);
 
-        // 防御性检查：如果 children 为空，说明是空对象的情况，不应该被调用
+        // 防御性检查：如果 children 为空，说明是空对象的情况，不应该被调�?
         // 这种情况通常不会发生，因为空对象{}不会有PropertyDefinition节点
         if (!cst.children || cst.children.length === 0) {
             throw new Error('PropertyDefinition CST has no children - this should not happen for valid syntax');
@@ -7609,7 +7515,7 @@ export class SlimeCstToAst {
         const first = cst.children[0]
 
         // ES2018: 对象spread {...obj}
-        // 检查first是否是Ellipsis token（name为'Ellipsis'）
+        // 检查first是否是Ellipsis token（name�?Ellipsis'�?
         if (first.name === 'Ellipsis' || first.value === '...') {
             // PropertyDefinition -> Ellipsis + AssignmentExpression
             const AssignmentExpressionCst = cst.children[1]
@@ -7638,7 +7544,7 @@ export class SlimeCstToAst {
 
             return keyAst
         } else if (first.name === SlimeParser.prototype.MethodDefinition?.name) {
-            // 方法定义（对象中的方法没有static）
+            // 方法定义（对象中的方法没有static�?
             const SlimeMethodDefinition = this.createMethodDefinitionAst(null, first)
 
             const keyAst = SlimeAstUtil.createPropertyAst(SlimeMethodDefinition.key, SlimeMethodDefinition.value)
@@ -7648,24 +7554,24 @@ export class SlimeCstToAst {
                 keyAst.computed = true
             }
 
-            // 继承MethodDefinition的kind标志（getter/setter/method）
+            // 继承MethodDefinition的kind标志（getter/setter/method�?
             if (SlimeMethodDefinition.kind === 'get' || SlimeMethodDefinition.kind === 'set') {
                 keyAst.kind = SlimeMethodDefinition.kind
             } else {
-                // 普通方法使用 method: true
+                // 普通方法使�?method: true
                 keyAst.method = true
             }
 
             return keyAst
         } else if (first.name === SlimeParser.prototype.IdentifierReference?.name) {
-            // 属性简写 {name} -> {name: name}
+            // 属性简�?{name} -> {name: name}
             const identifierCst = first.children[0] // IdentifierReference -> Identifier
             const identifier = this.createIdentifierAst(identifierCst)
             const keyAst = SlimeAstUtil.createPropertyAst(identifier, identifier)
             keyAst.shorthand = true
             return keyAst
         } else if (first.name === 'CoverInitializedName') {
-            // CoverInitializedName: 带默认值的属性简写 {name = 'default'}
+            // CoverInitializedName: 带默认值的属性简�?{name = 'default'}
             // CoverInitializedName -> IdentifierReference + Initializer
             const identifierRefCst = first.children[0]
             const initializerCst = first.children[1]
@@ -7707,7 +7613,7 @@ export class SlimeCstToAst {
             // ComputedPropertyName -> LBracket + AssignmentExpression + RBracket
             return this.createAssignmentExpressionAst(first.children[1])
         }
-        // 回退：可能first直接就是 LiteralPropertyName 的内容
+        // 回退：可能first直接就是 LiteralPropertyName 的内�?
         return this.createLiteralPropertyNameAst(first)
     }
 
@@ -7716,7 +7622,7 @@ export class SlimeCstToAst {
             throw new Error('createLiteralPropertyNameAst: cst is null')
         }
 
-        // 可能是 LiteralPropertyName 节点，也可能直接是内部节点
+        // 可能�?LiteralPropertyName 节点，也可能直接是内部节�?
         let first = cst
         if (cst.name === SlimeParser.prototype.LiteralPropertyName?.name || cst.name === 'LiteralPropertyName') {
             if (!cst.children || cst.children.length === 0) {
@@ -7727,7 +7633,7 @@ export class SlimeCstToAst {
 
         // IdentifierName (Es2025Parser) - 可能是规则节点或 token
         if (first.name === 'IdentifierName' || first.name === SlimeParser.prototype.IdentifierName?.name) {
-            // 如果有 value，直接使用
+            // 如果�?value，直接使�?
             if (first.value !== undefined) {
                 return SlimeAstUtil.createIdentifier(first.value, first.loc)
             }
@@ -7741,7 +7647,7 @@ export class SlimeCstToAst {
             }
             throw new Error(`createLiteralPropertyNameAst: Cannot extract value from IdentifierName`)
         }
-        // Identifier (旧版或 Es2025)
+        // Identifier (旧版�?Es2025)
         else if (first.name === 'Identifier' || first.name === SlimeParser.prototype.Identifier?.name) {
             return this.createIdentifierAst(first)
         }
@@ -7753,7 +7659,7 @@ export class SlimeCstToAst {
         else if (first.name === SlimeTokenConsumer.prototype.StringLiteral?.name || first.name === 'StringLiteral' || first.name === 'String') {
             return this.createStringLiteralAst(first)
         }
-        // 如果是直接的 token（有 value 属性），创建 Identifier
+        // 如果是直接的 token（有 value 属性），创�?Identifier
         else if (first.value !== undefined) {
             return SlimeAstUtil.createIdentifier(first.value, first.loc)
         }
@@ -7763,9 +7669,9 @@ export class SlimeCstToAst {
 
 
     /**
-     * [AST 类型映射] NumericLiteral 终端符 → Literal AST
+     * [AST 类型映射] NumericLiteral 终端�?�?Literal AST
      *
-     * 存在必要性：NumericLiteral 在 CST 中是终端符，在 ESTree AST 中是 Literal 类型。
+     * 存在必要性：NumericLiteral �?CST 中是终端符，�?ESTree AST 中是 Literal 类型�?
      */
     createNumericLiteralAst(cst: SubhutiCst): SlimeNumericLiteral {
         // 兼容多种 NumericLiteral 名称：NumericLiteral, NumericLiteralTok, Number
@@ -7778,15 +7684,15 @@ export class SlimeCstToAst {
         if (!validNames.includes(cst.name)) {
             throw new Error(`Expected NumericLiteral, got ${cst.name}`)
         }
-        // 保存原始值（raw）以保持格式（如十六进制 0xFF）
+        // 保存原始值（raw）以保持格式（如十六进制 0xFF�?
         const rawValue = cst.value as string
         return SlimeAstUtil.createNumericLiteral(Number(rawValue), rawValue)
     }
 
     /**
-     * [AST 类型映射] StringLiteral 终端符 → Literal AST
+     * [AST 类型映射] StringLiteral 终端�?�?Literal AST
      *
-     * 存在必要性：StringLiteral 在 CST 中是终端符，在 ESTree AST 中是 Literal 类型。
+     * 存在必要性：StringLiteral �?CST 中是终端符，�?ESTree AST 中是 Literal 类型�?
      */
     createStringLiteralAst(cst: SubhutiCst): SlimeStringLiteral {
         // 兼容多种 StringLiteral 名称：StringLiteral, StringLiteralTok, String
@@ -7806,16 +7712,16 @@ export class SlimeCstToAst {
     }
 
     /**
-     * [AST 类型映射] RegularExpressionLiteral 终端符 → Literal AST
+     * [AST 类型映射] RegularExpressionLiteral 终端�?�?Literal AST
      *
-     * 存在必要性：RegularExpressionLiteral 在 CST 中是终端符，
-     * 在 ESTree AST 中是 Literal 类型，需要解析正则表达式的 pattern 和 flags。
+     * 存在必要性：RegularExpressionLiteral �?CST 中是终端符，
+     * �?ESTree AST 中是 Literal 类型，需要解析正则表达式�?pattern �?flags�?
      *
      * RegularExpressionLiteral: /pattern/flags
      */
     createRegExpLiteralAst(cst: SubhutiCst): any {
         const rawValue = cst.value as string
-        // 解析正则表达式字面量：/pattern/flags
+        // 解析正则表达式字面量�?pattern/flags
         // 正则字面量格式：/.../ 后面可能跟着 flags
         const match = rawValue.match(/^\/(.*)\/([gimsuy]*)$/)
         if (match) {
@@ -7832,7 +7738,7 @@ export class SlimeCstToAst {
                 loc: cst.loc
             }
         }
-        // 如果无法解析，返回原始值
+        // 如果无法解析，返回原始�?
         return {
             type: SlimeNodeType.Literal,
             value: rawValue,
@@ -7862,7 +7768,7 @@ export class SlimeCstToAst {
         const astName = checkCstName(cst, SlimeParser.prototype.ElementList?.name);
         const elements: Array<SlimeArrayElement> = []
 
-        // 遍历所有子节点，处理 AssignmentExpression、SpreadElement、Elision 和 Comma
+        // 遍历所有子节点，处�?AssignmentExpression、SpreadElement、Elision �?Comma
         // 每个元素与其后面的逗号配对
         let currentElement: SlimeExpression | SlimeSpreadElement | null = null
         let hasElement = false
@@ -7885,7 +7791,7 @@ export class SlimeCstToAst {
                 hasElement = true
             } else if (child.name === SlimeParser.prototype.Elision?.name) {
                 // Elision 代表空元素：[1, , 3] - 可能包含多个逗号
-                // 每个 Elision 内部的逗号数量决定空元素数量
+                // 每个 Elision 内部的逗号数量决定空元素数�?
                 const elisionCommas = child.children?.filter((c: any) => c.name === 'Comma' || c.value === ',') || []
                 for (let j = 0; j < elisionCommas.length; j++) {
                     if (hasElement) {
@@ -7908,7 +7814,7 @@ export class SlimeCstToAst {
             }
         }
 
-        // 处理最后一个元素（如果没有尾随逗号）
+        // 处理最后一个元素（如果没有尾随逗号�?
         if (hasElement) {
             elements.push(SlimeAstUtil.createArrayElement(currentElement, undefined))
         }
@@ -7943,10 +7849,10 @@ export class SlimeCstToAst {
         )
     }
 
-    // ==================== 字面量相关转换方法 ====================
+    // ==================== 字面量相关转换方�?====================
 
     /**
-     * 布尔字面量 CST 转 AST
+     * 布尔字面�?CST �?AST
      * BooleanLiteral -> true | false
      */
     createBooleanLiteralAst(cst: SubhutiCst): SlimeLiteral {
@@ -7963,14 +7869,14 @@ export class SlimeCstToAst {
     }
 
     /**
-     * ArrayLiteral CST 转 ArrayExpression AST
+     * ArrayLiteral CST �?ArrayExpression AST
      * ArrayLiteral -> [ Elision? ] | [ ElementList ] | [ ElementList , Elision? ]
      */
     createArrayLiteralAst(cst: SubhutiCst): SlimeArrayExpression {
         const astName = checkCstName(cst, SlimeParser.prototype.ArrayLiteral?.name);
         // ArrayLiteral: [LBracket, ElementList?, Comma?, Elision?, RBracket]
 
-        // 提取 LBracket 和 RBracket tokens
+        // 提取 LBracket �?RBracket tokens
         let lBracketToken: any = undefined
         let rBracketToken: any = undefined
 
@@ -7989,8 +7895,8 @@ export class SlimeCstToAst {
         const elementList = cst.children.find(ch => ch.name === SlimeParser.prototype.ElementList?.name)
         const elements = elementList ? this.createElementListAst(elementList) : []
 
-        // 处理 ArrayLiteral 顶层的 Comma 和 Elision（尾随逗号和省略）
-        // 例如 [x,,] -> ElementList 后面有 Comma 和 Elision
+        // 处理 ArrayLiteral 顶层�?Comma �?Elision（尾随逗号和省略）
+        // 例如 [x,,] -> ElementList 后面�?Comma �?Elision
         let hasTrailingComma = false
         for (const child of cst.children) {
             if (child.name === 'Comma' || child.value === ',') {
@@ -8010,14 +7916,14 @@ export class SlimeCstToAst {
     }
 
     /**
-     * 对象字面量 CST 转 AST（透传到 ObjectExpression）
+     * 对象字面�?CST �?AST（透传�?ObjectExpression�?
      * ObjectLiteral -> { } | { PropertyDefinitionList } | { PropertyDefinitionList , }
      */
     createObjectLiteralAst(cst: SubhutiCst): SlimeObjectExpression {
         const astName = checkCstName(cst, SlimeParser.prototype.ObjectLiteral?.name);
         const properties: Array<SlimeObjectPropertyItem> = []
 
-        // 提取 LBrace 和 RBrace tokens
+        // 提取 LBrace �?RBrace tokens
         let lBraceToken: any = undefined
         let rBraceToken: any = undefined
 
@@ -8041,7 +7947,7 @@ export class SlimeCstToAst {
             let hasProperty = false
 
             for (const child of PropertyDefinitionListCst.children) {
-                // 跳过没有children的PropertyDefinition节点（SubhutiParser优化导致）
+                // 跳过没有children的PropertyDefinition节点（SubhutiParser优化导致�?
                 if (child.name === SlimeParser.prototype.PropertyDefinition?.name && child.children && child.children.length > 0) {
                     // 如果之前有属性但没有逗号，先推入
                     if (hasProperty) {
@@ -8050,7 +7956,7 @@ export class SlimeCstToAst {
                     currentProperty = this.createPropertyDefinitionAst(child)
                     hasProperty = true
                 } else if (child.name === 'Comma' || child.value === ',') {
-                    // 逗号与前面的属性配对
+                    // 逗号与前面的属性配�?
                     const commaToken = SlimeTokenCreate.createCommaToken(child.loc)
                     if (hasProperty) {
                         properties.push(SlimeAstUtil.createObjectPropertyItem(currentProperty!, commaToken))
@@ -8060,7 +7966,7 @@ export class SlimeCstToAst {
                 }
             }
 
-            // 处理最后一个属性（如果没有尾随逗号）
+            // 处理最后一个属性（如果没有尾随逗号�?
             if (hasProperty) {
                 properties.push(SlimeAstUtil.createObjectPropertyItem(currentProperty!, undefined))
             }
@@ -8069,12 +7975,12 @@ export class SlimeCstToAst {
     }
 
     /**
-     * Elision（逗号空位）CST 转 AST
+     * Elision（逗号空位）CST �?AST
      * Elision -> , | Elision ,
-     * 返回 null 元素的数量
+     * 返回 null 元素的数�?
      */
     createElisionAst(cst: SubhutiCst): number {
-        // 计算逗号数量，每个逗号代表一个空位
+        // 计算逗号数量，每个逗号代表一个空�?
         let count = 0
         for (const child of cst.children || []) {
             if (child.value === ',') {
@@ -8089,10 +7995,10 @@ export class SlimeCstToAst {
         const firstChild = cst.children[0]
         let value: SlimeLiteral
 
-        // 处理各种字面量类型
+        // 处理各种字面量类�?
         const childName = firstChild.name
 
-        // 直接是 token 的情况
+        // 直接�?token 的情�?
         if (childName === SlimeTokenConsumer.prototype.NumericLiteral?.name || childName === 'NumericLiteral') {
             const rawValue = firstChild.value as string
             value = SlimeAstUtil.createNumericLiteral(Number(rawValue), rawValue)
@@ -8106,9 +8012,9 @@ export class SlimeCstToAst {
             const rawValue = firstChild.value as string
             value = SlimeAstUtil.createStringLiteral(rawValue, firstChild.loc, rawValue)
         }
-        // 包装节点的情况（如 BooleanLiteral 包含 True/False）
+        // 包装节点的情况（�?BooleanLiteral 包含 True/False�?
         else if (childName === 'BooleanLiteral' || childName === SlimeParser.prototype.BooleanLiteral?.name) {
-            // BooleanLiteral → True | False
+            // BooleanLiteral �?True | False
             const innerChild = firstChild.children?.[0]
             if (innerChild?.name === 'True' || innerChild?.value === 'true') {
                 value = SlimeAstUtil.createBooleanLiteral(true)
@@ -8122,10 +8028,10 @@ export class SlimeCstToAst {
         else if (childName === 'NullLiteral') {
             value = SlimeAstUtil.createNullLiteralToken()
         }
-        // BigInt 字面量
+        // BigInt 字面�?
         else if (childName === 'BigIntLiteral' || childName === SlimeTokenConsumer.prototype.BigIntLiteral?.name) {
             const rawValue = firstChild.value as string || firstChild.children?.[0]?.value as string
-            // 去掉末尾的 'n'
+            // 去掉末尾�?'n'
             const numStr = rawValue.endsWith('n') ? rawValue.slice(0, -1) : rawValue
             value = SlimeAstUtil.createBigIntLiteral(numStr, rawValue) as any
         }
@@ -8159,19 +8065,19 @@ export class SlimeCstToAst {
             if (child.name === SlimeParser.prototype.ArrowFunction?.name) {
                 return this.createArrowFunctionAst(child)
             }
-            // 否则作为表达式处理
+            // 否则作为表达式处�?
             return this.createExpressionAst(child)
         }
 
         // AssignmentExpression -> LeftHandSideExpression + Eq + AssignmentExpression
-        // 或 LeftHandSideExpression + AssignmentOperator + AssignmentExpression
+        // �?LeftHandSideExpression + AssignmentOperator + AssignmentExpression
         const leftCst = cst.children[0]
         const operatorCst = cst.children[1]
         const rightCst = cst.children[2]
 
         const left = this.createExpressionAst(leftCst)
         const right = this.createAssignmentExpressionAst(rightCst)
-        // AssignmentOperator节点下有子节点(PlusEq/MinusEq等)，需要从children[0].value获取
+        // AssignmentOperator节点下有子节�?PlusEq/MinusEq�?，需要从children[0].value获取
         const operator = (operatorCst.children && operatorCst.children[0]?.value) || operatorCst.value || '='
 
         const ast: SlimeAssignmentExpression = {
@@ -8190,10 +8096,10 @@ export class SlimeCstToAst {
     createArrowFunctionAst(cst: SubhutiCst): SlimeArrowFunctionExpression {
         checkCstName(cst, SlimeParser.prototype.ArrowFunction?.name);
         // ArrowFunction 结构（带async）：
-        // children[0]: AsyncTok (可选)
-        // children[1]: BindingIdentifier 或 CoverParenthesizedExpressionAndArrowParameterList (参数)
+        // children[0]: AsyncTok (可�?
+        // children[1]: BindingIdentifier �?CoverParenthesizedExpressionAndArrowParameterList (参数)
         // children[2]: Arrow (=>)
-        // children[3]: ConciseBody (函数体)
+        // children[3]: ConciseBody (函数�?
 
         // Token fields
         let asyncToken: any = undefined
@@ -8213,7 +8119,7 @@ export class SlimeCstToAst {
 
         // 防御性检查：确保children存在且有足够元素
         if (!cst.children || cst.children.length < 3 + offset) {
-            throw new Error(`createArrowFunctionAst: 期望${3 + offset}个children，实际${cst.children?.length || 0}个`)
+            throw new Error(`createArrowFunctionAst: 期望${3 + offset}个children，实�?{cst.children?.length || 0}个`)
         }
 
         const arrowParametersCst = cst.children[0 + offset]
@@ -8232,7 +8138,7 @@ export class SlimeCstToAst {
             // 单个参数：x => x * 2
             params = [{ param: this.createBindingIdentifierAst(arrowParametersCst) }]
         } else if (arrowParametersCst.name === SlimeParser.prototype.CoverParenthesizedExpressionAndArrowParameterList?.name) {
-            // 括号参数：(a, b) => a + b 或 () => 42
+            // 括号参数�?a, b) => a + b �?() => 42
             // 提取括号 tokens
             for (const child of arrowParametersCst.children || []) {
                 if (child.name === 'LParen' || child.value === '(') {
@@ -8243,17 +8149,17 @@ export class SlimeCstToAst {
                     commaTokens.push(SlimeTokenCreate.createCommaToken(child.loc))
                 }
             }
-            // 将 SlimePattern[] 转换为 SlimeFunctionParam[]
+            // �?SlimePattern[] 转换�?SlimeFunctionParam[]
             const rawParams = this.createArrowParametersFromCoverGrammar(arrowParametersCst)
             params = rawParams.map((p, i) => ({
                 param: p,
-                commaToken: commaTokens[i] // 为每个参数关联逗号 token（最后一个参数无逗号）
+                commaToken: commaTokens[i] // 为每个参数关联逗号 token（最后一个参数无逗号�?
             }))
         } else if (arrowParametersCst.name === SlimeParser.prototype.ArrowParameters?.name) {
-            // ArrowParameters 规则：其子节点可能是 CoverParenthesizedExpressionAndArrowParameterList 或 BindingIdentifier
+            // ArrowParameters 规则：其子节点可能是 CoverParenthesizedExpressionAndArrowParameterList �?BindingIdentifier
             const firstChild = arrowParametersCst.children?.[0]
             if (firstChild?.name === SlimeParser.prototype.CoverParenthesizedExpressionAndArrowParameterList?.name) {
-                // 从 CoverParenthesizedExpressionAndArrowParameterList 提取括号 tokens
+                // �?CoverParenthesizedExpressionAndArrowParameterList 提取括号 tokens
                 for (const child of firstChild.children || []) {
                     if (child.name === 'LParen' || child.value === '(') {
                         lParenToken = SlimeTokenCreate.createLParenToken(child.loc)
@@ -8267,16 +8173,16 @@ export class SlimeCstToAst {
             const rawParams = this.createArrowParametersAst(arrowParametersCst)
             params = rawParams.map((p, i) => ({
                 param: p,
-                commaToken: commaTokens[i] // 为每个参数关联逗号 token（最后一个参数无逗号）
+                commaToken: commaTokens[i] // 为每个参数关联逗号 token（最后一个参数无逗号�?
             }))
         } else {
             throw new Error(`createArrowFunctionAst: 不支持的参数类型 ${arrowParametersCst.name}`)
         }
 
-        // 解析函数体
+        // 解析函数�?
         const body = this.createConciseBodyAst(conciseBodyCst)
 
-        // 注意：createArrowFunctionExpression 参数顺序是 (body, params, expression, async, loc, arrowToken, asyncToken, lParenToken, rParenToken)
+        // 注意：createArrowFunctionExpression 参数顺序�?(body, params, expression, async, loc, arrowToken, asyncToken, lParenToken, rParenToken)
         // commaTokens 目前函数签名不支持，暂时忽略
         return SlimeAstUtil.createArrowFunctionExpression(
             body, params, body.type !== SlimeNodeType.BlockStatement, isAsync, cst.loc,
@@ -8290,7 +8196,7 @@ export class SlimeCstToAst {
      *                   | CoverCallExpressionAndAsyncArrowHead => AsyncConciseBody
      */
     createAsyncArrowFunctionAst(cst: SubhutiCst): SlimeArrowFunctionExpression {
-        // AsyncArrowFunction 结构：
+        // AsyncArrowFunction 结构�?
         // 形式1: [AsyncTok, BindingIdentifier, Arrow, AsyncConciseBody]
         // 形式2: [CoverCallExpressionAndAsyncArrowHead, Arrow, AsyncConciseBody]
 
@@ -8302,7 +8208,7 @@ export class SlimeCstToAst {
         let lParenToken: any = undefined
         let rParenToken: any = undefined
 
-        // 找到 Arrow token 的位置
+        // 找到 Arrow token 的位�?
         for (let i = 0; i < cst.children.length; i++) {
             if (cst.children[i].name === 'Arrow' || cst.children[i].value === '=>') {
                 arrowToken = SlimeTokenCreate.createArrowToken(cst.children[i].loc)
@@ -8311,9 +8217,9 @@ export class SlimeCstToAst {
             }
         }
 
-        // 容错模式：如果找不到 Arrow token，尝试从不完整的 CST 中提取信息
+        // 容错模式：如果找不到 Arrow token，尝试从不完整的 CST 中提取信�?
         if (arrowIndex === -1) {
-            // 尝试从 CoverCallExpressionAndAsyncArrowHead 提取参数
+            // 尝试�?CoverCallExpressionAndAsyncArrowHead 提取参数
             for (const child of cst.children) {
                 if (child.name === 'CoverCallExpressionAndAsyncArrowHead') {
                     params = this.createAsyncArrowParamsFromCover(child)
@@ -8325,7 +8231,7 @@ export class SlimeCstToAst {
                     break
                 }
             }
-            // 返回不完整的箭头函数（没有 body）
+            // 返回不完整的箭头函数（没�?body�?
             return {
                 type: SlimeNodeType.ArrowFunctionExpression,
                 id: null,
@@ -8343,12 +8249,12 @@ export class SlimeCstToAst {
             const child = cst.children[i]
             if (child.name === 'Async' || (child.name === 'IdentifierName' && child.value === 'async')) {
                 asyncToken = SlimeTokenCreate.createAsyncToken(child.loc)
-                continue // 跳过 async 关键字
+                continue // 跳过 async 关键�?
             }
             if (child.name === SlimeParser.prototype.BindingIdentifier?.name || child.name === 'BindingIdentifier') {
                 params = [this.createBindingIdentifierAst(child)]
             } else if (child.name === 'AsyncArrowBindingIdentifier' || child.name === SlimeParser.prototype.AsyncArrowBindingIdentifier?.name) {
-                // AsyncArrowBindingIdentifier 包含一个 BindingIdentifier
+                // AsyncArrowBindingIdentifier 包含一�?BindingIdentifier
                 const bindingId = child.children?.find((c: any) =>
                     c.name === 'BindingIdentifier' || c.name === SlimeParser.prototype.BindingIdentifier?.name
                 ) || child.children?.[0]
@@ -8356,7 +8262,7 @@ export class SlimeCstToAst {
                     params = [this.createBindingIdentifierAst(bindingId)]
                 }
             } else if (child.name === 'CoverCallExpressionAndAsyncArrowHead') {
-                // 从 CoverCallExpressionAndAsyncArrowHead 提取参数和括号 tokens
+                // �?CoverCallExpressionAndAsyncArrowHead 提取参数和括�?tokens
                 params = this.createAsyncArrowParamsFromCover(child)
                 // 提取括号 tokens
                 for (const subChild of child.children || []) {
@@ -8413,24 +8319,24 @@ export class SlimeCstToAst {
     }
 
     /**
-     * 从 CoverCallExpressionAndAsyncArrowHead 提取 async 箭头函数参数
+     * �?CoverCallExpressionAndAsyncArrowHead 提取 async 箭头函数参数
      */
     createAsyncArrowParamsFromCover(cst: SubhutiCst): SlimePattern[] {
-        // CoverCallExpressionAndAsyncArrowHead 结构：
-        // [MemberExpression, Arguments] 或类似结构
-        // 我们需要从 Arguments 中提取参数
+        // CoverCallExpressionAndAsyncArrowHead 结构�?
+        // [MemberExpression, Arguments] 或类似结�?
+        // 我们需要从 Arguments 中提取参�?
 
         const params: SlimePattern[] = []
 
         for (const child of cst.children || []) {
             if (child.name === 'Arguments' || child.name === SlimeParser.prototype.Arguments?.name) {
-                // 从 Arguments 中提取参数
+                // �?Arguments 中提取参�?
                 for (const argChild of child.children || []) {
                     if (argChild.name === 'ArgumentList' || argChild.name === SlimeParser.prototype.ArgumentList?.name) {
-                        let hasEllipsis = false // 标记是否遇到了 ...
+                        let hasEllipsis = false // 标记是否遇到�?...
                         for (const arg of argChild.children || []) {
                             if (arg.value === ',') continue // 跳过逗号
-                            // 处理 rest 参数：...ids
+                            // 处理 rest 参数�?..ids
                             if (arg.name === 'Ellipsis' || arg.value === '...') {
                                 hasEllipsis = true
                                 continue
@@ -8450,17 +8356,17 @@ export class SlimeCstToAst {
     }
 
     /**
-     * 将表达式 CST 转换为 Pattern（用于 cover grammar）
-     * 这用于处理 async (expr) => body 中的 expr 到 pattern 的转换
+     * 将表达式 CST 转换�?Pattern（用�?cover grammar�?
+     * 这用于处�?async (expr) => body 中的 expr �?pattern 的转�?
      */
     /**
-     * 将 CST 表达式转换为 Pattern（用于 cover grammar）
-     * 这用于处理 async (expr) => body 中的 expr 到 pattern 的转换
-     * 注意：这个方法处理 CST 节点，convertExpressionToPattern 处理 AST 节点
+     * �?CST 表达式转换为 Pattern（用�?cover grammar�?
+     * 这用于处�?async (expr) => body 中的 expr �?pattern 的转�?
+     * 注意：这个方法处�?CST 节点，convertExpressionToPattern 处理 AST 节点
      */
     convertCstToPattern(cst: SubhutiCst): SlimePattern | null {
         // 首先检查是否是 AssignmentExpression (默认参数 options = {})
-        // 这必须在 findInnerExpr 之前处理，否则会丢失 = 和默认值
+        // 这必须在 findInnerExpr 之前处理，否则会丢失 = 和默认�?
         if (cst.name === 'AssignmentExpression' || cst.name === SlimeParser.prototype.AssignmentExpression?.name) {
             // 检查是否有 Assign token (=)
             const hasAssign = cst.children?.some(ch => ch.name === 'Assign' || ch.value === '=')
@@ -8476,7 +8382,7 @@ export class SlimeCstToAst {
         // 递归查找最内层的表达式
         const findInnerExpr = (node: SubhutiCst): SubhutiCst => {
             if (!node.children || node.children.length === 0) return node
-            // 如果是 ObjectLiteral、ArrayLiteral、Identifier 等，返回它
+            // 如果�?ObjectLiteral、ArrayLiteral、Identifier 等，返回�?
             const first = node.children[0]
             if (first.name === 'ObjectLiteral' || first.name === 'ArrayLiteral' ||
                 first.name === 'IdentifierReference' || first.name === 'Identifier' ||
@@ -8490,13 +8396,13 @@ export class SlimeCstToAst {
         const inner = findInnerExpr(cst)
 
         if (inner.name === 'ObjectLiteral') {
-            // 将 ObjectLiteral 转换为 ObjectPattern
+            // �?ObjectLiteral 转换�?ObjectPattern
             return this.convertObjectLiteralToPattern(inner)
         } else if (inner.name === 'ArrayLiteral') {
-            // 将 ArrayLiteral 转换为 ArrayPattern
+            // �?ArrayLiteral 转换�?ArrayPattern
             return this.convertArrayLiteralToPattern(inner)
         } else if (inner.name === 'IdentifierReference' || inner.name === 'Identifier') {
-            // 标识符直接转换
+            // 标识符直接转�?
             const idNode = inner.name === 'IdentifierReference' ? findInnerExpr(inner) : inner
             const identifierName = idNode.children?.[0]
             if (identifierName) {
@@ -8517,22 +8423,22 @@ export class SlimeCstToAst {
             // ArrayExpression 需要转换为 ArrayPattern
             return this.convertArrayExpressionToPattern(expr)
         } else if (expr.type === SlimeNodeType.AssignmentExpression) {
-            // AssignmentExpression 转换为 AssignmentPattern
+            // AssignmentExpression 转换�?AssignmentPattern
             return this.convertAssignmentExpressionToPattern(expr)
         }
 
-        // 如果仍然无法转换，返回 null（不要返回原始 CST）
+        // 如果仍然无法转换，返�?null（不要返回原�?CST�?
         return null
     }
 
     /**
-     * Cover 语法下，将单个参数相关的 CST 节点转换为 Pattern
-     * 仅在“参数位置”调用，用于 Arrow / AsyncArrow 等场景
+     * Cover 语法下，将单个参数相关的 CST 节点转换�?Pattern
+     * 仅在“参数位置”调用，用于 Arrow / AsyncArrow 等场�?
      */
     convertCoverParameterCstToPattern(cst: SubhutiCst, hasEllipsis: boolean): SlimePattern | null {
         let basePattern: SlimePattern | null = null
 
-        // 1. 已经是 BindingIdentifier / BindingPattern 系列的，直接走绑定模式基础方法
+        // 1. 已经�?BindingIdentifier / BindingPattern 系列的，直接走绑定模式基础方法
         if (cst.name === SlimeParser.prototype.BindingIdentifier?.name || cst.name === 'BindingIdentifier') {
             basePattern = this.createBindingIdentifierAst(cst)
         } else if (cst.name === SlimeParser.prototype.BindingPattern?.name || cst.name === 'BindingPattern') {
@@ -8543,12 +8449,12 @@ export class SlimeCstToAst {
             basePattern = this.createObjectBindingPatternAst(cst)
         }
 
-        // 2. 其它情况（AssignmentExpression / ObjectLiteral / ArrayLiteral 等），使用通用的 CST→Pattern 逻辑
+        // 2. 其它情况（AssignmentExpression / ObjectLiteral / ArrayLiteral 等），使用通用�?CST→Pattern 逻辑
         if (!basePattern) {
             basePattern = this.convertCstToPattern(cst)
         }
 
-        // 3. 兼容兜底：仍然无法转换时，尝试从表达式中提取第一个 Identifier
+        // 3. 兼容兜底：仍然无法转换时，尝试从表达式中提取第一�?Identifier
         if (!basePattern) {
             const identifierCst = this.findFirstIdentifierInExpression(cst)
             if (identifierCst) {
@@ -8558,7 +8464,7 @@ export class SlimeCstToAst {
 
         if (!basePattern) return null
 
-        // 4. 处理 rest 参数：根据调用方传入的 hasEllipsis 决定是否包装为 RestElement
+        // 4. 处理 rest 参数：根据调用方传入�?hasEllipsis 决定是否包装�?RestElement
         if (hasEllipsis) {
             return SlimeAstUtil.createRestElement(basePattern)
         }
@@ -8568,7 +8474,7 @@ export class SlimeCstToAst {
 
 
     /**
-     * 将 ObjectLiteral CST 转换为 ObjectPattern
+     * �?ObjectLiteral CST 转换�?ObjectPattern
      */
     convertObjectLiteralToPattern(cst: SubhutiCst): SlimeObjectPattern {
         const properties: SlimeObjectPatternProperty[] = []
@@ -8583,7 +8489,7 @@ export class SlimeCstToAst {
             } else if (child.name === 'PropertyDefinitionList') {
                 for (const prop of child.children || []) {
                     if (prop.value === ',') {
-                        // 将逗号关联到前一个属性
+                        // 将逗号关联到前一个属�?
                         if (properties.length > 0 && !properties[properties.length - 1].commaToken) {
                             properties[properties.length - 1].commaToken = SlimeTokenCreate.createCommaToken(prop.loc)
                         }
@@ -8593,10 +8499,10 @@ export class SlimeCstToAst {
                         // 检查是否是 SpreadElement (... identifier)
                         const ellipsis = prop.children?.find((c: any) => c.value === '...' || c.name === 'Ellipsis')
                         if (ellipsis) {
-                            // 这是一个 RestElement
+                            // 这是一�?RestElement
                             const assignExpr = prop.children?.find((c: any) => c.name === 'AssignmentExpression')
                             if (assignExpr) {
-                                // 从 AssignmentExpression 中提取 identifier
+                                // �?AssignmentExpression 中提�?identifier
                                 const idCst = this.findFirstIdentifierInExpression(assignExpr)
                                 if (idCst) {
                                     const restId = this.createIdentifierAst(idCst)
@@ -8630,14 +8536,14 @@ export class SlimeCstToAst {
     }
 
     /**
-     * 将 PropertyDefinition CST 转换为 Pattern 属性
+     * �?PropertyDefinition CST 转换�?Pattern 属�?
      */
     convertPropertyDefinitionToPatternProperty(cst: SubhutiCst): SlimeAssignmentProperty | null {
         const first = cst.children?.[0]
         if (!first) return null
 
         if (first.name === 'IdentifierReference') {
-            // 简写形式: { id } -> { id: id }
+            // 简写形�? { id } -> { id: id }
             const idNode = first.children?.[0]?.children?.[0]
             if (idNode) {
                 const id = SlimeAstUtil.createIdentifier(idNode.value, idNode.loc)
@@ -8652,7 +8558,7 @@ export class SlimeCstToAst {
                 } as SlimeAssignmentProperty
             }
         } else if (first.name === 'CoverInitializedName') {
-            // 带默认值的简写形式: { id = value }
+            // 带默认值的简写形�? { id = value }
             const idRef = first.children?.find((c: any) => c.name === 'IdentifierReference')
             const initializer = first.children?.find((c: any) => c.name === 'Initializer')
             if (idRef) {
@@ -8705,7 +8611,7 @@ export class SlimeCstToAst {
     }
 
     /**
-     * 将 ObjectExpression AST 转换为 ObjectPattern
+     * �?ObjectExpression AST 转换�?ObjectPattern
      */
     convertObjectExpressionToPattern(expr: any): SlimeObjectPattern {
         const properties: SlimeObjectPatternProperty[] = []
@@ -8744,7 +8650,7 @@ export class SlimeCstToAst {
     }
 
     /**
-     * 将 ArrayExpression AST 转换为 ArrayPattern
+     * �?ArrayExpression AST 转换�?ArrayPattern
      */
     convertArrayExpressionToPattern(expr: any): SlimeArrayPattern {
         const elements: SlimeArrayPatternElement[] = []
@@ -8767,7 +8673,7 @@ export class SlimeCstToAst {
     }
 
     /**
-     * 将 AssignmentExpression AST 转换为 AssignmentPattern
+     * �?AssignmentExpression AST 转换�?AssignmentPattern
      */
     convertAssignmentExpressionToPattern(expr: any): SlimeAssignmentPattern {
         const left = this.convertExpressionToPatternFromAST(expr.left)
@@ -8780,7 +8686,7 @@ export class SlimeCstToAst {
     }
 
     /**
-     * 将表达式 AST 转换为 Pattern
+     * 将表达式 AST 转换�?Pattern
      */
     convertExpressionToPatternFromAST(expr: any): SlimePattern | null {
         if (!expr) return null
@@ -8797,7 +8703,7 @@ export class SlimeCstToAst {
     }
 
     /**
-     * 将 ArrayLiteral CST 转换为 ArrayPattern
+     * �?ArrayLiteral CST 转换�?ArrayPattern
      */
     convertArrayLiteralToPattern(cst: SubhutiCst): SlimeArrayPattern {
         // 简化实现：使用 createArrayBindingPatternAst 的逻辑
@@ -8805,7 +8711,7 @@ export class SlimeCstToAst {
         let lBracketToken: any = undefined
         let rBracketToken: any = undefined
 
-        // 辅助函数：处理 Elision 节点
+        // 辅助函数：处�?Elision 节点
         const processElision = (elisionNode: SubhutiCst) => {
             for (const elisionChild of elisionNode.children || []) {
                 if (elisionChild.value === ',') {
@@ -8813,7 +8719,7 @@ export class SlimeCstToAst {
                     if (elements.length > 0 && !elements[elements.length - 1].commaToken) {
                         elements[elements.length - 1].commaToken = SlimeTokenCreate.createCommaToken(elisionChild.loc)
                     }
-                    // 添加一个省略元素
+                    // 添加一个省略元�?
                     elements.push({ element: null })
                 }
             }
@@ -8825,14 +8731,14 @@ export class SlimeCstToAst {
             } else if (child.value === ']') {
                 rBracketToken = SlimeTokenCreate.createRBracketToken(child.loc)
             } else if (child.name === 'Elision') {
-                // 直接在 ArrayLiteral 下的 Elision（如 [,,]）
+                // 直接�?ArrayLiteral 下的 Elision（如 [,,]�?
                 processElision(child)
             } else if (child.name === 'ElementList') {
                 const elemChildren = child.children || []
                 for (let i = 0; i < elemChildren.length; i++) {
                     const elem = elemChildren[i]
                     if (elem.value === ',') {
-                        // 将逗号关联到前一个元素
+                        // 将逗号关联到前一个元�?
                         if (elements.length > 0 && !elements[elements.length - 1].commaToken) {
                             elements[elements.length - 1].commaToken = SlimeTokenCreate.createCommaToken(elem.loc)
                         }
@@ -8867,7 +8773,7 @@ export class SlimeCstToAst {
     }
 
     /**
-     * 从 ArrowFormalParameters 提取参数
+     * �?ArrowFormalParameters 提取参数
      */
     createArrowFormalParametersAst(cst: SubhutiCst): SlimePattern[] {
         // ArrowFormalParameters: ( UniqueFormalParameters )
@@ -8886,7 +8792,7 @@ export class SlimeCstToAst {
     }
 
     /**
-     * 从 ArrowFormalParameters 提取参数 (包装类型版本)
+     * �?ArrowFormalParameters 提取参数 (包装类型版本)
      */
     createArrowFormalParametersAstWrapped(cst: SubhutiCst): SlimeFunctionParam[] {
         // ArrowFormalParameters: ( UniqueFormalParameters )
@@ -8908,15 +8814,15 @@ export class SlimeCstToAst {
     createArrowParametersFromCoverGrammar(cst: SubhutiCst): SlimePattern[] {
         checkCstName(cst, SlimeParser.prototype.CoverParenthesizedExpressionAndArrowParameterList?.name);
 
-        // CoverParenthesizedExpressionAndArrowParameterList 的children结构：
+        // CoverParenthesizedExpressionAndArrowParameterList 的children结构�?
         // LParen + (FormalParameterList | Expression | ...) + RParen
-        // 或者 LParen + Expression + Comma + Ellipsis + BindingIdentifier + RParen
+        // 或�?LParen + Expression + Comma + Ellipsis + BindingIdentifier + RParen
 
         if (cst.children.length === 0) {
             return []
         }
 
-        // () - 空参数
+        // () - 空参�?
         if (cst.children.length === 2) {
             return []
         }
@@ -8931,12 +8837,12 @@ export class SlimeCstToAst {
             return this.createFormalParameterListAst(formalParameterListCst)
         }
 
-        // 查找Expression（可能是逗号表达式，如 (a, b) 或单个参数 (x)）
+        // 查找Expression（可能是逗号表达式，�?(a, b) 或单个参�?(x)�?
         const expressionCst = cst.children.find(
             child => child.name === SlimeParser.prototype.Expression?.name
         )
         if (expressionCst && expressionCst.children?.length) {
-            // 直接在 Expression 的 children 上遍历 AssignmentExpression 等候选参数节点
+            // 直接�?Expression �?children 上遍�?AssignmentExpression 等候选参数节�?
             for (const child of expressionCst.children) {
                 if (child.name === 'Comma' || child.value === ',') continue
                 const param = this.convertCoverParameterCstToPattern(child, false)
@@ -8946,12 +8852,12 @@ export class SlimeCstToAst {
             }
         }
 
-        // 检查是否有 rest 参数（Ellipsis + BindingIdentifier 或 BindingPattern）
+        // 检查是否有 rest 参数（Ellipsis + BindingIdentifier �?BindingPattern�?
         const hasEllipsis = cst.children.some(
             child => child.name === 'Ellipsis' || child.name === 'Ellipsis'
         )
         if (hasEllipsis) {
-            // 首先查找 BindingIdentifier / BindingPattern 作为 rest 的目标
+            // 首先查找 BindingIdentifier / BindingPattern 作为 rest 的目�?
             const bindingIdentifierCst = cst.children.find(
                 child => child.name === SlimeParser.prototype.BindingIdentifier?.name || child.name === 'BindingIdentifier'
             )
@@ -8974,7 +8880,7 @@ export class SlimeCstToAst {
                 }
             }
         } else if (params.length === 0) {
-            // 没有 Expression 也没有 rest，检查是否有单独的 BindingIdentifier
+            // 没有 Expression 也没�?rest，检查是否有单独�?BindingIdentifier
             const bindingIdentifierCst = cst.children.find(
                 child => child.name === SlimeParser.prototype.BindingIdentifier?.name || child.name === 'BindingIdentifier'
             )
@@ -8987,13 +8893,13 @@ export class SlimeCstToAst {
     }
 
     /**
-     * 从Expression中提取箭头函数参数
-     * 处理逗号表达式 (a, b) 或单个参数 (x)
+     * 从Expression中提取箭头函数参�?
+     * 处理逗号表达�?(a, b) 或单个参�?(x)
      */
     extractParametersFromExpression(expressionCst: SubhutiCst): SlimePattern[] {
         // Expression可能是：
         // 1. 单个Identifier: x
-        // 2. 逗号表达式: a, b 或 a, b, c
+        // 2. 逗号表达�? a, b �?a, b, c
         // 3. 赋值表达式（默认参数）: a = 1
 
         // 检查是否是AssignmentExpression
@@ -9018,11 +8924,11 @@ export class SlimeCstToAst {
         if (expressionCst.children && expressionCst.children.length > 0) {
             const params: SlimePattern[] = []
 
-            // 遍历children，查找所有AssignmentExpression（用逗号分隔）
+            // 遍历children，查找所有AssignmentExpression（用逗号分隔�?
             for (const child of expressionCst.children) {
                 if (child.name === SlimeParser.prototype.AssignmentExpression?.name) {
                     const assignmentAst = this.createAssignmentExpressionAst(child)
-                    // 转换为参数
+                    // 转换为参�?
                     if (assignmentAst.type === SlimeNodeType.Identifier) {
                         params.push(assignmentAst as any)
                     } else if (assignmentAst.type === SlimeNodeType.AssignmentExpression) {
@@ -9033,12 +8939,12 @@ export class SlimeCstToAst {
                             right: assignmentAst.right
                         } as any)
                     } else if (assignmentAst.type === SlimeNodeType.ObjectExpression) {
-                        // 对象解构参数：({ a, b }) => ...
-                        // 需要将 ObjectExpression 转换为 ObjectPattern
+                        // 对象解构参数�?{ a, b }) => ...
+                        // 需要将 ObjectExpression 转换�?ObjectPattern
                         params.push(this.convertExpressionToPattern(assignmentAst) as any)
                     } else if (assignmentAst.type === SlimeNodeType.ArrayExpression) {
-                        // 数组解构参数：([a, b]) => ...
-                        // 需要将 ArrayExpression 转换为 ArrayPattern
+                        // 数组解构参数�?[a, b]) => ...
+                        // 需要将 ArrayExpression 转换�?ArrayPattern
                         params.push(this.convertExpressionToPattern(assignmentAst) as any)
                     } else {
                         // 其他复杂情况，尝试提取identifier
@@ -9081,7 +8987,7 @@ export class SlimeCstToAst {
     }
 
     /**
-     * 将表达式转换为模式（用于箭头函数参数解构）
+     * 将表达式转换为模式（用于箭头函数参数解构�?
      * ObjectExpression -> ObjectPattern
      * ArrayExpression -> ArrayPattern
      * Identifier -> Identifier
@@ -9095,7 +9001,7 @@ export class SlimeCstToAst {
         }
 
         if (expr.type === SlimeNodeType.ObjectExpression) {
-            // 将 ObjectExpression 转换为 ObjectPattern
+            // �?ObjectExpression 转换�?ObjectPattern
             const properties: any[] = []
             for (const item of expr.properties || []) {
                 const prop = item.property !== undefined ? item.property : item
@@ -9110,7 +9016,7 @@ export class SlimeCstToAst {
                         commaToken: item.commaToken
                     })
                 } else if (prop.type === SlimeNodeType.Property) {
-                    // 转换 Property 的 value
+                    // 转换 Property �?value
                     const convertedValue = this.convertExpressionToPattern(prop.value)
                     properties.push({
                         property: {
@@ -9133,7 +9039,7 @@ export class SlimeCstToAst {
         }
 
         if (expr.type === SlimeNodeType.ArrayExpression) {
-            // 将 ArrayExpression 转换为 ArrayPattern
+            // �?ArrayExpression 转换�?ArrayPattern
             const elements: any[] = []
             for (const item of expr.elements || []) {
                 const elem = item.element !== undefined ? item.element : item
@@ -9166,7 +9072,7 @@ export class SlimeCstToAst {
         }
 
         if (expr.type === SlimeNodeType.AssignmentExpression) {
-            // 将 AssignmentExpression 转换为 AssignmentPattern
+            // �?AssignmentExpression 转换�?AssignmentPattern
             return {
                 type: SlimeNodeType.AssignmentPattern,
                 left: this.convertExpressionToPattern(expr.left),
@@ -9194,7 +9100,7 @@ export class SlimeCstToAst {
     createArrowParametersAst(cst: SubhutiCst): SlimePattern[] {
         checkCstName(cst, SlimeParser.prototype.ArrowParameters?.name);
 
-        // ArrowParameters 可以是多种形式，这里简化处理
+        // ArrowParameters 可以是多种形式，这里简化处�?
         if (cst.children.length === 0) {
             return []
         }
@@ -9212,7 +9118,7 @@ export class SlimeCstToAst {
             return this.createArrowParametersFromCoverGrammar(first)
         }
 
-        // 参数列表：( FormalParameterList )
+        // 参数列表�? FormalParameterList )
         if (first.name === SlimeTokenConsumer.prototype.LParen?.name) {
             // 查找 FormalParameterList
             const formalParameterListCst = cst.children.find(
@@ -9228,22 +9134,22 @@ export class SlimeCstToAst {
     }
 
     /**
-     * 创建箭头函数体 AST
+     * 创建箭头函数�?AST
      */
     createConciseBodyAst(cst: SubhutiCst): SlimeBlockStatement | SlimeExpression {
-        // 防御性检查
+        // 防御性检�?
         if (!cst) {
             throw new Error('createConciseBodyAst: cst is null or undefined')
         }
 
-        // 支持 ConciseBody 和 AsyncConciseBody
+        // 支持 ConciseBody �?AsyncConciseBody
         const validNames = [
             SlimeParser.prototype.ConciseBody?.name,
             'ConciseBody',
             'AsyncConciseBody'
         ]
         if (!validNames.includes(cst.name)) {
-            throw new Error(`createConciseBodyAst: 期望 ConciseBody 或 AsyncConciseBody，实际 ${cst.name}`)
+            throw new Error(`createConciseBodyAst: 期望 ConciseBody �?AsyncConciseBody，实�?${cst.name}`)
         }
 
         const first = cst.children[0]
@@ -9251,7 +9157,7 @@ export class SlimeCstToAst {
         // Es2025Parser: { FunctionBody } 格式
         // children: [LBrace, FunctionBody/AsyncFunctionBody, RBrace]
         if (first.name === 'LBrace') {
-            // 找到 FunctionBody 或 AsyncFunctionBody
+            // 找到 FunctionBody �?AsyncFunctionBody
             const functionBodyCst = cst.children.find(child =>
                 child.name === 'FunctionBody' || child.name === SlimeParser.prototype.FunctionBody?.name ||
                 child.name === 'AsyncFunctionBody' || child.name === SlimeParser.prototype.AsyncFunctionBody?.name
@@ -9264,7 +9170,7 @@ export class SlimeCstToAst {
             return SlimeAstUtil.createBlockStatement([], cst.loc)
         }
 
-        // 否则是表达式，解析为表达式
+        // 否则是表达式，解析为表达�?
         if (first.name === SlimeParser.prototype.AssignmentExpression?.name || first.name === 'AssignmentExpression') {
             return this.createAssignmentExpressionAst(first)
         }
@@ -9359,14 +9265,14 @@ export class SlimeCstToAst {
     }
 
     /**
-     * 处理 ShortCircuitExpressionTail (|| 和 ?? 运算符的尾部)
+     * 处理 ShortCircuitExpressionTail (|| �??? 运算符的尾部)
      * CST 结构：ShortCircuitExpressionTail -> LogicalORExpressionTail | CoalesceExpressionTail
      * LogicalORExpressionTail -> LogicalOr LogicalANDExpression LogicalORExpressionTail?
      */
     createShortCircuitExpressionTailAst(left: SlimeExpression, tailCst: SubhutiCst): SlimeExpression {
         const tailChildren = tailCst.children || []
 
-        // 如果是 ShortCircuitExpressionTail，获取内部的 tail
+        // 如果�?ShortCircuitExpressionTail，获取内部的 tail
         if (tailCst.name === 'ShortCircuitExpressionTail' && tailChildren.length > 0) {
             const innerTail = tailChildren[0]
             return this.createShortCircuitExpressionTailAst(left, innerTail)
@@ -9377,7 +9283,7 @@ export class SlimeCstToAst {
         if (tailCst.name === 'LogicalORExpressionTail') {
             let result = left
 
-            // 循环处理 (operator, operand) 对
+            // 循环处理 (operator, operand) �?
             for (let i = 0; i < tailChildren.length; i += 2) {
                 const operatorNode = tailChildren[i]
                 const operator = operatorNode.value || '||'
@@ -9425,7 +9331,7 @@ export class SlimeCstToAst {
             return result
         }
 
-        // 未知的 tail 类型，返回左操作数
+        // 未知�?tail 类型，返回左操作�?
         console.warn('Unknown ShortCircuitExpressionTail type:', tailCst.name)
         return left
     }
