@@ -5,11 +5,11 @@
  * 前提: 阶段1、2已通过（CST和AST可以正常生成）
  *
  * 用法:
- *   npx tsx slime/test-stage3.ts              # 从头开始测试
- *   npx tsx slime/test-stage3.ts 100          # 从第100个开始
- *   npx tsx slime/test-stage3.ts 100 -s       # 从第100个开始，遇错停止
+ *   npx tsx slime/tests/utils/test-stage3.ts              # 从头开始测试
+ *   npx tsx slime/tests/utils/test-stage3.ts 100          # 从第100个开始
+ *   npx tsx slime/tests/utils/test-stage3.ts 100 -s       # 从第100个开始，遇错停止
  */
-import SlimeGenerator from './packages/slime-generator/src/SlimeGenerator'
+import SlimeGenerator from 'slime-generator/src/SlimeGenerator'
 import SubhutiMatchToken from 'subhuti/src/struct/SubhutiMatchToken'
 import { runTests, TestContext, TestResult, parseToAstWithTokens } from './test-framework'
 
@@ -71,8 +71,8 @@ function isTrailingComma(values: string[], idx: number): boolean {
 // ============================================
 
 function testStage3(ctx: TestContext): TestResult {
-  // 使用框架的 parseToAstWithTokens 解析代码
-  const { ast, tokens: inputTokens } = parseToAstWithTokens(ctx.code, ctx.parseMode)
+  // 使用 ctx 中的 ParserClass 和 CstToAstClass
+  const { ast, tokens: inputTokens } = parseToAstWithTokens(ctx.code, ctx.parseMode, ctx.ParserClass, ctx.CstToAstClass)
 
   if (!ast) {
     return { success: false, message: 'AST 转换失败' }
@@ -83,7 +83,7 @@ function testStage3(ctx: TestContext): TestResult {
   const generatedCode = result.code
 
   // 阶段4: 重新解析生成的代码
-  const { tokens: outputTokens } = parseToAstWithTokens(generatedCode, ctx.parseMode)
+  const { tokens: outputTokens } = parseToAstWithTokens(generatedCode, ctx.parseMode, ctx.ParserClass, ctx.CstToAstClass)
 
   // 比较 token 序列
   return compareTokens(inputTokens, outputTokens)

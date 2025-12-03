@@ -3,15 +3,16 @@
  * 测试范围: 词法分析 → 语法分析（生成CST）
  *
  * 用法:
- *   npx tsx slime/test-stage1.ts              # 从头开始测试
- *   npx tsx slime/test-stage1.ts 100          # 从第100个开始
- *   npx tsx slime/test-stage1.ts 100 -s       # 从第100个开始，遇错停止
+ *   npx tsx slime/tests/utils/test-stage1.ts              # 从头开始测试
+ *   npx tsx slime/tests/utils/test-stage1.ts 100          # 从第100个开始
+ *   npx tsx slime/tests/utils/test-stage1.ts 100 -s       # 从第100个开始，遇错停止
  */
 import {runTests, TestContext, TestResult, parseToCst} from './test-framework'
 
 // 阶段1测试逻辑：解析代码生成 CST
 function testStage1(ctx: TestContext): TestResult {
-    const cst = parseToCst(ctx.code, ctx.parseMode)
+    // 使用 ctx 中的 ParserClass
+    const cst = parseToCst(ctx.code, ctx.parseMode, ctx.ParserClass)
 
     if (!cst) {
         return {success: false, message: 'CST 生成返回 undefined'}

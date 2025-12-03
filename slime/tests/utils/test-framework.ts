@@ -1,6 +1,8 @@
 /**
  * 测试框架
  * 包含测试运行器和工具函数
+ *
+ * 支持自定义 Parser 和 CstToAst 类，便于 OVS 等项目复用
  */
 import * as fs from 'fs'
 import * as path from 'path'
@@ -9,33 +11,76 @@ import SlimeParser from 'slime-parser/src/language/es2025/SlimeParser'
 import { SlimeCstToAst } from 'slime-parser/src/language/SlimeCstToAstUtil'
 
 // ============================================
-// Parser 工具（供各阶段测试使用）
+// Parser 类型定义（支持自定义 Parser）
 // ============================================
+
+/** Parser 接口 - 解析器需要实现的方法 */
+export interface IParser {
+  Program(mode: 'module' | 'script'): any
+  parsedTokens: any[]
+}
+
+/** CstToAst 接口 - CST 转 AST 转换器需要实现的方法 */
+export interface ICstToAst {
+  toProgram(cst: any): any
+}
+
+/** Parser 类构造器类型 */
+export type ParserConstructor<T extends IParser = IParser> = new (code: string) => T
+
+/** CstToAst 类构造器类型 */
+export type CstToAstConstructor<T extends ICstToAst = ICstToAst> = new () => T
+
+/** 默认 Parser 类 */
+export const DefaultParserClass: ParserConstructor = SlimeParser
+
+/** 默认 CstToAst 类 */
+export const DefaultCstToAstClass: CstToAstConstructor = SlimeCstToAst
+
+// 导出默认类（向后兼容）
 export { SlimeParser, SlimeCstToAst }
 
+// ============================================
+// Parser 工具（供各阶段测试使用）
+// ============================================
+
 /** 创建解析器并解析为 CST */
-export function parseToCst(code: string, parseMode: 'module' | 'script') {
-  const parser = new SlimeParser(code)
+export function parseToCst(
+  code: string,
+  parseMode: 'module' | 'script',
+  ParserClass: ParserConstructor = DefaultParserClass
+) {
+  const parser = new ParserClass(code)
   return parser.Program(parseMode)
 }
 
 /** 创建解析器并解析为 AST（包含中间 CST） */
-export function parseToAst(code: string, parseMode: 'module' | 'script') {
-  const parser = new SlimeParser(code)
+export function parseToAst(
+  code: string,
+  parseMode: 'module' | 'script',
+  ParserClass: ParserConstructor = DefaultParserClass,
+  CstToAstClass: CstToAstConstructor = DefaultCstToAstClass
+) {
+  const parser = new ParserClass(code)
   const cst = parser.Program(parseMode)
   if (!cst) return { cst: null, ast: null }
-  const converter = new SlimeCstToAst()
+  const converter = new CstToAstClass()
   const ast = converter.toProgram(cst)
   return { cst, ast }
 }
 
 /** 创建解析器并解析为 AST，同时返回 tokens（供代码生成使用） */
-export function parseToAstWithTokens(code: string, parseMode: 'module' | 'script') {
-  const parser = new SlimeParser(code)
+export function parseToAstWithTokens(
+  code: string,
+  parseMode: 'module' | 'script',
+  ParserClass: ParserConstructor = DefaultParserClass,
+  CstToAstClass: CstToAstConstructor = DefaultCstToAstClass
+) {
+  const parser = new ParserClass(code)
   const cst = parser.Program(parseMode)
   const tokens = parser.parsedTokens
   if (!cst) return { cst: null, ast: null, tokens }
-  const converter = new SlimeCstToAst()
+  const converter = new CstToAstClass()
   const ast = converter.toProgram(cst)
   return { cst, ast, tokens }
 }
@@ -83,6 +128,10 @@ export interface TestContext {
   code: string
   parseMode: 'module' | 'script'
   index: number
+  /** Parser 类（用于自定义解析器） */
+  ParserClass: ParserConstructor
+  /** CstToAst 类（用于自定义转换器） */
+  CstToAstClass: CstToAstConstructor
 }
 
 export interface TestResult {
@@ -99,6 +148,12 @@ export interface TestRunnerOptions {
   startFrom?: number
   stopOnFail?: boolean
   useSubprocess?: boolean  // 是否使用子进程（启用超时中断，但会慢很多）
+  /** 自定义 Parser 类（默认使用 SlimeParser） */
+  ParserClass?: ParserConstructor
+  /** 自定义 CstToAst 类（默认使用 SlimeCstToAst） */
+  CstToAstClass?: CstToAstConstructor
+  /** 测试文件扩展名（默认 '.js'） */
+  fileExtension?: string
 }
 
 export interface TestStats {
@@ -240,7 +295,9 @@ export async function runTests(
     verboseOnFail = true,
     startFrom,
     stopOnFail: stopOnFailConfig,
-    useSubprocess: useSubprocessConfig
+    useSubprocess: useSubprocessConfig,
+    ParserClass = DefaultParserClass,
+    CstToAstClass = DefaultCstToAstClass
   } = options
 
   const args = process.argv.slice(2)
@@ -281,7 +338,7 @@ export async function runTests(
 
     const parseMode = getParseMode(testDir, filePath)
     const code = fs.readFileSync(filePath, 'utf-8')
-    const ctx: TestContext = { filePath, testName, code, parseMode, index: i }
+    const ctx: TestContext = { filePath, testName, code, parseMode, index: i, ParserClass, CstToAstClass }
 
     const startTime = performance.now()
 

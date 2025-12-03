@@ -4,9 +4,9 @@
  * 前提: 阶段1已通过（CST可以正常生成）
  *
  * 用法:
- *   npx tsx slime/test-stage2.ts              # 从头开始测试
- *   npx tsx slime/test-stage2.ts 100          # 从第100个开始
- *   npx tsx slime/test-stage2.ts 100 -s       # 从第100个开始，遇错停止
+ *   npx tsx slime/tests/utils/test-stage2.ts              # 从头开始测试
+ *   npx tsx slime/tests/utils/test-stage2.ts 100          # 从第100个开始
+ *   npx tsx slime/tests/utils/test-stage2.ts 100 -s       # 从第100个开始，遇错停止
  */
 import { runTests, TestContext, TestResult, parseToAst } from './test-framework'
 
@@ -72,8 +72,8 @@ function countNodes(node: any): number {
 // ============================================
 
 function testStage2(ctx: TestContext): TestResult {
-  // 使用框架的 parseToAst 解析代码
-  const { cst, ast } = parseToAst(ctx.code, ctx.parseMode)
+  // 使用 ctx 中的 ParserClass 和 CstToAstClass
+  const { cst, ast } = parseToAst(ctx.code, ctx.parseMode, ctx.ParserClass, ctx.CstToAstClass)
 
   if (!cst) {
     return { success: false, message: 'CST 生成返回 undefined' }
