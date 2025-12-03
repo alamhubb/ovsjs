@@ -36,11 +36,17 @@ export default class OvsParser extends SlimeParser<OvsTokenConsumer> {
         // 使用 IdentifierReference 并传递 params，和普通方法调用一样
         this.IdentifierReference(params)
         this.Option(() => {
-            this.Arguments()
+            // ✅ 修复：传递 params
+            // 根据 ES 规范 Arguments[?Yield, ?Await]，需要传递 Yield/Await 参数
+            // 这样在 async 上下文中参数里可以使用 await
+            this.Arguments(params)
         })
         this.tokenConsumer.LBrace()
         this.Option(() => {
-            this.StatementList()
+            // ✅ 正确：传递 params
+            // OvsRenderFunction 的 body 类似于 FunctionBody，需要传递 Yield/Await 参数
+            // 这样在 async 组件中可以使用 await，在 generator 组件中可以使用 yield
+            this.StatementList(params)
         })
         this.tokenConsumer.RBrace()
         return this.curCst
@@ -58,17 +64,38 @@ export default class OvsParser extends SlimeParser<OvsTokenConsumer> {
         return this.LeftHandSideExpression({...params, DisableOvsRender: true} as any)
     }
 
+    /**
+     * OvsViewDeclaration - OVS 视图声明
+     * 语法: ovsView Identifier (params)? : OvsRenderFunction
+     *
+     * ✅ 硬编码无参数是正确的：
+     * 根据 ES 规范，顶层声明（如 FunctionDeclaration）不接收 Yield/Await 参数，
+     * 而是在内部硬编码。例如：
+     * - FunctionDeclaration 内部使用 FunctionBody[~Yield, ~Await]
+     * - AsyncFunctionDeclaration 内部使用 AsyncFunctionBody (即 FunctionBody[~Yield, +Await])
+     *
+     * OvsViewDeclaration 作为顶层声明，其内部的 OvsRenderFunction 应该有自己的默认上下文。
+     * 目前默认 {Yield: false, Await: false}，类似普通函数。
+     * 如果需要 async 组件，可以考虑添加 async ovsView 语法。
+     */
     @SubhutiRule
     OvsViewDeclaration() {
         // ovsView + ovsRenderDomClassDeclaration + OvsRenderDomViewDeclaration
         this.tokenConsumer.OvsViewToken()
         this.OvsRenderDomClassDeclaration()  // 复用：Identifier, FunctionFormalParameters?, Colon
-        this.OvsRenderFunction()   // 视图内容
+        // ✅ 硬编码 {Yield: false, Await: false} 是正确的
+        // OvsViewDeclaration 类似 FunctionDeclaration，内部默认不在 async/generator 上下文中
+        this.OvsRenderFunction({Yield: false, Await: false})
     }
 
     /**
      * ovsView 的类声明部分
      * 格式: ComponentName(params)?:
+     *
+     * ✅ ArrowFormalParameters() 无参数是正确的：
+     * 根据 ES 规范 ArrowFormalParameters[Yield, Await]，参数列表的上下文由外层决定。
+     * OvsViewDeclaration 类似普通函数声明，其参数列表不在 async/generator 上下文中。
+     * 参考：FunctionDeclaration 使用 FormalParameters[~Yield, ~Await]
      */
     @SubhutiRule
     OvsRenderDomClassDeclaration() {
@@ -76,33 +103,49 @@ export default class OvsParser extends SlimeParser<OvsTokenConsumer> {
         this.Option(() => {
             // 使用 ArrowFormalParameters 而不是 FormalParameters
             // 因为 ovsView MyCard(state): div {} 的参数格式类似箭头函数
-            this.ArrowFormalParameters()
+            // ✅ 硬编码 {Yield: false, Await: false} 是正确的
+            // 类似 FunctionDeclaration 的 FormalParameters[~Yield, ~Await]
+            this.ArrowFormalParameters({Yield: false, Await: false})
         })
         this.tokenConsumer.Colon()
     }
 
+    /**
+     * NoRenderBlock - 不渲染代码块
+     * 语法: #{ StatementList? }
+     *
+     * ⚠️ 需要修复：NoRenderBlock 应该接收并传递 params
+     * NoRenderBlock 可以出现在任何 Statement 位置，需要继承外层的 Yield/Await 上下文。
+     * 例如在 async 函数中的 #{ await something } 需要正确解析 await。
+     */
     @SubhutiRule
-    NoRenderBlock() {
+    NoRenderBlock(params: StatementParams = {}) {
         // #{ statements } - 不渲染代码块
         this.tokenConsumer.Hash()
         this.tokenConsumer.LBrace()
         this.Option(() => {
-            this.StatementList()
+            // ✅ 正确：传递 params，继承外层的 Yield/Await/Return 上下文
+            this.StatementList(params)
         })
         this.tokenConsumer.RBrace()
     }
 
     /**
      * Statement - 覆盖父类，添加 NoRenderBlock 支持
+     *
+     * 参数传递说明：
+     * - NoRenderBlock(params): ✅ 传递 params，继承 Yield/Await/Return 上下文
+     * - EmptyStatement(): ✅ 无参数是正确的，空语句不需要上下文
+     * - DebuggerStatement(): ✅ 无参数是正确的，debugger 语句不需要上下文
      */
     @SubhutiRule
     Statement(params: StatementParams = {}) {
         const {Return = false} = params
         return this.Or([
-            { alt: () => this.NoRenderBlock() },        // 新增：#{}块优先
+            { alt: () => this.NoRenderBlock(params) },  // ✅ 修复：传递 params
             { alt: () => this.BlockStatement(params) },
             { alt: () => this.VariableStatement(params) },
-            { alt: () => this.EmptyStatement() },
+            { alt: () => this.EmptyStatement() },       // ✅ 正确：EmptyStatement 不需要参数
             { alt: () => this.ExpressionStatement(params) },
             { alt: () => this.IfStatement(params) },
             { alt: () => this.BreakableStatement(params) },
@@ -113,7 +156,7 @@ export default class OvsParser extends SlimeParser<OvsTokenConsumer> {
             { alt: () => this.LabelledStatement(params) },
             { alt: () => this.ThrowStatement(params) },
             { alt: () => this.TryStatement(params) },
-            { alt: () => this.DebuggerStatement() }
+            { alt: () => this.DebuggerStatement() }     // ✅ 正确：DebuggerStatement 不需要参数
         ])
     }
 
