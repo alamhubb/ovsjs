@@ -2,8 +2,14 @@ import {SlimeCstToAst} from "slime-parser/src/language/SlimeCstToAstUtil.ts";
 import SubhutiCst from "subhuti/src/struct/SubhutiCst.ts";
 import OvsParser from "../parser/OvsParser.ts";
 import {SlimeNodeType} from "slime-ast/src/SlimeNodeType.ts";
-import {type SlimeProgram, SlimeProgramSourceType} from "slime-ast/src/SlimeESTree.ts";
+import {
+    type SlimeModuleDeclaration,
+    type SlimeProgram,
+    SlimeProgramSourceType,
+    type SlimeStatement
+} from "slime-ast/src/SlimeESTree.ts";
 import SlimeParser from "slime-parser/src/language/es2025/SlimeParser.ts";
+import SlimeNodeCreate from "slime-ast/src/SlimeNodeCreate.ts";
 
 export function checkCstName(cst: SubhutiCst, cstName: string) {
   if (cst.name !== cstName) {
@@ -78,7 +84,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     }
 
     // 创建 Program AST
-    const program = SlimeAstUtil.createProgram(body, SlimeProgramSourceType.Module)
+    const program = SlimeNodeCreate.createProgram(body, SlimeProgramSourceType.Module)
     program.loc = cst.loc
 
     return program
@@ -166,7 +172,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
           const returnExpr = (lastReturn as any).argument
           functionBodyStatements = [
             ...statementsWithoutReturn,
-            SlimeAstUtil.createReturnStatement(returnExpr)
+            SlimeNodeCreate.createReturnStatement(returnExpr)
           ]
         } else {
           functionBodyStatements = iifeBody
@@ -174,18 +180,18 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
       } else {
         // 简单视图的 h 调用：h('div', {}, [...])
         functionBodyStatements = [
-          SlimeAstUtil.createReturnStatement(viewExpression)
+          SlimeNodeCreate.createReturnStatement(viewExpression)
         ]
       }
     } else {
       // 其他类型，直接 return
       functionBodyStatements = [
-        SlimeAstUtil.createReturnStatement(viewExpression)
+        SlimeNodeCreate.createReturnStatement(viewExpression)
       ]
     }
 
     // 创建函数体
-    const functionBody = SlimeAstUtil.createBlockStatement(
+    const functionBody = SlimeNodeCreate.createBlockStatement(
       { type: 'LBrace', value: '{', loc: cst.loc } as any,
       { type: 'RBrace', value: '}', loc: cst.loc } as any,
       functionBodyStatements,
@@ -346,11 +352,11 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
       
       // 1. OvsRenderFunction → 永远渲染（优先级最高）
       if (isOvsRenderFunction) {
-        const pushCall = SlimeAstUtil.createCallExpression(
-          SlimeAstUtil.createMemberExpression(
-            SlimeAstUtil.createIdentifier('children'),
-            SlimeAstUtil.createDotOperator(cst.loc),
-            SlimeAstUtil.createIdentifier('push')
+        const pushCall = SlimeNodeCreate.createCallExpression(
+          SlimeNodeCreate.createMemberExpression(
+            SlimeNodeCreate.createIdentifier('children'),
+            SlimeNodeCreate.createDotOperator(cst.loc),
+            SlimeNodeCreate.createIdentifier('push')
           ),
           [expr]
         )
@@ -371,11 +377,11 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
       }
       
       // 3. 在 div {} 内，不在 #{} 内 → 渲染
-      const pushCall = SlimeAstUtil.createCallExpression(
-        SlimeAstUtil.createMemberExpression(
-          SlimeAstUtil.createIdentifier('children'),
-          SlimeAstUtil.createDotOperator(cst.loc),
-          SlimeAstUtil.createIdentifier('push')
+      const pushCall = SlimeNodeCreate.createCallExpression(
+        SlimeNodeCreate.createMemberExpression(
+          SlimeNodeCreate.createIdentifier('children'),
+          SlimeNodeCreate.createDotOperator(cst.loc),
+          SlimeNodeCreate.createIdentifier('push')
         ),
         [expr]
       )
@@ -566,17 +572,17 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     })
 
     // 创建 children 数组
-    const childrenArray = SlimeAstUtil.createArrayExpression(childExpressions)
+    const childrenArray = SlimeNodeCreate.createArrayExpression(childExpressions)
 
     // 创建 props 对象：如果是组件调用，使用 componentProps，否则用空对象
-    const propsObject = componentProps || SlimeAstUtil.createObjectExpression([])
+    const propsObject = componentProps || SlimeNodeCreate.createObjectExpression([])
 
     // 创建第一个参数：组件用 Identifier，标签用 StringLiteral
     const firstArg = id  // MyComponent（不加引号）
 
     // 创建 createComponentVNode(firstArg, props, children) 调用
-    const vNodeCall = SlimeAstUtil.createCallExpression(
-      SlimeAstUtil.createIdentifier('createComponentVNode'),
+    const vNodeCall = SlimeNodeCreate.createCallExpression(
+      SlimeNodeCreate.createIdentifier('createComponentVNode'),
       [
         firstArg,         // 第一个参数：组件标识符或标签字符串
         propsObject,      // 第二个参数：props
@@ -617,13 +623,13 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     const iifeFunctionBody: SlimeStatement[] = [
       // 1. 声明 children 数组：const children = []
       // 注意：这是自动生成的代码，不传递loc（避免创建错误映射）
-      SlimeAstUtil.createVariableDeclaration(
-        SlimeAstUtil.createVariableDeclarationKind(SlimeVariableDeclarationKindValue.const),
+      SlimeNodeCreate.createVariableDeclaration(
+        SlimeNodeCreate.createVariableDeclarationKind(SlimeVariableDeclarationKindValue.const),
         [
-          SlimeAstUtil.createVariableDeclarator(
-            SlimeAstUtil.createIdentifier('children'),
-            SlimeAstUtil.createEqualOperator(),
-            SlimeAstUtil.createArrayExpression([])
+          SlimeNodeCreate.createVariableDeclarator(
+            SlimeNodeCreate.createIdentifier('children'),
+            SlimeNodeCreate.createEqualOperator(),
+            SlimeNodeCreate.createArrayExpression([])
           )
         ]
       )
@@ -632,13 +638,13 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     // 2. 如果有attrs，声明 attrs 对象：const temp$$attrs$$uuid = {}
     // 注意：这也是自动生成的代码，不传递loc（避免创建错误映射）
     if (attrsVarName) {
-      const attrsDeclaration = SlimeAstUtil.createVariableDeclaration(
-        SlimeAstUtil.createVariableDeclarationKind(SlimeVariableDeclarationKindValue.const),
+      const attrsDeclaration = SlimeNodeCreate.createVariableDeclaration(
+        SlimeNodeCreate.createVariableDeclarationKind(SlimeVariableDeclarationKindValue.const),
         [
-          SlimeAstUtil.createVariableDeclarator(
-            SlimeAstUtil.createIdentifier(attrsVarName),
-            SlimeAstUtil.createEqualOperator(),
-            SlimeAstUtil.createObjectExpression([])
+          SlimeNodeCreate.createVariableDeclarator(
+            SlimeNodeCreate.createIdentifier(attrsVarName),
+            SlimeNodeCreate.createEqualOperator(),
+            SlimeNodeCreate.createObjectExpression([])
           )
         ]
       )
@@ -650,8 +656,8 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
 
     // 4. 返回 children
     iifeFunctionBody.push(
-      SlimeAstUtil.createReturnStatement(
-        SlimeAstUtil.createIdentifier('children')
+      SlimeNodeCreate.createReturnStatement(
+        SlimeNodeCreate.createIdentifier('children')
       )
     )
 
@@ -691,13 +697,13 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     // 所以需要重新构建函数体，用基础的前半部分逻辑，但改变return语句
     const iifeFunctionBody: SlimeStatement[] = [
       // 1. 声明 children 数组：const children = []
-      SlimeAstUtil.createVariableDeclaration(
-        SlimeAstUtil.createVariableDeclarationKind(SlimeVariableDeclarationKindValue.const),
+      SlimeNodeCreate.createVariableDeclaration(
+        SlimeNodeCreate.createVariableDeclarationKind(SlimeVariableDeclarationKindValue.const),
         [
-          SlimeAstUtil.createVariableDeclarator(
-            SlimeAstUtil.createIdentifier('children'),
-            SlimeAstUtil.createEqualOperator(),
-            SlimeAstUtil.createArrayExpression([])
+          SlimeNodeCreate.createVariableDeclarator(
+            SlimeNodeCreate.createIdentifier('children'),
+            SlimeNodeCreate.createEqualOperator(),
+            SlimeNodeCreate.createArrayExpression([])
           )
         ]
       )
@@ -705,13 +711,13 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
 
     // 2. 如果有attrs，声明 attrs 对象
     if (attrsVarName) {
-      const attrsDeclaration = SlimeAstUtil.createVariableDeclaration(
-        SlimeAstUtil.createVariableDeclarationKind(SlimeVariableDeclarationKindValue.const),
+      const attrsDeclaration = SlimeNodeCreate.createVariableDeclaration(
+        SlimeNodeCreate.createVariableDeclarationKind(SlimeVariableDeclarationKindValue.const),
         [
-          SlimeAstUtil.createVariableDeclarator(
-            SlimeAstUtil.createIdentifier(attrsVarName),
-            SlimeAstUtil.createEqualOperator(),
-            SlimeAstUtil.createObjectExpression([])
+          SlimeNodeCreate.createVariableDeclarator(
+            SlimeNodeCreate.createIdentifier(attrsVarName),
+            SlimeNodeCreate.createEqualOperator(),
+            SlimeNodeCreate.createObjectExpression([])
           )
         ]
       )
@@ -748,7 +754,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
   ): SlimeStatement {
 
     // 创建 createReactiveVNode 函数标识符
-    const createReactiveVNodeIdentifier = SlimeAstUtil.createIdentifier('createComponentVNode')
+    const createReactiveVNodeIdentifier = SlimeNodeCreate.createIdentifier('createComponentVNode')
 
     // 创建 props 对象
     let propsObject
@@ -758,19 +764,19 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     } else {
       // 普通元素无自定义props：{}
       // 注：attrsVarName 保留用于将来的属性赋值功能
-      propsObject = SlimeAstUtil.createObjectExpression([])
+      propsObject = SlimeNodeCreate.createObjectExpression([])
     }
 
     // 创建第一个参数：组件用 Identifier，标签用 StringLiteral
     const firstArg = id  // MyComponent（不加引号）
 
     // 创建函数调用：createComponentVNode(firstArg, props, children)
-    const callExpression = SlimeAstUtil.createCallExpression(
+    const callExpression = SlimeNodeCreate.createCallExpression(
       createReactiveVNodeIdentifier,
       [
         firstArg,                                     // 第一个参数：组件标识符或标签字符串
         propsObject,                                  // 第二个参数：props 对象
-        SlimeAstUtil.createIdentifier('children')    // 第三个参数：children 数组（固定名字）
+        SlimeNodeCreate.createIdentifier('children')    // 第三个参数：children 数组（固定名字）
       ]
     )
 
@@ -780,7 +786,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     }
 
     // 包装为 return 语句
-    return SlimeAstUtil.createReturnStatement(callExpression)
+    return SlimeNodeCreate.createReturnStatement(callExpression)
   }
 
   /**
@@ -798,7 +804,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     const loc = body[0]?.loc || undefined
 
     // 创建函数体的 BlockStatement
-    const blockStatement = SlimeAstUtil.createBlockStatement(
+    const blockStatement = SlimeNodeCreate.createBlockStatement(
       { type: 'LBrace', value: '{', loc } as any,
       { type: 'RBrace', value: '}', loc } as any,
       body,
@@ -806,20 +812,20 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     )
 
     // 创建函数参数（空参数）
-    const lp = SlimeAstUtil.createLParen(loc)
-    const rp = SlimeAstUtil.createRParen(loc)
-    const functionParams = SlimeAstUtil.createFunctionParams(lp, rp)
+    const lp = SlimeNodeCreate.createLParen(loc)
+    const rp = SlimeNodeCreate.createRParen(loc)
+    const functionParams = SlimeNodeCreate.createFunctionParams(lp, rp)
 
     // 创建函数表达式
-    const functionExpression = SlimeAstUtil.createFunctionExpression(blockStatement, null, functionParams, loc)
+    const functionExpression = SlimeNodeCreate.createFunctionExpression(blockStatement, null, functionParams, loc)
 
     // 创建函数调用（立即执行）
-    const callExpression = SlimeAstUtil.createCallExpression(functionExpression, [])
+    const callExpression = SlimeNodeCreate.createCallExpression(functionExpression, [])
 
     return callExpression
   }
 
 }
 
-const OvsCstToSlimeAstUtil = new OvsCstToSlimeAst()
-export default OvsCstToSlimeAstUtil
+const OvsCstToSlimeNodeCreate = new OvsCstToSlimeAst()
+export default OvsCstToSlimeNodeCreate
