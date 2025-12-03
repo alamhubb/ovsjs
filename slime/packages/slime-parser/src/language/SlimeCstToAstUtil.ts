@@ -111,6 +111,8 @@ export function throwNewError(errorMsg: string = 'syntax error') {
 
 //应该根据cst名称命名，转换为ast
 export class SlimeCstToAst {
+    private readonly expressionAstCache = new WeakMap<SubhutiCst, SlimeExpression>()
+
     createIdentifierAst(cst: SubhutiCst): SlimeIdentifier {
         // Support Identifier, IdentifierName, and contextual keywords (yield, await) used as identifiers
         const expectedName = SlimeParser.prototype.Identifier?.name || 'Identifier'
@@ -5344,6 +5346,16 @@ export class SlimeCstToAst {
     }
 
     createExpressionAst(cst: SubhutiCst): SlimeExpression {
+        const cached = this.expressionAstCache.get(cst)
+        if (cached) {
+            return cached
+        }
+        const result = this.createExpressionAstUncached(cst)
+        this.expressionAstCache.set(cst, result)
+        return result
+    }
+
+    private createExpressionAstUncached(cst: SubhutiCst): SlimeExpression {
         const astName = cst.name
         let left
         if (astName === SlimeParser.prototype.Expression?.name) {
