@@ -212,7 +212,7 @@ export class SlimeCstToAst {
         // OptionalChain 需要 object 参数，不能直接从中心分发调用，应通过 OptionalExpression 处理
         if (name === SlimeParser.prototype.CoalesceExpression?.name) return this.createCoalesceExpressionAst(cst)
         if (name === SlimeParser.prototype.CoalesceExpressionHead?.name) return this.createCoalesceExpressionHeadAst(cst)
-        if (name === SlimeParser.prototype.ShortCircuitExpressionTail?.name) return this.createShortCircuitExpressionTailAst(cst)
+        // ShortCircuitExpressionTail 需要 left 参数，通过 ShortCircuitExpression 处理
         if (name === SlimeParser.prototype.ParenthesizedExpression?.name) return this.createParenthesizedExpressionAst(cst)
         if (name === SlimeParser.prototype.AwaitExpression?.name) return this.createAwaitExpressionAst(cst)
         if (name === SlimeParser.prototype.YieldExpression?.name) return this.createYieldExpressionAst(cst)
@@ -314,12 +314,12 @@ export class SlimeCstToAst {
         if (name === SlimeParser.prototype.ClassStaticBlock?.name) return this.createClassStaticBlockAst(cst)
         if (name === SlimeParser.prototype.ClassStaticBlockBody?.name) return this.createClassStaticBlockBodyAst(cst)
         if (name === SlimeParser.prototype.ClassStaticBlockStatementList?.name) return this.createClassStaticBlockStatementListAst(cst)
-        if (name === SlimeParser.prototype.MethodDefinition?.name) return this.createMethodDefinitionAst(cst)
-        if (name === SlimeParser.prototype.FieldDefinition?.name) return this.createFieldDefinitionAst(cst)
+        if (name === SlimeParser.prototype.MethodDefinition?.name) return this.createMethodDefinitionAst(null, cst)
+        if (name === SlimeParser.prototype.FieldDefinition?.name) return this.createFieldDefinitionAst(null, cst)
         if (name === SlimeParser.prototype.GeneratorMethod?.name) return this.createGeneratorMethodAst(cst)
         if (name === SlimeParser.prototype.AsyncMethod?.name) return this.createAsyncMethodAst(cst)
         if (name === SlimeParser.prototype.AsyncGeneratorMethod?.name) return this.createAsyncGeneratorMethodAst(cst)
-        if (name === SlimeParser.prototype.PrivateIdentifier?.name) return this.createPrivateIdentifierAst(cst)
+        if (name === 'PrivateIdentifier') return this.createPrivateIdentifierAst(cst)
 
         // ==================== 对象属性相�?====================
         if (name === SlimeParser.prototype.PropertyDefinition?.name) return this.createPropertyDefinitionAst(cst)
@@ -866,8 +866,7 @@ export class SlimeCstToAst {
             if (child.name === SlimeParser.prototype.AttributeKey?.name ||
                 child.name === 'AttributeKey') {
                 currentKey = this.createAttributeKeyAst(child)
-            } else if (child.name === SlimeParser.prototype.StringLiteral?.name ||
-                child.name === 'StringLiteral' ||
+            } else if (child.name === 'StringLiteral' ||
                 (child.value && (child.value.startsWith('"') || child.value.startsWith("'")))) {
                 if (currentKey) {
                     entries.push({
@@ -983,7 +982,7 @@ export class SlimeCstToAst {
                         // 这是 attribute 的�?
                         if (currentKey) {
                             attributes.push({
-                                type: SlimeNodeType.ImportAttribute,
+                                type: 'ImportAttribute',
                                 key: currentKey,
                                 value: this.createStringLiteralAst(entry),
                                 loc: { ...currentKey.loc, end: entry.loc?.end }
@@ -2281,7 +2280,7 @@ export class SlimeCstToAst {
     createClassBodyAst(cst: SubhutiCst): SlimeClassBody {
         const astName = checkCstName(cst, SlimeParser.prototype.ClassBody?.name);
         const elementsWrapper = cst.children && cst.children[0] // ClassBody -> ClassElementList?，第一项为列表容器
-        const body: Array<SlimeMethodDefinition | SlimePropertyDefinition | SlimeStaticBlock> = [] // 收集类成�?
+        const body: Array<SlimeMethodDefinition | SlimePropertyDefinition | any> = [] // 收集类成员 (any 用于 StaticBlock)
         if (elementsWrapper && Array.isArray(elementsWrapper.children)) {
             for (const element of elementsWrapper.children) { // 遍历 ClassElement
                 const elementChildren = element.children ?? [] // 兼容无子节点情况
@@ -2340,7 +2339,7 @@ export class SlimeCstToAst {
      * 创建 ClassStaticBlock AST (ES2022)
      * ClassStaticBlock: static { ClassStaticBlockBody }
      */
-    createClassStaticBlockAst(cst: SubhutiCst): SlimeStaticBlock {
+    createClassStaticBlockAst(cst: SubhutiCst): any {
         // CST 结构: ClassStaticBlock -> [IdentifierName:"static", LBrace, ClassStaticBlockBody, RBrace]
         let lBraceToken: any = undefined
         let rBraceToken: any = undefined
@@ -2417,14 +2416,7 @@ export class SlimeCstToAst {
     }
 
     /**
-     * MethodDefinition CST �?AST（透传�?
-     */
-    createMethodDefinitionAst(cst: SubhutiCst): SlimeMethodDefinition {
-        return this.createMethodDefinitionAstInternal(cst, 'method', false, false)
-    }
-
-    /**
-     * 内部辅助方法：创�?MethodDefinition AST
+     * 内部辅助方法：创建 MethodDefinition AST
      */
     private createMethodDefinitionAstInternal(cst: SubhutiCst, kind: 'method' | 'get' | 'set', generator: boolean, async: boolean): SlimeMethodDefinition {
         // 查找属性名
@@ -2477,10 +2469,10 @@ export class SlimeCstToAst {
         if (!firstChild) return null
 
         // 检查是否是 static
-        let isStatic = false
+        let staticCst: SubhutiCst | null = null
         let startIndex = 0
         if (firstChild.name === 'Static' || firstChild.value === 'static') {
-            isStatic = true
+            staticCst = firstChild
             startIndex = 1
         }
 
@@ -2490,12 +2482,10 @@ export class SlimeCstToAst {
         // 根据类型处理
         if (actualChild.name === SlimeParser.prototype.MethodDefinition?.name ||
             actualChild.name === 'MethodDefinition') {
-            const method = this.createMethodDefinitionAst(actualChild)
-            method.static = isStatic
-            return method
+            return this.createMethodDefinitionAst(staticCst, actualChild)
         } else if (actualChild.name === SlimeParser.prototype.FieldDefinition?.name ||
             actualChild.name === 'FieldDefinition') {
-            return this.createFieldDefinitionAst(actualChild, isStatic)
+            return this.createFieldDefinitionAst(staticCst, actualChild)
         } else if (actualChild.name === SlimeParser.prototype.ClassStaticBlock?.name ||
             actualChild.name === 'ClassStaticBlock') {
             return this.createClassStaticBlockAst(actualChild)
@@ -3753,7 +3743,7 @@ export class SlimeCstToAst {
      * AssignmentPattern CST �?AST
      * AssignmentPattern -> ObjectAssignmentPattern | ArrayAssignmentPattern
      */
-    createAssignmentPatternAst(cst: SubhutiCst): SlimeAssignmentPattern {
+    createAssignmentPatternAst(cst: SubhutiCst): any {
         const firstChild = cst.children?.[0]
         if (!firstChild) throw new Error('AssignmentPattern has no children')
 
@@ -6279,14 +6269,7 @@ export class SlimeCstToAst {
     }
 
     /**
-     * ShortCircuitExpressionTail CST �?AST（辅助方法）
-     */
-    createShortCircuitExpressionTailAst(cst: SubhutiCst): SlimeExpression {
-        return this.createShortCircuitExpressionAst(cst)
-    }
-
-    /**
-     * CoalesceExpressionHead CST �?AST
+     * CoalesceExpressionHead CST 转 AST
      * CoalesceExpressionHead -> CoalesceExpression | BitwiseORExpression
      */
     createCoalesceExpressionHeadAst(cst: SubhutiCst): SlimeExpression {
@@ -6454,7 +6437,7 @@ export class SlimeCstToAst {
         } else if (astName === SlimeParser.prototype.ImportCall?.name || astName === 'ImportCall') {
             // ES2020: 动�?import()
             left = this.createImportCallAst(cst)
-        } else if (astName === SlimeParser.prototype.PrivateIdentifier?.name || astName === 'PrivateIdentifier') {
+        } else if (astName === 'PrivateIdentifier') {
             // ES2022: PrivateIdentifier (e.g. #x in `#x in obj`)
             left = this.createPrivateIdentifierAst(cst)
         } else {
@@ -7885,7 +7868,7 @@ export class SlimeCstToAst {
             value = SlimeAstUtil.createNullLiteralToken()
         }
         // BigInt 字面�?
-        else if (childName === 'BigIntLiteral' || childName === SlimeTokenConsumer.prototype.BigIntLiteral?.name) {
+        else if (childName === 'BigIntLiteral') {
             const rawValue = firstChild.value as string || firstChild.children?.[0]?.value as string
             // 去掉末尾�?'n'
             const numStr = rawValue.endsWith('n') ? rawValue.slice(0, -1) : rawValue
@@ -8531,14 +8514,14 @@ export class SlimeCstToAst {
     /**
      * �?AssignmentExpression AST 转换�?AssignmentPattern
      */
-    convertAssignmentExpressionToPattern(expr: any): SlimeAssignmentPattern {
+    convertAssignmentExpressionToPattern(expr: any): any {
         const left = this.convertExpressionToPatternFromAST(expr.left)
         return {
             type: SlimeNodeType.AssignmentPattern,
             left: left || expr.left,
             right: expr.right,
             loc: expr.loc
-        } as SlimeAssignmentPattern
+        }
     }
 
     /**
