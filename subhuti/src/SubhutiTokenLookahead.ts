@@ -7,31 +7,21 @@
  * 3. 对应 ECMAScript® 2025 规范中的所有 [lookahead ...] 约束
  *
  * 设计模式：
- * - 抽象类，定义访问接口（tokens, currentIndex, curToken）
+ * - 抽象类，定义访问接口
  * - 子类（SubhutiParser）实现具体访问逻辑
- * - 避免循环依赖，实现依赖倒置
+ * - 完全基于按需词法分析（On-Demand Lexing）
  *
  * 规范地址：https://tc39.es/ecma262/2025/#sec-grammar-summary
  *
- * @version 3.0.0
+ * @version 4.0.0 - 移除旧模式，只保留按需词法分析
  */
 
 import type SubhutiMatchToken from "./struct/SubhutiMatchToken.ts"
 
 export default class SubhutiTokenLookahead {
     // ============================================
-    // Token 数据（protected，子类可访问）
+    // 核心状态
     // ============================================
-
-    /**
-     * Token 数组
-     */
-    protected _tokens: SubhutiMatchToken[] = []
-
-    /**
-     * 当前 token 索引
-     */
-    protected tokenIndex: number = 0
 
     /**
      * 核心状态：当前规则是否成功
@@ -57,10 +47,11 @@ export default class SubhutiTokenLookahead {
     }
 
     /**
-     * 获取当前 token
+     * 获取当前 token（由子类实现）
      */
     get curToken(): SubhutiMatchToken | undefined {
-        return this._tokens[this.tokenIndex]
+        // 子类 SubhutiParser 会覆盖此 getter
+        return undefined
     }
 
     // ============================================
@@ -69,15 +60,14 @@ export default class SubhutiTokenLookahead {
 
     /**
      * 前瞻：获取未来的 token（不消费）
+     * 由子类 SubhutiParser 覆盖实现
      *
-     * @param offset 偏移量（1 = 下一个 token，2 = 下下个...）
+     * @param offset 偏移量（1 = 当前 token，2 = 下一个...）
      * @returns token 或 undefined（EOF）
      */
     protected peek(offset: number = 1): SubhutiMatchToken | undefined {
-        const index = this.tokenIndex + offset - 1
-        return index >= 0 && index < this._tokens.length
-            ? this._tokens[index]
-            : undefined
+        // 子类 SubhutiParser 会覆盖此方法
+        return undefined
     }
 
     /**

@@ -20,18 +20,18 @@ import { LRUCache } from "lru-cache";
  * SubhutiPackratCache Parsing 缓存结果（完整状态）
  *
  * 关键字段：
- * - endTokenIndex: 解析结束位置
+ * - endTokenIndex: 解析结束时的 token 索引
  * - cst: CST 节点（成功时有值）
  * - parseSuccess: 解析是否成功
  * - recordNode: 解析记录节点（容错模式下使用）
- * - parsedTokens: 消费的 token 列表（新架构使用）
+ * - parsedTokens: 消费的 token 列表
  */
 export interface SubhutiPackratCacheResult {
-    endTokenIndex: number                 // 解析结束位置
+    endTokenIndex: number                 // 解析结束时的 token 索引
     cst: SubhutiCst                       // CST 节点
     parseSuccess: boolean                 // 解析是否成功
     recordNode?: ParseRecordNode | null   // 解析记录节点（容错模式）
-    parsedTokens?: any[]                  // 消费的 token 列表（新架构使用）
+    parsedTokens?: any[]                  // 消费的 token 列表
 }
 
 /**
@@ -129,7 +129,7 @@ export class SubhutiPackratCache {
      * - TypeScript 原生支持
      *
      * 复合键格式：`${ruleName}:${tokenIndex}`
-     * 示例："Expression:42" → 规则Expression在位置42的缓存结果
+     * 示例："Expression:5" → 规则Expression在第5个token位置的缓存结果
      */
     private cache: LRUCache<string, SubhutiPackratCacheResult>
 
@@ -210,7 +210,7 @@ export class SubhutiPackratCache {
      * - 自动更新访问顺序（由 lru-cache 库自动处理）
      *
      * @param ruleName 规则名称
-     * @param tokenIndex Token 位置
+     * @param tokenIndex token 索引
      * @returns 缓存结果，未命中返回 undefined
      */
     get(ruleName: string, tokenIndex: number): SubhutiPackratCacheResult | undefined {
@@ -236,13 +236,13 @@ export class SubhutiPackratCache {
      * - 自动淘汰旧条目（由 lru-cache 库自动处理）
      *
      * @param ruleName 规则名称
-     * @param tokenIndex Token 位置
+     * @param tokenIndex token 索引
      * @param result 缓存结果
      */
     set(ruleName: string, tokenIndex: number, result: SubhutiPackratCacheResult): void {
         const key = `${ruleName}:${tokenIndex}`
         this.stats.stores++
-        
+
         // lru-cache 自动处理 LRU 逻辑和容量限制
         this.cache.set(key, result)
     }

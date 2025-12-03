@@ -1,17 +1,35 @@
 import OvsTokenConsumer, {ovs6Tokens} from "./OvsConsumer.ts"
 import SubhutiParser, {Subhuti, SubhutiRule} from 'subhuti/src/SubhutiParser.ts'
+import SubhutiLexer from 'subhuti/src/SubhutiLexer.ts'
 import OvsVueRenderFactory from "../factory/OvsVueRenderFactory.ts";
 import SubhutiCst from "subhuti/src/struct/SubhutiCst.ts";
 import SlimeParser from "slime-parser/src/language/es2025/SlimeParser.ts";
 
 @Subhuti
 export default class OvsParser extends SlimeParser {
+    // 声明 tokenConsumer 类型为 OvsTokenConsumer
+    declare tokenConsumer: OvsTokenConsumer
+
     /**
      * 构造函数 - 使用按需词法分析模式
      * @param sourceCode 原始源码
      */
     constructor(sourceCode: string = '') {
-        super(sourceCode)  // 先调用空的 super
+        // 先调用 SlimeParser 的构造函数（会初始化所有内部状态）
+        super(sourceCode)
+
+        // 重新配置为 OVS 的 tokens 和 tokenConsumer
+        ;(this as any)._sourceCode = sourceCode
+        ;(this as any)._lexer = new SubhutiLexer(ovs6Tokens)
+        ;(this as any)._onDemandLexing = true
+        ;(this as any)._codeIndex = 0
+        ;(this as any)._codeLine = 1
+        ;(this as any)._codeColumn = 1
+        ;(this as any)._lastTokenName = null
+        ;(this as any)._templateDepth = 0
+        ;(this as any)._tokenCache = new Map()
+        ;(this as any)._parsedTokens = []
+        ;(this as any).tokenConsumer = new OvsTokenConsumer(this)
     }
 
 

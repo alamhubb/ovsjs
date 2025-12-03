@@ -24,8 +24,8 @@ export interface ErrorDetails {
     expected: string
     found?: SubhutiMatchToken
     position: {
-        tokenIndex: number      // token 数组索引
-        charIndex: number       // 字符位置索引
+        tokenIndex: number      // 第几个 token（用于显示，更直观）
+        codeIndex: number       // 源码位置索引（用于精确定位）
         line: number
         column: number
     }
@@ -56,20 +56,20 @@ export interface ErrorDetails {
 
 /**
  * 解析错误类
- * 
+ *
  * 设计理念：
  * - 清晰的视觉层次
  * - 关键信息突出显示
  * - 智能修复建议（只保留最常见的场景）
- * 
+ *
  * 参考：Rust compiler error messages
  */
 export class ParsingError extends Error {
     readonly expected: string
     readonly found?: SubhutiMatchToken
     readonly position: {
-        readonly tokenIndex: number    // token 数组索引
-        readonly charIndex: number     // 字符位置索引
+        readonly tokenIndex: number    // 第几个 token（用于显示）
+        readonly codeIndex: number     // 源码位置索引（用于精确定位）
         readonly line: number
         readonly column: number
     }
@@ -226,7 +226,7 @@ export class ParsingError extends Error {
         lines.push('')
 
         // 位置信息 - 使用紧凑格式
-        lines.push(`Token: token[${this.position.tokenIndex}] ${this.found?.tokenName || 'EOF'} @ line ${this.position.line}:${this.position.column} (char ${this.position.charIndex})`)
+        lines.push(`Token[${this.position.tokenIndex}]: ${this.found?.tokenName || 'EOF'} @ line ${this.position.line}:${this.position.column} (pos ${this.position.codeIndex})`)
         lines.push('')
 
         // 期望和实际
@@ -264,7 +264,7 @@ export class ParsingError extends Error {
 
         return lines.join('\n')
     }
-    
+
     /**
      * 简单格式（基本信息）
      */
@@ -358,7 +358,7 @@ export class ParsingError extends Error {
 
         // 核心信息 - 使用紧凑格式
         lines.push(`规则 "${this.loopRuleName}" 在 token[${this.position.tokenIndex}] 处重复调用自己`)
-        lines.push(`Token: token[${this.position.tokenIndex}] ${this.found?.tokenName || 'EOF'}("${this.found?.tokenValue || ''}") @ line ${this.position.line}:${this.position.column} (char ${this.position.charIndex})`)
+        lines.push(`Token[${this.position.tokenIndex}]: ${this.found?.tokenName || 'EOF'}("${this.found?.tokenValue || ''}") @ line ${this.position.line}:${this.position.column}`)
         lines.push('')
         
         // 🆕 规则路径（如果有）
@@ -459,7 +459,7 @@ export class ParsingError extends Error {
         lines.push('❌ 检测到 Or 分支遮蔽问题')
         lines.push('='.repeat(80))
         lines.push(`规则 "${this.loopRuleName}" 在 token[${this.position.tokenIndex}] 处重复调用自己`)
-        lines.push(`Token: token[${this.position.tokenIndex}] ${this.found?.tokenName}("${this.found?.tokenValue}") @ line ${this.position.line}:${this.position.column}`)
+        lines.push(`Token[${this.position.tokenIndex}]: ${this.found?.tokenName}("${this.found?.tokenValue}") @ line ${this.position.line}:${this.position.column}`)
         lines.push('')
 
         // 规则调用栈
