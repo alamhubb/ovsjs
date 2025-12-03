@@ -3,6 +3,9 @@ import SubhutiCst from "subhuti/src/struct/SubhutiCst.ts";
 import OvsParser from "../parser/OvsParser.ts";
 import {SlimeNodeType} from "slime-ast/src/SlimeNodeType.ts";
 import {
+    type SlimeCallExpression,
+    type SlimeExpression,
+    type SlimeExpressionStatement,
     type SlimeModuleDeclaration,
     type SlimeProgram,
     SlimeProgramSourceType,
@@ -10,6 +13,7 @@ import {
 } from "slime-ast/src/SlimeESTree.ts";
 import SlimeParser from "slime-parser/src/language/es2025/SlimeParser.ts";
 import SlimeNodeCreate from "slime-ast/src/SlimeNodeCreate.ts";
+import slimeTokenCreate from "slime-ast/src/SlimeTokenCreate.ts";
 
 export function checkCstName(cst: SubhutiCst, cstName: string) {
   if (cst.name !== cstName) {
@@ -628,7 +632,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
         [
           SlimeNodeCreate.createVariableDeclarator(
             SlimeNodeCreate.createIdentifier('children'),
-            SlimeNodeCreate.createEqualOperator(),
+            slimeTokenCreate.createEqualOperator(),
             SlimeNodeCreate.createArrayExpression([])
           )
         ]
