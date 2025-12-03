@@ -169,20 +169,27 @@ function decodeIdentifier(name: string): string | null {
  * 按照 ECMAScript 规范，Unicode 转义解码后的字符必须满足：
  * - 第一个字符：ID_Start | $ | _
  * - 后续字符：ID_Continue | $ | ZWNJ | ZWJ
+ *
+ * 注意：使用 for...of 正确迭代 Unicode 码点（处理代理对）
  */
 function isValidIdentifierWithEscapes(name: string): boolean {
     const decoded = decodeIdentifier(name)
     if (decoded === null || decoded.length === 0) return false
 
-    // 验证第一个字符是否满足 ID_Start
-    if (!ID_START_REGEX.test(decoded[0])) {
-        return false
-    }
-
-    // 验证后续字符是否满足 ID_Continue
-    for (let j = 1; j < decoded.length; j++) {
-        if (!ID_CONTINUE_REGEX.test(decoded[j])) {
-            return false
+    // 使用 for...of 正确迭代 Unicode 码点（自动处理代理对）
+    let isFirst = true
+    for (const char of decoded) {
+        if (isFirst) {
+            // 验证第一个字符是否满足 ID_Start
+            if (!ID_START_REGEX.test(char)) {
+                return false
+            }
+            isFirst = false
+        } else {
+            // 验证后续字符是否满足 ID_Continue
+            if (!ID_CONTINUE_REGEX.test(char)) {
+                return false
+            }
         }
     }
 
