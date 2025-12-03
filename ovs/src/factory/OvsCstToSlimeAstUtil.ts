@@ -499,11 +499,12 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     checkCstName(cst, OvsParser.prototype.OvsRenderFunction.name);
 
     // 获取元素/组件名称
+    // OvsRenderFunction 使用 IdentifierReference，需要通过专门的方法转换
     const idCst = cst.children?.[0]
     if (!idCst) {
       throw new Error('OvsRenderDomViewDeclaration has no identifier')
     }
-    const id = this.createIdentifierAst(idCst)
+    const id = this.createIdentifierReferenceAst(idCst)
     
     // 设置 loc 信息，确保包含 value（标签名）用于源码映射
     if (idCst.loc) {

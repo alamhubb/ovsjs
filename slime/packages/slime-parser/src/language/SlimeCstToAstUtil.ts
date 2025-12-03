@@ -109,9 +109,138 @@ export function throwNewError(errorMsg: string = 'syntax error') {
     throw new Error(errorMsg)
 }
 
-//应该根据cst名称命名，转换为ast
+/**
+ * CST 转 AST 转换器
+ *
+ * ## 两层架构设计
+ *
+ * ### 第一层：AST 工厂层 (SlimeNodeCreate.ts / SlimeAstUtil)
+ * - 与 ESTree AST 节点类型一一对应的纯粹创建方法
+ * - 不依赖 CST 结构，只接收参数创建节点
+ * - 示例：createIdentifier(name, loc) → SlimeIdentifier
+ *
+ * ### 第二层：CST 转换层 (本类)
+ * - 与 CST 规则一一对应的转换方法 (createXxxAst)
+ * - 解析 CST 结构，提取信息，调用 AST 工厂层
+ * - 中心转发方法：createAstFromCst(cst) - 自动根据类型分发
+ *
+ * ## 方法命名规范
+ *
+ * | 方法类型 | 命名模式 | 说明 |
+ * |----------|----------|------|
+ * | CST 规则转换 | createXxxAst | 与 @SubhutiRule 规则一一对应 |
+ * | AST 类型映射 | createXxxAst | CST 规则名 ≠ AST 类型名时使用 |
+ * | 内部辅助方法 | private createXxxAst | ES2025 专用处理等 |
+ * | 工具方法 | convertXxx / isXxx | 表达式转模式、检查方法等 |
+ *
+ * ## 非一一对应方法说明
+ *
+ * 以下方法不直接对应 CST 规则，但有存在必要性：
+ *
+ * ### AST 类型映射方法
+ * - createArrayExpressionAst: ArrayLiteral CST → ArrayExpression AST
+ * - createObjectExpressionAst: ObjectLiteral CST → ObjectExpression AST
+ * - createCatchClauseAst: Catch CST → CatchClause AST
+ * - createSwitchCaseAst: CaseClause/DefaultClause CST → SwitchCase AST
+ * - createPrivateIdentifierAst: PrivateIdentifier 终端符 → PrivateIdentifier AST
+ * - createStringLiteralAst: StringLiteral 终端符 → Literal AST
+ * - createNumericLiteralAst: NumericLiteral 终端符 → Literal AST
+ * - createRegExpLiteralAst: RegularExpressionLiteral 终端符 → Literal AST
+ *
+ * ### 核心分发方法
+ * - createAstFromCst: 中心转发，根据 CST 类型自动分发
+ * - createStatementDeclarationAst: 语句/声明分发
+ * - createExpressionAst: 表达式分发
+ *
+ * ### 辅助处理方法
+ * - createClassBodyItemAst: 类成员处理（MethodDefinition/FieldDefinition 分发）
+ * - createClassElementNameOrPropertyNameAst: 类元素名/属性名处理
+ * - createDotIdentifierAst: 点标识符处理（兼容旧版 Parser）
+ * - toProgram: Program 入口处理
+ *
+ * ### 兼容性方法（标记 @deprecated）
+ * - createPropertyNameMethodDefinitionAst: 旧版 Parser 兼容
+ */
 export class SlimeCstToAst {
     private readonly expressionAstCache = new WeakMap<SubhutiCst, SlimeExpression>()
+
+    /**
+     * 中心转发方法：根据 CST 节点类型自动分发到对应的转换方法
+     *
+     * 这是 CST 转 AST 两层架构的核心入口：
+     * - 第一层：AST 工厂层 (SlimeNodeCreate.ts) - 纯粹的 AST 节点创建
+     * - 第二层：CST 转换层 (本类) - 解析 CST 结构，调用 AST 工厂层
+     *
+     * 使用方式：
+     * ```typescript
+     * const ast = cstToAst.createAstFromCst(cst);
+     * ```
+     *
+     * @param cst CST 节点
+     * @returns 对应的 AST 节点
+     */
+    createAstFromCst(cst: SubhutiCst): any {
+        const methodName = `create${cst.name}Ast` as keyof this;
+        const method = this[methodName];
+
+        if (typeof method === 'function') {
+            return (method as Function).call(this, cst);
+        }
+
+        // 对于没有专门方法的 CST 节点，尝试使用通用表达式处理
+        // 这通常是中间规则节点，直接处理其子节点
+        if (cst.children && cst.children.length === 1) {
+            return this.createAstFromCst(cst.children[0]);
+        }
+
+        throw new Error(`No conversion method found for CST node: ${cst.name}. Expected method: ${String(methodName)}`);
+    }
+
+    /**
+     * 创建 IdentifierReference 的 AST
+     *
+     * 语法：IdentifierReference -> Identifier | yield | await
+     *
+     * IdentifierReference 是对 Identifier 的引用包装，
+     * 在 ES 规范中用于区分标识符的不同使用场景。
+     */
+    createIdentifierReferenceAst(cst: SubhutiCst): SlimeIdentifier {
+        const expectedName = SlimeParser.prototype.IdentifierReference?.name || 'IdentifierReference'
+        if (cst.name !== expectedName && cst.name !== 'IdentifierReference') {
+            throw new Error(`Expected IdentifierReference, got ${cst.name}`)
+        }
+
+        // IdentifierReference -> Identifier | yield | await
+        const child = cst.children?.[0]
+        if (!child) {
+            throw new Error('IdentifierReference has no children')
+        }
+
+        return this.createIdentifierAst(child)
+    }
+
+    /**
+     * 创建 LabelIdentifier 的 AST
+     *
+     * 语法：LabelIdentifier -> Identifier | [~Yield] yield | [~Await] await
+     *
+     * LabelIdentifier 用于 break/continue 语句的标签和 LabelledStatement 的标签。
+     * 结构与 IdentifierReference 相同。
+     */
+    createLabelIdentifierAst(cst: SubhutiCst): SlimeIdentifier {
+        const expectedName = SlimeParser.prototype.LabelIdentifier?.name || 'LabelIdentifier'
+        if (cst.name !== expectedName && cst.name !== 'LabelIdentifier') {
+            throw new Error(`Expected LabelIdentifier, got ${cst.name}`)
+        }
+
+        // LabelIdentifier -> Identifier | yield | await
+        const child = cst.children?.[0]
+        if (!child) {
+            throw new Error('LabelIdentifier has no children')
+        }
+
+        return this.createIdentifierAst(child)
+    }
 
     createIdentifierAst(cst: SubhutiCst): SlimeIdentifier {
         // Support Identifier, IdentifierName, and contextual keywords (yield, await) used as identifiers
@@ -173,6 +302,11 @@ export class SlimeCstToAst {
         return identifier
     }
 
+    /**
+     * [入口方法] 将顶层 CST 转换为 Program AST
+     *
+     * 存在必要性：这是外部调用的主入口，支持 Module、Script、Program 多种顶层 CST。
+     */
     toProgram(cst: SubhutiCst): SlimeProgram {
         // Support both Module and Script entry points
         const isModule = cst.name === SlimeParser.prototype.Module?.name || cst.name === 'Module'
@@ -258,6 +392,238 @@ export class SlimeCstToAst {
         }).filter(ast => ast !== undefined)
 
         return asts.flat()
+    }
+
+    // ==================== 模块相关转换方法 ====================
+
+    /**
+     * Program CST 转 AST
+     *
+     * 存在必要性：Program 是顶层入口规则，需要处理 Script 或 Module 两种情况。
+     */
+    createProgramAst(cst: SubhutiCst): SlimeProgram {
+        // 处理 Program -> Script | Module
+        const firstChild = cst.children?.[0]
+        if (firstChild) {
+            if (firstChild.name === 'Script' || firstChild.name === SlimeParser.prototype.Script?.name) {
+                return this.createScriptAst(firstChild)
+            } else if (firstChild.name === 'Module' || firstChild.name === SlimeParser.prototype.Module?.name) {
+                return this.createModuleAst(firstChild)
+            }
+        }
+        // 如果直接就是内容，调用 toProgram
+        return this.toProgram(cst)
+    }
+
+    /**
+     * Script CST 转 AST
+     */
+    createScriptAst(cst: SubhutiCst): SlimeProgram {
+        const scriptBody = cst.children?.find(ch =>
+            ch.name === 'ScriptBody' || ch.name === SlimeParser.prototype.ScriptBody?.name
+        )
+        if (scriptBody) {
+            return this.createScriptBodyAst(scriptBody)
+        }
+        return SlimeAstUtil.createProgram([], 'script')
+    }
+
+    /**
+     * ScriptBody CST 转 AST
+     */
+    createScriptBodyAst(cst: SubhutiCst): SlimeProgram {
+        const stmtList = cst.children?.find(ch =>
+            ch.name === 'StatementList' || ch.name === SlimeParser.prototype.StatementList?.name
+        )
+        if (stmtList) {
+            const body = this.createStatementListAst(stmtList)
+            return SlimeAstUtil.createProgram(body, 'script')
+        }
+        return SlimeAstUtil.createProgram([], 'script')
+    }
+
+    /**
+     * Module CST 转 AST
+     */
+    createModuleAst(cst: SubhutiCst): SlimeProgram {
+        const moduleBody = cst.children?.find(ch =>
+            ch.name === 'ModuleBody' || ch.name === SlimeParser.prototype.ModuleBody?.name
+        )
+        if (moduleBody) {
+            return this.createModuleBodyAst(moduleBody)
+        }
+        return SlimeAstUtil.createProgram([], 'module')
+    }
+
+    /**
+     * ModuleBody CST 转 AST
+     */
+    createModuleBodyAst(cst: SubhutiCst): SlimeProgram {
+        const moduleItemList = cst.children?.find(ch =>
+            ch.name === 'ModuleItemList' || ch.name === SlimeParser.prototype.ModuleItemList?.name
+        )
+        if (moduleItemList) {
+            const body = this.createModuleItemListAst(moduleItemList)
+            return SlimeAstUtil.createProgram(body, 'module')
+        }
+        return SlimeAstUtil.createProgram([], 'module')
+    }
+
+    /**
+     * NameSpaceImport CST 转 AST
+     * NameSpaceImport -> * as ImportedBinding
+     */
+    createNameSpaceImportAst(cst: SubhutiCst): SlimeImportNamespaceSpecifier {
+        return this.createNameSpaceImportSpecifierAst(cst)
+    }
+
+    /**
+     * NamedImports CST 转 AST
+     * NamedImports -> { } | { ImportsList } | { ImportsList , }
+     */
+    createNamedImportsAst(cst: SubhutiCst): Array<SlimeImportSpecifier> {
+        return this.createNamedImportsListAst(cst)
+    }
+
+    /**
+     * ImportsList CST 转 AST
+     * ImportsList -> ImportSpecifier (, ImportSpecifier)*
+     */
+    createImportsListAst(cst: SubhutiCst): Array<SlimeImportSpecifier> {
+        const specifiers: SlimeImportSpecifier[] = []
+        for (const child of cst.children || []) {
+            if (child.name === SlimeParser.prototype.ImportSpecifier?.name ||
+                child.name === 'ImportSpecifier') {
+                specifiers.push(this.createImportSpecifierAst(child))
+            }
+        }
+        return specifiers
+    }
+
+    /**
+     * ImportSpecifier CST 转 AST
+     * ImportSpecifier -> ImportedBinding | ModuleExportName as ImportedBinding
+     */
+    createImportSpecifierAst(cst: SubhutiCst): SlimeImportSpecifier {
+        const children = cst.children || []
+        let imported: SlimeIdentifier | null = null
+        let local: SlimeIdentifier | null = null
+        let asToken: any = undefined
+
+        for (const child of children) {
+            if (child.name === 'As' || child.value === 'as') {
+                asToken = SlimeTokenCreate.createAsToken(child.loc)
+            } else if (child.name === SlimeParser.prototype.ImportedBinding?.name ||
+                child.name === 'ImportedBinding') {
+                local = this.createImportedBindingAst(child)
+            } else if (child.name === SlimeParser.prototype.ModuleExportName?.name ||
+                child.name === 'ModuleExportName' ||
+                child.name === SlimeParser.prototype.IdentifierName?.name ||
+                child.name === 'IdentifierName') {
+                if (!imported) {
+                    imported = this.createModuleExportNameAst(child) as SlimeIdentifier
+                }
+            }
+        }
+
+        // 如果没有 as，imported 和 local 相同
+        if (!local && imported) {
+            local = { ...imported }
+        }
+        if (!imported && local) {
+            imported = { ...local }
+        }
+
+        return SlimeAstUtil.createImportSpecifier(imported!, local!, asToken)
+    }
+
+    /**
+     * AttributeKey CST 转 AST
+     * AttributeKey -> IdentifierName | StringLiteral
+     */
+    createAttributeKeyAst(cst: SubhutiCst): SlimeIdentifier | SlimeLiteral {
+        const firstChild = cst.children?.[0]
+        if (!firstChild) throw new Error('AttributeKey has no children')
+
+        if (firstChild.name === SlimeParser.prototype.IdentifierName?.name ||
+            firstChild.name === 'IdentifierName' ||
+            firstChild.value !== undefined && !firstChild.value.startsWith('"') && !firstChild.value.startsWith("'")) {
+            return this.createIdentifierNameAst(firstChild)
+        } else {
+            return this.createStringLiteralAst(firstChild)
+        }
+    }
+
+    /**
+     * ExportFromClause CST 转 AST
+     * ExportFromClause -> * | * as ModuleExportName | NamedExports
+     */
+    createExportFromClauseAst(cst: SubhutiCst): any {
+        const children = cst.children || []
+
+        // 检查是否是 * (export all)
+        const asterisk = children.find(ch => ch.name === 'Asterisk' || ch.value === '*')
+        if (asterisk) {
+            const asTok = children.find(ch => ch.name === 'As' || ch.value === 'as')
+            const exportedName = children.find(ch =>
+                ch.name === SlimeParser.prototype.ModuleExportName?.name ||
+                ch.name === 'ModuleExportName'
+            )
+
+            if (asTok && exportedName) {
+                // * as name
+                return {
+                    type: 'exportAll',
+                    exported: this.createModuleExportNameAst(exportedName)
+                }
+            } else {
+                // * (export all)
+                return { type: 'exportAll', exported: null }
+            }
+        }
+
+        // NamedExports
+        const namedExports = children.find(ch =>
+            ch.name === SlimeParser.prototype.NamedExports?.name ||
+            ch.name === 'NamedExports'
+        )
+        if (namedExports) {
+            return {
+                type: 'namedExports',
+                specifiers: this.createNamedExportsAst(namedExports)
+            }
+        }
+
+        return { type: 'unknown' }
+    }
+
+    /**
+     * WithEntries CST 转 AST
+     * WithEntries -> AttributeKey : StringLiteral (, AttributeKey : StringLiteral)*
+     */
+    createWithEntriesAst(cst: SubhutiCst): any[] {
+        const entries: any[] = []
+        let currentKey: any = null
+
+        for (const child of cst.children || []) {
+            if (child.name === SlimeParser.prototype.AttributeKey?.name ||
+                child.name === 'AttributeKey') {
+                currentKey = this.createAttributeKeyAst(child)
+            } else if (child.name === SlimeParser.prototype.StringLiteral?.name ||
+                child.name === 'StringLiteral' ||
+                (child.value && (child.value.startsWith('"') || child.value.startsWith("'")))) {
+                if (currentKey) {
+                    entries.push({
+                        type: 'ImportAttribute',
+                        key: currentKey,
+                        value: this.createStringLiteralAst(child)
+                    })
+                    currentKey = null
+                }
+            }
+        }
+
+        return entries
     }
 
     createModuleItemAst(item: SubhutiCst): SlimeStatement | SlimeModuleDeclaration | SlimeStatement[] | undefined {
@@ -743,8 +1109,18 @@ export class SlimeCstToAst {
     }
 
     /**
-     * 根据 CST 节点类型创建对应的 Statement AST
-     * 处理所有 ES6 语句类型
+     * [核心分发方法] 根据 CST 节点类型创建对应的 Statement/Declaration AST
+     *
+     * 存在必要性：ECMAScript 语法中 Statement 和 Declaration 有多种具体类型，
+     * 需要一个统一的分发方法来处理各种语句和声明。
+     *
+     * 处理的节点类型包括：
+     * - Statement 包装节点 → 递归处理子节点
+     * - BreakableStatement → IterationStatement | SwitchStatement
+     * - VariableStatement → VariableDeclaration
+     * - ExpressionStatement → ExpressionStatement
+     * - IfStatement, ForStatement, WhileStatement 等具体语句
+     * - FunctionDeclaration, ClassDeclaration 等声明
      */
     createStatementDeclarationAst(cst: SubhutiCst) {
         // Statement - 包装节点，递归处理子节点
@@ -1495,17 +1871,6 @@ export class SlimeCstToAst {
         }
     }
 
-
-    createNodeAst(cst: SubhutiCst) {
-        switch (cst.name) {
-            case SlimeParser.prototype.VariableDeclaration?.name:
-                return this.createVariableDeclarationAst(cst);
-            case SlimeParser.prototype.ExpressionStatement?.name:
-                return this.createExpressionStatementAst(cst);
-        }
-    }
-
-
     createVariableDeclarationAst(cst: SubhutiCst): SlimeVariableDeclaration {
         //直接返回声明
         //                 this.Statement()
@@ -1639,6 +2004,16 @@ export class SlimeCstToAst {
         return { superClass, extendsToken }
     }
 
+    /**
+     * [辅助处理方法] 类成员 CST 转 AST
+     *
+     * 存在必要性：ClassBody 中的成员可能是 MethodDefinition 或 FieldDefinition，
+     * 需要根据具体类型分发到对应的处理方法。这不是直接对应某个 CST 规则，
+     * 而是作为 createClassBodyAst 的辅助方法。
+     *
+     * @param staticCst static 修饰符 CST（如果有）
+     * @param cst 类成员 CST（MethodDefinition 或 FieldDefinition）
+     */
     createClassBodyItemAst(staticCst: SubhutiCst, cst: SubhutiCst): SlimeMethodDefinition | SlimePropertyDefinition {
         if (cst.name === SlimeParser.prototype.MethodDefinition?.name) {
             return this.createMethodDefinitionAst(staticCst, cst)
@@ -1686,13 +2061,15 @@ export class SlimeCstToAst {
     }
 
     /**
-     * 处理 ClassElementName（ES2022）或 PropertyName（ES6）
+     * [辅助处理方法] 类元素名/属性名 CST 转 AST
      *
-     * ClassElementName (ES2022) ::
-     *     PrivateIdentifier
-     *     PropertyName
+     * 存在必要性：ES2022 的 ClassElementName 和 ES6 的 PropertyName 有不同的结构，
+     * 需要一个统一的方法来处理这两种情况，支持：
+     * - PrivateIdentifier (#xxx) - ES2022 私有字段
+     * - PropertyName (字符串/数字/计算属性名)
      *
-     * 兼容性：自动识别并处理两种情况
+     * ClassElementName (ES2022) :: PrivateIdentifier | PropertyName
+     * PropertyName (ES6) :: LiteralPropertyName | ComputedPropertyName
      */
     createClassElementNameOrPropertyNameAst(cst: SubhutiCst): SlimeIdentifier | SlimeLiteral | SlimeExpression {
         if (!cst || !cst.children) {
@@ -1745,12 +2122,13 @@ export class SlimeCstToAst {
     }
 
     /**
-     * 创建 PrivateIdentifier 的AST节点（ES2022）
+     * [AST 类型映射] PrivateIdentifier 终端符 → Identifier AST
+     *
+     * 存在必要性：PrivateIdentifier 在 CST 中是一个终端符（token），
+     * 但在 ESTree AST 中需要表示为 Identifier 节点，name 以 # 开头。
      *
      * PrivateIdentifier :: # IdentifierName
-     *
-     * AST表示：Identifier节点，name以#开头
-     * 例如：{ type: "Identifier", name: "#count" }
+     * AST 表示：{ type: "Identifier", name: "#count" }
      */
     createPrivateIdentifierAst(cst: SubhutiCst): SlimeIdentifier {
         // Es2025Parser: PrivateIdentifier 是一个直接的 token，value 已经包含 #
@@ -1905,6 +2283,224 @@ export class SlimeCstToAst {
         }
 
         return SlimeAstUtil.createStaticBlock(bodyStatements, cst.loc, lBraceToken, rBraceToken)
+    }
+
+    // ==================== 函数/类相关转换方法 ====================
+
+    /**
+     * GeneratorMethod CST 转 AST
+     * GeneratorMethod -> * ClassElementName ( UniqueFormalParameters ) { GeneratorBody }
+     */
+    createGeneratorMethodAst(cst: SubhutiCst): SlimeMethodDefinition {
+        return this.createMethodDefinitionAstInternal(cst, 'method', true, false)
+    }
+
+    /**
+     * GeneratorBody CST 转 AST（透传到 FunctionBody）
+     */
+    createGeneratorBodyAst(cst: SubhutiCst): Array<SlimeStatement> {
+        return this.createFunctionBodyAst(cst)
+    }
+
+    /**
+     * AsyncMethod CST 转 AST
+     * AsyncMethod -> async ClassElementName ( UniqueFormalParameters ) { AsyncFunctionBody }
+     */
+    createAsyncMethodAst(cst: SubhutiCst): SlimeMethodDefinition {
+        return this.createMethodDefinitionAstInternal(cst, 'method', false, true)
+    }
+
+    /**
+     * AsyncFunctionBody CST 转 AST（透传到 FunctionBody）
+     */
+    createAsyncFunctionBodyAst(cst: SubhutiCst): Array<SlimeStatement> {
+        return this.createFunctionBodyAst(cst)
+    }
+
+    /**
+     * AsyncGeneratorMethod CST 转 AST
+     */
+    createAsyncGeneratorMethodAst(cst: SubhutiCst): SlimeMethodDefinition {
+        return this.createMethodDefinitionAstInternal(cst, 'method', true, true)
+    }
+
+    /**
+     * AsyncGeneratorBody CST 转 AST（透传到 FunctionBody）
+     */
+    createAsyncGeneratorBodyAst(cst: SubhutiCst): Array<SlimeStatement> {
+        return this.createFunctionBodyAst(cst)
+    }
+
+    /**
+     * MethodDefinition CST 转 AST（透传）
+     */
+    createMethodDefinitionAst(cst: SubhutiCst): SlimeMethodDefinition {
+        return this.createMethodDefinitionAstInternal(cst, 'method', false, false)
+    }
+
+    /**
+     * 内部辅助方法：创建 MethodDefinition AST
+     */
+    private createMethodDefinitionAstInternal(cst: SubhutiCst, kind: 'method' | 'get' | 'set', generator: boolean, async: boolean): SlimeMethodDefinition {
+        // 查找属性名
+        const classElementName = cst.children?.find(ch =>
+            ch.name === SlimeParser.prototype.ClassElementName?.name ||
+            ch.name === 'ClassElementName' ||
+            ch.name === SlimeParser.prototype.PropertyName?.name ||
+            ch.name === 'PropertyName'
+        )
+
+        const key = classElementName ? this.createClassElementNameOrPropertyNameAst(classElementName) : null
+
+        // 查找参数
+        const formalParams = cst.children?.find(ch =>
+            ch.name === SlimeParser.prototype.UniqueFormalParameters?.name ||
+            ch.name === 'UniqueFormalParameters' ||
+            ch.name === SlimeParser.prototype.FormalParameters?.name ||
+            ch.name === 'FormalParameters'
+        )
+        const params = formalParams ? this.createFormalParametersAst(formalParams) : []
+
+        // 查找函数体
+        const bodyNode = cst.children?.find(ch =>
+            ch.name === 'GeneratorBody' || ch.name === 'AsyncFunctionBody' ||
+            ch.name === 'AsyncGeneratorBody' || ch.name === 'FunctionBody' ||
+            ch.name === SlimeParser.prototype.FunctionBody?.name
+        )
+        const bodyStatements = bodyNode ? this.createFunctionBodyAst(bodyNode) : []
+        const body = SlimeAstUtil.createBlockStatement(bodyStatements, bodyNode?.loc)
+
+        const value: SlimeFunctionExpression = {
+            type: SlimeNodeType.FunctionExpression,
+            id: null,
+            params: params as any,
+            body: body,
+            generator: generator,
+            async: async,
+            loc: cst.loc
+        } as any
+
+        return SlimeAstUtil.createMethodDefinition(key, value, kind, false, false, cst.loc)
+    }
+
+    /**
+     * ClassElement CST 转 AST
+     * ClassElement -> MethodDefinition | static MethodDefinition | FieldDefinition | ...
+     */
+    createClassElementAst(cst: SubhutiCst): any {
+        const firstChild = cst.children?.[0]
+        if (!firstChild) return null
+
+        // 检查是否是 static
+        let isStatic = false
+        let startIndex = 0
+        if (firstChild.name === 'Static' || firstChild.value === 'static') {
+            isStatic = true
+            startIndex = 1
+        }
+
+        const actualChild = cst.children?.[startIndex]
+        if (!actualChild) return null
+
+        // 根据类型处理
+        if (actualChild.name === SlimeParser.prototype.MethodDefinition?.name ||
+            actualChild.name === 'MethodDefinition') {
+            const method = this.createMethodDefinitionAst(actualChild)
+            method.static = isStatic
+            return method
+        } else if (actualChild.name === SlimeParser.prototype.FieldDefinition?.name ||
+            actualChild.name === 'FieldDefinition') {
+            return this.createFieldDefinitionAst(actualChild, isStatic)
+        } else if (actualChild.name === SlimeParser.prototype.ClassStaticBlock?.name ||
+            actualChild.name === 'ClassStaticBlock') {
+            return this.createClassStaticBlockAst(actualChild)
+        }
+
+        return null
+    }
+
+    /**
+     * ClassElementName CST 转 AST（透传）
+     */
+    createClassElementNameAst(cst: SubhutiCst): any {
+        return this.createClassElementNameOrPropertyNameAst(cst)
+    }
+
+    /**
+     * ClassElementList CST 转 AST
+     */
+    createClassElementListAst(cst: SubhutiCst): any[] {
+        const elements: any[] = []
+        for (const child of cst.children || []) {
+            if (child.name === SlimeParser.prototype.ClassElement?.name || child.name === 'ClassElement') {
+                const element = this.createClassElementAst(child)
+                if (element) {
+                    elements.push(element)
+                }
+            }
+        }
+        return elements
+    }
+
+    /**
+     * ClassStaticBlockBody CST 转 AST
+     */
+    createClassStaticBlockBodyAst(cst: SubhutiCst): Array<SlimeStatement> {
+        const stmtList = cst.children?.find(ch =>
+            ch.name === 'ClassStaticBlockStatementList' ||
+            ch.name === SlimeParser.prototype.ClassStaticBlockStatementList?.name
+        )
+        if (stmtList) {
+            return this.createClassStaticBlockStatementListAst(stmtList)
+        }
+        return []
+    }
+
+    /**
+     * ClassStaticBlockStatementList CST 转 AST
+     */
+    createClassStaticBlockStatementListAst(cst: SubhutiCst): Array<SlimeStatement> {
+        const stmtList = cst.children?.find(ch =>
+            ch.name === 'StatementList' || ch.name === SlimeParser.prototype.StatementList?.name
+        )
+        if (stmtList) {
+            return this.createStatementListAst(stmtList)
+        }
+        return []
+    }
+
+    /**
+     * AsyncArrowBindingIdentifier CST 转 AST
+     */
+    createAsyncArrowBindingIdentifierAst(cst: SubhutiCst): SlimeIdentifier {
+        const bindingId = cst.children?.find(ch =>
+            ch.name === SlimeParser.prototype.BindingIdentifier?.name ||
+            ch.name === 'BindingIdentifier'
+        )
+        if (bindingId) {
+            return this.createBindingIdentifierAst(bindingId)
+        }
+        // 直接是标识符
+        const firstChild = cst.children?.[0]
+        if (firstChild) {
+            return this.createBindingIdentifierAst(firstChild)
+        }
+        throw new Error('AsyncArrowBindingIdentifier has no identifier')
+    }
+
+    /**
+     * AsyncConciseBody CST 转 AST
+     */
+    createAsyncConciseBodyAst(cst: SubhutiCst): SlimeBlockStatement | SlimeExpression {
+        return this.createConciseBodyAst(cst)
+    }
+
+    /**
+     * AsyncArrowHead CST 转 AST（透传）
+     */
+    createAsyncArrowHeadAst(cst: SubhutiCst): any {
+        // AsyncArrowHead 主要用于解析，实际 AST 处理在 AsyncArrowFunction 中
+        return cst.children?.[0] ? this.createAstFromCst(cst.children[0]) : null
     }
 
     createFormalParameterListAst(cst: SubhutiCst): SlimePattern[] {
@@ -2404,11 +3000,16 @@ export class SlimeCstToAst {
         }
     }
 
+    // ==================== ES2025 内部辅助方法 ====================
+    // 以下方法是处理 ES2025 Parser CST 结构的内部辅助方法，不直接对应 CST 规则。
+    // 存在必要性：ES2025 Parser 的 CST 结构与 ES6 有差异，需要专门的处理逻辑。
+
     /**
-     * Es2025Parser: 从直接的标识符创建方法定义
-     * IdentifierNameTok ( UniqueFormalParameters ) { FunctionBody }
+     * [内部方法] 从直接的标识符创建方法定义
+     * 处理 ES2025 Parser 中 IdentifierNameTok ( UniqueFormalParameters ) { FunctionBody } 结构
+     * @internal
      */
-    createEs2025MethodDefinitionFromIdentifier(staticCst: SubhutiCst | null, cst: SubhutiCst): SlimeMethodDefinition {
+    private createEs2025MethodDefinitionFromIdentifier(staticCst: SubhutiCst | null, cst: SubhutiCst): SlimeMethodDefinition {
         let i = 0
         const children = cst.children
 
@@ -2502,10 +3103,11 @@ export class SlimeCstToAst {
     }
 
     /**
-     * Es2025Parser: 普通方法定义
-     * ClassElementName ( UniqueFormalParameters ) { FunctionBody }
+     * [内部方法] 普通方法定义
+     * 处理 ES2025 Parser 中 ClassElementName ( UniqueFormalParameters ) { FunctionBody } 结构
+     * @internal
      */
-    createEs2025MethodDefinitionAst(staticCst: SubhutiCst | null, cst: SubhutiCst): SlimeMethodDefinition {
+    private createEs2025MethodDefinitionAst(staticCst: SubhutiCst | null, cst: SubhutiCst): SlimeMethodDefinition {
         // children: [ClassElementName, LParen, UniqueFormalParameters?, RParen, LBrace, FunctionBody?, RBrace]
         let i = 0
         const children = cst.children
@@ -2559,9 +3161,11 @@ export class SlimeCstToAst {
     }
 
     /**
-     * Es2025Parser: getter方法
+     * [内部方法] getter 方法
+     * 处理 ES2025 Parser 中 get ClassElementName ( ) { FunctionBody } 结构
+     * @internal
      */
-    createEs2025GetterMethodAst(staticCst: SubhutiCst | null, cst: SubhutiCst): SlimeMethodDefinition {
+    private createEs2025GetterMethodAst(staticCst: SubhutiCst | null, cst: SubhutiCst): SlimeMethodDefinition {
         // children: [GetTok, ClassElementName, LParen, RParen, LBrace, FunctionBody?, RBrace]
         const children = cst.children
         let i = 1 // 跳过 GetTok
@@ -2599,9 +3203,11 @@ export class SlimeCstToAst {
     }
 
     /**
-     * Es2025Parser: setter方法
+     * [内部方法] setter 方法
+     * 处理 ES2025 Parser 中 set ClassElementName ( PropertySetParameterList ) { FunctionBody } 结构
+     * @internal
      */
-    createEs2025SetterMethodAst(staticCst: SubhutiCst | null, cst: SubhutiCst): SlimeMethodDefinition {
+    private createEs2025SetterMethodAst(staticCst: SubhutiCst | null, cst: SubhutiCst): SlimeMethodDefinition {
         // children: [SetTok, ClassElementName, LParen, PropertySetParameterList, RParen, LBrace, FunctionBody?, RBrace]
         const children = cst.children
         let i = 1 // 跳过 SetTok
@@ -2649,10 +3255,11 @@ export class SlimeCstToAst {
     }
 
     /**
-     * Es2025Parser: getter方法 (从 IdentifierNameTok="get" 开始的 MethodDefinition)
-     * children: [IdentifierNameTok="get", ClassElementName, LParen, RParen, LBrace, FunctionBody?, RBrace]
+     * [内部方法] getter 方法 (从 IdentifierNameTok="get" 开始)
+     * 处理 ES2025 Parser 中 IdentifierNameTok="get" ClassElementName ( ) { FunctionBody } 结构
+     * @internal
      */
-    createEs2025GetterMethodFromIdentifier(staticCst: SubhutiCst | null, cst: SubhutiCst): SlimeMethodDefinition {
+    private createEs2025GetterMethodFromIdentifier(staticCst: SubhutiCst | null, cst: SubhutiCst): SlimeMethodDefinition {
         const children = cst.children
         let i = 1 // 跳过 IdentifierNameTok="get"
 
@@ -2692,10 +3299,11 @@ export class SlimeCstToAst {
     }
 
     /**
-     * Es2025Parser: setter方法 (从 IdentifierNameTok="set" 开始的 MethodDefinition)
-     * children: [IdentifierNameTok="set", ClassElementName, LParen, PropertySetParameterList, RParen, LBrace, FunctionBody?, RBrace]
+     * [内部方法] setter 方法 (从 IdentifierNameTok="set" 开始)
+     * 处理 ES2025 Parser 中 IdentifierNameTok="set" ClassElementName ( ... ) { FunctionBody } 结构
+     * @internal
      */
-    createEs2025SetterMethodFromIdentifier(staticCst: SubhutiCst | null, cst: SubhutiCst): SlimeMethodDefinition {
+    private createEs2025SetterMethodFromIdentifier(staticCst: SubhutiCst | null, cst: SubhutiCst): SlimeMethodDefinition {
         const children = cst.children
         let i = 1 // 跳过 IdentifierNameTok="set"
 
@@ -2746,9 +3354,11 @@ export class SlimeCstToAst {
     }
 
     /**
-     * Es2025Parser: generator方法 (从GeneratorMethod节点)
+     * [内部方法] generator 方法
+     * 处理 ES2025 Parser 中 * ClassElementName ( UniqueFormalParameters ) { GeneratorBody } 结构
+     * @internal
      */
-    createEs2025GeneratorMethodAst(staticCst: SubhutiCst | null, cst: SubhutiCst): SlimeMethodDefinition {
+    private createEs2025GeneratorMethodAst(staticCst: SubhutiCst | null, cst: SubhutiCst): SlimeMethodDefinition {
         // GeneratorMethod children: [Asterisk, ClassElementName, LParen, UniqueFormalParameters?, RParen, LBrace, GeneratorBody, RBrace]
         const children = cst.children
         let i = 1 // 跳过 Asterisk
@@ -2801,15 +3411,20 @@ export class SlimeCstToAst {
         return methodDef
     }
 
-    createEs2025GeneratorMethodFromChildren(staticCst: SubhutiCst | null, cst: SubhutiCst): SlimeMethodDefinition {
-        // 直接从MethodDefinition的children处理 [Asterisk, ClassElementName, ...]
+    /**
+     * [内部方法] generator 方法 (从 MethodDefinition children 直接处理)
+     * @internal
+     */
+    private createEs2025GeneratorMethodFromChildren(staticCst: SubhutiCst | null, cst: SubhutiCst): SlimeMethodDefinition {
         return this.createEs2025GeneratorMethodAst(staticCst, cst)
     }
 
     /**
-     * Es2025Parser: async方法
+     * [内部方法] async 方法
+     * 处理 ES2025 Parser 中 async ClassElementName ( UniqueFormalParameters ) { AsyncFunctionBody } 结构
+     * @internal
      */
-    createEs2025AsyncMethodAst(staticCst: SubhutiCst | null, cst: SubhutiCst): SlimeMethodDefinition {
+    private createEs2025AsyncMethodAst(staticCst: SubhutiCst | null, cst: SubhutiCst): SlimeMethodDefinition {
         // AsyncMethod children: [AsyncTok, ClassElementName, LParen, UniqueFormalParameters?, RParen, LBrace, AsyncFunctionBody, RBrace]
         const children = cst.children
         let i = 1 // 跳过 AsyncTok
@@ -2862,7 +3477,11 @@ export class SlimeCstToAst {
         return methodDef
     }
 
-    createEs2025AsyncMethodFromChildren(staticCst: SubhutiCst | null, cst: SubhutiCst): SlimeMethodDefinition {
+    /**
+     * [内部方法] async 方法 (从 MethodDefinition children 直接处理)
+     * @internal
+     */
+    private createEs2025AsyncMethodFromChildren(staticCst: SubhutiCst | null, cst: SubhutiCst): SlimeMethodDefinition {
         // 检查是否是 AsyncGeneratorMethod (async * ...)
         const children = cst.children
         if (children[1]?.name === 'Asterisk') {
@@ -2872,9 +3491,11 @@ export class SlimeCstToAst {
     }
 
     /**
-     * Es2025Parser: async generator方法
+     * [内部方法] async generator 方法
+     * 处理 ES2025 Parser 中 async * ClassElementName ( ... ) { AsyncGeneratorBody } 结构
+     * @internal
      */
-    createEs2025AsyncGeneratorMethodAst(staticCst: SubhutiCst | null, cst: SubhutiCst): SlimeMethodDefinition {
+    private createEs2025AsyncGeneratorMethodAst(staticCst: SubhutiCst | null, cst: SubhutiCst): SlimeMethodDefinition {
         // AsyncGeneratorMethod children: [AsyncTok, Asterisk, ClassElementName, LParen, UniqueFormalParameters?, RParen, LBrace, AsyncGeneratorBody, RBrace]
         const children = cst.children
         let i = 2 // 跳过 AsyncTok 和 Asterisk
@@ -3251,6 +3872,272 @@ export class SlimeCstToAst {
             rBraceToken,
             loc: cst.loc
         } as SlimeObjectPattern
+    }
+
+    // ==================== 解构相关转换方法 ====================
+
+    /**
+     * AssignmentPattern CST 转 AST
+     * AssignmentPattern -> ObjectAssignmentPattern | ArrayAssignmentPattern
+     */
+    createAssignmentPatternAst(cst: SubhutiCst): SlimeAssignmentPattern {
+        const firstChild = cst.children?.[0]
+        if (!firstChild) throw new Error('AssignmentPattern has no children')
+
+        if (firstChild.name === SlimeParser.prototype.ObjectAssignmentPattern?.name ||
+            firstChild.name === 'ObjectAssignmentPattern') {
+            return this.createObjectAssignmentPatternAst(firstChild) as any
+        } else if (firstChild.name === SlimeParser.prototype.ArrayAssignmentPattern?.name ||
+            firstChild.name === 'ArrayAssignmentPattern') {
+            return this.createArrayAssignmentPatternAst(firstChild) as any
+        }
+
+        throw new Error(`Unknown AssignmentPattern type: ${firstChild.name}`)
+    }
+
+    /**
+     * ObjectAssignmentPattern CST 转 AST
+     */
+    createObjectAssignmentPatternAst(cst: SubhutiCst): SlimeObjectPattern {
+        return this.createObjectBindingPatternAst(cst)
+    }
+
+    /**
+     * ArrayAssignmentPattern CST 转 AST
+     */
+    createArrayAssignmentPatternAst(cst: SubhutiCst): SlimeArrayPattern {
+        return this.createArrayBindingPatternAst(cst)
+    }
+
+    /**
+     * BindingProperty CST 转 AST
+     * BindingProperty -> SingleNameBinding | PropertyName : BindingElement
+     */
+    createBindingPropertyAst(cst: SubhutiCst): any {
+        const children = cst.children || []
+
+        // 检查是否是 SingleNameBinding
+        const singleNameBinding = children.find(ch =>
+            ch.name === SlimeParser.prototype.SingleNameBinding?.name ||
+            ch.name === 'SingleNameBinding'
+        )
+        if (singleNameBinding) {
+            return this.createSingleNameBindingAst(singleNameBinding)
+        }
+
+        // 否则是 PropertyName : BindingElement
+        const propertyName = children.find(ch =>
+            ch.name === SlimeParser.prototype.PropertyName?.name ||
+            ch.name === 'PropertyName'
+        )
+        const bindingElement = children.find(ch =>
+            ch.name === SlimeParser.prototype.BindingElement?.name ||
+            ch.name === 'BindingElement'
+        )
+
+        const key = propertyName ? this.createPropertyNameAst(propertyName) : null
+        const value = bindingElement ? this.createBindingElementAst(bindingElement) : null
+
+        return {
+            type: SlimeNodeType.Property,
+            key: key,
+            value: value,
+            kind: 'init',
+            method: false,
+            shorthand: false,
+            computed: false,
+            loc: cst.loc
+        }
+    }
+
+    /**
+     * BindingElement CST 转 AST
+     * BindingElement -> SingleNameBinding | BindingPattern Initializer?
+     */
+    createBindingElementAst(cst: SubhutiCst): any {
+        const firstChild = cst.children?.[0]
+        if (!firstChild) return null
+
+        if (firstChild.name === SlimeParser.prototype.SingleNameBinding?.name ||
+            firstChild.name === 'SingleNameBinding') {
+            return this.createSingleNameBindingAst(firstChild)
+        } else if (firstChild.name === SlimeParser.prototype.BindingPattern?.name ||
+            firstChild.name === 'BindingPattern') {
+            const pattern = this.createBindingPatternAst(firstChild)
+
+            // 检查是否有 Initializer
+            const initializer = cst.children?.find(ch =>
+                ch.name === SlimeParser.prototype.Initializer?.name ||
+                ch.name === 'Initializer'
+            )
+            if (initializer) {
+                const init = this.createInitializerAst(initializer)
+                return {
+                    type: SlimeNodeType.AssignmentPattern,
+                    left: pattern,
+                    right: init,
+                    loc: cst.loc
+                }
+            }
+            return pattern
+        }
+
+        // 直接是 BindingIdentifier
+        return this.createBindingIdentifierAst(firstChild)
+    }
+
+    /**
+     * SingleNameBinding CST 转 AST
+     * SingleNameBinding -> BindingIdentifier Initializer?
+     */
+    createSingleNameBindingAst(cst: SubhutiCst): any {
+        const bindingId = cst.children?.find(ch =>
+            ch.name === SlimeParser.prototype.BindingIdentifier?.name ||
+            ch.name === 'BindingIdentifier'
+        )
+        const initializer = cst.children?.find(ch =>
+            ch.name === SlimeParser.prototype.Initializer?.name ||
+            ch.name === 'Initializer'
+        )
+
+        const id = bindingId ? this.createBindingIdentifierAst(bindingId) : null
+
+        if (initializer) {
+            const init = this.createInitializerAst(initializer)
+            return {
+                type: SlimeNodeType.AssignmentPattern,
+                left: id,
+                right: init,
+                loc: cst.loc
+            }
+        }
+
+        return id
+    }
+
+    /**
+     * BindingPropertyList CST 转 AST
+     */
+    createBindingPropertyListAst(cst: SubhutiCst): any[] {
+        const properties: any[] = []
+        for (const child of cst.children || []) {
+            if (child.name === SlimeParser.prototype.BindingProperty?.name ||
+                child.name === 'BindingProperty') {
+                properties.push(this.createBindingPropertyAst(child))
+            }
+        }
+        return properties
+    }
+
+    /**
+     * BindingElementList CST 转 AST
+     */
+    createBindingElementListAst(cst: SubhutiCst): any[] {
+        const elements: any[] = []
+        for (const child of cst.children || []) {
+            if (child.name === SlimeParser.prototype.BindingElement?.name ||
+                child.name === 'BindingElement') {
+                elements.push(this.createBindingElementAst(child))
+            } else if (child.name === SlimeParser.prototype.BindingRestElement?.name ||
+                child.name === 'BindingRestElement') {
+                elements.push(this.createBindingRestElementAst(child))
+            } else if (child.name === SlimeParser.prototype.BindingElisionElement?.name ||
+                child.name === 'BindingElisionElement') {
+                // Elision 后跟 BindingElement
+                elements.push(null) // 空位
+                const bindingElement = child.children?.find((ch: SubhutiCst) =>
+                    ch.name === SlimeParser.prototype.BindingElement?.name ||
+                    ch.name === 'BindingElement'
+                )
+                if (bindingElement) {
+                    elements.push(this.createBindingElementAst(bindingElement))
+                }
+            }
+        }
+        return elements
+    }
+
+    /**
+     * BindingElisionElement CST 转 AST
+     */
+    createBindingElisionElementAst(cst: SubhutiCst): any {
+        const bindingElement = cst.children?.find(ch =>
+            ch.name === SlimeParser.prototype.BindingElement?.name ||
+            ch.name === 'BindingElement'
+        )
+        if (bindingElement) {
+            return this.createBindingElementAst(bindingElement)
+        }
+        return null
+    }
+
+    /**
+     * AssignmentPropertyList CST 转 AST
+     */
+    createAssignmentPropertyListAst(cst: SubhutiCst): any[] {
+        const properties: any[] = []
+        for (const child of cst.children || []) {
+            if (child.name === SlimeParser.prototype.AssignmentProperty?.name ||
+                child.name === 'AssignmentProperty') {
+                properties.push(this.createAssignmentPropertyAst(child))
+            }
+        }
+        return properties
+    }
+
+    /**
+     * AssignmentProperty CST 转 AST
+     */
+    createAssignmentPropertyAst(cst: SubhutiCst): any {
+        return this.createBindingPropertyAst(cst)
+    }
+
+    /**
+     * AssignmentElementList CST 转 AST
+     */
+    createAssignmentElementListAst(cst: SubhutiCst): any[] {
+        return this.createBindingElementListAst(cst)
+    }
+
+    /**
+     * AssignmentElement CST 转 AST
+     */
+    createAssignmentElementAst(cst: SubhutiCst): any {
+        return this.createBindingElementAst(cst)
+    }
+
+    /**
+     * AssignmentElisionElement CST 转 AST
+     */
+    createAssignmentElisionElementAst(cst: SubhutiCst): any {
+        return this.createBindingElisionElementAst(cst)
+    }
+
+    /**
+     * AssignmentRestElement CST 转 AST
+     */
+    createAssignmentRestElementAst(cst: SubhutiCst): any {
+        return this.createBindingRestElementAst(cst)
+    }
+
+    /**
+     * AssignmentRestProperty CST 转 AST
+     */
+    createAssignmentRestPropertyAst(cst: SubhutiCst): any {
+        return this.createBindingRestPropertyAst(cst)
+    }
+
+    /**
+     * BindingRestProperty CST 转 AST
+     */
+    createBindingRestPropertyAst(cst: SubhutiCst): SlimeRestElement {
+        const argument = cst.children?.find(ch =>
+            ch.name === SlimeParser.prototype.BindingIdentifier?.name ||
+            ch.name === 'BindingIdentifier'
+        )
+        const id = argument ? this.createBindingIdentifierAst(argument) : null
+
+        return SlimeAstUtil.createRestElement(id as any)
     }
 
     createFunctionExpressionAst(cst: SubhutiCst): SlimeFunctionExpression {
@@ -4025,6 +4912,152 @@ export class SlimeCstToAst {
         )
     }
 
+    // ==================== 语句相关转换方法 ====================
+
+    /**
+     * BreakableStatement CST 转 AST（透传）
+     * BreakableStatement -> IterationStatement | SwitchStatement
+     */
+    createBreakableStatementAst(cst: SubhutiCst): any {
+        const firstChild = cst.children?.[0]
+        if (firstChild) {
+            return this.createStatementDeclarationAst(firstChild)
+        }
+        throw new Error('BreakableStatement has no children')
+    }
+
+    /**
+     * IterationStatement CST 转 AST（透传）
+     * IterationStatement -> DoWhileStatement | WhileStatement | ForStatement | ForInOfStatement
+     */
+    createIterationStatementAst(cst: SubhutiCst): any {
+        const firstChild = cst.children?.[0]
+        if (firstChild) {
+            return this.createStatementDeclarationAst(firstChild)
+        }
+        throw new Error('IterationStatement has no children')
+    }
+
+    /**
+     * CaseBlock CST 转 AST
+     * CaseBlock -> { CaseClauses? DefaultClause? CaseClauses? }
+     */
+    createCaseBlockAst(cst: SubhutiCst): any[] {
+        return this.extractCasesFromCaseBlock(cst)
+    }
+
+    /**
+     * CaseClauses CST 转 AST
+     * CaseClauses -> CaseClause+
+     */
+    createCaseClausesAst(cst: SubhutiCst): any[] {
+        const cases: any[] = []
+        for (const child of cst.children || []) {
+            if (child.name === SlimeParser.prototype.CaseClause?.name || child.name === 'CaseClause') {
+                cases.push(this.createSwitchCaseAst(child))
+            }
+        }
+        return cases
+    }
+
+    /**
+     * CaseClause CST 转 AST
+     * CaseClause -> case Expression : StatementList?
+     */
+    createCaseClauseAst(cst: SubhutiCst): any {
+        return this.createSwitchCaseAst(cst)
+    }
+
+    /**
+     * DefaultClause CST 转 AST
+     * DefaultClause -> default : StatementList?
+     */
+    createDefaultClauseAst(cst: SubhutiCst): any {
+        return this.createSwitchCaseAst(cst)
+    }
+
+    /**
+     * LabelledItem CST 转 AST（透传）
+     * LabelledItem -> Statement | FunctionDeclaration
+     */
+    createLabelledItemAst(cst: SubhutiCst): any {
+        const firstChild = cst.children?.[0]
+        if (firstChild) {
+            return this.createStatementDeclarationAst(firstChild)
+        }
+        throw new Error('LabelledItem has no children')
+    }
+
+    /**
+     * Catch CST 转 AST（透传到 CatchClause）
+     * Catch -> catch ( CatchParameter ) Block | catch Block
+     */
+    createCatchAst(cst: SubhutiCst): any {
+        return this.createCatchClauseAst(cst)
+    }
+
+    /**
+     * SemicolonASI CST 转 AST
+     * 处理自动分号插入
+     */
+    createSemicolonASIAst(cst: SubhutiCst): any {
+        // ASI 不产生实际的 AST 节点，返回 null
+        return null
+    }
+
+    /**
+     * ForDeclaration CST 转 AST
+     * ForDeclaration -> LetOrConst ForBinding
+     */
+    createForDeclarationAst(cst: SubhutiCst): any {
+        const letOrConst = cst.children?.find(ch =>
+            ch.name === SlimeParser.prototype.LetOrConst?.name || ch.name === 'LetOrConst'
+        )
+        const forBinding = cst.children?.find(ch =>
+            ch.name === SlimeParser.prototype.ForBinding?.name || ch.name === 'ForBinding'
+        )
+
+        const kind = letOrConst?.children?.[0]?.value || 'let'
+        const id = forBinding ? this.createForBindingAst(forBinding) : null
+
+        return {
+            type: SlimeNodeType.VariableDeclaration,
+            declarations: [{
+                type: SlimeNodeType.VariableDeclarator,
+                id: id,
+                init: null,
+                loc: forBinding?.loc
+            }],
+            kind: { type: 'VariableDeclarationKind', value: kind, loc: letOrConst?.loc },
+            loc: cst.loc
+        }
+    }
+
+    /**
+     * ForBinding CST 转 AST
+     * ForBinding -> BindingIdentifier | BindingPattern
+     */
+    createForBindingAst(cst: SubhutiCst): any {
+        const firstChild = cst.children?.[0]
+        if (!firstChild) return null
+
+        if (firstChild.name === SlimeParser.prototype.BindingIdentifier?.name || firstChild.name === 'BindingIdentifier') {
+            return this.createBindingIdentifierAst(firstChild)
+        } else if (firstChild.name === SlimeParser.prototype.BindingPattern?.name || firstChild.name === 'BindingPattern') {
+            return this.createBindingPatternAst(firstChild)
+        }
+        return this.createBindingIdentifierAst(firstChild)
+    }
+
+    /**
+     * LetOrConst CST 转 AST
+     * LetOrConst -> let | const
+     */
+    createLetOrConstAst(cst: SubhutiCst): string {
+        const token = cst.children?.[0]
+        return token?.value || 'let'
+    }
+
     /**
      * 从 CaseBlock 提取所有 case/default 子句
      * CaseBlock: { CaseClauses? DefaultClause? CaseClauses? }
@@ -4057,9 +5090,14 @@ export class SlimeCstToAst {
     }
 
     /**
-     * 创建 SwitchCase AST（包括 case 和 default）
+     * [AST 类型映射] CaseClause/DefaultClause CST → SwitchCase AST
+     *
+     * 存在必要性：CST 中 case 和 default 是分开的规则（CaseClause/DefaultClause），
+     * 但 ESTree AST 统一使用 SwitchCase 类型，通过 test 是否为 null 区分。
+     *
      * CaseClause: case Expression : StatementList?
      * DefaultClause: default : StatementList?
+     * @internal
      */
     private createSwitchCaseAst(cst: SubhutiCst): any {
         let test = null
@@ -4172,7 +5210,9 @@ export class SlimeCstToAst {
     }
 
     /**
-     * 创建 Catch 子句 AST
+     * [AST 类型映射] Catch CST → CatchClause AST
+     *
+     * 存在必要性：CST 规则名是 Catch，但 ESTree AST 类型是 CatchClause。
      */
     createCatchClauseAst(cst: SubhutiCst): any {
         checkCstName(cst, SlimeParser.prototype.Catch?.name);
@@ -4270,8 +5310,8 @@ export class SlimeCstToAst {
                 breakToken = SlimeTokenCreate.createBreakToken(child.loc)
             } else if (child.name === 'Semicolon' || child.value === ';') {
                 semicolonToken = SlimeTokenCreate.createSemicolonToken(child.loc)
-            } else if (child.name === SlimeParser.prototype.LabelIdentifier?.name) {
-                label = this.createIdentifierAst(child.children[0])
+            } else if (child.name === SlimeParser.prototype.LabelIdentifier?.name || child.name === 'LabelIdentifier') {
+                label = this.createLabelIdentifierAst(child)
             } else if (child.name === SlimeParser.prototype.IdentifierName?.name) {
                 label = this.createIdentifierNameAst(child)
             } else if (child.name === SlimeTokenConsumer.prototype.IdentifierName?.name) {
@@ -4298,8 +5338,8 @@ export class SlimeCstToAst {
                 continueToken = SlimeTokenCreate.createContinueToken(child.loc)
             } else if (child.name === 'Semicolon' || child.value === ';') {
                 semicolonToken = SlimeTokenCreate.createSemicolonToken(child.loc)
-            } else if (child.name === SlimeParser.prototype.LabelIdentifier?.name) {
-                label = this.createIdentifierAst(child.children[0])
+            } else if (child.name === SlimeParser.prototype.LabelIdentifier?.name || child.name === 'LabelIdentifier') {
+                label = this.createLabelIdentifierAst(child)
             } else if (child.name === SlimeParser.prototype.IdentifierName?.name) {
                 label = this.createIdentifierNameAst(child)
             } else if (child.name === SlimeTokenConsumer.prototype.IdentifierName?.name) {
@@ -4329,13 +5369,9 @@ export class SlimeCstToAst {
                 // Skip tokens (Colon)
                 if (child.value === ':' || name === 'Colon') continue
 
-                // LabelIdentifier -> Identifier
+                // LabelIdentifier -> Identifier | yield | await
                 if (name === SlimeParser.prototype.LabelIdentifier?.name || name === 'LabelIdentifier') {
-                    // LabelIdentifier 内部是 Identifier
-                    const identifierCst = child.children?.[0]
-                    if (identifierCst) {
-                        label = this.createIdentifierAst(identifierCst)
-                    }
+                    label = this.createLabelIdentifierAst(child)
                     continue
                 }
 
@@ -5146,9 +6182,14 @@ export class SlimeCstToAst {
         }
     }
 
+    /**
+     * [兼容性方法] DotIdentifier CST → DotToken
+     *
+     * 存在必要性：兼容旧版 Parser 中的 DotIdentifier 规则。
+     * 新版 Parser 中属性访问使用 Dot + IdentifierName 分开表示。
+     * @deprecated 旧版 Parser 兼容，新版应直接处理 Dot 和 IdentifierName
+     */
     createDotIdentifierAst(cst: SubhutiCst): SlimeDotToken {
-        // 兼容旧版 DotIdentifier
-        // const astName = checkCstName(cst, 'DotIdentifier');
         const dotToken = SlimeTokenCreate.createDotToken(cst.children[0].loc)
         return dotToken
     }
@@ -5355,6 +6396,157 @@ export class SlimeCstToAst {
         }
         variableDeclarator.loc = cst.loc
         return variableDeclarator
+    }
+
+    // ==================== 表达式相关转换方法 ====================
+
+    /**
+     * CoverParenthesizedExpressionAndArrowParameterList CST 转 AST
+     * 这是一个 cover grammar，根据上下文可能是括号表达式或箭头函数参数
+     */
+    createCoverParenthesizedExpressionAndArrowParameterListAst(cst: SubhutiCst): SlimeExpression {
+        // 通常作为括号表达式处理，箭头函数参数有专门的处理路径
+        return this.createParenthesizedExpressionAst(cst)
+    }
+
+    /**
+     * ParenthesizedExpression CST 转 AST
+     * ParenthesizedExpression -> ( Expression )
+     */
+    createParenthesizedExpressionAst(cst: SubhutiCst): SlimeExpression {
+        // 查找内部的 Expression
+        for (const child of cst.children || []) {
+            if (child.name === SlimeParser.prototype.Expression?.name ||
+                child.name === 'Expression' ||
+                child.name === SlimeParser.prototype.AssignmentExpression?.name) {
+                return this.createExpressionAst(child)
+            }
+        }
+        // 如果没有找到 Expression，可能是空括号或者直接包含其他表达式
+        const innerExpr = cst.children?.find(ch =>
+            ch.name !== 'LParen' && ch.name !== 'RParen' && ch.value !== '(' && ch.value !== ')'
+        )
+        if (innerExpr) {
+            return this.createExpressionAst(innerExpr)
+        }
+        throw new Error('ParenthesizedExpression has no inner expression')
+    }
+
+    /**
+     * ComputedPropertyName CST 转 AST
+     * ComputedPropertyName -> [ AssignmentExpression ]
+     */
+    createComputedPropertyNameAst(cst: SubhutiCst): SlimeExpression {
+        const expr = cst.children?.find(ch =>
+            ch.name === SlimeParser.prototype.AssignmentExpression?.name ||
+            ch.name === 'AssignmentExpression'
+        )
+        if (expr) {
+            return this.createAssignmentExpressionAst(expr)
+        }
+        throw new Error('ComputedPropertyName missing AssignmentExpression')
+    }
+
+    /**
+     * CoverInitializedName CST 转 AST
+     * CoverInitializedName -> IdentifierReference Initializer
+     */
+    createCoverInitializedNameAst(cst: SubhutiCst): any {
+        const idRef = cst.children?.find(ch =>
+            ch.name === SlimeParser.prototype.IdentifierReference?.name ||
+            ch.name === 'IdentifierReference'
+        )
+        const init = cst.children?.find(ch =>
+            ch.name === SlimeParser.prototype.Initializer?.name ||
+            ch.name === 'Initializer'
+        )
+
+        const id = idRef ? this.createIdentifierReferenceAst(idRef) : null
+        const initValue = init ? this.createInitializerAst(init) : null
+
+        return {
+            type: SlimeNodeType.AssignmentPattern,
+            left: id,
+            right: initValue,
+            loc: cst.loc
+        }
+    }
+
+    /**
+     * CoverCallExpressionAndAsyncArrowHead CST 转 AST
+     * 这是一个 cover grammar，通常作为 CallExpression 处理
+     */
+    createCoverCallExpressionAndAsyncArrowHeadAst(cst: SubhutiCst): SlimeExpression {
+        return this.createCallExpressionAst(cst)
+    }
+
+    /**
+     * CallMemberExpression CST 转 AST
+     * CallMemberExpression -> MemberExpression Arguments
+     */
+    createCallMemberExpressionAst(cst: SubhutiCst): SlimeExpression {
+        return this.createCallExpressionAst(cst)
+    }
+
+    /**
+     * ShortCircuitExpression CST 转 AST（透传）
+     * ShortCircuitExpression -> LogicalORExpression | CoalesceExpression
+     */
+    createShortCircuitExpressionAst(cst: SubhutiCst): SlimeExpression {
+        const firstChild = cst.children?.[0]
+        if (firstChild) {
+            return this.createExpressionAst(firstChild)
+        }
+        throw new Error('ShortCircuitExpression has no children')
+    }
+
+    /**
+     * ShortCircuitExpressionTail CST 转 AST（辅助方法）
+     */
+    createShortCircuitExpressionTailAst(cst: SubhutiCst): SlimeExpression {
+        return this.createShortCircuitExpressionAst(cst)
+    }
+
+    /**
+     * CoalesceExpressionHead CST 转 AST
+     * CoalesceExpressionHead -> CoalesceExpression | BitwiseORExpression
+     */
+    createCoalesceExpressionHeadAst(cst: SubhutiCst): SlimeExpression {
+        const firstChild = cst.children?.[0]
+        if (firstChild) {
+            return this.createExpressionAst(firstChild)
+        }
+        throw new Error('CoalesceExpressionHead has no children')
+    }
+
+    /**
+     * MultiplicativeOperator CST 转 AST
+     * MultiplicativeOperator -> * | / | %
+     */
+    createMultiplicativeOperatorAst(cst: SubhutiCst): string {
+        const token = cst.children?.[0]
+        return token?.value || '*'
+    }
+
+    /**
+     * AssignmentOperator CST 转 AST
+     * AssignmentOperator -> *= | /= | %= | += | -= | <<= | >>= | >>>= | &= | ^= | |= | **= | &&= | ||= | ??=
+     */
+    createAssignmentOperatorAst(cst: SubhutiCst): string {
+        const token = cst.children?.[0]
+        return token?.value || '='
+    }
+
+    /**
+     * ExpressionBody CST 转 AST
+     * ExpressionBody -> AssignmentExpression
+     */
+    createExpressionBodyAst(cst: SubhutiCst): SlimeExpression {
+        const firstChild = cst.children?.[0]
+        if (firstChild) {
+            return this.createAssignmentExpressionAst(firstChild)
+        }
+        throw new Error('ExpressionBody has no children')
     }
 
     createExpressionAst(cst: SubhutiCst): SlimeExpression {
@@ -6374,6 +7566,11 @@ export class SlimeCstToAst {
         }
     }
 
+    /**
+     * [AST 类型映射] ObjectLiteral CST → ObjectExpression AST
+     *
+     * 存在必要性：CST 规则名是 ObjectLiteral，但 ESTree AST 类型是 ObjectExpression。
+     */
     createObjectExpressionAst(cst: SubhutiCst): SlimeObjectExpression {
         const astName = checkCstName(cst, SlimeParser.prototype.ObjectLiteral?.name);
         const properties: Array<SlimeObjectPropertyItem> = []
@@ -6609,6 +7806,11 @@ export class SlimeCstToAst {
     }
 
 
+    /**
+     * [AST 类型映射] NumericLiteral 终端符 → Literal AST
+     *
+     * 存在必要性：NumericLiteral 在 CST 中是终端符，在 ESTree AST 中是 Literal 类型。
+     */
     createNumericLiteralAst(cst: SubhutiCst): SlimeNumericLiteral {
         // 兼容多种 NumericLiteral 名称：NumericLiteral, NumericLiteralTok, Number
         const validNames = [
@@ -6625,6 +7827,11 @@ export class SlimeCstToAst {
         return SlimeAstUtil.createNumericLiteral(Number(rawValue), rawValue)
     }
 
+    /**
+     * [AST 类型映射] StringLiteral 终端符 → Literal AST
+     *
+     * 存在必要性：StringLiteral 在 CST 中是终端符，在 ESTree AST 中是 Literal 类型。
+     */
     createStringLiteralAst(cst: SubhutiCst): SlimeStringLiteral {
         // 兼容多种 StringLiteral 名称：StringLiteral, StringLiteralTok, String
         const validNames = [
@@ -6643,7 +7850,11 @@ export class SlimeCstToAst {
     }
 
     /**
-     * 创建 RegExpLiteral AST
+     * [AST 类型映射] RegularExpressionLiteral 终端符 → Literal AST
+     *
+     * 存在必要性：RegularExpressionLiteral 在 CST 中是终端符，
+     * 在 ESTree AST 中是 Literal 类型，需要解析正则表达式的 pattern 和 flags。
+     *
      * RegularExpressionLiteral: /pattern/flags
      */
     createRegExpLiteralAst(cst: SubhutiCst): any {
@@ -6691,6 +7902,11 @@ export class SlimeCstToAst {
         }
     }
 
+    /**
+     * [AST 类型映射] ArrayLiteral CST → ArrayExpression AST
+     *
+     * 存在必要性：CST 规则名是 ArrayLiteral，但 ESTree AST 类型是 ArrayExpression。
+     */
     createArrayExpressionAst(cst: SubhutiCst): SlimeArrayExpression {
         const astName = checkCstName(cst, SlimeParser.prototype.ArrayLiteral?.name);
         // ArrayLiteral: [LBracket, ElementList?, Comma?, Elision?, RBracket]
@@ -6819,6 +8035,56 @@ export class SlimeCstToAst {
         )
     }
 
+    // ==================== 字面量相关转换方法 ====================
+
+    /**
+     * 布尔字面量 CST 转 AST
+     * BooleanLiteral -> true | false
+     */
+    createBooleanLiteralAst(cst: SubhutiCst): SlimeLiteral {
+        const firstChild = cst.children?.[0]
+        if (firstChild?.name === 'True' || firstChild?.value === 'true') {
+            const lit = SlimeAstUtil.createBooleanLiteral(true)
+            lit.loc = firstChild.loc || cst.loc
+            return lit
+        } else {
+            const lit = SlimeAstUtil.createBooleanLiteral(false)
+            lit.loc = firstChild?.loc || cst.loc
+            return lit
+        }
+    }
+
+    /**
+     * 数组字面量 CST 转 AST（透传到 ArrayExpression）
+     * ArrayLiteral -> [ Elision? ] | [ ElementList ] | [ ElementList , Elision? ]
+     */
+    createArrayLiteralAst(cst: SubhutiCst): SlimeArrayExpression {
+        return this.createArrayExpressionAst(cst)
+    }
+
+    /**
+     * 对象字面量 CST 转 AST（透传到 ObjectExpression）
+     * ObjectLiteral -> { } | { PropertyDefinitionList } | { PropertyDefinitionList , }
+     */
+    createObjectLiteralAst(cst: SubhutiCst): SlimeObjectExpression {
+        return this.createObjectExpressionAst(cst)
+    }
+
+    /**
+     * Elision（逗号空位）CST 转 AST
+     * Elision -> , | Elision ,
+     * 返回 null 元素的数量
+     */
+    createElisionAst(cst: SubhutiCst): number {
+        // 计算逗号数量，每个逗号代表一个空位
+        let count = 0
+        for (const child of cst.children || []) {
+            if (child.value === ',') {
+                count++
+            }
+        }
+        return count
+    }
 
     createLiteralAst(cst: SubhutiCst): SlimeLiteral {
         const astName = checkCstName(cst, SlimeParser.prototype.Literal?.name);
