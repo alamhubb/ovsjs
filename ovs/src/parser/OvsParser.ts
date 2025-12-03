@@ -1,15 +1,24 @@
-import OvsTokenConsumer from "./OvsConsumer.ts"
-import {Subhuti, SubhutiRule} from 'subhuti/src/SubhutiParser.ts'
+import OvsTokenConsumer, {ovs6Tokens} from "./OvsConsumer.ts"
+import SubhutiParser, {Subhuti, SubhutiRule} from 'subhuti/src/SubhutiParser.ts'
 import OvsVueRenderFactory from "../factory/OvsVueRenderFactory.ts";
 import SubhutiCst from "subhuti/src/struct/SubhutiCst.ts";
 import SlimeParser from "slime-parser/src/language/es2025/SlimeParser.ts";
 
 @Subhuti
-export default class OvsParser extends SlimeParser<OvsTokenConsumer> {
+export default class OvsParser extends SlimeParser {
+    /**
+     * 构造函数 - 使用按需词法分析模式
+     * @param sourceCode 原始源码
+     */
+    constructor(sourceCode: string = '') {
+        super(sourceCode)  // 先调用空的 super
+    }
+
+
     @SubhutiRule
     OvsRenderFunction() {
         // this.Option(() => {
-        this.tokenConsumer.Identifier()
+        this.tokenConsumer.IdentifierName()
         // })
         this.Option(() => {
             this.Arguments()
@@ -20,8 +29,7 @@ export default class OvsParser extends SlimeParser<OvsTokenConsumer> {
             this.StatementList()
         })
         this.tokenConsumer.RBrace()
-        const curCst = this.getCurCst()
-        return curCst
+        return this.curCst
     }
 
     @SubhutiRule
@@ -34,7 +42,7 @@ export default class OvsParser extends SlimeParser<OvsTokenConsumer> {
 
     @SubhutiRule
     ovsRenderDomClassDeclaration() {
-        this.tokenConsumer.Identifier()
+        this.tokenConsumer.IdentifierName()
         this.Option(() => {
             this.FunctionFormalParameters()
         })
@@ -64,7 +72,7 @@ export default class OvsParser extends SlimeParser<OvsTokenConsumer> {
             { alt: () => this.NoRenderBlock() },        // 新增：#{}块优先
             { alt: () => this.BlockStatement() },
             { alt: () => this.VariableDeclaration() },
-            { alt: () => this.NotEmptySemicolon() },
+            { alt: () => this.EmptyStatement() },
             { alt: () => this.ExpressionStatement() },
             { alt: () => this.IfStatement() },
             { alt: () => this.BreakableStatement() },
@@ -117,7 +125,7 @@ export default class OvsParser extends SlimeParser<OvsTokenConsumer> {
             {
                 alt: () => {
                     this.LeftHandSideExpression()
-                    this.tokenConsumer.Eq()
+                    this.tokenConsumer.Assign()
                     this.AssignmentExpression()
                 }
             },

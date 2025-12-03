@@ -1,10 +1,7 @@
 // Vite 插件
 import {createFilter, type Plugin} from "vite"
-import SubhutiLexer from 'subhuti/src/SubhutiLexer.ts'
 import SubhutiCst from "subhuti/src/struct/SubhutiCst.ts";
 import SlimeGenerator from "slime-generator/src/SlimeGenerator.ts";
-import {ovs6Tokens} from "./parser/OvsConsumer.ts";
-import OvsTokenConsumer from "./parser/OvsConsumer.ts";
 import OvsParser from "./parser/OvsParser.ts";
 import OvsCstToSlimeAstUtil from "./factory/OvsCstToSlimeAstUtil.ts";
 import type {SlimeGeneratorResult} from "slime-generator/src/SlimeCodeMapping.ts";
@@ -390,12 +387,11 @@ export interface ovsTransformBaseResult {
  * @returns 转换结果（包含格式化后的代码和准确的 source map）
  *
  * 转换流程：
- * 1. 词法分析：code → tokens
- * 2. 语法分析：tokens → CST
- * 3. 语法转换：CST → AST（OVS 语法 → JavaScript AST）
- * 4. 添加 import：自动添加 h 函数 import（如果不存在）
- * 5. 组件包装：AST → Vue 组件 AST
- * 6. 代码生成：AST → code（自动格式化：分号后换行、{} 缩进）
+ * 1. 按需词法分析 + 语法分析：code → CST
+ * 2. 语法转换：CST → AST（OVS 语法 → JavaScript AST）
+ * 3. 添加 import：自动添加 h 函数 import（如果不存在）
+ * 4. 组件包装：AST → Vue 组件 AST
+ * 5. 代码生成：AST → code（自动格式化：分号后换行、{} 缩进）
  *
  * **格式化特性：**
  * - ✅ 分号后自动换行
@@ -406,19 +402,18 @@ export interface ovsTransformBaseResult {
 export function ovsTransformBase(
     code: string
 ): ovsTransformBaseResult {
-    // 1. 词法分析
-    const lexer = new SubhutiLexer(ovs6Tokens)
-    const tokens = lexer.tokenize(code)
+    // 1. 按需词法分析 + 语法分析（使用新架构）
+    const parser = new OvsParser(code)
+    let curCst = parser.Program()
+
+    // 获取解析后的 tokens
+    const tokens = parser.parsedTokens
 
     if (!tokens.length) {
         return {ast: null, tokens: tokens}
     }
 
-    // 2. 语法分析
-    const parser = new OvsParser(tokens, OvsTokenConsumer)
-    let curCst = parser.Program()
-
-    // 3. 语法转换
+    // 2. 语法转换
     let ast = OvsCstToSlimeAstUtil.toProgram(curCst)
 
     return {ast, tokens}
