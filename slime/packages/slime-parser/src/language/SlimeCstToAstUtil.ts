@@ -133,33 +133,24 @@ export function throwNewError(errorMsg: string = 'syntax error') {
  * | 内部辅助方法 | private createXxxAst | ES2025 专用处理等 |
  * | 工具方法 | convertXxx / isXxx | 表达式转模式、检查方法等 |
  *
- * ## 非一一对应方法说明
+ * ## 方法命名规范
  *
- * 以下方法不直接对应 CST 规则，但有存在必要性：
+ * 所有 CST 转换方法命名为 createXxxAst，其中 Xxx 与 CST 规则名一致。
+ * 内部调用 SlimeNodeCreate / SlimeAstUtil 中与 AST 类型名一致的工厂方法。
  *
- * ### AST 类型映射方法
- * - createArrayExpressionAst: ArrayLiteral CST → ArrayExpression AST
- * - createObjectExpressionAst: ObjectLiteral CST → ObjectExpression AST
- * - createCatchClauseAst: Catch CST → CatchClause AST
- * - createSwitchCaseAst: CaseClause/DefaultClause CST → SwitchCase AST
- * - createPrivateIdentifierAst: PrivateIdentifier 终端符 → PrivateIdentifier AST
- * - createStringLiteralAst: StringLiteral 终端符 → Literal AST
- * - createNumericLiteralAst: NumericLiteral 终端符 → Literal AST
- * - createRegExpLiteralAst: RegularExpressionLiteral 终端符 → Literal AST
+ * 例如：
+ * - createArrayLiteralAst (CST 规则名) → 内部调用 createArrayExpression (AST 类型名)
+ * - createObjectLiteralAst (CST 规则名) → 内部调用 createObjectExpression (AST 类型名)
+ * - createCatchAst (CST 规则名) → 内部调用 createCatchClause (AST 类型名)
  *
- * ### 核心分发方法
- * - createAstFromCst: 中心转发，根据 CST 类型自动分发
+ * ## 核心分发方法
+ * - createAstFromCst: 中心转发，根据 CST 类型显式分发到对应方法
  * - createStatementDeclarationAst: 语句/声明分发
- * - createExpressionAst: 表达式分发
  *
- * ### 辅助处理方法
+ * ## 辅助处理方法
  * - createClassBodyItemAst: 类成员处理（MethodDefinition/FieldDefinition 分发）
  * - createClassElementNameOrPropertyNameAst: 类元素名/属性名处理
- * - createDotIdentifierAst: 点标识符处理（兼容旧版 Parser）
  * - toProgram: Program 入口处理
- *
- * ### 兼容性方法（标记 @deprecated）
- * - createPropertyNameMethodDefinitionAst: 旧版 Parser 兼容
  */
 export class SlimeCstToAst {
     private readonly expressionAstCache = new WeakMap<SubhutiCst, SlimeExpression>()
@@ -5204,11 +5195,35 @@ export class SlimeCstToAst {
     }
 
     /**
-     * Catch CST 转 AST（透传到 CatchClause）
+     * Catch CST 转 CatchClause AST
      * Catch -> catch ( CatchParameter ) Block | catch Block
      */
     createCatchAst(cst: SubhutiCst): any {
-        return this.createCatchClauseAst(cst)
+        checkCstName(cst, SlimeParser.prototype.Catch?.name);
+        // Catch: CatchTok LParen CatchParameter RParen Block
+
+        let catchToken: any = undefined
+        let lParenToken: any = undefined
+        let rParenToken: any = undefined
+
+        for (const child of cst.children) {
+            if (!child) continue
+            if (child.name === 'Catch' || child.value === 'catch') {
+                catchToken = SlimeTokenCreate.createCatchToken(child.loc)
+            } else if (child.name === 'LParen' || child.value === '(') {
+                lParenToken = SlimeTokenCreate.createLParenToken(child.loc)
+            } else if (child.name === 'RParen' || child.value === ')') {
+                rParenToken = SlimeTokenCreate.createRParenToken(child.loc)
+            }
+        }
+
+        const paramCst = cst.children.find(ch => ch.name === SlimeParser.prototype.CatchParameter?.name)
+        const blockCst = cst.children.find(ch => ch.name === SlimeParser.prototype.Block?.name)
+
+        const param = paramCst ? this.createCatchParameterAst(paramCst) : null
+        const body = blockCst ? this.createBlockAst(blockCst) : SlimeAstUtil.createBlockStatement([])
+
+        return SlimeAstUtil.createCatchClause(body, param, cst.loc, catchToken, lParenToken, rParenToken)
     }
 
     /**
@@ -5388,7 +5403,7 @@ export class SlimeCstToAst {
         const finallyCst = cst.children.find(ch => ch.name === SlimeParser.prototype.Finally?.name)
 
         const block = blockCst ? this.createBlockAst(blockCst) : null
-        const handler = catchCst ? this.createCatchClauseAst(catchCst) : null
+        const handler = catchCst ? this.createCatchAst(catchCst) : null
         const finalizer = finallyCst ? this.createFinallyAst(finallyCst) : null
 
         return SlimeAstUtil.createTryStatement(block, handler, finalizer, cst.loc, tryToken, finallyToken)
@@ -5422,39 +5437,6 @@ export class SlimeCstToAst {
         const statements = statementListCst ? this.createStatementListAst(statementListCst) : []
 
         return SlimeAstUtil.createBlockStatement(statements, cst.loc, lBraceToken, rBraceToken)
-    }
-
-    /**
-     * [AST 类型映射] Catch CST → CatchClause AST
-     *
-     * 存在必要性：CST 规则名是 Catch，但 ESTree AST 类型是 CatchClause。
-     */
-    createCatchClauseAst(cst: SubhutiCst): any {
-        checkCstName(cst, SlimeParser.prototype.Catch?.name);
-        // Catch: CatchTok LParen CatchParameter RParen Block
-
-        let catchToken: any = undefined
-        let lParenToken: any = undefined
-        let rParenToken: any = undefined
-
-        for (const child of cst.children) {
-            if (!child) continue
-            if (child.name === 'Catch' || child.value === 'catch') {
-                catchToken = SlimeTokenCreate.createCatchToken(child.loc)
-            } else if (child.name === 'LParen' || child.value === '(') {
-                lParenToken = SlimeTokenCreate.createLParenToken(child.loc)
-            } else if (child.name === 'RParen' || child.value === ')') {
-                rParenToken = SlimeTokenCreate.createRParenToken(child.loc)
-            }
-        }
-
-        const paramCst = cst.children.find(ch => ch.name === SlimeParser.prototype.CatchParameter?.name)
-        const blockCst = cst.children.find(ch => ch.name === SlimeParser.prototype.Block?.name)
-
-        const param = paramCst ? this.createCatchParameterAst(paramCst) : null
-        const body = blockCst ? this.createBlockAst(blockCst) : SlimeAstUtil.createBlockStatement([])
-
-        return SlimeAstUtil.createCatchClause(body, param, cst.loc, catchToken, lParenToken, rParenToken)
     }
 
     /**
@@ -7447,11 +7429,11 @@ export class SlimeCstToAst {
         } else if (first.name === SlimeParser.prototype.Literal?.name) {
             return this.createLiteralAst(first)
         } else if (first.name === SlimeParser.prototype.ArrayLiteral?.name) {
-            return this.createArrayExpressionAst(first) as SlimeExpression
+            return this.createArrayLiteralAst(first) as SlimeExpression
         } else if (first.name === SlimeParser.prototype.FunctionExpression?.name) {
             return this.createFunctionExpressionAst(first) as SlimeExpression
         } else if (first.name === SlimeParser.prototype.ObjectLiteral?.name) {
-            return this.createObjectExpressionAst(first) as SlimeExpression
+            return this.createObjectLiteralAst(first) as SlimeExpression
         } else if (first.name === SlimeParser.prototype.ClassExpression?.name) {
             return this.createClassExpressionAst(first) as SlimeExpression
         } else if (first.name === SlimeTokenConsumer.prototype.This?.name) {
@@ -7781,66 +7763,6 @@ export class SlimeCstToAst {
         }
     }
 
-    /**
-     * [AST 类型映射] ObjectLiteral CST → ObjectExpression AST
-     *
-     * 存在必要性：CST 规则名是 ObjectLiteral，但 ESTree AST 类型是 ObjectExpression。
-     */
-    createObjectExpressionAst(cst: SubhutiCst): SlimeObjectExpression {
-        const astName = checkCstName(cst, SlimeParser.prototype.ObjectLiteral?.name);
-        const properties: Array<SlimeObjectPropertyItem> = []
-
-        // 提取 LBrace 和 RBrace tokens
-        let lBraceToken: any = undefined
-        let rBraceToken: any = undefined
-
-        // ObjectLiteral: { PropertyDefinitionList? ,? }
-        // children[0] = LBrace, children[last] = RBrace (if exists)
-        if (cst.children && cst.children.length > 0) {
-            const firstChild = cst.children[0]
-            if (firstChild && (firstChild.name === 'LBrace' || firstChild.value === '{')) {
-                lBraceToken = SlimeTokenCreate.createLBraceToken(firstChild.loc)
-            }
-
-            const lastChild = cst.children[cst.children.length - 1]
-            if (lastChild && (lastChild.name === 'RBrace' || lastChild.value === '}')) {
-                rBraceToken = SlimeTokenCreate.createRBraceToken(lastChild.loc)
-            }
-        }
-
-        if (cst.children.length > 2) {
-            const PropertyDefinitionListCst = cst.children[1]
-            let currentProperty: SlimeProperty | SlimeSpreadElement | null = null
-            let hasProperty = false
-
-            for (const child of PropertyDefinitionListCst.children) {
-                // 跳过没有children的PropertyDefinition节点（SubhutiParser优化导致）
-                if (child.name === SlimeParser.prototype.PropertyDefinition?.name && child.children && child.children.length > 0) {
-                    // 如果之前有属性但没有逗号，先推入
-                    if (hasProperty) {
-                        properties.push(SlimeAstUtil.createObjectPropertyItem(currentProperty!, undefined))
-                    }
-                    currentProperty = this.createPropertyDefinitionAst(child)
-                    hasProperty = true
-                } else if (child.name === 'Comma' || child.value === ',') {
-                    // 逗号与前面的属性配对
-                    const commaToken = SlimeTokenCreate.createCommaToken(child.loc)
-                    if (hasProperty) {
-                        properties.push(SlimeAstUtil.createObjectPropertyItem(currentProperty!, commaToken))
-                        hasProperty = false
-                        currentProperty = null
-                    }
-                }
-            }
-
-            // 处理最后一个属性（如果没有尾随逗号）
-            if (hasProperty) {
-                properties.push(SlimeAstUtil.createObjectPropertyItem(currentProperty!, undefined))
-            }
-        }
-        return SlimeAstUtil.createObjectExpression(properties, cst.loc, lBraceToken, rBraceToken)
-    }
-
     createClassExpressionAst(cst: SubhutiCst): SlimeClassExpression {
         const astName = checkCstName(cst, SlimeParser.prototype.ClassExpression?.name);
 
@@ -8117,54 +8039,6 @@ export class SlimeCstToAst {
         }
     }
 
-    /**
-     * [AST 类型映射] ArrayLiteral CST → ArrayExpression AST
-     *
-     * 存在必要性：CST 规则名是 ArrayLiteral，但 ESTree AST 类型是 ArrayExpression。
-     */
-    createArrayExpressionAst(cst: SubhutiCst): SlimeArrayExpression {
-        const astName = checkCstName(cst, SlimeParser.prototype.ArrayLiteral?.name);
-        // ArrayLiteral: [LBracket, ElementList?, Comma?, Elision?, RBracket]
-
-        // 提取 LBracket 和 RBracket tokens
-        let lBracketToken: any = undefined
-        let rBracketToken: any = undefined
-
-        if (cst.children && cst.children.length > 0) {
-            const firstChild = cst.children[0]
-            if (firstChild && (firstChild.name === 'LBracket' || firstChild.value === '[')) {
-                lBracketToken = SlimeTokenCreate.createLBracketToken(firstChild.loc)
-            }
-
-            const lastChild = cst.children[cst.children.length - 1]
-            if (lastChild && (lastChild.name === 'RBracket' || lastChild.value === ']')) {
-                rBracketToken = SlimeTokenCreate.createRBracketToken(lastChild.loc)
-            }
-        }
-
-        const elementList = cst.children.find(ch => ch.name === SlimeParser.prototype.ElementList?.name)
-        const elements = elementList ? this.createElementListAst(elementList) : []
-
-        // 处理 ArrayLiteral 顶层的 Comma 和 Elision（尾随逗号和省略）
-        // 例如 [x,,] -> ElementList 后面有 Comma 和 Elision
-        let hasTrailingComma = false
-        for (const child of cst.children) {
-            if (child.name === 'Comma' || child.value === ',') {
-                // 顶层逗号，表示尾随逗号
-                hasTrailingComma = true
-            } else if (child.name === SlimeParser.prototype.Elision?.name || child.name === 'Elision') {
-                // 顶层 Elision，添加空元素
-                const elisionCommas = child.children?.filter((c: any) => c.name === 'Comma' || c.value === ',') || []
-                for (let j = 0; j < elisionCommas.length; j++) {
-                    const commaToken = SlimeTokenCreate.createCommaToken(elisionCommas[j].loc)
-                    elements.push(SlimeAstUtil.createArrayElement(null, commaToken))
-                }
-            }
-        }
-
-        return SlimeAstUtil.createArrayExpression(elements, cst.loc, lBracketToken, rBracketToken)
-    }
-
     createElementListAst(cst: SubhutiCst): Array<SlimeArrayElement> {
         const astName = checkCstName(cst, SlimeParser.prototype.ElementList?.name);
         const elements: Array<SlimeArrayElement> = []
@@ -8270,11 +8144,50 @@ export class SlimeCstToAst {
     }
 
     /**
-     * 数组字面量 CST 转 AST（透传到 ArrayExpression）
+     * ArrayLiteral CST 转 ArrayExpression AST
      * ArrayLiteral -> [ Elision? ] | [ ElementList ] | [ ElementList , Elision? ]
      */
     createArrayLiteralAst(cst: SubhutiCst): SlimeArrayExpression {
-        return this.createArrayExpressionAst(cst)
+        const astName = checkCstName(cst, SlimeParser.prototype.ArrayLiteral?.name);
+        // ArrayLiteral: [LBracket, ElementList?, Comma?, Elision?, RBracket]
+
+        // 提取 LBracket 和 RBracket tokens
+        let lBracketToken: any = undefined
+        let rBracketToken: any = undefined
+
+        if (cst.children && cst.children.length > 0) {
+            const firstChild = cst.children[0]
+            if (firstChild && (firstChild.name === 'LBracket' || firstChild.value === '[')) {
+                lBracketToken = SlimeTokenCreate.createLBracketToken(firstChild.loc)
+            }
+
+            const lastChild = cst.children[cst.children.length - 1]
+            if (lastChild && (lastChild.name === 'RBracket' || lastChild.value === ']')) {
+                rBracketToken = SlimeTokenCreate.createRBracketToken(lastChild.loc)
+            }
+        }
+
+        const elementList = cst.children.find(ch => ch.name === SlimeParser.prototype.ElementList?.name)
+        const elements = elementList ? this.createElementListAst(elementList) : []
+
+        // 处理 ArrayLiteral 顶层的 Comma 和 Elision（尾随逗号和省略）
+        // 例如 [x,,] -> ElementList 后面有 Comma 和 Elision
+        let hasTrailingComma = false
+        for (const child of cst.children) {
+            if (child.name === 'Comma' || child.value === ',') {
+                // 顶层逗号，表示尾随逗号
+                hasTrailingComma = true
+            } else if (child.name === SlimeParser.prototype.Elision?.name || child.name === 'Elision') {
+                // 顶层 Elision，添加空元素
+                const elisionCommas = child.children?.filter((c: any) => c.name === 'Comma' || c.value === ',') || []
+                for (let j = 0; j < elisionCommas.length; j++) {
+                    const commaToken = SlimeTokenCreate.createCommaToken(elisionCommas[j].loc)
+                    elements.push(SlimeAstUtil.createArrayElement(null, commaToken))
+                }
+            }
+        }
+
+        return SlimeAstUtil.createArrayExpression(elements, cst.loc, lBracketToken, rBracketToken)
     }
 
     /**
@@ -8282,7 +8195,58 @@ export class SlimeCstToAst {
      * ObjectLiteral -> { } | { PropertyDefinitionList } | { PropertyDefinitionList , }
      */
     createObjectLiteralAst(cst: SubhutiCst): SlimeObjectExpression {
-        return this.createObjectExpressionAst(cst)
+        const astName = checkCstName(cst, SlimeParser.prototype.ObjectLiteral?.name);
+        const properties: Array<SlimeObjectPropertyItem> = []
+
+        // 提取 LBrace 和 RBrace tokens
+        let lBraceToken: any = undefined
+        let rBraceToken: any = undefined
+
+        // ObjectLiteral: { PropertyDefinitionList? ,? }
+        // children[0] = LBrace, children[last] = RBrace (if exists)
+        if (cst.children && cst.children.length > 0) {
+            const firstChild = cst.children[0]
+            if (firstChild && (firstChild.name === 'LBrace' || firstChild.value === '{')) {
+                lBraceToken = SlimeTokenCreate.createLBraceToken(firstChild.loc)
+            }
+
+            const lastChild = cst.children[cst.children.length - 1]
+            if (lastChild && (lastChild.name === 'RBrace' || lastChild.value === '}')) {
+                rBraceToken = SlimeTokenCreate.createRBraceToken(lastChild.loc)
+            }
+        }
+
+        if (cst.children.length > 2) {
+            const PropertyDefinitionListCst = cst.children[1]
+            let currentProperty: SlimeProperty | SlimeSpreadElement | null = null
+            let hasProperty = false
+
+            for (const child of PropertyDefinitionListCst.children) {
+                // 跳过没有children的PropertyDefinition节点（SubhutiParser优化导致）
+                if (child.name === SlimeParser.prototype.PropertyDefinition?.name && child.children && child.children.length > 0) {
+                    // 如果之前有属性但没有逗号，先推入
+                    if (hasProperty) {
+                        properties.push(SlimeAstUtil.createObjectPropertyItem(currentProperty!, undefined))
+                    }
+                    currentProperty = this.createPropertyDefinitionAst(child)
+                    hasProperty = true
+                } else if (child.name === 'Comma' || child.value === ',') {
+                    // 逗号与前面的属性配对
+                    const commaToken = SlimeTokenCreate.createCommaToken(child.loc)
+                    if (hasProperty) {
+                        properties.push(SlimeAstUtil.createObjectPropertyItem(currentProperty!, commaToken))
+                        hasProperty = false
+                        currentProperty = null
+                    }
+                }
+            }
+
+            // 处理最后一个属性（如果没有尾随逗号）
+            if (hasProperty) {
+                properties.push(SlimeAstUtil.createObjectPropertyItem(currentProperty!, undefined))
+            }
+        }
+        return SlimeAstUtil.createObjectExpression(properties, cst.loc, lBraceToken, rBraceToken)
     }
 
     /**
