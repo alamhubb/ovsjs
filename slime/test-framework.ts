@@ -4,12 +4,14 @@
  */
 import * as fs from 'fs'
 import * as path from 'path'
+import { performance } from 'perf_hooks'
 
 // ============================================
 // 通用配置 - 直接修改这里
 // ============================================
 export const DEFAULT_START_FROM = 0       // 从第几个测试开始（0 表示从头开始）
 export const DEFAULT_STOP_ON_FAIL = true  // 遇到第一个失败就停止
+export const DEFAULT_TIMEOUT_MS = 3000    // 单个测试文件超时时间（毫秒）
 
 // ============================================
 // 跳过规则配置
@@ -206,7 +208,6 @@ export async function runTests(
 
   const args = process.argv.slice(2)
   const cmdStartIndex = args.find(a => !a.startsWith('-'))
-  // 用户输入 1-based，内部转 0-based
   const startIndex = cmdStartIndex
     ? parseInt(cmdStartIndex, 10) - 1
     : (startFrom !== undefined ? startFrom - 1 : DEFAULT_START_FROM)
@@ -242,10 +243,22 @@ export async function runTests(
     const code = fs.readFileSync(filePath, 'utf-8')
     const ctx: TestContext = { filePath, testName, code, parseMode, index: i }
 
+    const startTime = performance.now()
+
     try {
-      const result = await testFn(ctx)
+      const result = await runTestWithTimeout(testFn, ctx, DEFAULT_TIMEOUT_MS)
+      const elapsed = performance.now() - startTime
+
+      if (result.timeout) {
+        console.log(`\n[${i + 1}] ⏱️ ${testName} - 超时 (>${DEFAULT_TIMEOUT_MS}ms)`)
+        console.log(`   🔍 该用例存在性能问题，需要分析`)
+        console.log(`   📄 代码: ${code}`)
+        throw new Error(`测试超时: ${testName} 超过阈值 ${DEFAULT_TIMEOUT_MS}ms`)
+      }
+
       if (result.success) {
-        console.log(`[${i + 1}] ✅ ${testName} - ${result.message}`)
+        const timeInfo = elapsed > 1000 ? ` (${elapsed.toFixed(0)}ms)` : ''
+        console.log(`[${i + 1}] ✅ ${testName} - ${result.message}${timeInfo}`)
         stats.passed++
       } else {
         console.log(`[${i + 1}] ❌ ${testName} - ${result.message}`)
@@ -255,7 +268,14 @@ export async function runTests(
         if (stopOnFail) { console.log(`\n🛑 在 ${i + 1} 停止`); break }
       }
     } catch (error: any) {
-      console.log(`[${i + 1}] ❌ ${testName} - 异常: ${error.message}`)
+      const elapsed = performance.now() - startTime
+
+      // 超时错误直接抛出
+      if (error.message?.includes('测试超时')) {
+        throw error
+      }
+
+      console.log(`[${i + 1}] ❌ ${testName} - 异常: ${error.message} (${elapsed.toFixed(0)}ms)`)
       if (verboseOnFail) console.log(`    ${error.stack?.split('\n').slice(0, 3).join('\n    ')}`)
       if (stats.firstFailIndex === -1) stats.firstFailIndex = i
       stats.failed++
@@ -265,6 +285,58 @@ export async function runTests(
 
   printSummary(stats, stageName)
   return stats
+}
+
+/** 使用子进程运行测试，支持真正的超时中断 */
+async function runTestWithTimeout(
+  testFn: (ctx: TestContext) => TestResult | Promise<TestResult>,
+  ctx: TestContext,
+  timeoutMs: number
+): Promise<TestResult & { timeout?: boolean }> {
+  const { spawn } = await import('child_process')
+
+  return new Promise((resolve) => {
+    // 使用 spawn 创建子进程运行 test-worker.ts
+    const child = spawn('npx', ['tsx', path.join(__dirname, 'test-worker.ts'), ctx.parseMode], {
+      stdio: ['pipe', 'pipe', 'pipe'],
+      shell: true
+    })
+
+    let stdout = ''
+    let resolved = false
+
+    // 设置超时
+    const timer = setTimeout(() => {
+      if (!resolved) {
+        resolved = true
+        child.kill('SIGKILL')
+        resolve({ success: false, message: '超时', timeout: true })
+      }
+    }, timeoutMs)
+
+    // 收集 stdout
+    child.stdout.on('data', (data: Buffer) => {
+      stdout += data.toString()
+    })
+
+    // 子进程退出
+    child.on('close', (code: number) => {
+      if (!resolved) {
+        resolved = true
+        clearTimeout(timer)
+        try {
+          const result = JSON.parse(stdout.trim())
+          resolve(result)
+        } catch {
+          resolve({ success: false, message: `解析结果失败: ${stdout}` })
+        }
+      }
+    })
+
+    // 发送代码到子进程的 stdin
+    child.stdin.write(ctx.code)
+    child.stdin.end()
+  })
 }
 
 function printSummary(stats: TestStats, stageName: string) {
