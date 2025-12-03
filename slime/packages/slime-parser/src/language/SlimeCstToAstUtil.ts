@@ -385,8 +385,6 @@ export class SlimeCstToAst {
         // ==================== 参数列表相关 ====================
         if (name === SlimeParser.prototype.Arguments?.name) return this.createArgumentsAst(cst)
         if (name === SlimeParser.prototype.ArgumentList?.name) return this.createArgumentListAst(cst)
-        if (name === SlimeParser.prototype.FormalsList?.name) return this.createFormalsListAst(cst)
-        if (name === SlimeParser.prototype.RestParameter?.name) return this.createRestParameterAst(cst)
 
         // ==================== 运算符相�?====================
         if (name === SlimeParser.prototype.AssignmentOperator?.name) return this.createAssignmentOperatorAst(cst)
@@ -699,11 +697,49 @@ export class SlimeCstToAst {
     }
 
     /**
-     * NamedImports CST �?AST
+     * NamedImports CST 转 AST
      * NamedImports -> { } | { ImportsList } | { ImportsList , }
      */
     createNamedImportsAst(cst: SubhutiCst): Array<SlimeImportSpecifier> {
-        return this.createNamedImportsListAst(cst)
+        // NamedImports: {LBrace, ImportsList?, RBrace}
+        const importsList = cst.children.find(ch => ch.name === SlimeParser.prototype.ImportsList?.name)
+        if (!importsList) return []
+
+        const specifiers: Array<SlimeImportSpecifier> = []
+        for (const child of importsList.children) {
+            if (child.name === SlimeParser.prototype.ImportSpecifier?.name) {
+                // ImportSpecifier有两种形式：
+                // 1. ImportedBinding （简写）
+                // 2. IdentifierName AsTok ImportedBinding （重命名）
+
+                const identifierName = child.children.find((ch: any) =>
+                    ch.name === SlimeParser.prototype.IdentifierName?.name)
+                const binding = child.children.find((ch: any) =>
+                    ch.name === SlimeParser.prototype.ImportedBinding?.name)
+
+                if (identifierName && binding) {
+                    // import {name as localName} 或 import {default as MyClass} - 重命名形式
+                    const imported = this.createIdentifierNameAst(identifierName)
+                    const local = this.createImportedBindingAst(binding)
+                    specifiers.push({
+                        type: SlimeNodeType.ImportSpecifier,
+                        imported: imported,
+                        local: local,
+                        loc: child.loc
+                    } as any)
+                } else if (binding) {
+                    // import {name} - 简写形式
+                    const id = this.createImportedBindingAst(binding)
+                    specifiers.push({
+                        type: SlimeNodeType.ImportSpecifier,
+                        imported: id,
+                        local: id,
+                        loc: child.loc
+                    } as any)
+                }
+            }
+        }
+        return specifiers
     }
 
     /**
@@ -1047,48 +1083,6 @@ export class SlimeCstToAst {
         let astName = checkCstName(cst, SlimeParser.prototype.ImportedBinding?.name);
         const first = cst.children[0]
         return this.createBindingIdentifierAst(first)
-    }
-
-    createNamedImportsListAst(cst: SubhutiCst): Array<SlimeImportSpecifier> {
-        // NamedImports: {LBrace, ImportsList?, RBrace}
-        const importsList = cst.children.find(ch => ch.name === SlimeParser.prototype.ImportsList?.name)
-        if (!importsList) return []
-
-        const specifiers: Array<SlimeImportSpecifier> = []
-        for (const child of importsList.children) {
-            if (child.name === SlimeParser.prototype.ImportSpecifier?.name) {
-                // ImportSpecifier有两种形式：
-                // 1. ImportedBinding （简写）
-                // 2. IdentifierName AsTok ImportedBinding （重命名�?
-
-                const identifierName = child.children.find((ch: any) =>
-                    ch.name === SlimeParser.prototype.IdentifierName?.name)
-                const binding = child.children.find((ch: any) =>
-                    ch.name === SlimeParser.prototype.ImportedBinding?.name)
-
-                if (identifierName && binding) {
-                    // import {name as localName} �?import {default as MyClass} - 重命名形�?
-                    const imported = this.createIdentifierNameAst(identifierName)
-                    const local = this.createImportedBindingAst(binding)
-                    specifiers.push({
-                        type: SlimeNodeType.ImportSpecifier,
-                        imported: imported,
-                        local: local,
-                        loc: child.loc
-                    } as any)
-                } else if (binding) {
-                    // import {name} - 简写形�?
-                    const id = this.createImportedBindingAst(binding)
-                    specifiers.push({
-                        type: SlimeNodeType.ImportSpecifier,
-                        imported: id,
-                        local: id,
-                        loc: child.loc
-                    } as any)
-                }
-            }
-        }
-        return specifiers
     }
 
     /** 返回包装类型的版本，包含 brace tokens */
@@ -2622,22 +2616,7 @@ export class SlimeCstToAst {
                 continue
             }
 
-            // FormalParameterListFormalsList - 包含普通参数列表和可选rest参数
-            if (name === 'FormalParameterListFormalsList') {
-                for (const subChild of child.children) {
-                    if (subChild.name === 'FormalsList') {
-                        params.push(...this.createFormalsListAst(subChild))
-                    } else if (subChild.name === 'CommaFunctionRestParameter') {
-                        const functionRestParam = subChild.children.find((c: any) => c.name === 'FunctionRestParameter')
-                        if (functionRestParam) {
-                            params.push(this.createFunctionRestParameterAst(functionRestParam))
-                        }
-                    }
-                }
-                continue
-            }
-
-            // FormalParameter - 直接的参�?
+            // FormalParameter - 直接的参数
             if (name === 'FormalParameter' || name === SlimeParser.prototype.FormalParameter?.name) {
                 params.push(this.createFormalParameterAst(child))
                 continue
@@ -2662,54 +2641,6 @@ export class SlimeCstToAst {
         }
 
         return params
-    }
-
-    /**
-     * 创建 FunctionRestParameter AST
-     * FunctionRestParameter: BindingRestElement
-     */
-    createRestParameterAst(cst: SubhutiCst): SlimeRestElement {
-        // 兼容 FunctionRestParameter �?BindingRestElement
-        if (cst.name === SlimeParser.prototype.FunctionRestParameter?.name) {
-            return this.createFunctionRestParameterAst(cst)
-        }
-        if (cst.name === SlimeParser.prototype.BindingRestElement?.name) {
-            return this.createBindingRestElementAst(cst)
-        }
-
-        // 直接处理 RestElement 结构
-        const argumentCst = cst.children[1]
-        let argument: SlimePattern
-
-        if (argumentCst.name === SlimeParser.prototype.BindingIdentifier?.name) {
-            argument = this.createBindingIdentifierAst(argumentCst)
-        } else if (argumentCst.name === SlimeParser.prototype.BindingPattern?.name) {
-            argument = this.createBindingPatternAst(argumentCst)
-        } else {
-            throw new Error(`Unexpected RestParameter argument: ${argumentCst.name}`)
-        }
-
-        return {
-            type: SlimeNodeType.RestElement,
-            argument: argument,
-            loc: cst.loc
-        } as any
-    }
-
-    createFormalsListAst(cst: SubhutiCst): SlimePattern[] {
-        // 兼容 FormalParameterList
-        const ary: SlimePattern[] = []
-        for (const child of cst.children) {
-            if (child.name === SlimeParser.prototype.FormalParameter?.name) {
-                const item = this.createFormalParameterAst(child)
-                ary.push(item)
-            } else if (child.name === SlimeTokenConsumer.prototype.Comma?.name || child.value === ',') {
-                // 忽略逗号
-            } else {
-                throw new Error('不支持的类型')
-            }
-        }
-        return ary
     }
 
     createBindingElementAst(cst: SubhutiCst): any {
@@ -2795,16 +2726,6 @@ export class SlimeCstToAst {
         }
 
         return SlimeAstUtil.createRestElement(argument)
-    }
-
-    /**
-     * [辅助方法] �?FunctionBody CST 节点转换�?BlockStatement AST
-     * 支持 FunctionBody, GeneratorBody, AsyncFunctionBody, AsyncGeneratorBody
-     */
-    createFunctionBodyToBlockStatementAst(cst: SubhutiCst): SlimeBlockStatement {
-        // 直接处理 FunctionBody 节点
-        const body = this.createFunctionBodyAst(cst)
-        return SlimeAstUtil.createBlockStatement(body, cst.loc)
     }
 
     createFunctionBodyAst(cst: SubhutiCst): Array<SlimeStatement> {
