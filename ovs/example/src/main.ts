@@ -1,8 +1,9 @@
 import { createApp } from 'vue'
-import DefaultViews from "@/views/hello.ovs"
+import DefaultView from "@/views/hello.ovs"
 
 createApp({
   setup() {
-    return () => DefaultViews.map(v => v.toVnode())
+    // hello.ovs 导出的是单个 VNode
+    return () => DefaultView.toVnode()
   }
 }).mount('#app')

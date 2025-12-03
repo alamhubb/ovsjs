@@ -191,8 +191,41 @@ function wrapTopLevelExpressions(ast: SlimeProgram): SlimeProgram {
         )
     }
 
-    // 5. 复杂情况：用 IIFE 包裹所有内容（declarations + expressions）
-    // 先构建 expressions 对应的语句列表（包含 push 逻辑）
+    // 5. 复杂情况：有声明时，用 IIFE 包裹声明 + 返回 view
+    //
+    // 如果只有一个 OVS view，直接返回这个 view（不用 children.push）
+    // 否则用 children.push + return children
+
+    if (ovsViews.length === 1 && expressions.length === 1) {
+        // 只有一个 OVS view：declarations + return vnode
+        // 生成：(function() { const a = ...; return createComponentVNode(...) })()
+        const vnodeExpr = (ovsViews[0] as SlimeExpressionStatement).expression
+        const returnStmt = SlimeAstUtil.createReturnStatement(vnodeExpr)
+
+        const allStatements = [...declarations, returnStmt]
+
+        // 创建 IIFE：(function() { ... })()
+        const blockStatement = SlimeAstUtil.createBlockStatement(allStatements)
+        const functionExpression = SlimeAstUtil.createFunctionExpression(
+            blockStatement,
+            null,  // id
+            [],    // params
+            false, // generator
+            false  // async
+        )
+        // 用括号包裹 function expression，使其成为合法的 IIFE
+        const parenExpr = SlimeAstUtil.createParenthesizedExpression(functionExpression)
+        const iife = SlimeAstUtil.createCallExpression(parenExpr, [])
+
+        const exportDefault = SlimeAstUtil.createExportDefaultDeclaration(iife)
+
+        return SlimeAstUtil.createProgram(
+            [...imports, exportDefault] as any,
+            SlimeProgramSourceType.module
+        )
+    }
+
+    // 多个表达式的情况：用 children.push 收集
     const expressionStatements: SlimeStatement[] = []
 
     // 处理所有 expressions，生成 children.push(...) 语句

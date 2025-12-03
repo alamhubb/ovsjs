@@ -380,29 +380,34 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
    *   #{ p {} }      → children.push(h('p', ...))  ✅ 渲染（OvsRenderFunction 优先）
    * }
    */
+  /**
+   * 递归查找 CST 树中是否包含 OvsRenderFunction 节点
+   * Expression 层级很深，需要递归遍历
+   */
+  private findOvsRenderFunction(cst: SubhutiCst): boolean {
+    if (!cst) return false
+
+    // 直接匹配
+    if (cst.name === OvsParser.prototype.OvsRenderFunction.name) {
+      return true
+    }
+
+    // 递归检查第一个子节点（表达式解析的核心路径）
+    if (cst.children && cst.children.length > 0) {
+      return this.findOvsRenderFunction(cst.children[0])
+    }
+
+    return false
+  }
+
   createExpressionStatementAst(cst: SubhutiCst): SlimeExpressionStatement | any {
     const exprCst = cst.children?.[0]
     if (!exprCst) {
       throw new Error('ExpressionStatement has no expression')
     }
 
-    // 检查 CST 类型，判断是否是 OvsRenderFunction
-    let actualCst = exprCst
-    while (actualCst.name === 'Expression' && actualCst.children && actualCst.children.length > 0) {
-      actualCst = actualCst.children[0]
-    }
-    
-    // 检查 AssignmentExpression 的第一个子节点
-    let isOvsRenderFunction = false
-    if (actualCst.name === 'AssignmentExpression' && actualCst.children && actualCst.children.length > 0) {
-      const firstChild = actualCst.children[0]
-      isOvsRenderFunction = firstChild.name === OvsParser.prototype.OvsRenderFunction.name
-      if (isOvsRenderFunction) {
-        actualCst = firstChild
-      }
-    } else if (actualCst.name === OvsParser.prototype.OvsRenderFunction.name) {
-      isOvsRenderFunction = true
-    }
+    // 检查是否包含 OvsRenderFunction（递归查找）
+    const isOvsRenderFunction = this.findOvsRenderFunction(exprCst)
 
     const expr = this.createExpressionAst(exprCst)
 
@@ -604,6 +609,26 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
   }
 
   /**
+   * 判断是否是 HTML 标签（小写开头）还是组件（大写开头）
+   */
+  private isHtmlTag(name: string): boolean {
+    return /^[a-z]/.test(name)
+  }
+
+  /**
+   * 创建第一个参数：HTML标签用 StringLiteral，组件用 Identifier
+   */
+  private createFirstArg(id: SlimeIdentifier): SlimeExpression {
+    if (this.isHtmlTag(id.name)) {
+      // HTML 标签：使用字符串字面量 'div'
+      return SlimeNodeCreate.createStringLiteral(`'${id.name}'`)
+    } else {
+      // 组件：使用标识符 MyComponent
+      return id
+    }
+  }
+
+  /**
    * 创建简单视图（直接返回 createComponentVNode 调用，无 IIFE）
    *
    * 生成：
@@ -621,24 +646,29 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     _attrsVarName: string | null,
     componentProps: SlimeExpression | null
   ): SlimeCallExpression {
-    // 从 ExpressionStatement 中提取表达式
-    const childExpressions: SlimeExpression[] = statements.map(stmt => {
+    // 从 ExpressionStatement 中提取表达式，并包装为 ArrayElement
+    const childElements = statements.map((stmt, index) => {
       const exprStmt = stmt as SlimeExpressionStatement
       const pushCall = exprStmt.expression as SlimeCallExpression
+      let element: SlimeExpression
       if (pushCall && pushCall.type === SlimeNodeType.CallExpression && pushCall.arguments.length > 0) {
-        return pushCall.arguments[0] as SlimeExpression
+        element = pushCall.arguments[0] as SlimeExpression
+      } else {
+        element = exprStmt.expression
       }
-      return exprStmt.expression
+      // 包装为 ArrayElement，除了最后一个元素都需要逗号
+      const needComma = index < statements.length - 1
+      return SlimeNodeCreate.createArrayElement(element, needComma ? SlimeTokenCreate.createCommaToken() : undefined)
     })
 
     // 创建 children 数组
-    const childrenArray = SlimeNodeCreate.createArrayExpression(childExpressions)
+    const childrenArray = SlimeNodeCreate.createArrayExpression(childElements)
 
     // 创建 props 对象：如果是组件调用，使用 componentProps，否则用空对象
     const propsObject = componentProps || SlimeNodeCreate.createObjectExpression([])
 
     // 创建第一个参数：组件用 Identifier，标签用 StringLiteral
-    const firstArg = id  // MyComponent（不加引号）
+    const firstArg = this.createFirstArg(id)
 
     // 创建 createComponentVNode(firstArg, props, children) 调用
     const vNodeCall = SlimeNodeCreate.createCallExpression(
@@ -828,7 +858,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     }
 
     // 创建第一个参数：组件用 Identifier，标签用 StringLiteral
-    const firstArg = id  // MyComponent（不加引号）
+    const firstArg = this.createFirstArg(id)
 
     // 创建函数调用：createComponentVNode(firstArg, props, children)
     const callExpression = SlimeNodeCreate.createCallExpression(
@@ -886,8 +916,11 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
       SlimeTokenCreate.createRParenToken(loc)   // rParenToken
     )
 
+    // 用括号包裹 function expression，使其成为合法的 IIFE
+    const parenExpr = SlimeNodeCreate.createParenthesizedExpression(functionExpression, loc)
+
     // 创建函数调用（立即执行）
-    const callExpression = SlimeNodeCreate.createCallExpression(functionExpression, [])
+    const callExpression = SlimeNodeCreate.createCallExpression(parenExpr, [])
 
     return callExpression
   }
