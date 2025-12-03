@@ -5,12 +5,12 @@ const version = "1.0"
 
 
 
-div({
-  onClick: () => {
-    console.log('clicked')
-  }
-}) {
-  h1 {
+div() {
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
 
   #{
   let a = 0

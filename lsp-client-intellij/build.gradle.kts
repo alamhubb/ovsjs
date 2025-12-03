@@ -23,7 +23,7 @@ dependencies {
 //    runtimeOnly("com.intellij.platform:ide-util-io:242.23726.103")
 
     intellijPlatform {
-        intellijIdeaUltimate("2025.2.1")
+        intellijIdeaUltimate("2025.2.2")
         bundledPlugins("JavaScript")
     }
 }
