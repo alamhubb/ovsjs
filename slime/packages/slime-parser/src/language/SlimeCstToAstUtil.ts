@@ -2819,13 +2819,13 @@ export class SlimeCstToAst {
 
         if (first.name === 'ClassElementName') {
             // MethodDefinition 分支: ClassElementName ( UniqueFormalParameters ) { FunctionBody }
-            return this.createMethodDefinitionNormalAst(staticCst, cst)
+            return this.createMethodDefinitionClassElementNameAst(staticCst, cst)
         } else if (first.name === 'Get') {
             // MethodDefinition 分支: get ClassElementName ( ) { FunctionBody }
-            return this.createMethodDefinitionGetterAst(staticCst, cst)
+            return this.createMethodDefinitionGetterMethodAst(staticCst, cst)
         } else if (first.name === 'Set') {
             // MethodDefinition 分支: set ClassElementName ( PropertySetParameterList ) { FunctionBody }
-            return this.createMethodDefinitionSetterAst(staticCst, cst)
+            return this.createMethodDefinitionSetterMethodAst(staticCst, cst)
         } else if (first.name === SlimeParser.prototype.GeneratorMethod?.name || first.name === 'GeneratorMethod') {
             // MethodDefinition 分支: GeneratorMethod
             return this.createMethodDefinitionGeneratorMethodAst(staticCst, first)
@@ -2840,19 +2840,19 @@ export class SlimeCstToAst {
             return this.createMethodDefinitionGeneratorMethodAst(staticCst, cst)
         } else if (first.name === 'Async') {
             // MethodDefinition 分支: async [no LineTerminator here] ClassElementName ( ... ) { ... }
-            return this.createMethodDefinitionAsyncFromTokenAst(staticCst, cst)
+            return this.createMethodDefinitionAsyncMethodFromChildren(staticCst, cst)
         } else if (first.name === 'IdentifierName' || first.name === 'IdentifierName' ||
                    first.name === 'PropertyName' || first.name === 'LiteralPropertyName') {
             // 检查是否是 getter/setter
             if (first.value === 'get' && cst.children[1]?.name === 'ClassElementName') {
                 // getter方法：get ClassElementName ( ) { FunctionBody }
-                return this.createMethodDefinitionGetterFromIdentifierAst(staticCst, cst)
+                return this.createMethodDefinitionGetterMethodFromIdentifier(staticCst, cst)
             } else if (first.value === 'set' && cst.children[1]?.name === 'ClassElementName') {
                 // setter方法：set ClassElementName ( PropertySetParameterList ) { FunctionBody }
-                return this.createMethodDefinitionSetterFromIdentifierAst(staticCst, cst)
+                return this.createMethodDefinitionSetterMethodFromIdentifier(staticCst, cst)
             }
             // MethodDefinition 分支: 直接的标识符作为方法名
-            return this.createMethodDefinitionFromIdentifierAst(staticCst, cst)
+            return this.createMethodDefinitionMethodDefinitionFromIdentifier(staticCst, cst)
         } else {
             throw new Error('不支持的类型: ' + first.name)
         }
