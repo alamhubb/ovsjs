@@ -3,6 +3,9 @@
 const appName = "Hello OVS"
 const version = "1.0"
 
+let a = 1
+let b = a
+let c = b
 
 
 div() {
