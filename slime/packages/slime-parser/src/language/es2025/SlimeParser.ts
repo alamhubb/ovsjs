@@ -10,7 +10,12 @@
  *
  * @version 1.0.0
  */
-import SubhutiParser, {Subhuti, SubhutiRule, SubhutiParserOptions, SubhutiTokenConsumerConstructor} from "subhuti/src/SubhutiParser.ts"
+import SubhutiParser, {
+    Subhuti,
+    SubhutiRule,
+    SubhutiParserOptions,
+    SubhutiTokenConsumerConstructor
+} from "subhuti/src/SubhutiParser.ts"
 import type SubhutiCst from "subhuti/src/struct/SubhutiCst.ts"
 import type SubhutiMatchToken from "subhuti/src/struct/SubhutiMatchToken.ts"
 import SubhutiLexer, {matchRegExpLiteral, LexicalGoal} from "subhuti/src/SubhutiLexer.ts"
@@ -509,18 +514,20 @@ export default class SlimeParser<T extends SlimeTokenConsumer = SlimeTokenConsum
     IdentifierName(): SubhutiCst | undefined {
         return this.Or([
             // 普通标识符（需要验证 Unicode 转义）
-            {alt: () => {
-                const cst = this.tokenConsumer.IdentifierName()
-                if (!cst) return undefined
-                const value = cst.value!
-                // 如果包含 Unicode 转义，验证解码后的字符是否有效
-                if (value.includes('\\u')) {
-                    if (!isValidIdentifierWithEscapes(value)) {
-                        return this.setParseFail()
+            {
+                alt: () => {
+                    const cst = this.tokenConsumer.IdentifierName()
+                    if (!cst) return undefined
+                    const value = cst.value!
+                    // 如果包含 Unicode 转义，验证解码后的字符是否有效
+                    if (value.includes('\\u')) {
+                        if (!isValidIdentifierWithEscapes(value)) {
+                            return this.setParseFail()
+                        }
                     }
+                    return cst
                 }
-                return cst
-            }},
+            },
             // 所有 ReservedWord 都可以作为 IdentifierName
             {alt: () => this.tokenConsumer.Await()},
             {alt: () => this.tokenConsumer.Break()},
@@ -4397,7 +4404,7 @@ export default class SlimeParser<T extends SlimeTokenConsumer = SlimeTokenConsum
      * @param sourceType - 'script' | 'module'，默认为 'module'
      */
     @SubhutiRule
-    Program(sourceType: 'script' | 'module' = 'module'): SubhutiCst | undefined {
+    Program(sourceType: 'script' | 'module' = 'module'): SubhutiCst {
         // Hashbang 注释只能出现在文件开头
         this.Option(() => this.tokenConsumer.HashbangComment())
 
