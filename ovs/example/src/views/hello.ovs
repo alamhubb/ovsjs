@@ -4,16 +4,16 @@ const appName = "Hello OVS"
 const version = "1.0"
 
 
-div {
+
+div({
+  onClick: () => {
+    console.log('clicked')
+  }
+}) {
   h1 {
 
   #{
   let a = 0
-
-  const timer = setInterval(() => {
-      a += 1;
-      console.log(a)
-    }, 1000);
   }
 
   a
