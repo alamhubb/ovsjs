@@ -364,3 +364,107 @@ export function vitePluginOvsTransform(
     return result
 }
 
+
+/**
+ * @deprecated 已废弃：不再使用后处理格式化，改用 vitePluginOvsTransform
+ * @see vitePluginOvsTransform - 直接使用此方法，SlimeGenerator 已自带格式化
+ * @see vitePluginOvs - Vite 插件已改用 vitePluginOvsTransform
+ *
+ * OVS 代码转换主函数（同步，带格式化）
+ *
+ * **保留原因：** 历史兼容性，展示后处理格式化方案
+ *
+ * @param code OVS 源代码
+ * @returns 转换结果（包含代码和 source map）
+ */
+export function vitePluginOvsTransformWithBeautify(
+    code: string
+): SlimeGeneratorResult {
+    // 先进行标准转换
+    const result = vitePluginOvsTransform(code);
+
+    // 使用简单格式化并更新 mapping（保持 source map 准确）
+    try {
+        const formatted = simpleFormatWithMapping(result.code, result.mapping);
+        return {
+            code: formatted.code,
+            mapping: formatted.mapping
+        };
+    } catch (e) {
+        console.warn('OVS code formatting (simple) failed:', e);
+        return result;
+    }
+}
+
+/**
+ * OVS 代码转换主函数（异步，支持 Prettier）
+ * @param code OVS 源代码
+ * @param prettify 是否使用 Prettier 格式化（异步）
+ * @returns 转换结果（包含代码和 source map）
+ */
+export async function vitePluginOvsTransformAsync(
+    code: string,
+    prettify: boolean = true
+): Promise<SlimeGeneratorResult> {
+    // 调用同步方法（无格式化）
+    const result = vitePluginOvsTransform(code)
+
+    // 使用 Prettier 异步格式化（可选）
+    if (prettify) {
+        try {
+            result.code = await prettier.format(result.code, {
+                parser: 'babel',
+                semi: false,
+                singleQuote: true,
+                tabWidth: 2,
+                printWidth: 80
+            })
+        } catch (e) {
+            console.warn('OVS code formatting (prettier) failed:', e)
+        }
+    }
+
+    return result
+}
+
+/**
+ * Vite 插件：处理 .ovs 文件
+ * @returns Vite 插件配置
+ *
+ * 功能：
+ * - 拦截 .ovs 文件
+ * - 转换为 Vue 函数组件
+ * - 自动格式化生成的代码（分号后换行、{} 缩进）
+ *
+ * **格式化方案：**
+ * - 使用 `vitePluginOvsTransform`，内部由 SlimeGenerator 在代码生成时完成格式化
+ * - 不再使用后处理方案（`simpleFormatWithMapping` 已废弃）
+ * - Source map 保持 100% 准确
+ */
+export default function vitePluginOvs(): Plugin {
+    // 创建文件过滤器：只处理 .ovs 文件
+    const filter = createFilter(/\.ovs$/, null)
+
+    return {
+        name: 'vite-plugin-ovs',
+        enforce: 'pre',  // 在其他插件之前执行
+
+        transform(code, id) {
+            // 只处理 .ovs 文件
+            if (!filter(id)) {
+                return
+            }
+
+            // 转换 OVS 代码（SlimeGenerator 已自带格式化：分号后换行 + {} 缩进）
+            const res = vitePluginOvsTransform(code)
+
+            return {
+                code: res.code,
+                map: null  // TODO: 支持 source map
+            }
+        }
+    }
+}
+
+
+
