@@ -7000,7 +7000,7 @@ export class SlimeCstToAst {
             return SlimeAstUtil.createThisExpression(first.loc)
         } else if (first.name === SlimeTokenConsumer.prototype.RegularExpressionLiteral?.name) {
             // 处理正则表达式字面量
-            return SlimeAstUtil.createStringLiteral(first.value)  // 暂时处理为字符串
+            return this.createRegExpLiteralAst(first)
         } else if (first.name === SlimeParser.prototype.GeneratorExpression?.name || first.name === 'GeneratorExpression') {
             // 处理 function* 表达�?
             return this.createGeneratorExpressionAst(first) as SlimeExpression
