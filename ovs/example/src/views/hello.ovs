@@ -1,5 +1,5 @@
 import { ref } from 'vue';
-import {div,h1,p} from '../utils/htmlElements';
+import {div,h1,h2,p} from '../utils/htmlElements';
 // Hello OVS - 简单示例
 
 const appName = "Hello OVS"
@@ -11,6 +11,7 @@ let c = b
 
 
 div() {
+  h2 { 'Hello OVS' }
   h1({
        onClick: () => {
          console.log('clicked')
