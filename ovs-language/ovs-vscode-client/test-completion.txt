@@ -1,0 +1,17 @@
+测试代码补全功能
+
+请在这个文件中输入以下内容来测试：
+
+1. 输入 "t" 然后按 Ctrl+Space
+2. 输入 "j" 然后按 Ctrl+Space
+3. 输入 "Type" 然后按 Ctrl+Space
+4. 输入 "Java" 然后按 Ctrl+Space
+
+应该会看到：
+- TypeScript
+- JavaScript
+
+这些提示来自语言服务器，不是 VS Code 内置功能。
+
+
+

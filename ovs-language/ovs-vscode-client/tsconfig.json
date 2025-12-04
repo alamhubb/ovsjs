@@ -1,0 +1,14 @@
+{
+	"compilerOptions": {
+		"module": "commonjs",
+		"target": "ESNext",
+		"lib": ["ESNext"],
+		"outDir": "out",
+		"rootDir": "src",
+		"sourceMap": true,
+		"skipLibCheck": true,
+		"strict": false
+	},
+	"include": ["src/**/*"],
+	"exclude": ["node_modules", ".vscode-test"]
+}

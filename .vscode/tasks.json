@@ -2,13 +2,21 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "type": "npm",
-      "script": "watch",
-      "path": "ovs-vscode-client",
-      "label": "npm: watch - ovs-vscode-client",
-      "isBackground": true,
-      "problemMatcher": ["$tsc-watch"],
-      "group": "build"
+      "label": "build-ovs-language",
+      "type": "shell",
+      "command": "npm run build",
+      "options": {
+        "cwd": "${workspaceFolder}/ovs-language"
+      },
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "silent",
+        "showReuseMessage": false
+      }
     }
   ]
 }

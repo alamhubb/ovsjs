@@ -1,26 +1,31 @@
-# Source files
-ovs-vscode-client/src/**
-ovs-lang-server/src/**
-ovs-lang-server/tests/**
+# 排除所有子项目
+ovs-vscode-client/**
+ovs-lang-server/**
 ovs-intellij-client/**
 
-# Config files
+# 排除配置文件
 **/*.ts
-!dist/**
 tsconfig.json
 tsdown.config.ts
 .gitignore
 
-# Development files
+# 排除开发文件
 node_modules/**
 .vscode/**
+.cursor/**
 *.md
 **/*.map
 
-# Test files
+# 排除测试文件
 **/test-*.mjs
 **/test-*.js
 **/test-*.txt
 **/debug-*.ts
 **/output.txt
+
+# 保留必要文件
+!dist/**
+!syntaxes/**
+!language-configuration.json
+!package.json
 

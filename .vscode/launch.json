@@ -4,16 +4,21 @@
     {
       "type": "extensionHost",
       "request": "launch",
-      "name": "Launch OVS LSP Client",
+      "name": "Launch OVS Extension",
       "runtimeExecutable": "${execPath}",
       "args": [
-        "--extensionDevelopmentPath=${workspaceFolder}/ovs-vscode-client"
+        "--extensionDevelopmentPath=${workspaceFolder}/ovs-language"
       ],
       "outFiles": [
-        "${workspaceFolder}/ovs-vscode-client/out/**/*.js",
-        "${workspaceFolder}/ovs-lang-server/dist/**/*.js"
+        "${workspaceFolder}/ovs-language/dist/**/*.js",
+        "${workspaceFolder}/ovs-language/dist/**/*.cjs",
+        "${workspaceFolder}/ovs-language/dist/**/*.mjs"
       ],
+      "preLaunchTask": "build-ovs-language",
       "autoAttachChildProcesses": true,
+      "env": {
+        "NODE_ENV": "development"
+      },
       "skipFiles": [
         "<node_internals>/**",
         "**/node_modules/**",

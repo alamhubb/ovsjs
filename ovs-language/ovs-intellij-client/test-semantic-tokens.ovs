@@ -1,0 +1,62 @@
+// 测试各种 semantic token 类型
+
+// 1. 类定义
+class MyClass {
+  private name: string
+  static count: number = 0
+  
+  constructor(n: string) {
+    this.name = n
+  }
+  
+  method(): string {
+    return this.name
+  }
+  
+  static staticMethod(): number {
+    return MyClass.count
+  }
+}
+
+// 2. 接口定义
+interface MyInterface {
+  id: number
+  value: string
+}
+
+// 3. 类型别名
+type MyType = string | number
+
+// 4. 枚举
+enum Color {
+  Red,
+  Green,
+  Blue
+}
+
+// 5. 函数
+function myFunction(param: string): void {
+  console.log(param)
+}
+
+const arrowFunc = (x: number) => x * 2
+
+// 6. 变量
+const constantVar = 100
+let mutableVar = 200
+var oldStyleVar = 300
+
+// 7. 对象
+const obj = {
+  property: "value",
+  method() {
+    return this.property
+  }
+}
+
+// 8. 使用
+const instance = new MyClass("test")
+const result = instance.method()
+const enumValue = Color.Red
+
+

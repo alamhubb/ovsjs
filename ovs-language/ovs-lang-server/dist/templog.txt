@@ -1,0 +1,7704 @@
+=== Log Started ===
+
+[2025-12-04T15:29:56.827Z]
+onInitialize params:
+================================================================================
+
+[2025-12-04T15:29:56.828Z]
+{
+  "processId": 36172,
+  "capabilities": {},
+  "rootUri": "file://D:\\project\\qkyproject\\test-volar\\ovs-lang-server",
+  "initializationOptions": {
+    "typescript": {
+      "tsdk": "D:\\project\\qkyproject\\test-volar\\ovs-lang-server\\node_modules\\typescript\\lib"
+    }
+  }
+}
+================================================================================
+
+[2025-12-04T15:29:56.828Z]
+Error during initialization:
+================================================================================
+
+[2025-12-04T15:29:56.829Z]
+Can't find typescript.js or tsserverlibrary.js in "D:\\project\\qkyproject\\test-volar\\ovs-lang-server\\node_modules\\typescript\\lib"
+================================================================================
+
+[2025-12-04T15:57:42.171Z]
+onInitialize params:
+================================================================================
+
+[2025-12-04T15:57:42.171Z]
+{
+  "processId": 49892,
+  "clientInfo": {
+    "name": "Visual Studio Code",
+    "version": "1.106.3"
+  },
+  "locale": "en",
+  "rootPath": "d:\\project\\qkyproject\\test-volar\\ovs",
+  "rootUri": "file:///d%3A/project/qkyproject/test-volar/ovs",
+  "capabilities": {
+    "workspace": {
+      "applyEdit": true,
+      "workspaceEdit": {
+        "documentChanges": true,
+        "resourceOperations": [
+          "create",
+          "rename",
+          "delete"
+        ],
+        "failureHandling": "textOnlyTransactional",
+        "normalizesLineEndings": true,
+        "changeAnnotationSupport": {
+          "groupsOnLabel": true
+        }
+      },
+      "configuration": true,
+      "didChangeWatchedFiles": {
+        "dynamicRegistration": true,
+        "relativePatternSupport": true
+      },
+      "symbol": {
+        "dynamicRegistration": true,
+        "symbolKind": {
+          "valueSet": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26
+          ]
+        },
+        "tagSupport": {
+          "valueSet": [
+            1
+          ]
+        },
+        "resolveSupport": {
+          "properties": [
+            "location.range"
+          ]
+        }
+      },
+      "codeLens": {
+        "refreshSupport": true
+      },
+      "executeCommand": {
+        "dynamicRegistration": true
+      },
+      "didChangeConfiguration": {
+        "dynamicRegistration": true
+      },
+      "workspaceFolders": true,
+      "foldingRange": {
+        "refreshSupport": true
+      },
+      "semanticTokens": {
+        "refreshSupport": true
+      },
+      "fileOperations": {
+        "dynamicRegistration": true,
+        "didCreate": true,
+        "didRename": true,
+        "didDelete": true,
+        "willCreate": true,
+        "willRename": true,
+        "willDelete": true
+      },
+      "inlineValue": {
+        "refreshSupport": true
+      },
+      "inlayHint": {
+        "refreshSupport": true
+      },
+      "diagnostics": {
+        "refreshSupport": true
+      }
+    },
+    "textDocument": {
+      "publishDiagnostics": {
+        "relatedInformation": true,
+        "versionSupport": false,
+        "tagSupport": {
+          "valueSet": [
+            1,
+            2
+          ]
+        },
+        "codeDescriptionSupport": true,
+        "dataSupport": true
+      },
+      "synchronization": {
+        "dynamicRegistration": true,
+        "willSave": true,
+        "willSaveWaitUntil": true,
+        "didSave": true
+      },
+      "completion": {
+        "dynamicRegistration": true,
+        "contextSupport": true,
+        "completionItem": {
+          "snippetSupport": true,
+          "commitCharactersSupport": true,
+          "documentationFormat": [
+            "markdown",
+            "plaintext"
+          ],
+          "deprecatedSupport": true,
+          "preselectSupport": true,
+          "tagSupport": {
+            "valueSet": [
+              1
+            ]
+          },
+          "insertReplaceSupport": true,
+          "resolveSupport": {
+            "properties": [
+              "documentation",
+              "detail",
+              "additionalTextEdits"
+            ]
+          },
+          "insertTextModeSupport": {
+            "valueSet": [
+              1,
+              2
+            ]
+          },
+          "labelDetailsSupport": true
+        },
+        "insertTextMode": 2,
+        "completionItemKind": {
+          "valueSet": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25
+          ]
+        },
+        "completionList": {
+          "itemDefaults": [
+            "commitCharacters",
+            "editRange",
+            "insertTextFormat",
+            "insertTextMode",
+            "data"
+          ]
+        }
+      },
+      "hover": {
+        "dynamicRegistration": true,
+        "contentFormat": [
+          "markdown",
+          "plaintext"
+        ]
+      },
+      "signatureHelp": {
+        "dynamicRegistration": true,
+        "signatureInformation": {
+          "documentationFormat": [
+            "markdown",
+            "plaintext"
+          ],
+          "parameterInformation": {
+            "labelOffsetSupport": true
+          },
+          "activeParameterSupport": true
+        },
+        "contextSupport": true
+      },
+      "definition": {
+        "dynamicRegistration": true,
+        "linkSupport": true
+      },
+      "references": {
+        "dynamicRegistration": true
+      },
+      "documentHighlight": {
+        "dynamicRegistration": true
+      },
+      "documentSymbol": {
+        "dynamicRegistration": true,
+        "symbolKind": {
+          "valueSet": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26
+          ]
+        },
+        "hierarchicalDocumentSymbolSupport": true,
+        "tagSupport": {
+          "valueSet": [
+            1
+          ]
+        },
+        "labelSupport": true
+      },
+      "codeAction": {
+        "dynamicRegistration": true,
+        "isPreferredSupport": true,
+        "disabledSupport": true,
+        "dataSupport": true,
+        "resolveSupport": {
+          "properties": [
+            "edit"
+          ]
+        },
+        "codeActionLiteralSupport": {
+          "codeActionKind": {
+            "valueSet": [
+              "",
+              "quickfix",
+              "refactor",
+              "refactor.extract",
+              "refactor.inline",
+              "refactor.rewrite",
+              "source",
+              "source.organizeImports"
+            ]
+          }
+        },
+        "honorsChangeAnnotations": true
+      },
+      "codeLens": {
+        "dynamicRegistration": true
+      },
+      "formatting": {
+        "dynamicRegistration": true
+      },
+      "rangeFormatting": {
+        "dynamicRegistration": true,
+        "rangesSupport": true
+      },
+      "onTypeFormatting": {
+        "dynamicRegistration": true
+      },
+      "rename": {
+        "dynamicRegistration": true,
+        "prepareSupport": true,
+        "prepareSupportDefaultBehavior": 1,
+        "honorsChangeAnnotations": true
+      },
+      "documentLink": {
+        "dynamicRegistration": true,
+        "tooltipSupport": true
+      },
+      "typeDefinition": {
+        "dynamicRegistration": true,
+        "linkSupport": true
+      },
+      "implementation": {
+        "dynamicRegistration": true,
+        "linkSupport": true
+      },
+      "colorProvider": {
+        "dynamicRegistration": true
+      },
+      "foldingRange": {
+        "dynamicRegistration": true,
+        "rangeLimit": 5000,
+        "lineFoldingOnly": true,
+        "foldingRangeKind": {
+          "valueSet": [
+            "comment",
+            "imports",
+            "region"
+          ]
+        },
+        "foldingRange": {
+          "collapsedText": false
+        }
+      },
+      "declaration": {
+        "dynamicRegistration": true,
+        "linkSupport": true
+      },
+      "selectionRange": {
+        "dynamicRegistration": true
+      },
+      "callHierarchy": {
+        "dynamicRegistration": true
+      },
+      "semanticTokens": {
+        "dynamicRegistration": true,
+        "tokenTypes": [
+          "namespace",
+          "type",
+          "class",
+          "enum",
+          "interface",
+          "struct",
+          "typeParameter",
+          "parameter",
+          "variable",
+          "property",
+          "enumMember",
+          "event",
+          "function",
+          "method",
+          "macro",
+          "keyword",
+          "modifier",
+          "comment",
+          "string",
+          "number",
+          "regexp",
+          "operator",
+          "decorator"
+        ],
+        "tokenModifiers": [
+          "declaration",
+          "definition",
+          "readonly",
+          "static",
+          "deprecated",
+          "abstract",
+          "async",
+          "modification",
+          "documentation",
+          "defaultLibrary"
+        ],
+        "formats": [
+          "relative"
+        ],
+        "requests": {
+          "range": true,
+          "full": {
+            "delta": true
+          }
+        },
+        "multilineTokenSupport": false,
+        "overlappingTokenSupport": false,
+        "serverCancelSupport": true,
+        "augmentsSyntaxTokens": true
+      },
+      "linkedEditingRange": {
+        "dynamicRegistration": true
+      },
+      "typeHierarchy": {
+        "dynamicRegistration": true
+      },
+      "inlineValue": {
+        "dynamicRegistration": true
+      },
+      "inlayHint": {
+        "dynamicRegistration": true,
+        "resolveSupport": {
+          "properties": [
+            "tooltip",
+            "textEdits",
+            "label.tooltip",
+            "label.location",
+            "label.command"
+          ]
+        }
+      },
+      "diagnostic": {
+        "dynamicRegistration": true,
+        "relatedDocumentSupport": false
+      }
+    },
+    "window": {
+      "showMessage": {
+        "messageActionItem": {
+          "additionalPropertiesSupport": true
+        }
+      },
+      "showDocument": {
+        "support": true
+      },
+      "workDoneProgress": true
+    },
+    "general": {
+      "staleRequestSupport": {
+        "cancel": true,
+        "retryOnContentModified": [
+          "textDocument/semanticTokens/full",
+          "textDocument/semanticTokens/range",
+          "textDocument/semanticTokens/full/delta"
+        ]
+      },
+      "regularExpressions": {
+        "engine": "ECMAScript",
+        "version": "ES2020"
+      },
+      "markdown": {
+        "parser": "marked",
+        "version": "1.1.0"
+      },
+      "positionEncodings": [
+        "utf-16"
+      ]
+    },
+    "notebookDocument": {
+      "synchronization": {
+        "dynamicRegistration": true,
+        "executionSummarySupport": true
+      }
+    }
+  },
+  "initializationOptions": {
+    "typescript": {
+      "tsdk": "d:/Users/qinky/AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/node_modules/typescript/lib"
+    }
+  },
+  "trace": "off",
+  "workspaceFolders": [
+    {
+      "uri": "file:///d%3A/project/qkyproject/test-volar/ovs",
+      "name": "ovs"
+    }
+  ]
+}
+================================================================================
+
+[2025-12-04T15:57:42.539Z]
+Server initialized with capabilities:
+================================================================================
+
+[2025-12-04T15:57:42.540Z]
+{
+  "textDocumentSync": 2,
+  "workspace": {
+    "workspaceFolders": {
+      "supported": true,
+      "changeNotifications": true
+    }
+  },
+  "selectionRangeProvider": true,
+  "foldingRangeProvider": true,
+  "documentSymbolProvider": true,
+  "documentFormattingProvider": true,
+  "documentRangeFormattingProvider": true,
+  "referencesProvider": true,
+  "implementationProvider": true,
+  "definitionProvider": true,
+  "typeDefinitionProvider": true,
+  "callHierarchyProvider": true,
+  "hoverProvider": true,
+  "documentHighlightProvider": true,
+  "workspaceSymbolProvider": {},
+  "renameProvider": {
+    "prepareProvider": true
+  },
+  "inlayHintProvider": {},
+  "signatureHelpProvider": {
+    "triggerCharacters": [
+      "(",
+      ",",
+      "<"
+    ],
+    "retriggerCharacters": [
+      ")"
+    ]
+  },
+  "completionProvider": {
+    "triggerCharacters": [
+      ".",
+      "\"",
+      "'",
+      "`",
+      "/",
+      "<",
+      "@",
+      "#",
+      "*"
+    ],
+    "resolveProvider": true
+  },
+  "semanticTokensProvider": {
+    "full": true,
+    "range": true,
+    "legend": {
+      "tokenTypes": [
+        "namespace",
+        "class",
+        "enum",
+        "interface",
+        "typeParameter",
+        "type",
+        "parameter",
+        "variable",
+        "property",
+        "enumMember",
+        "function",
+        "method"
+      ],
+      "tokenModifiers": [
+        "declaration",
+        "readonly",
+        "static",
+        "async",
+        "defaultLibrary",
+        "local"
+      ]
+    }
+  },
+  "codeActionProvider": {
+    "codeActionKinds": [
+      "",
+      "quickfix",
+      "refactor",
+      "refactor.extract",
+      "refactor.inline",
+      "refactor.rewrite",
+      "source",
+      "source.fixAll",
+      "source.organizeImports"
+    ],
+    "resolveProvider": true
+  },
+  "documentOnTypeFormattingProvider": {
+    "firstTriggerCharacter": ";",
+    "moreTriggerCharacter": [
+      "}",
+      "\n"
+    ]
+  },
+  "experimental": {
+    "autoInsertionProvider": {
+      "triggerCharacters": [
+        ">"
+      ],
+      "configurationSections": [
+        [
+          "javascript.autoClosingTags",
+          "typescript.autoClosingTags"
+        ]
+      ]
+    },
+    "fileRenameEditsProvider": true,
+    "fileReferencesProvider": true
+  }
+}
+================================================================================
+
+[2025-12-04T15:57:42.836Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:42.836Z]
+Input code length: 236
+================================================================================
+
+[2025-12-04T15:57:42.853Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:42.853Z]
+Output code length: 390
+================================================================================
+
+[2025-12-04T15:57:42.853Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:42.854Z]
+// 测试 #{} 不渲染块功能
+
+div {
+  #{
+    const x = 1
+    console.log("debug:", x)
+  }
+  
+  p { "hello" }
+  
+  #{
+    const y = 2
+    if (y > 0) {
+      p { "conditional" }
+    }
+  }
+  
+  span { "world" }
+  
+  getData()
+}
+
+
+================================================================================
+
+[2025-12-04T15:57:42.854Z]
+export default (function(){
+  return (function(){
+    const children = [];
+    const temp$$attrs$$ggu6w53q = {};
+    const x = 1;
+    console.log("debug:",x);
+    children.push(p({},["hello"]));
+    const y = 2;
+    if (y > 0){
+      children.push(p({},["conditional"]));
+    }
+    children.push(span({},["world"]));
+    children.push(getData());
+    return div({},children);
+  })();
+})();
+
+================================================================================
+
+[2025-12-04T15:57:42.854Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:42.854Z]
+Input code length: 907
+================================================================================
+
+[2025-12-04T15:57:42.870Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:42.871Z]
+Output code length: 527
+================================================================================
+
+[2025-12-04T15:57:42.871Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:42.871Z]
+// Export Class - export class 导出形式
+
+export class MyComponent {
+  constructor() {
+    // Empty constructor - required for OVS compatibility
+  }
+  
+  initData() {
+    if (this.initialized === undefined) {
+      this.title = "My Component"
+      this.items = [
+        { id: 1, name: "Item 1" },
+        { id: 2, name: "Item 2" }
+      ]
+      this.initialized = true
+    }
+  }
+  
+  handleClick(item) {
+    console.log("Clicked:", item.name)
+  }
+  
+  render() {
+    this.initData()
+    return div({ class: "component" }) {
+      h1 { this.title }
+      
+      div({ class: "items" }) {
+        this.items.map(item =>
+          div({ class: "item", key: item.id }) {
+            span { item.name }
+            button({
+              onClick: () => this.handleClick(item)
+            }) {
+              "Click"
+            }
+          }
+        )
+      }
+    }
+  }
+}
+
+
+================================================================================
+
+[2025-12-04T15:57:42.871Z]
+export class MyComponent{constructor(){
+  }initData(){
+  if (this.initialized === undefined){
+    this.title = "My Component";
+    this.items = [{id:1,name:"Item 1"},{id:2,name:"Item 2"}];
+    this.initialized = true;
+  }
+}handleClick(item){
+  console.log("Clicked:",item.name);
+}render(){
+  this.initData();
+  return div({class:"component"},[h1({},[this.title]),div({class:"items"},[this.items.map(item => div({class:"item",key:item.id},[span({},[item.name]),button({onClick:() => this.handleClick(item)},["Click"])]))])]);
+}}
+================================================================================
+
+[2025-12-04T15:57:42.872Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:42.872Z]
+Input code length: 285
+================================================================================
+
+[2025-12-04T15:57:42.878Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:42.878Z]
+Output code length: 245
+================================================================================
+
+[2025-12-04T15:57:42.879Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:42.879Z]
+// Multiple Exports - 多个导出
+
+const appTitle = "My Dashboard"
+
+export const HeaderView = div {
+  h1 { appTitle }
+  p { "Welcome" }
+}
+
+export const ContentView = div {
+  h2 { "Content" }
+  p { "Main content area" }
+}
+
+export const FooterView = div {
+  p { "Footer" }
+}
+
+
+================================================================================
+
+[2025-12-04T15:57:42.879Z]
+const appTitle = "My Dashboard";
+export const HeaderView = div({},[h1({},[appTitle]),p({},["Welcome"])]);
+export const ContentView = div({},[h2({},["Content"]),p({},["Main content area"])]);
+export const FooterView = div({},[p({},["Footer"])]);
+
+================================================================================
+
+[2025-12-04T15:57:42.879Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:42.880Z]
+Input code length: 124
+================================================================================
+
+[2025-12-04T15:57:42.881Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:42.882Z]
+Output code length: 34
+================================================================================
+
+[2025-12-04T15:57:42.882Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:42.882Z]
+// 测试00: 最简单场景 - 单个字符串字面量
+// 验证: 基础文本节点的映射
+
+div { "Hello" }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+================================================================================
+
+[2025-12-04T15:57:42.882Z]
+export default div({},["Hello"]);
+
+================================================================================
+
+[2025-12-04T15:57:42.882Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:42.883Z]
+Input code length: 136
+================================================================================
+
+[2025-12-04T15:57:42.886Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:42.887Z]
+Output code length: 53
+================================================================================
+
+[2025-12-04T15:57:42.887Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:42.887Z]
+// 测试01: 单个变量引用
+// 验证: 变量声明和使用的映射
+
+const name = "World"
+
+div { name }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+================================================================================
+
+[2025-12-04T15:57:42.888Z]
+const name = "World";
+export default div({},[name]);
+
+================================================================================
+
+[2025-12-04T15:57:42.889Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:42.890Z]
+Input code length: 141
+================================================================================
+
+[2025-12-04T15:57:42.893Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:42.893Z]
+Output code length: 61
+================================================================================
+
+[2025-12-04T15:57:42.893Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:42.893Z]
+// 测试02: 简单元素
+// 验证: 元素标签名的映射
+
+div {
+  h1 { "Title" }
+  p { "Content" }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+================================================================================
+
+[2025-12-04T15:57:42.893Z]
+export default div({},[h1({},["Title"]),p({},["Content"])]);
+
+================================================================================
+
+[2025-12-04T15:57:42.894Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:42.894Z]
+Input code length: 208
+================================================================================
+
+[2025-12-04T15:57:42.898Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:42.898Z]
+Output code length: 117
+================================================================================
+
+[2025-12-04T15:57:42.898Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:42.898Z]
+// 测试03: 变量在元素中使用
+// 验证: 变量标识符在渲染位置的映射
+
+const title = "Page Title"
+const content = "Page Content"
+
+div {
+  h1 { title }
+  p { content }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+================================================================================
+
+[2025-12-04T15:57:42.898Z]
+const title = "Page Title";
+const content = "Page Content";
+export default div({},[h1({},[title]),p({},[content])]);
+
+================================================================================
+
+[2025-12-04T15:57:42.898Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:42.898Z]
+Input code length: 203
+================================================================================
+
+[2025-12-04T15:57:42.903Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:42.903Z]
+Output code length: 106
+================================================================================
+
+[2025-12-04T15:57:42.903Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:42.904Z]
+// 测试04: 嵌套元素（2层）
+// 验证: 多层嵌套时每个元素的映射
+
+div {
+  h1 { "Header" }
+  div {
+    p { "Nested paragraph" }
+    span { "Nested span" }
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+================================================================================
+
+[2025-12-04T15:57:42.904Z]
+export default div({},[h1({},["Header"]),div({},[p({},["Nested paragraph"]),span({},["Nested span"])])]);
+
+================================================================================
+
+[2025-12-04T15:57:42.904Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:42.904Z]
+Input code length: 189
+================================================================================
+
+[2025-12-04T15:57:42.907Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:42.908Z]
+Output code length: 212
+================================================================================
+
+[2025-12-04T15:57:42.908Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:42.908Z]
+// 测试05: 条件渲染
+// 验证: if语句中的变量和元素映射
+
+const isVisible = true
+
+div {
+  if (isVisible) {
+    p { "Visible content" }
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+================================================================================
+
+[2025-12-04T15:57:42.908Z]
+const isVisible = true;
+export default (function(){
+  const children = [];
+  const temp$$attrs$$pgsejsgn = {};
+  if (isVisible){
+    children.push(p({},["Visible content"]));
+  }
+  return div({},children);
+})();
+
+================================================================================
+
+[2025-12-04T15:57:42.909Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:42.909Z]
+Input code length: 206
+================================================================================
+
+[2025-12-04T15:57:42.913Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:42.913Z]
+Output code length: 229
+================================================================================
+
+[2025-12-04T15:57:42.913Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:42.913Z]
+// 测试06: 简单循环
+// 验证: 循环变量和迭代项的映射
+
+const items = ["Apple", "Banana", "Cherry"]
+
+div {
+  for (const item of items) {
+    p { item }
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+================================================================================
+
+[2025-12-04T15:57:42.913Z]
+const items = ["Apple","Banana","Cherry"];
+export default (function(){
+  const children = [];
+  const temp$$attrs$$ou8xu1qf = {};
+  for (const item of items){
+    children.push(p({},[item]));
+  }
+  return div({},children);
+})();
+
+================================================================================
+
+[2025-12-04T15:57:42.913Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:42.914Z]
+Input code length: 226
+================================================================================
+
+[2025-12-04T15:57:42.920Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:42.920Z]
+Output code length: 138
+================================================================================
+
+[2025-12-04T15:57:42.921Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:42.921Z]
+// 测试07: 函数调用
+// 验证: 函数名和参数的映射
+
+function getMessage() {
+  return "Hello from function"
+}
+
+const name = "User"
+
+div {
+  p { getMessage() }
+  p { name }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+================================================================================
+
+[2025-12-04T15:57:42.921Z]
+function getMessage(){
+  return "Hello from function";
+}
+const name = "User";
+export default div({},[p({},[getMessage()]),p({},[name])]);
+
+================================================================================
+
+[2025-12-04T15:57:42.921Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:42.921Z]
+Input code length: 311
+================================================================================
+
+[2025-12-04T15:57:42.926Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:42.926Z]
+Output code length: 195
+================================================================================
+
+[2025-12-04T15:57:42.927Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:42.927Z]
+// 测试08: 多层嵌套（3层+）
+// 验证: 深层嵌套时每层的映射准确性
+
+const level1 = "Level 1"
+const level2 = "Level 2"
+const level3 = "Level 3"
+
+div {
+  h1 { level1 }
+  div {
+    h2 { level2 }
+    div {
+      h3 { level3 }
+      p { "Deep content" }
+    }
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+================================================================================
+
+[2025-12-04T15:57:42.927Z]
+const level1 = "Level 1";
+const level2 = "Level 2";
+const level3 = "Level 3";
+export default div({},[h1({},[level1]),div({},[h2({},[level2]),div({},[h3({},[level3]),p({},["Deep content"])])])]);
+
+================================================================================
+
+[2025-12-04T15:57:42.927Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:42.927Z]
+Input code length: 228
+================================================================================
+
+[2025-12-04T15:57:42.931Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:42.931Z]
+Output code length: 138
+================================================================================
+
+[2025-12-04T15:57:42.932Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:42.936Z]
+// 测试09: 复杂表达式
+// 验证: 运算符和表达式中各部分的映射
+
+const count = 10
+const multiplier = 5
+
+div {
+  p { count + multiplier }
+  p { count * multiplier }
+  p { count > 5 }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+================================================================================
+
+[2025-12-04T15:57:42.937Z]
+const count = 10;
+const multiplier = 5;
+export default div({},[p({},[count + multiplier]),p({},[count * multiplier]),p({},[count > 5])]);
+
+================================================================================
+
+[2025-12-04T15:57:42.938Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:42.938Z]
+Input code length: 446
+================================================================================
+
+[2025-12-04T15:57:42.945Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:42.945Z]
+Output code length: 586
+================================================================================
+
+[2025-12-04T15:57:42.945Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:42.945Z]
+// 测试10: 混合场景
+// 验证: 变量+嵌套+条件+循环的综合映射
+
+const title = "Product List"
+const products = ["Laptop", "Mouse", "Keyboard"]
+const showDetails = true
+
+div {
+  h1 { title }
+  
+  if (showDetails) {
+    div {
+      p { "Total items: " }
+      for (const product of products) {
+        div {
+          span { product }
+          p { "In stock" }
+        }
+      }
+    }
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+================================================================================
+
+[2025-12-04T15:57:42.945Z]
+const title = "Product List";
+const products = ["Laptop","Mouse","Keyboard"];
+const showDetails = true;
+export default (function(){
+  const children = [];
+  const temp$$attrs$$269se6no = {};
+  children.push(h1({},[title]));
+  if (showDetails){
+    children.push((function(){
+      const children = [];
+      const temp$$attrs$$mfji1iaw = {};
+      children.push(p({},["Total items: "]));
+      for (const product of products){
+        children.push(div({},[span({},[product]),p({},["In stock"])]));
+      }
+      return div({},children);
+    })());
+  }
+  return div({},children);
+})();
+
+================================================================================
+
+[2025-12-04T15:57:42.946Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:42.946Z]
+Input code length: 189
+================================================================================
+
+[2025-12-04T15:57:42.951Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:42.951Z]
+Output code length: 149
+================================================================================
+
+[2025-12-04T15:57:42.951Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:42.951Z]
+// 测试11: 多个变量声明
+// 验证: 多个const/let/var声明的映射
+
+const name = "Alice"
+const age = 25
+let count = 0
+var total = 100
+
+div {
+  p { name }
+  p { age }
+  p { count }
+  p { total }
+}
+
+
+================================================================================
+
+[2025-12-04T15:57:42.952Z]
+const name = "Alice";
+const age = 25;
+let count = 0;
+var total = 100;
+export default div({},[p({},[name]),p({},[age]),p({},[count]),p({},[total])]);
+
+================================================================================
+
+[2025-12-04T15:57:42.952Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:42.952Z]
+Input code length: 223
+================================================================================
+
+[2025-12-04T15:57:42.955Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:42.955Z]
+Output code length: 194
+================================================================================
+
+[2025-12-04T15:57:42.955Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:42.955Z]
+// 测试12: 字符串拼接
+// 验证: +运算符拼接字符串的映射
+
+const firstName = "John"
+const lastName = "Doe"
+const fullName = firstName + " " + lastName
+const greeting = "Hello, " + fullName
+
+div {
+  p { fullName }
+  p { greeting }
+}
+
+
+================================================================================
+
+[2025-12-04T15:57:42.955Z]
+const firstName = "John";
+const lastName = "Doe";
+const fullName = firstName + " " + lastName;
+const greeting = "Hello, " + fullName;
+export default div({},[p({},[fullName]),p({},[greeting])]);
+
+================================================================================
+
+[2025-12-04T15:57:42.956Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:42.956Z]
+Input code length: 212
+================================================================================
+
+[2025-12-04T15:57:42.960Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:42.961Z]
+Output code length: 176
+================================================================================
+
+[2025-12-04T15:57:42.961Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:42.961Z]
+// 测试13: 数组字面量
+// 验证: 数组声明和访问的映射
+
+const numbers = [1, 2, 3, 4, 5]
+const names = ["Alice", "Bob", "Charlie"]
+const mixed = [1, "two", 3]
+
+div {
+  p { numbers[0] }
+  p { names[1] }
+  p { mixed[2] }
+}
+
+
+================================================================================
+
+[2025-12-04T15:57:42.961Z]
+const numbers = [1,2,3,4,5];
+const names = ["Alice","Bob","Charlie"];
+const mixed = [1,"two",3];
+export default div({},[p({},[numbers[0]]),p({},[names[1]]),p({},[mixed[2]])]);
+
+================================================================================
+
+[2025-12-04T15:57:42.961Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:42.961Z]
+Input code length: 237
+================================================================================
+
+[2025-12-04T15:57:42.965Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:42.965Z]
+Output code length: 176
+================================================================================
+
+[2025-12-04T15:57:42.966Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:42.966Z]
+// 测试14: 对象字面量
+// 验证: 对象声明和属性访问的映射
+
+const user = {
+  name: "Alice",
+  age: 25,
+  role: "Developer"
+}
+
+const config = {
+  theme: "dark",
+  lang: "en"
+}
+
+div {
+  p { user.name }
+  p { user.age }
+  p { config.theme }
+}
+
+
+================================================================================
+
+[2025-12-04T15:57:42.966Z]
+const user = {name:"Alice",age:25,role:"Developer"};
+const config = {theme:"dark",lang:"en"};
+export default div({},[p({},[user.name]),p({},[user.age]),p({},[config.theme])]);
+
+================================================================================
+
+[2025-12-04T15:57:42.966Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:42.967Z]
+Input code length: 255
+================================================================================
+
+[2025-12-04T15:57:42.970Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:42.971Z]
+Output code length: 189
+================================================================================
+
+[2025-12-04T15:57:42.971Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:42.971Z]
+// 测试15: 属性访问（点号）
+// 验证: 链式属性访问的映射
+
+const data = {
+  user: {
+    profile: {
+      name: "Alice"
+    }
+  }
+}
+
+const name = data.user.profile.name
+const items = [1, 2, 3]
+const length = items.length
+
+div {
+  p { name }
+  p { length }
+}
+
+
+================================================================================
+
+[2025-12-04T15:57:42.971Z]
+const data = {user:{profile:{name:"Alice"}}};
+const name = data.user.profile.name;
+const items = [1,2,3];
+const length = items.length;
+export default div({},[p({},[name]),p({},[length])]);
+
+================================================================================
+
+[2025-12-04T15:57:42.971Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:42.971Z]
+Input code length: 261
+================================================================================
+
+[2025-12-04T15:57:42.975Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:42.975Z]
+Output code length: 215
+================================================================================
+
+[2025-12-04T15:57:42.976Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:42.976Z]
+// 测试16: 属性访问（方括号）
+// 验证: 计算属性访问的映射
+
+const obj = {
+  firstName: "John",
+  lastName: "Doe"
+}
+
+const key = "firstName"
+const value = obj[key]
+const arr = [10, 20, 30]
+const index = 1
+const item = arr[index]
+
+div {
+  p { value }
+  p { item }
+}
+
+
+================================================================================
+
+[2025-12-04T15:57:42.976Z]
+const obj = {firstName:"John",lastName:"Doe"};
+const key = "firstName";
+const value = obj[key];
+const arr = [10,20,30];
+const index = 1;
+const item = arr[index];
+export default div({},[p({},[value]),p({},[item])]);
+
+================================================================================
+
+[2025-12-04T15:57:42.976Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:42.976Z]
+Input code length: 288
+================================================================================
+
+[2025-12-04T15:57:42.981Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:42.981Z]
+Output code length: 254
+================================================================================
+
+[2025-12-04T15:57:42.981Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:42.981Z]
+// 测试17: 箭头函数（单参数）
+// 验证: 单参数箭头函数的映射
+
+const double = x => x + x
+const square = n => n * n
+const greet = name => "Hello, " + name
+
+const result1 = double(5)
+const result2 = square(4)
+const message = greet("Alice")
+
+div {
+  p { result1 }
+  p { result2 }
+  p { message }
+}
+
+
+================================================================================
+
+[2025-12-04T15:57:42.981Z]
+const double = x => x + x;
+const square = n => n * n;
+const greet = name => "Hello, " + name;
+const result1 = double(5);
+const result2 = square(4);
+const message = greet("Alice");
+export default div({},[p({},[result1]),p({},[result2]),p({},[message])]);
+
+================================================================================
+
+[2025-12-04T15:57:42.982Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:42.982Z]
+Input code length: 304
+================================================================================
+
+[2025-12-04T15:57:42.988Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:42.988Z]
+Output code length: 264
+================================================================================
+
+[2025-12-04T15:57:42.988Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:42.988Z]
+// 测试18: 箭头函数（多参数）
+// 验证: 多参数箭头函数的映射
+
+const add = (a, b) => a + b
+const multiply = (x, y) => x * y
+const concat = (str1, str2) => str1 + str2
+
+const sum = add(10, 20)
+const product = multiply(3, 7)
+const text = concat("Hello", "World")
+
+div {
+  p { sum }
+  p { product }
+  p { text }
+}
+
+
+================================================================================
+
+[2025-12-04T15:57:42.988Z]
+const add = (a,b) => a + b;
+const multiply = (x,y) => x * y;
+const concat = (str1,str2) => str1 + str2;
+const sum = add(10,20);
+const product = multiply(3,7);
+const text = concat("Hello","World");
+export default div({},[p({},[sum]),p({},[product]),p({},[text])]);
+
+================================================================================
+
+[2025-12-04T15:57:42.989Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:42.989Z]
+Input code length: 195
+================================================================================
+
+[2025-12-04T15:57:42.992Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:42.992Z]
+Output code length: 163
+================================================================================
+
+[2025-12-04T15:57:42.992Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:42.992Z]
+// 测试19: 模板字符串（基础）
+// 验证: 基础模板字符串的映射
+
+const text1 = `Hello World`
+const text2 = `Multi
+line
+text`
+const text3 = `Tab	separated`
+
+div {
+  p { text1 }
+  p { text2 }
+  p { text3 }
+}
+
+
+================================================================================
+
+[2025-12-04T15:57:42.992Z]
+const text1 = `Hello World`;
+const text2 = `Multi
+line
+text`;
+const text3 = `Tab	separated`;
+export default div({},[p({},[text1]),p({},[text2]),p({},[text3])]);
+
+================================================================================
+
+[2025-12-04T15:57:42.993Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:42.993Z]
+Input code length: 251
+================================================================================
+
+[2025-12-04T15:57:43.000Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:43.000Z]
+Output code length: 219
+================================================================================
+
+[2025-12-04T15:57:43.000Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:43.000Z]
+// 测试20: 模板字符串（插值）
+// 验证: 模板字符串插值的映射
+
+const name = "Alice"
+const age = 25
+const greeting = `Hello, ${name}!`
+const info = `${name} is ${age} years old`
+const calc = `Sum: ${10 + 20}`
+
+div {
+  p { greeting }
+  p { info }
+  p { calc }
+}
+
+
+================================================================================
+
+[2025-12-04T15:57:43.000Z]
+const name = "Alice";
+const age = 25;
+const greeting = `Hello, ${name}!`;
+const info = `${name} is ${age} years old`;
+const calc = `Sum: ${10 + 20}`;
+export default div({},[p({},[greeting]),p({},[info]),p({},[calc])]);
+
+================================================================================
+
+[2025-12-04T15:57:43.003Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:43.003Z]
+Input code length: 248
+================================================================================
+
+[2025-12-04T15:57:43.007Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:43.008Z]
+Output code length: 365
+================================================================================
+
+[2025-12-04T15:57:43.008Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:43.008Z]
+// 测试21: if-else语句
+// 验证: if-else分支的映射
+
+const score = 85
+const passed = true
+
+div {
+  if (score > 60) {
+    p { "Pass" }
+  } else {
+    p { "Fail" }
+  }
+  
+  if (passed) {
+    p { "Success" }
+  } else {
+    p { "Error" }
+  }
+}
+
+
+================================================================================
+
+[2025-12-04T15:57:43.009Z]
+const score = 85;
+const passed = true;
+export default (function(){
+  const children = [];
+  const temp$$attrs$$0e0nqvhk = {};
+  if (score > 60){
+    children.push(p({},["Pass"]));
+  }
+else{
+    children.push(p({},["Fail"]));
+  }
+  if (passed){
+    children.push(p({},["Success"]));
+  }
+else{
+    children.push(p({},["Error"]));
+  }
+  return div({},children);
+})();
+
+================================================================================
+
+[2025-12-04T15:57:43.009Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:43.009Z]
+Input code length: 250
+================================================================================
+
+[2025-12-04T15:57:43.014Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:43.014Z]
+Output code length: 368
+================================================================================
+
+[2025-12-04T15:57:43.014Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:43.014Z]
+// 测试22: if-else if-else语句
+// 验证: 多分支条件的映射
+
+const score = 75
+
+div {
+  if (score > 90) {
+    p { "Excellent" }
+  } else if (score > 70) {
+    p { "Good" }
+  } else if (score > 60) {
+    p { "Pass" }
+  } else {
+    p { "Fail" }
+  }
+}
+
+
+================================================================================
+
+[2025-12-04T15:57:43.014Z]
+const score = 75;
+export default (function(){
+  const children = [];
+  const temp$$attrs$$4hxnmy4e = {};
+  if (score > 90){
+    children.push(p({},["Excellent"]));
+  }
+else if (score > 70){
+    children.push(p({},["Good"]));
+  }
+else if (score > 60){
+    children.push(p({},["Pass"]));
+  }
+else{
+    children.push(p({},["Fail"]));
+  }
+  return div({},children);
+})();
+
+================================================================================
+
+[2025-12-04T15:57:43.014Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:43.015Z]
+Input code length: 198
+================================================================================
+
+[2025-12-04T15:57:43.021Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:43.021Z]
+Output code length: 215
+================================================================================
+
+[2025-12-04T15:57:43.021Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:43.021Z]
+// 测试23: while循环
+// 验证: while循环的映射
+
+const numbers = []
+let i = 0
+
+while (i < 3) {
+  numbers.push(i)
+  i = i + 1
+}
+
+div {
+  p { numbers[0] }
+  p { numbers[1] }
+  p { numbers[2] }
+}
+
+
+================================================================================
+
+[2025-12-04T15:57:43.021Z]
+import {Fragment,h} from 'vue';
+const numbers = [];
+let i = 0;
+export default h(Fragment,null,[while (i < 3){
+  numbers.push(i);
+  i = i + 1;
+}
+,div({},[p({},[numbers[0]]),p({},[numbers[1]]),p({},[numbers[2]])])]);
+
+================================================================================
+
+[2025-12-04T15:57:43.022Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:43.022Z]
+Input code length: 231
+================================================================================
+
+[2025-12-04T15:57:43.028Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:43.028Z]
+Output code length: 244
+================================================================================
+
+[2025-12-04T15:57:43.028Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:43.028Z]
+// 测试24: for-of循环
+// 验证: for-of遍历的映射
+
+const items = ["Apple", "Banana", "Cherry"]
+const result = []
+
+for (const item of items) {
+  result.push(item)
+}
+
+div {
+  p { result[0] }
+  p { result[1] }
+  p { result[2] }
+}
+
+
+================================================================================
+
+[2025-12-04T15:57:43.028Z]
+import {Fragment,h} from 'vue';
+const items = ["Apple","Banana","Cherry"];
+const result = [];
+export default h(Fragment,null,[for (const item of items){
+  result.push(item);
+}
+,div({},[p({},[result[0]]),p({},[result[1]]),p({},[result[2]])])]);
+
+================================================================================
+
+[2025-12-04T15:57:43.029Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:43.029Z]
+Input code length: 218
+================================================================================
+
+[2025-12-04T15:57:43.032Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:43.032Z]
+Output code length: 179
+================================================================================
+
+[2025-12-04T15:57:43.032Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:43.032Z]
+// 测试25: 三元表达式
+// 验证: 三元条件运算符的映射
+
+const age = 18
+const status = age > 18 ? "Adult" : "Minor"
+const score = 85
+const grade = score > 90 ? "A" : score > 80 ? "B" : "C"
+
+div {
+  p { status }
+  p { grade }
+}
+
+
+================================================================================
+
+[2025-12-04T15:57:43.032Z]
+const age = 18;
+const status = age > 18?"Adult":"Minor";
+const score = 85;
+const grade = score > 90?"A":score > 80?"B":"C";
+export default div({},[p({},[status]),p({},[grade])]);
+
+================================================================================
+
+[2025-12-04T15:57:43.032Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:43.033Z]
+Input code length: 251
+================================================================================
+
+[2025-12-04T15:57:43.037Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:43.037Z]
+Output code length: 221
+================================================================================
+
+[2025-12-04T15:57:43.037Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:43.038Z]
+// 测试26: 逻辑运算符
+// 验证: &&和||运算符的映射
+
+const a = true
+const b = false
+const result1 = a && b
+const result2 = a || b
+const result3 = a && !b
+const result4 = !a || b
+
+div {
+  p { result1 }
+  p { result2 }
+  p { result3 }
+  p { result4 }
+}
+
+
+================================================================================
+
+[2025-12-04T15:57:43.038Z]
+const a = true;
+const b = false;
+const result1 = a && b;
+const result2 = a || b;
+const result3 = a && !b;
+const result4 = !a || b;
+export default div({},[p({},[result1]),p({},[result2]),p({},[result3]),p({},[result4])]);
+
+================================================================================
+
+[2025-12-04T15:57:43.038Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:43.039Z]
+Input code length: 303
+================================================================================
+
+[2025-12-04T15:57:43.044Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:43.044Z]
+Output code length: 261
+================================================================================
+
+[2025-12-04T15:57:43.044Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:43.045Z]
+// 测试27: 比较运算符
+// 验证: ===, !==, <, >等比较运算符的映射
+
+const a = 10
+const b = 20
+const equal = a === b
+const notEqual = a !== b
+const less = a < b
+const greater = a > b
+const lessEqual = a < 15
+const greaterEqual = b > 15
+
+div {
+  p { equal }
+  p { notEqual }
+  p { less }
+  p { greater }
+}
+
+
+================================================================================
+
+[2025-12-04T15:57:43.045Z]
+const a = 10;
+const b = 20;
+const equal = a === b;
+const notEqual = a !== b;
+const less = a < b;
+const greater = a > b;
+const lessEqual = a < 15;
+const greaterEqual = b > 15;
+export default div({},[p({},[equal]),p({},[notEqual]),p({},[less]),p({},[greater])]);
+
+================================================================================
+
+[2025-12-04T15:57:43.045Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:43.045Z]
+Input code length: 308
+================================================================================
+
+[2025-12-04T15:57:43.050Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:43.050Z]
+Output code length: 264
+================================================================================
+
+[2025-12-04T15:57:43.051Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:43.051Z]
+// 测试28: 一元运算符
+// 验证: !, +, -, typeof等一元运算符的映射
+
+const flag = true
+const notFlag = !flag
+const num = 10
+const negNum = -num
+const posNum = +num
+const typeStr = typeof "hello"
+const typeNum = typeof 123
+
+div {
+  p { notFlag }
+  p { negNum }
+  p { posNum }
+  p { typeStr }
+  p { typeNum }
+}
+
+
+================================================================================
+
+[2025-12-04T15:57:43.051Z]
+const flag = true;
+const notFlag = !flag;
+const num = 10;
+const negNum = -num;
+const posNum = +num;
+const typeStr = typeof "hello";
+const typeNum = typeof 123;
+export default div({},[p({},[notFlag]),p({},[negNum]),p({},[posNum]),p({},[typeStr]),p({},[typeNum])]);
+
+================================================================================
+
+[2025-12-04T15:57:43.051Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:43.051Z]
+Input code length: 285
+================================================================================
+
+[2025-12-04T15:57:43.061Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:43.061Z]
+Output code length: 246
+================================================================================
+
+[2025-12-04T15:57:43.062Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:43.062Z]
+// 测试29: 算术运算符组合
+// 验证: +, -, *, %组合运算的映射
+
+const a = 10
+const b = 3
+const sum = a + b
+const diff = a - b
+const product = a * b
+const remainder = a % b
+const complex = a + b * 2 - 5
+
+div {
+  p { sum }
+  p { diff }
+  p { product }
+  p { remainder }
+  p { complex }
+}
+
+
+================================================================================
+
+[2025-12-04T15:57:43.062Z]
+const a = 10;
+const b = 3;
+const sum = a + b;
+const diff = a - b;
+const product = a * b;
+const remainder = a % b;
+const complex = a + b * 2 - 5;
+export default div({},[p({},[sum]),p({},[diff]),p({},[product]),p({},[remainder]),p({},[complex])]);
+
+================================================================================
+
+[2025-12-04T15:57:43.063Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:43.063Z]
+Input code length: 256
+================================================================================
+
+[2025-12-04T15:57:43.070Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:43.078Z]
+Output code length: 222
+================================================================================
+
+[2025-12-04T15:57:43.079Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:43.079Z]
+// 测试30: 自增自减运算符
+// 验证: ++和--运算符的映射
+
+let count = 10
+const pre1 = ++count
+const post1 = count++
+let num = 20
+const pre2 = --num
+const post2 = num--
+
+div {
+  p { pre1 }
+  p { post1 }
+  p { pre2 }
+  p { post2 }
+  p { count }
+  p { num }
+}
+
+
+================================================================================
+
+[2025-12-04T15:57:43.080Z]
+let count = 10;
+const pre1 = ++count;
+const post1 = count++;
+let num = 20;
+const pre2 = --num;
+const post2 = num--;
+export default div({},[p({},[pre1]),p({},[post1]),p({},[pre2]),p({},[post2]),p({},[count]),p({},[num])]);
+
+================================================================================
+
+[2025-12-04T15:57:43.080Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:43.081Z]
+Input code length: 233
+================================================================================
+
+[2025-12-04T15:57:43.093Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:43.094Z]
+Output code length: 195
+================================================================================
+
+[2025-12-04T15:57:43.094Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:43.094Z]
+// 测试31: 数组解构
+// 验证: 数组解构赋值的映射
+
+const arr = [1, 2, 3, 4, 5]
+const [first, second] = arr
+const [a, , c] = arr
+const [x, y, ...rest] = arr
+
+div {
+  p { first }
+  p { second }
+  p { a }
+  p { c }
+  p { x }
+  p { y }
+}
+
+
+================================================================================
+
+[2025-12-04T15:57:43.095Z]
+const arr = [1,2,3,4,5];
+const [first,second] = arr;
+const [a,,c] = arr;
+const [x,y,...rest] = arr;
+export default div({},[p({},[first]),p({},[second]),p({},[a]),p({},[c]),p({},[x]),p({},[y])]);
+
+================================================================================
+
+[2025-12-04T15:57:43.095Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:43.095Z]
+Input code length: 273
+================================================================================
+
+[2025-12-04T15:57:43.125Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:43.125Z]
+Output code length: 230
+================================================================================
+
+[2025-12-04T15:57:43.125Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:43.126Z]
+// 测试32: 对象解构
+// 验证: 对象解构赋值的映射
+
+const obj = { name: "Alice", age: 25, city: "NYC" }
+const { name, age } = obj
+const { city } = obj
+const { name: userName, age: userAge } = obj
+
+div {
+  p { name }
+  p { age }
+  p { city }
+  p { userName }
+  p { userAge }
+}
+
+
+================================================================================
+
+[2025-12-04T15:57:43.126Z]
+const obj = {name:"Alice",age:25,city:"NYC"};
+const {name,age} = obj;
+const {city} = obj;
+const {name: userName,age: userAge} = obj;
+export default div({},[p({},[name]),p({},[age]),p({},[city]),p({},[userName]),p({},[userAge])]);
+
+================================================================================
+
+[2025-12-04T15:57:43.129Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:43.130Z]
+Input code length: 310
+================================================================================
+
+[2025-12-04T15:57:43.154Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:43.155Z]
+Output code length: 262
+================================================================================
+
+[2025-12-04T15:57:43.158Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:43.158Z]
+// 测试33: 展开运算符
+// 验证: ...展开运算符的映射
+
+const arr1 = [1, 2, 3]
+const arr2 = [4, 5, 6]
+const combined = [...arr1, ...arr2]
+const obj1 = { a: 1, b: 2 }
+const obj2 = { c: 3, d: 4 }
+const merged = { ...obj1, ...obj2 }
+
+div {
+  p { combined[0] }
+  p { combined[5] }
+  p { merged.a }
+  p { merged.d }
+}
+
+
+================================================================================
+
+[2025-12-04T15:57:43.158Z]
+const arr1 = [1,2,3];
+const arr2 = [4,5,6];
+const combined = [...arr1,...arr2];
+const obj1 = {a:1,b:2};
+const obj2 = {c:3,d:4};
+const merged = {...obj1,...obj2};
+export default div({},[p({},[combined[0]]),p({},[combined[5]]),p({},[merged.a]),p({},[merged.d])]);
+
+================================================================================
+
+[2025-12-04T15:57:43.159Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:43.159Z]
+Input code length: 266
+================================================================================
+
+[2025-12-04T15:57:43.182Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:43.182Z]
+Output code length: 228
+================================================================================
+
+[2025-12-04T15:57:43.182Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:43.184Z]
+// 测试34: 可选链
+// 验证: ?.可选链运算符的映射
+
+const obj = { user: { name: "Alice", profile: { age: 25 } } }
+const name = obj?.user?.name
+const age = obj?.user?.profile?.age
+const missing = obj?.user?.address?.city
+
+div {
+  p { name }
+  p { age }
+  p { missing }
+}
+
+
+================================================================================
+
+[2025-12-04T15:57:43.185Z]
+const obj = {user:{name:"Alice",profile:{age:25}}};
+const name = obj?.user?.name;
+const age = obj?.user?.profile?.age;
+const missing = obj?.user?.address?.city;
+export default div({},[p({},[name]),p({},[age]),p({},[missing])]);
+
+================================================================================
+
+[2025-12-04T15:57:43.190Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:43.191Z]
+Input code length: 356
+================================================================================
+
+[2025-12-04T15:57:43.205Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:43.207Z]
+Output code length: 326
+================================================================================
+
+[2025-12-04T15:57:43.210Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:43.210Z]
+// 测试35: 空值合并
+// 验证: ??空值合并运算符的映射
+
+const value1 = null
+const value2 = undefined
+const value3 = 0
+const value4 = ""
+const result1 = value1 ?? "default1"
+const result2 = value2 ?? "default2"
+const result3 = value3 ?? "default3"
+const result4 = value4 ?? "default4"
+
+div {
+  p { result1 }
+  p { result2 }
+  p { result3 }
+  p { result4 }
+}
+
+
+================================================================================
+
+[2025-12-04T15:57:43.227Z]
+const value1 = null;
+const value2 = undefined;
+const value3 = 0;
+const value4 = "";
+const result1 = value1 ?? "default1";
+const result2 = value2 ?? "default2";
+const result3 = value3 ?? "default3";
+const result4 = value4 ?? "default4";
+export default div({},[p({},[result1]),p({},[result2]),p({},[result3]),p({},[result4])]);
+
+================================================================================
+
+[2025-12-04T15:57:43.229Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:43.230Z]
+Input code length: 264
+================================================================================
+
+[2025-12-04T15:57:43.249Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:43.263Z]
+Output code length: 231
+================================================================================
+
+[2025-12-04T15:57:43.264Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:43.264Z]
+// 测试36: 异步函数
+// 验证: async/await的映射
+
+const fetchData = async () => {
+  const result = await Promise.resolve("data")
+  return result
+}
+
+const getData = async () => {
+  const value = await fetchData()
+  return value
+}
+
+div {
+  p { "Async Test" }
+}
+
+
+================================================================================
+
+[2025-12-04T15:57:43.264Z]
+const fetchData = async () => {
+  const result = await Promise.resolve("data");
+  return result;
+};
+const getData = async () => {
+  const value = await fetchData();
+  return value;
+};
+export default div({},[p({},["Async Test"])]);
+
+================================================================================
+
+[2025-12-04T15:57:43.265Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:43.265Z]
+Input code length: 334
+================================================================================
+
+[2025-12-04T15:57:43.274Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:43.274Z]
+Output code length: 273
+================================================================================
+
+[2025-12-04T15:57:43.275Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:43.275Z]
+// 测试37: 基础类
+// 验证: class类定义的映射
+
+class Person {
+  constructor(name, age) {
+    this.name = name
+    this.age = age
+  }
+  
+  greet() {
+    return `Hello, ${this.name}`
+  }
+}
+
+const person = new Person("Alice", 25)
+const greeting = person.greet()
+
+div {
+  p { person.name }
+  p { person.age }
+  p { greeting }
+}
+
+
+================================================================================
+
+[2025-12-04T15:57:43.275Z]
+class Person{constructor(name,age){
+  this.name = name;
+  this.age = age;
+}greet(){
+  return `Hello, ${this.name}`;
+}}const person = new Person("Alice", 25);
+const greeting = person.greet();
+export default div({},[p({},[person.name]),p({},[person.age]),p({},[greeting])]);
+
+================================================================================
+
+[2025-12-04T15:57:43.275Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:43.275Z]
+Input code length: 451
+================================================================================
+
+[2025-12-04T15:57:43.282Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:43.282Z]
+Output code length: 354
+================================================================================
+
+[2025-12-04T15:57:43.282Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:43.282Z]
+// 测试38: 类继承
+// 验证: extends和super的映射
+
+class Animal {
+  constructor(name) {
+    this.name = name
+  }
+  
+  speak() {
+    return `${this.name} makes a sound`
+  }
+}
+
+class Dog extends Animal {
+  constructor(name, breed) {
+    super(name)
+    this.breed = breed
+  }
+  
+  speak() {
+    return `${this.name} barks`
+  }
+}
+
+const dog = new Dog("Buddy", "Golden")
+
+div {
+  p { dog.name }
+  p { dog.breed }
+  p { dog.speak() }
+}
+
+
+================================================================================
+
+[2025-12-04T15:57:43.284Z]
+class Animal{constructor(name){
+  this.name = name;
+}speak(){
+  return `${this.name} makes a sound`;
+}}class Dog extends Animal{constructor(name,breed){
+  super(name);
+  this.breed = breed;
+}speak(){
+  return `${this.name} barks`;
+}}const dog = new Dog("Buddy", "Golden");
+export default div({},[p({},[dog.name]),p({},[dog.breed]),p({},[dog.speak()])]);
+
+================================================================================
+
+[2025-12-04T15:57:43.285Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:43.285Z]
+Input code length: 288
+================================================================================
+
+[2025-12-04T15:57:43.289Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:43.289Z]
+Output code length: 295
+================================================================================
+
+[2025-12-04T15:57:43.289Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:43.289Z]
+// 测试39: 异常处理
+// 验证: try-catch-finally的映射
+
+let result = ""
+let error = ""
+
+try {
+  const value = JSON.parse('{"name":"Alice"}')
+  result = value.name
+} catch (e) {
+  error = e.message
+} finally {
+  result = result || "default"
+}
+
+div {
+  p { result }
+  p { error }
+}
+
+
+================================================================================
+
+[2025-12-04T15:57:43.289Z]
+import {Fragment,h} from 'vue';
+let result = "";
+let error = "";
+export default h(Fragment,null,[try {
+  const value = JSON.parse('{"name":"Alice"}');
+  result = value.name;
+}catch (e){
+  error = e.message;
+}finally {
+  result = result || "default";
+}
+,div({},[p({},[result]),p({},[error])])]);
+
+================================================================================
+
+[2025-12-04T15:57:43.289Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:43.290Z]
+Input code length: 325
+================================================================================
+
+[2025-12-04T15:57:43.295Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:43.296Z]
+Output code length: 278
+================================================================================
+
+[2025-12-04T15:57:43.296Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:43.296Z]
+// 测试40: 数组高阶函数
+// 验证: map/filter/reduce的映射
+
+const numbers = [1, 2, 3, 4, 5]
+const doubled = numbers.map(n => n * 2)
+const evens = numbers.filter(n => n % 2 === 0)
+const sum = numbers.reduce((acc, n) => acc + n, 0)
+
+div {
+  p { doubled[0] }
+  p { doubled[4] }
+  p { evens[0] }
+  p { evens[1] }
+  p { sum }
+}
+
+
+================================================================================
+
+[2025-12-04T15:57:43.296Z]
+const numbers = [1,2,3,4,5];
+const doubled = numbers.map(n => n * 2);
+const evens = numbers.filter(n => n % 2 === 0);
+const sum = numbers.reduce((acc,n) => acc + n,0);
+export default div({},[p({},[doubled[0]]),p({},[doubled[4]]),p({},[evens[0]]),p({},[evens[1]]),p({},[sum])]);
+
+================================================================================
+
+[2025-12-04T15:57:43.296Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:43.296Z]
+Input code length: 196
+================================================================================
+
+[2025-12-04T15:57:43.300Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:43.301Z]
+Output code length: 157
+================================================================================
+
+[2025-12-04T15:57:43.301Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:43.301Z]
+// 测试41: 基础组件
+// 验证: 自定义组件的映射
+
+const MyButton = (props) => {
+  return div {
+    button { props.text }
+  }
+}
+
+div {
+  MyButton({ text: "Click Me" })
+  MyButton({ text: "Submit" })
+}
+
+
+================================================================================
+
+[2025-12-04T15:57:43.301Z]
+const MyButton = (props) => {
+  return div({},[button({},[props.text])]);
+};
+export default div({},[MyButton({text:"Click Me"}),MyButton({text:"Submit"})]);
+
+================================================================================
+
+[2025-12-04T15:57:43.302Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:43.302Z]
+Input code length: 293
+================================================================================
+
+[2025-12-04T15:57:43.306Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:43.307Z]
+Output code length: 217
+================================================================================
+
+[2025-12-04T15:57:43.307Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:43.307Z]
+// 测试42: 组件属性传递
+// 验证: props传递和使用的映射
+
+const Card = (props) => {
+  const { title, content, author } = props
+  return div {
+    h2 { title }
+    p { content }
+    span { author }
+  }
+}
+
+div {
+  Card({ 
+    title: "Hello", 
+    content: "World", 
+    author: "Alice" 
+  })
+}
+
+
+================================================================================
+
+[2025-12-04T15:57:43.307Z]
+const Card = (props) => {
+  const {title,content,author} = props;
+  return div({},[h2({},[title]),p({},[content]),span({},[author])]);
+};
+export default div({},[Card({title:"Hello",content:"World",author:"Alice"})]);
+
+================================================================================
+
+[2025-12-04T15:57:43.308Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:43.308Z]
+Input code length: 332
+================================================================================
+
+[2025-12-04T15:57:43.312Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:43.312Z]
+Output code length: 252
+================================================================================
+
+[2025-12-04T15:57:43.313Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:43.313Z]
+// 测试43: 组件嵌套
+// 验证: 组件children传递的映射
+
+const Container = (props) => {
+  return div {
+    h1 { "Container" }
+    div { props.children }
+  }
+}
+
+const Item = (props) => {
+  return p { props.text }
+}
+
+div {
+  Container({
+    children: [
+      Item({ text: "Item 1" }),
+      Item({ text: "Item 2" })
+    ]
+  })
+}
+
+
+================================================================================
+
+[2025-12-04T15:57:43.313Z]
+const Container = (props) => {
+  return div({},[h1({},["Container"]),div({},[props.children])]);
+};
+const Item = (props) => {
+  return p({},[props.text]);
+};
+export default div({},[Container({children:[Item({text:"Item 1"}),Item({text:"Item 2"})]})]);
+
+================================================================================
+
+[2025-12-04T15:57:43.313Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:43.313Z]
+Input code length: 342
+================================================================================
+
+[2025-12-04T15:57:43.318Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:43.318Z]
+Output code length: 433
+================================================================================
+
+[2025-12-04T15:57:43.318Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:43.319Z]
+// 测试44: 条件渲染组件
+// 验证: 条件渲染中组件的映射
+
+const Message = (props) => {
+  return div { props.text }
+}
+
+const isLoggedIn = true
+const hasError = false
+
+div {
+  if (isLoggedIn) {
+    Message({ text: "Welcome!" })
+  }
+  
+  if (hasError) {
+    Message({ text: "Error occurred" })
+  } else {
+    Message({ text: "All good" })
+  }
+}
+
+
+================================================================================
+
+[2025-12-04T15:57:43.319Z]
+const Message = (props) => {
+  return div({},[props.text]);
+};
+const isLoggedIn = true;
+const hasError = false;
+export default (function(){
+  const children = [];
+  const temp$$attrs$$zkgdbf4t = {};
+  if (isLoggedIn){
+    children.push(Message({text:"Welcome!"}));
+  }
+  if (hasError){
+    children.push(Message({text:"Error occurred"}));
+  }
+else{
+    children.push(Message({text:"All good"}));
+  }
+  return div({},children);
+})();
+
+================================================================================
+
+[2025-12-04T15:57:43.319Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:43.319Z]
+Input code length: 242
+================================================================================
+
+[2025-12-04T15:57:43.322Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:43.323Z]
+Output code length: 310
+================================================================================
+
+[2025-12-04T15:57:43.323Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:43.323Z]
+// 测试45: 循环渲染组件
+// 验证: 循环中组件的映射
+
+const ListItem = (props) => {
+  return li { props.text }
+}
+
+const items = ["Apple", "Banana", "Cherry"]
+
+div {
+  ul {
+    for (const item of items) {
+      ListItem({ text: item })
+    }
+  }
+}
+
+================================================================================
+
+[2025-12-04T15:57:43.323Z]
+const ListItem = (props) => {
+  return li({},[props.text]);
+};
+const items = ["Apple","Banana","Cherry"];
+export default div({},[(function(){
+  const children = [];
+  const temp$$attrs$$efvu0gh0 = {};
+  for (const item of items){
+    children.push(ListItem({text:item}));
+  }
+  return ul({},children);
+})()]);
+
+================================================================================
+
+[2025-12-04T15:57:43.323Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:43.323Z]
+Input code length: 364
+================================================================================
+
+[2025-12-04T15:57:43.329Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:43.329Z]
+Output code length: 305
+================================================================================
+
+[2025-12-04T15:57:43.330Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:43.330Z]
+// 测试46: 深层嵌套组件
+// 验证: 多层组件嵌套的映射
+
+const Button = (props) => {
+  return button { props.text }
+}
+
+const Form = (props) => {
+  return div {
+    input { }
+    Button({ text: props.buttonText })
+  }
+}
+
+const Page = (props) => {
+  return div {
+    h1 { props.title }
+    Form({ buttonText: "Submit" })
+  }
+}
+
+div {
+  Page({ title: "Login" })
+}
+
+
+================================================================================
+
+[2025-12-04T15:57:43.330Z]
+const Button = (props) => {
+  return button({},[props.text]);
+};
+const Form = (props) => {
+  return div({},[input({},[]),Button({text:props.buttonText})]);
+};
+const Page = (props) => {
+  return div({},[h1({},[props.title]),Form({buttonText:"Submit"})]);
+};
+export default div({},[Page({title:"Login"})]);
+
+================================================================================
+
+[2025-12-04T15:57:43.331Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:43.331Z]
+Input code length: 404
+================================================================================
+
+[2025-12-04T15:57:43.336Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:43.336Z]
+Output code length: 341
+================================================================================
+
+[2025-12-04T15:57:43.336Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:43.337Z]
+// 测试47: 复杂状态管理
+// 验证: 复杂状态和计算的映射
+
+const state = {
+  user: { name: "Alice", age: 25 },
+  items: [1, 2, 3],
+  flags: { active: true, loading: false }
+}
+
+const userName = state.user.name
+const userAge = state.user.age
+const isActive = state.flags.active
+const total = state.items.reduce((sum, n) => sum + n, 0)
+
+div {
+  p { userName }
+  p { userAge }
+  p { isActive }
+  p { total }
+}
+
+
+================================================================================
+
+[2025-12-04T15:57:43.337Z]
+const state = {user:{name:"Alice",age:25},items:[1,2,3],flags:{active:true,loading:false}};
+const userName = state.user.name;
+const userAge = state.user.age;
+const isActive = state.flags.active;
+const total = state.items.reduce((sum,n) => sum + n,0);
+export default div({},[p({},[userName]),p({},[userAge]),p({},[isActive]),p({},[total])]);
+
+================================================================================
+
+[2025-12-04T15:57:43.337Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:43.337Z]
+Input code length: 339
+================================================================================
+
+[2025-12-04T15:57:43.342Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:43.342Z]
+Output code length: 306
+================================================================================
+
+[2025-12-04T15:57:43.342Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:43.342Z]
+// 测试48: 事件处理器
+// 验证: 事件处理函数的映射
+
+const handleClick = () => {
+  console.log("clicked")
+}
+
+const handleSubmit = (e) => {
+  e.preventDefault()
+  console.log("submitted")
+}
+
+const createHandler = (id) => {
+  return () => console.log(`Item ${id} clicked`)
+}
+
+div {
+  button { "Click" }
+  form { }
+  button { "Item 1" }
+}
+
+
+================================================================================
+
+[2025-12-04T15:57:43.342Z]
+const handleClick = () => {
+  console.log("clicked");
+};
+const handleSubmit = (e) => {
+  e.preventDefault();
+  console.log("submitted");
+};
+const createHandler = (id) => {
+  return () => console.log(`Item ${id} clicked`);
+};
+export default div({},[button({},["Click"]),form({},[]),button({},["Item 1"])]);
+
+================================================================================
+
+[2025-12-04T15:57:43.342Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:43.343Z]
+Input code length: 459
+================================================================================
+
+[2025-12-04T15:57:43.349Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:43.350Z]
+Output code length: 384
+================================================================================
+
+[2025-12-04T15:57:43.351Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:43.351Z]
+// 测试49: 混合高级场景
+// 验证: 解构+可选链+空值合并+三元运算符的映射
+
+const data = {
+  user: { name: "Alice", profile: { age: 25 } },
+  items: [1, 2, 3, 4, 5]
+}
+
+const { user, items } = data
+const userName = user?.name ?? "Guest"
+const age = user?.profile?.age
+const [first, ...rest] = items
+const doubled = items.map(n => n * 2)
+const status = age > 18 ? "Adult" : "Minor"
+
+div {
+  p { userName }
+  p { age }
+  p { status }
+  p { first }
+  p { doubled[0] }
+}
+
+
+================================================================================
+
+[2025-12-04T15:57:43.351Z]
+const data = {user:{name:"Alice",profile:{age:25}},items:[1,2,3,4,5]};
+const {user,items} = data;
+const userName = user?.name ?? "Guest";
+const age = user?.profile?.age;
+const [first,...rest] = items;
+const doubled = items.map(n => n * 2);
+const status = age > 18?"Adult":"Minor";
+export default div({},[p({},[userName]),p({},[age]),p({},[status]),p({},[first]),p({},[doubled[0]])]);
+
+================================================================================
+
+[2025-12-04T15:57:43.351Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:43.351Z]
+Input code length: 925
+================================================================================
+
+[2025-12-04T15:57:43.362Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:43.362Z]
+Output code length: 1158
+================================================================================
+
+[2025-12-04T15:57:43.362Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:43.362Z]
+// 测试50: 综合场景
+// 验证: 组合所有特性的映射
+
+const Card = (props) => {
+  const { title, items, status } = props
+  return div {
+    h2 { title }
+    if (status === "active") {
+      ul {
+        for (const item of items) {
+          li { `${item.name}: ${item.count}` }
+        }
+      }
+    } else {
+      p { "Inactive" }
+    }
+  }
+}
+
+const state = {
+  cards: [
+    { id: 1, title: "Card 1", status: "active", items: [
+      { name: "A", count: 10 },
+      { name: "B", count: 20 }
+    ]},
+    { id: 2, title: "Card 2", status: "inactive", items: [] }
+  ]
+}
+
+const processCard = (card) => {
+  const total = card.items.reduce((sum, item) => sum + item.count, 0)
+  return { ...card, total }
+}
+
+const processedCards = state.cards.map(processCard)
+
+div {
+  for (const card of processedCards) {
+    Card({
+      title: card.title,
+      items: card.items,
+      status: card.status
+    })
+  }
+}
+
+
+================================================================================
+
+[2025-12-04T15:57:43.362Z]
+const Card = (props) => {
+  const {title,items,status} = props;
+  return (function(){
+    const children = [];
+    const temp$$attrs$$u8r8fro8 = {};
+    children.push(h2({},[title]));
+    if (status === "active"){
+      children.push((function(){
+        const children = [];
+        const temp$$attrs$$3f0stj3p = {};
+        for (const item of items){
+          children.push(li({},[`${item.name}: ${item.count}`]));
+        }
+        return ul({},children);
+      })());
+    }
+else{
+      children.push(p({},["Inactive"]));
+    }
+    return div({},children);
+  })();
+};
+const state = {cards:[{id:1,title:"Card 1",status:"active",items:[{name:"A",count:10},{name:"B",count:20}]},{id:2,title:"Card 2",status:"inactive",items:[]}]};
+const processCard = (card) => {
+  const total = card.items.reduce((sum,item) => sum + item.count,0);
+  return {...card,total};
+};
+const processedCards = state.cards.map(processCard);
+export default (function(){
+  const children = [];
+  const temp$$attrs$$db7f6rxu = {};
+  for (const card of processedCards){
+    children.push(Card({title:card.title,items:card.items,status:card.status}));
+  }
+  return div({},children);
+})();
+
+================================================================================
+
+[2025-12-04T15:57:43.363Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:43.363Z]
+Input code length: 215
+================================================================================
+
+[2025-12-04T15:57:43.365Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:43.366Z]
+Output code length: 240
+================================================================================
+
+[2025-12-04T15:57:43.366Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:43.366Z]
+// Case 1: 简单场景 - 基础声明和表达式
+
+const appName = "Simple Test"
+const version = "1.0"
+
+console.log("Starting simple test...")
+
+div {
+  h1 { appName }
+  p { version }
+}
+
+console.log("Simple test complete!")
+
+
+================================================================================
+
+[2025-12-04T15:57:43.366Z]
+import {Fragment,h} from 'vue';
+const appName = "Simple Test";
+const version = "1.0";
+export default h(Fragment,null,[console.log("Starting simple test..."),div({},[h1({},[appName]),p({},[version])]),console.log("Simple test complete!")]);
+
+================================================================================
+
+[2025-12-04T15:57:43.367Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:43.367Z]
+Input code length: 248
+================================================================================
+
+[2025-12-04T15:57:43.370Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:43.370Z]
+Output code length: 205
+================================================================================
+
+[2025-12-04T15:57:43.370Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:43.371Z]
+// Case 5: 变量使用 - 变量引用
+
+const userName = "John"
+const userAge = 25
+const userRole = "Developer"
+
+div {
+  h1 { userName }
+  
+  div {
+    p { "Age: " }
+    p { userAge }
+  }
+  
+  div {
+    p { "Role: " }
+    p { userRole }
+  }
+}
+
+
+================================================================================
+
+[2025-12-04T15:57:43.371Z]
+const userName = "John";
+const userAge = 25;
+const userRole = "Developer";
+export default div({},[h1({},[userName]),div({},[p({},["Age: "]),p({},[userAge])]),div({},[p({},["Role: "]),p({},[userRole])])]);
+
+================================================================================
+
+[2025-12-04T15:57:43.371Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:43.371Z]
+Input code length: 306
+================================================================================
+
+[2025-12-04T15:57:43.375Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:43.375Z]
+Output code length: 500
+================================================================================
+
+[2025-12-04T15:57:43.375Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:43.375Z]
+// Case 2: 嵌套视图 - 多层嵌套结构
+
+const title = "Nested Views Demo"
+
+div {
+  h1 { title }
+  
+  div {
+    const level1 = "Level 1"
+    h2 { level1 }
+    
+    div {
+      const level2 = "Level 2"
+      h3 { level2 }
+      
+      div {
+        p { "Level 3 Deep nesting!" }
+      }
+    }
+  }
+}
+
+
+================================================================================
+
+[2025-12-04T15:57:43.375Z]
+const title = "Nested Views Demo";
+export default div({},[h1({},[title]),(function(){
+  const children = [];
+  const temp$$attrs$$m281i84z = {};
+  const level1 = "Level 1";
+  children.push(h2({},[level1]));
+  children.push((function(){
+    const children = [];
+    const temp$$attrs$$oysj6xoq = {};
+    const level2 = "Level 2";
+    children.push(h3({},[level2]));
+    children.push(div({},[p({},["Level 3 Deep nesting!"])]));
+    return div({},children);
+  })());
+  return div({},children);
+})()]);
+
+================================================================================
+
+[2025-12-04T15:57:43.376Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:43.376Z]
+Input code length: 197
+================================================================================
+
+[2025-12-04T15:57:43.379Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:43.379Z]
+Output code length: 311
+================================================================================
+
+[2025-12-04T15:57:43.380Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:43.380Z]
+// Case 3: 条件渲染 - if语句
+
+const isActive = true
+
+div {
+  h1 { "Conditional Test" }
+  
+  if (isActive) {
+    p { "Status: Active" }
+  }
+  
+  div {
+    p { "This always shows" }
+  }
+}
+
+
+================================================================================
+
+[2025-12-04T15:57:43.380Z]
+const isActive = true;
+export default (function(){
+  const children = [];
+  const temp$$attrs$$kf860n86 = {};
+  children.push(h1({},["Conditional Test"]));
+  if (isActive){
+    children.push(p({},["Status: Active"]));
+  }
+  children.push(div({},[p({},["This always shows"])]));
+  return div({},children);
+})();
+
+================================================================================
+
+[2025-12-04T15:57:43.380Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:43.380Z]
+Input code length: 370
+================================================================================
+
+[2025-12-04T15:57:43.387Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:43.387Z]
+Output code length: 361
+================================================================================
+
+[2025-12-04T15:57:43.387Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:43.387Z]
+// Case 9: 循环 - For和While循环
+
+const items = [10, 20, 30]
+let sum = 0
+
+for (let i = 0; i < items.length; i++) {
+  sum = sum + items[i]
+}
+
+let count = 0
+while (count < 3) {
+  count = count + 1
+}
+
+div {
+  h1 { "Loops Demo" }
+  
+  div {
+    p { "For loop sum: " }
+    p { sum }
+  }
+  
+  div {
+    p { "While loop count: " }
+    p { count }
+  }
+}
+
+
+================================================================================
+
+[2025-12-04T15:57:43.387Z]
+import {Fragment,h} from 'vue';
+const items = [10,20,30];
+let sum = 0;
+let count = 0;
+export default h(Fragment,null,[for (let i = 0;i < items.length;i++){
+  sum = sum + items[i];
+}
+,while (count < 3){
+  count = count + 1;
+}
+,div({},[h1({},["Loops Demo"]),div({},[p({},["For loop sum: "]),p({},[sum])]),div({},[p({},["While loop count: "]),p({},[count])])])]);
+
+================================================================================
+
+[2025-12-04T15:57:43.388Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:43.388Z]
+Input code length: 289
+================================================================================
+
+[2025-12-04T15:57:43.394Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:43.394Z]
+Output code length: 239
+================================================================================
+
+[2025-12-04T15:57:43.394Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:43.394Z]
+// Case 7: 函数声明 - Function声明和调用
+
+function getGreeting() {
+  return "Hello from function!"
+}
+
+function add(a, b) {
+  return a + b
+}
+
+const greeting = getGreeting()
+const sum = add(10, 20)
+
+div {
+  h1 { greeting }
+  
+  div {
+    p { "10 + 20 = " }
+    p { sum }
+  }
+}
+
+
+================================================================================
+
+[2025-12-04T15:57:43.395Z]
+function getGreeting(){
+  return "Hello from function!";
+}
+function add(a,b){
+  return a + b;
+}
+const greeting = getGreeting();
+const sum = add(10,20);
+export default div({},[h1({},[greeting]),div({},[p({},["10 + 20 = "]),p({},[sum])])]);
+
+================================================================================
+
+[2025-12-04T15:57:43.395Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:43.395Z]
+Input code length: 448
+================================================================================
+
+[2025-12-04T15:57:43.401Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:43.401Z]
+Output code length: 380
+================================================================================
+
+[2025-12-04T15:57:43.402Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:43.402Z]
+// Case 8: 箭头函数 - 单参数、无参数、多参数
+
+const double = (x) => x * 2
+const getValue = () => 42
+const multiply = (a, b) => a * b
+
+const result1 = double(5)
+const result2 = getValue()
+const result3 = multiply(3, 4)
+
+div {
+  h1 { "Arrow Functions" }
+  
+  div {
+    p { "double(5) = " }
+    p { result1 }
+  }
+  
+  div {
+    p { "getValue() = " }
+    p { result2 }
+  }
+  
+  div {
+    p { "multiply(3,4) = " }
+    p { result3 }
+  }
+}
+
+
+================================================================================
+
+[2025-12-04T15:57:43.402Z]
+const double = (x) => x * 2;
+const getValue = () => 42;
+const multiply = (a,b) => a * b;
+const result1 = double(5);
+const result2 = getValue();
+const result3 = multiply(3,4);
+export default div({},[h1({},["Arrow Functions"]),div({},[p({},["double(5) = "]),p({},[result1])]),div({},[p({},["getValue() = "]),p({},[result2])]),div({},[p({},["multiply(3,4) = "]),p({},[result3])])]);
+
+================================================================================
+
+[2025-12-04T15:57:43.402Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:43.402Z]
+Input code length: 426
+================================================================================
+
+[2025-12-04T15:57:43.409Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:43.409Z]
+Output code length: 324
+================================================================================
+
+[2025-12-04T15:57:43.409Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:43.409Z]
+// Case 8: Class基础 - Class声明、constructor、方法、实例化
+
+class Person {
+  constructor(name, age) {
+    this.name = name
+    this.age = age
+  }
+  
+  getName() {
+    return this.name
+  }
+}
+
+const person = new Person("Alice", 25)
+const personName = person.getName()
+
+div {
+  h1 { "Class Demo" }
+  
+  div {
+    p { "Name: " }
+    p { personName }
+  }
+  
+  div {
+    p { "Age: " }
+    p { person.age }
+  }
+}
+
+
+================================================================================
+
+[2025-12-04T15:57:43.409Z]
+class Person{constructor(name,age){
+  this.name = name;
+  this.age = age;
+}getName(){
+  return this.name;
+}}const person = new Person("Alice", 25);
+const personName = person.getName();
+export default div({},[h1({},["Class Demo"]),div({},[p({},["Name: "]),p({},[personName])]),div({},[p({},["Age: "]),p({},[person.age])])]);
+
+================================================================================
+
+[2025-12-04T15:57:43.410Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:43.410Z]
+Input code length: 246
+================================================================================
+
+[2025-12-04T15:57:43.415Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:43.415Z]
+Output code length: 212
+================================================================================
+
+[2025-12-04T15:57:43.415Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:43.415Z]
+// Named Export - 命名导出
+
+export const HeaderView = div {
+  h1 { "Header" }
+  p { "Welcome" }
+}
+
+export const ContentView = div {
+  h2 { "Content" }
+  p { "Main content area" }
+}
+
+export const FooterView = div {
+  p { "Footer" }
+}
+
+
+================================================================================
+
+[2025-12-04T15:57:43.415Z]
+export const HeaderView = div({},[h1({},["Header"]),p({},["Welcome"])]);
+export const ContentView = div({},[h2({},["Content"]),p({},["Main content area"])]);
+export const FooterView = div({},[p({},["Footer"])]);
+
+================================================================================
+
+[2025-12-04T15:57:43.416Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:43.416Z]
+Input code length: 193
+================================================================================
+
+[2025-12-04T15:57:43.419Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:43.419Z]
+Output code length: 153
+================================================================================
+
+[2025-12-04T15:57:43.419Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:43.419Z]
+// Default Export - 默认导出
+
+const title = "My App"
+const version = "1.0.0"
+
+export default div {
+  h1 { title }
+  p { version }
+  div {
+    p { "This is the default export" }
+  }
+}
+
+
+================================================================================
+
+[2025-12-04T15:57:43.419Z]
+const title = "My App";
+const version = "1.0.0";
+export default div({},[h1({},[title]),p({},[version]),div({},[p({},["This is the default export"])])]);
+
+================================================================================
+
+[2025-12-04T15:57:45.415Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:45.416Z]
+Input code length: 494
+================================================================================
+
+[2025-12-04T15:57:45.427Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:45.427Z]
+Output code length: 600
+================================================================================
+
+[2025-12-04T15:57:45.428Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:45.428Z]
+import { ref } from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = b
+
+div() {
+  h2 { 'Hello OVS' }
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-04T15:57:45.428Z]
+import {ref} from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+export default (function(){
+  const appName = "Hello OVS";
+  const version = "1.0";
+  let a = 1;
+  let b = a;
+  let c = b;
+  return div({},[h2({},['Hello OVS']),(function(){
+    const children = [];
+    const temp$$attrs$$ivyrs86i = {};
+    let a = ref(0);
+    const timer = setInterval(() => {
+      a.value = a.value + 1;
+      console.log(a);
+    },1000);
+    children.push(a);
+    return h1({onClick:() => {
+      children.push(console.log('clicked'));
+    }},children);
+  })(),h1({},[appName]),p({},[version])]);
+})();
+
+================================================================================
+
+[2025-12-04T15:57:48.870Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:48.870Z]
+Input code length: 496
+================================================================================
+
+[2025-12-04T15:57:48.877Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:48.877Z]
+Output code length: 600
+================================================================================
+
+[2025-12-04T15:57:48.877Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:48.878Z]
+import { ref } from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = b
+
+
+div() {
+  h2 { 'Hello OVS' }
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-04T15:57:48.878Z]
+import {ref} from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+export default (function(){
+  const appName = "Hello OVS";
+  const version = "1.0";
+  let a = 1;
+  let b = a;
+  let c = b;
+  return div({},[h2({},['Hello OVS']),(function(){
+    const children = [];
+    const temp$$attrs$$j27kqmzz = {};
+    let a = ref(0);
+    const timer = setInterval(() => {
+      a.value = a.value + 1;
+      console.log(a);
+    },1000);
+    children.push(a);
+    return h1({onClick:() => {
+      children.push(console.log('clicked'));
+    }},children);
+  })(),h1({},[appName]),p({},[version])]);
+})();
+
+================================================================================
+
+[2025-12-04T15:57:49.630Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:49.631Z]
+Input code length: 497
+================================================================================
+
+[2025-12-04T15:57:49.640Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:49.640Z]
+Output code length: 632
+================================================================================
+
+[2025-12-04T15:57:49.640Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:49.640Z]
+import { ref } from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = b
+l
+
+div() {
+  h2 { 'Hello OVS' }
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-04T15:57:49.641Z]
+import {ref,Fragment,h} from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+export default (function(){
+  const appName = "Hello OVS";
+  const version = "1.0";
+  let a = 1;
+  let b = a;
+  let c = b;
+  return h(Fragment,null,[l,div({},[h2({},['Hello OVS']),(function(){
+    const children = [];
+    const temp$$attrs$$f8coevl9 = {};
+    let a = ref(0);
+    const timer = setInterval(() => {
+      a.value = a.value + 1;
+      console.log(a);
+    },1000);
+    children.push(a);
+    return h1({onClick:() => {
+      children.push(console.log('clicked'));
+    }},children);
+  })(),h1({},[appName]),p({},[version])])]);
+})();
+
+================================================================================
+
+[2025-12-04T15:57:50.211Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:50.211Z]
+Input code length: 497
+================================================================================
+
+[2025-12-04T15:57:50.221Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:50.221Z]
+Output code length: 632
+================================================================================
+
+[2025-12-04T15:57:50.221Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:50.221Z]
+import { ref } from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = b
+l
+
+div() {
+  h2 { 'Hello OVS' }
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-04T15:57:50.221Z]
+import {ref,Fragment,h} from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+export default (function(){
+  const appName = "Hello OVS";
+  const version = "1.0";
+  let a = 1;
+  let b = a;
+  let c = b;
+  return h(Fragment,null,[l,div({},[h2({},['Hello OVS']),(function(){
+    const children = [];
+    const temp$$attrs$$4nprx8mz = {};
+    let a = ref(0);
+    const timer = setInterval(() => {
+      a.value = a.value + 1;
+      console.log(a);
+    },1000);
+    children.push(a);
+    return h1({onClick:() => {
+      children.push(console.log('clicked'));
+    }},children);
+  })(),h1({},[appName]),p({},[version])])]);
+})();
+
+================================================================================
+
+[2025-12-04T15:57:57.024Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:57.024Z]
+Input code length: 498
+================================================================================
+
+[2025-12-04T15:57:57.034Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:57.034Z]
+Output code length: 633
+================================================================================
+
+[2025-12-04T15:57:57.035Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:57.035Z]
+import { ref } from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = b
+le
+
+div() {
+  h2 { 'Hello OVS' }
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-04T15:57:57.036Z]
+import {ref,Fragment,h} from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+export default (function(){
+  const appName = "Hello OVS";
+  const version = "1.0";
+  let a = 1;
+  let b = a;
+  let c = b;
+  return h(Fragment,null,[le,div({},[h2({},['Hello OVS']),(function(){
+    const children = [];
+    const temp$$attrs$$ti3kju5d = {};
+    let a = ref(0);
+    const timer = setInterval(() => {
+      a.value = a.value + 1;
+      console.log(a);
+    },1000);
+    children.push(a);
+    return h1({onClick:() => {
+      children.push(console.log('clicked'));
+    }},children);
+  })(),h1({},[appName]),p({},[version])])]);
+})();
+
+================================================================================
+
+[2025-12-04T15:57:57.125Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:57.126Z]
+Input code length: 499
+================================================================================
+
+[2025-12-04T15:57:57.136Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:57.136Z]
+Output code length: 634
+================================================================================
+
+[2025-12-04T15:57:57.136Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:57.137Z]
+import { ref } from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = b
+let
+
+div() {
+  h2 { 'Hello OVS' }
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-04T15:57:57.137Z]
+import {ref,Fragment,h} from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+export default (function(){
+  const appName = "Hello OVS";
+  const version = "1.0";
+  let a = 1;
+  let b = a;
+  let c = b;
+  return h(Fragment,null,[let,div({},[h2({},['Hello OVS']),(function(){
+    const children = [];
+    const temp$$attrs$$4hdmp7su = {};
+    let a = ref(0);
+    const timer = setInterval(() => {
+      a.value = a.value + 1;
+      console.log(a);
+    },1000);
+    children.push(a);
+    return h1({onClick:() => {
+      children.push(console.log('clicked'));
+    }},children);
+  })(),h1({},[appName]),p({},[version])])]);
+})();
+
+================================================================================
+
+[2025-12-04T15:57:57.191Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:57.192Z]
+Input code length: 500
+================================================================================
+
+[2025-12-04T15:57:57.206Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:57.206Z]
+Output code length: 634
+================================================================================
+
+[2025-12-04T15:57:57.207Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:57.207Z]
+import { ref } from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = b
+let 
+
+div() {
+  h2 { 'Hello OVS' }
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-04T15:57:57.207Z]
+import {ref,Fragment,h} from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+export default (function(){
+  const appName = "Hello OVS";
+  const version = "1.0";
+  let a = 1;
+  let b = a;
+  let c = b;
+  return h(Fragment,null,[let,div({},[h2({},['Hello OVS']),(function(){
+    const children = [];
+    const temp$$attrs$$k8os7n2y = {};
+    let a = ref(0);
+    const timer = setInterval(() => {
+      a.value = a.value + 1;
+      console.log(a);
+    },1000);
+    children.push(a);
+    return h1({onClick:() => {
+      children.push(console.log('clicked'));
+    }},children);
+  })(),h1({},[appName]),p({},[version])])]);
+})();
+
+================================================================================
+
+[2025-12-04T15:57:57.275Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:57.275Z]
+Input code length: 501
+================================================================================
+
+[2025-12-04T15:57:57.283Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:57.283Z]
+Output code length: 609
+================================================================================
+
+[2025-12-04T15:57:57.283Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:57.283Z]
+import { ref } from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = b
+let f
+
+div() {
+  h2 { 'Hello OVS' }
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-04T15:57:57.283Z]
+import {ref} from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+export default (function(){
+  const appName = "Hello OVS";
+  const version = "1.0";
+  let a = 1;
+  let b = a;
+  let c = b;
+  let f;
+  return div({},[h2({},['Hello OVS']),(function(){
+    const children = [];
+    const temp$$attrs$$55d464ri = {};
+    let a = ref(0);
+    const timer = setInterval(() => {
+      a.value = a.value + 1;
+      console.log(a);
+    },1000);
+    children.push(a);
+    return h1({onClick:() => {
+      children.push(console.log('clicked'));
+    }},children);
+  })(),h1({},[appName]),p({},[version])]);
+})();
+
+================================================================================
+
+[2025-12-04T15:57:57.322Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:57.322Z]
+Input code length: 502
+================================================================================
+
+[2025-12-04T15:57:57.331Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:57.331Z]
+Output code length: 610
+================================================================================
+
+[2025-12-04T15:57:57.331Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:57.331Z]
+import { ref } from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = b
+let fd
+
+div() {
+  h2 { 'Hello OVS' }
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-04T15:57:57.331Z]
+import {ref} from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+export default (function(){
+  const appName = "Hello OVS";
+  const version = "1.0";
+  let a = 1;
+  let b = a;
+  let c = b;
+  let fd;
+  return div({},[h2({},['Hello OVS']),(function(){
+    const children = [];
+    const temp$$attrs$$qdjjui8f = {};
+    let a = ref(0);
+    const timer = setInterval(() => {
+      a.value = a.value + 1;
+      console.log(a);
+    },1000);
+    children.push(a);
+    return h1({onClick:() => {
+      children.push(console.log('clicked'));
+    }},children);
+  })(),h1({},[appName]),p({},[version])]);
+})();
+
+================================================================================
+
+[2025-12-04T15:57:57.360Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:57.361Z]
+Input code length: 503
+================================================================================
+
+[2025-12-04T15:57:57.367Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:57.368Z]
+Output code length: 611
+================================================================================
+
+[2025-12-04T15:57:57.368Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:57.368Z]
+import { ref } from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = b
+let fdf
+
+div() {
+  h2 { 'Hello OVS' }
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-04T15:57:57.368Z]
+import {ref} from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+export default (function(){
+  const appName = "Hello OVS";
+  const version = "1.0";
+  let a = 1;
+  let b = a;
+  let c = b;
+  let fdf;
+  return div({},[h2({},['Hello OVS']),(function(){
+    const children = [];
+    const temp$$attrs$$4nwgwpt8 = {};
+    let a = ref(0);
+    const timer = setInterval(() => {
+      a.value = a.value + 1;
+      console.log(a);
+    },1000);
+    children.push(a);
+    return h1({onClick:() => {
+      children.push(console.log('clicked'));
+    }},children);
+  })(),h1({},[appName]),p({},[version])]);
+})();
+
+================================================================================
+
+[2025-12-04T15:57:57.392Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:57.392Z]
+Input code length: 504
+================================================================================
+
+[2025-12-04T15:57:57.398Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:57.399Z]
+Output code length: 611
+================================================================================
+
+[2025-12-04T15:57:57.399Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:57.399Z]
+import { ref } from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = b
+let fdf 
+
+div() {
+  h2 { 'Hello OVS' }
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-04T15:57:57.399Z]
+import {ref} from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+export default (function(){
+  const appName = "Hello OVS";
+  const version = "1.0";
+  let a = 1;
+  let b = a;
+  let c = b;
+  let fdf;
+  return div({},[h2({},['Hello OVS']),(function(){
+    const children = [];
+    const temp$$attrs$$ldg4m574 = {};
+    let a = ref(0);
+    const timer = setInterval(() => {
+      a.value = a.value + 1;
+      console.log(a);
+    },1000);
+    children.push(a);
+    return h1({onClick:() => {
+      children.push(console.log('clicked'));
+    }},children);
+  })(),h1({},[appName]),p({},[version])]);
+})();
+
+================================================================================
+
+[2025-12-04T15:57:57.426Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:57.426Z]
+Input code length: 505
+================================================================================
+
+[2025-12-04T15:57:57.434Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:57.434Z]
+Output code length: 533
+================================================================================
+
+[2025-12-04T15:57:57.434Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:57.434Z]
+import { ref } from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = b
+let fdf =
+
+div() {
+  h2 { 'Hello OVS' }
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-04T15:57:57.434Z]
+import {ref} from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+const appName = "Hello OVS";
+const version = "1.0";
+let a = 1;
+let b = a;
+let c = b;
+let fdf = div({},[h2({},['Hello OVS']),(function(){
+  const children = [];
+  const temp$$attrs$$c1m1a3fb = {};
+  let a = ref(0);
+  const timer = setInterval(() => {
+    a.value = a.value + 1;
+    console.log(a);
+  },1000);
+  children.push(a);
+  return h1({onClick:() => {
+    children.push(console.log('clicked'));
+  }},children);
+})(),h1({},[appName]),p({},[version])]);
+
+================================================================================
+
+[2025-12-04T15:57:57.458Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:57.459Z]
+Input code length: 506
+================================================================================
+
+[2025-12-04T15:57:57.465Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:57.466Z]
+Output code length: 533
+================================================================================
+
+[2025-12-04T15:57:57.466Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:57.466Z]
+import { ref } from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = b
+let fdf = 
+
+div() {
+  h2 { 'Hello OVS' }
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-04T15:57:57.466Z]
+import {ref} from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+const appName = "Hello OVS";
+const version = "1.0";
+let a = 1;
+let b = a;
+let c = b;
+let fdf = div({},[h2({},['Hello OVS']),(function(){
+  const children = [];
+  const temp$$attrs$$9prn4fcb = {};
+  let a = ref(0);
+  const timer = setInterval(() => {
+    a.value = a.value + 1;
+    console.log(a);
+  },1000);
+  children.push(a);
+  return h1({onClick:() => {
+    children.push(console.log('clicked'));
+  }},children);
+})(),h1({},[appName]),p({},[version])]);
+
+================================================================================
+
+[2025-12-04T15:57:57.492Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:57.492Z]
+Input code length: 507
+================================================================================
+
+[2025-12-04T15:57:57.498Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:57.498Z]
+Output code length: 615
+================================================================================
+
+[2025-12-04T15:57:57.498Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:57.499Z]
+import { ref } from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = b
+let fdf = c
+
+div() {
+  h2 { 'Hello OVS' }
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-04T15:57:57.499Z]
+import {ref} from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+export default (function(){
+  const appName = "Hello OVS";
+  const version = "1.0";
+  let a = 1;
+  let b = a;
+  let c = b;
+  let fdf = c;
+  return div({},[h2({},['Hello OVS']),(function(){
+    const children = [];
+    const temp$$attrs$$aqxdrjts = {};
+    let a = ref(0);
+    const timer = setInterval(() => {
+      a.value = a.value + 1;
+      console.log(a);
+    },1000);
+    children.push(a);
+    return h1({onClick:() => {
+      children.push(console.log('clicked'));
+    }},children);
+  })(),h1({},[appName]),p({},[version])]);
+})();
+
+================================================================================
+
+[2025-12-04T15:57:59.729Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:57:59.729Z]
+Input code length: 509
+================================================================================
+
+[2025-12-04T15:57:59.740Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:57:59.740Z]
+Output code length: 615
+================================================================================
+
+[2025-12-04T15:57:59.740Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:57:59.740Z]
+import { ref } from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = b
+let fdf = c
+
+
+div() {
+  h2 { 'Hello OVS' }
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-04T15:57:59.740Z]
+import {ref} from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+export default (function(){
+  const appName = "Hello OVS";
+  const version = "1.0";
+  let a = 1;
+  let b = a;
+  let c = b;
+  let fdf = c;
+  return div({},[h2({},['Hello OVS']),(function(){
+    const children = [];
+    const temp$$attrs$$6tan032u = {};
+    let a = ref(0);
+    const timer = setInterval(() => {
+      a.value = a.value + 1;
+      console.log(a);
+    },1000);
+    children.push(a);
+    return h1({onClick:() => {
+      children.push(console.log('clicked'));
+    }},children);
+  })(),h1({},[appName]),p({},[version])]);
+})();
+
+================================================================================
+
+[2025-12-04T15:58:00.153Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:58:00.154Z]
+Input code length: 510
+================================================================================
+
+[2025-12-04T15:58:00.162Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:58:00.162Z]
+Output code length: 647
+================================================================================
+
+[2025-12-04T15:58:00.162Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:58:00.162Z]
+import { ref } from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = b
+let fdf = c
+l
+
+div() {
+  h2 { 'Hello OVS' }
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-04T15:58:00.162Z]
+import {ref,Fragment,h} from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+export default (function(){
+  const appName = "Hello OVS";
+  const version = "1.0";
+  let a = 1;
+  let b = a;
+  let c = b;
+  let fdf = c;
+  return h(Fragment,null,[l,div({},[h2({},['Hello OVS']),(function(){
+    const children = [];
+    const temp$$attrs$$gkns52sy = {};
+    let a = ref(0);
+    const timer = setInterval(() => {
+      a.value = a.value + 1;
+      console.log(a);
+    },1000);
+    children.push(a);
+    return h1({onClick:() => {
+      children.push(console.log('clicked'));
+    }},children);
+  })(),h1({},[appName]),p({},[version])])]);
+})();
+
+================================================================================
+
+[2025-12-04T15:58:00.291Z]
+=== resolveCompletionItem ===
+================================================================================
+
+[2025-12-04T15:58:00.291Z]
+completionName: length
+================================================================================
+
+[2025-12-04T15:58:00.292Z]
+importSource: null
+================================================================================
+
+[2025-12-04T15:58:00.292Z]
+hasCodeActions: false
+================================================================================
+
+[2025-12-04T15:58:01.795Z]
+=== resolveCompletionItem ===
+================================================================================
+
+[2025-12-04T15:58:01.795Z]
+completionName: let
+================================================================================
+
+[2025-12-04T15:58:01.795Z]
+importSource: null
+================================================================================
+
+[2025-12-04T15:58:01.796Z]
+hasCodeActions: false
+================================================================================
+
+[2025-12-04T15:58:02.093Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:58:02.094Z]
+Input code length: 512
+================================================================================
+
+[2025-12-04T15:58:02.100Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:58:02.101Z]
+Output code length: 649
+================================================================================
+
+[2025-12-04T15:58:02.101Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:58:02.101Z]
+import { ref } from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = b
+let fdf = c
+let
+
+div() {
+  h2 { 'Hello OVS' }
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-04T15:58:02.101Z]
+import {ref,Fragment,h} from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+export default (function(){
+  const appName = "Hello OVS";
+  const version = "1.0";
+  let a = 1;
+  let b = a;
+  let c = b;
+  let fdf = c;
+  return h(Fragment,null,[let,div({},[h2({},['Hello OVS']),(function(){
+    const children = [];
+    const temp$$attrs$$qipf1j50 = {};
+    let a = ref(0);
+    const timer = setInterval(() => {
+      a.value = a.value + 1;
+      console.log(a);
+    },1000);
+    children.push(a);
+    return h1({onClick:() => {
+      children.push(console.log('clicked'));
+    }},children);
+  })(),h1({},[appName]),p({},[version])])]);
+})();
+
+================================================================================
+
+[2025-12-04T15:58:02.253Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:58:02.253Z]
+Input code length: 513
+================================================================================
+
+[2025-12-04T15:58:02.261Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:58:02.261Z]
+Output code length: 649
+================================================================================
+
+[2025-12-04T15:58:02.262Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:58:02.262Z]
+import { ref } from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = b
+let fdf = c
+let 
+
+div() {
+  h2 { 'Hello OVS' }
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-04T15:58:02.262Z]
+import {ref,Fragment,h} from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+export default (function(){
+  const appName = "Hello OVS";
+  const version = "1.0";
+  let a = 1;
+  let b = a;
+  let c = b;
+  let fdf = c;
+  return h(Fragment,null,[let,div({},[h2({},['Hello OVS']),(function(){
+    const children = [];
+    const temp$$attrs$$1xr85rut = {};
+    let a = ref(0);
+    const timer = setInterval(() => {
+      a.value = a.value + 1;
+      console.log(a);
+    },1000);
+    children.push(a);
+    return h1({onClick:() => {
+      children.push(console.log('clicked'));
+    }},children);
+  })(),h1({},[appName]),p({},[version])])]);
+})();
+
+================================================================================
+
+[2025-12-04T15:58:02.505Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:58:02.505Z]
+Input code length: 514
+================================================================================
+
+[2025-12-04T15:58:02.514Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:58:02.514Z]
+Output code length: 624
+================================================================================
+
+[2025-12-04T15:58:02.515Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:58:02.515Z]
+import { ref } from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = b
+let fdf = c
+let f
+
+div() {
+  h2 { 'Hello OVS' }
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-04T15:58:02.515Z]
+import {ref} from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+export default (function(){
+  const appName = "Hello OVS";
+  const version = "1.0";
+  let a = 1;
+  let b = a;
+  let c = b;
+  let fdf = c;
+  let f;
+  return div({},[h2({},['Hello OVS']),(function(){
+    const children = [];
+    const temp$$attrs$$qbc0fv06 = {};
+    let a = ref(0);
+    const timer = setInterval(() => {
+      a.value = a.value + 1;
+      console.log(a);
+    },1000);
+    children.push(a);
+    return h1({onClick:() => {
+      children.push(console.log('clicked'));
+    }},children);
+  })(),h1({},[appName]),p({},[version])]);
+})();
+
+================================================================================
+
+[2025-12-04T15:58:02.598Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:58:02.598Z]
+Input code length: 516
+================================================================================
+
+[2025-12-04T15:58:02.609Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:58:02.610Z]
+Output code length: 626
+================================================================================
+
+[2025-12-04T15:58:02.610Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:58:02.610Z]
+import { ref } from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = b
+let fdf = c
+let fas
+
+div() {
+  h2 { 'Hello OVS' }
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-04T15:58:02.610Z]
+import {ref} from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+export default (function(){
+  const appName = "Hello OVS";
+  const version = "1.0";
+  let a = 1;
+  let b = a;
+  let c = b;
+  let fdf = c;
+  let fas;
+  return div({},[h2({},['Hello OVS']),(function(){
+    const children = [];
+    const temp$$attrs$$xc9oxmma = {};
+    let a = ref(0);
+    const timer = setInterval(() => {
+      a.value = a.value + 1;
+      console.log(a);
+    },1000);
+    children.push(a);
+    return h1({onClick:() => {
+      children.push(console.log('clicked'));
+    }},children);
+  })(),h1({},[appName]),p({},[version])]);
+})();
+
+================================================================================
+
+[2025-12-04T15:58:02.674Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:58:02.674Z]
+Input code length: 517
+================================================================================
+
+[2025-12-04T15:58:02.681Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:58:02.682Z]
+Output code length: 627
+================================================================================
+
+[2025-12-04T15:58:02.682Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:58:02.682Z]
+import { ref } from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = b
+let fdf = c
+let fasd
+
+div() {
+  h2 { 'Hello OVS' }
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-04T15:58:02.682Z]
+import {ref} from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+export default (function(){
+  const appName = "Hello OVS";
+  const version = "1.0";
+  let a = 1;
+  let b = a;
+  let c = b;
+  let fdf = c;
+  let fasd;
+  return div({},[h2({},['Hello OVS']),(function(){
+    const children = [];
+    const temp$$attrs$$wyhl9si1 = {};
+    let a = ref(0);
+    const timer = setInterval(() => {
+      a.value = a.value + 1;
+      console.log(a);
+    },1000);
+    children.push(a);
+    return h1({onClick:() => {
+      children.push(console.log('clicked'));
+    }},children);
+  })(),h1({},[appName]),p({},[version])]);
+})();
+
+================================================================================
+
+[2025-12-04T15:58:02.765Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:58:02.765Z]
+Input code length: 518
+================================================================================
+
+[2025-12-04T15:58:02.773Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:58:02.773Z]
+Output code length: 628
+================================================================================
+
+[2025-12-04T15:58:02.773Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:58:02.774Z]
+import { ref } from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = b
+let fdf = c
+let fasdf
+
+div() {
+  h2 { 'Hello OVS' }
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-04T15:58:02.774Z]
+import {ref} from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+export default (function(){
+  const appName = "Hello OVS";
+  const version = "1.0";
+  let a = 1;
+  let b = a;
+  let c = b;
+  let fdf = c;
+  let fasdf;
+  return div({},[h2({},['Hello OVS']),(function(){
+    const children = [];
+    const temp$$attrs$$58qcxzpj = {};
+    let a = ref(0);
+    const timer = setInterval(() => {
+      a.value = a.value + 1;
+      console.log(a);
+    },1000);
+    children.push(a);
+    return h1({onClick:() => {
+      children.push(console.log('clicked'));
+    }},children);
+  })(),h1({},[appName]),p({},[version])]);
+})();
+
+================================================================================
+
+[2025-12-04T15:58:02.848Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:58:02.848Z]
+Input code length: 519
+================================================================================
+
+[2025-12-04T15:58:02.856Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:58:02.856Z]
+Output code length: 628
+================================================================================
+
+[2025-12-04T15:58:02.856Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:58:02.856Z]
+import { ref } from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = b
+let fdf = c
+let fasdf 
+
+div() {
+  h2 { 'Hello OVS' }
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-04T15:58:02.857Z]
+import {ref} from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+export default (function(){
+  const appName = "Hello OVS";
+  const version = "1.0";
+  let a = 1;
+  let b = a;
+  let c = b;
+  let fdf = c;
+  let fasdf;
+  return div({},[h2({},['Hello OVS']),(function(){
+    const children = [];
+    const temp$$attrs$$5uvr0sf8 = {};
+    let a = ref(0);
+    const timer = setInterval(() => {
+      a.value = a.value + 1;
+      console.log(a);
+    },1000);
+    children.push(a);
+    return h1({onClick:() => {
+      children.push(console.log('clicked'));
+    }},children);
+  })(),h1({},[appName]),p({},[version])]);
+})();
+
+================================================================================
+
+[2025-12-04T15:58:03.165Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:58:03.165Z]
+Input code length: 520
+================================================================================
+
+[2025-12-04T15:58:03.174Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:58:03.174Z]
+Output code length: 548
+================================================================================
+
+[2025-12-04T15:58:03.174Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:58:03.174Z]
+import { ref } from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = b
+let fdf = c
+let fasdf =
+
+div() {
+  h2 { 'Hello OVS' }
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-04T15:58:03.174Z]
+import {ref} from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+const appName = "Hello OVS";
+const version = "1.0";
+let a = 1;
+let b = a;
+let c = b;
+let fdf = c;
+let fasdf = div({},[h2({},['Hello OVS']),(function(){
+  const children = [];
+  const temp$$attrs$$mwpopx2l = {};
+  let a = ref(0);
+  const timer = setInterval(() => {
+    a.value = a.value + 1;
+    console.log(a);
+  },1000);
+  children.push(a);
+  return h1({onClick:() => {
+    children.push(console.log('clicked'));
+  }},children);
+})(),h1({},[appName]),p({},[version])]);
+
+================================================================================
+
+[2025-12-04T15:58:03.315Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:58:03.315Z]
+Input code length: 521
+================================================================================
+
+[2025-12-04T15:58:03.324Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:58:03.324Z]
+Output code length: 548
+================================================================================
+
+[2025-12-04T15:58:03.325Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:58:03.325Z]
+import { ref } from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = b
+let fdf = c
+let fasdf = 
+
+div() {
+  h2 { 'Hello OVS' }
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-04T15:58:03.325Z]
+import {ref} from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+const appName = "Hello OVS";
+const version = "1.0";
+let a = 1;
+let b = a;
+let c = b;
+let fdf = c;
+let fasdf = div({},[h2({},['Hello OVS']),(function(){
+  const children = [];
+  const temp$$attrs$$qmboyuts = {};
+  let a = ref(0);
+  const timer = setInterval(() => {
+    a.value = a.value + 1;
+    console.log(a);
+  },1000);
+  children.push(a);
+  return h1({onClick:() => {
+    children.push(console.log('clicked'));
+  }},children);
+})(),h1({},[appName]),p({},[version])]);
+
+================================================================================
+
+[2025-12-04T15:58:04.043Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:58:04.043Z]
+Input code length: 522
+================================================================================
+
+[2025-12-04T15:58:04.050Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:58:04.050Z]
+Output code length: 632
+================================================================================
+
+[2025-12-04T15:58:04.050Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:58:04.051Z]
+import { ref } from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = b
+let fdf = c
+let fasdf = b
+
+div() {
+  h2 { 'Hello OVS' }
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-04T15:58:04.051Z]
+import {ref} from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+export default (function(){
+  const appName = "Hello OVS";
+  const version = "1.0";
+  let a = 1;
+  let b = a;
+  let c = b;
+  let fdf = c;
+  let fasdf = b;
+  return div({},[h2({},['Hello OVS']),(function(){
+    const children = [];
+    const temp$$attrs$$503ecvom = {};
+    let a = ref(0);
+    const timer = setInterval(() => {
+      a.value = a.value + 1;
+      console.log(a);
+    },1000);
+    children.push(a);
+    return h1({onClick:() => {
+      children.push(console.log('clicked'));
+    }},children);
+  })(),h1({},[appName]),p({},[version])]);
+})();
+
+================================================================================
+
+[2025-12-04T15:58:04.236Z]
+=== resolveCompletionItem ===
+================================================================================
+
+[2025-12-04T15:58:04.237Z]
+completionName: b
+================================================================================
+
+[2025-12-04T15:58:04.237Z]
+importSource: null
+================================================================================
+
+[2025-12-04T15:58:04.237Z]
+hasCodeActions: false
+================================================================================
+
+[2025-12-04T15:58:04.853Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:58:04.853Z]
+Input code length: 522
+================================================================================
+
+[2025-12-04T15:58:04.860Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:58:04.860Z]
+Output code length: 632
+================================================================================
+
+[2025-12-04T15:58:04.860Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:58:04.861Z]
+import { ref } from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = b
+let fdf = c
+let fasdf = b
+
+div() {
+  h2 { 'Hello OVS' }
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-04T15:58:04.861Z]
+import {ref} from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+export default (function(){
+  const appName = "Hello OVS";
+  const version = "1.0";
+  let a = 1;
+  let b = a;
+  let c = b;
+  let fdf = c;
+  let fasdf = b;
+  return div({},[h2({},['Hello OVS']),(function(){
+    const children = [];
+    const temp$$attrs$$hqyazo6p = {};
+    let a = ref(0);
+    const timer = setInterval(() => {
+      a.value = a.value + 1;
+      console.log(a);
+    },1000);
+    children.push(a);
+    return h1({onClick:() => {
+      children.push(console.log('clicked'));
+    }},children);
+  })(),h1({},[appName]),p({},[version])]);
+})();
+
+================================================================================
+
+[2025-12-04T15:58:05.265Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:58:05.265Z]
+Input code length: 524
+================================================================================
+
+[2025-12-04T15:58:05.273Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:58:05.274Z]
+Output code length: 632
+================================================================================
+
+[2025-12-04T15:58:05.274Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:58:05.274Z]
+import { ref } from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = b
+let fdf = c
+let fasdf = b
+
+
+div() {
+  h2 { 'Hello OVS' }
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-04T15:58:05.274Z]
+import {ref} from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+export default (function(){
+  const appName = "Hello OVS";
+  const version = "1.0";
+  let a = 1;
+  let b = a;
+  let c = b;
+  let fdf = c;
+  let fasdf = b;
+  return div({},[h2({},['Hello OVS']),(function(){
+    const children = [];
+    const temp$$attrs$$t1xhvqtv = {};
+    let a = ref(0);
+    const timer = setInterval(() => {
+      a.value = a.value + 1;
+      console.log(a);
+    },1000);
+    children.push(a);
+    return h1({onClick:() => {
+      children.push(console.log('clicked'));
+    }},children);
+  })(),h1({},[appName]),p({},[version])]);
+})();
+
+================================================================================
+
+[2025-12-04T15:58:05.961Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:58:05.961Z]
+Input code length: 526
+================================================================================
+
+[2025-12-04T15:58:05.969Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:58:05.969Z]
+Output code length: 632
+================================================================================
+
+[2025-12-04T15:58:05.970Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:58:05.970Z]
+import { ref } from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = b
+let fdf = c
+let fasdf = b
+
+
+
+div() {
+  h2 { 'Hello OVS' }
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-04T15:58:05.970Z]
+import {ref} from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+export default (function(){
+  const appName = "Hello OVS";
+  const version = "1.0";
+  let a = 1;
+  let b = a;
+  let c = b;
+  let fdf = c;
+  let fasdf = b;
+  return div({},[h2({},['Hello OVS']),(function(){
+    const children = [];
+    const temp$$attrs$$w6hgk0t3 = {};
+    let a = ref(0);
+    const timer = setInterval(() => {
+      a.value = a.value + 1;
+      console.log(a);
+    },1000);
+    children.push(a);
+    return h1({onClick:() => {
+      children.push(console.log('clicked'));
+    }},children);
+  })(),h1({},[appName]),p({},[version])]);
+})();
+
+================================================================================
+
+[2025-12-04T15:58:06.169Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:58:06.170Z]
+Input code length: 527
+================================================================================
+
+[2025-12-04T15:58:06.177Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:58:06.177Z]
+Output code length: 664
+================================================================================
+
+[2025-12-04T15:58:06.178Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:58:06.178Z]
+import { ref } from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = b
+let fdf = c
+let fasdf = b
+
+h
+
+div() {
+  h2 { 'Hello OVS' }
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-04T15:58:06.178Z]
+import {ref,Fragment,h} from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+export default (function(){
+  const appName = "Hello OVS";
+  const version = "1.0";
+  let a = 1;
+  let b = a;
+  let c = b;
+  let fdf = c;
+  let fasdf = b;
+  return h(Fragment,null,[h,div({},[h2({},['Hello OVS']),(function(){
+    const children = [];
+    const temp$$attrs$$xd5m3c5q = {};
+    let a = ref(0);
+    const timer = setInterval(() => {
+      a.value = a.value + 1;
+      console.log(a);
+    },1000);
+    children.push(a);
+    return h1({onClick:() => {
+      children.push(console.log('clicked'));
+    }},children);
+  })(),h1({},[appName]),p({},[version])])]);
+})();
+
+================================================================================
+
+[2025-12-04T15:58:06.248Z]
+=== resolveCompletionItem ===
+================================================================================
+
+[2025-12-04T15:58:06.249Z]
+completionName: h
+================================================================================
+
+[2025-12-04T15:58:06.249Z]
+importSource: null
+================================================================================
+
+[2025-12-04T15:58:06.249Z]
+hasCodeActions: false
+================================================================================
+
+[2025-12-04T15:58:06.680Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:58:06.680Z]
+Input code length: 528
+================================================================================
+
+[2025-12-04T15:58:06.689Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:58:06.689Z]
+Output code length: 665
+================================================================================
+
+[2025-12-04T15:58:06.690Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:58:06.690Z]
+import { ref } from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = b
+let fdf = c
+let fasdf = b
+
+h3
+
+div() {
+  h2 { 'Hello OVS' }
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-04T15:58:06.690Z]
+import {ref,Fragment,h} from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+export default (function(){
+  const appName = "Hello OVS";
+  const version = "1.0";
+  let a = 1;
+  let b = a;
+  let c = b;
+  let fdf = c;
+  let fasdf = b;
+  return h(Fragment,null,[h3,div({},[h2({},['Hello OVS']),(function(){
+    const children = [];
+    const temp$$attrs$$3ojuzva8 = {};
+    let a = ref(0);
+    const timer = setInterval(() => {
+      a.value = a.value + 1;
+      console.log(a);
+    },1000);
+    children.push(a);
+    return h1({onClick:() => {
+      children.push(console.log('clicked'));
+    }},children);
+  })(),h1({},[appName]),p({},[version])])]);
+})();
+
+================================================================================
+
+[2025-12-04T15:58:06.714Z]
+=== resolveCompletionItem ===
+================================================================================
+
+[2025-12-04T15:58:06.714Z]
+completionName: h3
+================================================================================
+
+[2025-12-04T15:58:06.715Z]
+importSource: ../utils/htmlElements
+================================================================================
+
+[2025-12-04T15:58:06.715Z]
+hasCodeActions: true
+================================================================================
+
+[2025-12-04T15:58:06.715Z]
+codeActions:
+================================================================================
+
+[2025-12-04T15:58:06.715Z]
+  description: Update import from "../utils/htmlElements"
+================================================================================
+
+[2025-12-04T15:58:06.715Z]
+  file: d:/project/qkyproject/test-volar/ovs/example/src/views/hello.ovs.ovsts.js
+================================================================================
+
+[2025-12-04T15:58:06.716Z]
+    span: {"start":54,"length":0}
+================================================================================
+
+[2025-12-04T15:58:06.716Z]
+    newText: h3,
+================================================================================
+
+[2025-12-04T15:58:08.090Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:58:08.090Z]
+Input code length: 531
+================================================================================
+
+[2025-12-04T15:58:08.098Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:58:08.099Z]
+Output code length: 668
+================================================================================
+
+[2025-12-04T15:58:08.099Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:58:08.099Z]
+import { ref } from 'vue';
+import {div,h1,h2,h3,p} from '../utils/htmlElements';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = b
+let fdf = c
+let fasdf = b
+
+h3
+
+div() {
+  h2 { 'Hello OVS' }
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-04T15:58:08.099Z]
+import {ref,Fragment,h} from 'vue';
+import {div,h1,h2,h3,p} from '../utils/htmlElements';
+export default (function(){
+  const appName = "Hello OVS";
+  const version = "1.0";
+  let a = 1;
+  let b = a;
+  let c = b;
+  let fdf = c;
+  let fasdf = b;
+  return h(Fragment,null,[h3,div({},[h2({},['Hello OVS']),(function(){
+    const children = [];
+    const temp$$attrs$$z25dga7w = {};
+    let a = ref(0);
+    const timer = setInterval(() => {
+      a.value = a.value + 1;
+      console.log(a);
+    },1000);
+    children.push(a);
+    return h1({onClick:() => {
+      children.push(console.log('clicked'));
+    }},children);
+  })(),h1({},[appName]),p({},[version])])]);
+})();
+
+================================================================================
+
+[2025-12-04T15:58:33.554Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:58:33.554Z]
+Input code length: 528
+================================================================================
+
+[2025-12-04T15:58:33.563Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:58:33.563Z]
+Output code length: 665
+================================================================================
+
+[2025-12-04T15:58:33.563Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:58:33.563Z]
+import { ref } from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = b
+let fdf = c
+let fasdf = b
+
+h3
+
+div() {
+  h2 { 'Hello OVS' }
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-04T15:58:33.563Z]
+import {ref,Fragment,h} from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+export default (function(){
+  const appName = "Hello OVS";
+  const version = "1.0";
+  let a = 1;
+  let b = a;
+  let c = b;
+  let fdf = c;
+  let fasdf = b;
+  return h(Fragment,null,[h3,div({},[h2({},['Hello OVS']),(function(){
+    const children = [];
+    const temp$$attrs$$7wugl14v = {};
+    let a = ref(0);
+    const timer = setInterval(() => {
+      a.value = a.value + 1;
+      console.log(a);
+    },1000);
+    children.push(a);
+    return h1({onClick:() => {
+      children.push(console.log('clicked'));
+    }},children);
+  })(),h1({},[appName]),p({},[version])])]);
+})();
+
+================================================================================
+
+[2025-12-04T15:58:33.992Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:58:33.993Z]
+Input code length: 524
+================================================================================
+
+[2025-12-04T15:58:33.998Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:58:33.999Z]
+Output code length: 632
+================================================================================
+
+[2025-12-04T15:58:33.999Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:58:33.999Z]
+import { ref } from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = b
+let fdf = c
+let fasdf = b
+
+
+div() {
+  h2 { 'Hello OVS' }
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-04T15:58:33.999Z]
+import {ref} from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+export default (function(){
+  const appName = "Hello OVS";
+  const version = "1.0";
+  let a = 1;
+  let b = a;
+  let c = b;
+  let fdf = c;
+  let fasdf = b;
+  return div({},[h2({},['Hello OVS']),(function(){
+    const children = [];
+    const temp$$attrs$$xcpn9x7g = {};
+    let a = ref(0);
+    const timer = setInterval(() => {
+      a.value = a.value + 1;
+      console.log(a);
+    },1000);
+    children.push(a);
+    return h1({onClick:() => {
+      children.push(console.log('clicked'));
+    }},children);
+  })(),h1({},[appName]),p({},[version])]);
+})();
+
+================================================================================
+
+[2025-12-04T15:58:34.256Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:58:34.256Z]
+Input code length: 522
+================================================================================
+
+[2025-12-04T15:58:34.262Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:58:34.262Z]
+Output code length: 632
+================================================================================
+
+[2025-12-04T15:58:34.262Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:58:34.262Z]
+import { ref } from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = b
+let fdf = c
+let fasdf = b
+
+div() {
+  h2 { 'Hello OVS' }
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-04T15:58:34.262Z]
+import {ref} from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+export default (function(){
+  const appName = "Hello OVS";
+  const version = "1.0";
+  let a = 1;
+  let b = a;
+  let c = b;
+  let fdf = c;
+  let fasdf = b;
+  return div({},[h2({},['Hello OVS']),(function(){
+    const children = [];
+    const temp$$attrs$$tugygs2w = {};
+    let a = ref(0);
+    const timer = setInterval(() => {
+      a.value = a.value + 1;
+      console.log(a);
+    },1000);
+    children.push(a);
+    return h1({onClick:() => {
+      children.push(console.log('clicked'));
+    }},children);
+  })(),h1({},[appName]),p({},[version])]);
+})();
+
+================================================================================
+
+[2025-12-04T15:58:34.859Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:58:34.859Z]
+Input code length: 522
+================================================================================
+
+[2025-12-04T15:58:34.865Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:58:34.865Z]
+Output code length: 632
+================================================================================
+
+[2025-12-04T15:58:34.865Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:58:34.865Z]
+import { ref } from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = b
+let fdf = c
+let fasdf = b
+
+div() {
+  h2 { 'Hello OVS' }
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-04T15:58:34.866Z]
+import {ref} from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+export default (function(){
+  const appName = "Hello OVS";
+  const version = "1.0";
+  let a = 1;
+  let b = a;
+  let c = b;
+  let fdf = c;
+  let fasdf = b;
+  return div({},[h2({},['Hello OVS']),(function(){
+    const children = [];
+    const temp$$attrs$$qzbomila = {};
+    let a = ref(0);
+    const timer = setInterval(() => {
+      a.value = a.value + 1;
+      console.log(a);
+    },1000);
+    children.push(a);
+    return h1({onClick:() => {
+      children.push(console.log('clicked'));
+    }},children);
+  })(),h1({},[appName]),p({},[version])]);
+})();
+
+================================================================================
+
+[2025-12-04T15:58:35.923Z]
+=== OVS Transform Start ===
+================================================================================
+
+[2025-12-04T15:58:35.924Z]
+Input code length: 494
+================================================================================
+
+[2025-12-04T15:58:35.930Z]
+=== OVS Transform Success ===
+================================================================================
+
+[2025-12-04T15:58:35.930Z]
+Output code length: 600
+================================================================================
+
+[2025-12-04T15:58:35.930Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T15:58:35.930Z]
+import { ref } from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = b
+
+div() {
+  h2 { 'Hello OVS' }
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-04T15:58:35.930Z]
+import {ref} from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+export default (function(){
+  const appName = "Hello OVS";
+  const version = "1.0";
+  let a = 1;
+  let b = a;
+  let c = b;
+  return div({},[h2({},['Hello OVS']),(function(){
+    const children = [];
+    const temp$$attrs$$jqwmoxom = {};
+    let a = ref(0);
+    const timer = setInterval(() => {
+      a.value = a.value + 1;
+      console.log(a);
+    },1000);
+    children.push(a);
+    return h1({onClick:() => {
+      children.push(console.log('clicked'));
+    }},children);
+  })(),h1({},[appName]),p({},[version])]);
+})();
+
+================================================================================
+
+[2025-12-04T15:58:36.037Z]
+=== resolveCompletionItem ===
+================================================================================
+
+[2025-12-04T15:58:36.044Z]
+completionName: b
+================================================================================
+
+[2025-12-04T15:58:36.045Z]
+importSource: null
+================================================================================
+
+[2025-12-04T15:58:36.045Z]
+hasCodeActions: false
+================================================================================
