@@ -1,5 +1,5 @@
 {
-	"name": "lsp-sample-client",
+	"name": "ovs-vscode-client",
 	"description": "VSCode part of a language server",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
@@ -13,6 +13,7 @@
 		"vscode": "^1.75.0"
 	},
 	"dependencies": {
+		"@volar/language-server": "^2.4.23",
 		"@volar/vscode": "^2.4.23",
 		"vscode-languageclient": "^9.0.1"
 	},
@@ -20,7 +21,6 @@
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^20.19.24",
 		"@types/vscode": "^1.75.1",
-		"@volar/language-server": "^2.4.23",
 		"@vscode/test-electron": "^2.3.9",
 		"glob": "^11.0.3",
 		"mocha": "^11.7.4"
