@@ -85,6 +85,194 @@ export function parseToAstWithTokens(
 }
 
 // ============================================
+// Stage1 测试逻辑（CST 生成测试）
+// ============================================
+
+/** Stage1 测试函数：解析代码生成 CST */
+export function testStage1(ctx: TestContext): TestResult {
+    const cst = parseToCst(ctx.code, ctx.parseMode, ctx.ParserClass)
+
+    if (!cst) {
+        return {success: false, message: 'CST 生成返回 undefined'}
+    }
+
+    const childCount = cst.children?.length || 0
+    return {
+        success: true,
+        message: `CST生成成功 (${childCount} 个子节点)`
+    }
+}
+
+// ============================================
+// Stage2 测试逻辑（AST 生成测试）
+// ============================================
+
+/** AST 验证错误 */
+export interface ValidationError {
+    path: string
+    issue: string
+}
+
+/** 验证 AST 结构 */
+export function validateAST(node: any, path: string = 'root'): ValidationError[] {
+    const errors: ValidationError[] = []
+
+    if (node === null || node === undefined) {
+        errors.push({path, issue: `Node is ${node}`})
+        return errors
+    }
+
+    if (!node.type) {
+        errors.push({path, issue: 'Node has no type property'})
+    }
+
+    // 递归检查常见的子节点数组
+    const arrayProps = ['body', 'declarations', 'params', 'elements', 'properties', 'specifiers']
+    for (const prop of arrayProps) {
+        if (node[prop] && Array.isArray(node[prop])) {
+            node[prop].forEach((child: any, i: number) => {
+                if (child && typeof child === 'object') {
+                    // 处理包装结构 { element/param/property/specifier: ..., commaToken: ... }
+                    const actualNode = child.element !== undefined ? child.element :
+                        child.specifier !== undefined ? child.specifier :
+                            child.param !== undefined ? child.param :
+                                child.property !== undefined ? child.property : child
+                    if (actualNode !== null) {
+                        errors.push(...validateAST(actualNode, `${path}.${prop}[${i}]`))
+                    }
+                }
+            })
+        }
+    }
+
+    return errors
+}
+
+/** 统计 AST 节点数量 */
+export function countNodes(node: any): number {
+    if (!node || typeof node !== 'object') return 0
+    let count = node.type ? 1 : 0
+    for (const key of Object.keys(node)) {
+        const val = node[key]
+        if (Array.isArray(val)) {
+            val.forEach(child => {
+                count += countNodes(child)
+            })
+        } else if (val && typeof val === 'object' && key !== 'loc') {
+            count += countNodes(val)
+        }
+    }
+    return count
+}
+
+/** Stage2 测试函数：CST → AST，验证 AST 结构 */
+export function testStage2(ctx: TestContext): TestResult {
+    const {cst, ast} = parseToAst(ctx.code, ctx.parseMode, ctx.ParserClass, ctx.CstToAstClass)
+
+    if (!cst) {
+        return {success: false, message: 'CST 生成返回 undefined'}
+    }
+
+    if (!ast) {
+        return {success: false, message: 'AST 转换返回 null/undefined'}
+    }
+
+    // 验证 AST 结构
+    const errors = validateAST(ast)
+    if (errors.length > 0) {
+        const details = errors.slice(0, 3).map(e => `  ${e.path}: ${e.issue}`).join('\n')
+        return {
+            success: false,
+            message: `AST结构错误 (${errors.length}个)`,
+            details: details + (errors.length > 3 ? `\n  ... 还有 ${errors.length - 3} 个` : '')
+        }
+    }
+
+    const nodeCount = countNodes(ast)
+    return {
+        success: true,
+        message: `AST转换成功 (${nodeCount} 个节点)`
+    }
+}
+
+// ============================================
+// Stage3 测试逻辑（代码生成测试）
+// ============================================
+import SlimeGenerator from 'slime-generator/src/SlimeGenerator'
+import SubhutiMatchToken from 'subhuti/src/struct/SubhutiMatchToken'
+
+/** 提取 token 值（过滤分号） */
+export function extractTokenValues(tokens: SubhutiMatchToken[]): string[] {
+    return tokens.map(t => t.tokenValue).filter(v => v !== ';')
+}
+
+/** 判断是否是 trailing comma */
+export function isTrailingComma(values: string[], idx: number): boolean {
+    return idx + 1 >= values.length || [')', ']', '}'].includes(values[idx + 1])
+}
+
+/** 比较输入和输出的 token 序列 */
+export function compareTokens(inputTokens: SubhutiMatchToken[], outputTokens: SubhutiMatchToken[]): TestResult {
+    const inputValues = extractTokenValues(inputTokens)
+    const outputValues = extractTokenValues(outputTokens)
+
+    let inputIdx = 0, outputIdx = 0
+
+    while (inputIdx < inputValues.length && outputIdx < outputValues.length) {
+        if (inputValues[inputIdx] === outputValues[outputIdx]) {
+            inputIdx++; outputIdx++
+        } else if (outputValues[outputIdx] === ',' && isTrailingComma(outputValues, outputIdx)) {
+            outputIdx++ // 跳过输出中的 trailing comma
+        } else if (inputValues[inputIdx] === ',' && isTrailingComma(inputValues, inputIdx)) {
+            inputIdx++ // 跳过输入中的 trailing comma
+        } else {
+            return {
+                success: false,
+                message: `Token不匹配 @ [${inputIdx}]: "${inputValues[inputIdx]}" vs "${outputValues[outputIdx]}"`,
+                details: `  输入: ...${inputValues.slice(Math.max(0, inputIdx-2), inputIdx+3).join(' ')}...\n` +
+                         `  输出: ...${outputValues.slice(Math.max(0, outputIdx-2), outputIdx+3).join(' ')}...`
+            }
+        }
+    }
+
+    // 处理剩余 tokens
+    while (inputIdx < inputValues.length && inputValues[inputIdx] === ',' && isTrailingComma(inputValues, inputIdx)) {
+        inputIdx++
+    }
+    while (outputIdx < outputValues.length && outputValues[outputIdx] === ',' && isTrailingComma(outputValues, outputIdx)) {
+        outputIdx++
+    }
+
+    if (inputIdx !== inputValues.length || outputIdx !== outputValues.length) {
+        return {
+            success: false,
+            message: `Token数量不匹配: 输入剩余${inputValues.length - inputIdx}, 输出剩余${outputValues.length - outputIdx}`
+        }
+    }
+
+    return { success: true, message: `${inputTokens.length} tokens` }
+}
+
+/** Stage3 测试函数：AST → 代码，比较 token 序列 */
+export function testStage3(ctx: TestContext): TestResult {
+    const { ast, tokens: inputTokens } = parseToAstWithTokens(ctx.code, ctx.parseMode, ctx.ParserClass, ctx.CstToAstClass)
+
+    if (!ast) {
+        return { success: false, message: 'AST 转换失败' }
+    }
+
+    // AST → 代码
+    const result = SlimeGenerator.generator(ast, inputTokens)
+    const generatedCode = result.code
+
+    // 重新解析生成的代码
+    const { tokens: outputTokens } = parseToAstWithTokens(generatedCode, ctx.parseMode, ctx.ParserClass, ctx.CstToAstClass)
+
+    // 比较 token 序列
+    return compareTokens(inputTokens, outputTokens)
+}
+
+// ============================================
 // 通用配置 - 直接修改这里
 // ============================================
 export const DEFAULT_START_FROM = 0       // 从第几个测试开始（0 表示从头开始）
