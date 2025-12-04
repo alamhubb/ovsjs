@@ -9,7 +9,8 @@
     ".": {
       "types": "./dist/index.d.mts",
       "import": "./dist/index.mjs"
-    }
+    },
+    "./src/*": "./src/*"
   },
   "files": [
     "dist"
