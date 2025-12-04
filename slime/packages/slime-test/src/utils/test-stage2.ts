@@ -8,7 +8,7 @@
  *   npx tsx slime/tests/utils/test-stage2.ts 100          # 从第100个开始
  *   npx tsx slime/tests/utils/test-stage2.ts 100 -s       # 从第100个开始，遇错停止
  */
-import { runTests, TestContext, TestResult, parseToAst } from '../../src/test-framework'
+import {parseToAst, runTests, type TestContext, type TestResult} from "./test-framework.ts";
 
 // ============================================
 // AST 验证工具
