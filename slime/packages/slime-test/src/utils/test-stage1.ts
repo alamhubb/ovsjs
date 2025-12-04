@@ -7,7 +7,8 @@
  *   npx tsx slime/tests/utils/test-stage1.ts 100          # 从第100个开始
  *   npx tsx slime/tests/utils/test-stage1.ts 100 -s       # 从第100个开始，遇错停止
  */
-import {runTests, TestContext, TestResult, parseToCst} from '../../src/test-framework'
+import {runTests, parseToCst} from './test-framework.ts'
+import type {TestContext, TestResult} from './test-framework.ts'
 
 // 阶段1测试逻辑：解析代码生成 CST
 function testStage1(ctx: TestContext): TestResult {
