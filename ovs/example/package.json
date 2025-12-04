@@ -6,7 +6,7 @@
   "types": "dist/index.d.mts",
   "license": "MIT",
   "scripts": {
-    "dev": "tsx node_modules/vite/bin/vite.js",
+    "dev": "tsx ../../node_modules/vite/bin/vite.js",
     "build": "rollup -c rollup.config.mjs",
     "build:tsdown": "tsdown",
     "prepublishOnly": "npm run build"
@@ -41,7 +41,6 @@
     "@dagrejs/graphlib": "^2.2.4",
     "@dagrejs/graphlib-dot": "^1.0.2",
     "big-cartesian": "^6.1.1",
-    "ovsjs": "^0.1.5",
     "d3": "^7.9.0",
     "dagre-d3": "^0.6.4",
     "fast-cartesian": "^9.0.1",
@@ -52,15 +51,16 @@
     "slime-parser": "^0.1.5",
     "slime-test": "^0.1.5",
     "slime-token": "^0.1.5",
-    "subhuti": "^0.1.5"
+    "subhuti": "^0.1.5",
+    "ovsjs": "^0.1.5"
   },
   "devDependencies": {
-    "@rollup/plugin-node-resolve": "^16.0.3",
-    "@swc/core": "^1.15.3",
-    "rollup": "^4.53.3",
-    "rollup-plugin-dts": "^6.3.0",
-    "rollup-plugin-swc3": "^0.12.1",
-    "tsdown": "0.17.0-beta.6"
+    "@vitejs/plugin-vue": "^6.0.1",
+    "@vue/tsconfig": "^0.8.1",
+    "prettier": "^3.6.2",
+    "tsx": "^4.19.1",
+    "typescript": "~5.8.3",
+    "vite": "^7.1.7"
   },
   "bugs": {
     "url": "https://github.com/alamhubb/ovs/issues"

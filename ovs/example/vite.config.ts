@@ -1,12 +1,13 @@
 import {defineConfig} from 'vite'
 import vue from '@vitejs/plugin-vue'
 import {fileURLToPath, URL} from "node:url";
+import {vitePluginOvsTransform} from "../src";
 
 // https://vitejs.dev/config/
 export default defineConfig({
     plugins: [
         vue(),
-        vitePluginOvs()
+        vitePluginOvsTransform()
     ],
     build: {
         minify: false,
