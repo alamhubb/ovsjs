@@ -1,7 +1,7 @@
 packages:
-  - 'langServer'
-  - 'lsp-client-vscode'
-  - 'lsp-client-vscode/client'
+  - 'ovs-lang-server'
+  - 'ovs-vscode-client'
+  - 'ovs-vscode-client/client'
   - 'subhuti'
   - 'ovs'
   - 'extensions/*'
