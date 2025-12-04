@@ -1,0 +1,15 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "npm",
+      "script": "watch",
+      "path": "lsp-client-vscode",
+      "label": "npm: watch - lsp-client-vscode",
+      "isBackground": true,
+      "problemMatcher": ["$tsc-watch"],
+      "group": "build"
+    }
+  ]
+}
+

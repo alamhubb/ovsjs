@@ -1,0 +1,27 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "extensionHost",
+      "request": "launch",
+      "name": "Launch OVS LSP Client",
+      "runtimeExecutable": "${execPath}",
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}/lsp-client-vscode",
+        "--user-data-dir=${workspaceFolder}/lsp-client-vscode/.vscode-test-data"
+      ],
+      "outFiles": [
+        "${workspaceFolder}/lsp-client-vscode/client/out/**/*.js"
+      ],
+      "autoAttachChildProcesses": true,
+      "preLaunchTask": "npm: watch - lsp-client-vscode",
+      "skipFiles": [
+        "<node_internals>/**",
+        "**/node_modules/**",
+        "**/typescript/lib/**",
+        "**/typescript.js"
+      ]
+    }
+  ]
+}
+
