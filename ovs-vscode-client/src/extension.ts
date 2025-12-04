@@ -66,3 +66,4 @@ export async function activate(context: vscode.ExtensionContext) {
 export function deactivate(): Thenable<void> | undefined {
   return client?.stop();
 }
+

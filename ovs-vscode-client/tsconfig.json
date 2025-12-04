@@ -5,16 +5,10 @@
 		"lib": ["ESNext"],
 		"outDir": "out",
 		"rootDir": "src",
-		"sourceMap": true
+		"sourceMap": true,
+		"skipLibCheck": true,
+		"strict": false
 	},
-	"include": [
-		"src"
-	],
-	"exclude": [
-		"node_modules",
-		".vscode-test"
-	],
-	"references": [
-		{ "path": "./client" }
-	]
+	"include": ["src/**/*"],
+	"exclude": ["node_modules", ".vscode-test"]
 }
