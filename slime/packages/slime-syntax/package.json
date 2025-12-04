@@ -1,6 +1,6 @@
 {
   "name": "slime-syntax",
-  "version": "0.0.1",
+  "version": "0.1.5",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -8,5 +8,6 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": ""
+  "description": "",
+  "gitHead": "2f8c9e3c52445d48435b6a432fffb4eed5187217"
 }

@@ -3,7 +3,7 @@
   "description": "A language server example",
   "author": "Microsoft Corporation",
   "license": "MIT",
-  "version": "1.0.0",
+  "version": "0.1.5",
   "repository": {
     "type": "git",
     "url": "https://github.com/Microsoft/vscode-extension-samples"
@@ -72,11 +72,12 @@
   },
   "dependencies": {
     "@volar/vscode": "^2.4.23",
-    "ovs-lang-server": "workspace:*",
+    "ovs-lang-server": "^0.1.5",
     "vscode-languageclient": "^9.0.1"
   },
   "devDependencies": {
     "@types/node": "^20",
     "typescript": "^5.6.2"
-  }
+  },
+  "gitHead": "2f8c9e3c52445d48435b6a432fffb4eed5187217"
 }

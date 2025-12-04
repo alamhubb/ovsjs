@@ -1,15 +1,15 @@
 {
-  "name": "slime",
-  "version": "0.0.1",
+  "name": "slimejs",
+  "version": "0.1.5",
   "description": "Slime库测试和调试工具",
   "scripts": {
     "test": "tsx test-runner.ts"
   },
   "dependencies": {
-    "slime-ast": "^0.0.1",
-    "slime-parser": "^0.0.1",
-    "slime-generator": "^0.0.1",
-    "subhuti": "^0.1.3"
-  }
+    "slime-ast": "^0.1.5",
+    "slime-generator": "^0.1.5",
+    "slime-parser": "^0.1.5",
+    "subhuti": "^0.1.5"
+  },
+  "gitHead": "2f8c9e3c52445d48435b6a432fffb4eed5187217"
 }
-
