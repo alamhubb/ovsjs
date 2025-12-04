@@ -17,12 +17,7 @@ export default defineConfig([
       'vscode',
     ],
     // 打包所有其他依赖
-    noExternal: [
-      '@volar/language-server/protocol',
-      '@volar/vscode',
-      '@volar/vscode/node',
-      'vscode-languageclient',
-    ],
+    noExternal: [/.*/],
   },
   // Server (Language Server) - CommonJS (VSCode LanguageClient 需要 CJS)
   {
@@ -35,11 +30,7 @@ export default defineConfig([
     outDir: 'dist',
     target: 'es2020',
     outExtension: () => ({ js: '.cjs' }),
-    // 只外部化 typescript（用户 VSCode 自带）
-    external: [
-      'typescript',
-    ],
-    // 打包所有其他依赖
+    // 打包所有依赖，包括 typescript
     noExternal: [/.*/],
   },
 ])

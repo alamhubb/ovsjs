@@ -138,9 +138,16 @@ export class OvsVirtualCode implements VirtualCode {
         }
         const offsets = MappingConverter.convertMappings(mapping)
 
-        LogUtil.log('mappings ascopy mapping')
+        LogUtil.log('=== Mapping Debug ===')
+        LogUtil.log('Raw mapping count: ' + mapping.length)
+        LogUtil.log('Converted offsets count: ' + offsets.length)
+        if (offsets.length > 0) {
+            LogUtil.log('First 5 offsets:', offsets.slice(0, 5))
+        }
 
+        LogUtil.log('Source code:')
         LogUtil.log(styleText)
+        LogUtil.log('Generated code:')
         LogUtil.log(newCode)
         const mappings = [{
             sourceOffsets: offsets.map(item => item.original.offset),

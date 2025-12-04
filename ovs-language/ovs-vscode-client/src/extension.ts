@@ -53,8 +53,21 @@ export async function activate(context: vscode.ExtensionContext) {
 
   // 获取用户 VSCode 中的 TypeScript SDK 路径
   log('Getting TypeScript SDK...');
-  const tsdk = await getTsdk(context);
-  log('TSDK result', tsdk);
+  let tsdk: Awaited<ReturnType<typeof getTsdk>> | undefined;
+  try {
+    // 添加超时，避免卡住
+    const tsdkPromise = getTsdk(context);
+    const timeoutPromise = new Promise<undefined>((resolve) => {
+      setTimeout(() => {
+        log('TSDK timeout after 5 seconds, using default');
+        resolve(undefined);
+      }, 5000);
+    });
+    tsdk = await Promise.race([tsdkPromise, timeoutPromise]);
+    log('TSDK result', tsdk);
+  } catch (e) {
+    log('Error getting TSDK', e);
+  }
 
   const serverOptions: ServerOptions = {
     run: {

@@ -779,7 +779,11 @@ export function create(
             return;
           }
           LogUtil.log('Hover info kind: ' + info.kind);
-          return convertQuickInfo(ts, info, document, ctx.fileNameToUri, ctx.getTextDocument);
+          LogUtil.log('Hover info textSpan: start=' + info.textSpan.start + ', length=' + info.textSpan.length);
+          LogUtil.log('Hover info displayParts:', info.displayParts);
+          const result = convertQuickInfo(ts, info, document, ctx.fileNameToUri, ctx.getTextDocument);
+          LogUtil.log('Hover result:', result);
+          return result;
         },
 
         async provideImplementation(document, position, token) {
