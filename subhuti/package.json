@@ -4,9 +4,6 @@
   "type": "module",
   "main": "dist/index.mjs",
   "types": "dist/index.d.mts",
-  "files": [
-    "dist"
-  ],
   "license": "MIT",
   "scripts": {
     "test": "tsx test/HelloWorldGrammarParser.ts",

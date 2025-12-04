@@ -5,9 +5,6 @@
   "description": "OVS Language Server",
   "main": "dist/index.mjs",
   "types": "dist/index.d.mts",
-  "files": [
-    "dist"
-  ],
   "scripts": {
     "dev": "tsx src/index.ts --stdio",
     "build": "tsdown",

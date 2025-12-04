@@ -7,8 +7,6 @@
 import * as fs from 'fs'
 import * as path from 'path'
 import { performance } from 'perf_hooks'
-import {SlimeCstToAst} from "../packages/slime-parser/src";
-import SlimeParser from "../packages/slime-parser/src/language/es2025/SlimeParser";
 
 // ============================================
 // Parser 类型定义（支持自定义 Parser）
