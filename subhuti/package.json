@@ -1,8 +1,15 @@
 {
   "name": "subhuti",
   "version": "0.1.7",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "type": "module",
+  "main": "dist/index.mjs",
+  "types": "dist/index.d.mts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    }
+  },
   "files": [
     "dist"
   ],
@@ -10,7 +17,7 @@
   "scripts": {
     "test": "tsx test/HelloWorldGrammarParser.ts",
     "test:validation": "tsx tests/validation/grammar-validation.test.ts",
-    "build": "tsc",
+    "build": "tsdown",
     "prepublishOnly": "npm run build",
     "clean": "rimraf dist"
   },
@@ -50,7 +57,8 @@
   },
   "devDependencies": {
     "@types/estree": "1.0.6",
-    "@types/node": "^24.10.1"
+    "@types/node": "^24.10.1",
+    "tsdown": "0.17.0-beta.6"
   },
   "gitHead": "2f8c9e3c52445d48435b6a432fffb4eed5187217"
 }

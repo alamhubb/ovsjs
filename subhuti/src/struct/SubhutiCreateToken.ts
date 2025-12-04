@@ -19,9 +19,24 @@ export interface SubhutiTokenContextConstraint {
     onlyAtLineStart?: boolean  // 只能在行首匹配（前一个非 skip token 在上一行，如 HTMLCloseComment -->）
 }
 
+/**
+ * SubhutiCreateToken 构造函数参数类型
+ */
+export interface SubhutiCreateTokenOptions {
+    name: string;
+    type?: string;
+    pattern?: RegExp;
+    isKeyword?: boolean;
+    skip?: boolean;
+    value?: string;
+    categories?: any;
+    lookaheadAfter?: SubhutiTokenLookahead;
+    contextConstraint?: SubhutiTokenContextConstraint;
+}
+
 export class SubhutiCreateToken {
     name: string;
-    type: string;  // 添加 type 属性
+    type: string;
     pattern?: RegExp;
     isKeyword?: boolean;
     skip?: boolean;  // 是否跳过此 token（不加入结果）
@@ -30,16 +45,16 @@ export class SubhutiCreateToken {
     lookaheadAfter?: SubhutiTokenLookahead;  // 前瞻配置
     contextConstraint?: SubhutiTokenContextConstraint;  // 上下文约束配置
 
-    constructor(ovsToken: SubhutiCreateToken) {
+    constructor(ovsToken: SubhutiCreateTokenOptions) {
         this.name = ovsToken.name;
-        this.type = ovsToken.name;  // type 默认等于 name
+        this.type = ovsToken.type || ovsToken.name;  // type 默认等于 name
         this.pattern = ovsToken.pattern
         if (ovsToken.value) {
             this.value = ovsToken.value
         } else {
             this.value = emptyValue
         }
-        this.isKeyword = false;
+        this.isKeyword = ovsToken.isKeyword ?? false;
         this.skip = ovsToken.skip;
         this.lookaheadAfter = ovsToken.lookaheadAfter;  // 复制前瞻配置
         this.contextConstraint = ovsToken.contextConstraint;  // 复制上下文约束

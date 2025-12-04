@@ -1,12 +1,15 @@
 import * as fs from 'fs'
 import * as path from 'path'
+import { fileURLToPath } from 'url'
 
 export class LogUtil {
     private static logFilePath: string
 
     private static ensureLogFile(): string {
         if (!this.logFilePath) {
-            // CommonJS 使用 __dirname
+            // ESM 使用 import.meta.url
+            const __filename = fileURLToPath(import.meta.url)
+            const __dirname = path.dirname(__filename)
             this.logFilePath = path.join(__dirname, 'templog.txt')
             // 确保文件存在
             if (!fs.existsSync(this.logFilePath)) {

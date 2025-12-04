@@ -38,11 +38,10 @@
 
 import type { SubhutiGrammarAnalyzer } from "./SubhutiGrammarAnalyzer"
 import type { SubhutiRuleCollector } from "./SubhutiRuleCollector"
-import type { 
-    ValidationError, 
-    RuleNode, 
-    Path,
-    ValidateOptions 
+import type {
+    ValidationError,
+    RuleNode,
+    Path
 } from "./SubhutiValidationError"
 
 // ============================================

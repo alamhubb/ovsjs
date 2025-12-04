@@ -503,16 +503,9 @@ export class SubhutiGrammarAnalyzer {
 
         // 创建日志目录（相对于 subhuti 目录）
         // 从当前文件位置向上查找，找到 subhuti 目录
-        // 获取当前文件的目录（兼容 CommonJS 和 ES modules）
-        let currentDir: string
-        try {
-            // ES modules 方式
-            const __filename = fileURLToPath(import.meta.url)
-            currentDir = path.dirname(__filename)
-        } catch {
-            // CommonJS 方式（如果 __dirname 可用）
-            currentDir = typeof __dirname !== 'undefined' ? __dirname : process.cwd()
-        }
+        // ESM 使用 import.meta.url
+        const __filename = fileURLToPath(import.meta.url)
+        const currentDir = path.dirname(__filename)
 
         let subhutiDir = currentDir
         while (subhutiDir !== path.dirname(subhutiDir)) {
@@ -591,16 +584,9 @@ export class SubhutiGrammarAnalyzer {
             const executingFilePath = this.currentLogFilePath
 
             // 从当前文件位置向上查找，找到 subhuti 目录
-            let currentDir: string
-            try {
-                // ES modules 方式
-                const __filename = fileURLToPath(import.meta.url)
-                currentDir = path.dirname(__filename)
-            } catch {
-                // CommonJS 方式（如果 __dirname 可用）
-                currentDir = typeof __dirname !== 'undefined' ? __dirname : process.cwd()
-            }
-
+            // ESM 使用 import.meta.url
+            const __filename = fileURLToPath(import.meta.url)
+            const currentDir = path.dirname(__filename)
             let subhutiDir = currentDir
             while (subhutiDir !== path.dirname(subhutiDir)) {
                 const dirName = path.basename(subhutiDir)
