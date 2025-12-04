@@ -71,6 +71,7 @@
     "watch": "tsc -b -w"
   },
   "dependencies": {
+    "@volar/language-server": "^2.4.23",
     "@volar/vscode": "^2.4.23",
     "ovs-lang-server": "^0.1.5",
     "vscode-languageclient": "^9.0.1"

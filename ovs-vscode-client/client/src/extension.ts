@@ -18,7 +18,7 @@ let client: BaseLanguageClient;
 
 export async function activate(context: vscode.ExtensionContext) {
   // 从 node_modules 中找到 server 的 .ts 入口文件
-  const serverModule = vscode.Uri.joinPath(context.extensionUri, 'node_modules', 'ovs-lang-server', 'src', 'index.ts');
+  const serverModule = vscode.Uri.joinPath(context.extensionUri, 'node_modules', 'ovs-lang-server', 'src', 'index.ts').fsPath;
 
   // 获取用户 VSCode 中的 TypeScript SDK 路径
   const tsdk = await getTsdk(context);
@@ -26,13 +26,13 @@ export async function activate(context: vscode.ExtensionContext) {
   const serverOptions: ServerOptions = {
     run: {
       command: 'npx',
-      args: ['tsx', serverModule.fsPath, '--stdio'],
+      args: ['tsx', serverModule, '--stdio'],
       transport: TransportKind.stdio,
       options: { shell: true }
     },
     debug: {
       command: 'npx',
-      args: ['tsx', serverModule.fsPath, '--stdio'],
+      args: ['tsx', serverModule, '--stdio'],
       transport: TransportKind.stdio,
       options: { shell: true }
     },
