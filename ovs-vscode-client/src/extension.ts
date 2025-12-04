@@ -14,14 +14,32 @@ import {
 } from '@volar/vscode/node';
 import * as vscode from 'vscode';
 import * as path from 'path';
+import * as fs from 'fs';
 
 let client: BaseLanguageClient;
 
 export async function activate(context: vscode.ExtensionContext) {
   console.log('OVS Extension activating...');
 
-  // 使用编译后的 JS 文件
-  const serverModule = path.join(context.extensionPath, 'node_modules', 'ovs-lang-server', 'dist', 'index.mjs');
+  // 查找 ovs-lang-server 模块路径
+  // 先查找本地 node_modules，再查找父目录（npm workspaces 会提升到根目录）
+  const possiblePaths = [
+    path.join(context.extensionPath, 'node_modules', 'ovs-lang-server', 'dist', 'index.mjs'),
+    path.join(context.extensionPath, '..', 'node_modules', 'ovs-lang-server', 'dist', 'index.mjs'),
+  ];
+
+  let serverModule = '';
+  for (const p of possiblePaths) {
+    if (fs.existsSync(p)) {
+      serverModule = p;
+      break;
+    }
+  }
+
+  if (!serverModule) {
+    throw new Error('Cannot find ovs-lang-server module. Searched paths: ' + possiblePaths.join(', '));
+  }
+
   console.log('Server module path:', serverModule);
 
   // 获取用户 VSCode 中的 TypeScript SDK 路径
