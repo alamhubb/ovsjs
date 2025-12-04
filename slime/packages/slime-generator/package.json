@@ -1,6 +1,6 @@
 {
   "name": "slime-generator",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -11,6 +11,7 @@
   "dependencies": {
     "slime-ast": "^0.1.5",
     "slime-parser": "^0.1.5",
+    "slime-token": "^0.1.5",
     "subhuti": "^0.1.5"
   },
   "gitHead": "2f8c9e3c52445d48435b6a432fffb4eed5187217"

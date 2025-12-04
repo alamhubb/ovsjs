@@ -1,6 +1,6 @@
 {
   "name": "ovsjs",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "main": "lib/index.js",
   "license": "MIT",
   "scripts": {
@@ -55,7 +55,7 @@
     "js-beautify": "^1.15.4",
     "magic-string": "^0.30.21",
     "slime-ast": "^0.1.5",
-    "slime-generator": "^0.1.5",
+    "slime-generator": "^0.1.6",
     "slime-parser": "^0.1.5",
     "slime-token": "^0.1.5",
     "subhuti": "^0.1.5",

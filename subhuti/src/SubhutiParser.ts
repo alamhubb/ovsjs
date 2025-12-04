@@ -25,7 +25,7 @@ import SubhutiLexer, {LexicalGoal, TokenCacheEntry} from "./SubhutiLexer.ts";
 import {SubhutiCreateToken} from "./struct/SubhutiCreateToken.ts";
 
 // Grammar Validation
-import {SubhutiGrammarValidator} from "./validation/SubhutiGrammarValidator";
+import {SubhutiGrammarValidator} from "./validation/SubhutiGrammarValidator.ts";
 
 // ============================================
 // 类型定义

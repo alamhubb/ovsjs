@@ -1,12 +1,18 @@
 {
   "name": "subhuti",
-  "version": "0.1.5",
-  "main": "index.js",
+  "version": "0.1.7",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
   "license": "MIT",
   "scripts": {
     "test": "tsx test/HelloWorldGrammarParser.ts",
     "test:validation": "tsx tests/validation/grammar-validation.test.ts",
-    "build": "tsc"
+    "build": "tsc",
+    "prepublishOnly": "npm run build",
+    "clean": "rimraf dist"
   },
   "homepage": "https://github.com/alamhubb/subhuti",
   "repository": {
@@ -43,7 +49,8 @@
     "mnemonist": "^0.40.3"
   },
   "devDependencies": {
-    "@types/estree": "1.0.6"
+    "@types/estree": "1.0.6",
+    "@types/node": "^24.10.1"
   },
   "gitHead": "2f8c9e3c52445d48435b6a432fffb4eed5187217"
 }

@@ -48,7 +48,7 @@ import type {SubhutiSourceLocation} from "subhuti/src/struct/SubhutiCst.ts";
 import {SubhutiCreateToken} from "subhuti/src/struct/SubhutiCreateToken.ts";
 import SubhutiMatchToken from "subhuti/src/struct/SubhutiMatchToken.ts";
 import {SlimeTokensObj} from "slime-parser/src/language/es2025/SlimeTokens.ts";
-import {SlimeTokenType} from "../../slime-token/src/SlimeTokenType.ts";
+import {SlimeTokenType} from "slime-token/src/SlimeTokenType.ts";
 
 // 兼容别名
 const Es6TokenName = SlimeTokenType;
