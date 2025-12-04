@@ -2,10 +2,11 @@
   "private": true,
   "packageManager": "pnpm@9.4.0",
   "workspaces": [
-    "langServer",
+    "ovs-lang-server",
+    "ovs-vscode-client",
+    "ovs-vscode-client/client",
     "ovs",
     "subhuti",
-    "lsp-client-vscode",
     "slime",
     "slime/packages/*",
     "packages/*"
