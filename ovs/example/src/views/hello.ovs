@@ -1,4 +1,5 @@
 import { ref } from 'vue';
+import {div,h1,p} from '../utils/htmlElements';
 // Hello OVS - 简单示例
 
 const appName = "Hello OVS"

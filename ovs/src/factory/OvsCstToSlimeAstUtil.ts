@@ -610,36 +610,16 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
   }
 
   /**
-   * 判断是否是 HTML 标签（小写开头）还是组件（大写开头）
-   */
-  private isHtmlTag(name: string): boolean {
-    return /^[a-z]/.test(name)
-  }
-
-  /**
-   * 创建第一个参数：HTML标签用 StringLiteral，组件用 Identifier
-   */
-  private createFirstArg(id: SlimeIdentifier): SlimeExpression {
-    if (this.isHtmlTag(id.name)) {
-      // HTML 标签：使用字符串字面量 'div'
-      return SlimeNodeCreate.createStringLiteral(`'${id.name}'`)
-    } else {
-      // 组件：使用标识符 MyComponent
-      return id
-    }
-  }
-
-  /**
-   * 创建简单视图（直接返回 createComponentVNode 调用，无 IIFE）
+   * 创建简单视图（直接返回标签函数调用，无 IIFE）
    *
    * 生成：
-   * createComponentVNode(firstArg, props, children)
-   * 其中 firstArg 是标签字符串（'div'）或组件标识符（MyComponent）
+   * - HTML 标签：div(props, children) - 直接调用 htmlElements 中的函数
+   * - 组件：MyComponent(props, children) - 调用组件函数
    *
    * @param id 元素/组件标识符
    * @param statements 语句数组（只包含 ExpressionStatement）
    * @param attrsVarName attrs变量名（已弃用，保留用于将来功能）
-   * @returns CallExpression - createComponentVNode 调用
+   * @returns CallExpression - 标签函数调用
    */
   private createSimpleView(
     id: SlimeIdentifier,
@@ -668,16 +648,21 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     // 创建 props 对象：如果是组件调用，使用 componentProps，否则用空对象
     const propsObject = componentProps || SlimeNodeCreate.createObjectExpression([])
 
-    // 创建第一个参数：组件用 Identifier，标签用 StringLiteral
-    const firstArg = this.createFirstArg(id)
+    // 直接使用标签名/组件名作为函数调用
+    // HTML 标签（div、h1等）会从 htmlElements 导入
+    // 组件（MyComponent）直接使用标识符
+    const calleeId = SlimeNodeCreate.createIdentifier(id.name)
+    // 保留原始 loc 信息用于源码映射
+    if (id.loc) {
+      calleeId.loc = id.loc
+    }
 
-    // 创建 createComponentVNode(firstArg, props, children) 调用
+    // 创建 tagName(props, children) 调用
     const vNodeCall = SlimeNodeCreate.createCallExpression(
-      SlimeNodeCreate.createIdentifier('createComponentVNode'),
+      calleeId,
       [
-        firstArg,         // 第一个参数：组件标识符或标签字符串
-        propsObject,      // 第二个参数：props
-        childrenArray     // 第三个参数：children
+        propsObject,      // 第一个参数：props
+        childrenArray     // 第二个参数：children
       ]
     )
 
@@ -826,12 +811,11 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
   }
 
   /**
-   * 创建 return createComponentVNode(...) 语句
+   * 创建 return tagName(props, children) 语句
    *
    * 生成：
-   * return createComponentVNode(firstArg, props, children)
-   * 其中 firstArg 是标签字符串（'div'）或组件标识符（MyComponent）
-   *       props 是自定义参数对象或空对象
+   * - HTML 标签：return div(props, children)
+   * - 组件：return MyComponent(props, children)
    *
    * @param id 元素/组件标识符
    * @param attrsVarName attrs变量名（已弃用，保留用于将来功能）
@@ -844,9 +828,6 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     componentProps: SlimeExpression | null
   ): SlimeStatement {
 
-    // 创建 createReactiveVNode 函数标识符
-    const createReactiveVNodeIdentifier = SlimeNodeCreate.createIdentifier('createComponentVNode')
-
     // 创建 props 对象
     let propsObject
     if (componentProps) {
@@ -858,16 +839,19 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
       propsObject = SlimeNodeCreate.createObjectExpression([])
     }
 
-    // 创建第一个参数：组件用 Identifier，标签用 StringLiteral
-    const firstArg = this.createFirstArg(id)
+    // 直接使用标签名/组件名作为函数调用
+    const calleeId = SlimeNodeCreate.createIdentifier(id.name)
+    // 保留原始 loc 信息用于源码映射
+    if (id.loc) {
+      calleeId.loc = id.loc
+    }
 
-    // 创建函数调用：createComponentVNode(firstArg, props, children)
+    // 创建函数调用：tagName(props, children)
     const callExpression = SlimeNodeCreate.createCallExpression(
-      createReactiveVNodeIdentifier,
+      calleeId,
       [
-        firstArg,                                     // 第一个参数：组件标识符或标签字符串
-        propsObject,                                  // 第二个参数：props 对象
-        SlimeNodeCreate.createIdentifier('children')    // 第三个参数：children 数组（固定名字）
+        propsObject,                                  // 第一个参数：props 对象
+        SlimeNodeCreate.createIdentifier('children')    // 第二个参数：children 数组（固定名字）
       ]
     )
 

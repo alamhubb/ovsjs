@@ -206,23 +206,35 @@ OVS 在 SlimeTokens 基础上添加了两个 token：
 ## 5. 转换流程
 
 ```
-OVS 源码 → OvsParser.Program() → CST → OvsCstToSlimeAstUtil → JavaScript AST → SlimeGenerator → JavaScript 代码
+OVS 源码 → OvsParser.Program() → CST → OvsCstToSlimeAstUtil → JavaScript AST → wrapTopLevelExpressions → SlimeGenerator → JavaScript 代码
 ```
 
-**转换示例**:
+### 5.1 代码生成规则
 
-输入:
+OVS 编译器会将 `tagName { }` 语法转换为**函数调用**形式，开发者需要自己导入对应的函数：
+
+| OVS 源码 | 编译输出 |
+|----------|----------|
+| `div { "hello" }` | `div({}, ["hello"])` |
+| `h1(props) { content }` | `h1(props, [content])` |
+
+**函数签名**: `tagName(props?: object, children?: any[]) => VNode`
+
+### 5.2 转换示例
+
+**输入**:
 ```javascript
+import { div, h1 } from './utils/htmlElements'
+
 div {
   h1 { "Hello" }
 }
 ```
 
-输出:
+**输出**:
 ```javascript
-createComponentVNode('div', {}, [
-  createComponentVNode('h1', {}, ["Hello"])
-])
+import { div, h1 } from './utils/htmlElements';
+export default div({}, [h1({}, ["Hello"])])
 ```
 
 ## 6. CST 转 AST 逻辑（OvsCstToSlimeAstUtil）
@@ -262,38 +274,155 @@ try {
 
 **含义**: `#{}` 对其内部嵌套的 `div {}` 元素不生效。
 
-### 6.4 IIFE 判断规则
+### 6.4 顶层表达式包裹规则（wrapTopLevelExpressions）
 
-满足以下任一条件时，使用复杂模式（IIFE）：
-1. 有非 ExpressionStatement（声明/控制流语句）
-2. 有来自 `#{}` 不渲染块的语句（标记 `__fromNoRenderBlock`）
+编译器根据两个条件决定输出格式：
 
-**简单模式**（无 IIFE）:
+1. **是否包含 `#{}`** - 决定是否使用 IIFE
+2. **节点数量** - 决定是否使用 Fragment 包裹
+
+#### 判断规则
+
+| 条件 | 节点数量 | 输出格式 |
+|------|---------|---------|
+| 无 `#{}` | 1个 | `export default div({}, [...])` |
+| 无 `#{}` | 多个 | `export default h(Fragment, null, [div(), h1()])` |
+| 有 `#{}` | 1个 | `export default (function(){ ...; return div(...) })()` |
+| 有 `#{}` | 多个 | `export default (function(){ ...; return h(Fragment, null, [...]) })()` |
+
+#### 示例
+
+**单节点，无 `#{}`**（最简单情况）:
 ```javascript
 // 输入
-div { h1 { greeting } }
+import { div } from './utils/htmlElements'
+div { "hello" }
+
 // 输出
-createComponentVNode('div', {}, [
-  createComponentVNode('h1', {}, [greeting])
-])
+import { div } from './utils/htmlElements';
+export default div({}, ["hello"]);
 ```
 
-**复杂模式**（有 IIFE）:
+**多节点，无 `#{}`**（使用 Fragment）:
 ```javascript
 // 输入
-div { let a = 1; p { a } }
+import { div, h1 } from './utils/htmlElements'
+div { "hello" }
+h1 { "world" }
+
 // 输出
-(function() {
-  const children = []
-  let a = 1
-  children.push(createComponentVNode('p', {}, [a]))
-  return createComponentVNode('div', {}, children)
-})()
+import { Fragment, h } from 'vue';
+import { div, h1 } from './utils/htmlElements';
+export default h(Fragment, null, [div({}, ["hello"]), h1({}, ["world"])]);
 ```
 
-## 7. 修改记录（2025-12-03）
+**单节点，有 `#{}`**（使用 IIFE）:
+```javascript
+// 输入
+import { div, p } from './utils/htmlElements'
+let count = 0
+div { #{ count++ } p { count } }
 
-### 7.1 ✅ OvsRenderFunction 语义位置确定
+// 输出
+import { div, p } from './utils/htmlElements';
+export default (function(){
+  let count = 0;
+  return div({}, [(function(){
+    count++;
+    return p({}, [count]);
+  })()]);
+})();
+```
+
+**多节点，有 `#{}`**（IIFE + Fragment）:
+```javascript
+// 输入
+import { div, h1 } from './utils/htmlElements'
+let count = 0
+div { #{ count++ } count }
+h1 { "world" }
+
+// 输出
+import { Fragment, h } from 'vue';
+import { div, h1 } from './utils/htmlElements';
+export default (function(){
+  let count = 0;
+  return h(Fragment, null, [
+    div({}, [count]),
+    h1({}, ["world"])
+  ]);
+})();
+```
+
+#### 为什么使用 `#{}` 判断？
+
+`#{}` 是 OVS 的响应式表达式语法，它内部的代码需要在 IIFE 作用域中执行，以便：
+- 变量声明不会污染全局作用域
+- 副作用代码（如 `count++`）能正确执行
+
+如果没有 `#{}`，代码是纯声明式的，可以直接导出表达式。
+
+#### Fragment 自动导入
+
+当有多个顶层节点时，编译器会自动添加 `import { Fragment, h } from 'vue'`。如果已有 vue 导入，会在现有导入中添加 Fragment 和 h
+```
+
+## 7. 修改记录
+
+### 7.1 修改记录（2025-12-04）
+
+#### 7.1.1 ✅ 代码生成改为函数调用格式
+
+**修改前**: `createComponentVNode('div', {}, [...])`
+**修改后**: `div({}, [...])`
+
+**理由**:
+- 支持 IDE 智能提示和自动导入
+- 开发者可以自定义 HTML 标签函数
+- 更直观的代码输出
+
+**影响的文件**:
+- `OvsCstToSlimeAstUtil.ts` - `createSimpleView` 和 `createReturnOvsAPICreateVNode` 方法
+
+#### 7.1.2 ✅ 简化顶层表达式包裹逻辑
+
+**修改前**: 根据是否有声明/控制流语句判断是否使用 IIFE
+**修改后**: 根据是否包含 `#{}` 判断是否使用 IIFE
+
+**新规则**:
+- 无 `#{}` → 直接导出表达式
+- 有 `#{}` → 使用 IIFE 包裹
+
+**理由**:
+- 逻辑更简单明了
+- `#{}` 是唯一需要 IIFE 作用域的场景
+
+#### 7.1.3 ✅ 多节点使用 Fragment 包裹
+
+**修改前**: 多节点返回数组 `[div(), h1()]`
+**修改后**: 多节点使用 Vue Fragment `h(Fragment, null, [div(), h1()])`
+
+**理由**:
+- 与 Vue 3 多根节点设计一致
+- 返回单个 VNode，便于使用
+
+**影响**:
+- 自动添加 `import { Fragment, h } from 'vue'`
+
+#### 7.1.4 ✅ 移除自动导入逻辑
+
+**修改前**: 编译器自动添加 HTML 标签函数的导入
+**修改后**: 开发者根据 IDE 智能提示自己导入
+
+**理由**:
+- 与正常开发工作流一致
+- 支持自定义函数来源
+
+---
+
+### 7.2 修改记录（2025-12-03）
+
+#### 7.2.1 ✅ OvsRenderFunction 语义位置确定
 
 **设计决策**: `OvsRenderFunction` 放在 `PrimaryExpression` 层
 
@@ -305,29 +434,28 @@ div { let a = 1; p { a } }
 **为什么不能放在 AssignmentExpression**:
 - ConditionalExpression 会先成功匹配 `div`（作为变量），导致 `{}` 无法消费
 
-### 7.2 ✅ Statement 规则
+#### 7.2.2 ✅ Statement 规则
 - 使用正确的 `VariableStatement()` 而非 `VariableDeclaration()`
 - 正确传递 `params` 参数
 
-### 7.3 ✅ Declaration 规则
+#### 7.2.3 ✅ Declaration 规则
 - 使用正确的 `LexicalDeclaration()` 而非 `VariableDeclaration()`
 - 正确传递 `params` 参数
 
-### 7.4 ✅ AssignmentExpression 规则
+#### 7.2.4 ✅ AssignmentExpression 规则
 - 完整复制 SlimeParser 的实现
 - 包含 `AsyncArrowFunction` 分支
 - 包含所有复合赋值运算符（`&&=`, `||=`, `??=`）
 - `Yield` 参数正确控制 `YieldExpression` 分支
 
-### 7.5 ✅ Token 优先级
+#### 7.2.5 ✅ Token 优先级
 - `OvsViewToken` 和 `Hash` 放在 `SlimeTokens` 之前
 - 确保 `ovsView` 不会被错误识别为 `IdentifierName`
 
-### 7.6 ✅ FormalParameters 修复
+#### 7.2.6 ✅ FormalParameters 修复
 - 改用 `ArrowFormalParameters()` 替代不存在的 `FunctionFormalParameters()`
 
-### 7.7 旧代码标记废弃
+#### 7.2.7 旧代码标记废弃
 - `OvsLexicalBinding` 规则标记为 `@deprecated`
 - `exec()` 和 `transCst()` 方法标记为 `@deprecated`
 - 保留向后兼容，新代码应使用 `OvsCstToSlimeAstUtil`
-
