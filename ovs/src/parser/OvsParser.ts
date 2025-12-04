@@ -1,13 +1,24 @@
 import OvsTokenConsumer, {ovs6Tokens} from "./OvsConsumer.ts"
 import {Subhuti, SubhutiRule} from 'subhuti/src/SubhutiParser.ts'
-import SlimeParser from "slime-parser/src/language/es2025/SlimeParser.ts";
+import SlimeParser, {ReservedWords} from "slime-parser/src/language/es2025/SlimeParser.ts";
 import type {ExpressionParams, StatementParams, DeclarationParams} from "slime-parser/src/language/es2025/SlimeParser.ts";
+import {SlimeContextualKeywordTokenTypes} from "slime-token/src/SlimeTokenType.ts";
 
 /** OVS 扩展的表达式参数 */
 interface OvsExpressionParams extends ExpressionParams {
     /** 禁用 OvsRenderFunction（用于 ClassHeritage 等上下文） */
     DisableOvsRender?: boolean
 }
+
+/**
+ * OVS 组件标签名黑名单
+ * 包含 JavaScript 硬关键字 + 软关键字
+ * 这些不能作为 OvsRenderFunction 的标签名
+ */
+const OVS_TAG_BLACKLIST = new Set([
+    ...ReservedWords,
+    ...Object.values(SlimeContextualKeywordTokenTypes)
+])
 
 @Subhuti
 export default class OvsParser extends SlimeParser<OvsTokenConsumer> {
@@ -25,7 +36,11 @@ export default class OvsParser extends SlimeParser<OvsTokenConsumer> {
 
     /**
      * OvsRenderFunction - OVS 视图渲染函数
-     * 语法: IdentifierReference Arguments? { StatementList? }
+     * 语法: IdentifierReference [no LineTerminator here] Arguments? { StatementList? }
+     *
+     * 限制条件：
+     * 1. 标签名不能是 JavaScript 关键字（硬关键字 + 软关键字）
+     * 2. 标签名和 { 之间不能有换行符
      *
      * 采用和普通方法调用一样的策略：
      * - 使用 IdentifierReference 并正确传递 params
@@ -35,13 +50,19 @@ export default class OvsParser extends SlimeParser<OvsTokenConsumer> {
     @SubhutiRule
     OvsRenderFunction(params: OvsExpressionParams = {}) {
         // 使用 IdentifierReference 并传递 params，和普通方法调用一样
-        this.IdentifierReference(params)
+        const idRef = this.IdentifierReference(params)
+        // 限制 1：组件标签名不能是 JavaScript 关键字
+        const tagName = idRef?.children?.[0]?.children?.[0]?.value
+        this.assertCondition(!OVS_TAG_BLACKLIST.has(tagName))
+
         this.Option(() => {
             // ✅ 修复：传递 params
             // 根据 ES 规范 Arguments[?Yield, ?Await]，需要传递 Yield/Await 参数
             // 这样在 async 上下文中参数里可以使用 await
             this.Arguments(params)
         })
+        // 限制 2：标签名和 { 之间不能有换行符 [no LineTerminator here]
+        this.assertNoLineBreak()
         this.tokenConsumer.LBrace()
         this.Option(() => {
             // ✅ 正确：传递 params
