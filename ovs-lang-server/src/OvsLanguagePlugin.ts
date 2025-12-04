@@ -4,7 +4,7 @@ import ts from 'typescript';
 import {URI} from 'vscode-uri';
 import {LogUtil} from "./logutil.js";
 import SlimeCodeMapping from "slime-generator/src/SlimeCodeMapping";
-import {vitePluginOvsTransform} from "ovsjs/src";
+import {vitePluginOvsTransform} from "ovsjs";
 
 export const ovsLanguagePlugin: LanguagePlugin<URI> = {
     getLanguageId(uri) {
@@ -113,18 +113,28 @@ export class OvsVirtualCode implements VirtualCode {
         }];
         const styleText = snapshot.getText(0, snapshot.getLength());
         let newCode = styleText
-        LogUtil.log('styleTextstyleTextstyleTextstyleText')
-        let mapping = []
+        LogUtil.log('=== OVS Transform Start ===')
+        let mapping: any[] = []
         try {
-            LogUtil.log('3333')
+            LogUtil.log('Input code length: ' + styleText.length)
             // 使用带格式化的同步方法（保持 source map 准确）
             const res = vitePluginOvsTransform(styleText)
             newCode = res.code
             mapping = res.mapping
-        } catch (e: any) {
-            LogUtil.log('styleErrrrrrrr')
-            LogUtil.log(styleText)
-            LogUtil.log(e.message)
+            LogUtil.log('=== OVS Transform Success ===')
+            LogUtil.log('Output code length: ' + newCode.length)
+        } catch (e: unknown) {
+            LogUtil.log('=== OVS Transform Error ===')
+            if (e instanceof Error) {
+                LogUtil.log('Error type: ' + e.constructor.name)
+                LogUtil.log('Error message: ' + e.message)
+                LogUtil.log('Error stack: ' + e.stack)
+            } else {
+                LogUtil.log('Unknown error: ' + String(e))
+            }
+            // 解析失败时，使用原始代码作为 fallback
+            newCode = styleText
+            mapping = []
         }
         const offsets = MappingConverter.convertMappings(mapping)
 

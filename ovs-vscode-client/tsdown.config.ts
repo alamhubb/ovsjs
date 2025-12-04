@@ -6,6 +6,13 @@ export default defineConfig({
   dts: false,     // 不需要类型声明
   clean: true,
   outDir: 'out',
-  external: ['vscode'],  // vscode 模块由 VSCode 提供
+  // 所有依赖都作为外部模块
+  external: [
+    'vscode',
+    '@volar/language-server/protocol',
+    '@volar/vscode',
+    '@volar/vscode/node',
+    'path',
+  ],
 })
 

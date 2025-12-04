@@ -42,7 +42,16 @@
     "slime-generator": "workspace:*",
     "slime-parser": "workspace:*",
     "slime-token": "workspace:*",
-    "subhuti": "workspace:*"
+    "subhuti": "workspace:*",
+    "@dagrejs/dagre": "^2.0.0",
+    "@dagrejs/graphlib": "^2.2.4",
+    "@dagrejs/graphlib-dot": "^1.0.2",
+    "big-cartesian": "^6.1.1",
+    "d3": "^7.9.0",
+    "dagre-d3": "^0.6.4",
+    "fast-cartesian": "^9.0.1",
+    "lru-cache": "^11.0.0",
+    "mnemonist": "^0.40.3"
   },
   "devDependencies": {
     "tsdown": "0.17.0-beta.6"

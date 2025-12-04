@@ -3,7 +3,7 @@ import {
     createServer,
     createTypeScriptProject,
     loadTsdkByPath
-} from '@volar/language-server/node';
+} from '@volar/language-server/node.js';
 import { LogUtil } from "./logutil";
 import { createTypeScriptServices } from "./typescript";
 import { ovsLanguagePlugin } from "./OvsLanguagePlugin";

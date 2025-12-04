@@ -1,4 +1,4 @@
-import {vitePluginOvsTransform} from "ovsjs/src"
+import {vitePluginOvsTransform} from "ovsjs/src/index.ts"
 
 Error.stackTraceLimit = 50
 

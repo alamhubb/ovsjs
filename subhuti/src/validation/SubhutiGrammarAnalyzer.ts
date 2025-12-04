@@ -77,7 +77,6 @@ import type {
     OrNode, ManyNode, OptionNode, AtLeastOneNode
 } from "./SubhutiValidationError"
 import {SubhutiValidationLogger} from './SubhutiValidationLogger'
-import {list} from "@lerna-lite/publish";
 import ArrayTrie from "./ArrayTria.ts";
 import * as fs from 'fs';
 import * as path from 'path';

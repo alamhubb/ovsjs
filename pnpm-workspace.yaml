@@ -1,8 +1,0 @@
-packages:
-  - 'ovs-lang-server'
-  - 'ovs-vscode-client'
-  - 'ovs-vscode-client/client'
-  - 'subhuti'
-  - 'ovs'
-  - 'slime/packages/*'
-  - 'slime'

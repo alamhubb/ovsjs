@@ -7,8 +7,11 @@
 import { execSync } from 'child_process'
 import * as path from 'path'
 import * as fs from 'fs'
+import {fileURLToPath} from "url";
 
 // 扫描 cases/ 目录下的所有 .ts 和 .js 文件
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 const casesDir = path.join(__dirname, 'cases')
 const allFiles = fs.readdirSync(casesDir)
 const tests = allFiles

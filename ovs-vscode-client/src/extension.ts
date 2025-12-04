@@ -18,24 +18,27 @@ import * as path from 'path';
 let client: BaseLanguageClient;
 
 export async function activate(context: vscode.ExtensionContext) {
-  // 从 node_modules 中找到 server 的 .ts 入口文件
-  const serverModule = path.join(context.extensionPath, 'node_modules', 'ovs-lang-server', 'src', 'index.ts');
+  console.log('OVS Extension activating...');
+
+  // 使用编译后的 JS 文件
+  const serverModule = path.join(context.extensionPath, 'node_modules', 'ovs-lang-server', 'dist', 'index.mjs');
+  console.log('Server module path:', serverModule);
 
   // 获取用户 VSCode 中的 TypeScript SDK 路径
   const tsdk = await getTsdk(context);
+  console.log('TSDK:', tsdk);
 
   const serverOptions: ServerOptions = {
     run: {
-      command: 'npx',
-      args: ['tsx', serverModule, '--stdio'],
-      transport: TransportKind.stdio,
-      options: { shell: true }
+      module: serverModule,
+      transport: TransportKind.ipc,
     },
     debug: {
-      command: 'npx',
-      args: ['tsx', serverModule, '--stdio'],
-      transport: TransportKind.stdio,
-      options: { shell: true }
+      module: serverModule,
+      transport: TransportKind.ipc,
+      options: {
+        execArgv: ['--nolazy', '--inspect=6009'],
+      },
     },
   };
 
@@ -55,7 +58,14 @@ export async function activate(context: vscode.ExtensionContext) {
     clientOptions,
   );
 
-  await client.start();
+  console.log('Starting OVS Language Client...');
+  try {
+    await client.start();
+    console.log('OVS Language Client started successfully!');
+  } catch (e) {
+    console.error('Failed to start OVS Language Client:', e);
+    throw e;
+  }
 
   // 支持 Volar Labs
   const labsInfo = createLabsInfo(serverProtocol);

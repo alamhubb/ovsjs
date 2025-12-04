@@ -7,14 +7,13 @@
       "name": "Launch OVS LSP Client",
       "runtimeExecutable": "${execPath}",
       "args": [
-        "--extensionDevelopmentPath=${workspaceFolder}/ovs-vscode-client",
-        "--user-data-dir=${workspaceFolder}/ovs-vscode-client/.vscode-test-data"
+        "--extensionDevelopmentPath=${workspaceFolder}/ovs-vscode-client"
       ],
       "outFiles": [
-        "${workspaceFolder}/ovs-vscode-client/client/out/**/*.js"
+        "${workspaceFolder}/ovs-vscode-client/out/**/*.js",
+        "${workspaceFolder}/ovs-lang-server/dist/**/*.js"
       ],
       "autoAttachChildProcesses": true,
-      "preLaunchTask": "npm: watch - ovs-vscode-client",
       "skipFiles": [
         "<node_internals>/**",
         "**/node_modules/**",

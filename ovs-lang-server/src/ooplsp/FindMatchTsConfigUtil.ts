@@ -3,7 +3,7 @@ import {URI} from "vscode-uri";
 import {createUriMap, FileType} from "@volar/language-service";
 import * as path from "path-browserify";
 import TypeScriptProject from "./TypeScriptProject.ts";
-import {isFileInDir, sortTSConfigs} from "@volar/language-server/lib/project/typescriptProject.ts";
+import {isFileInDir, sortTSConfigs} from "@volar/language-server/lib/project/typescriptProject.js";
 import * as ts from "typescript";
 
 export default class FindMatchTsConfigUtil {

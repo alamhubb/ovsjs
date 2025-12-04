@@ -84,15 +84,15 @@ export function Subhuti<E extends SubhutiTokenLookahead, T extends new (...args:
     target: T,
     context: ClassDecoratorContext
 ) {
-    context.metadata.className = target.name
+    // 不使用 context.metadata，因为 tsdown/rolldown 编译后不支持
     return target
 }
 
 export function SubhutiRule(targetFun: any, context: ClassMethodDecoratorContext) {
     const ruleName = targetFun.name
-    const className = context.metadata.className
-
+    // 在运行时通过 this.constructor.name 获取类名
     const wrappedFunction = function (...args: any[]): SubhutiCst | undefined {
+        const className = this.constructor.name
         return this.executeRuleWrapper(targetFun, ruleName, className, ...args)
     }
 

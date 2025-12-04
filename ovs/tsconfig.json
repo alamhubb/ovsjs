@@ -4,8 +4,10 @@
     "useDefineForClassFields": true,
     "module": "ESNext",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "types": ["vite/client"],
     "skipLibCheck": true,
+
+    /* Decorators - 需要开启让 tsdown 编译装饰器 */
+    "experimentalDecorators": true,
 
     /* Bundler mode */
     "moduleResolution": "bundler",
@@ -18,7 +20,6 @@
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },

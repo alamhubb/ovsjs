@@ -5,7 +5,7 @@ import {
   getWorkspaceFolder,
   isFileInDir,
   sortTSConfigs
-} from "@volar/language-server/lib/project/typescriptProject.ts";
+} from "@volar/language-server/lib/project/typescriptProject.js";
 import {
   type ExperimentalFeatures,
   Language,
@@ -21,19 +21,19 @@ import {
   createTypeScriptLS,
   ProjectExposeContext,
   TypeScriptProjectLS
-} from "@volar/language-server/lib/project/typescriptProjectLs.ts";
+} from "@volar/language-server/lib/project/typescriptProjectLs.js";
 import FindMatchTsConfigUtil from "./FindMatchTsConfigUtil.ts";
-import {createLanguageServiceEnvironment} from "@volar/language-server/lib/project/simpleProject.ts";
-import {getInferredCompilerOptions} from "@volar/language-server/lib/project/inferredCompilerOptions.ts";
-import {createServer} from "@volar/language-server/node.ts";
+import {createLanguageServiceEnvironment} from "@volar/language-server/lib/project/simpleProject.js";
+import {getInferredCompilerOptions} from "@volar/language-server/lib/project/inferredCompilerOptions.js";
+import {createServer} from "@volar/language-server/node.js";
 import * as vscode from "vscode-languageserver";
-import {register as registerConfigurationSupport} from "@volar/language-server/lib/features/configurations.ts";
-import {register as registerEditorFeaturesSupport} from "@volar/language-server/lib/features/editorFeatures.ts";
-import {register as registerTextDocumentRegistry} from "@volar/language-server/lib/features/textDocuments.ts";
-import {register as registerWorkspaceFolderRegistry} from "@volar/language-server/lib/features/workspaceFolders.ts";
-import {register as registerFileWatcher} from "@volar/language-server/lib/features/fileWatcher.ts";
-import {register as registerLanguageFeatures} from "@volar/language-server/lib/features/languageFeatures.ts";
-import {register as registerFileSystemSupport} from "@volar/language-server/lib/features/fileSystem.ts";
+import {register as registerConfigurationSupport} from "@volar/language-server/lib/features/configurations.js";
+import {register as registerEditorFeaturesSupport} from "@volar/language-server/lib/features/editorFeatures.js";
+import {register as registerTextDocumentRegistry} from "@volar/language-server/lib/features/textDocuments.js";
+import {register as registerWorkspaceFolderRegistry} from "@volar/language-server/lib/features/workspaceFolders.js";
+import {register as registerFileWatcher} from "@volar/language-server/lib/features/fileWatcher.js";
+import {register as registerLanguageFeatures} from "@volar/language-server/lib/features/languageFeatures.js";
+import {register as registerFileSystemSupport} from "@volar/language-server/lib/features/fileSystem.js";
 
 export default class TypeScriptProject {
   static tsLocalized: ts.MapLike<string>
