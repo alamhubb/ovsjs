@@ -10467,3 +10467,2068 @@ export default (function(){
 })();
 
 ================================================================================
+
+[2025-12-04T05:49:20.663Z]
+onInitialize params:
+================================================================================
+
+[2025-12-04T05:49:20.664Z]
+{
+  "processId": 51552,
+  "clientInfo": {
+    "name": "Visual Studio Code",
+    "version": "1.106.3"
+  },
+  "locale": "en",
+  "rootPath": "d:\\project\\qkyproject\\test-volar\\ovs",
+  "rootUri": "file:///d%3A/project/qkyproject/test-volar/ovs",
+  "capabilities": {
+    "workspace": {
+      "applyEdit": true,
+      "workspaceEdit": {
+        "documentChanges": true,
+        "resourceOperations": [
+          "create",
+          "rename",
+          "delete"
+        ],
+        "failureHandling": "textOnlyTransactional",
+        "normalizesLineEndings": true,
+        "changeAnnotationSupport": {
+          "groupsOnLabel": true
+        }
+      },
+      "configuration": true,
+      "didChangeWatchedFiles": {
+        "dynamicRegistration": true,
+        "relativePatternSupport": true
+      },
+      "symbol": {
+        "dynamicRegistration": true,
+        "symbolKind": {
+          "valueSet": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26
+          ]
+        },
+        "tagSupport": {
+          "valueSet": [
+            1
+          ]
+        },
+        "resolveSupport": {
+          "properties": [
+            "location.range"
+          ]
+        }
+      },
+      "codeLens": {
+        "refreshSupport": true
+      },
+      "executeCommand": {
+        "dynamicRegistration": true
+      },
+      "didChangeConfiguration": {
+        "dynamicRegistration": true
+      },
+      "workspaceFolders": true,
+      "foldingRange": {
+        "refreshSupport": true
+      },
+      "semanticTokens": {
+        "refreshSupport": true
+      },
+      "fileOperations": {
+        "dynamicRegistration": true,
+        "didCreate": true,
+        "didRename": true,
+        "didDelete": true,
+        "willCreate": true,
+        "willRename": true,
+        "willDelete": true
+      },
+      "inlineValue": {
+        "refreshSupport": true
+      },
+      "inlayHint": {
+        "refreshSupport": true
+      },
+      "diagnostics": {
+        "refreshSupport": true
+      }
+    },
+    "textDocument": {
+      "publishDiagnostics": {
+        "relatedInformation": true,
+        "versionSupport": false,
+        "tagSupport": {
+          "valueSet": [
+            1,
+            2
+          ]
+        },
+        "codeDescriptionSupport": true,
+        "dataSupport": true
+      },
+      "synchronization": {
+        "dynamicRegistration": true,
+        "willSave": true,
+        "willSaveWaitUntil": true,
+        "didSave": true
+      },
+      "completion": {
+        "dynamicRegistration": true,
+        "contextSupport": true,
+        "completionItem": {
+          "snippetSupport": true,
+          "commitCharactersSupport": true,
+          "documentationFormat": [
+            "markdown",
+            "plaintext"
+          ],
+          "deprecatedSupport": true,
+          "preselectSupport": true,
+          "tagSupport": {
+            "valueSet": [
+              1
+            ]
+          },
+          "insertReplaceSupport": true,
+          "resolveSupport": {
+            "properties": [
+              "documentation",
+              "detail",
+              "additionalTextEdits"
+            ]
+          },
+          "insertTextModeSupport": {
+            "valueSet": [
+              1,
+              2
+            ]
+          },
+          "labelDetailsSupport": true
+        },
+        "insertTextMode": 2,
+        "completionItemKind": {
+          "valueSet": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25
+          ]
+        },
+        "completionList": {
+          "itemDefaults": [
+            "commitCharacters",
+            "editRange",
+            "insertTextFormat",
+            "insertTextMode",
+            "data"
+          ]
+        }
+      },
+      "hover": {
+        "dynamicRegistration": true,
+        "contentFormat": [
+          "markdown",
+          "plaintext"
+        ]
+      },
+      "signatureHelp": {
+        "dynamicRegistration": true,
+        "signatureInformation": {
+          "documentationFormat": [
+            "markdown",
+            "plaintext"
+          ],
+          "parameterInformation": {
+            "labelOffsetSupport": true
+          },
+          "activeParameterSupport": true
+        },
+        "contextSupport": true
+      },
+      "definition": {
+        "dynamicRegistration": true,
+        "linkSupport": true
+      },
+      "references": {
+        "dynamicRegistration": true
+      },
+      "documentHighlight": {
+        "dynamicRegistration": true
+      },
+      "documentSymbol": {
+        "dynamicRegistration": true,
+        "symbolKind": {
+          "valueSet": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26
+          ]
+        },
+        "hierarchicalDocumentSymbolSupport": true,
+        "tagSupport": {
+          "valueSet": [
+            1
+          ]
+        },
+        "labelSupport": true
+      },
+      "codeAction": {
+        "dynamicRegistration": true,
+        "isPreferredSupport": true,
+        "disabledSupport": true,
+        "dataSupport": true,
+        "resolveSupport": {
+          "properties": [
+            "edit"
+          ]
+        },
+        "codeActionLiteralSupport": {
+          "codeActionKind": {
+            "valueSet": [
+              "",
+              "quickfix",
+              "refactor",
+              "refactor.extract",
+              "refactor.inline",
+              "refactor.rewrite",
+              "source",
+              "source.organizeImports"
+            ]
+          }
+        },
+        "honorsChangeAnnotations": true
+      },
+      "codeLens": {
+        "dynamicRegistration": true
+      },
+      "formatting": {
+        "dynamicRegistration": true
+      },
+      "rangeFormatting": {
+        "dynamicRegistration": true,
+        "rangesSupport": true
+      },
+      "onTypeFormatting": {
+        "dynamicRegistration": true
+      },
+      "rename": {
+        "dynamicRegistration": true,
+        "prepareSupport": true,
+        "prepareSupportDefaultBehavior": 1,
+        "honorsChangeAnnotations": true
+      },
+      "documentLink": {
+        "dynamicRegistration": true,
+        "tooltipSupport": true
+      },
+      "typeDefinition": {
+        "dynamicRegistration": true,
+        "linkSupport": true
+      },
+      "implementation": {
+        "dynamicRegistration": true,
+        "linkSupport": true
+      },
+      "colorProvider": {
+        "dynamicRegistration": true
+      },
+      "foldingRange": {
+        "dynamicRegistration": true,
+        "rangeLimit": 5000,
+        "lineFoldingOnly": true,
+        "foldingRangeKind": {
+          "valueSet": [
+            "comment",
+            "imports",
+            "region"
+          ]
+        },
+        "foldingRange": {
+          "collapsedText": false
+        }
+      },
+      "declaration": {
+        "dynamicRegistration": true,
+        "linkSupport": true
+      },
+      "selectionRange": {
+        "dynamicRegistration": true
+      },
+      "callHierarchy": {
+        "dynamicRegistration": true
+      },
+      "semanticTokens": {
+        "dynamicRegistration": true,
+        "tokenTypes": [
+          "namespace",
+          "type",
+          "class",
+          "enum",
+          "interface",
+          "struct",
+          "typeParameter",
+          "parameter",
+          "variable",
+          "property",
+          "enumMember",
+          "event",
+          "function",
+          "method",
+          "macro",
+          "keyword",
+          "modifier",
+          "comment",
+          "string",
+          "number",
+          "regexp",
+          "operator",
+          "decorator"
+        ],
+        "tokenModifiers": [
+          "declaration",
+          "definition",
+          "readonly",
+          "static",
+          "deprecated",
+          "abstract",
+          "async",
+          "modification",
+          "documentation",
+          "defaultLibrary"
+        ],
+        "formats": [
+          "relative"
+        ],
+        "requests": {
+          "range": true,
+          "full": {
+            "delta": true
+          }
+        },
+        "multilineTokenSupport": false,
+        "overlappingTokenSupport": false,
+        "serverCancelSupport": true,
+        "augmentsSyntaxTokens": true
+      },
+      "linkedEditingRange": {
+        "dynamicRegistration": true
+      },
+      "typeHierarchy": {
+        "dynamicRegistration": true
+      },
+      "inlineValue": {
+        "dynamicRegistration": true
+      },
+      "inlayHint": {
+        "dynamicRegistration": true,
+        "resolveSupport": {
+          "properties": [
+            "tooltip",
+            "textEdits",
+            "label.tooltip",
+            "label.location",
+            "label.command"
+          ]
+        }
+      },
+      "diagnostic": {
+        "dynamicRegistration": true,
+        "relatedDocumentSupport": false
+      }
+    },
+    "window": {
+      "showMessage": {
+        "messageActionItem": {
+          "additionalPropertiesSupport": true
+        }
+      },
+      "showDocument": {
+        "support": true
+      },
+      "workDoneProgress": true
+    },
+    "general": {
+      "staleRequestSupport": {
+        "cancel": true,
+        "retryOnContentModified": [
+          "textDocument/semanticTokens/full",
+          "textDocument/semanticTokens/range",
+          "textDocument/semanticTokens/full/delta"
+        ]
+      },
+      "regularExpressions": {
+        "engine": "ECMAScript",
+        "version": "ES2020"
+      },
+      "markdown": {
+        "parser": "marked",
+        "version": "1.1.0"
+      },
+      "positionEncodings": [
+        "utf-16"
+      ]
+    },
+    "notebookDocument": {
+      "synchronization": {
+        "dynamicRegistration": true,
+        "executionSummarySupport": true
+      }
+    }
+  },
+  "initializationOptions": {
+    "typescript": {
+      "tsdk": "d:/Users/qinky/AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/node_modules/typescript/lib"
+    }
+  },
+  "trace": "off",
+  "workspaceFolders": [
+    {
+      "uri": "file:///d%3A/project/qkyproject/test-volar/ovs",
+      "name": "ovs"
+    }
+  ]
+}
+================================================================================
+
+[2025-12-04T05:49:21.545Z]
+Server initialized with capabilities:
+================================================================================
+
+[2025-12-04T05:49:21.545Z]
+{
+  "textDocumentSync": 2,
+  "workspace": {
+    "workspaceFolders": {
+      "supported": true,
+      "changeNotifications": true
+    }
+  },
+  "selectionRangeProvider": true,
+  "foldingRangeProvider": true,
+  "documentSymbolProvider": true,
+  "documentFormattingProvider": true,
+  "documentRangeFormattingProvider": true,
+  "referencesProvider": true,
+  "implementationProvider": true,
+  "definitionProvider": true,
+  "typeDefinitionProvider": true,
+  "callHierarchyProvider": true,
+  "hoverProvider": true,
+  "documentHighlightProvider": true,
+  "workspaceSymbolProvider": {},
+  "renameProvider": {
+    "prepareProvider": true
+  },
+  "inlayHintProvider": {},
+  "signatureHelpProvider": {
+    "triggerCharacters": [
+      "(",
+      ",",
+      "<"
+    ],
+    "retriggerCharacters": [
+      ")"
+    ]
+  },
+  "completionProvider": {
+    "triggerCharacters": [
+      ".",
+      "\"",
+      "'",
+      "`",
+      "/",
+      "<",
+      "@",
+      "#",
+      "*"
+    ],
+    "resolveProvider": true
+  },
+  "semanticTokensProvider": {
+    "full": true,
+    "range": true,
+    "legend": {
+      "tokenTypes": [
+        "namespace",
+        "class",
+        "enum",
+        "interface",
+        "typeParameter",
+        "type",
+        "parameter",
+        "variable",
+        "property",
+        "enumMember",
+        "function",
+        "method"
+      ],
+      "tokenModifiers": [
+        "declaration",
+        "readonly",
+        "static",
+        "async",
+        "defaultLibrary",
+        "local"
+      ]
+    }
+  },
+  "codeActionProvider": {
+    "codeActionKinds": [
+      "",
+      "quickfix",
+      "refactor",
+      "refactor.extract",
+      "refactor.inline",
+      "refactor.rewrite",
+      "source",
+      "source.fixAll",
+      "source.organizeImports"
+    ],
+    "resolveProvider": true
+  },
+  "documentOnTypeFormattingProvider": {
+    "firstTriggerCharacter": ";",
+    "moreTriggerCharacter": [
+      "}",
+      "\n"
+    ]
+  },
+  "experimental": {
+    "autoInsertionProvider": {
+      "triggerCharacters": [
+        ">"
+      ],
+      "configurationSections": [
+        [
+          "javascript.autoClosingTags",
+          "typescript.autoClosingTags"
+        ]
+      ]
+    },
+    "fileRenameEditsProvider": true,
+    "fileReferencesProvider": true
+  }
+}
+================================================================================
+
+[2025-12-04T05:49:24.673Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-12-04T05:49:24.674Z]
+3333
+================================================================================
+
+[2025-12-04T05:49:24.762Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T05:49:24.763Z]
+import { ref } from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = b
+
+
+div() {
+  h2 { 'Hello OVS' }
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-04T05:49:24.763Z]
+import {ref} from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+export default (function(){
+  const appName = "Hello OVS";
+  const version = "1.0";
+  let a = 1;
+  let b = a;
+  let c = b;
+  return div({},[h2({},['Hello OVS']),(function(){
+    const children = [];
+    const temp$$attrs$$mug0pw2p = {};
+    let a = ref(0);
+    const timer = setInterval(() => {
+      a.value = a.value + 1;
+      console.log(a);
+    },1000);
+    children.push(a);
+    return h1({onClick:() => {
+      children.push(console.log('clicked'));
+    }},children);
+  })(),h1({},[appName]),p({},[version])]);
+})();
+
+================================================================================
+
+[2025-12-04T05:49:34.869Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-12-04T05:49:34.869Z]
+3333
+================================================================================
+
+[2025-12-04T05:49:34.902Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T05:49:34.902Z]
+import { ref } from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = 
+
+
+div() {
+  h2 { 'Hello OVS' }
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-04T05:49:34.902Z]
+import {ref} from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+const appName = "Hello OVS";
+const version = "1.0";
+let a = 1;
+let b = a;
+let c = div({},[h2({},['Hello OVS']),(function(){
+  const children = [];
+  const temp$$attrs$$j2ldkys4 = {};
+  let a = ref(0);
+  const timer = setInterval(() => {
+    a.value = a.value + 1;
+    console.log(a);
+  },1000);
+  children.push(a);
+  return h1({onClick:() => {
+    children.push(console.log('clicked'));
+  }},children);
+})(),h1({},[appName]),p({},[version])]);
+
+================================================================================
+
+[2025-12-04T05:49:35.119Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-12-04T05:49:35.121Z]
+3333
+================================================================================
+
+[2025-12-04T05:49:35.152Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T05:49:35.152Z]
+import { ref } from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = b
+
+
+div() {
+  h2 { 'Hello OVS' }
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-04T05:49:35.152Z]
+import {ref} from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+export default (function(){
+  const appName = "Hello OVS";
+  const version = "1.0";
+  let a = 1;
+  let b = a;
+  let c = b;
+  return div({},[h2({},['Hello OVS']),(function(){
+    const children = [];
+    const temp$$attrs$$obqebnuf = {};
+    let a = ref(0);
+    const timer = setInterval(() => {
+      a.value = a.value + 1;
+      console.log(a);
+    },1000);
+    children.push(a);
+    return h1({onClick:() => {
+      children.push(console.log('clicked'));
+    }},children);
+  })(),h1({},[appName]),p({},[version])]);
+})();
+
+================================================================================
+
+[2025-12-04T05:49:37.615Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-12-04T05:49:37.616Z]
+3333
+================================================================================
+
+[2025-12-04T05:49:37.640Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T05:49:37.640Z]
+import { ref } from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = a
+
+
+div() {
+  h2 { 'Hello OVS' }
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-04T05:49:37.640Z]
+import {ref} from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+export default (function(){
+  const appName = "Hello OVS";
+  const version = "1.0";
+  let a = 1;
+  let b = a;
+  let c = a;
+  return div({},[h2({},['Hello OVS']),(function(){
+    const children = [];
+    const temp$$attrs$$ffm7uclm = {};
+    let a = ref(0);
+    const timer = setInterval(() => {
+      a.value = a.value + 1;
+      console.log(a);
+    },1000);
+    children.push(a);
+    return h1({onClick:() => {
+      children.push(console.log('clicked'));
+    }},children);
+  })(),h1({},[appName]),p({},[version])]);
+})();
+
+================================================================================
+
+[2025-12-04T05:49:37.748Z]
+=== resolveCompletionItem ===
+================================================================================
+
+[2025-12-04T05:49:37.748Z]
+completionName: a
+================================================================================
+
+[2025-12-04T05:49:37.748Z]
+importSource: null
+================================================================================
+
+[2025-12-04T05:49:37.748Z]
+hasCodeActions: false
+================================================================================
+
+[2025-12-04T05:49:37.828Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-12-04T05:49:37.828Z]
+3333
+================================================================================
+
+[2025-12-04T05:49:37.845Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T05:49:37.845Z]
+import { ref } from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = 
+
+
+div() {
+  h2 { 'Hello OVS' }
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-04T05:49:37.845Z]
+import {ref} from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+const appName = "Hello OVS";
+const version = "1.0";
+let a = 1;
+let b = a;
+let c = div({},[h2({},['Hello OVS']),(function(){
+  const children = [];
+  const temp$$attrs$$ncugsudk = {};
+  let a = ref(0);
+  const timer = setInterval(() => {
+    a.value = a.value + 1;
+    console.log(a);
+  },1000);
+  children.push(a);
+  return h1({onClick:() => {
+    children.push(console.log('clicked'));
+  }},children);
+})(),h1({},[appName]),p({},[version])]);
+
+================================================================================
+
+[2025-12-04T05:49:38.373Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-12-04T05:49:38.374Z]
+3333
+================================================================================
+
+[2025-12-04T05:49:38.386Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T05:49:38.386Z]
+import { ref } from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = a
+
+
+div() {
+  h2 { 'Hello OVS' }
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-04T05:49:38.387Z]
+import {ref} from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+export default (function(){
+  const appName = "Hello OVS";
+  const version = "1.0";
+  let a = 1;
+  let b = a;
+  let c = a;
+  return div({},[h2({},['Hello OVS']),(function(){
+    const children = [];
+    const temp$$attrs$$evm5b3qb = {};
+    let a = ref(0);
+    const timer = setInterval(() => {
+      a.value = a.value + 1;
+      console.log(a);
+    },1000);
+    children.push(a);
+    return h1({onClick:() => {
+      children.push(console.log('clicked'));
+    }},children);
+  })(),h1({},[appName]),p({},[version])]);
+})();
+
+================================================================================
+
+[2025-12-04T05:49:38.474Z]
+=== resolveCompletionItem ===
+================================================================================
+
+[2025-12-04T05:49:38.474Z]
+completionName: a
+================================================================================
+
+[2025-12-04T05:49:38.475Z]
+importSource: null
+================================================================================
+
+[2025-12-04T05:49:38.475Z]
+hasCodeActions: false
+================================================================================
+
+[2025-12-04T05:49:39.162Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-12-04T05:49:39.162Z]
+3333
+================================================================================
+
+[2025-12-04T05:49:39.175Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T05:49:39.175Z]
+import { ref } from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = a
+
+
+div() {
+  h2 { 'Hello OVS' }
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-04T05:49:39.175Z]
+import {ref} from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+export default (function(){
+  const appName = "Hello OVS";
+  const version = "1.0";
+  let a = 1;
+  let b = a;
+  let c = a;
+  return div({},[h2({},['Hello OVS']),(function(){
+    const children = [];
+    const temp$$attrs$$08b1zlcr = {};
+    let a = ref(0);
+    const timer = setInterval(() => {
+      a.value = a.value + 1;
+      console.log(a);
+    },1000);
+    children.push(a);
+    return h1({onClick:() => {
+      children.push(console.log('clicked'));
+    }},children);
+  })(),h1({},[appName]),p({},[version])]);
+})();
+
+================================================================================
+
+[2025-12-04T05:49:39.628Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-12-04T05:49:39.628Z]
+3333
+================================================================================
+
+[2025-12-04T05:49:39.643Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T05:49:39.643Z]
+import { ref } from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = 
+
+
+div() {
+  h2 { 'Hello OVS' }
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-04T05:49:39.643Z]
+import {ref} from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+const appName = "Hello OVS";
+const version = "1.0";
+let a = 1;
+let b = a;
+let c = div({},[h2({},['Hello OVS']),(function(){
+  const children = [];
+  const temp$$attrs$$i68b0sgu = {};
+  let a = ref(0);
+  const timer = setInterval(() => {
+    a.value = a.value + 1;
+    console.log(a);
+  },1000);
+  children.push(a);
+  return h1({onClick:() => {
+    children.push(console.log('clicked'));
+  }},children);
+})(),h1({},[appName]),p({},[version])]);
+
+================================================================================
+
+[2025-12-04T05:49:39.848Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-12-04T05:49:39.848Z]
+3333
+================================================================================
+
+[2025-12-04T05:49:39.862Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T05:49:39.862Z]
+import { ref } from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = b
+
+
+div() {
+  h2 { 'Hello OVS' }
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-04T05:49:39.862Z]
+import {ref} from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+export default (function(){
+  const appName = "Hello OVS";
+  const version = "1.0";
+  let a = 1;
+  let b = a;
+  let c = b;
+  return div({},[h2({},['Hello OVS']),(function(){
+    const children = [];
+    const temp$$attrs$$fmwwm1e7 = {};
+    let a = ref(0);
+    const timer = setInterval(() => {
+      a.value = a.value + 1;
+      console.log(a);
+    },1000);
+    children.push(a);
+    return h1({onClick:() => {
+      children.push(console.log('clicked'));
+    }},children);
+  })(),h1({},[appName]),p({},[version])]);
+})();
+
+================================================================================
+
+[2025-12-04T05:49:39.940Z]
+=== resolveCompletionItem ===
+================================================================================
+
+[2025-12-04T05:49:39.940Z]
+completionName: b
+================================================================================
+
+[2025-12-04T05:49:39.940Z]
+importSource: null
+================================================================================
+
+[2025-12-04T05:49:39.940Z]
+hasCodeActions: false
+================================================================================
+
+[2025-12-04T05:49:40.625Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-12-04T05:49:40.625Z]
+3333
+================================================================================
+
+[2025-12-04T05:49:40.640Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T05:49:40.640Z]
+import { ref } from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = b
+
+
+div() {
+  h2 { 'Hello OVS' }
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-04T05:49:40.640Z]
+import {ref} from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+export default (function(){
+  const appName = "Hello OVS";
+  const version = "1.0";
+  let a = 1;
+  let b = a;
+  let c = b;
+  return div({},[h2({},['Hello OVS']),(function(){
+    const children = [];
+    const temp$$attrs$$3a88vwip = {};
+    let a = ref(0);
+    const timer = setInterval(() => {
+      a.value = a.value + 1;
+      console.log(a);
+    },1000);
+    children.push(a);
+    return h1({onClick:() => {
+      children.push(console.log('clicked'));
+    }},children);
+  })(),h1({},[appName]),p({},[version])]);
+})();
+
+================================================================================
+
+[2025-12-04T05:49:41.861Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-12-04T05:49:41.861Z]
+3333
+================================================================================
+
+[2025-12-04T05:49:41.875Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T05:49:41.875Z]
+import { ref } from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = b
+
+
+
+div() {
+  h2 { 'Hello OVS' }
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-04T05:49:41.876Z]
+import {ref} from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+export default (function(){
+  const appName = "Hello OVS";
+  const version = "1.0";
+  let a = 1;
+  let b = a;
+  let c = b;
+  return div({},[h2({},['Hello OVS']),(function(){
+    const children = [];
+    const temp$$attrs$$ihhdmrv7 = {};
+    let a = ref(0);
+    const timer = setInterval(() => {
+      a.value = a.value + 1;
+      console.log(a);
+    },1000);
+    children.push(a);
+    return h1({onClick:() => {
+      children.push(console.log('clicked'));
+    }},children);
+  })(),h1({},[appName]),p({},[version])]);
+})();
+
+================================================================================
+
+[2025-12-04T05:49:42.036Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-12-04T05:49:42.036Z]
+3333
+================================================================================
+
+[2025-12-04T05:49:42.049Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T05:49:42.049Z]
+import { ref } from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = b
+
+
+
+
+div() {
+  h2 { 'Hello OVS' }
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-04T05:49:42.050Z]
+import {ref} from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+export default (function(){
+  const appName = "Hello OVS";
+  const version = "1.0";
+  let a = 1;
+  let b = a;
+  let c = b;
+  return div({},[h2({},['Hello OVS']),(function(){
+    const children = [];
+    const temp$$attrs$$ca9zdawi = {};
+    let a = ref(0);
+    const timer = setInterval(() => {
+      a.value = a.value + 1;
+      console.log(a);
+    },1000);
+    children.push(a);
+    return h1({onClick:() => {
+      children.push(console.log('clicked'));
+    }},children);
+  })(),h1({},[appName]),p({},[version])]);
+})();
+
+================================================================================
+
+[2025-12-04T05:49:44.706Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-12-04T05:49:44.706Z]
+3333
+================================================================================
+
+[2025-12-04T05:49:44.720Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T05:49:44.721Z]
+import { ref } from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = b
+
+h
+
+
+div() {
+  h2 { 'Hello OVS' }
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-04T05:49:44.721Z]
+import {ref,Fragment,h} from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+export default (function(){
+  const appName = "Hello OVS";
+  const version = "1.0";
+  let a = 1;
+  let b = a;
+  let c = b;
+  return h(Fragment,null,[h,div({},[h2({},['Hello OVS']),(function(){
+    const children = [];
+    const temp$$attrs$$ts1vauqv = {};
+    let a = ref(0);
+    const timer = setInterval(() => {
+      a.value = a.value + 1;
+      console.log(a);
+    },1000);
+    children.push(a);
+    return h1({onClick:() => {
+      children.push(console.log('clicked'));
+    }},children);
+  })(),h1({},[appName]),p({},[version])])]);
+})();
+
+================================================================================
+
+[2025-12-04T05:49:44.867Z]
+=== resolveCompletionItem ===
+================================================================================
+
+[2025-12-04T05:49:44.867Z]
+completionName: h
+================================================================================
+
+[2025-12-04T05:49:44.867Z]
+importSource: null
+================================================================================
+
+[2025-12-04T05:49:44.867Z]
+hasCodeActions: false
+================================================================================
+
+[2025-12-04T05:49:46.089Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-12-04T05:49:46.089Z]
+3333
+================================================================================
+
+[2025-12-04T05:49:46.103Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T05:49:46.103Z]
+import { ref } from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = b
+
+h3
+
+
+div() {
+  h2 { 'Hello OVS' }
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-04T05:49:46.103Z]
+import {ref,Fragment,h} from 'vue';
+import {div,h1,h2,p} from '../utils/htmlElements';
+export default (function(){
+  const appName = "Hello OVS";
+  const version = "1.0";
+  let a = 1;
+  let b = a;
+  let c = b;
+  return h(Fragment,null,[h3,div({},[h2({},['Hello OVS']),(function(){
+    const children = [];
+    const temp$$attrs$$rt589343 = {};
+    let a = ref(0);
+    const timer = setInterval(() => {
+      a.value = a.value + 1;
+      console.log(a);
+    },1000);
+    children.push(a);
+    return h1({onClick:() => {
+      children.push(console.log('clicked'));
+    }},children);
+  })(),h1({},[appName]),p({},[version])])]);
+})();
+
+================================================================================
+
+[2025-12-04T05:49:46.165Z]
+=== resolveCompletionItem ===
+================================================================================
+
+[2025-12-04T05:49:46.165Z]
+completionName: h3
+================================================================================
+
+[2025-12-04T05:49:46.165Z]
+importSource: ../utils/htmlElements
+================================================================================
+
+[2025-12-04T05:49:46.165Z]
+hasCodeActions: true
+================================================================================
+
+[2025-12-04T05:49:46.166Z]
+codeActions:
+================================================================================
+
+[2025-12-04T05:49:46.166Z]
+  description: Update import from "../utils/htmlElements"
+================================================================================
+
+[2025-12-04T05:49:46.166Z]
+  file: d:/project/qkyproject/test-volar/ovs/example/src/views/hello.ovs.ovsts.js
+================================================================================
+
+[2025-12-04T05:49:46.166Z]
+    span: {"start":54,"length":0}
+================================================================================
+
+[2025-12-04T05:49:46.166Z]
+    newText: h3,
+================================================================================
+
+[2025-12-04T05:49:46.824Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-12-04T05:49:46.824Z]
+3333
+================================================================================
+
+[2025-12-04T05:49:46.837Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T05:49:46.837Z]
+import { ref } from 'vue';
+import {div,h1,h2,h3,p} from '../utils/htmlElements';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = b
+
+h3
+
+
+div() {
+  h2 { 'Hello OVS' }
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-04T05:49:46.837Z]
+import {ref,Fragment,h} from 'vue';
+import {div,h1,h2,h3,p} from '../utils/htmlElements';
+export default (function(){
+  const appName = "Hello OVS";
+  const version = "1.0";
+  let a = 1;
+  let b = a;
+  let c = b;
+  return h(Fragment,null,[h3,div({},[h2({},['Hello OVS']),(function(){
+    const children = [];
+    const temp$$attrs$$3ruuo4n9 = {};
+    let a = ref(0);
+    const timer = setInterval(() => {
+      a.value = a.value + 1;
+      console.log(a);
+    },1000);
+    children.push(a);
+    return h1({onClick:() => {
+      children.push(console.log('clicked'));
+    }},children);
+  })(),h1({},[appName]),p({},[version])])]);
+})();
+
+================================================================================
+
+[2025-12-04T05:49:48.359Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-12-04T05:49:48.359Z]
+3333
+================================================================================
+
+[2025-12-04T05:49:48.372Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T05:49:48.372Z]
+import { ref } from 'vue';
+import {div,h1,h2,h3,p} from '../utils/htmlElements';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = b
+
+
+
+div() {
+  h2 { 'Hello OVS' }
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-04T05:49:48.372Z]
+import {ref} from 'vue';
+import {div,h1,h2,h3,p} from '../utils/htmlElements';
+export default (function(){
+  const appName = "Hello OVS";
+  const version = "1.0";
+  let a = 1;
+  let b = a;
+  let c = b;
+  return div({},[h2({},['Hello OVS']),(function(){
+    const children = [];
+    const temp$$attrs$$1c91uxma = {};
+    let a = ref(0);
+    const timer = setInterval(() => {
+      a.value = a.value + 1;
+      console.log(a);
+    },1000);
+    children.push(a);
+    return h1({onClick:() => {
+      children.push(console.log('clicked'));
+    }},children);
+  })(),h1({},[appName]),p({},[version])]);
+})();
+
+================================================================================
+
+[2025-12-04T05:49:48.760Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-12-04T05:49:48.760Z]
+3333
+================================================================================
+
+[2025-12-04T05:49:48.776Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T05:49:48.776Z]
+import { ref } from 'vue';
+import {div,h1,h2,h3,p} from '../utils/htmlElements';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = b
+
+
+div() {
+  h2 { 'Hello OVS' }
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-04T05:49:48.776Z]
+import {ref} from 'vue';
+import {div,h1,h2,h3,p} from '../utils/htmlElements';
+export default (function(){
+  const appName = "Hello OVS";
+  const version = "1.0";
+  let a = 1;
+  let b = a;
+  let c = b;
+  return div({},[h2({},['Hello OVS']),(function(){
+    const children = [];
+    const temp$$attrs$$j4vpd68t = {};
+    let a = ref(0);
+    const timer = setInterval(() => {
+      a.value = a.value + 1;
+      console.log(a);
+    },1000);
+    children.push(a);
+    return h1({onClick:() => {
+      children.push(console.log('clicked'));
+    }},children);
+  })(),h1({},[appName]),p({},[version])]);
+})();
+
+================================================================================
+
+[2025-12-04T05:49:49.111Z]
+styleTextstyleTextstyleTextstyleText
+================================================================================
+
+[2025-12-04T05:49:49.111Z]
+3333
+================================================================================
+
+[2025-12-04T05:49:49.124Z]
+mappings ascopy mapping
+================================================================================
+
+[2025-12-04T05:49:49.124Z]
+import { ref } from 'vue';
+import {div,h1,h2,h3,p} from '../utils/htmlElements';
+// Hello OVS - 简单示例
+
+const appName = "Hello OVS"
+const version = "1.0"
+
+let a = 1
+let b = a
+let c = b
+
+div() {
+  h2 { 'Hello OVS' }
+  h1({
+       onClick: () => {
+         console.log('clicked')
+       }
+     }) {
+
+  #{
+  let a = ref(0)
+    const timer = setInterval(() => {
+      a.value = a.value+1
+      console.log(a)
+    }, 1000);
+  }
+
+  a
+
+  }
+  h1 { appName }
+  p { version }
+}
+================================================================================
+
+[2025-12-04T05:49:49.124Z]
+import {ref} from 'vue';
+import {div,h1,h2,h3,p} from '../utils/htmlElements';
+export default (function(){
+  const appName = "Hello OVS";
+  const version = "1.0";
+  let a = 1;
+  let b = a;
+  let c = b;
+  return div({},[h2({},['Hello OVS']),(function(){
+    const children = [];
+    const temp$$attrs$$cyr0pkho = {};
+    let a = ref(0);
+    const timer = setInterval(() => {
+      a.value = a.value + 1;
+      console.log(a);
+    },1000);
+    children.push(a);
+    return h1({onClick:() => {
+      children.push(console.log('clicked'));
+    }},children);
+  })(),h1({},[appName]),p({},[version])]);
+})();
+
+================================================================================

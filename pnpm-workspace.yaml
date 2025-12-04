@@ -4,7 +4,5 @@ packages:
   - 'ovs-vscode-client/client'
   - 'subhuti'
   - 'ovs'
-  - 'extensions/*'
   - 'slime/packages/*'
   - 'slime'
-  - 'packages/*'

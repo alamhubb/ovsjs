@@ -13,12 +13,13 @@ import {
   BaseLanguageClient
 } from '@volar/vscode/node';
 import * as vscode from 'vscode';
+import * as path from 'path';
 
 let client: BaseLanguageClient;
 
 export async function activate(context: vscode.ExtensionContext) {
   // 从 node_modules 中找到 server 的 .ts 入口文件
-  const serverModule = vscode.Uri.joinPath(context.extensionUri, 'node_modules', 'ovs-lang-server', 'src', 'index.ts').fsPath;
+  const serverModule = path.join(context.extensionPath, 'node_modules', 'ovs-lang-server', 'src', 'index.ts');
 
   // 获取用户 VSCode 中的 TypeScript SDK 路径
   const tsdk = await getTsdk(context);

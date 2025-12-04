@@ -13,7 +13,7 @@
 		"vscode": "^1.75.0"
 	},
 	"dependencies": {
-		"@volar/language-server": "^2.4.23",
+		"@volar/language-server": "2.4.11",
 		"@volar/vscode": "^2.4.23",
 		"vscode-languageclient": "^9.0.1"
 	},
