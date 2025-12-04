@@ -1,4 +1,4 @@
-export { Provide } from './lib/plugins/semantic';
+export type { Provide } from './lib/plugins/semantic';
 
 import { create as createDirectiveCommentServicePlugin } from './lib/plugins/directiveComment';
 import { create as createDocCommentTemplateServicePlugin } from './lib/plugins/docCommentTemplate';

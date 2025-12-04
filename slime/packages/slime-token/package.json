@@ -1,16 +1,31 @@
 {
   "name": "slime-token",
-  "version": "0.1.5",
-  "main": "index.js",
+  "version": "0.1.7",
+  "type": "module",
+  "main": "dist/index.mjs",
+  "types": "dist/index.d.mts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsdown",
+    "prepublishOnly": "npm run build"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "subhuti": "^0.1.5"
+    "subhuti": "workspace:*"
+  },
+  "devDependencies": {
+    "tsdown": "0.17.0-beta.6"
   },
   "gitHead": "2f8c9e3c52445d48435b6a432fffb4eed5187217"
 }

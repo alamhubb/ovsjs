@@ -4,7 +4,7 @@
   "description": "OVS language support for VSCode",
   "author": "alamhubb",
   "license": "MIT",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "repository": {
     "type": "git",
     "url": "https://github.com/alamhubb/ovsjs"
@@ -18,7 +18,7 @@
     "vscode": "^1.75.0"
   },
   "activationEvents": [],
-  "main": "./out/extension",
+  "main": "./out/extension.cjs",
   "contributes": {
     "languages": [
       {
@@ -64,19 +64,20 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p tsconfig.json --skipLibCheck",
-    "watch": "tsc -p tsconfig.json -w --skipLibCheck"
+    "vscode:prepublish": "npm run build",
+    "build": "tsdown",
+    "watch": "tsdown --watch"
   },
   "dependencies": {
-    "@volar/language-server": "^2.4.23",
-    "@volar/vscode": "^2.4.23",
-    "ovs-lang-server": "^0.1.6",
+    "@volar/language-server": "~2.4.0",
+    "@volar/vscode": "~2.4.0",
+    "ovs-lang-server": "workspace:*",
     "vscode-languageclient": "^9.0.1"
   },
   "devDependencies": {
     "@types/node": "^20",
     "@types/vscode": "^1.75.1",
+    "tsdown": "0.17.0-beta.6",
     "typescript": "^5.6.2"
   },
   "gitHead": "2f8c9e3c52445d48435b6a432fffb4eed5187217"

@@ -1,22 +1,35 @@
 {
   "name": "ovs-lang-server",
-  "version": "0.1.6",
+  "version": "0.1.7",
+  "type": "module",
   "description": "OVS Language Server",
-  "main": "src/index.ts",
+  "main": "dist/index.mjs",
+  "types": "dist/index.d.mts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "dev": "tsx src/index.ts --stdio",
-    "build": "tsc -b",
-    "watch": "tsc -b -w"
+    "build": "tsdown",
+    "watch": "tsdown --watch",
+    "prepublishOnly": "npm run build"
   },
   "bin": {
-    "ovs-lang-server": "src/index.ts"
+    "ovs-lang-server": "dist/index.mjs"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "@types/esprima": "^4.0.6",
-    "@types/node": "^22.8.6"
+    "@types/node": "^22.8.6",
+    "tsdown": "0.17.0-beta.6"
   },
   "dependencies": {
     "@volar/language-core": "~2.4.0",
@@ -24,30 +37,21 @@
     "@volar/language-service": "~2.4.0",
     "@volar/source-map": "~2.4.0",
     "@volar/typescript": "~2.4.0",
-    "ast-types": "^0.16.1",
-    "cac": "^6.7.14",
-    "ovsjs": "^0.1.6",
+    "ovsjs": "workspace:*",
     "path-browserify": "^1.0.1",
-    "prettier": "^3.3.3",
     "semver": "^7.6.2",
-    "slime-ast": "^0.1.5",
-    "slime-generator": "^0.1.6",
-    "slime-parser": "^0.1.5",
-    "source-map": "^0.7.4",
-    "subhuti": "^0.1.5",
+    "slime-ast": "workspace:*",
+    "slime-generator": "workspace:*",
+    "slime-parser": "workspace:*",
+    "subhuti": "workspace:*",
     "tsx": "^4.19.2",
     "typescript": "^5.6.3",
     "typescript-auto-import-cache": "^0.3.5",
-    "typescript-todo-or-die-plugin": "^0.6.0",
-    "vite": "^7.1.7",
     "volar-service-typescript": "^0.0.65",
-    "vscode": "^1.1.37",
-    "vscode-html-languageservice": "^5.3.1",
     "vscode-languageserver": "^9.0.1",
     "vscode-languageserver-textdocument": "^1.0.12",
     "vscode-nls": "^5.2.0",
-    "vscode-uri": "^3.0.8",
-    "vue": "^3.5.12"
+    "vscode-uri": "^3.0.8"
   },
   "gitHead": "2f8c9e3c52445d48435b6a432fffb4eed5187217"
 }

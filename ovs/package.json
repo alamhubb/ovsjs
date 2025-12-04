@@ -1,19 +1,22 @@
 {
   "name": "ovsjs",
-  "version": "0.1.6",
-  "main": "lib/index.js",
+  "version": "0.1.7",
+  "type": "module",
+  "main": "dist/index.mjs",
+  "types": "dist/index.d.mts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
   "license": "MIT",
   "scripts": {
-    "dev": "tsx node_modules/vite/bin/vite.js",
-    "test": "tsx test-runner.ts",
-    "build": "tsc && vite build",
-    "preview": "vite preview",
-    "test:unit": "tsx tests/run-tests.ts unit",
-    "test:integration": "tsx tests/run-tests.ts integration",
-    "test:regression": "tsx tests/run-tests.ts regression",
-    "test:watch": "tsx --watch tests/run-all-tests.ts",
-    "test:semantic": "tsx test-semantic-tokens.ts",
-    "debug:let": "tsx debug-let-token.ts"
+    "build": "tsdown",
+    "prepublishOnly": "npm run build"
   },
   "homepage": "https://github.com/alamhubb/ovs",
   "repository": {
@@ -40,29 +43,15 @@
   ],
   "author": "alamhubb",
   "description": "A technology similar to JSX, but unlike JSX which still uses XML syntax, OVS uses OOP syntax similar to Flutter and SwiftUI to develop UI.",
-  "devDependencies": {
-    "@types/node": "^22.7.6",
-    "@vitejs/plugin-vue": "^6.0.1",
-    "@vue/tsconfig": "^0.8.1",
-    "prettier": "^3.6.2",
-    "tsx": "^4.19.1",
-    "typescript": "~5.8.3",
-    "vite": "^7.1.7",
-    "vue-tsc": "^3.0.7"
-  },
   "dependencies": {
-    "@types/js-beautify": "^1.14.3",
-    "js-beautify": "^1.15.4",
-    "magic-string": "^0.30.21",
-    "slime-ast": "^0.1.5",
-    "slime-generator": "^0.1.6",
-    "slime-parser": "^0.1.5",
-    "slime-token": "^0.1.5",
-    "subhuti": "^0.1.5",
-    "vue": "^3.5.12"
+    "slime-ast": "workspace:*",
+    "slime-generator": "workspace:*",
+    "slime-parser": "workspace:*",
+    "slime-token": "workspace:*",
+    "subhuti": "workspace:*"
   },
-  "directories": {
-    "example": "example"
+  "devDependencies": {
+    "tsdown": "0.17.0-beta.6"
   },
   "bugs": {
     "url": "https://github.com/alamhubb/ovs/issues"
