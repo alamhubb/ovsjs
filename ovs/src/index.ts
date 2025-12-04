@@ -16,6 +16,8 @@ import SlimeAstUtil from "slime-ast/src/SlimeNodeCreate.ts";
 import SlimeTokenCreate from "slime-ast/src/SlimeTokenCreate.ts";
 import {SlimeNodeType} from "slime-ast/src/SlimeNodeType.ts";
 import SubhutiMatchToken from "subhuti/src/struct/SubhutiMatchToken.ts";
+import type {Plugin} from 'vite';
+import {createFilter} from 'vite';
 
 /**
  * 检查源代码是否包含响应式表达式 #{}
@@ -344,6 +346,14 @@ export function vitePluginOvsTransform(
     let codeResult = ovsTransformBase(code)
     let ast = codeResult.ast
 
+    // 如果 ast 为 null（空文件或解析失败），返回空结果
+    if (!ast) {
+        return {
+            code: '',
+            mapping: []
+        }
+    }
+
     // 注意：不再自动添加 import
     // 开发者根据语言服务器的智能提示自己导入所需的函数
     // 例如：import { div, h1 } from './utils/htmlElements'
@@ -399,7 +409,7 @@ export function vitePluginOvsTransformWithBeautify(
 /**
  * OVS 代码转换主函数（异步，支持 Prettier）
  * @param code OVS 源代码
- * @param prettify 是否使用 Prettier 格式化（异步）
+ * @param prettify 是否使用 Prettier 格式化（异步）- 当前已禁用
  * @returns 转换结果（包含代码和 source map）
  */
 export async function vitePluginOvsTransformAsync(
@@ -409,20 +419,22 @@ export async function vitePluginOvsTransformAsync(
     // 调用同步方法（无格式化）
     const result = vitePluginOvsTransform(code)
 
-    // 使用 Prettier 异步格式化（可选）
-    if (prettify) {
-        try {
-            result.code = await prettier.format(result.code, {
-                parser: 'babel',
-                semi: false,
-                singleQuote: true,
-                tabWidth: 2,
-                printWidth: 80
-            })
-        } catch (e) {
-            console.warn('OVS code formatting (prettier) failed:', e)
-        }
-    }
+    // Prettier 格式化已禁用（避免额外依赖）
+    // 如需启用，请安装 prettier 并取消下面的注释
+    // if (prettify) {
+    //     try {
+    //         const prettier = await import('prettier')
+    //         result.code = await prettier.format(result.code, {
+    //             parser: 'babel',
+    //             semi: false,
+    //             singleQuote: true,
+    //             tabWidth: 2,
+    //             printWidth: 80
+    //         })
+    //     } catch (e) {
+    //         console.warn('OVS code formatting (prettier) failed:', e)
+    //     }
+    // }
 
     return result
 }
