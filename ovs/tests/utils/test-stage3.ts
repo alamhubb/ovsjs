@@ -11,7 +11,8 @@
  */
 import SlimeGenerator from 'slime-generator/src/SlimeGenerator'
 import SlimeParser from 'slime-parser/src/language/es2025/SlimeParser'
-import { TestContext, TestResult, parseToAstWithTokens, runTests } from '../../../slime/src/test-framework'
+import {parseToAstWithTokens, runTests} from 'slime-test/src/utils/test-framework.ts'
+import type {TestContext, TestResult} from 'slime-test/src/utils/test-framework.ts'
 import OvsParser from '../../src/parser/OvsParser'
 import { OvsCstToSlimeAst } from '../../src/factory/OvsCstToSlimeAstUtil'
 

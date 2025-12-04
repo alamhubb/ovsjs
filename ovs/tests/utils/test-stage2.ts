@@ -8,9 +8,10 @@
  *   npx tsx ovs/tests/utils/test-stage2.ts 10           # 从第10个开始
  *   npx tsx ovs/tests/utils/test-stage2.ts 10 -s        # 从第10个开始，遇错停止
  */
-import { TestContext, TestResult, parseToAst, runTests } from 'slime/src/test-framework.ts'
-import OvsParser from '../../src/parser/OvsParser'
-import { OvsCstToSlimeAst } from '../../src/factory/OvsCstToSlimeAstUtil'
+import {parseToAst, runTests} from 'slime-test/src/utils/test-framework.ts'
+import type {TestContext, TestResult} from 'slime-test/src/utils/test-framework.ts'
+import OvsParser from "../../src/parser/OvsParser.ts";
+import {OvsCstToSlimeAst} from "../../src/factory/OvsCstToSlimeAstUtil.ts";
 
 // ============================================
 // AST 验证工具
@@ -107,7 +108,7 @@ function testStage2(ctx: TestContext): TestResult {
 runTests(testStage2, {
   stageName: 'OVS 阶段2: AST生成测试',
   description: 'CST → AST 转换，验证 AST 结构完整性',
-  ParserClass: OvsParser as any,
+  ParserClass: OvsParser,
   CstToAstClass: OvsCstToSlimeAst,
   startFrom: 1,
   stopOnFail: true,

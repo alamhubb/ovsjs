@@ -37,6 +37,7 @@
   "dependencies": {
     "slime-ast": "^0.1.5",
     "slime-generator": "^0.1.5",
+    "slime-test": "^0.1.5",
     "slime-parser": "^0.1.5",
     "slime-token": "^0.1.5",
     "subhuti": "^0.1.5",
