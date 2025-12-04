@@ -1,9 +1,7 @@
 {
   "private": true,
   "workspaces": [
-    "ovs-lang-server",
-    "ovs-vscode-client",
-    "ovs-vscode-client/client",
+    "ovs-language/*",
     "ovs",
     "subhuti",
     "slime",
