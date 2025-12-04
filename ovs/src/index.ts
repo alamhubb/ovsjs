@@ -140,7 +140,7 @@ function ensureFragmentImport(imports: any[]): any[] {
                     local: SlimeAstUtil.createIdentifier('h')
                 } as SlimeImportSpecifier
             ],
-            SlimeAstUtil.createStringLiteral('vue', undefined, "'vue'")
+            SlimeAstUtil.createStringLiteral('vue')
         )
         return [newImport, ...imports]
     }

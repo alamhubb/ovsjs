@@ -1398,10 +1398,13 @@ class SlimeNodeCreate {
 
 
   createStringLiteral(value: string, loc?: SubhutiSourceLocation, raw?: string): SlimeStringLiteral {
+    // 检查 value 是否已经有引号
+    const hasQuotes = /^['"].*['"]$/.test(value)
+    const cleanValue = value.replace(/^['"]|['"]$/g, '')
     return this.commonLocType({
       type: SlimeNodeType.Literal,
-      value: value.replace(/^['"]|['"]$/g, ''),
-      raw: raw || value,  // 保存原始值（包含引号）
+      value: cleanValue,
+      raw: raw || (hasQuotes ? value : `'${value}'`),  // 如果已有引号就保留，否则自动加引号
       loc: loc
     })
   }
