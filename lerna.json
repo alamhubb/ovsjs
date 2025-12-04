@@ -1,12 +1,13 @@
 {
-	"$schema": "https://raw.githubusercontent.com/lerna-lite/lerna-lite/main/packages/cli/schemas/lerna-schema.json",
-	"npmClient": "pnpm",
-	"packages": [
-        "ovs-language/*",
-		"ovs",
-		"subhuti",
-		"slime",
-		"slime/packages/*"
-	],
-	"version": "0.1.5"
+  "$schema": "https://raw.githubusercontent.com/lerna-lite/lerna-lite/main/packages/cli/schemas/lerna-schema.json",
+  "npmClient": "pnpm",
+  "packages": [
+    "ovs/*",
+    "ovs-language/*",
+    "ovs",
+    "subhuti",
+    "slime",
+    "slime/packages/*"
+  ],
+  "version": "0.1.5"
 }

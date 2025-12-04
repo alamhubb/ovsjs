@@ -2,6 +2,7 @@
   "private": true,
   "workspaces": [
     "ovs-language/*",
+    "ovs/*",
     "ovs",
     "subhuti",
     "slime",
