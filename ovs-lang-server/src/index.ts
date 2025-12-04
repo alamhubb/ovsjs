@@ -1,60 +1,56 @@
 import {
-  createConnection,
-  createServer,
-  createTypeScriptProject,
-  loadTsdkByPath
+    createConnection,
+    createServer,
+    createTypeScriptProject,
+    loadTsdkByPath
 } from '@volar/language-server/node';
-import {LogUtil} from "./logutil";
-
-LogUtil.log('createTypeScriptServices')
-
-import {createTypeScriptServices} from "./typescript";
-import {ovsLanguagePlugin} from "./OvsLanguagePlugin.ts";
+import { LogUtil } from "./logutil";
+import { createTypeScriptServices } from "./typescript";
+import { ovsLanguagePlugin } from "./OvsLanguagePlugin";
 
 const connection = createConnection();
-
-
 const server = createServer(connection);
-
 
 connection.listen();
 
-function getLocalTsdkPath() {
-  let tsdkPath = "C:\\Users\\qinky\\AppData\\Roaming\\npm\\node_modules\\typescript\\lib";
-  // let tsdkPath = "C:\\Users\\qinkaiyuan\\AppData\\Roaming\\npm\\node_modules\\typescript\\lib";
-  return tsdkPath.replace(/\\/g, '/');
-}
-
-LogUtil.log('getLocalTsdkPath')
-
-const tsdkPath = getLocalTsdkPath();
-LogUtil.log('onInitialize')
 connection.onInitialize(params => {
-  LogUtil.log('params')
-  // LogUtil.log(params)
-  try {
-    const tsdk = loadTsdkByPath(tsdkPath, params.locale);
-    const languagePlugins = [ovsLanguagePlugin]
+    LogUtil.log('onInitialize params:');
+    LogUtil.log(params);
 
-    //createTypeScriptServicePlugins
-    const languageServicePlugins = [...createTypeScriptServices(tsdk.typescript)]
-    const tsProject = createTypeScriptProject(
-      tsdk.typescript,
-      tsdk.diagnosticMessages,
-      () => ({
-        languagePlugins: languagePlugins,
-      }))
-    return server.initialize(
-      params,
-      tsProject,
-      [
-        ...languageServicePlugins
-      ],
-    )
-  } catch (e) {
-    LogUtil.log(7777)
-    LogUtil.log(e.message)
-  }
+    try {
+        // 从客户端传递的 initializationOptions 获取 TypeScript SDK 路径
+        const tsdkPath = params.initializationOptions?.typescript?.tsdk;
+
+        if (!tsdkPath) {
+            LogUtil.log('Warning: No tsdk path provided, using fallback');
+        }
+
+        const tsdk = loadTsdkByPath(tsdkPath, params.locale);
+        const languagePlugins = [ovsLanguagePlugin];
+        const languageServicePlugins = [...createTypeScriptServices(tsdk.typescript)];
+
+        const tsProject = createTypeScriptProject(
+            tsdk.typescript,
+            tsdk.diagnosticMessages,
+            () => ({
+                languagePlugins: languagePlugins,
+            })
+        );
+
+        const res = server.initialize(
+            params,
+            tsProject,
+            [...languageServicePlugins],
+        );
+
+        LogUtil.log('Server initialized with capabilities:');
+        LogUtil.log(res.capabilities);
+        return res;
+    } catch (e) {
+        LogUtil.log('Error during initialization:');
+        LogUtil.log(e.message);
+        throw e;
+    }
 });
 
 connection.onInitialized(server.initialized);

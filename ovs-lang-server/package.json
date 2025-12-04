@@ -1,14 +1,15 @@
 {
   "name": "ovs-lsp",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "OVS Language Server",
+  "main": "dist/ovsserver.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "run": "tsx src/index.js"
+    "build": "tsc -b",
+    "watch": "tsc -b -w",
+    "dev": "tsx src/ovsserver.ts --stdio"
   },
   "bin": {
-    "ovs-lsp": "src/index.js"
+    "ovs-lsp": "dist/ovsserver.js"
   },
   "keywords": [],
   "author": "",

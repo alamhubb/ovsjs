@@ -1,37 +1,28 @@
 {
   "compilerOptions": {
-    "module": "ES2022",
+    "module": "CommonJS",
     "useDefineForClassFields": true,
     "moduleResolution": "Node",
-    "allowImportingTsExtensions": true,
-    "noEmit": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "declaration": true,
     "target": "ESNext",
     "strict": false,
     "esModuleInterop": true,
+    "skipLibCheck": true,
     "lib": [
-      "ESNext",
-      "DOM"
+      "ESNext"
     ],
     "types": [
-      "node",
-      "babel"
-    ],
-    "plugins": [
-      {
-        "name": "typescript-todo-or-die-plugin",
-        "options": {
-          "after_date": {
-            "warn": "1w"
-          },
-          "when": {
-            "warn": "1p"
-          }
-        },
-        "additionalKeywords": [
-          "FIX",
-          "TODO_OR_DIE"
-        ]
-      }
+      "node"
     ]
-  }
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "tests"
+  ]
 }

@@ -3,70 +3,66 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import * as path from 'path';
-import { workspace, ExtensionContext } from 'vscode';
-import { createLabsInfo } from '@volar/vscode';
-
+import * as serverProtocol from '@volar/language-server/protocol';
+import { createLabsInfo, getTsdk } from '@volar/vscode';
 import {
   LanguageClient,
   LanguageClientOptions,
   ServerOptions,
-  TransportKind
-} from 'vscode-languageclient/node';
+  TransportKind,
+  BaseLanguageClient
+} from '@volar/vscode/node';
+import * as vscode from 'vscode';
 
-let client: LanguageClient;
+let client: BaseLanguageClient;
 
-export function activate(context: ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
+  // 从 node_modules 中找到 server 模块
+  const serverModule = vscode.Uri.joinPath(context.extensionUri, 'node_modules', 'ovs-lsp', 'dist', 'ovsserver.js');
 
-  const serverModule = "D:/project/qkyproject/test-volar/langServer/src/ovsserver.ts";
+  const runOptions = { execArgv: <string[]>[] };
+  const debugOptions = { execArgv: ['--nolazy', '--inspect=' + 6009] };
 
-  // If the extension is launched in debug mode then the debug server options are used
-  // Otherwise the run options are used
   const serverOptions: ServerOptions = {
     run: {
-      command: 'tsx',
-      args: [serverModule, '--stdio'],
-      transport: TransportKind.stdio,
-      options: { shell: true }
+      module: serverModule.fsPath,
+      transport: TransportKind.ipc,
+      options: runOptions
     },
     debug: {
-      command: 'tsx',
-      args: [serverModule, '--stdio'],
-      transport: TransportKind.stdio,
-      options: { shell: true }
-    }
+      module: serverModule.fsPath,
+      transport: TransportKind.ipc,
+      options: debugOptions
+    },
   };
 
-  // Options to control the language client
+  // 获取用户 VSCode 中的 TypeScript SDK 路径
+  const tsdk = await getTsdk(context);
+
   const clientOptions: LanguageClientOptions = {
-    // Register the server for plain text documents
     documentSelector: [{ scheme: 'file', language: 'ovs' }],
-    synchronize: {
-      // Notify the server about file changes to '.clientrc files contained in the workspace
-      fileEvents: workspace.createFileSystemWatcher('**/.clientrc')
-    }
+    initializationOptions: {
+      typescript: {
+        tsdk: tsdk?.tsdk,
+      },
+    },
   };
 
-  // Create the language client and start the client.
   client = new LanguageClient(
-    'languageServerExample',
-    'Language Server Example',
+    'ovs-language-server',
+    'OVS Language Server',
     serverOptions,
-    clientOptions
+    clientOptions,
   );
 
-  // Start the client. This will also launch the server
-  client.start();
+  await client.start();
 
-  // Register with Volar Labs
-  const labsInfo = createLabsInfo();
+  // 支持 Volar Labs
+  const labsInfo = createLabsInfo(serverProtocol);
   labsInfo.addLanguageClient(client);
   return labsInfo.extensionExports;
 }
 
 export function deactivate(): Thenable<void> | undefined {
-  if (!client) {
-    return undefined;
-  }
-  return client.stop();
+  return client?.stop();
 }

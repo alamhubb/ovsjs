@@ -72,6 +72,7 @@
   },
   "dependencies": {
     "@volar/vscode": "^2.4.23",
+    "ovs-lsp": "workspace:*",
     "vscode-languageclient": "^9.0.1"
   },
   "devDependencies": {
