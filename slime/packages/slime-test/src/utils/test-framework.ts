@@ -9,6 +9,7 @@ import * as path from 'path'
 import {performance} from 'perf_hooks'
 import SlimeParser from "slime-parser/src/language/es2025/SlimeParser.ts"
 import {SlimeCstToAst} from "slime-parser/src/language/SlimeCstToAstUtil.ts"
+import {fileURLToPath} from "url";
 
 // ============================================
 // Parser 类型定义（支持自定义 Parser）
@@ -297,6 +298,8 @@ export async function runTests(
     testFn: (ctx: TestContext) => TestResult | Promise<TestResult>,
     options: TestRunnerOptions
 ): Promise<TestStats> {
+    const __filename = fileURLToPath(import.meta.url)
+    const __dirname = path.dirname(__filename)
     const {
         stageName, description,
         casesDir = path.join(__dirname, '../babel'),
