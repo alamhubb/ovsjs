@@ -6,7 +6,8 @@
   "types": "dist/index.d.mts",
   "license": "MIT",
   "scripts": {
-    "build": "tsdown",
+    "build": "rollup -c rollup.config.mjs",
+    "build:tsdown": "tsdown",
     "prepublishOnly": "npm run build"
   },
   "homepage": "https://github.com/alamhubb/ovs",
@@ -35,12 +36,6 @@
   "author": "alamhubb",
   "description": "A technology similar to JSX, but unlike JSX which still uses XML syntax, OVS uses OOP syntax similar to Flutter and SwiftUI to develop UI.",
   "dependencies": {
-    "slime-ast": "^0.1.5",
-    "slime-generator": "^0.1.5",
-    "slime-test": "^0.1.5",
-    "slime-parser": "^0.1.5",
-    "slime-token": "^0.1.5",
-    "subhuti": "^0.1.5",
     "@dagrejs/dagre": "^2.0.0",
     "@dagrejs/graphlib": "^2.2.4",
     "@dagrejs/graphlib-dot": "^1.0.2",
@@ -49,9 +44,20 @@
     "dagre-d3": "^0.6.4",
     "fast-cartesian": "^9.0.1",
     "lru-cache": "^11.0.0",
-    "mnemonist": "^0.40.3"
+    "mnemonist": "^0.40.3",
+    "slime-ast": "^0.1.5",
+    "slime-generator": "^0.1.5",
+    "slime-parser": "^0.1.5",
+    "slime-test": "^0.1.5",
+    "slime-token": "^0.1.5",
+    "subhuti": "^0.1.5"
   },
   "devDependencies": {
+    "@rollup/plugin-node-resolve": "^16.0.3",
+    "@swc/core": "^1.15.3",
+    "rollup": "^4.53.3",
+    "rollup-plugin-dts": "^6.3.0",
+    "rollup-plugin-swc3": "^0.12.1",
     "tsdown": "0.17.0-beta.6"
   },
   "bugs": {
