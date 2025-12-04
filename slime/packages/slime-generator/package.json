@@ -15,10 +15,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "slime-ast": "workspace:*",
-    "slime-parser": "workspace:*",
-    "slime-token": "workspace:*",
-    "subhuti": "workspace:*"
+    "slime-ast": "^0.1.5",
+    "slime-parser": "^0.1.5",
+    "slime-token": "^0.1.5",
+    "subhuti": "^0.1.5"
   },
   "devDependencies": {
     "tsdown": "0.17.0-beta.6"

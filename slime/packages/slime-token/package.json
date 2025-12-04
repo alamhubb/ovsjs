@@ -16,7 +16,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "subhuti": "workspace:*"
+    "subhuti": "^0.1.5"
   },
   "devDependencies": {
     "tsdown": "0.17.0-beta.6"

@@ -16,8 +16,8 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "subhuti": "workspace:*",
-    "slime-token": "workspace:*"
+    "subhuti": "^0.1.5",
+    "slime-token": "^0.1.5"
   },
   "devDependencies": {
     "@types/estree": "1.0.6",
