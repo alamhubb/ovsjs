@@ -7,7 +7,8 @@
  *   npx tsx ovs/tests/utils/test-stage1.ts 10           # 从第10个开始
  *   npx tsx ovs/tests/utils/test-stage1.ts 10 -s        # 从第10个开始，遇错停止
  */
-import { TestContext, TestResult, parseToCst, runTests } from 'slimejs/tests/utils/test-framework.ts'
+import { parseToCst, runTests } from 'slimejs/tests/utils/test-framework.ts'
+import type {TestContext, TestResult} from 'slimejs/tests/utils/test-framework.ts'
 
 // 阶段1测试逻辑：解析代码生成 CST
 function testStage1(ctx: TestContext): TestResult {
