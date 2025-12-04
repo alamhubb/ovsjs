@@ -1,0 +1,26 @@
+# Source files
+ovs-vscode-client/src/**
+ovs-lang-server/src/**
+ovs-lang-server/tests/**
+ovs-intellij-client/**
+
+# Config files
+**/*.ts
+!dist/**
+tsconfig.json
+tsdown.config.ts
+.gitignore
+
+# Development files
+node_modules/**
+.vscode/**
+*.md
+**/*.map
+
+# Test files
+**/test-*.mjs
+**/test-*.js
+**/test-*.txt
+**/debug-*.ts
+**/output.txt
+
