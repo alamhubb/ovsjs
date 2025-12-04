@@ -9,6 +9,8 @@
  */
 import { parseToCst, runTests } from 'slimejs/tests/utils/test-framework.ts'
 import type {TestContext, TestResult} from 'slimejs/tests/utils/test-framework.ts'
+import OvsParser from "../../src/parser/OvsParser.ts";
+import {OvsCstToSlimeAst} from "../../src/factory/OvsCstToSlimeAstUtil.ts";
 
 // 阶段1测试逻辑：解析代码生成 CST
 function testStage1(ctx: TestContext): TestResult {
@@ -30,7 +32,7 @@ function testStage1(ctx: TestContext): TestResult {
 runTests(testStage1, {
     stageName: 'OVS 阶段1: CST生成测试',
     description: '词法分析 → 语法分析',
-    ParserClass: OvsParser as any,
+    ParserClass: OvsParser,
     CstToAstClass: OvsCstToSlimeAst,
     startFrom: 1,
     stopOnFail: true,

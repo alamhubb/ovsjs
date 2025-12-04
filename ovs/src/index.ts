@@ -8,7 +8,6 @@ import {
     type SlimeProgram,
     type SlimeStatement,
     type SlimeExpressionStatement,
-    type SlimeCallExpression,
     type SlimeImportDeclaration,
     type SlimeImportSpecifier,
     SlimeProgramSourceType
@@ -17,33 +16,6 @@ import SlimeAstUtil from "slime-ast/src/SlimeNodeCreate.ts";
 import SlimeTokenCreate from "slime-ast/src/SlimeTokenCreate.ts";
 import {SlimeNodeType} from "slime-ast/src/SlimeNodeType.ts";
 import SubhutiMatchToken from "subhuti/src/struct/SubhutiMatchToken.ts";
-
-// 导出子模块
-export { default as OvsParser } from "./parser/OvsParser.ts";
-export * from "./factory/OvsCstToSlimeAstUtil.ts";
-
-export interface SourceMapSourceGenerateIndexLength {
-    source: number[]
-    generate: number[]
-    length: number[]
-    generateLength: number[]
-}
-
-/**
- * 判断 statement 是否是声明语句
- * @param node AST 节点
- * @returns 是否是声明
- */
-function isDeclaration(node: any): boolean {
-    return [
-        SlimeNodeType.VariableDeclaration,    // const/let/var
-        SlimeNodeType.FunctionDeclaration,
-        SlimeNodeType.ClassDeclaration,
-        SlimeNodeType.ImportDeclaration,
-        SlimeNodeType.ExportNamedDeclaration,
-        SlimeNodeType.ExportDefaultDeclaration,
-    ].includes(node.type)
-}
 
 /**
  * 检查源代码是否包含响应式表达式 #{}
