@@ -83,7 +83,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import {fileURLToPath} from 'url';
 import fastCartesian from "fast-cartesian";
-import {Graph, alg} from '@dagrejs/graphlib'
+import graphlib from '@dagrejs/graphlib'
+const {Graph, alg} = graphlib
 
 /**
  * 左递归错误类型
