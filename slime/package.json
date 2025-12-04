@@ -1,5 +1,5 @@
 {
-  "name": "slime-main",
+  "name": "slime",
   "version": "0.0.1",
   "description": "Slime库测试和调试工具",
   "scripts": {
