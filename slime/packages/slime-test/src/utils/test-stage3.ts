@@ -11,7 +11,7 @@
  */
 import SlimeGenerator from 'slime-generator/src/SlimeGenerator'
 import SubhutiMatchToken from 'subhuti/src/struct/SubhutiMatchToken'
-import { runTests, TestContext, TestResult, parseToAstWithTokens } from './test-framework'
+import { runTests, TestContext, TestResult, parseToAstWithTokens } from '../../src/test-framework'
 
 // ============================================
 // Token 比较工具

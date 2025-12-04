@@ -8,7 +8,7 @@
  *   npx tsx ovs/tests/utils/test-stage2.ts 10           # 从第10个开始
  *   npx tsx ovs/tests/utils/test-stage2.ts 10 -s        # 从第10个开始，遇错停止
  */
-import { TestContext, TestResult, parseToAst, runTests } from 'slimejs/tests/utils/test-framework'
+import { TestContext, TestResult, parseToAst, runTests } from 'slime/src/test-framework.ts'
 import OvsParser from '../../src/parser/OvsParser'
 import { OvsCstToSlimeAst } from '../../src/factory/OvsCstToSlimeAstUtil'
 

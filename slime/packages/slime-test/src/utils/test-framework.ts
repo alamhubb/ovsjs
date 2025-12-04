@@ -7,8 +7,8 @@
 import * as fs from 'fs'
 import * as path from 'path'
 import { performance } from 'perf_hooks'
-import SlimeParser from 'slime-parser/src/language/es2025/SlimeParser'
-import { SlimeCstToAst } from 'slime-parser/src/language/SlimeCstToAstUtil'
+import {SlimeCstToAst} from "../packages/slime-parser/src";
+import SlimeParser from "../packages/slime-parser/src/language/es2025/SlimeParser";
 
 // ============================================
 // Parser 类型定义（支持自定义 Parser）
@@ -36,9 +36,6 @@ export const DefaultParserClass: ParserConstructor = SlimeParser
 
 /** 默认 CstToAst 类 */
 export const DefaultCstToAstClass: CstToAstConstructor = SlimeCstToAst
-
-// 导出默认类（向后兼容）
-export { SlimeParser, SlimeCstToAst }
 
 // ============================================
 // Parser 工具（供各阶段测试使用）
