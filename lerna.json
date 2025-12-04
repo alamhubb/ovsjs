@@ -2,8 +2,12 @@
 	"$schema": "https://raw.githubusercontent.com/lerna-lite/lerna-lite/main/packages/cli/schemas/lerna-schema.json",
 	"npmClient": "pnpm",
 	"packages": [
-		"extensions/*",
-		"packages/*"
+		"ovs-lang-server",
+		"ovs-vscode-client",
+		"ovs",
+		"subhuti",
+		"slime",
+		"slime/packages/*"
 	],
-	"version": "2.4.23"
+	"version": "0.1.2"
 }

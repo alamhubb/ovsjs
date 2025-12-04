@@ -17,27 +17,26 @@ import * as vscode from 'vscode';
 let client: BaseLanguageClient;
 
 export async function activate(context: vscode.ExtensionContext) {
-  // 从 node_modules 中找到 server 模块
-  const serverModule = vscode.Uri.joinPath(context.extensionUri, 'node_modules', 'ovs-lsp', 'dist', 'index.js');
-
-  const runOptions = { execArgv: <string[]>[] };
-  const debugOptions = { execArgv: ['--nolazy', '--inspect=' + 6009] };
-
-  const serverOptions: ServerOptions = {
-    run: {
-      module: serverModule.fsPath,
-      transport: TransportKind.ipc,
-      options: runOptions
-    },
-    debug: {
-      module: serverModule.fsPath,
-      transport: TransportKind.ipc,
-      options: debugOptions
-    },
-  };
+  // 从 node_modules 中找到 server 的 .ts 入口文件
+  const serverModule = vscode.Uri.joinPath(context.extensionUri, 'node_modules', 'ovs-lsp', 'src', 'index.ts');
 
   // 获取用户 VSCode 中的 TypeScript SDK 路径
   const tsdk = await getTsdk(context);
+
+  const serverOptions: ServerOptions = {
+    run: {
+      command: 'npx',
+      args: ['tsx', serverModule.fsPath, '--stdio'],
+      transport: TransportKind.stdio,
+      options: { shell: true }
+    },
+    debug: {
+      command: 'npx',
+      args: ['tsx', serverModule.fsPath, '--stdio'],
+      transport: TransportKind.stdio,
+      options: { shell: true }
+    },
+  };
 
   const clientOptions: LanguageClientOptions = {
     documentSelector: [{ scheme: 'file', language: 'ovs' }],
