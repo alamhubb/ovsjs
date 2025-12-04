@@ -1,5 +1,5 @@
 {
-  "name": "ovs-lsp",
+  "name": "ovs-lang-server",
   "version": "1.0.0",
   "description": "OVS Language Server",
   "main": "src/index.ts",
@@ -9,7 +9,7 @@
     "watch": "tsc -b -w"
   },
   "bin": {
-    "ovs-lsp": "src/index.ts"
+    "ovs-lang-server": "src/index.ts"
   },
   "keywords": [],
   "author": "",
