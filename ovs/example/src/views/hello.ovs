@@ -5,12 +5,7 @@ import {div,h1,h2,p} from '../utils/htmlElements';
 const appName = "Hello OVS"
 const version = "1.0"
 
-let a = 1
-let b = a
-let c = b
-
 div() {
-  h2 { 'Hello OVS' }
   h1({
        onClick: () => {
          console.log('clicked')
@@ -18,7 +13,7 @@ div() {
      }) {
 
   #{
-  let a = ref(0)
+    let a = ref(0)
     const timer = setInterval(() => {
       a.value = a.value+1
       console.log(a)
