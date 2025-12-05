@@ -7,7 +7,8 @@
     "subhuti",
     "slime",
     "slime/packages/*",
-    "packages/*"
+    "packages/*",
+    "create-ovs"
   ],
   "scripts": {
     "build": "tsc -b",

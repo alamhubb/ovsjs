@@ -1,0 +1,49 @@
+{
+  "name": "create-ovs",
+  "version": "0.1.8",
+  "description": "🛠️ Create OVS projects powered by Vite + Vue",
+  "type": "module",
+  "main": "dist/index.mjs",
+  "bin": {
+    "create-ovs": "dist/index.mjs"
+  },
+  "files": [
+    "dist",
+    "template"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "prepublishOnly": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alamhubb/ovsjs.git"
+  },
+  "keywords": [
+    "ovs",
+    "create-ovs",
+    "vue",
+    "vite",
+    "scaffold",
+    "cli"
+  ],
+  "author": "alamhubb",
+  "license": "MIT",
+  "homepage": "https://github.com/alamhubb/ovsjs",
+  "bugs": {
+    "url": "https://github.com/alamhubb/ovsjs/issues"
+  },
+  "dependencies": {
+    "@clack/prompts": "^0.11.0",
+    "picocolors": "^1.1.1",
+    "cross-spawn": "^7.0.6"
+  },
+  "devDependencies": {
+    "@types/cross-spawn": "^6.0.6",
+    "@types/node": "^22.8.6",
+    "tsdown": "0.17.0-beta.6",
+    "typescript": "^5.6.3"
+  }
+}
+
