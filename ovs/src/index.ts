@@ -29,6 +29,60 @@ function hasReactiveExpression(sourceCode: string): boolean {
 }
 
 /**
+ * 确保有 defineOvsComponent 的导入
+ * @param imports 现有的 import 语句数组
+ * @returns 更新后的 import 语句数组
+ */
+function ensureDefineOvsComponentImport(imports: any[]): any[] {
+    // 检查是否已经有 ReactiveVNode 的导入
+    let reactiveVNodeImport: SlimeImportDeclaration | null = null
+    for (const imp of imports) {
+        if (imp.type === SlimeNodeType.ImportDeclaration) {
+            const source = (imp as SlimeImportDeclaration).source
+            // 检查是否是 ReactiveVNode 相关的导入路径
+            if (source.value && (
+                source.value.includes('ReactiveVNode') ||
+                source.value.includes('reactiveVNode')
+            )) {
+                reactiveVNodeImport = imp as SlimeImportDeclaration
+                break
+            }
+        }
+    }
+
+    if (reactiveVNodeImport) {
+        // 已有 ReactiveVNode 导入，检查是否有 defineOvsComponent
+        const specifiers = reactiveVNodeImport.specifiers || []
+        const hasDefineOvsComponent = specifiers.some((s: any) =>
+            s.type === SlimeNodeType.ImportSpecifier &&
+            (s.imported?.name === 'defineOvsComponent' || s.local?.name === 'defineOvsComponent')
+        )
+
+        if (!hasDefineOvsComponent) {
+            specifiers.push({
+                type: SlimeNodeType.ImportSpecifier,
+                imported: SlimeAstUtil.createIdentifier('defineOvsComponent'),
+                local: SlimeAstUtil.createIdentifier('defineOvsComponent')
+            })
+        }
+        return imports
+    } else {
+        // 没有 ReactiveVNode 导入，创建新的
+        const newImport = SlimeAstUtil.createImportDeclaration(
+            [
+                {
+                    type: SlimeNodeType.ImportSpecifier,
+                    imported: SlimeAstUtil.createIdentifier('defineOvsComponent'),
+                    local: SlimeAstUtil.createIdentifier('defineOvsComponent')
+                } as SlimeImportSpecifier
+            ],
+            SlimeAstUtil.createStringLiteral('../utils/ReactiveVNode')
+        )
+        return [newImport, ...imports]
+    }
+}
+
+/**
  * 创建 Fragment 包裹的表达式: h(Fragment, null, [...])
  * @param expressions 子表达式数组
  * @returns h(Fragment, null, [...]) 调用表达式
@@ -190,22 +244,35 @@ function wrapTopLevelExpressions(ast: SlimeProgram, sourceCode: string): SlimePr
     }
 
     if (needsIIFE) {
-        // 有 #{}：使用 IIFE 包裹 declarations + return expr
+        // 有 #{}：使用 defineOvsComponent 包裹
+        // 生成: export default defineOvsComponent((props) => { ...declarations... return expr })
+
+        // 添加 defineOvsComponent 导入
+        imports = ensureDefineOvsComponentImport(imports)
+
+        // 创建 return 语句
         const returnStmt = SlimeAstUtil.createReturnStatement(finalExpr)
         const allStatements = [...declarations, returnStmt]
 
+        // 创建块语句 { ...declarations... return expr }
         const blockStatement = SlimeAstUtil.createBlockStatement(allStatements)
-        const functionExpression = SlimeAstUtil.createFunctionExpression(
-            blockStatement,
-            null,  // id
-            [],    // params
-            false, // generator
-            false  // async
-        )
-        const parenExpr = SlimeAstUtil.createParenthesizedExpression(functionExpression)
-        const iife = SlimeAstUtil.createCallExpression(parenExpr, [])
 
-        const exportDefault = SlimeAstUtil.createExportDefaultDeclaration(iife)
+        // 创建箭头函数 (props) => { ... }
+        const propsParam = SlimeAstUtil.createIdentifier('props')
+        const arrowFunction = SlimeAstUtil.createArrowFunctionExpression(
+            blockStatement,
+            [propsParam],
+            false,  // expression: false 因为是块语句
+            false   // async
+        )
+
+        // 创建 defineOvsComponent((props) => { ... })
+        const defineOvsCall = SlimeAstUtil.createCallExpression(
+            SlimeAstUtil.createIdentifier('defineOvsComponent'),
+            [arrowFunction]
+        )
+
+        const exportDefault = SlimeAstUtil.createExportDefaultDeclaration(defineOvsCall)
         return SlimeAstUtil.createProgram(
             [...imports, exportDefault] as any,
             SlimeProgramSourceType.Module

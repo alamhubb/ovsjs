@@ -44,10 +44,23 @@ function mapChildrenToVNodes(children: unknown): any {
  * factory 返回 render 函数 () => VNode
  */
 export function defineOvsComponent(
-    factory: (props: Record<string, any>) => (() => VNode)
+    factory: (props: Record<string, any>) => any
 ) {
     const component = defineComponent((props) => {
-        return factory(props)
+        const result = factory(props)
+
+        // 如果返回的是组件（defineComponent），用 h() 渲染它
+        if (isDefineComponent(result)) {
+            return () => h(result)
+        }
+
+        // 如果返回的是函数，当作 render 函数
+        if (typeof result === 'function') {
+            return result
+        }
+
+        // 其他情况，包装成 render 函数
+        return () => result
     })
     // 添加标记，方便识别
     ;(component as any).__isOvsComponent = true
@@ -96,14 +109,14 @@ export function createComponentVNode(
 
 /**
  * 创建元素 VNode
- * 内部使用 defineOvsComponent
+ * 直接使用 defineComponent（不经过 defineOvsComponent，避免重复判断）
  */
 export function createElementVNode(
     type: string,
     props: Record<string, any> = {},
     children: any = null
 ) {
-    return defineOvsComponent((componentProps) => {
+    const component = defineComponent((componentProps) => {
         const state: ReactiveVNodeState = reactive({
             type,
             props: {...ensureReactiveProps(props), ...componentProps},
@@ -112,4 +125,6 @@ export function createElementVNode(
 
         return () => h(state.type, state.props, mapChildrenToVNodes(state.children))
     })
+    ;(component as any).__isOvsComponent = true
+    return component
 }
