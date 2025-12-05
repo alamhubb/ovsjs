@@ -1,12 +1,15 @@
-import {div, h1, h3, a} from '../utils/htmlElements';
-import {defineComponent, ref} from 'vue';
+import { div } from '../utils/htmlElements';
+import { ref } from 'vue';
+import { defineOvsComponent } from '../utils/ReactiveVNode';
 
-export default defineComponent((props) => {
+export default defineOvsComponent((props) => {
     const a1 = ref(0)
 
-    // 定时器只创建一次
     setInterval(() => {
         a1.value++
     }, 1000)
-    return div({}, a1.value);
+
+    return div({
+        onClick: () => a1.value = 0
+    }, a1)
 })

@@ -93,3 +93,16 @@ export function createElementVNode(
     return () => h(state.type, state.props, mapChildrenToVNodes(state.children))
   })
 }
+
+/**
+ * 定义 OVS 组件
+ * 每个实例调用一次 factory，实现状态独立
+ */
+export function defineOvsComponent(
+  factory: (props: Record<string, any>) => ReturnType<typeof createElementVNode>
+) {
+  return defineComponent((props) => {
+    const vnode = factory(props)
+    return () => h(vnode)
+  })
+}
