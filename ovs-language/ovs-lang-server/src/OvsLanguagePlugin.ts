@@ -4,7 +4,7 @@ import ts from 'typescript';
 import {URI} from 'vscode-uri';
 import {LogUtil} from "./logutil.js";
 import SlimeCodeMapping from "slime-generator/src/SlimeCodeMapping";
-import {vitePluginOvsTransform} from "ovsjs";
+import {vitePluginOvsTransform} from "ovs-compiler";
 
 // OVS 运行时导入声明（注入到每个 .ovs 文件的虚拟代码头部）
 // 这样 TypeScript 会加载 ovsjs 的类型，declare global 中的 HTML 标签声明就会生效
