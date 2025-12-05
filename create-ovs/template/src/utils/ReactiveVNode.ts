@@ -71,14 +71,14 @@ export function defineOvsComponent(
 
 /**
  * 创建组件 VNode
- * 内部使用 defineOvsComponent
+ * 直接使用 defineComponent（不经过 defineOvsComponent，避免重复判断）
  */
 export function createComponentVNode(
     componentFn: OvsComponent | Component,
     props: Record<string, any> = {},
     children: any = null
 ) {
-    return defineOvsComponent((componentProps) => {
+    const component = defineComponent((componentProps) => {
         const state: ReactiveVNodeState = reactive({
             type: componentFn,
             props: {...ensureReactiveProps(props), ...componentProps},
@@ -86,25 +86,17 @@ export function createComponentVNode(
         }) as ReactiveVNodeState
 
         return () => {
-            // 如果是 OVS 组件函数
             if (typeof state.type === 'function') {
+                // OVS 组件函数：调用它获取组件定义，直接渲染（组件内部已包含 state）
                 const result = (state.type as OvsComponent)(state)
-
-                // 如果返回组件定义，渲染它
-                if (isDefineComponent(result)) {
-                    return h(result as Component, state.props, mapChildrenToVNodes(state.children))
-                }
-
-                // 如果返回 VNode，直接使用
-                if (result && typeof result === 'object' && 'type' in result) {
-                    return result as VNode
-                }
+                return h(result as Component)
             }
-
-            // Fallback 逻辑
-            return h(state.type as any, state.props, mapChildrenToVNodes(state.children))
+            // 普通 Vue 组件：直接渲染
+            return h(state.type as Component, state.props, mapChildrenToVNodes(state.children))
         }
     })
+    ;(component as any).__isOvsComponent = true
+    return component
 }
 
 /**
