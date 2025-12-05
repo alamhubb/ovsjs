@@ -7,9 +7,7 @@ import HelloWorld from './components/HelloWorld.ts'
     <img alt="Vue logo" class="logo" src="./assets/logo.png" width="125" height="125" />
 
     <div class="wrapper">
-<!--      <component :is="HelloWorld.toVnode()" />-->
-      <hello-world msg="ovs"></hello-world>
-      <hello-world msg="ovs"></hello-world>
+      <component :is="HelloWorld" />
     </div>
   </header>
 </template>
