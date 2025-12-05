@@ -1,19 +1,11 @@
 import {h, ref} from 'vue'
 
-// 用 IIFE 包裹，返回一个工厂函数
-const createComponent = (function () {
-    // 每次调用都创建新的状态 —— 独立！
-    let a1 = ref(0)
-    const timer = setInterval(() => {
-        a1.value = a1.value + 1
+export default (function () {
+    let a1 = ref(0);
+    setInterval(() => {
+        a1.value++
     }, 1000)
-
-    return h('div', {
-        onClick() {
-            a1.value = 0
-        }
-    }, [a1.value])
-})()
-
-// 使用方式
-export default createComponent
+    return (function () {
+        return h('div', a1.value);
+    })();
+})();
