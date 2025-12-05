@@ -6,10 +6,6 @@ import {LogUtil} from "./logutil.js";
 import SlimeCodeMapping from "slime-generator/src/SlimeCodeMapping";
 import {vitePluginOvsTransform} from "ovs-compiler";
 
-// OVS 运行时导入声明（注入到每个 .ovs 文件的虚拟代码头部）
-// 这样 TypeScript 会加载 ovsjs 的类型，declare global 中的 HTML 标签声明就会生效
-const OVS_RUNTIME_IMPORT = `import { $OvsHtmlTag, defineOvsComponent } from 'ovsjs';\n`;
-
 export const ovsLanguagePlugin: LanguagePlugin<URI> = {
     getLanguageId(uri) {
         if (uri.path.endsWith('.ovs')) {
@@ -155,29 +151,14 @@ export class OvsVirtualCode implements VirtualCode {
 
         LogUtil.log('Source code:')
         LogUtil.log(styleText)
-
-        // 在虚拟代码头部添加 OVS 运行时导入
-        // 这样 TypeScript 会加载 ovsjs 的类型，declare global 中的 HTML 标签声明就会生效
-        const prefixLength = OVS_RUNTIME_IMPORT.length
-        const finalCode = OVS_RUNTIME_IMPORT + newCode
-
-        LogUtil.log('Generated code (with OVS runtime import):')
-        LogUtil.log(finalCode)
-
-        // 调整 mapping 偏移量，补偿添加的前缀
-        const adjustedOffsets = offsets.map(item => ({
-            original: item.original,
-            generated: {
-                offset: item.generated.offset + prefixLength,
-                length: item.generated.length
-            }
-        }))
+        LogUtil.log('Generated code:')
+        LogUtil.log(newCode)
 
         const mappings = [{
-            sourceOffsets: adjustedOffsets.map(item => item.original.offset),
-            generatedOffsets: adjustedOffsets.map(item => item.generated.offset),
-            lengths: adjustedOffsets.map(item => item.original.length),
-            generatedLengths: adjustedOffsets.map(item => item.generated.length),
+            sourceOffsets: offsets.map(item => item.original.offset),
+            generatedOffsets: offsets.map(item => item.generated.offset),
+            lengths: offsets.map(item => item.original.length),
+            generatedLengths: offsets.map(item => item.generated.length),
             data: {
                 completion: true,
                 format: true,
@@ -191,8 +172,8 @@ export class OvsVirtualCode implements VirtualCode {
             id: 'ovsts',
             languageId: 'typescript',
             snapshot: {
-                getText: (start, end) => finalCode.substring(start, end),
-                getLength: () => finalCode.length,
+                getText: (start, end) => newCode.substring(start, end),
+                getLength: () => newCode.length,
                 getChangeRange: () => undefined,
             },
             mappings: mappings,
