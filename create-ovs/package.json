@@ -34,13 +34,8 @@
   "bugs": {
     "url": "https://github.com/alamhubb/ovsjs/issues"
   },
-  "dependencies": {
-    "@clack/prompts": "^0.11.0",
-    "picocolors": "^1.1.1",
-    "cross-spawn": "^7.0.6"
-  },
+  "dependencies": {},
   "devDependencies": {
-    "@types/cross-spawn": "^6.0.6",
     "@types/node": "^22.8.6",
     "tsdown": "0.17.0-beta.6",
     "typescript": "^5.6.3"

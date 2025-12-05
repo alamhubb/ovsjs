@@ -1,6 +1,6 @@
 {
   "name": "ovsjs",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "type": "module",
   "main": "dist/index.mjs",
   "types": "dist/index.d.mts",
@@ -48,7 +48,6 @@
     "slime-ast": "^0.1.8",
     "slime-generator": "^0.1.8",
     "slime-parser": "^0.1.8",
-    "slime-test": "^0.1.8",
     "slime-token": "^0.1.8",
     "subhuti": "^0.1.8"
   },
@@ -58,6 +57,7 @@
     "rollup": "^4.53.3",
     "rollup-plugin-dts": "^6.3.0",
     "rollup-plugin-swc3": "^0.12.1",
+    "slime-test": "^0.1.8",
     "tsdown": "0.17.0-beta.6"
   },
   "bugs": {

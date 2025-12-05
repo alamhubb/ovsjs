@@ -1,38 +1,26 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import spawn from 'cross-spawn'
-import { intro, outro, text, confirm, spinner, isCancel, cancel } from '@clack/prompts'
-import pc from 'picocolors'
-
-const { red, green, cyan, bold, dim } = pc
+import * as readline from 'node:readline'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
+// 颜色输出
+const green = (text: string) => `\x1b[32m${text}\x1b[0m`
+const cyan = (text: string) => `\x1b[36m${text}\x1b[0m`
+const bold = (text: string) => `\x1b[1m${text}\x1b[0m`
+const dim = (text: string) => `\x1b[2m${text}\x1b[0m`
+
 async function main() {
   console.log()
-  intro(bold(cyan('🚀 Create OVS Project')))
+  console.log(cyan('┌  ') + bold('OVS - A declarative UI syntax without JSX'))
+  console.log(cyan('│'))
 
-  // 获取命令行参数中的项目名
+  // 获取项目名
   let projectName = process.argv[2]
 
   if (!projectName) {
-    const result = await text({
-      message: 'Project name:',
-      placeholder: 'my-ovs-app',
-      defaultValue: 'my-ovs-app',
-      validate: (value) => {
-        if (!value || value.trim().length === 0) {
-          return 'Project name is required'
-        }
-      }
-    })
-
-    if (isCancel(result)) {
-      cancel(red('✖') + ' Operation cancelled')
-      process.exit(0)
-    }
-    projectName = result as string
+    projectName = await prompt('│  Project name: ', 'my-ovs-app')
   }
 
   const targetDir = path.resolve(process.cwd(), projectName)
@@ -41,171 +29,81 @@ async function main() {
   if (fs.existsSync(targetDir)) {
     const files = fs.readdirSync(targetDir)
     if (files.length > 0) {
-      const shouldOverwrite = await confirm({
-        message: `Directory "${projectName}" is not empty. Overwrite?`,
-        initialValue: false
-      })
-
-      if (isCancel(shouldOverwrite) || !shouldOverwrite) {
-        cancel(red('✖') + ' Operation cancelled')
+      const overwrite = await promptConfirm(`│  Directory "${projectName}" is not empty. Overwrite?`)
+      if (!overwrite) {
+        console.log(cyan('│'))
+        console.log(cyan('└  ') + 'Operation cancelled')
         process.exit(0)
       }
+      // 清空目录
+      fs.rmSync(targetDir, { recursive: true, force: true })
     }
   }
 
-  // Step 1: 调用 create-vue
-  const s = spinner()
-  s.start('Creating Vue project with create-vue...')
+  console.log(cyan('│'))
+  console.log(cyan('│  ') + `Scaffolding project in ${targetDir}...`)
 
-  try {
-    await runCreateVue(projectName)
-    s.stop('Vue project created successfully!')
-  } catch (error) {
-    s.stop(red('Failed to create Vue project'))
-    console.error(error)
-    process.exit(1)
-  }
+  // 复制模板
+  const templateDir = path.resolve(__dirname, '..', 'template')
+  copyDir(templateDir, targetDir)
 
-  // Step 2: 注入 OVS 配置
-  s.start('Injecting OVS configuration...')
+  // 修改 package.json 中的项目名
+  const pkgPath = path.join(targetDir, 'package.json')
+  let pkgContent = fs.readFileSync(pkgPath, 'utf-8')
+  pkgContent = pkgContent.replace('{{projectName}}', projectName)
+  fs.writeFileSync(pkgPath, pkgContent)
 
-  try {
-    await injectOvsConfig(targetDir)
-    s.stop('OVS configuration injected!')
-  } catch (error) {
-    s.stop(red('Failed to inject OVS configuration'))
-    console.error(error)
-    process.exit(1)
-  }
-
-  // 完成
+  console.log(cyan('│'))
+  console.log(cyan('└  ') + green('Done!') + ' Now run:')
   console.log()
-  outro(green('✔ OVS project created successfully!'))
-
-  console.log()
-  console.log('Next steps:')
-  console.log()
-  console.log(`  ${bold(green(`cd ${projectName}`))}`)
-  console.log(`  ${bold(green('npm install'))}`)
-  console.log(`  ${bold(green('npm run dev'))}`)
-  console.log()
-  console.log(`${dim('Happy coding with OVS! 🎉')}`)
+  console.log(`   ${bold(green(`cd ${projectName}`))}`)
+  console.log(`   ${bold(green('npm install'))}`)
+  console.log(`   ${bold(green('npm run dev'))}`)
   console.log()
 }
 
-function runCreateVue(projectName: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    // 使用 npx --yes 自动确认安装，并传递 --default 使用默认配置
-    const child = spawn('npx', ['--yes', 'create-vue@latest', projectName, '--default'], {
-      stdio: 'inherit'
-    })
+function prompt(message: string, defaultValue: string): Promise<string> {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+  })
 
-    child.on('close', (code) => {
-      if (code === 0) {
-        resolve()
-      } else {
-        reject(new Error(`create-vue exited with code ${code}`))
-      }
-    })
-
-    child.on('error', (err) => {
-      reject(err)
+  return new Promise((resolve) => {
+    rl.question(message + dim(`(${defaultValue}) `), (answer) => {
+      rl.close()
+      resolve(answer.trim() || defaultValue)
     })
   })
 }
 
-async function injectOvsConfig(targetDir: string): Promise<void> {
-  // 1. 修改 package.json，添加 ovsjs 依赖
-  const pkgPath = path.join(targetDir, 'package.json')
-  const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'))
-  
-  pkg.dependencies = pkg.dependencies || {}
-  pkg.dependencies['ovsjs'] = '^0.1.8'
-  
-  fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n')
+function promptConfirm(message: string): Promise<boolean> {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+  })
 
-  // 2. 修改 vite.config.ts/js，添加 vitePluginOvs
-  const viteConfigTs = path.join(targetDir, 'vite.config.ts')
-  const viteConfigJs = path.join(targetDir, 'vite.config.js')
-  const viteConfigPath = fs.existsSync(viteConfigTs) ? viteConfigTs : viteConfigJs
+  return new Promise((resolve) => {
+    rl.question(message + dim(' (y/N) '), (answer) => {
+      rl.close()
+      resolve(answer.toLowerCase() === 'y')
+    })
+  })
+}
 
-  if (fs.existsSync(viteConfigPath)) {
-    let content = fs.readFileSync(viteConfigPath, 'utf-8')
-    
-    // 添加 import
-    content = `import vitePluginOvs from 'ovsjs'\n` + content
-    
-    // 在 plugins 数组中添加 vitePluginOvs()
-    content = content.replace(
-      /plugins:\s*\[/,
-      'plugins: [\n    vitePluginOvs(),'
-    )
-    
-    fs.writeFileSync(viteConfigPath, content)
-  }
+function copyDir(src: string, dest: string) {
+  fs.mkdirSync(dest, { recursive: true })
 
-  // 3. 创建示例 .ovs 文件
-  const viewsDir = path.join(targetDir, 'src', 'views')
-  if (!fs.existsSync(viewsDir)) {
-    fs.mkdirSync(viewsDir, { recursive: true })
-  }
+  for (const file of fs.readdirSync(src)) {
+    const srcPath = path.join(src, file)
+    const destPath = path.join(dest, file)
 
-  // 复制模板文件
-  const templateDir = path.resolve(__dirname, '..', 'template')
-  const exampleOvsPath = path.join(templateDir, 'HelloOvs.ovs')
-  
-  if (fs.existsSync(exampleOvsPath)) {
-    fs.copyFileSync(exampleOvsPath, path.join(viewsDir, 'HelloOvs.ovs'))
-  } else {
-    // 如果模板不存在，直接写入
-    const ovsContent = `// HelloOvs.ovs - Your first OVS component
-export default class HelloOvs {
-  count = 0
-
-  increment() {
-    this.count++
-  }
-
-  render() {
-    return div({ class: 'hello-ovs' }) {
-      h1 { 'Hello OVS! 🚀' }
-      p { 'Count: ' + this.count }
-      button({ onClick: () => this.increment() }) {
-        'Click me'
-      }
+    const stat = fs.statSync(srcPath)
+    if (stat.isDirectory()) {
+      copyDir(srcPath, destPath)
+    } else {
+      fs.copyFileSync(srcPath, destPath)
     }
   }
-}
-`
-    fs.writeFileSync(path.join(viewsDir, 'HelloOvs.ovs'), ovsContent)
-  }
-
-  // 4. 创建使用示例的说明文件
-  const readmePath = path.join(viewsDir, 'README.md')
-  const readmeContent = `# OVS Views
-
-This folder contains OVS component files (.ovs).
-
-## Usage
-
-Import and use OVS components in your Vue app:
-
-\`\`\`typescript
-import HelloOvs from './views/HelloOvs.ovs'
-
-// In your component
-export default {
-  setup() {
-    return () => HelloOvs.toVnode()
-  }
-}
-\`\`\`
-
-## Learn More
-
-Visit [OVS Documentation](https://github.com/alamhubb/ovsjs) to learn more.
-`
-  fs.writeFileSync(readmePath, readmeContent)
 }
 
 main().catch((err) => {
