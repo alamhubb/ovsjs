@@ -593,25 +593,73 @@ export default class SlimeGenerator {
         this.addRParen()
     }
 
+    /**
+     * 判断节点是否"复杂"（需要换行）
+     * 复杂的定义：
+     * - CallExpression（函数调用）
+     * - ObjectExpression（超过1个属性）
+     * - ArrayExpression（包含复杂元素）
+     */
+    private static isComplexNode(node: any): boolean {
+        if (!node) return false
+        if (node.type === SlimeNodeType.CallExpression) return true
+        if (node.type === SlimeNodeType.ObjectExpression && node.properties?.length > 1) return true
+        if (node.type === SlimeNodeType.ArrayExpression) {
+            return node.elements?.some((item: any) => this.isComplexNode(item?.element))
+        }
+        return false
+    }
+
     private static generatorArrayExpression(node: SlimeArrayExpression) {
         this.addLBracket(node.loc)
-        for (const item of node.elements) {
-            // elements 是 SlimeArrayElement[] 类型，每个元素是 { element, commaToken }
-            const element = item.element
-            if (element === null || element === undefined) {
-                // 空元素：[1, , 3]，只添加逗号
-            } else if (element.type === SlimeNodeType.SpreadElement) {
-                // SpreadElement：[...arr]
-                this.generatorSpreadElement(element as SlimeSpreadElement)
-            } else {
-                // 普通表达式
-                this.generatorNode(element as SlimeExpression)
-            }
-            // 使用关联的逗号 token，如果有的话
-            if (item.commaToken) {
-                this.addComma()
+
+        // 判断是否需要多行格式：数组元素中有复杂节点（如函数调用）
+        const hasComplexElements = node.elements?.some(item => this.isComplexNode(item?.element))
+
+        if (hasComplexElements && node.elements.length > 0) {
+            // 多行格式
+            this.addNewLine()
+            this.indent++
+            this.addIndent()
+
+            node.elements.forEach((item, index) => {
+                const element = item.element
+                if (element === null || element === undefined) {
+                    // 空元素：[1, , 3]
+                } else if (element.type === SlimeNodeType.SpreadElement) {
+                    this.generatorSpreadElement(element as SlimeSpreadElement)
+                } else {
+                    this.generatorNode(element as SlimeExpression)
+                }
+
+                // 添加逗号和换行（除了最后一个元素）
+                if (index < node.elements.length - 1) {
+                    this.addComma()
+                    this.addNewLine()
+                    this.addIndent()
+                }
+            })
+
+            this.addNewLine()
+            this.indent--
+            this.addIndent()
+        } else {
+            // 单行格式（简单元素）
+            for (const item of node.elements) {
+                const element = item.element
+                if (element === null || element === undefined) {
+                    // 空元素
+                } else if (element.type === SlimeNodeType.SpreadElement) {
+                    this.generatorSpreadElement(element as SlimeSpreadElement)
+                } else {
+                    this.generatorNode(element as SlimeExpression)
+                }
+                if (item.commaToken) {
+                    this.addComma()
+                }
             }
         }
+
         this.addRBracket(node.loc)
     }
 
