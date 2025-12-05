@@ -1,11 +1,11 @@
-import { h, reactive, isReactive, watchEffect, render, isRef, unref } from 'vue'
+import { h, reactive, isReactive, isRef, unref } from 'vue'
 import type { Component, VNode } from 'vue'
+
+// ==================== 类型定义 ====================
 
 export interface ReactiveVNodeApi {
   toVnode(): VNode
-  mount(container: Element): void
-  unmount(): void
-  get state(): ReactiveVNodeState
+  state: ReactiveVNodeState
 }
 
 export interface ReactiveVNodeState {
@@ -14,96 +14,36 @@ export interface ReactiveVNodeState {
   children: ReactiveVNodeApi | ReactiveVNodeApi[] | null | any
 }
 
-// ==================== 组件类型定义 ====================
-
 /**
- * 函数组件类型
+ * OVS 组件类型
  * 接收 state，返回 ReactiveVNodeApi
  */
 export type OvsComponent = (state: ReactiveVNodeState) => ReactiveVNodeApi
 
+// ==================== 工具函数 ====================
 
 function ensureReactiveProps<T extends object>(obj: T): T {
   return (isReactive(obj) ? obj : reactive(obj)) as T
 }
 
 function isReactiveVNodeApi(value: unknown): value is ReactiveVNodeApi {
-  return !!value && typeof value === 'object' && 'toVnode' in (value as any) && typeof (value as any).toVnode === 'function'
+  return !!value && typeof value === 'object' && 'toVnode' in value
 }
 
 function mapChildrenToVNodes(children: unknown): VNode | VNode[] | unknown {
-  if (children == null) return undefined as unknown as VNode
-  if (isRef(children)) {
-    return mapChildrenToVNodes(unref(children))
-  }
-  if (Array.isArray(children)) {
-    return children.map((c) => mapChildrenToVNodes(c)) as VNode[]
-  }
-  if (isReactiveVNodeApi(children)) {
-    return children.toVnode()
-  }
-  // primitive or VNode-like children pass through
+  if (children == null) return undefined
+  if (isRef(children)) return mapChildrenToVNodes(unref(children))
+  if (Array.isArray(children)) return children.map(mapChildrenToVNodes) as VNode[]
+  if (isReactiveVNodeApi(children)) return children.toVnode()
   return children
-}
-
-// ==================== ReactiveVNode 核心类 ====================
-
-/**
- * 响应式 VNode 核心类
- * 处理状态、渲染、挂载卸载等通用逻辑
- */
-class ReactiveVNode implements ReactiveVNodeApi {
-  state: ReactiveVNodeState
-  private stopEffect: (() => void) | null = null
-  private mountedContainer: Element | null = null
-
-  constructor(state: ReactiveVNodeState) {
-    this.state = state
-  }
-
-  toVnode(): VNode {
-    // 如果 type 是函数，说明是组件
-    if (typeof this.state.type === 'function') {
-      const result = (this.state.type as OvsComponent)(this.state)
-      
-      // 如果返回 ReactiveVNodeApi，递归调用 toVnode
-      if (isReactiveVNodeApi(result)) {
-        return result.toVnode()
-      }
-      
-      // 如果返回 VNode，直接使用（兼容普通 Vue 组件）
-      if (result && typeof result === 'object' && 'type' in result) {
-        return result as VNode
-      }
-    }
-    
-    // Fallback 逻辑（组件或元素都可能执行到这里）
-    const vnodeChildren = mapChildrenToVNodes(this.state.children)
-    return h(this.state.type as any, this.state.props, vnodeChildren as any)
-  }
-
-  mount(container: Element): void {
-    this.mountedContainer = container
-    if (this.stopEffect) this.stopEffect()
-    this.stopEffect = watchEffect(() => {
-      render(this.toVnode(), container)
-    })
-  }
-
-  unmount(): void {
-    if (this.stopEffect) {
-      this.stopEffect()
-      this.stopEffect = null
-    }
-    if (this.mountedContainer) {
-      render(null, this.mountedContainer)
-      this.mountedContainer = null
-    }
-  }
 }
 
 // ==================== 工厂函数 ====================
 
+/**
+ * 创建组件 VNode
+ * 响应式依赖由 Vue 的 render 上下文自动追踪
+ */
 export function createComponentVNode(
   componentFn: OvsComponent | Component,
   props: Record<string, any> = {},
@@ -112,12 +52,37 @@ export function createComponentVNode(
   const state: ReactiveVNodeState = reactive({
     type: componentFn,
     props: ensureReactiveProps(props),
-    children: children
+    children
   }) as ReactiveVNodeState
 
-  return new ReactiveVNode(state)
+  return {
+    state,
+    toVnode(): VNode {
+      // 如果是 OVS 组件函数
+      if (typeof state.type === 'function') {
+        const result = (state.type as OvsComponent)(state)
+
+        // 如果返回 ReactiveVNodeApi，递归调用 toVnode
+        if (isReactiveVNodeApi(result)) {
+          return result.toVnode()
+        }
+
+        // 如果返回 VNode，直接使用（兼容普通 Vue 组件）
+        if (result && typeof result === 'object' && 'type' in result) {
+          return result as VNode
+        }
+      }
+
+      // Fallback 逻辑
+      return h(state.type as any, state.props, mapChildrenToVNodes(state.children) as any)
+    }
+  }
 }
 
+/**
+ * 创建元素 VNode
+ * 响应式依赖由 Vue 的 render 上下文自动追踪
+ */
 export function createElementVNode(
   type: string,
   props: Record<string, any> = {},
@@ -126,10 +91,15 @@ export function createElementVNode(
   const state: ReactiveVNodeState = reactive({
     type,
     props: ensureReactiveProps(props),
-    children: children
+    children
   }) as ReactiveVNodeState
 
-  return new ReactiveVNode(state)
+  return {
+    state,
+    toVnode(): VNode {
+      return h(state.type, state.props, mapChildrenToVNodes(state.children) as any)
+    }
+  }
 }
 
 export function toVnode(rvnode: ReactiveVNodeApi): VNode {
