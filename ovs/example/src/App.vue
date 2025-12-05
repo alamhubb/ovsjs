@@ -9,6 +9,7 @@ import HelloWorld from './components/HelloWorld.ts'
     <div class="wrapper">
 <!--      <component :is="HelloWorld.toVnode()" />-->
       <hello-world msg="ovs"></hello-world>
+      <hello-world msg="ovs"></hello-world>
     </div>
   </header>
 </template>

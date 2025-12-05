@@ -1,10 +1,10 @@
-import { h, ref } from 'vue'
+import {h, ref} from 'vue'
 
 // 用 IIFE 包裹，返回一个工厂函数
-const createComponent = (function() {
+const createComponent = (function () {
     // 这里可以放一些共享的东西（如果需要）
 
-    return function() {
+    return function () {
         // 每次调用都创建新的状态 —— 独立！
         let a1 = ref(0)
         const timer = setInterval(() => {
@@ -18,7 +18,11 @@ const createComponent = (function() {
                 }
             },
             render() {
-                return h('div', [a1.value, this.msg])
+                return h('div', {
+                    onClick() {
+                        a1.value = 0
+                    }
+                }, [a1.value, this.msg])
             },
             unmounted() {
                 clearInterval(timer)  // 清理定时器
