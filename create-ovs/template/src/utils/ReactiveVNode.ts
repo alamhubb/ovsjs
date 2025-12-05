@@ -34,18 +34,32 @@ function mapChildrenToVNodes(children: unknown): any {
   return children
 }
 
+// ==================== 核心函数 ====================
+
+/**
+ * 定义 OVS 组件
+ * factory 返回 render 函数 () => VNode
+ */
+export function defineOvsComponent(
+  factory: (props: Record<string, any>) => (() => VNode)
+) {
+  return defineComponent((props) => {
+    return factory(props)
+  })
+}
+
 // ==================== 工厂函数 ====================
 
 /**
  * 创建组件 VNode
- * 内部使用 defineComponent，返回 Vue 组件定义
+ * 内部使用 defineOvsComponent
  */
 export function createComponentVNode(
   componentFn: OvsComponent | Component,
   props: Record<string, any> = {},
   children: any = null
 ) {
-  return defineComponent((componentProps) => {
+  return defineOvsComponent((componentProps) => {
     const state: ReactiveVNodeState = reactive({
       type: componentFn,
       props: { ...ensureReactiveProps(props), ...componentProps },
@@ -76,14 +90,14 @@ export function createComponentVNode(
 
 /**
  * 创建元素 VNode
- * 内部使用 defineComponent，返回 Vue 组件定义
+ * 内部使用 defineOvsComponent
  */
 export function createElementVNode(
   type: string,
   props: Record<string, any> = {},
   children: any = null
 ) {
-  return defineComponent((componentProps) => {
+  return defineOvsComponent((componentProps) => {
     const state: ReactiveVNodeState = reactive({
       type,
       props: { ...ensureReactiveProps(props), ...componentProps },
@@ -91,18 +105,5 @@ export function createElementVNode(
     }) as ReactiveVNodeState
 
     return () => h(state.type, state.props, mapChildrenToVNodes(state.children))
-  })
-}
-
-/**
- * 定义 OVS 组件
- * 每个实例调用一次 factory，实现状态独立
- */
-export function defineOvsComponent(
-  factory: (props: Record<string, any>) => ReturnType<typeof createElementVNode>
-) {
-  return defineComponent((props) => {
-    const vnode = factory(props)
-    return () => h(vnode)
   })
 }
