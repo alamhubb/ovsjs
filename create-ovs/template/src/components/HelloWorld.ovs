@@ -1,17 +1,17 @@
 import { div, h1, h3, a } from '../utils/htmlElements';
 
 // HelloWorld OVS Component
-// Props: msg
+const msg = "You did it!"
 
 div({ class: 'greetings' }) {
-  h1({ class: 'green' }) { props.msg }
+  h1({ class: 'green' }) { msg }
   h3 {
     "You've successfully created a project with "
     a({ href: 'https://vite.dev/', target: '_blank', rel: 'noopener' }) { 'Vite' }
     ' + '
     a({ href: 'https://vuejs.org/', target: '_blank', rel: 'noopener' }) { 'Vue 3' }
     ' + '
-    a({ href: 'https://github.com/AlaM-hubb/ovsjs', target: '_blank', rel: 'noopener' }) { 'OVS' }
+    a({ href: 'https://github.com/alamhubb/ovsjs', target: '_blank', rel: 'noopener' }) { 'OVS' }
     '.'
   }
 }
