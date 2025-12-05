@@ -22,7 +22,10 @@ function ensureReactiveProps<T extends object>(obj: T): T {
 }
 
 function isDefineComponent(value: unknown): boolean {
-    return !!value && typeof value === 'object' && 'render' in value
+    if (!value || typeof value !== 'object') return false
+    const v = value as any
+    // defineComponent 可能有 render、setup 或我们的标记
+    return 'render' in v || 'setup' in v || v.__isOvsComponent === true
 }
 
 function mapChildrenToVNodes(children: unknown): any {
@@ -43,10 +46,12 @@ function mapChildrenToVNodes(children: unknown): any {
 export function defineOvsComponent(
     factory: (props: Record<string, any>) => (() => VNode)
 ) {
-    return defineComponent((props) => {
-        const vNode = factory(props)
-        return () => h(vNode)
+    const component = defineComponent((props) => {
+        return factory(props)
     })
+    // 添加标记，方便识别
+    ;(component as any).__isOvsComponent = true
+    return component
 }
 
 // ==================== 工厂函数 ====================
