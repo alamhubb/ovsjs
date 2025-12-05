@@ -1,6 +1,0 @@
-const a = 123
-
-div{
-    a
-    div{ 456 }
-}

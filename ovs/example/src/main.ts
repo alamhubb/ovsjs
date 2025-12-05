@@ -1,9 +1,6 @@
-import { createApp } from 'vue'
-import DefaultView from "@/views/hello.ovs"
+import './assets/main.css'
 
-createApp({
-  setup() {
-    // hello.ovs 导出的是单个 VNode
-    return () => DefaultView.toVnode()
-  }
-}).mount('#app')
+import { createApp } from 'vue'
+import App from './App.vue'
+
+createApp(App).mount('#app')
