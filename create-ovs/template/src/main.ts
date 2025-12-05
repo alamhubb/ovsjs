@@ -1,9 +1,6 @@
+import './assets/main.css'
+
 import { createApp } from 'vue'
-import HelloOvs from '@/views/hello.ovs'
+import App from './App.vue'
 
-createApp({
-  setup() {
-    return () => HelloOvs.toVnode()
-  }
-}).mount('#app')
-
+createApp(App).mount('#app')
