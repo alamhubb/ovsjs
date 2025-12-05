@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "vue": "^3.5.25",
-    "ovsjs": "^0.1.9"
+    "ovsjs": "file:../../ovs/ovs-runtime"
   },
   "devDependencies": {
     "@tsconfig/node24": "^24.0.3",
@@ -25,7 +25,7 @@
     "npm-run-all2": "^8.0.4",
     "typescript": "~5.9.0",
     "vite": "^6.3.5",
-    "vite-plugin-ovs": "^0.1.0",
+    "vite-plugin-ovs": "file:../../vite-plugin-ovs",
     "vite-plugin-vue-devtools": "^8.0.5",
     "vue-tsc": "^3.1.5"
   }

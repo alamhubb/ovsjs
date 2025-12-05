@@ -23,10 +23,10 @@
   "author": "nicholasyhuang",
   "description": "OVS Compiler - Parser and AST transformer for OVS syntax",
   "dependencies": {
-    "subhuti": "^0.1.9",
-    "slime-ast": "^0.1.9",
-    "slime-generator": "^0.1.9",
-    "slime-parser": "^0.1.9"
+    "subhuti": "^0.1.5",
+    "slime-ast": "^0.1.5",
+    "slime-generator": "^0.1.5",
+    "slime-parser": "^0.1.5"
   },
   "devDependencies": {
     "tsdown": "0.17.0-beta.6"
