@@ -10,13 +10,13 @@ export default (function () {
 
     // 返回 Options 组件，Vue 负责响应式更新
     return {
-        toVnode() {
+        render() {
             // 直接在 toVnode 里访问闭包中的 ref
             return h('div', {
                 onClick() {
                     a1.value = 0
                 }
-            }, [a1.value])
+            }, [a1.value])  // 这里用 .value 是 OK 的！
         }
     }
 })()
