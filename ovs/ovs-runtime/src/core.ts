@@ -24,15 +24,13 @@ function ensureReactiveProps<T extends object>(obj: T): T {
 function isDefineComponent(value: unknown): boolean {
     if (!value || typeof value !== 'object') return false
     const v = value as any
-    // defineComponent 可能有 render、setup 或我们的标记
     return 'render' in v || 'setup' in v || v.__isOvsComponent === true
 }
 
-function mapChildrenToVNodes(children: unknown): any {
+export function mapChildrenToVNodes(children: unknown): any {
     if (children == null) return undefined
     if (isRef(children)) return mapChildrenToVNodes(unref(children))
     if (Array.isArray(children)) return children.map(mapChildrenToVNodes)
-    // 如果是 defineComponent 返回的组件，渲染它
     if (isDefineComponent(children)) return h(children as Component)
     return children
 }
@@ -41,28 +39,20 @@ function mapChildrenToVNodes(children: unknown): any {
 
 /**
  * 定义 OVS 组件
- * factory 返回 render 函数 () => VNode
  */
 export function defineOvsComponent(
     factory: (props: Record<string, any>) => any
 ) {
     const component = defineComponent((props) => {
         const result = factory(props)
-
-        // 如果返回的是组件（defineComponent），用 h() 渲染它
         if (isDefineComponent(result)) {
             return () => h(result)
         }
-
-        // 如果返回的是函数，当作 render 函数
         if (typeof result === 'function') {
             return result
         }
-
-        // 其他情况，包装成 render 函数
         return () => result
     })
-    // 添加标记，方便识别
     ;(component as any).__isOvsComponent = true
     return component
 }
@@ -71,7 +61,6 @@ export function defineOvsComponent(
 
 /**
  * 创建组件 VNode
- * 直接使用 defineComponent（不经过 defineOvsComponent，避免重复判断）
  */
 export function createComponentVNode(
     componentFn: OvsComponent | Component,
@@ -87,11 +76,9 @@ export function createComponentVNode(
 
         return () => {
             if (typeof state.type === 'function') {
-                // OVS 组件函数：调用它获取组件定义，直接渲染（组件内部已包含 state）
                 const result = (state.type as OvsComponent)(state)
                 return h(result as Component)
             }
-            // 普通 Vue 组件：直接渲染
             return h(state.type as Component, state.props, mapChildrenToVNodes(state.children))
         }
     })
@@ -101,7 +88,6 @@ export function createComponentVNode(
 
 /**
  * 创建元素 VNode
- * 直接使用 defineComponent（不经过 defineOvsComponent，避免重复判断）
  */
 export function createElementVNode(
     type: string,
@@ -120,3 +106,4 @@ export function createElementVNode(
     ;(component as any).__isOvsComponent = true
     return component
 }
+

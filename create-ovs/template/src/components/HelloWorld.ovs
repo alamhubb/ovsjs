@@ -1,21 +1,22 @@
-import { div, h1, h3, a } from '../utils/htmlElements';
 import { ref } from 'vue';
 
 // HelloWorld OVS Component
-const msg = "You did it!"
-let a1 = ref(0)
-      const timer = setInterval(() => {
-        a1.value = a1.value+1
-        console.log(a)
-      }, 1000);
+// 注意：HTML 标签（div, h1, h3, a 等）会自动转换为 $OvsHtmlTag.xxx()
+// 编译器会自动添加 import { $OvsHtmlTag } from 'ovsjs'
 
-div({ class: 'greetings', onClick(){a1.value= 0}}) {
+const msg = "You did it!"
+let count = ref(0)
+
+const timer = setInterval(() => {
+  count.value = count.value + 1
+}, 1000);
+
+div({ class: 'greetings', onClick() { count.value = 0 }}) {
   h1({ class: 'green' }) { msg }
   #{
-
-    }
-
-    a1
+    // 这里可以写纯 JS 逻辑
+  }
+  count
   h3 {
     "You've successfully created a project with "
     a({ href: 'https://vite.dev/', target: '_blank', rel: 'noopener' }) { 'Vite' }

@@ -6,6 +6,10 @@ import {LogUtil} from "./logutil.js";
 import SlimeCodeMapping from "slime-generator/src/SlimeCodeMapping";
 import {vitePluginOvsTransform} from "ovsjs";
 
+// OVS 运行时导入声明（注入到每个 .ovs 文件的虚拟代码头部）
+// 这样 TypeScript 会加载 ovsjs 的类型，declare global 中的 HTML 标签声明就会生效
+const OVS_RUNTIME_IMPORT = `import { $OvsHtmlTag, defineOvsComponent } from 'ovsjs';\n`;
+
 export const ovsLanguagePlugin: LanguagePlugin<URI> = {
     getLanguageId(uri) {
         if (uri.path.endsWith('.ovs')) {
@@ -30,10 +34,14 @@ export const ovsLanguagePlugin: LanguagePlugin<URI> = {
             // LogUtil.log(ary.length)
             // LogUtil.log(root.embeddedCodes)
             for (const code of ary) {
-                // LogUtil.log('code')
-                // LogUtil.log(code)
-                // LogUtil.log(code.languageId)
-                if (code.languageId === 'js') {
+                if (code.languageId === 'typescript') {
+                    scripts.push({
+                        fileName: fileName + '.' + code.id + '.ts',
+                        code,
+                        extension: '.ts',
+                        scriptKind: ts.ScriptKind.TS
+                    });
+                } else if (code.languageId === 'js') {
                     scripts.push({
                         fileName: fileName + '.' + code.id + '.js',
                         code,
@@ -147,16 +155,29 @@ export class OvsVirtualCode implements VirtualCode {
 
         LogUtil.log('Source code:')
         LogUtil.log(styleText)
-        LogUtil.log('Generated code:')
-        LogUtil.log(newCode)
+
+        // 在虚拟代码头部添加 OVS 运行时导入
+        // 这样 TypeScript 会加载 ovsjs 的类型，declare global 中的 HTML 标签声明就会生效
+        const prefixLength = OVS_RUNTIME_IMPORT.length
+        const finalCode = OVS_RUNTIME_IMPORT + newCode
+
+        LogUtil.log('Generated code (with OVS runtime import):')
+        LogUtil.log(finalCode)
+
+        // 调整 mapping 偏移量，补偿添加的前缀
+        const adjustedOffsets = offsets.map(item => ({
+            original: item.original,
+            generated: {
+                offset: item.generated.offset + prefixLength,
+                length: item.generated.length
+            }
+        }))
+
         const mappings = [{
-            sourceOffsets: offsets.map(item => item.original.offset),
-            generatedOffsets: offsets.map(item => item.generated.offset),
-            lengths: offsets.map(item => item.original.length),
-            generatedLengths: offsets.map(item => item.generated.length),
-            // sourceOffsets: [0],
-            // generatedOffsets: [0],
-            // lengths: [styleText.length],
+            sourceOffsets: adjustedOffsets.map(item => item.original.offset),
+            generatedOffsets: adjustedOffsets.map(item => item.generated.offset),
+            lengths: adjustedOffsets.map(item => item.original.length),
+            generatedLengths: adjustedOffsets.map(item => item.generated.length),
             data: {
                 completion: true,
                 format: true,
@@ -168,17 +189,12 @@ export class OvsVirtualCode implements VirtualCode {
         }]
         this.embeddedCodes = [{
             id: 'ovsts',
-            languageId: 'js',
+            languageId: 'typescript',
             snapshot: {
-                getText: (start, end) => newCode.substring(start, end),
-                getLength: () => newCode.length,
+                getText: (start, end) => finalCode.substring(start, end),
+                getLength: () => finalCode.length,
                 getChangeRange: () => undefined,
             },
-            // sourceOffsets: number[];
-            // generatedOffsets: number[];
-            // lengths: number[];
-            // generatedLengths?: number[];
-            // data: Data;
             mappings: mappings,
             embeddedCodes: [],
         }];

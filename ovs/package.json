@@ -1,67 +1,19 @@
 {
-  "name": "ovsjs",
+  "name": "ovs-workspace",
   "version": "0.1.9",
+  "private": true,
   "type": "module",
-  "main": "dist/index.mjs",
-  "types": "dist/index.d.mts",
-  "license": "MIT",
+  "description": "OVS workspace - contains ovs-runtime and ovs-compiler packages",
+  "workspaces": [
+    "ovs-runtime",
+    "ovs-compiler"
+  ],
   "scripts": {
-    "build": "rollup -c rollup.config.mjs",
-    "build:tsdown": "tsdown",
-    "prepublishOnly": "npm run build"
-  },
-  "homepage": "https://github.com/alamhubb/ovs",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/alamhubb/ovs.git"
-  },
-  "contributors": [
-    {
-      "name": "alamhubb",
-      "url": "https://github.com/alamhubb"
-    }
-  ],
-  "keywords": [
-    "ovs",
-    "UI",
-    "framework",
-    "UI framework",
-    "tsx",
-    "no jsx",
-    "no html",
-    "oopUI",
-    "flutterUI",
-    "swiftUI"
-  ],
-  "author": "alamhubb",
-  "description": "A technology similar to JSX, but unlike JSX which still uses XML syntax, OVS uses OOP syntax similar to Flutter and SwiftUI to develop UI.",
-  "dependencies": {
-    "@dagrejs/dagre": "^2.0.0",
-    "@dagrejs/graphlib": "^2.2.4",
-    "@dagrejs/graphlib-dot": "^1.0.2",
-    "big-cartesian": "^6.1.1",
-    "d3": "^7.9.0",
-    "dagre-d3": "^0.6.4",
-    "fast-cartesian": "^9.0.1",
-    "lru-cache": "^11.0.0",
-    "mnemonist": "^0.40.3",
-    "slime-ast": "^0.1.8",
-    "slime-generator": "^0.1.8",
-    "slime-parser": "^0.1.8",
-    "slime-token": "^0.1.8",
-    "subhuti": "^0.1.8"
+    "build": "npm run build --workspaces",
+    "test": "echo \"See ovs/tests for tests\""
   },
   "devDependencies": {
-    "@rollup/plugin-node-resolve": "^16.0.3",
-    "@swc/core": "^1.15.3",
-    "rollup": "^4.53.3",
-    "rollup-plugin-dts": "^6.3.0",
-    "rollup-plugin-swc3": "^0.12.1",
     "slime-test": "^0.1.8",
     "tsdown": "0.17.0-beta.6"
-  },
-  "bugs": {
-    "url": "https://github.com/alamhubb/ovs/issues"
-  },
-  "gitHead": "2f8c9e3c52445d48435b6a432fffb4eed5187217"
+  }
 }

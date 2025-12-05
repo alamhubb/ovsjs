@@ -1,0 +1,37 @@
+{
+  "name": "vite-plugin-ovs",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.mjs",
+  "types": "dist/index.d.mts",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsdown",
+    "prepublishOnly": "npm run build"
+  },
+  "homepage": "https://github.com/alamhubb/ovs",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alamhubb/ovs.git"
+  },
+  "keywords": [
+    "vite",
+    "vite-plugin",
+    "ovs",
+    "UI",
+    "framework"
+  ],
+  "author": "alamhubb",
+  "description": "Vite plugin for OVS - A declarative UI syntax similar to Flutter and SwiftUI",
+  "peerDependencies": {
+    "vite": "^5.0.0 || ^6.0.0"
+  },
+  "dependencies": {
+    "ovs-compiler": "^0.1.9"
+  },
+  "devDependencies": {
+    "tsdown": "0.17.0-beta.6",
+    "vite": "^6.3.5"
+  }
+}
+

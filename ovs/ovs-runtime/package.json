@@ -1,0 +1,47 @@
+{
+  "name": "ovsjs",
+  "version": "0.1.9",
+  "type": "module",
+  "main": "dist/index.mjs",
+  "types": "dist/index.d.mts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "types": "./dist/index.d.mts"
+    },
+
+    "./tsconfig.ovs.json": "./tsconfig.ovs.json"
+  },
+  "files": [
+    "dist",
+    "tsconfig.ovs.json"
+  ],
+  "license": "MIT",
+  "scripts": {
+    "build": "tsdown",
+    "prepublishOnly": "npm run build"
+  },
+  "homepage": "https://github.com/nicholasyhuang/ovs",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nicholasyhuang/ovs.git"
+  },
+  "keywords": [
+    "ovs",
+    "UI",
+    "framework",
+    "declarative",
+    "vue",
+    "component"
+  ],
+  "author": "nicholasyhuang",
+  "description": "OVS Runtime - A declarative UI syntax similar to Flutter and SwiftUI",
+  "dependencies": {
+    "vue": "^3.5.13",
+    "@vue/tsconfig": "^0.8.0"
+  },
+  "devDependencies": {
+    "tsdown": "0.17.0-beta.6"
+  }
+}
+
