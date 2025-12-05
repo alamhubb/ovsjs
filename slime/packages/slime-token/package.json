@@ -1,6 +1,6 @@
 {
   "name": "slime-token",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "type": "module",
   "main": "dist/index.mjs",
   "types": "dist/index.d.mts",
@@ -13,7 +13,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "subhuti": "^0.1.5"
+    "subhuti": "^0.1.8"
   },
   "devDependencies": {
     "tsdown": "0.17.0-beta.6"

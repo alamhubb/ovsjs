@@ -1,6 +1,6 @@
 {
   "name": "ovsjs",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "type": "module",
   "main": "dist/index.mjs",
   "types": "dist/index.d.mts",
@@ -45,12 +45,12 @@
     "fast-cartesian": "^9.0.1",
     "lru-cache": "^11.0.0",
     "mnemonist": "^0.40.3",
-    "slime-ast": "^0.1.5",
-    "slime-generator": "^0.1.5",
-    "slime-parser": "^0.1.5",
-    "slime-test": "^0.1.5",
-    "slime-token": "^0.1.5",
-    "subhuti": "^0.1.5"
+    "slime-ast": "^0.1.8",
+    "slime-generator": "^0.1.8",
+    "slime-parser": "^0.1.8",
+    "slime-test": "^0.1.8",
+    "slime-token": "^0.1.8",
+    "subhuti": "^0.1.8"
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^16.0.3",
