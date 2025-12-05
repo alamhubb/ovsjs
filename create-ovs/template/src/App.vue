@@ -7,9 +7,9 @@ import HelloWorld from './components/HelloWorld.ovs'
     <img alt="Vue logo" class="logo" src="./assets/logo.png" width="125" height="125" />
 
     <div class="wrapper">
-      <component :is="HelloWorld" />
+      <HelloWorld></HelloWorld>
       ---
-      <component :is="HelloWorld" />
+      <HelloWorld></HelloWorld>
     </div>
   </header>
 </template>
