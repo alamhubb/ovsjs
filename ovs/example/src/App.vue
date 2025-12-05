@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup lang="ts" xmlns="http://www.w3.org/1999/html">
 import HelloWorld from './components/HelloWorld.ts'
 </script>
 
@@ -7,6 +7,8 @@ import HelloWorld from './components/HelloWorld.ts'
     <img alt="Vue logo" class="logo" src="./assets/logo.png" width="125" height="125" />
 
     <div class="wrapper">
+      <component :is="HelloWorld" />
+      --
       <component :is="HelloWorld" />
     </div>
   </header>
