@@ -1,10 +1,20 @@
 import { div, h1, h3, a } from '../utils/htmlElements';
+import { ref } from 'vue';
 
 // HelloWorld OVS Component
 const msg = "You did it!"
 
 div({ class: 'greetings' }) {
   h1({ class: 'green' }) { msg }
+  #{
+      let a1 = ref(0)
+      const timer = setInterval(() => {
+        a1.value = a1.value+1
+        console.log(a)
+      }, 1000);
+    }
+
+    a1
   h3 {
     "You've successfully created a project with "
     a({ href: 'https://vite.dev/', target: '_blank', rel: 'noopener' }) { 'Vite' }
