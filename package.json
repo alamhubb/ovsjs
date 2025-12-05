@@ -9,6 +9,7 @@
     "slime/packages/*",
     "packages/*",
     "create-ovs",
+    "create-ovs/template",
     "vite-plugin-ovs"
   ],
   "scripts": {

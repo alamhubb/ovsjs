@@ -4,18 +4,6 @@
   "type": "module",
   "main": "dist/index.mjs",
   "types": "dist/index.d.mts",
-  "exports": {
-    ".": {
-      "import": "./dist/index.mjs",
-      "types": "./dist/index.d.mts"
-    },
-
-    "./tsconfig.ovs.json": "./tsconfig.ovs.json"
-  },
-  "files": [
-    "dist",
-    "tsconfig.ovs.json"
-  ],
   "license": "MIT",
   "scripts": {
     "build": "tsdown",
