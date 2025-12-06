@@ -3,24 +3,14 @@
   "version": "0.1.7",
   "type": "module",
   "description": "OVS Language Server",
-  "main": "src/index.ts",
-  "types": "src/index.ts",
+  "author": "alamhubb",
+  "license": "MIT",
   "scripts": {
-    "dev": "tsx src/index.ts --stdio",
-    "build": "tsdown",
-    "watch": "tsdown --watch",
-    "prepublishOnly": "npm run build"
+    "dev": "tsx src/index.ts --stdio"
   },
-  "bin": {
-    "ovs-lang-server": "dist/index.mjs"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "devDependencies": {
     "@types/esprima": "^4.0.6",
     "@types/node": "^22.8.6",
-    "tsdown": "0.17.0-beta.6",
     "tsx": "^4.19.2",
     "typescript": "^5.6.3"
   },
@@ -44,6 +34,5 @@
     "vscode-languageserver-textdocument": "^1.0.12",
     "vscode-nls": "^5.2.0",
     "vscode-uri": "^3.0.8"
-  },
-  "gitHead": "2f8c9e3c52445d48435b6a432fffb4eed5187217"
+  }
 }
