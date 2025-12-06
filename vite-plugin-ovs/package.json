@@ -27,7 +27,7 @@
     "vite": "^5.0.0 || ^6.0.0"
   },
   "dependencies": {
-    "ovs-compiler": "^0.1.9"
+    "ovs-compiler": "^0.2.1"
   },
   "devDependencies": {
     "tsdown": "0.17.0-beta.6",

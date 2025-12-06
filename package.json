@@ -24,6 +24,7 @@
     "prerelease": "npm run buildall",
     "release": "lerna publish --exact --force-publish --yes --sync-workspace-lock",
     "release:next": "npm run release -- --dist-tag next --no-push",
+    "pub": "lerna version from-git --force-publish --yes --no-push --no-git-tag-version && lerna publish from-package --yes",
     "format": "dprint fmt",
     "lint": "tsslint --project */*/tsconfig.json",
     "lint:fix": "npm run lint -- --fix"

@@ -13,8 +13,8 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "slime-token": "^0.1.9",
-    "subhuti": "^0.1.9"
+    "slime-token": "^0.2.1",
+    "subhuti": "^0.2.1"
   },
   "devDependencies": {
     "@types/estree": "1.0.6",

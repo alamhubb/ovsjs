@@ -1,6 +1,6 @@
 {
   "name": "slime-test",
-  "version": "0.1.8",
+  "version": "0.2.1",
   "type": "module",
   "main": "dist/index.mjs",
   "types": "dist/index.d.mts",
@@ -12,14 +12,14 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "slime-generator": "^0.1.8",
-    "slime-ast": "^0.1.8",
-    "slime-parser": "^0.1.8",
-    "slime-token": "^0.1.8",
-    "subhuti": "^0.1.8"
+    "slime-ast": "^0.2.1",
+    "slime-generator": "^0.2.1",
+    "slime-parser": "^0.2.1",
+    "slime-token": "^0.2.1",
+    "subhuti": "^0.2.1"
   },
   "devDependencies": {
     "tsdown": "0.17.0-beta.6"
   },
-  "gitHead": "2f8c9e3c52445d48435b6a432fffb4eed5187217"
+  "gitHead": "015b9bab1b556588e348044bf1e4eb7cd8049e9a"
 }

@@ -13,9 +13,9 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "slime-ast": "^0.1.9",
-    "slime-token": "^0.1.9",
-    "subhuti": "^0.1.9"
+    "slime-ast": "^0.2.1",
+    "slime-token": "^0.2.1",
+    "subhuti": "^0.2.1"
   },
   "devDependencies": {
     "tsdown": "0.17.0-beta.6"

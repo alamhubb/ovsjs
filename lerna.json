@@ -1,4 +1,15 @@
 {
   "$schema": "https://raw.githubusercontent.com/lerna-lite/lerna-lite/main/packages/cli/schemas/lerna-schema.json",
-  "version": "0.2.1"
+  "version": "0.2.2",
+  "packages": [
+    "ovs/ovs-runtime",
+    "ovs/ovs-compiler",
+    "subhuti",
+    "slime/packages/slime-token",
+    "slime/packages/slime-ast",
+    "slime/packages/slime-parser",
+    "slime/packages/slime-generator",
+    "create-ovs",
+    "vite-plugin-ovs"
+  ]
 }
