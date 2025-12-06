@@ -47,6 +47,43 @@ function isHtmlTag(tagName: string): boolean {
   return HTML_TAGS.has(tagName.toLowerCase())
 }
 
+/**
+ * 判断表达式是否是副作用表达式（不应该渲染）
+ *
+ * 副作用表达式的主要目的是产生副作用，返回值只是副产品：
+ * - AssignmentExpression: x = 1, x += 1, x ||= 1 等
+ * - UpdateExpression: x++, ++x, x--, --x
+ * - UnaryExpression(delete): delete obj.prop
+ * - UnaryExpression(void): void expr（显式丢弃返回值）
+ *
+ * 这些表达式在 OVS 渲染上下文中不应该被 children.push()
+ */
+function isSideEffectExpression(expr: SlimeExpression): boolean {
+  // 赋值表达式 - 副作用
+  if (expr.type === SlimeNodeType.AssignmentExpression) {
+    return true
+  }
+
+  // 更新表达式 - 副作用
+  if (expr.type === SlimeNodeType.UpdateExpression) {
+    return true
+  }
+
+  // delete 表达式 - 副作用
+  if (expr.type === SlimeNodeType.UnaryExpression &&
+      (expr as any).operator === 'delete') {
+    return true
+  }
+
+  // void 表达式 - 显式丢弃返回值，不渲染
+  if (expr.type === SlimeNodeType.UnaryExpression &&
+      (expr as any).operator === 'void') {
+    return true
+  }
+
+  return false
+}
+
 /** 创建 callee 表达式：HTML 标签返回 $OvsHtmlTag.xxx，其他返回标识符 */
 function createCalleeForTag(tagName: string, loc?: any): SlimeExpression {
   if (isHtmlTag(tagName)) {
@@ -519,23 +556,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
 
       // 1. OvsRenderFunction → 永远渲染（优先级最高）
       if (isOvsRenderFunction) {
-        const pushCall = SlimeNodeCreate.createCallExpression(
-          SlimeNodeCreate.createMemberExpression(
-            SlimeNodeCreate.createIdentifier('children'),
-            SlimeTokenCreate.createDotToken(cst.loc),
-            SlimeNodeCreate.createIdentifier('push')
-          ),
-          [expr]
-        )
-        // 设置 pushCall 的 loc，用于 source map 映射
-        if (cst.loc) {
-          pushCall.loc = cst.loc
-        }
-        return {
-          type: SlimeNodeType.ExpressionStatement,
-          expression: pushCall,
-          loc: cst.loc
-        } as SlimeExpressionStatement
+        return this.createRenderExpressionStatement(expr, cst.loc)
       }
 
       // 2. 在 #{} 内 → 不渲染，保持原样
@@ -547,31 +568,47 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
         } as SlimeExpressionStatement
       }
 
-      // 3. 在 div {} 内，不在 #{} 内 → 渲染
-      const pushCall = SlimeNodeCreate.createCallExpression(
-        SlimeNodeCreate.createMemberExpression(
-          SlimeNodeCreate.createIdentifier('children'),
-          SlimeTokenCreate.createDotToken(cst.loc),
-          SlimeNodeCreate.createIdentifier('push')
-        ),
-        [expr]
-      )
-      // 设置 pushCall 的 loc，用于 source map 映射
-      if (cst.loc) {
-        pushCall.loc = cst.loc
+      // 3. 副作用表达式（赋值、更新、delete）→ 不渲染
+      // 这些表达式的主要目的是副作用，返回值只是副产品
+      if (isSideEffectExpression(expr)) {
+        return {
+          type: SlimeNodeType.ExpressionStatement,
+          expression: expr,
+          loc: cst.loc
+        } as SlimeExpressionStatement
       }
-      return {
-        type: SlimeNodeType.ExpressionStatement,
-        expression: pushCall,
-        loc: cst.loc
-      } as SlimeExpressionStatement
+
+      // 4. 求值表达式 → 渲染
+      return this.createRenderExpressionStatement(expr, cst.loc)
     }
-    
+
     // 不在 div {} 内 → 保持原样
     return {
       type: SlimeNodeType.ExpressionStatement,
       expression: expr,
       loc: cst.loc
+    } as SlimeExpressionStatement
+  }
+
+  /**
+   * 创建渲染表达式语句 - 包装为 children.push(expr)
+   */
+  private createRenderExpressionStatement(expr: SlimeExpression, loc: any): SlimeExpressionStatement {
+    const pushCall = SlimeNodeCreate.createCallExpression(
+      SlimeNodeCreate.createMemberExpression(
+        SlimeNodeCreate.createIdentifier('children'),
+        SlimeTokenCreate.createDotToken(loc),
+        SlimeNodeCreate.createIdentifier('push')
+      ),
+      [expr]
+    )
+    if (loc) {
+      pushCall.loc = loc
+    }
+    return {
+      type: SlimeNodeType.ExpressionStatement,
+      expression: pushCall,
+      loc: loc
     } as SlimeExpressionStatement
   }
 
@@ -685,27 +722,34 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
       }
 
       // 判断是否有复杂语句（需要 IIFE）
-      // 
-      // IIFE 判断规则（v0.2.1 优化）：
+      //
+      // IIFE 判断规则：
       // 只要满足以下任一条件，就需要复杂模式（IIFE）：
       // 1. 有非 ExpressionStatement（声明/控制流）
       // 2. 有来自 #{} 不渲染块的语句
-      // 
-      // 好处：
-      // - 与实现解耦：不依赖 children.push() 这个具体函数名
-      // - 语义清晰：直接表达"有复杂内容就用IIFE"
-      // - 高度稳定：未来改变渲染方式时，此逻辑无需改动
+      // 3. 有副作用表达式（赋值/更新/delete）—— 这些不会变成 children.push()
+      //
+      // 这与 createExpressionStatementAst 中的渲染判断逻辑保持一致：
+      // - 副作用表达式不渲染，所以需要 IIFE 来执行它们
+      // - 求值表达式会变成 children.push()，可以内联到数组中
       const hasComplexStatements = bodyStatements.some(stmt => {
         // 情况1: 非 ExpressionStatement（声明/控制流）
         if (stmt.type !== SlimeNodeType.ExpressionStatement) {
           return true
         }
-        
+
         // 情况2: 来自 #{} 不渲染块的语句
         if ((stmt as any).__fromNoRenderBlock) {
           return true
         }
-        
+
+        // 情况3: 副作用表达式（赋值/更新/delete）
+        // 这些表达式不会变成 children.push()，需要在 IIFE 中执行
+        const expr = (stmt as SlimeExpressionStatement).expression
+        if (expr && isSideEffectExpression(expr)) {
+          return true
+        }
+
         return false
       })
       

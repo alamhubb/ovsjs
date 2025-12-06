@@ -277,6 +277,40 @@ OVS 编译时生成精确的 Source Map，IDE 能够：
 
 ## 编译原理
 
+### OVS 元素的双重身份
+
+OVS 元素（如 `div { }`）既可以作为**语句**，也可以作为**表达式**：
+
+```javascript
+// 作为语句（OvsRenderStatement）
+div { 'hello' }
+
+// 作为表达式（OvsRenderFunction）
+const element = div { 'hello' }
+```
+
+**设计原因：解决 ASI（自动分号插入）问题**
+
+在 JavaScript 中，以下代码会因为 ASI 规则失败：
+```javascript
+div { 'a' } div { 'b' }  // 两个连续的 OVS 元素
+```
+
+如果 OVS 元素只作为表达式，需要通过 `ExpressionStatement` 包装，而 ASI 规则无法识别 `}` 后面紧跟标识符的情况。
+
+**解决方案：借鉴 ES 规范的设计**
+
+类似于 `function` 和 `class` 可以同时作为声明和表达式：
+- 在语句位置 → 解析为 `OvsRenderStatement`（不需要分号）
+- 在表达式位置 → 解析为 `OvsRenderFunction`（用于赋值等场景）
+
+```javascript
+// 这些都可以正确解析
+div { 'a' } div { 'b' }           // 两个 OvsRenderStatement
+div { span { 'a' } span { 'b' } } // 嵌套的 OvsRenderStatement
+const x = div { 'hello' }         // OvsRenderFunction 作为表达式
+```
+
 ### HTML 标签自动转换
 
 OVS 编译器会将 HTML 标签自动转换为 `$OvsHtmlTag.xxx()` 调用：
@@ -310,6 +344,48 @@ function div(props, children) {
 }
 ```
 
+### 表达式渲染规则
+
+在 OVS 渲染上下文（`div {}` 内部）中，**求值表达式**会被渲染，**副作用表达式**不会被渲染：
+
+| 表达式类型 | 示例 | 渲染？ | 说明 |
+|-----------|------|--------|------|
+| 字符串/数字字面量 | `'hello'`, `123` | ✅ 渲染 | 求值表达式 |
+| 变量引用 | `count`, `user.name` | ✅ 渲染 | 求值表达式 |
+| 函数调用 | `func()`, `getData()` | ✅ 渲染 | 求值表达式（渲染返回值） |
+| OVS 元素 | `div {}`, `span { 'hi' }` | ✅ 渲染 | 求值表达式 |
+| 赋值表达式 | `x = 1`, `x += 1` | ❌ 不渲染 | 副作用表达式 |
+| 更新表达式 | `x++`, `++x`, `x--` | ❌ 不渲染 | 副作用表达式 |
+| delete 表达式 | `delete obj.prop` | ❌ 不渲染 | 副作用表达式 |
+| void 表达式 | `void doSomething()` | ❌ 不渲染 | 显式丢弃返回值 |
+
+**示例：**
+```javascript
+div {
+  // 这些会渲染
+  'hello'              // → children.push('hello')
+  count                // → children.push(count)
+  func()               // → children.push(func())
+
+  // 这些不会渲染（副作用表达式）
+  x = 1                // → x = 1
+  count++              // → count++
+  void doSomething()   // → void doSomething()
+}
+```
+
+**设计原因：**
+- 赋值和更新的主要目的是产生**副作用**，返回值只是副产品
+- `void` 的语义就是"执行但丢弃返回值"
+- 如果需要同时赋值并渲染，可以显式写两行
+
+```javascript
+div {
+  x = getNewValue()    // 只赋值
+  x                    // 显式渲染
+}
+```
+
 ### 简单视图 vs 复杂视图
 
 编译器会智能判断视图复杂度：
@@ -339,6 +415,13 @@ div {
   return $OvsHtmlTag.div({}, children)
 })()
 ```
+
+**IIFE 判断规则：**
+
+只要满足以下任一条件，就使用 IIFE（复杂模式）：
+1. 有非 ExpressionStatement（变量声明、控制流语句等）
+2. 有来自 `#{}` 不渲染块的语句
+3. 有副作用表达式（赋值/更新/delete/void）
 
 ### 不渲染块 `#{}` 的处理
 
