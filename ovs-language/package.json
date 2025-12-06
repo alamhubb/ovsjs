@@ -68,6 +68,10 @@
     "build:dev": "rollup -c rollup.config.mjs",
     "build:prod": "rollup -c rollup.config.mjs",
     "watch": "rollup -c rollup.config.mjs --watch",
+    "test": "npm run test:dist",
+    "test:source": "npx tsx tests/test-language-server.ts --source",
+    "test:dist": "npx tsx tests/test-language-server.ts --dist",
+    "test:all": "npm run test:source && npm run build && npm run test:dist",
     "vscode:prepublish": "npm run build:prod",
     "pack": "npm run build:prod && vsce package",
     "release": "npm run build:prod && vsce publish"
