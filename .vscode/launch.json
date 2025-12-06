@@ -7,7 +7,8 @@
       "name": "Launch OVS Extension",
       "runtimeExecutable": "${execPath}",
       "args": [
-        "--extensionDevelopmentPath=${workspaceFolder}/ovs-language"
+        "--extensionDevelopmentPath=${workspaceFolder}/ovs-language",
+        "${workspaceFolder}/create-ovs/template"
       ],
       "outFiles": [
         "${workspaceFolder}/ovs-language/dist/**/*.js",

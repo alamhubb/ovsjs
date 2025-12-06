@@ -28,8 +28,13 @@
     "languages": [
       {
         "id": "ovs",
-        "aliases": ["OVS", "ovs"],
-        "extensions": [".ovs"],
+        "aliases": [
+          "OVS",
+          "ovs"
+        ],
+        "extensions": [
+          ".ovs"
+        ],
         "configuration": "./language-configuration.json"
       }
     ],
@@ -47,7 +52,11 @@
         "ovs.trace.server": {
           "scope": "window",
           "type": "string",
-          "enum": ["off", "messages", "verbose"],
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
           "default": "off",
           "description": "Traces the communication between VS Code and the language server."
         }
@@ -55,35 +64,39 @@
     }
   },
   "scripts": {
-    "build": "tsdown",
-    "build:dev": "tsdown",
-    "build:prod": "tsdown",
-    "watch": "tsdown --watch",
+    "build": "rollup -c rollup.config.mjs",
+    "build:dev": "rollup -c rollup.config.mjs",
+    "build:prod": "rollup -c rollup.config.mjs",
+    "watch": "rollup -c rollup.config.mjs --watch",
     "vscode:prepublish": "npm run build:prod",
     "pack": "npm run build:prod && vsce package",
     "release": "npm run build:prod && vsce publish"
   },
   "dependencies": {
-    "@volar/language-server": "~2.4.0",
-    "@volar/vscode": "~2.4.0",
     "@volar/language-core": "~2.4.0",
+    "@volar/language-server": "~2.4.0",
     "@volar/language-service": "~2.4.0",
     "@volar/typescript": "~2.4.0",
-    "vscode-languageclient": "^9.0.1",
-    "vscode-languageserver": "^9.0.1",
-    "vscode-uri": "^3.0.8",
+    "@volar/vscode": "~2.4.0",
     "ovsjs": "*",
     "path-browserify": "^1.0.1",
     "semver": "^7.6.2",
+    "typescript-auto-import-cache": "^0.3.5",
+    "vscode-languageclient": "^9.0.1",
+    "vscode-languageserver": "^9.0.1",
     "vscode-nls": "^5.2.0",
-    "typescript-auto-import-cache": "^0.3.5"
+    "vscode-uri": "^3.0.8"
   },
   "devDependencies": {
+    "@rollup/plugin-commonjs": "^28.0.9",
+    "@rollup/plugin-json": "^6.1.0",
+    "@rollup/plugin-node-resolve": "^16.0.3",
+    "@rollup/plugin-swc": "^0.4.0",
+    "@swc/core": "^1.15.3",
     "@types/node": "^22",
     "@types/vscode": "^1.75.1",
     "@vscode/vsce": "^3.2.1",
-    "tsdown": "0.17.0-beta.6",
+    "rollup": "^4.53.3",
     "typescript": "^5.6.2"
   }
 }
-
