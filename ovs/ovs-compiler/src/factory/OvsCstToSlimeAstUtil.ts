@@ -242,7 +242,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
       params = this.createArrowFormalParametersAstWrapped(formalParamsCst)
     } else {
       // 用户没有声明参数，抛出错误提示必须声明
-      throw new Error('ovsView 组件必须声明参数，格式: ovsView ComponentName (state) : rootElement { ... }')
+      throw new Error('ovsView 组件必须声明参数123，格式: ovsView ComponentName (state) : rootElement { ... }')
     }
 
     // 2. 视图内容（第3个：OvsRenderDomViewDeclaration）

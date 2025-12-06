@@ -15,7 +15,8 @@
   },
   "dependencies": {
     "vue": "^3.5.25",
-    "ovsjs": "^0.1.9"
+    "ovsjs": "../../ovs/ovs-runtime",
+    "ovs-compiler": "../../ovs/ovs-compiler"
   },
   "devDependencies": {
     "@tsconfig/node24": "^24.0.3",
