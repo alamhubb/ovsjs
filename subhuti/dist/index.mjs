@@ -2404,107 +2404,6 @@ var SubhutiLexer = class {
 };
 
 //#endregion
-//#region src/validation/SubhutiValidationError.ts
-/**
-* 语法验证异常
-*/
-var SubhutiGrammarValidationError = class extends Error {
-	constructor(errors, stats) {
-		super("Grammar validation failed");
-		this.errors = errors;
-		this.stats = stats;
-		this.name = "SubhutiGrammarValidationError";
-	}
-	/**
-	* 格式化错误信息（包含统计信息）
-	*/
-	toString() {
-		const lines = [];
-		for (const error of this.errors) {
-			let title = "";
-			if (error.type === "prefix-conflict" && error.branchIndices.length === 2) {
-				const [i, j] = error.branchIndices;
-				title = `[${error.level}] 分支 ${j} 被分支 ${i} 遮蔽`;
-			} else if (error.type === "or-identical-branches" && error.branchIndices.length === 2) {
-				const [i, j] = error.branchIndices;
-				title = `[${error.level}] 分支 ${i} 和分支 ${j} 完全相同`;
-			} else title = `[${error.level}] ${error.message}`;
-			lines.push(title);
-			lines.push(`  Rule: ${error.ruleName}`);
-			lines.push(`  Branches: [${error.branchIndices.join(", ")}]`);
-			if (error.conflictPaths) {
-				lines.push(`  Path A: ${error.conflictPaths.pathA}`);
-				lines.push(`  Path B: ${error.conflictPaths.pathB}`);
-			}
-			if (error.type === "prefix-conflict" && error.branchIndices.length === 2) {
-				const [i, j] = error.branchIndices;
-				lines.push(`  Suggestion: 将分支 ${j} 移到分支 ${i} 前面（长规则在前，短规则在后）`);
-			} else lines.push(`  Suggestion: ${error.suggestion}`);
-			lines.push("");
-		}
-		if (this.stats) {
-			const s = this.stats;
-			lines.push("");
-			lines.push("=".repeat(60));
-			lines.push("📊 ========== 统计信息 ==========");
-			lines.push("=".repeat(60));
-			lines.push("");
-			lines.push("⏱️  时间统计：");
-			lines.push(`   总耗时: ${s.totalTime}ms`);
-			lines.push(`   ├─ First(K) 缓存生成: ${s.dfsFirstKTime}ms (${(s.dfsFirstKTime / s.totalTime * 100).toFixed(1)}%)`);
-			lines.push(`   ├─ MaxLevel 缓存生成: ${s.bfsMaxLevelTime}ms (${(s.bfsMaxLevelTime / s.totalTime * 100).toFixed(1)}%)`);
-			lines.push(`   └─ Or 冲突检测: ${s.orDetectionTime}ms (${(s.orDetectionTime / s.totalTime * 100).toFixed(1)}%)`);
-			lines.push("");
-			lines.push("🔍 检测结果：");
-			lines.push(`   ├─ 左递归错误: ${s.leftRecursionCount} 个`);
-			lines.push(`   └─ Or 分支遮蔽: ${s.orConflictCount} 个`);
-			lines.push(`   总计: ${this.errors.length} 个错误`);
-			lines.push("");
-			lines.push("📦 缓存信息：");
-			lines.push(`   ├─ dfsFirstKCache: ${s.dfsFirstKCacheSize} 条 (First(${s.firstK}))`);
-			lines.push(`   └─ bfsAllCache: ${s.bfsAllCacheSize} 条 (MaxLevel)`);
-			if (s.cacheUsage) {
-				lines.push("");
-				lines.push("💾 缓存使用率：");
-				const dfs = s.cacheUsage.dfsFirstK;
-				lines.push(`   dfsFirstKCache:`);
-				lines.push(`      查询次数: ${dfs.getCount}`);
-				lines.push(`      命中次数: ${dfs.hit}`);
-				lines.push(`      未命中次数: ${dfs.miss}`);
-				lines.push(`      命中率: ${dfs.hitRate.toFixed(1)}%`);
-				lines.push(`      缓存总条数: ${s.dfsFirstKCacheSize}`);
-				const bfsAll = s.cacheUsage.bfsAllCache;
-				lines.push(`   bfsAllCache:`);
-				lines.push(`      查询次数: ${bfsAll.getCount}`);
-				lines.push(`      命中次数: ${bfsAll.hit}`);
-				lines.push(`      未命中次数: ${bfsAll.miss}`);
-				lines.push(`      命中率: ${bfsAll.total > 0 ? bfsAll.hitRate.toFixed(1) : "0.0"}%`);
-				lines.push(`      缓存总条数: ${bfsAll.size}`);
-				const bfsLevel = s.cacheUsage.bfsLevelCache;
-				lines.push(`   bfsLevelCache:`);
-				lines.push(`      查询次数: ${bfsLevel.getCount}`);
-				lines.push(`      命中次数: ${bfsLevel.hit}`);
-				lines.push(`      未命中次数: ${bfsLevel.miss}`);
-				lines.push(`      命中率: ${bfsLevel.total > 0 ? bfsLevel.hitRate.toFixed(1) : "N/A"}%`);
-				lines.push(`      缓存总条数: ${bfsLevel.size}`);
-				const gdc = s.cacheUsage.getDirectChildren;
-				if (gdc.total > 0) {
-					lines.push(`   getDirectChildren (懒加载):`);
-					lines.push(`      查询次数: ${gdc.total}`);
-					lines.push(`      命中次数: ${gdc.hit}`);
-					lines.push(`      未命中次数: ${gdc.miss}`);
-					lines.push(`      命中率: ${gdc.hitRate.toFixed(1)}%`);
-					lines.push(`      缓存总条数: 与 bfsLevelCache 共用`);
-				}
-			}
-			lines.push("");
-			lines.push("=".repeat(60));
-		}
-		return lines.join("\n");
-	}
-};
-
-//#endregion
 //#region src/validation/SubhutiRuleCollector.ts
 var SubhutiRuleCollector_exports = /* @__PURE__ */ __export({ SubhutiRuleCollector: () => SubhutiRuleCollector });
 var SubhutiRuleCollector;
@@ -4857,482 +4756,106 @@ First(${ruleName}) = {${Array.from(firstSet).slice(0, 5).join(", ")}${firstSet.s
 }));
 
 //#endregion
-//#region src/validation/SubhutiConflictDetector.ts
-var SubhutiConflictDetector_exports = /* @__PURE__ */ __export({ SubhutiConflictDetector: () => SubhutiConflictDetector });
-var SubhutiConflictDetector;
-var init_SubhutiConflictDetector = __esmMin((() => {
-	SubhutiConflictDetector = class {};
-}));
-
-//#endregion
-//#region src/validation/SubhutiValidationDebugger.ts
-init_SubhutiConflictDetector();
+//#region src/validation/SubhutiValidationError.ts
 init_SubhutiGrammarAnalyzer();
 init_SubhutiRuleCollector();
-var SubhutiValidationDebugger = class {
-	constructor() {
-		this.events = [];
-		this.ruleInfos = /* @__PURE__ */ new Map();
-		this.conflictInfos = [];
-		this.stats = {
-			totalRules: 0,
-			collectedRules: 0,
-			totalPaths: 0,
-			totalConflicts: 0,
-			fatalErrors: 0,
-			warnings: 0,
-			collectTime: 0,
-			analyzeTime: 0,
-			detectTime: 0,
-			totalTime: 0
-		};
-		this.options = {
-			traceCollect: true,
-			traceCompute: true,
-			traceDetect: true,
-			showPaths: true,
-			maxPathsToShow: 10,
-			autoOutput: true
-		};
+/**
+* 语法验证异常
+*/
+var SubhutiGrammarValidationError = class extends Error {
+	constructor(errors, stats) {
+		super("Grammar validation failed");
+		this.errors = errors;
+		this.stats = stats;
+		this.name = "SubhutiGrammarValidationError";
 	}
 	/**
-	* 配置调试选项
+	* 格式化错误信息（包含统计信息）
 	*/
-	configure(options) {
-		Object.assign(this.options, options);
-		return this;
-	}
-	/**
-	* 钩子方法：验证完成后调用（轻量侵入模式）
-	* 
-	* Parser 会在 validateGrammar() 完成后调用此方法
-	* 
-	* @param ruleASTs 收集到的规则 AST
-	* @param errors 检测到的错误
-	*/
-	onValidationComplete(ruleASTs, errors) {
-		this.stats.collectedRules = ruleASTs.size;
-		this.stats.totalRules = ruleASTs.size;
-		this.stats.totalConflicts = errors.length;
-		this.stats.fatalErrors = errors.filter((e) => e.level === "FATAL").length;
-		this.stats.warnings = errors.filter((e) => e.level === "ERROR").length;
-		const { SubhutiGrammarAnalyzer: SubhutiGrammarAnalyzer$1 } = (init_SubhutiGrammarAnalyzer(), __toCommonJS(SubhutiGrammarAnalyzer_exports));
-		const analyzer = new SubhutiGrammarAnalyzer$1(ruleASTs, { maxPaths: 100 });
-		let totalPaths = 0;
-		for (const [ruleName, ast] of ruleASTs) {
-			const nodeCount = this.countASTNodes(ast);
-			const paths = analyzer.computePaths(ruleName);
-			totalPaths += paths.length;
-			this.ruleInfos.set(ruleName, {
-				ruleName,
-				astNodeCount: nodeCount,
-				pathCount: paths.length,
-				maxPathLength: Math.max(...paths.map((p) => this.countTokens(p)), 0),
-				pathComputeTime: 0,
-				hasConflict: false
-			});
-		}
-		this.stats.totalPaths = totalPaths;
-		for (const error of errors) {
-			const info = this.ruleInfos.get(error.ruleName);
-			if (info) info.hasConflict = true;
-		}
-		console.log("\n" + "=".repeat(80));
-		console.log("🔍 Subhuti Grammar Validation Debug");
-		console.log("=".repeat(80));
-		console.log(`\n✓ 收集了 ${ruleASTs.size} 个规则`);
-		console.log(`✓ 计算了 ${totalPaths.toLocaleString()} 条路径`);
-		console.log(`✓ 发现 ${errors.length} 个冲突`);
-		if (errors.length > 0) this.outputReport(errors);
-		console.log("=".repeat(80));
-	}
-	/**
-	* 调试完整的验证流程（独立调用，完全无侵入）
-	* 
-	* @param parser Parser 实例
-	* @param validateOptions 验证选项
-	* @returns 验证结果
-	*/
-	debug(parser, validateOptions) {
-		const startTime = performance.now();
-		console.log("\n" + "=".repeat(80));
-		console.log("🔍 Subhuti Grammar Validation Debug");
-		console.log("=".repeat(80));
-		try {
-			console.log("\n【步骤 1：规则收集】");
-			console.log("─".repeat(80));
-			const { SubhutiRuleCollector: SubhutiRuleCollector$1 } = (init_SubhutiRuleCollector(), __toCommonJS(SubhutiRuleCollector_exports));
-			const collector = new SubhutiRuleCollector$1();
-			const collectStart = performance.now();
-			const ruleASTs = this.instrumentCollector(collector, parser);
-			this.stats.collectTime = performance.now() - collectStart;
-			console.log(`✓ 收集完成：${ruleASTs.size} 个规则，耗时 ${this.stats.collectTime.toFixed(2)}ms`);
-			console.log("\n【步骤 2：路径计算】");
-			console.log("─".repeat(80));
-			const { SubhutiGrammarAnalyzer: SubhutiGrammarAnalyzer$1 } = (init_SubhutiGrammarAnalyzer(), __toCommonJS(SubhutiGrammarAnalyzer_exports));
-			const analyzer = new SubhutiGrammarAnalyzer$1(ruleASTs, { maxPaths: validateOptions?.maxPaths || 100 });
-			const analyzeStart = performance.now();
-			this.instrumentAnalyzer(analyzer, ruleASTs);
-			this.stats.analyzeTime = performance.now() - analyzeStart;
-			console.log(`✓ 计算完成：${this.stats.totalPaths} 条路径，耗时 ${this.stats.analyzeTime.toFixed(2)}ms`);
-			console.log("\n【步骤 3：冲突检测】");
-			console.log("─".repeat(80));
-			const { SubhutiConflictDetector: SubhutiConflictDetector$1 } = (init_SubhutiConflictDetector(), __toCommonJS(SubhutiConflictDetector_exports));
-			const detector = new SubhutiConflictDetector$1(analyzer, ruleASTs);
-			const detectStart = performance.now();
-			const errors = this.instrumentDetector(detector, ruleASTs);
-			this.stats.detectTime = performance.now() - detectStart;
-			this.stats.totalConflicts = errors.length;
-			this.stats.fatalErrors = errors.filter((e) => e.level === "FATAL").length;
-			this.stats.warnings = errors.filter((e) => e.level === "ERROR").length;
-			console.log(`✓ 检测完成：${errors.length} 个冲突，耗时 ${this.stats.detectTime.toFixed(2)}ms`);
-			this.stats.totalTime = performance.now() - startTime;
-			if (this.options.autoOutput) this.outputReport(errors);
-			return {
-				success: errors.length === 0,
-				errors
-			};
-		} catch (error) {
-			console.error("\n❌ 验证调试失败:", error.message);
-			throw error;
-		}
-	}
-	/**
-	* 注入规则收集器（追踪收集过程）
-	*/
-	instrumentCollector(collector, parser) {
-		if (this.options.traceCollect) console.log("开始收集规则...\n");
-		const ruleASTs = collector.collectRules(parser);
-		this.stats.collectedRules = ruleASTs.size;
-		this.stats.totalRules = ruleASTs.size;
-		if (this.options.traceCollect) {
-			console.log("\n收集到的规则：");
-			let index = 1;
-			for (const [ruleName, ast] of ruleASTs) {
-				const nodeCount = this.countASTNodes(ast);
-				console.log(`  ${index}. ${ruleName} (${nodeCount} 个节点)`);
-				this.ruleInfos.set(ruleName, {
-					ruleName,
-					astNodeCount: nodeCount,
-					pathCount: 0,
-					maxPathLength: 0,
-					pathComputeTime: 0,
-					hasConflict: false
-				});
-				index++;
+	toString() {
+		const lines = [];
+		for (const error of this.errors) {
+			let title = "";
+			if (error.type === "prefix-conflict" && error.branchIndices.length === 2) {
+				const [i, j] = error.branchIndices;
+				title = `[${error.level}] 分支 ${j} 被分支 ${i} 遮蔽`;
+			} else if (error.type === "or-identical-branches" && error.branchIndices.length === 2) {
+				const [i, j] = error.branchIndices;
+				title = `[${error.level}] 分支 ${i} 和分支 ${j} 完全相同`;
+			} else title = `[${error.level}] ${error.message}`;
+			lines.push(title);
+			lines.push(`  Rule: ${error.ruleName}`);
+			lines.push(`  Branches: [${error.branchIndices.join(", ")}]`);
+			if (error.conflictPaths) {
+				lines.push(`  Path A: ${error.conflictPaths.pathA}`);
+				lines.push(`  Path B: ${error.conflictPaths.pathB}`);
 			}
+			if (error.type === "prefix-conflict" && error.branchIndices.length === 2) {
+				const [i, j] = error.branchIndices;
+				lines.push(`  Suggestion: 将分支 ${j} 移到分支 ${i} 前面（长规则在前，短规则在后）`);
+			} else lines.push(`  Suggestion: ${error.suggestion}`);
+			lines.push("");
 		}
-		return ruleASTs;
-	}
-	/**
-	* 注入语法分析器（追踪路径计算）
-	*/
-	instrumentAnalyzer(analyzer, ruleASTs) {
-		if (this.options.traceCompute) console.log("开始计算路径...\n");
-		let totalPaths = 0;
-		for (const ruleName of ruleASTs.keys()) {
-			const start = performance.now();
-			const paths = analyzer.computePaths(ruleName);
-			const duration = performance.now() - start;
-			totalPaths += paths.length;
-			const info = this.ruleInfos.get(ruleName);
-			if (info) {
-				info.pathCount = paths.length;
-				info.maxPathLength = Math.max(...paths.map((p) => this.countTokens(p)));
-				info.pathComputeTime = duration;
-			}
-			if (this.options.traceCompute) {
-				console.log(`  ${ruleName}: ${paths.length} 条路径 (最长 ${this.countTokens(paths[0] || "")} tokens, ${duration.toFixed(2)}ms)`);
-				if (this.options.showPaths && paths.length > 0) {
-					const showCount = Math.min(paths.length, this.options.maxPathsToShow);
-					for (let i = 0; i < showCount; i++) {
-						const path$1 = paths[i];
-						const tokens = path$1 === "" ? "(空路径)" : path$1.replace(/,/g, " → ").slice(0, -3);
-						console.log(`    [${i}] ${tokens}`);
-					}
-					if (paths.length > showCount) console.log(`    ... 还有 ${paths.length - showCount} 条路径`);
-					console.log("");
+		if (this.stats) {
+			const s = this.stats;
+			lines.push("");
+			lines.push("=".repeat(60));
+			lines.push("📊 ========== 统计信息 ==========");
+			lines.push("=".repeat(60));
+			lines.push("");
+			lines.push("⏱️  时间统计：");
+			lines.push(`   总耗时: ${s.totalTime}ms`);
+			lines.push(`   ├─ First(K) 缓存生成: ${s.dfsFirstKTime}ms (${(s.dfsFirstKTime / s.totalTime * 100).toFixed(1)}%)`);
+			lines.push(`   ├─ MaxLevel 缓存生成: ${s.bfsMaxLevelTime}ms (${(s.bfsMaxLevelTime / s.totalTime * 100).toFixed(1)}%)`);
+			lines.push(`   └─ Or 冲突检测: ${s.orDetectionTime}ms (${(s.orDetectionTime / s.totalTime * 100).toFixed(1)}%)`);
+			lines.push("");
+			lines.push("🔍 检测结果：");
+			lines.push(`   ├─ 左递归错误: ${s.leftRecursionCount} 个`);
+			lines.push(`   └─ Or 分支遮蔽: ${s.orConflictCount} 个`);
+			lines.push(`   总计: ${this.errors.length} 个错误`);
+			lines.push("");
+			lines.push("📦 缓存信息：");
+			lines.push(`   ├─ dfsFirstKCache: ${s.dfsFirstKCacheSize} 条 (First(${s.firstK}))`);
+			lines.push(`   └─ bfsAllCache: ${s.bfsAllCacheSize} 条 (MaxLevel)`);
+			if (s.cacheUsage) {
+				lines.push("");
+				lines.push("💾 缓存使用率：");
+				const dfs = s.cacheUsage.dfsFirstK;
+				lines.push(`   dfsFirstKCache:`);
+				lines.push(`      查询次数: ${dfs.getCount}`);
+				lines.push(`      命中次数: ${dfs.hit}`);
+				lines.push(`      未命中次数: ${dfs.miss}`);
+				lines.push(`      命中率: ${dfs.hitRate.toFixed(1)}%`);
+				lines.push(`      缓存总条数: ${s.dfsFirstKCacheSize}`);
+				const bfsAll = s.cacheUsage.bfsAllCache;
+				lines.push(`   bfsAllCache:`);
+				lines.push(`      查询次数: ${bfsAll.getCount}`);
+				lines.push(`      命中次数: ${bfsAll.hit}`);
+				lines.push(`      未命中次数: ${bfsAll.miss}`);
+				lines.push(`      命中率: ${bfsAll.total > 0 ? bfsAll.hitRate.toFixed(1) : "0.0"}%`);
+				lines.push(`      缓存总条数: ${bfsAll.size}`);
+				const bfsLevel = s.cacheUsage.bfsLevelCache;
+				lines.push(`   bfsLevelCache:`);
+				lines.push(`      查询次数: ${bfsLevel.getCount}`);
+				lines.push(`      命中次数: ${bfsLevel.hit}`);
+				lines.push(`      未命中次数: ${bfsLevel.miss}`);
+				lines.push(`      命中率: ${bfsLevel.total > 0 ? bfsLevel.hitRate.toFixed(1) : "N/A"}%`);
+				lines.push(`      缓存总条数: ${bfsLevel.size}`);
+				const gdc = s.cacheUsage.getDirectChildren;
+				if (gdc.total > 0) {
+					lines.push(`   getDirectChildren (懒加载):`);
+					lines.push(`      查询次数: ${gdc.total}`);
+					lines.push(`      命中次数: ${gdc.hit}`);
+					lines.push(`      未命中次数: ${gdc.miss}`);
+					lines.push(`      命中率: ${gdc.hitRate.toFixed(1)}%`);
+					lines.push(`      缓存总条数: 与 bfsLevelCache 共用`);
 				}
 			}
+			lines.push("");
+			lines.push("=".repeat(60));
 		}
-		this.stats.totalPaths = totalPaths;
+		return lines.join("\n");
 	}
-	/**
-	* 注入冲突检测器（追踪检测过程）
-	*/
-	instrumentDetector(detector, ruleASTs) {
-		if (this.options.traceDetect) console.log("开始检测冲突...\n");
-		const errors = detector.detectAllConflicts();
-		if (this.options.traceDetect) if (errors.length === 0) console.log("  ✓ 未发现冲突");
-		else {
-			console.log(`  ✗ 发现 ${errors.length} 个冲突:\n`);
-			errors.forEach((error, index) => {
-				console.log(`  [${index + 1}] ${error.ruleName} - ${error.message}`);
-				console.log(`      类型: ${error.type}`);
-				console.log(`      分支: [${error.branchIndices.join(", ")}]`);
-				console.log(`      路径A: ${this.formatPath(error.conflictPaths.pathA)}`);
-				console.log(`      路径B: ${this.formatPath(error.conflictPaths.pathB)}`);
-				console.log(`      建议: ${error.suggestion}`);
-				console.log("");
-				const info = this.ruleInfos.get(error.ruleName);
-				if (info) info.hasConflict = true;
-			});
-		}
-		return errors;
-	}
-	/**
-	* 输出完整调试报告
-	*/
-	outputReport(errors) {
-		console.log("\n" + "=".repeat(80));
-		console.log("📊 验证调试报告");
-		console.log("=".repeat(80));
-		console.log("\n【第一部分：总体统计】");
-		console.log("─".repeat(80));
-		console.log("\n⏱️  性能统计");
-		console.log(`  总耗时: ${this.stats.totalTime.toFixed(2)}ms`);
-		console.log(`    - 规则收集: ${this.stats.collectTime.toFixed(2)}ms (${(this.stats.collectTime / this.stats.totalTime * 100).toFixed(1)}%)`);
-		console.log(`    - 路径计算: ${this.stats.analyzeTime.toFixed(2)}ms (${(this.stats.analyzeTime / this.stats.totalTime * 100).toFixed(1)}%)`);
-		console.log(`    - 冲突检测: ${this.stats.detectTime.toFixed(2)}ms (${(this.stats.detectTime / this.stats.totalTime * 100).toFixed(1)}%)`);
-		console.log("\n📋 规则统计");
-		console.log(`  总规则数: ${this.stats.totalRules}`);
-		console.log(`  已收集: ${this.stats.collectedRules}`);
-		console.log(`  总路径数: ${this.stats.totalPaths.toLocaleString()}`);
-		console.log(`  平均路径/规则: ${(this.stats.totalPaths / this.stats.collectedRules).toFixed(1)}`);
-		console.log("\n⚠️  冲突统计");
-		console.log(`  总冲突数: ${this.stats.totalConflicts}`);
-		console.log(`  致命错误: ${this.stats.fatalErrors}`);
-		console.log(`  警告: ${this.stats.warnings}`);
-		console.log("\n【第二部分：规则详情】");
-		console.log("─".repeat(80));
-		const topPathRules = Array.from(this.ruleInfos.values()).sort((a, b) => b.pathCount - a.pathCount).slice(0, 5);
-		console.log("\n📈 路径最多的规则（Top 5）:");
-		topPathRules.forEach((info, i) => {
-			const conflictMark = info.hasConflict ? "⚠️ " : "✓ ";
-			console.log(`  ${i + 1}. ${conflictMark}${info.ruleName}: ${info.pathCount.toLocaleString()} 条路径 (最长 ${info.maxPathLength} tokens, ${info.pathComputeTime.toFixed(2)}ms)`);
-		});
-		const conflictRules = Array.from(this.ruleInfos.values()).filter((info) => info.hasConflict);
-		if (conflictRules.length > 0) {
-			console.log("\n⚠️  有冲突的规则:");
-			conflictRules.forEach((info, i) => {
-				console.log(`  ${i + 1}. ${info.ruleName}: ${info.pathCount} 条路径, AST ${info.astNodeCount} 个节点`);
-			});
-		}
-		if (errors.length > 0) {
-			console.log("\n【第三部分：冲突详情】");
-			console.log("─".repeat(80));
-			errors.forEach((error, index) => {
-				console.log(`\n🔴 冲突 ${index + 1}/${errors.length}`);
-				console.log("─".repeat(40));
-				console.log(`规则: ${error.ruleName}`);
-				console.log(`类型: ${error.type}`);
-				console.log(`级别: ${error.level}`);
-				console.log(`分支: [${error.branchIndices.join(", ")}]`);
-				console.log(`\n问题: ${error.message}`);
-				console.log(`\n路径对比:`);
-				console.log(`  分支 ${error.branchIndices[0]}: ${this.formatPath(error.conflictPaths.pathA)}`);
-				console.log(`  分支 ${error.branchIndices[1]}: ${this.formatPath(error.conflictPaths.pathB)}`);
-				const analysis = this.analyzeConflict(error);
-				console.log(`\n原因分析:`);
-				console.log(`  ${analysis}`);
-				console.log(`\n修复建议:`);
-				console.log(`  ${error.suggestion}`);
-			});
-		}
-		console.log("\n" + "=".repeat(80));
-		console.log("🎉 验证调试完成");
-		console.log("=".repeat(80));
-	}
-	/**
-	* 计算 AST 节点数量
-	*/
-	countASTNodes(node) {
-		switch (node.type) {
-			case "consume":
-			case "subrule": return 1;
-			case "sequence": return 1 + node.nodes.reduce((sum, n) => sum + this.countASTNodes(n), 0);
-			case "or": return 1 + node.alternatives.reduce((sum, n) => sum + this.countASTNodes(n), 0);
-			case "option":
-			case "many":
-			case "atLeastOne": return 1 + this.countASTNodes(node.node);
-			default: return 0;
-		}
-	}
-	/**
-	* 计算路径中的 token 数量
-	*/
-	countTokens(path$1) {
-		if (path$1 === "") return 0;
-		return (path$1.match(/,/g) || []).length;
-	}
-	/**
-	* 格式化路径（用于显示）
-	*/
-	formatPath(path$1) {
-		if (path$1 === "") return "(空路径)";
-		if (path$1.startsWith("<")) return path$1;
-		return path$1.replace(/,/g, " → ").slice(0, -3);
-	}
-	/**
-	* 分析冲突原因
-	*/
-	analyzeConflict(error) {
-		if (error.type === "empty-path") return `分支 ${error.branchIndices[0]} 可以匹配空输入（0个token），导致后续所有分支（包括分支 ${error.branchIndices[1]}）都不可达。这通常是由 Option() 或 Many() 引起的。`;
-		if (error.type === "prefix-conflict") {
-			const pathA = error.conflictPaths.pathA;
-			const pathB = error.conflictPaths.pathB;
-			const tokensA = this.countTokens(pathA);
-			const tokensB = this.countTokens(pathB);
-			return `分支 ${error.branchIndices[0]} 的路径（${tokensA} tokens）是 分支 ${error.branchIndices[1]} 路径（${tokensB} tokens）的前缀。这意味着当输入匹配前 ${tokensA} 个token时，Parser会优先选择分支 ${error.branchIndices[0]}，导致分支 ${error.branchIndices[1]} 永远不会被尝试。`;
-		}
-		return "未知冲突类型";
-	}
-	/**
-	* 获取统计信息（供外部使用）
-	*/
-	getStats() {
-		return { ...this.stats };
-	}
-	/**
-	* 获取规则信息（供外部使用）
-	*/
-	getRuleInfos() {
-		return new Map(this.ruleInfos);
-	}
-	/**
-	* 清除所有数据
-	*/
-	clear() {
-		this.events = [];
-		this.ruleInfos.clear();
-		this.conflictInfos = [];
-		this.stats = {
-			totalRules: 0,
-			collectedRules: 0,
-			totalPaths: 0,
-			totalConflicts: 0,
-			fatalErrors: 0,
-			warnings: 0,
-			collectTime: 0,
-			analyzeTime: 0,
-			detectTime: 0,
-			totalTime: 0
-		};
-	}
-};
-
-//#endregion
-//#region src/validation/SubhutiValidationLogger.ts
-/**
-* Subhuti Validation Logger - 统一的日志工具
-* 
-* 功能：
-* 1. 提供统一的日志接口
-* 2. 支持日志级别控制
-* 3. 支持按规则名过滤日志
-* 4. 性能优化：日志关闭时零开销
-* 
-* @version 1.0.0
-*/
-/**
-* 日志级别
-*/
-let LogLevel = /* @__PURE__ */ function(LogLevel$1) {
-	LogLevel$1[LogLevel$1["NONE"] = 0] = "NONE";
-	LogLevel$1[LogLevel$1["ERROR"] = 1] = "ERROR";
-	LogLevel$1[LogLevel$1["WARN"] = 2] = "WARN";
-	LogLevel$1[LogLevel$1["INFO"] = 3] = "INFO";
-	LogLevel$1[LogLevel$1["DEBUG"] = 4] = "DEBUG";
-	return LogLevel$1;
-}({});
-/**
-* 验证日志工具
-*/
-var SubhutiValidationLogger = class {
-	/**
-	* 配置日志
-	* 
-	* @param config 日志配置
-	*/
-	static configure(config) {
-		this.config = {
-			...this.config,
-			...config
-		};
-	}
-	/**
-	* 检查是否应该输出日志
-	* 
-	* @param level 日志级别
-	* @param ruleName 规则名（可选）
-	* @returns 是否应该输出
-	*/
-	static shouldLog(level, ruleName) {
-		if (this.config.level < level) return false;
-		if (ruleName && this.config.enabledRules && this.config.enabledRules.length > 0) {
-			if (!this.config.enabledRules.includes(ruleName)) return false;
-		}
-		return true;
-	}
-	/**
-	* 输出调试日志
-	* 
-	* @param message 消息
-	* @param ruleName 规则名（可选）
-	*/
-	static debug(message, ruleName) {
-		if (!this.shouldLog(LogLevel.DEBUG, ruleName)) return;
-		console.log(`[DEBUG] ${message}`);
-	}
-	/**
-	* 输出信息日志
-	* 
-	* @param message 消息
-	* @param ruleName 规则名（可选）
-	*/
-	static info(message, ruleName) {
-		if (!this.shouldLog(LogLevel.INFO, ruleName)) return;
-		console.log(`[INFO] ${message}`);
-	}
-	/**
-	* 输出警告日志
-	* 
-	* @param message 消息
-	* @param ruleName 规则名（可选）
-	*/
-	static warn(message, ruleName) {
-		if (!this.shouldLog(LogLevel.WARN, ruleName)) return;
-		console.warn(`[WARN] ${message}`);
-	}
-	/**
-	* 输出错误日志
-	* 
-	* @param message 消息
-	* @param ruleName 规则名（可选）
-	*/
-	static error(message, ruleName) {
-		if (!this.shouldLog(LogLevel.ERROR, ruleName)) return;
-		console.error(`[ERROR] ${message}`);
-	}
-	/**
-	* 获取当前配置
-	*/
-	static getConfig() {
-		return { ...this.config };
-	}
-	/**
-	* 重置配置为默认值
-	*/
-	static reset() {
-		this.config = {
-			level: LogLevel.NONE,
-			enabledRules: []
-		};
-	}
-};
-SubhutiValidationLogger.config = {
-	level: LogLevel.NONE,
-	enabledRules: []
 };
 
 //#endregion
@@ -6348,6 +5871,488 @@ var SubhutiCreateToken = class {
 	}
 };
 const emptyValue = "Error:CannotUseValue";
+
+//#endregion
+//#region src/validation/SubhutiConflictDetector.ts
+var SubhutiConflictDetector_exports = /* @__PURE__ */ __export({ SubhutiConflictDetector: () => SubhutiConflictDetector });
+var SubhutiConflictDetector;
+var init_SubhutiConflictDetector = __esmMin((() => {
+	SubhutiConflictDetector = class {};
+}));
+
+//#endregion
+//#region src/validation/SubhutiValidationDebugger.ts
+init_SubhutiConflictDetector();
+var SubhutiValidationDebugger = class {
+	constructor() {
+		this.events = [];
+		this.ruleInfos = /* @__PURE__ */ new Map();
+		this.conflictInfos = [];
+		this.stats = {
+			totalRules: 0,
+			collectedRules: 0,
+			totalPaths: 0,
+			totalConflicts: 0,
+			fatalErrors: 0,
+			warnings: 0,
+			collectTime: 0,
+			analyzeTime: 0,
+			detectTime: 0,
+			totalTime: 0
+		};
+		this.options = {
+			traceCollect: true,
+			traceCompute: true,
+			traceDetect: true,
+			showPaths: true,
+			maxPathsToShow: 10,
+			autoOutput: true
+		};
+	}
+	/**
+	* 配置调试选项
+	*/
+	configure(options) {
+		Object.assign(this.options, options);
+		return this;
+	}
+	/**
+	* 钩子方法：验证完成后调用（轻量侵入模式）
+	* 
+	* Parser 会在 validateGrammar() 完成后调用此方法
+	* 
+	* @param ruleASTs 收集到的规则 AST
+	* @param errors 检测到的错误
+	*/
+	onValidationComplete(ruleASTs, errors) {
+		this.stats.collectedRules = ruleASTs.size;
+		this.stats.totalRules = ruleASTs.size;
+		this.stats.totalConflicts = errors.length;
+		this.stats.fatalErrors = errors.filter((e) => e.level === "FATAL").length;
+		this.stats.warnings = errors.filter((e) => e.level === "ERROR").length;
+		const { SubhutiGrammarAnalyzer: SubhutiGrammarAnalyzer$1 } = (init_SubhutiGrammarAnalyzer(), __toCommonJS(SubhutiGrammarAnalyzer_exports));
+		const analyzer = new SubhutiGrammarAnalyzer$1(ruleASTs, { maxPaths: 100 });
+		let totalPaths = 0;
+		for (const [ruleName, ast] of ruleASTs) {
+			const nodeCount = this.countASTNodes(ast);
+			const paths = analyzer.computePaths(ruleName);
+			totalPaths += paths.length;
+			this.ruleInfos.set(ruleName, {
+				ruleName,
+				astNodeCount: nodeCount,
+				pathCount: paths.length,
+				maxPathLength: Math.max(...paths.map((p) => this.countTokens(p)), 0),
+				pathComputeTime: 0,
+				hasConflict: false
+			});
+		}
+		this.stats.totalPaths = totalPaths;
+		for (const error of errors) {
+			const info = this.ruleInfos.get(error.ruleName);
+			if (info) info.hasConflict = true;
+		}
+		console.log("\n" + "=".repeat(80));
+		console.log("🔍 Subhuti Grammar Validation Debug");
+		console.log("=".repeat(80));
+		console.log(`\n✓ 收集了 ${ruleASTs.size} 个规则`);
+		console.log(`✓ 计算了 ${totalPaths.toLocaleString()} 条路径`);
+		console.log(`✓ 发现 ${errors.length} 个冲突`);
+		if (errors.length > 0) this.outputReport(errors);
+		console.log("=".repeat(80));
+	}
+	/**
+	* 调试完整的验证流程（独立调用，完全无侵入）
+	* 
+	* @param parser Parser 实例
+	* @param validateOptions 验证选项
+	* @returns 验证结果
+	*/
+	debug(parser, validateOptions) {
+		const startTime = performance.now();
+		console.log("\n" + "=".repeat(80));
+		console.log("🔍 Subhuti Grammar Validation Debug");
+		console.log("=".repeat(80));
+		try {
+			console.log("\n【步骤 1：规则收集】");
+			console.log("─".repeat(80));
+			const { SubhutiRuleCollector: SubhutiRuleCollector$1 } = (init_SubhutiRuleCollector(), __toCommonJS(SubhutiRuleCollector_exports));
+			const collector = new SubhutiRuleCollector$1();
+			const collectStart = performance.now();
+			const ruleASTs = this.instrumentCollector(collector, parser);
+			this.stats.collectTime = performance.now() - collectStart;
+			console.log(`✓ 收集完成：${ruleASTs.size} 个规则，耗时 ${this.stats.collectTime.toFixed(2)}ms`);
+			console.log("\n【步骤 2：路径计算】");
+			console.log("─".repeat(80));
+			const { SubhutiGrammarAnalyzer: SubhutiGrammarAnalyzer$1 } = (init_SubhutiGrammarAnalyzer(), __toCommonJS(SubhutiGrammarAnalyzer_exports));
+			const analyzer = new SubhutiGrammarAnalyzer$1(ruleASTs, { maxPaths: validateOptions?.maxPaths || 100 });
+			const analyzeStart = performance.now();
+			this.instrumentAnalyzer(analyzer, ruleASTs);
+			this.stats.analyzeTime = performance.now() - analyzeStart;
+			console.log(`✓ 计算完成：${this.stats.totalPaths} 条路径，耗时 ${this.stats.analyzeTime.toFixed(2)}ms`);
+			console.log("\n【步骤 3：冲突检测】");
+			console.log("─".repeat(80));
+			const { SubhutiConflictDetector: SubhutiConflictDetector$1 } = (init_SubhutiConflictDetector(), __toCommonJS(SubhutiConflictDetector_exports));
+			const detector = new SubhutiConflictDetector$1(analyzer, ruleASTs);
+			const detectStart = performance.now();
+			const errors = this.instrumentDetector(detector, ruleASTs);
+			this.stats.detectTime = performance.now() - detectStart;
+			this.stats.totalConflicts = errors.length;
+			this.stats.fatalErrors = errors.filter((e) => e.level === "FATAL").length;
+			this.stats.warnings = errors.filter((e) => e.level === "ERROR").length;
+			console.log(`✓ 检测完成：${errors.length} 个冲突，耗时 ${this.stats.detectTime.toFixed(2)}ms`);
+			this.stats.totalTime = performance.now() - startTime;
+			if (this.options.autoOutput) this.outputReport(errors);
+			return {
+				success: errors.length === 0,
+				errors
+			};
+		} catch (error) {
+			console.error("\n❌ 验证调试失败:", error.message);
+			throw error;
+		}
+	}
+	/**
+	* 注入规则收集器（追踪收集过程）
+	*/
+	instrumentCollector(collector, parser) {
+		if (this.options.traceCollect) console.log("开始收集规则...\n");
+		const ruleASTs = collector.collectRules(parser);
+		this.stats.collectedRules = ruleASTs.size;
+		this.stats.totalRules = ruleASTs.size;
+		if (this.options.traceCollect) {
+			console.log("\n收集到的规则：");
+			let index = 1;
+			for (const [ruleName, ast] of ruleASTs) {
+				const nodeCount = this.countASTNodes(ast);
+				console.log(`  ${index}. ${ruleName} (${nodeCount} 个节点)`);
+				this.ruleInfos.set(ruleName, {
+					ruleName,
+					astNodeCount: nodeCount,
+					pathCount: 0,
+					maxPathLength: 0,
+					pathComputeTime: 0,
+					hasConflict: false
+				});
+				index++;
+			}
+		}
+		return ruleASTs;
+	}
+	/**
+	* 注入语法分析器（追踪路径计算）
+	*/
+	instrumentAnalyzer(analyzer, ruleASTs) {
+		if (this.options.traceCompute) console.log("开始计算路径...\n");
+		let totalPaths = 0;
+		for (const ruleName of ruleASTs.keys()) {
+			const start = performance.now();
+			const paths = analyzer.computePaths(ruleName);
+			const duration = performance.now() - start;
+			totalPaths += paths.length;
+			const info = this.ruleInfos.get(ruleName);
+			if (info) {
+				info.pathCount = paths.length;
+				info.maxPathLength = Math.max(...paths.map((p) => this.countTokens(p)));
+				info.pathComputeTime = duration;
+			}
+			if (this.options.traceCompute) {
+				console.log(`  ${ruleName}: ${paths.length} 条路径 (最长 ${this.countTokens(paths[0] || "")} tokens, ${duration.toFixed(2)}ms)`);
+				if (this.options.showPaths && paths.length > 0) {
+					const showCount = Math.min(paths.length, this.options.maxPathsToShow);
+					for (let i = 0; i < showCount; i++) {
+						const path$1 = paths[i];
+						const tokens = path$1 === "" ? "(空路径)" : path$1.replace(/,/g, " → ").slice(0, -3);
+						console.log(`    [${i}] ${tokens}`);
+					}
+					if (paths.length > showCount) console.log(`    ... 还有 ${paths.length - showCount} 条路径`);
+					console.log("");
+				}
+			}
+		}
+		this.stats.totalPaths = totalPaths;
+	}
+	/**
+	* 注入冲突检测器（追踪检测过程）
+	*/
+	instrumentDetector(detector, ruleASTs) {
+		if (this.options.traceDetect) console.log("开始检测冲突...\n");
+		const errors = detector.detectAllConflicts();
+		if (this.options.traceDetect) if (errors.length === 0) console.log("  ✓ 未发现冲突");
+		else {
+			console.log(`  ✗ 发现 ${errors.length} 个冲突:\n`);
+			errors.forEach((error, index) => {
+				console.log(`  [${index + 1}] ${error.ruleName} - ${error.message}`);
+				console.log(`      类型: ${error.type}`);
+				console.log(`      分支: [${error.branchIndices.join(", ")}]`);
+				console.log(`      路径A: ${this.formatPath(error.conflictPaths.pathA)}`);
+				console.log(`      路径B: ${this.formatPath(error.conflictPaths.pathB)}`);
+				console.log(`      建议: ${error.suggestion}`);
+				console.log("");
+				const info = this.ruleInfos.get(error.ruleName);
+				if (info) info.hasConflict = true;
+			});
+		}
+		return errors;
+	}
+	/**
+	* 输出完整调试报告
+	*/
+	outputReport(errors) {
+		console.log("\n" + "=".repeat(80));
+		console.log("📊 验证调试报告");
+		console.log("=".repeat(80));
+		console.log("\n【第一部分：总体统计】");
+		console.log("─".repeat(80));
+		console.log("\n⏱️  性能统计");
+		console.log(`  总耗时: ${this.stats.totalTime.toFixed(2)}ms`);
+		console.log(`    - 规则收集: ${this.stats.collectTime.toFixed(2)}ms (${(this.stats.collectTime / this.stats.totalTime * 100).toFixed(1)}%)`);
+		console.log(`    - 路径计算: ${this.stats.analyzeTime.toFixed(2)}ms (${(this.stats.analyzeTime / this.stats.totalTime * 100).toFixed(1)}%)`);
+		console.log(`    - 冲突检测: ${this.stats.detectTime.toFixed(2)}ms (${(this.stats.detectTime / this.stats.totalTime * 100).toFixed(1)}%)`);
+		console.log("\n📋 规则统计");
+		console.log(`  总规则数: ${this.stats.totalRules}`);
+		console.log(`  已收集: ${this.stats.collectedRules}`);
+		console.log(`  总路径数: ${this.stats.totalPaths.toLocaleString()}`);
+		console.log(`  平均路径/规则: ${(this.stats.totalPaths / this.stats.collectedRules).toFixed(1)}`);
+		console.log("\n⚠️  冲突统计");
+		console.log(`  总冲突数: ${this.stats.totalConflicts}`);
+		console.log(`  致命错误: ${this.stats.fatalErrors}`);
+		console.log(`  警告: ${this.stats.warnings}`);
+		console.log("\n【第二部分：规则详情】");
+		console.log("─".repeat(80));
+		const topPathRules = Array.from(this.ruleInfos.values()).sort((a, b) => b.pathCount - a.pathCount).slice(0, 5);
+		console.log("\n📈 路径最多的规则（Top 5）:");
+		topPathRules.forEach((info, i) => {
+			const conflictMark = info.hasConflict ? "⚠️ " : "✓ ";
+			console.log(`  ${i + 1}. ${conflictMark}${info.ruleName}: ${info.pathCount.toLocaleString()} 条路径 (最长 ${info.maxPathLength} tokens, ${info.pathComputeTime.toFixed(2)}ms)`);
+		});
+		const conflictRules = Array.from(this.ruleInfos.values()).filter((info) => info.hasConflict);
+		if (conflictRules.length > 0) {
+			console.log("\n⚠️  有冲突的规则:");
+			conflictRules.forEach((info, i) => {
+				console.log(`  ${i + 1}. ${info.ruleName}: ${info.pathCount} 条路径, AST ${info.astNodeCount} 个节点`);
+			});
+		}
+		if (errors.length > 0) {
+			console.log("\n【第三部分：冲突详情】");
+			console.log("─".repeat(80));
+			errors.forEach((error, index) => {
+				console.log(`\n🔴 冲突 ${index + 1}/${errors.length}`);
+				console.log("─".repeat(40));
+				console.log(`规则: ${error.ruleName}`);
+				console.log(`类型: ${error.type}`);
+				console.log(`级别: ${error.level}`);
+				console.log(`分支: [${error.branchIndices.join(", ")}]`);
+				console.log(`\n问题: ${error.message}`);
+				console.log(`\n路径对比:`);
+				console.log(`  分支 ${error.branchIndices[0]}: ${this.formatPath(error.conflictPaths.pathA)}`);
+				console.log(`  分支 ${error.branchIndices[1]}: ${this.formatPath(error.conflictPaths.pathB)}`);
+				const analysis = this.analyzeConflict(error);
+				console.log(`\n原因分析:`);
+				console.log(`  ${analysis}`);
+				console.log(`\n修复建议:`);
+				console.log(`  ${error.suggestion}`);
+			});
+		}
+		console.log("\n" + "=".repeat(80));
+		console.log("🎉 验证调试完成");
+		console.log("=".repeat(80));
+	}
+	/**
+	* 计算 AST 节点数量
+	*/
+	countASTNodes(node) {
+		switch (node.type) {
+			case "consume":
+			case "subrule": return 1;
+			case "sequence": return 1 + node.nodes.reduce((sum, n) => sum + this.countASTNodes(n), 0);
+			case "or": return 1 + node.alternatives.reduce((sum, n) => sum + this.countASTNodes(n), 0);
+			case "option":
+			case "many":
+			case "atLeastOne": return 1 + this.countASTNodes(node.node);
+			default: return 0;
+		}
+	}
+	/**
+	* 计算路径中的 token 数量
+	*/
+	countTokens(path$1) {
+		if (path$1 === "") return 0;
+		return (path$1.match(/,/g) || []).length;
+	}
+	/**
+	* 格式化路径（用于显示）
+	*/
+	formatPath(path$1) {
+		if (path$1 === "") return "(空路径)";
+		if (path$1.startsWith("<")) return path$1;
+		return path$1.replace(/,/g, " → ").slice(0, -3);
+	}
+	/**
+	* 分析冲突原因
+	*/
+	analyzeConflict(error) {
+		if (error.type === "empty-path") return `分支 ${error.branchIndices[0]} 可以匹配空输入（0个token），导致后续所有分支（包括分支 ${error.branchIndices[1]}）都不可达。这通常是由 Option() 或 Many() 引起的。`;
+		if (error.type === "prefix-conflict") {
+			const pathA = error.conflictPaths.pathA;
+			const pathB = error.conflictPaths.pathB;
+			const tokensA = this.countTokens(pathA);
+			const tokensB = this.countTokens(pathB);
+			return `分支 ${error.branchIndices[0]} 的路径（${tokensA} tokens）是 分支 ${error.branchIndices[1]} 路径（${tokensB} tokens）的前缀。这意味着当输入匹配前 ${tokensA} 个token时，Parser会优先选择分支 ${error.branchIndices[0]}，导致分支 ${error.branchIndices[1]} 永远不会被尝试。`;
+		}
+		return "未知冲突类型";
+	}
+	/**
+	* 获取统计信息（供外部使用）
+	*/
+	getStats() {
+		return { ...this.stats };
+	}
+	/**
+	* 获取规则信息（供外部使用）
+	*/
+	getRuleInfos() {
+		return new Map(this.ruleInfos);
+	}
+	/**
+	* 清除所有数据
+	*/
+	clear() {
+		this.events = [];
+		this.ruleInfos.clear();
+		this.conflictInfos = [];
+		this.stats = {
+			totalRules: 0,
+			collectedRules: 0,
+			totalPaths: 0,
+			totalConflicts: 0,
+			fatalErrors: 0,
+			warnings: 0,
+			collectTime: 0,
+			analyzeTime: 0,
+			detectTime: 0,
+			totalTime: 0
+		};
+	}
+};
+
+//#endregion
+//#region src/validation/SubhutiValidationLogger.ts
+/**
+* Subhuti Validation Logger - 统一的日志工具
+* 
+* 功能：
+* 1. 提供统一的日志接口
+* 2. 支持日志级别控制
+* 3. 支持按规则名过滤日志
+* 4. 性能优化：日志关闭时零开销
+* 
+* @version 1.0.0
+*/
+/**
+* 日志级别
+*/
+let LogLevel = /* @__PURE__ */ function(LogLevel$1) {
+	LogLevel$1[LogLevel$1["NONE"] = 0] = "NONE";
+	LogLevel$1[LogLevel$1["ERROR"] = 1] = "ERROR";
+	LogLevel$1[LogLevel$1["WARN"] = 2] = "WARN";
+	LogLevel$1[LogLevel$1["INFO"] = 3] = "INFO";
+	LogLevel$1[LogLevel$1["DEBUG"] = 4] = "DEBUG";
+	return LogLevel$1;
+}({});
+/**
+* 验证日志工具
+*/
+var SubhutiValidationLogger = class {
+	/**
+	* 配置日志
+	* 
+	* @param config 日志配置
+	*/
+	static configure(config) {
+		this.config = {
+			...this.config,
+			...config
+		};
+	}
+	/**
+	* 检查是否应该输出日志
+	* 
+	* @param level 日志级别
+	* @param ruleName 规则名（可选）
+	* @returns 是否应该输出
+	*/
+	static shouldLog(level, ruleName) {
+		if (this.config.level < level) return false;
+		if (ruleName && this.config.enabledRules && this.config.enabledRules.length > 0) {
+			if (!this.config.enabledRules.includes(ruleName)) return false;
+		}
+		return true;
+	}
+	/**
+	* 输出调试日志
+	* 
+	* @param message 消息
+	* @param ruleName 规则名（可选）
+	*/
+	static debug(message, ruleName) {
+		if (!this.shouldLog(LogLevel.DEBUG, ruleName)) return;
+		console.log(`[DEBUG] ${message}`);
+	}
+	/**
+	* 输出信息日志
+	* 
+	* @param message 消息
+	* @param ruleName 规则名（可选）
+	*/
+	static info(message, ruleName) {
+		if (!this.shouldLog(LogLevel.INFO, ruleName)) return;
+		console.log(`[INFO] ${message}`);
+	}
+	/**
+	* 输出警告日志
+	* 
+	* @param message 消息
+	* @param ruleName 规则名（可选）
+	*/
+	static warn(message, ruleName) {
+		if (!this.shouldLog(LogLevel.WARN, ruleName)) return;
+		console.warn(`[WARN] ${message}`);
+	}
+	/**
+	* 输出错误日志
+	* 
+	* @param message 消息
+	* @param ruleName 规则名（可选）
+	*/
+	static error(message, ruleName) {
+		if (!this.shouldLog(LogLevel.ERROR, ruleName)) return;
+		console.error(`[ERROR] ${message}`);
+	}
+	/**
+	* 获取当前配置
+	*/
+	static getConfig() {
+		return { ...this.config };
+	}
+	/**
+	* 重置配置为默认值
+	*/
+	static reset() {
+		this.config = {
+			level: LogLevel.NONE,
+			enabledRules: []
+		};
+	}
+};
+SubhutiValidationLogger.config = {
+	level: LogLevel.NONE,
+	enabledRules: []
+};
+
+//#endregion
+//#region src/validation/index.ts
+init_SubhutiRuleCollector();
+init_SubhutiGrammarAnalyzer();
 
 //#endregion
 //#region src/logutil.ts

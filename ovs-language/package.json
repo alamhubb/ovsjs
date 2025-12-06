@@ -1,10 +1,10 @@
 {
   "name": "ovs-language",
-  "displayName": "OVS Language",
+  "displayName": "Ovs Language",
   "description": "OVS language support for VSCode",
   "author": "alamhubb",
   "license": "MIT",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "repository": {
     "type": "git",
     "url": "https://github.com/alamhubb/ovsjs"
