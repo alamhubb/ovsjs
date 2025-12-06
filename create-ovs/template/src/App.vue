@@ -8,8 +8,6 @@ import HelloWorld from './components/HelloWorld.ovs'
 
     <div class="wrapper">
       <HelloWorld></HelloWorld>
-      ---
-      <HelloWorld></HelloWorld>
     </div>
   </header>
 </template>

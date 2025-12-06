@@ -9,24 +9,7 @@ ovsView CountDisplay(props): div({ class: 'count-display' }) {
 
 // 主视图
 div({ class: 'greetings', onClick() { count.value = 0 }}) {
-    const msg = "You did it!"
-    let count = ref(0)
-
-    const timer = setInterval(() => {
-      count.value = count.value + 1
-    }, 1000);
-
-
-  h1({ class: 'green' }) { msg }
-
-  const div123= div{ div{'woshidiv:'} div{count} }
-
-
-
-  // 使用组件，传入 count
-  CountDisplay({ count:div123 })
-
-  p({ style: 'color: #888; font-size: 12px;' }) { '(Click anywhere to reset)' }
+ 
 
   h3 {
     "You've successfully created a project with "
@@ -37,4 +20,24 @@ div({ class: 'greetings', onClick() { count.value = 0 }}) {
     a({ href: 'https://github.com/alamhubb/ovsjs', target: '_blank', rel: 'noopener' }) { 'OVS' }
     '.'
   }
+
+
+    const msg = "You did it!"
+    let count = ref(0)
+
+    const timer = setInterval(() => {
+      count.value = count.value + 1
+    }, 1000);
+
+
+  h1({ class: 'green' }) { msg }
+
+  const countView= span{count}
+
+
+
+  // 使用组件，传入 count
+  CountDisplay({ count:countView })
+
+ p({ style: 'color: #888; font-size: 12px;' }) { '(Click anywhere to reset)' }
 }
