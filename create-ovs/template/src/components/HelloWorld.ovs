@@ -1,11 +1,5 @@
 import { ref } from 'vue';
 
-const msg = "You did it!"
-let count = ref(0)
-
-const timer = setInterval(() => {
-  count.value = count.value + 1
-}, 1000);
 
 // 定义一个小组件，接收 count 并显示
 ovsView CountDisplay(props): div({ class: 'count-display' }) {
@@ -15,6 +9,15 @@ ovsView CountDisplay(props): div({ class: 'count-display' }) {
 
 // 主视图
 div({ class: 'greetings', onClick() { count.value = 0 }}) {
+const msg = "You did it!"
+let count = ref(0)
+
+const timer = setInterval(() => {
+  count.value = count.value + 1
+}, 1000);
+
+
+
   h1({ class: 'green' }) { msg }
 
   // 使用组件，传入 count

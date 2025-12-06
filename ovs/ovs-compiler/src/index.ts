@@ -172,22 +172,19 @@ function wrapTopLevelExpressions(ast: SlimeProgram, sourceCode: string): SlimePr
     }
     const exprValues = expressions.map(e => e.type === SlimeNodeType.ExpressionStatement ?
         (e as SlimeExpressionStatement).expression : e)
-    const needsIIFE = hasReactiveExpression(sourceCode)
     let finalExpr: any = exprValues.length === 1 ? exprValues[0] :
         (imports = ensureFragmentImport(imports), createFragmentWrapper(exprValues))
-    if (needsIIFE) {
-        imports = ensureDefineOvsComponentImport(imports)
-        const returnStmt = SlimeAstUtil.createReturnStatement(finalExpr)
-        const blockStatement = SlimeAstUtil.createBlockStatement([...declarations, returnStmt])
-        const arrowFunction = SlimeAstUtil.createArrowFunctionExpression(blockStatement,
-            [SlimeAstUtil.createIdentifier('props')], false, false)
-        const defineOvsCall = SlimeAstUtil.createCallExpression(
-            SlimeAstUtil.createIdentifier('defineOvsComponent'), [arrowFunction])
-        return SlimeAstUtil.createProgram([...imports,
-            SlimeAstUtil.createExportDefaultDeclaration(defineOvsCall)] as any, SlimeProgramSourceType.Module)
-    }
-    return SlimeAstUtil.createProgram([...imports, ...declarations,
-        SlimeAstUtil.createExportDefaultDeclaration(finalExpr)] as any, SlimeProgramSourceType.Module)
+
+    // 最外层始终使用 defineOvsComponent 包裹，确保每个组件实例有独立的状态
+    imports = ensureDefineOvsComponentImport(imports)
+    const returnStmt = SlimeAstUtil.createReturnStatement(finalExpr)
+    const blockStatement = SlimeAstUtil.createBlockStatement([...declarations, returnStmt])
+    const arrowFunction = SlimeAstUtil.createArrowFunctionExpression(blockStatement,
+        [SlimeAstUtil.createIdentifier('props')], false, false)
+    const defineOvsCall = SlimeAstUtil.createCallExpression(
+        SlimeAstUtil.createIdentifier('defineOvsComponent'), [arrowFunction])
+    return SlimeAstUtil.createProgram([...imports,
+        SlimeAstUtil.createExportDefaultDeclaration(defineOvsCall)] as any, SlimeProgramSourceType.Module)
 }
 
 // ==================== 导出的 API ====================
