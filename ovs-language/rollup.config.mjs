@@ -23,8 +23,8 @@ const swcConfig = {
 };
 
 // Server 的 external 依赖
-// TypeScript 由 VSCode 提供，不需要打包
-const serverExternal = ['typescript'];
+// 所有依赖都打包进来，Node.js 内置模块由 preferBuiltins: true 自动处理
+const serverExternal = [];
 
 export default [
   // Client (VSCode Extension) - CommonJS

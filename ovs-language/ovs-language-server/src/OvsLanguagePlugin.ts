@@ -1,10 +1,17 @@
 import {CodeMapping, forEachEmbeddedCode, LanguagePlugin, VirtualCode} from '@volar/language-core';
 import type {TypeScriptExtraServiceScript} from '@volar/typescript';
-import ts from 'typescript';
+import type {IScriptSnapshot} from 'typescript';
 import {URI} from 'vscode-uri';
 import {LogUtil} from "./logutil.js";
 import SlimeCodeMapping from "slime-generator/src/SlimeCodeMapping";
 import {vitePluginOvsTransform} from "ovs-compiler";
+
+// TypeScript ScriptKind 枚举值（避免运行时依赖 typescript）
+const ScriptKind = {
+    Deferred: 0,
+    JS: 1,
+    TS: 3,
+} as const;
 
 export const ovsLanguagePlugin: LanguagePlugin<URI> = {
     getLanguageId(uri) {
@@ -18,7 +25,7 @@ export const ovsLanguagePlugin: LanguagePlugin<URI> = {
         }
     },
     typescript: {
-        extraFileExtensions: [{extension: 'ovs', isMixedContent: true, scriptKind: ts.ScriptKind.Deferred}],
+        extraFileExtensions: [{extension: 'ovs', isMixedContent: true, scriptKind: ScriptKind.Deferred}],
         getServiceScript() {
             return undefined;
         },
@@ -35,14 +42,14 @@ export const ovsLanguagePlugin: LanguagePlugin<URI> = {
                         fileName: fileName + '.' + code.id + '.ts',
                         code,
                         extension: '.ts',
-                        scriptKind: ts.ScriptKind.TS
+                        scriptKind: ScriptKind.TS
                     });
                 } else if (code.languageId === 'js') {
                     scripts.push({
                         fileName: fileName + '.' + code.id + '.js',
                         code,
                         extension: '.js',
-                        scriptKind: ts.ScriptKind.JS
+                        scriptKind: ScriptKind.JS
                     });
                 }
             }
@@ -101,7 +108,7 @@ export class OvsVirtualCode implements VirtualCode {
     mappings: CodeMapping[];
     embeddedCodes: VirtualCode[] = [];
 
-    constructor(public snapshot: ts.IScriptSnapshot) {
+    constructor(public snapshot: IScriptSnapshot) {
         this.mappings = [{
             sourceOffsets: [0],
             generatedOffsets: [0],
