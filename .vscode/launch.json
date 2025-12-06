@@ -8,6 +8,7 @@
       "runtimeExecutable": "${execPath}",
       "args": [
         "--extensionDevelopmentPath=${workspaceFolder}/ovs-language",
+        "--disable-extension=alamhubb.ovs-vscode-client",
         "${workspaceFolder}/create-ovs/template"
       ],
       "outFiles": [

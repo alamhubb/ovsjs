@@ -16,6 +16,7 @@ div({ class: 'greetings', onClick() { count.value = 0 }}) {
   #{
     // 这里可以写纯 JS 逻辑
   }
+  h2 { "fasdf" }
   count
   h3 {
     "You've successfully created a project with "
