@@ -13,14 +13,10 @@
  * @version 2.0.0 - 静态方法重构
  */
 
-import {
-    SubhutiRuleCollector,
-    SubhutiGrammarAnalyzer,
-    SubhutiConflictDetector,
-    SubhutiGrammarValidationError,
-    ValidationStats,
-    EXPANSION_LIMITS
-} from "./index";
+import { SubhutiRuleCollector } from "./SubhutiRuleCollector";
+import { SubhutiGrammarAnalyzer, EXPANSION_LIMITS } from "./SubhutiGrammarAnalyzer";
+import { SubhutiConflictDetector } from "./SubhutiConflictDetector";
+import { SubhutiGrammarValidationError, ValidationStats } from "./SubhutiValidationError";
 
 export class SubhutiGrammarValidator {
     /**
