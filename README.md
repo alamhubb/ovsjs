@@ -1,194 +1,411 @@
-# Test-Volar
+# OVS - Object View Script
 
-> 一个编译器工具链 Monorepo 项目，包含多个独立的编程语言工具和 IDE 支持
+> 声明式 UI 语法，JavaScript 的超集，编译为 Vue 渲染函数，完全兼容vue生态
 
-## 📦 项目列表
-
-### 核心编译器
-
-| 项目 | 描述 | 文档 |
-|------|------|------|
-| **[ovs](./ovs/)** | OVS 语言编译器 - 声明式 UI 语法（类似 Flutter/SwiftUI） | [README](./ovs/.cursor/rules/project.mdc) |
-| **[slime](./slime/)** | JavaScript/TypeScript 容错解析器和代码生成器 | [README](./slime/README.md) |
-| **[subhuti](./subhuti/)** | Parser 生成器框架 - 使用装饰器定义语法规则 | [README](./subhuti/README.md) |
-| **[objectScript](./objectScript/)** | ObjectScript 语言实现 | - |
-| **[particula](./particula/)** | 可组合的模块化解析器库 | [设计文档](./particula/HYBRID_DESIGN.md) |
-
-### IDE 支持
-
-| 项目 | 描述 | 文档 |
-|------|------|------|
-| **[langServer](./langServer/)** | OVS Language Server (LSP) - 基于 Volar 2.4.0 | [README](./langServer/README.md) |
-| **[ovs-lsp-intellij](./ovs-lsp-intellij/)** | IntelliJ IDEA 插件 - OVS 语言支持 | [README](./ovs-lsp-intellij/README.md) |
-
-### 示例应用
-
-| 项目 | 描述 | 文档 |
-|------|------|------|
-| **[guidebot](./guidebot/)** | OVS 完整应用示例 - AI 驱动的开发工具 UI | [README](./guidebot/README.md) |
-
-### 共享包 (packages/)
-
-- **language-core** - 语言核心
-- **language-server** - 语言服务器基础
-- **language-service** - 语言服务
-- **typescript** - TypeScript 集成
-- **source-map** - Source Map 支持
-- **monaco** - Monaco Editor 集成
-- **kit** - 工具集
-- **eslint** - ESLint 集成
+<p align="center">
+  <a href="#快速开始">快速开始</a> •
+  <a href="#基础语法">基础语法</a> •
+  <a href="#进阶用法">进阶用法</a> •
+  <a href="#设计理念">设计理念</a> •
+  <a href="#编译原理">编译原理</a>
+</p>
 
 ---
 
-## 🚀 快速开始
+## 简介
 
-### 安装依赖
-
-```bash
-# 根目录安装（使用 pnpm workspace）
-pnpm install
-```
-
-### 运行示例项目
-
-```bash
-# OVS 示例
-cd guidebot
-npm run dev
-
-# 语言服务器
-cd langServer
-tsx src/ovsserver.ts --stdio
-```
-
-### 构建 IntelliJ 插件
-
-```bash
-cd ovs-lsp-intellij
-./gradlew buildPlugin
-```
-
----
-
-## 🏗️ 项目架构
-
-```
-编译器层次：
-┌─────────────────────────────────────────┐
-│  应用层: OVS, ObjectScript, Guidebot    │
-├─────────────────────────────────────────┤
-│  工具链: Slime (JS/TS Parser)           │
-├─────────────────────────────────────────┤
-│  框架层: Subhuti (Parser Generator)     │
-└─────────────────────────────────────────┘
-
-IDE 支持：
-┌─────────────────────────────────────────┐
-│  IntelliJ Plugin (LSP Client)           │
-├─────────────────────────────────────────┤
-│  Language Server (Volar-based)          │
-├─────────────────────────────────────────┤
-│  OVS Compiler (Virtual Code)            │
-└─────────────────────────────────────────┘
-```
-
----
-
-## 📚 技术栈
-
-- **TypeScript** - 主要开发语言
-- **Node.js** - 运行时环境
-- **Volar** - 语言服务器框架
-- **Kotlin** - IntelliJ 插件开发
-- **Gradle** - 构建工具（IntelliJ 插件）
-- **Vite** - 前端构建工具
-- **Vue 3** - UI 框架（OVS 运行时）
-- **Lerna** - Monorepo 管理
-
----
-
-## 🎯 核心特性
-
-### OVS 语言
+OVS 是一种声明式 UI 语法扩展，让你用更简洁的方式编写 Vue 组件：
 
 ```javascript
-// 声明式 UI，无需 JSX
-export class App {
-  render() {
-    return div({ class: 'container' }) {
-      h1 { 'Hello OVS' }
-      button({ onClick: () => this.handleClick() }) {
-        'Click Me'
-      }
-    }
+// OVS 语法
+div({ class: 'container' }) {
+  h1 { 'Hello OVS!' }
+  button({ onClick: handleClick }) { 'Click Me' }
+}
+```
+
+**特点：**
+- ✅ **纯 JavaScript 超集** - 所有 JS 语法都可用
+- ✅ **无需 JSX** - 原生大括号语法
+- ✅ **完整 IDE 支持** - 代码补全、类型检查、跳转定义
+- ✅ **Vue 3 运行时** - 编译为高效的 Vue 渲染函数
+
+---
+
+## 快速开始
+
+### 1. 创建项目
+
+```bash
+npm create ovs@latest my-app
+cd my-app
+npm install
+npm run dev
+```
+
+### 2. 安装 VSCode 插件
+
+在 VSCode 扩展商店搜索 **"Ovs Language"** 并安装。
+
+### 3. 开始编写
+
+创建 `.ovs` 文件：
+
+```javascript
+// src/components/Hello.ovs
+import { ref } from 'vue'
+
+const count = ref(0)
+
+div({ class: 'hello' }) {
+  h1 { 'Hello OVS!' }
+  p { `Count: ${count.value}` }
+  button({ onClick: () => count.value++ }) { '+1' }
+}
+```
+
+---
+
+## 基础语法
+
+### 元素声明
+
+使用 `标签名 { 内容 }` 声明元素：
+
+```javascript
+div { 'Hello World' }
+
+// 嵌套元素
+div {
+  h1 { 'Title' }
+  p { 'Content' }
+}
+```
+
+### 属性传递
+
+使用 `标签名(属性对象) { 内容 }` 传递属性：
+
+```javascript
+div({ class: 'container', id: 'app' }) {
+  a({ href: 'https://example.com', target: '_blank' }) {
+    'Click here'
+  }
+}
+
+// 事件处理
+button({ onClick: () => console.log('clicked') }) {
+  'Click Me'
+}
+```
+
+### 文本和表达式
+
+直接写字符串或 JavaScript 表达式：
+
+```javascript
+div {
+  'Static text'           // 静态文本
+  `Dynamic: ${value}`     // 模板字符串
+  someVariable            // 变量
+  computedValue()         // 函数调用
+}
+```
+
+### 条件渲染
+
+使用标准 JavaScript 条件语句：
+
+```javascript
+div {
+  if (isLoggedIn) {
+    span { `Welcome, ${username}` }
+  } else {
+    button { 'Login' }
   }
 }
 ```
 
-### 智能 IDE 支持
+### 列表渲染
 
-- ✅ 语法高亮
-- ✅ 代码补全
-- ✅ 类型推断
-- ✅ 错误诊断
-- ✅ 跳转定义
-- ✅ 悬停提示
+使用 `for...of` 循环：
 
-### 容错解析器
-
-Slime 支持解析包含语法错误的代码，适用于编辑器场景。
-
----
-
-## 📖 文档说明
-
-每个子项目都有独立的文档：
-
-- **README.md** - 用户指南和快速开始
-- **.cursor/rules/project.mdc** - 完整技术文档（AI 协作用）
-
-专题文档位于对应子项目目录下（如 `SOLUTION_*.md`、`*_GUIDE.md`）。
+```javascript
+ul {
+  for (const item of items) {
+    li { item.name }
+  }
+}
+```
 
 ---
 
-## 🔧 开发
+## 进阶用法
+
+### 组件定义
+
+使用 `ovsView` 关键字定义可复用组件：
+
+```javascript
+// 定义组件
+ovsView Card(state):
+div({ class: 'card' }) {
+  h2 { state.props.title }
+  p { state.props.content }
+  state.children  // 渲染子元素
+}
+
+// 使用组件
+Card({ title: 'Hello', content: 'World' }) {
+  span { 'Extra content' }
+}
+```
+
+### 不渲染块 `#{}`
+
+在 `#{}` 内的代码不会被渲染到 DOM，用于纯逻辑操作：
+
+```javascript
+div {
+  #{
+    // 这里是纯 JS 逻辑，不渲染
+    const data = processData(rawData)
+    console.log('Processing...')
+  }
+
+  // 这里会渲染
+  span { data.result }
+
+  #{
+    // 但 #{} 内的 OVS 元素仍然会渲染
+    p { 'This will render!' }
+  }
+}
+```
+
+**规则：**
+- `#{}` 内的普通表达式/语句 → 不渲染
+- `#{}` 内的 OVS 元素（如 `p {}`） → 仍然渲染（OVS 元素优先级最高）
+
+### 响应式数据
+
+配合 Vue 的 `ref` 和 `reactive` 使用：
+
+```javascript
+import { ref, reactive } from 'vue'
+
+const count = ref(0)
+const user = reactive({ name: 'Alice', age: 25 })
+
+div {
+  p { `Count: ${count.value}` }
+  p { `Name: ${user.name}` }
+  button({ onClick: () => count.value++ }) { 'Add' }
+}
+```
+
+---
+
+## 完整示例
+
+```javascript
+// HelloWorld.ovs
+import { ref } from 'vue'
+
+const msg = "You did it!"
+const count = ref(0)
+
+div({ class: 'greetings', onClick: () => count.value = 0 }) {
+  h1({ class: 'green' }) { msg }
+
+  #{
+    // 纯逻辑代码，不渲染
+    console.log('Component rendered')
+  }
+
+  h2 { `Clicked ${count.value} times` }
+
+  h3 {
+    "Built with "
+    a({ href: 'https://vuejs.org/', target: '_blank' }) { 'Vue 3' }
+    ' + '
+    a({ href: 'https://github.com/aspect-apps/ovsjs', target: '_blank' }) { 'OVS' }
+  }
+
+  button({ onClick: () => count.value++ }) { 'Click Me' }
+}
+```
+
+---
+
+# 设计理念与原理
+
+## 设计理念
+
+### 1. JavaScript 超集，最小侵入
+
+OVS 只添加了两个语法扩展：
+- `tag {}` / `tag() {}` - 元素声明
+- `#{}` - 不渲染块
+
+其他都是标准 JavaScript，学习成本极低。
+
+### 2. 声明式 UI，无需 JSX
+
+不需要学习 JSX 语法，使用原生大括号 `{}` 更符合 JavaScript 习惯：
+
+```javascript
+// JSX 方式
+<div className="container">
+  <h1>{title}</h1>
+</div>
+
+// OVS 方式
+div({ class: 'container' }) {
+  h1 { title }
+}
+```
+
+### 3. 完整类型支持
+
+OVS 编译时生成精确的 Source Map，IDE 能够：
+- 准确定位到原始 `.ovs` 文件位置
+- 提供完整的 TypeScript 类型检查
+- 支持跳转定义、重命名等重构功能
+
+---
+
+## 编译原理
+
+### HTML 标签自动转换
+
+OVS 编译器会将 HTML 标签自动转换为 `$OvsHtmlTag.xxx()` 调用：
+
+```javascript
+// 输入（OVS）
+div({ class: 'container' }) {
+  h1 { 'Hello' }
+}
+
+// 输出（JavaScript）
+$OvsHtmlTag.div({ class: 'container' }, [
+  $OvsHtmlTag.h1({}, ['Hello'])
+])
+```
+
+**为什么用 `$OvsHtmlTag`？**
+
+避免与用户变量冲突。如果直接使用 `div`，用户定义的 `const div = ...` 会覆盖它。
+
+### 编译为 Vue 渲染函数
+
+OVS 最终编译为 Vue 的 `h()` 函数调用：
+
+```javascript
+// $OvsHtmlTag.div 内部实现
+function div(props, children) {
+  return defineComponent(() => {
+    return () => h('div', props, children)
+  })
+}
+```
+
+### 简单视图 vs 复杂视图
+
+编译器会智能判断视图复杂度：
+
+**简单视图（无 IIFE）：**
+```javascript
+// 输入
+div { h1 { 'Hello' } }
+
+// 输出（直接调用，无包装）
+$OvsHtmlTag.div({}, [$OvsHtmlTag.h1({}, ['Hello'])])
+```
+
+**复杂视图（使用 IIFE）：**
+```javascript
+// 输入
+div {
+  const x = 1
+  h1 { x }
+}
+
+// 输出（IIFE 包装）
+(function() {
+  const children = []
+  const x = 1
+  children.push($OvsHtmlTag.h1({}, [x]))
+  return $OvsHtmlTag.div({}, children)
+})()
+```
+
+### 不渲染块 `#{}` 的处理
+
+`#{}` 内的代码会被展开，但不会被 `children.push()` 包装：
+
+```javascript
+// 输入
+div {
+  #{ const x = compute() }
+  h1 { x }
+}
+
+// 输出
+(function() {
+  const children = []
+  const x = compute()           // 展开，不 push
+  children.push($OvsHtmlTag.h1({}, [x]))  // 正常 push
+  return $OvsHtmlTag.div({}, children)
+})()
+```
+
+**特例：`#{}` 内的 OVS 元素仍然渲染**
+
+```javascript
+// 输入
+div {
+  #{ p { 'Still renders!' } }
+}
+
+// 输出 - p {} 仍然被 push
+(function() {
+  const children = []
+  children.push($OvsHtmlTag.p({}, ['Still renders!']))
+  return $OvsHtmlTag.div({}, children)
+})()
+```
+
+---
+
+## 核心技术栈
+
+| 组件 | 描述 |
+|------|------|
+| **[Subhuti](./subhuti/)** | Parser 生成器框架，使用装饰器定义语法规则 |
+| **[Slime](./slime/)** | JavaScript/TypeScript 容错解析器 |
+| **[Volar](https://volarjs.dev/)** | Language Server 框架，提供 IDE 支持 |
+| **[Vue 3](https://vuejs.org/)** | 运行时框架 |
 
 ### 项目结构
 
 ```
 test-volar/
-├── ovs/                    # OVS 编译器
-├── langServer/             # LSP 服务器
-├── ovs-lsp-intellij/       # IntelliJ 插件
-├── guidebot/               # 示例应用
+├── ovs/                    # OVS 编译器 + 运行时
+│   ├── ovs-compiler/       # 编译器（Parser + AST 转换）
+│   └── ovs-runtime/        # 运行时（$OvsHtmlTag + defineOvsComponent）
+├── ovs-language/           # VSCode 插件
+├── create-ovs/             # 项目脚手架
+├── vite-plugin-ovs/        # Vite 插件
 ├── slime/                  # JS/TS 解析器
-├── subhuti/                # Parser 框架
-├── objectScript/           # ObjectScript 实现
-├── particula/              # 模块化解析器
-└── packages/               # 共享包
-```
-
-### 常用命令
-
-```bash
-# 安装依赖
-pnpm install
-
-# 构建所有包
-pnpm run build
-
-# 运行测试
-pnpm run test
-
-# 清理构建产物
-pnpm run clean
+└── subhuti/                # Parser 框架
 ```
 
 ---
 
 ## 📄 许可证
 
-MIT License - 详见 [LICENSE.md](./LICENSE.md)
+MIT License
 
 ---
 
@@ -196,9 +413,4 @@ MIT License - 详见 [LICENSE.md](./LICENSE.md)
 
 欢迎提交 Issue 和 Pull Request！
 
-请先阅读对应子项目的文档了解技术细节。
-
----
-
-**Test-Volar** - _构建下一代编程语言工具链_ ✨
-
+**OVS** - _WEB 端声明式 UI，简洁优雅_ ✨
