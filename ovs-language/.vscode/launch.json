@@ -12,7 +12,8 @@
       ],
       "outFiles": [
         "${workspaceFolder}/dist/**/*.js",
-        "${workspaceFolder}/dist/**/*.cjs"
+        "${workspaceFolder}/dist/**/*.cjs",
+        "${workspaceFolder}/dist/**/*.mjs"
       ],
       "preLaunchTask": "npm: build"
     },
@@ -24,7 +25,8 @@
       "restart": true,
       "outFiles": [
         "${workspaceFolder}/dist/**/*.js",
-        "${workspaceFolder}/dist/**/*.cjs"
+        "${workspaceFolder}/dist/**/*.cjs",
+        "${workspaceFolder}/dist/**/*.mjs"
       ]
     }
   ],
