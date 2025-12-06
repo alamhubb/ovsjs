@@ -1,0 +1,656 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="ed852524-1410-4f6e-9ecd-f32f076070a2" name="Changes" comment="server改为使用cjs">
+      <change beforePath="$PROJECT_DIR$/.vscode/launch.json" beforeDir="false" afterPath="$PROJECT_DIR$/.vscode/launch.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/create-ovs/template/src/components/HelloWorld.ovs" beforeDir="false" afterPath="$PROJECT_DIR$/create-ovs/template/src/components/HelloWorld.ovs" afterDir="false" />
+    </list>
+    <list id="57f948f6-135c-4fce-ab52-506754ac885b" name="ignore" comment="ignore">
+      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ovs-language/dist/extension.cjs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ovs-language/dist/language-server.cjs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/slime/packages/slime-ast/dist/index.d.mts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/slime/packages/slime-ast/dist/index.mjs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/slime/packages/slime-generator/dist/index.d.mts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/slime/packages/slime-generator/dist/index.mjs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/slime/packages/slime-parser/dist/index.d.mts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/slime/packages/slime-parser/dist/index.mjs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/slime/packages/slime-token/dist/index.d.mts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/slime/packages/slime-token/dist/index.mjs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/subhuti/dist/index.d.mts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/subhuti/dist/index.d.mts.map" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/subhuti/dist/index.mjs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/subhuti/dist/index.mjs.map" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 0
+}</component>
+  <component name="ProjectId" id="36MwtiZnXxumNiCGYAjy36UoES0" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Node.js.ovs > test-stage1.ts.executor": "Run",
+    "Node.js.ovs > test-stage2.ts.executor": "Run",
+    "Node.js.ovs > test-stage3.ts.executor": "Run",
+    "Node.js.slime > test-stage1.ts.executor": "Run",
+    "Node.js.slime > test-stage2.ts.executor": "Run",
+    "Node.js.slime-test > test-stage1.ts.executor": "Run",
+    "Node.js.slime-test > test-stage2.ts.executor": "Run",
+    "Node.js.slime-test > test-stage3.ts.executor": "Run",
+    "Node.js.subhuti > run-all-tests.ts.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "last_opened_file_path": "D:/project/qkyproject/test-volar/ovs/ovs-compiler",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "npm.example > dev.executor": "Run",
+    "npm.template > dev.executor": "Run",
+    "ts.external.directory.path": "D:\\project\\qkyproject\\test-volar\\node_modules\\typescript\\lib",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\project\qkyproject\test-volar\ovs\ovs-compiler" />
+      <recent name="D:\project\qkyproject\test-volar\create-ovs\template\src\components" />
+      <recent name="D:\project\qkyproject\test-volar\ovs\example\src" />
+      <recent name="D:\project\qkyproject\test-volar\create-ovs\template\public" />
+      <recent name="D:\project\qkyproject\test-volar\create-ovs\template\src\assets" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="D:\project\qkyproject\test-volar\ovs\ovs-compiler" />
+      <recent name="D:\project\qkyproject\test-volar\slime\src" />
+    </key>
+  </component>
+  <component name="RunManager" selected="npm.template &gt; dev">
+    <configuration name="ovs &gt; test-stage2.ts" type="NodeJSConfigurationType" temporary="true" nameIsGenerated="true" path-to-js-file="$PROJECT_DIR$/ovs/tests/utils/test-stage2.ts" typescript-loader="bundled" working-dir="$PROJECT_DIR$/ovs/tests/utils">
+      <method v="2" />
+    </configuration>
+    <configuration name="ovs &gt; test-stage3.ts" type="NodeJSConfigurationType" temporary="true" nameIsGenerated="true" path-to-js-file="$PROJECT_DIR$/ovs/tests/utils/test-stage3.ts" typescript-loader="bundled" working-dir="$PROJECT_DIR$/ovs/tests/utils">
+      <method v="2" />
+    </configuration>
+    <configuration name="slime-test &gt; test-stage3.ts" type="NodeJSConfigurationType" temporary="true" nameIsGenerated="true" path-to-js-file="$PROJECT_DIR$/slime/packages/slime-test/src/utils/test-stage3.ts" typescript-loader="bundled" working-dir="$PROJECT_DIR$/slime/packages/slime-test/src/utils">
+      <method v="2" />
+    </configuration>
+    <configuration name="example &gt; dev" type="js.build_tools.npm" temporary="true" nameIsGenerated="true">
+      <package-json value="$PROJECT_DIR$/ovs/example/package.json" />
+      <command value="run" />
+      <scripts>
+        <script value="dev" />
+      </scripts>
+      <node-interpreter value="project" />
+      <envs />
+      <method v="2" />
+    </configuration>
+    <configuration name="template &gt; dev" type="js.build_tools.npm" temporary="true" nameIsGenerated="true">
+      <package-json value="$PROJECT_DIR$/create-ovs/template/package.json" />
+      <command value="run" />
+      <scripts>
+        <script value="dev" />
+      </scripts>
+      <node-interpreter value="project" />
+      <envs />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="npm.template &gt; dev" />
+        <item itemvalue="npm.example &gt; dev" />
+        <item itemvalue="Node.js.ovs &gt; test-stage3.ts" />
+        <item itemvalue="Node.js.ovs &gt; test-stage2.ts" />
+        <item itemvalue="Node.js.slime-test &gt; test-stage3.ts" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-js-predefined-d6986cc7102b-a71380e98a7c-JavaScript-WS-252.28238.10" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="ed852524-1410-4f6e-9ecd-f32f076070a2" name="Changes" comment="" />
+      <changelist id="" name="ignore" comment="ignore" />
+      <changelist id="57f948f6-135c-4fce-ab52-506754ac885b" name="ignore" comment="ignore" />
+      <created>1764829964511</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1764829964511</updated>
+      <workItem from="1764829966155" duration="2924000" />
+      <workItem from="1764837847966" duration="9351000" />
+      <workItem from="1764851598041" duration="88000" />
+      <workItem from="1764851701817" duration="5844000" />
+      <workItem from="1764865124008" duration="4812000" />
+      <workItem from="1764873159829" duration="811000" />
+      <workItem from="1764874309089" duration="3430000" />
+      <workItem from="1764906451509" duration="38035000" />
+    </task>
+    <task id="LOCAL-00051" summary="支持启动">
+      <option name="closed" value="true" />
+      <created>1764923181631</created>
+      <option name="number" value="00051" />
+      <option name="presentableId" value="LOCAL-00051" />
+      <option name="project" value="LOCAL" />
+      <updated>1764923181631</updated>
+    </task>
+    <task id="LOCAL-00052" summary="增加代码格式化换行相关功能">
+      <option name="closed" value="true" />
+      <created>1764923436156</created>
+      <option name="number" value="00052" />
+      <option name="presentableId" value="LOCAL-00052" />
+      <option name="project" value="LOCAL" />
+      <updated>1764923436156</updated>
+    </task>
+    <task id="LOCAL-00053" summary="增加代码格式化换行相关功能">
+      <option name="closed" value="true" />
+      <created>1764927456539</created>
+      <option name="number" value="00053" />
+      <option name="presentableId" value="LOCAL-00053" />
+      <option name="project" value="LOCAL" />
+      <updated>1764927456539</updated>
+    </task>
+    <task id="LOCAL-00054" summary="增加代码格式化换行相关功能">
+      <option name="closed" value="true" />
+      <created>1764928504697</created>
+      <option name="number" value="00054" />
+      <option name="presentableId" value="LOCAL-00054" />
+      <option name="project" value="LOCAL" />
+      <updated>1764928504697</updated>
+    </task>
+    <task id="LOCAL-00055" summary="增加代码格式化换行相关功能">
+      <option name="closed" value="true" />
+      <created>1764928684145</created>
+      <option name="number" value="00055" />
+      <option name="presentableId" value="LOCAL-00055" />
+      <option name="project" value="LOCAL" />
+      <updated>1764928684145</updated>
+    </task>
+    <task id="LOCAL-00056" summary="增加代码格式化换行相关功能">
+      <option name="closed" value="true" />
+      <created>1764930099129</created>
+      <option name="number" value="00056" />
+      <option name="presentableId" value="LOCAL-00056" />
+      <option name="project" value="LOCAL" />
+      <updated>1764930099129</updated>
+    </task>
+    <task id="LOCAL-00057" summary="增加代码格式化换行相关功能">
+      <option name="closed" value="true" />
+      <created>1764930371179</created>
+      <option name="number" value="00057" />
+      <option name="presentableId" value="LOCAL-00057" />
+      <option name="project" value="LOCAL" />
+      <updated>1764930371179</updated>
+    </task>
+    <task id="LOCAL-00058" summary="增加代码格式化换行相关功能">
+      <option name="closed" value="true" />
+      <created>1764930521736</created>
+      <option name="number" value="00058" />
+      <option name="presentableId" value="LOCAL-00058" />
+      <option name="project" value="LOCAL" />
+      <updated>1764930521736</updated>
+    </task>
+    <task id="LOCAL-00059" summary="增加代码格式化换行相关功能">
+      <option name="closed" value="true" />
+      <created>1764930792246</created>
+      <option name="number" value="00059" />
+      <option name="presentableId" value="LOCAL-00059" />
+      <option name="project" value="LOCAL" />
+      <updated>1764930792246</updated>
+    </task>
+    <task id="LOCAL-00060" summary="增加代码格式化换行相关功能">
+      <option name="closed" value="true" />
+      <created>1764934351922</created>
+      <option name="number" value="00060" />
+      <option name="presentableId" value="LOCAL-00060" />
+      <option name="project" value="LOCAL" />
+      <updated>1764934351922</updated>
+    </task>
+    <task id="LOCAL-00061" summary="增加代码格式化换行相关功能">
+      <option name="closed" value="true" />
+      <created>1764934679770</created>
+      <option name="number" value="00061" />
+      <option name="presentableId" value="LOCAL-00061" />
+      <option name="project" value="LOCAL" />
+      <updated>1764934679770</updated>
+    </task>
+    <task id="LOCAL-00062" summary="增加代码格式化换行相关功能">
+      <option name="closed" value="true" />
+      <created>1764936047173</created>
+      <option name="number" value="00062" />
+      <option name="presentableId" value="LOCAL-00062" />
+      <option name="project" value="LOCAL" />
+      <updated>1764936047173</updated>
+    </task>
+    <task id="LOCAL-00063" summary="增加代码格式化换行相关功能">
+      <option name="closed" value="true" />
+      <created>1764936227077</created>
+      <option name="number" value="00063" />
+      <option name="presentableId" value="LOCAL-00063" />
+      <option name="project" value="LOCAL" />
+      <updated>1764936227077</updated>
+    </task>
+    <task id="LOCAL-00064" summary="增加代码格式化换行相关功能">
+      <option name="closed" value="true" />
+      <created>1764936682473</created>
+      <option name="number" value="00064" />
+      <option name="presentableId" value="LOCAL-00064" />
+      <option name="project" value="LOCAL" />
+      <updated>1764936682473</updated>
+    </task>
+    <task id="LOCAL-00065" summary="增加代码格式化换行相关功能">
+      <option name="closed" value="true" />
+      <created>1764937026038</created>
+      <option name="number" value="00065" />
+      <option name="presentableId" value="LOCAL-00065" />
+      <option name="project" value="LOCAL" />
+      <updated>1764937026038</updated>
+    </task>
+    <task id="LOCAL-00066" summary="增加代码格式化换行相关功能">
+      <option name="closed" value="true" />
+      <created>1764937068743</created>
+      <option name="number" value="00066" />
+      <option name="presentableId" value="LOCAL-00066" />
+      <option name="project" value="LOCAL" />
+      <updated>1764937068743</updated>
+    </task>
+    <task id="LOCAL-00067" summary="增加代码格式化换行相关功能">
+      <option name="closed" value="true" />
+      <created>1764937304579</created>
+      <option name="number" value="00067" />
+      <option name="presentableId" value="LOCAL-00067" />
+      <option name="project" value="LOCAL" />
+      <updated>1764937304579</updated>
+    </task>
+    <task id="LOCAL-00068" summary="增加代码格式化换行相关功能">
+      <option name="closed" value="true" />
+      <created>1764938280125</created>
+      <option name="number" value="00068" />
+      <option name="presentableId" value="LOCAL-00068" />
+      <option name="project" value="LOCAL" />
+      <updated>1764938280125</updated>
+    </task>
+    <task id="LOCAL-00069" summary="增加代码格式化换行相关功能">
+      <option name="closed" value="true" />
+      <created>1764938379493</created>
+      <option name="number" value="00069" />
+      <option name="presentableId" value="LOCAL-00069" />
+      <option name="project" value="LOCAL" />
+      <updated>1764938379493</updated>
+    </task>
+    <task id="LOCAL-00070" summary="增加代码格式化换行相关功能">
+      <option name="closed" value="true" />
+      <created>1764939684944</created>
+      <option name="number" value="00070" />
+      <option name="presentableId" value="LOCAL-00070" />
+      <option name="project" value="LOCAL" />
+      <updated>1764939684944</updated>
+    </task>
+    <task id="LOCAL-00071" summary="增加代码格式化换行相关功能">
+      <option name="closed" value="true" />
+      <created>1764940634476</created>
+      <option name="number" value="00071" />
+      <option name="presentableId" value="LOCAL-00071" />
+      <option name="project" value="LOCAL" />
+      <updated>1764940634476</updated>
+    </task>
+    <task id="LOCAL-00072" summary="增加代码格式化换行相关功能">
+      <option name="closed" value="true" />
+      <created>1764940949599</created>
+      <option name="number" value="00072" />
+      <option name="presentableId" value="LOCAL-00072" />
+      <option name="project" value="LOCAL" />
+      <updated>1764940949599</updated>
+    </task>
+    <task id="LOCAL-00073" summary="增加代码格式化换行相关功能">
+      <option name="closed" value="true" />
+      <created>1764941279057</created>
+      <option name="number" value="00073" />
+      <option name="presentableId" value="LOCAL-00073" />
+      <option name="project" value="LOCAL" />
+      <updated>1764941279057</updated>
+    </task>
+    <task id="LOCAL-00074" summary="增加代码格式化换行相关功能">
+      <option name="closed" value="true" />
+      <created>1764941398814</created>
+      <option name="number" value="00074" />
+      <option name="presentableId" value="LOCAL-00074" />
+      <option name="project" value="LOCAL" />
+      <updated>1764941398814</updated>
+    </task>
+    <task id="LOCAL-00075" summary="增加代码格式化换行相关功能">
+      <option name="closed" value="true" />
+      <created>1764942189862</created>
+      <option name="number" value="00075" />
+      <option name="presentableId" value="LOCAL-00075" />
+      <option name="project" value="LOCAL" />
+      <updated>1764942189862</updated>
+    </task>
+    <task id="LOCAL-00076" summary="增加代码格式化换行相关功能">
+      <option name="closed" value="true" />
+      <created>1764942813164</created>
+      <option name="number" value="00076" />
+      <option name="presentableId" value="LOCAL-00076" />
+      <option name="project" value="LOCAL" />
+      <updated>1764942813164</updated>
+    </task>
+    <task id="LOCAL-00077" summary="增加代码格式化换行相关功能">
+      <option name="closed" value="true" />
+      <created>1764942947727</created>
+      <option name="number" value="00077" />
+      <option name="presentableId" value="LOCAL-00077" />
+      <option name="project" value="LOCAL" />
+      <updated>1764942947727</updated>
+    </task>
+    <task id="LOCAL-00078" summary="增加代码格式化换行相关功能">
+      <option name="closed" value="true" />
+      <created>1764943309891</created>
+      <option name="number" value="00078" />
+      <option name="presentableId" value="LOCAL-00078" />
+      <option name="project" value="LOCAL" />
+      <updated>1764943309891</updated>
+    </task>
+    <task id="LOCAL-00079" summary="增加代码格式化换行相关功能">
+      <option name="closed" value="true" />
+      <created>1764943404860</created>
+      <option name="number" value="00079" />
+      <option name="presentableId" value="LOCAL-00079" />
+      <option name="project" value="LOCAL" />
+      <updated>1764943404860</updated>
+    </task>
+    <task id="LOCAL-00080" summary="增加代码格式化换行相关功能">
+      <option name="closed" value="true" />
+      <created>1764943677398</created>
+      <option name="number" value="00080" />
+      <option name="presentableId" value="LOCAL-00080" />
+      <option name="project" value="LOCAL" />
+      <updated>1764943677398</updated>
+    </task>
+    <task id="LOCAL-00081" summary="增加代码格式化换行相关功能">
+      <option name="closed" value="true" />
+      <created>1764950819768</created>
+      <option name="number" value="00081" />
+      <option name="presentableId" value="LOCAL-00081" />
+      <option name="project" value="LOCAL" />
+      <updated>1764950819768</updated>
+    </task>
+    <task id="LOCAL-00082" summary="增加代码格式化换行相关功能">
+      <option name="closed" value="true" />
+      <created>1764950968088</created>
+      <option name="number" value="00082" />
+      <option name="presentableId" value="LOCAL-00082" />
+      <option name="project" value="LOCAL" />
+      <updated>1764950968088</updated>
+    </task>
+    <task id="LOCAL-00083" summary="增加代码格式化换行相关功能">
+      <option name="closed" value="true" />
+      <created>1764958158974</created>
+      <option name="number" value="00083" />
+      <option name="presentableId" value="LOCAL-00083" />
+      <option name="project" value="LOCAL" />
+      <updated>1764958158974</updated>
+    </task>
+    <task id="LOCAL-00084" summary="增加代码格式化换行相关功能">
+      <option name="closed" value="true" />
+      <created>1764958247796</created>
+      <option name="number" value="00084" />
+      <option name="presentableId" value="LOCAL-00084" />
+      <option name="project" value="LOCAL" />
+      <updated>1764958247796</updated>
+    </task>
+    <task id="LOCAL-00085" summary="增加代码格式化换行相关功能">
+      <option name="closed" value="true" />
+      <created>1764958497667</created>
+      <option name="number" value="00085" />
+      <option name="presentableId" value="LOCAL-00085" />
+      <option name="project" value="LOCAL" />
+      <updated>1764958497667</updated>
+    </task>
+    <task id="LOCAL-00086" summary="增加代码格式化换行相关功能">
+      <option name="closed" value="true" />
+      <created>1764958962777</created>
+      <option name="number" value="00086" />
+      <option name="presentableId" value="LOCAL-00086" />
+      <option name="project" value="LOCAL" />
+      <updated>1764958962777</updated>
+    </task>
+    <task id="LOCAL-00087" summary="增加代码格式化换行相关功能">
+      <option name="closed" value="true" />
+      <created>1764959081292</created>
+      <option name="number" value="00087" />
+      <option name="presentableId" value="LOCAL-00087" />
+      <option name="project" value="LOCAL" />
+      <updated>1764959081292</updated>
+    </task>
+    <task id="LOCAL-00088" summary="增加代码格式化换行相关功能">
+      <option name="closed" value="true" />
+      <created>1764959139345</created>
+      <option name="number" value="00088" />
+      <option name="presentableId" value="LOCAL-00088" />
+      <option name="project" value="LOCAL" />
+      <updated>1764959139345</updated>
+    </task>
+    <task id="LOCAL-00089" summary="增加代码格式化换行相关功能">
+      <option name="closed" value="true" />
+      <created>1764959156377</created>
+      <option name="number" value="00089" />
+      <option name="presentableId" value="LOCAL-00089" />
+      <option name="project" value="LOCAL" />
+      <updated>1764959156377</updated>
+    </task>
+    <task id="LOCAL-00090" summary="增加代码格式化换行相关功能">
+      <option name="closed" value="true" />
+      <created>1764959588929</created>
+      <option name="number" value="00090" />
+      <option name="presentableId" value="LOCAL-00090" />
+      <option name="project" value="LOCAL" />
+      <updated>1764959588929</updated>
+    </task>
+    <task id="LOCAL-00091" summary="增加代码格式化换行相关功能">
+      <option name="closed" value="true" />
+      <created>1764959774822</created>
+      <option name="number" value="00091" />
+      <option name="presentableId" value="LOCAL-00091" />
+      <option name="project" value="LOCAL" />
+      <updated>1764959774822</updated>
+    </task>
+    <task id="LOCAL-00092" summary="增加代码格式化换行相关功能">
+      <option name="closed" value="true" />
+      <created>1764960086261</created>
+      <option name="number" value="00092" />
+      <option name="presentableId" value="LOCAL-00092" />
+      <option name="project" value="LOCAL" />
+      <updated>1764960086261</updated>
+    </task>
+    <task id="LOCAL-00093" summary="增加代码格式化换行相关功能">
+      <option name="closed" value="true" />
+      <created>1764990706231</created>
+      <option name="number" value="00093" />
+      <option name="presentableId" value="LOCAL-00093" />
+      <option name="project" value="LOCAL" />
+      <updated>1764990706231</updated>
+    </task>
+    <task id="LOCAL-00094" summary="增加代码格式化换行相关功能">
+      <option name="closed" value="true" />
+      <created>1764991171231</created>
+      <option name="number" value="00094" />
+      <option name="presentableId" value="LOCAL-00094" />
+      <option name="project" value="LOCAL" />
+      <updated>1764991171231</updated>
+    </task>
+    <task id="LOCAL-00095" summary="ovs-language-server改为使用rollup 打包">
+      <option name="closed" value="true" />
+      <created>1764992211469</created>
+      <option name="number" value="00095" />
+      <option name="presentableId" value="LOCAL-00095" />
+      <option name="project" value="LOCAL" />
+      <updated>1764992211469</updated>
+    </task>
+    <task id="LOCAL-00096" summary="更新打包相关配置">
+      <option name="closed" value="true" />
+      <created>1764995450788</created>
+      <option name="number" value="00096" />
+      <option name="presentableId" value="LOCAL-00096" />
+      <option name="project" value="LOCAL" />
+      <updated>1764995450788</updated>
+    </task>
+    <task id="LOCAL-00097" summary="更新打包相关配置">
+      <option name="closed" value="true" />
+      <created>1764996213665</created>
+      <option name="number" value="00097" />
+      <option name="presentableId" value="LOCAL-00097" />
+      <option name="project" value="LOCAL" />
+      <updated>1764996213665</updated>
+    </task>
+    <task id="LOCAL-00098" summary="更新打包相关配置">
+      <option name="closed" value="true" />
+      <created>1764996503016</created>
+      <option name="number" value="00098" />
+      <option name="presentableId" value="LOCAL-00098" />
+      <option name="project" value="LOCAL" />
+      <updated>1764996503016</updated>
+    </task>
+    <task id="LOCAL-00099" summary="server改为使用cjs">
+      <option name="closed" value="true" />
+      <created>1764997040375</created>
+      <option name="number" value="00099" />
+      <option name="presentableId" value="LOCAL-00099" />
+      <option name="project" value="LOCAL" />
+      <updated>1764997040375</updated>
+    </task>
+    <option name="localTasksCounter" value="100" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="OPEN_GENERIC_TABS">
+      <map>
+        <entry key="e77eda3e-ee07-448f-a941-d0e1a8cee00b" value="TOOL_WINDOW" />
+        <entry key="9406e234-692a-4691-b692-f07f5c6d6cb0" value="TOOL_WINDOW" />
+        <entry key="f8c481a8-50d0-42e8-890e-da2d038aa9ba" value="TOOL_WINDOW" />
+      </map>
+    </option>
+    <option name="TAB_STATES">
+      <map>
+        <entry key="9406e234-692a-4691-b692-f07f5c6d6cb0">
+          <value>
+            <State>
+              <option name="FILTERS">
+                <map>
+                  <entry key="branch">
+                    <value>
+                      <list>
+                        <option value="HEAD" />
+                      </list>
+                    </value>
+                  </entry>
+                  <entry key="structure">
+                    <value>
+                      <list>
+                        <option value="dir:D:/project/qkyproject/test-volar/ovs" />
+                      </list>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+              <option name="SHOW_ONLY_AFFECTED_CHANGES" value="true" />
+            </State>
+          </value>
+        </entry>
+        <entry key="e77eda3e-ee07-448f-a941-d0e1a8cee00b">
+          <value>
+            <State>
+              <option name="FILTERS">
+                <map>
+                  <entry key="branch">
+                    <value>
+                      <list>
+                        <option value="HEAD" />
+                      </list>
+                    </value>
+                  </entry>
+                  <entry key="roots">
+                    <value>
+                      <list>
+                        <option value="$PROJECT_DIR$" />
+                      </list>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+              <option name="SHOW_ONLY_AFFECTED_CHANGES" value="true" />
+            </State>
+          </value>
+        </entry>
+        <entry key="f8c481a8-50d0-42e8-890e-da2d038aa9ba">
+          <value>
+            <State>
+              <option name="FILTERS">
+                <map>
+                  <entry key="branch">
+                    <value>
+                      <list>
+                        <option value="HEAD" />
+                      </list>
+                    </value>
+                  </entry>
+                  <entry key="structure">
+                    <value>
+                      <list>
+                        <option value="dir:D:/project/qkyproject/test-volar/ovs-language" />
+                      </list>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+              <option name="SHOW_ONLY_AFFECTED_CHANGES" value="true" />
+            </State>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
+    <option name="CHECK_NEW_TODO" value="false" />
+    <MESSAGE value="ini" />
+    <MESSAGE value="统一使用tsdown编译" />
+    <MESSAGE value="支持导出src供开发使用" />
+    <MESSAGE value="删除exports字段，导出所有" />
+    <MESSAGE value="修复类型导入的错误" />
+    <MESSAGE value="修复路径" />
+    <MESSAGE value="修复slime测试" />
+    <MESSAGE value="支持插件" />
+    <MESSAGE value="更新" />
+    <MESSAGE value="ignore" />
+    <MESSAGE value="支持启动" />
+    <MESSAGE value="增加代码格式化换行相关功能" />
+    <MESSAGE value="ovs-language-server改为使用rollup 打包" />
+    <MESSAGE value="更新打包相关配置" />
+    <MESSAGE value="server改为使用cjs" />
+    <option name="LAST_COMMIT_MESSAGE" value="server改为使用cjs" />
+  </component>
+</project>

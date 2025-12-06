@@ -25,11 +25,10 @@
   "author": "nicholasyhuang",
   "description": "OVS Runtime - A declarative UI syntax similar to Flutter and SwiftUI",
   "dependencies": {
-    "vue": "^3.5.13",
-    "@vue/tsconfig": "^0.8.0"
+    "@vue/tsconfig": "^0.8.0",
+    "vue": "^3.5.13"
   },
   "devDependencies": {
     "tsdown": "0.17.0-beta.6"
   }
 }
-

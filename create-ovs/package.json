@@ -1,6 +1,6 @@
 {
   "name": "create-ovs",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "🛠️ Create OVS projects powered by Vite + Vue",
   "type": "module",
   "main": "dist/index.mjs",
@@ -34,11 +34,9 @@
   "bugs": {
     "url": "https://github.com/alamhubb/ovsjs/issues"
   },
-  "dependencies": {},
   "devDependencies": {
     "@types/node": "^22.8.6",
     "tsdown": "0.17.0-beta.6",
     "typescript": "^5.6.3"
   }
 }
-

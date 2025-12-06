@@ -1,6 +1,6 @@
 {
   "name": "vite-plugin-ovs",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "type": "module",
   "main": "src/index.ts",
   "types": "src/index.ts",
@@ -27,11 +27,10 @@
     "vite": "^5.0.0 || ^6.0.0"
   },
   "dependencies": {
-    "ovs-compiler": "^0.1.5"
+    "ovs-compiler": "^0.1.9"
   },
   "devDependencies": {
     "tsdown": "0.17.0-beta.6",
     "vite": "^6.3.5"
   }
 }
-
