@@ -13,7 +13,7 @@ const dim = (text: string) => `\x1b[2m${text}\x1b[0m`
 
 async function main() {
   console.log()
-  console.log(cyan('┌  ') + bold('OVS - A declarative UI syntax without JSX'))
+  console.log(cyan('┌  ') + bold('OVS - A declarative UI syntax for Vue'))
   console.log(cyan('│'))
 
   // 获取项目名
