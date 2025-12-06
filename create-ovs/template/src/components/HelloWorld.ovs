@@ -8,9 +8,9 @@ const timer = setInterval(() => {
 }, 1000);
 
 // 定义一个小组件，接收 count 并显示
-ovsView CountDisplay(state): div({ class: 'count-display' }) {
+ovsView CountDisplay(props): div({ class: 'count-display' }) {
   span { 'Current count: ' }
-  strong({ style: 'color: #42b883; font-size: 24px;' }) { state.props.count }
+  strong({ style: 'color: #42b883; font-size: 24px;' }) { props.count }
 }
 
 // 主视图

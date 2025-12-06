@@ -4,7 +4,7 @@
  * 使用 $OvsHtmlTag.div() 避免与用户变量冲突
  */
 
-import { createElementVNode } from './core'
+import { createElementVNode } from './core.ts'
 import type { DefineComponent } from 'vue'
 
 type HtmlElementFactory = (props?: Record<string, any>, children?: any) => DefineComponent<any, any, any>

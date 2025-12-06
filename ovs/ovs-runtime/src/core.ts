@@ -1,4 +1,4 @@
-import {h, reactive, isReactive, isRef, unref, defineComponent} from 'vue'
+import {h, reactive, isReactive, isRef, unref, defineComponent, markRaw} from 'vue'
 import type {Component, VNode, DefineComponent} from 'vue'
 
 // ==================== 类型定义 ====================
@@ -54,7 +54,7 @@ export function defineOvsComponent(
         return () => result
     })
     ;(component as any).__isOvsComponent = true
-    return component
+    return markRaw(component)  // 标记为原始对象，防止被 reactive 包装
 }
 
 // ==================== 工厂函数 ====================
@@ -83,7 +83,7 @@ export function createComponentVNode(
         }
     })
     ;(component as any).__isOvsComponent = true
-    return component
+    return markRaw(component)  // 标记为原始对象，防止被 reactive 包装
 }
 
 /**
@@ -104,6 +104,6 @@ export function createElementVNode(
         return () => h(state.type, state.props, mapChildrenToVNodes(state.children))
     })
     ;(component as any).__isOvsComponent = true
-    return component
+    return markRaw(component)  // 标记为原始对象，防止被 reactive 包装
 }
 

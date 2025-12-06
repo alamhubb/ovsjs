@@ -51,10 +51,18 @@ function isHtmlTag(tagName: string): boolean {
 function createCalleeForTag(tagName: string, loc?: any): SlimeExpression {
   if (isHtmlTag(tagName)) {
     // HTML 标签 → $OvsHtmlTag.tagName
+    // 关键：给标签名标识符设置 loc，用于 source map 映射
+    const tagIdentifier = SlimeNodeCreate.createIdentifier(tagName)
+    if (loc) {
+      tagIdentifier.loc = {
+        ...loc,
+        value: tagName  // 确保 value 字段包含标签名，供 SlimeGenerator 使用
+      }
+    }
     const memberExpr = SlimeNodeCreate.createMemberExpression(
       SlimeNodeCreate.createIdentifier('$OvsHtmlTag'),
       SlimeTokenCreate.createDotToken(),
-      SlimeNodeCreate.createIdentifier(tagName)
+      tagIdentifier
     )
     if (loc) memberExpr.loc = loc
     return memberExpr
@@ -474,7 +482,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     // 判断逻辑
     if (this.ovsRenderDomViewDepth > 0) {
       // 在 div {} 内
-      
+
       // 1. OvsRenderFunction → 永远渲染（优先级最高）
       if (isOvsRenderFunction) {
         const pushCall = SlimeNodeCreate.createCallExpression(
@@ -485,13 +493,17 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
           ),
           [expr]
         )
+        // 设置 pushCall 的 loc，用于 source map 映射
+        if (cst.loc) {
+          pushCall.loc = cst.loc
+        }
         return {
           type: SlimeNodeType.ExpressionStatement,
           expression: pushCall,
           loc: cst.loc
         } as SlimeExpressionStatement
       }
-      
+
       // 2. 在 #{} 内 → 不渲染，保持原样
       if (this.noRenderDepth > 0) {
         return {
@@ -500,7 +512,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
           loc: cst.loc
         } as SlimeExpressionStatement
       }
-      
+
       // 3. 在 div {} 内，不在 #{} 内 → 渲染
       const pushCall = SlimeNodeCreate.createCallExpression(
         SlimeNodeCreate.createMemberExpression(
@@ -510,6 +522,10 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
         ),
         [expr]
       )
+      // 设置 pushCall 的 loc，用于 source map 映射
+      if (cst.loc) {
+        pushCall.loc = cst.loc
+      }
       return {
         type: SlimeNodeType.ExpressionStatement,
         expression: pushCall,
