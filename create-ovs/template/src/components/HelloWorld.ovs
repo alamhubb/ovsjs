@@ -18,7 +18,7 @@ div({ class: 'greetings', onClick() { count.value = 0 }}) {
   h1({ class: 'green' }) { msg }
 
   // 使用组件，传入 count
-  CountDisplay({ count: count.value })
+  CountDisplay({ count })
 
   p({ style: 'color: #888; font-size: 12px;' }) { '(Click anywhere to reset)' }
 
