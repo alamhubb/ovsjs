@@ -1,6 +1,6 @@
 {
   "name": "create-ovs",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "🛠️ Create OVS projects powered by Vite + Vue",
   "type": "module",
   "main": "dist/index.mjs",
