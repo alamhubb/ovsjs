@@ -33,8 +33,5 @@
     "dprint": "^0.50.0",
     "typescript": "latest",
     "vitest": "latest"
-  },
-  "dependencies": {
-    "pnpm": "^9.14.2"
   }
 }
