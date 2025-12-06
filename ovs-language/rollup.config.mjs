@@ -43,12 +43,12 @@ export default [
       swc(swcConfig),
     ],
   },
-  // Server (Language Server) - ESM
+  // Server (Language Server) - CommonJS
   {
     input: 'ovs-language-server/src/index.ts',
     output: {
-      file: 'dist/language-server.mjs',
-      format: 'esm',
+      file: 'dist/language-server.cjs',
+      format: 'cjs',
       sourcemap: true,
     },
     external: serverExternal,
@@ -63,8 +63,8 @@ export default [
   {
     input: 'ovs-language-server/src/index.ts',
     output: {
-      file: 'dist/language-server.d.mts',
-      format: 'esm',
+      file: 'dist/language-server.d.cts',
+      format: 'cjs',
     },
     external: serverExternal,
     plugins: [

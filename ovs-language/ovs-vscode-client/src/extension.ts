@@ -35,8 +35,8 @@ export async function activate(context: vscode.ExtensionContext) {
   log('Storage path', context.storagePath);
   log('Global storage path', context.globalStoragePath);
 
-  // Language Server 已打包到 dist/language-server.mjs
-  const serverModule = path.join(context.extensionPath, 'dist', 'language-server.mjs');
+  // Language Server 已打包到 dist/language-server.cjs
+  const serverModule = path.join(context.extensionPath, 'dist', 'language-server.cjs');
   log('Server module path', serverModule);
 
   // 检查服务器模块是否存在

@@ -1,15 +1,14 @@
 import * as fs from 'fs'
 import * as path from 'path'
-import {fileURLToPath} from 'url'
 
 export class LogUtil {
     private static logFilePath: string
 
     static {
-        // 获取当前文件的目录
-        const __filename = fileURLToPath(import.meta.url)
-        const __dirname = path.dirname(__filename)
-        this.logFilePath = path.join(__dirname, 'templog.txt')
+        // 兼容 CJS 和 ESM：使用 __dirname（CJS 提供）
+        // @ts-ignore - __dirname 在 CJS 中可用
+        const dir = typeof __dirname !== 'undefined' ? __dirname : process.cwd()
+        this.logFilePath = path.join(dir, 'templog.txt')
 
         // 确保文件存在
         if (!fs.existsSync(this.logFilePath)) {
