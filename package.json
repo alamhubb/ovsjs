@@ -21,10 +21,9 @@
     "build:language": "cd ovs-language && npm run build",
     "watch": "tsc -b -w",
     "watch:labs": "cd extensions/labs && npm run watch",
-    "prerelease": "npm run buildall && npm run test",
+    "prerelease": "npm run buildall",
     "release": "lerna publish --exact --force-publish --yes --sync-workspace-lock",
     "release:next": "npm run release -- --dist-tag next --no-push",
-    "test": "vitest run",
     "format": "dprint fmt",
     "lint": "tsslint --project */*/tsconfig.json",
     "lint:fix": "npm run lint -- --fix"

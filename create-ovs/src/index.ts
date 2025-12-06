@@ -90,10 +90,18 @@ function promptConfirm(message: string): Promise<boolean> {
   })
 }
 
+// 需要排除的文件/目录
+const EXCLUDED = ['node_modules', '.git', 'package-lock.json', 'pnpm-lock.yaml', 'yarn.lock']
+
 function copyDir(src: string, dest: string) {
   fs.mkdirSync(dest, { recursive: true })
 
   for (const file of fs.readdirSync(src)) {
+    // 跳过排除的文件/目录
+    if (EXCLUDED.includes(file)) {
+      continue
+    }
+
     const srcPath = path.join(src, file)
     const destPath = path.join(dest, file)
 

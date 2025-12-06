@@ -69,9 +69,17 @@ function promptConfirm(message) {
 		});
 	});
 }
+const EXCLUDED = [
+	"node_modules",
+	".git",
+	"package-lock.json",
+	"pnpm-lock.yaml",
+	"yarn.lock"
+];
 function copyDir(src, dest) {
 	fs.mkdirSync(dest, { recursive: true });
 	for (const file of fs.readdirSync(src)) {
+		if (EXCLUDED.includes(file)) continue;
 		const srcPath = path.join(src, file);
 		const destPath = path.join(dest, file);
 		if (fs.statSync(srcPath).isDirectory()) copyDir(srcPath, destPath);
