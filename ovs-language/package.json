@@ -72,9 +72,9 @@
     "test:source": "npx tsx tests/test-language-server.ts --source",
     "test:dist": "npx tsx tests/test-language-server.ts --dist",
     "test:all": "npm run test:source && npm run build && npm run test:dist",
-    "vscode:prepublish": "npm run build:prod",
-    "pack": "npm run build:prod && vsce package",
-    "release": "npm run build:prod && vsce publish"
+    "pack": "vsce package",
+    "release": "npm run build:prod && npx vsce publish",
+    "vscode:prepublish": "npm run build:prod"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^28.0.9",
