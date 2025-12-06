@@ -133,10 +133,17 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
       return SlimeNodeCreate.createProgram([], SlimeProgramSourceType.Module)
     }
 
+    // 使用 SlimeParser.prototype.XXX.name 确保与 Parser 同步
+    const hashbangCommentName = 'HashbangComment'  // Token 名称，不是规则
+    const moduleBodyName = SlimeParser.prototype.ModuleBody?.name || 'ModuleBody'
+    const scriptBodyName = SlimeParser.prototype.ScriptBody?.name || 'ScriptBody'
+    const moduleItemListName = SlimeParser.prototype.ModuleItemList?.name || 'ModuleItemList'
+    const statementListName = SlimeParser.prototype.StatementList?.name || 'StatementList'
+
     // 查找主体内容（跳过 HashbangComment）
     let bodyChild: SubhutiCst | null = null
     for (const child of cst.children) {
-      if (child.name === 'HashbangComment') {
+      if (child.name === hashbangCommentName) {
         continue  // 跳过 hashbang 注释
       }
       bodyChild = child
@@ -151,25 +158,25 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     let body: Array<SlimeStatement | SlimeModuleDeclaration> = []
     let sourceType: SlimeProgramSourceType = SlimeProgramSourceType.Module
 
-    if (bodyChild.name === 'ModuleBody') {
+    if (bodyChild.name === moduleBodyName) {
       // 新结构：Program -> ModuleBody -> ModuleItemList
       const moduleItemList = bodyChild.children?.[0]
-      if (moduleItemList && moduleItemList.name === SlimeParser.prototype.ModuleItemList?.name) {
+      if (moduleItemList && moduleItemList.name === moduleItemListName) {
         body = this.createModuleItemListAst(moduleItemList)
       }
       sourceType = SlimeProgramSourceType.Module
-    } else if (bodyChild.name === SlimeParser.prototype.ModuleItemList?.name) {
+    } else if (bodyChild.name === moduleItemListName) {
       // 兼容旧结构：Program -> ModuleItemList
       body = this.createModuleItemListAst(bodyChild)
       sourceType = SlimeProgramSourceType.Module
-    } else if (bodyChild.name === 'ScriptBody') {
+    } else if (bodyChild.name === scriptBodyName) {
       // 新结构：Program -> ScriptBody -> StatementList
       const statementList = bodyChild.children?.[0]
-      if (statementList && statementList.name === SlimeParser.prototype.StatementList?.name) {
+      if (statementList && statementList.name === statementListName) {
         body = this.createStatementListAst(statementList)
       }
       sourceType = SlimeProgramSourceType.Script
-    } else if (bodyChild.name === SlimeParser.prototype.StatementList?.name) {
+    } else if (bodyChild.name === statementListName) {
       // 兼容旧结构：Program -> StatementList
       body = this.createStatementListAst(bodyChild)
       sourceType = SlimeProgramSourceType.Script
@@ -213,7 +220,8 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
       throw new Error('OvsViewDeclaration: missing class declaration')
     }
 
-    // ovsRenderDomClassDeclaration 的结构：Identifier, FunctionFormalParameters?, Colon
+    // OvsRenderDomClassDeclaration 的结构：Identifier, ArrowFormalParameters?, Colon
+    // 注意：使用 ArrowFormalParameters 而不是 FunctionFormalParameters
     const classDeclChildren = classDeclCst.children || []
 
     // 组件名
@@ -224,12 +232,14 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     const componentName = this.createIdentifierAst(componentNameCst)
 
     // 参数处理：使用用户声明的参数
+    // 使用 SlimeParser.prototype.ArrowFormalParameters.name 确保与 Parser 同步
     let params
-    const formalParamsCst = classDeclChildren.find(c => c.name === 'FunctionFormalParameters')
-    
+    const arrowFormalParamsName = SlimeParser.prototype.ArrowFormalParameters?.name || 'ArrowFormalParameters'
+    const formalParamsCst = classDeclChildren.find(c => c.name === arrowFormalParamsName)
+
     if (formalParamsCst) {
-      // 用户声明了参数，直接使用用户的参数
-      params = this.createFunctionFormalParametersAst(formalParamsCst)
+      // 用户声明了参数，使用 ArrowFormalParameters 的转换方法
+      params = this.createArrowFormalParametersAstWrapped(formalParamsCst)
     } else {
       // 用户没有声明参数，抛出错误提示必须声明
       throw new Error('ovsView 组件必须声明参数，格式: ovsView ComponentName (state) : rootElement { ... }')
@@ -284,10 +294,10 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
 
     // 创建函数体
     const functionBody = SlimeNodeCreate.createBlockStatement(
-      { type: 'LBrace', value: '{', loc: cst.loc } as any,
-      { type: 'RBrace', value: '}', loc: cst.loc } as any,
       functionBodyStatements,
-      cst.loc
+      cst.loc,
+      { type: 'LBrace', value: '{', loc: cst.loc } as any,
+      { type: 'RBrace', value: '}', loc: cst.loc } as any
     )
 
     // 创建函数声明（手动构造AST节点）
@@ -567,14 +577,16 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     }
 
     // 查找 Arguments 节点（组件调用参数）
-    // 简化逻辑：直接使用参数，不需要特殊的 attrs 提取
-    const argumentsCst = cst.children?.find(child => child.name === 'Arguments')
+    // 使用 SlimeParser.prototype.XXX.name 确保与 Parser 同步
+    const argumentsName = SlimeParser.prototype.Arguments?.name || 'Arguments'
+    const argumentsCst = cst.children?.find(child => child.name === argumentsName)
     let componentProps: SlimeExpression | null = null
 
     if (argumentsCst && argumentsCst.children) {
       // 提取 Arguments 内的参数
       // Arguments 结构：LParen, ArgumentList?, RParen
-      const argListCst = argumentsCst.children.find(child => child.name === 'ArgumentList')
+      const argumentListName = SlimeParser.prototype.ArgumentList?.name || 'ArgumentList'
+      const argListCst = argumentsCst.children.find(child => child.name === argumentListName)
       if (argListCst && argListCst.children?.[0]?.children?.[0]) {
         // 直接使用第一个参数作为 componentProps
         componentProps = this.createExpressionAst(argListCst.children[0].children[0])
@@ -587,15 +599,16 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     const uuid = Math.random().toString(36).substring(2, 10)
     const attrsVarName = `temp$$attrs$$${uuid}`
     this.attrsVarNameStack.push(attrsVarName)
-    
+
     // 进入新的渲染元素，临时清零 noRenderDepth（#{} 对元素内部不生效）
     const savedNoRenderDepth = this.noRenderDepth
     this.noRenderDepth = 0
 
     try {
       // 查找 StatementList 节点
+      const statementListName = SlimeParser.prototype.StatementList?.name || 'StatementList'
       const statementListCst = cst.children?.find(child =>
-        child.name === 'StatementList'
+        child.name === statementListName
       )
 
       // StatementList是可选的（空div也合法）

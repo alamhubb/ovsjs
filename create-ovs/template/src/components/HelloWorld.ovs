@@ -1,9 +1,5 @@
 import { ref } from 'vue';
 
-// HelloWorld OVS Component
-// 注意：HTML 标签（div, h1, h3, a 等）会自动转换为 $OvsHtmlTag.xxx()
-// 编译器会自动添加 import { $OvsHtmlTag } from 'ovsjs'
-
 const msg = "You did it!"
 let count = ref(0)
 
@@ -11,13 +7,21 @@ const timer = setInterval(() => {
   count.value = count.value + 1
 }, 1000);
 
+// 定义一个小组件，接收 count 并显示
+ovsView CountDisplay(state): div({ class: 'count-display' }) {
+  span { 'Current count: ' }
+  strong({ style: 'color: #42b883; font-size: 24px;' }) { state.props.count }
+}
+
+// 主视图
 div({ class: 'greetings', onClick() { count.value = 0 }}) {
   h1({ class: 'green' }) { msg }
-  #{
-    // 这里可以写纯 JS 逻辑
-  }
-  h2 { "fasdf" }
-  count
+
+  // 使用组件，传入 count
+  CountDisplay({ count: count.value })
+
+  p({ style: 'color: #888; font-size: 12px;' }) { '(Click anywhere to reset)' }
+
   h3 {
     "You've successfully created a project with "
     a({ href: 'https://vite.dev/', target: '_blank', rel: 'noopener' }) { 'Vite' }
@@ -28,4 +32,3 @@ div({ class: 'greetings', onClick() { count.value = 0 }}) {
     '.'
   }
 }
-

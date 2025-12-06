@@ -10,6 +10,7 @@
     "slime/packages/slime-parser",
     "slime/packages/slime-token",
     "create-ovs",
+    "create-ovs/template",
     "vite-plugin-ovs"
   ],
   "version": "0.1.9"
