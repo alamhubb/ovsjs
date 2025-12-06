@@ -354,31 +354,65 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
   }
   
   /**
-   * Override: 处理 StatementListItem，支持 NoRenderBlock 展开
+   * Override: 处理 StatementListItem，支持 OvsRenderStatement 和 NoRenderBlock
    */
   createStatementListItemAst(cst: SubhutiCst): SlimeStatement[] {
     checkCstName(cst, SlimeParser.prototype.StatementListItem.name)
-    
+
     if (!cst.children || cst.children.length === 0) {
       return []
     }
-    
+
     const child = cst.children[0]
-    
-    // 检查是否是 Statement -> NoRenderBlock
+
+    // 检查是否是 Statement
     if (child.name === SlimeParser.prototype.Statement.name) {
       const statementChild = child.children?.[0]
-      
+
+      // 处理 OvsRenderStatement - 语句版本的 OVS 渲染
+      if (statementChild && statementChild.name === OvsParser.prototype.OvsRenderStatement.name) {
+        // OvsRenderStatement 和 OvsRenderFunction 的 CST 结构相同，复用转换逻辑
+        const expr = this.createOvsRenderDomViewDeclarationAst(statementChild)
+
+        // 在 OVS 渲染上下文中，需要包装成 children.push()
+        if (this.ovsRenderDomViewDepth > 0) {
+          const pushCall = SlimeNodeCreate.createCallExpression(
+            SlimeNodeCreate.createMemberExpression(
+              SlimeNodeCreate.createIdentifier('children'),
+              SlimeTokenCreate.createDotToken(cst.loc),
+              SlimeNodeCreate.createIdentifier('push')
+            ),
+            [expr]
+          )
+          if (cst.loc) {
+            pushCall.loc = cst.loc
+          }
+          return [{
+            type: SlimeNodeType.ExpressionStatement,
+            expression: pushCall,
+            loc: cst.loc
+          } as SlimeExpressionStatement]
+        }
+
+        // 不在渲染上下文中，直接作为表达式语句
+        return [{
+          type: SlimeNodeType.ExpressionStatement,
+          expression: expr,
+          loc: cst.loc
+        } as SlimeExpressionStatement]
+      }
+
+      // 处理 NoRenderBlock - 展开处理
       if (statementChild && statementChild.name === OvsParser.prototype.NoRenderBlock.name) {
         // 识别为 NoRenderBlock，展开处理
         this.noRenderDepth++
-        
+
         try {
           // 找到内部的 StatementList
           const innerList = statementChild.children?.find(
             c => c.name === SlimeParser.prototype.StatementList.name
           )
-          
+
           if (innerList) {
             // 递归处理内部语句，直接展开
             const innerStatements = this.createStatementListAst(innerList)
@@ -389,14 +423,14 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
             })
             return innerStatements  // 返回数组（会被展开）
           }
-          
+
           return []
         } finally {
           this.noRenderDepth--
         }
       }
     }
-    
+
     // 正常处理（调用父类）
     return super.createStatementListItemAst(cst)
   }
@@ -572,10 +606,16 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
    * })()
    */
   createOvsRenderDomViewDeclarationAst(cst: SubhutiCst): SlimeExpression {
-    checkCstName(cst, OvsParser.prototype.OvsRenderFunction.name);
+    // 支持 OvsRenderFunction（表达式版本）和 OvsRenderStatement（语句版本）
+    // 两者的 CST 结构相同，只是名称不同
+    const isRenderFunction = cst.name === OvsParser.prototype.OvsRenderFunction.name
+    const isRenderStatement = cst.name === OvsParser.prototype.OvsRenderStatement.name
+    if (!isRenderFunction && !isRenderStatement) {
+      throw new Error(`Expected OvsRenderFunction or OvsRenderStatement, got ${cst.name}`)
+    }
 
     // 获取元素/组件名称
-    // OvsRenderFunction 使用 IdentifierReference，需要通过专门的方法转换
+    // OvsRenderFunction/OvsRenderStatement 使用 IdentifierReference，需要通过专门的方法转换
     const idCst = cst.children?.[0]
     if (!idCst) {
       throw new Error('OvsRenderDomViewDeclaration has no identifier')

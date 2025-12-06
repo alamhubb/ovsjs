@@ -20,8 +20,12 @@ const timer = setInterval(() => {
 
   h1({ class: 'green' }) { msg }
 
+  const div123= div{ div{'woshidiv:'} div{count} }
+
+
+
   // 使用组件，传入 count
-  CountDisplay({ count })
+  CountDisplay({ count:div123 })
 
   p({ style: 'color: #888; font-size: 12px;' }) { '(Click anywhere to reset)' }
 

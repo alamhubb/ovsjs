@@ -35,7 +35,7 @@ export default class OvsParser extends SlimeParser<OvsTokenConsumer> {
 
 
     /**
-     * OvsRenderFunction - OVS 视图渲染函数
+     * OvsRenderFunction - OVS 视图渲染函数（表达式版本）
      * 语法: IdentifierReference [no LineTerminator here] Arguments? { StatementList? }
      *
      * 限制条件：
@@ -46,6 +46,9 @@ export default class OvsParser extends SlimeParser<OvsTokenConsumer> {
      * - 使用 IdentifierReference 并正确传递 params
      * - 在 async 上下文中，await 是关键字，不会被匹配为标签名
      * - 在非 async 上下文中，await 可以作为标识符（虽然不常见）
+     *
+     * 注意：这是表达式版本，用于赋值场景如 `const x = div { }`
+     * 语句版本请使用 OvsRenderStatement
      */
     @SubhutiRule
     OvsRenderFunction(params: OvsExpressionParams = {}) {
@@ -71,6 +74,42 @@ export default class OvsParser extends SlimeParser<OvsTokenConsumer> {
             this.StatementList(params)
         })
         this.tokenConsumer.RBrace()
+        return this.curCst
+    }
+
+    /**
+     * OvsRenderStatement - OVS 视图渲染语句（语句版本）
+     * 语法: IdentifierReference [no LineTerminator here] Arguments? { StatementList? }
+     *
+     * 与 OvsRenderFunction 的区别：
+     * - OvsRenderStatement 是 Statement，以 } 结尾，不需要分号
+     * - OvsRenderFunction 是 Expression，用于赋值等场景
+     *
+     * 这解决了 ASI（自动分号插入）问题：
+     * - `div{"a"} div{"b"}` 现在可以正确解析为两个独立的语句
+     * - 类似于 ES 中 FunctionDeclaration 和 BlockStatement 不需要分号
+     */
+    @SubhutiRule
+    OvsRenderStatement(params: StatementParams = {}) {
+        // 使用 IdentifierReference 并传递 params
+        const idRef = this.IdentifierReference(params)
+        // 限制 1：组件标签名不能是 JavaScript 关键字
+        const tagName = idRef?.children?.[0]?.children?.[0]?.value
+        this.assertCondition(!OVS_TAG_BLACKLIST.has(tagName))
+
+        this.Option(() => {
+            // 传递 params，支持 async 上下文中的 await
+            this.Arguments(params)
+        })
+        // 限制 2：标签名和 { 之间不能有换行符 [no LineTerminator here]
+        this.assertNoLineBreak()
+        this.tokenConsumer.LBrace()
+        this.Option(() => {
+            // 传递 params，继承 Yield/Await/Return 上下文
+            this.StatementList(params)
+        })
+        this.tokenConsumer.RBrace()
+        // 不需要 SemicolonASI！这是语句版本，以 } 结尾即可
         return this.curCst
     }
 
@@ -153,9 +192,15 @@ export default class OvsParser extends SlimeParser<OvsTokenConsumer> {
     }
 
     /**
-     * Statement - 覆盖父类，添加 NoRenderBlock 支持
+     * Statement - 覆盖父类，添加 OvsRenderStatement 和 NoRenderBlock 支持
+     *
+     * OvsRenderStatement 放在最前面，优先尝试：
+     * - 解决 ASI 问题：`div{"a"} div{"b"}` 可以正确解析
+     * - 类似 ES 中 FunctionDeclaration/BlockStatement 不需要分号的设计
+     * - 如果不匹配（如普通函数调用 `foo()`），会回溯到 ExpressionStatement
      *
      * 参数传递说明：
+     * - OvsRenderStatement(params): ✅ 传递 params，继承 Yield/Await/Return 上下文
      * - NoRenderBlock(params): ✅ 传递 params，继承 Yield/Await/Return 上下文
      * - EmptyStatement(): ✅ 无参数是正确的，空语句不需要上下文
      * - DebuggerStatement(): ✅ 无参数是正确的，debugger 语句不需要上下文
@@ -164,10 +209,11 @@ export default class OvsParser extends SlimeParser<OvsTokenConsumer> {
     Statement(params: StatementParams = {}) {
         const {Return = false} = params
         return this.Or([
-            { alt: () => this.NoRenderBlock(params) },  // ✅ 修复：传递 params
+            { alt: () => this.OvsRenderStatement(params) },  // 🆕 OVS 渲染语句，优先尝试
+            { alt: () => this.NoRenderBlock(params) },
             { alt: () => this.BlockStatement(params) },
             { alt: () => this.VariableStatement(params) },
-            { alt: () => this.EmptyStatement() },       // ✅ 正确：EmptyStatement 不需要参数
+            { alt: () => this.EmptyStatement() },
             { alt: () => this.ExpressionStatement(params) },
             { alt: () => this.IfStatement(params) },
             { alt: () => this.BreakableStatement(params) },
@@ -178,7 +224,7 @@ export default class OvsParser extends SlimeParser<OvsTokenConsumer> {
             { alt: () => this.LabelledStatement(params) },
             { alt: () => this.ThrowStatement(params) },
             { alt: () => this.TryStatement(params) },
-            { alt: () => this.DebuggerStatement() }     // ✅ 正确：DebuggerStatement 不需要参数
+            { alt: () => this.DebuggerStatement() }
         ])
     }
 
