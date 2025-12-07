@@ -144,15 +144,16 @@ ul {
 
 ### 组件定义
 
-使用 `ovsView` 关键字定义可复用组件：
+使用 `view` 关键字定义可复用组件：
 
 ```javascript
 // 定义组件
-ovsView Card(state):
-div({ class: 'card' }) {
-  h2 { state.props.title }
-  p { state.props.content }
-  state.children  // 渲染子元素
+view Card(state) {
+  div({ class: 'card' }) {
+    h2 { state.props.title }
+    p { state.props.content }
+    state.children  // 渲染子元素
+  }
 }
 
 // 使用组件
@@ -160,6 +161,9 @@ Card({ title: 'Hello', content: 'World' }) {
   span { 'Extra content' }
 }
 ```
+
+> **注意**：`view` 是软关键字（上下文关键字），只在组件声明位置有特殊含义。
+> 你仍然可以在其他地方使用 `view` 作为变量名：`const view = someValue`
 
 ### 不渲染块 `#{}`
 
@@ -244,8 +248,9 @@ div({ class: 'greetings', onClick: () => count.value = 0 }) {
 
 ### 1. JavaScript 超集，最小侵入
 
-OVS 只添加了两个语法扩展：
+OVS 只添加了三个语法扩展：
 - `tag {}` / `tag() {}` - 元素声明
+- `view Name() {}` - 组件声明（`view` 是软关键字，可作为变量名使用）
 - `#{}` - 不渲染块
 
 其他都是标准 JavaScript，学习成本极低。

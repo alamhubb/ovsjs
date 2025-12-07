@@ -2,9 +2,12 @@ import { ref } from 'vue';
 
 
 // 定义一个小组件，接收 count 并显示
-ovsView CountDisplay(props): div({ class: 'count-display' }) {
-  span { 'Current count: ' }
-  strong({ style: 'color: #42b883; font-size: 24px;' }) { props.count }
+// view 是软关键字，可以在其他地方作为变量名使用
+view CountDisplay(props) {
+  div({ class: 'count-display' }) {
+    span { 'Current count: ' }
+    strong({ style: 'color: #42b883; font-size: 24px;' }) { props.count }
+  }
 }
 
 // 主视图

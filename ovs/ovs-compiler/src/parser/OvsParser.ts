@@ -127,48 +127,38 @@ export default class OvsParser extends SlimeParser<OvsTokenConsumer> {
 
     /**
      * OvsViewDeclaration - OVS 视图声明
-     * 语法: ovsView Identifier (params)? : OvsRenderFunction
+     * 语法: view Identifier (params)? { StatementList }
+     *
+     * 示例:
+     * view Card(state) {
+     *   div({ class: 'card' }) {
+     *     h2 { state.props.title }
+     *   }
+     * }
+     *
+     * 注意：view 是软关键字（上下文关键字），用户仍可使用 view 作为变量名
+     * 例如：const view = someValue  // 合法
      *
      * ✅ 硬编码无参数是正确的：
      * 根据 ES 规范，顶层声明（如 FunctionDeclaration）不接收 Yield/Await 参数，
-     * 而是在内部硬编码。例如：
-     * - FunctionDeclaration 内部使用 FunctionBody[~Yield, ~Await]
-     * - AsyncFunctionDeclaration 内部使用 AsyncFunctionBody (即 FunctionBody[~Yield, +Await])
-     *
-     * OvsViewDeclaration 作为顶层声明，其内部的 OvsRenderFunction 应该有自己的默认上下文。
-     * 目前默认 {Yield: false, Await: false}，类似普通函数。
-     * 如果需要 async 组件，可以考虑添加 async ovsView 语法。
+     * 而是在内部硬编码。
      */
     @SubhutiRule
     OvsViewDeclaration() {
-        // ovsView + ovsRenderDomClassDeclaration + OvsRenderDomViewDeclaration
-        this.tokenConsumer.OvsViewToken()
-        this.OvsRenderDomClassDeclaration()  // 复用：Identifier, FunctionFormalParameters?, Colon
-        // ✅ 硬编码 {Yield: false, Await: false} 是正确的
-        // OvsViewDeclaration 类似 FunctionDeclaration，内部默认不在 async/generator 上下文中
-        this.OvsRenderFunction({Yield: false, Await: false})
-    }
-
-    /**
-     * ovsView 的类声明部分
-     * 格式: ComponentName(params)?:
-     *
-     * ✅ ArrowFormalParameters() 无参数是正确的：
-     * 根据 ES 规范 ArrowFormalParameters[Yield, Await]，参数列表的上下文由外层决定。
-     * OvsViewDeclaration 类似普通函数声明，其参数列表不在 async/generator 上下文中。
-     * 参考：FunctionDeclaration 使用 FormalParameters[~Yield, ~Await]
-     */
-    @SubhutiRule
-    OvsRenderDomClassDeclaration() {
-        this.tokenConsumer.IdentifierName()
+        // view ComponentName (params)? { StatementList }
+        this.tokenConsumer.View()                   // view 软关键字
+        this.tokenConsumer.IdentifierName()         // 组件名
         this.Option(() => {
-            // 使用 ArrowFormalParameters 而不是 FormalParameters
-            // 因为 ovsView MyCard(state): div {} 的参数格式类似箭头函数
-            // ✅ 硬编码 {Yield: false, Await: false} 是正确的
-            // 类似 FunctionDeclaration 的 FormalParameters[~Yield, ~Await]
+            // 可选的参数列表 (state)
             this.ArrowFormalParameters({Yield: false, Await: false})
         })
-        this.tokenConsumer.Colon()
+        // 函数体 { ... }
+        this.tokenConsumer.LBrace()
+        this.Option(() => {
+            // 内部是 StatementList，支持 Return 语句
+            this.StatementList({Yield: false, Await: false, Return: true})
+        })
+        this.tokenConsumer.RBrace()
     }
 
     /**
