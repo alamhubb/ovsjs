@@ -1,0 +1,43 @@
+import { ref } from 'vue';
+
+
+// 定义一个小组件，接收 count 并显示
+ovsView CountDisplay(props): div({ class: 'count-display' }) {
+  span { 'Current count: ' }
+  strong({ style: 'color: #42b883; font-size: 24px;' }) { props.count }
+}
+
+// 主视图
+div({ class: 'greetings', onClick() { count.value = 0 }}) {
+ 
+
+  h3 {
+    "You've successfully created a project with "
+    a({ href: 'https://vite.dev/', target: '_blank', rel: 'noopener' }) { 'Vite' }
+    ' + '
+    a({ href: 'https://vuejs.org/', target: '_blank', rel: 'noopener' }) { 'Vue 3' }
+    ' + '
+    a({ href: 'https://github.com/alamhubb/ovsjs', target: '_blank', rel: 'noopener' }) { 'OVS' }
+    '.'
+  }
+
+
+    const msg = "You did it!"
+    let count = ref(0)
+
+    const timer = setInterval(() => {
+      count.value = count.value + 1
+    }, 1000);
+
+
+  h1({ class: 'green' }) { msg }
+
+  const countView= span{count}
+
+
+
+  // 使用组件，传入 count
+  CountDisplay({ count:countView })
+
+ p({ style: 'color: #888; font-size: 12px;' }) { '(Click anywhere to reset)' }
+}
