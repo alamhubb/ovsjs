@@ -3,6 +3,7 @@
 > **OVS** - A pure JavaScript declarative UI, a Vue DSL that lets you write Vue with a more concise, elegant, and flexible syntax, inspired by Kotlin-HTML, SwiftUI, and SolidJS.
 
 [![Documentation](https://img.shields.io/badge/docs-deepwiki-blue)](https://deepwiki.com/alamhubb/ovsjs/)
+[![VSCode Extension](https://img.shields.io/badge/VSCode-Extension-007ACC?logo=visual-studio-code)](https://marketplace.visualstudio.com/items?itemName=alamhubb.ovs-language)
 [![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
 
 **English** | [中文](README_zh.md)
@@ -31,9 +32,94 @@ div({ class: 'container' }) {
 
 **Features:**
 - ✅ **Pure JavaScript Superset** - All JS syntax works
-- ✅ **No JSX Required** - Native brace syntax
+- ✅ **Zero Template Directives** - No `v-if`, `v-for`, just native `if/for`
+- ✅ **No JSX Required** - Native brace syntax, no `className`, no `{}`  wrapping
 - ✅ **Full IDE Support** - Code completion, type checking, go to definition
 - ✅ **Vue 3 Runtime** - Compiles to efficient Vue render functions
+
+---
+
+## Why OVS?
+
+OVS solves the flexibility problem of Vue templates while being more elegant than JSX.
+
+### Vue Template vs JSX vs OVS
+
+**Conditional Rendering:**
+
+```javascript
+// ❌ Vue Template - Custom directives, limited flexibility
+<template>
+  <div v-if="isLoggedIn">Welcome, {{ username }}</div>
+  <div v-else>Please login</div>
+</template>
+
+// ❌ JSX - Ternary expressions, hard to read when nested
+{isLoggedIn ? <div>Welcome, {username}</div> : <div>Please login</div>}
+
+// ✅ OVS - Native JavaScript, clean and intuitive
+if (isLoggedIn) {
+  div { `Welcome, ${username}` }
+} else {
+  div { 'Please login' }
+}
+```
+
+**List Rendering:**
+
+```javascript
+// ❌ Vue Template - v-for directive, special :key syntax
+<template>
+  <ul>
+    <li v-for="item in items" :key="item.id">{{ item.name }}</li>
+  </ul>
+</template>
+
+// ❌ JSX - .map() callback, requires return and key prop
+<ul>
+  {items.map(item => <li key={item.id}>{item.name}</li>)}
+</ul>
+
+// ✅ OVS - Native for...of, straightforward
+ul {
+  for (const item of items) {
+    li { item.name }
+  }
+}
+```
+
+**Complex Logic:**
+
+```javascript
+// ❌ Vue Template - Need computed properties or methods for complex logic
+// ❌ JSX - Inline logic becomes messy with && and ternary chains
+
+// ✅ OVS - Just write JavaScript!
+div {
+  const total = items.reduce((sum, item) => sum + item.price, 0)
+
+  if (total > 100) {
+    span({ class: 'discount' }) { 'Free shipping!' }
+  }
+
+  for (const item of items) {
+    if (item.inStock) {
+      ProductCard({ product: item })
+    }
+  }
+}
+```
+
+### Key Advantages
+
+| Feature | Vue Template | JSX | OVS |
+|---------|-------------|-----|-----|
+| Control Flow | `v-if`, `v-for` directives | `&&`, `? :`, `.map()` | Native `if`, `for` |
+| Class Attribute | `class` | `className` | `class` |
+| Expression Syntax | `{{ }}` | `{ }` | Direct reference |
+| Learning Curve | Template syntax | JSX rules | Just JavaScript |
+| Flexibility | Limited | High | High |
+| Readability | Good for simple | Complex nesting | Clean & intuitive |
 
 ---
 
@@ -50,7 +136,7 @@ npm run dev
 
 ### 2. Install VSCode Extension
 
-Search for **"Ovs Language"** in VSCode Extensions Marketplace and install it.
+Install **[Ovs Language](https://marketplace.visualstudio.com/items?itemName=alamhubb.ovs-language)** from VSCode Extensions Marketplace.
 
 ### 3. Start Writing
 
@@ -143,13 +229,9 @@ ul {
 }
 ```
 
----
-
-## Advanced Usage
-
 ### Component Definition
 
-Use the `view` keyword to define reusable components:
+Use the `view` soft keyword to define reusable components:
 
 ```javascript
 // Define component
@@ -169,6 +251,10 @@ Card({ title: 'Hello', content: 'World' }) {
 
 > **Note**: `view` is a soft keyword (contextual keyword), only has special meaning at component declaration position.
 > You can still use `view` as a variable name elsewhere: `const view = someValue`
+
+---
+
+## Advanced Usage
 
 ### Non-Rendering Block `#{}`
 

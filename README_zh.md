@@ -3,6 +3,7 @@
 > **OVS** - 一个纯 JavaScript 的声明式 UI，一种 Vue DSL，让你用更简洁、优雅、灵活的语法编写 Vue，灵感来自 Kotlin-HTML、SwiftUI 和 SolidJS。
 
 [![Documentation](https://img.shields.io/badge/docs-deepwiki-blue)](https://deepwiki.com/alamhubb/ovsjs/)
+[![VSCode Extension](https://img.shields.io/badge/VSCode-Extension-007ACC?logo=visual-studio-code)](https://marketplace.visualstudio.com/items?itemName=alamhubb.ovs-language)
 [![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
 
 **[English](README.md)** | 中文
@@ -31,9 +32,94 @@ div({ class: 'container' }) {
 
 **特点：**
 - ✅ **纯 JavaScript 超集** - 所有 JS 语法都可用
-- ✅ **无需 JSX** - 原生大括号语法
+- ✅ **零模板指令** - 没有 `v-if`、`v-for`，直接用原生 `if/for`
+- ✅ **无需 JSX** - 原生大括号语法，没有 `className`，没有 `{}` 包裹
 - ✅ **完整 IDE 支持** - 代码补全、类型检查、跳转定义
 - ✅ **Vue 3 运行时** - 编译为高效的 Vue 渲染函数
+
+---
+
+## 为什么选择 OVS？
+
+OVS 解决了 Vue 模板不够灵活的问题，同时比 JSX 写起来更优雅。
+
+### Vue Template vs JSX vs OVS
+
+**条件渲染：**
+
+```javascript
+// ❌ Vue Template - 自定义指令，灵活性受限
+<template>
+  <div v-if="isLoggedIn">Welcome, {{ username }}</div>
+  <div v-else>Please login</div>
+</template>
+
+// ❌ JSX - 三元表达式，嵌套时难以阅读
+{isLoggedIn ? <div>Welcome, {username}</div> : <div>Please login</div>}
+
+// ✅ OVS - 原生 JavaScript，干净直观
+if (isLoggedIn) {
+  div { `Welcome, ${username}` }
+} else {
+  div { 'Please login' }
+}
+```
+
+**列表渲染：**
+
+```javascript
+// ❌ Vue Template - v-for 指令，特殊的 :key 语法
+<template>
+  <ul>
+    <li v-for="item in items" :key="item.id">{{ item.name }}</li>
+  </ul>
+</template>
+
+// ❌ JSX - .map() 回调，需要 return 和 key 属性
+<ul>
+  {items.map(item => <li key={item.id}>{item.name}</li>)}
+</ul>
+
+// ✅ OVS - 原生 for...of，简单直接
+ul {
+  for (const item of items) {
+    li { item.name }
+  }
+}
+```
+
+**复杂逻辑：**
+
+```javascript
+// ❌ Vue Template - 复杂逻辑需要 computed 或 methods
+// ❌ JSX - 内联逻辑用 && 和三元链会变得混乱
+
+// ✅ OVS - 直接写 JavaScript！
+div {
+  const total = items.reduce((sum, item) => sum + item.price, 0)
+
+  if (total > 100) {
+    span({ class: 'discount' }) { '免运费！' }
+  }
+
+  for (const item of items) {
+    if (item.inStock) {
+      ProductCard({ product: item })
+    }
+  }
+}
+```
+
+### 核心优势对比
+
+| 特性 | Vue Template | JSX | OVS |
+|------|-------------|-----|-----|
+| 控制流 | `v-if`, `v-for` 指令 | `&&`, `? :`, `.map()` | 原生 `if`, `for` |
+| Class 属性 | `class` | `className` | `class` |
+| 表达式语法 | `{{ }}` | `{ }` | 直接引用 |
+| 学习成本 | 模板语法 | JSX 规则 | 只需 JavaScript |
+| 灵活性 | 有限 | 高 | 高 |
+| 可读性 | 简单场景好 | 嵌套复杂 | 干净直观 |
 
 ---
 
@@ -50,7 +136,7 @@ npm run dev
 
 ### 2. 安装 VSCode 插件
 
-在 VSCode 扩展商店搜索 **"Ovs Language"** 并安装。
+安装 **[Ovs Language](https://marketplace.visualstudio.com/items?itemName=alamhubb.ovs-language)** 插件。
 
 ### 3. 开始编写
 
@@ -143,13 +229,9 @@ ul {
 }
 ```
 
----
-
-## 进阶用法
-
 ### 组件定义
 
-使用 `view` 关键字定义可复用组件：
+使用 `view` 软关键字定义可复用组件：
 
 ```javascript
 // 定义组件
@@ -169,6 +251,10 @@ Card({ title: 'Hello', content: 'World' }) {
 
 > **注意**：`view` 是软关键字（上下文关键字），只在组件声明位置有特殊含义。
 > 你仍然可以在其他地方使用 `view` 作为变量名：`const view = someValue`
+
+---
+
+## 进阶用法
 
 ### 不渲染块 `#{}`
 
