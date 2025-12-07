@@ -4,7 +4,7 @@
   "description": "OVS language support for VSCode",
   "author": "alamhubb",
   "license": "MIT",
-  "version": "0.2.1",
+  "version": "0.2.3",
   "repository": {
     "type": "git",
     "url": "https://github.com/alamhubb/ovsjs"
@@ -65,15 +65,13 @@
   },
   "scripts": {
     "build": "rollup -c rollup.config.mjs",
-    "build:dev": "rollup -c rollup.config.mjs",
-    "build:prod": "rollup -c rollup.config.mjs",
     "watch": "rollup -c rollup.config.mjs --watch",
     "test": "npm run test:dist",
     "test:source": "npx tsx tests/test-language-server.ts --source",
     "test:dist": "npx tsx tests/test-language-server.ts --dist",
     "test:all": "npm run test:source && npm run build && npm run test:dist",
     "pack": "vsce package",
-    "release": "npm run build:prod && npx vsce publish",
+    "release": "npm run test:all && npx vsce publish",
     "vscode:prepublish": "npm run build:prod"
   },
   "devDependencies": {
