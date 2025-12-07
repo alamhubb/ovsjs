@@ -1,6 +1,11 @@
 # OVS - Object View Script
 
-> 声明式 UI 语法，JavaScript 的超集，编译为 Vue 渲染函数，完全兼容vue生态
+> **OVS** - 一个纯 JavaScript 的声明式 UI，一种 Vue DSL，让你用更简洁、优雅、灵活的语法编写 Vue，灵感来自 Kotlin-HTML、SwiftUI 和 SolidJS。
+
+[![Documentation](https://img.shields.io/badge/docs-deepwiki-blue)](https://deepwiki.com/alamhubb/ovsjs/)
+[![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
+
+**[English](./README_EN.md)** | 中文
 
 <p align="center">
   <a href="#快速开始">快速开始</a> •
@@ -500,5 +505,14 @@ MIT License
 ## 🤝 贡献
 
 欢迎提交 Issue 和 Pull Request！
+
+---
+
+## 🔗 链接
+
+- **文档**: [deepwiki.com/alamhubb/ovsjs](https://deepwiki.com/alamhubb/ovsjs/)
+- **关键词**: `vue-kotlin` `vue-dsl` `declarative-vue` `declarative-ui-syntax-in-vue` `vue-swiftui` `vue-flutter` `vue-solidjs` `vue-dsl-in-pure-javascript` `declarative-dsl-vue`
+
+---
 
 **OVS** - _WEB 端声明式 UI，简洁优雅_ ✨
