@@ -134,7 +134,7 @@ export class ObjectCstToSlimeAst extends SlimeCstToAst {
 
   /**
    * 创建 $osRuntime 的 import 声明
-   * import { $osRuntime } from 'object-script/runtime'
+   * import { $osRuntime } from 'osjs'
    */
   private createOsRuntimeImport(): SlimeModuleDeclaration {
     // 创建 ImportSpecifier: $osRuntime
@@ -142,8 +142,8 @@ export class ObjectCstToSlimeAst extends SlimeCstToAst {
     const specifier = SlimeAstUtil.createImportSpecifier(osRuntimeId, osRuntimeId)
     const specifierItem = SlimeAstUtil.createImportSpecifierItem(specifier)
 
-    // 创建 source: 'object-script/runtime'
-    const source = SlimeAstUtil.createStringLiteral('object-script/runtime')
+    // 创建 source: 'osjs'
+    const source = SlimeAstUtil.createStringLiteral('osjs')
 
     // 创建 ImportDeclaration
     return SlimeAstUtil.createImportDeclaration([specifierItem], source)

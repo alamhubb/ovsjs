@@ -1,0 +1,36 @@
+{
+  "name": "os-compiler",
+  "version": "0.2.2",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsdown",
+    "prepublishOnly": "npm run build"
+  },
+  "homepage": "https://github.com/nicholasyhuang/ovs",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nicholasyhuang/ovs.git"
+  },
+  "keywords": [
+    "objectscript",
+    "multiple-inheritance",
+    "compiler",
+    "parser",
+    "ast"
+  ],
+  "author": "alamhubb",
+  "description": "ObjectScript Compiler - Parser and AST transformer for ObjectScript syntax",
+  "dependencies": {
+    "slime-ast": "^0.2.1",
+    "slime-generator": "^0.2.1",
+    "slime-parser": "^0.2.1",
+    "subhuti": "^0.2.1"
+  },
+  "devDependencies": {
+    "tsdown": "0.17.0-beta.6"
+  }
+}
+

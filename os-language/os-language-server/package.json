@@ -1,0 +1,38 @@
+{
+  "name": "os-language-server",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "ObjectScript Language Server",
+  "author": "alamhubb",
+  "license": "MIT",
+  "scripts": {
+    "dev": "tsx src/index.ts --stdio"
+  },
+  "devDependencies": {
+    "@types/node": "^22.8.6",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3"
+  },
+  "dependencies": {
+    "@volar/language-core": "~2.4.0",
+    "@volar/language-server": "~2.4.0",
+    "@volar/language-service": "~2.4.0",
+    "@volar/source-map": "~2.4.0",
+    "@volar/typescript": "~2.4.0",
+    "os-compiler": "file:../../objectScript/os-compiler",
+    "osjs": "file:../../objectScript/os-runtime",
+    "path-browserify": "^1.0.1",
+    "semver": "^7.6.2",
+    "slime-ast": "^0.2.1",
+    "slime-generator": "^0.2.1",
+    "slime-parser": "^0.2.1",
+    "subhuti": "^0.2.1",
+    "typescript-auto-import-cache": "^0.3.5",
+    "volar-service-typescript": "^0.0.65",
+    "vscode-languageserver": "^9.0.1",
+    "vscode-languageserver-textdocument": "^1.0.12",
+    "vscode-nls": "^5.2.0",
+    "vscode-uri": "^3.0.8"
+  }
+}
+

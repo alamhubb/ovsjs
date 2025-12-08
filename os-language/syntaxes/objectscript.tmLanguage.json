@@ -1,0 +1,26 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "ObjectScript",
+  "scopeName": "source.objectscript",
+  "patterns": [
+    { "include": "#objectscript-keywords" },
+    { "include": "source.js" }
+  ],
+  "repository": {
+    "objectscript-keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.objectscript",
+          "match": "\\b(object)\\b",
+          "comment": "ObjectScript keyword for singleton object declaration"
+        },
+        {
+          "name": "storage.modifier.objectscript",
+          "match": "\\b(extends)\\b",
+          "comment": "ObjectScript extends keyword (supports multiple inheritance)"
+        }
+      ]
+    }
+  }
+}
+
