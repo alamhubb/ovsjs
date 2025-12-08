@@ -33,6 +33,41 @@ export function checkCstName(cst: SubhutiCst, cstName: string) {
 }
 
 /**
+ * 从 BindingIdentifier CST 节点中提取标识符名称
+ *
+ * CST 结构：
+ * BindingIdentifier
+ *   └── Identifier
+ *       └── IdentifierName: "actualName"  <-- 值在这里
+ *
+ * @param bindingIdCst BindingIdentifier CST 节点
+ * @returns 标识符名称和 loc 信息
+ */
+function extractIdentifierFromBindingId(bindingIdCst: SubhutiCst): { name: string; loc: any } {
+  // BindingIdentifier -> Identifier -> IdentifierName
+  const identifierNode = bindingIdCst.children?.[0]
+  if (!identifierNode) {
+    throw new Error('BindingIdentifier: 缺少 Identifier 子节点')
+  }
+
+  // Identifier -> IdentifierName (如果是软关键字场景，可能是 IdentifierName token)
+  const identifierNameNode = identifierNode.children?.[0]
+  if (identifierNameNode) {
+    // 有子节点，取子节点的值
+    return {
+      name: identifierNameNode.value || identifierNameNode.name,
+      loc: identifierNameNode.loc
+    }
+  }
+
+  // 没有子节点，直接取 Identifier 的值（硬关键字场景）
+  return {
+    name: identifierNode.value || identifierNode.name,
+    loc: identifierNode.loc
+  }
+}
+
+/**
  * ObjectScript CST 到 Slime AST 转换器
  *
  * 核心功能：将 object 声明转换为临时类 + 实例化
@@ -809,57 +844,65 @@ export class ObjectCstToSlimeAst extends SlimeCstToAst {
    * @param cst ObjectDeclaration CST 节点
    * @returns [ClassDeclaration, VariableDeclaration] 两个 AST 节点的数组
    */
-  createObjectDeclarationAst(cst: SubhutiCst): [SlimeClassDeclaration, SlimeVariableDeclaration] {
+  createObjectDeclarationAst(cst: SubhutiCst): SlimeStatement[] {
     checkCstName(cst, ObjectScriptParser.prototype.ObjectDeclaration.name)
-    
+
     // 1. 提取对象名（BindingIdentifier）
-    // BindingIdentifier 本身是一个规则，其children[0]是Identifier token
-    const nameNode = cst.children?.find(child => 
+    const nameNode = cst.children?.find(child =>
       child.name === 'BindingIdentifier'
     )
     if (!nameNode) {
       throw new Error('ObjectDeclaration: 缺少对象名')
     }
-    // BindingIdentifier的第一个子节点是Identifier token
-    const identifierToken = nameNode.children?.[0]
-    if (!identifierToken) {
-      throw new Error('ObjectDeclaration: BindingIdentifier没有Identifier token')
-    }
-    const objectName = identifierToken.value || identifierToken.name
-    
+    const { name: objectName, loc: nameLoc } = extractIdentifierFromBindingId(nameNode)
+
     // 2. 生成临时类名（使用 UUID）
     const uuid = generateUUID()
     const tempClassName = `$$OsClass${objectName}_${uuid}`
     const tempClassId = SlimeAstUtil.createIdentifier(tempClassName, cst.loc)
-    
+
     // 3. 提取继承信息（ObjectHeritage）
-    const heritageNode = cst.children?.find(child => 
+    const heritageNode = cst.children?.find(child =>
       child.name === ObjectScriptParser.prototype.ObjectHeritage.name
     )
     let superClass: SlimeExpression | undefined = undefined
     if (heritageNode) {
-      // ObjectHeritage: ExtendsTok + BindingIdentifier
-      const superClassNode = heritageNode.children?.find(child => 
-        child.name === 'BindingIdentifier'
+      // ObjectHeritage: ExtendsTok + LeftHandSideExpression
+      const lhsNode = heritageNode.children?.find(child =>
+        child.name === 'LeftHandSideExpression'
       )
-      if (superClassNode) {
-        // BindingIdentifier的第一个子节点是Identifier token
-        const superIdToken = superClassNode.children?.[0]
-        if (superIdToken) {
-          const superClassName = superIdToken.value || superIdToken.name
-          superClass = SlimeAstUtil.createIdentifier(superClassName, superIdToken.loc)
-        }
+      if (lhsNode) {
+        // 包装为 $osRuntime.getObjectClass(parent)
+        // 这样既支持继承 class，也支持继承 object 实例
+        const parentExpr = this.createLeftHandSideExpressionAst(lhsNode) as SlimeExpression
+        superClass = {
+          type: 'CallExpression',
+          callee: {
+            type: 'MemberExpression',
+            object: SlimeAstUtil.createIdentifier('$osRuntime', cst.loc),
+            property: SlimeAstUtil.createIdentifier('getObjectClass', cst.loc),
+            computed: false,
+            optional: false,
+            loc: cst.loc
+          } as any,
+          arguments: [parentExpr],
+          optional: false,
+          loc: cst.loc
+        } as any
+
+        // 标记需要 $osRuntime
+        this._needsOsRuntime = true
       }
     }
-    
+
     // 4. 提取对象体（ObjectBody）
-    const bodyNode = cst.children?.find(child => 
+    const bodyNode = cst.children?.find(child =>
       child.name === ObjectScriptParser.prototype.ObjectBody.name
     )
-    const classBody = bodyNode 
+    const classBody = bodyNode
       ? this.createObjectBodyAst(bodyNode)
       : this.createEmptyClassBody()
-    
+
     // 5. 创建 ClassDeclaration AST
     const classDecl: SlimeClassDeclaration = {
       type: 'ClassDeclaration' as any,
@@ -868,7 +911,7 @@ export class ObjectCstToSlimeAst extends SlimeCstToAst {
       body: classBody,
       loc: cst.loc
     }
-    
+
     // 6. 创建 VariableDeclaration AST: const objectName = new tempClassName()
     const varDecl = SlimeAstUtil.createVariableDeclaration(
       SlimeTokenCreate.createConstToken(cst.loc),
@@ -880,16 +923,43 @@ export class ObjectCstToSlimeAst extends SlimeCstToAst {
           {
             type: 'NewExpression',
             callee: SlimeAstUtil.createIdentifier(tempClassName, cst.loc),
-            arguments: [], // 无参数
+            arguments: [],
             loc: cst.loc
           } as any
         )
       ],
       cst.loc
     )
-    
-    // 7. 返回两个 AST 节点
-    return [classDecl, varDecl]
+
+    // 7. 创建 $osRuntime.setObjectClass(objectName, tempClassName) 语句
+    // 这样 object 实例就保存了对其类的引用，支持被其他 object 继承
+    const setClassStmt: SlimeStatement = {
+      type: 'ExpressionStatement',
+      expression: {
+        type: 'CallExpression',
+        callee: {
+          type: 'MemberExpression',
+          object: SlimeAstUtil.createIdentifier('$osRuntime', cst.loc),
+          property: SlimeAstUtil.createIdentifier('setObjectClass', cst.loc),
+          computed: false,
+          optional: false,
+          loc: cst.loc
+        } as any,
+        arguments: [
+          SlimeAstUtil.createIdentifier(objectName, cst.loc),
+          SlimeAstUtil.createIdentifier(tempClassName, cst.loc)
+        ],
+        optional: false,
+        loc: cst.loc
+      } as any,
+      loc: cst.loc
+    } as any
+
+    // 标记需要 $osRuntime
+    this._needsOsRuntime = true
+
+    // 8. 返回三个 AST 节点
+    return [classDecl, varDecl, setClassStmt]
   }
 
   /**
@@ -997,31 +1067,26 @@ export class ObjectCstToSlimeAst extends SlimeCstToAst {
    */
   createObjectPropertyAssignmentAst(cst: SubhutiCst): SlimePropertyDefinition {
     checkCstName(cst, ObjectScriptParser.prototype.ObjectPropertyAssignment.name)
-    
+
     // 1. 提取属性名
-    const nameNode = cst.children?.find(child => 
+    const nameNode = cst.children?.find(child =>
       child.name === 'BindingIdentifier'
     )
     if (!nameNode) {
       throw new Error('ObjectPropertyAssignment: 缺少属性名')
     }
-    // BindingIdentifier的第一个子节点是Identifier token
-    const keyToken = nameNode.children?.[0]
-    if (!keyToken) {
-      throw new Error('ObjectPropertyAssignment: BindingIdentifier没有Identifier token')
-    }
-    const keyName = keyToken.value || keyToken.name
-    const key = SlimeAstUtil.createIdentifier(keyName, keyToken.loc)
-    
+    const { name: keyName, loc: keyLoc } = extractIdentifierFromBindingId(nameNode)
+    const key = SlimeAstUtil.createIdentifier(keyName, keyLoc)
+
     // 2. 提取属性值
-    const valueNode = cst.children?.find(child => 
+    const valueNode = cst.children?.find(child =>
       child.name === 'AssignmentExpression'
     )
     if (!valueNode) {
       throw new Error('ObjectPropertyAssignment: 缺少属性值')
     }
     const value = this.createAssignmentExpressionAst(valueNode)
-    
+
     // 3. 创建 PropertyDefinition
     return SlimeAstUtil.createPropertyDefinition(key, value, false)
   }

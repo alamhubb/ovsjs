@@ -6,6 +6,7 @@
 
 // 内部使用的 Symbol keys
 const SOURCE_CLASSES_KEY = Symbol.for('__os_source_classes')
+const OS_CLASS_KEY = Symbol.for('__os_class')
 const getParentKey = (name: string) => Symbol.for(`__os_parent_${name}`)
 
 /**
@@ -334,6 +335,45 @@ export function initParent(instance: any, ParentClass: Function, args: any[]): v
   }
 }
 
+// ============================================
+// object 关键字支持
+// ============================================
+
+/**
+ * 获取 object 实例对应的类
+ *
+ * 用于 object 继承 object 的场景：
+ *   object Base { }
+ *   object Child extends Base { }  // 编译为 extends $osRuntime.getObjectClass(Base)
+ *
+ * @param target 可能是类或 object 实例
+ * @returns 类/构造函数
+ */
+export function getObjectClass(target: any): Function {
+  // 1. 如果是 object 实例，返回其保存的类
+  if (target && target[OS_CLASS_KEY]) {
+    return target[OS_CLASS_KEY]
+  }
+
+  // 2. 如果是函数/类，直接返回
+  if (typeof target === 'function') {
+    return target
+  }
+
+  // 3. 其他情况报错
+  throw new Error('Cannot extend: target is not a class or object instance')
+}
+
+/**
+ * 为 object 实例设置其类引用
+ *
+ * @param instance object 实例
+ * @param OsClass 临时生成的类
+ */
+export function setObjectClass(instance: any, OsClass: Function): void {
+  instance[OS_CLASS_KEY] = OsClass
+}
+
 /**
  * ObjectScript 运行时对象
  * 在编译输出中作为 $osRuntime 使用
@@ -350,7 +390,10 @@ export const $osRuntime = {
   superGet,
   superGetOn,
   superSet,
-  superSetOn
+  superSetOn,
+  // object 关键字支持
+  getObjectClass,
+  setObjectClass
 }
 
 export default $osRuntime
