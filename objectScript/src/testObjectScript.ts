@@ -87,11 +87,10 @@ console.log('CST 结构（简化）:')
 console.log(JSON.stringify(cstForAst, null, 2).substring(0, 2000))
 
 console.log('\n========== 2. CST to AST (转换) ==========')
-const transformResult = ObjectCstToSlimeAstUtil.toProgram(cstForAst)
-const ast = transformResult.ast
+const ast = ObjectCstToSlimeAstUtil.toProgram(cstForAst)
 console.log('AST 生成成功')
 console.log('AST body 数量:', ast.body?.length || 0)
-console.log('需要 $osRuntime:', transformResult.meta.needsOsRuntime)
+console.log('需要 $osRuntime:', ObjectCstToSlimeAstUtil.needsOsRuntime)
 
 // 检查第三个类（A）是否正确转换
 if (ast.body && ast.body.length >= 3) {
@@ -149,8 +148,7 @@ let curCst2 = parser2.Program()
 const outCst2 = cloneDeep(curCst2)
 const cstForAst2 = traverseClearTokens(outCst2)
 
-const transformResult2 = ObjectCstToSlimeAstUtil.toProgram(cstForAst2)
-const ast2 = transformResult2.ast
+const ast2 = ObjectCstToSlimeAstUtil.toProgram(cstForAst2)
 const result2 = SlimeGenerator.generator(ast2)
 console.log('生成的代码:')
 console.log('---')
@@ -463,10 +461,10 @@ const superCallParser = new ObjectScriptParser(superCallCode)
 const superCallCst = traverseClearTokens(cloneDeep(superCallParser.Program()))
 
 // CST 转 AST
-const superCallResult = ObjectCstToSlimeAstUtil.toProgram(superCallCst)
+const superCallAst = ObjectCstToSlimeAstUtil.toProgram(superCallCst)
 
 // AST 转代码
-const superCallGenResult = SlimeGenerator.generator(superCallResult.ast)
+const superCallGenResult = SlimeGenerator.generator(superCallAst)
 const superCallGeneratedCode = superCallGenResult.code
 
 console.log('编译后代码:')
@@ -509,8 +507,9 @@ class Child extends Parent {
 
 const singleParser = new ObjectScriptParser(singleInheritanceCode)
 const singleCst = traverseClearTokens(cloneDeep(singleParser.Program()))
-const singleResult = ObjectCstToSlimeAstUtil.toProgram(singleCst)
-const singleGenerated = SlimeGenerator.generator(singleResult.ast)
+const singleAst = ObjectCstToSlimeAstUtil.toProgram(singleCst)
+const singleNeedsOsRuntime = ObjectCstToSlimeAstUtil.needsOsRuntime
+const singleGenerated = SlimeGenerator.generator(singleAst)
 
 console.log('单继承原始代码:')
 console.log(singleInheritanceCode)
@@ -523,7 +522,7 @@ const hasOsRuntime = /\$osRuntime/.test(singleGenerated.code)
 console.log(`\n--- 单继承验证 ---`)
 console.log(`保持原生 extends: ${hasSuperClass ? '✅' : '❌'}`)
 console.log(`没有 $osRuntime: ${!hasOsRuntime ? '✅' : '❌'}`)
-console.log(`needsOsRuntime: ${singleResult.meta.needsOsRuntime} (应该是 false)`)
+console.log(`needsOsRuntime: ${singleNeedsOsRuntime} (应该是 false)`)
 
 // ============================================
 // 测试11: 菱形继承问题分析

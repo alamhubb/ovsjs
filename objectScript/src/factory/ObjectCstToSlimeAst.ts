@@ -25,18 +25,6 @@ function generateUUID(): string {
   return `${Date.now().toString(36)}_${(uuidCounter++).toString(36)}`;
 }
 
-/**
- * 转换结果接口
- * 包含 AST 和元数据
- */
-export interface TransformResult {
-  ast: SlimeProgram
-  meta: {
-    /** 是否需要导入 $osRuntime */
-    needsOsRuntime: boolean
-  }
-}
-
 export function checkCstName(cst: SubhutiCst, cstName: string) {
   if (cst.name !== cstName) {
     throw new Error(`Expected CST name '${cstName}', but got '${cst.name}'`)
@@ -46,9 +34,9 @@ export function checkCstName(cst: SubhutiCst, cstName: string) {
 
 /**
  * ObjectScript CST 到 Slime AST 转换器
- * 
+ *
  * 核心功能：将 object 声明转换为临时类 + 实例化
- * 
+ *
  * 转换示例：
  * ```
  * // 输入 CST
@@ -56,7 +44,7 @@ export function checkCstName(cst: SubhutiCst, cstName: string) {
  *   name = "Alice"
  *   greet() { return "Hello" }
  * }
- * 
+ *
  * // 输出 AST（两个语句）
  * class $$OsClassPerson_a1b2c3d4 {
  *   name = "Alice"
@@ -66,8 +54,11 @@ export function checkCstName(cst: SubhutiCst, cstName: string) {
  * ```
  */
 export class ObjectCstToSlimeAst extends SlimeCstToAst {
-  /** 是否需要导入 $osRuntime（用于多继承） */
-  private _needsOsRuntime = false
+  /**
+   * 是否需要导入 $osRuntime（用于多继承）
+   * 在 toProgram() 调用后可读取此属性
+   */
+  needsOsRuntime = false
 
   /**
    * 重写 toProgram 以支持 ObjectDeclaration
@@ -75,11 +66,11 @@ export class ObjectCstToSlimeAst extends SlimeCstToAst {
    * 因为一个 ObjectDeclaration 会生成两个 AST 节点（class + const），
    * 所以需要在这里展平处理
    *
-   * @returns TransformResult 包含 AST 和元数据
+   * @returns SlimeProgram AST
    */
-  toProgram(cst: SubhutiCst): TransformResult {
+  toProgram(cst: SubhutiCst): SlimeProgram {
     // 重置状态
-    this._needsOsRuntime = false
+    this.needsOsRuntime = false
 
     // 调用父类方法获取基础 Program
     const program = super.toProgram(cst)
@@ -96,19 +87,14 @@ export class ObjectCstToSlimeAst extends SlimeCstToAst {
     }
 
     // 如果需要 $osRuntime，在头部注入 import 语句
-    if (this._needsOsRuntime) {
+    if (this.needsOsRuntime) {
       const importDecl = this.createOsRuntimeImport()
       flatBody.unshift(importDecl)
     }
 
     program.body = flatBody
 
-    return {
-      ast: program,
-      meta: {
-        needsOsRuntime: this._needsOsRuntime
-      }
-    }
+    return program
   }
 
   /**
@@ -479,7 +465,7 @@ export class ObjectCstToSlimeAst extends SlimeCstToAst {
    * 转换 super.foo() 或 super.B.foo() 为运行时调用
    */
   transformSuperCall(expr: any, loc: any): any {
-    this._needsOsRuntime = true
+    this.needsOsRuntime = true
     const callee = expr.callee
     const args = this.extractCallArguments(expr.arguments || [])
 
@@ -508,7 +494,7 @@ export class ObjectCstToSlimeAst extends SlimeCstToAst {
    * 转换 super.name 或 super.B.name 为运行时调用
    */
   transformSuperGet(expr: any, loc: any): any {
-    this._needsOsRuntime = true
+    this.needsOsRuntime = true
 
     if (this.isExplicitSuperExpression(expr)) {
       // super.B.name → $osRuntime.superGetOn(this, B, 'name')
@@ -533,7 +519,7 @@ export class ObjectCstToSlimeAst extends SlimeCstToAst {
    * 转换 super.name = x 或 super.B.name = x 为运行时调用
    */
   transformSuperAssignment(expr: any, loc: any): any {
-    this._needsOsRuntime = true
+    this.needsOsRuntime = true
     const left = expr.left
     const right = this.transformExpression(expr.right, loc)
 
@@ -718,7 +704,7 @@ export class ObjectCstToSlimeAst extends SlimeCstToAst {
    */
   createInitParentCall(parentExpr: SlimeExpression, args: any[], loc: any): SlimeStatement {
     // 标记需要导入 $osRuntime
-    this._needsOsRuntime = true
+    this.needsOsRuntime = true
 
     // 将参数包装成数组元素格式
     // 注意：args 可能来自不同来源：
