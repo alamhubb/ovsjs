@@ -189,20 +189,15 @@ export class OsVirtualCode implements VirtualCode {
             newCode = styleText
             mapping = []
         }
-        const rawOffsets = MappingConverter.convertMappings(mapping)
-        // 使用填充映射确保完整覆盖
-        const offsets = MappingConverter.createFullMappings(
-            styleText.length,
-            newCode.length,
-            rawOffsets
-        )
+        // 直接使用精确映射，不填充间隙
+        // 间隙填充会导致 extends Animal, Flyable 等被删除的代码产生错误映射
+        const offsets = MappingConverter.convertMappings(mapping)
 
         LogUtil.log('=== Mapping Debug ===')
         LogUtil.log('Raw mapping count: ' + mapping.length)
-        LogUtil.log('Converted offsets count: ' + rawOffsets.length)
-        LogUtil.log('Full mappings count: ' + offsets.length)
+        LogUtil.log('Converted offsets count: ' + offsets.length)
         if (offsets.length > 0) {
-            LogUtil.log('First 5 full offsets:', offsets.slice(0, 5))
+            LogUtil.log('First 5 offsets:', offsets.slice(0, 5))
         }
 
         LogUtil.log('Source code:')
