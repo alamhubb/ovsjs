@@ -72,7 +72,7 @@
     "test:all": "npm run test:source && npm run build && npm run test:dist",
     "pack": "vsce package",
     "release": "npm run test:all && npx vsce publish",
-    "vscode:prepublish": "npm run build:prod"
+    "vscode:prepublish": "npm run build"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^28.0.9",
