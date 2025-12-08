@@ -858,6 +858,7 @@ export default class SlimeGenerator {
             this.generatorNode(node.superClass) // 递归生成父类表达式
         }
         this.generatorClassBody(node.body) // 生成类主体花括号及成员
+        this.addNewLine() // 类声明后换行
     }
 
     private static generatorClassExpression(node: SlimeClassExpression) {
@@ -878,9 +879,14 @@ export default class SlimeGenerator {
     private static generatorClassBody(body: SlimeClassBody) {
         this.addLBrace(body.loc) // 输出左花括号，并绑定定位
         if (body?.body?.length) {
-            body.body.forEach((element) => {
+            this.addNewLine()  // { 后换行
+            this.indent++      // 增加缩进层级
+            body.body.forEach((element, index) => {
+                this.addIndent()  // 添加缩进
                 this.generatorNode(element) // 遍历生成每个类成员
+                this.addNewLine()  // 每个成员后换行
             })
+            this.indent--      // 减少缩进层级
         }
         this.addRBrace(body.loc) // 输出右花括号
     }

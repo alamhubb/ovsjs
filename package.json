@@ -2,6 +2,8 @@
   "private": true,
   "workspaces": [
     "ovs-language/*",
+    "os-language/*",
+    "objectScript/*",
     "ovs/ovs-runtime",
     "ovs/ovs-compiler",
     "subhuti",

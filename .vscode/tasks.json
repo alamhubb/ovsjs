@@ -2,11 +2,11 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "build-ovs-language",
+      "label": "build-os-language",
       "type": "shell",
       "command": "npm run build",
       "options": {
-        "cwd": "${workspaceFolder}/ovs-language"
+        "cwd": "${workspaceFolder}/os-language"
       },
       "problemMatcher": [],
       "group": {

@@ -4,18 +4,18 @@
     {
       "type": "extensionHost",
       "request": "launch",
-      "name": "Launch OVS Extension",
+      "name": "Launch ObjectScript Extension",
       "runtimeExecutable": "${execPath}",
       "args": [
-        "--extensionDevelopmentPath=${workspaceFolder}/ovs-language",
-        "${workspaceFolder}/create-ovs/template"
+        "--extensionDevelopmentPath=${workspaceFolder}/os-language",
+        "${workspaceFolder}/os-language-test"
       ],
       "outFiles": [
-        "${workspaceFolder}/ovs-language/dist/**/*.js",
-        "${workspaceFolder}/ovs-language/dist/**/*.cjs",
-        "${workspaceFolder}/ovs-language/dist/**/*.mjs"
+        "${workspaceFolder}/os-language/dist/**/*.js",
+        "${workspaceFolder}/os-language/dist/**/*.cjs",
+        "${workspaceFolder}/os-language/dist/**/*.mjs"
       ],
-      "preLaunchTask": "build-ovs-language",
+      "preLaunchTask": "build-os-language",
       "autoAttachChildProcesses": true,
       "env": {
         "NODE_ENV": "development"
