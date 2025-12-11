@@ -1,0 +1,25 @@
+.bg-click {
+  cursor: pointer;
+}
+
+.bg-click:hover {
+  cursor: pointer;
+  opacity: 0.9;
+}
+
+.bg-click:focus {
+  opacity: 0.9;
+}
+
+.bg-click:active {
+  opacity: 0.6;
+}
+
+.bg-active {
+  opacity: 0.6;
+}
+
+.bg-disabled{
+  cursor: not-allowed;
+  opacity: 0.5;
+}

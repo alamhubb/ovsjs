@@ -1,0 +1,24 @@
+//为什么有横杠，因为存在sm、md这种值
+@for $index from 1 through 100 {
+  .font-#{''+$index+''} {
+    font-size: #{''+$index}px;
+  }
+}
+
+//生成字体大小和padding和margin
+@each $sizeKey, $sizeValue in $size-map {
+  .text-#{$sizeKey} {
+    font-size: map-get($text-map, $sizeKey);
+  }
+  .font-#{$sizeKey} {
+    font-size: map-get($text-map, $sizeKey);
+  }
+}
+
+.font-normal {
+  font-weight: normal;
+}
+
+.font-bold {
+  font-weight: bold;
+}

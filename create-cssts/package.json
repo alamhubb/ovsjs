@@ -1,0 +1,35 @@
+{
+  "name": "create-cssts",
+  "version": "0.1.0",
+  "description": "🎨 Create CssTs projects - compile-time CSS class management for Vue + Vite",
+  "type": "module",
+  "main": "dist/index.mjs",
+  "bin": {
+    "create-cssts": "dist/index.mjs"
+  },
+  "files": [
+    "dist",
+    "template"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "cssts",
+    "css",
+    "typescript",
+    "vue",
+    "vite",
+    "atomic-css",
+    "scaffold",
+    "cli"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^22.8.6",
+    "tsdown": "^0.11.10",
+    "typescript": "^5.6.3"
+  }
+}

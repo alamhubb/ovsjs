@@ -1,0 +1,11 @@
+{
+  "name": "cssts-theme-element",
+  "version": "0.0.1",
+  "description": "Element Plus theme colors for CssTs",
+  "types": "index.d.ts",
+  "keywords": ["cssts", "element-plus", "theme", "typescript"],
+  "license": "MIT",
+  "peerDependencies": {
+    "cssts-types": "^0.0.1"
+  }
+}

@@ -1,6 +1,7 @@
 import OvsTokenConsumer, {ovs6Tokens} from "./OvsConsumer.ts"
 import {Subhuti, SubhutiRule} from 'subhuti/src/SubhutiParser.ts'
-import SlimeParser, {ReservedWords} from "slime-parser/src/language/es2025/SlimeParser.ts";
+import CssTsParser from "cssts/src/parser/CssTsParser.ts";
+import {ReservedWords} from "slime-parser/src/language/es2025/SlimeParser.ts";
 import type {ExpressionParams, StatementParams, DeclarationParams} from "slime-parser/src/language/es2025/SlimeParser.ts";
 import {SlimeContextualKeywordTokenTypes} from "slime-token/src/SlimeTokenType.ts";
 
@@ -20,8 +21,18 @@ const OVS_TAG_BLACKLIST = new Set([
     ...Object.values(SlimeContextualKeywordTokenTypes)
 ])
 
+/**
+ * OvsParser - OVS 视图语法解析器
+ * 
+ * 继承链：SlimeParser -> CssTsParser -> OvsParser
+ * 
+ * 这样 OVS 文件中可以同时使用：
+ * - ES2025 标准语法（来自 SlimeParser）
+ * - CssTs 样式语法（来自 CssTsParser）：css colorRed, css buttonBase = { colorRed, fontBold }
+ * - OVS 视图语法：view ComponentName() { }, tag({ props }) { children }
+ */
 @Subhuti
-export default class OvsParser extends SlimeParser<OvsTokenConsumer> {
+export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
     /**
      * 构造函数 - 使用按需词法分析模式
      * @param sourceCode 原始源码
@@ -36,7 +47,7 @@ export default class OvsParser extends SlimeParser<OvsTokenConsumer> {
 
     /**
      * OvsRenderFunction - OVS 视图渲染函数（表达式版本）
-     * 语法: IdentifierReference [no LineTerminator here] Arguments? { StatementList? }
+     * 语法: IdentifierReference [no LineTerminator here] OvsArguments? { StatementList? }
      *
      * 限制条件：
      * 1. 标签名不能是 JavaScript 关键字（硬关键字 + 软关键字）
@@ -59,10 +70,8 @@ export default class OvsParser extends SlimeParser<OvsTokenConsumer> {
         this.assertCondition(!OVS_TAG_BLACKLIST.has(tagName))
 
         this.Option(() => {
-            // ✅ 修复：传递 params
-            // 根据 ES 规范 Arguments[?Yield, ?Await]，需要传递 Yield/Await 参数
-            // 这样在 async 上下文中参数里可以使用 await
-            this.Arguments(params)
+            // 使用 OVS 专属的参数语法
+            this.OvsArguments(params)
         })
         // 限制 2：标签名和 { 之间不能有换行符 [no LineTerminator here]
         this.assertNoLineBreak()
@@ -77,9 +86,84 @@ export default class OvsParser extends SlimeParser<OvsTokenConsumer> {
         return this.curCst
     }
 
+    // ==================== OVS 专属参数语法 ====================
+    
+    /**
+     * OvsArguments - OVS 专属参数列表
+     * 语法: ( OvsPropertyDefinitionList? )
+     * 
+     * 与普通 Arguments 的区别：
+     * - 使用 OvsPropertyDefinition 而非 AssignmentExpression
+     * - 属性使用 = 而非 :
+     * 
+     * 示例：
+     * - div() {} 等价于 div({}) {}
+     * - div(class = "foo", id = "bar") {}
+     * - div(onClick() { console.log('clicked') }) {}
+     */
+    @SubhutiRule
+    OvsArguments(params: OvsExpressionParams = {}) {
+        this.tokenConsumer.LParen()
+        this.Option(() => {
+            this.OvsPropertyDefinitionList(params)
+        })
+        this.tokenConsumer.RParen()
+        return this.curCst
+    }
+
+    /**
+     * OvsPropertyDefinitionList - OVS 属性定义列表
+     * 语法: OvsPropertyDefinition (, OvsPropertyDefinition)*
+     */
+    @SubhutiRule
+    OvsPropertyDefinitionList(params: OvsExpressionParams = {}) {
+        this.OvsPropertyDefinition(params)
+        this.Many(() => {
+            this.tokenConsumer.Comma()
+            this.OvsPropertyDefinition(params)
+        })
+        return this.curCst
+    }
+
+    /**
+     * OvsPropertyDefinition - OVS 属性定义
+     * 
+     * 与 PropertyDefinition 类似，但使用 = 代替 :
+     * 
+     * 语法：
+     * - ... AssignmentExpression          // 展开：...props
+     * - PropertyName = AssignmentExpression  // 完整属性：class = "foo"
+     * - MethodDefinition                   // 方法简写：onClick() {}
+     * - IdentifierReference                // 简写属性：disabled
+     */
+    @SubhutiRule
+    OvsPropertyDefinition(params: OvsExpressionParams = {}) {
+        return this.Or([
+            // 1. ... AssignmentExpression - 扩展属性（最明确）
+            {
+                alt: () => {
+                    this.tokenConsumer.Ellipsis()
+                    this.AssignmentExpression({...params, In: true})
+                }
+            },
+            // 2. PropertyName = AssignmentExpression - 完整属性（用 = 代替 :）
+            {
+                alt: () => {
+                    this.PropertyName(params)
+                    this.tokenConsumer.Assign()
+                    this.AssignmentExpression({...params, In: true})
+                }
+            },
+            // 3. MethodDefinition - 方法定义：onClick() {}
+            {alt: () => this.MethodDefinition(params)},
+            // 4. IdentifierReference - 简写属性（最后尝试）：disabled
+            {alt: () => this.IdentifierReference(params)}
+        ])
+    }
+
     /**
      * OvsRenderStatement - OVS 视图渲染语句（语句版本）
-     * 语法: IdentifierReference [no LineTerminator here] Arguments? { StatementList? }
+     * 语法: IdentifierReference [no LineTerminator here] OvsArguments? { StatementList? }
      *
      * 与 OvsRenderFunction 的区别：
      * - OvsRenderStatement 是 Statement，以 } 结尾，不需要分号
@@ -98,8 +182,8 @@ export default class OvsParser extends SlimeParser<OvsTokenConsumer> {
         this.assertCondition(!OVS_TAG_BLACKLIST.has(tagName))
 
         this.Option(() => {
-            // 传递 params，支持 async 上下文中的 await
-            this.Arguments(params)
+            // 使用 OVS 专属的参数语法
+            this.OvsArguments(params)
         })
         // 限制 2：标签名和 { 之间不能有换行符 [no LineTerminator here]
         this.assertNoLineBreak()
@@ -182,7 +266,7 @@ export default class OvsParser extends SlimeParser<OvsTokenConsumer> {
     }
 
     /**
-     * Statement - 覆盖父类，添加 OvsRenderStatement 和 NoRenderBlock 支持
+     * Statement - 覆盖父类，添加 OvsRenderStatement、NoRenderBlock 和 CssDeclarationStatement 支持
      *
      * OvsRenderStatement 放在最前面，优先尝试：
      * - 解决 ASI 问题：`div{"a"} div{"b"}` 可以正确解析
@@ -192,6 +276,7 @@ export default class OvsParser extends SlimeParser<OvsTokenConsumer> {
      * 参数传递说明：
      * - OvsRenderStatement(params): ✅ 传递 params，继承 Yield/Await/Return 上下文
      * - NoRenderBlock(params): ✅ 传递 params，继承 Yield/Await/Return 上下文
+     * - CssDeclarationStatement(params): ✅ 继承自 CssTsParser，支持 css 语法
      * - EmptyStatement(): ✅ 无参数是正确的，空语句不需要上下文
      * - DebuggerStatement(): ✅ 无参数是正确的，debugger 语句不需要上下文
      */
@@ -199,6 +284,7 @@ export default class OvsParser extends SlimeParser<OvsTokenConsumer> {
     Statement(params: StatementParams = {}) {
         const {Return = false} = params
         return this.Or([
+            { alt: () => this.CssDeclarationStatement(params) },  // 🆕 CssTs 样式声明语句
             { alt: () => this.OvsRenderStatement(params) },  // 🆕 OVS 渲染语句，优先尝试
             { alt: () => this.NoRenderBlock(params) },
             { alt: () => this.BlockStatement(params) },
@@ -219,12 +305,13 @@ export default class OvsParser extends SlimeParser<OvsTokenConsumer> {
     }
 
     /**
-     * Declaration - 覆盖父类，添加 OvsViewDeclaration 支持
+     * Declaration - 覆盖父类，添加 OvsViewDeclaration 和 CssDeclaration 支持
      */
     @SubhutiRule
     Declaration(params: DeclarationParams = {}) {
         return this.Or([
-            { alt: () => this.OvsViewDeclaration() },  // 添加 ovsView 组件声明
+            { alt: () => this.CssDeclaration(params) },  // 🆕 CssTs 样式声明
+            { alt: () => this.OvsViewDeclaration() },  // 添加 view 组件声明
             { alt: () => this.HoistableDeclaration({ ...params, Default: false }) },
             { alt: () => this.ClassDeclaration({ ...params, Default: false }) },
             { alt: () => this.LexicalDeclaration({ ...params, In: true }) }
@@ -232,7 +319,7 @@ export default class OvsParser extends SlimeParser<OvsTokenConsumer> {
     }
 
     /**
-     * PrimaryExpression - 覆盖父类，添加 OvsRenderFunction 支持
+     * PrimaryExpression - 覆盖父类，添加 OvsRenderFunction 和 CssExpression 支持
      * OvsRenderFunction 放在 IdentifierReference 之前，因为都以 IdentifierName 开头
      * 依靠 Or 的回溯机制：OvsRenderFunction 失败时会回溯并尝试 IdentifierReference
      *
@@ -247,30 +334,34 @@ export default class OvsParser extends SlimeParser<OvsTokenConsumer> {
             // === 1. 硬关键字表达式（不会被标识符遮蔽）===
             {alt: () => this.tokenConsumer.This()},
 
-            // === 2. async 开头（软关键字，必须在 IdentifierReference 之前）===
+            // === 2. CssExpression（css 软关键字，必须在 IdentifierReference 之前）===
+            // css { colorRed, fontBold } → "color-red font-bold"
+            {alt: () => this.CssExpression(params)},
+
+            // === 3. async 开头（软关键字，必须在 IdentifierReference 之前）===
             {alt: () => this.AsyncGeneratorExpression()},
             {alt: () => this.AsyncFunctionExpression()},
 
-            // === 3. OvsRenderFunction（OVS 特有语法，放在 IdentifierReference 之前）===
+            // === 4. OvsRenderFunction（OVS 特有语法，放在 IdentifierReference 之前）===
             // 因为 div { } 以 IdentifierName 开头，需要先尝试 OvsRenderFunction
             // 当 DisableOvsRender 为 true 时跳过此分支
             // 传递 params 确保 await/yield 在正确的上下文中被处理
             ...(!DisableOvsRender ? [{alt: () => this.OvsRenderFunction(params)}] : []),
 
-            // === 4. 标识符（在所有软关键字表达式之后）===
+            // === 5. 标识符（在所有软关键字表达式之后）===
             {alt: () => this.IdentifierReference(params)},
 
-            // === 5. 字面量（null/true/false 是硬关键字，数字/字符串有独特首 token）===
+            // === 6. 字面量（null/true/false 是硬关键字，数字/字符串有独特首 token）===
             {alt: () => this.Literal()},
 
-            // === 6. function 开头（硬关键字，按特异性排序）===
+            // === 7. function 开头（硬关键字，按特异性排序）===
             {alt: () => this.GeneratorExpression()},
             {alt: () => this.FunctionExpression()},
 
-            // === 7. class 表达式（硬关键字）===
+            // === 8. class 表达式（硬关键字）===
             {alt: () => this.ClassExpression(params)},
 
-            // === 8. 符号开头（各有独特首 token，不会互相遮蔽）===
+            // === 9. 符号开头（各有独特首 token，不会互相遮蔽）===
             {alt: () => this.ArrayLiteral(params)},
             {alt: () => this.ObjectLiteral(params)},
             // RegularExpressionLiteral - 使用 InputElementRegExp 模式消费

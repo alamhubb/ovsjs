@@ -1,0 +1,32 @@
+
+.t0 {
+  top: 0;
+}
+
+.b0 {
+  bottom: 0;
+}
+
+.l0 {
+  left: 0;
+}
+
+.r0 {
+  right: 0;
+}
+
+//为什么有横杠，因为存在sm、md这种值
+@for $index from 1 through 100 {
+  .b#{''+$index+''} {
+    bottom: #{''+$index}px;
+  }
+  .t#{''+$index+''} {
+    top: #{''+$index}px;
+  }
+  .l#{''+$index+''} {
+    left: #{''+$index}px;
+  }
+  .r#{''+$index+''} {
+    right: #{''+$index}px;
+  }
+}

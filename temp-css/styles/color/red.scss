@@ -1,0 +1,24 @@
+$color-red: #C50F1A !default;
+$color-red1: #CF1322 !default;
+$color-red2: #D4353F !default;
+$color-red3: #F5222D !default;
+$color-red4: #FF4D4F !default;
+$color-red5: #FF7875 !default;
+$color-red6: #FFA39E !default;
+$color-red7: #FBC4C4 !default;
+$color-red8: #FEF0F0 !default;
+
+$color-red-light: $color-red8 !default;
+
+$colors-red: (
+        red:$color-red,
+        red1:$color-red1,
+        red2:$color-red2,
+        red3:$color-red3,
+        red4:$color-red4,
+        red5:$color-red5,
+        red6:$color-red6,
+        red7:$color-red7,
+        red8:$color-red8,
+        red-light:$color-red-light,
+)

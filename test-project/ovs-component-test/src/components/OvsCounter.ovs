@@ -1,0 +1,45 @@
+/**
+ * OVS Counter 组件
+ * 测试响应式状态和事件处理
+ */
+import { ref, computed } from 'vue'
+
+view OvsCounter(props) {
+  const count = ref(props.initialValue || 0)
+
+  const increment = () => {
+    count.value++
+  }
+
+  const decrement = () => {
+    count.value--
+  }
+
+  const reset = () => {
+    count.value = props.initialValue || 0
+  }
+
+  const statusClass = computed(() => {
+    return count.value >= 0 ? 'status-badge status-badge--success' : 'status-badge status-badge--error'
+  })
+
+  div(class = 'ovs-card') {
+    div(class = 'counter-display') {
+      count
+    }
+    
+    div(class = 'test-row', style = 'justify-content: center; margin-top: 15px;') {
+      button(class = 'ovs-button ovs-button--danger', onClick = decrement) { '➖ 减少' }
+      button(class = 'ovs-button ovs-button--warning', onClick = reset) { '🔄 重置' }
+      button(class = 'ovs-button ovs-button--success', onClick = increment) { '➕ 增加' }
+    }
+
+    div(style = 'text-align: center; margin-top: 15px;') {
+      span(class = statusClass.value) {
+        count.value >= 0 ? '正数' : '负数'
+      }
+    }
+  }
+}
+
+export default OvsCounter

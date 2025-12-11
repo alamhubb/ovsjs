@@ -1,0 +1,35 @@
+/**
+ * OVS Input 组件
+ * 测试表单输入和双向绑定
+ */
+import { ref, watch } from 'vue'
+
+view OvsInput(props) {
+  const inputValue = ref(props.modelValue || '')
+
+  const handleInput = (e) => {
+    inputValue.value = e.target.value
+    if (props.onInput) {
+      props.onInput(e)
+    }
+    if (props['onUpdate:modelValue']) {
+      props['onUpdate:modelValue'](e.target.value)
+    }
+  }
+
+  watch(() => props.modelValue, (newVal) => {
+    if (newVal !== undefined) {
+      inputValue.value = newVal
+    }
+  })
+
+  input(
+    class = 'ovs-input',
+    type = props.type || 'text',
+    placeholder = props.placeholder || '',
+    value = inputValue.value,
+    onInput = handleInput
+  ) {}
+}
+
+export default OvsInput

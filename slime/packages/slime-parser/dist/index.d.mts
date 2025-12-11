@@ -355,31 +355,31 @@ declare class SlimeCstToAst {
   private createMethodDefinitionClassElementNameAst;
   /**
    * [内部方法] getter 方法
-   * 处理 ES2025 Parser �?get ClassElementName ( ) { FunctionBody } 结构
+   * 处理 ES2025 Parser 的 get ClassElementName ( ) { FunctionBody } 结构
    * @internal
    */
   private createMethodDefinitionGetterMethodAst;
   /**
    * [内部方法] setter 方法
-   * 处理 ES2025 Parser �?set ClassElementName ( PropertySetParameterList ) { FunctionBody } 结构
+   * 处理 ES2025 Parser 的 set ClassElementName ( PropertySetParameterList ) { FunctionBody } 结构
    * @internal
    */
   private createMethodDefinitionSetterMethodAst;
   /**
-   * [内部方法] getter 方法 (�?IdentifierNameTok="get" 开�?
-   * 处理 ES2025 Parser �?IdentifierNameTok="get" ClassElementName ( ) { FunctionBody } 结构
+   * [内部方法] getter 方法 (以 IdentifierNameTok="get" 开始)
+   * 处理 ES2025 Parser 的 IdentifierNameTok="get" ClassElementName ( ) { FunctionBody } 结构
    * @internal
    */
   private createMethodDefinitionGetterMethodFromIdentifier;
   /**
-   * [内部方法] setter 方法 (�?IdentifierNameTok="set" 开�?
-   * 处理 ES2025 Parser �?IdentifierNameTok="set" ClassElementName ( ... ) { FunctionBody } 结构
+   * [内部方法] setter 方法 (以 IdentifierNameTok="set" 开始)
+   * 处理 ES2025 Parser 的 IdentifierNameTok="set" ClassElementName ( ... ) { FunctionBody } 结构
    * @internal
    */
   private createMethodDefinitionSetterMethodFromIdentifier;
   /**
    * [内部方法] generator 方法
-   * 处理 ES2025 Parser �?* ClassElementName ( UniqueFormalParameters ) { GeneratorBody } 结构
+   * 处理 ES2025 Parser 的 * ClassElementName ( UniqueFormalParameters ) { GeneratorBody } 结构
    * @internal
    */
   private createMethodDefinitionGeneratorMethodAst;
@@ -390,7 +390,7 @@ declare class SlimeCstToAst {
   private createMethodDefinitionGeneratorMethodFromChildren;
   /**
    * [内部方法] async 方法
-   * 处理 ES2025 Parser �?async ClassElementName ( UniqueFormalParameters ) { AsyncFunctionBody } 结构
+   * 处理 ES2025 Parser 的 async ClassElementName ( UniqueFormalParameters ) { AsyncFunctionBody } 结构
    * @internal
    */
   private createMethodDefinitionAsyncMethodAst;
@@ -401,7 +401,7 @@ declare class SlimeCstToAst {
   private createMethodDefinitionAsyncMethodFromChildren;
   /**
    * [内部方法] async generator 方法
-   * 处理 ES2025 Parser �?async * ClassElementName ( ... ) { AsyncGeneratorBody } 结构
+   * 处理 ES2025 Parser 的 async * ClassElementName ( ... ) { AsyncGeneratorBody } 结构
    * @internal
    */
   private createMethodDefinitionAsyncGeneratorMethodAst;

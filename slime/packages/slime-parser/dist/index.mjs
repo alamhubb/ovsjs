@@ -6457,9 +6457,18 @@ var SlimeCstToAst = class {
 	createMethodDefinitionClassElementNameAst(staticCst, cst) {
 		let i = 0;
 		const children = cst.children;
+		let staticToken = void 0;
+		let lParenToken = void 0;
+		let rParenToken = void 0;
+		let lBraceToken = void 0;
+		let rBraceToken = void 0;
+		if (staticCst && (staticCst.name === "Static" || staticCst.value === "static")) staticToken = SlimeTokenCreate.createStaticToken(staticCst.loc);
 		const classElementNameCst = children[i++];
 		const key = this.createClassElementNameAst(classElementNameCst);
-		if (children[i]?.name === "LParen") i++;
+		if (children[i]?.name === "LParen") {
+			lParenToken = SlimeTokenCreate.createLParenToken(children[i].loc);
+			i++;
+		}
 		let params = [];
 		if (children[i]?.name === "UniqueFormalParameters" || children[i]?.name === SlimeParser.prototype.UniqueFormalParameters?.name) {
 			params = this.createUniqueFormalParametersAstWrapped(children[i]);
@@ -6468,127 +6477,203 @@ var SlimeCstToAst = class {
 			params = this.createFormalParametersAstWrapped(children[i]);
 			i++;
 		}
-		if (children[i]?.name === "RParen") i++;
-		if (children[i]?.name === "LBrace") i++;
+		if (children[i]?.name === "RParen") {
+			rParenToken = SlimeTokenCreate.createRParenToken(children[i].loc);
+			i++;
+		}
+		if (children[i]?.name === "LBrace") {
+			lBraceToken = SlimeTokenCreate.createLBraceToken(children[i].loc);
+			i++;
+		}
 		let body;
 		if (children[i]?.name === "FunctionBody" || children[i]?.name === SlimeParser.prototype.FunctionBody?.name) {
 			const bodyStatements = this.createFunctionBodyAst(children[i]);
-			body = SlimeAstUtil.createBlockStatement(bodyStatements, children[i].loc);
-		} else body = SlimeAstUtil.createBlockStatement([]);
-		const functionExpression = SlimeAstUtil.createFunctionExpression(body, null, params, false, false, cst.loc);
+			i++;
+			if (children[i]?.name === "RBrace") rBraceToken = SlimeTokenCreate.createRBraceToken(children[i].loc);
+			body = SlimeAstUtil.createBlockStatement(bodyStatements, cst.loc, lBraceToken, rBraceToken);
+		} else {
+			if (children[i]?.name === "RBrace") rBraceToken = SlimeTokenCreate.createRBraceToken(children[i].loc);
+			body = SlimeAstUtil.createBlockStatement([], void 0, lBraceToken, rBraceToken);
+		}
+		const functionExpression = SlimeAstUtil.createFunctionExpression(body, null, params, false, false, cst.loc, void 0, void 0, void 0, lParenToken, rParenToken, lBraceToken, rBraceToken);
 		const isComputed = this.isComputedPropertyName(classElementNameCst);
 		const isConstructor = key.type === "Identifier" && key.name === "constructor" && !this.isStaticModifier(staticCst);
 		const isStatic = this.isStaticModifier(staticCst);
 		const kind = isConstructor ? "constructor" : "method";
-		return SlimeAstUtil.createMethodDefinition(key, functionExpression, kind, isComputed, isStatic, cst.loc);
+		return SlimeAstUtil.createMethodDefinition(key, functionExpression, kind, isComputed, isStatic, cst.loc, staticToken);
 	}
 	/**
 	* [内部方法] getter 方法
-	* 处理 ES2025 Parser �?get ClassElementName ( ) { FunctionBody } 结构
+	* 处理 ES2025 Parser 的 get ClassElementName ( ) { FunctionBody } 结构
 	* @internal
 	*/
 	createMethodDefinitionGetterMethodAst(staticCst, cst) {
 		const children = cst.children;
-		let i = 1;
+		let i = 0;
+		let staticToken = void 0;
+		let getToken = void 0;
+		let lParenToken = void 0;
+		let rParenToken = void 0;
+		let lBraceToken = void 0;
+		let rBraceToken = void 0;
+		if (staticCst && (staticCst.name === "Static" || staticCst.value === "static")) staticToken = SlimeTokenCreate.createStaticToken(staticCst.loc);
+		if (children[i]?.name === "Get" || children[i]?.value === "get") {
+			getToken = SlimeTokenCreate.createGetToken(children[i].loc);
+			i++;
+		}
 		const classElementNameCst = children[i++];
 		const key = this.createClassElementNameAst(classElementNameCst);
 		const isComputed = this.isComputedPropertyName(classElementNameCst);
-		while (i < children.length && [
-			"LParen",
-			"RParen",
-			"LBrace"
-		].includes(children[i]?.name)) i++;
+		if (children[i]?.name === "LParen") {
+			lParenToken = SlimeTokenCreate.createLParenToken(children[i].loc);
+			i++;
+		}
+		if (children[i]?.name === "RParen") {
+			rParenToken = SlimeTokenCreate.createRParenToken(children[i].loc);
+			i++;
+		}
+		if (children[i]?.name === "LBrace") {
+			lBraceToken = SlimeTokenCreate.createLBraceToken(children[i].loc);
+			i++;
+		}
 		let body;
 		if (children[i]?.name === "FunctionBody" || children[i]?.name === SlimeParser.prototype.FunctionBody?.name) {
 			const bodyStatements = this.createFunctionBodyAst(children[i]);
-			body = SlimeAstUtil.createBlockStatement(bodyStatements, children[i].loc);
-		} else body = SlimeAstUtil.createBlockStatement([]);
-		const methodDef = SlimeAstUtil.createMethodDefinition(key, {
-			type: "FunctionExpression",
-			id: null,
-			params: [],
-			body
-		});
-		methodDef.kind = "get";
-		methodDef.computed = isComputed;
-		if (this.isStaticModifier(staticCst)) methodDef.static = true;
-		return methodDef;
+			i++;
+			if (children[i]?.name === "RBrace") rBraceToken = SlimeTokenCreate.createRBraceToken(children[i].loc);
+			body = SlimeAstUtil.createBlockStatement(bodyStatements, cst.loc, lBraceToken, rBraceToken);
+		} else {
+			if (children[i]?.name === "RBrace") rBraceToken = SlimeTokenCreate.createRBraceToken(children[i].loc);
+			body = SlimeAstUtil.createBlockStatement([], void 0, lBraceToken, rBraceToken);
+		}
+		const functionExpression = SlimeAstUtil.createFunctionExpression(body, null, [], false, false, cst.loc, void 0, void 0, void 0, lParenToken, rParenToken, lBraceToken, rBraceToken);
+		return SlimeAstUtil.createMethodDefinition(key, functionExpression, "get", isComputed, this.isStaticModifier(staticCst), cst.loc, staticToken, getToken);
 	}
 	/**
 	* [内部方法] setter 方法
-	* 处理 ES2025 Parser �?set ClassElementName ( PropertySetParameterList ) { FunctionBody } 结构
+	* 处理 ES2025 Parser 的 set ClassElementName ( PropertySetParameterList ) { FunctionBody } 结构
 	* @internal
 	*/
 	createMethodDefinitionSetterMethodAst(staticCst, cst) {
 		const children = cst.children;
-		let i = 1;
+		let i = 0;
+		let staticToken = void 0;
+		let setToken = void 0;
+		let lParenToken = void 0;
+		let rParenToken = void 0;
+		let lBraceToken = void 0;
+		let rBraceToken = void 0;
+		if (staticCst && (staticCst.name === "Static" || staticCst.value === "static")) staticToken = SlimeTokenCreate.createStaticToken(staticCst.loc);
+		if (children[i]?.name === "Set" || children[i]?.value === "set") {
+			setToken = SlimeTokenCreate.createSetToken(children[i].loc);
+			i++;
+		}
 		const classElementNameCst = children[i++];
 		const key = this.createClassElementNameAst(classElementNameCst);
 		const isComputed = this.isComputedPropertyName(classElementNameCst);
-		if (children[i]?.name === "LParen") i++;
+		if (children[i]?.name === "LParen") {
+			lParenToken = SlimeTokenCreate.createLParenToken(children[i].loc);
+			i++;
+		}
 		let params = [];
 		if (children[i]?.name === "PropertySetParameterList" || children[i]?.name === SlimeParser.prototype.PropertySetParameterList?.name) {
 			params = this.createPropertySetParameterListAst(children[i]);
 			i++;
 		}
-		while (i < children.length && ["RParen", "LBrace"].includes(children[i]?.name)) i++;
+		if (children[i]?.name === "RParen") {
+			rParenToken = SlimeTokenCreate.createRParenToken(children[i].loc);
+			i++;
+		}
+		if (children[i]?.name === "LBrace") {
+			lBraceToken = SlimeTokenCreate.createLBraceToken(children[i].loc);
+			i++;
+		}
 		let body;
 		if (children[i]?.name === "FunctionBody" || children[i]?.name === SlimeParser.prototype.FunctionBody?.name) {
 			const bodyStatements = this.createFunctionBodyAst(children[i]);
-			body = SlimeAstUtil.createBlockStatement(bodyStatements, children[i].loc);
-		} else body = SlimeAstUtil.createBlockStatement([]);
-		const methodDef = SlimeAstUtil.createMethodDefinition(key, {
-			type: "FunctionExpression",
-			id: null,
-			params,
-			body
-		});
-		methodDef.kind = "set";
-		methodDef.computed = isComputed;
-		if (this.isStaticModifier(staticCst)) methodDef.static = true;
-		return methodDef;
+			i++;
+			if (children[i]?.name === "RBrace") rBraceToken = SlimeTokenCreate.createRBraceToken(children[i].loc);
+			body = SlimeAstUtil.createBlockStatement(bodyStatements, cst.loc, lBraceToken, rBraceToken);
+		} else {
+			if (children[i]?.name === "RBrace") rBraceToken = SlimeTokenCreate.createRBraceToken(children[i].loc);
+			body = SlimeAstUtil.createBlockStatement([], void 0, lBraceToken, rBraceToken);
+		}
+		const functionExpression = SlimeAstUtil.createFunctionExpression(body, null, params, false, false, cst.loc, void 0, void 0, void 0, lParenToken, rParenToken, lBraceToken, rBraceToken);
+		return SlimeAstUtil.createMethodDefinition(key, functionExpression, "set", isComputed, this.isStaticModifier(staticCst), cst.loc, staticToken, void 0, setToken);
 	}
 	/**
-	* [内部方法] getter 方法 (�?IdentifierNameTok="get" 开�?
-	* 处理 ES2025 Parser �?IdentifierNameTok="get" ClassElementName ( ) { FunctionBody } 结构
+	* [内部方法] getter 方法 (以 IdentifierNameTok="get" 开始)
+	* 处理 ES2025 Parser 的 IdentifierNameTok="get" ClassElementName ( ) { FunctionBody } 结构
 	* @internal
 	*/
 	createMethodDefinitionGetterMethodFromIdentifier(staticCst, cst) {
 		const children = cst.children;
-		let i = 1;
+		let i = 0;
+		let staticToken = void 0;
+		let getToken = void 0;
+		let lParenToken = void 0;
+		let rParenToken = void 0;
+		let lBraceToken = void 0;
+		let rBraceToken = void 0;
+		if (staticCst && (staticCst.name === "Static" || staticCst.value === "static")) staticToken = SlimeTokenCreate.createStaticToken(staticCst.loc);
+		if (children[i]?.value === "get") {
+			getToken = SlimeTokenCreate.createGetToken(children[i].loc);
+			i++;
+		}
 		const classElementNameCst = children[i++];
 		const key = this.createClassElementNameAst(classElementNameCst);
 		const isComputed = this.isComputedPropertyName(classElementNameCst);
-		while (i < children.length && ["LParen", "RParen"].includes(children[i]?.name)) i++;
-		if (children[i]?.name === "LBrace") i++;
+		if (children[i]?.name === "LParen") {
+			lParenToken = SlimeTokenCreate.createLParenToken(children[i].loc);
+			i++;
+		}
+		if (children[i]?.name === "RParen") {
+			rParenToken = SlimeTokenCreate.createRParenToken(children[i].loc);
+			i++;
+		}
+		if (children[i]?.name === "LBrace") {
+			lBraceToken = SlimeTokenCreate.createLBraceToken(children[i].loc);
+			i++;
+		}
 		let body;
 		if (children[i]?.name === "FunctionBody" || children[i]?.name === SlimeParser.prototype.FunctionBody?.name) {
 			const bodyStatements = this.createFunctionBodyAst(children[i]);
-			body = SlimeAstUtil.createBlockStatement(bodyStatements, children[i].loc);
-		} else body = SlimeAstUtil.createBlockStatement([]);
-		const methodDef = SlimeAstUtil.createMethodDefinition(key, {
-			type: "FunctionExpression",
-			id: null,
-			params: [],
-			body
-		});
-		methodDef.kind = "get";
-		methodDef.computed = isComputed;
-		if (this.isStaticModifier(staticCst)) methodDef.static = true;
-		return methodDef;
+			i++;
+			if (children[i]?.name === "RBrace") rBraceToken = SlimeTokenCreate.createRBraceToken(children[i].loc);
+			body = SlimeAstUtil.createBlockStatement(bodyStatements, cst.loc, lBraceToken, rBraceToken);
+		} else {
+			if (children[i]?.name === "RBrace") rBraceToken = SlimeTokenCreate.createRBraceToken(children[i].loc);
+			body = SlimeAstUtil.createBlockStatement([], void 0, lBraceToken, rBraceToken);
+		}
+		const functionExpression = SlimeAstUtil.createFunctionExpression(body, null, [], false, false, cst.loc, void 0, void 0, void 0, lParenToken, rParenToken, lBraceToken, rBraceToken);
+		return SlimeAstUtil.createMethodDefinition(key, functionExpression, "get", isComputed, this.isStaticModifier(staticCst), cst.loc, staticToken, getToken);
 	}
 	/**
-	* [内部方法] setter 方法 (�?IdentifierNameTok="set" 开�?
-	* 处理 ES2025 Parser �?IdentifierNameTok="set" ClassElementName ( ... ) { FunctionBody } 结构
+	* [内部方法] setter 方法 (以 IdentifierNameTok="set" 开始)
+	* 处理 ES2025 Parser 的 IdentifierNameTok="set" ClassElementName ( ... ) { FunctionBody } 结构
 	* @internal
 	*/
 	createMethodDefinitionSetterMethodFromIdentifier(staticCst, cst) {
 		const children = cst.children;
-		let i = 1;
+		let i = 0;
+		let staticToken = void 0;
+		let setToken = void 0;
+		let lParenToken = void 0;
+		let rParenToken = void 0;
+		let lBraceToken = void 0;
+		let rBraceToken = void 0;
+		if (staticCst && (staticCst.name === "Static" || staticCst.value === "static")) staticToken = SlimeTokenCreate.createStaticToken(staticCst.loc);
+		if (children[i]?.value === "set") {
+			setToken = SlimeTokenCreate.createSetToken(children[i].loc);
+			i++;
+		}
 		const classElementNameCst = children[i++];
 		const key = this.createClassElementNameAst(classElementNameCst);
 		const isComputed = this.isComputedPropertyName(classElementNameCst);
-		if (children[i]?.name === "LParen") i++;
+		if (children[i]?.name === "LParen") {
+			lParenToken = SlimeTokenCreate.createLParenToken(children[i].loc);
+			i++;
+		}
 		let params = [];
 		if (children[i]?.name === "PropertySetParameterList" || children[i]?.name === SlimeParser.prototype.PropertySetParameterList?.name) {
 			params = this.createPropertySetParameterListAst(children[i]);
@@ -6597,60 +6682,79 @@ var SlimeCstToAst = class {
 			params = [this.createBindingIdentifierAst(children[i])];
 			i++;
 		}
-		while (i < children.length && ["RParen", "LBrace"].includes(children[i]?.name)) i++;
+		if (children[i]?.name === "RParen") {
+			rParenToken = SlimeTokenCreate.createRParenToken(children[i].loc);
+			i++;
+		}
+		if (children[i]?.name === "LBrace") {
+			lBraceToken = SlimeTokenCreate.createLBraceToken(children[i].loc);
+			i++;
+		}
 		let body;
 		if (children[i]?.name === "FunctionBody" || children[i]?.name === SlimeParser.prototype.FunctionBody?.name) {
 			const bodyStatements = this.createFunctionBodyAst(children[i]);
-			body = SlimeAstUtil.createBlockStatement(bodyStatements, children[i].loc);
-		} else body = SlimeAstUtil.createBlockStatement([]);
-		const methodDef = SlimeAstUtil.createMethodDefinition(key, {
-			type: "FunctionExpression",
-			id: null,
-			params,
-			body
-		});
-		methodDef.kind = "set";
-		methodDef.computed = isComputed;
-		if (this.isStaticModifier(staticCst)) methodDef.static = true;
-		return methodDef;
+			i++;
+			if (children[i]?.name === "RBrace") rBraceToken = SlimeTokenCreate.createRBraceToken(children[i].loc);
+			body = SlimeAstUtil.createBlockStatement(bodyStatements, cst.loc, lBraceToken, rBraceToken);
+		} else {
+			if (children[i]?.name === "RBrace") rBraceToken = SlimeTokenCreate.createRBraceToken(children[i].loc);
+			body = SlimeAstUtil.createBlockStatement([], void 0, lBraceToken, rBraceToken);
+		}
+		const functionExpression = SlimeAstUtil.createFunctionExpression(body, null, params, false, false, cst.loc, void 0, void 0, void 0, lParenToken, rParenToken, lBraceToken, rBraceToken);
+		return SlimeAstUtil.createMethodDefinition(key, functionExpression, "set", isComputed, this.isStaticModifier(staticCst), cst.loc, staticToken, void 0, setToken);
 	}
 	/**
 	* [内部方法] generator 方法
-	* 处理 ES2025 Parser �?* ClassElementName ( UniqueFormalParameters ) { GeneratorBody } 结构
+	* 处理 ES2025 Parser 的 * ClassElementName ( UniqueFormalParameters ) { GeneratorBody } 结构
 	* @internal
 	*/
 	createMethodDefinitionGeneratorMethodAst(staticCst, cst) {
 		const children = cst.children;
-		let i = 1;
+		let i = 0;
+		let staticToken = void 0;
+		let asteriskToken = void 0;
+		let lParenToken = void 0;
+		let rParenToken = void 0;
+		let lBraceToken = void 0;
+		let rBraceToken = void 0;
+		if (staticCst && (staticCst.name === "Static" || staticCst.value === "static")) staticToken = SlimeTokenCreate.createStaticToken(staticCst.loc);
+		if (children[i]?.name === "Asterisk" || children[i]?.value === "*") {
+			asteriskToken = SlimeTokenCreate.createAsteriskToken(children[i].loc);
+			i++;
+		}
 		const classElementNameCst = children[i++];
 		const key = this.createClassElementNameAst(classElementNameCst);
 		const isComputed = this.isComputedPropertyName(classElementNameCst);
-		if (children[i]?.name === "LParen") i++;
+		if (children[i]?.name === "LParen") {
+			lParenToken = SlimeTokenCreate.createLParenToken(children[i].loc);
+			i++;
+		}
 		let params = [];
 		if (children[i]?.name === "UniqueFormalParameters" || children[i]?.name === SlimeParser.prototype.UniqueFormalParameters?.name) {
 			params = this.createUniqueFormalParametersAst(children[i]);
 			i++;
 		}
-		while (i < children.length && ["RParen", "LBrace"].includes(children[i]?.name)) i++;
+		if (children[i]?.name === "RParen") {
+			rParenToken = SlimeTokenCreate.createRParenToken(children[i].loc);
+			i++;
+		}
+		if (children[i]?.name === "LBrace") {
+			lBraceToken = SlimeTokenCreate.createLBraceToken(children[i].loc);
+			i++;
+		}
 		let body;
 		const bodyChild = children[i];
 		if (bodyChild?.name === "GeneratorBody" || bodyChild?.name === SlimeParser.prototype.GeneratorBody?.name || bodyChild?.name === "FunctionBody" || bodyChild?.name === SlimeParser.prototype.FunctionBody?.name) {
 			const bodyStatements = this.createFunctionBodyAst(bodyChild);
-			body = SlimeAstUtil.createBlockStatement(bodyStatements, bodyChild.loc);
-		} else body = SlimeAstUtil.createBlockStatement([]);
-		const functionExpression = {
-			type: "FunctionExpression",
-			id: null,
-			params,
-			body,
-			generator: true,
-			async: false
-		};
-		const methodDef = SlimeAstUtil.createMethodDefinition(key, functionExpression);
-		methodDef.kind = "method";
-		methodDef.computed = isComputed;
-		if (this.isStaticModifier(staticCst)) methodDef.static = true;
-		return methodDef;
+			i++;
+			if (children[i]?.name === "RBrace") rBraceToken = SlimeTokenCreate.createRBraceToken(children[i].loc);
+			body = SlimeAstUtil.createBlockStatement(bodyStatements, cst.loc, lBraceToken, rBraceToken);
+		} else {
+			if (children[i]?.name === "RBrace") rBraceToken = SlimeTokenCreate.createRBraceToken(children[i].loc);
+			body = SlimeAstUtil.createBlockStatement([], void 0, lBraceToken, rBraceToken);
+		}
+		const functionExpression = SlimeAstUtil.createFunctionExpression(body, null, params, true, false, cst.loc, void 0, void 0, asteriskToken, lParenToken, rParenToken, lBraceToken, rBraceToken);
+		return SlimeAstUtil.createMethodDefinition(key, functionExpression, "method", isComputed, this.isStaticModifier(staticCst), cst.loc, staticToken, void 0, void 0, asteriskToken);
 	}
 	/**
 	* [内部方法] generator 方法 (�?MethodDefinition children 直接处理)
@@ -6661,41 +6765,56 @@ var SlimeCstToAst = class {
 	}
 	/**
 	* [内部方法] async 方法
-	* 处理 ES2025 Parser �?async ClassElementName ( UniqueFormalParameters ) { AsyncFunctionBody } 结构
+	* 处理 ES2025 Parser 的 async ClassElementName ( UniqueFormalParameters ) { AsyncFunctionBody } 结构
 	* @internal
 	*/
 	createMethodDefinitionAsyncMethodAst(staticCst, cst) {
 		const children = cst.children;
-		let i = 1;
+		let i = 0;
+		let staticToken = void 0;
+		let asyncToken = void 0;
+		let lParenToken = void 0;
+		let rParenToken = void 0;
+		let lBraceToken = void 0;
+		let rBraceToken = void 0;
+		if (staticCst && (staticCst.name === "Static" || staticCst.value === "static")) staticToken = SlimeTokenCreate.createStaticToken(staticCst.loc);
+		if (children[i]?.name === "Async" || children[i]?.value === "async") {
+			asyncToken = SlimeTokenCreate.createAsyncToken(children[i].loc);
+			i++;
+		}
 		const classElementNameCst = children[i++];
 		const key = this.createClassElementNameAst(classElementNameCst);
 		const isComputed = this.isComputedPropertyName(classElementNameCst);
-		if (children[i]?.name === "LParen") i++;
+		if (children[i]?.name === "LParen") {
+			lParenToken = SlimeTokenCreate.createLParenToken(children[i].loc);
+			i++;
+		}
 		let params = [];
 		if (children[i]?.name === "UniqueFormalParameters" || children[i]?.name === SlimeParser.prototype.UniqueFormalParameters?.name) {
 			params = this.createUniqueFormalParametersAst(children[i]);
 			i++;
 		}
-		while (i < children.length && ["RParen", "LBrace"].includes(children[i]?.name)) i++;
+		if (children[i]?.name === "RParen") {
+			rParenToken = SlimeTokenCreate.createRParenToken(children[i].loc);
+			i++;
+		}
+		if (children[i]?.name === "LBrace") {
+			lBraceToken = SlimeTokenCreate.createLBraceToken(children[i].loc);
+			i++;
+		}
 		let body;
 		const bodyChild = children[i];
 		if (bodyChild?.name === "AsyncFunctionBody" || bodyChild?.name === SlimeParser.prototype.AsyncFunctionBody?.name || bodyChild?.name === "FunctionBody" || bodyChild?.name === SlimeParser.prototype.FunctionBody?.name) {
 			const bodyStatements = this.createFunctionBodyAst(bodyChild);
-			body = SlimeAstUtil.createBlockStatement(bodyStatements, bodyChild.loc);
-		} else body = SlimeAstUtil.createBlockStatement([]);
-		const functionExpression = {
-			type: "FunctionExpression",
-			id: null,
-			params,
-			body,
-			generator: false,
-			async: true
-		};
-		const methodDef = SlimeAstUtil.createMethodDefinition(key, functionExpression);
-		methodDef.kind = "method";
-		methodDef.computed = isComputed;
-		if (this.isStaticModifier(staticCst)) methodDef.static = true;
-		return methodDef;
+			i++;
+			if (children[i]?.name === "RBrace") rBraceToken = SlimeTokenCreate.createRBraceToken(children[i].loc);
+			body = SlimeAstUtil.createBlockStatement(bodyStatements, cst.loc, lBraceToken, rBraceToken);
+		} else {
+			if (children[i]?.name === "RBrace") rBraceToken = SlimeTokenCreate.createRBraceToken(children[i].loc);
+			body = SlimeAstUtil.createBlockStatement([], void 0, lBraceToken, rBraceToken);
+		}
+		const functionExpression = SlimeAstUtil.createFunctionExpression(body, null, params, false, true, cst.loc, void 0, asyncToken, void 0, lParenToken, rParenToken, lBraceToken, rBraceToken);
+		return SlimeAstUtil.createMethodDefinition(key, functionExpression, "method", isComputed, this.isStaticModifier(staticCst), cst.loc, staticToken, void 0, void 0, void 0, asyncToken);
 	}
 	/**
 	* [内部方法] async 方法 (�?MethodDefinition children 直接处理)
@@ -6707,41 +6826,61 @@ var SlimeCstToAst = class {
 	}
 	/**
 	* [内部方法] async generator 方法
-	* 处理 ES2025 Parser �?async * ClassElementName ( ... ) { AsyncGeneratorBody } 结构
+	* 处理 ES2025 Parser 的 async * ClassElementName ( ... ) { AsyncGeneratorBody } 结构
 	* @internal
 	*/
 	createMethodDefinitionAsyncGeneratorMethodAst(staticCst, cst) {
 		const children = cst.children;
-		let i = 2;
+		let i = 0;
+		let staticToken = void 0;
+		let asyncToken = void 0;
+		let asteriskToken = void 0;
+		let lParenToken = void 0;
+		let rParenToken = void 0;
+		let lBraceToken = void 0;
+		let rBraceToken = void 0;
+		if (staticCst && (staticCst.name === "Static" || staticCst.value === "static")) staticToken = SlimeTokenCreate.createStaticToken(staticCst.loc);
+		if (children[i]?.name === "Async" || children[i]?.value === "async") {
+			asyncToken = SlimeTokenCreate.createAsyncToken(children[i].loc);
+			i++;
+		}
+		if (children[i]?.name === "Asterisk" || children[i]?.value === "*") {
+			asteriskToken = SlimeTokenCreate.createAsteriskToken(children[i].loc);
+			i++;
+		}
 		const classElementNameCst = children[i++];
 		const key = this.createClassElementNameAst(classElementNameCst);
 		const isComputed = this.isComputedPropertyName(classElementNameCst);
-		if (children[i]?.name === "LParen") i++;
+		if (children[i]?.name === "LParen") {
+			lParenToken = SlimeTokenCreate.createLParenToken(children[i].loc);
+			i++;
+		}
 		let params = [];
 		if (children[i]?.name === "UniqueFormalParameters" || children[i]?.name === SlimeParser.prototype.UniqueFormalParameters?.name) {
 			params = this.createUniqueFormalParametersAst(children[i]);
 			i++;
 		}
-		while (i < children.length && ["RParen", "LBrace"].includes(children[i]?.name)) i++;
+		if (children[i]?.name === "RParen") {
+			rParenToken = SlimeTokenCreate.createRParenToken(children[i].loc);
+			i++;
+		}
+		if (children[i]?.name === "LBrace") {
+			lBraceToken = SlimeTokenCreate.createLBraceToken(children[i].loc);
+			i++;
+		}
 		let body;
 		const bodyChild = children[i];
 		if (bodyChild?.name === "AsyncGeneratorBody" || bodyChild?.name === SlimeParser.prototype.AsyncGeneratorBody?.name || bodyChild?.name === "FunctionBody" || bodyChild?.name === SlimeParser.prototype.FunctionBody?.name) {
 			const bodyStatements = this.createFunctionBodyAst(bodyChild);
-			body = SlimeAstUtil.createBlockStatement(bodyStatements, bodyChild.loc);
-		} else body = SlimeAstUtil.createBlockStatement([]);
-		const functionExpression = {
-			type: "FunctionExpression",
-			id: null,
-			params,
-			body,
-			generator: true,
-			async: true
-		};
-		const methodDef = SlimeAstUtil.createMethodDefinition(key, functionExpression);
-		methodDef.kind = "method";
-		methodDef.computed = isComputed;
-		if (this.isStaticModifier(staticCst)) methodDef.static = true;
-		return methodDef;
+			i++;
+			if (children[i]?.name === "RBrace") rBraceToken = SlimeTokenCreate.createRBraceToken(children[i].loc);
+			body = SlimeAstUtil.createBlockStatement(bodyStatements, cst.loc, lBraceToken, rBraceToken);
+		} else {
+			if (children[i]?.name === "RBrace") rBraceToken = SlimeTokenCreate.createRBraceToken(children[i].loc);
+			body = SlimeAstUtil.createBlockStatement([], void 0, lBraceToken, rBraceToken);
+		}
+		const functionExpression = SlimeAstUtil.createFunctionExpression(body, null, params, true, true, cst.loc, void 0, asyncToken, asteriskToken, lParenToken, rParenToken, lBraceToken, rBraceToken);
+		return SlimeAstUtil.createMethodDefinition(key, functionExpression, "method", isComputed, this.isStaticModifier(staticCst), cst.loc, staticToken, void 0, void 0, asteriskToken, asyncToken);
 	}
 	/**
 	* 处理 UniqueFormalParameters CST 节点

@@ -1,0 +1,216 @@
+@import "color/color";
+
+//基础色
+$color-white: #fff;
+$color-black: #000;
+
+//自定义颜色
+//字体颜色
+$color-special: #1F2329 !default;
+//默认字体色
+$color-main: #333333 !default;
+$color-th: #444444 !default;
+$color-content: #666666 !default;
+$color-sub: #909399 !default;
+$color-tip: #C0C4CC !default;
+$color-link: #409EFF !default;
+$color-focus: #66b1ff !default;
+$color-hover: #66b1ff !default;
+$color-active: #337ab7 !default;
+$color-menu: #1F2329 !default;
+$color-pink: #ef799a !default;
+$color-girl: #ef799a !default;
+$color-girl-light: #ef799a !default;
+$color-boy: #3f93ee !default;
+$color-boy-light: #ddeefe !default;
+$color-pink1: #ffedf0 !default;
+$color-navbar-text: white !default;
+$color-navbar-bg: #282f3d !default;
+
+$color-primary: $color-blue1;
+$color-error: $color-red;
+$color-warn: $color-orange;
+$color-success: $color-green;
+$color-info: $color-content;
+
+//系统默认色
+//系统默认字体色
+//默认背景色
+//主题默认背景色
+//主题背景色
+//主题辅助背景色
+
+//默认背景
+$color-bg-default: #f7f7f7 !default;
+//$color-bg-default: #f1f2f5 !default;
+$color-border-default: #dedede !default;
+//主题色
+$color-bg-base: $color-white !default;
+//主题色
+//$color-theme-base: $color-white !default;
+//主题下背景颜色，整体的背景颜色不一定与主题色一样，主题颜色对应的背景色
+//$color-theme-base-light: $color-bg-default !default;
+//主题色
+//主题下字体颜色，主题背景色下，字体颜色也不一定一样，主题颜色对应的字体色
+//$color-theme: #5B21B6 !default;
+//$color-theme-bg: #e4bad4 !default;
+//$color-theme-light: #FDF2F8 !default;
+
+$color-theme: #3f93ee !default;
+$color-theme1: mix($color-white, $color-theme, 20%) !default;
+$color-theme2: mix($color-white, $color-theme, 40%) !default;
+$color-theme3: mix($color-white, $color-theme, 60%) !default;
+$color-theme4: mix($color-white, $color-theme, 80%) !default;
+$color-theme-sub: #A2D2FF !default;
+$color-theme-bg: $color-bg-default !default;
+$color-theme-navbar-bg: #f7f7f7 !default;
+$color-theme-light: $color-white !default;
+
+$colors-theme: (
+        girl:$color-girl,
+        boy:$color-boy,
+        white:$color-white,
+        black:$color-black,
+        theme:$color-theme,
+        theme1:$color-theme1,
+        theme2:$color-theme2,
+        theme3:$color-theme3,
+        theme4:$color-theme4,
+        primary:$color-primary,
+        error:$color-error,
+        warn:$color-warn,
+        success:$color-success,
+        info:$color-info,
+);
+//基础颜色
+$mergeMap1: map-merge($colors-theme, $colors-blue);
+$mergeMap2: map-merge($mergeMap1, $colors-green);
+$mergeMap3: map-merge($mergeMap2, $colors-grey);
+$mergeMap4: map-merge($mergeMap3, $colors-orange);
+$mergeMap5: map-merge($mergeMap4, $colors-purple);
+$colors-base: map-merge($mergeMap5, $colors-red);
+
+//背景
+//头部菜单
+$color-bg-header-menu: #282F3D;
+$color-bg-header-menu-hover: #212631;
+//菜单
+$color-bg-menu-hover: #F1F4FE;
+//筛选器选中
+$color-bg-filter-active: #EAEBEC;
+//表头背景色
+$color-bg-table-header: #909399;
+//默认表头hover
+$color-bg-table-header-hover: #F7F7F7;
+
+
+//边框
+//边框蓝灰1
+$color-border-gray1: #dcdfe6;
+//边框蓝灰2
+$color-border-gray2: #e4e7ed;
+//输入框边框色
+$color-border-form: #C0C6CC;
+$color-border-form-advance: #CCCCCC;
+//头部菜单分割线
+$color-border-divider: #E1E6EB;
+//表格分割线
+$color-border-table: $color-border-default;
+//常规按钮灰色边线
+$color-border-button: #C0C6CC;
+
+//基础颜色直接循环拼就行
+$colors-custom-font: (
+  //主题色，可自定义，默认和白色一样
+        theme: $color-theme,
+        default: $color-main,
+        special: $color-special,
+        main: $color-main,
+        th: $color-th,
+        content: $color-content,
+        sub: $color-sub,
+        tip: $color-tip,
+        link: $color-link,
+        focus: $color-focus,
+        hover: $color-hover,
+        active: $color-active,
+        navbar:$color-navbar-text,
+);
+
+$colors-font: map-merge($colors-base, $colors-custom-font);
+
+//基础颜色直接循环拼就行
+$colors-custom-bg: (
+  //主题色，可自定义，默认和白色一样
+        default: $color-bg-default,
+        base: $color-bg-base,
+        theme: $color-theme,
+        sub: $color-theme-sub,
+        theme-bg: $color-theme-bg,
+        theme-light: $color-theme-light,
+        header-menu: $color-bg-header-menu,
+        header-menu-hover: $color-bg-header-menu-hover,
+        menu-hover: $color-bg-menu-hover,
+        filter-active: $color-bg-filter-active,
+        table-header: $color-bg-table-header,
+        table-header-hover: $color-bg-table-header-hover,
+        navbar: $color-theme-navbar-bg,
+);
+
+$colors-bg: map-merge($colors-base, $colors-custom-bg);
+
+$colors-custom-border: (
+        theme: $color-border-default,
+        theme-bd: $color-theme,
+        gray1: $color-border-gray1,
+        gray2: $color-border-gray2,
+        form: $color-border-form,
+        divider: $color-border-divider,
+        table: $color-border-table,
+        default: $color-border-default,
+        special: $color-special,
+        main: $color-main,
+        content: $color-content,
+        sub: $color-sub,
+        tip: $color-tip,
+        link: $color-link,
+        focus: $color-focus,
+        hover: $color-hover,
+        active: $color-active
+);
+
+$colors-border: map-merge($colors-base, $colors-custom-border);
+
+//百分比
+$percent-3: 3%;
+$percent-5: 5%;
+$percent-10: 10%;
+$percent-20: 20%;
+$percent-30: 30%;
+$percent-40: 40%;
+$percent-50: 50%;
+$percent-60: 60%;
+$percent-70: 70%;
+$percent-80: 80%;
+$percent-90: 90%;
+//$color-bg-default: #FCE7F3;
+
+//点击变色比
+//$percent-active: $percent-10 !default;
+//light的样式
+$percent-light-bg: $percent-90 !default;
+$percent-light-border: $percent-60 !default;
+
+/* Border
+-------------------------- */
+$border-width-base: 1px !default;
+$border-style-base: solid !default;
+$border-base: $border-width-base $border-style-base $color-border-default !default;
+/// borderRadius|1|Radius|0
+$border-radius-base: 5px !default;
+/// borderRadius|1|Radius|0
+$border-radius-small: 2px !default;
+/// borderRadius|1|Radius|0
+$border-radius-circle: 100% !default;
+/// borderRadius|1|Radius|0
+$border-radius-zero: 0 !default;

@@ -1,0 +1,376 @@
+/**
+ * Element Plus 风格的 CssTs 原子类
+ * 
+ * 颜色参考 Element Plus 设计规范:
+ * - Primary: #409eff (light-3: #79bbff, dark-2: #337ecc)
+ * - Success: #67c23a (light-3: #95d475, dark-2: #529b2e)
+ * - Warning: #e6a23c (light-3: #eebe77, dark-2: #b88230)
+ * - Danger:  #f56c6c (light-3: #f89898, dark-2: #c45656)
+ * - Info:    #909399 (light-3: #b1b3b8, dark-2: #73767a)
+ */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  padding: 20px;
+}
+
+#app {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.test-container {
+  background: white;
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.test-container h1 {
+  color: #333;
+  margin-bottom: 10px;
+  font-size: 28px;
+}
+
+.test-container p {
+  color: #666;
+  margin-bottom: 30px;
+}
+
+.test-section {
+  margin-bottom: 30px;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.test-section h2 {
+  color: #495057;
+  margin-bottom: 15px;
+  font-size: 18px;
+  border-bottom: 2px solid #dee2e6;
+  padding-bottom: 10px;
+}
+
+
+.test-row {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.test-label {
+  color: #6c757d;
+  font-size: 14px;
+  min-width: 100px;
+}
+
+/* ==================== CssTs 原子类 (无前缀) ==================== */
+
+/* Layout */
+.inline-flex { display: inline-flex; }
+.flex { display: flex; }
+.block { display: block; }
+.items-center { align-items: center; }
+.justify-center { justify-content: center; }
+.flex-col { flex-direction: column; }
+
+/* Spacing */
+.padding-sm { padding: 8px 15px; }
+.padding-md { padding: 10px 20px; }
+
+/* Sizing */
+.height-32 { height: 32px; }
+
+/* Typography */
+.font-medium { font-weight: 500; }
+.font-size-14 { font-size: 14px; }
+.text-center { text-align: center; }
+
+/* Colors */
+.color-white { color: #ffffff; }
+.color-black { color: #303133; }
+.color-regular { color: #606266; }
+
+/* Background - Element Plus 颜色 */
+.bg-white { background-color: #ffffff; }
+.bg-primary { background-color: #409eff; }
+.bg-success { background-color: #67c23a; }
+.bg-warning { background-color: #e6a23c; }
+.bg-danger { background-color: #f56c6c; }
+.bg-info { background-color: #909399; }
+
+/* Border */
+.border { border: 1px solid #dcdfe6; }
+.border-base { border-color: #dcdfe6; }
+.border-primary { border-color: #409eff; }
+.border-success { border-color: #67c23a; }
+.border-warning { border-color: #e6a23c; }
+.border-danger { border-color: #f56c6c; }
+.border-info { border-color: #909399; }
+.rounded { border-radius: 4px; }
+.rounded-full { border-radius: 9999px; }
+
+/* Effects */
+.cursor-pointer { cursor: pointer; }
+.cursor-not-allowed { cursor: not-allowed; }
+.transition { transition: 0.1s; }  /* Element Plus 使用 0.1s */
+.select-none { user-select: none; }
+.outline-none { outline: none; }
+
+/* States */
+.is-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+.is-loading {
+  pointer-events: none;
+}
+
+/* Margin */
+.margin-right-6 { margin-right: 6px; }
+
+/* Animation */
+.animation-rotating {
+  display: inline-block;
+  animation: rotating 2s linear infinite;
+}
+
+@keyframes rotating {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Hover - Element Plus light-3 颜色 */
+.bg-primary:hover { background-color: #79bbff; border-color: #79bbff; }
+.bg-success:hover { background-color: #95d475; border-color: #95d475; }
+.bg-warning:hover { background-color: #eebe77; border-color: #eebe77; }
+.bg-danger:hover { background-color: #f89898; border-color: #f89898; }
+.bg-info:hover { background-color: #b1b3b8; border-color: #b1b3b8; }
+
+/* Active - Element Plus dark-2 颜色 */
+.bg-primary:active { background-color: #337ecc; border-color: #337ecc; }
+.bg-success:active { background-color: #529b2e; border-color: #529b2e; }
+.bg-warning:active { background-color: #b88230; border-color: #b88230; }
+.bg-danger:active { background-color: #c45656; border-color: #c45656; }
+.bg-info:active { background-color: #73767a; border-color: #73767a; }
+
+
+/* ==================== el- 前缀原子类 ==================== */
+
+/* Layout */
+.el-inline-flex { display: inline-flex; }
+.el-flex { display: flex; }
+.el-items-center { align-items: center; }
+.el-justify-center { justify-content: center; }
+
+/* Spacing */
+.el-padding-sm { padding: 8px 15px; }
+
+/* Typography */
+.el-font-medium { font-weight: 500; }
+
+/* Colors */
+.el-color-white { color: #ffffff; }
+.el-color-black { color: #303133; }
+.el-bg-white { background-color: #ffffff; }
+.el-bg-primary { background-color: #409eff; }
+.el-bg-success { background-color: #67c23a; }
+.el-bg-warning { background-color: #e6a23c; }
+.el-bg-danger { background-color: #f56c6c; }
+
+/* Border */
+.el-border { border: 1px solid #dcdfe6; }
+.el-border-base { border-color: #dcdfe6; }
+.el-rounded { border-radius: 4px; }
+
+/* Effects */
+.el-cursor-pointer { cursor: pointer; }
+.el-transition { transition: 0.1s; }
+
+/* Hover - Element Plus light-3 */
+.el-bg-primary:hover { background-color: #79bbff; border-color: #79bbff; }
+.el-bg-success:hover { background-color: #95d475; border-color: #95d475; }
+.el-bg-warning:hover { background-color: #eebe77; border-color: #eebe77; }
+.el-bg-danger:hover { background-color: #f89898; border-color: #f89898; }
+
+/* Active - Element Plus dark-2 */
+.el-bg-primary:active { background-color: #337ecc; border-color: #337ecc; }
+.el-bg-success:active { background-color: #529b2e; border-color: #529b2e; }
+.el-bg-warning:active { background-color: #b88230; border-color: #b88230; }
+.el-bg-danger:active { background-color: #c45656; border-color: #c45656; }
+
+/* ==================== 组件样式 ==================== */
+
+.ovs-input {
+  padding: 10px 15px;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+  width: 200px;
+}
+
+.ovs-input:focus {
+  border-color: #409eff;
+}
+
+.ovs-card {
+  background: white;
+  border-radius: 4px;
+  padding: 20px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+}
+
+.counter-display {
+  font-size: 48px;
+  font-weight: bold;
+  color: #409eff;
+  text-align: center;
+  padding: 20px;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.status-badge--success {
+  background: #e1f3d8;
+  color: #67c23a;
+}
+
+.status-badge--error {
+  background: #fde2e2;
+  color: #f56c6c;
+}
+
+
+/* ==================== Element Plus Button 样式 ==================== */
+
+.el-button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  line-height: 1;
+  height: 32px;
+  white-space: nowrap;
+  cursor: pointer;
+  color: #606266;
+  text-align: center;
+  box-sizing: border-box;
+  outline: none;
+  transition: 0.1s;
+  font-weight: 500;
+  user-select: none;
+  vertical-align: middle;
+  -webkit-appearance: none;
+  background-color: #ffffff;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  padding: 8px 15px;
+  font-size: 14px;
+}
+
+.el-button:hover {
+  color: #409eff;
+  border-color: #c6e2ff;
+  background-color: #ecf5ff;
+}
+
+.el-button:active {
+  color: #337ecc;
+  border-color: #337ecc;
+}
+
+/* Primary */
+.el-button--primary {
+  color: #ffffff;
+  background-color: #409eff;
+  border-color: #409eff;
+}
+
+.el-button--primary:hover {
+  background-color: #79bbff;
+  border-color: #79bbff;
+  color: #ffffff;
+}
+
+.el-button--primary:active {
+  background-color: #337ecc;
+  border-color: #337ecc;
+  color: #ffffff;
+}
+
+/* Success */
+.el-button--success {
+  color: #ffffff;
+  background-color: #67c23a;
+  border-color: #67c23a;
+}
+
+.el-button--success:hover {
+  background-color: #95d475;
+  border-color: #95d475;
+}
+
+.el-button--success:active {
+  background-color: #529b2e;
+  border-color: #529b2e;
+}
+
+/* Warning */
+.el-button--warning {
+  color: #ffffff;
+  background-color: #e6a23c;
+  border-color: #e6a23c;
+}
+
+.el-button--warning:hover {
+  background-color: #eebe77;
+  border-color: #eebe77;
+}
+
+.el-button--warning:active {
+  background-color: #b88230;
+  border-color: #b88230;
+}
+
+/* Danger */
+.el-button--danger {
+  color: #ffffff;
+  background-color: #f56c6c;
+  border-color: #f56c6c;
+}
+
+.el-button--danger:hover {
+  background-color: #f89898;
+  border-color: #f89898;
+}
+
+.el-button--danger:active {
+  background-color: #c45656;
+  border-color: #c45656;
+}
+
+/* 按钮间距 */
+.el-button + .el-button {
+  margin-left: 12px;
+}
+
+

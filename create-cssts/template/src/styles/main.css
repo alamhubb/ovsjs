@@ -1,0 +1,75 @@
+/* 
+ * CssTs Demo Styles
+ * 这些是与 CssTs 声明对应的实际 CSS 样式
+ */
+
+/* 颜色 */
+.color-red { color: #ef4444; }
+.color-blue { color: #3b82f6; }
+.color-green { color: #22c55e; }
+.color-white { color: #ffffff; }
+
+/* 背景 */
+.bg-blue { background-color: #3b82f6; }
+.bg-green { background-color: #22c55e; }
+.bg-red { background-color: #ef4444; }
+.bg-gray { background-color: #f3f4f6; }
+.bg-dark { background-color: #1f2937; }
+
+/* 字体 */
+.font-bold { font-weight: 700; }
+.font-medium { font-weight: 500; }
+.font-large { font-size: 1.25rem; }
+.font-small { font-size: 0.875rem; }
+
+/* 间距 */
+.margin-top { margin-top: 1rem; }
+.margin-bottom { margin-bottom: 1rem; }
+.padding { padding: 1rem; }
+.padding-large { padding: 1.5rem; }
+
+/* 边框 */
+.rounded { border-radius: 0.5rem; }
+.rounded-full { border-radius: 9999px; }
+.border { border: 1px solid #e5e7eb; }
+
+/* 布局 */
+.flex { display: flex; }
+.flex-center { 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+}
+.gap { gap: 0.5rem; }
+
+/* 效果 */
+.shadow { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+.hover-scale:hover { transform: scale(1.05); }
+.transition { transition: all 0.2s ease; }
+
+/* 文本 */
+.text-center { text-align: center; }
+.uppercase { text-transform: uppercase; }
+
+/* 基础重置 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.5;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem;
+}

@@ -1,0 +1,40 @@
+{
+  "name": "cssts",
+  "version": "0.1.0",
+  "description": "CSS-in-TS: A compile-time CSS class management system with TypeScript support",
+  "type": "module",
+  "main": "dist/index.mjs",
+  "types": "dist/index.d.mts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "types": "./dist/index.d.mts"
+    },
+    "./src/*": {
+      "import": "./src/*",
+      "types": "./src/*"
+    }
+  },
+  "scripts": {
+    "build": "tsdown",
+    "test": "tsx tests/test-parser.ts"
+  },
+  "keywords": [
+    "css",
+    "typescript",
+    "atomic-css",
+    "compile-time"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "subhuti": "*",
+    "slime-parser": "*",
+    "slime-ast": "*",
+    "slime-token": "*"
+  },
+  "devDependencies": {
+    "tsdown": "^0.11.10",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3"
+  }
+}

@@ -1,0 +1,20 @@
+/**
+ * OVS Card 组件
+ * 测试子组件传递和样式
+ */
+
+view OvsCard(props) {
+  div(class = 'ovs-card') {
+    if (props.title) {
+      div(style = 'font-size: 18px; font-weight: bold; margin-bottom: 15px; color: #303133;') {
+        props.title
+      }
+    }
+    
+    div(style = 'color: #606266; line-height: 1.6;') {
+      props.children
+    }
+  }
+}
+
+export default OvsCard

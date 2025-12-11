@@ -1,0 +1,210 @@
+//遍历颜色
+//遍历主题类，plain dark light
+//遍历size
+
+//border颜色  border-主题  默认1px
+
+//border-主题 bd bt bt br bl bx by b
+
+//生成padding
+.bd {
+  border: $border-base;
+}
+
+.bd-none {
+  border-width: 0 !important;
+}
+
+.bx-none {
+  border-left-width: 0 !important;
+  border-right-width: 0 !important;
+}
+
+.by-none {
+  border-top-width: 0 !important;
+  border-bottom-width: 0 !important;
+}
+
+@each $directionKey, $directionValue in $direction-map {
+  .b#{''+$directionKey+''}-none {
+    border-#{''+$directionValue+''}-width: 0 !important;
+  }
+}
+
+.by {
+  border-top: $border-base;
+  border-bottom: $border-base;
+}
+
+.bx {
+  border-left: $border-base;
+  border-right: $border-base;
+}
+
+@each $directionKey, $directionValue in $direction-map {
+  .b#{''+$directionKey+''} {
+    border-#{''+$directionValue}: $border-base;
+  }
+}
+
+//单设置宽度
+//为什么有横杠，因为存在l1这种值
+@for $index from 1 through 10 {
+  .bd-#{''+$index+''} {
+    border: $border-base;
+    border-width: #{''+$index}px !important;
+  }
+  .bx-#{''+$index+''} {
+    border-left: $border-base;
+    border-right: $border-base;
+    border-left-width: #{''+$index}px !important;
+    border-right-width: #{''+$index}px !important;
+  }
+  .by-#{''+$index+''} {
+    border-top: $border-base;
+    border-bottom: $border-base;
+    border-top-width: #{''+$index}px !important;
+    border-bottom-width: #{''+$index}px !important;
+  }
+
+  @each $directionKey, $directionValue in $direction-map {
+    .b#{''+$directionKey+''}-#{''+$index+''} {
+      border-#{''+$directionValue}: $border-base;
+      border-#{''+$directionValue+''}-width: #{''+$index}px !important;
+    }
+  }
+}
+
+//单设置颜色
+@each $colorKey, $color in $colors-border {
+  .bd-#{''+$colorKey+''} {
+    border: $border-base;
+    border-color: $color !important;
+  }
+  .bd-#{''+$colorKey+''}_light {
+    border: $border-base;
+    border-color: mix($color-white, $color, 90%)!important;
+  }
+  .bx-#{''+$colorKey+''} {
+    border-left: $border-base;
+    border-right: $border-base;
+    border-left-color: $color !important;
+    border-right-color: $color !important;
+  }
+  .by-#{''+$colorKey+''} {
+    border-top: $border-base;
+    border-bottom: $border-base;
+    border-top-color: $color !important;
+    border-bottom-color: $color !important;
+  }
+  @each $directionKey, $directionValue in $direction-map {
+    .b#{''+$directionKey+''}-#{''+$colorKey+''} {
+      border-#{''+$directionValue}: $border-base;
+      border-#{''+$directionValue+''}-color: $color !important;
+    }
+  }
+}
+
+.bd-radius {
+  border-radius: $border-radius-base !important;
+}
+
+.bt-radius {
+  border-top-left-radius: $border-radius-base !important;
+  border-top-right-radius: $border-radius-base !important;
+}
+
+.bb-radius {
+  border-bottom-left-radius: $border-radius-base !important;
+  border-bottom-right-radius: $border-radius-base !important;
+}
+
+.bl-radius {
+  border-top-left-radius: $border-radius-base !important;
+  border-bottom-left-radius: $border-radius-base !important;
+}
+
+.br-radius {
+  border-top-right-radius: $border-radius-base !important;
+  border-bottom-right-radius: $border-radius-base !important;
+}
+
+@each $directionKey, $directionValue in $direction-com-map {
+  .b#{''+$directionKey+''}-radius {
+    border-#{''+$directionValue+''}-radius: $border-radius-base !important;
+  }
+}
+
+@for $index from 1 through 50 {
+  .bd-radius-#{''+$index} {
+    border-radius: #{''+$index}px !important;
+  }
+
+  @each $directionKey, $directionValue in $direction-com-map {
+    .b#{''+$directionKey+''}-radius-#{''+$index} {
+      border-#{''+$directionValue}-radius: #{''+$index}px !important;
+    }
+
+    .bt-radius-#{''+$index} {
+      border-top-left-radius: #{''+$index}px !important;
+      border-top-right-radius: #{''+$index}px !important;
+    }
+
+    .bb-radius-#{''+$index} {
+      border-bottom-left-radius: #{''+$index}px !important;
+      border-bottom-right-radius: #{''+$index}px !important;
+    }
+
+    .bl-radius-#{''+$index} {
+      border-top-left-radius: #{''+$index}px !important;
+      border-bottom-left-radius: #{''+$index}px !important;
+    }
+
+    .br-radius-#{''+$index} {
+      border-top-right-radius: #{''+$index}px !important;
+      border-bottom-right-radius: #{''+$index}px !important;
+    }
+  }
+}
+
+
+@each $sizeKey, $sizeValue in $padding-map {
+  .bd-radius-#{''+$sizeKey} {
+    border-radius: #{''+$sizeValue} !important;
+  }
+
+  @each $directionKey, $directionValue in $direction-com-map {
+    .b#{''+$directionKey+''}-radius-#{''+$sizeKey} {
+      border-#{''+$directionValue}-radius: #{''+$sizeValue} !important;
+    }
+
+    .bt-radius-#{''+$sizeKey} {
+      border-top-left-radius: #{''+$sizeValue} !important;
+      border-top-right-radius: #{''+$sizeValue} !important;
+    }
+
+    .bb-radius-#{''+$sizeKey} {
+      border-bottom-left-radius: #{''+$sizeValue} !important;
+      border-bottom-right-radius: #{''+$sizeValue} !important;
+    }
+
+    .bl-radius-#{''+$sizeKey} {
+      border-top-left-radius: #{''+$sizeValue} !important;
+      border-bottom-left-radius: #{''+$sizeValue} !important;
+    }
+
+    .br-radius-#{''+$sizeKey} {
+      border-top-right-radius: #{''+$sizeValue} !important;
+      border-bottom-right-radius: #{''+$sizeValue} !important;
+    }
+  }
+}
+
+.bd-dashed {
+  border: $border-base;
+  border-style: dashed !important;
+}
+
+.bd-round {
+  border-radius: 2500px !important;
+}

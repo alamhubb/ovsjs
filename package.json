@@ -11,7 +11,10 @@
     "slime/packages/*",
     "packages/*",
     "create-ovs",
-    "vite-plugin-ovs"
+    "vite-plugin-ovs",
+    "cssts",
+    "vite-plugin-cssts",
+    "create-cssts"
   ],
   "scripts": {
     "build": "tsc -b",

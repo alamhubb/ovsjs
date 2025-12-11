@@ -1,0 +1,73 @@
+// CssTs 样式声明文件
+// 使用 css 关键字声明原子样式和组合样式
+
+// ==================== 原子样式 ====================
+// 这些会自动转换为 kebab-case: colorRed → 'color-red'
+
+// 颜色
+css colorRed
+css colorBlue
+css colorGreen
+css colorWhite
+
+// 背景
+css bgBlue
+css bgGreen
+css bgRed
+css bgGray
+css bgDark
+
+// 字体
+css fontBold
+css fontMedium
+css fontLarge
+css fontSmall
+
+// 间距
+css marginTop
+css marginBottom
+css padding
+css paddingLarge
+
+// 边框
+css rounded
+css roundedFull
+css border
+
+// 布局
+css flex
+css flexCenter
+css gap
+
+// 效果
+css shadow
+css hoverScale
+css transition
+
+// 文本
+css textCenter
+css uppercase
+
+// ==================== 组合样式 ====================
+// 组合多个原子样式，方便复用
+
+// 按钮基础样式
+css buttonBase = { padding, rounded, fontMedium, transition, hoverScale }
+
+// 主要按钮
+css primaryButton = { buttonBase, bgBlue, colorWhite }
+
+// 成功按钮
+css successButton = { buttonBase, bgGreen, colorWhite }
+
+// 危险按钮
+css dangerButton = { buttonBase, bgRed, colorWhite }
+
+// 卡片样式
+css card = { bgGray, rounded, padding, shadow }
+
+// 标题样式
+css title = { fontBold, fontLarge, textCenter, marginBottom }
+
+// 徽章样式
+css badge = { paddingLarge, roundedFull, fontSmall, uppercase }

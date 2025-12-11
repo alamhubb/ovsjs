@@ -1,0 +1,20 @@
+$color-green: #52C41A !default;
+$color-green1: #82CC6B !default;
+$color-green2: #73D13D !default;
+$color-green3: #95DE64 !default;
+$color-green4: #B7EB8F !default;
+$color-green5: #C2E7B0 !default;
+$color-green6: #F0F9EB !default;
+
+$color-green-light: $color-green6 !default;
+
+$colors-green: (
+        green:$color-green,
+        green1:$color-green1,
+        green2:$color-green2,
+        green3:$color-green3,
+        green4:$color-green4,
+        green5:$color-green5,
+        green6:$color-green6,
+        green-light:$color-green-light,
+)

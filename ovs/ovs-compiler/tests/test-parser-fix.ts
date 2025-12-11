@@ -54,8 +54,33 @@ const testCases = [
         code: 'div { #{ console.log(1) } }'
     },
     {
-        name: 'OVS - ovsView 声明',
-        code: 'ovsView MyCard(state): div { }'
+        name: 'OVS - view 声明',
+        code: 'view MyCard(state) { div { } }'
+    },
+    {
+        name: 'OVS - view 声明带 props',
+        code: `view Button(props) {
+  button(class = "btn") {
+    props.children
+  }
+}`
+    },
+    {
+        name: 'CssTs - 原子样式声明',
+        code: 'css colorRed'
+    },
+    {
+        name: 'CssTs - 组合样式声明',
+        code: 'css buttonBase = { colorRed, fontBold }'
+    },
+    {
+        name: 'OVS + CssTs - 混合使用',
+        code: `css buttonStyle = { colorRed }
+view Button(props) {
+  button(class = buttonStyle) {
+    props.label
+  }
+}`
     }
 ]
 

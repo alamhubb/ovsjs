@@ -1,6 +1,8 @@
 import {SlimeCstToAst} from "slime-parser/src/language/SlimeCstToAstUtil.ts";
+import {CssTsCstToAst} from "../../../../cssts/src/factory/CssTsCstToAst.ts";
 import SubhutiCst from "subhuti/src/struct/SubhutiCst.ts";
 import OvsParser from "../parser/OvsParser.ts";
+import CssTsParser from "../../../../cssts/src/parser/CssTsParser.ts";
 import {SlimeNodeType} from "slime-ast/src/SlimeNodeType.ts";
 import {
     type SlimeCallExpression,
@@ -123,7 +125,7 @@ export function throwNewError(errorMsg: string = 'syntax error') {
   throw new Error(errorMsg)
 }
 
-export class OvsCstToSlimeAst extends SlimeCstToAst {
+export class OvsCstToSlimeAst extends CssTsCstToAst {
   /**
    * 计数器：标记当前是否在 OvsRenderDomViewDeclaration 内部
    * 用于判断 ExpressionStatement 是否需要转换为 children.push()
@@ -246,10 +248,10 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
   }
 
   /**
-   * 转换 OvsViewDeclaration 为函数声明
+   * 转换 OvsViewDeclaration 为 defineOvsComponent 包装的变量声明
    *
-   * 新语法输入：ovsview ComponentName (state) { div { ... } }
-   * 输出：function ComponentName(state) { ... return div(...) }
+   * 新语法输入：view ComponentName (props) { div { ... } }
+   * 输出：const ComponentName = defineOvsComponent((props) => { ... return div(...) })
    *
    * CST 结构：OvsViewToken, IdentifierName, ArrowFormalParameters?, LBrace, StatementList?, RBrace
    */
@@ -273,7 +275,7 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     if (formalParamsCst) {
       params = this.createArrowFormalParametersAstWrapped(formalParamsCst)
     }
-    // 新语法允许无参数的组件：ovsview MyComponent { div { 'hello' } }
+    // 新语法允许无参数的组件：view MyComponent { div { 'hello' } }
 
     // 3. 提取函数体内的 StatementList
     const statementListName = SlimeParser.prototype.StatementList?.name || 'StatementList'
@@ -315,18 +317,31 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
       { type: 'RBrace', value: '}', loc: cst.loc } as any
     )
 
-    // 6. 创建函数声明
-    const functionDeclaration = {
-      type: 'FunctionDeclaration',
-      id: componentName,
-      params: params,
-      body: functionBody,
-      generator: false,
-      async: false,
-      loc: cst.loc
-    }
+    // 6. 创建箭头函数 (props) => { ... }
+    const arrowFunction = SlimeNodeCreate.createArrowFunctionExpression(
+      functionBody,
+      params,
+      false,
+      false
+    )
 
-    return functionDeclaration
+    // 7. 创建 defineOvsComponent 调用
+    const defineOvsCall = SlimeNodeCreate.createCallExpression(
+      SlimeNodeCreate.createIdentifier('defineOvsComponent'),
+      [arrowFunction]
+    )
+
+    // 8. 创建变量声明: const ComponentName = defineOvsComponent(...)
+    const variableDeclaration = SlimeNodeCreate.createVariableDeclaration(
+      'const',
+      [SlimeNodeCreate.createVariableDeclarator(
+        componentName,
+        SlimeTokenCreate.createAssignToken(),
+        defineOvsCall
+      )]
+    )
+
+    return variableDeclaration
   }
 
   /**
@@ -639,20 +654,29 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
       }
     }
 
-    // 查找 Arguments 节点（组件调用参数）
-    // 使用 SlimeParser.prototype.XXX.name 确保与 Parser 同步
-    const argumentsName = SlimeParser.prototype.Arguments?.name || 'Arguments'
-    const argumentsCst = cst.children?.find(child => child.name === argumentsName)
+    // 查找 OvsArguments 节点（OVS 专属参数语法）
+    // 新语法：div(id = "main", class = { colorRed }) {}
+    const ovsArgumentsName = 'OvsArguments'
+    const ovsArgumentsCst = cst.children?.find(child => child.name === ovsArgumentsName)
     let componentProps: SlimeExpression | null = null
 
-    if (argumentsCst && argumentsCst.children) {
-      // 提取 Arguments 内的参数
-      // Arguments 结构：LParen, ArgumentList?, RParen
-      const argumentListName = SlimeParser.prototype.ArgumentList?.name || 'ArgumentList'
-      const argListCst = argumentsCst.children.find(child => child.name === argumentListName)
-      if (argListCst && argListCst.children?.[0]?.children?.[0]) {
-        // 直接使用第一个参数作为 componentProps
-        componentProps = this.createExpressionAst(argListCst.children[0].children[0])
+    if (ovsArgumentsCst) {
+      // 转换 OvsArguments 为对象表达式
+      componentProps = this.createOvsArgumentsAst(ovsArgumentsCst)
+    } else {
+      // 兼容旧语法：查找普通 Arguments 节点
+      const argumentsName = SlimeParser.prototype.Arguments?.name || 'Arguments'
+      const argumentsCst = cst.children?.find(child => child.name === argumentsName)
+      
+      if (argumentsCst && argumentsCst.children) {
+        // 提取 Arguments 内的参数
+        // Arguments 结构：LParen, ArgumentList?, RParen
+        const argumentListName = SlimeParser.prototype.ArgumentList?.name || 'ArgumentList'
+        const argListCst = argumentsCst.children.find(child => child.name === argumentListName)
+        if (argListCst && argListCst.children?.[0]?.children?.[0]) {
+          // 直接使用第一个参数作为 componentProps
+          componentProps = this.createExpressionAst(argListCst.children[0].children[0])
+        }
       }
     }
 
@@ -1031,6 +1055,255 @@ export class OvsCstToSlimeAst extends SlimeCstToAst {
     const callExpression = SlimeNodeCreate.createCallExpression(parenExpr, [])
 
     return callExpression
+  }
+
+  // ==================== OVS 参数语法转换 ====================
+
+  /**
+   * 转换 OvsArguments CST 为 ObjectExpression AST
+   * 
+   * 输入 CST: OvsArguments -> OvsPropertyDefinitionList -> OvsPropertyDefinition*
+   * 输出 AST: ObjectExpression { properties: SlimeObjectPropertyItem[] }
+   * 
+   * 特殊处理：
+   * - class = { colorRed, fontBold } → class: [OvsCls.colorRed, OvsCls.fontBold]
+   */
+  createOvsArgumentsAst(cst: SubhutiCst): SlimeExpression {
+    const properties: any[] = []
+    
+    // 查找 OvsPropertyDefinitionList
+    const propListCst = cst.children?.find(child => child.name === 'OvsPropertyDefinitionList')
+    
+    if (propListCst && propListCst.children) {
+      const propDefs = propListCst.children.filter(c => c.name === 'OvsPropertyDefinition')
+      
+      for (let i = 0; i < propDefs.length; i++) {
+        const propDefCst = propDefs[i]
+        const prop = this.createOvsPropertyDefinitionAst(propDefCst)
+        if (prop) {
+          // 包装为 ObjectPropertyItem，除了最后一个都需要逗号
+          const needComma = i < propDefs.length - 1
+          properties.push(
+            SlimeNodeCreate.createObjectPropertyItem(
+              prop,
+              needComma ? SlimeTokenCreate.createCommaToken() : undefined
+            )
+          )
+        }
+      }
+    }
+    
+    return SlimeNodeCreate.createObjectExpression(properties)
+  }
+
+  /**
+   * 转换 OvsPropertyDefinition CST 为 Property AST
+   * 
+   * 处理的语法形式：
+   * 1. PropertyName = AssignmentExpression  → { key: value }
+   * 2. MethodDefinition                     → { method() {} }
+   * 3. ... AssignmentExpression             → { ...spread }
+   * 4. IdentifierReference                  → { shorthand: true }
+   * 
+   * 特殊处理 class 属性：
+   * - class = { colorRed, fontBold } → class: [OvsCls.colorRed, OvsCls.fontBold]
+   */
+  createOvsPropertyDefinitionAst(cst: SubhutiCst): any {
+    if (!cst.children || cst.children.length === 0) return null
+    
+    const firstChild = cst.children[0]
+    
+    // 1. 展开属性: ... AssignmentExpression
+    if (firstChild.name === 'Ellipsis' || firstChild.value === '...') {
+      const exprCst = cst.children.find(c => 
+        c.name !== 'Ellipsis' && c.value !== '...'
+      )
+      if (exprCst) {
+        const argument = this.createExpressionAst(exprCst)
+        return SlimeNodeCreate.createSpreadElement(argument, cst.loc)
+      }
+      return null
+    }
+    
+    // 2. 方法定义: MethodDefinition
+    if (firstChild.name === 'MethodDefinition') {
+      // MethodDefinition 在对象字面量中会被转换为 Property with method: true
+      // 先创建 MethodDefinition AST，然后转换为 Property
+      const methodDef = this.createMethodDefinitionAst(null, firstChild)
+      
+      const keyAst = SlimeNodeCreate.createPropertyAst(methodDef.key, methodDef.value)
+      
+      // 继承 MethodDefinition 的 computed 标志
+      if (methodDef.computed) {
+        keyAst.computed = true
+      }
+      
+      // 继承 MethodDefinition 的 kind 标志（getter/setter/method）
+      if (methodDef.kind === 'get' || methodDef.kind === 'set') {
+        keyAst.kind = methodDef.kind
+      } else {
+        // 普通方法使用 method: true
+        keyAst.method = true
+      }
+      
+      keyAst.loc = cst.loc
+      return keyAst
+    }
+    
+    // 3. PropertyName = AssignmentExpression 或 简写属性
+    // 查找 PropertyName
+    const propertyNameCst = cst.children.find(c => c.name === 'PropertyName')
+    
+    // 查找 = 号后的表达式
+    const assignIndex = cst.children.findIndex(c => c.value === '=' || c.name === 'Assign')
+    
+    if (propertyNameCst && assignIndex !== -1) {
+      // 完整属性: name = value
+      const key = this.createPropertyNameAst(propertyNameCst)
+      const keyName = this.getPropertyKeyName(key)
+      
+      // 找到 = 后面的表达式
+      const valueCst = cst.children[assignIndex + 1]
+      if (!valueCst) return null
+      
+      let value = this.createExpressionAst(valueCst)
+      
+      // 特殊处理 class 属性
+      if (keyName === 'class' && value.type === SlimeNodeType.ObjectExpression) {
+        value = this.transformClassObjectToArray(value)
+      }
+      
+      // 使用 createPropertyAst 创建属性
+      const prop = SlimeNodeCreate.createPropertyAst(key, value)
+      prop.loc = cst.loc
+      return prop
+    }
+    
+    // 4. 简写属性: IdentifierReference
+    const idRefCst = cst.children.find(c => c.name === 'IdentifierReference')
+    if (idRefCst) {
+      const id = this.createIdentifierReferenceAst(idRefCst)
+      // 创建简写属性
+      const prop = SlimeNodeCreate.createPropertyAst(id, { ...id })
+      prop.shorthand = true
+      prop.loc = cst.loc
+      return prop
+    }
+    
+    return null
+  }
+
+  /**
+   * 获取属性键的名称（用于判断是否是 class 属性）
+   */
+  private getPropertyKeyName(key: any): string | null {
+    if (key.type === SlimeNodeType.Identifier) {
+      return key.name
+    }
+    if (key.type === SlimeNodeType.Literal && typeof key.value === 'string') {
+      return key.value
+    }
+    return null
+  }
+
+  /**
+   * 转换 class 对象为数组
+   * 
+   * 输入: { colorRed, fontBold }  (ObjectExpression with shorthand properties)
+   * 输出: [OvsCls.colorRed, OvsCls.fontBold]  (ArrayExpression)
+   */
+  private transformClassObjectToArray(objExpr: any): SlimeExpression {
+    const elements: any[] = []
+    
+    if (objExpr.properties) {
+      const propItems = objExpr.properties
+      const totalProps = propItems.length
+      
+      for (let i = 0; i < totalProps; i++) {
+        const propItem = propItems[i]
+        // SlimeObjectPropertyItem 结构: { property: SlimeProperty, commaToken? }
+        const prop = propItem.property || propItem
+        
+        // 只处理简写属性
+        if (prop.shorthand && prop.key && prop.key.type === SlimeNodeType.Identifier) {
+          const className = prop.key.name
+          // 创建 OvsCls.className
+          const memberExpr = SlimeNodeCreate.createMemberExpression(
+            SlimeNodeCreate.createIdentifier('OvsCls'),
+            SlimeTokenCreate.createDotToken(),
+            SlimeNodeCreate.createIdentifier(className)
+          )
+          elements.push(
+            SlimeNodeCreate.createArrayElement(
+              memberExpr,
+              i < totalProps - 1 
+                ? SlimeTokenCreate.createCommaToken() 
+                : undefined
+            )
+          )
+        }
+      }
+    }
+    
+    return SlimeNodeCreate.createArrayExpression(elements)
+  }
+
+  /**
+   * 转换 PropertyName CST 为 AST
+   */
+  private createPropertyNameAst(cst: SubhutiCst): any {
+    if (!cst.children || cst.children.length === 0) return null
+    
+    const child = cst.children[0]
+    
+    // LiteralPropertyName
+    if (child.name === 'LiteralPropertyName') {
+      return this.createLiteralPropertyNameAst(child)
+    }
+    
+    // ComputedPropertyName
+    if (child.name === 'ComputedPropertyName') {
+      return this.createComputedPropertyNameAst(child)
+    }
+    
+    return null
+  }
+
+  /**
+   * 转换 LiteralPropertyName CST 为 AST
+   */
+  private createLiteralPropertyNameAst(cst: SubhutiCst): any {
+    if (!cst.children || cst.children.length === 0) return null
+    
+    const child = cst.children[0]
+    
+    // IdentifierName
+    if (child.name === 'IdentifierName' || child.value) {
+      const name = child.value || child.children?.[0]?.value
+      return SlimeNodeCreate.createIdentifier(name)
+    }
+    
+    // StringLiteral / NumericLiteral
+    if (child.name === 'StringLiteral' || child.name === 'NumericLiteral') {
+      return this.createLiteralAst(child)
+    }
+    
+    return null
+  }
+
+  /**
+   * 转换 ComputedPropertyName CST 为 AST
+   */
+  private createComputedPropertyNameAst(cst: SubhutiCst): any {
+    // [expression]
+    const exprCst = cst.children?.find(c => 
+      c.name !== 'LBracket' && c.name !== 'RBracket' && 
+      c.value !== '[' && c.value !== ']'
+    )
+    if (exprCst) {
+      return this.createExpressionAst(exprCst)
+    }
+    return null
   }
 
 }

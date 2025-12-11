@@ -109,6 +109,12 @@ function usesOvsHtmlTag(ast: SlimeProgram): boolean {
     return code.includes('$OvsHtmlTag')
 }
 
+/** 检查 AST 中是否使用了 defineOvsComponent */
+function usesDefineOvsComponent(ast: SlimeProgram): boolean {
+    const code = JSON.stringify(ast)
+    return code.includes('defineOvsComponent')
+}
+
 /** 确保有 $OvsHtmlTag 的导入 */
 function ensureOvsHtmlTagImport(imports: any[]): any[] {
     // 检查是否已经有 ovsjs 的导入
@@ -162,8 +168,17 @@ function wrapTopLevelExpressions(ast: SlimeProgram, sourceCode: string): SlimePr
     }
 
     if (hasAnyExport || expressions.length === 0) {
-        // 即使有 export，也需要检查并添加 $OvsHtmlTag 导入
+        // 即使有 export，也需要检查并添加必要的导入
+        let needsRebuild = false
         if (usesOvsHtmlTag(ast)) {
+            imports = ensureOvsHtmlTagImport(imports)
+            needsRebuild = true
+        }
+        if (usesDefineOvsComponent(ast)) {
+            imports = ensureDefineOvsComponentImport(imports)
+            needsRebuild = true
+        }
+        if (needsRebuild) {
             // 重建 AST，将新的 imports 放入
             const newBody = [...imports, ...ast.body.filter(s => s.type !== SlimeNodeType.ImportDeclaration)]
             return SlimeAstUtil.createProgram(newBody as any, SlimeProgramSourceType.Module)

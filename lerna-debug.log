@@ -1,0 +1,29 @@
+0 silly argv {"_":["version"],"force-publish":true,"forcePublish":true,"yes":true,"y":true,"push":false,"git-tag-version":false,"gitTagVersion":false,"lernaVersion":"4.9.4","$0":"node_modules\\@lerna-lite\\cli\\dist\\cli.js","bump":"from-git"}
+1 notice cli v4.9.4
+2 verbose rootPath D:\project\qkyproject\test-volar
+3 verbose project packages ovs/ovs-runtime ovs/ovs-compiler subhuti slime/packages/slime-token slime/packages/slime-ast slime/packages/slime-parser slime/packages/slime-generator create-ovs vite-plugin-ovs
+4 info current project version 0.2.2
+5 notice FYI git repository validation has been skipped, please ensure your version bumps are correct
+6 silly hasTags
+7 verbose hasTags filter for tags with 'v*' pattern
+8 verbose hasTags true
+9 verbose git-describe.sync "v*" => "v0.1.9-24-g015b9bab1-dirty"
+10 silly git-describe parsed => {"lastTagName":"v0.1.9","lastVersion":"v0.1.9","refCount":"24","sha":"015b9bab1","isDirty":true}
+11 warn force-publish all packages
+12 info Assuming all packages changed
+13 verbose updated create-ovs
+14 verbose updated ovs-compiler
+15 verbose updated ovsjs
+16 verbose updated slime-ast
+17 verbose updated slime-generator
+18 verbose updated slime-parser
+19 verbose updated slime-token
+20 verbose updated subhuti
+21 verbose updated vite-plugin-ovs
+22 warn version Skipping working tree validation, proceed at your own risk
+23 error TypeError: Invalid Version:
+23 error     at new SemVer (D:\project\qkyproject\test-volar\node_modules\semver\classes\semver.js:40:13)
+23 error     at parse (D:\project\qkyproject\test-volar\node_modules\semver\functions\parse.js:9:12)
+23 error     at Object.diff (D:\project\qkyproject\test-volar\node_modules\semver\functions\diff.js:7:14)
+23 error     at isBreakingChange (file:///D:/project/qkyproject/test-volar/node_modules/@lerna-lite/version/dist/lib/is-breaking-change.js:3:32)
+23 error     at VersionCommand.setUpdatesForVersions (file:///D:/project/qkyproject/test-volar/node_modules/@lerna-lite/version/dist/version-command.js:316:58)

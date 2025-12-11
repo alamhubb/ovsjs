@@ -1,0 +1,24 @@
+$color-orange: #FF7800 !default;
+$color-orange1: #FF9429 !default;
+$color-orange2: #FFC069 !default;
+$color-orange3: #FFAE52 !default;
+$color-orange4: #FFC67A !default;
+$color-orange5: #FFDAA3 !default;
+$color-orange6: #FFF6E6 !default;
+$color-orange7: #F5DAB1 !default;
+$color-orange8: #FDF6EC !default;
+
+$color-orange-light: $color-orange5 !default;
+
+$colors-orange: (
+        orange:$color-orange,
+        orange1:$color-orange1,
+        orange2:$color-orange2,
+        orange3:$color-orange3,
+        orange4:$color-orange4,
+        orange5:$color-orange5,
+        orange6:$color-orange6,
+        orange7:$color-orange7,
+        orange8:$color-orange8,
+        orange-light:$color-orange-light,
+)

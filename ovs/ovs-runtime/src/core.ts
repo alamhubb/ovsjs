@@ -39,12 +39,25 @@ export function mapChildrenToVNodes(children: unknown): any {
 
 /**
  * 定义 OVS 组件
+ * 
+ * OVS 简化了 Vue 的概念，将 props、attrs、slots 统一为 props：
+ * - props.xxx     - 所有属性（包括 Vue 的 props 和 attrs）
+ * - props.children - 子内容（Vue 的 slots.default）
+ * - props.onXxx   - 事件回调
  */
 export function defineOvsComponent(
     factory: (props: Record<string, any>) => any
 ) {
-    const component = defineComponent((props) => {
-        const result = factory(props)
+    const component = defineComponent((props, { slots, attrs }) => {
+        // 合并 props + attrs + children，统一为 OVS 的 props
+        const unifiedProps = {
+            ...attrs,       // 未声明的属性（class、style、data-* 等）
+            ...props,       // 声明的属性
+            get children() {
+                return slots.default ? slots.default() : undefined
+            }
+        }
+        const result = factory(unifiedProps)
         if (isDefineComponent(result)) {
             return () => h(result)
         }

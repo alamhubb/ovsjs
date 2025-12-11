@@ -1,0 +1,30 @@
+.shadow-none {
+  box-shadow: none;
+}
+
+.shadow {
+  box-shadow: 0 1px 5px -1px rgba(0, 0, 0, .1);
+}
+
+.shadow-3 {
+  box-shadow: 0 -1px 3px -1px rgba(0, 0, 0, .12);
+}
+
+//h-shadow v-shadow blur spread color inset;
+//10px 10px 100px #500606
+// 向右偏移 下偏移 扩展的模糊区域 阴影大小 背景色
+.shadow-top {
+  box-shadow: 0 -3px 3px -3px rgba(0, 0, 0, .12);
+}
+
+.shadow-bottom {
+  box-shadow: 0 1px 5px rgba(0, 0, 0, .1);
+}
+
+.shadow-right {
+  box-shadow: 3px 0 3px -3px rgba(0, 0, 0, .12);
+}
+
+.shadow-5 {
+  box-shadow: 0 0 8px 0 rgba(0, 0, 0, 0.15);
+}
