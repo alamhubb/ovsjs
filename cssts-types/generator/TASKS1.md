@@ -236,6 +236,7 @@ type NumericType =
       max?: number         // 最大值
       step?: number        // 步长
       presets?: number[]   // 额外预设值（与步长生成的值合并）
+      negative?: boolean   // 是否支持负数（默认 false）
     }
 ```
 
@@ -256,7 +257,8 @@ export const globalDefaults = {
 1. **zero 类型** → 返回 `[0]`
 2. **使用配置的 min/max/step**，未配置的使用全局默认值
 3. **特殊情况**：`min=0, max=1` 时，默认 `step=0.1`（适用于 opacity 等）
-4. **presets 合并**：额外预设值与步长生成的值合并（去重并排序）
+4. **negative 支持**：如果 `negative=true`，遍历时同时 push 正负值
+5. **presets 合并**：额外预设值与步长生成的值合并（去重并排序）
 
 ```typescript
 // 示例：ratio 类型配置
@@ -266,6 +268,15 @@ const ratio: NumericType = {
   presets: [33.33, 66.67]  // 常用的三等分值
 }
 // 生成: [1, 2, 3, ..., 33.33, ..., 66.67, ..., 100]
+
+// 示例：支持负数的大像素值
+const largePxNeg: NumericType = { 
+  unit: 'px', 
+  value: 'integer',
+  max: 10000,
+  negative: true
+}
+// 生成: [-10000, ..., -2, -1, 1, 2, ..., 10000]
 ```
 
 ### 属性配置 (property-numeric-config.ts)
@@ -304,9 +315,19 @@ const alpha: NumericType = { unit: 'unitless', value: 'number', min: 0, max: 1 }
 
 /** 字重 (1-1000, step 100) */
 const fontWeight: NumericType = { unit: 'unitless', value: 'integer', min: 1, max: 1000, step: 100 }
+
+/** 大像素值 (max: 10000) - 用于 width、height、padding */
+const heightWidthPx: NumericType = { unit: 'px', value: 'integer', max: 10000 }
 ```
 
-#### 属性配置示例
+#### 待添加的抽象常量（支持负数）
+
+```typescript
+/** 大像素值 + 支持负数 (用于 margin、定位) */
+const largePxNeg: NumericType = { unit: 'px', value: 'integer', max: 10000, negative: true }
+
+/** 支持负数的整数 (用于 z-index、order) */
+const intNeg: NumericType = { unit
 
 ```typescript
 export const propertyNumericTypes: Record<string, NumericType[]> = {
