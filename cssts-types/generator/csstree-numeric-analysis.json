@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2025-12-12T10:24:39.567Z",
+  "generatedAt": "2025-12-12T10:42:51.983Z",
   "source": "css-tree",
   "typesWithRange": {
     "cubic-bezier-timing-function": {
@@ -183,6 +183,7 @@
       "numericTypes": [
         "<image>"
       ],
+      "complexOnly": true,
       "category": "background"
     },
     {
@@ -336,6 +337,7 @@
       "numericTypes": [
         "<image>"
       ],
+      "complexOnly": true,
       "category": "border"
     },
     {
@@ -724,6 +726,7 @@
       "numericTypes": [
         "<filter-function>"
       ],
+      "complexOnly": true,
       "category": "other"
     },
     {
@@ -761,6 +764,7 @@
       "numericTypes": [
         "<shadow>"
       ],
+      "complexOnly": true,
       "category": "other"
     },
     {
@@ -776,6 +780,7 @@
       "numericTypes": [
         "<shape>"
       ],
+      "complexOnly": true,
       "category": "other"
     },
     {
@@ -858,6 +863,7 @@
       "numericTypes": [
         "<image>"
       ],
+      "complexOnly": true,
       "category": "other"
     },
     {
@@ -917,6 +923,7 @@
       "numericTypes": [
         "<filter-function>"
       ],
+      "complexOnly": true,
       "category": "other"
     },
     {
@@ -969,6 +976,7 @@
       "numericTypes": [
         "<image>"
       ],
+      "complexOnly": true,
       "category": "other"
     },
     {
@@ -1002,6 +1010,7 @@
       "numericTypes": [
         "<image>"
       ],
+      "complexOnly": true,
       "category": "other"
     },
     {
@@ -1019,6 +1028,7 @@
       "numericTypes": [
         "<image>"
       ],
+      "complexOnly": true,
       "category": "other"
     },
     {
@@ -1769,6 +1779,7 @@
       "numericTypes": [
         "<transform-function>"
       ],
+      "complexOnly": true,
       "category": "transform"
     },
     {
@@ -2004,7 +2015,8 @@
       "numericTypes": [
         "<shape>"
       ],
-      "deprecated": true
+      "deprecated": true,
+      "complexOnly": true
     },
     {
       "property": "-moz-outline-radius",
@@ -2293,7 +2305,8 @@
       "numericTypes": [
         "<image>"
       ],
-      "deprecated": true
+      "deprecated": true,
+      "complexOnly": true
     },
     {
       "property": "-webkit-mask-position",
@@ -2374,8 +2387,9 @@
   "stats": {
     "typesWithRange": 11,
     "propertiesTotal": 285,
-    "propertiesStandard": 214,
+    "propertiesStandard": 203,
     "propertiesColor": 38,
+    "propertiesComplexOnly": 13,
     "propertiesDeprecated": 50
   }
 }

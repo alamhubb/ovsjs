@@ -16,6 +16,7 @@ interface PropertyNumericInfo {
   numericTypes: string[]
   deprecated?: boolean      // 浏览器前缀属性标记为过时
   colorProperty?: boolean   // 颜色属性（由设计系统处理）
+  complexOnly?: boolean     // 只有复杂类型（<image>、<filter-function> 等），没有真正的数值类型
   category?: string         // 属性分类
 }
 
@@ -121,6 +122,20 @@ function isColorProperty(numericTypes: string[]): boolean {
 }
 
 /**
+ * 判断属性是否只有复杂类型（没有真正的数值类型）
+ * 
+ * 复杂类型包括：<image>、<filter-function>、<transform-function>、<shadow>、<shape> 等
+ * 这些属性不需要生成数值原子类
+ */
+function isComplexOnlyProperty(numericTypes: string[]): boolean {
+  // 真正的数值类型（不包括 <xxx> 复杂类型）
+  const realNumericTypes = numericTypes.filter(t => !t.startsWith('<'))
+  
+  // 如果没有真正的数值类型，只有复杂类型，则标记为 complexOnly
+  return realNumericTypes.length === 0
+}
+
+/**
  * 获取属性分类
  */
 function getPropertyCategory(property: string): string {
@@ -207,6 +222,11 @@ function getPropertyNumericInfo(): PropertyNumericInfo[] {
       // 标记颜色属性（由设计系统处理）
       if (isColorProperty(numericTypes)) {
         info.colorProperty = true
+      }
+      
+      // 标记只有复杂类型的属性（不需要生成数值原子类）
+      if (!info.colorProperty && isComplexOnlyProperty(numericTypes)) {
+        info.complexOnly = true
       }
       
       // 添加分类（只对非过时属性）
@@ -371,8 +391,9 @@ async function main() {
     stats: {
       typesWithRange: Object.keys(typesWithRange).length,
       propertiesTotal: propertyInfo.length,
-      propertiesStandard: propertyInfo.filter(p => !p.deprecated && !p.colorProperty).length,
+      propertiesStandard: propertyInfo.filter(p => !p.deprecated && !p.colorProperty && !p.complexOnly).length,
       propertiesColor: propertyInfo.filter(p => p.colorProperty).length,
+      propertiesComplexOnly: propertyInfo.filter(p => p.complexOnly).length,
       propertiesDeprecated: propertyInfo.filter(p => p.deprecated).length,
     }
   }
@@ -392,6 +413,7 @@ async function main() {
   console.log('\n📊 统计:')
   console.log(`   标准属性: ${output.stats.propertiesStandard}`)
   console.log(`   颜色属性 (由设计系统处理): ${output.stats.propertiesColor}`)
+  console.log(`   复杂类型属性 (无数值): ${output.stats.propertiesComplexOnly}`)
   console.log(`   过时属性 (浏览器前缀): ${output.stats.propertiesDeprecated}`)
   console.log(`   总计: ${output.stats.propertiesTotal}`)
 }
