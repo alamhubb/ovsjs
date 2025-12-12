@@ -86,7 +86,11 @@ function isSideEffectExpression(expr: SlimeExpression): boolean {
   return false
 }
 
-/** 创建 callee 表达式：HTML 标签返回 $OvsHtmlTag.xxx，其他返回标识符 */
+/** 
+ * 创建 callee 表达式
+ * - HTML 标签返回 $OvsHtmlTag.xxx
+ * - 用户组件返回标识符（需要配合 h() 使用）
+ */
 function createCalleeForTag(tagName: string, loc?: any): SlimeExpression {
   if (isHtmlTag(tagName)) {
     // HTML 标签 → $OvsHtmlTag.tagName
@@ -111,6 +115,11 @@ function createCalleeForTag(tagName: string, loc?: any): SlimeExpression {
     if (loc) id.loc = loc
     return id
   }
+}
+
+/** 检查标签名是否是用户组件（非 HTML 标签） */
+function isUserComponent(tagName: string): boolean {
+  return !isHtmlTag(tagName)
 }
 
 export function checkCstName(cst: SubhutiCst, cstName: string) {
@@ -247,102 +256,89 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
     return super.createDeclarationAst(cst)
   }
 
-  /**
-   * 转换 OvsViewDeclaration 为 defineOvsComponent 包装的变量声明
-   *
-   * 新语法输入：view ComponentName (props) { div { ... } }
-   * 输出：const ComponentName = defineOvsComponent((props) => { ... return div(...) })
-   *
-   * CST 结构：OvsViewToken, IdentifierName, ArrowFormalParameters?, LBrace, StatementList?, RBrace
-   */
-  createOvsViewDeclarationAst(cst: SubhutiCst): any {
-    checkCstName(cst, OvsParser.prototype.OvsViewDeclaration.name)
+    /**
+     * 转换 OvsViewDeclaration 为函数声明
+     *
+     * 新语法输入：view ComponentName (props) { div { ... } }
+     * 输出：function ComponentName(props) { ... return div(...) }
+     *
+     * CST 结构：OvsViewToken, IdentifierName, ArrowFormalParameters?, LBrace, StatementList?, RBrace
+     */
+    createOvsViewDeclarationAst(cst: SubhutiCst): any {
+        checkCstName(cst, OvsParser.prototype.OvsViewDeclaration.name)
 
-    const children = cst.children || []
+        const children = cst.children || []
 
-    // 1. 提取组件名（第2个子节点：IdentifierName）
-    const componentNameCst = children[1]
-    if (!componentNameCst) {
-      throw new Error('OvsViewDeclaration: missing component name')
-    }
-    const componentName = this.createIdentifierAst(componentNameCst)
-
-    // 2. 提取参数（可选的 ArrowFormalParameters）
-    let params: any[] = []
-    const arrowFormalParamsName = SlimeParser.prototype.ArrowFormalParameters?.name || 'ArrowFormalParameters'
-    const formalParamsCst = children.find(c => c.name === arrowFormalParamsName)
-
-    if (formalParamsCst) {
-      params = this.createArrowFormalParametersAstWrapped(formalParamsCst)
-    }
-    // 新语法允许无参数的组件：view MyComponent { div { 'hello' } }
-
-    // 3. 提取函数体内的 StatementList
-    const statementListName = SlimeParser.prototype.StatementList?.name || 'StatementList'
-    const statementListCst = children.find(c => c.name === statementListName)
-
-    let functionBodyStatements: SlimeStatement[] = []
-
-    if (statementListCst) {
-      // 转换 StatementList
-      functionBodyStatements = this.createStatementListAst(statementListCst)
-    }
-
-    // 4. 处理函数体：检查最后一条语句
-    // 如果最后一条是 ExpressionStatement 且表达式是 OvsRenderFunction 调用，
-    // 需要将其转换为 return 语句
-    if (functionBodyStatements.length > 0) {
-      const lastStmt = functionBodyStatements[functionBodyStatements.length - 1]
-
-      // 检查是否是 ExpressionStatement
-      if (lastStmt.type === SlimeNodeType.ExpressionStatement) {
-        const expr = (lastStmt as SlimeExpressionStatement).expression
-
-        // 检查是否是 CallExpression（OvsRenderFunction 转换后的结果）
-        // 简单视图：$OvsHtmlTag.div({}, [...])
-        // 复杂视图：(function() { ... })() - IIFE
-        if (expr.type === SlimeNodeType.CallExpression) {
-          // 将最后的表达式语句转换为 return 语句
-          functionBodyStatements[functionBodyStatements.length - 1] =
-            SlimeNodeCreate.createReturnStatement(expr)
+        // 1. 提取组件名（第2个子节点：IdentifierName）
+        const componentNameCst = children[1]
+        if (!componentNameCst) {
+            throw new Error('OvsViewDeclaration: missing component name')
         }
-      }
+        const componentName = this.createIdentifierAst(componentNameCst)
+
+        // 2. 提取参数（可选的 ArrowFormalParameters）
+        let params: any[] = []
+        const arrowFormalParamsName = SlimeParser.prototype.ArrowFormalParameters?.name || 'ArrowFormalParameters'
+        const formalParamsCst = children.find(c => c.name === arrowFormalParamsName)
+
+        if (formalParamsCst) {
+            params = this.createArrowFormalParametersAstWrapped(formalParamsCst)
+        }
+        // 新语法允许无参数的组件：view MyComponent { div { 'hello' } }
+
+        // 3. 提取函数体内的 StatementList
+        const statementListName = SlimeParser.prototype.StatementList?.name || 'StatementList'
+        const statementListCst = children.find(c => c.name === statementListName)
+
+        let functionBodyStatements: SlimeStatement[] = []
+
+        if (statementListCst) {
+            // 转换 StatementList
+            functionBodyStatements = this.createStatementListAst(statementListCst)
+        }
+
+        // 4. 处理函数体：检查最后一条语句
+        // 如果最后一条是 ExpressionStatement 且表达式是 OvsRenderFunction 调用，
+        // 需要将其转换为 return 语句
+        if (functionBodyStatements.length > 0) {
+            const lastStmt = functionBodyStatements[functionBodyStatements.length - 1]
+
+            // 检查是否是 ExpressionStatement
+            if (lastStmt.type === SlimeNodeType.ExpressionStatement) {
+                const expr = (lastStmt as SlimeExpressionStatement).expression
+
+                // 检查是否是 CallExpression（OvsRenderFunction 转换后的结果）
+                // 简单视图：$OvsHtmlTag.div({}, [...])
+                // 复杂视图：(function() { ... })() - IIFE
+                if (expr.type === SlimeNodeType.CallExpression) {
+                    // 将最后的表达式语句转换为 return 语句
+                    functionBodyStatements[functionBodyStatements.length - 1] =
+                        SlimeNodeCreate.createReturnStatement(expr)
+                }
+            }
+        }
+
+        // 5. 创建函数体
+        const functionBody = SlimeNodeCreate.createBlockStatement(
+            functionBodyStatements,
+            cst.loc,
+            { type: 'LBrace', value: '{', loc: cst.loc } as any,
+            { type: 'RBrace', value: '}', loc: cst.loc } as any
+        )
+
+        // 创建函数声明（手动构造AST节点）
+        const functionDeclaration = {
+            type: 'FunctionDeclaration',
+            id: componentName,
+            params: params,
+            body: functionBody,
+            generator: false,
+            async: false,
+            loc: cst.loc
+        }
+
+        return functionDeclaration
     }
-
-    // 5. 创建函数体
-    const functionBody = SlimeNodeCreate.createBlockStatement(
-      functionBodyStatements,
-      cst.loc,
-      { type: 'LBrace', value: '{', loc: cst.loc } as any,
-      { type: 'RBrace', value: '}', loc: cst.loc } as any
-    )
-
-    // 6. 创建箭头函数 (props) => { ... }
-    const arrowFunction = SlimeNodeCreate.createArrowFunctionExpression(
-      functionBody,
-      params,
-      false,
-      false
-    )
-
-    // 7. 创建 defineOvsComponent 调用
-    const defineOvsCall = SlimeNodeCreate.createCallExpression(
-      SlimeNodeCreate.createIdentifier('defineOvsComponent'),
-      [arrowFunction]
-    )
-
-    // 8. 创建变量声明: const ComponentName = defineOvsComponent(...)
-    const variableDeclaration = SlimeNodeCreate.createVariableDeclaration(
-      'const',
-      [SlimeNodeCreate.createVariableDeclarator(
-        componentName,
-        SlimeTokenCreate.createAssignToken(),
-        defineOvsCall
-      )]
-    )
-
-    return variableDeclaration
-  }
 
   /**
    * Override: 处理 StatementList，支持 NoRenderBlock
