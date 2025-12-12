@@ -1,111 +1,15 @@
 /**
  * 属性到数值类型的映射配置
- * 手动配置：定义每个属性的数值生成规则（css-tree 无法提供）
+ * 定义每个 CSS 属性支持的数值类型（unit + value）
  */
 
-// ============ 基础 NumericType 对象 ============
+import type { NumericType } from './types'
 
-/** px 整数（渐进步长） */
-const pxInt = { unit: 'px', value: 'integer' }
-
-/** px 整数（渐进步长，支持负数） */
-const pxIntNeg = { ...pxInt, allowNegative: true }
-
-/** ratio 百分比（0-100，步长5） */
-const ratio100 = { unit: 'ratio', value: 'number', range: { min: 0, max: 100, step: 5 } }
-
-/** ratio 百分比（-100到100，步长5，支持负数） */
-const ratio100Neg = { ...ratio100, allowNegative: true, range: { min: -100, max: 100, step: 5 } }
-
-/** rem（0-5，步长0.25） */
-const rem5 = { unit: 'rem', value: 'number', range: { min: 0, max: 5, step: 0.25 } }
-
-/** 边框宽度 px（0-20，步长1） */
-const pxBorder = { ...pxInt, range: { min: 0, max: 20, step: 1 } }
-
-/** 圆角 px（0-100，步长2） */
-const pxRadius = { ...pxInt, range: { min: 0, max: 100, step: 2 } }
-
-/** 角度（-360到360，步长15） */
-const deg360 = { unit: 'deg', value: 'number', allowNegative: true, range: { min: -360, max: 360, step: 15 } }
-
-/** 时间 ms（0-2000，步长50） */
-const ms2000 = { unit: 'ms', value: 'integer', range: { min: 0, max: 2000, step: 50 } }
-
-/** 透明度（0-1，步长0.05） */
-const unitlessOpacity = { unit: 'unitless', value: 'number', range: { min: 0, max: 1, step: 0.05 } }
-
-/** 层级（-10到9999，步长1） */
-const unitlessZIndex = { unit: 'unitless', value: 'integer', allowNegative: true, range: { min: -10, max: 9999, step: 1 } }
-
-/** 行高（1-3，步长0.1） */
-const unitlessLineHeight = { unit: 'unitless', value: 'number', range: { min: 1, max: 3, step: 0.1 } }
-
-/** 字重（1-1000，步长100） */
-const unitlessFontWeight = { unit: 'unitless', value: 'integer', range: { min: 1, max: 1000, step: 100 } }
-
-/** flex 增长/收缩（0-10，步长1） */
-const unitlessFlex = { unit: 'unitless', value: 'number', range: { min: 0, max: 10, step: 1 } }
-
-/** 排序（-10到10，步长1） */
-const unitlessOrder = { unit: 'unitless', value: 'integer', allowNegative: true, range: { min: -10, max: 10, step: 1 } }
-
-// ============ 预设模板（NumericType 数组） ============
-
-/** 间距（不支持负数）- padding 系列 */
-const spacing = [pxInt]
-
-/** 间距（支持负数）- margin 系列 */
-const spacingNegative = [pxIntNeg]
-
-/** 尺寸 - width, height 系列 */
-const sizing = [pxInt, ratio100]
-
-/** 定位 - top, right, bottom, left */
-const positioning = [pxIntNeg, ratio100Neg]
-
-/** 边框宽度 */
-const borderWidth = [pxBorder]
-
-/** 圆角 */
-const borderRadius = [pxRadius]
-
-/** 字体大小 */
-const fontSize = [pxInt, rem5]
-
-/** 字间距 */
-const letterSpacing = [pxIntNeg]
-
-/** 角度 */
-const angle = [deg360]
-
-/** 时间 */
-const duration = [ms2000]
-
-/** 透明度 */
-const opacity = [unitlessOpacity]
-
-/** 层级 */
-const zIndex = [unitlessZIndex]
-
-/** 行高 */
-const lineHeight = [unitlessLineHeight]
-
-/** 字重 */
-const fontWeight = [unitlessFontWeight]
-
-/** flex 增长/收缩 */
-const flexGrowShrink = [unitlessFlex]
-
-/** 排序 */
-const order = [unitlessOrder]
-
-/** 间隙 */
-const gap = [pxInt]
-
-// ============ 属性映射（自动生成，按分类排序） ============
-
-export const propertyNumericTypes = {
+/**
+ * CSS 属性到数值类型的映射
+ * 每个属性对应一个 NumericType[] 数组
+ */
+export const propertyNumericTypes: Record<string, NumericType[]> = {
   // ========== sizing ==========
   'height': [{ unit: 'zero', value: 'integer' }, { unit: 'px', value: 'integer' }, { unit: 'ratio', value: 'number' }],
   'max-height': [{ unit: 'zero', value: 'integer' }, { unit: 'px', value: 'integer' }, { unit: 'ratio', value: 'number' }],
@@ -187,7 +91,6 @@ export const propertyNumericTypes = {
   'border-end-start-radius': [{ unit: 'zero', value: 'integer' }, { unit: 'px', value: 'integer' }, { unit: 'ratio', value: 'number' }],
   'border-image-outset': [{ unit: 'zero', value: 'integer' }, { unit: 'px', value: 'integer' }, { unit: 'unitless', value: 'number' }],
   'border-image-slice': [{ unit: 'unitless', value: 'number' }, { unit: 'ratio', value: 'number' }],
-
   'border-image-width': [{ unit: 'zero', value: 'integer' }, { unit: 'px', value: 'integer' }, { unit: 'ratio', value: 'number' }, { unit: 'unitless', value: 'number' }],
   'border-left': [{ unit: 'zero', value: 'integer' }, { unit: 'px', value: 'integer' }],
   'border-left-width': [{ unit: 'zero', value: 'integer' }, { unit: 'px', value: 'integer' }],
@@ -207,7 +110,6 @@ export const propertyNumericTypes = {
 
   // ========== background ==========
   'background': [{ unit: 'zero', value: 'integer' }, { unit: 'px', value: 'integer' }, { unit: 'ratio', value: 'number' }],
-
   'background-position': [{ unit: 'zero', value: 'integer' }, { unit: 'px', value: 'integer' }, { unit: 'ratio', value: 'number' }],
   'background-position-x': [{ unit: 'zero', value: 'integer' }, { unit: 'px', value: 'integer' }, { unit: 'ratio', value: 'number' }],
   'background-position-y': [{ unit: 'zero', value: 'integer' }, { unit: 'px', value: 'integer' }, { unit: 'ratio', value: 'number' }],
@@ -221,7 +123,6 @@ export const propertyNumericTypes = {
   'perspective': [{ unit: 'zero', value: 'integer' }, { unit: 'px', value: 'integer' }],
   'rotate': [{ unit: 'zero', value: 'integer' }, { unit: 'deg', value: 'number' }],
   'scale': [{ unit: 'unitless', value: 'number' }, { unit: 'ratio', value: 'number' }],
-
   'transform-origin': [{ unit: 'zero', value: 'integer' }, { unit: 'px', value: 'integer' }, { unit: 'ratio', value: 'number' }],
   'translate': [{ unit: 'zero', value: 'integer' }, { unit: 'px', value: 'integer' }, { unit: 'ratio', value: 'number' }],
 
@@ -270,13 +171,10 @@ export const propertyNumericTypes = {
   // ========== other ==========
   'aspect-ratio': [{ unit: 'unitless', value: 'number' }],
   'azimuth': [{ unit: 'deg', value: 'number' }],
-
   'baseline-shift': [{ unit: 'zero', value: 'integer' }, { unit: 'px', value: 'integer' }, { unit: 'ratio', value: 'number' }],
   'box-flex': [{ unit: 'unitless', value: 'number' }],
   'box-flex-group': [{ unit: 'unitless', value: 'integer' }],
   'box-ordinal-group': [{ unit: 'unitless', value: 'integer' }],
-
-
   'clip-path': [{ unit: 'zero', value: 'integer' }, { unit: 'px', value: 'integer' }, { unit: 'ratio', value: 'number' }],
   'column-count': [{ unit: 'unitless', value: 'integer' }],
   'column-width': [{ unit: 'zero', value: 'integer' }, { unit: 'px', value: 'integer' }],
@@ -285,27 +183,22 @@ export const propertyNumericTypes = {
   'contain-intrinsic-inline-size': [{ unit: 'zero', value: 'integer' }, { unit: 'px', value: 'integer' }],
   'contain-intrinsic-size': [{ unit: 'zero', value: 'integer' }, { unit: 'px', value: 'integer' }],
   'contain-intrinsic-width': [{ unit: 'zero', value: 'integer' }, { unit: 'px', value: 'integer' }],
-
   'counter-increment': [{ unit: 'unitless', value: 'integer' }],
   'counter-reset': [{ unit: 'unitless', value: 'integer' }],
   'counter-set': [{ unit: 'unitless', value: 'integer' }],
   'cursor': [{ unit: 'unitless', value: 'number' }],
   'cx': [{ unit: 'zero', value: 'integer' }, { unit: 'px', value: 'integer' }, { unit: 'ratio', value: 'number' }],
   'cy': [{ unit: 'zero', value: 'integer' }, { unit: 'px', value: 'integer' }, { unit: 'ratio', value: 'number' }],
-
   'glyph-orientation-horizontal': [{ unit: 'deg', value: 'number' }],
   'glyph-orientation-vertical': [{ unit: 'deg', value: 'number' }],
   'hyphenate-limit-chars': [{ unit: 'unitless', value: 'integer' }],
   'image-orientation': [{ unit: 'deg', value: 'number' }],
   'initial-letter': [{ unit: 'unitless', value: 'number' }],
   'kerning': [{ unit: 'zero', value: 'integer' }, { unit: 'px', value: 'integer' }, { unit: 'ratio', value: 'number' }],
-
   'mask': [{ unit: 'zero', value: 'integer' }, { unit: 'px', value: 'integer' }, { unit: 'ratio', value: 'number' }],
   'mask-border-outset': [{ unit: 'zero', value: 'integer' }, { unit: 'px', value: 'integer' }, { unit: 'unitless', value: 'number' }],
   'mask-border-slice': [{ unit: 'unitless', value: 'number' }, { unit: 'ratio', value: 'number' }],
-
   'mask-border-width': [{ unit: 'zero', value: 'integer' }, { unit: 'px', value: 'integer' }, { unit: 'ratio', value: 'number' }, { unit: 'unitless', value: 'number' }],
-
   'mask-position': [{ unit: 'zero', value: 'integer' }, { unit: 'px', value: 'integer' }, { unit: 'ratio', value: 'number' }],
   'mask-size': [{ unit: 'zero', value: 'integer' }, { unit: 'px', value: 'integer' }, { unit: 'ratio', value: 'number' }],
   'math-depth': [{ unit: 'unitless', value: 'integer' }],
@@ -343,116 +236,4 @@ export const propertyNumericTypes = {
   'x': [{ unit: 'zero', value: 'integer' }, { unit: 'px', value: 'integer' }, { unit: 'ratio', value: 'number' }],
   'y': [{ unit: 'zero', value: 'integer' }, { unit: 'px', value: 'integer' }, { unit: 'ratio', value: 'number' }],
   'zoom': [{ unit: 'unitless', value: 'number' }, { unit: 'ratio', value: 'number' }],
-}
-
-// ============ 旧版属性映射（参考用） ============
-
-export const propertyNumericTypesOld = {
-  // 尺寸
-  'width': sizing,
-  'height': sizing,
-  'min-width': sizing,
-  'max-width': sizing,
-  'min-height': sizing,
-  'max-height': sizing,
-
-  // padding（不支持负数）
-  'padding': spacing,
-  'padding-top': spacing,
-  'padding-right': spacing,
-  'padding-bottom': spacing,
-  'padding-left': spacing,
-
-  // margin（支持负数）
-  'margin': spacingNegative,
-  'margin-top': spacingNegative,
-  'margin-right': spacingNegative,
-  'margin-bottom': spacingNegative,
-  'margin-left': spacingNegative,
-
-  // 间隙
-  'gap': gap,
-  'row-gap': gap,
-  'column-gap': gap,
-
-  // 定位
-  'top': positioning,
-  'right': positioning,
-  'bottom': positioning,
-  'left': positioning,
-  'inset': positioning,
-
-  // 字体
-  'font-size': fontSize,
-  'letter-spacing': letterSpacing,
-  'word-spacing': letterSpacing,
-
-  // 边框宽度
-  'border-width': borderWidth,
-  'border-top-width': borderWidth,
-  'border-right-width': borderWidth,
-  'border-bottom-width': borderWidth,
-  'border-left-width': borderWidth,
-
-  // 圆角
-  'border-radius': borderRadius,
-  'border-top-left-radius': borderRadius,
-  'border-top-right-radius': borderRadius,
-  'border-bottom-left-radius': borderRadius,
-  'border-bottom-right-radius': borderRadius,
-
-  // 变换
-  'rotate': angle,
-
-  // 过渡
-  'transition-duration': duration,
-
-  // 无单位属性
-  'opacity': opacity,
-  'z-index': zIndex,
-  'line-height': lineHeight,
-  'font-weight': fontWeight,
-  'flex-grow': flexGrowShrink,
-  'flex-shrink': flexGrowShrink,
-  'order': order,
-}
-
-// 导出基础 NumericType 对象
-export const numericTypes = {
-  pxInt,
-  pxIntNeg,
-  ratio100,
-  ratio100Neg,
-  rem5,
-  pxBorder,
-  pxRadius,
-  deg360,
-  ms2000,
-  unitlessOpacity,
-  unitlessZIndex,
-  unitlessLineHeight,
-  unitlessFontWeight,
-  unitlessFlex,
-  unitlessOrder,
-}
-
-// 导出预设模板
-export const presets = {
-  spacing,
-  spacingNegative,
-  sizing,
-  positioning,
-  borderWidth,
-  borderRadius,
-  fontSize,
-  letterSpacing,
-  angle,
-  duration,
-  opacity,
-  zIndex,
-  lineHeight,
-  fontWeight,
-  flexGrowShrink,
-  order,
-  gap,
 }

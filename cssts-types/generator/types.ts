@@ -8,25 +8,29 @@
 
 /**
  * 单位类型
+ * - zero: 特殊值 0（无单位）
  * - px: 像素（绝对单位）
  * - rem: 相对单位（字体相关）
  * - ratio: 比例单位（%、vh、vw 等）
  * - deg: 角度
  * - ms: 时间
- * - none: 无单位
+ * - fr: CSS Grid 弹性单位
+ * - unitless: 无单位数值（如 opacity, z-index, line-height）
  */
-export type UnitType = 'px' | 'rem' | 'ratio' | 'deg' | 'ms' | 'none'
+export type UnitType = 'zero' | 'px' | 'rem' | 'ratio' | 'deg' | 'ms' | 'fr' | 'unitless'
 
 /**
  * 单位类型到具体 CSS 单位后缀的映射
  */
 export const unitToSuffixes: Record<UnitType, string[]> = {
+  'zero': [''],
   'px': ['px'],
   'rem': ['rem', 'em'],
   'ratio': ['%', 'vh', 'vw', 'vmin', 'vmax'],
   'deg': ['deg', 'rad', 'turn'],
   'ms': ['ms', 's'],
-  'none': [],
+  'fr': ['fr'],
+  'unitless': [''],
 }
 
 // ==================== 数值类型 ====================
@@ -66,18 +70,20 @@ export interface PropertyDefinition {
  * 当属性没有自定义预设时使用
  */
 export const defaultValuePresets: Record<UnitType, number[]> = {
-  'px': [0, 2, 4, 6, 8, 10, 12, 14, 16, 20, 24, 32, 40, 48, 64, 80, 100, 120],
+  'zero': [0],
+  'px': [2, 4, 6, 8, 10, 12, 14, 16, 20, 24, 32, 40, 48, 64, 80, 100, 120],
   'rem': [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3],
-  'ratio': [0, 25, 33.33, 50, 66.67, 75, 100],
-  'deg': [0, 45, 90, 180, 270, 360],
-  'ms': [0, 100, 150, 200, 300, 500, 1000],
-  'none': [],
+  'ratio': [25, 33.33, 50, 66.67, 75, 100],
+  'deg': [45, 90, 180, 270, 360],
+  'ms': [100, 150, 200, 300, 500, 1000],
+  'fr': [1, 2, 3, 4],
+  'unitless': [],
 }
 
 /**
  * 无单位属性的特殊预设
  */
-export const noneValuePresets: Record<string, number[]> = {
+export const unitlessValuePresets: Record<string, number[]> = {
   'opacity': [0, 0.25, 0.5, 0.75, 1],
   'z-index': [-1, 0, 10, 20, 30, 40, 50, 100, 999, 9999],
   'line-height': [1, 1.25, 1.5, 1.75, 2],
@@ -140,8 +146,8 @@ export function generateValuePresets(
   }
   
   // 2. 无单位属性的特殊预设
-  if (unit === 'none' && property && noneValuePresets[property]) {
-    return noneValuePresets[property]
+  if (unit === 'unitless' && property && unitlessValuePresets[property]) {
+    return unitlessValuePresets[property]
   }
   
   // 3. 使用默认预设
