@@ -21,6 +21,8 @@ interface PropertyNumericInfo {
 
 /**
  * 递归提取语法中的数值类型
+ * 
+ * 注意：遇到 <color>、<image> 等复杂类型时停止递归，不展开内部语法
  */
 function extractNumericTypes(syntax: any, visited: Set<string> = new Set()): string[] {
   const types: string[] = []
@@ -29,11 +31,30 @@ function extractNumericTypes(syntax: any, visited: Set<string> = new Set()): str
   const lexer = (csstree as any).lexer
   
   if (syntax.type === 'Type' && syntax.name) {
+    // 我们关心的数值类型
     const numericTypeNames = [
       'length', 'percentage', 'number', 'integer', 'angle', 'time',
       'length-percentage', 'alpha-value', 'flex', 'font-weight-absolute',
       'line-width', 'border-width'
     ]
+    
+    // 不展开的复杂类型（遇到就停止递归）
+    // 这些类型内部虽然包含数值，但不是我们要生成原子类的值
+    const stopTypes = [
+      'color',           // 颜色类型（rgb(), hsl() 等内部有数值，但不是原子类值）
+      'image',           // 图片类型（gradient 等内部有数值）
+      'gradient',        // 渐变
+      'filter-function', // 滤镜函数
+      'transform-function', // 变换函数（我们单独处理 rotate, scale 等）
+      'shadow',          // 阴影
+      'shape',           // 形状
+    ]
+    
+    // 如果是停止类型，记录并停止递归
+    if (stopTypes.includes(syntax.name)) {
+      types.push(`<${syntax.name}>`) // 标记为复杂类型
+      return types // 不继续递归
+    }
     
     if (numericTypeNames.includes(syntax.name)) {
       types.push(syntax.name)
@@ -44,7 +65,7 @@ function extractNumericTypes(syntax: any, visited: Set<string> = new Set()): str
       }
     }
     
-    // 递归展开类型
+    // 递归展开类型（除了停止类型）
     if (!visited.has(syntax.name)) {
       visited.add(syntax.name)
       const typeData = lexer.types[syntax.name]
@@ -75,17 +96,28 @@ function isDeprecatedProperty(property: string): boolean {
 
 /**
  * 判断属性是否为颜色属性（由设计系统处理，不生成数值原子类）
- * 注意：opacity 虽然在 color 分类，但它是真正的数值属性，需要保留
+ * 
+ * 通过检查 numericTypes 中是否包含 <color> 类型来判断
+ * 如果属性只有 <color> 类型（没有其他数值类型），则认为是颜色属性
  */
-function isColorProperty(property: string): boolean {
-  // 这些属性的数值来自颜色函数内部（如 rgb(), hsl()），不是我们要生成的原子类
-  const colorProperties = [
-    'color', 'background-color', 'border-color', 'outline-color',
-    'accent-color', 'caret-color', 'column-rule-color', 'scrollbar-color',
-    'text-decoration-color', 'text-emphasis-color', 'fill', 'stroke',
-    'border-top-color', 'border-right-color', 'border-bottom-color', 'border-left-color',
-  ]
-  return colorProperties.includes(property)
+function isColorProperty(numericTypes: string[]): boolean {
+  // 如果包含 <color> 类型，且没有其他真正的数值类型，则是颜色属性
+  const hasColorType = numericTypes.includes('<color>')
+  
+  // 真正的数值类型（不包括 <color> 等复杂类型）
+  const realNumericTypes = numericTypes.filter(t => !t.startsWith('<'))
+  
+  // 如果只有 <color> 类型，或者数值类型只有 alpha-value（用于颜色透明度）
+  // 则认为是颜色属性
+  if (hasColorType) {
+    // 如果除了 <color> 外没有其他数值类型，或只有 alpha-value
+    const onlyAlphaValue = realNumericTypes.every(t => 
+      t === 'alpha-value' || t.startsWith('alpha-value[')
+    )
+    return realNumericTypes.length === 0 || onlyAlphaValue
+  }
+  
+  return false
 }
 
 /**
@@ -173,7 +205,7 @@ function getPropertyNumericInfo(): PropertyNumericInfo[] {
       }
       
       // 标记颜色属性（由设计系统处理）
-      if (isColorProperty(property)) {
+      if (isColorProperty(numericTypes)) {
         info.colorProperty = true
       }
       

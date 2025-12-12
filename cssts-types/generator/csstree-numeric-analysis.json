@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2025-12-12T10:19:30.615Z",
+  "generatedAt": "2025-12-12T10:24:39.567Z",
   "source": "css-tree",
   "typesWithRange": {
     "cubic-bezier-timing-function": {
@@ -163,25 +163,17 @@
     {
       "property": "background",
       "numericTypes": [
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]",
+        "<image>",
         "length-percentage",
         "length",
-        "number[0,1]"
+        "percentage"
       ],
       "category": "background"
     },
     {
       "property": "background-color",
       "numericTypes": [
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]"
+        "<color>"
       ],
       "colorProperty": true,
       "category": "background"
@@ -189,14 +181,7 @@
     {
       "property": "background-image",
       "numericTypes": [
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]",
-        "length-percentage",
-        "length",
-        "number[0,1]"
+        "<image>"
       ],
       "category": "background"
     },
@@ -241,45 +226,32 @@
       "numericTypes": [
         "line-width",
         "length",
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]"
+        "<color>"
       ],
       "category": "border"
     },
     {
       "property": "border-block",
       "numericTypes": [
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]"
+        "<color>"
       ],
+      "colorProperty": true,
       "category": "border"
     },
     {
       "property": "border-block-end",
       "numericTypes": [
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]"
+        "<color>"
       ],
+      "colorProperty": true,
       "category": "border"
     },
     {
       "property": "border-block-start",
       "numericTypes": [
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]"
+        "<color>"
       ],
+      "colorProperty": true,
       "category": "border"
     },
     {
@@ -287,11 +259,7 @@
       "numericTypes": [
         "line-width",
         "length",
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]"
+        "<color>"
       ],
       "category": "border"
     },
@@ -324,11 +292,7 @@
     {
       "property": "border-color",
       "numericTypes": [
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]"
+        "<color>"
       ],
       "colorProperty": true,
       "category": "border"
@@ -370,14 +334,7 @@
     {
       "property": "border-image-source",
       "numericTypes": [
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]",
-        "length-percentage",
-        "length",
-        "number[0,1]"
+        "<image>"
       ],
       "category": "border"
     },
@@ -394,34 +351,25 @@
     {
       "property": "border-inline",
       "numericTypes": [
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]"
+        "<color>"
       ],
+      "colorProperty": true,
       "category": "border"
     },
     {
       "property": "border-inline-end",
       "numericTypes": [
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]"
+        "<color>"
       ],
+      "colorProperty": true,
       "category": "border"
     },
     {
       "property": "border-inline-start",
       "numericTypes": [
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]"
+        "<color>"
       ],
+      "colorProperty": true,
       "category": "border"
     },
     {
@@ -429,22 +377,14 @@
       "numericTypes": [
         "line-width",
         "length",
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]"
+        "<color>"
       ],
       "category": "border"
     },
     {
       "property": "border-left-color",
       "numericTypes": [
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]"
+        "<color>"
       ],
       "colorProperty": true,
       "category": "border"
@@ -471,22 +411,14 @@
       "numericTypes": [
         "line-width",
         "length",
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]"
+        "<color>"
       ],
       "category": "border"
     },
     {
       "property": "border-right-color",
       "numericTypes": [
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]"
+        "<color>"
       ],
       "colorProperty": true,
       "category": "border"
@@ -529,22 +461,14 @@
       "numericTypes": [
         "line-width",
         "length",
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]"
+        "<color>"
       ],
       "category": "border"
     },
     {
       "property": "border-top-color",
       "numericTypes": [
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]"
+        "<color>"
       ],
       "colorProperty": true,
       "category": "border"
@@ -586,11 +510,7 @@
     {
       "property": "outline-color",
       "numericTypes": [
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]"
+        "<color>"
       ],
       "colorProperty": true,
       "category": "border"
@@ -779,11 +699,7 @@
     {
       "property": "accent-color",
       "numericTypes": [
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]"
+        "<color>"
       ],
       "colorProperty": true,
       "category": "other"
@@ -806,12 +722,7 @@
     {
       "property": "backdrop-filter",
       "numericTypes": [
-        "length",
-        "number",
-        "percentage",
-        "alpha-value",
-        "angle",
-        "percentage[0,100]"
+        "<filter-function>"
       ],
       "category": "other"
     },
@@ -848,23 +759,14 @@
     {
       "property": "box-shadow",
       "numericTypes": [
-        "length",
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]"
+        "<shadow>"
       ],
       "category": "other"
     },
     {
       "property": "caret-color",
       "numericTypes": [
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]"
+        "<color>"
       ],
       "colorProperty": true,
       "category": "other"
@@ -872,7 +774,7 @@
     {
       "property": "clip",
       "numericTypes": [
-        "length"
+        "<shape>"
       ],
       "category": "other"
     },
@@ -889,11 +791,7 @@
     {
       "property": "color",
       "numericTypes": [
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]"
+        "<color>"
       ],
       "colorProperty": true,
       "category": "other"
@@ -908,11 +806,7 @@
     {
       "property": "column-rule-color",
       "numericTypes": [
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]"
+        "<color>"
       ],
       "colorProperty": true,
       "category": "other"
@@ -962,14 +856,7 @@
     {
       "property": "content",
       "numericTypes": [
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]",
-        "length-percentage",
-        "length",
-        "number[0,1]"
+        "<image>"
       ],
       "category": "other"
     },
@@ -1020,11 +907,7 @@
     {
       "property": "fill",
       "numericTypes": [
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]"
+        "<color>"
       ],
       "colorProperty": true,
       "category": "other"
@@ -1032,12 +915,7 @@
     {
       "property": "filter",
       "numericTypes": [
-        "length",
-        "number",
-        "percentage",
-        "alpha-value",
-        "angle",
-        "percentage[0,100]"
+        "<filter-function>"
       ],
       "category": "other"
     },
@@ -1089,28 +967,17 @@
     {
       "property": "list-style-image",
       "numericTypes": [
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]",
-        "length-percentage",
-        "length",
-        "number[0,1]"
+        "<image>"
       ],
       "category": "other"
     },
     {
       "property": "mask",
       "numericTypes": [
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]",
+        "<image>",
         "length-percentage",
         "length",
-        "number[0,1]"
+        "percentage"
       ],
       "category": "other"
     },
@@ -1133,14 +1000,7 @@
     {
       "property": "mask-border-source",
       "numericTypes": [
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]",
-        "length-percentage",
-        "length",
-        "number[0,1]"
+        "<image>"
       ],
       "category": "other"
     },
@@ -1157,14 +1017,7 @@
     {
       "property": "mask-image",
       "numericTypes": [
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]",
-        "length-percentage",
-        "length",
-        "number[0,1]"
+        "<image>"
       ],
       "category": "other"
     },
@@ -1347,22 +1200,14 @@
         "length",
         "percentage",
         "length-percentage[0,∞]",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]",
-        "number[0,1]"
+        "<image>"
       ],
       "category": "other"
     },
     {
       "property": "stroke",
       "numericTypes": [
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]"
+        "<color>"
       ],
       "colorProperty": true,
       "category": "other"
@@ -1739,11 +1584,7 @@
     {
       "property": "scrollbar-color",
       "numericTypes": [
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]"
+        "<color>"
       ],
       "colorProperty": true,
       "category": "scroll"
@@ -1926,12 +1767,7 @@
     {
       "property": "transform",
       "numericTypes": [
-        "number",
-        "length-percentage",
-        "length",
-        "percentage",
-        "angle",
-        "length[0,∞]"
+        "<transform-function>"
       ],
       "category": "transform"
     },
@@ -2063,11 +1899,7 @@
     {
       "property": "text-decoration-color",
       "numericTypes": [
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]"
+        "<color>"
       ],
       "colorProperty": true,
       "category": "typography"
@@ -2083,11 +1915,7 @@
     {
       "property": "text-emphasis-color",
       "numericTypes": [
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]"
+        "<color>"
       ],
       "colorProperty": true,
       "category": "typography"
@@ -2105,11 +1933,7 @@
       "property": "text-shadow",
       "numericTypes": [
         "length",
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]"
+        "<color>"
       ],
       "category": "typography"
     },
@@ -2146,51 +1970,39 @@
     {
       "property": "-moz-border-bottom-colors",
       "numericTypes": [
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]"
+        "<color>"
       ],
-      "deprecated": true
+      "deprecated": true,
+      "colorProperty": true
     },
     {
       "property": "-moz-border-left-colors",
       "numericTypes": [
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]"
+        "<color>"
       ],
-      "deprecated": true
+      "deprecated": true,
+      "colorProperty": true
     },
     {
       "property": "-moz-border-right-colors",
       "numericTypes": [
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]"
+        "<color>"
       ],
-      "deprecated": true
+      "deprecated": true,
+      "colorProperty": true
     },
     {
       "property": "-moz-border-top-colors",
       "numericTypes": [
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]"
+        "<color>"
       ],
-      "deprecated": true
+      "deprecated": true,
+      "colorProperty": true
     },
     {
       "property": "-moz-image-region",
       "numericTypes": [
-        "length"
+        "<shape>"
       ],
       "deprecated": true
     },
@@ -2357,90 +2169,66 @@
     {
       "property": "-ms-scrollbar-3dlight-color",
       "numericTypes": [
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]"
+        "<color>"
       ],
-      "deprecated": true
+      "deprecated": true,
+      "colorProperty": true
     },
     {
       "property": "-ms-scrollbar-arrow-color",
       "numericTypes": [
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]"
+        "<color>"
       ],
-      "deprecated": true
+      "deprecated": true,
+      "colorProperty": true
     },
     {
       "property": "-ms-scrollbar-base-color",
       "numericTypes": [
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]"
+        "<color>"
       ],
-      "deprecated": true
+      "deprecated": true,
+      "colorProperty": true
     },
     {
       "property": "-ms-scrollbar-darkshadow-color",
       "numericTypes": [
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]"
+        "<color>"
       ],
-      "deprecated": true
+      "deprecated": true,
+      "colorProperty": true
     },
     {
       "property": "-ms-scrollbar-face-color",
       "numericTypes": [
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]"
+        "<color>"
       ],
-      "deprecated": true
+      "deprecated": true,
+      "colorProperty": true
     },
     {
       "property": "-ms-scrollbar-highlight-color",
       "numericTypes": [
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]"
+        "<color>"
       ],
-      "deprecated": true
+      "deprecated": true,
+      "colorProperty": true
     },
     {
       "property": "-ms-scrollbar-shadow-color",
       "numericTypes": [
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]"
+        "<color>"
       ],
-      "deprecated": true
+      "deprecated": true,
+      "colorProperty": true
     },
     {
       "property": "-ms-scrollbar-track-color",
       "numericTypes": [
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]"
+        "<color>"
       ],
-      "deprecated": true
+      "deprecated": true,
+      "colorProperty": true
     },
     {
       "property": "-ms-wrap-margin",
@@ -2452,36 +2240,24 @@
     {
       "property": "-webkit-border-before",
       "numericTypes": [
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]"
+        "<color>"
       ],
-      "deprecated": true
+      "deprecated": true,
+      "colorProperty": true
     },
     {
       "property": "-webkit-border-before-color",
       "numericTypes": [
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]"
+        "<color>"
       ],
-      "deprecated": true
+      "deprecated": true,
+      "colorProperty": true
     },
     {
       "property": "-webkit-box-reflect",
       "numericTypes": [
         "length",
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]",
-        "length-percentage",
-        "number[0,1]"
+        "<image>"
       ],
       "deprecated": true
     },
@@ -2495,42 +2271,27 @@
     {
       "property": "-webkit-mask",
       "numericTypes": [
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]",
+        "<image>",
         "length-percentage",
         "length",
-        "number[0,1]"
+        "percentage"
       ],
       "deprecated": true
     },
     {
       "property": "-webkit-mask-box-image",
       "numericTypes": [
-        "angle",
-        "percentage",
-        "alpha-value",
-        "number",
-        "percentage[0,100]",
+        "<gradient>",
         "length-percentage",
         "length",
-        "number[0,1]"
+        "percentage"
       ],
       "deprecated": true
     },
     {
       "property": "-webkit-mask-image",
       "numericTypes": [
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]",
-        "length-percentage",
-        "length",
-        "number[0,1]"
+        "<image>"
       ],
       "deprecated": true
     },
@@ -2573,47 +2334,34 @@
     {
       "property": "-webkit-tap-highlight-color",
       "numericTypes": [
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]"
+        "<color>"
       ],
-      "deprecated": true
+      "deprecated": true,
+      "colorProperty": true
     },
     {
       "property": "-webkit-text-fill-color",
       "numericTypes": [
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]"
+        "<color>"
       ],
-      "deprecated": true
+      "deprecated": true,
+      "colorProperty": true
     },
     {
       "property": "-webkit-text-stroke",
       "numericTypes": [
         "length",
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]"
+        "<color>"
       ],
       "deprecated": true
     },
     {
       "property": "-webkit-text-stroke-color",
       "numericTypes": [
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]"
+        "<color>"
       ],
-      "deprecated": true
+      "deprecated": true,
+      "colorProperty": true
     },
     {
       "property": "-webkit-text-stroke-width",
@@ -2626,8 +2374,8 @@
   "stats": {
     "typesWithRange": 11,
     "propertiesTotal": 285,
-    "propertiesStandard": 220,
-    "propertiesColor": 15,
+    "propertiesStandard": 214,
+    "propertiesColor": 38,
     "propertiesDeprecated": 50
   }
 }

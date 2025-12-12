@@ -79,9 +79,6 @@ export const propertyNumericTypes = {
 
   // ========== border ==========
   'border': [],
-  'border-block': [],
-  'border-block-end': [],
-  'border-block-start': [],
   'border-bottom': [],
   'border-bottom-left-radius': [],
   'border-bottom-right-radius': [],
@@ -92,9 +89,6 @@ export const propertyNumericTypes = {
   'border-image-slice': [],
   'border-image-source': [],
   'border-image-width': [],
-  'border-inline': [],
-  'border-inline-end': [],
-  'border-inline-start': [],
   'border-left': [],
   'border-left-width': [],
   'border-radius': [],
