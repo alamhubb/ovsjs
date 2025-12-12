@@ -1,8 +1,411 @@
-# CssTs 原子类生成器任务清单
+# CssTs 原子类生成器设计文档
 
 ## 目标
 
 完善基于 css-tree 的原子类生成器，生成正确的类型定义文件。
+
+---
+
+## 设计理念
+
+### 1. 权威数据源优先
+
+**css-tree 作为唯一数据源**，而非手动维护属性列表。
+
+- css-tree 是 CSS 语法解析的权威库，包含完整的 CSS 规范定义
+- 属性名、关键字、语法结构都从 css-tree 自动提取
+- 避免手动维护带来的遗漏和错误
+- 当 CSS 规范更新时，只需更新 css-tree 版本
+
+### 2. 自动检测 + 手动配置
+
+**能自动化的自动化，必须手动的才手动**。
+
+| 数据 | 来源 | 说明 |
+|------|------|------|
+| 属性名 | 自动（css-tree） | 651 个属性 |
+| 关键字 | 自动（css-tree） | 递归解析语法树 |
+| 颜色属性检测 | 自动（css-tree） | 检测 `<color>` 类型 |
+| 复杂类型检测 | 自动（css-tree） | 检测 `<image>`, `<filter-function>` 等 |
+| 数值单位配置 | 手动（配置表） | 每个属性支持的单位类型 |
+
+### 3. 类型安全
+
+**TypeScript 类型系统保证配置正确性**。
+
+```typescript
+// 联合类型确保 zero 不需要 value
+type NumericType = 
+  | { unit: 'zero' }
+  | { unit: Exclude<UnitType, 'zero'>; value: ValueType; ... }
+
+// 编译时检查配置错误
+const config: NumericType = { unit: 'zero', value: 'integer' } // ❌ 类型错误
+const config: NumericType = { unit: 'zero' } // ✅ 正确
+```
+
+### 4. 分层设计
+
+**关注点分离，各司其职**。
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    生成器 (Generator)                    │
+│  - 组合 keywords + numeric 生成原子类                    │
+│  - 处理命名转换（TS 标识符、CSS 类名）                    │
+└─────────────────────────────────────────────────────────┘
+                           ↑
+          ┌────────────────┴────────────────┐
+          ↓                                 ↓
+┌─────────────────────┐       ┌─────────────────────────┐
+│   css-tree 数据层    │       │      配置层              │
+│  - 属性名            │       │  - propertyNumericTypes │
+│  - 关键字            │       │  - 单位类型映射          │
+│  - 语法结构          │       │  - 数值预设              │
+└─────────────────────┘       └─────────────────────────┘
+```
+
+### 5. 排除优于包含
+
+**明确排除不适合的属性，而非手动选择要包含的**。
+
+- 颜色属性 → 由设计系统（cssts-theme-element）处理
+- 复杂类型属性 → 无法预生成，需运行时处理
+- 其他所有属性 → 自动生成原子类
+
+这样做的好处：
+- 不会遗漏新增的 CSS 属性
+- 排除规则清晰可追溯
+- 减少手动维护工作量
+
+### 6. 渐进式设计
+
+**分阶段实现，每阶段聚焦核心问题**。
+
+| 阶段 | 聚焦 | 状态 |
+|------|------|------|
+| 第一阶段 | 数据结构、类型系统、配置设计 | ✅ 完成 |
+| 第二阶段 | 属性筛选、简写属性处理 | 🔄 进行中 |
+| 第三阶段 | 响应式变体、状态变体 | ⏳ 待定 |
+
+---
+
+## 实现原理
+
+### 核心思路
+
+原子类生成器的核心是将 CSS 属性分解为两类值：
+1. **关键字值** - 如 `auto`, `flex`, `none` 等（从 css-tree 获取）
+2. **数值** - 如 `16px`, `50%`, `0` 等（从配置表获取）
+
+### 数据流
+
+```
+css-tree (权威数据源)
+    │
+    ├─→ 属性名列表 (651 个)
+    │
+    ├─→ 关键字列表 (keywords)
+    │       └─→ 递归解析语法树，提取所有关键字
+    │
+    └─→ 数值类型分析 (numericTypes)
+            │
+            ├─→ 颜色属性 (38 个) ──→ 排除（由设计系统处理）
+            │
+            ├─→ 复杂类型属性 (13 个) ──→ 排除（无法预生成）
+            │       如 filter, transform, box-shadow
+            │
+            └─→ 数值属性 (203 个) ──→ 生成配置
+                    └─→ property-numeric-config.ts
+```
+
+### 属性分类
+
+| 分类 | 数量 | 处理方式 |
+|------|------|---------|
+| **数值属性** | 203 | 生成数值原子类 |
+| **颜色属性** | 38 | 排除（由 cssts-theme-element 处理） |
+| **复杂类型属性** | 13 | 排除（无法预生成） |
+| **纯关键字属性** | ~400 | 只生成关键字原子类 |
+
+### 颜色属性检测原理
+
+通过递归解析 css-tree 的语法树，检测属性是否包含 `<color>` 类型：
+
+```typescript
+// 递归解析时遇到以下类型则停止：
+const STOP_TYPES = [
+  '<color>',           // 颜色类型
+  '<image>',           // 图片类型
+  '<filter-function>', // 滤镜函数
+  '<transform-function>', // 变换函数
+  '<shadow>',          // 阴影类型
+  '<shape>',           // 形状类型
+]
+
+// 判断逻辑：
+// 如果属性的 numericTypes 只包含 <color>（或 <color> + alpha-value）
+// 则标记为 colorProperty: true
+```
+
+### 复杂类型检测原理
+
+如果属性的 numericTypes 只包含复杂类型（无真正的数值类型），则标记为 `complexOnly: true`：
+
+```typescript
+// 复杂类型列表
+const COMPLEX_TYPES = ['<image>', '<filter-function>', '<transform-function>', '<shadow>', '<shape>']
+
+// 示例：
+// background-image: [<image>] → complexOnly: true
+// filter: [<filter-function>] → complexOnly: true
+// transform: [<transform-function>] → complexOnly: true
+```
+
+### 生成覆盖分析
+
+**可以生成的属性**：
+1. **数值属性** (203 个) - 有 `propertyNumericTypes` 配置，生成数值类 + 关键字类
+2. **纯关键字属性** (~400 个) - 只生成关键字类（如 `display-flex`, `position-absolute`）
+
+**不生成的属性**：
+1. **颜色属性** (38 个) - 由 cssts-theme-element 设计系统处理
+2. **复杂类型属性** (13 个) - 无法预生成（filter, transform, box-shadow 等）
+
+**生成逻辑**：
+```typescript
+// 对于每个属性：
+function canGenerate(property: string): boolean {
+  // 1. 检查是否有 keywords（从 css-tree）
+  const hasKeywords = getKeywordsFromCssTree(property).length > 0
+  
+  // 2. 检查是否有数值配置
+  const hasNumeric = property in propertyNumericTypes
+  
+  // 只要有 keywords 或 numeric，就可以生成
+  return hasKeywords || hasNumeric
+}
+```
+
+---
+
+## 现有实现
+
+### 文件结构
+
+```
+cssts-types/generator/
+├── types.ts                    # 核心类型定义
+├── property-numeric-config.ts  # 属性数值配置（203 个属性）
+├── extract-numeric-types.ts    # css-tree 数据提取脚本
+├── generate-property-config.ts # 配置生成脚本
+├── csstree-numeric-analysis.json # css-tree 分析结果
+└── TASKS1.md                   # 本设计文档
+```
+
+### 类型系统 (types.ts)
+
+#### 单位类型 (UnitType)
+
+```typescript
+type UnitType = 'zero' | 'px' | 'rem' | 'ratio' | 'deg' | 'ms' | 'fr' | 'unitless'
+```
+
+| 单位类型 | 说明 | CSS 后缀 |
+|---------|------|---------|
+| `zero` | 特殊值 0（无单位） | `''` |
+| `px` | 像素 | `px` |
+| `rem` | 相对单位 | `rem`, `em` |
+| `ratio` | 比例单位 | `%`, `vh`, `vw`, `vmin`, `vmax` |
+| `deg` | 角度 | `deg`, `rad`, `turn` |
+| `ms` | 时间 | `ms`, `s` |
+| `fr` | Grid 弹性单位 | `fr` |
+| `unitless` | 无单位数值 | `''` |
+
+#### 数值类型 (NumericType)
+
+使用联合类型，`zero` 不需要 `value` 字段：
+
+```typescript
+type NumericType = 
+  | { unit: 'zero' }  // 只有 0，不需要 value
+  | {
+      unit: Exclude<UnitType, 'zero'>
+      value: ValueType     // 'integer' | 'number'
+      min?: number         // 最小值
+      max?: number         // 最大值
+      step?: number        // 步长
+    }
+```
+
+### 属性配置 (property-numeric-config.ts)
+
+定义 203 个数值属性的配置：
+
+```typescript
+const zero: NumericType = { unit: 'zero' }
+
+export const propertyNumericTypes: Record<string, NumericType[]> = {
+  // sizing
+  'width': [zero, { unit: 'px', value: 'integer' }, { unit: 'ratio', value: 'number' }],
+  'height': [zero, { unit: 'px', value: 'integer' }, { unit: 'ratio', value: 'number' }],
+  
+  // spacing
+  'margin': [zero, { unit: 'px', value: 'integer' }, { unit: 'ratio', value: 'number' }],
+  'padding': [zero, { unit: 'px', value: 'integer' }, { unit: 'ratio', value: 'number' }],
+  
+  // layout
+  'z-index': [{ unit: 'unitless', value: 'integer' }],
+  'flex-grow': [{ unit: 'unitless', value: 'number' }],
+  
+  // opacity
+  'opacity': [{ unit: 'unitless', value: 'number' }, { unit: 'ratio', value: 'number' }],
+  
+  // ... 共 203 个属性
+}
+```
+
+### 属性分类统计
+
+| 分类 | 属性数量 | 示例 |
+|------|---------|------|
+| sizing | 6 | width, height, min-width, max-height |
+| spacing | 12 | margin, padding, gap, column-gap |
+| positioning | 4 | top, right, bottom, left |
+| layout | 18 | z-index, order, flex-grow, grid-* |
+| typography | 22 | font-size, line-height, letter-spacing |
+| border | 26 | border-width, border-radius |
+| background | 5 | background-position, background-size |
+| opacity | 2 | opacity, fill-opacity |
+| transform | 5 | rotate, scale, translate, perspective |
+| animation | 11 | animation-delay, transition-duration |
+| scroll | 28 | scroll-margin, scroll-padding |
+| other | 64 | aspect-ratio, clip-path, stroke-width |
+
+### 排除的属性
+
+#### 颜色属性 (38 个)
+
+由 cssts-theme-element 设计系统统一处理：
+
+```
+color, background-color, border-color, border-top-color, border-right-color,
+border-bottom-color, border-left-color, border-block, border-block-end,
+border-block-start, border-inline, border-inline-end, border-inline-start,
+outline-color, text-decoration-color, text-emphasis-color, caret-color,
+accent-color, column-rule-color, fill, stroke, scrollbar-color,
+flood-color, lighting-color, stop-color, ...
+```
+
+#### 复杂类型属性 (13 个)
+
+无法预生成原子类，需要运行时处理：
+
+| 属性 | 类型 | 原因 |
+|------|------|------|
+| `background-image` | `<image>` | 需要 url() 或渐变函数 |
+| `border-image-source` | `<image>` | 需要 url() |
+| `filter` | `<filter-function>` | 需要 blur(), brightness() 等函数 |
+| `backdrop-filter` | `<filter-function>` | 同上 |
+| `transform` | `<transform-function>` | 需要 rotate(), scale() 等函数 |
+| `box-shadow` | `<shadow>` | 复杂的阴影语法 |
+| `clip` | `<shape>` | 需要 rect() 函数 |
+| `content` | `<image>` | 需要字符串或 url() |
+| `list-style-image` | `<image>` | 需要 url() |
+| `mask-image` | `<image>` | 需要 url() 或渐变 |
+| `mask-border-source` | `<image>` | 需要 url() |
+
+### 数据提取脚本 (extract-numeric-types.ts)
+
+从 css-tree 提取属性的数值类型信息：
+
+```typescript
+// 核心逻辑
+function extractNumericTypes(property: string): ExtractResult {
+  const syntax = lexer.getProperty(property)
+  const numericTypes = new Set<string>()
+  
+  // 递归解析语法树
+  function walk(node: SyntaxNode) {
+    // 遇到停止类型则标记并返回
+    if (STOP_TYPES.includes(node.name)) {
+      if (node.name === '<color>') colorProperty = true
+      if (COMPLEX_TYPES.includes(node.name)) complexOnly = true
+      return
+    }
+    
+    // 收集数值类型
+    if (NUMERIC_TYPES.includes(node.name)) {
+      numericTypes.add(node.name)
+    }
+    
+    // 递归子节点
+    node.children?.forEach(walk)
+  }
+  
+  walk(syntax)
+  return { numericTypes, colorProperty, complexOnly }
+}
+```
+
+### 工具函数 (types.ts)
+
+```typescript
+// 判断是否支持负数
+function supportsNegative(numericType: NumericType): boolean {
+  if (numericType.unit === 'zero') return false
+  return numericType.min === undefined || numericType.min < 0
+}
+
+// 生成数值预设
+function generateValuePresets(numericType: NumericType, property?: string): number[] {
+  if (numericType.unit === 'zero') return [0]
+  
+  // 有 step 配置则使用固定步长
+  if (numericType.step !== undefined) {
+    return generateFixedStepValues(numericType.min, numericType.max, numericType.step)
+  }
+  
+  // 否则使用默认预设
+  return defaultValuePresets[numericType.unit]
+}
+```
+
+### 生成逻辑（待实现）
+
+```typescript
+// 对于每个属性：
+function generateAtomicClasses(property: string) {
+  const classes = []
+  
+  // 1. 生成关键字类（从 css-tree）
+  const keywords = getKeywordsFromCssTree(property)
+  for (const keyword of keywords) {
+    classes.push({
+      tsName: `${camelCase(property)}${pascalCase(keyword)}`,
+      cssClass: `.${property}_${keyword}`,
+      cssRule: `${property}: ${keyword};`
+    })
+  }
+  
+  // 2. 生成数值类（从配置表）
+  const numericTypes = propertyNumericTypes[property]
+  if (numericTypes) {
+    for (const numericType of numericTypes) {
+      const values = generateValues(numericType)
+      for (const value of values) {
+        classes.push({
+          tsName: formatTsName(property, value, numericType.unit),
+          cssClass: formatCssClass(property, value, numericType.unit),
+          cssRule: `${property}: ${value}${getUnitSuffix(numericType.unit)};`
+        })
+      }
+    }
+  }
+  
+  return classes
+}
+```
 
 ---
 
@@ -560,101 +963,86 @@ const sizing = [zero, pxInt, ratio100]   // width/height 系列
 // → width0, width1px, ..., width5pct, width10pct, ..., width100pct
 ```
 
-#### 13.5 数值预设配置
+#### 13.5 数值生成策略
 
-##### 渐进步长策略（Progressive Step Strategy）
+##### 统一步长策略
 
-对于 `px` 等需要大范围数值的单位，使用渐进步长策略：小数值密集，大数值稀疏。
-
-**注意**：渐进步长策略从 **1** 开始，**不包含 0**。`0` 由独立的 `zero` 单位类型处理。
+所有数值类型都使用 **min/max/step** 三个参数生成数值序列：
 
 ```typescript
 /**
- * 生成渐进步长的数值序列（从 1 开始，不含 0）
- * 
- * 策略：
- * - 1-200: 步长 1（200 个）
- * - 200-500: 步长 2（150 个）
- * - 500-1000: 步长 5（100 个）
- * - 1000-2000: 步长 50（20 个）
- * - 2000-5000: 步长 100（30 个）
- * - 5000-10000: 步长 100（50 个）
- * 
- * 总计：约 550 个值（不含 0）
+ * 根据 min/max/step 生成数值序列
  */
-function generateProgressiveValues(max: number = 10000): number[] {
-  const values: number[] = []  // 不包含 0，0 由 zero 单位处理
-  
-  // 1-200: 步长 1
-  for (let i = 1; i <= Math.min(200, max); i += 1) {
-    values.push(i)
+function generateStepValues(min: number, max: number, step: number): number[] {
+  const values: number[] = []
+  for (let v = min; v <= max; v += step) {
+    values.push(Math.round(v * 1000) / 1000)  // 处理浮点精度
   }
-  
-  // 200-500: 步长 2
-  for (let i = 202; i <= Math.min(500, max); i += 2) {
-    values.push(i)
-  }
-  
-  // 500-1000: 步长 5
-  for (let i = 505; i <= Math.min(1000, max); i += 5) {
-    values.push(i)
-  }
-  
-  // 1000-2000: 步长 50
-  for (let i = 1050; i <= Math.min(2000, max); i += 50) {
-    values.push(i)
-  }
-  
-  // 2000-5000: 步长 100
-  for (let i = 2100; i <= Math.min(5000, max); i += 100) {
-    values.push(i)
-  }
-  
-  // 5000-10000: 步长 100
-  for (let i = 5100; i <= Math.min(10000, max); i += 100) {
-    values.push(i)
-  }
-  
   return values
 }
 ```
 
-**数量统计**：
+##### 全局默认配置
 
-| 范围 | 步长 | 数量 |
-|------|------|------|
-| 0 | - | 1 个 |
-| 1-200 | 1 | 200 个 |
-| 200-500 | 2 | 150 个 |
-| 500-1000 | 5 | 100 个 |
-| 1000-2000 | 50 | 20 个 |
-| 2000-5000 | 100 | 30 个 |
-| 5000-10000 | 100 | 50 个 |
-| **总计** | | **551 个** |
-
-##### 单位预设配置
+所有单位类型共用一个全局默认配置，属性可以覆盖：
 
 ```typescript
-const valuePresets: Record<UnitType, number[] | 'progressive'> = {
-  'px': 'progressive',  // 使用渐进步长策略，生成 551 个值
-  'rem': [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3],
-  'ratio': [0, 25, 33.33, 50, 66.67, 75, 100],
-  'deg': [0, 45, 90, 180, 270, 360],
-  'ms': [0, 100, 150, 200, 300, 500, 1000],
-  'unitless': [], // 由属性单独配置（见 unitlessValuePresets）
-}
-
-// 无单位属性的特殊预设
-const unitlessValuePresets: Record<string, number[]> = {
-  'opacity': [0, 0.25, 0.5, 0.75, 1],
-  'z-index': [-1, 0, 10, 20, 30, 40, 50, 100, 999, 9999],
-  'line-height': [1, 1.25, 1.5, 1.75, 2],
-  'font-weight': [100, 200, 300, 400, 500, 600, 700, 800, 900],
-  'flex-grow': [0, 1],
-  'flex-shrink': [0, 1],
-  'order': [-1, 0, 1, 2, 3, 4, 5],
+/**
+ * 全局默认配置
+ */
+export const globalDefaults = {
+  min: 1,
+  max: 100,
+  step: 1,
 }
 ```
+
+##### 生成逻辑
+
+```typescript
+function generateValuePresets(numericType: NumericType): number[] {
+  // zero 类型只返回 [0]
+  if (numericType.unit === 'zero') return [0]
+  
+  // 使用配置值或全局默认值
+  const min = numericType.min ?? globalDefaults.min
+  const max = numericType.max ?? globalDefaults.max
+  const step = numericType.step ?? globalDefaults.step
+  
+  return generateStepValues(min, max, step)
+}
+```
+
+##### 配置示例
+
+```typescript
+// 使用默认配置（px: 1-100, step 1）
+{ unit: 'px', value: 'integer' }
+// → [1, 2, 3, ..., 100]
+
+// 覆盖 max
+{ unit: 'px', value: 'integer', max: 50 }
+// → [1, 2, 3, ..., 50]
+
+// 完全自定义
+{ unit: 'px', value: 'integer', min: 100, max: 1000, step: 100 }
+// → [100, 200, 300, ..., 1000]
+
+// zero 类型
+{ unit: 'zero' }
+// → [0]
+```
+
+##### 数量统计（全局默认配置）
+
+使用全局默认配置 `{ min: 1, max: 100, step: 1 }` 时：
+
+| 单位类型 | 数量 | 说明 |
+|---------|------|------|
+| `zero` | 1 | 只有 0 |
+| 其他 | 100 | 1, 2, 3, ..., 100 |
+
+属性可以通过配置 `min/max/step` 覆盖默认值。
 
 **子任务**:
 
@@ -1028,4 +1416,19 @@ css { color: var(--brand-color); }
 
 - 创建时间: 2025-12-12
 - 最后更新: 2025-12-12
-- 状态: 🔄 重构中
+- 状态: ✅ 第一阶段设计完成
+
+### 已完成
+
+1. ✅ 类型系统设计（UnitType, ValueType, NumericType）
+2. ✅ 属性数值配置（203 个属性）
+3. ✅ 颜色属性自动检测（38 个）
+4. ✅ 复杂类型属性自动检测（13 个）
+5. ✅ css-tree 数据提取脚本
+6. ✅ 工具函数（supportsNegative, generateValuePresets）
+
+### 下一步
+
+1. 从 css-tree 提取所有属性的 keywords
+2. 合并 keywords + numeric 配置
+3. 实现生成器核心逻辑
