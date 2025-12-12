@@ -132,6 +132,7 @@ export function generateStepValues(min: number, max: number, step: number): numb
  * 策略：
  * 1. zero 类型 → 返回 [0]
  * 2. 使用配置的 min/max/step，未配置的使用全局默认值
+ * 3. 特殊情况：min=0, max=1 时，默认 step=0.1
  */
 export function generateValuePresets(numericType: NumericType): number[] {
   const { unit } = numericType
@@ -144,7 +145,10 @@ export function generateValuePresets(numericType: NumericType): number[] {
   // 使用配置值或全局默认值
   const min = numericType.min ?? globalDefaults.min
   const max = numericType.max ?? globalDefaults.max
-  const step = numericType.step ?? globalDefaults.step
+  
+  // 计算默认步长：min=0, max=1 时使用 0.1，否则使用全局默认值
+  const defaultStep = (min === 0 && max === 1) ? 0.1 : globalDefaults.step
+  const step = numericType.step ?? defaultStep
   
   return generateStepValues(min, max, step)
 }
