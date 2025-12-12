@@ -1,10 +1,4 @@
 {
   "mcpServers": {
-    "Augment-Context-Engine": {
-      "command": "auggie",
-      "args": ["--mcp", "-m", "default", "-w", "./"],
-      "disabled": false,
-      "autoApprove": ["codebase-retrieval"]
-    }
   }
 }

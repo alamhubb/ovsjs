@@ -18,7 +18,7 @@
 // 核心函数
 export {
     defineOvsComponent,
-    createComponentVNode,
+    createComponentVNodeNew,
     createElementVNode,
     mapChildrenToVNodes,
     type ReactiveVNodeState,

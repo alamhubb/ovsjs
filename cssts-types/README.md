@@ -250,6 +250,99 @@ widthFull  // 100%
 | `CsstsAtom.ts` | 运行时原子类实现 |
 | 按需 CSS | 从 atoms.css 中提取使用到的样式 |
 
+## 生成逻辑
+
+### 核心流程
+
+生成器遍历所有 CSS 属性，为每个属性生成两类原子类：
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    CSS 属性遍历                              │
+└─────────────────────────────────────────────────────────────┘
+                              │
+              ┌───────────────┴───────────────┐
+              ▼                               ▼
+┌─────────────────────────┐     ┌─────────────────────────────┐
+│   1. 关键字原子类        │     │   2. 数值原子类              │
+│   数据源: css-tree       │     │   数据源: 配置文件            │
+│                         │     │   property-numeric-config-   │
+│   提取: flex, center,   │     │   type.ts                    │
+│   auto, none 等关键字    │     │                             │
+│                         │     │   生成: 16px, 1rem, 50% 等   │
+└─────────────────────────┘     └─────────────────────────────┘
+              │                               │
+              └───────────────┬───────────────┘
+                              ▼
+                    ┌─────────────────┐
+                    │   去重 & 合并    │
+                    │   seenNames Set │
+                    └─────────────────┘
+                              │
+                              ▼
+                    ┌─────────────────┐
+                    │   输出原子类     │
+                    │   87,679 个     │
+                    └─────────────────┘
+```
+
+### 1. 关键字原子类（来自 css-tree）
+
+从 css-tree 的 lexer 递归解析 CSS 语法，提取所有关键字值：
+
+```typescript
+// css-tree 语法解析示例
+// display 属性语法: [ <display-outside> || <display-inside> ] | ...
+// 递归展开后提取: flex, block, inline, grid, none, ...
+
+const keywords = getPropertyKeywords('display')
+// → ['flex', 'block', 'inline', 'grid', 'none', 'contents', ...]
+```
+
+**过滤规则**：
+- 过滤以 `-` 开头的值（浏览器前缀如 `-webkit-flex`）
+- 过滤以 `webkit` 开头的值
+- 过滤空字符串
+
+### 2. 数值原子类（来自配置文件）
+
+数值类型（`<length>`、`<percentage>`、`<number>` 等）不会从 css-tree 提取具体值，而是根据 `property-numeric-config-type.ts` 配置生成：
+
+```typescript
+// 配置示例
+class PropertyNumericConfigBase {
+  // 基础数值类型定义
+  sizePx: NumericType = { unit: 'px', value: 'integer', max: 10000 }
+  ratio: NumericType = { unit: 'ratio', value: 'number', presets: [33.33, 66.67] }
+  
+  // CSS 属性配置（引用基础类型）
+  width: NumericType[] = [this.zero, this.sizePx, this.sizeRem, this.ratio]
+  padding: NumericType[] = [this.zero, this.sizePx, this.sizeRem, this.ratio]
+  'z-index': NumericType[] = [this.zIndex]  // 支持负数
+}
+```
+
+**设计原因**：
+- css-tree 只定义语法规则（如 `<length>` 接受任意长度值），不提供具体数值
+- 具体数值范围由设计系统决定（如 0-10000px、0.25-50rem）
+- 配置文件允许用户自定义数值范围和步长
+
+### 3. 属性数量统计
+
+| 来源 | 数量 | 说明 |
+|------|------|------|
+| css-tree 总属性 | 651 | W3C CSS 规范定义的所有属性 |
+| 带前缀属性 | 32 | `-ms-`、`-moz-`、`-webkit-` 等（被过滤） |
+| 无原子类属性 | 75 | 没有关键字 + 没有数值配置 |
+| **最终输出属性** | **545** | 651 - 32 - 75 + 1(state) |
+
+**75 个无原子类属性的原因**：
+- 这些属性的语法只包含数值类型或复杂函数，没有可提取的关键字
+- 同时没有在配置文件中定义数值类型
+- 例如：`gap`、`inset`、`margin-block` 等逻辑属性
+
+如需支持这些属性，在 `property-numeric-config-type.ts` 中添加配置即可。
+
 ## 数据来源
 
 使用 [css-tree](https://github.com/csstree/csstree) v3.1.0 库递归解析 W3C CSS 语法定义，自动提取所有属性的关键字值。

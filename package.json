@@ -13,6 +13,7 @@
     "create-ovs",
     "vite-plugin-ovs",
     "cssts",
+    "cssts-types",
     "vite-plugin-cssts",
     "create-cssts"
   ],

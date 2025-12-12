@@ -18,8 +18,8 @@
     "./global": {
       "types": "./global.d.ts"
     },
-    "./atoms.json": {
-      "default": "./dist/atoms.json"
+    "./dist/properties.json": {
+      "default": "./dist/properties.json"
     }
   },
   "files": [

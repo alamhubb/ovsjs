@@ -1,84 +1,78 @@
 /**
  * Button Component (OVS)
  * 
- * Element Plus 风格的按钮组件
- * 使用 OVS 语法 + cssts 原子类表达式
+ * 简单的按钮组件，使用纯 OVS 语法
  */
 
 import { computed } from 'vue'
 
-view OvsButton(props) {
-  // 按钮基础样式 - 使用 css {} 表达式
-  const baseStyle = css {
-    inlineFlex,
-    justifyCenter,
-    itemsCenter,
-    height32,
-    paddingSm,
-    fontSize14,
-    fontMedium,
-    border,
-    rounded,
-    cursorPointer,
-    transition,
-    selectNone,
-    outlineNone
-  }
-  
-  // 类型样式映射
-  const typeStyles = {
-    default: css { bgWhite, colorRegular, borderBase },
-    primary: css { bgPrimary, colorWhite, borderPrimary },
-    success: css { bgSuccess, colorWhite, borderSuccess },
-    warning: css { bgWarning, colorWhite, borderWarning },
-    danger: css { bgDanger, colorWhite, borderDanger },
-    info: css { bgInfo, colorWhite, borderInfo }
-  }
-  
-  // 计算完整类名
-  const buttonClass = computed(() => {
-    const classes = [baseStyle]
-    
-    // 类型样式
-    const type = props.type || 'default'
-    classes.push(typeStyles[type] || typeStyles.default)
-    
-    // 状态样式
-    if (props.disabled) classes.push(css { isDisabled, cursorNotAllowed })
-    if (props.loading) classes.push(css { isLoading })
-    if (props.round) classes.push(css { roundedFull })
-    
-    return classes.join(' ')
-  })
+// 类型样式映射
+const typeColors = {
+  default: '#606266',
+  primary: '#409eff',
+  success: '#67c23a',
+  warning: '#e6a23c',
+  danger: '#f56c6c',
+  info: '#909399'
+}
 
-  // 点击处理
-  const handleClick = (evt) => {
-    if (props.disabled || props.loading) {
-      evt.stopPropagation()
-      return
-    }
-    if (props.onClick) {
-      props.onClick(evt)
-    }
-  }
+const typeBgColors = {
+  default: '#ffffff',
+  primary: '#409eff',
+  success: '#67c23a',
+  warning: '#e6a23c',
+  danger: '#f56c6c',
+  info: '#909399'
+}
 
-  // 渲染
-  button(
-    class = buttonClass.value,
-    disabled = props.disabled || undefined,
-    type = props.nativeType || 'button',
-    onClick = handleClick
-  ) {
-    // 加载图标
-    if (props.loading) {
-      span(class = css { marginRight6, animationRotating }) { '⟳' }
-    }
-    
-    // 子内容
-    span() {
-      props.children
-    }
+// 计算样式
+const buttonStyle = computed(() => {
+  const type = props.type || 'default'
+  const isDefault = type === 'default'
+  return {
+    display: 'inline-flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: '32px',
+    padding: '0 15px',
+    fontSize: '14px',
+    fontWeight: '500',
+    border: '1px solid',
+    borderRadius: '4px',
+    cursor: props.disabled ? 'not-allowed' : 'pointer',
+    transition: 'all 0.3s',
+    userSelect: 'none',
+    outline: 'none',
+    backgroundColor: isDefault ? '#fff' : typeBgColors[type],
+    color: isDefault ? typeColors[type] : '#fff',
+    borderColor: isDefault ? '#dcdfe6' : typeBgColors[type],
+    opacity: props.disabled ? 0.6 : 1
+  }
+})
+
+// 点击处理
+const handleClick = (evt) => {
+  if (props.disabled || props.loading) {
+    evt.stopPropagation()
+    return
+  }
+  if (props.onClick) {
+    props.onClick(evt)
   }
 }
 
-export default OvsButton
+// 渲染
+button(
+  style = buttonStyle.value,
+  disabled = props.disabled || undefined,
+  type = props.nativeType || 'button',
+  onClick = handleClick
+) {
+  // 加载图标
+  if (props.loading) {
+    span(style = { marginRight: '6px' }) { '⟳' }
+  }
+  
+  // 子内容
+  span { props.children }
+}

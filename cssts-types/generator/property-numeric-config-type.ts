@@ -202,6 +202,7 @@ export class PropertyNumericConfigBase {
   'padding-top': NumericType[] = [this.zero, this.sizePx, this.sizeRem, this.ratio]
 
   // spacing - gap
+  gap: NumericType[] = [this.zero, this.gapPx, this.gapRem, this.ratio]
   'column-gap': NumericType[] = [this.zero, this.gapPx, this.gapRem, this.ratio]
   'row-gap': NumericType[] = [this.zero, this.gapPx, this.gapRem, this.ratio]
 

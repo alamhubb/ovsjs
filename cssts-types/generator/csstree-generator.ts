@@ -8,7 +8,8 @@
  * 1. CsstsAtoms.d.ts - 接口定义（唯一数据源）
  * 2. global.generated.d.ts - 全局声明（引用接口）
  * 3. atoms.json - 原子类映射表（运行时用）
- * 4. atoms.css - 原子类样式定义
+ *
+ * 注意：CSS 样式由 vite-plugin-cssts 在编译时按需生成
  *
  * 命名规则：
  * - CSS 类名：property_value（用 _ 分隔属性和值）
@@ -282,56 +283,15 @@ function generateAtoms(config: PropertyNumericConfigBase = defaultConfig): AtomD
   // 获取属性数值配置
   const propertyNumericTypes = config.getPropertyNumericTypes()
 
-  // 收集所有需要处理的属性
-  const allProperties = new Set<string>([...Object.keys(propertyNumericTypes)])
+  // 从 css-tree 获取所有 CSS 属性
+  const lexer = (csstree as any).lexer
+  const allCssProperties = Object.keys(lexer.properties as Record<string, any>)
 
-  // 添加一些纯关键字属性
-  const keywordOnlyProperties = [
-    'display',
-    'position',
-    'float',
-    'clear',
-    'flex-direction',
-    'flex-wrap',
-    'justify-content',
-    'align-items',
-    'align-self',
-    'align-content',
-    'text-align',
-    'text-decoration',
-    'text-transform',
-    'white-space',
-    'word-break',
-    'overflow-wrap',
-    'vertical-align',
-    'border-style',
-    'visibility',
-    'overflow',
-    'overflow-x',
-    'overflow-y',
-    'cursor',
-    'pointer-events',
-    'user-select',
-    'box-sizing',
-    'table-layout',
-    'border-collapse',
-    'list-style-type',
-    'list-style-position',
-    'font-style',
-    'resize',
-    'appearance',
-    'outline-style',
-    'background-repeat',
-    'background-attachment',
-    'background-clip',
-    'background-origin',
-    'object-fit',
-    'object-position',
-  ]
-
-  for (const prop of keywordOnlyProperties) {
-    allProperties.add(prop)
-  }
+  // 合并：css-tree 的所有属性 + 数值配置的属性
+  const allProperties = new Set<string>([
+    ...allCssProperties,
+    ...Object.keys(propertyNumericTypes),
+  ])
 
   // 遍历每个属性
   for (const prop of allProperties) {
@@ -487,65 +447,26 @@ function generateGlobalDts(atoms: AtomDefinition[]): string {
 }
 
 /**
- * 生成 atoms.json 文件 - 原子类映射表（运行时用）
+ * 生成 properties.json 文件 - 所有 CSS 属性映射
  *
- * 结构：{ tsIdentifier: { property, className } }
+ * 结构：{ [camelCaseName]: kebab-case-name }
+ * 例如：{ "paddingTop": "padding-top", "zIndex": "z-index" }
  */
-function generateAtomsJson(atoms: AtomDefinition[]): string {
-  const data: Record<string, AtomInfo> = {}
+function generatePropertiesJson(atoms: AtomDefinition[]): string {
+  const properties = new Set<string>()
 
   for (const atom of atoms) {
-    data[atom.name] = {
-      property: atom.property,
-      className: atom.className,
-    }
+    properties.add(atom.property)
   }
 
-  return JSON.stringify(data, null, 2)
-}
-
-/**
- * 生成 atoms.css 文件 - 原子类样式定义
- *
- * 与 atoms.json 同时生成，确保数据一致性
- */
-function generateAtomsCss(atoms: AtomDefinition[]): string {
-  const lines: string[] = [
-    '/**',
-    ' * CssTs Atomic Styles',
-    ' *',
-    ' * 自动生成，请勿手动修改',
-    ' * 生成时间: ' + new Date().toISOString(),
-    ' * 数据来源: css-tree + property-numeric-config-type.ts',
-    ' */',
-    '',
-  ]
-
-  // 按属性分组
-  const grouped = new Map<string, AtomDefinition[]>()
-  for (const atom of atoms) {
-    const group = atom.property
-    if (!grouped.has(group)) {
-      grouped.set(group, [])
-    }
-    grouped.get(group)!.push(atom)
+  // 转换为对象格式：camelCase -> kebab-case
+  const result: Record<string, string> = {}
+  for (const prop of [...properties].sort()) {
+    const camelName = kebabToCamel(prop)
+    result[camelName] = prop
   }
 
-  // 生成每个分组的 CSS
-  for (const [property, groupAtoms] of grouped) {
-    lines.push(`/* ==================== ${property} ==================== */`)
-    for (const atom of groupAtoms) {
-      // 状态类不生成具体样式，由用户定义
-      if (property === 'state') {
-        lines.push(`.${atom.className} { /* ${atom.value} state */ }`)
-      } else {
-        lines.push(`.${atom.className} { ${property}: ${atom.value}; }`)
-      }
-    }
-    lines.push('')
-  }
-
-  return lines.join('\n')
+  return JSON.stringify(result, null, 2)
 }
 
 // ==================== 主函数 ====================
@@ -582,15 +503,10 @@ async function main() {
   fs.writeFileSync(path.join(rootDir, 'global.generated.d.ts'), globalDts)
   console.log('✅ 生成 global.generated.d.ts')
 
-  // 3. 生成 atoms.json - 原子类映射表（运行时用）
-  const atomsJson = generateAtomsJson(atoms)
-  fs.writeFileSync(path.join(distDir, 'atoms.json'), atomsJson)
-  console.log('✅ 生成 dist/atoms.json')
-
-  // 4. 生成 atoms.css - 原子类样式定义（与 atoms.json 同时生成）
-  const atomsCss = generateAtomsCss(atoms)
-  fs.writeFileSync(path.join(distDir, 'atoms.css'), atomsCss)
-  console.log('✅ 生成 dist/atoms.css')
+  // 3. 生成 properties.json - 所有 CSS 属性列表
+  const propertiesJson = generatePropertiesJson(atoms)
+  fs.writeFileSync(path.join(distDir, 'properties.json'), propertiesJson)
+  console.log('✅ 生成 dist/properties.json')
 
   // 输出统计
   const grouped = new Map<string, number>()
@@ -624,8 +540,7 @@ async function main() {
   console.log('生成的文件:')
   console.log('  - CsstsAtoms.d.ts      (类型定义)')
   console.log('  - global.generated.d.ts (全局声明)')
-  console.log('  - dist/atoms.json      (运行时映射表)')
-  console.log('  - dist/atoms.css       (样式定义)')
+  console.log('  - dist/properties.json (CSS 属性列表)')
 }
 
 main().catch(console.error)

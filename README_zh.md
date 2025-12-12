@@ -24,9 +24,9 @@ OVS 是一种声明式 UI 语法扩展，让你用更简洁的方式编写 Vue �
 
 ```javascript
 // OVS 语法
-div({ class: 'container' }) {
+div(class = 'container') {
   h1 { 'Hello OVS!' }
-  button({ onClick: handleClick }) { 'Click Me' }
+  button(onClick() { handleClick() }) { 'Click Me' }
 }
 ```
 
@@ -99,12 +99,12 @@ div {
   const total = items.reduce((sum, item) => sum + item.price, 0)
 
   if (total > 100) {
-    span({ class: 'discount' }) { '免运费！' }
+    span(class = 'discount') { '免运费！' }
   }
 
   for (const item of items) {
     if (item.inStock) {
-      ProductCard({ product: item })
+      ProductCard(product = item) { }
     }
   }
 }
@@ -148,10 +148,10 @@ import { ref } from 'vue'
 
 const count = ref(0)
 
-div({ class: 'hello' }) {
+div(class = 'hello') {
   h1 { 'Hello OVS!' }
   p { `Count: ${count.value}` }
-  button({ onClick: () => count.value++ }) { '+1' }
+  button(onClick() { count.value++ }) { '+1' }
 }
 ```
 
@@ -173,21 +173,29 @@ div {
 }
 ```
 
-### 属性传递
+### 属性传递 (OvsArguments)
 
-使用 `标签名(属性对象) { 内容 }` 传递属性：
+使用 `标签名(属性 = 值) { 内容 }` 传递属性：
 
 ```javascript
-div({ class: 'container', id: 'app' }) {
-  a({ href: 'https://example.com', target: '_blank' }) {
+div(class = 'container', id = 'app') {
+  a(href = 'https://example.com', target = '_blank') {
     'Click here'
   }
 }
 
-// 事件处理
-button({ onClick: () => console.log('clicked') }) {
+// 事件处理 - 方法简写
+button(onClick() { console.log('clicked') }) {
   'Click Me'
 }
+
+// 简写属性（类似 ES6 对象简写）
+const disabled = true
+button(disabled) { 'Submit' }
+
+// 展开属性
+const props = { class: 'btn', id: 'submit' }
+button(...props) { 'Submit' }
 ```
 
 ### 文本和表达式
@@ -235,16 +243,16 @@ ul {
 
 ```javascript
 // 定义组件
-view Card(state) {
-  div({ class: 'card' }) {
-    h2 { state.props.title }
-    p { state.props.content }
-    state.children  // 渲染子元素
+view Card(props) {
+  div(class = 'card') {
+    h2 { props.title }
+    p { props.content }
+    props.children  // 渲染子元素
   }
 }
 
 // 使用组件
-Card({ title: 'Hello', content: 'World' }) {
+Card(title = 'Hello', content = 'World') {
   span { 'Extra content' }
 }
 ```
@@ -295,7 +303,7 @@ const user = reactive({ name: 'Alice', age: 25 })
 div {
   p { `Count: ${count.value}` }
   p { `Name: ${user.name}` }
-  button({ onClick: () => count.value++ }) { 'Add' }
+  button(onClick() { count.value++ }) { 'Add' }
 }
 ```
 
@@ -307,27 +315,40 @@ div {
 // HelloWorld.ovs
 import { ref } from 'vue'
 
-const msg = "You did it!"
-const count = ref(0)
-
-div({ class: 'greetings', onClick: () => count.value = 0 }) {
-  h1({ class: 'green' }) { msg }
-
-  #{
-    // 纯逻辑代码，不渲染
-    console.log('Component rendered')
+// 定义子组件
+view CountDisplay(props) {
+  div(class = 'count-display') {
+    span { 'Current count: ' }
+    strong(style = 'color: #42b883; font-size: 24px;') { props.count }
   }
+}
 
-  h2 { `Clicked ${count.value} times` }
+// 主视图
+div(class = 'greetings', onClick() { count.value = 0 }) {
+  const msg = "You did it!"
+  let count = ref(0)
+
+  // 定时器每秒+1
+  const timer = setInterval(() => {
+    count.value = count.value + 1
+  }, 1000)
+
+  h1(class = 'green') { msg }
 
   h3 {
     "Built with "
-    a({ href: 'https://vuejs.org/', target: '_blank' }) { 'Vue 3' }
+    a(href = 'https://vuejs.org/', target = '_blank') { 'Vue 3' }
     ' + '
-    a({ href: 'https://github.com/aspect-apps/ovsjs', target: '_blank' }) { 'OVS' }
+    a(href = 'https://github.com/alamhubb/ovsjs', target = '_blank') { 'OVS' }
   }
 
-  button({ onClick: () => count.value++ }) { 'Click Me' }
+  // 内联元素赋值
+  const countView = span { count }
+
+  // 使用组件传递 props
+  CountDisplay(count = countView) { }
+
+  p(style = 'color: #888; font-size: 12px;') { '(Click anywhere to reset)' }
 }
 ```
 
@@ -340,27 +361,31 @@ div({ class: 'greetings', onClick: () => count.value = 0 }) {
 ### 1. JavaScript 超集，最小侵入
 
 OVS 只添加了三个语法扩展：
-- `tag {}` / `tag() {}` - 元素声明
-- `view Name() {}` - 组件声明（`view` 是软关键字，可作为变量名使用）
+- `tag {}` / `tag(props) {}` - 元素声明，使用 OvsArguments 语法
+- `view Name(props) {}` - 组件声明（`view` 是软关键字）
 - `#{}` - 不渲染块
 
 其他都是标准 JavaScript，学习成本极低。
 
-### 2. 声明式 UI，无需 JSX
+### 2. OvsArguments - 更简洁的属性语法
 
-不需要学习 JSX 语法，使用原生大括号 `{}` 更符合 JavaScript 习惯：
+OVS 使用特殊的属性语法，比对象字面量更简洁：
 
 ```javascript
-// JSX 方式
-<div className="container">
-  <h1>{title}</h1>
-</div>
-
-// OVS 方式
-div({ class: 'container' }) {
-  h1 { title }
+// OvsArguments 语法 (OVS)
+div(class = 'container', id = 'app', onClick() { handle() }) {
+  'content'
 }
+
+// 编译为：
+$OvsHtmlTag.div({ class: 'container', id: 'app', onClick() { handle() } }, ['content'])
 ```
+
+**OvsArguments 特性：**
+- `prop = value` - 属性赋值（使用 `=` 而不是 `:`）
+- `method() {}` - 方法简写
+- `shorthand` - 简写属性（类似 ES6）
+- `...spread` - 展开运算符
 
 ### 3. 完整类型支持
 
@@ -413,7 +438,7 @@ OVS 编译器会将 HTML 标签自动转换为 `$OvsHtmlTag.xxx()` 调用：
 
 ```javascript
 // 输入（OVS）
-div({ class: 'container' }) {
+div(class = 'container') {
   h1 { 'Hello' }
 }
 

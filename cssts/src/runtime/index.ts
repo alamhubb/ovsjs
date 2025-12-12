@@ -1,11 +1,15 @@
 /**
  * CssTs 运行时命名空间
- * 
+ *
  * 提供 cssts.$cls() 函数，用于合并多个样式
+ * 使用 properties.json 做最长前缀匹配来解析属性名
  */
 
-type ClassValue = 
-  | string 
+// @ts-ignore - JSON import
+import propertiesData from 'cssts-types/dist/properties.json' with { type: 'json' }
+
+type ClassValue =
+  | string
   | number
   | boolean
   | null
@@ -17,107 +21,90 @@ interface ClassObject {
   [key: string]: boolean | undefined | null
 }
 
+// ==================== 属性名数据 ====================
+
 /**
- * 原子类信息结构（来自 atoms.json）
+ * properties.json 格式: { camelCase: "kebab-case" }
+ * 例如: { "paddingTop": "padding-top", "zIndex": "z-index" }
  */
-interface AtomInfo {
-  property: string   // CSS 属性名，用于同属性去重
-  className: string  // CSS 类名
+const properties: Record<string, string> = propertiesData as Record<string, string>
+
+/**
+ * 按长度降序排列的属性名列表（用于最长前缀匹配）
+ */
+const sortedPropertyNames = Object.keys(properties).sort((a, b) => b.length - a.length)
+
+// ==================== 命名转换算法 ====================
+
+/**
+ * CSS 类名中需要转义的符号
+ */
+const symbolToEscape: Record<string, string> = {
+  '.': '\\.',
+  '%': '\\%',
+  '/': '\\/',
 }
 
 /**
- * atoms.json 数据类型
+ * 从 TS 属性名解析出 CSS 属性名和值（最长前缀匹配）
+ *
+ * 例如:
+ * - displayFlex → { property: 'display', value: 'flex' }
+ * - paddingTop16px → { property: 'padding-top', value: '16px' }
+ * - zIndexN1 → { property: 'z-index', value: '-1' }
+ * - width50pct → { property: 'width', value: '50%' }
+ * - lineHeight1p5 → { property: 'line-height', value: '1.5' }
  */
-type AtomsData = Record<string, AtomInfo>
-
-/**
- * 合并多个样式为 Vue :class 可用的对象
- * 
- * 支持的输入类型：
- * - 字符串: 'class-name' → { 'class-name': true }
- * - 数组: ['class1', 'class2'] → { 'class1': true, 'class2': true }
- * - 对象: { 'class-name': true } → 直接合并
- * - 嵌套对象: 递归解包
- * - falsy 值: 忽略 (null, undefined, false, 0, '')
- * 
- * @example
- * // 基础用法
- * cssts.$cls(CssCls.card, CssCls.textCenter)
- * 
- * // 混合字符串
- * cssts.$cls('static-class', CssCls.card)
- * 
- * // 条件样式
- * cssts.$cls(isActive && CssCls.active, CssCls.base)
- * 
- * // 数组
- * cssts.$cls(['class1', 'class2'], CssCls.card)
- */
-function $cls(...args: ClassValue[]): ClassObject {
-  const result: ClassObject = {}
-  
-  for (const arg of args) {
-    processValue(arg, result)
-  }
-  
-  return result
-}
-
-/**
- * 递归处理单个值
- */
-function processValue(value: ClassValue, result: ClassObject): void {
-  // 忽略 falsy 值
-  if (!value) return
-  
-  if (typeof value === 'string') {
-    // 字符串：直接添加
-    result[value] = true
-  } else if (typeof value === 'number') {
-    // 数字：转为字符串
-    result[String(value)] = true
-  } else if (Array.isArray(value)) {
-    // 数组：递归处理每个元素
-    for (const item of value) {
-      processValue(item, result)
-    }
-  } else if (typeof value === 'object') {
-    // 对象：合并，递归处理嵌套对象
-    for (const [key, val] of Object.entries(value)) {
-      if (val) {
-        // 检查 val 是否是嵌套的样式对象（值为 true 的对象）
-        if (typeof val === 'object' && val !== null) {
-          // 嵌套对象，递归处理
-          processValue(val as ClassValue, result)
-        } else {
-          // 普通的 { 'class-name': true }
-          result[key] = true
-        }
+function parseTsAtomName(tsName: string): { property: string; value: string } | null {
+  // 最长前缀匹配：找到最长的属性名前缀
+  for (const propName of sortedPropertyNames) {
+    if (tsName.startsWith(propName) && tsName.length > propName.length) {
+      const valuePart = tsName.slice(propName.length)
+      // 值部分必须以大写字母、数字或 N(负数) 开头
+      // 注意：属性名是 camelCase，所以如果值以小写开头说明还是属性名的一部分
+      if (/^[A-Z0-9]/.test(valuePart) || /^N[0-9]/.test(valuePart)) {
+        const property = properties[propName]
+        const value = tsValueToCSS(valuePart)
+        return { property, value }
       }
     }
   }
+
+  return null
 }
 
-// ==================== 全局属性映射 ====================
-
 /**
- * 原子类数据（从 atoms.json 加载）
- * 
- * 结构：{ tsIdentifier: { property: 'css-property', className: 'css-class-name' } }
- * 
- * 初始化方式：
- * 1. 编译时由 vite-plugin-cssts 注入
- * 2. 或运行时调用 cssts.loadAtoms() 加载
+ * 将 TS 值部分转换为 CSS 值
+ *
+ * - Flex → flex
+ * - 16px → 16px
+ * - N1 → -1
+ * - 50pct → 50%
+ * - 1p5 → 1.5
  */
-let atomsData: AtomsData = {}
+function tsValueToCSS(tsValue: string): string {
+  let result = tsValue
 
-/**
- * 加载原子类数据
- * 
- * @param data atoms.json 数据
- */
-function loadAtoms(data: AtomsData): void {
-  atomsData = data
+  // 处理负数前缀 N → -
+  if (result.startsWith('N') && result.length > 1 && /[0-9]/.test(result[1])) {
+    result = '-' + result.slice(1)
+  }
+
+  // 处理百分号 pct → %
+  result = result.replace(/pct/g, '%')
+
+  // 处理小数点 p → . (仅在数字上下文中)
+  // 例如: 1p5 → 1.5, 0p25 → 0.25
+  result = result.replace(/(\d)p(\d)/g, '$1.$2')
+
+  // 处理斜杠 s → / (仅在数字上下文中)
+  // 例如: 16s9 → 16/9
+  result = result.replace(/(\d)s(\d)/g, '$1/$2')
+
+  // 转换为 kebab-case（处理驼峰值如 FlexStart → flex-start）
+  result = camelToKebab(result)
+
+  return result
 }
 
 /**
@@ -131,115 +118,138 @@ function camelToKebab(str: string): string {
 }
 
 /**
- * 获取原子类对应的 CSS 属性（从 atoms.json 查询）
+ * 生成 CSS 类名
+ *
+ * 格式: property_value（特殊字符转义）
+ */
+function generateClassName(property: string, value: string): string {
+  let escapedValue = value
+
+  // 转义特殊字符
+  for (const [symbol, escaped] of Object.entries(symbolToEscape)) {
+    escapedValue = escapedValue.split(symbol).join(escaped)
+  }
+
+  return `${property}_${escapedValue}`
+}
+
+/**
+ * 从 TS 属性名获取 CSS 类名
+ */
+function getCssClassName(atomName: string): string {
+  const parsed = parseTsAtomName(atomName)
+  if (parsed) {
+    return generateClassName(parsed.property, parsed.value)
+  }
+  // 无法解析时，直接转换为 kebab-case
+  return camelToKebab(atomName)
+}
+
+/**
+ * 从 TS 属性名获取 CSS 属性名
  */
 function getCssProperty(atomName: string): string | undefined {
-  return atomsData[atomName]?.property
+  const parsed = parseTsAtomName(atomName)
+  return parsed?.property
+}
+
+// ==================== 样式合并 ====================
+
+/**
+ * 合并多个样式为 Vue :class 可用的对象
+ */
+function $cls(...args: ClassValue[]): ClassObject {
+  const result: ClassObject = {}
+
+  for (const arg of args) {
+    processValue(arg, result)
+  }
+
+  return result
 }
 
 /**
- * 获取原子类对应的 CSS 类名（从 atoms.json 查询）
+ * 递归处理单个值
  */
-function getCssClassName(atomName: string): string | undefined {
-  return atomsData[atomName]?.className
-}
+function processValue(value: ClassValue, result: ClassObject): void {
+  if (!value) return
 
-/**
- * 判断是否是 CSS 属性名（而非原子类名）
- * 
- * 通过检查 atomsData 中是否有该属性名对应的原子类来判断
- */
-function isCssPropertyName(name: string): boolean {
-  const kebabName = camelToKebab(name)
-  // 如果在 atomsData 中找到任何原子类的 property 等于该名称，则是 CSS 属性名
-  for (const atomInfo of Object.values(atomsData)) {
-    if (atomInfo.property === name || atomInfo.property === kebabName) {
-      return true
+  if (typeof value === 'string') {
+    result[value] = true
+  } else if (typeof value === 'number') {
+    result[String(value)] = true
+  } else if (Array.isArray(value)) {
+    for (const item of value) {
+      processValue(item, result)
+    }
+  } else if (typeof value === 'object') {
+    for (const [key, val] of Object.entries(value)) {
+      if (val) {
+        if (typeof val === 'object' && val !== null) {
+          processValue(val as ClassValue, result)
+        } else {
+          result[key] = true
+        }
+      }
     }
   }
-  return false
 }
+
+// ==================== 样式替换 ====================
 
 /**
  * 样式替换：用新原子类替换旧原子类（基于 CSS 属性冲突检测）
- * 
- * 支持两种模式：
- * 1. 原子类替换：style.bgPrimary = css bgSuccess
- *    → cssts.replace(style, "bgPrimary", "bgSuccess")
- * 2. 属性名替换：style.color = css colorRed
- *    → cssts.replace(style, "color", "colorRed")
- *    删除所有 color 属性的原子类，添加 colorRed
- * 
- * @param style 当前样式字符串，如 "bg-primary color-white padding-sm"
- * @param oldAtomOrProp 要替换的原子类名或 CSS 属性名（驼峰）
- * @param newAtom 新的原子类名（驼峰），如 "bgSuccess"
- * @returns 替换后的样式字符串
- * 
- * @example
- * // 原子类替换
- * cssts.replace("bg-primary color-white", "bgPrimary", "bgSuccess")
- * // → "bg-success color-white"
- * 
- * // 属性名替换
- * cssts.replace("bg-primary color-white", "color", "colorRed")
- * // → "bg-primary color-red"
  */
-function replace(style: string, oldAtomOrProp: string, newAtom: string): string {
-  const newClassName = getCssClassName(newAtom) || camelToKebab(newAtom)
+function replace(style: string | ClassObject, oldAtomOrProp: string, newAtom: string): string | ClassObject {
+  const newClassName = getCssClassName(newAtom)
   const newProp = getCssProperty(newAtom)
-  const classes = style.split(' ').filter(Boolean)
-  
-  // 检查 oldAtomOrProp 是否是 CSS 属性名
-  if (isCssPropertyName(oldAtomOrProp)) {
-    const targetProp = camelToKebab(oldAtomOrProp)
-    
-    // 验证新原子类是否属于该 CSS 属性
-    if (newProp && newProp === targetProp) {
-      // 删除所有属于该 CSS 属性的原子类
-      const result = classes.filter(cls => {
-        // 通过类名反查原子类名，获取其 property
-        const atomEntry = Object.entries(atomsData).find(([_, info]) => info.className === cls)
-        if (atomEntry) {
-          return atomEntry[1].property !== targetProp
+  const oldProp = getCssProperty(oldAtomOrProp) || camelToKebab(oldAtomOrProp)
+
+  if (typeof style === 'string') {
+    const classes = style.split(' ').filter(Boolean)
+
+    if (newProp && newProp === oldProp) {
+      const result = classes.filter((cls) => {
+        const underscoreIndex = cls.indexOf('_')
+        if (underscoreIndex > 0) {
+          const clsProp = cls.slice(0, underscoreIndex)
+          return clsProp !== oldProp
         }
         return true
       })
-      // 添加新原子类的类名
       result.push(newClassName)
       return result.join(' ')
     }
-    
-    // 属性不匹配，直接添加新原子类
-    return [...classes, newClassName].join(' ')
+
+    const oldClassName = getCssClassName(oldAtomOrProp)
+    return classes.map((cls) => (cls === oldClassName ? newClassName : cls)).join(' ')
   }
-  
-  // 原子类替换模式
-  const oldClassName = getCssClassName(oldAtomOrProp) || camelToKebab(oldAtomOrProp)
-  const oldProp = getCssProperty(oldAtomOrProp)
-  
-  // 如果新旧原子类属于同一 CSS 属性，直接替换
-  if (oldProp && newProp && oldProp === newProp) {
-    const result = classes.filter(cls => cls !== oldClassName)
-    result.push(newClassName)
-    return result.join(' ')
+
+  const result: ClassObject = {}
+  for (const [cls, val] of Object.entries(style)) {
+    if (!val) continue
+
+    const underscoreIndex = cls.indexOf('_')
+    const clsProp = underscoreIndex > 0 ? cls.slice(0, underscoreIndex) : null
+
+    if (clsProp && clsProp === oldProp && newProp === oldProp) {
+      continue
+    }
+
+    result[cls] = true
   }
-  
-  // 否则只替换精确匹配的类名
-  return classes.map(cls => cls === oldClassName ? newClassName : cls).join(' ')
+
+  result[newClassName] = true
+  return result
 }
 
 /**
  * 批量样式替换
- * 
- * @param style 当前样式字符串
- * @param replacements 替换映射 { oldAtom: newAtom }
- * @returns 替换后的样式字符串
- * 
- * @example
- * cssts.replaceAll("bg-primary color-white", { bgPrimary: "bgSuccess", colorWhite: "colorBlack" })
- * // → "bg-success color-black"
  */
-function replaceAll(style: string, replacements: Record<string, string>): string {
+function replaceAll(
+  style: string | ClassObject,
+  replacements: Record<string, string>,
+): string | ClassObject {
   let result = style
   for (const [oldAtom, newAtom] of Object.entries(replacements)) {
     result = replace(result, oldAtom, newAtom)
@@ -247,71 +257,16 @@ function replaceAll(style: string, replacements: Record<string, string>): string
   return result
 }
 
-/**
- * 注册自定义原子类
- * 
- * @param atomName 原子类名（驼峰）
- * @param property CSS 属性名
- * @param className CSS 类名（可选，默认从 atomName 转换）
- */
-function registerAtom(atomName: string, property: string, className?: string): void {
-  atomsData[atomName] = {
-    property,
-    className: className || camelToKebab(atomName)
-  }
-}
+// ==================== 导出 ====================
 
-/**
- * CssTs 命名空间
- */
 export const cssts = {
-  /**
-   * 合并多个样式
-   * @see $cls
-   */
   $cls,
-  
-  /**
-   * 样式替换
-   * @see replace
-   */
   replace,
-  
-  /**
-   * 批量样式替换
-   * @see replaceAll
-   */
   replaceAll,
-  
-  /**
-   * 加载原子类数据（从 atoms.json）
-   * @see loadAtoms
-   */
-  loadAtoms,
-  
-  /**
-   * 注册自定义原子类
-   * @see registerAtom
-   */
-  registerAtom,
-  
-  /**
-   * 获取原子类的 CSS 属性
-   * @see getCssProperty
-   */
   getCssProperty,
-  
-  /**
-   * 获取原子类的 CSS 类名
-   * @see getCssClassName
-   */
   getCssClassName,
-  
-  /**
-   * 版本号
-   */
-  version: '0.1.0'
+  version: '0.1.0',
 }
 
 export default cssts
-export { $cls, replace, replaceAll, loadAtoms, registerAtom, getCssProperty, getCssClassName }
+export { $cls, replace, replaceAll, getCssProperty, getCssClassName }

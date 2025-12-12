@@ -24,9 +24,9 @@ OVS is a declarative UI syntax extension that lets you write Vue components in a
 
 ```javascript
 // OVS syntax
-div({ class: 'container' }) {
+div(class = 'container') {
   h1 { 'Hello OVS!' }
-  button({ onClick: handleClick }) { 'Click Me' }
+  button(onClick() { handleClick() }) { 'Click Me' }
 }
 ```
 
@@ -99,12 +99,12 @@ div {
   const total = items.reduce((sum, item) => sum + item.price, 0)
 
   if (total > 100) {
-    span({ class: 'discount' }) { 'Free shipping!' }
+    span(class = 'discount') { 'Free shipping!' }
   }
 
   for (const item of items) {
     if (item.inStock) {
-      ProductCard({ product: item })
+      ProductCard(product = item) { }
     }
   }
 }
@@ -148,10 +148,10 @@ import { ref } from 'vue'
 
 const count = ref(0)
 
-div({ class: 'hello' }) {
+div(class = 'hello') {
   h1 { 'Hello OVS!' }
   p { `Count: ${count.value}` }
-  button({ onClick: () => count.value++ }) { '+1' }
+  button(onClick() { count.value++ }) { '+1' }
 }
 ```
 
@@ -173,21 +173,29 @@ div {
 }
 ```
 
-### Passing Props
+### Passing Props (OvsArguments)
 
-Use `tagName(propsObject) { content }` to pass props:
+Use `tagName(prop = value) { content }` to pass props:
 
 ```javascript
-div({ class: 'container', id: 'app' }) {
-  a({ href: 'https://example.com', target: '_blank' }) {
+div(class = 'container', id = 'app') {
+  a(href = 'https://example.com', target = '_blank') {
     'Click here'
   }
 }
 
-// Event handling
-button({ onClick: () => console.log('clicked') }) {
+// Event handling - method shorthand
+button(onClick() { console.log('clicked') }) {
   'Click Me'
 }
+
+// Shorthand property (like ES6 object shorthand)
+const disabled = true
+button(disabled) { 'Submit' }
+
+// Spread props
+const props = { class: 'btn', id: 'submit' }
+button(...props) { 'Submit' }
 ```
 
 ### Text and Expressions
@@ -235,16 +243,16 @@ Use the `view` soft keyword to define reusable components:
 
 ```javascript
 // Define component
-view Card(state) {
-  div({ class: 'card' }) {
-    h2 { state.props.title }
-    p { state.props.content }
-    state.children  // Render children
+view Card(props) {
+  div(class = 'card') {
+    h2 { props.title }
+    p { props.content }
+    props.children  // Render children
   }
 }
 
 // Use component
-Card({ title: 'Hello', content: 'World' }) {
+Card(title = 'Hello', content = 'World') {
   span { 'Extra content' }
 }
 ```
@@ -286,7 +294,7 @@ const user = reactive({ name: 'Alice', age: 25 })
 div {
   p { `Count: ${count.value}` }
   p { `Name: ${user.name}` }
-  button({ onClick: () => count.value++ }) { 'Add' }
+  button(onClick() { count.value++ }) { 'Add' }
 }
 ```
 
@@ -298,27 +306,40 @@ div {
 // HelloWorld.ovs
 import { ref } from 'vue'
 
-const msg = "You did it!"
-const count = ref(0)
-
-div({ class: 'greetings', onClick: () => count.value = 0 }) {
-  h1({ class: 'green' }) { msg }
-
-  #{
-    // Pure logic code, won't render
-    console.log('Component rendered')
+// Define a sub-component
+view CountDisplay(props) {
+  div(class = 'count-display') {
+    span { 'Current count: ' }
+    strong(style = 'color: #42b883; font-size: 24px;') { props.count }
   }
+}
 
-  h2 { `Clicked ${count.value} times` }
+// Main view
+div(class = 'greetings', onClick() { count.value = 0 }) {
+  const msg = "You did it!"
+  let count = ref(0)
+
+  // Timer to increment count
+  const timer = setInterval(() => {
+    count.value = count.value + 1
+  }, 1000)
+
+  h1(class = 'green') { msg }
 
   h3 {
     "Built with "
-    a({ href: 'https://vuejs.org/', target: '_blank' }) { 'Vue 3' }
+    a(href = 'https://vuejs.org/', target = '_blank') { 'Vue 3' }
     ' + '
-    a({ href: 'https://github.com/aspect-apps/ovsjs', target: '_blank' }) { 'OVS' }
+    a(href = 'https://github.com/alamhubb/ovsjs', target = '_blank') { 'OVS' }
   }
 
-  button({ onClick: () => count.value++ }) { 'Click Me' }
+  // Inline element assignment
+  const countView = span { count }
+
+  // Use component with props
+  CountDisplay(count = countView) { }
+
+  p(style = 'color: #888; font-size: 12px;') { '(Click anywhere to reset)' }
 }
 ```
 
@@ -331,27 +352,31 @@ div({ class: 'greetings', onClick: () => count.value = 0 }) {
 ### 1. JavaScript Superset, Minimal Intrusion
 
 OVS only adds three syntax extensions:
-- `tag {}` / `tag() {}` - Element declaration
-- `view Name() {}` - Component declaration (`view` is a soft keyword, can be used as variable name)
+- `tag {}` / `tag(props) {}` - Element declaration with OvsArguments
+- `view Name(props) {}` - Component declaration (`view` is a soft keyword)
 - `#{}` - Non-rendering block
 
 Everything else is standard JavaScript, minimal learning curve.
 
-### 2. Declarative UI, No JSX Required
+### 2. OvsArguments - Cleaner Props Syntax
 
-No need to learn JSX syntax, native braces `{}` are more natural for JavaScript:
+OVS uses a special props syntax that's cleaner than object literals:
 
 ```javascript
-// JSX approach
-<div className="container">
-  <h1>{title}</h1>
-</div>
-
-// OVS approach
-div({ class: 'container' }) {
-  h1 { title }
+// OvsArguments syntax (OVS)
+div(class = 'container', id = 'app', onClick() { handle() }) {
+  'content'
 }
+
+// Compiles to:
+$OvsHtmlTag.div({ class: 'container', id: 'app', onClick() { handle() } }, ['content'])
 ```
+
+**OvsArguments features:**
+- `prop = value` - Property assignment (uses `=` instead of `:`)
+- `method() {}` - Method shorthand
+- `shorthand` - Shorthand property (like ES6)
+- `...spread` - Spread operator
 
 ### 3. Full Type Support
 
@@ -407,4 +432,3 @@ Issues and Pull Requests are welcome!
 ---
 
 **OVS** - _Declarative UI for the Web, Concise & Elegant_ ✨
-

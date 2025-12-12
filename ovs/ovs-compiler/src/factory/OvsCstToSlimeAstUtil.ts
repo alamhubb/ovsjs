@@ -257,10 +257,15 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
   }
 
     /**
-     * 转换 OvsViewDeclaration 为函数声明
+     * 转换 OvsViewDeclaration 为 defineOvsComponent 包裹的组件
      *
      * 新语法输入：view ComponentName (props) { div { ... } }
-     * 输出：function ComponentName(props) { ... return div(...) }
+     * 输出：const ComponentName = defineOvsComponent(props => { ... return div(...) })
+     *
+     * 这样生成的组件既可以：
+     * 1. 在 OVS 内部作为函数调用（返回的组件会被 mapChildrenToVNodes 用 h() 渲染）
+     * 2. 在 Vue 模板中作为组件使用
+     * 3. 被 export 导出供其他文件使用
      *
      * CST 结构：OvsViewToken, IdentifierName, ArrowFormalParameters?, LBrace, StatementList?, RBrace
      */
@@ -277,6 +282,7 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
         const componentName = this.createIdentifierAst(componentNameCst)
 
         // 2. 提取参数（可选的 ArrowFormalParameters）
+        // view 声明的参数会成为 defineOvsComponent 内部箭头函数的参数
         let params: any[] = []
         const arrowFormalParamsName = SlimeParser.prototype.ArrowFormalParameters?.name || 'ArrowFormalParameters'
         const formalParamsCst = children.find(c => c.name === arrowFormalParamsName)
@@ -284,7 +290,10 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
         if (formalParamsCst) {
             params = this.createArrowFormalParametersAstWrapped(formalParamsCst)
         }
-        // 新语法允许无参数的组件：view MyComponent { div { 'hello' } }
+        // 如果没有声明参数，默认使用 props
+        if (params.length === 0) {
+            params = [SlimeNodeCreate.createIdentifier('props')]
+        }
 
         // 3. 提取函数体内的 StatementList
         const statementListName = SlimeParser.prototype.StatementList?.name || 'StatementList'
@@ -318,26 +327,42 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
             }
         }
 
-        // 5. 创建函数体
-        const functionBody = SlimeNodeCreate.createBlockStatement(
+        // 5. 创建箭头函数体
+        const arrowFunctionBody = SlimeNodeCreate.createBlockStatement(
             functionBodyStatements,
             cst.loc,
             { type: 'LBrace', value: '{', loc: cst.loc } as any,
             { type: 'RBrace', value: '}', loc: cst.loc } as any
         )
 
-        // 创建函数声明（手动构造AST节点）
-        const functionDeclaration = {
-            type: 'FunctionDeclaration',
-            id: componentName,
-            params: params,
-            body: functionBody,
-            generator: false,
-            async: false,
-            loc: cst.loc
-        }
+        // 6. 创建箭头函数：props => { ... }
+        const arrowFunction = SlimeNodeCreate.createArrowFunctionExpression(
+            arrowFunctionBody,
+            params,
+            false,  // async
+            false   // generator
+        )
 
-        return functionDeclaration
+        // 7. 创建 defineOvsComponent(props => { ... }) 调用
+        const defineOvsCall = SlimeNodeCreate.createCallExpression(
+            SlimeNodeCreate.createIdentifier('defineOvsComponent'),
+            [arrowFunction]
+        )
+
+        // 8. 创建变量声明：const ComponentName = defineOvsComponent(...)
+        const variableDeclaration = SlimeNodeCreate.createVariableDeclaration(
+            slimeTokenCreate.createConstToken(),
+            [
+                SlimeNodeCreate.createVariableDeclarator(
+                    componentName,
+                    slimeTokenCreate.createAssignToken(),
+                    defineOvsCall
+                )
+            ]
+        )
+        variableDeclaration.loc = cst.loc
+
+        return variableDeclaration
     }
 
   /**

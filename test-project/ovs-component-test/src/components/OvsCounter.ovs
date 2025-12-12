@@ -1,45 +1,38 @@
 /**
- * OVS Counter 组件
- * 测试响应式状态和事件处理
+ * Counter Component (OVS)
+ * 
+ * 简单的计数器组件
  */
-import { ref, computed } from 'vue'
 
-view OvsCounter(props) {
-  const count = ref(props.initialValue || 0)
+import { ref } from 'vue'
 
-  const increment = () => {
-    count.value++
-  }
+const count = ref(props.initialValue || 0)
 
-  const decrement = () => {
-    count.value--
-  }
-
-  const reset = () => {
-    count.value = props.initialValue || 0
-  }
-
-  const statusClass = computed(() => {
-    return count.value >= 0 ? 'status-badge status-badge--success' : 'status-badge status-badge--error'
-  })
-
-  div(class = 'ovs-card') {
-    div(class = 'counter-display') {
-      count
-    }
-    
-    div(class = 'test-row', style = 'justify-content: center; margin-top: 15px;') {
-      button(class = 'ovs-button ovs-button--danger', onClick = decrement) { '➖ 减少' }
-      button(class = 'ovs-button ovs-button--warning', onClick = reset) { '🔄 重置' }
-      button(class = 'ovs-button ovs-button--success', onClick = increment) { '➕ 增加' }
-    }
-
-    div(style = 'text-align: center; margin-top: 15px;') {
-      span(class = statusClass.value) {
-        count.value >= 0 ? '正数' : '负数'
-      }
-    }
-  }
+const containerStyle = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: '10px'
 }
 
-export default OvsCounter
+const buttonStyle = {
+  width: '32px',
+  height: '32px',
+  fontSize: '18px',
+  border: '1px solid #dcdfe6',
+  borderRadius: '4px',
+  backgroundColor: '#fff',
+  cursor: 'pointer'
+}
+
+const countStyle = {
+  fontSize: '24px',
+  fontWeight: 'bold',
+  minWidth: '60px',
+  textAlign: 'center'
+}
+
+div(style = containerStyle) {
+  button(style = buttonStyle, onClick() { count.value-- }) { '-' }
+  span(style = countStyle) { count }
+  button(style = buttonStyle, onClick() { count.value++ }) { '+' }
+}

@@ -27,6 +27,7 @@
   ],
   "license": "MIT",
   "dependencies": {
+    "cssts-types": "*",
     "subhuti": "*",
     "slime-parser": "*",
     "slime-ast": "*",
