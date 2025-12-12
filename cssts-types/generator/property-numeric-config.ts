@@ -13,8 +13,8 @@ const zero: NumericType = { unit: 'zero' }
 /** 像素整数 */
 const px: NumericType = { unit: 'px', value: 'integer' }
 
-/** 比例/百分比 */
-const ratio: NumericType = { unit: 'ratio', value: 'number' }
+/** 比例/百分比 (1-100%, step 0.1) */
+const ratio: NumericType = { unit: 'ratio', value: 'number', presets: [33.33, 66.67] }
 
 /** Grid 弹性单位 */
 const fr: NumericType = { unit: 'fr', value: 'number' }
