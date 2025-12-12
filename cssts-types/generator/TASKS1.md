@@ -16,6 +16,17 @@
 - ✅ 数据结构组织（类型系统设计）
 - ✅ 命名规则（TS 标识符 + CSS 类名）
 - ✅ css-tree 到我们类型的映射
+- ✅ 配置文件设计
+
+**配置文件**：
+- `csstree-overrides.json` - 补充 css-tree 缺失的 min/max（CSS 规范）
+- `property-numeric-config.json` - 属性到数值类型的映射配置（核心配置）
+  - 定义每个属性支持的 NumericType 数组
+  - 包含单位类型、数值类型、是否支持负数、步长范围
+- `design-presets.json` - 设计系统配置（用户可配置，已废弃部分功能）
+  - ~~`propertyUnits`~~ - 已迁移到 `property-numeric-config.json`
+  - ~~`unitPresets`~~ - 已迁移到 `property-numeric-config.json`
+  - `propertyPresets` - 特定属性的预设值（保留）
 
 **暂不涉及**：
 - ❌ 具体代码生成逻辑
@@ -125,35 +136,71 @@ const csstreeToUnit: Record<string, UnitType> = {
   'length': 'px',
   'percentage': 'ratio',
   'length-percentage': 'px',  // 同时生成 px 和 ratio
-  'number': 'none',
-  'integer': 'none',
+  'number': 'unitless',
+  'integer': 'unitless',
   'angle': 'deg',
   'time': 'ms',
-  'alpha-value': 'none',      // opacity 等
+  'alpha-value': 'unitless',  // opacity 等
 }
 
 // 需要递归展开的复合类型
 const expandableTypes = ['length-percentage', 'alpha-value', 'font-weight-absolute']
 ```
 
-#### 手动覆盖配置
+#### 配置文件
 
-```typescript
-const propertyOverrides: Record<string, Partial<PropertyDefinition>> = {
-  // 补充负数支持信息
-  'padding': { numeric: [{ unit: 'px', value: 'integer', min: 0 }] },
-  'margin': { numeric: [{ unit: 'px', value: 'integer' }] },  // 无 min = 支持负数
-  
-  // 补充数值范围
-  'opacity': { numeric: [{ unit: 'none', value: 'number', min: 0, max: 1 }] },
-  'z-index': { numeric: [{ unit: 'none', value: 'integer' }] },  // 支持负数
-  
-  // 特殊处理
-  'line-height': { numeric: [{ unit: 'none', value: 'number', min: 0 }] },
+**1. csstree-overrides.json** - 补充 CSS 规范定义的 min/max
+```json
+{
+  "typeOverrides": {
+    "alpha-value": { "min": 0, "max": 1 }
+  },
+  "propertyOverrides": {
+    "padding": { "min": 0 },
+    "width": { "min": 0 }
+  }
 }
 ```
 
-**待决定**：是否采用此方案？
+**2. property-numeric-config.json** - 属性到数值类型的映射（核心配置）
+
+定义每个属性支持的 NumericType 数组：
+
+```json
+{
+  "propertyNumericTypes": {
+    "width": [
+      { "unit": "px", "value": "integer" },
+      { "unit": "ratio", "value": "number", "range": { "min": 0, "max": 100, "step": 5 } }
+    ],
+    "margin": [
+      { "unit": "px", "value": "integer", "allowNegative": true }
+    ],
+    "opacity": [
+      { "unit": "unitless", "value": "number", "range": { "min": 0, "max": 1, "step": 0.05 } }
+    ],
+    "font-weight": [
+      { "unit": "unitless", "value": "integer", "range": { "min": 1, "max": 1000, "step": 100 } }
+    ]
+  }
+}
+```
+
+**配置说明**：
+- `unit`: 单位类型（px, rem, ratio, deg, ms, unitless）
+- `value`: 数值类型（integer, number）
+- `allowNegative`: 是否支持负数（默认 false）
+- `range`: 固定步长配置（可选，无则使用渐进步长策略）
+  - `min`: 最小值
+  - `max`: 最大值
+  - `step`: 步长
+
+**生成逻辑**：
+1. 从 `property-numeric-config.json` 获取属性的 NumericType 数组
+2. 对于每个 NumericType：
+   - 有 `range` → 使用固定步长 + 对齐补偿算法
+   - 无 `range` → 使用渐进步长策略（551 个值）
+3. 结合 `csstree-overrides` 的 min/max 过滤
 
 ---
 
@@ -387,25 +434,38 @@ mb8px             // ❌
 定义有哪些单位，以及每种单位类型包含的具体单位：
 
 ```typescript
-type UnitType = 'px' | 'rem' | 'ratio' | 'deg' | 'ms' | 'none'
+type UnitType = 'zero' | 'px' | 'rem' | 'ratio' | 'deg' | 'ms' | 'unitless'
 
 const unitToSuffixes: Record<UnitType, string[]> = {
+  'zero': [''],                              // 零值（特殊单位，只生成 0）
   'px': ['px'],                              // 像素（绝对单位）
   'rem': ['rem', 'em'],                      // 相对单位（字体相关）
   'ratio': ['%', 'vh', 'vw', 'vmin', 'vmax'], // 比例单位（合并百分比和视口单位）
   'deg': ['deg', 'rad', 'turn'],             // 角度
   'ms': ['ms', 's'],                         // 时间
-  'none': [],                                // 无单位
+  'unitless': [''],                          // 无单位（空字符串）
 }
 ```
 
 **设计说明**：
-- `px`: 像素值，最常用的绝对单位
+- `zero`: **特殊单位类型**，只生成值 `0`，不需要单位后缀（CSS 规范：`padding: 0` 不需要单位）
+- `px`: 像素值，最常用的绝对单位，数值从 1 开始（0 由 `zero` 处理）
 - `rem`: 字体相对单位，`em` 也归入此类
 - `ratio`: 合并 `%`、`vh`、`vw` 等，因为它们的数值预设相同（0-100 范围）
 - `deg`: 角度单位
 - `ms`: 时间单位
-- `none`: 无单位数字（如 `opacity`、`z-index`、`line-height`）
+- `unitless`: 无单位数字（如 `opacity`、`z-index`、`line-height`），后缀为空字符串
+
+**`zero` 单位类型说明**：
+- `zero` 是一个独立的单位类型，与 `px`、`rem` 等平级
+- 只生成一个值：`0`
+- 生成的类名：`padding0`、`margin0`、`width0`（不带单位后缀）
+- 使用场景：需要 `0` 值的属性在预设模板中组合 `[zero, pxInt]`
+
+**概念区分**：
+- `none` 是 CSS 关键字（如 `display: none`），从 css-tree keywords 获取
+- `zero` 是我们的单位类型，表示数值 `0`（如 `padding: 0`）
+- `unitless` 是我们的单位类型，表示非零数值不带单位（如 `opacity: 0.5`）
 
 #### 13.2 数值类型 (ValueType)
 
@@ -423,12 +483,18 @@ type ValueType = 'integer' | 'number'
 组合单位类型和数值类型：
 
 ```typescript
+// 固定步长配置（必须同时指定 min, max, step）
+interface FixedStepConfig {
+  min: number    // 最小值
+  max: number    // 最大值
+  step: number   // 固定步长
+}
+
 interface NumericType {
-  unit: UnitType      // 单位类型
-  value: ValueType    // 数值类型（integer/number）
-  min?: number        // 最小值（undefined = 支持负数）
-  max?: number        // 最大值
-  step?: number       // 步长（用于自动生成预设值）
+  unit: UnitType           // 单位类型
+  value: ValueType         // 数值类型（integer/number）
+  allowNegative?: boolean  // 是否支持负数（默认 false）
+  range?: FixedStepConfig  // 固定步长配置（可选）
 }
 
 interface PropertyDefinition {
@@ -437,54 +503,149 @@ interface PropertyDefinition {
 }
 ```
 
-**step 属性说明**：
-- 当同时存在 `min`、`max`、`step` 时，自动生成预设值
-- 生成逻辑：从 `min` 开始，每次加 `step`，直到 `max`
-- 如果没有 `step`，则使用默认预设列表
+**生成策略说明**：
+
+1. **`zero` 单位**：只生成值 `0`，不需要 range 配置
+2. **默认策略**：如果没有指定 `range`，使用**渐进步长策略**（见 13.5），从 1 开始
+3. **固定步长**：如果指定了 `range`，必须同时提供 `min`、`max`、`step` 三个属性
+   - 生成逻辑：从 `min` 开始，每次加 `step`，直到 `max`
+
+```typescript
+// 示例：zero 单位（只生成 0）
+{ unit: 'zero', value: 'integer' }  // → 生成 [0]
+
+// 示例：使用默认渐进步长策略（从 1 开始）
+{ unit: 'px', value: 'integer' }  // → 使用 generateProgressiveValues()，从 1 开始
+
+// 示例：使用固定步长
+{ unit: 'unitless', value: 'integer', range: { min: 100, max: 900, step: 100 } }
+// → 生成 [100, 200, 300, 400, 500, 600, 700, 800, 900]
+```
 
 #### 13.4 属性示例
 
-| 属性 | unit | value | min | max | step | 说明 |
-|------|------|-------|-----|-----|------|------|
-| `padding` | `px` | `integer` | 0 | - | - | 像素整数，不支持负数，使用默认预设 |
-| `margin` | `px` | `integer` | - | - | - | 像素整数，支持负数，使用默认预设 |
-| `width` | `ratio` | `number` | 0 | 100 | 25 | 比例，生成 `[0, 25, 50, 75, 100]` |
-| `opacity` | `none` | `number` | 0 | 1 | 0.25 | 无单位小数，生成 `[0, 0.25, 0.5, 0.75, 1]` |
-| `z-index` | `none` | `integer` | 0 | 50 | 10 | 无单位整数，生成 `[0, 10, 20, 30, 40, 50]` |
-| `line-height` | `none` | `number` | 1 | 2 | 0.25 | 无单位小数，生成 `[1, 1.25, 1.5, 1.75, 2]` |
-| `font-weight` | `none` | `integer` | 100 | 900 | 100 | 无单位整数，生成 `[100, 200, ..., 900]` |
-| `rotate` | `deg` | `number` | 0 | 360 | 45 | 角度，生成 `[0, 45, 90, ..., 360]` |
-| `transition-duration` | `ms` | `number` | 0 | 1000 | 100 | 时间，生成 `[0, 100, 200, ..., 1000]` |
+| 属性 | NumericType 数组 | 生成结果 |
+|------|-----------------|---------|
+| `padding` | `[zero, pxInt]` | `0`, `1px`, `2px`, ..., `10000px` |
+| `margin` | `[zero, pxIntNeg]` | `0`, `1px`, `-1px`, ..., `10000px`, `-10000px` |
+| `width` | `[zero, pxInt, ratio100]` | `0`, `1px`, ..., `5%`, `10%`, ..., `100%` |
+| `opacity` | `[unitlessOpacity]` | `0`, `0.05`, `0.1`, ..., `1` |
+| `z-index` | `[unitlessZIndex]` | `-10`, `-9`, ..., `0`, `1`, ..., `9999` |
+| `font-weight` | `[unitlessFontWeight]` | `100`, `200`, ..., `1000` |
 
-**step 生成示例**：
+**预设模板示例**：
+
+```javascript
+// 基础 NumericType 对象
+const zero = { unit: 'zero', value: 'integer' }  // 只生成 0
+const pxInt = { unit: 'px', value: 'integer' }   // 1-10000，渐进步长
+const pxIntNeg = { ...pxInt, allowNegative: true }
+
+// 预设模板（NumericType 数组）
+const spacing = [zero, pxInt]           // padding 系列
+const spacingNegative = [zero, pxIntNeg] // margin 系列
+const sizing = [zero, pxInt, ratio100]   // width/height 系列
+```
+
+**生成示例**：
 
 ```typescript
-// font-weight: min=100, max=900, step=100
-// 生成: [100, 200, 300, 400, 500, 600, 700, 800, 900]
+// padding 使用 spacing 预设
+// → padding0, padding1px, padding2px, ..., padding10000px
 
-// opacity: min=0, max=1, step=0.25
-// 生成: [0, 0.25, 0.5, 0.75, 1]
+// margin 使用 spacingNegative 预设
+// → margin0, margin1px, marginN1px, ..., margin10000px, marginN10000px
 
-// z-index: min=0, max=50, step=10
-// 生成: [0, 10, 20, 30, 40, 50]
+// width 使用 sizing 预设
+// → width0, width1px, ..., width5pct, width10pct, ..., width100pct
 ```
 
 #### 13.5 数值预设配置
 
-每种单位类型有独立的数值预设：
+##### 渐进步长策略（Progressive Step Strategy）
+
+对于 `px` 等需要大范围数值的单位，使用渐进步长策略：小数值密集，大数值稀疏。
+
+**注意**：渐进步长策略从 **1** 开始，**不包含 0**。`0` 由独立的 `zero` 单位类型处理。
 
 ```typescript
-const valuePresets: Record<UnitType, number[]> = {
-  'px': [0, 2, 4, 6, 8, 10, 12, 14, 16, 20, 24, 32, 40, 48, 64, 80, 100, 120],
+/**
+ * 生成渐进步长的数值序列（从 1 开始，不含 0）
+ * 
+ * 策略：
+ * - 1-200: 步长 1（200 个）
+ * - 200-500: 步长 2（150 个）
+ * - 500-1000: 步长 5（100 个）
+ * - 1000-2000: 步长 50（20 个）
+ * - 2000-5000: 步长 100（30 个）
+ * - 5000-10000: 步长 100（50 个）
+ * 
+ * 总计：约 550 个值（不含 0）
+ */
+function generateProgressiveValues(max: number = 10000): number[] {
+  const values: number[] = []  // 不包含 0，0 由 zero 单位处理
+  
+  // 1-200: 步长 1
+  for (let i = 1; i <= Math.min(200, max); i += 1) {
+    values.push(i)
+  }
+  
+  // 200-500: 步长 2
+  for (let i = 202; i <= Math.min(500, max); i += 2) {
+    values.push(i)
+  }
+  
+  // 500-1000: 步长 5
+  for (let i = 505; i <= Math.min(1000, max); i += 5) {
+    values.push(i)
+  }
+  
+  // 1000-2000: 步长 50
+  for (let i = 1050; i <= Math.min(2000, max); i += 50) {
+    values.push(i)
+  }
+  
+  // 2000-5000: 步长 100
+  for (let i = 2100; i <= Math.min(5000, max); i += 100) {
+    values.push(i)
+  }
+  
+  // 5000-10000: 步长 100
+  for (let i = 5100; i <= Math.min(10000, max); i += 100) {
+    values.push(i)
+  }
+  
+  return values
+}
+```
+
+**数量统计**：
+
+| 范围 | 步长 | 数量 |
+|------|------|------|
+| 0 | - | 1 个 |
+| 1-200 | 1 | 200 个 |
+| 200-500 | 2 | 150 个 |
+| 500-1000 | 5 | 100 个 |
+| 1000-2000 | 50 | 20 个 |
+| 2000-5000 | 100 | 30 个 |
+| 5000-10000 | 100 | 50 个 |
+| **总计** | | **551 个** |
+
+##### 单位预设配置
+
+```typescript
+const valuePresets: Record<UnitType, number[] | 'progressive'> = {
+  'px': 'progressive',  // 使用渐进步长策略，生成 551 个值
   'rem': [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3],
   'ratio': [0, 25, 33.33, 50, 66.67, 75, 100],
   'deg': [0, 45, 90, 180, 270, 360],
   'ms': [0, 100, 150, 200, 300, 500, 1000],
-  'none': [], // 由属性单独配置
+  'unitless': [], // 由属性单独配置（见 unitlessValuePresets）
 }
 
 // 无单位属性的特殊预设
-const noneValuePresets: Record<string, number[]> = {
+const unitlessValuePresets: Record<string, number[]> = {
   'opacity': [0, 0.25, 0.5, 0.75, 1],
   'z-index': [-1, 0, 10, 20, 30, 40, 50, 100, 999, 9999],
   'line-height': [1, 1.25, 1.5, 1.75, 2],
@@ -518,8 +679,8 @@ const csstreeToUnit: Record<string, UnitType> = {
   'percentage': 'ratio',    // 归入 ratio
   'angle': 'deg',
   'time': 'ms',
-  'number': 'none',
-  'integer': 'none',
+  'number': 'unitless',
+  'integer': 'unitless',
 }
 
 // css-tree 类型 → 我们的数值类型
@@ -593,16 +754,19 @@ const symbolToEscape: Record<string, string> = {
 
 | 单位类型 | TS 变量名 | CSS 类名（选择器） | CSS 规则 |
 |---------|-----------|-------------------|----------|
+| `zero` | `padding0` | `.padding_0` | `padding: 0;` |
+| `zero` | `margin0` | `.margin_0` | `margin: 0;` |
+| `zero` | `width0` | `.width_0` | `width: 0;` |
 | `px` | `padding16px` | `.padding_16px` | `padding: 16px;` |
 | `px` | `marginN100px` | `.margin_-100px` | `margin: -100px;` |
 | `rem` | `fontSize1p5rem` | `.font-size_1\.5rem` | `font-size: 1.5rem;` |
 | `ratio` | `width50pct` | `.width_50\%` | `width: 50%;` |
 | `ratio` | `height100vh` | `.height_100vh` | `height: 100vh;` |
 | `ratio` | `width33p33vw` | `.width_33\.33vw` | `width: 33.33vw;` |
-| `none` | `opacity0p25` | `.opacity_0\.25` | `opacity: 0.25;` |
-| `none` | `zIndexN1` | `.z-index_-1` | `z-index: -1;` |
-| `none` | `lineHeight1p5` | `.line-height_1\.5` | `line-height: 1.5;` |
-| `none` | `fontWeight700` | `.font-weight_700` | `font-weight: 700;` |
+| `unitless` | `opacity0p25` | `.opacity_0\.25` | `opacity: 0.25;` |
+| `unitless` | `zIndexN1` | `.z-index_-1` | `z-index: -1;` |
+| `unitless` | `lineHeight1p5` | `.line-height_1\.5` | `line-height: 1.5;` |
+| `unitless` | `fontWeight700` | `.font-weight_700` | `font-weight: 700;` |
 | `deg` | `rotate45deg` | `.rotate_45deg` | `rotate: 45deg;` |
 | `deg` | `rotateN90deg` | `.rotate_-90deg` | `rotate: -90deg;` |
 | `ms` | `transitionDuration300ms` | `.transition-duration_300ms` | `transition-duration: 300ms;` |
@@ -617,6 +781,7 @@ const symbolToEscape: Record<string, string> = {
 | ---------- | ---------------- | ------------------------- |
 | 属性-值    | camelCase        | `_` 下划线分隔            |
 | 值内部     | PascalCase       | `-` 连字符                |
+| 零值 `0`   | `属性0`          | `.属性_0`                 |
 | 小数点 `.` | `p` (point)      | `\.` (转义)               |
 | 百分号 `%` | `pct` (percent)  | `\%` (转义)               |
 | 斜杠 `/`   | `s` (slash)      | `\/` (转义)               |
@@ -633,78 +798,80 @@ const cssPropertyMap = {
     keywords: ['flex', 'block', 'inline', 'grid', 'none'],
   },
 
-  // 关键字 + 无单位整数（有范围）
+  // 关键字 + 无单位整数（固定步长，CSS 规范 1-1000，对齐后 100-1000）
   'font-weight': {
     keywords: ['normal', 'bold', 'bolder', 'lighter'],
     numeric: [
-      { unit: 'none', value: 'integer', min: 1, max: 1000 }
+      { unit: 'unitless', value: 'integer', range: { min: 1, max: 1000, step: 100 } }
+      // 对齐补偿：alignedMin = ceil(1/100)*100 = 100, alignedMax = floor(1000/100)*100 = 1000
+      // 生成: [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]
     ],
   },
 
-  // 无单位整数，支持负数（无 min）
+  // 无单位整数，支持负数（固定步长）
   'z-index': {
     keywords: ['auto'],
     numeric: [
-      { unit: 'none', value: 'integer' }
+      { unit: 'unitless', value: 'integer', allowNegative: true, range: { min: -10, max: 9999, step: 10 } }
     ],
   },
 
-  // 无单位小数，有范围
+  // 无单位小数（固定步长）
   opacity: {
     keywords: [],
     numeric: [
-      { unit: 'none', value: 'number', min: 0, max: 1 }
+      { unit: 'unitless', value: 'number', range: { min: 0, max: 1, step: 0.25 } }
     ],
   },
 
-  // 像素 + 比例单位，不支持负数
+  // 像素 + 比例单位，不支持负数（渐进步长）
   width: {
     keywords: ['auto', 'min-content', 'max-content', 'fit-content'],
     numeric: [
-      { unit: 'px', value: 'integer', min: 0 },
-      { unit: 'ratio', value: 'number', min: 0 }
+      { unit: 'px', value: 'integer' },  // 渐进步长策略
+      { unit: 'ratio', value: 'number', range: { min: 0, max: 100, step: 25 } }
     ],
   },
 
-  // 像素 + 比例单位，支持负数
+  // 像素 + 比例单位，支持负数（渐进步长）
   margin: {
     keywords: ['auto'],
     numeric: [
-      { unit: 'px', value: 'integer' },
-      { unit: 'ratio', value: 'number' }
+      { unit: 'px', value: 'integer', allowNegative: true },  // 渐进步长策略
+      { unit: 'ratio', value: 'number', allowNegative: true }
     ],
   },
 
-  // 无单位小数
+  // 无单位小数（固定步长）
   'line-height': {
     keywords: ['normal'],
     numeric: [
-      { unit: 'none', value: 'number', min: 0 }
+      { unit: 'unitless', value: 'number', range: { min: 1, max: 2, step: 0.25 } }
     ],
   },
 
-  // rem 单位
+  // rem 单位（渐进步长）
   'font-size': {
     keywords: ['xx-small', 'x-small', 'small', 'medium', 'large', 'x-large', 'xx-large'],
     numeric: [
-      { unit: 'px', value: 'integer', min: 0 },
-      { unit: 'rem', value: 'number', min: 0 }
+      { unit: 'px', value: 'integer' },  // 渐进步长策略
+      { unit: 'rem', value: 'number' }   // 渐进步长策略
     ],
   },
 
-  // 角度单位，支持负数
+  // 角度单位（固定步长）
   'rotate': {
     keywords: ['none'],
     numeric: [
-      { unit: 'deg', value: 'number' }
+      { unit: 'deg', value: 'number', allowNegative: true, range: { min: 0, max: 360, step: 45 } }
     ],
   },
 
-  // 时间单位
+  // 时间单位（固定步长）
   'transition-duration': {
     keywords: [],
     numeric: [
-      { unit: 'ms', value: 'number', min: 0 }
+      { unit: 'ms', value: 'number', range: { min: 0, max: 1000, step: 100 } }
     ],
   },
 }
@@ -717,17 +884,52 @@ const supportsDecimal = (valueType: ValueType) => valueType !== 'integer'
 
 // 是否支持负数
 const supportsNegative = (numericType: NumericType) => 
-  numericType.min === undefined || numericType.min < 0
+  numericType.allowNegative === true
 
 // 获取单位后缀列表
 const getUnitSuffixes = (unitType: UnitType) => unitToSuffixes[unitType]
 
-// 获取数值预设
-const getValuePresets = (unitType: UnitType, property?: string) => {
-  if (unitType === 'none' && property) {
-    return noneValuePresets[property] || []
+/**
+ * 固定步长生成算法（带对齐补偿）
+ * 
+ * 当 min 不是 step 的整数倍时，向上对齐到 step 的整数倍
+ * 当 max 不是 step 的整数倍时，向下对齐到 step 的整数倍
+ * 
+ * 示例：
+ * - min=1, max=1000, step=100 → [100, 200, 300, ..., 1000]
+ * - min=0, max=360, step=45 → [0, 45, 90, ..., 360]
+ */
+function generateFixedStepValues(min: number, max: number, step: number): number[] {
+  const values: number[] = []
+  
+  // 将 min 向上对齐到 step 的整数倍
+  const alignedMin = Math.ceil(min / step) * step
+  
+  // 将 max 向下对齐到 step 的整数倍
+  const alignedMax = Math.floor(max / step) * step
+  
+  for (let i = alignedMin; i <= alignedMax; i += step) {
+    // 处理浮点数精度问题
+    values.push(Math.round(i * 1000) / 1000)
   }
-  return valuePresets[unitType]
+  
+  return values
+}
+
+// 获取数值预设
+const getValuePresets = (numericType: NumericType, property?: string) => {
+  // 如果有固定步长配置，使用固定步长生成（带对齐补偿）
+  if (numericType.range) {
+    const { min, max, step } = numericType.range
+    const values: number[] = []
+    for (let i = min; i <= max; i += step) {
+      values.push(i)
+    }
+    return values
+  }
+  
+  // 否则使用渐进步长策略
+  return generateProgressiveValues()
 }
 ```
 

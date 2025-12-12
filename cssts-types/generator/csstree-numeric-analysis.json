@@ -1,0 +1,2308 @@
+{
+  "generatedAt": "2025-12-12T10:06:47.124Z",
+  "source": "css-tree",
+  "typesWithRange": {
+    "cubic-bezier-timing-function": {
+      "min": 0,
+      "max": 1
+    },
+    "fixed-repeat": {
+      "min": 1,
+      "max": null
+    },
+    "font-weight-absolute": {
+      "min": 1,
+      "max": 1000
+    },
+    "name-repeat": {
+      "min": 1,
+      "max": null
+    },
+    "perspective()": {
+      "min": 0,
+      "max": null
+    },
+    "ratio": {
+      "min": 0,
+      "max": null
+    },
+    "track-repeat": {
+      "min": 1,
+      "max": null
+    },
+    "color-mix()": {
+      "min": 0,
+      "max": 100
+    },
+    "number-zero-one": {
+      "min": 0,
+      "max": 1
+    },
+    "number-one-or-greater": {
+      "min": 1,
+      "max": null
+    },
+    "xywh()": {
+      "min": 0,
+      "max": null
+    }
+  },
+  "propertiesWithNumeric": [
+    {
+      "property": "-ms-content-zoom-limit-max",
+      "numericTypes": [
+        "percentage"
+      ]
+    },
+    {
+      "property": "-ms-content-zoom-limit-min",
+      "numericTypes": [
+        "percentage"
+      ]
+    },
+    {
+      "property": "-ms-content-zoom-snap-points",
+      "numericTypes": [
+        "percentage"
+      ]
+    },
+    {
+      "property": "-ms-grid-columns",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage",
+        "flex",
+        "integer",
+        "integer[1,∞]"
+      ]
+    },
+    {
+      "property": "-ms-grid-rows",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage",
+        "flex",
+        "integer",
+        "integer[1,∞]"
+      ]
+    },
+    {
+      "property": "-ms-hyphenate-limit-chars",
+      "numericTypes": [
+        "integer"
+      ]
+    },
+    {
+      "property": "-ms-hyphenate-limit-lines",
+      "numericTypes": [
+        "integer"
+      ]
+    },
+    {
+      "property": "-ms-hyphenate-limit-zone",
+      "numericTypes": [
+        "percentage",
+        "length"
+      ]
+    },
+    {
+      "property": "-ms-scrollbar-3dlight-color",
+      "numericTypes": [
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]"
+      ]
+    },
+    {
+      "property": "-ms-scrollbar-arrow-color",
+      "numericTypes": [
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]"
+      ]
+    },
+    {
+      "property": "-ms-scrollbar-base-color",
+      "numericTypes": [
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]"
+      ]
+    },
+    {
+      "property": "-ms-scrollbar-darkshadow-color",
+      "numericTypes": [
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]"
+      ]
+    },
+    {
+      "property": "-ms-scrollbar-face-color",
+      "numericTypes": [
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]"
+      ]
+    },
+    {
+      "property": "-ms-scrollbar-highlight-color",
+      "numericTypes": [
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]"
+      ]
+    },
+    {
+      "property": "-ms-scrollbar-shadow-color",
+      "numericTypes": [
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]"
+      ]
+    },
+    {
+      "property": "-ms-scrollbar-track-color",
+      "numericTypes": [
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]"
+      ]
+    },
+    {
+      "property": "-ms-scroll-limit-x-max",
+      "numericTypes": [
+        "length"
+      ]
+    },
+    {
+      "property": "-ms-scroll-limit-x-min",
+      "numericTypes": [
+        "length"
+      ]
+    },
+    {
+      "property": "-ms-scroll-limit-y-max",
+      "numericTypes": [
+        "length"
+      ]
+    },
+    {
+      "property": "-ms-scroll-limit-y-min",
+      "numericTypes": [
+        "length"
+      ]
+    },
+    {
+      "property": "-ms-scroll-snap-points-x",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "-ms-scroll-snap-points-y",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "-ms-wrap-margin",
+      "numericTypes": [
+        "length"
+      ]
+    },
+    {
+      "property": "-moz-border-bottom-colors",
+      "numericTypes": [
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]"
+      ]
+    },
+    {
+      "property": "-moz-border-left-colors",
+      "numericTypes": [
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]"
+      ]
+    },
+    {
+      "property": "-moz-border-right-colors",
+      "numericTypes": [
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]"
+      ]
+    },
+    {
+      "property": "-moz-border-top-colors",
+      "numericTypes": [
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]"
+      ]
+    },
+    {
+      "property": "-moz-image-region",
+      "numericTypes": [
+        "length"
+      ]
+    },
+    {
+      "property": "-moz-outline-radius",
+      "numericTypes": [
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "-moz-outline-radius-bottomleft",
+      "numericTypes": [
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "-moz-outline-radius-bottomright",
+      "numericTypes": [
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "-moz-outline-radius-topleft",
+      "numericTypes": [
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "-moz-outline-radius-topright",
+      "numericTypes": [
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "-webkit-border-before",
+      "numericTypes": [
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]"
+      ]
+    },
+    {
+      "property": "-webkit-border-before-color",
+      "numericTypes": [
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]"
+      ]
+    },
+    {
+      "property": "-webkit-box-reflect",
+      "numericTypes": [
+        "length",
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]",
+        "length-percentage",
+        "number[0,1]"
+      ]
+    },
+    {
+      "property": "-webkit-line-clamp",
+      "numericTypes": [
+        "integer"
+      ]
+    },
+    {
+      "property": "-webkit-mask",
+      "numericTypes": [
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]",
+        "length-percentage",
+        "length",
+        "number[0,1]"
+      ]
+    },
+    {
+      "property": "-webkit-mask-image",
+      "numericTypes": [
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]",
+        "length-percentage",
+        "length",
+        "number[0,1]"
+      ]
+    },
+    {
+      "property": "-webkit-mask-position",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "-webkit-mask-position-x",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "-webkit-mask-position-y",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "-webkit-mask-size",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "-webkit-tap-highlight-color",
+      "numericTypes": [
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]"
+      ]
+    },
+    {
+      "property": "-webkit-text-fill-color",
+      "numericTypes": [
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]"
+      ]
+    },
+    {
+      "property": "-webkit-text-stroke",
+      "numericTypes": [
+        "length",
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]"
+      ]
+    },
+    {
+      "property": "-webkit-text-stroke-color",
+      "numericTypes": [
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]"
+      ]
+    },
+    {
+      "property": "-webkit-text-stroke-width",
+      "numericTypes": [
+        "length"
+      ]
+    },
+    {
+      "property": "accent-color",
+      "numericTypes": [
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]"
+      ]
+    },
+    {
+      "property": "animation",
+      "numericTypes": [
+        "number",
+        "number[0,1]",
+        "integer"
+      ]
+    },
+    {
+      "property": "animation-delay",
+      "numericTypes": [
+        "time"
+      ]
+    },
+    {
+      "property": "animation-duration",
+      "numericTypes": [
+        "time"
+      ]
+    },
+    {
+      "property": "animation-iteration-count",
+      "numericTypes": [
+        "number"
+      ]
+    },
+    {
+      "property": "animation-range-end",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "animation-range-start",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "animation-timing-function",
+      "numericTypes": [
+        "number",
+        "number[0,1]",
+        "integer"
+      ]
+    },
+    {
+      "property": "aspect-ratio",
+      "numericTypes": [
+        "number",
+        "number[0,∞]"
+      ]
+    },
+    {
+      "property": "azimuth",
+      "numericTypes": [
+        "angle"
+      ]
+    },
+    {
+      "property": "backdrop-filter",
+      "numericTypes": [
+        "length",
+        "number",
+        "percentage",
+        "alpha-value",
+        "angle",
+        "percentage[0,100]"
+      ]
+    },
+    {
+      "property": "background",
+      "numericTypes": [
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]",
+        "length-percentage",
+        "length",
+        "number[0,1]"
+      ]
+    },
+    {
+      "property": "background-color",
+      "numericTypes": [
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]"
+      ]
+    },
+    {
+      "property": "background-image",
+      "numericTypes": [
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]",
+        "length-percentage",
+        "length",
+        "number[0,1]"
+      ]
+    },
+    {
+      "property": "background-position",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "background-position-x",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "background-position-y",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "background-size",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "border",
+      "numericTypes": [
+        "line-width",
+        "length",
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]"
+      ]
+    },
+    {
+      "property": "border-block",
+      "numericTypes": [
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]"
+      ]
+    },
+    {
+      "property": "border-block-end",
+      "numericTypes": [
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]"
+      ]
+    },
+    {
+      "property": "border-block-start",
+      "numericTypes": [
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]"
+      ]
+    },
+    {
+      "property": "border-bottom",
+      "numericTypes": [
+        "line-width",
+        "length",
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]"
+      ]
+    },
+    {
+      "property": "border-bottom-left-radius",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "border-bottom-right-radius",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "border-bottom-width",
+      "numericTypes": [
+        "line-width",
+        "length"
+      ]
+    },
+    {
+      "property": "border-color",
+      "numericTypes": [
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]"
+      ]
+    },
+    {
+      "property": "border-end-end-radius",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "border-end-start-radius",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "border-image-outset",
+      "numericTypes": [
+        "length",
+        "number"
+      ]
+    },
+    {
+      "property": "border-image-slice",
+      "numericTypes": [
+        "number",
+        "percentage"
+      ]
+    },
+    {
+      "property": "border-image-source",
+      "numericTypes": [
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]",
+        "length-percentage",
+        "length",
+        "number[0,1]"
+      ]
+    },
+    {
+      "property": "border-image-width",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage",
+        "number"
+      ]
+    },
+    {
+      "property": "border-inline",
+      "numericTypes": [
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]"
+      ]
+    },
+    {
+      "property": "border-inline-end",
+      "numericTypes": [
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]"
+      ]
+    },
+    {
+      "property": "border-inline-start",
+      "numericTypes": [
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]"
+      ]
+    },
+    {
+      "property": "border-left",
+      "numericTypes": [
+        "line-width",
+        "length",
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]"
+      ]
+    },
+    {
+      "property": "border-left-color",
+      "numericTypes": [
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]"
+      ]
+    },
+    {
+      "property": "border-left-width",
+      "numericTypes": [
+        "line-width",
+        "length"
+      ]
+    },
+    {
+      "property": "border-radius",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "border-right",
+      "numericTypes": [
+        "line-width",
+        "length",
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]"
+      ]
+    },
+    {
+      "property": "border-right-color",
+      "numericTypes": [
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]"
+      ]
+    },
+    {
+      "property": "border-right-width",
+      "numericTypes": [
+        "line-width",
+        "length"
+      ]
+    },
+    {
+      "property": "border-spacing",
+      "numericTypes": [
+        "length"
+      ]
+    },
+    {
+      "property": "border-start-end-radius",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "border-start-start-radius",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "border-top",
+      "numericTypes": [
+        "line-width",
+        "length",
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]"
+      ]
+    },
+    {
+      "property": "border-top-color",
+      "numericTypes": [
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]"
+      ]
+    },
+    {
+      "property": "border-top-left-radius",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "border-top-right-radius",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "border-top-width",
+      "numericTypes": [
+        "line-width",
+        "length"
+      ]
+    },
+    {
+      "property": "border-width",
+      "numericTypes": [
+        "line-width",
+        "length"
+      ]
+    },
+    {
+      "property": "bottom",
+      "numericTypes": [
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "box-flex",
+      "numericTypes": [
+        "number"
+      ]
+    },
+    {
+      "property": "box-flex-group",
+      "numericTypes": [
+        "integer"
+      ]
+    },
+    {
+      "property": "box-ordinal-group",
+      "numericTypes": [
+        "integer"
+      ]
+    },
+    {
+      "property": "box-shadow",
+      "numericTypes": [
+        "length",
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]"
+      ]
+    },
+    {
+      "property": "caret-color",
+      "numericTypes": [
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]"
+      ]
+    },
+    {
+      "property": "clip",
+      "numericTypes": [
+        "length"
+      ]
+    },
+    {
+      "property": "clip-path",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage",
+        "length-percentage[0,∞]"
+      ]
+    },
+    {
+      "property": "color",
+      "numericTypes": [
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]"
+      ]
+    },
+    {
+      "property": "column-count",
+      "numericTypes": [
+        "integer"
+      ]
+    },
+    {
+      "property": "column-gap",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "column-rule-color",
+      "numericTypes": [
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]"
+      ]
+    },
+    {
+      "property": "column-width",
+      "numericTypes": [
+        "length"
+      ]
+    },
+    {
+      "property": "contain-intrinsic-size",
+      "numericTypes": [
+        "length"
+      ]
+    },
+    {
+      "property": "contain-intrinsic-block-size",
+      "numericTypes": [
+        "length"
+      ]
+    },
+    {
+      "property": "contain-intrinsic-height",
+      "numericTypes": [
+        "length"
+      ]
+    },
+    {
+      "property": "contain-intrinsic-inline-size",
+      "numericTypes": [
+        "length"
+      ]
+    },
+    {
+      "property": "contain-intrinsic-width",
+      "numericTypes": [
+        "length"
+      ]
+    },
+    {
+      "property": "content",
+      "numericTypes": [
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]",
+        "length-percentage",
+        "length",
+        "number[0,1]"
+      ]
+    },
+    {
+      "property": "counter-increment",
+      "numericTypes": [
+        "integer"
+      ]
+    },
+    {
+      "property": "counter-reset",
+      "numericTypes": [
+        "integer"
+      ]
+    },
+    {
+      "property": "counter-set",
+      "numericTypes": [
+        "integer"
+      ]
+    },
+    {
+      "property": "cursor",
+      "numericTypes": [
+        "number"
+      ]
+    },
+    {
+      "property": "cx",
+      "numericTypes": [
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "cy",
+      "numericTypes": [
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "fill",
+      "numericTypes": [
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]"
+      ]
+    },
+    {
+      "property": "fill-opacity",
+      "numericTypes": [
+        "number",
+        "number[0,1]"
+      ]
+    },
+    {
+      "property": "filter",
+      "numericTypes": [
+        "length",
+        "number",
+        "percentage",
+        "alpha-value",
+        "angle",
+        "percentage[0,100]"
+      ]
+    },
+    {
+      "property": "flex-grow",
+      "numericTypes": [
+        "number"
+      ]
+    },
+    {
+      "property": "flex-shrink",
+      "numericTypes": [
+        "number"
+      ]
+    },
+    {
+      "property": "font-feature-settings",
+      "numericTypes": [
+        "integer"
+      ]
+    },
+    {
+      "property": "font-variation-settings",
+      "numericTypes": [
+        "number"
+      ]
+    },
+    {
+      "property": "font-size",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "font-size-adjust",
+      "numericTypes": [
+        "number"
+      ]
+    },
+    {
+      "property": "font-smooth",
+      "numericTypes": [
+        "length"
+      ]
+    },
+    {
+      "property": "font-stretch",
+      "numericTypes": [
+        "percentage"
+      ]
+    },
+    {
+      "property": "font-style",
+      "numericTypes": [
+        "angle"
+      ]
+    },
+    {
+      "property": "font-weight",
+      "numericTypes": [
+        "font-weight-absolute",
+        "number",
+        "number[1,1000]"
+      ]
+    },
+    {
+      "property": "grid-area",
+      "numericTypes": [
+        "integer"
+      ]
+    },
+    {
+      "property": "grid-auto-columns",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage",
+        "flex"
+      ]
+    },
+    {
+      "property": "grid-auto-rows",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage",
+        "flex"
+      ]
+    },
+    {
+      "property": "grid-column",
+      "numericTypes": [
+        "integer"
+      ]
+    },
+    {
+      "property": "grid-column-end",
+      "numericTypes": [
+        "integer"
+      ]
+    },
+    {
+      "property": "grid-column-gap",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "grid-column-start",
+      "numericTypes": [
+        "integer"
+      ]
+    },
+    {
+      "property": "grid-row",
+      "numericTypes": [
+        "integer"
+      ]
+    },
+    {
+      "property": "grid-row-end",
+      "numericTypes": [
+        "integer"
+      ]
+    },
+    {
+      "property": "grid-row-gap",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "grid-row-start",
+      "numericTypes": [
+        "integer"
+      ]
+    },
+    {
+      "property": "grid-template",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage",
+        "flex"
+      ]
+    },
+    {
+      "property": "grid-template-columns",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage",
+        "flex",
+        "integer",
+        "integer[1,∞]"
+      ]
+    },
+    {
+      "property": "grid-template-rows",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage",
+        "flex",
+        "integer",
+        "integer[1,∞]"
+      ]
+    },
+    {
+      "property": "height",
+      "numericTypes": [
+        "length",
+        "percentage",
+        "length-percentage"
+      ]
+    },
+    {
+      "property": "hyphenate-limit-chars",
+      "numericTypes": [
+        "integer"
+      ]
+    },
+    {
+      "property": "image-orientation",
+      "numericTypes": [
+        "angle"
+      ]
+    },
+    {
+      "property": "initial-letter",
+      "numericTypes": [
+        "number",
+        "integer"
+      ]
+    },
+    {
+      "property": "left",
+      "numericTypes": [
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "letter-spacing",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "line-clamp",
+      "numericTypes": [
+        "integer"
+      ]
+    },
+    {
+      "property": "line-height",
+      "numericTypes": [
+        "number",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "line-height-step",
+      "numericTypes": [
+        "length"
+      ]
+    },
+    {
+      "property": "list-style-image",
+      "numericTypes": [
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]",
+        "length-percentage",
+        "length",
+        "number[0,1]"
+      ]
+    },
+    {
+      "property": "margin",
+      "numericTypes": [
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "margin-bottom",
+      "numericTypes": [
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "margin-left",
+      "numericTypes": [
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "margin-right",
+      "numericTypes": [
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "margin-top",
+      "numericTypes": [
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "mask",
+      "numericTypes": [
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]",
+        "length-percentage",
+        "length",
+        "number[0,1]"
+      ]
+    },
+    {
+      "property": "mask-border-outset",
+      "numericTypes": [
+        "length",
+        "number"
+      ]
+    },
+    {
+      "property": "mask-border-slice",
+      "numericTypes": [
+        "number",
+        "percentage"
+      ]
+    },
+    {
+      "property": "mask-border-source",
+      "numericTypes": [
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]",
+        "length-percentage",
+        "length",
+        "number[0,1]"
+      ]
+    },
+    {
+      "property": "mask-border-width",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage",
+        "number"
+      ]
+    },
+    {
+      "property": "mask-image",
+      "numericTypes": [
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]",
+        "length-percentage",
+        "length",
+        "number[0,1]"
+      ]
+    },
+    {
+      "property": "mask-position",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "mask-size",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "math-depth",
+      "numericTypes": [
+        "integer"
+      ]
+    },
+    {
+      "property": "max-height",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "max-lines",
+      "numericTypes": [
+        "integer"
+      ]
+    },
+    {
+      "property": "max-width",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "min-height",
+      "numericTypes": [
+        "length",
+        "percentage",
+        "length-percentage"
+      ]
+    },
+    {
+      "property": "min-width",
+      "numericTypes": [
+        "length",
+        "percentage",
+        "length-percentage"
+      ]
+    },
+    {
+      "property": "object-position",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "offset-anchor",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "offset-distance",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "offset-path",
+      "numericTypes": [
+        "angle",
+        "length-percentage",
+        "length",
+        "percentage",
+        "length-percentage[0,∞]"
+      ]
+    },
+    {
+      "property": "offset-position",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "offset-rotate",
+      "numericTypes": [
+        "angle"
+      ]
+    },
+    {
+      "property": "opacity",
+      "numericTypes": [
+        "alpha-value",
+        "number",
+        "percentage"
+      ]
+    },
+    {
+      "property": "order",
+      "numericTypes": [
+        "integer"
+      ]
+    },
+    {
+      "property": "orphans",
+      "numericTypes": [
+        "integer"
+      ]
+    },
+    {
+      "property": "outline-color",
+      "numericTypes": [
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]"
+      ]
+    },
+    {
+      "property": "outline-offset",
+      "numericTypes": [
+        "length"
+      ]
+    },
+    {
+      "property": "outline-width",
+      "numericTypes": [
+        "line-width",
+        "length"
+      ]
+    },
+    {
+      "property": "overflow-clip-margin",
+      "numericTypes": [
+        "length",
+        "length[0,∞]"
+      ]
+    },
+    {
+      "property": "padding",
+      "numericTypes": [
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "padding-bottom",
+      "numericTypes": [
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "padding-left",
+      "numericTypes": [
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "padding-right",
+      "numericTypes": [
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "padding-top",
+      "numericTypes": [
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "perspective",
+      "numericTypes": [
+        "length"
+      ]
+    },
+    {
+      "property": "perspective-origin",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "r",
+      "numericTypes": [
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "right",
+      "numericTypes": [
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "rotate",
+      "numericTypes": [
+        "angle",
+        "number"
+      ]
+    },
+    {
+      "property": "row-gap",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "rx",
+      "numericTypes": [
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "ry",
+      "numericTypes": [
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "scale",
+      "numericTypes": [
+        "number",
+        "percentage"
+      ]
+    },
+    {
+      "property": "scrollbar-color",
+      "numericTypes": [
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]"
+      ]
+    },
+    {
+      "property": "scroll-margin",
+      "numericTypes": [
+        "length"
+      ]
+    },
+    {
+      "property": "scroll-margin-block",
+      "numericTypes": [
+        "length"
+      ]
+    },
+    {
+      "property": "scroll-margin-block-start",
+      "numericTypes": [
+        "length"
+      ]
+    },
+    {
+      "property": "scroll-margin-block-end",
+      "numericTypes": [
+        "length"
+      ]
+    },
+    {
+      "property": "scroll-margin-bottom",
+      "numericTypes": [
+        "length"
+      ]
+    },
+    {
+      "property": "scroll-margin-inline",
+      "numericTypes": [
+        "length"
+      ]
+    },
+    {
+      "property": "scroll-margin-inline-start",
+      "numericTypes": [
+        "length"
+      ]
+    },
+    {
+      "property": "scroll-margin-inline-end",
+      "numericTypes": [
+        "length"
+      ]
+    },
+    {
+      "property": "scroll-margin-left",
+      "numericTypes": [
+        "length"
+      ]
+    },
+    {
+      "property": "scroll-margin-right",
+      "numericTypes": [
+        "length"
+      ]
+    },
+    {
+      "property": "scroll-margin-top",
+      "numericTypes": [
+        "length"
+      ]
+    },
+    {
+      "property": "scroll-padding",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "scroll-padding-block",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "scroll-padding-block-start",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "scroll-padding-block-end",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "scroll-padding-bottom",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "scroll-padding-inline",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "scroll-padding-inline-start",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "scroll-padding-inline-end",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "scroll-padding-left",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "scroll-padding-right",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "scroll-padding-top",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "scroll-snap-coordinate",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "scroll-snap-destination",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "scroll-snap-points-x",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "scroll-snap-points-y",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "shape-image-threshold",
+      "numericTypes": [
+        "alpha-value",
+        "number",
+        "percentage"
+      ]
+    },
+    {
+      "property": "shape-margin",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "shape-outside",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage",
+        "length-percentage[0,∞]",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]",
+        "number[0,1]"
+      ]
+    },
+    {
+      "property": "stroke",
+      "numericTypes": [
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]"
+      ]
+    },
+    {
+      "property": "stroke-dasharray",
+      "numericTypes": [
+        "percentage",
+        "length",
+        "number"
+      ]
+    },
+    {
+      "property": "stroke-dashoffset",
+      "numericTypes": [
+        "percentage",
+        "length",
+        "number"
+      ]
+    },
+    {
+      "property": "stroke-miterlimit",
+      "numericTypes": [
+        "number",
+        "number[1,∞]"
+      ]
+    },
+    {
+      "property": "stroke-width",
+      "numericTypes": [
+        "percentage",
+        "length",
+        "number"
+      ]
+    },
+    {
+      "property": "tab-size",
+      "numericTypes": [
+        "integer",
+        "length"
+      ]
+    },
+    {
+      "property": "text-combine-upright",
+      "numericTypes": [
+        "integer"
+      ]
+    },
+    {
+      "property": "text-decoration-color",
+      "numericTypes": [
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]"
+      ]
+    },
+    {
+      "property": "text-decoration-thickness",
+      "numericTypes": [
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "text-emphasis-color",
+      "numericTypes": [
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]"
+      ]
+    },
+    {
+      "property": "text-indent",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "text-shadow",
+      "numericTypes": [
+        "length",
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]"
+      ]
+    },
+    {
+      "property": "text-size-adjust",
+      "numericTypes": [
+        "percentage"
+      ]
+    },
+    {
+      "property": "text-underline-offset",
+      "numericTypes": [
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "top",
+      "numericTypes": [
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "transform",
+      "numericTypes": [
+        "number",
+        "length-percentage",
+        "length",
+        "percentage",
+        "angle",
+        "length[0,∞]"
+      ]
+    },
+    {
+      "property": "transform-origin",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "transition",
+      "numericTypes": [
+        "time",
+        "number",
+        "number[0,1]",
+        "integer"
+      ]
+    },
+    {
+      "property": "transition-delay",
+      "numericTypes": [
+        "time"
+      ]
+    },
+    {
+      "property": "transition-duration",
+      "numericTypes": [
+        "time"
+      ]
+    },
+    {
+      "property": "transition-timing-function",
+      "numericTypes": [
+        "number",
+        "number[0,1]",
+        "integer"
+      ]
+    },
+    {
+      "property": "translate",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "vertical-align",
+      "numericTypes": [
+        "percentage",
+        "length"
+      ]
+    },
+    {
+      "property": "view-timeline-inset",
+      "numericTypes": [
+        "length-percentage",
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "widows",
+      "numericTypes": [
+        "integer"
+      ]
+    },
+    {
+      "property": "width",
+      "numericTypes": [
+        "length",
+        "percentage",
+        "length-percentage"
+      ]
+    },
+    {
+      "property": "word-spacing",
+      "numericTypes": [
+        "length"
+      ]
+    },
+    {
+      "property": "x",
+      "numericTypes": [
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "y",
+      "numericTypes": [
+        "length",
+        "percentage"
+      ]
+    },
+    {
+      "property": "z-index",
+      "numericTypes": [
+        "integer"
+      ]
+    },
+    {
+      "property": "zoom",
+      "numericTypes": [
+        "number",
+        "percentage"
+      ]
+    },
+    {
+      "property": "-ms-flex-order",
+      "numericTypes": [
+        "integer"
+      ]
+    },
+    {
+      "property": "-webkit-mask-box-image",
+      "numericTypes": [
+        "angle",
+        "percentage",
+        "alpha-value",
+        "number",
+        "percentage[0,100]",
+        "length-percentage",
+        "length",
+        "number[0,1]"
+      ]
+    },
+    {
+      "property": "baseline-shift",
+      "numericTypes": [
+        "percentage",
+        "length",
+        "number"
+      ]
+    },
+    {
+      "property": "glyph-orientation-horizontal",
+      "numericTypes": [
+        "angle"
+      ]
+    },
+    {
+      "property": "glyph-orientation-vertical",
+      "numericTypes": [
+        "angle"
+      ]
+    },
+    {
+      "property": "kerning",
+      "numericTypes": [
+        "percentage",
+        "length",
+        "number"
+      ]
+    },
+    {
+      "property": "pause-after",
+      "numericTypes": [
+        "time"
+      ]
+    },
+    {
+      "property": "pause-before",
+      "numericTypes": [
+        "time"
+      ]
+    },
+    {
+      "property": "rest-after",
+      "numericTypes": [
+        "time"
+      ]
+    },
+    {
+      "property": "rest-before",
+      "numericTypes": [
+        "time"
+      ]
+    },
+    {
+      "property": "voice-balance",
+      "numericTypes": [
+        "number"
+      ]
+    },
+    {
+      "property": "voice-duration",
+      "numericTypes": [
+        "time"
+      ]
+    },
+    {
+      "property": "voice-family",
+      "numericTypes": [
+        "integer"
+      ]
+    },
+    {
+      "property": "voice-pitch",
+      "numericTypes": [
+        "percentage"
+      ]
+    },
+    {
+      "property": "voice-range",
+      "numericTypes": [
+        "percentage"
+      ]
+    },
+    {
+      "property": "voice-rate",
+      "numericTypes": [
+        "percentage"
+      ]
+    }
+  ],
+  "stats": {
+    "typesWithRange": 11,
+    "propertiesWithNumeric": 285
+  }
+}
