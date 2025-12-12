@@ -55,6 +55,7 @@ export type NumericType =
       min?: number         // 最小值（undefined = 支持负数）
       max?: number         // 最大值
       step?: number        // 步长（用于生成预设值）
+      presets?: number[]   // 额外预设值（与步长生成的值合并）
     }
 
 // ==================== 属性定义 ====================
@@ -133,6 +134,7 @@ export function generateStepValues(min: number, max: number, step: number): numb
  * 1. zero 类型 → 返回 [0]
  * 2. 使用配置的 min/max/step，未配置的使用全局默认值
  * 3. 特殊情况：min=0, max=1 时，默认 step=0.1
+ * 4. 合并 presets 额外预设值（去重并排序）
  */
 export function generateValuePresets(numericType: NumericType): number[] {
   const { unit } = numericType
@@ -150,5 +152,16 @@ export function generateValuePresets(numericType: NumericType): number[] {
   const defaultStep = (min === 0 && max === 1) ? 0.1 : globalDefaults.step
   const step = numericType.step ?? defaultStep
   
-  return generateStepValues(min, max, step)
+  // 生成步长值
+  const stepValues = generateStepValues(min, max, step)
+  
+  // 合并额外预设值
+  const presets = numericType.presets ?? []
+  if (presets.length === 0) {
+    return stepValues
+  }
+  
+  // 合并、去重、排序
+  const merged = [...new Set([...stepValues, ...presets])]
+  return merged.sort((a, b) => a - b)
 }
