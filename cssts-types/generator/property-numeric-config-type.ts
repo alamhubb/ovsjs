@@ -46,26 +46,41 @@ export class PropertyNumericConfigBase {
   /** 尺寸像素 - 用于 width/height/padding (max: 10000, 不支持负数) */
   sizePx: NumericType = { unit: 'px', value: 'integer', max: 10000 }
 
+  /** 尺寸 rem - 用于 width/height/padding (0.25-100rem, step: 0.25) */
+  sizeRem: NumericType = { unit: 'rem', value: 'number', min: 0.25, max: 100, step: 0.25 }
+
   /** 间距像素 - 用于 margin/定位 (max: 10000, 支持负数) */
   spacingPx: NumericType = { unit: 'px', value: 'integer', max: 10000, negative: true }
+
+  /** 间距 rem - 用于 margin/定位 (0.25-100rem, step: 0.25, 支持负数) */
+  spacingRem: NumericType = { unit: 'rem', value: 'number', min: 0.25, max: 100, step: 0.25, negative: true }
 
   /** 边框宽度 (max: 20) */
   borderWidthPx: NumericType = { unit: 'px', value: 'integer', max: 20 }
 
-  /** 圆角半径 (max: 500) */
+  /** 圆角半径像素 (max: 500) */
   radiusPx: NumericType = { unit: 'px', value: 'integer', max: 500 }
 
-  /** 字体大小 (8-200) */
+  /** 圆角半径 rem (0.25-10rem, step: 0.25) */
+  radiusRem: NumericType = { unit: 'rem', value: 'number', min: 0.25, max: 10, step: 0.25 }
+
+  /** 字体大小像素 (8-200) */
   fontSizePx: NumericType = { unit: 'px', value: 'integer', min: 8, max: 200 }
 
-  /** 小间距 - 用于 gap/letter-spacing (max: 200) */
+  /** 字体大小 rem (0.5-10rem, step: 0.125) */
+  fontSizeRem: NumericType = { unit: 'rem', value: 'number', min: 0.5, max: 10, step: 0.125 }
+
+  /** 小间距像素 - 用于 gap/letter-spacing (max: 200) */
   gapPx: NumericType = { unit: 'px', value: 'integer', max: 200 }
 
-  /** z-index 层级 (支持负数, -9999~9999) */
-  zIndex: NumericType = { unit: 'unitless', value: 'integer', min: -9999, max: 9999, negative: true }
+  /** 小间距 rem - 用于 gap (0.25-20rem, step: 0.25) */
+  gapRem: NumericType = { unit: 'rem', value: 'number', min: 0.25, max: 20, step: 0.25 }
 
-  /** order 排序 (支持负数, -100~100) */
-  orderInt: NumericType = { unit: 'unitless', value: 'integer', min: -100, max: 100, negative: true }
+  /** z-index 层级 (支持负数, 1~9999，同时生成负数版本) */
+  zIndex: NumericType = { unit: 'unitless', value: 'integer', min: 1, max: 9999, negative: true }
+
+  /** order 排序 (支持负数, 1~100，同时生成负数版本) */
+  orderInt: NumericType = { unit: 'unitless', value: 'integer', min: 1, max: 100, negative: true }
 
   /** Grid 轨道数 (1-24) */
   gridTrack: NumericType = { unit: 'unitless', value: 'integer', min: 1, max: 24 }
@@ -114,8 +129,8 @@ export class PropertyNumericConfigBase {
   /** 字体特性设置 (1-99) */
   fontFeatureInt: NumericType = { unit: 'unitless', value: 'integer', min: 1, max: 99 }
 
-  /** 计数器值 (支持负数, -1000~1000) */
-  counterInt: NumericType = { unit: 'unitless', value: 'integer', min: -1000, max: 1000, negative: true }
+  /** 计数器值 (支持负数, 1~1000，同时生成负数版本) */
+  counterInt: NumericType = { unit: 'unitless', value: 'integer', min: 1, max: 1000, negative: true }
 
   /** 组序号 (1-100) */
   groupInt: NumericType = { unit: 'unitless', value: 'integer', min: 1, max: 100 }
@@ -123,8 +138,8 @@ export class PropertyNumericConfigBase {
   /** 字符数限制 (1-50) */
   charCount: NumericType = { unit: 'unitless', value: 'integer', min: 1, max: 50 }
 
-  /** 数学深度 (支持负数, -10~10) */
-  mathDepthInt: NumericType = { unit: 'unitless', value: 'integer', min: -10, max: 10, negative: true }
+  /** 数学深度 (支持负数, 1~10，同时生成负数版本) */
+  mathDepthInt: NumericType = { unit: 'unitless', value: 'integer', min: 1, max: 10, negative: true }
 
   /** 字体调整值 (0-2, step: 0.01) */
   fontAdjustNum: NumericType = { unit: 'unitless', value: 'number', min: 0, max: 2, step: 0.01 }
@@ -144,8 +159,8 @@ export class PropertyNumericConfigBase {
   /** 描边斜接限制 (1-10) */
   miterLimitNum: NumericType = { unit: 'unitless', value: 'number', min: 1, max: 10 }
 
-  /** 语音平衡 (-100~100) */
-  voiceBalanceNum: NumericType = { unit: 'unitless', value: 'number', min: -100, max: 100, negative: true }
+  /** 语音平衡 (支持负数, 1~100，同时生成负数版本) */
+  voiceBalanceNum: NumericType = { unit: 'unitless', value: 'number', min: 1, max: 100, negative: true }
 
   /** 初始字母大小 (1-10) */
   initialLetterNum: NumericType = { unit: 'unitless', value: 'number', min: 1, max: 10 }
@@ -153,42 +168,42 @@ export class PropertyNumericConfigBase {
   /** 光标数值 (0-100) */
   cursorNum: NumericType = { unit: 'unitless', value: 'number', min: 0, max: 100 }
 
-  /** 字体变体设置值 (-1~1, step: 0.01) */
-  fontVariationNum: NumericType = { unit: 'unitless', value: 'number', min: -1, max: 1, step: 0.01 }
+  /** 字体变体设置值 (支持负数, 0~1, step: 0.01) */
+  fontVariationNum: NumericType = { unit: 'unitless', value: 'number', min: 0, max: 1, step: 0.01, negative: true }
 
   // ==================== CSS 属性配置 ====================
 
   // sizing (不支持负数)
-  height: NumericType[] = [this.zero, this.sizePx, this.ratio]
-  'max-height': NumericType[] = [this.zero, this.sizePx, this.ratio]
-  'max-width': NumericType[] = [this.zero, this.sizePx, this.ratio]
-  'min-height': NumericType[] = [this.zero, this.sizePx, this.ratio]
-  'min-width': NumericType[] = [this.zero, this.sizePx, this.ratio]
-  width: NumericType[] = [this.zero, this.sizePx, this.ratio]
+  height: NumericType[] = [this.zero, this.sizePx, this.sizeRem, this.ratio]
+  'max-height': NumericType[] = [this.zero, this.sizePx, this.sizeRem, this.ratio]
+  'max-width': NumericType[] = [this.zero, this.sizePx, this.sizeRem, this.ratio]
+  'min-height': NumericType[] = [this.zero, this.sizePx, this.sizeRem, this.ratio]
+  'min-width': NumericType[] = [this.zero, this.sizePx, this.sizeRem, this.ratio]
+  width: NumericType[] = [this.zero, this.sizePx, this.sizeRem, this.ratio]
 
   // spacing - margin (支持负数)
-  margin: NumericType[] = [this.zero, this.spacingPx, this.ratio]
-  'margin-bottom': NumericType[] = [this.zero, this.spacingPx, this.ratio]
-  'margin-left': NumericType[] = [this.zero, this.spacingPx, this.ratio]
-  'margin-right': NumericType[] = [this.zero, this.spacingPx, this.ratio]
-  'margin-top': NumericType[] = [this.zero, this.spacingPx, this.ratio]
+  margin: NumericType[] = [this.zero, this.spacingPx, this.spacingRem, this.ratio]
+  'margin-bottom': NumericType[] = [this.zero, this.spacingPx, this.spacingRem, this.ratio]
+  'margin-left': NumericType[] = [this.zero, this.spacingPx, this.spacingRem, this.ratio]
+  'margin-right': NumericType[] = [this.zero, this.spacingPx, this.spacingRem, this.ratio]
+  'margin-top': NumericType[] = [this.zero, this.spacingPx, this.spacingRem, this.ratio]
 
   // spacing - padding (不支持负数)
-  padding: NumericType[] = [this.zero, this.sizePx, this.ratio]
-  'padding-bottom': NumericType[] = [this.zero, this.sizePx, this.ratio]
-  'padding-left': NumericType[] = [this.zero, this.sizePx, this.ratio]
-  'padding-right': NumericType[] = [this.zero, this.sizePx, this.ratio]
-  'padding-top': NumericType[] = [this.zero, this.sizePx, this.ratio]
+  padding: NumericType[] = [this.zero, this.sizePx, this.sizeRem, this.ratio]
+  'padding-bottom': NumericType[] = [this.zero, this.sizePx, this.sizeRem, this.ratio]
+  'padding-left': NumericType[] = [this.zero, this.sizePx, this.sizeRem, this.ratio]
+  'padding-right': NumericType[] = [this.zero, this.sizePx, this.sizeRem, this.ratio]
+  'padding-top': NumericType[] = [this.zero, this.sizePx, this.sizeRem, this.ratio]
 
   // spacing - gap
-  'column-gap': NumericType[] = [this.zero, this.gapPx, this.ratio]
-  'row-gap': NumericType[] = [this.zero, this.gapPx, this.ratio]
+  'column-gap': NumericType[] = [this.zero, this.gapPx, this.gapRem, this.ratio]
+  'row-gap': NumericType[] = [this.zero, this.gapPx, this.gapRem, this.ratio]
 
   // positioning (支持负数)
-  bottom: NumericType[] = [this.zero, this.spacingPx, this.ratio]
-  left: NumericType[] = [this.zero, this.spacingPx, this.ratio]
-  right: NumericType[] = [this.zero, this.spacingPx, this.ratio]
-  top: NumericType[] = [this.zero, this.spacingPx, this.ratio]
+  bottom: NumericType[] = [this.zero, this.spacingPx, this.spacingRem, this.ratio]
+  left: NumericType[] = [this.zero, this.spacingPx, this.spacingRem, this.ratio]
+  right: NumericType[] = [this.zero, this.spacingPx, this.spacingRem, this.ratio]
+  top: NumericType[] = [this.zero, this.spacingPx, this.spacingRem, this.ratio]
 
   // layout
   'flex-grow': NumericType[] = [this.scaleNum]
@@ -212,7 +227,7 @@ export class PropertyNumericConfigBase {
 
   // typography
   'font-feature-settings': NumericType[] = [this.fontFeatureInt]
-  'font-size': NumericType[] = [this.zero, this.fontSizePx, this.ratio]
+  'font-size': NumericType[] = [this.zero, this.fontSizePx, this.fontSizeRem, this.ratio]
   'font-size-adjust': NumericType[] = [this.fontAdjustNum]
   'font-smooth': NumericType[] = [this.zero, this.smallPx]
   'font-stretch': NumericType[] = [this.ratio]
@@ -236,25 +251,25 @@ export class PropertyNumericConfigBase {
   // border
   border: NumericType[] = [this.zero, this.borderWidthPx]
   'border-bottom': NumericType[] = [this.zero, this.borderWidthPx]
-  'border-bottom-left-radius': NumericType[] = [this.zero, this.radiusPx, this.ratio]
-  'border-bottom-right-radius': NumericType[] = [this.zero, this.radiusPx, this.ratio]
+  'border-bottom-left-radius': NumericType[] = [this.zero, this.radiusPx, this.radiusRem, this.ratio]
+  'border-bottom-right-radius': NumericType[] = [this.zero, this.radiusPx, this.radiusRem, this.ratio]
   'border-bottom-width': NumericType[] = [this.zero, this.borderWidthPx]
-  'border-end-end-radius': NumericType[] = [this.zero, this.radiusPx, this.ratio]
-  'border-end-start-radius': NumericType[] = [this.zero, this.radiusPx, this.ratio]
+  'border-end-end-radius': NumericType[] = [this.zero, this.radiusPx, this.radiusRem, this.ratio]
+  'border-end-start-radius': NumericType[] = [this.zero, this.radiusPx, this.radiusRem, this.ratio]
   'border-image-outset': NumericType[] = [this.zero, this.smallPx, this.borderSliceNum]
   'border-image-slice': NumericType[] = [this.borderSliceNum, this.ratio]
   'border-image-width': NumericType[] = [this.zero, this.smallPx, this.ratio, this.borderSliceNum]
   'border-left': NumericType[] = [this.zero, this.borderWidthPx]
   'border-left-width': NumericType[] = [this.zero, this.borderWidthPx]
-  'border-radius': NumericType[] = [this.zero, this.radiusPx, this.ratio]
+  'border-radius': NumericType[] = [this.zero, this.radiusPx, this.radiusRem, this.ratio]
   'border-right': NumericType[] = [this.zero, this.borderWidthPx]
   'border-right-width': NumericType[] = [this.zero, this.borderWidthPx]
   'border-spacing': NumericType[] = [this.zero, this.gapPx]
-  'border-start-end-radius': NumericType[] = [this.zero, this.radiusPx, this.ratio]
-  'border-start-start-radius': NumericType[] = [this.zero, this.radiusPx, this.ratio]
+  'border-start-end-radius': NumericType[] = [this.zero, this.radiusPx, this.radiusRem, this.ratio]
+  'border-start-start-radius': NumericType[] = [this.zero, this.radiusPx, this.radiusRem, this.ratio]
   'border-top': NumericType[] = [this.zero, this.borderWidthPx]
-  'border-top-left-radius': NumericType[] = [this.zero, this.radiusPx, this.ratio]
-  'border-top-right-radius': NumericType[] = [this.zero, this.radiusPx, this.ratio]
+  'border-top-left-radius': NumericType[] = [this.zero, this.radiusPx, this.radiusRem, this.ratio]
+  'border-top-right-radius': NumericType[] = [this.zero, this.radiusPx, this.radiusRem, this.ratio]
   'border-top-width': NumericType[] = [this.zero, this.borderWidthPx]
   'border-width': NumericType[] = [this.zero, this.borderWidthPx]
   'outline-offset': NumericType[] = [this.zero, this.smallPx]
