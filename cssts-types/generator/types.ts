@@ -52,10 +52,11 @@ export type NumericType =
   | {
       unit: Exclude<UnitType, 'zero'>
       value: ValueType     // 数值类型（integer/number）
-      min?: number         // 最小值（undefined = 支持负数）
+      min?: number         // 最小值
       max?: number         // 最大值
       step?: number        // 步长（用于生成预设值）
       presets?: number[]   // 额外预设值（与步长生成的值合并）
+      negative?: boolean   // 是否支持负数（默认 false）
     }
 
 // ==================== 属性定义 ====================
@@ -95,7 +96,7 @@ export function supportsDecimal(valueType: ValueType): boolean {
 export function supportsNegative(numericType: NumericType): boolean {
   // zero 类型只有 0，不支持负数
   if (numericType.unit === 'zero') return false
-  return numericType.min === undefined || numericType.min < 0
+  return numericType.negative === true
 }
 
 /**
@@ -134,7 +135,8 @@ export function generateStepValues(min: number, max: number, step: number): numb
  * 1. zero 类型 → 返回 [0]
  * 2. 使用配置的 min/max/step，未配置的使用全局默认值
  * 3. 特殊情况：min=0, max=1 时，默认 step=0.1
- * 4. 合并 presets 额外预设值（去重并排序）
+ * 4. 如果 negative=true，同时 push 正负值
+ * 5. 合并 presets 额外预设值（去重并排序）
  */
 export function generateValuePresets(numericType: NumericType): number[] {
   const { unit } = numericType
@@ -147,21 +149,37 @@ export function generateValuePresets(numericType: NumericType): number[] {
   // 使用配置值或全局默认值
   const min = numericType.min ?? globalDefaults.min
   const max = numericType.max ?? globalDefaults.max
+  const supportNegative = numericType.negative === true
   
   // 计算默认步长：min=0, max=1 时使用 0.1，否则使用全局默认值
   const defaultStep = (min === 0 && max === 1) ? 0.1 : globalDefaults.step
   const step = numericType.step ?? defaultStep
   
-  // 生成步长值
-  const stepValues = generateStepValues(min, max, step)
+  // 一次遍历生成所有值
+  const values: number[] = []
+  for (let v = min; v <= max; v += step) {
+    const rounded = Math.round(v * 1000) / 1000
+    values.push(rounded)
+    // 如果支持负数且当前值 > 0，同时 push 负值
+    if (supportNegative && rounded > 0) {
+      values.push(-rounded)
+    }
+  }
+  // 确保包含 max
+  if (values.length > 0 && !values.includes(max)) {
+    values.push(max)
+    if (supportNegative && max > 0) {
+      values.push(-max)
+    }
+  }
   
   // 合并额外预设值
   const presets = numericType.presets ?? []
-  if (presets.length === 0) {
-    return stepValues
+  if (presets.length > 0) {
+    values.push(...presets)
   }
   
-  // 合并、去重、排序
-  const merged = [...new Set([...stepValues, ...presets])]
+  // 去重、排序
+  const merged = [...new Set(values)]
   return merged.sort((a, b) => a - b)
 }

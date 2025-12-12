@@ -235,35 +235,112 @@ type NumericType =
       min?: number         // 最小值
       max?: number         // 最大值
       step?: number        // 步长
+      presets?: number[]   // 额外预设值（与步长生成的值合并）
     }
+```
+
+#### 全局默认配置
+
+```typescript
+export const globalDefaults = {
+  min: 1,
+  max: 100,
+  step: 1,
+}
+```
+
+所有单位类型共用一个全局默认配置，属性可以通过 `min/max/step` 覆盖。
+
+#### 数值生成策略
+
+1. **zero 类型** → 返回 `[0]`
+2. **使用配置的 min/max/step**，未配置的使用全局默认值
+3. **特殊情况**：`min=0, max=1` 时，默认 `step=0.1`（适用于 opacity 等）
+4. **presets 合并**：额外预设值与步长生成的值合并（去重并排序）
+
+```typescript
+// 示例：ratio 类型配置
+const ratio: NumericType = { 
+  unit: 'ratio', 
+  value: 'number',
+  presets: [33.33, 66.67]  // 常用的三等分值
+}
+// 生成: [1, 2, 3, ..., 33.33, ..., 66.67, ..., 100]
 ```
 
 ### 属性配置 (property-numeric-config.ts)
 
-定义 203 个数值属性的配置：
+定义 203 个数值属性的配置，使用抽象常量简化配置：
+
+#### 基础 NumericType 常量
 
 ```typescript
+/** 特殊值 0（无单位） */
 const zero: NumericType = { unit: 'zero' }
 
+/** 像素整数 */
+const px: NumericType = { unit: 'px', value: 'integer' }
+
+/** 比例/百分比，包含三等分预设值 */
+const ratio: NumericType = { unit: 'ratio', value: 'number', presets: [33.33, 66.67] }
+
+/** Grid 弹性单位 */
+const fr: NumericType = { unit: 'fr', value: 'number' }
+
+/** 角度 */
+const deg: NumericType = { unit: 'deg', value: 'number' }
+
+/** 时间（毫秒） */
+const ms: NumericType = { unit: 'ms', value: 'integer' }
+
+/** 无单位整数 */
+const int: NumericType = { unit: 'unitless', value: 'integer' }
+
+/** 无单位小数 */
+const num: NumericType = { unit: 'unitless', value: 'number' }
+
+/** 透明度 (0-1, step 0.1) */
+const alpha: NumericType = { unit: 'unitless', value: 'number', min: 0, max: 1 }
+
+/** 字重 (1-1000, step 100) */
+const fontWeight: NumericType = { unit: 'unitless', value: 'integer', min: 1, max: 1000, step: 100 }
+```
+
+#### 属性配置示例
+
+```typescript
 export const propertyNumericTypes: Record<string, NumericType[]> = {
-  // sizing
-  'width': [zero, { unit: 'px', value: 'integer' }, { unit: 'ratio', value: 'number' }],
-  'height': [zero, { unit: 'px', value: 'integer' }, { unit: 'ratio', value: 'number' }],
+  // sizing - 使用 zero + px + ratio 组合
+  'width': [zero, px, ratio],
+  'height': [zero, px, ratio],
   
   // spacing
-  'margin': [zero, { unit: 'px', value: 'integer' }, { unit: 'ratio', value: 'number' }],
-  'padding': [zero, { unit: 'px', value: 'integer' }, { unit: 'ratio', value: 'number' }],
+  'margin': [zero, px, ratio],
+  'padding': [zero, px, ratio],
   
   // layout
-  'z-index': [{ unit: 'unitless', value: 'integer' }],
-  'flex-grow': [{ unit: 'unitless', value: 'number' }],
+  'z-index': [int],
+  'flex-grow': [num],
+  'grid-template-columns': [zero, px, ratio, fr],
   
-  // opacity
-  'opacity': [{ unit: 'unitless', value: 'number' }, { unit: 'ratio', value: 'number' }],
+  // opacity - 使用 alpha 常量（0-1 范围）
+  'opacity': [alpha],
+  'fill-opacity': [alpha],
+  
+  // typography - 使用 fontWeight 常量
+  'font-weight': [fontWeight],
   
   // ... 共 203 个属性
 }
 ```
+
+#### 特殊配置说明
+
+| 常量 | min | max | step | presets | 说明 |
+|------|-----|-----|------|---------|------|
+| `alpha` | 0 | 1 | 0.1（自动） | - | 透明度，min=0 且 max=1 时自动使用 step=0.1 |
+| `fontWeight` | 1 | 1000 | 100 | - | 字重，来自 css-tree 规范 |
+| `ratio` | 1 | 100 | 1 | [33.33, 66.67] | 百分比，包含三等分预设值 |
 
 ### 属性分类统计
 
@@ -351,23 +428,48 @@ function extractNumericTypes(property: string): ExtractResult {
 ### 工具函数 (types.ts)
 
 ```typescript
+// 判断是否支持小数
+function supportsDecimal(valueType: ValueType): boolean {
+  return valueType === 'number'
+}
+
 // 判断是否支持负数
 function supportsNegative(numericType: NumericType): boolean {
   if (numericType.unit === 'zero') return false
   return numericType.min === undefined || numericType.min < 0
 }
 
-// 生成数值预设
-function generateValuePresets(numericType: NumericType, property?: string): number[] {
+// 根据 min/max/step 生成数值序列
+function generateStepValues(min: number, max: number, step: number): number[] {
+  const values: number[] = []
+  for (let v = min; v <= max; v += step) {
+    values.push(Math.round(v * 1000) / 1000)  // 处理浮点精度
+  }
+  return values
+}
+
+// 生成数值预设（核心函数）
+function generateValuePresets(numericType: NumericType): number[] {
+  // zero 类型只返回 [0]
   if (numericType.unit === 'zero') return [0]
   
-  // 有 step 配置则使用固定步长
-  if (numericType.step !== undefined) {
-    return generateFixedStepValues(numericType.min, numericType.max, numericType.step)
-  }
+  // 使用配置值或全局默认值
+  const min = numericType.min ?? globalDefaults.min
+  const max = numericType.max ?? globalDefaults.max
   
-  // 否则使用默认预设
-  return defaultValuePresets[numericType.unit]
+  // 特殊情况：min=0, max=1 时使用 0.1，否则使用全局默认值
+  const defaultStep = (min === 0 && max === 1) ? 0.1 : globalDefaults.step
+  const step = numericType.step ?? defaultStep
+  
+  // 生成步长值
+  const stepValues = generateStepValues(min, max, step)
+  
+  // 合并额外预设值（去重并排序）
+  const presets = numericType.presets ?? []
+  if (presets.length === 0) return stepValues
+  
+  const merged = [...new Set([...stepValues, ...presets])]
+  return merged.sort((a, b) => a - b)
 }
 ```
 

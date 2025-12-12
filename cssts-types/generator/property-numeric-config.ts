@@ -37,38 +37,39 @@ const alpha: NumericType = { unit: 'unitless', value: 'number', min: 0, max: 1 }
 /** 字重 (1-1000, step 100) */
 const fontWeight: NumericType = { unit: 'unitless', value: 'integer', min: 1, max: 1000, step: 100 }
 
+const heightWightPx: NumericType = { unit: 'px', value: 'integer', max: 10000 }
 /**
  * CSS 属性到数值类型的映射
  * 每个属性对应一个 NumericType[] 数组
  */
 export const propertyNumericTypes: Record<string, NumericType[]> = {
   // ========== sizing ==========
-  'height': [zero, px, ratio],
-  'max-height': [zero, px, ratio],
-  'max-width': [zero, px, ratio],
-  'min-height': [zero, px, ratio],
-  'min-width': [zero, px, ratio],
-  'width': [zero, px, ratio],
+  'height': [zero, heightWightPx, ratio],
+  'max-height': [zero, heightWightPx, ratio],
+  'max-width': [zero, heightWightPx, ratio],
+  'min-height': [zero, heightWightPx, ratio],
+  'min-width': [zero, heightWightPx, ratio],
+  'width': [zero, heightWightPx, ratio],
 
   // ========== spacing ==========
+  'margin': [zero, heightWightPx, ratio],
+  'margin-bottom': [zero, heightWightPx, ratio],
+  'margin-left': [zero, heightWightPx, ratio],
+  'margin-right': [zero, heightWightPx, ratio],
+  'margin-top': [zero, heightWightPx, ratio],
+  'padding': [zero, heightWightPx, ratio],
+  'padding-bottom': [zero, heightWightPx, ratio],
+  'padding-left': [zero, heightWightPx, ratio],
+  'padding-right': [zero, heightWightPx, ratio],
+  'padding-top': [zero, heightWightPx, ratio],
   'column-gap': [zero, px, ratio],
-  'margin': [zero, px, ratio],
-  'margin-bottom': [zero, px, ratio],
-  'margin-left': [zero, px, ratio],
-  'margin-right': [zero, px, ratio],
-  'margin-top': [zero, px, ratio],
-  'padding': [zero, px, ratio],
-  'padding-bottom': [zero, px, ratio],
-  'padding-left': [zero, px, ratio],
-  'padding-right': [zero, px, ratio],
-  'padding-top': [zero, px, ratio],
   'row-gap': [zero, px, ratio],
 
   // ========== positioning ==========
-  'bottom': [zero, px, ratio],
-  'left': [zero, px, ratio],
-  'right': [zero, px, ratio],
-  'top': [zero, px, ratio],
+  'bottom': [zero, heightWightPx, ratio],
+  'left': [zero, heightWightPx, ratio],
+  'right': [zero, heightWightPx, ratio],
+  'top': [zero, heightWightPx, ratio],
 
   // ========== layout ==========
   'flex-grow': [num],
