@@ -177,9 +177,10 @@ export function replaceConflictingStyles(
 /**
  * kebab-case 转驼峰
  * color-red → colorRed
+ * font-size-14 → fontSize14
  */
 export function kebabToCamel(str: string): string {
-  return str.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase())
+  return str.replace(/-([a-z0-9])/g, (_, char) => char.toUpperCase())
 }
 
 /**

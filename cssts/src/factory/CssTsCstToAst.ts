@@ -152,23 +152,176 @@ export class CssTsCstToAst extends SlimeCstToAst {
   }
 
   /**
-   * 转换 CssExpression CST 为字符串字面量 AST
+   * 收集的原子类名（用于生成 CsstsAtom）
+   */
+  private usedAtoms: Set<string> = new Set()
+
+  /**
+   * 获取使用的原子类名
+   */
+  getUsedAtoms(): Set<string> {
+    return this.usedAtoms
+  }
+
+  /**
+   * 清空使用的原子类
+   */
+  clearUsedAtoms() {
+    this.usedAtoms.clear()
+  }
+
+  /**
+   * 转换 CssExpression CST 为 AST
    * 
-   * 输入：css { colorRed, fontBold }
-   * 输出："color-red font-bold"
+   * 两种形式：
+   * 1. css { colorRed, fontBold } → cssts.$cls(csstsAtom.colorRed, csstsAtom.fontBold)
+   * 2. css colorRed → 字符串 "colorRed"（用于替换语法）
    */
   createCssExpressionAst(cst: SubhutiCst): SlimeExpression {
     const children = cst.children || []
     
-    // 找到 CssStyleObject
+    // 检查是否是单原子形式：css colorRed
+    const identifierCst = children.find(c => c.name === 'IdentifierName')
+    if (identifierCst) {
+      // 单原子形式：返回字符串字面量 "colorRed"
+      const atomName = identifierCst.value || identifierCst.children?.[0]?.value || ''
+      // 收集原子类名
+      this.usedAtoms.add(atomName)
+      return SlimeNodeCreate.createStringLiteral(atomName)
+    }
+    
+    // 多原子形式：css { colorRed, fontBold }
     const styleObjectCst = children.find(c => c.name === CssTsParser.prototype.CssStyleObject.name)
     const properties = this.extractCssProperties(styleObjectCst)
     
-    // 将驼峰命名转换为 kebab-case 并用空格连接
-    const classNames = properties.map(camelToKebab).join(' ')
+    // 收集原子类名
+    for (const prop of properties) {
+      this.usedAtoms.add(prop)
+    }
     
-    // 创建字符串字面量
-    return SlimeNodeCreate.createStringLiteral(classNames)
+    // 创建 cssts.$cls(csstsAtom.prop1, csstsAtom.prop2, ...) 调用
+    return this.createCsstsClsCall(properties, cst.loc)
+  }
+
+  /**
+   * 创建 cssts.$cls(csstsAtom.prop1, csstsAtom.prop2, ...) 调用表达式
+   */
+  protected createCsstsClsCall(properties: string[], loc?: any): SlimeExpression {
+    // callee: cssts.$cls (MemberExpression)
+    const csstsId = SlimeNodeCreate.createIdentifier('cssts')
+    const clsId = SlimeNodeCreate.createIdentifier('$cls')
+    const callee: SlimeExpression = {
+      type: SlimeNodeType.MemberExpression,
+      object: csstsId,
+      property: clsId,
+      computed: false,
+      optional: false
+    } as any
+    
+    // arguments: [csstsAtom.prop1, csstsAtom.prop2, ...]
+    const args = properties.map(prop => this.createCsstsAtomMember(prop))
+    
+    // 创建 CallExpression
+    return {
+      type: SlimeNodeType.CallExpression,
+      callee,
+      arguments: args,
+      optional: false,
+      loc
+    } as any
+  }
+
+  /**
+   * 创建 csstsAtom.propName 成员表达式
+   */
+  protected createCsstsAtomMember(propName: string): SlimeExpression {
+    return {
+      type: SlimeNodeType.MemberExpression,
+      object: SlimeNodeCreate.createIdentifier('csstsAtom'),
+      property: SlimeNodeCreate.createIdentifier(propName),
+      computed: false,
+      optional: false
+    } as any
+  }
+
+  /**
+   * 处理赋值表达式，检测 style.atom = css newAtom 模式
+   * 
+   * 输入：style.bgPrimary = css bgSuccess
+   * 输出：style = cssts.replace(style, "bgPrimary", "bgSuccess")
+   */
+  createAssignmentExpressionAst(cst: SubhutiCst): SlimeExpression {
+    // 先调用父类处理
+    const ast = super.createAssignmentExpressionAst(cst)
+    
+    // 检测是否是 style.atom = css newAtom 模式
+    if (this.isCssReplacePattern(ast)) {
+      return this.transformToCsstsReplace(ast)
+    }
+    
+    return ast
+  }
+
+  /**
+   * 检测是否是 style.atom = css newAtom 模式
+   */
+  private isCssReplacePattern(ast: any): boolean {
+    // 检查是否是赋值表达式
+    if (ast.type !== SlimeNodeType.AssignmentExpression) return false
+    if (ast.operator !== '=') return false
+    
+    // 检查左边是否是 MemberExpression (style.atom)
+    if (ast.left?.type !== SlimeNodeType.MemberExpression) return false
+    
+    // 检查右边是否是字符串字面量（来自 css atomName）
+    if (ast.right?.type !== SlimeNodeType.Literal) return false
+    if (typeof ast.right?.value !== 'string') return false
+    
+    return true
+  }
+
+  /**
+   * 将 style.atom = "newAtom" 转换为 style = cssts.replace(style, "atom", "newAtom")
+   */
+  private transformToCsstsReplace(ast: any): SlimeExpression {
+    const memberExpr = ast.left
+    const objectName: string = memberExpr.object?.name || memberExpr.object?.value || 'style'
+    const propertyName: string = memberExpr.property?.name || memberExpr.property?.value || ''
+    const newAtomName: string = ast.right.value || ''
+    
+    // 创建 cssts.replace(style, "atom", "newAtom") 调用
+    const csstsId = SlimeNodeCreate.createIdentifier('cssts')
+    const replaceId = SlimeNodeCreate.createIdentifier('replace')
+    const callee: SlimeExpression = {
+      type: SlimeNodeType.MemberExpression,
+      object: csstsId,
+      property: replaceId,
+      computed: false,
+      optional: false
+    } as any
+    
+    // arguments: [style, "atom", "newAtom"]
+    const args = [
+      SlimeNodeCreate.createIdentifier(objectName),
+      SlimeNodeCreate.createStringLiteral(propertyName),
+      SlimeNodeCreate.createStringLiteral(newAtomName)
+    ]
+    
+    const replaceCall: SlimeExpression = {
+      type: SlimeNodeType.CallExpression,
+      callee,
+      arguments: args,
+      optional: false
+    } as any
+    
+    // 创建 style = cssts.replace(...) 赋值表达式
+    return {
+      type: SlimeNodeType.AssignmentExpression,
+      operator: '=',
+      left: SlimeNodeCreate.createIdentifier(objectName),
+      right: replaceCall,
+      loc: ast.loc
+    } as any
   }
 
   /**
@@ -222,7 +375,7 @@ export class CssTsCstToAst extends SlimeCstToAst {
     if (!styleNameCst) {
       throw new Error('CssDeclaration: missing style name')
     }
-    const styleName = styleNameCst.value || styleNameCst.children?.[0]?.value
+    const styleName: string = styleNameCst.value || styleNameCst.children?.[0]?.value || ''
 
     // 检查是否有 = { ... } 部分
     const assignIndex = children.findIndex(c => c.value === '=' || c.name === 'Assign')
@@ -234,26 +387,30 @@ export class CssTsCstToAst extends SlimeCstToAst {
       const dependencies = this.extractCssProperties(styleObjectCst)
 
       // 收集样式信息
-      this.cssStyles.set(styleName, {
-        name: styleName,
-        isAtomic: false,
-        dependencies,
-        cssClassName: camelToKebab(styleName),
-        loc: cst.loc
-      })
+      if (styleName) {
+        this.cssStyles.set(styleName, {
+          name: styleName,
+          isAtomic: false,
+          dependencies,
+          cssClassName: camelToKebab(styleName),
+          loc: cst.loc
+        })
+      }
 
       // 生成 const buttonBase = { colorRed, fontBold }
       // 这里简化处理，实际可以生成更复杂的 AST
       return this.createCssConstDeclaration(styleName, dependencies, cst.loc)
     } else {
       // 原子样式：css colorRed
-      this.cssStyles.set(styleName, {
-        name: styleName,
-        isAtomic: true,
-        dependencies: [],
-        cssClassName: camelToKebab(styleName),
-        loc: cst.loc
-      })
+      if (styleName) {
+        this.cssStyles.set(styleName, {
+          name: styleName,
+          isAtomic: true,
+          dependencies: [],
+          cssClassName: camelToKebab(styleName),
+          loc: cst.loc
+        })
+      }
 
       // 原子样式不生成代码，仅收集信息
       // 返回空语句

@@ -45,22 +45,30 @@ export default class CssTsParser<T extends CssTsTokenConsumer = CssTsTokenConsum
   // ==================== CssTs 样式语法 ====================
 
   /**
-   * CssExpression - CSS 样式表达式（推荐语法）
+   * CssExpression - CSS 样式表达式
    * 
-   * 语法：css { CssPropertyList }
+   * 语法：
+   *   css { CssPropertyList }    // 多原子：css { colorRed, fontBold }
+   *   css IdentifierName         // 单原子：css colorRed
    * 
    * 示例：
    *   const buttonBase = css { colorRed, fontBold }
    *   const styles = { primary: css { bgPrimary, colorWhite } }
    *   button(class = css { rounded, cursorPointer })
+   *   style.color = css colorRed   // 单原子用于替换
    * 
    * 编译后：
-   *   const buttonBase = "color-red font-bold"
+   *   const buttonBase = cssts.$cls(colorRed, fontBold)
+   *   style.color = css colorRed → style = cssts.replace(style, "color", "colorRed")
    */
   @SubhutiRule
   CssExpression(params: ExpressionParams = {}) {
     this.tokenConsumer.Css()           // css 软关键字
-    this.CssStyleObject(params)        // { ... }
+    // 两种形式：{ ... } 或 单个标识符
+    this.Or([
+      { alt: () => this.CssStyleObject(params) },  // css { colorRed, fontBold }
+      { alt: () => this.tokenConsumer.IdentifierName() }  // css colorRed
+    ])
     return this.curCst
   }
 

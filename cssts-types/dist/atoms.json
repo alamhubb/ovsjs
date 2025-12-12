@@ -1,0 +1,4286 @@
+{
+  "version": "1.0.0",
+  "generatedAt": "2025-12-12T04:51:11.664Z",
+  "source": "css-tree",
+  "atomNames": [
+    "displayBlock",
+    "displayContents",
+    "displayFlex",
+    "displayFlow",
+    "displayFlowRoot",
+    "displayGrid",
+    "displayInline",
+    "displayInlineBlock",
+    "displayInlineFlex",
+    "displayInlineGrid",
+    "displayInlineListItem",
+    "displayInlineTable",
+    "displayListItem",
+    "displayNone",
+    "displayRuby",
+    "displayRubyBase",
+    "displayRubyBaseContainer",
+    "displayRubyText",
+    "displayRubyTextContainer",
+    "displayRunIn",
+    "displayTable",
+    "displayTableCaption",
+    "displayTableCell",
+    "displayTableColumn",
+    "displayTableColumnGroup",
+    "displayTableFooterGroup",
+    "displayTableHeaderGroup",
+    "displayTableRow",
+    "displayTableRowGroup",
+    "positionAbsolute",
+    "positionFixed",
+    "positionRelative",
+    "positionStatic",
+    "positionSticky",
+    "floatInlineEnd",
+    "floatInlineStart",
+    "floatLeft",
+    "floatNone",
+    "floatRight",
+    "clearBoth",
+    "clearInlineEnd",
+    "clearInlineStart",
+    "clearLeft",
+    "clearNone",
+    "clearRight",
+    "flexDirectionColumn",
+    "flexDirectionColumnReverse",
+    "flexDirectionRow",
+    "flexDirectionRowReverse",
+    "flexWrapNowrap",
+    "flexWrapWrap",
+    "flexWrapWrapReverse",
+    "flexGrow0",
+    "flexGrow1",
+    "flexShrink0",
+    "flexShrink1",
+    "flexBasisContent",
+    "justifyContentCenter",
+    "justifyContentEnd",
+    "justifyContentFlexEnd",
+    "justifyContentFlexStart",
+    "justifyContentLeft",
+    "justifyContentNormal",
+    "justifyContentRight",
+    "justifyContentSafe",
+    "justifyContentSpaceAround",
+    "justifyContentSpaceBetween",
+    "justifyContentSpaceEvenly",
+    "justifyContentStart",
+    "justifyContentStretch",
+    "justifyContentUnsafe",
+    "alignItemsBaseline",
+    "alignItemsCenter",
+    "alignItemsEnd",
+    "alignItemsFirst",
+    "alignItemsFlexEnd",
+    "alignItemsFlexStart",
+    "alignItemsLast",
+    "alignItemsNormal",
+    "alignItemsSafe",
+    "alignItemsSelfEnd",
+    "alignItemsSelfStart",
+    "alignItemsStart",
+    "alignItemsStretch",
+    "alignItemsUnsafe",
+    "alignSelfAuto",
+    "alignSelfBaseline",
+    "alignSelfCenter",
+    "alignSelfEnd",
+    "alignSelfFirst",
+    "alignSelfFlexEnd",
+    "alignSelfFlexStart",
+    "alignSelfLast",
+    "alignSelfNormal",
+    "alignSelfSafe",
+    "alignSelfSelfEnd",
+    "alignSelfSelfStart",
+    "alignSelfStart",
+    "alignSelfStretch",
+    "alignSelfUnsafe",
+    "alignContentBaseline",
+    "alignContentCenter",
+    "alignContentEnd",
+    "alignContentFirst",
+    "alignContentFlexEnd",
+    "alignContentFlexStart",
+    "alignContentLast",
+    "alignContentNormal",
+    "alignContentSafe",
+    "alignContentSpaceAround",
+    "alignContentSpaceBetween",
+    "alignContentSpaceEvenly",
+    "alignContentStart",
+    "alignContentStretch",
+    "alignContentUnsafe",
+    "order1",
+    "order0",
+    "order2",
+    "order3",
+    "order4",
+    "order5",
+    "widthAuto",
+    "widthFitContent",
+    "widthIntrinsic",
+    "widthMaxContent",
+    "widthMinContent",
+    "widthMinIntrinsic",
+    "widthStretch",
+    "width0",
+    "width24",
+    "width32",
+    "width40",
+    "width48",
+    "width64",
+    "width80",
+    "width100",
+    "width120",
+    "width160",
+    "width200",
+    "width240",
+    "width320",
+    "widthFull",
+    "widthHalf",
+    "widthScreen",
+    "heightAuto",
+    "heightFitContent",
+    "heightIntrinsic",
+    "heightMaxContent",
+    "heightMinContent",
+    "heightMinIntrinsic",
+    "heightStretch",
+    "height0",
+    "height24",
+    "height32",
+    "height40",
+    "height48",
+    "height64",
+    "height80",
+    "height100",
+    "height120",
+    "heightFull",
+    "heightHalf",
+    "heightScreen",
+    "minWidthAuto",
+    "minWidthFitContent",
+    "minWidthIntrinsic",
+    "minWidthMaxContent",
+    "minWidthMinContent",
+    "minWidthMinIntrinsic",
+    "minWidthStretch",
+    "maxWidthFitContent",
+    "maxWidthIntrinsic",
+    "maxWidthMaxContent",
+    "maxWidthMinContent",
+    "maxWidthMinIntrinsic",
+    "maxWidthNone",
+    "maxWidthStretch",
+    "minHeightAuto",
+    "minHeightFitContent",
+    "minHeightIntrinsic",
+    "minHeightMaxContent",
+    "minHeightMinContent",
+    "minHeightMinIntrinsic",
+    "minHeightStretch",
+    "maxHeightFitContent",
+    "maxHeightIntrinsic",
+    "maxHeightMaxContent",
+    "maxHeightMinContent",
+    "maxHeightMinIntrinsic",
+    "maxHeightNone",
+    "maxHeightStretch",
+    "padding0",
+    "padding2",
+    "padding4",
+    "padding6",
+    "padding8",
+    "padding10",
+    "padding12",
+    "padding14",
+    "padding16",
+    "padding20",
+    "padding24",
+    "padding32",
+    "padding40",
+    "padding48",
+    "padding64",
+    "marginAuto",
+    "margin0",
+    "margin2",
+    "margin4",
+    "margin6",
+    "margin8",
+    "margin10",
+    "margin12",
+    "margin14",
+    "margin16",
+    "margin20",
+    "margin24",
+    "margin32",
+    "margin40",
+    "margin48",
+    "margin64",
+    "gap0",
+    "gap2",
+    "gap4",
+    "gap6",
+    "gap8",
+    "gap10",
+    "gap12",
+    "gap16",
+    "gap20",
+    "gap24",
+    "gap32",
+    "fontSizeLarge",
+    "fontSizeLarger",
+    "fontSizeMedium",
+    "fontSizeSmall",
+    "fontSizeSmaller",
+    "fontSizeXLarge",
+    "fontSizeXSmall",
+    "fontSizeXxLarge",
+    "fontSizeXxSmall",
+    "fontSizeXxxLarge",
+    "fontSize10",
+    "fontSize11",
+    "fontSize12",
+    "fontSize13",
+    "fontSize14",
+    "fontSize15",
+    "fontSize16",
+    "fontSize18",
+    "fontSize20",
+    "fontSize24",
+    "fontSize28",
+    "fontSize32",
+    "fontSize36",
+    "fontSize48",
+    "fontWeightBold",
+    "fontWeightBolder",
+    "fontWeightLighter",
+    "fontWeightNormal",
+    "fontStyleItalic",
+    "fontStyleNormal",
+    "fontStyleOblique",
+    "lineHeightNormal",
+    "lineHeight1",
+    "lineHeight1p25",
+    "lineHeight1p5",
+    "lineHeight1p75",
+    "lineHeight2",
+    "textAlignCenter",
+    "textAlignEnd",
+    "textAlignJustify",
+    "textAlignLeft",
+    "textAlignMatchParent",
+    "textAlignRight",
+    "textAlignStart",
+    "textTransformCapitalize",
+    "textTransformFullSizeKana",
+    "textTransformFullWidth",
+    "textTransformLowercase",
+    "textTransformNone",
+    "textTransformUppercase",
+    "whiteSpaceBreakSpaces",
+    "whiteSpaceNormal",
+    "whiteSpaceNowrap",
+    "whiteSpacePre",
+    "whiteSpacePreLine",
+    "whiteSpacePreWrap",
+    "wordBreakAutoPhrase",
+    "wordBreakBreakAll",
+    "wordBreakBreakWord",
+    "wordBreakKeepAll",
+    "wordBreakNormal",
+    "overflowWrapAnywhere",
+    "overflowWrapBreakWord",
+    "overflowWrapNormal",
+    "verticalAlignBaseline",
+    "verticalAlignBottom",
+    "verticalAlignMiddle",
+    "verticalAlignSub",
+    "verticalAlignSuper",
+    "verticalAlignTextBottom",
+    "verticalAlignTextTop",
+    "verticalAlignTop",
+    "borderStyleDashed",
+    "borderStyleDotted",
+    "borderStyleDouble",
+    "borderStyleGroove",
+    "borderStyleHidden",
+    "borderStyleInset",
+    "borderStyleNone",
+    "borderStyleOutset",
+    "borderStyleRidge",
+    "borderStyleSolid",
+    "borderRadius0",
+    "borderRadius2",
+    "borderRadius4",
+    "borderRadius6",
+    "borderRadius8",
+    "borderRadius12",
+    "borderRadius16",
+    "borderRadius9999",
+    "boxShadowAccentColor",
+    "boxShadowAccentColorText",
+    "boxShadowActiveText",
+    "boxShadowButtonBorder",
+    "boxShadowButtonFace",
+    "boxShadowButtonText",
+    "boxShadowCanvas",
+    "boxShadowCanvasText",
+    "boxShadowField",
+    "boxShadowFieldText",
+    "boxShadowGrayText",
+    "boxShadowHighlight",
+    "boxShadowHighlightText",
+    "boxShadowLinkText",
+    "boxShadowMark",
+    "boxShadowMarkText",
+    "boxShadowSelectedItem",
+    "boxShadowSelectedItemText",
+    "boxShadowVisitedText",
+    "boxShadowA98Rgb",
+    "boxShadowAliceblue",
+    "boxShadowAntiquewhite",
+    "boxShadowAqua",
+    "boxShadowAquamarine",
+    "boxShadowAzure",
+    "boxShadowBeige",
+    "boxShadowBisque",
+    "boxShadowBlack",
+    "boxShadowBlanchedalmond",
+    "boxShadowBlue",
+    "boxShadowBlueviolet",
+    "boxShadowBrown",
+    "boxShadowBurlywood",
+    "boxShadowCadetblue",
+    "boxShadowChartreuse",
+    "boxShadowChocolate",
+    "boxShadowCoral",
+    "boxShadowCornflowerblue",
+    "boxShadowCornsilk",
+    "boxShadowCrimson",
+    "boxShadowCurrentColor",
+    "boxShadowCyan",
+    "boxShadowDarkblue",
+    "boxShadowDarkcyan",
+    "boxShadowDarkgoldenrod",
+    "boxShadowDarkgray",
+    "boxShadowDarkgreen",
+    "boxShadowDarkgrey",
+    "boxShadowDarkkhaki",
+    "boxShadowDarkmagenta",
+    "boxShadowDarkolivegreen",
+    "boxShadowDarkorange",
+    "boxShadowDarkorchid",
+    "boxShadowDarkred",
+    "boxShadowDarksalmon",
+    "boxShadowDarkseagreen",
+    "boxShadowDarkslateblue",
+    "boxShadowDarkslategray",
+    "boxShadowDarkslategrey",
+    "boxShadowDarkturquoise",
+    "boxShadowDarkviolet",
+    "boxShadowDecreasing",
+    "boxShadowDeeppink",
+    "boxShadowDeepskyblue",
+    "boxShadowDimgray",
+    "boxShadowDimgrey",
+    "boxShadowDisplayP3",
+    "boxShadowDodgerblue",
+    "boxShadowFirebrick",
+    "boxShadowFloralwhite",
+    "boxShadowForestgreen",
+    "boxShadowFuchsia",
+    "boxShadowGainsboro",
+    "boxShadowGhostwhite",
+    "boxShadowGold",
+    "boxShadowGoldenrod",
+    "boxShadowGray",
+    "boxShadowGreen",
+    "boxShadowGreenyellow",
+    "boxShadowGrey",
+    "boxShadowHoneydew",
+    "boxShadowHotpink",
+    "boxShadowHsl",
+    "boxShadowHue",
+    "boxShadowHwb",
+    "boxShadowIn",
+    "boxShadowIncreasing",
+    "boxShadowIndianred",
+    "boxShadowIndigo",
+    "boxShadowInset",
+    "boxShadowIvory",
+    "boxShadowKhaki",
+    "boxShadowLab",
+    "boxShadowLavender",
+    "boxShadowLavenderblush",
+    "boxShadowLawngreen",
+    "boxShadowLch",
+    "boxShadowLemonchiffon",
+    "boxShadowLightblue",
+    "boxShadowLightcoral",
+    "boxShadowLightcyan",
+    "boxShadowLightgoldenrodyellow",
+    "boxShadowLightgray",
+    "boxShadowLightgreen",
+    "boxShadowLightgrey",
+    "boxShadowLightpink",
+    "boxShadowLightsalmon",
+    "boxShadowLightseagreen",
+    "boxShadowLightskyblue",
+    "boxShadowLightslategray",
+    "boxShadowLightslategrey",
+    "boxShadowLightsteelblue",
+    "boxShadowLightyellow",
+    "boxShadowLime",
+    "boxShadowLimegreen",
+    "boxShadowLinen",
+    "boxShadowLonger",
+    "boxShadowMagenta",
+    "boxShadowMaroon",
+    "boxShadowMediumaquamarine",
+    "boxShadowMediumblue",
+    "boxShadowMediumorchid",
+    "boxShadowMediumpurple",
+    "boxShadowMediumseagreen",
+    "boxShadowMediumslateblue",
+    "boxShadowMediumspringgreen",
+    "boxShadowMediumturquoise",
+    "boxShadowMediumvioletred",
+    "boxShadowMidnightblue",
+    "boxShadowMintcream",
+    "boxShadowMistyrose",
+    "boxShadowMoccasin",
+    "boxShadowNavajowhite",
+    "boxShadowNavy",
+    "boxShadowNone",
+    "boxShadowOklab",
+    "boxShadowOklch",
+    "boxShadowOldlace",
+    "boxShadowOlive",
+    "boxShadowOlivedrab",
+    "boxShadowOrange",
+    "boxShadowOrangered",
+    "boxShadowOrchid",
+    "boxShadowPalegoldenrod",
+    "boxShadowPalegreen",
+    "boxShadowPaleturquoise",
+    "boxShadowPalevioletred",
+    "boxShadowPapayawhip",
+    "boxShadowPeachpuff",
+    "boxShadowPeru",
+    "boxShadowPink",
+    "boxShadowPlum",
+    "boxShadowPowderblue",
+    "boxShadowProphotoRgb",
+    "boxShadowPurple",
+    "boxShadowRebeccapurple",
+    "boxShadowRec2020",
+    "boxShadowRed",
+    "boxShadowRosybrown",
+    "boxShadowRoyalblue",
+    "boxShadowSaddlebrown",
+    "boxShadowSalmon",
+    "boxShadowSandybrown",
+    "boxShadowSeagreen",
+    "boxShadowSeashell",
+    "boxShadowShorter",
+    "boxShadowSienna",
+    "boxShadowSilver",
+    "boxShadowSkyblue",
+    "boxShadowSlateblue",
+    "boxShadowSlategray",
+    "boxShadowSlategrey",
+    "boxShadowSnow",
+    "boxShadowSpringgreen",
+    "boxShadowSrgb",
+    "boxShadowSrgbLinear",
+    "boxShadowSteelblue",
+    "boxShadowTan",
+    "boxShadowTeal",
+    "boxShadowThistle",
+    "boxShadowTomato",
+    "boxShadowTransparent",
+    "boxShadowTurquoise",
+    "boxShadowViolet",
+    "boxShadowWheat",
+    "boxShadowWhite",
+    "boxShadowWhitesmoke",
+    "boxShadowXyz",
+    "boxShadowXyzD50",
+    "boxShadowXyzD65",
+    "boxShadowYellow",
+    "boxShadowYellowgreen",
+    "opacity0",
+    "opacity0p25",
+    "opacity0p5",
+    "opacity0p75",
+    "opacity1",
+    "visibilityCollapse",
+    "visibilityHidden",
+    "visibilityVisible",
+    "overflowAuto",
+    "overflowClip",
+    "overflowHidden",
+    "overflowOverlay",
+    "overflowScroll",
+    "overflowVisible",
+    "overflowXAuto",
+    "overflowXClip",
+    "overflowXHidden",
+    "overflowXScroll",
+    "overflowXVisible",
+    "overflowYAuto",
+    "overflowYClip",
+    "overflowYHidden",
+    "overflowYScroll",
+    "overflowYVisible",
+    "cursorAlias",
+    "cursorAllScroll",
+    "cursorAuto",
+    "cursorCell",
+    "cursorColResize",
+    "cursorContextMenu",
+    "cursorCopy",
+    "cursorCrosshair",
+    "cursorDefault",
+    "cursorEResize",
+    "cursorEwResize",
+    "cursorGrab",
+    "cursorGrabbing",
+    "cursorHand",
+    "cursorHelp",
+    "cursorMove",
+    "cursorNResize",
+    "cursorNeResize",
+    "cursorNeswResize",
+    "cursorNoDrop",
+    "cursorNone",
+    "cursorNotAllowed",
+    "cursorNsResize",
+    "cursorNwResize",
+    "cursorNwseResize",
+    "cursorPointer",
+    "cursorProgress",
+    "cursorRowResize",
+    "cursorSResize",
+    "cursorSeResize",
+    "cursorSwResize",
+    "cursorText",
+    "cursorVerticalText",
+    "cursorWResize",
+    "cursorWait",
+    "cursorZoomIn",
+    "cursorZoomOut",
+    "pointerEventsAll",
+    "pointerEventsAuto",
+    "pointerEventsFill",
+    "pointerEventsInherit",
+    "pointerEventsNone",
+    "pointerEventsPainted",
+    "pointerEventsStroke",
+    "pointerEventsVisible",
+    "pointerEventsVisibleFill",
+    "pointerEventsVisiblePainted",
+    "pointerEventsVisibleStroke",
+    "userSelectAll",
+    "userSelectAuto",
+    "userSelectContain",
+    "userSelectNone",
+    "userSelectText",
+    "zIndexAuto",
+    "zIndex0",
+    "zIndex10",
+    "zIndex20",
+    "zIndex30",
+    "zIndex40",
+    "zIndex50",
+    "zIndex100",
+    "zIndex999",
+    "zIndex9999",
+    "isDisabled",
+    "isLoading",
+    "isActive",
+    "isFocus",
+    "isHover",
+    "isSelected",
+    "isError",
+    "isSuccess",
+    "isWarning"
+  ],
+  "atoms": [
+    {
+      "name": "displayBlock",
+      "className": "display_block",
+      "property": "display",
+      "value": "block"
+    },
+    {
+      "name": "displayContents",
+      "className": "display_contents",
+      "property": "display",
+      "value": "contents"
+    },
+    {
+      "name": "displayFlex",
+      "className": "display_flex",
+      "property": "display",
+      "value": "flex"
+    },
+    {
+      "name": "displayFlow",
+      "className": "display_flow",
+      "property": "display",
+      "value": "flow"
+    },
+    {
+      "name": "displayFlowRoot",
+      "className": "display_flow-root",
+      "property": "display",
+      "value": "flow-root"
+    },
+    {
+      "name": "displayGrid",
+      "className": "display_grid",
+      "property": "display",
+      "value": "grid"
+    },
+    {
+      "name": "displayInline",
+      "className": "display_inline",
+      "property": "display",
+      "value": "inline"
+    },
+    {
+      "name": "displayInlineBlock",
+      "className": "display_inline-block",
+      "property": "display",
+      "value": "inline-block"
+    },
+    {
+      "name": "displayInlineFlex",
+      "className": "display_inline-flex",
+      "property": "display",
+      "value": "inline-flex"
+    },
+    {
+      "name": "displayInlineGrid",
+      "className": "display_inline-grid",
+      "property": "display",
+      "value": "inline-grid"
+    },
+    {
+      "name": "displayInlineListItem",
+      "className": "display_inline-list-item",
+      "property": "display",
+      "value": "inline-list-item"
+    },
+    {
+      "name": "displayInlineTable",
+      "className": "display_inline-table",
+      "property": "display",
+      "value": "inline-table"
+    },
+    {
+      "name": "displayListItem",
+      "className": "display_list-item",
+      "property": "display",
+      "value": "list-item"
+    },
+    {
+      "name": "displayNone",
+      "className": "display_none",
+      "property": "display",
+      "value": "none"
+    },
+    {
+      "name": "displayRuby",
+      "className": "display_ruby",
+      "property": "display",
+      "value": "ruby"
+    },
+    {
+      "name": "displayRubyBase",
+      "className": "display_ruby-base",
+      "property": "display",
+      "value": "ruby-base"
+    },
+    {
+      "name": "displayRubyBaseContainer",
+      "className": "display_ruby-base-container",
+      "property": "display",
+      "value": "ruby-base-container"
+    },
+    {
+      "name": "displayRubyText",
+      "className": "display_ruby-text",
+      "property": "display",
+      "value": "ruby-text"
+    },
+    {
+      "name": "displayRubyTextContainer",
+      "className": "display_ruby-text-container",
+      "property": "display",
+      "value": "ruby-text-container"
+    },
+    {
+      "name": "displayRunIn",
+      "className": "display_run-in",
+      "property": "display",
+      "value": "run-in"
+    },
+    {
+      "name": "displayTable",
+      "className": "display_table",
+      "property": "display",
+      "value": "table"
+    },
+    {
+      "name": "displayTableCaption",
+      "className": "display_table-caption",
+      "property": "display",
+      "value": "table-caption"
+    },
+    {
+      "name": "displayTableCell",
+      "className": "display_table-cell",
+      "property": "display",
+      "value": "table-cell"
+    },
+    {
+      "name": "displayTableColumn",
+      "className": "display_table-column",
+      "property": "display",
+      "value": "table-column"
+    },
+    {
+      "name": "displayTableColumnGroup",
+      "className": "display_table-column-group",
+      "property": "display",
+      "value": "table-column-group"
+    },
+    {
+      "name": "displayTableFooterGroup",
+      "className": "display_table-footer-group",
+      "property": "display",
+      "value": "table-footer-group"
+    },
+    {
+      "name": "displayTableHeaderGroup",
+      "className": "display_table-header-group",
+      "property": "display",
+      "value": "table-header-group"
+    },
+    {
+      "name": "displayTableRow",
+      "className": "display_table-row",
+      "property": "display",
+      "value": "table-row"
+    },
+    {
+      "name": "displayTableRowGroup",
+      "className": "display_table-row-group",
+      "property": "display",
+      "value": "table-row-group"
+    },
+    {
+      "name": "positionAbsolute",
+      "className": "position_absolute",
+      "property": "position",
+      "value": "absolute"
+    },
+    {
+      "name": "positionFixed",
+      "className": "position_fixed",
+      "property": "position",
+      "value": "fixed"
+    },
+    {
+      "name": "positionRelative",
+      "className": "position_relative",
+      "property": "position",
+      "value": "relative"
+    },
+    {
+      "name": "positionStatic",
+      "className": "position_static",
+      "property": "position",
+      "value": "static"
+    },
+    {
+      "name": "positionSticky",
+      "className": "position_sticky",
+      "property": "position",
+      "value": "sticky"
+    },
+    {
+      "name": "floatInlineEnd",
+      "className": "float_inline-end",
+      "property": "float",
+      "value": "inline-end"
+    },
+    {
+      "name": "floatInlineStart",
+      "className": "float_inline-start",
+      "property": "float",
+      "value": "inline-start"
+    },
+    {
+      "name": "floatLeft",
+      "className": "float_left",
+      "property": "float",
+      "value": "left"
+    },
+    {
+      "name": "floatNone",
+      "className": "float_none",
+      "property": "float",
+      "value": "none"
+    },
+    {
+      "name": "floatRight",
+      "className": "float_right",
+      "property": "float",
+      "value": "right"
+    },
+    {
+      "name": "clearBoth",
+      "className": "clear_both",
+      "property": "clear",
+      "value": "both"
+    },
+    {
+      "name": "clearInlineEnd",
+      "className": "clear_inline-end",
+      "property": "clear",
+      "value": "inline-end"
+    },
+    {
+      "name": "clearInlineStart",
+      "className": "clear_inline-start",
+      "property": "clear",
+      "value": "inline-start"
+    },
+    {
+      "name": "clearLeft",
+      "className": "clear_left",
+      "property": "clear",
+      "value": "left"
+    },
+    {
+      "name": "clearNone",
+      "className": "clear_none",
+      "property": "clear",
+      "value": "none"
+    },
+    {
+      "name": "clearRight",
+      "className": "clear_right",
+      "property": "clear",
+      "value": "right"
+    },
+    {
+      "name": "flexDirectionColumn",
+      "className": "flex-direction_column",
+      "property": "flex-direction",
+      "value": "column"
+    },
+    {
+      "name": "flexDirectionColumnReverse",
+      "className": "flex-direction_column-reverse",
+      "property": "flex-direction",
+      "value": "column-reverse"
+    },
+    {
+      "name": "flexDirectionRow",
+      "className": "flex-direction_row",
+      "property": "flex-direction",
+      "value": "row"
+    },
+    {
+      "name": "flexDirectionRowReverse",
+      "className": "flex-direction_row-reverse",
+      "property": "flex-direction",
+      "value": "row-reverse"
+    },
+    {
+      "name": "flexWrapNowrap",
+      "className": "flex-wrap_nowrap",
+      "property": "flex-wrap",
+      "value": "nowrap"
+    },
+    {
+      "name": "flexWrapWrap",
+      "className": "flex-wrap_wrap",
+      "property": "flex-wrap",
+      "value": "wrap"
+    },
+    {
+      "name": "flexWrapWrapReverse",
+      "className": "flex-wrap_wrap-reverse",
+      "property": "flex-wrap",
+      "value": "wrap-reverse"
+    },
+    {
+      "name": "flexGrow0",
+      "className": "flex-grow_0",
+      "property": "flex-grow",
+      "value": "0"
+    },
+    {
+      "name": "flexGrow1",
+      "className": "flex-grow_1",
+      "property": "flex-grow",
+      "value": "1"
+    },
+    {
+      "name": "flexShrink0",
+      "className": "flex-shrink_0",
+      "property": "flex-shrink",
+      "value": "0"
+    },
+    {
+      "name": "flexShrink1",
+      "className": "flex-shrink_1",
+      "property": "flex-shrink",
+      "value": "1"
+    },
+    {
+      "name": "flexBasisContent",
+      "className": "flex-basis_content",
+      "property": "flex-basis",
+      "value": "content"
+    },
+    {
+      "name": "justifyContentCenter",
+      "className": "justify-content_center",
+      "property": "justify-content",
+      "value": "center"
+    },
+    {
+      "name": "justifyContentEnd",
+      "className": "justify-content_end",
+      "property": "justify-content",
+      "value": "end"
+    },
+    {
+      "name": "justifyContentFlexEnd",
+      "className": "justify-content_flex-end",
+      "property": "justify-content",
+      "value": "flex-end"
+    },
+    {
+      "name": "justifyContentFlexStart",
+      "className": "justify-content_flex-start",
+      "property": "justify-content",
+      "value": "flex-start"
+    },
+    {
+      "name": "justifyContentLeft",
+      "className": "justify-content_left",
+      "property": "justify-content",
+      "value": "left"
+    },
+    {
+      "name": "justifyContentNormal",
+      "className": "justify-content_normal",
+      "property": "justify-content",
+      "value": "normal"
+    },
+    {
+      "name": "justifyContentRight",
+      "className": "justify-content_right",
+      "property": "justify-content",
+      "value": "right"
+    },
+    {
+      "name": "justifyContentSafe",
+      "className": "justify-content_safe",
+      "property": "justify-content",
+      "value": "safe"
+    },
+    {
+      "name": "justifyContentSpaceAround",
+      "className": "justify-content_space-around",
+      "property": "justify-content",
+      "value": "space-around"
+    },
+    {
+      "name": "justifyContentSpaceBetween",
+      "className": "justify-content_space-between",
+      "property": "justify-content",
+      "value": "space-between"
+    },
+    {
+      "name": "justifyContentSpaceEvenly",
+      "className": "justify-content_space-evenly",
+      "property": "justify-content",
+      "value": "space-evenly"
+    },
+    {
+      "name": "justifyContentStart",
+      "className": "justify-content_start",
+      "property": "justify-content",
+      "value": "start"
+    },
+    {
+      "name": "justifyContentStretch",
+      "className": "justify-content_stretch",
+      "property": "justify-content",
+      "value": "stretch"
+    },
+    {
+      "name": "justifyContentUnsafe",
+      "className": "justify-content_unsafe",
+      "property": "justify-content",
+      "value": "unsafe"
+    },
+    {
+      "name": "alignItemsBaseline",
+      "className": "align-items_baseline",
+      "property": "align-items",
+      "value": "baseline"
+    },
+    {
+      "name": "alignItemsCenter",
+      "className": "align-items_center",
+      "property": "align-items",
+      "value": "center"
+    },
+    {
+      "name": "alignItemsEnd",
+      "className": "align-items_end",
+      "property": "align-items",
+      "value": "end"
+    },
+    {
+      "name": "alignItemsFirst",
+      "className": "align-items_first",
+      "property": "align-items",
+      "value": "first"
+    },
+    {
+      "name": "alignItemsFlexEnd",
+      "className": "align-items_flex-end",
+      "property": "align-items",
+      "value": "flex-end"
+    },
+    {
+      "name": "alignItemsFlexStart",
+      "className": "align-items_flex-start",
+      "property": "align-items",
+      "value": "flex-start"
+    },
+    {
+      "name": "alignItemsLast",
+      "className": "align-items_last",
+      "property": "align-items",
+      "value": "last"
+    },
+    {
+      "name": "alignItemsNormal",
+      "className": "align-items_normal",
+      "property": "align-items",
+      "value": "normal"
+    },
+    {
+      "name": "alignItemsSafe",
+      "className": "align-items_safe",
+      "property": "align-items",
+      "value": "safe"
+    },
+    {
+      "name": "alignItemsSelfEnd",
+      "className": "align-items_self-end",
+      "property": "align-items",
+      "value": "self-end"
+    },
+    {
+      "name": "alignItemsSelfStart",
+      "className": "align-items_self-start",
+      "property": "align-items",
+      "value": "self-start"
+    },
+    {
+      "name": "alignItemsStart",
+      "className": "align-items_start",
+      "property": "align-items",
+      "value": "start"
+    },
+    {
+      "name": "alignItemsStretch",
+      "className": "align-items_stretch",
+      "property": "align-items",
+      "value": "stretch"
+    },
+    {
+      "name": "alignItemsUnsafe",
+      "className": "align-items_unsafe",
+      "property": "align-items",
+      "value": "unsafe"
+    },
+    {
+      "name": "alignSelfAuto",
+      "className": "align-self_auto",
+      "property": "align-self",
+      "value": "auto"
+    },
+    {
+      "name": "alignSelfBaseline",
+      "className": "align-self_baseline",
+      "property": "align-self",
+      "value": "baseline"
+    },
+    {
+      "name": "alignSelfCenter",
+      "className": "align-self_center",
+      "property": "align-self",
+      "value": "center"
+    },
+    {
+      "name": "alignSelfEnd",
+      "className": "align-self_end",
+      "property": "align-self",
+      "value": "end"
+    },
+    {
+      "name": "alignSelfFirst",
+      "className": "align-self_first",
+      "property": "align-self",
+      "value": "first"
+    },
+    {
+      "name": "alignSelfFlexEnd",
+      "className": "align-self_flex-end",
+      "property": "align-self",
+      "value": "flex-end"
+    },
+    {
+      "name": "alignSelfFlexStart",
+      "className": "align-self_flex-start",
+      "property": "align-self",
+      "value": "flex-start"
+    },
+    {
+      "name": "alignSelfLast",
+      "className": "align-self_last",
+      "property": "align-self",
+      "value": "last"
+    },
+    {
+      "name": "alignSelfNormal",
+      "className": "align-self_normal",
+      "property": "align-self",
+      "value": "normal"
+    },
+    {
+      "name": "alignSelfSafe",
+      "className": "align-self_safe",
+      "property": "align-self",
+      "value": "safe"
+    },
+    {
+      "name": "alignSelfSelfEnd",
+      "className": "align-self_self-end",
+      "property": "align-self",
+      "value": "self-end"
+    },
+    {
+      "name": "alignSelfSelfStart",
+      "className": "align-self_self-start",
+      "property": "align-self",
+      "value": "self-start"
+    },
+    {
+      "name": "alignSelfStart",
+      "className": "align-self_start",
+      "property": "align-self",
+      "value": "start"
+    },
+    {
+      "name": "alignSelfStretch",
+      "className": "align-self_stretch",
+      "property": "align-self",
+      "value": "stretch"
+    },
+    {
+      "name": "alignSelfUnsafe",
+      "className": "align-self_unsafe",
+      "property": "align-self",
+      "value": "unsafe"
+    },
+    {
+      "name": "alignContentBaseline",
+      "className": "align-content_baseline",
+      "property": "align-content",
+      "value": "baseline"
+    },
+    {
+      "name": "alignContentCenter",
+      "className": "align-content_center",
+      "property": "align-content",
+      "value": "center"
+    },
+    {
+      "name": "alignContentEnd",
+      "className": "align-content_end",
+      "property": "align-content",
+      "value": "end"
+    },
+    {
+      "name": "alignContentFirst",
+      "className": "align-content_first",
+      "property": "align-content",
+      "value": "first"
+    },
+    {
+      "name": "alignContentFlexEnd",
+      "className": "align-content_flex-end",
+      "property": "align-content",
+      "value": "flex-end"
+    },
+    {
+      "name": "alignContentFlexStart",
+      "className": "align-content_flex-start",
+      "property": "align-content",
+      "value": "flex-start"
+    },
+    {
+      "name": "alignContentLast",
+      "className": "align-content_last",
+      "property": "align-content",
+      "value": "last"
+    },
+    {
+      "name": "alignContentNormal",
+      "className": "align-content_normal",
+      "property": "align-content",
+      "value": "normal"
+    },
+    {
+      "name": "alignContentSafe",
+      "className": "align-content_safe",
+      "property": "align-content",
+      "value": "safe"
+    },
+    {
+      "name": "alignContentSpaceAround",
+      "className": "align-content_space-around",
+      "property": "align-content",
+      "value": "space-around"
+    },
+    {
+      "name": "alignContentSpaceBetween",
+      "className": "align-content_space-between",
+      "property": "align-content",
+      "value": "space-between"
+    },
+    {
+      "name": "alignContentSpaceEvenly",
+      "className": "align-content_space-evenly",
+      "property": "align-content",
+      "value": "space-evenly"
+    },
+    {
+      "name": "alignContentStart",
+      "className": "align-content_start",
+      "property": "align-content",
+      "value": "start"
+    },
+    {
+      "name": "alignContentStretch",
+      "className": "align-content_stretch",
+      "property": "align-content",
+      "value": "stretch"
+    },
+    {
+      "name": "alignContentUnsafe",
+      "className": "align-content_unsafe",
+      "property": "align-content",
+      "value": "unsafe"
+    },
+    {
+      "name": "order1",
+      "className": "order_-1",
+      "property": "order",
+      "value": "-1"
+    },
+    {
+      "name": "order0",
+      "className": "order_0",
+      "property": "order",
+      "value": "0"
+    },
+    {
+      "name": "order2",
+      "className": "order_2",
+      "property": "order",
+      "value": "2"
+    },
+    {
+      "name": "order3",
+      "className": "order_3",
+      "property": "order",
+      "value": "3"
+    },
+    {
+      "name": "order4",
+      "className": "order_4",
+      "property": "order",
+      "value": "4"
+    },
+    {
+      "name": "order5",
+      "className": "order_5",
+      "property": "order",
+      "value": "5"
+    },
+    {
+      "name": "widthAuto",
+      "className": "width_auto",
+      "property": "width",
+      "value": "auto"
+    },
+    {
+      "name": "widthFitContent",
+      "className": "width_fit-content",
+      "property": "width",
+      "value": "fit-content"
+    },
+    {
+      "name": "widthIntrinsic",
+      "className": "width_intrinsic",
+      "property": "width",
+      "value": "intrinsic"
+    },
+    {
+      "name": "widthMaxContent",
+      "className": "width_max-content",
+      "property": "width",
+      "value": "max-content"
+    },
+    {
+      "name": "widthMinContent",
+      "className": "width_min-content",
+      "property": "width",
+      "value": "min-content"
+    },
+    {
+      "name": "widthMinIntrinsic",
+      "className": "width_min-intrinsic",
+      "property": "width",
+      "value": "min-intrinsic"
+    },
+    {
+      "name": "widthStretch",
+      "className": "width_stretch",
+      "property": "width",
+      "value": "stretch"
+    },
+    {
+      "name": "width0",
+      "className": "width_0",
+      "property": "width",
+      "value": "0px"
+    },
+    {
+      "name": "width24",
+      "className": "width_24",
+      "property": "width",
+      "value": "24px"
+    },
+    {
+      "name": "width32",
+      "className": "width_32",
+      "property": "width",
+      "value": "32px"
+    },
+    {
+      "name": "width40",
+      "className": "width_40",
+      "property": "width",
+      "value": "40px"
+    },
+    {
+      "name": "width48",
+      "className": "width_48",
+      "property": "width",
+      "value": "48px"
+    },
+    {
+      "name": "width64",
+      "className": "width_64",
+      "property": "width",
+      "value": "64px"
+    },
+    {
+      "name": "width80",
+      "className": "width_80",
+      "property": "width",
+      "value": "80px"
+    },
+    {
+      "name": "width100",
+      "className": "width_100",
+      "property": "width",
+      "value": "100px"
+    },
+    {
+      "name": "width120",
+      "className": "width_120",
+      "property": "width",
+      "value": "120px"
+    },
+    {
+      "name": "width160",
+      "className": "width_160",
+      "property": "width",
+      "value": "160px"
+    },
+    {
+      "name": "width200",
+      "className": "width_200",
+      "property": "width",
+      "value": "200px"
+    },
+    {
+      "name": "width240",
+      "className": "width_240",
+      "property": "width",
+      "value": "240px"
+    },
+    {
+      "name": "width320",
+      "className": "width_320",
+      "property": "width",
+      "value": "320px"
+    },
+    {
+      "name": "widthFull",
+      "className": "width_full",
+      "property": "width",
+      "value": "100%"
+    },
+    {
+      "name": "widthHalf",
+      "className": "width_half",
+      "property": "width",
+      "value": "50%"
+    },
+    {
+      "name": "widthScreen",
+      "className": "width_screen",
+      "property": "width",
+      "value": "100vw"
+    },
+    {
+      "name": "heightAuto",
+      "className": "height_auto",
+      "property": "height",
+      "value": "auto"
+    },
+    {
+      "name": "heightFitContent",
+      "className": "height_fit-content",
+      "property": "height",
+      "value": "fit-content"
+    },
+    {
+      "name": "heightIntrinsic",
+      "className": "height_intrinsic",
+      "property": "height",
+      "value": "intrinsic"
+    },
+    {
+      "name": "heightMaxContent",
+      "className": "height_max-content",
+      "property": "height",
+      "value": "max-content"
+    },
+    {
+      "name": "heightMinContent",
+      "className": "height_min-content",
+      "property": "height",
+      "value": "min-content"
+    },
+    {
+      "name": "heightMinIntrinsic",
+      "className": "height_min-intrinsic",
+      "property": "height",
+      "value": "min-intrinsic"
+    },
+    {
+      "name": "heightStretch",
+      "className": "height_stretch",
+      "property": "height",
+      "value": "stretch"
+    },
+    {
+      "name": "height0",
+      "className": "height_0",
+      "property": "height",
+      "value": "0px"
+    },
+    {
+      "name": "height24",
+      "className": "height_24",
+      "property": "height",
+      "value": "24px"
+    },
+    {
+      "name": "height32",
+      "className": "height_32",
+      "property": "height",
+      "value": "32px"
+    },
+    {
+      "name": "height40",
+      "className": "height_40",
+      "property": "height",
+      "value": "40px"
+    },
+    {
+      "name": "height48",
+      "className": "height_48",
+      "property": "height",
+      "value": "48px"
+    },
+    {
+      "name": "height64",
+      "className": "height_64",
+      "property": "height",
+      "value": "64px"
+    },
+    {
+      "name": "height80",
+      "className": "height_80",
+      "property": "height",
+      "value": "80px"
+    },
+    {
+      "name": "height100",
+      "className": "height_100",
+      "property": "height",
+      "value": "100px"
+    },
+    {
+      "name": "height120",
+      "className": "height_120",
+      "property": "height",
+      "value": "120px"
+    },
+    {
+      "name": "heightFull",
+      "className": "height_full",
+      "property": "height",
+      "value": "100%"
+    },
+    {
+      "name": "heightHalf",
+      "className": "height_half",
+      "property": "height",
+      "value": "50%"
+    },
+    {
+      "name": "heightScreen",
+      "className": "height_screen",
+      "property": "height",
+      "value": "100vh"
+    },
+    {
+      "name": "minWidthAuto",
+      "className": "min-width_auto",
+      "property": "min-width",
+      "value": "auto"
+    },
+    {
+      "name": "minWidthFitContent",
+      "className": "min-width_fit-content",
+      "property": "min-width",
+      "value": "fit-content"
+    },
+    {
+      "name": "minWidthIntrinsic",
+      "className": "min-width_intrinsic",
+      "property": "min-width",
+      "value": "intrinsic"
+    },
+    {
+      "name": "minWidthMaxContent",
+      "className": "min-width_max-content",
+      "property": "min-width",
+      "value": "max-content"
+    },
+    {
+      "name": "minWidthMinContent",
+      "className": "min-width_min-content",
+      "property": "min-width",
+      "value": "min-content"
+    },
+    {
+      "name": "minWidthMinIntrinsic",
+      "className": "min-width_min-intrinsic",
+      "property": "min-width",
+      "value": "min-intrinsic"
+    },
+    {
+      "name": "minWidthStretch",
+      "className": "min-width_stretch",
+      "property": "min-width",
+      "value": "stretch"
+    },
+    {
+      "name": "maxWidthFitContent",
+      "className": "max-width_fit-content",
+      "property": "max-width",
+      "value": "fit-content"
+    },
+    {
+      "name": "maxWidthIntrinsic",
+      "className": "max-width_intrinsic",
+      "property": "max-width",
+      "value": "intrinsic"
+    },
+    {
+      "name": "maxWidthMaxContent",
+      "className": "max-width_max-content",
+      "property": "max-width",
+      "value": "max-content"
+    },
+    {
+      "name": "maxWidthMinContent",
+      "className": "max-width_min-content",
+      "property": "max-width",
+      "value": "min-content"
+    },
+    {
+      "name": "maxWidthMinIntrinsic",
+      "className": "max-width_min-intrinsic",
+      "property": "max-width",
+      "value": "min-intrinsic"
+    },
+    {
+      "name": "maxWidthNone",
+      "className": "max-width_none",
+      "property": "max-width",
+      "value": "none"
+    },
+    {
+      "name": "maxWidthStretch",
+      "className": "max-width_stretch",
+      "property": "max-width",
+      "value": "stretch"
+    },
+    {
+      "name": "minHeightAuto",
+      "className": "min-height_auto",
+      "property": "min-height",
+      "value": "auto"
+    },
+    {
+      "name": "minHeightFitContent",
+      "className": "min-height_fit-content",
+      "property": "min-height",
+      "value": "fit-content"
+    },
+    {
+      "name": "minHeightIntrinsic",
+      "className": "min-height_intrinsic",
+      "property": "min-height",
+      "value": "intrinsic"
+    },
+    {
+      "name": "minHeightMaxContent",
+      "className": "min-height_max-content",
+      "property": "min-height",
+      "value": "max-content"
+    },
+    {
+      "name": "minHeightMinContent",
+      "className": "min-height_min-content",
+      "property": "min-height",
+      "value": "min-content"
+    },
+    {
+      "name": "minHeightMinIntrinsic",
+      "className": "min-height_min-intrinsic",
+      "property": "min-height",
+      "value": "min-intrinsic"
+    },
+    {
+      "name": "minHeightStretch",
+      "className": "min-height_stretch",
+      "property": "min-height",
+      "value": "stretch"
+    },
+    {
+      "name": "maxHeightFitContent",
+      "className": "max-height_fit-content",
+      "property": "max-height",
+      "value": "fit-content"
+    },
+    {
+      "name": "maxHeightIntrinsic",
+      "className": "max-height_intrinsic",
+      "property": "max-height",
+      "value": "intrinsic"
+    },
+    {
+      "name": "maxHeightMaxContent",
+      "className": "max-height_max-content",
+      "property": "max-height",
+      "value": "max-content"
+    },
+    {
+      "name": "maxHeightMinContent",
+      "className": "max-height_min-content",
+      "property": "max-height",
+      "value": "min-content"
+    },
+    {
+      "name": "maxHeightMinIntrinsic",
+      "className": "max-height_min-intrinsic",
+      "property": "max-height",
+      "value": "min-intrinsic"
+    },
+    {
+      "name": "maxHeightNone",
+      "className": "max-height_none",
+      "property": "max-height",
+      "value": "none"
+    },
+    {
+      "name": "maxHeightStretch",
+      "className": "max-height_stretch",
+      "property": "max-height",
+      "value": "stretch"
+    },
+    {
+      "name": "padding0",
+      "className": "padding_0",
+      "property": "padding",
+      "value": "0px"
+    },
+    {
+      "name": "padding2",
+      "className": "padding_2",
+      "property": "padding",
+      "value": "2px"
+    },
+    {
+      "name": "padding4",
+      "className": "padding_4",
+      "property": "padding",
+      "value": "4px"
+    },
+    {
+      "name": "padding6",
+      "className": "padding_6",
+      "property": "padding",
+      "value": "6px"
+    },
+    {
+      "name": "padding8",
+      "className": "padding_8",
+      "property": "padding",
+      "value": "8px"
+    },
+    {
+      "name": "padding10",
+      "className": "padding_10",
+      "property": "padding",
+      "value": "10px"
+    },
+    {
+      "name": "padding12",
+      "className": "padding_12",
+      "property": "padding",
+      "value": "12px"
+    },
+    {
+      "name": "padding14",
+      "className": "padding_14",
+      "property": "padding",
+      "value": "14px"
+    },
+    {
+      "name": "padding16",
+      "className": "padding_16",
+      "property": "padding",
+      "value": "16px"
+    },
+    {
+      "name": "padding20",
+      "className": "padding_20",
+      "property": "padding",
+      "value": "20px"
+    },
+    {
+      "name": "padding24",
+      "className": "padding_24",
+      "property": "padding",
+      "value": "24px"
+    },
+    {
+      "name": "padding32",
+      "className": "padding_32",
+      "property": "padding",
+      "value": "32px"
+    },
+    {
+      "name": "padding40",
+      "className": "padding_40",
+      "property": "padding",
+      "value": "40px"
+    },
+    {
+      "name": "padding48",
+      "className": "padding_48",
+      "property": "padding",
+      "value": "48px"
+    },
+    {
+      "name": "padding64",
+      "className": "padding_64",
+      "property": "padding",
+      "value": "64px"
+    },
+    {
+      "name": "marginAuto",
+      "className": "margin_auto",
+      "property": "margin",
+      "value": "auto"
+    },
+    {
+      "name": "margin0",
+      "className": "margin_0",
+      "property": "margin",
+      "value": "0px"
+    },
+    {
+      "name": "margin2",
+      "className": "margin_2",
+      "property": "margin",
+      "value": "2px"
+    },
+    {
+      "name": "margin4",
+      "className": "margin_4",
+      "property": "margin",
+      "value": "4px"
+    },
+    {
+      "name": "margin6",
+      "className": "margin_6",
+      "property": "margin",
+      "value": "6px"
+    },
+    {
+      "name": "margin8",
+      "className": "margin_8",
+      "property": "margin",
+      "value": "8px"
+    },
+    {
+      "name": "margin10",
+      "className": "margin_10",
+      "property": "margin",
+      "value": "10px"
+    },
+    {
+      "name": "margin12",
+      "className": "margin_12",
+      "property": "margin",
+      "value": "12px"
+    },
+    {
+      "name": "margin14",
+      "className": "margin_14",
+      "property": "margin",
+      "value": "14px"
+    },
+    {
+      "name": "margin16",
+      "className": "margin_16",
+      "property": "margin",
+      "value": "16px"
+    },
+    {
+      "name": "margin20",
+      "className": "margin_20",
+      "property": "margin",
+      "value": "20px"
+    },
+    {
+      "name": "margin24",
+      "className": "margin_24",
+      "property": "margin",
+      "value": "24px"
+    },
+    {
+      "name": "margin32",
+      "className": "margin_32",
+      "property": "margin",
+      "value": "32px"
+    },
+    {
+      "name": "margin40",
+      "className": "margin_40",
+      "property": "margin",
+      "value": "40px"
+    },
+    {
+      "name": "margin48",
+      "className": "margin_48",
+      "property": "margin",
+      "value": "48px"
+    },
+    {
+      "name": "margin64",
+      "className": "margin_64",
+      "property": "margin",
+      "value": "64px"
+    },
+    {
+      "name": "gap0",
+      "className": "gap_0",
+      "property": "gap",
+      "value": "0px"
+    },
+    {
+      "name": "gap2",
+      "className": "gap_2",
+      "property": "gap",
+      "value": "2px"
+    },
+    {
+      "name": "gap4",
+      "className": "gap_4",
+      "property": "gap",
+      "value": "4px"
+    },
+    {
+      "name": "gap6",
+      "className": "gap_6",
+      "property": "gap",
+      "value": "6px"
+    },
+    {
+      "name": "gap8",
+      "className": "gap_8",
+      "property": "gap",
+      "value": "8px"
+    },
+    {
+      "name": "gap10",
+      "className": "gap_10",
+      "property": "gap",
+      "value": "10px"
+    },
+    {
+      "name": "gap12",
+      "className": "gap_12",
+      "property": "gap",
+      "value": "12px"
+    },
+    {
+      "name": "gap16",
+      "className": "gap_16",
+      "property": "gap",
+      "value": "16px"
+    },
+    {
+      "name": "gap20",
+      "className": "gap_20",
+      "property": "gap",
+      "value": "20px"
+    },
+    {
+      "name": "gap24",
+      "className": "gap_24",
+      "property": "gap",
+      "value": "24px"
+    },
+    {
+      "name": "gap32",
+      "className": "gap_32",
+      "property": "gap",
+      "value": "32px"
+    },
+    {
+      "name": "fontSizeLarge",
+      "className": "font-size_large",
+      "property": "font-size",
+      "value": "large"
+    },
+    {
+      "name": "fontSizeLarger",
+      "className": "font-size_larger",
+      "property": "font-size",
+      "value": "larger"
+    },
+    {
+      "name": "fontSizeMedium",
+      "className": "font-size_medium",
+      "property": "font-size",
+      "value": "medium"
+    },
+    {
+      "name": "fontSizeSmall",
+      "className": "font-size_small",
+      "property": "font-size",
+      "value": "small"
+    },
+    {
+      "name": "fontSizeSmaller",
+      "className": "font-size_smaller",
+      "property": "font-size",
+      "value": "smaller"
+    },
+    {
+      "name": "fontSizeXLarge",
+      "className": "font-size_x-large",
+      "property": "font-size",
+      "value": "x-large"
+    },
+    {
+      "name": "fontSizeXSmall",
+      "className": "font-size_x-small",
+      "property": "font-size",
+      "value": "x-small"
+    },
+    {
+      "name": "fontSizeXxLarge",
+      "className": "font-size_xx-large",
+      "property": "font-size",
+      "value": "xx-large"
+    },
+    {
+      "name": "fontSizeXxSmall",
+      "className": "font-size_xx-small",
+      "property": "font-size",
+      "value": "xx-small"
+    },
+    {
+      "name": "fontSizeXxxLarge",
+      "className": "font-size_xxx-large",
+      "property": "font-size",
+      "value": "xxx-large"
+    },
+    {
+      "name": "fontSize10",
+      "className": "font-size_10",
+      "property": "font-size",
+      "value": "10px"
+    },
+    {
+      "name": "fontSize11",
+      "className": "font-size_11",
+      "property": "font-size",
+      "value": "11px"
+    },
+    {
+      "name": "fontSize12",
+      "className": "font-size_12",
+      "property": "font-size",
+      "value": "12px"
+    },
+    {
+      "name": "fontSize13",
+      "className": "font-size_13",
+      "property": "font-size",
+      "value": "13px"
+    },
+    {
+      "name": "fontSize14",
+      "className": "font-size_14",
+      "property": "font-size",
+      "value": "14px"
+    },
+    {
+      "name": "fontSize15",
+      "className": "font-size_15",
+      "property": "font-size",
+      "value": "15px"
+    },
+    {
+      "name": "fontSize16",
+      "className": "font-size_16",
+      "property": "font-size",
+      "value": "16px"
+    },
+    {
+      "name": "fontSize18",
+      "className": "font-size_18",
+      "property": "font-size",
+      "value": "18px"
+    },
+    {
+      "name": "fontSize20",
+      "className": "font-size_20",
+      "property": "font-size",
+      "value": "20px"
+    },
+    {
+      "name": "fontSize24",
+      "className": "font-size_24",
+      "property": "font-size",
+      "value": "24px"
+    },
+    {
+      "name": "fontSize28",
+      "className": "font-size_28",
+      "property": "font-size",
+      "value": "28px"
+    },
+    {
+      "name": "fontSize32",
+      "className": "font-size_32",
+      "property": "font-size",
+      "value": "32px"
+    },
+    {
+      "name": "fontSize36",
+      "className": "font-size_36",
+      "property": "font-size",
+      "value": "36px"
+    },
+    {
+      "name": "fontSize48",
+      "className": "font-size_48",
+      "property": "font-size",
+      "value": "48px"
+    },
+    {
+      "name": "fontWeightBold",
+      "className": "font-weight_bold",
+      "property": "font-weight",
+      "value": "bold"
+    },
+    {
+      "name": "fontWeightBolder",
+      "className": "font-weight_bolder",
+      "property": "font-weight",
+      "value": "bolder"
+    },
+    {
+      "name": "fontWeightLighter",
+      "className": "font-weight_lighter",
+      "property": "font-weight",
+      "value": "lighter"
+    },
+    {
+      "name": "fontWeightNormal",
+      "className": "font-weight_normal",
+      "property": "font-weight",
+      "value": "normal"
+    },
+    {
+      "name": "fontStyleItalic",
+      "className": "font-style_italic",
+      "property": "font-style",
+      "value": "italic"
+    },
+    {
+      "name": "fontStyleNormal",
+      "className": "font-style_normal",
+      "property": "font-style",
+      "value": "normal"
+    },
+    {
+      "name": "fontStyleOblique",
+      "className": "font-style_oblique",
+      "property": "font-style",
+      "value": "oblique"
+    },
+    {
+      "name": "lineHeightNormal",
+      "className": "line-height_normal",
+      "property": "line-height",
+      "value": "normal"
+    },
+    {
+      "name": "lineHeight1",
+      "className": "line-height_1",
+      "property": "line-height",
+      "value": "1"
+    },
+    {
+      "name": "lineHeight1p25",
+      "className": "line-height_1p25",
+      "property": "line-height",
+      "value": "1.25"
+    },
+    {
+      "name": "lineHeight1p5",
+      "className": "line-height_1p5",
+      "property": "line-height",
+      "value": "1.5"
+    },
+    {
+      "name": "lineHeight1p75",
+      "className": "line-height_1p75",
+      "property": "line-height",
+      "value": "1.75"
+    },
+    {
+      "name": "lineHeight2",
+      "className": "line-height_2",
+      "property": "line-height",
+      "value": "2"
+    },
+    {
+      "name": "textAlignCenter",
+      "className": "text-align_center",
+      "property": "text-align",
+      "value": "center"
+    },
+    {
+      "name": "textAlignEnd",
+      "className": "text-align_end",
+      "property": "text-align",
+      "value": "end"
+    },
+    {
+      "name": "textAlignJustify",
+      "className": "text-align_justify",
+      "property": "text-align",
+      "value": "justify"
+    },
+    {
+      "name": "textAlignLeft",
+      "className": "text-align_left",
+      "property": "text-align",
+      "value": "left"
+    },
+    {
+      "name": "textAlignMatchParent",
+      "className": "text-align_match-parent",
+      "property": "text-align",
+      "value": "match-parent"
+    },
+    {
+      "name": "textAlignRight",
+      "className": "text-align_right",
+      "property": "text-align",
+      "value": "right"
+    },
+    {
+      "name": "textAlignStart",
+      "className": "text-align_start",
+      "property": "text-align",
+      "value": "start"
+    },
+    {
+      "name": "textTransformCapitalize",
+      "className": "text-transform_capitalize",
+      "property": "text-transform",
+      "value": "capitalize"
+    },
+    {
+      "name": "textTransformFullSizeKana",
+      "className": "text-transform_full-size-kana",
+      "property": "text-transform",
+      "value": "full-size-kana"
+    },
+    {
+      "name": "textTransformFullWidth",
+      "className": "text-transform_full-width",
+      "property": "text-transform",
+      "value": "full-width"
+    },
+    {
+      "name": "textTransformLowercase",
+      "className": "text-transform_lowercase",
+      "property": "text-transform",
+      "value": "lowercase"
+    },
+    {
+      "name": "textTransformNone",
+      "className": "text-transform_none",
+      "property": "text-transform",
+      "value": "none"
+    },
+    {
+      "name": "textTransformUppercase",
+      "className": "text-transform_uppercase",
+      "property": "text-transform",
+      "value": "uppercase"
+    },
+    {
+      "name": "whiteSpaceBreakSpaces",
+      "className": "white-space_break-spaces",
+      "property": "white-space",
+      "value": "break-spaces"
+    },
+    {
+      "name": "whiteSpaceNormal",
+      "className": "white-space_normal",
+      "property": "white-space",
+      "value": "normal"
+    },
+    {
+      "name": "whiteSpaceNowrap",
+      "className": "white-space_nowrap",
+      "property": "white-space",
+      "value": "nowrap"
+    },
+    {
+      "name": "whiteSpacePre",
+      "className": "white-space_pre",
+      "property": "white-space",
+      "value": "pre"
+    },
+    {
+      "name": "whiteSpacePreLine",
+      "className": "white-space_pre-line",
+      "property": "white-space",
+      "value": "pre-line"
+    },
+    {
+      "name": "whiteSpacePreWrap",
+      "className": "white-space_pre-wrap",
+      "property": "white-space",
+      "value": "pre-wrap"
+    },
+    {
+      "name": "wordBreakAutoPhrase",
+      "className": "word-break_auto-phrase",
+      "property": "word-break",
+      "value": "auto-phrase"
+    },
+    {
+      "name": "wordBreakBreakAll",
+      "className": "word-break_break-all",
+      "property": "word-break",
+      "value": "break-all"
+    },
+    {
+      "name": "wordBreakBreakWord",
+      "className": "word-break_break-word",
+      "property": "word-break",
+      "value": "break-word"
+    },
+    {
+      "name": "wordBreakKeepAll",
+      "className": "word-break_keep-all",
+      "property": "word-break",
+      "value": "keep-all"
+    },
+    {
+      "name": "wordBreakNormal",
+      "className": "word-break_normal",
+      "property": "word-break",
+      "value": "normal"
+    },
+    {
+      "name": "overflowWrapAnywhere",
+      "className": "overflow-wrap_anywhere",
+      "property": "overflow-wrap",
+      "value": "anywhere"
+    },
+    {
+      "name": "overflowWrapBreakWord",
+      "className": "overflow-wrap_break-word",
+      "property": "overflow-wrap",
+      "value": "break-word"
+    },
+    {
+      "name": "overflowWrapNormal",
+      "className": "overflow-wrap_normal",
+      "property": "overflow-wrap",
+      "value": "normal"
+    },
+    {
+      "name": "verticalAlignBaseline",
+      "className": "vertical-align_baseline",
+      "property": "vertical-align",
+      "value": "baseline"
+    },
+    {
+      "name": "verticalAlignBottom",
+      "className": "vertical-align_bottom",
+      "property": "vertical-align",
+      "value": "bottom"
+    },
+    {
+      "name": "verticalAlignMiddle",
+      "className": "vertical-align_middle",
+      "property": "vertical-align",
+      "value": "middle"
+    },
+    {
+      "name": "verticalAlignSub",
+      "className": "vertical-align_sub",
+      "property": "vertical-align",
+      "value": "sub"
+    },
+    {
+      "name": "verticalAlignSuper",
+      "className": "vertical-align_super",
+      "property": "vertical-align",
+      "value": "super"
+    },
+    {
+      "name": "verticalAlignTextBottom",
+      "className": "vertical-align_text-bottom",
+      "property": "vertical-align",
+      "value": "text-bottom"
+    },
+    {
+      "name": "verticalAlignTextTop",
+      "className": "vertical-align_text-top",
+      "property": "vertical-align",
+      "value": "text-top"
+    },
+    {
+      "name": "verticalAlignTop",
+      "className": "vertical-align_top",
+      "property": "vertical-align",
+      "value": "top"
+    },
+    {
+      "name": "borderStyleDashed",
+      "className": "border-style_dashed",
+      "property": "border-style",
+      "value": "dashed"
+    },
+    {
+      "name": "borderStyleDotted",
+      "className": "border-style_dotted",
+      "property": "border-style",
+      "value": "dotted"
+    },
+    {
+      "name": "borderStyleDouble",
+      "className": "border-style_double",
+      "property": "border-style",
+      "value": "double"
+    },
+    {
+      "name": "borderStyleGroove",
+      "className": "border-style_groove",
+      "property": "border-style",
+      "value": "groove"
+    },
+    {
+      "name": "borderStyleHidden",
+      "className": "border-style_hidden",
+      "property": "border-style",
+      "value": "hidden"
+    },
+    {
+      "name": "borderStyleInset",
+      "className": "border-style_inset",
+      "property": "border-style",
+      "value": "inset"
+    },
+    {
+      "name": "borderStyleNone",
+      "className": "border-style_none",
+      "property": "border-style",
+      "value": "none"
+    },
+    {
+      "name": "borderStyleOutset",
+      "className": "border-style_outset",
+      "property": "border-style",
+      "value": "outset"
+    },
+    {
+      "name": "borderStyleRidge",
+      "className": "border-style_ridge",
+      "property": "border-style",
+      "value": "ridge"
+    },
+    {
+      "name": "borderStyleSolid",
+      "className": "border-style_solid",
+      "property": "border-style",
+      "value": "solid"
+    },
+    {
+      "name": "borderRadius0",
+      "className": "border-radius_0",
+      "property": "border-radius",
+      "value": "0px"
+    },
+    {
+      "name": "borderRadius2",
+      "className": "border-radius_2",
+      "property": "border-radius",
+      "value": "2px"
+    },
+    {
+      "name": "borderRadius4",
+      "className": "border-radius_4",
+      "property": "border-radius",
+      "value": "4px"
+    },
+    {
+      "name": "borderRadius6",
+      "className": "border-radius_6",
+      "property": "border-radius",
+      "value": "6px"
+    },
+    {
+      "name": "borderRadius8",
+      "className": "border-radius_8",
+      "property": "border-radius",
+      "value": "8px"
+    },
+    {
+      "name": "borderRadius12",
+      "className": "border-radius_12",
+      "property": "border-radius",
+      "value": "12px"
+    },
+    {
+      "name": "borderRadius16",
+      "className": "border-radius_16",
+      "property": "border-radius",
+      "value": "16px"
+    },
+    {
+      "name": "borderRadius9999",
+      "className": "border-radius_9999",
+      "property": "border-radius",
+      "value": "9999px"
+    },
+    {
+      "name": "boxShadowAccentColor",
+      "className": "box-shadow_AccentColor",
+      "property": "box-shadow",
+      "value": "AccentColor"
+    },
+    {
+      "name": "boxShadowAccentColorText",
+      "className": "box-shadow_AccentColorText",
+      "property": "box-shadow",
+      "value": "AccentColorText"
+    },
+    {
+      "name": "boxShadowActiveText",
+      "className": "box-shadow_ActiveText",
+      "property": "box-shadow",
+      "value": "ActiveText"
+    },
+    {
+      "name": "boxShadowButtonBorder",
+      "className": "box-shadow_ButtonBorder",
+      "property": "box-shadow",
+      "value": "ButtonBorder"
+    },
+    {
+      "name": "boxShadowButtonFace",
+      "className": "box-shadow_ButtonFace",
+      "property": "box-shadow",
+      "value": "ButtonFace"
+    },
+    {
+      "name": "boxShadowButtonText",
+      "className": "box-shadow_ButtonText",
+      "property": "box-shadow",
+      "value": "ButtonText"
+    },
+    {
+      "name": "boxShadowCanvas",
+      "className": "box-shadow_Canvas",
+      "property": "box-shadow",
+      "value": "Canvas"
+    },
+    {
+      "name": "boxShadowCanvasText",
+      "className": "box-shadow_CanvasText",
+      "property": "box-shadow",
+      "value": "CanvasText"
+    },
+    {
+      "name": "boxShadowField",
+      "className": "box-shadow_Field",
+      "property": "box-shadow",
+      "value": "Field"
+    },
+    {
+      "name": "boxShadowFieldText",
+      "className": "box-shadow_FieldText",
+      "property": "box-shadow",
+      "value": "FieldText"
+    },
+    {
+      "name": "boxShadowGrayText",
+      "className": "box-shadow_GrayText",
+      "property": "box-shadow",
+      "value": "GrayText"
+    },
+    {
+      "name": "boxShadowHighlight",
+      "className": "box-shadow_Highlight",
+      "property": "box-shadow",
+      "value": "Highlight"
+    },
+    {
+      "name": "boxShadowHighlightText",
+      "className": "box-shadow_HighlightText",
+      "property": "box-shadow",
+      "value": "HighlightText"
+    },
+    {
+      "name": "boxShadowLinkText",
+      "className": "box-shadow_LinkText",
+      "property": "box-shadow",
+      "value": "LinkText"
+    },
+    {
+      "name": "boxShadowMark",
+      "className": "box-shadow_Mark",
+      "property": "box-shadow",
+      "value": "Mark"
+    },
+    {
+      "name": "boxShadowMarkText",
+      "className": "box-shadow_MarkText",
+      "property": "box-shadow",
+      "value": "MarkText"
+    },
+    {
+      "name": "boxShadowSelectedItem",
+      "className": "box-shadow_SelectedItem",
+      "property": "box-shadow",
+      "value": "SelectedItem"
+    },
+    {
+      "name": "boxShadowSelectedItemText",
+      "className": "box-shadow_SelectedItemText",
+      "property": "box-shadow",
+      "value": "SelectedItemText"
+    },
+    {
+      "name": "boxShadowVisitedText",
+      "className": "box-shadow_VisitedText",
+      "property": "box-shadow",
+      "value": "VisitedText"
+    },
+    {
+      "name": "boxShadowA98Rgb",
+      "className": "box-shadow_a98-rgb",
+      "property": "box-shadow",
+      "value": "a98-rgb"
+    },
+    {
+      "name": "boxShadowAliceblue",
+      "className": "box-shadow_aliceblue",
+      "property": "box-shadow",
+      "value": "aliceblue"
+    },
+    {
+      "name": "boxShadowAntiquewhite",
+      "className": "box-shadow_antiquewhite",
+      "property": "box-shadow",
+      "value": "antiquewhite"
+    },
+    {
+      "name": "boxShadowAqua",
+      "className": "box-shadow_aqua",
+      "property": "box-shadow",
+      "value": "aqua"
+    },
+    {
+      "name": "boxShadowAquamarine",
+      "className": "box-shadow_aquamarine",
+      "property": "box-shadow",
+      "value": "aquamarine"
+    },
+    {
+      "name": "boxShadowAzure",
+      "className": "box-shadow_azure",
+      "property": "box-shadow",
+      "value": "azure"
+    },
+    {
+      "name": "boxShadowBeige",
+      "className": "box-shadow_beige",
+      "property": "box-shadow",
+      "value": "beige"
+    },
+    {
+      "name": "boxShadowBisque",
+      "className": "box-shadow_bisque",
+      "property": "box-shadow",
+      "value": "bisque"
+    },
+    {
+      "name": "boxShadowBlack",
+      "className": "box-shadow_black",
+      "property": "box-shadow",
+      "value": "black"
+    },
+    {
+      "name": "boxShadowBlanchedalmond",
+      "className": "box-shadow_blanchedalmond",
+      "property": "box-shadow",
+      "value": "blanchedalmond"
+    },
+    {
+      "name": "boxShadowBlue",
+      "className": "box-shadow_blue",
+      "property": "box-shadow",
+      "value": "blue"
+    },
+    {
+      "name": "boxShadowBlueviolet",
+      "className": "box-shadow_blueviolet",
+      "property": "box-shadow",
+      "value": "blueviolet"
+    },
+    {
+      "name": "boxShadowBrown",
+      "className": "box-shadow_brown",
+      "property": "box-shadow",
+      "value": "brown"
+    },
+    {
+      "name": "boxShadowBurlywood",
+      "className": "box-shadow_burlywood",
+      "property": "box-shadow",
+      "value": "burlywood"
+    },
+    {
+      "name": "boxShadowCadetblue",
+      "className": "box-shadow_cadetblue",
+      "property": "box-shadow",
+      "value": "cadetblue"
+    },
+    {
+      "name": "boxShadowChartreuse",
+      "className": "box-shadow_chartreuse",
+      "property": "box-shadow",
+      "value": "chartreuse"
+    },
+    {
+      "name": "boxShadowChocolate",
+      "className": "box-shadow_chocolate",
+      "property": "box-shadow",
+      "value": "chocolate"
+    },
+    {
+      "name": "boxShadowCoral",
+      "className": "box-shadow_coral",
+      "property": "box-shadow",
+      "value": "coral"
+    },
+    {
+      "name": "boxShadowCornflowerblue",
+      "className": "box-shadow_cornflowerblue",
+      "property": "box-shadow",
+      "value": "cornflowerblue"
+    },
+    {
+      "name": "boxShadowCornsilk",
+      "className": "box-shadow_cornsilk",
+      "property": "box-shadow",
+      "value": "cornsilk"
+    },
+    {
+      "name": "boxShadowCrimson",
+      "className": "box-shadow_crimson",
+      "property": "box-shadow",
+      "value": "crimson"
+    },
+    {
+      "name": "boxShadowCurrentColor",
+      "className": "box-shadow_currentColor",
+      "property": "box-shadow",
+      "value": "currentColor"
+    },
+    {
+      "name": "boxShadowCyan",
+      "className": "box-shadow_cyan",
+      "property": "box-shadow",
+      "value": "cyan"
+    },
+    {
+      "name": "boxShadowDarkblue",
+      "className": "box-shadow_darkblue",
+      "property": "box-shadow",
+      "value": "darkblue"
+    },
+    {
+      "name": "boxShadowDarkcyan",
+      "className": "box-shadow_darkcyan",
+      "property": "box-shadow",
+      "value": "darkcyan"
+    },
+    {
+      "name": "boxShadowDarkgoldenrod",
+      "className": "box-shadow_darkgoldenrod",
+      "property": "box-shadow",
+      "value": "darkgoldenrod"
+    },
+    {
+      "name": "boxShadowDarkgray",
+      "className": "box-shadow_darkgray",
+      "property": "box-shadow",
+      "value": "darkgray"
+    },
+    {
+      "name": "boxShadowDarkgreen",
+      "className": "box-shadow_darkgreen",
+      "property": "box-shadow",
+      "value": "darkgreen"
+    },
+    {
+      "name": "boxShadowDarkgrey",
+      "className": "box-shadow_darkgrey",
+      "property": "box-shadow",
+      "value": "darkgrey"
+    },
+    {
+      "name": "boxShadowDarkkhaki",
+      "className": "box-shadow_darkkhaki",
+      "property": "box-shadow",
+      "value": "darkkhaki"
+    },
+    {
+      "name": "boxShadowDarkmagenta",
+      "className": "box-shadow_darkmagenta",
+      "property": "box-shadow",
+      "value": "darkmagenta"
+    },
+    {
+      "name": "boxShadowDarkolivegreen",
+      "className": "box-shadow_darkolivegreen",
+      "property": "box-shadow",
+      "value": "darkolivegreen"
+    },
+    {
+      "name": "boxShadowDarkorange",
+      "className": "box-shadow_darkorange",
+      "property": "box-shadow",
+      "value": "darkorange"
+    },
+    {
+      "name": "boxShadowDarkorchid",
+      "className": "box-shadow_darkorchid",
+      "property": "box-shadow",
+      "value": "darkorchid"
+    },
+    {
+      "name": "boxShadowDarkred",
+      "className": "box-shadow_darkred",
+      "property": "box-shadow",
+      "value": "darkred"
+    },
+    {
+      "name": "boxShadowDarksalmon",
+      "className": "box-shadow_darksalmon",
+      "property": "box-shadow",
+      "value": "darksalmon"
+    },
+    {
+      "name": "boxShadowDarkseagreen",
+      "className": "box-shadow_darkseagreen",
+      "property": "box-shadow",
+      "value": "darkseagreen"
+    },
+    {
+      "name": "boxShadowDarkslateblue",
+      "className": "box-shadow_darkslateblue",
+      "property": "box-shadow",
+      "value": "darkslateblue"
+    },
+    {
+      "name": "boxShadowDarkslategray",
+      "className": "box-shadow_darkslategray",
+      "property": "box-shadow",
+      "value": "darkslategray"
+    },
+    {
+      "name": "boxShadowDarkslategrey",
+      "className": "box-shadow_darkslategrey",
+      "property": "box-shadow",
+      "value": "darkslategrey"
+    },
+    {
+      "name": "boxShadowDarkturquoise",
+      "className": "box-shadow_darkturquoise",
+      "property": "box-shadow",
+      "value": "darkturquoise"
+    },
+    {
+      "name": "boxShadowDarkviolet",
+      "className": "box-shadow_darkviolet",
+      "property": "box-shadow",
+      "value": "darkviolet"
+    },
+    {
+      "name": "boxShadowDecreasing",
+      "className": "box-shadow_decreasing",
+      "property": "box-shadow",
+      "value": "decreasing"
+    },
+    {
+      "name": "boxShadowDeeppink",
+      "className": "box-shadow_deeppink",
+      "property": "box-shadow",
+      "value": "deeppink"
+    },
+    {
+      "name": "boxShadowDeepskyblue",
+      "className": "box-shadow_deepskyblue",
+      "property": "box-shadow",
+      "value": "deepskyblue"
+    },
+    {
+      "name": "boxShadowDimgray",
+      "className": "box-shadow_dimgray",
+      "property": "box-shadow",
+      "value": "dimgray"
+    },
+    {
+      "name": "boxShadowDimgrey",
+      "className": "box-shadow_dimgrey",
+      "property": "box-shadow",
+      "value": "dimgrey"
+    },
+    {
+      "name": "boxShadowDisplayP3",
+      "className": "box-shadow_display-p3",
+      "property": "box-shadow",
+      "value": "display-p3"
+    },
+    {
+      "name": "boxShadowDodgerblue",
+      "className": "box-shadow_dodgerblue",
+      "property": "box-shadow",
+      "value": "dodgerblue"
+    },
+    {
+      "name": "boxShadowFirebrick",
+      "className": "box-shadow_firebrick",
+      "property": "box-shadow",
+      "value": "firebrick"
+    },
+    {
+      "name": "boxShadowFloralwhite",
+      "className": "box-shadow_floralwhite",
+      "property": "box-shadow",
+      "value": "floralwhite"
+    },
+    {
+      "name": "boxShadowForestgreen",
+      "className": "box-shadow_forestgreen",
+      "property": "box-shadow",
+      "value": "forestgreen"
+    },
+    {
+      "name": "boxShadowFuchsia",
+      "className": "box-shadow_fuchsia",
+      "property": "box-shadow",
+      "value": "fuchsia"
+    },
+    {
+      "name": "boxShadowGainsboro",
+      "className": "box-shadow_gainsboro",
+      "property": "box-shadow",
+      "value": "gainsboro"
+    },
+    {
+      "name": "boxShadowGhostwhite",
+      "className": "box-shadow_ghostwhite",
+      "property": "box-shadow",
+      "value": "ghostwhite"
+    },
+    {
+      "name": "boxShadowGold",
+      "className": "box-shadow_gold",
+      "property": "box-shadow",
+      "value": "gold"
+    },
+    {
+      "name": "boxShadowGoldenrod",
+      "className": "box-shadow_goldenrod",
+      "property": "box-shadow",
+      "value": "goldenrod"
+    },
+    {
+      "name": "boxShadowGray",
+      "className": "box-shadow_gray",
+      "property": "box-shadow",
+      "value": "gray"
+    },
+    {
+      "name": "boxShadowGreen",
+      "className": "box-shadow_green",
+      "property": "box-shadow",
+      "value": "green"
+    },
+    {
+      "name": "boxShadowGreenyellow",
+      "className": "box-shadow_greenyellow",
+      "property": "box-shadow",
+      "value": "greenyellow"
+    },
+    {
+      "name": "boxShadowGrey",
+      "className": "box-shadow_grey",
+      "property": "box-shadow",
+      "value": "grey"
+    },
+    {
+      "name": "boxShadowHoneydew",
+      "className": "box-shadow_honeydew",
+      "property": "box-shadow",
+      "value": "honeydew"
+    },
+    {
+      "name": "boxShadowHotpink",
+      "className": "box-shadow_hotpink",
+      "property": "box-shadow",
+      "value": "hotpink"
+    },
+    {
+      "name": "boxShadowHsl",
+      "className": "box-shadow_hsl",
+      "property": "box-shadow",
+      "value": "hsl"
+    },
+    {
+      "name": "boxShadowHue",
+      "className": "box-shadow_hue",
+      "property": "box-shadow",
+      "value": "hue"
+    },
+    {
+      "name": "boxShadowHwb",
+      "className": "box-shadow_hwb",
+      "property": "box-shadow",
+      "value": "hwb"
+    },
+    {
+      "name": "boxShadowIn",
+      "className": "box-shadow_in",
+      "property": "box-shadow",
+      "value": "in"
+    },
+    {
+      "name": "boxShadowIncreasing",
+      "className": "box-shadow_increasing",
+      "property": "box-shadow",
+      "value": "increasing"
+    },
+    {
+      "name": "boxShadowIndianred",
+      "className": "box-shadow_indianred",
+      "property": "box-shadow",
+      "value": "indianred"
+    },
+    {
+      "name": "boxShadowIndigo",
+      "className": "box-shadow_indigo",
+      "property": "box-shadow",
+      "value": "indigo"
+    },
+    {
+      "name": "boxShadowInset",
+      "className": "box-shadow_inset",
+      "property": "box-shadow",
+      "value": "inset"
+    },
+    {
+      "name": "boxShadowIvory",
+      "className": "box-shadow_ivory",
+      "property": "box-shadow",
+      "value": "ivory"
+    },
+    {
+      "name": "boxShadowKhaki",
+      "className": "box-shadow_khaki",
+      "property": "box-shadow",
+      "value": "khaki"
+    },
+    {
+      "name": "boxShadowLab",
+      "className": "box-shadow_lab",
+      "property": "box-shadow",
+      "value": "lab"
+    },
+    {
+      "name": "boxShadowLavender",
+      "className": "box-shadow_lavender",
+      "property": "box-shadow",
+      "value": "lavender"
+    },
+    {
+      "name": "boxShadowLavenderblush",
+      "className": "box-shadow_lavenderblush",
+      "property": "box-shadow",
+      "value": "lavenderblush"
+    },
+    {
+      "name": "boxShadowLawngreen",
+      "className": "box-shadow_lawngreen",
+      "property": "box-shadow",
+      "value": "lawngreen"
+    },
+    {
+      "name": "boxShadowLch",
+      "className": "box-shadow_lch",
+      "property": "box-shadow",
+      "value": "lch"
+    },
+    {
+      "name": "boxShadowLemonchiffon",
+      "className": "box-shadow_lemonchiffon",
+      "property": "box-shadow",
+      "value": "lemonchiffon"
+    },
+    {
+      "name": "boxShadowLightblue",
+      "className": "box-shadow_lightblue",
+      "property": "box-shadow",
+      "value": "lightblue"
+    },
+    {
+      "name": "boxShadowLightcoral",
+      "className": "box-shadow_lightcoral",
+      "property": "box-shadow",
+      "value": "lightcoral"
+    },
+    {
+      "name": "boxShadowLightcyan",
+      "className": "box-shadow_lightcyan",
+      "property": "box-shadow",
+      "value": "lightcyan"
+    },
+    {
+      "name": "boxShadowLightgoldenrodyellow",
+      "className": "box-shadow_lightgoldenrodyellow",
+      "property": "box-shadow",
+      "value": "lightgoldenrodyellow"
+    },
+    {
+      "name": "boxShadowLightgray",
+      "className": "box-shadow_lightgray",
+      "property": "box-shadow",
+      "value": "lightgray"
+    },
+    {
+      "name": "boxShadowLightgreen",
+      "className": "box-shadow_lightgreen",
+      "property": "box-shadow",
+      "value": "lightgreen"
+    },
+    {
+      "name": "boxShadowLightgrey",
+      "className": "box-shadow_lightgrey",
+      "property": "box-shadow",
+      "value": "lightgrey"
+    },
+    {
+      "name": "boxShadowLightpink",
+      "className": "box-shadow_lightpink",
+      "property": "box-shadow",
+      "value": "lightpink"
+    },
+    {
+      "name": "boxShadowLightsalmon",
+      "className": "box-shadow_lightsalmon",
+      "property": "box-shadow",
+      "value": "lightsalmon"
+    },
+    {
+      "name": "boxShadowLightseagreen",
+      "className": "box-shadow_lightseagreen",
+      "property": "box-shadow",
+      "value": "lightseagreen"
+    },
+    {
+      "name": "boxShadowLightskyblue",
+      "className": "box-shadow_lightskyblue",
+      "property": "box-shadow",
+      "value": "lightskyblue"
+    },
+    {
+      "name": "boxShadowLightslategray",
+      "className": "box-shadow_lightslategray",
+      "property": "box-shadow",
+      "value": "lightslategray"
+    },
+    {
+      "name": "boxShadowLightslategrey",
+      "className": "box-shadow_lightslategrey",
+      "property": "box-shadow",
+      "value": "lightslategrey"
+    },
+    {
+      "name": "boxShadowLightsteelblue",
+      "className": "box-shadow_lightsteelblue",
+      "property": "box-shadow",
+      "value": "lightsteelblue"
+    },
+    {
+      "name": "boxShadowLightyellow",
+      "className": "box-shadow_lightyellow",
+      "property": "box-shadow",
+      "value": "lightyellow"
+    },
+    {
+      "name": "boxShadowLime",
+      "className": "box-shadow_lime",
+      "property": "box-shadow",
+      "value": "lime"
+    },
+    {
+      "name": "boxShadowLimegreen",
+      "className": "box-shadow_limegreen",
+      "property": "box-shadow",
+      "value": "limegreen"
+    },
+    {
+      "name": "boxShadowLinen",
+      "className": "box-shadow_linen",
+      "property": "box-shadow",
+      "value": "linen"
+    },
+    {
+      "name": "boxShadowLonger",
+      "className": "box-shadow_longer",
+      "property": "box-shadow",
+      "value": "longer"
+    },
+    {
+      "name": "boxShadowMagenta",
+      "className": "box-shadow_magenta",
+      "property": "box-shadow",
+      "value": "magenta"
+    },
+    {
+      "name": "boxShadowMaroon",
+      "className": "box-shadow_maroon",
+      "property": "box-shadow",
+      "value": "maroon"
+    },
+    {
+      "name": "boxShadowMediumaquamarine",
+      "className": "box-shadow_mediumaquamarine",
+      "property": "box-shadow",
+      "value": "mediumaquamarine"
+    },
+    {
+      "name": "boxShadowMediumblue",
+      "className": "box-shadow_mediumblue",
+      "property": "box-shadow",
+      "value": "mediumblue"
+    },
+    {
+      "name": "boxShadowMediumorchid",
+      "className": "box-shadow_mediumorchid",
+      "property": "box-shadow",
+      "value": "mediumorchid"
+    },
+    {
+      "name": "boxShadowMediumpurple",
+      "className": "box-shadow_mediumpurple",
+      "property": "box-shadow",
+      "value": "mediumpurple"
+    },
+    {
+      "name": "boxShadowMediumseagreen",
+      "className": "box-shadow_mediumseagreen",
+      "property": "box-shadow",
+      "value": "mediumseagreen"
+    },
+    {
+      "name": "boxShadowMediumslateblue",
+      "className": "box-shadow_mediumslateblue",
+      "property": "box-shadow",
+      "value": "mediumslateblue"
+    },
+    {
+      "name": "boxShadowMediumspringgreen",
+      "className": "box-shadow_mediumspringgreen",
+      "property": "box-shadow",
+      "value": "mediumspringgreen"
+    },
+    {
+      "name": "boxShadowMediumturquoise",
+      "className": "box-shadow_mediumturquoise",
+      "property": "box-shadow",
+      "value": "mediumturquoise"
+    },
+    {
+      "name": "boxShadowMediumvioletred",
+      "className": "box-shadow_mediumvioletred",
+      "property": "box-shadow",
+      "value": "mediumvioletred"
+    },
+    {
+      "name": "boxShadowMidnightblue",
+      "className": "box-shadow_midnightblue",
+      "property": "box-shadow",
+      "value": "midnightblue"
+    },
+    {
+      "name": "boxShadowMintcream",
+      "className": "box-shadow_mintcream",
+      "property": "box-shadow",
+      "value": "mintcream"
+    },
+    {
+      "name": "boxShadowMistyrose",
+      "className": "box-shadow_mistyrose",
+      "property": "box-shadow",
+      "value": "mistyrose"
+    },
+    {
+      "name": "boxShadowMoccasin",
+      "className": "box-shadow_moccasin",
+      "property": "box-shadow",
+      "value": "moccasin"
+    },
+    {
+      "name": "boxShadowNavajowhite",
+      "className": "box-shadow_navajowhite",
+      "property": "box-shadow",
+      "value": "navajowhite"
+    },
+    {
+      "name": "boxShadowNavy",
+      "className": "box-shadow_navy",
+      "property": "box-shadow",
+      "value": "navy"
+    },
+    {
+      "name": "boxShadowNone",
+      "className": "box-shadow_none",
+      "property": "box-shadow",
+      "value": "none"
+    },
+    {
+      "name": "boxShadowOklab",
+      "className": "box-shadow_oklab",
+      "property": "box-shadow",
+      "value": "oklab"
+    },
+    {
+      "name": "boxShadowOklch",
+      "className": "box-shadow_oklch",
+      "property": "box-shadow",
+      "value": "oklch"
+    },
+    {
+      "name": "boxShadowOldlace",
+      "className": "box-shadow_oldlace",
+      "property": "box-shadow",
+      "value": "oldlace"
+    },
+    {
+      "name": "boxShadowOlive",
+      "className": "box-shadow_olive",
+      "property": "box-shadow",
+      "value": "olive"
+    },
+    {
+      "name": "boxShadowOlivedrab",
+      "className": "box-shadow_olivedrab",
+      "property": "box-shadow",
+      "value": "olivedrab"
+    },
+    {
+      "name": "boxShadowOrange",
+      "className": "box-shadow_orange",
+      "property": "box-shadow",
+      "value": "orange"
+    },
+    {
+      "name": "boxShadowOrangered",
+      "className": "box-shadow_orangered",
+      "property": "box-shadow",
+      "value": "orangered"
+    },
+    {
+      "name": "boxShadowOrchid",
+      "className": "box-shadow_orchid",
+      "property": "box-shadow",
+      "value": "orchid"
+    },
+    {
+      "name": "boxShadowPalegoldenrod",
+      "className": "box-shadow_palegoldenrod",
+      "property": "box-shadow",
+      "value": "palegoldenrod"
+    },
+    {
+      "name": "boxShadowPalegreen",
+      "className": "box-shadow_palegreen",
+      "property": "box-shadow",
+      "value": "palegreen"
+    },
+    {
+      "name": "boxShadowPaleturquoise",
+      "className": "box-shadow_paleturquoise",
+      "property": "box-shadow",
+      "value": "paleturquoise"
+    },
+    {
+      "name": "boxShadowPalevioletred",
+      "className": "box-shadow_palevioletred",
+      "property": "box-shadow",
+      "value": "palevioletred"
+    },
+    {
+      "name": "boxShadowPapayawhip",
+      "className": "box-shadow_papayawhip",
+      "property": "box-shadow",
+      "value": "papayawhip"
+    },
+    {
+      "name": "boxShadowPeachpuff",
+      "className": "box-shadow_peachpuff",
+      "property": "box-shadow",
+      "value": "peachpuff"
+    },
+    {
+      "name": "boxShadowPeru",
+      "className": "box-shadow_peru",
+      "property": "box-shadow",
+      "value": "peru"
+    },
+    {
+      "name": "boxShadowPink",
+      "className": "box-shadow_pink",
+      "property": "box-shadow",
+      "value": "pink"
+    },
+    {
+      "name": "boxShadowPlum",
+      "className": "box-shadow_plum",
+      "property": "box-shadow",
+      "value": "plum"
+    },
+    {
+      "name": "boxShadowPowderblue",
+      "className": "box-shadow_powderblue",
+      "property": "box-shadow",
+      "value": "powderblue"
+    },
+    {
+      "name": "boxShadowProphotoRgb",
+      "className": "box-shadow_prophoto-rgb",
+      "property": "box-shadow",
+      "value": "prophoto-rgb"
+    },
+    {
+      "name": "boxShadowPurple",
+      "className": "box-shadow_purple",
+      "property": "box-shadow",
+      "value": "purple"
+    },
+    {
+      "name": "boxShadowRebeccapurple",
+      "className": "box-shadow_rebeccapurple",
+      "property": "box-shadow",
+      "value": "rebeccapurple"
+    },
+    {
+      "name": "boxShadowRec2020",
+      "className": "box-shadow_rec2020",
+      "property": "box-shadow",
+      "value": "rec2020"
+    },
+    {
+      "name": "boxShadowRed",
+      "className": "box-shadow_red",
+      "property": "box-shadow",
+      "value": "red"
+    },
+    {
+      "name": "boxShadowRosybrown",
+      "className": "box-shadow_rosybrown",
+      "property": "box-shadow",
+      "value": "rosybrown"
+    },
+    {
+      "name": "boxShadowRoyalblue",
+      "className": "box-shadow_royalblue",
+      "property": "box-shadow",
+      "value": "royalblue"
+    },
+    {
+      "name": "boxShadowSaddlebrown",
+      "className": "box-shadow_saddlebrown",
+      "property": "box-shadow",
+      "value": "saddlebrown"
+    },
+    {
+      "name": "boxShadowSalmon",
+      "className": "box-shadow_salmon",
+      "property": "box-shadow",
+      "value": "salmon"
+    },
+    {
+      "name": "boxShadowSandybrown",
+      "className": "box-shadow_sandybrown",
+      "property": "box-shadow",
+      "value": "sandybrown"
+    },
+    {
+      "name": "boxShadowSeagreen",
+      "className": "box-shadow_seagreen",
+      "property": "box-shadow",
+      "value": "seagreen"
+    },
+    {
+      "name": "boxShadowSeashell",
+      "className": "box-shadow_seashell",
+      "property": "box-shadow",
+      "value": "seashell"
+    },
+    {
+      "name": "boxShadowShorter",
+      "className": "box-shadow_shorter",
+      "property": "box-shadow",
+      "value": "shorter"
+    },
+    {
+      "name": "boxShadowSienna",
+      "className": "box-shadow_sienna",
+      "property": "box-shadow",
+      "value": "sienna"
+    },
+    {
+      "name": "boxShadowSilver",
+      "className": "box-shadow_silver",
+      "property": "box-shadow",
+      "value": "silver"
+    },
+    {
+      "name": "boxShadowSkyblue",
+      "className": "box-shadow_skyblue",
+      "property": "box-shadow",
+      "value": "skyblue"
+    },
+    {
+      "name": "boxShadowSlateblue",
+      "className": "box-shadow_slateblue",
+      "property": "box-shadow",
+      "value": "slateblue"
+    },
+    {
+      "name": "boxShadowSlategray",
+      "className": "box-shadow_slategray",
+      "property": "box-shadow",
+      "value": "slategray"
+    },
+    {
+      "name": "boxShadowSlategrey",
+      "className": "box-shadow_slategrey",
+      "property": "box-shadow",
+      "value": "slategrey"
+    },
+    {
+      "name": "boxShadowSnow",
+      "className": "box-shadow_snow",
+      "property": "box-shadow",
+      "value": "snow"
+    },
+    {
+      "name": "boxShadowSpringgreen",
+      "className": "box-shadow_springgreen",
+      "property": "box-shadow",
+      "value": "springgreen"
+    },
+    {
+      "name": "boxShadowSrgb",
+      "className": "box-shadow_srgb",
+      "property": "box-shadow",
+      "value": "srgb"
+    },
+    {
+      "name": "boxShadowSrgbLinear",
+      "className": "box-shadow_srgb-linear",
+      "property": "box-shadow",
+      "value": "srgb-linear"
+    },
+    {
+      "name": "boxShadowSteelblue",
+      "className": "box-shadow_steelblue",
+      "property": "box-shadow",
+      "value": "steelblue"
+    },
+    {
+      "name": "boxShadowTan",
+      "className": "box-shadow_tan",
+      "property": "box-shadow",
+      "value": "tan"
+    },
+    {
+      "name": "boxShadowTeal",
+      "className": "box-shadow_teal",
+      "property": "box-shadow",
+      "value": "teal"
+    },
+    {
+      "name": "boxShadowThistle",
+      "className": "box-shadow_thistle",
+      "property": "box-shadow",
+      "value": "thistle"
+    },
+    {
+      "name": "boxShadowTomato",
+      "className": "box-shadow_tomato",
+      "property": "box-shadow",
+      "value": "tomato"
+    },
+    {
+      "name": "boxShadowTransparent",
+      "className": "box-shadow_transparent",
+      "property": "box-shadow",
+      "value": "transparent"
+    },
+    {
+      "name": "boxShadowTurquoise",
+      "className": "box-shadow_turquoise",
+      "property": "box-shadow",
+      "value": "turquoise"
+    },
+    {
+      "name": "boxShadowViolet",
+      "className": "box-shadow_violet",
+      "property": "box-shadow",
+      "value": "violet"
+    },
+    {
+      "name": "boxShadowWheat",
+      "className": "box-shadow_wheat",
+      "property": "box-shadow",
+      "value": "wheat"
+    },
+    {
+      "name": "boxShadowWhite",
+      "className": "box-shadow_white",
+      "property": "box-shadow",
+      "value": "white"
+    },
+    {
+      "name": "boxShadowWhitesmoke",
+      "className": "box-shadow_whitesmoke",
+      "property": "box-shadow",
+      "value": "whitesmoke"
+    },
+    {
+      "name": "boxShadowXyz",
+      "className": "box-shadow_xyz",
+      "property": "box-shadow",
+      "value": "xyz"
+    },
+    {
+      "name": "boxShadowXyzD50",
+      "className": "box-shadow_xyz-d50",
+      "property": "box-shadow",
+      "value": "xyz-d50"
+    },
+    {
+      "name": "boxShadowXyzD65",
+      "className": "box-shadow_xyz-d65",
+      "property": "box-shadow",
+      "value": "xyz-d65"
+    },
+    {
+      "name": "boxShadowYellow",
+      "className": "box-shadow_yellow",
+      "property": "box-shadow",
+      "value": "yellow"
+    },
+    {
+      "name": "boxShadowYellowgreen",
+      "className": "box-shadow_yellowgreen",
+      "property": "box-shadow",
+      "value": "yellowgreen"
+    },
+    {
+      "name": "opacity0",
+      "className": "opacity_0",
+      "property": "opacity",
+      "value": "0"
+    },
+    {
+      "name": "opacity0p25",
+      "className": "opacity_0p25",
+      "property": "opacity",
+      "value": "0.25"
+    },
+    {
+      "name": "opacity0p5",
+      "className": "opacity_0p5",
+      "property": "opacity",
+      "value": "0.5"
+    },
+    {
+      "name": "opacity0p75",
+      "className": "opacity_0p75",
+      "property": "opacity",
+      "value": "0.75"
+    },
+    {
+      "name": "opacity1",
+      "className": "opacity_1",
+      "property": "opacity",
+      "value": "1"
+    },
+    {
+      "name": "visibilityCollapse",
+      "className": "visibility_collapse",
+      "property": "visibility",
+      "value": "collapse"
+    },
+    {
+      "name": "visibilityHidden",
+      "className": "visibility_hidden",
+      "property": "visibility",
+      "value": "hidden"
+    },
+    {
+      "name": "visibilityVisible",
+      "className": "visibility_visible",
+      "property": "visibility",
+      "value": "visible"
+    },
+    {
+      "name": "overflowAuto",
+      "className": "overflow_auto",
+      "property": "overflow",
+      "value": "auto"
+    },
+    {
+      "name": "overflowClip",
+      "className": "overflow_clip",
+      "property": "overflow",
+      "value": "clip"
+    },
+    {
+      "name": "overflowHidden",
+      "className": "overflow_hidden",
+      "property": "overflow",
+      "value": "hidden"
+    },
+    {
+      "name": "overflowOverlay",
+      "className": "overflow_overlay",
+      "property": "overflow",
+      "value": "overlay"
+    },
+    {
+      "name": "overflowScroll",
+      "className": "overflow_scroll",
+      "property": "overflow",
+      "value": "scroll"
+    },
+    {
+      "name": "overflowVisible",
+      "className": "overflow_visible",
+      "property": "overflow",
+      "value": "visible"
+    },
+    {
+      "name": "overflowXAuto",
+      "className": "overflow-x_auto",
+      "property": "overflow-x",
+      "value": "auto"
+    },
+    {
+      "name": "overflowXClip",
+      "className": "overflow-x_clip",
+      "property": "overflow-x",
+      "value": "clip"
+    },
+    {
+      "name": "overflowXHidden",
+      "className": "overflow-x_hidden",
+      "property": "overflow-x",
+      "value": "hidden"
+    },
+    {
+      "name": "overflowXScroll",
+      "className": "overflow-x_scroll",
+      "property": "overflow-x",
+      "value": "scroll"
+    },
+    {
+      "name": "overflowXVisible",
+      "className": "overflow-x_visible",
+      "property": "overflow-x",
+      "value": "visible"
+    },
+    {
+      "name": "overflowYAuto",
+      "className": "overflow-y_auto",
+      "property": "overflow-y",
+      "value": "auto"
+    },
+    {
+      "name": "overflowYClip",
+      "className": "overflow-y_clip",
+      "property": "overflow-y",
+      "value": "clip"
+    },
+    {
+      "name": "overflowYHidden",
+      "className": "overflow-y_hidden",
+      "property": "overflow-y",
+      "value": "hidden"
+    },
+    {
+      "name": "overflowYScroll",
+      "className": "overflow-y_scroll",
+      "property": "overflow-y",
+      "value": "scroll"
+    },
+    {
+      "name": "overflowYVisible",
+      "className": "overflow-y_visible",
+      "property": "overflow-y",
+      "value": "visible"
+    },
+    {
+      "name": "cursorAlias",
+      "className": "cursor_alias",
+      "property": "cursor",
+      "value": "alias"
+    },
+    {
+      "name": "cursorAllScroll",
+      "className": "cursor_all-scroll",
+      "property": "cursor",
+      "value": "all-scroll"
+    },
+    {
+      "name": "cursorAuto",
+      "className": "cursor_auto",
+      "property": "cursor",
+      "value": "auto"
+    },
+    {
+      "name": "cursorCell",
+      "className": "cursor_cell",
+      "property": "cursor",
+      "value": "cell"
+    },
+    {
+      "name": "cursorColResize",
+      "className": "cursor_col-resize",
+      "property": "cursor",
+      "value": "col-resize"
+    },
+    {
+      "name": "cursorContextMenu",
+      "className": "cursor_context-menu",
+      "property": "cursor",
+      "value": "context-menu"
+    },
+    {
+      "name": "cursorCopy",
+      "className": "cursor_copy",
+      "property": "cursor",
+      "value": "copy"
+    },
+    {
+      "name": "cursorCrosshair",
+      "className": "cursor_crosshair",
+      "property": "cursor",
+      "value": "crosshair"
+    },
+    {
+      "name": "cursorDefault",
+      "className": "cursor_default",
+      "property": "cursor",
+      "value": "default"
+    },
+    {
+      "name": "cursorEResize",
+      "className": "cursor_e-resize",
+      "property": "cursor",
+      "value": "e-resize"
+    },
+    {
+      "name": "cursorEwResize",
+      "className": "cursor_ew-resize",
+      "property": "cursor",
+      "value": "ew-resize"
+    },
+    {
+      "name": "cursorGrab",
+      "className": "cursor_grab",
+      "property": "cursor",
+      "value": "grab"
+    },
+    {
+      "name": "cursorGrabbing",
+      "className": "cursor_grabbing",
+      "property": "cursor",
+      "value": "grabbing"
+    },
+    {
+      "name": "cursorHand",
+      "className": "cursor_hand",
+      "property": "cursor",
+      "value": "hand"
+    },
+    {
+      "name": "cursorHelp",
+      "className": "cursor_help",
+      "property": "cursor",
+      "value": "help"
+    },
+    {
+      "name": "cursorMove",
+      "className": "cursor_move",
+      "property": "cursor",
+      "value": "move"
+    },
+    {
+      "name": "cursorNResize",
+      "className": "cursor_n-resize",
+      "property": "cursor",
+      "value": "n-resize"
+    },
+    {
+      "name": "cursorNeResize",
+      "className": "cursor_ne-resize",
+      "property": "cursor",
+      "value": "ne-resize"
+    },
+    {
+      "name": "cursorNeswResize",
+      "className": "cursor_nesw-resize",
+      "property": "cursor",
+      "value": "nesw-resize"
+    },
+    {
+      "name": "cursorNoDrop",
+      "className": "cursor_no-drop",
+      "property": "cursor",
+      "value": "no-drop"
+    },
+    {
+      "name": "cursorNone",
+      "className": "cursor_none",
+      "property": "cursor",
+      "value": "none"
+    },
+    {
+      "name": "cursorNotAllowed",
+      "className": "cursor_not-allowed",
+      "property": "cursor",
+      "value": "not-allowed"
+    },
+    {
+      "name": "cursorNsResize",
+      "className": "cursor_ns-resize",
+      "property": "cursor",
+      "value": "ns-resize"
+    },
+    {
+      "name": "cursorNwResize",
+      "className": "cursor_nw-resize",
+      "property": "cursor",
+      "value": "nw-resize"
+    },
+    {
+      "name": "cursorNwseResize",
+      "className": "cursor_nwse-resize",
+      "property": "cursor",
+      "value": "nwse-resize"
+    },
+    {
+      "name": "cursorPointer",
+      "className": "cursor_pointer",
+      "property": "cursor",
+      "value": "pointer"
+    },
+    {
+      "name": "cursorProgress",
+      "className": "cursor_progress",
+      "property": "cursor",
+      "value": "progress"
+    },
+    {
+      "name": "cursorRowResize",
+      "className": "cursor_row-resize",
+      "property": "cursor",
+      "value": "row-resize"
+    },
+    {
+      "name": "cursorSResize",
+      "className": "cursor_s-resize",
+      "property": "cursor",
+      "value": "s-resize"
+    },
+    {
+      "name": "cursorSeResize",
+      "className": "cursor_se-resize",
+      "property": "cursor",
+      "value": "se-resize"
+    },
+    {
+      "name": "cursorSwResize",
+      "className": "cursor_sw-resize",
+      "property": "cursor",
+      "value": "sw-resize"
+    },
+    {
+      "name": "cursorText",
+      "className": "cursor_text",
+      "property": "cursor",
+      "value": "text"
+    },
+    {
+      "name": "cursorVerticalText",
+      "className": "cursor_vertical-text",
+      "property": "cursor",
+      "value": "vertical-text"
+    },
+    {
+      "name": "cursorWResize",
+      "className": "cursor_w-resize",
+      "property": "cursor",
+      "value": "w-resize"
+    },
+    {
+      "name": "cursorWait",
+      "className": "cursor_wait",
+      "property": "cursor",
+      "value": "wait"
+    },
+    {
+      "name": "cursorZoomIn",
+      "className": "cursor_zoom-in",
+      "property": "cursor",
+      "value": "zoom-in"
+    },
+    {
+      "name": "cursorZoomOut",
+      "className": "cursor_zoom-out",
+      "property": "cursor",
+      "value": "zoom-out"
+    },
+    {
+      "name": "pointerEventsAll",
+      "className": "pointer-events_all",
+      "property": "pointer-events",
+      "value": "all"
+    },
+    {
+      "name": "pointerEventsAuto",
+      "className": "pointer-events_auto",
+      "property": "pointer-events",
+      "value": "auto"
+    },
+    {
+      "name": "pointerEventsFill",
+      "className": "pointer-events_fill",
+      "property": "pointer-events",
+      "value": "fill"
+    },
+    {
+      "name": "pointerEventsInherit",
+      "className": "pointer-events_inherit",
+      "property": "pointer-events",
+      "value": "inherit"
+    },
+    {
+      "name": "pointerEventsNone",
+      "className": "pointer-events_none",
+      "property": "pointer-events",
+      "value": "none"
+    },
+    {
+      "name": "pointerEventsPainted",
+      "className": "pointer-events_painted",
+      "property": "pointer-events",
+      "value": "painted"
+    },
+    {
+      "name": "pointerEventsStroke",
+      "className": "pointer-events_stroke",
+      "property": "pointer-events",
+      "value": "stroke"
+    },
+    {
+      "name": "pointerEventsVisible",
+      "className": "pointer-events_visible",
+      "property": "pointer-events",
+      "value": "visible"
+    },
+    {
+      "name": "pointerEventsVisibleFill",
+      "className": "pointer-events_visibleFill",
+      "property": "pointer-events",
+      "value": "visibleFill"
+    },
+    {
+      "name": "pointerEventsVisiblePainted",
+      "className": "pointer-events_visiblePainted",
+      "property": "pointer-events",
+      "value": "visiblePainted"
+    },
+    {
+      "name": "pointerEventsVisibleStroke",
+      "className": "pointer-events_visibleStroke",
+      "property": "pointer-events",
+      "value": "visibleStroke"
+    },
+    {
+      "name": "userSelectAll",
+      "className": "user-select_all",
+      "property": "user-select",
+      "value": "all"
+    },
+    {
+      "name": "userSelectAuto",
+      "className": "user-select_auto",
+      "property": "user-select",
+      "value": "auto"
+    },
+    {
+      "name": "userSelectContain",
+      "className": "user-select_contain",
+      "property": "user-select",
+      "value": "contain"
+    },
+    {
+      "name": "userSelectNone",
+      "className": "user-select_none",
+      "property": "user-select",
+      "value": "none"
+    },
+    {
+      "name": "userSelectText",
+      "className": "user-select_text",
+      "property": "user-select",
+      "value": "text"
+    },
+    {
+      "name": "zIndexAuto",
+      "className": "z-index_auto",
+      "property": "z-index",
+      "value": "auto"
+    },
+    {
+      "name": "zIndex0",
+      "className": "z-index_0",
+      "property": "z-index",
+      "value": "0"
+    },
+    {
+      "name": "zIndex10",
+      "className": "z-index_10",
+      "property": "z-index",
+      "value": "10"
+    },
+    {
+      "name": "zIndex20",
+      "className": "z-index_20",
+      "property": "z-index",
+      "value": "20"
+    },
+    {
+      "name": "zIndex30",
+      "className": "z-index_30",
+      "property": "z-index",
+      "value": "30"
+    },
+    {
+      "name": "zIndex40",
+      "className": "z-index_40",
+      "property": "z-index",
+      "value": "40"
+    },
+    {
+      "name": "zIndex50",
+      "className": "z-index_50",
+      "property": "z-index",
+      "value": "50"
+    },
+    {
+      "name": "zIndex100",
+      "className": "z-index_100",
+      "property": "z-index",
+      "value": "100"
+    },
+    {
+      "name": "zIndex999",
+      "className": "z-index_999",
+      "property": "z-index",
+      "value": "999"
+    },
+    {
+      "name": "zIndex9999",
+      "className": "z-index_9999",
+      "property": "z-index",
+      "value": "9999"
+    },
+    {
+      "name": "isDisabled",
+      "className": "is-disabled",
+      "property": "state",
+      "value": "disabled"
+    },
+    {
+      "name": "isLoading",
+      "className": "is-loading",
+      "property": "state",
+      "value": "loading"
+    },
+    {
+      "name": "isActive",
+      "className": "is-active",
+      "property": "state",
+      "value": "active"
+    },
+    {
+      "name": "isFocus",
+      "className": "is-focus",
+      "property": "state",
+      "value": "focus"
+    },
+    {
+      "name": "isHover",
+      "className": "is-hover",
+      "property": "state",
+      "value": "hover"
+    },
+    {
+      "name": "isSelected",
+      "className": "is-selected",
+      "property": "state",
+      "value": "selected"
+    },
+    {
+      "name": "isError",
+      "className": "is-error",
+      "property": "state",
+      "value": "error"
+    },
+    {
+      "name": "isSuccess",
+      "className": "is-success",
+      "property": "state",
+      "value": "success"
+    },
+    {
+      "name": "isWarning",
+      "className": "is-warning",
+      "property": "state",
+      "value": "warning"
+    }
+  ]
+}

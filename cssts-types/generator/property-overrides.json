@@ -1,0 +1,104 @@
+{
+  "$schema": "./property-overrides.schema.json",
+  "$comment": "补充 css-tree 缺失的类型范围配置",
+  
+  "typeOverrides": {
+    "$comment": "css-tree 类型的范围补充（当 opts 为 null 时使用）",
+    
+    "alpha-value": {
+      "min": 0,
+      "max": 1,
+      "step": 0.25,
+      "comment": "透明度，css-tree 未设置范围"
+    }
+  },
+  
+  "propertyOverrides": {
+    "$comment": "特定属性的配置覆盖",
+    
+    "padding": {
+      "numeric": [
+        { "unit": "px", "value": "integer", "min": 0 }
+      ],
+      "comment": "padding 不支持负数"
+    },
+    
+    "padding-top": {
+      "numeric": [
+        { "unit": "px", "value": "integer", "min": 0 }
+      ]
+    },
+    
+    "padding-right": {
+      "numeric": [
+        { "unit": "px", "value": "integer", "min": 0 }
+      ]
+    },
+    
+    "padding-bottom": {
+      "numeric": [
+        { "unit": "px", "value": "integer", "min": 0 }
+      ]
+    },
+    
+    "padding-left": {
+      "numeric": [
+        { "unit": "px", "value": "integer", "min": 0 }
+      ]
+    },
+    
+    "margin": {
+      "numeric": [
+        { "unit": "px", "value": "integer" }
+      ],
+      "comment": "margin 支持负数（无 min）"
+    },
+    
+    "opacity": {
+      "numeric": [
+        { "unit": "none", "value": "number", "min": 0, "max": 1, "step": 0.25 }
+      ],
+      "comment": "透明度 0-1"
+    },
+    
+    "z-index": {
+      "numeric": [
+        { "unit": "none", "value": "integer", "min": -9999, "max": 9999, "step": 10 }
+      ],
+      "comment": "层级，支持负数"
+    },
+    
+    "line-height": {
+      "numeric": [
+        { "unit": "none", "value": "number", "min": 0, "step": 0.25 }
+      ],
+      "comment": "行高，无单位小数"
+    },
+    
+    "font-weight": {
+      "numeric": [
+        { "unit": "none", "value": "integer", "min": 100, "max": 900, "step": 100 }
+      ],
+      "comment": "字重，css-tree 有范围但我们用常用值"
+    },
+    
+    "flex-grow": {
+      "numeric": [
+        { "unit": "none", "value": "integer", "min": 0, "max": 1, "step": 1 }
+      ]
+    },
+    
+    "flex-shrink": {
+      "numeric": [
+        { "unit": "none", "value": "integer", "min": 0, "max": 1, "step": 1 }
+      ]
+    },
+    
+    "order": {
+      "numeric": [
+        { "unit": "none", "value": "integer", "min": -5, "max": 5, "step": 1 }
+      ],
+      "comment": "排序，支持负数"
+    }
+  }
+}
