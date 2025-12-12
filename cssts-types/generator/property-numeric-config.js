@@ -105,7 +105,7 @@ const gap = [pxInt]
 
 // ============ 属性映射 ============
 
-export const propertyNumericTypes = {
+export const propertyNumericTypesOld = {
   // 尺寸
   'width': sizing,
   'height': sizing,
