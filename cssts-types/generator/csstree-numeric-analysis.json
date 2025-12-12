@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2025-12-12T10:11:34.132Z",
+  "generatedAt": "2025-12-12T10:19:30.615Z",
   "source": "css-tree",
   "typesWithRange": {
     "cubic-bezier-timing-function": {
@@ -183,6 +183,7 @@
         "angle",
         "percentage[0,100]"
       ],
+      "colorProperty": true,
       "category": "background"
     },
     {
@@ -329,6 +330,7 @@
         "angle",
         "percentage[0,100]"
       ],
+      "colorProperty": true,
       "category": "border"
     },
     {
@@ -444,6 +446,7 @@
         "angle",
         "percentage[0,100]"
       ],
+      "colorProperty": true,
       "category": "border"
     },
     {
@@ -485,6 +488,7 @@
         "angle",
         "percentage[0,100]"
       ],
+      "colorProperty": true,
       "category": "border"
     },
     {
@@ -542,6 +546,7 @@
         "angle",
         "percentage[0,100]"
       ],
+      "colorProperty": true,
       "category": "border"
     },
     {
@@ -587,6 +592,7 @@
         "angle",
         "percentage[0,100]"
       ],
+      "colorProperty": true,
       "category": "border"
     },
     {
@@ -603,70 +609,6 @@
         "length"
       ],
       "category": "border"
-    },
-    {
-      "property": "accent-color",
-      "numericTypes": [
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]"
-      ],
-      "category": "color"
-    },
-    {
-      "property": "caret-color",
-      "numericTypes": [
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]"
-      ],
-      "category": "color"
-    },
-    {
-      "property": "color",
-      "numericTypes": [
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]"
-      ],
-      "category": "color"
-    },
-    {
-      "property": "column-rule-color",
-      "numericTypes": [
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]"
-      ],
-      "category": "color"
-    },
-    {
-      "property": "opacity",
-      "numericTypes": [
-        "alpha-value",
-        "number",
-        "percentage"
-      ],
-      "category": "color"
-    },
-    {
-      "property": "scrollbar-color",
-      "numericTypes": [
-        "percentage",
-        "alpha-value",
-        "number",
-        "angle",
-        "percentage[0,100]"
-      ],
-      "category": "color"
     },
     {
       "property": "flex-grow",
@@ -818,6 +760,35 @@
       "category": "layout"
     },
     {
+      "property": "fill-opacity",
+      "numericTypes": [
+        "number",
+        "number[0,1]"
+      ],
+      "category": "opacity"
+    },
+    {
+      "property": "opacity",
+      "numericTypes": [
+        "alpha-value",
+        "number",
+        "percentage"
+      ],
+      "category": "opacity"
+    },
+    {
+      "property": "accent-color",
+      "numericTypes": [
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]"
+      ],
+      "colorProperty": true,
+      "category": "other"
+    },
+    {
       "property": "aspect-ratio",
       "numericTypes": [
         "number",
@@ -887,6 +858,18 @@
       "category": "other"
     },
     {
+      "property": "caret-color",
+      "numericTypes": [
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]"
+      ],
+      "colorProperty": true,
+      "category": "other"
+    },
+    {
       "property": "clip",
       "numericTypes": [
         "length"
@@ -904,10 +887,34 @@
       "category": "other"
     },
     {
+      "property": "color",
+      "numericTypes": [
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]"
+      ],
+      "colorProperty": true,
+      "category": "other"
+    },
+    {
       "property": "column-count",
       "numericTypes": [
         "integer"
       ],
+      "category": "other"
+    },
+    {
+      "property": "column-rule-color",
+      "numericTypes": [
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]"
+      ],
+      "colorProperty": true,
       "category": "other"
     },
     {
@@ -1019,14 +1026,7 @@
         "angle",
         "percentage[0,100]"
       ],
-      "category": "other"
-    },
-    {
-      "property": "fill-opacity",
-      "numericTypes": [
-        "number",
-        "number[0,1]"
-      ],
+      "colorProperty": true,
       "category": "other"
     },
     {
@@ -1364,6 +1364,7 @@
         "angle",
         "percentage[0,100]"
       ],
+      "colorProperty": true,
       "category": "other"
     },
     {
@@ -1736,6 +1737,18 @@
       "category": "scroll"
     },
     {
+      "property": "scrollbar-color",
+      "numericTypes": [
+        "percentage",
+        "alpha-value",
+        "number",
+        "angle",
+        "percentage[0,100]"
+      ],
+      "colorProperty": true,
+      "category": "scroll"
+    },
+    {
       "property": "height",
       "numericTypes": [
         "length",
@@ -2056,6 +2069,7 @@
         "angle",
         "percentage[0,100]"
       ],
+      "colorProperty": true,
       "category": "typography"
     },
     {
@@ -2075,6 +2089,7 @@
         "angle",
         "percentage[0,100]"
       ],
+      "colorProperty": true,
       "category": "typography"
     },
     {
@@ -2611,7 +2626,8 @@
   "stats": {
     "typesWithRange": 11,
     "propertiesTotal": 285,
-    "propertiesStandard": 235,
+    "propertiesStandard": 220,
+    "propertiesColor": 15,
     "propertiesDeprecated": 50
   }
 }

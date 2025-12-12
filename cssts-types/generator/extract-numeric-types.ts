@@ -14,8 +14,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 interface PropertyNumericInfo {
   property: string
   numericTypes: string[]
-  deprecated?: boolean  // 浏览器前缀属性标记为过时
-  category?: string     // 属性分类
+  deprecated?: boolean      // 浏览器前缀属性标记为过时
+  colorProperty?: boolean   // 颜色属性（由设计系统处理）
+  category?: string         // 属性分类
 }
 
 /**
@@ -73,6 +74,21 @@ function isDeprecatedProperty(property: string): boolean {
 }
 
 /**
+ * 判断属性是否为颜色属性（由设计系统处理，不生成数值原子类）
+ * 注意：opacity 虽然在 color 分类，但它是真正的数值属性，需要保留
+ */
+function isColorProperty(property: string): boolean {
+  // 这些属性的数值来自颜色函数内部（如 rgb(), hsl()），不是我们要生成的原子类
+  const colorProperties = [
+    'color', 'background-color', 'border-color', 'outline-color',
+    'accent-color', 'caret-color', 'column-rule-color', 'scrollbar-color',
+    'text-decoration-color', 'text-emphasis-color', 'fill', 'stroke',
+    'border-top-color', 'border-right-color', 'border-bottom-color', 'border-left-color',
+  ]
+  return colorProperties.includes(property)
+}
+
+/**
  * 获取属性分类
  */
 function getPropertyCategory(property: string): string {
@@ -112,9 +128,9 @@ function getPropertyCategory(property: string): string {
   if (property.startsWith('background')) {
     return 'background'
   }
-  // 颜色
-  if (property === 'color' || property === 'opacity' || property.includes('color')) {
-    return 'color'
+  // 透明度（真正的数值属性）
+  if (property === 'opacity' || property === 'fill-opacity') {
+    return 'opacity'
   }
   // 变换
   if (property.startsWith('transform') || property === 'rotate' || property === 'scale' ||
@@ -154,6 +170,11 @@ function getPropertyNumericInfo(): PropertyNumericInfo[] {
       // 标记过时属性
       if (isDeprecatedProperty(property)) {
         info.deprecated = true
+      }
+      
+      // 标记颜色属性（由设计系统处理）
+      if (isColorProperty(property)) {
+        info.colorProperty = true
       }
       
       // 添加分类（只对非过时属性）
@@ -318,7 +339,8 @@ async function main() {
     stats: {
       typesWithRange: Object.keys(typesWithRange).length,
       propertiesTotal: propertyInfo.length,
-      propertiesStandard: propertyInfo.filter(p => !p.deprecated).length,
+      propertiesStandard: propertyInfo.filter(p => !p.deprecated && !p.colorProperty).length,
+      propertiesColor: propertyInfo.filter(p => p.colorProperty).length,
       propertiesDeprecated: propertyInfo.filter(p => p.deprecated).length,
     }
   }
@@ -337,6 +359,7 @@ async function main() {
   // 打印统计
   console.log('\n📊 统计:')
   console.log(`   标准属性: ${output.stats.propertiesStandard}`)
+  console.log(`   颜色属性 (由设计系统处理): ${output.stats.propertiesColor}`)
   console.log(`   过时属性 (浏览器前缀): ${output.stats.propertiesDeprecated}`)
   console.log(`   总计: ${output.stats.propertiesTotal}`)
 }

@@ -13,6 +13,7 @@ interface PropertyInfo {
   property: string
   numericTypes: string[]
   deprecated?: boolean
+  colorProperty?: boolean
   category?: string
 }
 
@@ -25,8 +26,8 @@ async function main() {
   const jsonPath = path.join(__dirname, 'csstree-numeric-analysis.json')
   const data: AnalysisData = JSON.parse(fs.readFileSync(jsonPath, 'utf-8'))
   
-  // 过滤掉 deprecated 属性，按 category 分组
-  const standardProps = data.propertiesWithNumeric.filter(p => !p.deprecated)
+  // 过滤掉 deprecated 和 colorProperty 属性，按 category 分组
+  const standardProps = data.propertiesWithNumeric.filter(p => !p.deprecated && !p.colorProperty)
   
   // 按 category 分组
   const byCategory: Record<string, PropertyInfo[]> = {}
@@ -48,7 +49,7 @@ export const propertyNumericTypes = {
 `
 
   // 按分类顺序输出
-  const categoryOrder = ['sizing', 'spacing', 'positioning', 'layout', 'typography', 'border', 'background', 'color', 'transform', 'animation', 'scroll', 'other']
+  const categoryOrder = ['sizing', 'spacing', 'positioning', 'layout', 'typography', 'border', 'background', 'opacity', 'transform', 'animation', 'scroll', 'other']
   
   for (const category of categoryOrder) {
     const props = byCategory[category]
