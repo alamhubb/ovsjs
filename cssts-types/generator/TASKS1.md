@@ -608,7 +608,28 @@ function generateAtomicClasses(property: string) {
 
 - [x] `generateCsstsAtomsDts()` - 生成 CsstsAtoms.d.ts
 - [x] `generateGlobalDts()` - 生成 global.generated.d.ts
-- [x] `generateAtomsJson()` - 生成 atoms.json
+- [x] `generateAtomsJsonAndCss()` - **同时生成** atoms.json 和 atoms.css
+
+**重要设计决策**：`atoms.json` 和 `atoms.css` 必须**同时生成**，确保数据一致性。
+
+**atoms.json 结构**：
+```json
+{
+  "paddingTop16px": {
+    "property": "padding-top",
+    "className": "padding-top_16px"
+  },
+  "displayFlex": {
+    "property": "display",
+    "className": "display_flex"
+  }
+}
+```
+
+**字段说明**：
+- `property`: CSS 属性名，用于**同属性去重**
+- `className`: CSS 类名，用于生成最终的 class 字符串
+- 不需要 `value` 字段，因为 CSS 规则已写入 atoms.css
 
 ---
 
@@ -716,17 +737,56 @@ const expandableTypes = ['length-percentage', 'alpha-value', 'font-weight-absolu
 - `unit`: 单位类型（px, rem, ratio, deg, ms, unitless）
 - `value`: 数值类型（integer, number）
 - `allowNegative`: 是否支持负数（默认 false）
-- `range`: 固定步长配置（可选，无则使用渐进步长策略）
-  - `min`: 最小值
-  - `max`: 最大值
-  - `step`: 步长
+- `step`: 固定步长配置（可选，无则使用渐进步长策略）
 
 **生成逻辑**：
-1. 从 `property-numeric-config.json` 获取属性的 NumericType 数组
+1. 从 `property-numeric-config-type.ts` 获取属性的 NumericType 数组
 2. 对于每个 NumericType：
-   - 有 `range` → 使用固定步长 + 对齐补偿算法
-   - 无 `range` → 使用渐进步长策略（551 个值）
-3. 结合 `csstree-overrides` 的 min/max 过滤
+   - 有 `step` → 使用固定步长生成
+   - 无 `step` → 使用渐进步长策略
+
+#### 渐进步长策略
+
+当配置没有指定 `step` 时，使用渐进步长策略生成数值。策略基于"整除算法"：
+
+| 范围 | 生成规则 | 示例值 |
+|------|---------|--------|
+| 1-100 | 步长 1 | 1, 2, 3, ..., 100 |
+| 100-200 | 能被 2 和 5 整除的数 | 100, 110, 120, ..., 200 |
+| 200-500 | 能被 5 整除的数 | 200, 205, 210, ..., 500 |
+| 500-1000 | 能被 10 整除的数 | 500, 510, 520, ..., 1000 |
+| 1000-2000 | 能被 20 和 50 整除的数 | 1000, 1050, 1100, ..., 2000 |
+| 2000-5000 | 能被 50 整除的数 | 2000, 2050, 2100, ..., 5000 |
+| 5000-10000 | 能被 100 整除的数 | 5000, 5100, 5200, ..., 10000 |
+
+**核心算法**：`isDivisibleByAny(value, divisors)` - 判断值是否能被任一除数整除
+
+```typescript
+function isDivisibleByAny(value: number, divisors: number[]): boolean {
+  return divisors.some(d => value % d === 0)
+}
+
+// 渐进步长区间配置
+const progressiveRanges = [
+  { max: 100, divisors: [1] },           // 1-100: 每个整数
+  { max: 200, divisors: [2, 5] },        // 100-200: 能被 2 或 5 整除
+  { max: 500, divisors: [5] },           // 200-500: 能被 5 整除
+  { max: 1000, divisors: [10] },         // 500-1000: 能被 10 整除
+  { max: 2000, divisors: [20, 50] },     // 1000-2000: 能被 20 或 50 整除
+  { max: 5000, divisors: [50] },         // 2000-5000: 能被 50 整除
+  { max: 10000, divisors: [100] },       // 5000-10000: 能被 100 整除
+]
+```
+
+**生成数量估算**（max: 10000）：
+- 1-100: 100 个
+- 100-200: 约 30 个（能被 2 或 5 整除）
+- 200-500: 60 个（能被 5 整除）
+- 500-1000: 50 个（能被 10 整除）
+- 1000-2000: 约 30 个（能被 20 或 50 整除）
+- 2000-5000: 60 个（能被 50 整除）
+- 5000-10000: 50 个（能被 100 整除）
+- **总计约 380 个值**
 
 ---
 

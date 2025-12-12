@@ -342,6 +342,15 @@ export default defineConfig({
 
 ## 运行时 API
 
+### cssts.loadAtoms(data)
+
+加载原子类数据（从 atoms.json）。通常由 vite-plugin-cssts 自动调用：
+
+```typescript
+import atomsData from 'cssts-types/dist/atoms.json'
+cssts.loadAtoms(atomsData)
+```
+
 ### cssts.$cls(...args)
 
 合并多个样式，支持条件表达式：
@@ -357,7 +366,7 @@ cssts.$cls(
 
 ### cssts.replace(style, key, newAtom)
 
-替换样式中的原子类：
+替换样式中的原子类（基于 atoms.json 的 property 字段进行同属性去重）：
 
 ```typescript
 // 原子类替换
@@ -365,6 +374,32 @@ cssts.replace(style, "backgroundColorPrimary", "backgroundColorSuccess")
 
 // CSS 属性名替换
 cssts.replace(style, "backgroundColor", "backgroundColorDanger")
+```
+
+### cssts.getCssProperty(atomName)
+
+获取原子类对应的 CSS 属性名：
+
+```typescript
+cssts.getCssProperty("paddingTop16px")  // → "padding-top"
+cssts.getCssProperty("displayFlex")     // → "display"
+```
+
+### cssts.getCssClassName(atomName)
+
+获取原子类对应的 CSS 类名：
+
+```typescript
+cssts.getCssClassName("paddingTop16px")  // → "padding-top_16px"
+cssts.getCssClassName("width50pct")      // → "width_50\\%"
+```
+
+### cssts.registerAtom(atomName, property, className?)
+
+注册自定义原子类：
+
+```typescript
+cssts.registerAtom("myCustomStyle", "background-color", "my-custom-style")
 ```
 
 ## 项目结构

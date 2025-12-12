@@ -73,12 +73,12 @@ export interface PropertyDefinition {
 
 /**
  * 全局默认配置
- * 当属性没有指定 min/max/step 时使用
+ * 当属性没有指定 min/max 时使用
+ * 注意：不包含 step，未设置 step 时使用渐进步长策略
  */
 export const globalDefaults = {
   min: 1,
   max: 100,
-  step: 1,
 }
 
 // ==================== 工具函数 ====================
@@ -129,13 +129,94 @@ export function generateStepValues(min: number, max: number, step: number): numb
 }
 
 /**
+ * 判断值是否能被任一除数整除
+ *
+ * @param value 要检查的值
+ * @param divisors 除数数组
+ * @returns 是否能被任一除数整除
+ */
+function isDivisibleByAny(value: number, divisors: number[]): boolean {
+  return divisors.some((d) => value % d === 0)
+}
+
+/**
+ * 渐进步长区间配置
+ *
+ * | 范围 | 生成规则 |
+ * |------|---------|
+ * | 1-100 | 步长 1（每个整数） |
+ * | 100-200 | 能被 2 或 5 整除的数 |
+ * | 200-500 | 能被 5 整除的数 |
+ * | 500-1000 | 能被 10 整除的数 |
+ * | 1000-2000 | 能被 20 或 50 整除的数 |
+ * | 2000-5000 | 能被 50 整除的数 |
+ * | 5000-10000 | 能被 100 整除的数 |
+ */
+const progressiveRanges = [
+  { max: 100, divisors: [1] }, // 1-100: 每个整数
+  { max: 200, divisors: [2, 5] }, // 100-200: 能被 2 或 5 整除
+  { max: 500, divisors: [5] }, // 200-500: 能被 5 整除
+  { max: 1000, divisors: [10] }, // 500-1000: 能被 10 整除
+  { max: 2000, divisors: [20, 50] }, // 1000-2000: 能被 20 或 50 整除
+  { max: 5000, divisors: [50] }, // 2000-5000: 能被 50 整除
+  { max: 10000, divisors: [100] }, // 5000-10000: 能被 100 整除
+  { max: Infinity, divisors: [1000] }, // 10000+: 能被 1000 整除
+]
+
+/**
+ * 渐进步长策略 - 生成常用数值预设
+ *
+ * 策略：数值越大，使用越稀疏的整除规则
+ *
+ * @param min 最小值
+ * @param max 最大值
+ * @param supportNegative 是否支持负数
+ * @returns 数值数组
+ */
+function generateProgressiveValues(min: number, max: number, supportNegative: boolean): number[] {
+  const values: number[] = []
+
+  for (let current = min; current <= max; current++) {
+    // 找到当前值所属的区间
+    let shouldInclude = false
+    let prevMax = 0
+
+    for (const range of progressiveRanges) {
+      if (current <= range.max && current > prevMax) {
+        // 当前值在这个区间内，检查是否满足整除条件
+        shouldInclude = isDivisibleByAny(current, range.divisors)
+        break
+      }
+      prevMax = range.max
+    }
+
+    if (shouldInclude) {
+      values.push(current)
+      if (supportNegative && current > 0) {
+        values.push(-current)
+      }
+    }
+  }
+
+  // 确保包含 max（如果 max 不在生成的值中）
+  if (!values.includes(max) && max > 0) {
+    values.push(max)
+    if (supportNegative) {
+      values.push(-max)
+    }
+  }
+
+  return values
+}
+
+/**
  * 根据 NumericType 生成数值预设
  * 
  * 策略：
  * 1. zero 类型 → 返回 [0]
- * 2. 使用配置的 min/max/step，未配置的使用全局默认值
- * 3. 特殊情况：min=0, max=1 时，默认 step=0.1
- * 4. 如果 negative=true，同时 push 正负值
+ * 2. 有 step → 使用固定步长生成
+ * 3. 无 step → 使用渐进步长策略
+ * 4. 如果 negative=true，同时生成负数版本
  * 5. 合并 presets 额外预设值（去重并排序）
  */
 export function generateValuePresets(numericType: NumericType): number[] {
@@ -151,32 +232,39 @@ export function generateValuePresets(numericType: NumericType): number[] {
   const max = numericType.max ?? globalDefaults.max
   const supportNegative = numericType.negative === true
   
-  // 计算默认步长：min=0, max=1 时使用 0.1，否则使用全局默认值
-  const defaultStep = (min === 0 && max === 1) ? 0.1 : globalDefaults.step
-  const step = numericType.step ?? defaultStep
+  let values: number[] = []
   
-  // 一次遍历生成所有值
-  const values: number[] = []
-  for (let v = min; v <= max; v += step) {
-    const rounded = Math.round(v * 1000) / 1000
-    values.push(rounded)
-    // 如果支持负数且当前值 > 0，同时 push 负值
-    if (supportNegative && rounded > 0) {
-      values.push(-rounded)
+  if (numericType.step !== undefined) {
+    // 有 step → 使用固定步长生成
+    const step = numericType.step
+    for (let v = min; v <= max; v += step) {
+      const rounded = Math.round(v * 1000) / 1000
+      values.push(rounded)
+      if (supportNegative && rounded > 0) {
+        values.push(-rounded)
+      }
     }
-  }
-  // 确保包含 max
-  if (values.length > 0 && !values.includes(max)) {
-    values.push(max)
-    if (supportNegative && max > 0) {
-      values.push(-max)
+    // 确保包含 max
+    if (!values.includes(max)) {
+      values.push(max)
+      if (supportNegative && max > 0) {
+        values.push(-max)
+      }
     }
+  } else {
+    // 无 step → 使用渐进步长策略
+    values = generateProgressiveValues(min, max, supportNegative)
   }
   
-  // 合并额外预设值
+  // 合并额外预设值（如果支持负数，也生成负数版本）
   const presets = numericType.presets ?? []
   if (presets.length > 0) {
-    values.push(...presets)
+    for (const preset of presets) {
+      values.push(preset)
+      if (supportNegative && preset > 0) {
+        values.push(-preset)
+      }
+    }
   }
   
   // 去重、排序

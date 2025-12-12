@@ -18,6 +18,19 @@ interface ClassObject {
 }
 
 /**
+ * 原子类信息结构（来自 atoms.json）
+ */
+interface AtomInfo {
+  property: string   // CSS 属性名，用于同属性去重
+  className: string  // CSS 类名
+}
+
+/**
+ * atoms.json 数据类型
+ */
+type AtomsData = Record<string, AtomInfo>
+
+/**
  * 合并多个样式为 Vue :class 可用的对象
  * 
  * 支持的输入类型：
@@ -88,34 +101,23 @@ function processValue(value: ClassValue, result: ClassObject): void {
 // ==================== 全局属性映射 ====================
 
 /**
- * 原子类名 → CSS 属性类别的全局映射
+ * 原子类数据（从 atoms.json 加载）
+ * 
+ * 结构：{ tsIdentifier: { property: 'css-property', className: 'css-class-name' } }
+ * 
+ * 初始化方式：
+ * 1. 编译时由 vite-plugin-cssts 注入
+ * 2. 或运行时调用 cssts.loadAtoms() 加载
  */
-const CSS_PROPERTY_MAP: Record<string, string> = {
-  // 颜色
-  colorRed: 'color', colorWhite: 'color', colorBlack: 'color',
-  colorRegular: 'color', colorPrimary: 'color', colorSuccess: 'color',
-  colorWarning: 'color', colorDanger: 'color', colorInfo: 'color',
-  
-  // 背景色
-  bgPrimary: 'background-color', bgSuccess: 'background-color',
-  bgWarning: 'background-color', bgDanger: 'background-color',
-  bgInfo: 'background-color', bgWhite: 'background-color', bgBlack: 'background-color',
-  
-  // 边框颜色
-  borderBase: 'border-color', borderPrimary: 'border-color',
-  borderSuccess: 'border-color', borderWarning: 'border-color',
-  borderDanger: 'border-color', borderInfo: 'border-color',
-  
-  // 字体
-  fontSize12: 'font-size', fontSize14: 'font-size', fontSize16: 'font-size',
-  fontNormal: 'font-weight', fontMedium: 'font-weight', fontBold: 'font-weight',
-  
-  // 布局
-  rounded: 'border-radius', roundedFull: 'border-radius', roundedNone: 'border-radius',
-  paddingXs: 'padding', paddingSm: 'padding', paddingMd: 'padding', paddingLg: 'padding',
-  height32: 'height', height40: 'height', height48: 'height',
-  cursorPointer: 'cursor', cursorNotAllowed: 'cursor', cursorDefault: 'cursor',
-  flex: 'display', inlineFlex: 'display', block: 'display', hidden: 'display',
+let atomsData: AtomsData = {}
+
+/**
+ * 加载原子类数据
+ * 
+ * @param data atoms.json 数据
+ */
+function loadAtoms(data: AtomsData): void {
+  atomsData = data
 }
 
 /**
@@ -129,51 +131,32 @@ function camelToKebab(str: string): string {
 }
 
 /**
- * kebab-case 转驼峰
+ * 获取原子类对应的 CSS 属性（从 atoms.json 查询）
  */
-function kebabToCamel(str: string): string {
-  return str.replace(/-([a-z0-9])/g, (_, char) => char.toUpperCase())
+function getCssProperty(atomName: string): string | undefined {
+  return atomsData[atomName]?.property
 }
 
 /**
- * 已知的 CSS 属性名集合（用于判断是否是属性名而非原子类名）
+ * 获取原子类对应的 CSS 类名（从 atoms.json 查询）
  */
-const CSS_PROPERTIES = new Set([
-  'color', 'background-color', 'border-color', 'font-size', 'font-weight',
-  'padding', 'margin', 'height', 'width', 'border-radius', 'cursor', 'display',
-  'background', 'border', 'opacity', 'transform', 'transition'
-])
-
-/**
- * 获取原子类对应的 CSS 属性
- */
-function getCssProperty(atomName: string): string | undefined {
-  if (CSS_PROPERTY_MAP[atomName]) return CSS_PROPERTY_MAP[atomName]
-  
-  // 根据前缀推断
-  if (atomName.startsWith('color')) return 'color'
-  if (atomName.startsWith('bg')) return 'background-color'
-  if (atomName.startsWith('border')) return 'border-color'
-  if (atomName.startsWith('fontSize')) return 'font-size'
-  if (atomName.startsWith('font')) return 'font-weight'
-  if (atomName.startsWith('padding')) return 'padding'
-  if (atomName.startsWith('margin')) return 'margin'
-  if (atomName.startsWith('height')) return 'height'
-  if (atomName.startsWith('width')) return 'width'
-  if (atomName.startsWith('rounded')) return 'border-radius'
-  if (atomName.startsWith('cursor')) return 'cursor'
-  
-  return undefined
+function getCssClassName(atomName: string): string | undefined {
+  return atomsData[atomName]?.className
 }
 
 /**
  * 判断是否是 CSS 属性名（而非原子类名）
+ * 
+ * 通过检查 atomsData 中是否有该属性名对应的原子类来判断
  */
 function isCssPropertyName(name: string): boolean {
-  // 检查 kebab-case 格式
-  if (CSS_PROPERTIES.has(name)) return true
-  // 检查驼峰格式转换后
-  if (CSS_PROPERTIES.has(camelToKebab(name))) return true
+  const kebabName = camelToKebab(name)
+  // 如果在 atomsData 中找到任何原子类的 property 等于该名称，则是 CSS 属性名
+  for (const atomInfo of Object.values(atomsData)) {
+    if (atomInfo.property === name || atomInfo.property === kebabName) {
+      return true
+    }
+  }
   return false
 }
 
@@ -202,7 +185,7 @@ function isCssPropertyName(name: string): boolean {
  * // → "bg-primary color-red"
  */
 function replace(style: string, oldAtomOrProp: string, newAtom: string): string {
-  const newKebab = camelToKebab(newAtom)
+  const newClassName = getCssClassName(newAtom) || camelToKebab(newAtom)
   const newProp = getCssProperty(newAtom)
   const classes = style.split(' ').filter(Boolean)
   
@@ -214,32 +197,35 @@ function replace(style: string, oldAtomOrProp: string, newAtom: string): string 
     if (newProp && newProp === targetProp) {
       // 删除所有属于该 CSS 属性的原子类
       const result = classes.filter(cls => {
-        const atomName = kebabToCamel(cls)
-        const prop = getCssProperty(atomName)
-        return prop !== targetProp
+        // 通过类名反查原子类名，获取其 property
+        const atomEntry = Object.entries(atomsData).find(([_, info]) => info.className === cls)
+        if (atomEntry) {
+          return atomEntry[1].property !== targetProp
+        }
+        return true
       })
-      // 添加新原子类
-      result.push(newKebab)
+      // 添加新原子类的类名
+      result.push(newClassName)
       return result.join(' ')
     }
     
     // 属性不匹配，直接添加新原子类
-    return [...classes, newKebab].join(' ')
+    return [...classes, newClassName].join(' ')
   }
   
   // 原子类替换模式
-  const oldKebab = camelToKebab(oldAtomOrProp)
+  const oldClassName = getCssClassName(oldAtomOrProp) || camelToKebab(oldAtomOrProp)
   const oldProp = getCssProperty(oldAtomOrProp)
   
   // 如果新旧原子类属于同一 CSS 属性，直接替换
   if (oldProp && newProp && oldProp === newProp) {
-    const result = classes.filter(cls => cls !== oldKebab)
-    result.push(newKebab)
+    const result = classes.filter(cls => cls !== oldClassName)
+    result.push(newClassName)
     return result.join(' ')
   }
   
   // 否则只替换精确匹配的类名
-  return classes.map(cls => cls === oldKebab ? newKebab : cls).join(' ')
+  return classes.map(cls => cls === oldClassName ? newClassName : cls).join(' ')
 }
 
 /**
@@ -262,10 +248,17 @@ function replaceAll(style: string, replacements: Record<string, string>): string
 }
 
 /**
- * 注册自定义属性映射
+ * 注册自定义原子类
+ * 
+ * @param atomName 原子类名（驼峰）
+ * @param property CSS 属性名
+ * @param className CSS 类名（可选，默认从 atomName 转换）
  */
-function registerProperty(atomName: string, cssProperty: string): void {
-  CSS_PROPERTY_MAP[atomName] = cssProperty
+function registerAtom(atomName: string, property: string, className?: string): void {
+  atomsData[atomName] = {
+    property,
+    className: className || camelToKebab(atomName)
+  }
 }
 
 /**
@@ -291,9 +284,28 @@ export const cssts = {
   replaceAll,
   
   /**
-   * 注册自定义属性映射
+   * 加载原子类数据（从 atoms.json）
+   * @see loadAtoms
    */
-  registerProperty,
+  loadAtoms,
+  
+  /**
+   * 注册自定义原子类
+   * @see registerAtom
+   */
+  registerAtom,
+  
+  /**
+   * 获取原子类的 CSS 属性
+   * @see getCssProperty
+   */
+  getCssProperty,
+  
+  /**
+   * 获取原子类的 CSS 类名
+   * @see getCssClassName
+   */
+  getCssClassName,
   
   /**
    * 版本号
@@ -302,4 +314,4 @@ export const cssts = {
 }
 
 export default cssts
-export { $cls, replace, replaceAll, registerProperty }
+export { $cls, replace, replaceAll, loadAtoms, registerAtom, getCssProperty, getCssClassName }

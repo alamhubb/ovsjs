@@ -43,41 +43,47 @@ export class PropertyNumericConfigBase {
 
   // ==================== 语义化 NumericType ====================
 
-  /** 尺寸像素 - 用于 width/height/padding (max: 10000, 不支持负数) */
+  /** 尺寸像素 - 用于 width/height/padding (使用渐进步长策略, max: 10000) */
   sizePx: NumericType = { unit: 'px', value: 'integer', max: 10000 }
 
-  /** 尺寸 rem - 用于 width/height/padding (0.25-100rem, step: 0.25) */
-  sizeRem: NumericType = { unit: 'rem', value: 'number', min: 0.25, max: 100, step: 0.25 }
+  /** 尺寸 rem - 用于 width/height/padding (0.25-50rem, step: 0.25) */
+  sizeRem: NumericType = { unit: 'rem', value: 'number', min: 0.25, max: 50, step: 0.25 }
 
-  /** 间距像素 - 用于 margin/定位 (max: 10000, 支持负数) */
+  /** 间距像素 - 用于 margin/定位 (使用渐进步长策略, max: 10000, 支持负数) */
   spacingPx: NumericType = { unit: 'px', value: 'integer', max: 10000, negative: true }
 
-  /** 间距 rem - 用于 margin/定位 (0.25-100rem, step: 0.25, 支持负数) */
-  spacingRem: NumericType = { unit: 'rem', value: 'number', min: 0.25, max: 100, step: 0.25, negative: true }
+  /** 间距 rem - 用于 margin/定位 (0.25-50rem, step: 0.25, 支持负数) */
+  spacingRem: NumericType = { unit: 'rem', value: 'number', min: 0.25, max: 50, step: 0.25, negative: true }
 
   /** 边框宽度 (max: 20) */
   borderWidthPx: NumericType = { unit: 'px', value: 'integer', max: 20 }
 
-  /** 圆角半径像素 (max: 500) */
-  radiusPx: NumericType = { unit: 'px', value: 'integer', max: 500 }
+  /** 圆角半径像素 (max: 500, 含 9999 用于圆形) */
+  radiusPx: NumericType = { unit: 'px', value: 'integer', max: 500, presets: [9999] }
 
   /** 圆角半径 rem (0.25-10rem, step: 0.25) */
   radiusRem: NumericType = { unit: 'rem', value: 'number', min: 0.25, max: 10, step: 0.25 }
 
-  /** 字体大小像素 (8-200) */
+  /** 字体大小像素 (使用渐进步长策略) */
   fontSizePx: NumericType = { unit: 'px', value: 'integer', min: 8, max: 200 }
 
   /** 字体大小 rem (0.5-10rem, step: 0.125) */
   fontSizeRem: NumericType = { unit: 'rem', value: 'number', min: 0.5, max: 10, step: 0.125 }
 
-  /** 小间距像素 - 用于 gap/letter-spacing (max: 200) */
+  /** 小间距像素 - 用于 gap/letter-spacing (使用渐进步长策略) */
   gapPx: NumericType = { unit: 'px', value: 'integer', max: 200 }
 
   /** 小间距 rem - 用于 gap (0.25-20rem, step: 0.25) */
   gapRem: NumericType = { unit: 'rem', value: 'number', min: 0.25, max: 20, step: 0.25 }
 
-  /** z-index 层级 (支持负数, 1~9999，同时生成负数版本) */
-  zIndex: NumericType = { unit: 'unitless', value: 'integer', min: 1, max: 9999, negative: true }
+  /** 小尺寸 rem - 用于 letter-spacing/line-height 等 (0.125-5rem, step: 0.125) */
+  smallRem: NumericType = { unit: 'rem', value: 'number', min: 0.125, max: 5, step: 0.125 }
+
+  /** 行高 rem (1-5rem, step: 0.25) */
+  lineHeightRem: NumericType = { unit: 'rem', value: 'number', min: 1, max: 5, step: 0.25 }
+
+  /** z-index 层级 (使用渐进步长策略, 支持负数) */
+  zIndex: NumericType = { unit: 'unitless', value: 'integer', max: 9999, negative: true }
 
   /** order 排序 (支持负数, 1~100，同时生成负数版本) */
   orderInt: NumericType = { unit: 'unitless', value: 'integer', min: 1, max: 100, negative: true }
@@ -234,19 +240,19 @@ export class PropertyNumericConfigBase {
   'font-style': NumericType[] = [this.obliqueDeg]
   'font-variation-settings': NumericType[] = [this.fontVariationNum]
   'font-weight': NumericType[] = [this.fontWeight]
-  'letter-spacing': NumericType[] = [this.zero, this.gapPx]
+  'letter-spacing': NumericType[] = [this.zero, this.gapPx, this.smallRem]
   'line-clamp': NumericType[] = [this.lineCount]
-  'line-height': NumericType[] = [this.zero, this.smallPx, this.lineHeightNum]
-  'line-height-step': NumericType[] = [this.zero, this.smallPx]
+  'line-height': NumericType[] = [this.zero, this.smallPx, this.lineHeightRem, this.lineHeightNum]
+  'line-height-step': NumericType[] = [this.zero, this.smallPx, this.lineHeightRem]
   'tab-size': NumericType[] = [this.zero, this.smallPx, this.charCount]
   'text-combine-upright': NumericType[] = [this.charCount]
   'text-decoration-thickness': NumericType[] = [this.zero, this.smallPx, this.ratio]
-  'text-indent': NumericType[] = [this.zero, this.sizePx, this.ratio]
+  'text-indent': NumericType[] = [this.zero, this.sizePx, this.sizeRem, this.ratio]
   'text-shadow': NumericType[] = [this.zero, this.smallPx]
   'text-size-adjust': NumericType[] = [this.ratio]
   'text-underline-offset': NumericType[] = [this.zero, this.smallPx, this.ratio]
   'vertical-align': NumericType[] = [this.zero, this.smallPx, this.ratio]
-  'word-spacing': NumericType[] = [this.zero, this.gapPx, this.ratio]
+  'word-spacing': NumericType[] = [this.zero, this.gapPx, this.smallRem, this.ratio]
 
   // border
   border: NumericType[] = [this.zero, this.borderWidthPx]
@@ -272,7 +278,7 @@ export class PropertyNumericConfigBase {
   'border-top-right-radius': NumericType[] = [this.zero, this.radiusPx, this.radiusRem, this.ratio]
   'border-top-width': NumericType[] = [this.zero, this.borderWidthPx]
   'border-width': NumericType[] = [this.zero, this.borderWidthPx]
-  'outline-offset': NumericType[] = [this.zero, this.smallPx]
+  'outline-offset': NumericType[] = [this.zero, this.smallPx, this.smallRem]
   'outline-width': NumericType[] = [this.zero, this.borderWidthPx]
 
   // background
@@ -287,11 +293,11 @@ export class PropertyNumericConfigBase {
   opacity: NumericType[] = [this.alpha]
 
   // transform
-  perspective: NumericType[] = [this.zero, this.sizePx]
+  perspective: NumericType[] = [this.zero, this.sizePx, this.sizeRem]
   rotate: NumericType[] = [this.zero, this.rotateDeg]
   scale: NumericType[] = [this.scaleNum, this.ratio]
   'transform-origin': NumericType[] = [this.zero, this.positionPx, this.ratio]
-  translate: NumericType[] = [this.zero, this.spacingPx, this.ratio]
+  translate: NumericType[] = [this.zero, this.spacingPx, this.spacingRem, this.ratio]
 
   // animation
   animation: NumericType[] = [this.durationMs, this.iterationCount]
@@ -307,29 +313,29 @@ export class PropertyNumericConfigBase {
   'transition-timing-function': NumericType[] = [this.easingNum]
 
   // scroll
-  'overflow-clip-margin': NumericType[] = [this.zero, this.smallPx]
-  'scroll-margin': NumericType[] = [this.zero, this.gapPx]
-  'scroll-margin-block': NumericType[] = [this.zero, this.gapPx]
-  'scroll-margin-block-end': NumericType[] = [this.zero, this.gapPx]
-  'scroll-margin-block-start': NumericType[] = [this.zero, this.gapPx]
-  'scroll-margin-bottom': NumericType[] = [this.zero, this.gapPx]
-  'scroll-margin-inline': NumericType[] = [this.zero, this.gapPx]
-  'scroll-margin-inline-end': NumericType[] = [this.zero, this.gapPx]
-  'scroll-margin-inline-start': NumericType[] = [this.zero, this.gapPx]
-  'scroll-margin-left': NumericType[] = [this.zero, this.gapPx]
-  'scroll-margin-right': NumericType[] = [this.zero, this.gapPx]
-  'scroll-margin-top': NumericType[] = [this.zero, this.gapPx]
-  'scroll-padding': NumericType[] = [this.zero, this.gapPx, this.ratio]
-  'scroll-padding-block': NumericType[] = [this.zero, this.gapPx, this.ratio]
-  'scroll-padding-block-end': NumericType[] = [this.zero, this.gapPx, this.ratio]
-  'scroll-padding-block-start': NumericType[] = [this.zero, this.gapPx, this.ratio]
-  'scroll-padding-bottom': NumericType[] = [this.zero, this.gapPx, this.ratio]
-  'scroll-padding-inline': NumericType[] = [this.zero, this.gapPx, this.ratio]
-  'scroll-padding-inline-end': NumericType[] = [this.zero, this.gapPx, this.ratio]
-  'scroll-padding-inline-start': NumericType[] = [this.zero, this.gapPx, this.ratio]
-  'scroll-padding-left': NumericType[] = [this.zero, this.gapPx, this.ratio]
-  'scroll-padding-right': NumericType[] = [this.zero, this.gapPx, this.ratio]
-  'scroll-padding-top': NumericType[] = [this.zero, this.gapPx, this.ratio]
+  'overflow-clip-margin': NumericType[] = [this.zero, this.smallPx, this.smallRem]
+  'scroll-margin': NumericType[] = [this.zero, this.gapPx, this.gapRem]
+  'scroll-margin-block': NumericType[] = [this.zero, this.gapPx, this.gapRem]
+  'scroll-margin-block-end': NumericType[] = [this.zero, this.gapPx, this.gapRem]
+  'scroll-margin-block-start': NumericType[] = [this.zero, this.gapPx, this.gapRem]
+  'scroll-margin-bottom': NumericType[] = [this.zero, this.gapPx, this.gapRem]
+  'scroll-margin-inline': NumericType[] = [this.zero, this.gapPx, this.gapRem]
+  'scroll-margin-inline-end': NumericType[] = [this.zero, this.gapPx, this.gapRem]
+  'scroll-margin-inline-start': NumericType[] = [this.zero, this.gapPx, this.gapRem]
+  'scroll-margin-left': NumericType[] = [this.zero, this.gapPx, this.gapRem]
+  'scroll-margin-right': NumericType[] = [this.zero, this.gapPx, this.gapRem]
+  'scroll-margin-top': NumericType[] = [this.zero, this.gapPx, this.gapRem]
+  'scroll-padding': NumericType[] = [this.zero, this.gapPx, this.gapRem, this.ratio]
+  'scroll-padding-block': NumericType[] = [this.zero, this.gapPx, this.gapRem, this.ratio]
+  'scroll-padding-block-end': NumericType[] = [this.zero, this.gapPx, this.gapRem, this.ratio]
+  'scroll-padding-block-start': NumericType[] = [this.zero, this.gapPx, this.gapRem, this.ratio]
+  'scroll-padding-bottom': NumericType[] = [this.zero, this.gapPx, this.gapRem, this.ratio]
+  'scroll-padding-inline': NumericType[] = [this.zero, this.gapPx, this.gapRem, this.ratio]
+  'scroll-padding-inline-end': NumericType[] = [this.zero, this.gapPx, this.gapRem, this.ratio]
+  'scroll-padding-inline-start': NumericType[] = [this.zero, this.gapPx, this.gapRem, this.ratio]
+  'scroll-padding-left': NumericType[] = [this.zero, this.gapPx, this.gapRem, this.ratio]
+  'scroll-padding-right': NumericType[] = [this.zero, this.gapPx, this.gapRem, this.ratio]
+  'scroll-padding-top': NumericType[] = [this.zero, this.gapPx, this.gapRem, this.ratio]
   'scroll-snap-coordinate': NumericType[] = [this.zero, this.positionPx, this.ratio]
   'scroll-snap-destination': NumericType[] = [this.zero, this.positionPx, this.ratio]
   'scroll-snap-points-x': NumericType[] = [this.zero, this.positionPx, this.ratio]
@@ -344,7 +350,7 @@ export class PropertyNumericConfigBase {
   'box-ordinal-group': NumericType[] = [this.groupInt]
   'clip-path': NumericType[] = [this.zero, this.maskPx, this.ratio]
   'column-count': NumericType[] = [this.lineCount]
-  'column-width': NumericType[] = [this.zero, this.sizePx]
+  'column-width': NumericType[] = [this.zero, this.sizePx, this.sizeRem]
   'contain-intrinsic-block-size': NumericType[] = [this.zero, this.sizePx]
   'contain-intrinsic-height': NumericType[] = [this.zero, this.sizePx]
   'contain-intrinsic-inline-size': NumericType[] = [this.zero, this.sizePx]
@@ -413,8 +419,10 @@ export class PropertyNumericConfigBase {
     const result: Record<string, NumericType[]> = {}
     const numericTypeKeys = new Set([
       'zero', 'ratio', 'fr', 'alpha', 'fontWeight',
-      'sizePx', 'spacingPx', 'borderWidthPx', 'radiusPx', 'fontSizePx',
-      'gapPx', 'zIndex', 'orderInt', 'gridTrack', 'durationMs',
+      'sizePx', 'sizeRem', 'spacingPx', 'spacingRem', 'borderWidthPx',
+      'radiusPx', 'radiusRem', 'fontSizePx', 'fontSizeRem',
+      'gapPx', 'gapRem', 'smallRem', 'lineHeightRem',
+      'zIndex', 'orderInt', 'gridTrack', 'durationMs',
       'scaleNum', 'rotateDeg', 'lineCount', 'lineHeightNum',
       'gridSizePx', 'positionPx', 'smallPx', 'strokePx', 'svgCoordPx',
       'maskPx', 'offsetPx', 'obliqueDeg', 'fontFeatureInt', 'counterInt',

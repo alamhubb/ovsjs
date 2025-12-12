@@ -193,18 +193,62 @@ widthFull  // 100%
 
 ### 发布时生成（npm publish）
 
+生成器**同时生成** `atoms.json` 和 `atoms.css`，确保数据一致性。
+
 | 文件 | 用途 |
 |------|------|
 | `CsstsAtoms.d.ts` | 接口定义（唯一数据源） |
 | `global.generated.d.ts` | 全局类型声明（引用接口） |
-| `dist/atoms.json` | 原子类名称列表（编译时查找用） |
+| `dist/atoms.json` | 原子类映射表（运行时查找用） |
+| `dist/atoms.css` | 原子类样式定义 |
+
+#### atoms.json 结构
+
+```json
+{
+  "paddingTop16px": {
+    "property": "padding-top",
+    "className": "padding-top_16px"
+  },
+  "displayFlex": {
+    "property": "display",
+    "className": "display_flex"
+  },
+  "width50pct": {
+    "property": "width",
+    "className": "width_50\\%"
+  },
+  "zIndexN1": {
+    "property": "z-index",
+    "className": "z-index_-1"
+  }
+}
+```
+
+**字段说明**：
+- `property`: CSS 属性名，用于**同属性去重**（相同属性只保留最后一个）
+- `className`: CSS 类名，用于生成最终的 class 字符串
+
+**为什么不需要 value？**
+- `atoms.json` 和 `atoms.css` 是**同时生成**的
+- CSS 规则已经写入 `atoms.css`，运行时只需要类名
+- 不存储冗余数据
+
+#### atoms.css 结构（同时生成）
+
+```css
+.padding-top_16px { padding-top: 16px; }
+.display_flex { display: flex; }
+.width_50\% { width: 50%; }
+.z-index_-1 { z-index: -1; }
+```
 
 ### 用户编译时生成（vite build）
 
 | 文件 | 用途 |
 |------|------|
 | `CsstsAtom.ts` | 运行时原子类实现 |
-| `atoms.css` | 按需生成的 CSS 样式 |
+| 按需 CSS | 从 atoms.css 中提取使用到的样式 |
 
 ## 数据来源
 
