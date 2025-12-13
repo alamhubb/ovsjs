@@ -238,6 +238,11 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
       sourceType = SlimeProgramSourceType.Script
     }
 
+    // 如果使用了 css { } 语法，自动添加 cssts 和 csstsAtom 导入
+    if (this.getUsedAtoms().size > 0) {
+      body = this.ensureCsstsImports(body)
+    }
+
     // 创建 Program AST
     const program = SlimeNodeCreate.createProgram(body, sourceType)
     program.loc = cst.loc
@@ -245,6 +250,81 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
     return program
   }
 
+  /**
+   * 确保有 cssts 和 csstsAtom 的导入
+   */
+  private ensureCsstsImports(body: Array<SlimeStatement | SlimeModuleDeclaration>): Array<SlimeStatement | SlimeModuleDeclaration> {
+    // 检查是否已经有 cssts 导入
+    let hasCsstsImport = false
+    let hasCsstsAtomImport = false
+
+    for (const stmt of body) {
+      if (stmt.type === SlimeNodeType.ImportDeclaration) {
+        const importDecl = stmt as any
+        const source = importDecl.source?.value
+        if (source === 'cssts' || source?.endsWith('/cssts')) {
+          for (const spec of importDecl.specifiers || []) {
+            if (spec.type === SlimeNodeType.ImportSpecifier) {
+              if (spec.imported?.name === 'cssts' || spec.local?.name === 'cssts') {
+                hasCsstsImport = true
+              }
+            } else if (spec.type === SlimeNodeType.ImportDefaultSpecifier) {
+              if (spec.local?.name === 'cssts') {
+                hasCsstsImport = true
+              }
+            }
+          }
+        }
+        if (source === 'cssts-theme-element' || source?.includes('csstsAtom')) {
+          for (const spec of importDecl.specifiers || []) {
+            if (spec.imported?.name === 'csstsAtom' || spec.local?.name === 'csstsAtom') {
+              hasCsstsAtomImport = true
+            }
+          }
+        }
+      }
+    }
+
+    const newImports: SlimeModuleDeclaration[] = []
+
+    if (!hasCsstsImport) {
+      newImports.push({
+        type: SlimeNodeType.ImportDeclaration,
+        specifiers: [{
+          type: SlimeNodeType.ImportSpecifier,
+          imported: SlimeNodeCreate.createIdentifier('cssts'),
+          local: SlimeNodeCreate.createIdentifier('cssts')
+        }],
+        source: SlimeNodeCreate.createStringLiteral('cssts')
+      } as any)
+    }
+
+    if (!hasCsstsAtomImport) {
+      newImports.push({
+        type: SlimeNodeType.ImportDeclaration,
+        specifiers: [{
+          type: SlimeNodeType.ImportSpecifier,
+          imported: SlimeNodeCreate.createIdentifier('csstsAtom'),
+          local: SlimeNodeCreate.createIdentifier('csstsAtom')
+        }],
+        source: SlimeNodeCreate.createStringLiteral('cssts-theme-element')
+      } as any)
+    }
+
+    if (newImports.length > 0) {
+      let insertIndex = 0
+      for (let i = 0; i < body.length; i++) {
+        if (body[i].type === SlimeNodeType.ImportDeclaration) {
+          insertIndex = i + 1
+        } else {
+          break
+        }
+      }
+      return [...body.slice(0, insertIndex), ...newImports, ...body.slice(insertIndex)]
+    }
+
+    return body
+  }
 
   createDeclarationAst(cst: SubhutiCst): any {
     // Declaration -> OvsViewDeclaration | VariableDeclaration | FunctionDeclaration | ...

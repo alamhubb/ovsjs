@@ -2,10 +2,39 @@
   "name": "cssts-theme-element",
   "version": "0.0.1",
   "description": "Element Plus theme colors for CssTs",
-  "types": "index.d.ts",
+  "type": "module",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./css": {
+      "types": "./dist/css/index.d.ts",
+      "import": "./dist/css/index.js"
+    },
+    "./cssts": {
+      "types": "./dist/cssts/index.d.ts",
+      "import": "./dist/cssts/index.js"
+    },
+    "./theme.css": "./dist/theme.css"
+  },
+  "files": [
+    "dist",
+    "*.d.ts"
+  ],
+  "scripts": {
+    "build": "tsdown src/index.ts src/css/index.ts src/cssts/index.ts --dts"
+  },
   "keywords": ["cssts", "element-plus", "theme", "typescript"],
   "license": "MIT",
   "peerDependencies": {
     "cssts-types": "^0.0.1"
+  },
+  "devDependencies": {
+    "tsdown": "^0.12.5",
+    "typescript": "~5.5.0"
   }
 }

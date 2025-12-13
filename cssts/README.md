@@ -71,19 +71,59 @@ css { ...baseStyle, backgroundColorPrimary }
 
 ### 4. 统一命名规则
 
-原子类采用完整语义命名：`{cssProperty}{Value}`
+原子类采用 `{property}_{value}` 格式，用 `_` 下划线分隔属性和值。
 
-| CSS 属性 | 原子类名称 | CSS 类名 |
+#### CSS 类名格式
+
+```css
+.display_flex { display: flex; }
+.justify-content_center { justify-content: center; }
+.padding-top_16px { padding-top: 16px; }
+```
+
+**为什么用 `_` 分隔？**
+CSS 属性名和值都可能包含 `-`，如果统一用 `-` 会产生歧义：
+```
+justify-content-flex-start  // 歧义：哪里是属性和值的分界？
+justify-content_flex-start  // 清晰：_ 左边是属性，右边是值
+```
+
+#### TypeScript 变量名格式
+
+采用 `{property}{Value}` 的 camelCase 格式：
+
+| CSS 属性 | TS 变量名 | CSS 类名 |
 |---------|-----------|---------|
-| `display: flex` | `displayFlex` | `display-flex` |
-| `display: none` | `displayNone` | `display-none` |
-| `flex-direction: column` | `flexDirectionColumn` | `flex-direction-column` |
-| `justify-content: center` | `justifyContentCenter` | `justify-content-center` |
-| `align-items: center` | `alignItemsCenter` | `align-items-center` |
-| `position: absolute` | `positionAbsolute` | `position-absolute` |
-| `padding: 16px` | `padding16` | `padding-16` |
+| `display: flex` | `displayFlex` | `.display_flex` |
+| `justify-content: center` | `justifyContentCenter` | `.justify-content_center` |
+| `padding-top: 16px` | `paddingTop16px` | `.padding-top_16px` |
+| `height: 32px` | `height32px` | `.height_32px` |
 
-**设计原因**：统一的命名规则让所有 CSS 属性保持一致的风格，避免歧义。
+**重要：数值必须带单位！**
+```typescript
+// ✅ 正确
+height32px, fontSize14px, paddingLeft15px
+
+// ❌ 错误（缺少单位）
+height32, fontSize14, paddingLeft15
+```
+
+#### 特殊符号转换
+
+| CSS 值 | TS 变量名 | CSS 类名 |
+|--------|-----------|----------|
+| `1.5` | `lineHeight1p5` | `.line-height_1\.5` |
+| `50%` | `width50pct` | `.width_50\%` |
+| `-1` | `zIndexN1` | `.z-index_-1` |
+| `16/9` | `aspectRatio16s9` | `.aspect-ratio_16\/9` |
+
+符号别名（TS 标识符）：
+- `.` → `p` (point，小数点)
+- `%` → `pct` (percent，百分号)
+- `/` → `s` (slash，斜杠)
+- `-` → `N` (negative，负数前缀)
+
+详细规范请参考 `cssts-types/README.md`。
 
 ## 架构设计
 

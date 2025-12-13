@@ -11,6 +11,8 @@ import {
 } from "slime-ast/src/SlimeESTree.ts"
 import SlimeParser from "slime-parser/src/language/es2025/SlimeParser.ts"
 import SlimeNodeCreate from "slime-ast/src/SlimeNodeCreate.ts"
+// 导入运行时的命名转换函数，使用统一的 property_value 命名规范
+import { getCssClassName } from "../runtime/index.ts"
 
 /**
  * CSS 样式声明信息
@@ -22,19 +24,21 @@ export interface CssStyleInfo {
   isAtomic: boolean
   /** 依赖的其他样式名称 */
   dependencies: string[]
-  /** 转换后的 CSS class 名称（kebab-case） */
+  /** 转换后的 CSS class 名称（property_value 格式） */
   cssClassName: string
   /** 源码位置 */
   loc?: any
 }
 
 /**
- * 驼峰命名转 kebab-case
+ * 驼峰命名转 kebab-case（内部辅助函数）
+ * 
+ * 注意：CSS 类名生成请使用 getCssClassName()，它遵循 property_value 命名规范
+ * 
+ * @example
  * colorRed → color-red
  * fontBold → font-bold
  * bgBlue → bg-blue
- * fontSize14 → font-size-14
- * height32 → height-32
  */
 function camelToKebab(str: string): string {
   return str
@@ -123,10 +127,113 @@ export class CssTsCstToAst extends SlimeCstToAst {
       sourceType = SlimeProgramSourceType.Script
     }
 
+    // 如果使用了 css { } 语法，自动添加 cssts 和 csstsAtom 导入
+    if (this.usedAtoms.size > 0) {
+      body = this.ensureCsstsImports(body)
+    }
+
     const program = SlimeNodeCreate.createProgram(body, sourceType)
     program.loc = cst.loc
 
     return program
+  }
+
+  /**
+   * 确保有 cssts 和 csstsAtom 的导入
+   */
+  private ensureCsstsImports(body: Array<SlimeStatement | SlimeModuleDeclaration>): Array<SlimeStatement | SlimeModuleDeclaration> {
+    // 检查是否已经有 cssts 导入
+    let hasCsstsImport = false
+    let hasCsstsAtomImport = false
+
+    for (const stmt of body) {
+      if (stmt.type === SlimeNodeType.ImportDeclaration) {
+        const importDecl = stmt as any
+        const source = importDecl.source?.value
+        if (source === 'cssts' || source?.endsWith('/cssts')) {
+          // 检查是否导入了 cssts
+          for (const spec of importDecl.specifiers || []) {
+            if (spec.type === SlimeNodeType.ImportSpecifier) {
+              if (spec.imported?.name === 'cssts' || spec.local?.name === 'cssts') {
+                hasCsstsImport = true
+              }
+            } else if (spec.type === SlimeNodeType.ImportDefaultSpecifier) {
+              if (spec.local?.name === 'cssts') {
+                hasCsstsImport = true
+              }
+            }
+          }
+        }
+        if (source === 'cssts-theme-element' || source?.includes('csstsAtom')) {
+          // 检查是否导入了 csstsAtom
+          for (const spec of importDecl.specifiers || []) {
+            if (spec.imported?.name === 'csstsAtom' || spec.local?.name === 'csstsAtom') {
+              hasCsstsAtomImport = true
+            }
+          }
+        }
+      }
+    }
+
+    const newImports: SlimeModuleDeclaration[] = []
+
+    // 添加 cssts 导入
+    if (!hasCsstsImport) {
+      newImports.push(this.createCsstsImport())
+    }
+
+    // 添加 csstsAtom 导入
+    if (!hasCsstsAtomImport) {
+      newImports.push(this.createCsstsAtomImport())
+    }
+
+    if (newImports.length > 0) {
+      // 找到第一个非导入语句的位置
+      let insertIndex = 0
+      for (let i = 0; i < body.length; i++) {
+        if (body[i].type === SlimeNodeType.ImportDeclaration) {
+          insertIndex = i + 1
+        } else {
+          break
+        }
+      }
+      // 在导入语句后面插入新的导入
+      return [...body.slice(0, insertIndex), ...newImports, ...body.slice(insertIndex)]
+    }
+
+    return body
+  }
+
+  /**
+   * 创建 cssts 导入语句
+   * import { cssts } from 'cssts'
+   */
+  private createCsstsImport(): SlimeModuleDeclaration {
+    return {
+      type: SlimeNodeType.ImportDeclaration,
+      specifiers: [{
+        type: SlimeNodeType.ImportSpecifier,
+        imported: SlimeNodeCreate.createIdentifier('cssts'),
+        local: SlimeNodeCreate.createIdentifier('cssts')
+      }],
+      source: SlimeNodeCreate.createStringLiteral('cssts')
+    } as any
+  }
+
+  /**
+   * 创建 csstsAtom 导入语句
+   * import { csstsAtom } from 'cssts-theme-element'
+   */
+  private createCsstsAtomImport(): SlimeModuleDeclaration {
+    return {
+      type: SlimeNodeType.ImportDeclaration,
+      specifiers: [{
+        type: SlimeNodeType.ImportSpecifier,
+        imported: SlimeNodeCreate.createIdentifier('csstsAtom'),
+        local: SlimeNodeCreate.createIdentifier('csstsAtom')
+      }],
+      source: SlimeNodeCreate.createStringLiteral('cssts-theme-element')
+    } as any
   }
 
   /**
@@ -176,31 +283,42 @@ export class CssTsCstToAst extends SlimeCstToAst {
    * 两种形式：
    * 1. css { colorRed, fontBold } → cssts.$cls(csstsAtom.colorRed, csstsAtom.fontBold)
    * 2. css colorRed → 字符串 "colorRed"（用于替换语法）
+   * 
+   * 支持复杂表达式：
+   * - 展开语法：...baseStyle
+   * - 条件表达式：props.disabled && css { ... }
    */
   createCssExpressionAst(cst: SubhutiCst): SlimeExpression {
     const children = cst.children || []
     
-    // 检查是否是单原子形式：css colorRed
-    const identifierCst = children.find(c => c.name === 'IdentifierName')
-    if (identifierCst) {
-      // 单原子形式：返回字符串字面量 "colorRed"
-      const atomName = identifierCst.value || identifierCst.children?.[0]?.value || ''
+    // CssExpression 的 children 结构：
+    // - css { ... } 形式：[IdentifierName(css), CssStyleObject]
+    // - css atomName 形式：[IdentifierName(css), IdentifierName(atomName)]
+    
+    // 查找 CssStyleObject
+    const styleObjectCst = children.find(c => c.name === CssTsParser.prototype.CssStyleObject.name)
+    
+    if (styleObjectCst) {
+      // 多原子形式：css { colorRed, fontBold, ...baseStyle, condition && css { ... } }
+      const args = this.extractCssPropertyExpressions(styleObjectCst)
+      
+      // 创建 cssts.$cls(...args) 调用
+      return this.createCsstsClsCallWithArgs(args, cst.loc)
+    }
+    
+    // 单原子形式：css colorRed
+    // 第二个 IdentifierName 是原子名称（第一个是 css 关键字）
+    const identifierCsts = children.filter(c => c.name === 'IdentifierName')
+    if (identifierCsts.length >= 2) {
+      const atomCst = identifierCsts[1]  // 第二个是原子名称
+      const atomName = atomCst.value || atomCst.children?.[0]?.value || ''
       // 收集原子类名
       this.usedAtoms.add(atomName)
       return SlimeNodeCreate.createStringLiteral(atomName)
     }
     
-    // 多原子形式：css { colorRed, fontBold }
-    const styleObjectCst = children.find(c => c.name === CssTsParser.prototype.CssStyleObject.name)
-    const properties = this.extractCssProperties(styleObjectCst)
-    
-    // 收集原子类名
-    for (const prop of properties) {
-      this.usedAtoms.add(prop)
-    }
-    
-    // 创建 cssts.$cls(csstsAtom.prop1, csstsAtom.prop2, ...) 调用
-    return this.createCsstsClsCall(properties, cst.loc)
+    // 兜底：返回空字符串
+    return SlimeNodeCreate.createStringLiteral('')
   }
 
   /**
@@ -229,6 +347,156 @@ export class CssTsCstToAst extends SlimeCstToAst {
       optional: false,
       loc
     } as any
+  }
+
+  /**
+   * 创建 cssts.$cls(...args) 调用表达式（支持任意表达式参数）
+   */
+  protected createCsstsClsCallWithArgs(args: SlimeExpression[], loc?: any): SlimeExpression {
+    // callee: cssts.$cls (MemberExpression)
+    const csstsId = SlimeNodeCreate.createIdentifier('cssts')
+    const clsId = SlimeNodeCreate.createIdentifier('$cls')
+    const callee: SlimeExpression = {
+      type: SlimeNodeType.MemberExpression,
+      object: csstsId,
+      property: clsId,
+      computed: false,
+      optional: false
+    } as any
+    
+    // 创建 CallExpression
+    return {
+      type: SlimeNodeType.CallExpression,
+      callee,
+      arguments: args,
+      optional: false,
+      loc
+    } as any
+  }
+
+  /**
+   * 提取 CssStyleObject 中的元素表达式
+   * 
+   * CssStyleObject 现在使用 ElementList（和数组字面量一样）
+   * ElementList 包含 AssignmentExpression 或 SpreadElement
+   */
+  private extractCssPropertyExpressions(styleObjectCst: SubhutiCst | undefined): SlimeExpression[] {
+    if (!styleObjectCst) return []
+
+    // 查找 ElementList
+    const elementListCst = styleObjectCst.children?.find(
+      c => c.name === 'ElementList'
+    )
+
+    if (!elementListCst) return []
+
+    // 使用父类的 createElementListAst 来处理 ElementList
+    // 然后对每个元素进行转换
+    const elements = this.processElementList(elementListCst)
+    
+    // 转换每个元素：简单标识符 → csstsAtom.identifier
+    return elements.map(expr => this.transformCssPropertyExpression(expr))
+  }
+
+  /**
+   * 处理 ElementList CST，返回表达式数组
+   * 
+   * ElementList 结构：
+   * - AssignmentExpression | SpreadElement
+   * - (, AssignmentExpression | SpreadElement)*
+   */
+  private processElementList(cst: SubhutiCst): SlimeExpression[] {
+    if (!cst.children) return []
+
+    const expressions: SlimeExpression[] = []
+    
+    for (const child of cst.children) {
+      // 跳过逗号和 Elision
+      if (child.name === 'Comma' || child.value === ',' || child.name === 'Elision') {
+        continue
+      }
+      
+      // AssignmentExpression
+      if (child.name === 'AssignmentExpression') {
+        const expr = this.createAssignmentExpressionAst(child)
+        expressions.push(expr)
+      }
+      // SpreadElement
+      else if (child.name === 'SpreadElement') {
+        const expr = this.createSpreadElementAst(child)
+        expressions.push(expr as any)
+      }
+    }
+
+    return expressions
+  }
+
+  /**
+   * 创建 SpreadElement AST（覆盖父类方法）
+   */
+  createSpreadElementAst(cst: SubhutiCst): any {
+    // SpreadElement: ... AssignmentExpression
+    const assignExprCst = cst.children?.find(c => c.name === 'AssignmentExpression')
+    if (!assignExprCst) {
+      throw new Error('SpreadElement: missing AssignmentExpression')
+    }
+    
+    const argument = this.createAssignmentExpressionAst(assignExprCst)
+    return {
+      type: SlimeNodeType.SpreadElement,
+      argument,
+      loc: cst.loc
+    }
+  }
+
+  /**
+   * 转换 CssProperty 表达式
+   * - 简单标识符 colorRed → csstsAtom.colorRed
+   * - 展开语法保持不变（SpreadElement）
+   * - 条件表达式递归处理
+   */
+  private transformCssPropertyExpression(expr: SlimeExpression): SlimeExpression {
+    if (!expr) return expr
+
+    // 简单标识符 → csstsAtom.identifier
+    if (expr.type === SlimeNodeType.Identifier) {
+      const name = (expr as any).name || ''
+      if (name) {
+        this.usedAtoms.add(name)
+        return this.createCsstsAtomMember(name)
+      }
+    }
+
+    // 展开语法 ...baseStyle → 保持不变
+    if ((expr as any).type === SlimeNodeType.SpreadElement) {
+      return expr
+    }
+
+    // 逻辑表达式 condition && css { ... }
+    if (expr.type === SlimeNodeType.LogicalExpression) {
+      const logicalExpr = expr as any
+      return {
+        ...logicalExpr,
+        right: this.transformCssPropertyExpression(logicalExpr.right)
+      }
+    }
+
+    // 条件表达式 condition ? css { ... } : css { ... }
+    if (expr.type === SlimeNodeType.ConditionalExpression) {
+      const condExpr = expr as any
+      return {
+        ...condExpr,
+        consequent: this.transformCssPropertyExpression(condExpr.consequent),
+        alternate: condExpr.alternate ? this.transformCssPropertyExpression(condExpr.alternate) : condExpr.alternate
+      }
+    }
+
+    // CallExpression (已经是 cssts.$cls 调用) → 保持不变
+    if (expr.type === SlimeNodeType.CallExpression) {
+      return expr
+    }
+
+    return expr
   }
 
   /**
@@ -392,7 +660,7 @@ export class CssTsCstToAst extends SlimeCstToAst {
           name: styleName,
           isAtomic: false,
           dependencies,
-          cssClassName: camelToKebab(styleName),
+          cssClassName: getCssClassName(styleName),
           loc: cst.loc
         })
       }
@@ -407,7 +675,7 @@ export class CssTsCstToAst extends SlimeCstToAst {
           name: styleName,
           isAtomic: true,
           dependencies: [],
-          cssClassName: camelToKebab(styleName),
+          cssClassName: getCssClassName(styleName),
           loc: cst.loc
         })
       }
@@ -422,21 +690,26 @@ export class CssTsCstToAst extends SlimeCstToAst {
   }
 
   /**
-   * 提取 CssStyleObject 中的属性名称
+   * 提取 CssStyleObject 中的属性名称（用于 CssDeclaration 旧语法）
+   * 
+   * 现在 CssStyleObject 使用 ElementList，需要从中提取简单标识符名称
    */
   private extractCssProperties(styleObjectCst: SubhutiCst | undefined): string[] {
     if (!styleObjectCst) return []
 
     const properties: string[] = []
-    const propListCst = styleObjectCst.children?.find(
-      c => c.name === CssTsParser.prototype.CssPropertyList.name
+    const elementListCst = styleObjectCst.children?.find(
+      c => c.name === 'ElementList'
     )
 
-    if (propListCst && propListCst.children) {
-      for (const child of propListCst.children) {
-        if (child.name === CssTsParser.prototype.CssProperty.name || 
-            child.name === 'IdentifierName') {
-          const name = child.value || child.children?.[0]?.value
+    if (elementListCst && elementListCst.children) {
+      for (const child of elementListCst.children) {
+        // 跳过逗号
+        if (child.name === 'Comma' || child.value === ',') continue
+        
+        // 从 AssignmentExpression 中提取标识符名称
+        if (child.name === 'AssignmentExpression') {
+          const name = this.extractIdentifierName(child)
           if (name) {
             properties.push(name)
           }
@@ -445,6 +718,25 @@ export class CssTsCstToAst extends SlimeCstToAst {
     }
 
     return properties
+  }
+
+  /**
+   * 从表达式 CST 中提取标识符名称（递归查找）
+   */
+  private extractIdentifierName(cst: SubhutiCst): string | null {
+    if (!cst) return null
+    
+    // 直接是 IdentifierName
+    if (cst.name === 'IdentifierName') {
+      return cst.value || cst.children?.[0]?.value || null
+    }
+    
+    // 递归查找第一个子节点
+    if (cst.children && cst.children.length > 0) {
+      return this.extractIdentifierName(cst.children[0])
+    }
+    
+    return null
   }
 
   /**

@@ -600,10 +600,93 @@ test-volar/
 │   └── ovs-runtime/        # 运行时（$OvsHtmlTag + defineOvsComponent）
 ├── ovs-language/           # VSCode 插件
 ├── create-ovs/             # 项目脚手架
-├── vite-plugin-ovs/        # Vite 插件
+├── vite-plugin-ovs/        # Vite 插件（集成 cssts）
+├── cssts/                  # CssTs 核心（css {} 语法编译器）
+├── cssts-types/            # CssTs 类型定义
+├── cssts-theme-element/    # Element Plus 主题原子类
+├── cssts-ui/               # Element Plus 源码（CssTs 实现对比）
+├── vite-plugin-cssts/      # CssTs Vite 插件
 ├── slime/                  # JS/TS 解析器
 └── subhuti/                # Parser 框架
 ```
+
+---
+
+## CssTs-UI - Element Plus 的 CssTs 实现
+
+`cssts-ui/` 是 [Element Plus](https://github.com/element-plus/element-plus) 的 fork，用于演示如何使用 CssTs 原子类重写组件库。
+
+### 目录结构
+
+```
+cssts-ui/
+├── packages/
+│   ├── components/         # 原始 Element Plus 组件（Vue SFC + SCSS）
+│   ├── cssts-components/   # CssTs 重写的组件（OVS + css {}）
+│   └── theme-chalk/        # 原始 SCSS 主题
+```
+
+### 对比：原始版本 vs CssTs 版本
+
+**原始 Element Plus（Vue SFC + SCSS）：**
+- 组件位于 `packages/components/`
+- 样式位于 `packages/theme-chalk/`
+- 使用 BEM 命名规范
+- 需要 SCSS 编译
+
+**CssTs 版本（OVS + css {}）：**
+- 组件位于 `packages/cssts-components/`
+- 样式使用 `css {}` 语法内联定义
+- 类型安全的原子类
+- 无需外部 CSS 文件
+
+---
+
+## CssTs - CSS-in-TypeScript
+
+OVS 集成了 CssTs，提供类型安全的原子类样式：
+
+```javascript
+// 使用 css {} 语法定义样式
+const buttonStyle = css {
+  displayInlineFlex,
+  justifyContentCenter,
+  alignItemsCenter,
+  height32px,
+  paddingLeft15px,
+  paddingRight15px,
+  fontSize14px,
+  borderRadius4px,
+  cursorPointer
+}
+
+// 在 OVS 中使用
+button(class = buttonStyle) { '点击我' }
+```
+
+### 命名规范
+
+CssTs 使用 `property_value` 格式作为 CSS 类名：
+
+| TS 变量名 | CSS 类名 | CSS 规则 |
+|-----------|----------|----------|
+| `displayFlex` | `.display_flex` | `display: flex` |
+| `height32px` | `.height_32px` | `height: 32px` |
+| `justifyContentCenter` | `.justify-content_center` | `justify-content: center` |
+
+**重要：数值必须带单位！**
+```typescript
+// ✅ 正确
+height32px, fontSize14px, paddingLeft15px
+
+// ❌ 错误（缺少单位）
+height32, fontSize14, paddingLeft15
+```
+
+详细文档请参考：
+- [cssts/README.md](./cssts/README.md) - 核心编译器
+- [cssts-types/README.md](./cssts-types/README.md) - 命名规范
+- [vite-plugin-cssts/README.md](./vite-plugin-cssts/README.md) - Vite 插件
 
 ---
 

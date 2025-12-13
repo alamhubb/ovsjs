@@ -405,10 +405,93 @@ test-volar/
 │   └── ovs-runtime/        # Runtime ($OvsHtmlTag + defineOvsComponent)
 ├── ovs-language/           # VSCode extension
 ├── create-ovs/             # Project scaffolding
-├── vite-plugin-ovs/        # Vite plugin
+├── vite-plugin-ovs/        # Vite plugin (integrates cssts)
+├── cssts/                  # CssTs core (css {} syntax compiler)
+├── cssts-types/            # CssTs type definitions
+├── cssts-theme-element/    # Element Plus theme atoms
+├── cssts-ui/               # Element Plus fork (CssTs implementation)
+├── vite-plugin-cssts/      # CssTs Vite plugin
 ├── slime/                  # JS/TS parser
 └── subhuti/                # Parser framework
 ```
+
+---
+
+## CssTs-UI - Element Plus with CssTs
+
+`cssts-ui/` is a fork of [Element Plus](https://github.com/element-plus/element-plus), demonstrating how to rewrite a component library using CssTs atomic classes.
+
+### Directory Structure
+
+```
+cssts-ui/
+├── packages/
+│   ├── components/         # Original Element Plus components (Vue SFC + SCSS)
+│   ├── cssts-components/   # CssTs rewritten components (OVS + css {})
+│   └── theme-chalk/        # Original SCSS theme
+```
+
+### Comparison: Original vs CssTs
+
+**Original Element Plus (Vue SFC + SCSS):**
+- Components in `packages/components/`
+- Styles in `packages/theme-chalk/`
+- Uses BEM naming convention
+- Requires SCSS compilation
+
+**CssTs Version (OVS + css {}):**
+- Components in `packages/cssts-components/`
+- Styles defined inline with `css {}` syntax
+- Type-safe atomic classes
+- No external CSS files needed
+
+---
+
+## CssTs - CSS-in-TypeScript
+
+OVS integrates CssTs for type-safe atomic CSS styling:
+
+```javascript
+// Define styles with css {} syntax
+const buttonStyle = css {
+  displayInlineFlex,
+  justifyContentCenter,
+  alignItemsCenter,
+  height32px,
+  paddingLeft15px,
+  paddingRight15px,
+  fontSize14px,
+  borderRadius4px,
+  cursorPointer
+}
+
+// Use in OVS
+button(class = buttonStyle) { 'Click Me' }
+```
+
+### Naming Convention
+
+CssTs uses `property_value` format for CSS class names:
+
+| TS Variable | CSS Class | CSS Rule |
+|-------------|-----------|----------|
+| `displayFlex` | `.display_flex` | `display: flex` |
+| `height32px` | `.height_32px` | `height: 32px` |
+| `justifyContentCenter` | `.justify-content_center` | `justify-content: center` |
+
+**Important: Numbers must include units!**
+```typescript
+// ✅ Correct
+height32px, fontSize14px, paddingLeft15px
+
+// ❌ Wrong (missing units)
+height32, fontSize14, paddingLeft15
+```
+
+For detailed documentation, see:
+- [cssts/README.md](./cssts/README.md) - Core compiler
+- [cssts-types/README.md](./cssts-types/README.md) - Naming specification
+- [vite-plugin-cssts/README.md](./vite-plugin-cssts/README.md) - Vite plugin
 
 ---
 

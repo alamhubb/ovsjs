@@ -91,15 +91,19 @@ export function defineOvsComponent(
     // 关键：区分两种调用方式：
     // 1. OVS 调用：CountDisplay({count: 1}, []) - 第二个参数是数组
     // 2. Vue 模板调用：<CountDisplay /> - Vue 会传入 props 对象，没有第二个参数
-    function callable(props?: Record<string, any>, children?: any) {
+    function callable(props?: Record<string, any>, context?: any) {
         // 如果第二个参数是数组，说明是 OVS 调用方式
         // 返回一个组件对象，用于 children.push()
-        if (Array.isArray(children)) {
-            return createComponentVNodeNew(rawComponent, props, children)
+        if (Array.isArray(context)) {
+            return createComponentVNodeNew(rawComponent, props, context)
         }
-        // 否则是 Vue 模板调用，返回 VNode
-        // Vue 会把这个函数当作函数组件来调用
-        return h(rawComponent, props)
+        // Vue 函数式组件调用：context 包含 { attrs, slots, emit }
+        // 需要把 slots 传递给内部组件
+        if (context && context.slots) {
+            return h(rawComponent, props, context.slots)
+        }
+        // 否则是普通调用
+        return h(rawComponent, props, context)
     }
     
     // 函数的只读属性，不能被覆盖

@@ -59,6 +59,13 @@ export interface CssTsPluginOptions {
    * @default '' (无前缀)
    */
   classPrefix?: string
+
+  /**
+   * 外部传入的原子类收集器
+   * 用于与其他插件（如 vite-plugin-ovs）共享原子类收集
+   * 如果不传，使用内部默认的全局收集器
+   */
+  usedAtoms?: Set<string>
 }
 
 // ==================== 虚拟模块 ====================
@@ -79,6 +86,25 @@ const globalUsedAtoms = new Set<string>()
 // ==================== CSS 生成 ====================
 
 /**
+ * CssTs 原子类命名规范（来自 cssts-types/README.md）
+ * 
+ * CSS 类名格式：`{property}_{value}`
+ * - 用 `_` 下划线分隔属性和值
+ * - 属性名使用 kebab-case（如 justify-content）
+ * - 值使用 kebab-case（如 flex-start）
+ * 
+ * 示例：
+ * - displayFlex → .display_flex { display: flex; }
+ * - justifyContentCenter → .justify-content_center { justify-content: center; }
+ * - paddingTop16px → .padding-top_16px { padding-top: 16px; }
+ * 
+ * 特殊符号转义（CSS 类名中）：
+ * - 小数点：\.（如 .line-height_1\.5）
+ * - 百分号：\%（如 .width_50\%）
+ * - 斜杠：\/（如 .aspect-ratio_16\/9）
+ */
+
+/**
  * 从 TS 属性名获取 CSS 值
  */
 function getCssValue(atomName: string): string | undefined {
@@ -87,7 +113,7 @@ function getCssValue(atomName: string): string | undefined {
   const underscoreIndex = className.indexOf('_')
   if (underscoreIndex > 0) {
     let value = className.slice(underscoreIndex + 1)
-    // 反转义
+    // 反转义：将 CSS 转义符号还原为实际值
     value = value.replace(/\\\./g, '.').replace(/\\%/g, '%').replace(/\\\//g, '/')
     return value
   }
@@ -96,6 +122,8 @@ function getCssValue(atomName: string): string | undefined {
 
 /**
  * 生成单个原子类的 CSS 规则
+ * 
+ * 使用 property_value 命名规范
  */
 function generateAtomCssRule(atomName: string, prefix: string = ''): string | null {
   const className = getCssClassName(atomName)
@@ -176,16 +204,6 @@ function transformCssTs(
     styles,
     usedAtoms,
   }
-}
-
-/**
- * 驼峰转 kebab-case
- */
-function camelToKebab(str: string): string {
-  return str
-    .replace(/([a-z])([A-Z])/g, '$1-$2')
-    .replace(/([a-zA-Z])(\d)/g, '$1-$2')
-    .toLowerCase()
 }
 
 /**
@@ -387,6 +405,8 @@ export default function cssTsPlugin(options: CssTsPluginOptions = {}): Plugin {
   let isDev = false
   const runtimeImport = options.runtimeImport || './cssts/runtime'
   const prefix = options.classPrefix || ''
+  // 使用外部传入的 usedAtoms 或默认的全局收集器
+  const usedAtoms = options.usedAtoms ?? globalUsedAtoms
 
   return {
     name: 'vite-plugin-cssts',
@@ -407,8 +427,8 @@ export default function cssTsPlugin(options: CssTsPluginOptions = {}): Plugin {
     // 加载虚拟模块内容
     load(id) {
       if (id === RESOLVED_VIRTUAL_CSS_ID) {
-        // 生成使用的原子类的 CSS
-        return generateUsedAtomsCss(globalUsedAtoms, prefix)
+        // 生成使用的原子类的 CSS（使用实例级的 usedAtoms）
+        return generateUsedAtomsCss(usedAtoms, prefix)
       }
     },
 
@@ -485,4 +505,4 @@ export default function cssTsPlugin(options: CssTsPluginOptions = {}): Plugin {
   }
 }
 
-export { transformCssTs, transformVueTemplate, generateOutputFiles, globalStyles, VIRTUAL_CSS_ID }
+export { transformCssTs, transformVueTemplate, generateOutputFiles, globalStyles, globalUsedAtoms, VIRTUAL_CSS_ID }

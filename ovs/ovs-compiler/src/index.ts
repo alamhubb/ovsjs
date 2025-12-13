@@ -115,6 +115,18 @@ function usesDefineOvsComponent(ast: SlimeProgram): boolean {
     return code.includes('defineOvsComponent')
 }
 
+/** 检查 AST 中是否使用了 cssts */
+function usesCssts(ast: SlimeProgram): boolean {
+    const code = JSON.stringify(ast)
+    return code.includes('"cssts"') || code.includes('"name":"cssts"')
+}
+
+/** 检查 AST 中是否使用了 csstsAtom */
+function usesCsstsAtom(ast: SlimeProgram): boolean {
+    const code = JSON.stringify(ast)
+    return code.includes('"csstsAtom"') || code.includes('"name":"csstsAtom"')
+}
+
 /** 确保有 $OvsHtmlTag 的导入 */
 function ensureOvsHtmlTagImport(imports: any[]): any[] {
     // 检查是否已经有 ovsjs 的导入
@@ -150,6 +162,64 @@ function ensureOvsHtmlTagImport(imports: any[]): any[] {
     return [newImport, ...imports]
 }
 
+/** 确保有 cssts 的导入 */
+function ensureCsstsImport(imports: any[]): any[] {
+    // 检查是否已经有 cssts 的导入
+    for (const imp of imports) {
+        if (imp.type === SlimeNodeType.ImportDeclaration) {
+            const source = (imp as SlimeImportDeclaration).source
+            if (source.value === 'cssts') {
+                const specifiers = imp.specifiers || []
+                const has = specifiers.some((s: any) => s.type === SlimeNodeType.ImportSpecifier &&
+                    (s.imported?.name === 'cssts' || s.local?.name === 'cssts'))
+                if (!has) {
+                    specifiers.push({
+                        type: SlimeNodeType.ImportSpecifier,
+                        imported: SlimeAstUtil.createIdentifier('cssts'),
+                        local: SlimeAstUtil.createIdentifier('cssts')
+                    })
+                }
+                return imports
+            }
+        }
+    }
+    // 没有 cssts 导入，创建新的
+    const newImport = SlimeAstUtil.createImportDeclaration(
+        [{type: SlimeNodeType.ImportSpecifier, imported: SlimeAstUtil.createIdentifier('cssts'),
+          local: SlimeAstUtil.createIdentifier('cssts')} as SlimeImportSpecifier],
+        SlimeAstUtil.createStringLiteral('cssts'))
+    return [newImport, ...imports]
+}
+
+/** 确保有 csstsAtom 的导入 */
+function ensureCsstsAtomImport(imports: any[]): any[] {
+    // 检查是否已经有 cssts-theme-element 的导入
+    for (const imp of imports) {
+        if (imp.type === SlimeNodeType.ImportDeclaration) {
+            const source = (imp as SlimeImportDeclaration).source
+            if (source.value === 'cssts-theme-element') {
+                const specifiers = imp.specifiers || []
+                const has = specifiers.some((s: any) => s.type === SlimeNodeType.ImportSpecifier &&
+                    (s.imported?.name === 'csstsAtom' || s.local?.name === 'csstsAtom'))
+                if (!has) {
+                    specifiers.push({
+                        type: SlimeNodeType.ImportSpecifier,
+                        imported: SlimeAstUtil.createIdentifier('csstsAtom'),
+                        local: SlimeAstUtil.createIdentifier('csstsAtom')
+                    })
+                }
+                return imports
+            }
+        }
+    }
+    // 没有 cssts-theme-element 导入，创建新的
+    const newImport = SlimeAstUtil.createImportDeclaration(
+        [{type: SlimeNodeType.ImportSpecifier, imported: SlimeAstUtil.createIdentifier('csstsAtom'),
+          local: SlimeAstUtil.createIdentifier('csstsAtom')} as SlimeImportSpecifier],
+        SlimeAstUtil.createStringLiteral('cssts-theme-element'))
+    return [newImport, ...imports]
+}
+
 function wrapTopLevelExpressions(ast: SlimeProgram, sourceCode: string): SlimeProgram {
     let imports: any[] = [], declarations: any[] = [], expressions: SlimeStatement[] = [], hasAnyExport = false
     for (const statement of ast.body) {
@@ -167,6 +237,16 @@ function wrapTopLevelExpressions(ast: SlimeProgram, sourceCode: string): SlimePr
         imports = ensureOvsHtmlTagImport(imports)
     }
 
+    // 检查是否使用了 cssts，如果是则自动添加导入
+    if (usesCssts(ast)) {
+        imports = ensureCsstsImport(imports)
+    }
+
+    // 检查是否使用了 csstsAtom，如果是则自动添加导入
+    if (usesCsstsAtom(ast)) {
+        imports = ensureCsstsAtomImport(imports)
+    }
+
     if (hasAnyExport || expressions.length === 0) {
         // 即使有 export，也需要检查并添加必要的导入
         let needsRebuild = false
@@ -176,6 +256,14 @@ function wrapTopLevelExpressions(ast: SlimeProgram, sourceCode: string): SlimePr
         }
         if (usesDefineOvsComponent(ast)) {
             imports = ensureDefineOvsComponentImport(imports)
+            needsRebuild = true
+        }
+        if (usesCssts(ast)) {
+            imports = ensureCsstsImport(imports)
+            needsRebuild = true
+        }
+        if (usesCsstsAtom(ast)) {
+            imports = ensureCsstsAtomImport(imports)
             needsRebuild = true
         }
         if (needsRebuild) {

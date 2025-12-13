@@ -1,15 +1,13 @@
-# OVS 组件测试项目
+# OVS + CssTs 组件测试项目
 
-测试 OVS 语法开发的 Vue 组件是否正常工作。
+对比展示两种组件实现方式：Vue SFC（Element Plus 风格）vs OVS + CssTs 原子类。
 
-## 测试组件
+## 项目目的
 
-| 组件 | 功能 | 测试点 |
-|------|------|--------|
-| **OvsButton** | 按钮组件 | 类型变体、点击事件、computed 属性 |
-| **OvsCounter** | 计数器组件 | ref 响应式、事件处理、条件渲染 |
-| **OvsInput** | 输入框组件 | 表单输入、watch 监听、双向绑定 |
-| **OvsCard** | 卡片组件 | props.children 传递、条件渲染 |
+| 实现方式 | 目录 | 特点 |
+|---------|------|------|
+| **Vue SFC** | `components/css/` | 标准 Vue 单文件组件，使用 scoped CSS |
+| **OVS + CssTs** | `components/cssts/` | OVS 语法 + `css {}` 原子类 |
 
 ## 运行
 
@@ -19,24 +17,90 @@ npm install
 npm run dev
 ```
 
-然后访问 http://localhost:5173 (或控制台显示的端口)
+访问 http://localhost:5173
 
-## OVS 语法特点
+## 代码对比
+
+### Vue SFC 实现 (`components/css/ElButton.vue`)
+
+```vue
+<template>
+  <button :class="buttonClasses" @click="handleClick">
+    <slot />
+  </button>
+</template>
+
+<script setup lang="ts">
+import { computed } from 'vue'
+
+const props = defineProps<{
+  type?: 'primary' | 'success' | 'warning' | 'danger'
+  disabled?: boolean
+}>()
+
+const buttonClasses = computed(() => [
+  'el-button',
+  `el-button--${props.type}`,
+  { 'is-disabled': props.disabled }
+])
+</script>
+
+<style scoped>
+.el-button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  height: 32px;
+  padding: 0 15px;
+  /* ... 大量 CSS 规则 ... */
+}
+
+.el-button--primary {
+  background-color: var(--el-color-primary);
+  /* ... */
+}
+</style>
+```
+
+### OVS + CssTs 实现 (`components/cssts/OvsButton.ovs`)
 
 ```javascript
-// 使用 view 定义组件
-view OvsButton(props) {
-  // 支持 Vue 3 Composition API
-  const buttonClass = computed(() => {
-    return `ovs-button ovs-button--${props.type || 'primary'}`
-  })
+import { computed } from 'vue'
 
-  // 使用 HTML 标签语法
-  button(class = buttonClass.value, onClick = handleClick) {
-    props.children  // 子组件通过 props.children 传递
-  }
+// 原子类组合
+const baseStyle = css {
+  displayInlineFlex,
+  justifyContentCenter,
+  alignItemsCenter,
+  height32px,
+  paddingLeft15px,
+  paddingRight15px
+}
+
+const typeStyles = {
+  primary: css { bgPrimary, colorWhite },
+  success: css { bgSuccess, colorWhite }
+}
+
+const buttonClass = computed(() => css {
+  ...baseStyle,
+  ...typeStyles[props.type]
+})
+
+button(class = buttonClass.value, onClick = handleClick) {
+  props.children
 }
 ```
+
+## 核心差异
+
+| 特性 | Vue SFC | OVS + CssTs |
+|------|---------|-------------|
+| 文件格式 | `.vue` (template + script + style) | `.ovs` (纯 JavaScript) |
+| 样式定义 | `<style scoped>` 块 | `css {}` 内联语法 |
+| 类型安全 | 需要额外配置 | 原生 TypeScript 支持 |
+| 样式复用 | CSS 类继承 | 原子类组合 |
+| 按需生成 | 全量加载 | 只生成使用的样式 |
 
 ## 项目结构
 
@@ -44,23 +108,22 @@ view OvsButton(props) {
 ovs-component-test/
 ├── src/
 │   ├── components/
-│   │   ├── OvsButton.ovs    # 按钮组件
-│   │   ├── OvsCounter.ovs   # 计数器组件
-│   │   ├── OvsInput.ovs     # 输入框组件
-│   │   └── OvsCard.ovs      # 卡片组件
-│   ├── assets/
-│   │   └── main.css         # 样式
-│   ├── App.vue              # 主应用 (Vue SFC)
-│   └── main.ts              # 入口
-├── package.json
-├── vite.config.ts           # Vite 配置 (使用 vite-plugin-ovs)
-└── tsconfig.json
+│   │   ├── css/              # Vue SFC 实现
+│   │   │   ├── ElButton.vue
+│   │   │   ├── ElCounter.vue
+│   │   │   ├── ElInput.vue
+│   │   │   └── ElCard.vue
+│   │   └── cssts/            # OVS + CssTs 实现
+│   │       ├── OvsButton.ovs
+│   │       ├── OvsCounter.ovs
+│   │       ├── OvsInput.ovs
+│   │       └── OvsCard.ovs
+│   ├── assets/main.css       # CSS 变量定义
+│   ├── App.vue               # 对比展示页面
+│   └── main.ts
+└── vite.config.ts            # 使用 vite-plugin-ovs
 ```
 
-## 验证结果
+## 完整源码对比
 
-✅ OVS 组件可以被 vite-plugin-ovs 正确编译
-✅ 支持 Vue 3 Composition API (ref, computed, watch)
-✅ 支持事件处理 (onClick 等)
-✅ 支持 props 传递和 children
-✅ 可以在 Vue SFC 中导入和使用 OVS 组件
+完整的 Element Plus 源码位于 `cssts-ui/packages/components/`，CssTs 重写版本位于 `cssts-ui/packages/cssts-components/`。

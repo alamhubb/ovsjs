@@ -96,48 +96,27 @@ export default class CssTsParser<T extends CssTsTokenConsumer = CssTsTokenConsum
   /**
    * CssStyleObject - CSS 样式对象
    * 
-   * 语法：{ CssPropertyList }
+   * 语法：{ ElementList }
+   * 
+   * 直接复用 ElementList（和数组字面量一样的语法）：
+   * - 简单表达式：colorRed
+   * - 展开语法：...baseStyle
+   * - 任意表达式：props.disabled && css { opacity60 }
    * 
    * 示例：
    *   { colorRed }
    *   { colorRed, fontBold }
-   *   { buttonBase, bgBlue, marginTop }
+   *   { ...baseStyle, bgBlue }
+   *   { props.disabled && css { opacity60 } }
    */
   @SubhutiRule
   CssStyleObject(params: ExpressionParams = {}) {
     this.tokenConsumer.LBrace()
     this.Option(() => {
-      this.CssPropertyList(params)
+      this.ElementList(params)  // 直接复用 ElementList
     })
     this.tokenConsumer.RBrace()
     return this.curCst
-  }
-
-  /**
-   * CssPropertyList - CSS 属性列表
-   * 
-   * 语法：CssProperty (, CssProperty)*
-   */
-  @SubhutiRule
-  CssPropertyList(params: ExpressionParams = {}) {
-    this.CssProperty(params)
-    this.Many(() => {
-      this.tokenConsumer.Comma()
-      this.CssProperty(params)
-    })
-    return this.curCst
-  }
-
-  /**
-   * CssProperty - CSS 属性（样式引用）
-   * 
-   * 语法：IdentifierName
-   * 
-   * 每个属性都是对另一个 css 声明的引用
-   */
-  @SubhutiRule
-  CssProperty(params: ExpressionParams = {}) {
-    return this.tokenConsumer.IdentifierName()
   }
 
   /**
@@ -174,10 +153,17 @@ export default class CssTsParser<T extends CssTsTokenConsumer = CssTsTokenConsum
       { alt: () => this.GeneratorExpression() },
       { alt: () => this.AsyncFunctionExpression() },
       { alt: () => this.AsyncGeneratorExpression() },
-      { alt: () => this.RegularExpressionLiteral() },
+      { alt: () => this.consumeRegularExpressionLiteral() },  // 使用正确的方法名
       { alt: () => this.TemplateLiteral(params) },
       { alt: () => this.CoverParenthesizedExpressionAndArrowParameterList(params) }
     ])
+  }
+
+  /**
+   * 消费正则表达式字面量（复制自 SlimeParser）
+   */
+  private consumeRegularExpressionLiteral(): any {
+    return (this as any).consume('RegularExpressionLiteral', 'InputElementRegExp')
   }
 
   /**

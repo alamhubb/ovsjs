@@ -3,6 +3,32 @@
  *
  * 提供 cssts.$cls() 函数，用于合并多个样式
  * 使用 properties.json 做最长前缀匹配来解析属性名
+ * 
+ * ## 命名规范（来自 cssts-types/README.md）
+ * 
+ * ### CSS 类名格式
+ * 采用 `{property}_{value}` 格式，用 `_` 下划线分隔属性和值：
+ * ```css
+ * .display_flex { display: flex; }
+ * .justify-content_center { justify-content: center; }
+ * .padding-top_16px { padding-top: 16px; }
+ * ```
+ * 
+ * ### TypeScript 变量名格式
+ * 采用 `{property}{Value}` 的 camelCase 格式：
+ * ```typescript
+ * displayFlex           → .display_flex
+ * justifyContentCenter  → .justify-content_center
+ * paddingTop16px        → .padding-top_16px
+ * ```
+ * 
+ * ### 特殊符号转换
+ * | CSS 值 | TS 变量名 | CSS 类名 |
+ * |--------|-----------|----------|
+ * | 1.5    | lineHeight1p5 | .line-height_1\.5 |
+ * | 50%    | width50pct | .width_50\% |
+ * | -1     | zIndexN1 | .z-index_-1 |
+ * | 16/9   | aspectRatio16s9 | .aspect-ratio_16\/9 |
  */
 
 // @ts-ignore - JSON import
