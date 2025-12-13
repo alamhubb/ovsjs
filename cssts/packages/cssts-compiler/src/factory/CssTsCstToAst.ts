@@ -64,7 +64,13 @@ export class CssTsCstToAst extends SlimeCstToAst {
   }
 
   toProgram(cst: SubhutiCst): SlimeProgram {
-    this.checkCstName(cst, SlimeParser.prototype.Program.name)
+    // 支持 Program 和 Module 两种入口
+    const programName = SlimeParser.prototype.Program?.name || 'Program'
+    const moduleName = SlimeParser.prototype.Module?.name || 'Module'
+    
+    if (cst.name !== programName && cst.name !== moduleName) {
+      throw new Error(`Expected ${programName} or ${moduleName}, got ${cst.name}`)
+    }
 
     if (!cst.children || cst.children.length === 0) {
       return SlimeNodeCreate.createProgram([], SlimeProgramSourceType.Module)

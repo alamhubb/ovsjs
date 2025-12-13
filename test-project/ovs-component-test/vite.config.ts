@@ -22,7 +22,9 @@ export default defineConfig({
       'cssts-theme-element': fileURLToPath(new URL('../../cssts-theme-element/src/index.ts', import.meta.url)),
       // 让 @cssts-ui/components 使用本地版本
       '@cssts-ui/components': fileURLToPath(new URL('../../cssts-ui/packages/cssts-components/src/index.ts', import.meta.url))
-    }
+    },
+    // 添加 .cssts 扩展名解析支持
+    extensions: ['.mjs', '.js', '.mts', '.ts', '.jsx', '.tsx', '.json', '.cssts']
   },
   // 配置 esbuild 跳过 cssts-ui 目录（因为它包含 css {} 语法）
   optimizeDeps: {
