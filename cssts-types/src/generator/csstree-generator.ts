@@ -27,7 +27,7 @@ import { defaultConfig, type PropertyNumericConfigBase } from './property-numeri
 import { generateValuePresets, type NumericType } from './types'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const rootDir = path.resolve(__dirname, '..')
+const rootDir = path.resolve(__dirname, '../..')  // 从 src/generator 到 cssts-types 根目录
 const distDir = path.resolve(rootDir, 'dist')
 
 // ==================== 核心数据结构 ====================
@@ -92,18 +92,37 @@ const unitToSuffix: Record<string, string> = {
 
 /**
  * kebab-case 转 camelCase
+ * 处理所有 - 后的字符（包括数字）
  */
 function kebabToCamel(str: string): string {
-  return str.replace(/-([a-z])/g, (_, c) => c.toUpperCase())
+  // 先移除开头的 - (如 -ms-, -webkit-)
+  let result = str.replace(/^-+/, '')
+  // 转换 -x 为 X（包括数字，数字前加下划线使其合法）
+  result = result.replace(/-([a-z0-9])/gi, (_, c) => {
+    // 如果是数字，前面加下划线
+    if (/[0-9]/.test(c)) {
+      return '_' + c
+    }
+    return c.toUpperCase()
+  })
+  return result
 }
 
 /**
  * kebab-case 转 PascalCase
+ * 处理数字开头的部分（加下划线前缀）
  */
 function kebabToPascal(str: string): string {
   return str
     .split('-')
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .filter(part => part.length > 0)  // 过滤空字符串
+    .map((part) => {
+      // 如果部分以数字开头，加下划线前缀
+      if (/^[0-9]/.test(part)) {
+        return '_' + part
+      }
+      return part.charAt(0).toUpperCase() + part.slice(1)
+    })
     .join('')
 }
 
@@ -113,6 +132,7 @@ function kebabToPascal(str: string): string {
  * - 小数点：1.25 → 1p25
  * - 百分号：50% → 50pct
  * - 斜杠：16/9 → 16s9
+ * - 中间的连字符：no-limit → noLimit (转 camelCase)
  */
 function formatForTsIdentifier(value: string | number): string {
   let str = String(value)
@@ -126,6 +146,12 @@ function formatForTsIdentifier(value: string | number): string {
   for (const [symbol, alias] of Object.entries(symbolToAlias)) {
     str = str.split(symbol).join(alias)
   }
+
+  // 处理中间的连字符：转换为 camelCase（no-limit → noLimit）
+  str = str.replace(/-([a-z0-9])/gi, (_, c) => c.toUpperCase())
+  
+  // 移除任何剩余的非法字符（如单独的 -）
+  str = str.replace(/-/g, '')
 
   return str
 }
@@ -498,10 +524,10 @@ async function main() {
   fs.writeFileSync(path.join(rootDir, 'CsstsAtoms.d.ts'), csstsAtomsDts)
   console.log('✅ 生成 CsstsAtoms.d.ts')
 
-  // 2. 生成 global.generated.d.ts - 引用 CsstsAtoms
+  // 2. 生成 global.d.ts - 引用 CsstsAtoms
   const globalDts = generateGlobalDts(atoms)
-  fs.writeFileSync(path.join(rootDir, 'global.generated.d.ts'), globalDts)
-  console.log('✅ 生成 global.generated.d.ts')
+  fs.writeFileSync(path.join(rootDir, 'global.d.ts'), globalDts)
+  console.log('✅ 生成 global.d.ts')
 
   // 3. 生成 properties.json - 所有 CSS 属性列表
   const propertiesJson = generatePropertiesJson(atoms)
@@ -539,7 +565,7 @@ async function main() {
   console.log('')
   console.log('生成的文件:')
   console.log('  - CsstsAtoms.d.ts      (类型定义)')
-  console.log('  - global.generated.d.ts (全局声明)')
+  console.log('  - global.d.ts          (全局声明)')
   console.log('  - dist/properties.json (CSS 属性列表)')
 }
 

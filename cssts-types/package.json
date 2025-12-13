@@ -9,14 +9,14 @@
     ".": {
       "types": "./index.d.ts"
     },
-    "./atoms/*": {
-      "types": "./atoms/*"
-    },
     "./runtime": {
       "types": "./runtime.d.ts"
     },
     "./global": {
       "types": "./global.d.ts"
+    },
+    "./atoms": {
+      "types": "./CsstsAtoms.d.ts"
     },
     "./dist/properties.json": {
       "default": "./dist/properties.json"
@@ -24,11 +24,10 @@
   },
   "files": [
     "*.d.ts",
-    "atoms",
     "dist"
   ],
   "scripts": {
-    "generate": "tsx generator/csstree-generator.ts",
+    "generate": "tsx src/generator/csstree-generator.ts",
     "build": "npm run generate"
   },
   "devDependencies": {
