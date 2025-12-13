@@ -1,4 +1,0 @@
-{
-  "allowNewTargetOutsideFunction": false,
-  "throws": "`sourceType: 'commonjs'` implies `allowNewTargetOutsideFunction: true`, please remove the `allowNewTargetOutsideFunction` option or use `sourceType: 'script'`."
-}

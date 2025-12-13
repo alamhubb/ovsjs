@@ -1,1 +1,0 @@
-value |> @foo class { constructor () { @@; } }

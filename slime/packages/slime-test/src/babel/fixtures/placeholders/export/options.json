@@ -1,4 +1,0 @@
-{
-  "plugins": ["placeholders", "exportDefaultFrom"],
-  "sourceType": "module"
-}

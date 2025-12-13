@@ -1,3 +1,0 @@
-{
-  "plugins": ["decoratorAutoAccessors", ["estree", { "classFeatures": true }]]
-}

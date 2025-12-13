@@ -1,4 +1,0 @@
-{
-  "allowReturnOutsideFunction": true,
-  "throws": "`sourceType: 'commonjs'` implies `allowReturnOutsideFunction: true`, please remove the `allowReturnOutsideFunction` option or use `sourceType: 'script'`."
-}

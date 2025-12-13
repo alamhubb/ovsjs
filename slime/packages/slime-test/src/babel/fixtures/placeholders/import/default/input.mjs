@@ -1,1 +1,0 @@
-import %%DEFAULT%% from "file";

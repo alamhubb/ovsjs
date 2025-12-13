@@ -1,5 +1,0 @@
-{
-  "errorRecovery": false,
-  "allowNewTargetOutsideFunction": false,
-  "throws": "`new.target` can only be used in functions or class properties. (1:10)"
-}
