@@ -23,7 +23,7 @@
   "activationEvents": [
     "onLanguage:ovs"
   ],
-  "main": "./dist/extension.cjs",
+  "main": "./dist/extension.js",
   "contributes": {
     "languages": [
       {
@@ -64,8 +64,8 @@
     }
   },
   "scripts": {
-    "build": "rollup -c rollup.config.mjs",
-    "watch": "rollup -c rollup.config.mjs --watch",
+    "build": "tsdown",
+    "watch": "tsdown --watch",
     "test": "npm run test:dist",
     "test:source": "npx tsx tests/test-language-server.ts --source",
     "test:dist": "npx tsx tests/test-language-server.ts --dist",
@@ -75,14 +75,8 @@
     "vscode:prepublish": "npm run build"
   },
   "devDependencies": {
-    "@rollup/plugin-commonjs": "^28.0.9",
-    "@rollup/plugin-json": "^6.1.0",
-    "@rollup/plugin-node-resolve": "^16.0.3",
-    "@swc/core": "^1.15.3",
     "@vscode/vsce": "^3.2.1",
-    "rollup": "^4.53.3",
-    "rollup-plugin-dts": "^6.3.0",
-    "rollup-plugin-swc3": "^0.12.1",
+    "tsdown": "^0.9.3",
     "typescript": "^5.6.2"
   }
 }
