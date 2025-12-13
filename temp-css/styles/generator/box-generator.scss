@@ -1,9 +1,0 @@
-@each $boxKey, $boxValue in $box-map {
-  .q-box-#{''+$boxKey+''} {
-    padding: $boxValue !important;
-  }
-}
-
-.q-box {
-  padding: $box-df !important;
-}
