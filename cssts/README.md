@@ -1,474 +1,244 @@
-# CssTs - CSS-in-TypeScript
+# CssTs
 
-> 编译时 CSS 类名管理系统，提供类型安全的原子类组合能力
+> CSS-in-TS：编译时原子 CSS 类管理系统
 
-## 核心特性
+CssTs 是一个类型安全的原子 CSS 解决方案，通过 TypeScript 提供完整的 IDE 支持，在编译时生成优化的 CSS。
 
-- **类型安全** - TypeScript 原生支持，IDE 智能提示
-- **原子类组合** - 使用 `css { }` 语法组合原子类
-- **编译时转换** - 语法糖编译为运行时调用
-- **智能区分** - 自动区分原子类和局部变量
-- **样式冲突替换** - 智能检测并替换同属性类别的样式
-- **按需生成** - 只生成项目中使用的原子类和 CSS
+## 特性
 
-## 设计原则
-
-### 1. css 关键字是必须的
-
-`css` 关键字用于标识 CssTs 语法，只有带 `css` 前缀的表达式才会被编译转换：
-
-```typescript
-// ✅ 有 css 关键字 → 编译转换
-css { isDisabled, cursorNotAllowed }  
-// → cssts.$cls(csstsAtom.isDisabled, csstsAtom.cursorNotAllowed)
-
-// ❌ 没有 css 关键字 → 保持原样（标准 JS 语义）
-{ isDisabled, cursorNotAllowed }  
-// → { isDisabled: isDisabled, cursorNotAllowed: cursorNotAllowed }
-```
-
-**设计原因**：`{ A }` 在 JavaScript 中是对象简写语法 `{ A: A }`，我们不应该改变这个语义。
-
-### 2. 嵌套 css {} 是必须的
-
-在 `css { }` 内部使用条件表达式时，内层的原子类组也需要 `css { }` 包裹：
-
-```typescript
-// ✅ 正确写法
-const buttonClass = computed(() => {
-  return css {
-    ...baseStyle,
-    props.disabled && css { isDisabled, cursorNotAllowed },
-    props.round && css { borderRadiusFull }
-  }
-})
-
-// ❌ 错误写法（内层缺少 css）
-const buttonClass = computed(() => {
-  return css {
-    ...baseStyle,
-    props.disabled && { isDisabled, cursorNotAllowed }  // 这是 JS 对象！
-  }
-})
-```
-
-### 3. 智能区分原子类和变量
-
-编译器会自动区分标识符是原子类还是局部变量：
-
-```typescript
-const baseStyle = css { displayFlex, alignItemsCenter }  // 定义局部变量
-
-css { ...baseStyle, backgroundColorPrimary }
-// baseStyle 是局部变量 → 保持原样
-// backgroundColorPrimary 是原子类 → csstsAtom.backgroundColorPrimary
-```
-
-**判断逻辑**：
-1. 先检查当前作用域是否有该变量声明
-2. 如果没有，检查原子类名称表（`atoms.json`）
-3. 都不匹配则报警告
-
-### 4. 统一命名规则
-
-原子类采用 `{property}_{value}` 格式，用 `_` 下划线分隔属性和值。
-
-#### CSS 类名格式
-
-```css
-.display_flex { display: flex; }
-.justify-content_center { justify-content: center; }
-.padding-top_16px { padding-top: 16px; }
-```
-
-**为什么用 `_` 分隔？**
-CSS 属性名和值都可能包含 `-`，如果统一用 `-` 会产生歧义：
-```
-justify-content-flex-start  // 歧义：哪里是属性和值的分界？
-justify-content_flex-start  // 清晰：_ 左边是属性，右边是值
-```
-
-#### TypeScript 变量名格式
-
-采用 `{property}{Value}` 的 camelCase 格式：
-
-| CSS 属性 | TS 变量名 | CSS 类名 |
-|---------|-----------|---------|
-| `display: flex` | `displayFlex` | `.display_flex` |
-| `justify-content: center` | `justifyContentCenter` | `.justify-content_center` |
-| `padding-top: 16px` | `paddingTop16px` | `.padding-top_16px` |
-| `height: 32px` | `height32px` | `.height_32px` |
-
-**重要：数值必须带单位！**
-```typescript
-// ✅ 正确
-height32px, fontSize14px, paddingLeft15px
-
-// ❌ 错误（缺少单位）
-height32, fontSize14, paddingLeft15
-```
-
-#### 特殊符号转换
-
-| CSS 值 | TS 变量名 | CSS 类名 |
-|--------|-----------|----------|
-| `1.5` | `lineHeight1p5` | `.line-height_1\.5` |
-| `50%` | `width50pct` | `.width_50\%` |
-| `-1` | `zIndexN1` | `.z-index_-1` |
-| `16/9` | `aspectRatio16s9` | `.aspect-ratio_16\/9` |
-
-符号别名（TS 标识符）：
-- `.` → `p` (point，小数点)
-- `%` → `pct` (percent，百分号)
-- `/` → `s` (slash，斜杠)
-- `-` → `N` (negative，负数前缀)
-
-详细规范请参考 `cssts-types/README.md`。
+- 🎯 **类型安全** - 完整的 TypeScript 类型定义，IDE 代码补全
+- 🚀 **编译时优化** - CSS 在构建时按需生成，零运行时开销
+- 🔧 **灵活配置** - 属性 → 单位 → 配置的直观配置结构
+- ⚡ **冲突处理** - 智能检测并替换同属性样式
+- 📦 **零依赖运行时** - runtime 包无任何依赖，体积最小
 
 ## 架构设计
 
-### 文件生成流程
-
 ```
-┌─────────────────────────────────────────────────────────────┐
-│  cssts-types 包发布时（我们维护）                            │
-├─────────────────────────────────────────────────────────────┤
-│  mdn-data → 生成器 → CsstsAtoms.d.ts (接口，唯一数据源)      │
-│                    → global.d.ts (全局声明，引用接口)        │
-│                    → atoms.json (名称列表，编译时用)         │
-└─────────────────────────────────────────────────────────────┘
-                              ↓
-                        npm publish
-                              ↓
-┌─────────────────────────────────────────────────────────────┐
-│  用户项目编译时 (vite-plugin-cssts)                          │
-├─────────────────────────────────────────────────────────────┤
-│  1. 加载 atoms.json（判断标识符是否是原子类）                 │
-│  2. 作用域分析（区分局部变量和原子类）                        │
-│  3. 扫描用户代码中使用的原子类                               │
-│  4. 生成 CsstsAtom.ts（只包含使用的原子类实现）              │
-│  5. 生成 atoms.css（只包含使用的 CSS 样式）                  │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### 类型定义结构
-
-```typescript
-// CsstsAtoms.d.ts - 唯一数据源
-export interface CsstsAtoms {
-  readonly displayFlex: { 'display-flex': true }
-  readonly positionRelative: { 'position-relative': true }
-  // ...
-}
-
-// global.d.ts - 引用接口
-import type { CsstsAtoms } from './CsstsAtoms'
-
-declare global {
-  const displayFlex: CsstsAtoms['displayFlex']
-  const positionRelative: CsstsAtoms['positionRelative']
-  // ...
-}
+┌─────────────────────────────────────────────────────────────────┐
+│                           编译时                                 │
+│  ┌─────────────────┐         ┌─────────────────────────────┐   │
+│  │ cssts-compiler  │         │     vite-plugin-cssts       │   │
+│  │                 │ 生成    │                             │   │
+│  │ • 解析配置      │ ──────> │ • 调用 compiler 生成数据    │   │
+│  │ • 生成 .d.ts    │         │ • 注入 properties 到 runtime│   │
+│  │ • 生成 json     │         │ • 转换 css { } 语法         │   │
+│  └─────────────────┘         └──────────────┬──────────────┘   │
+└─────────────────────────────────────────────┼───────────────────┘
+                                              │ 注入
+                                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                           运行时                                 │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │                    cssts-runtime                         │   │
+│  │                                                          │   │
+│  │  initProperties(data)  ← 接收编译时生成的属性映射数据     │   │
+│  │  $cls()                ← 样式合并                        │   │
+│  │  replace()             ← 样式替换（基于属性冲突检测）     │   │
+│  │                                                          │   │
+│  │  ⚠️ 零依赖：不依赖 compiler，数据由 vite 插件注入        │   │
+│  └─────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-**设计原因**：接口是唯一数据源，全局声明引用接口，保证类型一致性。
+### 数据流
 
-## 语法说明
+1. **编译时**：`cssts-compiler` 根据配置生成 `properties.json` 和 `.d.ts` 文件
+2. **注入**：`vite-plugin-cssts` 将 properties 数据注入到应用入口
+3. **运行时**：`cssts-runtime` 通过 `initProperties()` 接收数据，实现样式解析
 
-### css {} 表达式
+### 为什么这样设计？
+
+- **运行时零依赖**：不依赖 compiler，打包体积最小
+- **按需生成**：属性数据根据用户配置动态生成，不是硬编码
+- **properties.json 用途**：用于"最长前缀匹配"，将 TS 变量名解析为 CSS 属性名
+
+## 快速开始
+
+```bash
+npm install cssts cssts-runtime cssts-compiler
+```
+
+### 使用
 
 ```typescript
 // 基础用法
-const style = css { displayFlex, alignItemsCenter, padding16 }
+const buttonStyle = css {
+  displayFlex,
+  alignItemsCenter,
+  paddingX16px,
+  paddingY8px,
+  bgPrimary,
+  colorWhite
+}
 
-// 编译后
-const style = cssts.$cls(csstsAtom.displayFlex, csstsAtom.alignItemsCenter, csstsAtom.padding16)
+// 条件样式
+const style = css {
+  colorRed,
+  isDisabled && opacity50pct
+}
+
+// 在 Vue 中使用
+<template>
+  <button :class="buttonStyle">点击我</button>
+</template>
 ```
 
-### 变量展开
+## 包结构
 
-使用 `...` 展开已定义的样式变量：
-
-```typescript
-const baseStyle = css { displayFlex, alignItemsCenter }
-
-// 展开变量
-const buttonStyle = css { ...baseStyle, backgroundColorPrimary, colorWhite }
-
-// 编译后
-const buttonStyle = cssts.$cls(baseStyle, csstsAtom.backgroundColorPrimary, csstsAtom.colorWhite)
+```
+cssts/
+├── packages/
+│   ├── cssts-runtime/    # 运行时（$cls, replace）- 零依赖
+│   └── cssts-compiler/   # 编译器 + 类型生成器
+└── src/
+    └── index.ts          # 统一导出
 ```
 
-### 条件样式
+### cssts-runtime
+
+**零依赖**的运行时工具函数，通过 `initProperties()` 接收编译时生成的数据：
 
 ```typescript
-const buttonClass = computed(() => {
-  return css {
-    ...baseStyle,
-    ...typeStyles[props.type],
-    props.disabled && css { isDisabled, cursorNotAllowed },
-    props.loading && css { isLoading },
-    props.round && css { borderRadiusFull }
+import { $cls, replace, replaceAll, initProperties } from 'cssts-runtime'
+
+// ⚠️ 由 vite-plugin-cssts 自动注入，无需手动调用
+// initProperties({ paddingTop: 'padding-top', ... })
+
+// 合并样式
+const style = $cls(colorRed, fontBold, padding16px)
+
+// 替换样式（基于属性冲突检测）
+const newStyle = replace(style, 'color', 'colorGreen')
+```
+
+### cssts-compiler
+
+编译时处理 + 类型生成，生成两类文件：
+
+| 文件 | 用途 | 使用者 |
+|------|------|--------|
+| `properties.json` | 属性映射表（最长前缀匹配） | cssts-runtime |
+| `.d.ts` 文件 | TypeScript 类型定义 | IDE |
+
+```typescript
+import { 
+  createConfig, 
+  generate,
+  generatePropertiesJsonSync,
+  generateDtsAsync,
+  CssTsParser, 
+  cssTsCstToAst 
+} from 'cssts-compiler'
+
+// 自定义配置
+const config = createConfig({
+  properties: {
+    padding: {
+      zero: true,
+      px: { max: 500 },
+      rem: {},
+    },
+    'border-width': {
+      px: { max: 20 },
+    }
   }
 })
+
+// 同步生成 properties.json（vite 启动时）
+generatePropertiesJsonSync({ outDir: './node_modules/.cssts', config })
+
+// 异步生成 .d.ts（开发环境，不阻塞启动）
+await generateDtsAsync({ outDir: './node_modules/.cssts', config })
 ```
 
-### 样式替换
+## 配置系统
+
+新的配置结构：属性 → 单位 → 配置
 
 ```typescript
-// 原子类替换
-const style = css { backgroundColorPrimary, colorWhite }
-style.backgroundColorPrimary = css backgroundColorSuccess
-
-// CSS 属性名替换
-style.backgroundColor = css backgroundColorDanger
-```
-
-## 原子类分类
-
-### 布局 (Layout)
-```typescript
-css { displayFlex }              // display: flex
-css { displayInlineFlex }        // display: inline-flex
-css { displayBlock }             // display: block
-css { displayNone }              // display: none
-css { displayGrid }              // display: grid
-```
-
-### Flex 布局
-```typescript
-css { flexDirectionRow }         // flex-direction: row
-css { flexDirectionColumn }      // flex-direction: column
-css { justifyContentCenter }     // justify-content: center
-css { justifyContentBetween }    // justify-content: space-between
-css { alignItemsCenter }         // align-items: center
-css { alignItemsStretch }        // align-items: stretch
-css { flexWrapWrap }             // flex-wrap: wrap
-```
-
-### 定位 (Position)
-```typescript
-css { positionRelative }         // position: relative
-css { positionAbsolute }         // position: absolute
-css { positionFixed }            // position: fixed
-css { positionSticky }           // position: sticky
-```
-
-### 间距 (Spacing)
-```typescript
-css { padding4 }                 // padding: 4px
-css { padding8 }                 // padding: 8px
-css { padding16 }                // padding: 16px
-css { margin8 }                  // margin: 8px
-css { marginAuto }               // margin: auto
-css { gap8 }                     // gap: 8px
-```
-
-### 尺寸 (Sizing)
-```typescript
-css { width100 }                 // width: 100px
-css { widthFull }                // width: 100%
-css { widthAuto }                // width: auto
-css { height32 }                 // height: 32px
-css { heightFull }               // height: 100%
-```
-
-### 排版 (Typography)
-```typescript
-css { fontSize14 }               // font-size: 14px
-css { fontSize16 }               // font-size: 16px
-css { fontWeightNormal }         // font-weight: 400
-css { fontWeightBold }           // font-weight: 700
-css { textAlignCenter }          // text-align: center
-```
-
-### 颜色 (Colors)
-```typescript
-css { colorWhite }               // color: #ffffff
-css { colorBlack }               // color: #000000
-css { backgroundColorPrimary }   // background-color: var(--color-primary)
-css { backgroundColorSuccess }   // background-color: var(--color-success)
-```
-
-### 边框 (Border)
-```typescript
-css { borderNone }               // border: none
-css { borderRadius4 }            // border-radius: 4px
-css { borderRadius8 }            // border-radius: 8px
-css { borderRadiusFull }         // border-radius: 9999px
-```
-
-### 效果 (Effects)
-```typescript
-css { cursorPointer }            // cursor: pointer
-css { cursorNotAllowed }         // cursor: not-allowed
-css { transitionAll }            // transition: all 0.2s
-css { userSelectNone }           // user-select: none
-```
-
-### 状态 (States)
-```typescript
-css { isDisabled }               // 禁用状态
-css { isLoading }                // 加载状态
-css { isActive }                 // 激活状态
-css { isError }                  // 错误状态
-```
-
-## 使用示例
-
-### Button 组件
-
-```typescript
-view Button(props) {
-  // 基础样式
-  const baseStyle = css {
-    displayInlineFlex,
-    justifyContentCenter,
-    alignItemsCenter,
-    height32,
-    padding8,
-    fontSize14,
-    fontWeightMedium,
-    borderRadius4,
-    cursorPointer,
-    transitionAll
+interface CsstsConfig {
+  // 全局默认（字段级回退）
+  defaults?: {
+    px?: UnitConfig
+    rem?: UnitConfig
+    // ...
   }
   
-  // 类型样式
-  const typeStyles = {
-    default: css { backgroundColorWhite, colorBlack },
-    primary: css { backgroundColorPrimary, colorWhite },
-    success: css { backgroundColorSuccess, colorWhite },
-    danger: css { backgroundColorDanger, colorWhite }
-  }
-  
-  // 组合样式
-  const buttonClass = computed(() => {
-    return css {
-      ...baseStyle,
-      ...typeStyles[props.type || 'default'],
-      props.disabled && css { isDisabled, cursorNotAllowed },
-      props.round && css { borderRadiusFull }
+  // 属性配置
+  properties: {
+    [property: string]: {
+      zero?: boolean        // 是否生成 0 值
+      px?: UnitConfig       // 像素配置
+      rem?: UnitConfig      // rem 配置
+      ratio?: UnitConfig    // 百分比配置
+      unitless?: UnitConfig // 无单位配置
+      deg?: UnitConfig      // 角度配置
+      ms?: UnitConfig       // 时间配置
+      fr?: UnitConfig       // grid fr 配置
     }
-  })
-
-  button(class = buttonClass.value) {
-    props.children
   }
+}
+
+interface UnitConfig {
+  min?: number          // 最小值
+  max?: number          // 最大值
+  step?: number         // 步长（不设置则用渐进步长）
+  presets?: number[]    // 额外预设值
+  negative?: boolean    // 是否支持负数
 }
 ```
 
-## 配置
-
-### Vite 插件
+### 配置示例
 
 ```typescript
-// vite.config.ts
-import cssTsPlugin from 'vite-plugin-cssts'
-
-export default defineConfig({
-  plugins: [
-    cssTsPlugin({
-      // 生成的原子类文件路径
-      atomOutput: 'src/cssts/CsstsAtom.ts',
-      // 编译后导入路径
-      atomImport: './cssts/CsstsAtom',
-      // 类名前缀
-      classPrefix: 'cu-'
-    })
-  ]
+const config = createConfig({
+  defaults: {
+    px: { max: 500 },
+  },
+  properties: {
+    padding: {
+      zero: true,
+      px: { max: 1000 },    // 覆盖默认
+      rem: {},              // 使用默认
+      ratio: {},
+    },
+    'z-index': {
+      unitless: { max: 9999, negative: true },
+    },
+  }
 })
 ```
 
-## 运行时 API
+## 命名规范
 
-### cssts.loadAtoms(data)
+| TS 变量名 | CSS 类名 | CSS 规则 |
+|-----------|----------|----------|
+| `displayFlex` | `display_flex` | `display: flex` |
+| `paddingTop16px` | `padding-top_16px` | `padding-top: 16px` |
+| `width50pct` | `width_50\%` | `width: 50%` |
+| `zIndexN1` | `z-index_-1` | `z-index: -1` |
 
-加载原子类数据（从 atoms.json）。通常由 vite-plugin-cssts 自动调用：
-
-```typescript
-import atomsData from 'cssts-types/dist/atoms.json'
-cssts.loadAtoms(atomsData)
-```
-
-### cssts.$cls(...args)
-
-合并多个样式，支持条件表达式：
+## 与 Vite 集成
 
 ```typescript
-cssts.$cls(
-  baseStyle,                    // 样式对象
-  isActive && activeStyle,      // 条件样式（false 时忽略）
-  null,                         // 忽略
-  undefined                     // 忽略
-)
+// vite.config.ts
+import { cssts } from 'vite-plugin-cssts'
+import { createConfig } from 'cssts-compiler'
+
+export default {
+  plugins: [
+    cssts({
+      config: createConfig({
+        properties: {
+          padding: { px: { max: 500 } }
+        }
+      })
+    })
+  ]
+}
 ```
 
-### cssts.replace(style, key, newAtom)
-
-替换样式中的原子类（基于 atoms.json 的 property 字段进行同属性去重）：
-
-```typescript
-// 原子类替换
-cssts.replace(style, "backgroundColorPrimary", "backgroundColorSuccess")
-
-// CSS 属性名替换
-cssts.replace(style, "backgroundColor", "backgroundColorDanger")
-```
-
-### cssts.getCssProperty(atomName)
-
-获取原子类对应的 CSS 属性名：
-
-```typescript
-cssts.getCssProperty("paddingTop16px")  // → "padding-top"
-cssts.getCssProperty("displayFlex")     // → "display"
-```
-
-### cssts.getCssClassName(atomName)
-
-获取原子类对应的 CSS 类名：
-
-```typescript
-cssts.getCssClassName("paddingTop16px")  // → "padding-top_16px"
-cssts.getCssClassName("width50pct")      // → "width_50\\%"
-```
-
-### cssts.registerAtom(atomName, property, className?)
-
-注册自定义原子类：
-
-```typescript
-cssts.registerAtom("myCustomStyle", "background-color", "my-custom-style")
-```
-
-## 项目结构
-
-```
-cssts/                    # 核心编译器
-├── src/
-│   ├── parser/          # css 软关键字解析器
-│   ├── factory/         # CST → AST 转换（含作用域分析）
-│   ├── runtime/         # 运行时函数
-│   └── utils/           # 工具函数
-
-cssts-types/              # 类型定义包
-├── CsstsAtoms.d.ts      # 接口定义（唯一数据源）
-├── global.d.ts          # 全局声明（引用接口）
-├── dist/atoms.json      # 原子类名称列表（编译时用）
-└── generator/           # 生成器（从 mdn-data 生成）
-
-vite-plugin-cssts/        # Vite 插件
-└── src/index.ts         # 编译转换 + 按需生成
-```
-
-## 数据来源
-
-原子类定义从 `mdn-data` 包自动生成，包含：
-- 所有标准 CSS 属性
-- 每个属性的可用关键字值
-- 常用数值变体（padding、margin、font-size 等）
-
-## License
+## 许可证
 
 MIT

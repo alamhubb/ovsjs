@@ -1,7 +1,8 @@
 import { createRegToken } from 'subhuti/src/struct/SubhutiCreateToken.ts'
 import {SlimeTokensObj} from "slime-parser/src/language/es2025/SlimeTokens.ts";
 import {SlimeTokenType} from "slime-token/src/SlimeTokenType.ts";
-import CssTsTokenConsumer, { CssTsContextualKeywordTypes, cssTsTokens } from "cssts/src/parser/CssTsTokenConsumer.ts";
+// 开发模式：使用相对路径导入源码
+import CssTsTokenConsumer, { CssTsContextualKeywordTypes, cssTsTokens } from "../../../../cssts/packages/cssts-compiler/src/parser/CssTsTokenConsumer.ts";
 
 export const ovsTokenName = {
   ...SlimeTokenType,

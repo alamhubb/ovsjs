@@ -1,14 +1,14 @@
 import type { Plugin } from 'vite'
-// Development imports - use relative paths in monorepo
-import CssTsParser from '../../cssts/src/parser/CssTsParser.ts'
-import { CssTsCstToAst, type CssStyleInfo } from '../../cssts/src/factory/CssTsCstToAst.ts'
-import { generateCssClsInterface, generateCssClsStyles } from '../../cssts/src/utils/cssUtils.ts'
+// Development imports - use relative paths in monorepo (新结构)
+import { CssTsParser } from '../../cssts/packages/cssts-compiler/src/parser/index.ts'
+import { CssTsCstToAst, type CssStyleInfo } from '../../cssts/packages/cssts-compiler/src/factory/index.ts'
+import { generateCssClsInterface, generateCssClsStyles } from '../../cssts/packages/cssts-compiler/src/utils/cssUtils.ts'
 import SlimeGenerator from '../../slime/packages/slime-generator/src/SlimeGenerator.ts'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 
 // 导入运行时的命名转换函数
-import { getCssClassName, getCssProperty } from '../../cssts/src/runtime/index.ts'
+import { getCssClassName, getCssProperty } from '../../cssts/packages/cssts-runtime/src/index.ts'
 
 export interface CssTsPluginOptions {
   /**

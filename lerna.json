@@ -10,6 +10,9 @@
     "slime/packages/slime-parser",
     "slime/packages/slime-generator",
     "create-ovs",
-    "vite-plugin-ovs"
+    "vite-plugin-ovs",
+    "cssts",
+    "cssts/packages/cssts-runtime",
+    "cssts/packages/cssts-compiler"
   ]
 }

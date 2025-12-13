@@ -23,6 +23,7 @@
   "author": "nicholasyhuang",
   "description": "OVS Compiler - Parser and AST transformer for OVS syntax",
   "dependencies": {
+    "cssts-compiler": "*",
     "slime-ast": "^0.2.1",
     "slime-generator": "^0.2.1",
     "slime-parser": "^0.2.1",

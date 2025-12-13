@@ -1,0 +1,50 @@
+{
+  "name": "cssts-compiler",
+  "version": "0.1.0",
+  "description": "CssTs compiler - parser, AST transformer, and type generator for CSS-in-TS",
+  "type": "module",
+  "main": "dist/index.mjs",
+  "types": "dist/index.d.mts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "types": "./dist/index.d.mts"
+    },
+    "./parser": {
+      "import": "./dist/parser/index.mjs",
+      "types": "./dist/parser/index.d.mts"
+    },
+    "./factory": {
+      "import": "./dist/factory/index.mjs",
+      "types": "./dist/factory/index.d.mts"
+    },
+    "./generator": {
+      "import": "./dist/generator/index.mjs",
+      "types": "./dist/generator/index.d.mts"
+    }
+  },
+  "scripts": {
+    "build": "tsdown",
+    "test": "vitest run"
+  },
+  "keywords": [
+    "cssts",
+    "compiler",
+    "parser",
+    "generator",
+    "css",
+    "typescript"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "css-tree": "^3.1.0",
+    "subhuti": "*",
+    "slime-parser": "*",
+    "slime-ast": "*",
+    "slime-token": "*"
+  },
+  "devDependencies": {
+    "tsdown": "^0.11.10",
+    "typescript": "^5.8.3"
+  }
+}

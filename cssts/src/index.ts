@@ -1,23 +1,46 @@
-// Parser
-export { default as CssTsParser } from './parser/CssTsParser.js'
-export { default as CssTsTokenConsumer, cssTsTokens, CssTsContextualKeywordTypes } from './parser/CssTsTokenConsumer.js'
-
-// AST Transformer
-export { default as cssTsCstToAst, CssTsCstToAst, type CssStyleInfo } from './factory/CssTsCstToAst.js'
-
-// Utility functions
-export { 
-  camelToKebab, 
+// Re-export from cssts-compiler
+export {
+  // Parser
+  CssTsParser,
+  CssTsTokenConsumer,
+  cssTsTokens,
+  CssTsContextualKeywordTypes,
+  // AST
+  cssTsCstToAst,
+  CssTsCstToAst,
+  type CssStyleInfo,
+  // Utils
+  camelToKebab,
   kebabToCamel,
-  collectAllCssClasses, 
-  generateCssClsInterface, 
+  collectAllCssClasses,
+  generateCssClsInterface,
   generateCssClsStyles,
   analyzeUsedClasses,
-  // 样式冲突替换
-  getCssProperty,
-  registerCssPropertyMap,
-  replaceConflictingStyles,
-} from './utils/cssUtils.js'
+  // Generator
+  type CsstsConfig,
+  type PropertyConfig,
+  type UnitConfig,
+  type UnitType,
+  type AtomDefinition,
+  type GeneratorOptions,
+  defaultConfig,
+  defaultProperties,
+  createConfig,
+  mergeConfig,
+  generateAtoms,
+  generatePropertiesJson,
+  generatePropertiesJsonSync,
+  generateDtsAsync,
+  generate,
+} from 'cssts-compiler'
 
-// Runtime
-export { cssts, $cls } from './runtime/index.js'
+// Re-export from cssts-runtime
+export {
+  cssts,
+  $cls,
+  replace,
+  replaceAll,
+  getCssProperty,
+  getCssClassName,
+  initProperties,
+} from 'cssts-runtime'

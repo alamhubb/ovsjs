@@ -1,49 +1,42 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { Counter } from './Counter.ovs'
+// 导入 cssts-ui 的 Button 组件
+import { Button } from '@cssts-ui/components'
 
-// 从 @cssts-ui/components 导入 OVS + CssTs 实现的组件
-import { Button as CsstsButton, Input as CsstsInput } from '@cssts-ui/components'
-
+const count = ref(0)
 const handleClick = () => {
-  window.alert('Button clicked!')
+  count.value++
 }
 
-// Input state
-const csstsInputValue = ref('')
+const handleButtonClick = () => {
+  window.alert('CssTs Button clicked!')
+}
 </script>
 
 <template>
   <div class="test-container">
-    <h1>🧪 OVS + CssTs 组件测试</h1>
-    <p>使用 @cssts-ui/components 中的组件</p>
+    <h1>🧪 OVS + CssTs 基础测试</h1>
+    <p>测试 vite-plugin-ovs 和 cssts 的基本功能</p>
 
-    <!-- ==================== CssTs 实现 ==================== -->
-    <div class="impl-section">
-      <h2 class="impl-title">⚡ CssTs 实现 (css {} 原子类语法)</h2>
-      
-      <!-- Button -->
-      <div class="test-section">
-        <h3>📦 Button 组件</h3>
-        <div class="test-row">
-          <span class="test-label">类型变体:</span>
-          <CsstsButton type="primary">Primary</CsstsButton>
-          <CsstsButton type="success">Success</CsstsButton>
-          <CsstsButton type="warning">Warning</CsstsButton>
-          <CsstsButton type="danger">Danger</CsstsButton>
-        </div>
-        <div class="test-row">
-          <span class="test-label">点击事件:</span>
-          <CsstsButton type="primary" @click="handleClick">点击我</CsstsButton>
-        </div>
-      </div>
+    <div class="test-section">
+      <h2>Vue 计数器</h2>
+      <p>当前计数: {{ count }}</p>
+      <button @click="handleClick">点击增加</button>
+    </div>
 
-      <!-- Input -->
-      <div class="test-section">
-        <h3>✏️ Input 组件</h3>
-        <div class="test-row">
-          <span class="test-label">基础输入:</span>
-          <CsstsInput v-model="csstsInputValue" placeholder="CssTs 实现..." />
-        </div>
+    <div class="test-section">
+      <h2>OVS 组件测试</h2>
+      <Counter :initial="10" />
+    </div>
+
+    <div class="test-section">
+      <h2>CssTs-UI Button 组件</h2>
+      <div class="button-row">
+        <Button type="primary" @click="handleButtonClick">Primary</Button>
+        <Button type="success">Success</Button>
+        <Button type="warning">Warning</Button>
+        <Button type="danger">Danger</Button>
       </div>
     </div>
   </div>
@@ -51,44 +44,34 @@ const csstsInputValue = ref('')
 
 <style scoped>
 .test-container {
-  max-width: 1200px;
+  max-width: 800px;
   margin: 0 auto;
   padding: 20px;
 }
 
-.impl-section {
-  margin-bottom: 40px;
-  padding: 20px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.5);
-}
-
-.impl-title {
-  color: #409eff;
-  margin-bottom: 20px;
-  padding-bottom: 10px;
-  border-bottom: 2px solid #409eff;
-}
-
 .test-section {
-  margin-bottom: 20px;
+  margin-top: 20px;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
 }
 
-.test-section h3 {
-  color: #303133;
-  margin-bottom: 12px;
-  font-size: 16px;
-}
-
-.test-row {
+.button-row {
   display: flex;
-  align-items: center;
   gap: 10px;
-  margin-bottom: 10px;
+  margin-top: 10px;
 }
 
-.test-label {
-  min-width: 80px;
-  color: #606266;
+button {
+  padding: 8px 16px;
+  background: #409eff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #66b1ff;
 }
 </style>

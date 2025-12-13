@@ -1,7 +1,7 @@
 {
-  "name": "cssts",
+  "name": "cssts-runtime",
   "version": "0.1.0",
-  "description": "CSS-in-TS: A compile-time CSS class management system with TypeScript support",
+  "description": "CssTs runtime - style merging and conflict resolution",
   "type": "module",
   "main": "dist/index.mjs",
   "types": "dist/index.d.mts",
@@ -16,22 +16,14 @@
     "test": "vitest run"
   },
   "keywords": [
+    "cssts",
+    "runtime",
     "css",
-    "typescript",
-    "atomic-css",
-    "compile-time"
+    "atomic-css"
   ],
   "license": "MIT",
-  "dependencies": {
-    "cssts-runtime": "*",
-    "cssts-compiler": "*"
-  },
   "devDependencies": {
     "tsdown": "^0.11.10",
-    "tsx": "^4.19.4",
     "typescript": "^5.8.3"
-  },
-  "workspaces": [
-    "packages/*"
-  ]
+  }
 }
