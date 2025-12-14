@@ -1,9 +1,9 @@
 import {SlimeCstToAst} from "slime-parser/src/language/SlimeCstToAstUtil.ts";
-// 开发模式：使用相对路径导入源码
-import {CssTsCstToAst} from "../../../../cssts/packages/cssts-compiler/src/factory/CssTsCstToAst.ts";
+// 使用包名导入（monorepo workspaces）
+import {CssTsCstToAst} from "cssts-compiler/src/factory/CssTsCstToAst.ts";
 import SubhutiCst from "subhuti/src/struct/SubhutiCst.ts";
 import OvsParser from "../parser/OvsParser.ts";
-import CssTsParser from "../../../../cssts/packages/cssts-compiler/src/parser/CssTsParser.ts";
+import CssTsParser from "cssts-compiler/src/parser/CssTsParser.ts";
 import {SlimeNodeType} from "slime-ast/src/SlimeNodeType.ts";
 import {
     type SlimeCallExpression,

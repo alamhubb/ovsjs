@@ -1,7 +1,7 @@
 import OvsTokenConsumer, {ovs6Tokens} from "./OvsConsumer.ts"
 import {Subhuti, SubhutiRule} from 'subhuti/src/SubhutiParser.ts'
-// 开发模式：使用相对路径导入源码
-import CssTsParser from "../../../../cssts/packages/cssts-compiler/src/parser/CssTsParser.ts";
+// 使用包名导入（monorepo workspaces）
+import CssTsParser from "cssts-compiler/src/parser/CssTsParser.ts";
 import {ReservedWords} from "slime-parser/src/language/es2025/SlimeParser.ts";
 import type {ExpressionParams, StatementParams, DeclarationParams} from "slime-parser/src/language/es2025/SlimeParser.ts";
 import {SlimeContextualKeywordTokenTypes} from "slime-token/src/SlimeTokenType.ts";
