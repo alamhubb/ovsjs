@@ -88,6 +88,70 @@ function generateUsedAtomsCss(usedAtoms: Set<string>, prefix: string = ''): stri
 }
 
 /**
+ * 包装 OVS class 组件为 Vue 组件
+ * 
+ * OVS class 组件有 render() 方法，需要被包装成 Vue 组件才能在 Vue 中使用。
+ * 
+ * 输入: export class MyComponent { render() { ... } }
+ * 输出: 
+ *   import { defineComponent, reactive } from 'vue';
+ *   class MyComponent { render() { ... } }
+ *   export { MyComponent as _OvsClass_MyComponent };
+ *   export const MyComponent = defineComponent({ ... });
+ */
+function wrapOvsClassComponents(code: string): string {
+    // 匹配 export class ClassName { ... render() { ... } }
+    const classExportRegex = /export\s+class\s+(\w+)\s*\{/g
+    const matches = [...code.matchAll(classExportRegex)]
+    
+    if (matches.length === 0) {
+        return code
+    }
+
+    // 检查是否已经有 Vue 导入
+    const hasVueImport = /import\s*\{[^}]*defineComponent[^}]*\}\s*from\s*['"]vue['"]/.test(code)
+    
+    let result = code
+    const classNames: string[] = []
+    
+    for (const match of matches) {
+        const className = match[1]
+        classNames.push(className)
+        
+        // 将 export class 改为 class（移除 export）
+        result = result.replace(
+            new RegExp(`export\\s+class\\s+${className}\\s*\\{`),
+            `class _OvsClass_${className} {`
+        )
+    }
+    
+    // 添加 Vue 导入（如果需要）
+    if (!hasVueImport) {
+        result = `import { defineComponent, reactive, h } from 'vue';\n` + result
+    }
+    
+    // 为每个 class 添加 Vue 组件包装
+    for (const className of classNames) {
+        const wrapperCode = `
+// OVS class 组件包装
+export const ${className} = defineComponent({
+    name: '${className}',
+    setup(props, { slots }) {
+        const instance = reactive(new _OvsClass_${className}());
+        return () => {
+            const result = instance.render();
+            return result;
+        };
+    }
+});
+`
+        result += wrapperCode
+    }
+    
+    return result
+}
+
+/**
  * OVS Vite 插件
  * 
  * 单一插件，内部处理：
@@ -138,6 +202,10 @@ export default function vitePluginOvs(options: OvsPluginOptions = {}): Plugin {
             if (atoms.size > 0 && !transformedCode.includes(VIRTUAL_CSS_ID)) {
                 transformedCode = `import '${VIRTUAL_CSS_ID}'\n` + transformedCode
             }
+
+            // 包装 OVS class 组件为 Vue 组件
+            // 检测 export class XXX { ... render() { ... } } 模式
+            transformedCode = wrapOvsClassComponents(transformedCode)
 
             return {
                 code: transformedCode,
