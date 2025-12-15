@@ -12,7 +12,6 @@ import {
     type SlimeMemberExpression,
     type SlimeModuleDeclaration,
     type SlimeProgram,
-    SlimeProgramSourceType,
     type SlimeStatement
 } from "slime-ast/src/SlimeESTree.ts";
 import SlimeParser from "slime-parser/src/language/es2025/SlimeParser.ts";
@@ -198,82 +197,6 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
     this.ovsRenderDomViewDepth = 0
     this.noRenderDepth = 0
     this.attrsVarNameStack = []
-  }
-
-  /**
-   * 纯 AST 转换：CST → AST
-   * 
-   * 职责：只做语法转换，不做任何后处理
-   * - 不添加导入语句
-   * - 不做 defineOvsComponent 包装
-   * 
-   * 适用场景：测试、AST 分析等
-   */
-  toProgram(cst: SubhutiCst): SlimeProgram {
-    checkCstName(cst, SlimeParser.prototype.Program.name);
-
-    // 重置所有状态（包括父类的 CSSTS 状态和 OVS 状态）
-    this.resetState();
-
-    // 如果没有子节点，返回空程序
-    if (!cst.children || cst.children.length === 0) {
-      return SlimeNodeCreate.createProgram([], SlimeProgramSourceType.Module)
-    }
-
-    // 使用 SlimeParser.prototype.XXX.name 确保与 Parser 同步
-    const hashbangCommentName = 'HashbangComment'  // Token 名称，不是规则
-    const moduleBodyName = SlimeParser.prototype.ModuleBody?.name || 'ModuleBody'
-    const scriptBodyName = SlimeParser.prototype.ScriptBody?.name || 'ScriptBody'
-    const moduleItemListName = SlimeParser.prototype.ModuleItemList?.name || 'ModuleItemList'
-    const statementListName = SlimeParser.prototype.StatementList?.name || 'StatementList'
-
-    // 查找主体内容（跳过 HashbangComment）
-    let bodyChild: SubhutiCst | null = null
-    for (const child of cst.children) {
-      if (child.name === hashbangCommentName) {
-        continue  // 跳过 hashbang 注释
-      }
-      bodyChild = child
-      break
-    }
-
-    if (!bodyChild) {
-      return SlimeNodeCreate.createProgram([], SlimeProgramSourceType.Module)
-    }
-
-    // 根据子节点类型转换为 AST
-    let body: Array<SlimeStatement | SlimeModuleDeclaration> = []
-    let sourceType: SlimeProgramSourceType = SlimeProgramSourceType.Module
-
-    if (bodyChild.name === moduleBodyName) {
-      // 新结构：Program -> ModuleBody -> ModuleItemList
-      const moduleItemList = bodyChild.children?.[0]
-      if (moduleItemList && moduleItemList.name === moduleItemListName) {
-        body = this.createModuleItemListAst(moduleItemList)
-      }
-      sourceType = SlimeProgramSourceType.Module
-    } else if (bodyChild.name === moduleItemListName) {
-      // 兼容旧结构：Program -> ModuleItemList
-      body = this.createModuleItemListAst(bodyChild)
-      sourceType = SlimeProgramSourceType.Module
-    } else if (bodyChild.name === scriptBodyName) {
-      // 新结构：Program -> ScriptBody -> StatementList
-      const statementList = bodyChild.children?.[0]
-      if (statementList && statementList.name === statementListName) {
-        body = this.createStatementListAst(statementList)
-      }
-      sourceType = SlimeProgramSourceType.Script
-    } else if (bodyChild.name === statementListName) {
-      // 兼容旧结构：Program -> StatementList
-      body = this.createStatementListAst(bodyChild)
-      sourceType = SlimeProgramSourceType.Script
-    }
-
-    // 创建 Program AST（纯转换，不做后处理）
-    const program = SlimeNodeCreate.createProgram(body, sourceType)
-    program.loc = cst.loc
-
-    return program
   }
 
   /**
