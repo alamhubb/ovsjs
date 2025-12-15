@@ -497,30 +497,111 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
   /**
    * 处理顶层表达式和自动导入
    * 
-   * 功能：
-   * 1. 检查是否使用了 $OvsHtmlTag、defineOvsComponent 等，自动添加导入
-   * 2. 如果没有 export 且有顶层表达式，包装成 defineOvsComponent 导出
+   * 职责分离：
+   * 1. ensureRequiredImports - 自动添加导入（不改变语句顺序）
+   * 2. wrapAsDefineOvsComponent - 包装成组件（内部会重排序）
+   * 
+   * 只有在需要包装时才会重排序，避免普通 JS 代码被错误重排
    */
   private processTopLevelAndImports(body: Array<SlimeStatement | SlimeModuleDeclaration>): Array<SlimeStatement | SlimeModuleDeclaration> {
     // 如果没有使用 OVS 语法，直接返回原始 body，保持语句顺序不变
-    // 这样普通 JS 代码（如 test-stage3 中的测试用例）不会被错误重排序
     if (!this.hasOvsSyntax) {
       return body
     }
     
+    // 1. 自动添加导入（不改变其他语句顺序）
+    body = this.ensureRequiredImports(body)
+    
+    // 2. 如果需要包装，才做包装（包装内部会重排序）
+    if (this.shouldWrapAsComponent(body)) {
+      body = this.wrapAsDefineOvsComponent(body)
+    }
+    
+    return body
+  }
+  
+  /**
+   * 检查是否需要包装成 defineOvsComponent
+   * 
+   * 条件：
+   * - 使用了 OVS 语法（hasOvsSyntax = true）
+   * - 没有任何 export 语句
+   * - 有顶层表达式语句
+   */
+  private shouldWrapAsComponent(body: Array<SlimeStatement | SlimeModuleDeclaration>): boolean {
+    let hasAnyExport = false
+    let hasTopLevelExpression = false
+    
+    for (const stmt of body) {
+      if (stmt.type === SlimeNodeType.ExportDefaultDeclaration ||
+          stmt.type === SlimeNodeType.ExportNamedDeclaration) {
+        hasAnyExport = true
+        break
+      }
+      if (stmt.type === SlimeNodeType.ExpressionStatement) {
+        hasTopLevelExpression = true
+      }
+    }
+    
+    return !hasAnyExport && hasTopLevelExpression
+  }
+  
+  /**
+   * 自动添加必要的导入语句
+   * 
+   * 检查 body 中是否使用了 $OvsHtmlTag、defineOvsComponent 等，
+   * 如果使用了但没有导入，则在 body 开头添加导入语句。
+   * 
+   * 注意：只在 body 开头插入导入，不改变其他语句的顺序
+   */
+  private ensureRequiredImports(body: Array<SlimeStatement | SlimeModuleDeclaration>): Array<SlimeStatement | SlimeModuleDeclaration> {
+    const bodyJson = JSON.stringify(body)
+    
+    // 提取现有的 imports
+    let imports: any[] = []
+    const nonImports: any[] = []
+    
+    for (const stmt of body) {
+      if (stmt.type === SlimeNodeType.ImportDeclaration) {
+        imports.push(stmt)
+      } else {
+        nonImports.push(stmt)
+      }
+    }
+    
+    // 检查并添加必要的导入
+    if (bodyJson.includes('$OvsHtmlTag')) {
+      imports = this.ensureOvsHtmlTagImport(imports)
+    }
+    if (bodyJson.includes('defineOvsComponent')) {
+      imports = this.ensureDefineOvsComponentImport(imports)
+    }
+    
+    // 返回：imports 在前，其他语句保持原顺序
+    return [...imports, ...nonImports]
+  }
+  
+  /**
+   * 包装成 defineOvsComponent 导出
+   * 
+   * 将顶层表达式包装成：
+   * export default defineOvsComponent((props) => {
+   *   // declarations 放这里
+   *   return expression
+   * })
+   * 
+   * 注意：只有这个方法内部会重排序（imports → export default）
+   */
+  private wrapAsDefineOvsComponent(body: Array<SlimeStatement | SlimeModuleDeclaration>): Array<SlimeStatement | SlimeModuleDeclaration> {
+    // 分类语句
     let imports: any[] = []
     let declarations: any[] = []
     let expressions: SlimeStatement[] = []
-    let hasAnyExport = false
     let otherStatements: any[] = []
     
     for (const stmt of body) {
       if (stmt.type === SlimeNodeType.ImportDeclaration) {
         imports.push(stmt)
-      } else if (stmt.type === SlimeNodeType.ExportDefaultDeclaration ||
-                 stmt.type === SlimeNodeType.ExportNamedDeclaration) {
-        hasAnyExport = true
-        otherStatements.push(stmt)
       } else if (stmt.type === SlimeNodeType.VariableDeclaration ||
                  stmt.type === SlimeNodeType.FunctionDeclaration ||
                  stmt.type === SlimeNodeType.ClassDeclaration) {
@@ -532,28 +613,15 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
       }
     }
     
-    // 检查并添加必要的导入
-    const bodyJson = JSON.stringify(body)
-    
-    if (bodyJson.includes('$OvsHtmlTag')) {
-      imports = this.ensureOvsHtmlTagImport(imports)
-    }
-    if (bodyJson.includes('defineOvsComponent')) {
-      imports = this.ensureDefineOvsComponentImport(imports)
-    }
-    
-    // 如果有 export 或没有顶层表达式，直接返回（保持分类后的顺序）
-    if (hasAnyExport || expressions.length === 0) {
-      return [...imports, ...declarations, ...otherStatements, ...expressions]
-    }
-    
-    // 没有 export 且有顶层表达式且使用了 OVS 语法：包装成 defineOvsComponent
+    // 确保有 defineOvsComponent 导入
     imports = this.ensureDefineOvsComponentImport(imports)
     
+    // 提取表达式值
     const exprValues = expressions.map(e => 
       e.type === SlimeNodeType.ExpressionStatement ? (e as any).expression : e
     )
     
+    // 处理单个或多个表达式
     let finalExpr: any
     if (exprValues.length === 1) {
       finalExpr = exprValues[0]
@@ -564,8 +632,9 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
     }
     
     // 创建 defineOvsComponent 包装
+    // declarations 放在箭头函数体内，expressions 作为 return
     const returnStmt = SlimeNodeCreate.createReturnStatement(finalExpr)
-    const blockStatement = SlimeNodeCreate.createBlockStatement([...declarations, returnStmt])
+    const blockStatement = SlimeNodeCreate.createBlockStatement([...declarations, ...otherStatements, returnStmt])
     const arrowFunction = SlimeNodeCreate.createArrowFunctionExpression(
       blockStatement,
       [SlimeNodeCreate.createIdentifier('props')],
@@ -577,6 +646,7 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
       [arrowFunction]
     )
     
+    // 重排序：imports 在前，然后是 export default
     return [
       ...imports,
       {
