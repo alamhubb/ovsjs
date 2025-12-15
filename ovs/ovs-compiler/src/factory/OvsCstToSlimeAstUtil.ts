@@ -502,6 +502,12 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
    * 2. 如果没有 export 且有顶层表达式，包装成 defineOvsComponent 导出
    */
   private processTopLevelAndImports(body: Array<SlimeStatement | SlimeModuleDeclaration>): Array<SlimeStatement | SlimeModuleDeclaration> {
+    // 如果没有使用 OVS 语法，直接返回原始 body，保持语句顺序不变
+    // 这样普通 JS 代码（如 test-stage3 中的测试用例）不会被错误重排序
+    if (!this.hasOvsSyntax) {
+      return body
+    }
+    
     let imports: any[] = []
     let declarations: any[] = []
     let expressions: SlimeStatement[] = []
@@ -536,14 +542,8 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
       imports = this.ensureDefineOvsComponentImport(imports)
     }
     
-    // 如果有 export 或没有顶层表达式，直接返回
+    // 如果有 export 或没有顶层表达式，直接返回（保持分类后的顺序）
     if (hasAnyExport || expressions.length === 0) {
-      return [...imports, ...declarations, ...otherStatements, ...expressions]
-    }
-    
-    // 如果没有使用 OVS 语法（如 div {}、view 声明等），不做 defineOvsComponent 包装
-    // 这样普通 JS 代码（如 test-stage3 中的测试用例）不会被错误包装
-    if (!this.hasOvsSyntax) {
       return [...imports, ...declarations, ...otherStatements, ...expressions]
     }
     
