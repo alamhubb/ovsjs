@@ -307,11 +307,29 @@ export function ovsTransformBase(code: string): ovsTransformBaseResult {
     return {ast, tokens}
 }
 
+/** Vite 插件转换选项 */
+export interface VitePluginOvsTransformOptions {
+    /** 共享的样式集合，用于收集 css {} 中的原子类名 */
+    globalStyles?: Set<string>
+}
+
 /** Vite 插件专用的 OVS 代码转换 */
-export function vitePluginOvsTransform(code: string): SlimeGeneratorResult {
+export function vitePluginOvsTransform(code: string, options?: VitePluginOvsTransformOptions): SlimeGeneratorResult {
+    // 转换前清空 usedAtoms
+    OvsCstToSlimeAstUtil.clearUsedAtoms()
+    
     let codeResult = ovsTransformBase(code)
     let ast = codeResult.ast
     if (!ast) return { code: '', mapping: [] }
+    
+    // 把收集到的 usedAtoms 写入共享的 globalStyles
+    if (options?.globalStyles) {
+        const usedAtoms = OvsCstToSlimeAstUtil.getUsedAtoms()
+        for (const atom of usedAtoms) {
+            options.globalStyles.add(atom)
+        }
+    }
+    
     // wrapTopLevelExpressions 和 wrapOvsClassComponents 的逻辑已移到 toProgram 中
     const result = SlimeGenerator.generator(ast, codeResult.tokens)
     result.mapping = result.mapping.filter(m => m.source && m.source.value && m.source.value !== '' && m.source.length > 0)

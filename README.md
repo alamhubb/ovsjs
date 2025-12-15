@@ -469,6 +469,20 @@ const buttonStyle = css {
 button(class = buttonStyle) { 'Click Me' }
 ```
 
+### $$ Pseudo-class Syntax
+
+Use `$$` (double dollar sign) to declare pseudo-class styles:
+
+```javascript
+// Variable name format: {baseName}$${pseudo1}$${pseudo2}...
+const btn$$hover$$active = css { cursorPointer, displayFlex }
+
+// Generated CSS:
+// .cursor_pointer { cursor: pointer; }
+// .btn:hover { opacity: 0.9; }      ← from pseudoUtils config
+// .btn:active { opacity: 0.6; }     ← from pseudoUtils config
+```
+
 ### Naming Convention
 
 CssTs uses `property_value` format for CSS class names:
@@ -488,10 +502,44 @@ height32px, fontSize14px, paddingLeft15px
 height32, fontSize14, paddingLeft15
 ```
 
+### OVS + CssTs Integration
+
+`vite-plugin-ovs` integrates `vite-plugin-cssts` internally:
+
+```typescript
+// vite.config.ts
+import ovs from 'vite-plugin-ovs'
+
+export default defineConfig({
+  plugins: [
+    ovs({
+      cssts: {
+        pseudoUtils: {
+          hover: { opacity: '0.9' },
+          active: { opacity: '0.6' }
+        }
+      }
+    })
+  ]
+})
+```
+
+**How it works:**
+1. `vite-plugin-ovs` creates a shared `Set<string>` for style collection
+2. Both `.cssts` and `.ovs` files write collected atoms to this shared Set
+3. `virtual:cssts.css` generates CSS from all collected styles
+4. `virtual:csstsAtom` generates atom object mappings
+
+```
+.ovs file ──► ovs-compiler ──► usedAtoms ──┐
+                                           ├──► sharedStyles ──► CSS
+.cssts file ─► cssts-compiler ─► usedAtoms ┘
+```
+
 For detailed documentation, see:
-- [cssts/README.md](./cssts/README.md) - Core compiler
-- [cssts-types/README.md](./cssts-types/README.md) - Naming specification
-- [vite-plugin-cssts/README.md](./vite-plugin-cssts/README.md) - Vite plugin
+- [cssts/ARCHITECTURE.md](../cssts/ARCHITECTURE.md) - Architecture design
+- [cssts/cssts/README.md](../cssts/cssts/README.md) - Core compiler
+- [vite-plugin-cssts](../cssts/vite-plugin-cssts/) - Vite plugin
 
 ---
 
