@@ -137,6 +137,13 @@ export function throwNewError(errorMsg: string = 'syntax error') {
 
 export class OvsCstToSlimeAst extends CssTsCstToAst {
   /**
+   * 标记是否使用了 OVS 特有语法
+   * 包括：div {}、view 声明、css {} 等
+   * 如果没有使用 OVS 语法，则不做 defineOvsComponent 包装
+   */
+  private hasOvsSyntax = false;
+
+  /**
    * 计数器：标记当前是否在 OvsRenderDomViewDeclaration 内部
    * 用于判断 ExpressionStatement 是否需要转换为 children.push()
    *
@@ -182,8 +189,31 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
    * @param cst Program CST 节点
    * @returns Program AST
    */
+  /**
+   * 重写父类的 resetState 方法，重置 OVS 特有的状态
+   */
+  protected override resetState(): void {
+    super.resetState()
+    this.hasOvsSyntax = false
+    this.ovsRenderDomViewDepth = 0
+    this.noRenderDepth = 0
+    this.attrsVarNameStack = []
+  }
+
+  /**
+   * 纯 AST 转换：CST → AST
+   * 
+   * 职责：只做语法转换，不做任何后处理
+   * - 不添加导入语句
+   * - 不做 defineOvsComponent 包装
+   * 
+   * 适用场景：测试、AST 分析等
+   */
   toProgram(cst: SubhutiCst): SlimeProgram {
     checkCstName(cst, SlimeParser.prototype.Program.name);
+
+    // 重置所有状态（包括父类的 CSSTS 状态和 OVS 状态）
+    this.resetState();
 
     // 如果没有子节点，返回空程序
     if (!cst.children || cst.children.length === 0) {
@@ -239,21 +269,39 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
       sourceType = SlimeProgramSourceType.Script
     }
 
-    // 如果使用了 css { } 语法，自动添加 cssts 和 csstsAtom 导入
-    // 调用父类的 cssts 后处理方法
-    body = this.processCsstsPostTransform(body)
-
-    // ==================== 后处理：包装和导入 ====================
-    // 1. 包装 export class 为 Vue defineComponent
-    // body = this.wrapExportClassAsVueComponent(body)
-    
-    // 2. 处理顶层表达式和自动导入
-    body = this.processTopLevelAndImports(body)
-
-    // 创建 Program AST
+    // 创建 Program AST（纯转换，不做后处理）
     const program = SlimeNodeCreate.createProgram(body, sourceType)
     program.loc = cst.loc
 
+    return program
+  }
+
+  /**
+   * 面向文件的完整 AST 转换：CST → AST + 后处理
+   * 
+   * 职责：完整的文件转换，包含所有后处理
+   * - 添加 cssts/csstsAtom 导入（如果使用了 CSSTS 语法）
+   * - 添加 $OvsHtmlTag/defineOvsComponent 导入（如果使用了 OVS 语法）
+   * - 包装成 defineOvsComponent（如果没有 export 且使用了 OVS 语法）
+   * 
+   * 适用场景：vite 插件、实际编译
+   */
+  toFileAst(cst: SubhutiCst): SlimeProgram {
+    // 先调用 toProgram 做纯 AST 转换
+    const program = this.toProgram(cst)
+    
+    // 获取 body 进行后处理
+    let body = [...program.body]
+    
+    // 1. CSSTS 后处理：添加 cssts 和 csstsAtom 导入
+    body = this.processCsstsPostTransform(body)
+    
+    // 2. OVS 后处理：处理顶层表达式和自动导入
+    body = this.processTopLevelAndImports(body)
+    
+    // 更新 program.body
+    program.body = body
+    
     return program
   }
   
@@ -493,7 +541,13 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
       return [...imports, ...declarations, ...otherStatements, ...expressions]
     }
     
-    // 没有 export 且有顶层表达式：包装成 defineOvsComponent
+    // 如果没有使用 OVS 语法（如 div {}、view 声明等），不做 defineOvsComponent 包装
+    // 这样普通 JS 代码（如 test-stage3 中的测试用例）不会被错误包装
+    if (!this.hasOvsSyntax) {
+      return [...imports, ...declarations, ...otherStatements, ...expressions]
+    }
+    
+    // 没有 export 且有顶层表达式且使用了 OVS 语法：包装成 defineOvsComponent
     imports = this.ensureDefineOvsComponentImport(imports)
     
     const exprValues = expressions.map(e => 
@@ -665,6 +719,9 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
      */
     createOvsViewDeclarationAst(cst: SubhutiCst): any {
         checkCstName(cst, OvsParser.prototype.OvsViewDeclaration.name)
+        
+        // 标记使用了 OVS 语法
+        this.hasOvsSyntax = true;
 
         const children = cst.children || []
 
@@ -1043,6 +1100,9 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
    * })()
    */
   createOvsRenderDomViewDeclarationAst(cst: SubhutiCst): SlimeExpression {
+    // 标记使用了 OVS 语法
+    this.hasOvsSyntax = true
+
     // 支持 OvsRenderFunction（表达式版本）和 OvsRenderStatement（语句版本）
     // 两者的 CST 结构相同，只是名称不同
     const isRenderFunction = cst.name === OvsParser.prototype.OvsRenderFunction.name

@@ -297,13 +297,33 @@ export interface ovsTransformBaseResult {
     tokens: SubhutiMatchToken[]
 }
 
-/** OVS 代码转换基础函数 */
+/**
+ * OVS 代码转换基础函数（纯 AST 转换）
+ * 
+ * 使用 toProgram，不做导入处理和组件包装
+ * 适用场景：测试、AST 分析
+ */
 export function ovsTransformBase(code: string): ovsTransformBaseResult {
     const parser = new OvsParser(code)
     let curCst = parser.Program()
     const tokens = parser.parsedTokens
     if (!tokens.length) return {ast: null, tokens: tokens}
     let ast = OvsCstToSlimeAstUtil.toProgram(curCst)
+    return {ast, tokens}
+}
+
+/**
+ * OVS 代码转换完整函数（包含后处理）
+ * 
+ * 使用 toFileAst，包含导入处理和组件包装
+ * 适用场景：vite 插件、实际编译
+ */
+export function ovsTransformFile(code: string): ovsTransformBaseResult {
+    const parser = new OvsParser(code)
+    let curCst = parser.Program()
+    const tokens = parser.parsedTokens
+    if (!tokens.length) return {ast: null, tokens: tokens}
+    let ast = OvsCstToSlimeAstUtil.toFileAst(curCst)
     return {ast, tokens}
 }
 
@@ -318,7 +338,8 @@ export function vitePluginOvsTransform(code: string, options?: VitePluginOvsTran
     // 转换前清空 usedAtoms
     OvsCstToSlimeAstUtil.clearUsedAtoms()
     
-    let codeResult = ovsTransformBase(code)
+    // 使用 toFileAst 进行完整转换（包含导入处理和组件包装）
+    let codeResult = ovsTransformFile(code)
     let ast = codeResult.ast
     if (!ast) return { code: '', mapping: [] }
     
@@ -330,7 +351,6 @@ export function vitePluginOvsTransform(code: string, options?: VitePluginOvsTran
         }
     }
     
-    // wrapTopLevelExpressions 和 wrapOvsClassComponents 的逻辑已移到 toProgram 中
     const result = SlimeGenerator.generator(ast, codeResult.tokens)
     result.mapping = result.mapping.filter(m => m.source && m.source.value && m.source.value !== '' && m.source.length > 0)
     return result
