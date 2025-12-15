@@ -29,8 +29,11 @@ const OVS_TAG_BLACKLIST = new Set([
  * 
  * 这样 OVS 文件中可以同时使用：
  * - ES2025 标准语法（来自 SlimeParser）
- * - CssTs 样式语法（来自 CssTsParser）：css colorRed, css buttonBase = { colorRed, fontBold }
+ * - CssTs 样式表达式语法（来自 CssTsParser）：css { colorRed, fontBold }
  * - OVS 视图语法：view ComponentName() { }, tag({ props }) { children }
+ * 
+ * 注意：不支持 css 声明语法（如 `css colorRed`），只支持 css 表达式语法。
+ * 详见 CssTsParser 和 ARCHITECTURE.md 的说明。
  */
 @Subhuti
 export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
@@ -267,7 +270,7 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
     }
 
     /**
-     * Statement - 覆盖父类，添加 OvsRenderStatement、NoRenderBlock 和 CssDeclarationStatement 支持
+     * Statement - 覆盖父类，添加 OvsRenderStatement 和 NoRenderBlock 支持
      *
      * OvsRenderStatement 放在最前面，优先尝试：
      * - 解决 ASI 问题：`div{"a"} div{"b"}` 可以正确解析
@@ -277,15 +280,16 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
      * 参数传递说明：
      * - OvsRenderStatement(params): ✅ 传递 params，继承 Yield/Await/Return 上下文
      * - NoRenderBlock(params): ✅ 传递 params，继承 Yield/Await/Return 上下文
-     * - CssDeclarationStatement(params): ✅ 继承自 CssTsParser，支持 css 语法
      * - EmptyStatement(): ✅ 无参数是正确的，空语句不需要上下文
      * - DebuggerStatement(): ✅ 无参数是正确的，debugger 语句不需要上下文
+     * 
+     * 注意：不再支持 CssDeclarationStatement（css 声明语法），
+     * 只支持 css 表达式语法（css { colorRed }），通过 PrimaryExpression 中的 CssExpression 实现。
      */
     @SubhutiRule
     Statement(params: StatementParams = {}) {
         const {Return = false} = params
         return this.Or([
-            { alt: () => this.CssDeclarationStatement(params) },  // 🆕 CssTs 样式声明语句
             { alt: () => this.OvsRenderStatement(params) },  // 🆕 OVS 渲染语句，优先尝试
             { alt: () => this.NoRenderBlock(params) },
             { alt: () => this.BlockStatement(params) },
@@ -306,12 +310,14 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
     }
 
     /**
-     * Declaration - 覆盖父类，添加 OvsViewDeclaration 和 CssDeclaration 支持
+     * Declaration - 覆盖父类，添加 OvsViewDeclaration 支持
+     * 
+     * 注意：不再支持 CssDeclaration（css 声明语法），
+     * 只支持 css 表达式语法（css { colorRed }），通过 PrimaryExpression 中的 CssExpression 实现。
      */
     @SubhutiRule
     Declaration(params: DeclarationParams = {}) {
         return this.Or([
-            { alt: () => this.CssDeclaration(params) },  // 🆕 CssTs 样式声明
             { alt: () => this.OvsViewDeclaration() },  // 添加 view 组件声明
             { alt: () => this.HoistableDeclaration({ ...params, Default: false }) },
             { alt: () => this.ClassDeclaration({ ...params, Default: false }) },
