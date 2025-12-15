@@ -6,7 +6,6 @@
   "types": "dist/index.d.mts",
   "scripts": {
     "build": "tsdown",
-    "test": "vitest run",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
@@ -23,7 +22,6 @@
   },
   "devDependencies": {
     "fast-check": "^3.23.2",
-    "tsdown": "0.17.0-beta.6",
-    "vitest": "^2.0.0"
+    "tsdown": "0.17.0-beta.6"
   }
 }
