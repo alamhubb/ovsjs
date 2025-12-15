@@ -1,22 +1,19 @@
-import {SlimeCstToAst} from "slime-parser/src/language/SlimeCstToAstUtil.ts";
 // 使用包名导入（monorepo workspaces）
 import {CssTsCstToAst} from "cssts-compiler/src/factory/CssTsCstToAst.ts";
 import SubhutiCst from "subhuti/src/struct/SubhutiCst.ts";
 import OvsParser from "../parser/OvsParser.ts";
-import CssTsParser from "cssts-compiler/src/parser/CssTsParser.ts";
 import {SlimeNodeType} from "slime-ast/src/SlimeNodeType.ts";
 import {
     type SlimeCallExpression,
     type SlimeExpression,
-    type SlimeExpressionStatement, type SlimeIdentifier,
-    type SlimeMemberExpression,
+    type SlimeExpressionStatement,
+    type SlimeIdentifier,
     type SlimeModuleDeclaration,
     type SlimeProgram,
     type SlimeStatement
 } from "slime-ast/src/SlimeESTree.ts";
 import SlimeParser from "slime-parser/src/language/es2025/SlimeParser.ts";
 import SlimeNodeCreate from "slime-ast/src/SlimeNodeCreate.ts";
-import slimeTokenCreate from "slime-ast/src/SlimeTokenCreate.ts";
 import SlimeTokenCreate from "slime-ast/src/SlimeTokenCreate.ts";
 
 // HTML 标签列表，用于判断是否需要转换为 $OvsHtmlTag.xxx()
@@ -115,11 +112,6 @@ function createCalleeForTag(tagName: string, loc?: any): SlimeExpression {
     if (loc) id.loc = loc
     return id
   }
-}
-
-/** 检查标签名是否是用户组件（非 HTML 标签） */
-function isUserComponent(tagName: string): boolean {
-  return !isHtmlTag(tagName)
 }
 
 export function checkCstName(cst: SubhutiCst, cstName: string) {
@@ -226,195 +218,6 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
     program.body = body
     
     return program
-  }
-  
-  /**
-   * 包装 export class 为 Vue defineComponent
-   * 
-   * 输入：export class MyComponent { render() { ... } }
-   * 输出：
-   *   class _OvsClass_MyComponent { render() { ... } }
-   *   export const MyComponent = defineComponent({
-   *     name: 'MyComponent',
-   *     setup() {
-   *       const instance = reactive(new _OvsClass_MyComponent())
-   *       return () => instance.render()
-   *     }
-   *   })
-   */
-  private wrapExportClassAsVueComponent(body: Array<SlimeStatement | SlimeModuleDeclaration>): Array<SlimeStatement | SlimeModuleDeclaration> {
-    const result: Array<SlimeStatement | SlimeModuleDeclaration> = []
-    let needsVueImport = false
-    const classNames: string[] = []
-    
-    for (const stmt of body) {
-      // 检测 export class Xxx
-      if (stmt.type === SlimeNodeType.ExportNamedDeclaration) {
-        const exportDecl = stmt as any
-        if (exportDecl.declaration?.type === SlimeNodeType.ClassDeclaration) {
-          const classDecl = exportDecl.declaration
-          const className = classDecl.id?.name
-          if (className) {
-            classNames.push(className)
-            needsVueImport = true
-            
-            // 1. 将 export class Xxx 改为 class _OvsClass_Xxx
-            const renamedClass = {
-              ...classDecl,
-              id: SlimeNodeCreate.createIdentifier(`_OvsClass_${className}`)
-            }
-            result.push(renamedClass)
-            continue
-          }
-        }
-      }
-      result.push(stmt)
-    }
-    
-    // 如果有需要包装的 class，添加 Vue 导入和包装代码
-    if (needsVueImport && classNames.length > 0) {
-      // 添加 Vue 导入
-      const vueImport = this.createVueImportForClass()
-      result.unshift(vueImport)
-      
-      // 为每个 class 添加 defineComponent 包装
-      for (const className of classNames) {
-        const wrapperExport = this.createDefineComponentWrapper(className)
-        result.push(wrapperExport)
-      }
-    }
-    
-    return result
-  }
-  
-  /**
-   * 创建 Vue 导入语句
-   */
-  private createVueImportForClass(): SlimeModuleDeclaration {
-    return {
-      type: SlimeNodeType.ImportDeclaration,
-      specifiers: [
-        { type: SlimeNodeType.ImportSpecifier, imported: SlimeNodeCreate.createIdentifier('defineComponent'), local: SlimeNodeCreate.createIdentifier('defineComponent') },
-        { type: SlimeNodeType.ImportSpecifier, imported: SlimeNodeCreate.createIdentifier('reactive'), local: SlimeNodeCreate.createIdentifier('reactive') },
-        { type: SlimeNodeType.ImportSpecifier, imported: SlimeNodeCreate.createIdentifier('h'), local: SlimeNodeCreate.createIdentifier('h') }
-      ],
-      source: SlimeNodeCreate.createStringLiteral('vue')
-    } as any
-  }
-  
-  /**
-   * 创建 defineComponent 包装导出
-   */
-  private createDefineComponentWrapper(className: string): SlimeModuleDeclaration {
-    // export const ClassName = defineComponent({
-    //   name: 'ClassName',
-    //   setup(props, { slots }) {
-    //     const instance = reactive(new _OvsClass_ClassName())
-    //     return () => instance.render()
-    //   }
-    // })
-    
-    const internalClassName = `_OvsClass_${className}`
-    
-    // new _OvsClass_ClassName()
-    const newExpr = {
-      type: SlimeNodeType.NewExpression,
-      callee: SlimeNodeCreate.createIdentifier(internalClassName),
-      arguments: []
-    }
-    
-    // reactive(new _OvsClass_ClassName())
-    const reactiveCall = SlimeNodeCreate.createCallExpression(
-      SlimeNodeCreate.createIdentifier('reactive'),
-      [newExpr as any]
-    )
-    
-    // const instance = reactive(...)
-    const instanceDecl = SlimeNodeCreate.createVariableDeclaration(
-      { type: 'Const', value: 'const' } as any,
-      [SlimeNodeCreate.createVariableDeclarator(
-        SlimeNodeCreate.createIdentifier('instance'),
-        { type: 'Assign', value: '=' } as any,
-        reactiveCall
-      )]
-    )
-    
-    // instance.render()
-    const renderCall = SlimeNodeCreate.createCallExpression(
-      SlimeNodeCreate.createMemberExpression(
-        SlimeNodeCreate.createIdentifier('instance'),
-        { type: 'Dot', value: '.' } as any,
-        SlimeNodeCreate.createIdentifier('render')
-      ),
-      []
-    )
-    
-    // () => instance.render()
-    const returnArrow = SlimeNodeCreate.createArrowFunctionExpression(
-      renderCall,
-      [],
-      false,
-      false
-    )
-    
-    // return () => instance.render()
-    const returnStmt = SlimeNodeCreate.createReturnStatement(returnArrow)
-    
-    // setup(props, { slots }) { ... }
-    const setupBody = SlimeNodeCreate.createBlockStatement([instanceDecl, returnStmt])
-    const setupFunc = SlimeNodeCreate.createFunctionExpression(
-      setupBody,
-      null,
-      [SlimeNodeCreate.createIdentifier('props'), {
-        type: SlimeNodeType.ObjectPattern,
-        properties: [{
-          type: SlimeNodeType.Property,
-          key: SlimeNodeCreate.createIdentifier('slots'),
-          value: SlimeNodeCreate.createIdentifier('slots'),
-          shorthand: true,
-          kind: 'init'
-        }]
-      } as any],
-      false,
-      false
-    )
-    
-    // { name: 'ClassName', setup: ... }
-    const componentOptions = SlimeNodeCreate.createObjectExpression([
-      SlimeNodeCreate.createObjectPropertyItem(
-        SlimeNodeCreate.createPropertyAst(
-          SlimeNodeCreate.createIdentifier('name'),
-          SlimeNodeCreate.createStringLiteral(className)
-        )
-      ),
-      SlimeNodeCreate.createObjectPropertyItem(
-        SlimeNodeCreate.createPropertyAst(
-          SlimeNodeCreate.createIdentifier('setup'),
-          setupFunc
-        )
-      )
-    ])
-    
-    // defineComponent({ ... })
-    const defineComponentCall = SlimeNodeCreate.createCallExpression(
-      SlimeNodeCreate.createIdentifier('defineComponent'),
-      [componentOptions]
-    )
-    
-    // export const ClassName = defineComponent(...)
-    return {
-      type: SlimeNodeType.ExportNamedDeclaration,
-      declaration: SlimeNodeCreate.createVariableDeclaration(
-        { type: 'Const', value: 'const' } as any,
-        [SlimeNodeCreate.createVariableDeclarator(
-          SlimeNodeCreate.createIdentifier(className),
-          { type: 'Assign', value: '=' } as any,
-          defineComponentCall
-        )]
-      ),
-      specifiers: [],
-      source: null
-    } as any
   }
   
   /**
@@ -676,7 +479,7 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
   private createFragmentWrapper(expressions: any[]): any {
     const arrayElements = expressions.map((expr, index) => {
       const isLast = index === expressions.length - 1
-      return SlimeNodeCreate.createArrayElement(expr, isLast ? undefined : slimeTokenCreate.createCommaToken())
+      return SlimeNodeCreate.createArrayElement(expr, isLast ? undefined : SlimeTokenCreate.createCommaToken())
     })
     return SlimeNodeCreate.createCallExpression(
       SlimeNodeCreate.createIdentifier('h'),
@@ -796,11 +599,11 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
 
         // 8. 创建变量声明：const ComponentName = defineOvsComponent(...)
         const variableDeclaration = SlimeNodeCreate.createVariableDeclaration(
-            slimeTokenCreate.createConstToken(),
+            SlimeTokenCreate.createConstToken(),
             [
                 SlimeNodeCreate.createVariableDeclarator(
                     componentName,
-                    slimeTokenCreate.createAssignToken(),
+                    SlimeTokenCreate.createAssignToken(),
                     defineOvsCall
                 )
             ]
@@ -1386,11 +1189,7 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
     attrsVarName: string | null,
     componentProps: SlimeExpression | null
   ): SlimeCallExpression {
-    // 1. 创建基础的 IIFE（包含children数组和push逻辑）
-    const baseIIFE = this.createBaseIIFE(statements, attrsVarName)
-
-    // 2. 但是基础IIFE返回的是children数组，我们需要把它改成返回 createComponentVNode
-    // 所以需要重新构建函数体，用基础的前半部分逻辑，但改变return语句
+    // 构建 IIFE 函数体
     const iifeFunctionBody: SlimeStatement[] = [
       // 1. 声明 children 数组：const children = []
       SlimeNodeCreate.createVariableDeclaration(
@@ -1444,7 +1243,7 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
    */
   private createReturnOvsAPICreateVNode(
     id: SlimeIdentifier,
-    attrsVarName: string | null,
+    _attrsVarName: string | null,  // 保留用于将来的属性赋值功能
     componentProps: SlimeExpression | null
   ): SlimeStatement {
 
@@ -1455,7 +1254,6 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
       propsObject = componentProps
     } else {
       // 普通元素无自定义props：{}
-      // 注：attrsVarName 保留用于将来的属性赋值功能
       propsObject = SlimeNodeCreate.createObjectExpression([])
     }
 

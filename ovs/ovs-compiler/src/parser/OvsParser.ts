@@ -70,12 +70,12 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
         // 使用 IdentifierReference 并传递 params，和普通方法调用一样
         const idRef = this.IdentifierReference(params)
         // 限制 1：组件标签名不能是 JavaScript 关键字
-        const tagName = idRef?.children?.[0]?.children?.[0]?.value
+        const tagName = idRef?.children?.[0]?.children?.[0]?.value || ''
         this.assertCondition(!OVS_TAG_BLACKLIST.has(tagName))
 
         this.Option(() => {
             // 使用 OVS 专属的参数语法
-            this.OvsArguments(params)
+            return this.OvsArguments(params)
         })
         // 限制 2：标签名和 { 之间不能有换行符 [no LineTerminator here]
         this.assertNoLineBreak()
@@ -84,7 +84,7 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
             // ✅ 正确：传递 params
             // OvsRenderFunction 的 body 类似于 FunctionBody，需要传递 Yield/Await 参数
             // 这样在 async 组件中可以使用 await，在 generator 组件中可以使用 yield
-            this.StatementList(params)
+            return this.StatementList(params)
         })
         this.tokenConsumer.RBrace()
         return this.curCst
@@ -109,7 +109,7 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
     OvsArguments(params: OvsExpressionParams = {}) {
         this.tokenConsumer.LParen()
         this.Option(() => {
-            this.OvsPropertyDefinitionList(params)
+            return this.OvsPropertyDefinitionList(params)
         })
         this.tokenConsumer.RParen()
         return this.curCst
@@ -125,6 +125,7 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
         this.Many(() => {
             this.tokenConsumer.Comma()
             this.OvsPropertyDefinition(params)
+            return this.curCst
         })
         return this.curCst
     }
@@ -147,7 +148,7 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
             {
                 alt: () => {
                     this.tokenConsumer.Ellipsis()
-                    this.AssignmentExpression({...params, In: true})
+                    return this.AssignmentExpression({...params, In: true})
                 }
             },
             // 2. PropertyName = AssignmentExpression - 完整属性（用 = 代替 :）
@@ -155,7 +156,7 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
                 alt: () => {
                     this.PropertyName(params)
                     this.tokenConsumer.Assign()
-                    this.AssignmentExpression({...params, In: true})
+                    return this.AssignmentExpression({...params, In: true})
                 }
             },
             // 3. MethodDefinition - 方法定义：onClick() {}
@@ -182,19 +183,19 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
         // 使用 IdentifierReference 并传递 params
         const idRef = this.IdentifierReference(params)
         // 限制 1：组件标签名不能是 JavaScript 关键字
-        const tagName = idRef?.children?.[0]?.children?.[0]?.value
+        const tagName = idRef?.children?.[0]?.children?.[0]?.value || ''
         this.assertCondition(!OVS_TAG_BLACKLIST.has(tagName))
 
         this.Option(() => {
             // 使用 OVS 专属的参数语法
-            this.OvsArguments(params)
+            return this.OvsArguments(params)
         })
         // 限制 2：标签名和 { 之间不能有换行符 [no LineTerminator here]
         this.assertNoLineBreak()
         this.tokenConsumer.LBrace()
         this.Option(() => {
             // 传递 params，继承 Yield/Await/Return 上下文
-            this.StatementList(params)
+            return this.StatementList(params)
         })
         this.tokenConsumer.RBrace()
         // 不需要 SemicolonASI！这是语句版本，以 } 结尾即可
@@ -238,15 +239,16 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
         this.tokenConsumer.IdentifierName()         // 组件名
         this.Option(() => {
             // 可选的参数列表 (state)
-            this.ArrowFormalParameters({Yield: false, Await: false})
+            return this.ArrowFormalParameters({Yield: false, Await: false})
         })
         // 函数体 { ... }
         this.tokenConsumer.LBrace()
         this.Option(() => {
             // 内部是 StatementList，支持 Return 语句
-            this.StatementList({Yield: false, Await: false, Return: true})
+            return this.StatementList({Yield: false, Await: false, Return: true})
         })
         this.tokenConsumer.RBrace()
+        return this.curCst
     }
 
     /**
@@ -264,9 +266,10 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
         this.tokenConsumer.LBrace()
         this.Option(() => {
             // ✅ 正确：传递 params，继承外层的 Yield/Await/Return 上下文
-            this.StatementList(params)
+            return this.StatementList(params)
         })
         this.tokenConsumer.RBrace()
+        return this.curCst
     }
 
     /**
@@ -287,7 +290,7 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
      * 只支持 css 表达式语法（css { colorRed }），通过 PrimaryExpression 中的 CssExpression 实现。
      */
     @SubhutiRule
-    Statement(params: StatementParams = {}) {
+    Statement(params: StatementParams = {}): any {
         const {Return = false} = params
         return this.Or([
             { alt: () => this.OvsRenderStatement(params) },  // 🆕 OVS 渲染语句，优先尝试
@@ -316,7 +319,7 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
      * 只支持 css 表达式语法（css { colorRed }），通过 PrimaryExpression 中的 CssExpression 实现。
      */
     @SubhutiRule
-    Declaration(params: DeclarationParams = {}) {
+    Declaration(params: DeclarationParams = {}): any {
         return this.Or([
             { alt: () => this.OvsViewDeclaration() },  // 添加 view 组件声明
             { alt: () => this.HoistableDeclaration({ ...params, Default: false }) },
