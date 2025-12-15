@@ -8,6 +8,9 @@
 			"ES2021"
 		],
 		"module": "Node16",
+		"moduleResolution": "Bundler",
+		"allowImportingTsExtensions": true,
+		"noEmit": true,
 		"sourceMap": true,
 		"composite": true,
 		"strict": true,
