@@ -244,11 +244,401 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
       body = this.ensureCsstsImports(body)
     }
 
+    // ==================== 后处理：包装和导入 ====================
+    // 1. 包装 export class 为 Vue defineComponent
+    // body = this.wrapExportClassAsVueComponent(body)
+    
+    // 2. 处理顶层表达式和自动导入
+    body = this.processTopLevelAndImports(body)
+
     // 创建 Program AST
     const program = SlimeNodeCreate.createProgram(body, sourceType)
     program.loc = cst.loc
 
     return program
+  }
+  
+  /**
+   * 包装 export class 为 Vue defineComponent
+   * 
+   * 输入：export class MyComponent { render() { ... } }
+   * 输出：
+   *   class _OvsClass_MyComponent { render() { ... } }
+   *   export const MyComponent = defineComponent({
+   *     name: 'MyComponent',
+   *     setup() {
+   *       const instance = reactive(new _OvsClass_MyComponent())
+   *       return () => instance.render()
+   *     }
+   *   })
+   */
+  private wrapExportClassAsVueComponent(body: Array<SlimeStatement | SlimeModuleDeclaration>): Array<SlimeStatement | SlimeModuleDeclaration> {
+    const result: Array<SlimeStatement | SlimeModuleDeclaration> = []
+    let needsVueImport = false
+    const classNames: string[] = []
+    
+    for (const stmt of body) {
+      // 检测 export class Xxx
+      if (stmt.type === SlimeNodeType.ExportNamedDeclaration) {
+        const exportDecl = stmt as any
+        if (exportDecl.declaration?.type === SlimeNodeType.ClassDeclaration) {
+          const classDecl = exportDecl.declaration
+          const className = classDecl.id?.name
+          if (className) {
+            classNames.push(className)
+            needsVueImport = true
+            
+            // 1. 将 export class Xxx 改为 class _OvsClass_Xxx
+            const renamedClass = {
+              ...classDecl,
+              id: SlimeNodeCreate.createIdentifier(`_OvsClass_${className}`)
+            }
+            result.push(renamedClass)
+            continue
+          }
+        }
+      }
+      result.push(stmt)
+    }
+    
+    // 如果有需要包装的 class，添加 Vue 导入和包装代码
+    if (needsVueImport && classNames.length > 0) {
+      // 添加 Vue 导入
+      const vueImport = this.createVueImportForClass()
+      result.unshift(vueImport)
+      
+      // 为每个 class 添加 defineComponent 包装
+      for (const className of classNames) {
+        const wrapperExport = this.createDefineComponentWrapper(className)
+        result.push(wrapperExport)
+      }
+    }
+    
+    return result
+  }
+  
+  /**
+   * 创建 Vue 导入语句
+   */
+  private createVueImportForClass(): SlimeModuleDeclaration {
+    return {
+      type: SlimeNodeType.ImportDeclaration,
+      specifiers: [
+        { type: SlimeNodeType.ImportSpecifier, imported: SlimeNodeCreate.createIdentifier('defineComponent'), local: SlimeNodeCreate.createIdentifier('defineComponent') },
+        { type: SlimeNodeType.ImportSpecifier, imported: SlimeNodeCreate.createIdentifier('reactive'), local: SlimeNodeCreate.createIdentifier('reactive') },
+        { type: SlimeNodeType.ImportSpecifier, imported: SlimeNodeCreate.createIdentifier('h'), local: SlimeNodeCreate.createIdentifier('h') }
+      ],
+      source: SlimeNodeCreate.createStringLiteral('vue')
+    } as any
+  }
+  
+  /**
+   * 创建 defineComponent 包装导出
+   */
+  private createDefineComponentWrapper(className: string): SlimeModuleDeclaration {
+    // export const ClassName = defineComponent({
+    //   name: 'ClassName',
+    //   setup(props, { slots }) {
+    //     const instance = reactive(new _OvsClass_ClassName())
+    //     return () => instance.render()
+    //   }
+    // })
+    
+    const internalClassName = `_OvsClass_${className}`
+    
+    // new _OvsClass_ClassName()
+    const newExpr = {
+      type: SlimeNodeType.NewExpression,
+      callee: SlimeNodeCreate.createIdentifier(internalClassName),
+      arguments: []
+    }
+    
+    // reactive(new _OvsClass_ClassName())
+    const reactiveCall = SlimeNodeCreate.createCallExpression(
+      SlimeNodeCreate.createIdentifier('reactive'),
+      [newExpr as any]
+    )
+    
+    // const instance = reactive(...)
+    const instanceDecl = SlimeNodeCreate.createVariableDeclaration(
+      { type: 'Const', value: 'const' } as any,
+      [SlimeNodeCreate.createVariableDeclarator(
+        SlimeNodeCreate.createIdentifier('instance'),
+        { type: 'Assign', value: '=' } as any,
+        reactiveCall
+      )]
+    )
+    
+    // instance.render()
+    const renderCall = SlimeNodeCreate.createCallExpression(
+      SlimeNodeCreate.createMemberExpression(
+        SlimeNodeCreate.createIdentifier('instance'),
+        { type: 'Dot', value: '.' } as any,
+        SlimeNodeCreate.createIdentifier('render')
+      ),
+      []
+    )
+    
+    // () => instance.render()
+    const returnArrow = SlimeNodeCreate.createArrowFunctionExpression(
+      renderCall,
+      [],
+      false,
+      false
+    )
+    
+    // return () => instance.render()
+    const returnStmt = SlimeNodeCreate.createReturnStatement(returnArrow)
+    
+    // setup(props, { slots }) { ... }
+    const setupBody = SlimeNodeCreate.createBlockStatement([instanceDecl, returnStmt])
+    const setupFunc = SlimeNodeCreate.createFunctionExpression(
+      setupBody,
+      null,
+      [SlimeNodeCreate.createIdentifier('props'), {
+        type: SlimeNodeType.ObjectPattern,
+        properties: [{
+          type: SlimeNodeType.Property,
+          key: SlimeNodeCreate.createIdentifier('slots'),
+          value: SlimeNodeCreate.createIdentifier('slots'),
+          shorthand: true,
+          kind: 'init'
+        }]
+      } as any],
+      false,
+      false
+    )
+    
+    // { name: 'ClassName', setup: ... }
+    const componentOptions = SlimeNodeCreate.createObjectExpression([
+      SlimeNodeCreate.createObjectPropertyItem(
+        SlimeNodeCreate.createPropertyAst(
+          SlimeNodeCreate.createIdentifier('name'),
+          SlimeNodeCreate.createStringLiteral(className)
+        )
+      ),
+      SlimeNodeCreate.createObjectPropertyItem(
+        SlimeNodeCreate.createPropertyAst(
+          SlimeNodeCreate.createIdentifier('setup'),
+          setupFunc
+        )
+      )
+    ])
+    
+    // defineComponent({ ... })
+    const defineComponentCall = SlimeNodeCreate.createCallExpression(
+      SlimeNodeCreate.createIdentifier('defineComponent'),
+      [componentOptions]
+    )
+    
+    // export const ClassName = defineComponent(...)
+    return {
+      type: SlimeNodeType.ExportNamedDeclaration,
+      declaration: SlimeNodeCreate.createVariableDeclaration(
+        { type: 'Const', value: 'const' } as any,
+        [SlimeNodeCreate.createVariableDeclarator(
+          SlimeNodeCreate.createIdentifier(className),
+          { type: 'Assign', value: '=' } as any,
+          defineComponentCall
+        )]
+      ),
+      specifiers: [],
+      source: null
+    } as any
+  }
+  
+  /**
+   * 处理顶层表达式和自动导入
+   * 
+   * 功能：
+   * 1. 检查是否使用了 $OvsHtmlTag、defineOvsComponent 等，自动添加导入
+   * 2. 如果没有 export 且有顶层表达式，包装成 defineOvsComponent 导出
+   */
+  private processTopLevelAndImports(body: Array<SlimeStatement | SlimeModuleDeclaration>): Array<SlimeStatement | SlimeModuleDeclaration> {
+    let imports: any[] = []
+    let declarations: any[] = []
+    let expressions: SlimeStatement[] = []
+    let hasAnyExport = false
+    let otherStatements: any[] = []
+    
+    for (const stmt of body) {
+      if (stmt.type === SlimeNodeType.ImportDeclaration) {
+        imports.push(stmt)
+      } else if (stmt.type === SlimeNodeType.ExportDefaultDeclaration ||
+                 stmt.type === SlimeNodeType.ExportNamedDeclaration) {
+        hasAnyExport = true
+        otherStatements.push(stmt)
+      } else if (stmt.type === SlimeNodeType.VariableDeclaration ||
+                 stmt.type === SlimeNodeType.FunctionDeclaration ||
+                 stmt.type === SlimeNodeType.ClassDeclaration) {
+        declarations.push(stmt)
+      } else if (stmt.type === SlimeNodeType.ExpressionStatement) {
+        expressions.push(stmt as SlimeStatement)
+      } else {
+        otherStatements.push(stmt)
+      }
+    }
+    
+    // 检查并添加必要的导入
+    const bodyJson = JSON.stringify(body)
+    
+    if (bodyJson.includes('$OvsHtmlTag')) {
+      imports = this.ensureOvsHtmlTagImport(imports)
+    }
+    if (bodyJson.includes('defineOvsComponent')) {
+      imports = this.ensureDefineOvsComponentImport(imports)
+    }
+    
+    // 如果有 export 或没有顶层表达式，直接返回
+    if (hasAnyExport || expressions.length === 0) {
+      return [...imports, ...declarations, ...otherStatements, ...expressions]
+    }
+    
+    // 没有 export 且有顶层表达式：包装成 defineOvsComponent
+    imports = this.ensureDefineOvsComponentImport(imports)
+    
+    const exprValues = expressions.map(e => 
+      e.type === SlimeNodeType.ExpressionStatement ? (e as any).expression : e
+    )
+    
+    let finalExpr: any
+    if (exprValues.length === 1) {
+      finalExpr = exprValues[0]
+    } else {
+      // 多个表达式，用 Fragment 包装
+      imports = this.ensureFragmentImport(imports)
+      finalExpr = this.createFragmentWrapper(exprValues)
+    }
+    
+    // 创建 defineOvsComponent 包装
+    const returnStmt = SlimeNodeCreate.createReturnStatement(finalExpr)
+    const blockStatement = SlimeNodeCreate.createBlockStatement([...declarations, returnStmt])
+    const arrowFunction = SlimeNodeCreate.createArrowFunctionExpression(
+      blockStatement,
+      [SlimeNodeCreate.createIdentifier('props')],
+      false,
+      false
+    )
+    const defineOvsCall = SlimeNodeCreate.createCallExpression(
+      SlimeNodeCreate.createIdentifier('defineOvsComponent'),
+      [arrowFunction]
+    )
+    
+    return [
+      ...imports,
+      {
+        type: SlimeNodeType.ExportDefaultDeclaration,
+        declaration: defineOvsCall
+      } as any
+    ]
+  }
+  
+  /**
+   * 确保有 $OvsHtmlTag 导入
+   */
+  private ensureOvsHtmlTagImport(imports: any[]): any[] {
+    for (const imp of imports) {
+      if (imp.source?.value === 'ovsjs') {
+        const specs = imp.specifiers || []
+        if (!specs.some((s: any) => s.imported?.name === '$OvsHtmlTag' || s.local?.name === '$OvsHtmlTag')) {
+          specs.push({
+            type: SlimeNodeType.ImportSpecifier,
+            imported: SlimeNodeCreate.createIdentifier('$OvsHtmlTag'),
+            local: SlimeNodeCreate.createIdentifier('$OvsHtmlTag')
+          })
+        }
+        return imports
+      }
+    }
+    return [{
+      type: SlimeNodeType.ImportDeclaration,
+      specifiers: [{
+        type: SlimeNodeType.ImportSpecifier,
+        imported: SlimeNodeCreate.createIdentifier('$OvsHtmlTag'),
+        local: SlimeNodeCreate.createIdentifier('$OvsHtmlTag')
+      }],
+      source: SlimeNodeCreate.createStringLiteral('ovsjs')
+    }, ...imports]
+  }
+  
+  /**
+   * 确保有 defineOvsComponent 导入
+   */
+  private ensureDefineOvsComponentImport(imports: any[]): any[] {
+    for (const imp of imports) {
+      if (imp.source?.value === 'ovsjs') {
+        const specs = imp.specifiers || []
+        if (!specs.some((s: any) => s.imported?.name === 'defineOvsComponent' || s.local?.name === 'defineOvsComponent')) {
+          specs.push({
+            type: SlimeNodeType.ImportSpecifier,
+            imported: SlimeNodeCreate.createIdentifier('defineOvsComponent'),
+            local: SlimeNodeCreate.createIdentifier('defineOvsComponent')
+          })
+        }
+        return imports
+      }
+    }
+    return [{
+      type: SlimeNodeType.ImportDeclaration,
+      specifiers: [{
+        type: SlimeNodeType.ImportSpecifier,
+        imported: SlimeNodeCreate.createIdentifier('defineOvsComponent'),
+        local: SlimeNodeCreate.createIdentifier('defineOvsComponent')
+      }],
+      source: SlimeNodeCreate.createStringLiteral('ovsjs')
+    }, ...imports]
+  }
+  
+  /**
+   * 确保有 Fragment 和 h 导入
+   */
+  private ensureFragmentImport(imports: any[]): any[] {
+    for (const imp of imports) {
+      if (imp.source?.value === 'vue') {
+        const specs = imp.specifiers || []
+        if (!specs.some((s: any) => s.imported?.name === 'Fragment')) {
+          specs.push({
+            type: SlimeNodeType.ImportSpecifier,
+            imported: SlimeNodeCreate.createIdentifier('Fragment'),
+            local: SlimeNodeCreate.createIdentifier('Fragment')
+          })
+        }
+        if (!specs.some((s: any) => s.imported?.name === 'h')) {
+          specs.push({
+            type: SlimeNodeType.ImportSpecifier,
+            imported: SlimeNodeCreate.createIdentifier('h'),
+            local: SlimeNodeCreate.createIdentifier('h')
+          })
+        }
+        return imports
+      }
+    }
+    return [{
+      type: SlimeNodeType.ImportDeclaration,
+      specifiers: [
+        { type: SlimeNodeType.ImportSpecifier, imported: SlimeNodeCreate.createIdentifier('Fragment'), local: SlimeNodeCreate.createIdentifier('Fragment') },
+        { type: SlimeNodeType.ImportSpecifier, imported: SlimeNodeCreate.createIdentifier('h'), local: SlimeNodeCreate.createIdentifier('h') }
+      ],
+      source: SlimeNodeCreate.createStringLiteral('vue')
+    }, ...imports]
+  }
+  
+  /**
+   * 创建 Fragment 包装
+   */
+  private createFragmentWrapper(expressions: any[]): any {
+    const arrayElements = expressions.map((expr, index) => {
+      const isLast = index === expressions.length - 1
+      return SlimeNodeCreate.createArrayElement(expr, isLast ? undefined : slimeTokenCreate.createCommaToken())
+    })
+    return SlimeNodeCreate.createCallExpression(
+      SlimeNodeCreate.createIdentifier('h'),
+      [
+        SlimeNodeCreate.createIdentifier('Fragment'),
+        SlimeNodeCreate.createNullLiteralToken(),
+        SlimeNodeCreate.createArrayExpression(arrayElements)
+      ]
+    )
   }
 
   /**

@@ -307,18 +307,12 @@ export function ovsTransformBase(code: string): ovsTransformBaseResult {
     return {ast, tokens}
 }
 
-/** OVS 代码转换（纯编译） */
-export function ovsTransform(code: string): SlimeGeneratorResult {
-    let codeResult = ovsTransformBase(code)
-    return SlimeGenerator.generator(codeResult.ast, codeResult.tokens)
-}
-
 /** Vite 插件专用的 OVS 代码转换 */
 export function vitePluginOvsTransform(code: string): SlimeGeneratorResult {
     let codeResult = ovsTransformBase(code)
     let ast = codeResult.ast
     if (!ast) return { code: '', mapping: [] }
-    ast = wrapTopLevelExpressions(ast, code)
+    // wrapTopLevelExpressions 和 wrapOvsClassComponents 的逻辑已移到 toProgram 中
     const result = SlimeGenerator.generator(ast, codeResult.tokens)
     result.mapping = result.mapping.filter(m => m.source && m.source.value && m.source.value !== '' && m.source.length > 0)
     return result
