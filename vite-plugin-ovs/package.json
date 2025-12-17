@@ -2,7 +2,8 @@
   "name": "vite-plugin-ovs",
   "version": "0.2.2",
   "type": "module",
-  "main": "src/index.ts",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
   "types": "./dist/index.d.mts",
   "license": "MIT",
   "scripts": {
