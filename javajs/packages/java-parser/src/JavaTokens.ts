@@ -7,7 +7,7 @@ import {
     createKeywordToken,
     createValueRegToken,
     type SubhutiCreateToken,
-} from 'subhuti/src/struct/SubhutiCreateToken.ts'
+} from 'subhuti'
 import { JavaTokenType } from './JavaTokenType.ts'
 
 // ============================================

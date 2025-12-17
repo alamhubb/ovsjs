@@ -1,6 +1,6 @@
-import { createRegToken } from 'subhuti/src/struct/SubhutiCreateToken.ts'
-import {SlimeTokensObj} from "slime-parser/src/language/es2025/SlimeTokens.ts";
-import {SlimeTokenType} from "slime-token/src/SlimeTokenType.ts";
+import { createRegToken } from 'subhuti'
+import { SlimeTokensObj } from "slime-parser";
+import { SlimeTokenType } from "slime-token";
 // 使用包名导入（monorepo workspaces）
 import CssTsTokenConsumer, { CssTsContextualKeywordTypes, cssTsTokens } from "cssts-compiler/src/parser/CssTsTokenConsumer.ts";
 

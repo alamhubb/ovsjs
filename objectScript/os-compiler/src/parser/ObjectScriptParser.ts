@@ -1,6 +1,6 @@
-import {Subhuti, SubhutiRule} from "subhuti/src/SubhutiParser";
-import SlimeParser from "slime-parser/src/language/es2025/SlimeParser";
-import type {ExpressionParams, DeclarationParams} from "slime-parser/src/language/es2025/SlimeParser";
+import { Subhuti, SubhutiRule } from "subhuti";
+import { SlimeParser } from "slime-parser";
+import type { ExpressionParams, DeclarationParams } from "slime-parser";
 import ObjectScriptTokenConsumer, {objectScriptTokens} from "./ObjectScriptTokenConsumer";
 
 /**

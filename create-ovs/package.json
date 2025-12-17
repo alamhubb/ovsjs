@@ -3,9 +3,17 @@
   "version": "0.2.3",
   "description": "🛠️ Create OVS projects powered by Vite + Vue",
   "type": "module",
-  "main": "dist/index.mjs",
+  "main": "./dist/index.mjs",
+  "module": "./dist/index.mjs",
   "bin": {
     "create-ovs": "dist/index.mjs"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs",
+      "default": "./dist/index.mjs"
+    }
   },
   "files": [
     "dist",

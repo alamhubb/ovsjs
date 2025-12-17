@@ -1,7 +1,7 @@
 import {readFileSync} from 'fs'
 import OvsCstToSlimeNodeCreate from '../../src/factory/OvsCstToSlimeAstUtil'
 import OvsParser from '../../src/parser/OvsParser'
-import SlimeGenerator from 'slime-generator/src/SlimeGenerator'
+import { SlimeGenerator } from 'slime-generator'
 
 const code = readFileSync('./example/src/views/hello.ovs', 'utf-8')
 console.log('源代码:')

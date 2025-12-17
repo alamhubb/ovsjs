@@ -9,17 +9,15 @@
  * ```
  */
 
-import SlimeGenerator from "slime-generator/src/SlimeGenerator.ts";
+import { SlimeGenerator, SlimeCodeMapping, type SlimeGeneratorResult } from "slime-generator";
 import ObjectScriptParser from "./parser/ObjectScriptParser.ts";
 import {ObjectCstToSlimeAst} from "./factory/ObjectCstToSlimeAst.ts";
-import type {SlimeGeneratorResult} from "slime-generator/src/SlimeCodeMapping.ts";
-import SlimeCodeMapping from "slime-generator/src/SlimeCodeMapping.ts";
 import {
     type SlimeProgram,
-    SlimeProgramSourceType
-} from "slime-ast/src/SlimeESTree.ts";
-import SlimeAstUtil from "slime-ast/src/SlimeNodeCreate.ts";
-import SubhutiMatchToken from "subhuti/src/struct/SubhutiMatchToken.ts";
+    SlimeProgramSourceType,
+    SlimeAstUtil
+} from "slime-ast";
+import { SubhutiMatchToken } from "subhuti";
 
 // ==================== 导出的 API ====================
 

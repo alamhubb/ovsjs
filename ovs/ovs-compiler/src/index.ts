@@ -9,23 +9,21 @@
  * ```
  */
 
-import SlimeGenerator from "slime-generator/src/SlimeGenerator.ts";
+import { SlimeGenerator, SlimeCodeMapping, type SlimeGeneratorResult } from "slime-generator";
 import OvsParser from "./parser/OvsParser.ts";
 import OvsCstToSlimeAstUtil from "./factory/OvsCstToSlimeAstUtil.ts";
-import type {SlimeGeneratorResult} from "slime-generator/src/SlimeCodeMapping.ts";
-import SlimeCodeMapping from "slime-generator/src/SlimeCodeMapping.ts";
 import {
     type SlimeProgram,
     type SlimeStatement,
     type SlimeExpressionStatement,
     type SlimeImportDeclaration,
     type SlimeImportSpecifier,
-    SlimeProgramSourceType
-} from "slime-ast/src/SlimeESTree.ts";
-import SlimeAstUtil from "slime-ast/src/SlimeNodeCreate.ts";
-import SlimeTokenCreate from "slime-ast/src/SlimeTokenCreate.ts";
-import {SlimeNodeType} from "slime-ast/src/SlimeNodeType.ts";
-import SubhutiMatchToken from "subhuti/src/struct/SubhutiMatchToken.ts";
+    SlimeProgramSourceType,
+    SlimeAstUtil,
+    SlimeTokenCreate,
+    SlimeNodeType
+} from "slime-ast";
+import { SubhutiMatchToken } from "subhuti";
 
 // ==================== 内部工具函数 ====================
 

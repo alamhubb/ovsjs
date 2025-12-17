@@ -3,7 +3,7 @@
  */
 import OvsParser from '../src/parser/OvsParser.ts'
 import OvsCstToSlimeAstUtil from '../src/factory/OvsCstToSlimeAstUtil.ts'
-import SlimeGenerator from 'slime-generator/src/SlimeGenerator.ts'
+import { SlimeGenerator } from 'slime-generator'
 
 const testCode = `
 const baseStyle = css {

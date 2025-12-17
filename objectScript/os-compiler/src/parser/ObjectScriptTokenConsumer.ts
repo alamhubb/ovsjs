@@ -1,7 +1,6 @@
-import SlimeTokenConsumer from "slime-parser/src/language/es2025/SlimeTokenConsumer";
-import {SlimeTokensObj} from "slime-parser/src/language/es2025/SlimeTokens";
-import {type SubhutiCreateToken} from "subhuti/src/struct/SubhutiCreateToken";
-import {SlimeTokenType} from "slime-token/src/SlimeTokenType";
+import { SlimeTokenConsumer, SlimeTokensObj } from "slime-parser";
+import { type SubhutiCreateToken } from "subhuti";
+import { SlimeTokenType } from "slime-token";
 
 /**
  * ObjectScript Token 名称（继承 SlimeTokenType）

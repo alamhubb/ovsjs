@@ -1,20 +1,20 @@
 // 使用包名导入（monorepo workspaces）
 import {CssTsCstToAst} from "cssts-compiler/src/factory/CssTsCstToAst.ts";
-import SubhutiCst from "subhuti/src/struct/SubhutiCst.ts";
+import { SubhutiCst } from "subhuti";
 import OvsParser from "../parser/OvsParser.ts";
-import {SlimeNodeType} from "slime-ast/src/SlimeNodeType.ts";
 import {
+    SlimeNodeType,
     type SlimeCallExpression,
     type SlimeExpression,
     type SlimeExpressionStatement,
     type SlimeIdentifier,
     type SlimeModuleDeclaration,
     type SlimeProgram,
-    type SlimeStatement
-} from "slime-ast/src/SlimeESTree.ts";
-import SlimeParser from "slime-parser/src/language/es2025/SlimeParser.ts";
-import SlimeNodeCreate from "slime-ast/src/SlimeNodeCreate.ts";
-import SlimeTokenCreate from "slime-ast/src/SlimeTokenCreate.ts";
+    type SlimeStatement,
+    SlimeAstUtil as SlimeNodeCreate,
+    SlimeTokenCreate
+} from "slime-ast";
+import { SlimeParser } from "slime-parser";
 
 // HTML 标签列表，用于判断是否需要转换为 $OvsHtmlTag.xxx()
 const HTML_TAGS = new Set([

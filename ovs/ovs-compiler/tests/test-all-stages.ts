@@ -5,7 +5,7 @@
 import { readFileSync } from 'fs'
 import OvsParser from '../src/parser/OvsParser'
 import OvsCstToSlimeAstUtil from '../src/factory/OvsCstToSlimeAstUtil'
-import SlimeGenerator from 'slime-generator/src/SlimeGenerator'
+import { SlimeGenerator } from 'slime-generator'
 import { vitePluginOvsTransform } from '../src/index'
 
 const testCode = `

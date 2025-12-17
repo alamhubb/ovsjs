@@ -7,7 +7,7 @@
  * 3. 支持 IDE 自动补全和编译时检查
  */
 
-import SubhutiTokenConsumer from 'subhuti/src/SubhutiTokenConsumer.ts'
+import { SubhutiTokenConsumer } from 'subhuti'
 import { JavaTokenType } from './JavaTokenType.ts'
 
 export default class JavaTokenConsumer extends SubhutiTokenConsumer {

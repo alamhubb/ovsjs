@@ -7,4 +7,5 @@ export default defineConfig({
   clean: true,
   outDir: 'dist',
   target: 'es2020',
+  external: [/node_modules/],
 })

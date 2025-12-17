@@ -1,5 +1,5 @@
-import {SlimeCstToAst} from "slime-parser/src/language/SlimeCstToAstUtil.ts";
-import SubhutiCst from "subhuti/src/struct/SubhutiCst.ts";
+import { SlimeCstToAst, SlimeParser } from "slime-parser";
+import { SubhutiCst } from "subhuti";
 import {
   type SlimeClassDeclaration,
   type SlimeClassBody,
@@ -12,12 +12,11 @@ import {
   type SlimeModuleDeclaration,
   type SlimePropertyDefinition,
   type SlimeMethodDefinition,
-  type SlimeFunctionExpression
-} from "slime-ast/src/SlimeESTree.ts";
-import SlimeAstUtil from "slime-ast/src/SlimeNodeCreate.ts";
-import SlimeTokenCreate from "slime-ast/src/SlimeTokenCreate.ts";
+  type SlimeFunctionExpression,
+  SlimeAstUtil,
+  SlimeTokenCreate
+} from "slime-ast";
 import ObjectScriptParser from "../parser/ObjectScriptParser.ts";
-import SlimeParser from "slime-parser/src/language/es2025/SlimeParser.ts";
 
 // 简单的 UUID 生成函数
 let uuidCounter = 0;

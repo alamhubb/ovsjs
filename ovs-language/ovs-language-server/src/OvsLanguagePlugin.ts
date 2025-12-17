@@ -3,7 +3,7 @@ import type {TypeScriptExtraServiceScript} from '@volar/typescript';
 import type {IScriptSnapshot} from 'typescript';
 import {URI} from 'vscode-uri';
 import {LogUtil} from "./logutil.js";
-import SlimeCodeMapping from "slime-generator/src/SlimeCodeMapping";
+import { SlimeCodeMapping } from "slime-generator";
 import {vitePluginOvsTransform} from "ovs-compiler";
 
 // TypeScript ScriptKind 枚举值（避免运行时依赖 typescript）

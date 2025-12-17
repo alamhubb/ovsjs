@@ -6,13 +6,14 @@
  * 2. 每个规则都是独立的方法，使用 @SubhutiRule 装饰器
  * 3. 使用 JavaTokenConsumer 提供类型安全的 token 消费
  */
-import SubhutiParser, {
+import {
+    SubhutiParser,
     Subhuti,
     SubhutiRule,
     type SubhutiParserOptions,
-    type SubhutiTokenConsumerConstructor
-} from 'subhuti/src/SubhutiParser.ts'
-import type SubhutiCst from 'subhuti/src/struct/SubhutiCst.ts'
+    type SubhutiTokenConsumerConstructor,
+    type SubhutiCst
+} from 'subhuti'
 import JavaTokenConsumer from './JavaTokenConsumer.ts'
 import { javaTokens } from './JavaTokens.ts'
 import { JavaTokenType } from './JavaTokenType.ts'

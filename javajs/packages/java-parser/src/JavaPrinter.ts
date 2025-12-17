@@ -3,7 +3,7 @@
  *
  * 用于往返测试：parse -> print -> parse 应该产生等效的 CST
  */
-import type SubhutiCst from 'subhuti/src/struct/SubhutiCst.ts'
+import type { SubhutiCst } from 'subhuti'
 
 export interface PrinterOptions {
     indent?: string      // 缩进字符，默认 4 空格
