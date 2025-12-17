@@ -1,21 +1,10 @@
 {
   "private": true,
   "workspaces": [
-    "ovs-language/*",
-    "os-language/*",
-    "objectScript/*",
     "ovs/ovs-runtime",
     "ovs/ovs-compiler",
-    "subhuti",
-    "slime",
-    "slime/packages/*",
-    "packages/*",
     "create-ovs",
-    "vite-plugin-ovs",
-    "cssts",
-    "cssts/packages/*",
-    "vite-plugin-cssts",
-    "create-cssts"
+    "vite-plugin-ovs"
   ],
   "scripts": {
     "build": "tsc -b",
