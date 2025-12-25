@@ -59,23 +59,23 @@ function isHtmlTag(tagName: string): boolean {
  */
 function isSideEffectExpression(expr: SlimeExpression): boolean {
   // 赋值表达式 - 副作用
-  if (expr.type === SlimeNodeType.AssignmentExpression) {
+  if (expr.type === SlimeAstTypeName.AssignmentExpression) {
     return true
   }
 
   // 更新表达式 - 副作用
-  if (expr.type === SlimeNodeType.UpdateExpression) {
+  if (expr.type === SlimeAstTypeName.UpdateExpression) {
     return true
   }
 
   // delete 表达式 - 副作用
-  if (expr.type === SlimeNodeType.UnaryExpression &&
+  if (expr.type === SlimeAstTypeName.UnaryExpression &&
       (expr as any).operator === 'delete') {
     return true
   }
 
   // void 表达式 - 显式丢弃返回值，不渲染
-  if (expr.type === SlimeNodeType.UnaryExpression &&
+  if (expr.type === SlimeAstTypeName.UnaryExpression &&
       (expr as any).operator === 'void') {
     return true
   }
@@ -259,12 +259,12 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
     let hasTopLevelExpression = false
     
     for (const stmt of body) {
-      if (stmt.type === SlimeNodeType.ExportDefaultDeclaration ||
-          stmt.type === SlimeNodeType.ExportNamedDeclaration) {
+      if (stmt.type === SlimeAstTypeName.ExportDefaultDeclaration ||
+          stmt.type === SlimeAstTypeName.ExportNamedDeclaration) {
         hasAnyExport = true
         break
       }
-      if (stmt.type === SlimeNodeType.ExpressionStatement) {
+      if (stmt.type === SlimeAstTypeName.ExpressionStatement) {
         hasTopLevelExpression = true
       }
     }
@@ -288,7 +288,7 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
     const nonImports: any[] = []
     
     for (const stmt of body) {
-      if (stmt.type === SlimeNodeType.ImportDeclaration) {
+      if (stmt.type === SlimeAstTypeName.ImportDeclaration) {
         imports.push(stmt)
       } else {
         nonImports.push(stmt)
@@ -327,13 +327,13 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
     let otherStatements: any[] = []
     
     for (const stmt of body) {
-      if (stmt.type === SlimeNodeType.ImportDeclaration) {
+      if (stmt.type === SlimeAstTypeName.ImportDeclaration) {
         imports.push(stmt)
-      } else if (stmt.type === SlimeNodeType.VariableDeclaration ||
-                 stmt.type === SlimeNodeType.FunctionDeclaration ||
-                 stmt.type === SlimeNodeType.ClassDeclaration) {
+      } else if (stmt.type === SlimeAstTypeName.VariableDeclaration ||
+                 stmt.type === SlimeAstTypeName.FunctionDeclaration ||
+                 stmt.type === SlimeAstTypeName.ClassDeclaration) {
         declarations.push(stmt)
-      } else if (stmt.type === SlimeNodeType.ExpressionStatement) {
+      } else if (stmt.type === SlimeAstTypeName.ExpressionStatement) {
         expressions.push(stmt as SlimeStatement)
       } else {
         otherStatements.push(stmt)
@@ -345,7 +345,7 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
     
     // 提取表达式值
     const exprValues = expressions.map(e => 
-      e.type === SlimeNodeType.ExpressionStatement ? (e as any).expression : e
+      e.type === SlimeAstTypeName.ExpressionStatement ? (e as any).expression : e
     )
     
     // 处理单个或多个表达式
@@ -377,7 +377,7 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
     return [
       ...imports,
       {
-        type: SlimeNodeType.ExportDefaultDeclaration,
+        type: SlimeAstTypeName.ExportDefaultDeclaration,
         declaration: defineOvsCall
       } as any
     ]
@@ -392,7 +392,7 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
         const specs = imp.specifiers || []
         if (!specs.some((s: any) => s.imported?.name === '$OvsHtmlTag' || s.local?.name === '$OvsHtmlTag')) {
           specs.push({
-            type: SlimeNodeType.ImportSpecifier,
+            type: SlimeAstTypeName.ImportSpecifier,
             imported: SlimeAstCreateUtils.createIdentifier('$OvsHtmlTag'),
             local: SlimeAstCreateUtils.createIdentifier('$OvsHtmlTag')
           })
@@ -401,9 +401,9 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
       }
     }
     return [{
-      type: SlimeNodeType.ImportDeclaration,
+      type: SlimeAstTypeName.ImportDeclaration,
       specifiers: [{
-        type: SlimeNodeType.ImportSpecifier,
+        type: SlimeAstTypeName.ImportSpecifier,
         imported: SlimeAstCreateUtils.createIdentifier('$OvsHtmlTag'),
         local: SlimeAstCreateUtils.createIdentifier('$OvsHtmlTag')
       }],
@@ -420,7 +420,7 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
         const specs = imp.specifiers || []
         if (!specs.some((s: any) => s.imported?.name === 'defineOvsComponent' || s.local?.name === 'defineOvsComponent')) {
           specs.push({
-            type: SlimeNodeType.ImportSpecifier,
+            type: SlimeAstTypeName.ImportSpecifier,
             imported: SlimeAstCreateUtils.createIdentifier('defineOvsComponent'),
             local: SlimeAstCreateUtils.createIdentifier('defineOvsComponent')
           })
@@ -429,9 +429,9 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
       }
     }
     return [{
-      type: SlimeNodeType.ImportDeclaration,
+      type: SlimeAstTypeName.ImportDeclaration,
       specifiers: [{
-        type: SlimeNodeType.ImportSpecifier,
+        type: SlimeAstTypeName.ImportSpecifier,
         imported: SlimeAstCreateUtils.createIdentifier('defineOvsComponent'),
         local: SlimeAstCreateUtils.createIdentifier('defineOvsComponent')
       }],
@@ -448,14 +448,14 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
         const specs = imp.specifiers || []
         if (!specs.some((s: any) => s.imported?.name === 'Fragment')) {
           specs.push({
-            type: SlimeNodeType.ImportSpecifier,
+            type: SlimeAstTypeName.ImportSpecifier,
             imported: SlimeAstCreateUtils.createIdentifier('Fragment'),
             local: SlimeAstCreateUtils.createIdentifier('Fragment')
           })
         }
         if (!specs.some((s: any) => s.imported?.name === 'h')) {
           specs.push({
-            type: SlimeNodeType.ImportSpecifier,
+            type: SlimeAstTypeName.ImportSpecifier,
             imported: SlimeAstCreateUtils.createIdentifier('h'),
             local: SlimeAstCreateUtils.createIdentifier('h')
           })
@@ -464,10 +464,10 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
       }
     }
     return [{
-      type: SlimeNodeType.ImportDeclaration,
+      type: SlimeAstTypeName.ImportDeclaration,
       specifiers: [
-        { type: SlimeNodeType.ImportSpecifier, imported: SlimeAstCreateUtils.createIdentifier('Fragment'), local: SlimeAstCreateUtils.createIdentifier('Fragment') },
-        { type: SlimeNodeType.ImportSpecifier, imported: SlimeAstCreateUtils.createIdentifier('h'), local: SlimeAstCreateUtils.createIdentifier('h') }
+        { type: SlimeAstTypeName.ImportSpecifier, imported: SlimeAstCreateUtils.createIdentifier('Fragment'), local: SlimeAstCreateUtils.createIdentifier('Fragment') },
+        { type: SlimeAstTypeName.ImportSpecifier, imported: SlimeAstCreateUtils.createIdentifier('h'), local: SlimeAstCreateUtils.createIdentifier('h') }
       ],
       source: SlimeAstCreateUtils.createStringLiteral('vue')
     }, ...imports]
@@ -561,13 +561,13 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
             const lastStmt = functionBodyStatements[functionBodyStatements.length - 1]
 
             // 检查是否是 ExpressionStatement
-            if (lastStmt.type === SlimeNodeType.ExpressionStatement) {
+            if (lastStmt.type === SlimeAstTypeName.ExpressionStatement) {
                 const expr = (lastStmt as SlimeExpressionStatement).expression
 
                 // 检查是否是 CallExpression（OvsRenderFunction 转换后的结果）
                 // 简单视图：$OvsHtmlTag.div({}, [...])
                 // 复杂视图：(function() { ... })() - IIFE
-                if (expr.type === SlimeNodeType.CallExpression) {
+                if (expr.type === SlimeAstTypeName.CallExpression) {
                     // 将最后的表达式语句转换为 return 语句
                     functionBodyStatements[functionBodyStatements.length - 1] =
                         SlimeAstCreateUtils.createReturnStatement(expr)
@@ -679,7 +679,7 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
             pushCall.loc = cst.loc
           }
           return [{
-            type: SlimeNodeType.ExpressionStatement,
+            type: SlimeAstTypeName.ExpressionStatement,
             expression: pushCall,
             loc: cst.loc
           } as SlimeExpressionStatement]
@@ -687,7 +687,7 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
 
         // 不在渲染上下文中，直接作为表达式语句
         return [{
-          type: SlimeNodeType.ExpressionStatement,
+          type: SlimeAstTypeName.ExpressionStatement,
           expression: expr,
           loc: cst.loc
         } as SlimeExpressionStatement]
@@ -816,7 +816,7 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
       // 2. 在 #{} 内 → 不渲染，保持原样
       if (this.noRenderDepth > 0) {
         return {
-          type: SlimeNodeType.ExpressionStatement,
+          type: SlimeAstTypeName.ExpressionStatement,
           expression: expr,
           loc: cst.loc
         } as SlimeExpressionStatement
@@ -826,7 +826,7 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
       // 这些表达式的主要目的是副作用，返回值只是副产品
       if (isSideEffectExpression(expr)) {
         return {
-          type: SlimeNodeType.ExpressionStatement,
+          type: SlimeAstTypeName.ExpressionStatement,
           expression: expr,
           loc: cst.loc
         } as SlimeExpressionStatement
@@ -838,7 +838,7 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
 
     // 不在 div {} 内 → 保持原样
     return {
-      type: SlimeNodeType.ExpressionStatement,
+      type: SlimeAstTypeName.ExpressionStatement,
       expression: expr,
       loc: cst.loc
     } as SlimeExpressionStatement
@@ -860,7 +860,7 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
       pushCall.loc = loc
     }
     return {
-      type: SlimeNodeType.ExpressionStatement,
+      type: SlimeAstTypeName.ExpressionStatement,
       expression: pushCall,
       loc: loc
     } as SlimeExpressionStatement
@@ -1000,7 +1000,7 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
       // - 求值表达式会变成 children.push()，可以内联到数组中
       const hasComplexStatements = bodyStatements.some(stmt => {
         // 情况1: 非 ExpressionStatement（声明/控制流）
-        if (stmt.type !== SlimeNodeType.ExpressionStatement) {
+        if (stmt.type !== SlimeAstTypeName.ExpressionStatement) {
           return true
         }
 
@@ -1061,7 +1061,7 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
       const exprStmt = stmt as SlimeExpressionStatement
       const pushCall = exprStmt.expression as SlimeCallExpression
       let element: SlimeExpression
-      if (pushCall && pushCall.type === SlimeNodeType.CallExpression && pushCall.arguments.length > 0) {
+      if (pushCall && pushCall.type === SlimeAstTypeName.CallExpression && pushCall.arguments.length > 0) {
         element = pushCall.arguments[0] as SlimeExpression
       } else {
         element = exprStmt.expression
@@ -1436,7 +1436,7 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
       let value = this.createExpressionAst(valueCst)
       
       // 特殊处理 class 属性
-      if (keyName === 'class' && value.type === SlimeNodeType.ObjectExpression) {
+      if (keyName === 'class' && value.type === SlimeAstTypeName.ObjectExpression) {
         value = this.transformClassObjectToArray(value)
       }
       
@@ -1464,10 +1464,10 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
    * 获取属性键的名称（用于判断是否是 class 属性）
    */
   private getPropertyKeyName(key: any): string | null {
-    if (key.type === SlimeNodeType.Identifier) {
+    if (key.type === SlimeAstTypeName.Identifier) {
       return key.name
     }
-    if (key.type === SlimeNodeType.Literal && typeof key.value === 'string') {
+    if (key.type === SlimeAstTypeName.Literal && typeof key.value === 'string') {
       return key.value
     }
     return null
@@ -1492,7 +1492,7 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
         const prop = propItem.property || propItem
         
         // 只处理简写属性
-        if (prop.shorthand && prop.key && prop.key.type === SlimeNodeType.Identifier) {
+        if (prop.shorthand && prop.key && prop.key.type === SlimeAstTypeName.Identifier) {
           const className = prop.key.name
           // 创建 OvsCls.className
           const memberExpr = SlimeAstCreateUtils.createMemberExpression(

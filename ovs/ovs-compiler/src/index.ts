@@ -11,7 +11,7 @@
 
 import { SlimeGenerator, SlimeCodeMapping, type SlimeGeneratorResult } from "slime-generator";
 import OvsParser from "./parser/OvsParser.ts";
-import OvsCstToSlimeAstUtil from "./factory/OvsCstToSlimeAstCreateUtils.ts";
+import OvsCstToSlimeAstUtil from "./factory/OvsCstToSlimeAstUtil.ts";
 import {
     type SlimeProgram,
     type SlimeStatement,
@@ -306,7 +306,7 @@ export function ovsTransformBase(code: string): ovsTransformBaseResult {
     let curCst = parser.Program()
     const tokens = parser.parsedTokens
     if (!tokens.length) return {ast: null, tokens: tokens}
-    let ast = OvsCstToSlimeAstCreateUtils.toProgram(curCst)
+    let ast = OvsCstToSlimeAstUtil.toProgram(curCst)
     return {ast, tokens}
 }
 
@@ -321,7 +321,7 @@ export function ovsTransformFile(code: string): ovsTransformBaseResult {
     let curCst = parser.Program()
     const tokens = parser.parsedTokens
     if (!tokens.length) return {ast: null, tokens: tokens}
-    let ast = OvsCstToSlimeAstCreateUtils.toFileAst(curCst)
+    let ast = OvsCstToSlimeAstUtil.toFileAst(curCst)
     return {ast, tokens}
 }
 
@@ -334,7 +334,7 @@ export interface VitePluginOvsTransformOptions {
 /** Vite 插件专用的 OVS 代码转换 */
 export function vitePluginOvsTransform(code: string, options?: VitePluginOvsTransformOptions): SlimeGeneratorResult {
     // 转换前清空 usedAtoms
-    OvsCstToSlimeAstCreateUtils.clearUsedAtoms()
+    OvsCstToSlimeAstUtil.clearUsedAtoms()
     
     // 使用 toFileAst 进行完整转换（包含导入处理和组件包装）
     let codeResult = ovsTransformFile(code)
@@ -343,7 +343,7 @@ export function vitePluginOvsTransform(code: string, options?: VitePluginOvsTran
     
     // 把收集到的 usedAtoms 写入共享的 globalStyles
     if (options?.globalStyles) {
-        const usedAtoms = OvsCstToSlimeAstCreateUtils.getUsedAtoms()
+        const usedAtoms = OvsCstToSlimeAstUtil.getUsedAtoms()
         for (const atom of usedAtoms) {
             options.globalStyles.add(atom)
         }
