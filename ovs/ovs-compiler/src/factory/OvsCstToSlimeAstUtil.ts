@@ -3,7 +3,7 @@ import { CssTsCstToAst } from "cssts-compiler";
 import { SubhutiCst } from "subhuti";
 import OvsParser from "../parser/OvsParser.ts";
 import {
-    SlimeNodeType,
+    SlimeAstTypeName,
     type SlimeCallExpression,
     type SlimeExpression,
     type SlimeExpressionStatement,
@@ -11,8 +11,8 @@ import {
     type SlimeModuleDeclaration,
     type SlimeProgram,
     type SlimeStatement,
-    SlimeAstUtil as SlimeNodeCreate,
-    SlimeTokenCreate
+    SlimeAstCreateUtils as SlimeNodeCreate,
+    SlimeTokenCreateUtils as SlimeTokenCreate
 } from "slime-ast";
 import { SlimeParser } from "slime-parser";
 

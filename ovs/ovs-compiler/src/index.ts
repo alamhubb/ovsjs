@@ -11,7 +11,7 @@
 
 import { SlimeGenerator, SlimeCodeMapping, type SlimeGeneratorResult } from "slime-generator";
 import OvsParser from "./parser/OvsParser.ts";
-import OvsCstToSlimeAstUtil from "./factory/OvsCstToSlimeAstUtil.ts";
+import OvsCstToSlimeAstUtil from "./factory/OvsCstToSlimeAstCreateUtils.ts";
 import {
     type SlimeProgram,
     type SlimeStatement,
@@ -19,9 +19,9 @@ import {
     type SlimeImportDeclaration,
     type SlimeImportSpecifier,
     SlimeProgramSourceType,
-    SlimeAstUtil,
-    SlimeTokenCreate,
-    SlimeNodeType
+    SlimeAstCreateUtils,
+    SlimeTokenCreateUtils as SlimeTokenCreate,
+    SlimeAstTypeName
 } from "slime-ast";
 import { SubhutiMatchToken } from "subhuti";
 
@@ -34,7 +34,7 @@ function hasReactiveExpression(sourceCode: string): boolean {
 function ensureDefineOvsComponentImport(imports: any[]): any[] {
     let reactiveVNodeImport: SlimeImportDeclaration | null = null
     for (const imp of imports) {
-        if (imp.type === SlimeNodeType.ImportDeclaration) {
+        if (imp.type === SlimeAstTypeName.ImportDeclaration) {
             const source = (imp as SlimeImportDeclaration).source
             if (source.value && (source.value.includes('ReactiveVNode') || source.value.includes('reactiveVNode'))) {
                 reactiveVNodeImport = imp as SlimeImportDeclaration
@@ -44,60 +44,60 @@ function ensureDefineOvsComponentImport(imports: any[]): any[] {
     }
     if (reactiveVNodeImport) {
         const specifiers = reactiveVNodeImport.specifiers || []
-        const has = specifiers.some((s: any) => s.type === SlimeNodeType.ImportSpecifier &&
+        const has = specifiers.some((s: any) => s.type === SlimeAstTypeName.ImportSpecifier &&
             (s.imported?.name === 'defineOvsComponent' || s.local?.name === 'defineOvsComponent'))
         if (!has) {
             specifiers.push({
-                type: SlimeNodeType.ImportSpecifier,
-                imported: SlimeAstUtil.createIdentifier('defineOvsComponent'),
-                local: SlimeAstUtil.createIdentifier('defineOvsComponent')
+                type: SlimeAstTypeName.ImportSpecifier,
+                imported: SlimeAstCreateUtils.createIdentifier('defineOvsComponent'),
+                local: SlimeAstCreateUtils.createIdentifier('defineOvsComponent')
             })
         }
         return imports
     }
-    const newImport = SlimeAstUtil.createImportDeclaration(
-        [{type: SlimeNodeType.ImportSpecifier, imported: SlimeAstUtil.createIdentifier('defineOvsComponent'),
-          local: SlimeAstUtil.createIdentifier('defineOvsComponent')} as SlimeImportSpecifier],
-        SlimeAstUtil.createStringLiteral('ovsjs'))
+    const newImport = SlimeAstCreateUtils.createImportDeclaration(
+        [{type: SlimeAstTypeName.ImportSpecifier, imported: SlimeAstCreateUtils.createIdentifier('defineOvsComponent'),
+          local: SlimeAstCreateUtils.createIdentifier('defineOvsComponent')} as SlimeImportSpecifier],
+        SlimeAstCreateUtils.createStringLiteral('ovsjs'))
     return [newImport, ...imports]
 }
 
 function createFragmentWrapper(expressions: any[]): any {
     const arrayElements = expressions.map((expr, index) => {
         const isLast = index === expressions.length - 1
-        return SlimeAstUtil.createArrayElement(expr, isLast ? undefined : SlimeTokenCreate.createCommaToken())
+        return SlimeAstCreateUtils.createArrayElement(expr, isLast ? undefined : SlimeTokenCreateUtils.createCommaToken())
     })
-    return SlimeAstUtil.createCallExpression(SlimeAstUtil.createIdentifier('h'),
-        [SlimeAstUtil.createIdentifier('Fragment'), SlimeAstUtil.createNullLiteralToken(),
-         SlimeAstUtil.createArrayExpression(arrayElements)])
+    return SlimeAstCreateUtils.createCallExpression(SlimeAstCreateUtils.createIdentifier('h'),
+        [SlimeAstCreateUtils.createIdentifier('Fragment'), SlimeAstCreateUtils.createNullLiteralToken(),
+         SlimeAstCreateUtils.createArrayExpression(arrayElements)])
 }
 
 function ensureFragmentImport(imports: any[]): any[] {
     let vueImport: SlimeImportDeclaration | null = null
     for (const imp of imports) {
-        if (imp.type === SlimeNodeType.ImportDeclaration) {
+        if (imp.type === SlimeAstTypeName.ImportDeclaration) {
             const source = (imp as SlimeImportDeclaration).source
             if (source.value === 'vue') { vueImport = imp as SlimeImportDeclaration; break }
         }
     }
     if (vueImport) {
         const specifiers = vueImport.specifiers || []
-        const hasFragment = specifiers.some((s: any) => s.type === SlimeNodeType.ImportSpecifier &&
+        const hasFragment = specifiers.some((s: any) => s.type === SlimeAstTypeName.ImportSpecifier &&
             (s.imported?.name === 'Fragment' || s.local?.name === 'Fragment'))
-        const hasH = specifiers.some((s: any) => s.type === SlimeNodeType.ImportSpecifier &&
+        const hasH = specifiers.some((s: any) => s.type === SlimeAstTypeName.ImportSpecifier &&
             (s.imported?.name === 'h' || s.local?.name === 'h'))
-        if (!hasFragment) specifiers.push({type: SlimeNodeType.ImportSpecifier,
-            imported: SlimeAstUtil.createIdentifier('Fragment'), local: SlimeAstUtil.createIdentifier('Fragment')})
-        if (!hasH) specifiers.push({type: SlimeNodeType.ImportSpecifier,
-            imported: SlimeAstUtil.createIdentifier('h'), local: SlimeAstUtil.createIdentifier('h')})
+        if (!hasFragment) specifiers.push({type: SlimeAstTypeName.ImportSpecifier,
+            imported: SlimeAstCreateUtils.createIdentifier('Fragment'), local: SlimeAstCreateUtils.createIdentifier('Fragment')})
+        if (!hasH) specifiers.push({type: SlimeAstTypeName.ImportSpecifier,
+            imported: SlimeAstCreateUtils.createIdentifier('h'), local: SlimeAstCreateUtils.createIdentifier('h')})
         return imports
     }
-    const newImport = SlimeAstUtil.createImportDeclaration([
-        {type: SlimeNodeType.ImportSpecifier, imported: SlimeAstUtil.createIdentifier('Fragment'),
-         local: SlimeAstUtil.createIdentifier('Fragment')} as SlimeImportSpecifier,
-        {type: SlimeNodeType.ImportSpecifier, imported: SlimeAstUtil.createIdentifier('h'),
-         local: SlimeAstUtil.createIdentifier('h')} as SlimeImportSpecifier
-    ], SlimeAstUtil.createStringLiteral('vue'))
+    const newImport = SlimeAstCreateUtils.createImportDeclaration([
+        {type: SlimeAstTypeName.ImportSpecifier, imported: SlimeAstCreateUtils.createIdentifier('Fragment'),
+         local: SlimeAstCreateUtils.createIdentifier('Fragment')} as SlimeImportSpecifier,
+        {type: SlimeAstTypeName.ImportSpecifier, imported: SlimeAstCreateUtils.createIdentifier('h'),
+         local: SlimeAstCreateUtils.createIdentifier('h')} as SlimeImportSpecifier
+    ], SlimeAstCreateUtils.createStringLiteral('vue'))
     return [newImport, ...imports]
 }
 
@@ -130,7 +130,7 @@ function ensureOvsHtmlTagImport(imports: any[]): any[] {
     // 检查是否已经有 ovsjs 的导入
     let ovsjsImport: SlimeImportDeclaration | null = null
     for (const imp of imports) {
-        if (imp.type === SlimeNodeType.ImportDeclaration) {
+        if (imp.type === SlimeAstTypeName.ImportDeclaration) {
             const source = (imp as SlimeImportDeclaration).source
             if (source.value === 'ovsjs') {
                 ovsjsImport = imp as SlimeImportDeclaration
@@ -141,22 +141,22 @@ function ensureOvsHtmlTagImport(imports: any[]): any[] {
     if (ovsjsImport) {
         // 已有 ovsjs 导入，检查是否有 $OvsHtmlTag
         const specifiers = ovsjsImport.specifiers || []
-        const has = specifiers.some((s: any) => s.type === SlimeNodeType.ImportSpecifier &&
+        const has = specifiers.some((s: any) => s.type === SlimeAstTypeName.ImportSpecifier &&
             (s.imported?.name === '$OvsHtmlTag' || s.local?.name === '$OvsHtmlTag'))
         if (!has) {
             specifiers.push({
-                type: SlimeNodeType.ImportSpecifier,
-                imported: SlimeAstUtil.createIdentifier('$OvsHtmlTag'),
-                local: SlimeAstUtil.createIdentifier('$OvsHtmlTag')
+                type: SlimeAstTypeName.ImportSpecifier,
+                imported: SlimeAstCreateUtils.createIdentifier('$OvsHtmlTag'),
+                local: SlimeAstCreateUtils.createIdentifier('$OvsHtmlTag')
             })
         }
         return imports
     }
     // 没有 ovsjs 导入，创建新的
-    const newImport = SlimeAstUtil.createImportDeclaration(
-        [{type: SlimeNodeType.ImportSpecifier, imported: SlimeAstUtil.createIdentifier('$OvsHtmlTag'),
-          local: SlimeAstUtil.createIdentifier('$OvsHtmlTag')} as SlimeImportSpecifier],
-        SlimeAstUtil.createStringLiteral('ovsjs'))
+    const newImport = SlimeAstCreateUtils.createImportDeclaration(
+        [{type: SlimeAstTypeName.ImportSpecifier, imported: SlimeAstCreateUtils.createIdentifier('$OvsHtmlTag'),
+          local: SlimeAstCreateUtils.createIdentifier('$OvsHtmlTag')} as SlimeImportSpecifier],
+        SlimeAstCreateUtils.createStringLiteral('ovsjs'))
     return [newImport, ...imports]
 }
 
@@ -164,17 +164,17 @@ function ensureOvsHtmlTagImport(imports: any[]): any[] {
 function ensureCsstsImport(imports: any[]): any[] {
     // 检查是否已经有 cssts 的导入
     for (const imp of imports) {
-        if (imp.type === SlimeNodeType.ImportDeclaration) {
+        if (imp.type === SlimeAstTypeName.ImportDeclaration) {
             const source = (imp as SlimeImportDeclaration).source
             if (source.value === 'cssts') {
                 const specifiers = imp.specifiers || []
-                const has = specifiers.some((s: any) => s.type === SlimeNodeType.ImportSpecifier &&
+                const has = specifiers.some((s: any) => s.type === SlimeAstTypeName.ImportSpecifier &&
                     (s.imported?.name === 'cssts' || s.local?.name === 'cssts'))
                 if (!has) {
                     specifiers.push({
-                        type: SlimeNodeType.ImportSpecifier,
-                        imported: SlimeAstUtil.createIdentifier('cssts'),
-                        local: SlimeAstUtil.createIdentifier('cssts')
+                        type: SlimeAstTypeName.ImportSpecifier,
+                        imported: SlimeAstCreateUtils.createIdentifier('cssts'),
+                        local: SlimeAstCreateUtils.createIdentifier('cssts')
                     })
                 }
                 return imports
@@ -182,10 +182,10 @@ function ensureCsstsImport(imports: any[]): any[] {
         }
     }
     // 没有 cssts 导入，创建新的
-    const newImport = SlimeAstUtil.createImportDeclaration(
-        [{type: SlimeNodeType.ImportSpecifier, imported: SlimeAstUtil.createIdentifier('cssts'),
-          local: SlimeAstUtil.createIdentifier('cssts')} as SlimeImportSpecifier],
-        SlimeAstUtil.createStringLiteral('cssts'))
+    const newImport = SlimeAstCreateUtils.createImportDeclaration(
+        [{type: SlimeAstTypeName.ImportSpecifier, imported: SlimeAstCreateUtils.createIdentifier('cssts'),
+          local: SlimeAstCreateUtils.createIdentifier('cssts')} as SlimeImportSpecifier],
+        SlimeAstCreateUtils.createStringLiteral('cssts'))
     return [newImport, ...imports]
 }
 
@@ -193,17 +193,17 @@ function ensureCsstsImport(imports: any[]): any[] {
 function ensureCsstsAtomImport(imports: any[]): any[] {
     // 检查是否已经有 cssts-theme-element 的导入
     for (const imp of imports) {
-        if (imp.type === SlimeNodeType.ImportDeclaration) {
+        if (imp.type === SlimeAstTypeName.ImportDeclaration) {
             const source = (imp as SlimeImportDeclaration).source
             if (source.value === 'cssts-theme-element') {
                 const specifiers = imp.specifiers || []
-                const has = specifiers.some((s: any) => s.type === SlimeNodeType.ImportSpecifier &&
+                const has = specifiers.some((s: any) => s.type === SlimeAstTypeName.ImportSpecifier &&
                     (s.imported?.name === 'csstsAtom' || s.local?.name === 'csstsAtom'))
                 if (!has) {
                     specifiers.push({
-                        type: SlimeNodeType.ImportSpecifier,
-                        imported: SlimeAstUtil.createIdentifier('csstsAtom'),
-                        local: SlimeAstUtil.createIdentifier('csstsAtom')
+                        type: SlimeAstTypeName.ImportSpecifier,
+                        imported: SlimeAstCreateUtils.createIdentifier('csstsAtom'),
+                        local: SlimeAstCreateUtils.createIdentifier('csstsAtom')
                     })
                 }
                 return imports
@@ -211,22 +211,22 @@ function ensureCsstsAtomImport(imports: any[]): any[] {
         }
     }
     // 没有 cssts-theme-element 导入，创建新的
-    const newImport = SlimeAstUtil.createImportDeclaration(
-        [{type: SlimeNodeType.ImportSpecifier, imported: SlimeAstUtil.createIdentifier('csstsAtom'),
-          local: SlimeAstUtil.createIdentifier('csstsAtom')} as SlimeImportSpecifier],
-        SlimeAstUtil.createStringLiteral('cssts-theme-element'))
+    const newImport = SlimeAstCreateUtils.createImportDeclaration(
+        [{type: SlimeAstTypeName.ImportSpecifier, imported: SlimeAstCreateUtils.createIdentifier('csstsAtom'),
+          local: SlimeAstCreateUtils.createIdentifier('csstsAtom')} as SlimeImportSpecifier],
+        SlimeAstCreateUtils.createStringLiteral('cssts-theme-element'))
     return [newImport, ...imports]
 }
 
 function wrapTopLevelExpressions(ast: SlimeProgram, sourceCode: string): SlimeProgram {
     let imports: any[] = [], declarations: any[] = [], expressions: SlimeStatement[] = [], hasAnyExport = false
     for (const statement of ast.body) {
-        if (statement.type === SlimeNodeType.ImportDeclaration) imports.push(statement)
-        else if (statement.type === SlimeNodeType.ExportDefaultDeclaration ||
-                 statement.type === SlimeNodeType.ExportNamedDeclaration) hasAnyExport = true
-        else if (statement.type === SlimeNodeType.VariableDeclaration ||
-                 statement.type === SlimeNodeType.FunctionDeclaration ||
-                 statement.type === SlimeNodeType.ClassDeclaration) declarations.push(statement)
+        if (statement.type === SlimeAstTypeName.ImportDeclaration) imports.push(statement)
+        else if (statement.type === SlimeAstTypeName.ExportDefaultDeclaration ||
+                 statement.type === SlimeAstTypeName.ExportNamedDeclaration) hasAnyExport = true
+        else if (statement.type === SlimeAstTypeName.VariableDeclaration ||
+                 statement.type === SlimeAstTypeName.FunctionDeclaration ||
+                 statement.type === SlimeAstTypeName.ClassDeclaration) declarations.push(statement)
         else expressions.push(statement as SlimeStatement)
     }
 
@@ -266,26 +266,26 @@ function wrapTopLevelExpressions(ast: SlimeProgram, sourceCode: string): SlimePr
         }
         if (needsRebuild) {
             // 重建 AST，将新的 imports 放入
-            const newBody = [...imports, ...ast.body.filter(s => s.type !== SlimeNodeType.ImportDeclaration)]
-            return SlimeAstUtil.createProgram(newBody as any, SlimeProgramSourceType.Module)
+            const newBody = [...imports, ...ast.body.filter(s => s.type !== SlimeAstTypeName.ImportDeclaration)]
+            return SlimeAstCreateUtils.createProgram(newBody as any, SlimeProgramSourceType.Module)
         }
         return ast
     }
-    const exprValues = expressions.map(e => e.type === SlimeNodeType.ExpressionStatement ?
+    const exprValues = expressions.map(e => e.type === SlimeAstTypeName.ExpressionStatement ?
         (e as SlimeExpressionStatement).expression : e)
     let finalExpr: any = exprValues.length === 1 ? exprValues[0] :
         (imports = ensureFragmentImport(imports), createFragmentWrapper(exprValues))
 
     // 最外层始终使用 defineOvsComponent 包裹，确保每个组件实例有独立的状态
     imports = ensureDefineOvsComponentImport(imports)
-    const returnStmt = SlimeAstUtil.createReturnStatement(finalExpr)
-    const blockStatement = SlimeAstUtil.createBlockStatement([...declarations, returnStmt])
-    const arrowFunction = SlimeAstUtil.createArrowFunctionExpression(blockStatement,
-        [SlimeAstUtil.createIdentifier('props')], false, false)
-    const defineOvsCall = SlimeAstUtil.createCallExpression(
-        SlimeAstUtil.createIdentifier('defineOvsComponent'), [arrowFunction])
-    return SlimeAstUtil.createProgram([...imports,
-        SlimeAstUtil.createExportDefaultDeclaration(defineOvsCall)] as any, SlimeProgramSourceType.Module)
+    const returnStmt = SlimeAstCreateUtils.createReturnStatement(finalExpr)
+    const blockStatement = SlimeAstCreateUtils.createBlockStatement([...declarations, returnStmt])
+    const arrowFunction = SlimeAstCreateUtils.createArrowFunctionExpression(blockStatement,
+        [SlimeAstCreateUtils.createIdentifier('props')], false, false)
+    const defineOvsCall = SlimeAstCreateUtils.createCallExpression(
+        SlimeAstCreateUtils.createIdentifier('defineOvsComponent'), [arrowFunction])
+    return SlimeAstCreateUtils.createProgram([...imports,
+        SlimeAstCreateUtils.createExportDefaultDeclaration(defineOvsCall)] as any, SlimeProgramSourceType.Module)
 }
 
 // ==================== 导出的 API ====================
@@ -306,7 +306,7 @@ export function ovsTransformBase(code: string): ovsTransformBaseResult {
     let curCst = parser.Program()
     const tokens = parser.parsedTokens
     if (!tokens.length) return {ast: null, tokens: tokens}
-    let ast = OvsCstToSlimeAstUtil.toProgram(curCst)
+    let ast = OvsCstToSlimeAstCreateUtils.toProgram(curCst)
     return {ast, tokens}
 }
 
@@ -321,7 +321,7 @@ export function ovsTransformFile(code: string): ovsTransformBaseResult {
     let curCst = parser.Program()
     const tokens = parser.parsedTokens
     if (!tokens.length) return {ast: null, tokens: tokens}
-    let ast = OvsCstToSlimeAstUtil.toFileAst(curCst)
+    let ast = OvsCstToSlimeAstCreateUtils.toFileAst(curCst)
     return {ast, tokens}
 }
 
@@ -334,7 +334,7 @@ export interface VitePluginOvsTransformOptions {
 /** Vite 插件专用的 OVS 代码转换 */
 export function vitePluginOvsTransform(code: string, options?: VitePluginOvsTransformOptions): SlimeGeneratorResult {
     // 转换前清空 usedAtoms
-    OvsCstToSlimeAstUtil.clearUsedAtoms()
+    OvsCstToSlimeAstCreateUtils.clearUsedAtoms()
     
     // 使用 toFileAst 进行完整转换（包含导入处理和组件包装）
     let codeResult = ovsTransformFile(code)
@@ -343,7 +343,7 @@ export function vitePluginOvsTransform(code: string, options?: VitePluginOvsTran
     
     // 把收集到的 usedAtoms 写入共享的 globalStyles
     if (options?.globalStyles) {
-        const usedAtoms = OvsCstToSlimeAstUtil.getUsedAtoms()
+        const usedAtoms = OvsCstToSlimeAstCreateUtils.getUsedAtoms()
         for (const atom of usedAtoms) {
             options.globalStyles.add(atom)
         }
