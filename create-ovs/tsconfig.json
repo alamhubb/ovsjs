@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES2022",
     "module": "ESNext",
-    "moduleResolution": "bundler",
+    "moduleResolution": "tsxdler",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,

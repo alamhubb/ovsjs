@@ -8,7 +8,7 @@
 			"DOM"
 		],
 		"module": "ESNext",
-		"moduleResolution": "Bundler",
+		"moduleResolution": "tsxdler",
 		"allowImportingTsExtensions": true,
 		"noEmit": true,
 		"sourceMap": true,

@@ -1,5 +1,5 @@
-// 使用包名导入（monorepo workspaces）
-import {CssTsCstToAst} from "cssts-compiler/src/factory/CssTsCstToAst.ts";
+// 使用包名导入
+import { CssTsCstToAst } from "cssts-compiler";
 import { SubhutiCst } from "subhuti";
 import OvsParser from "../parser/OvsParser.ts";
 import {

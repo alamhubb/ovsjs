@@ -12,7 +12,7 @@
 import type { Plugin } from 'vite'
 import { createFilter } from 'vite'
 import { vitePluginOvsTransform } from 'ovs-compiler'
-import cssTsPlugin, { type CssTsPluginOptions, VIRTUAL_CSS_ID } from 'vite-plugin-cssts/src/index.ts'
+import cssTsPlugin, { type CssTsPluginOptions, VIRTUAL_CSS_ID } from 'vite-plugin-cssts'
 
 export interface OvsPluginOptions {
   /** CSS 类名前缀 */

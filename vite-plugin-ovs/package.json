@@ -39,7 +39,8 @@
     "vite": "^5.0.0 || ^6.0.0"
   },
   "dependencies": {
-    "ovs-compiler": "^0.2.1"
+    "ovs-compiler": "file:../ovs/ovs-compiler",
+    "vite-plugin-cssts": "file:../../cssts/vite-plugin-cssts"
   },
   "devDependencies": {
     "tsdown": "0.17.0-beta.6",
