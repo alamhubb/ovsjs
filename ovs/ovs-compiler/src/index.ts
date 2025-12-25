@@ -24,6 +24,7 @@ import {
     SlimeAstTypeName
 } from "slime-ast";
 import { SubhutiMatchToken } from "subhuti";
+import {registerSlimeCstToAstUtil} from "slime-parser";
 
 // ==================== 内部工具函数 ====================
 
@@ -333,6 +334,9 @@ export interface VitePluginOvsTransformOptions {
 
 /** Vite 插件专用的 OVS 代码转换 */
 export function vitePluginOvsTransform(code: string, options?: VitePluginOvsTransformOptions): SlimeGeneratorResult {
+    // 确保 OvsCstToSlimeAst 被注册（防止被其他模块覆盖，如 cssts-compiler 的 transformCssTs）
+    registerSlimeCstToAstUtil(OvsCstToSlimeAstUtil)
+    
     // 转换前清空 usedAtoms
     OvsCstToSlimeAstUtil.clearUsedAtoms()
     
