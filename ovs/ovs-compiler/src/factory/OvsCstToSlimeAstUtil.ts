@@ -14,7 +14,7 @@ import {
     SlimeAstCreateUtils,
     SlimeTokenCreateUtils
 } from "slime-ast";
-import { SlimeParser } from "slime-parser";
+import { SlimeParser, registerSlimeCstToAstUtil } from "slime-parser";
 
 // HTML 标签列表，用于判断是否需要转换为 $OvsHtmlTag.xxx()
 const HTML_TAGS = new Set([
@@ -162,6 +162,12 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
    * 当前view的临时attrs变量名栈（支持嵌套）,必须使用，不使用而是使用ovsview中循环的方法的话解决不了 if for 中使用此方式的问题
    */
   private attrsVarNameStack: Array<string | null> = [];
+
+  constructor() {
+    // 传入 true 跳过父类注册，然后注册自己
+    super(true)
+    registerSlimeCstToAstUtil(this)
+  }
 
   /**
    * 将 CST 转换为 Program AST

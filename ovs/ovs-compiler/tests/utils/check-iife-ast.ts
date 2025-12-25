@@ -1,4 +1,4 @@
-import { SlimeAstUtil, SlimeNodeType } from "slime-ast"
+import { SlimeAstUtil } from "slime-ast"
 
 // 检查我们创建 IIFE 时的 AST 结构
 
