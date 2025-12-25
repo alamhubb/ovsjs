@@ -20,7 +20,7 @@ import {
     type SlimeImportSpecifier,
     SlimeProgramSourceType,
     SlimeAstCreateUtils,
-    SlimeTokenCreateUtils as SlimeTokenCreate,
+    SlimeTokenCreateUtils,
     SlimeAstTypeName
 } from "slime-ast";
 import { SubhutiMatchToken } from "subhuti";
