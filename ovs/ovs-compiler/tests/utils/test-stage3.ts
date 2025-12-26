@@ -11,7 +11,7 @@
  */
 import { runTests, testStage3 } from 'slime-test'
 import OvsParser from '../../src/parser/OvsParser'
-import {OvsCstToSlimeAst} from '../../src/factory/OvsCstToSlimeAstUtil'
+import {OvsCstToSlimeAst} from '../../src/factory/OvsCstToSlimeAstUtils'
 
 // 运行测试
 runTests(testStage3, {

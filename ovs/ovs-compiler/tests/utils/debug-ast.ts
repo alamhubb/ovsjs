@@ -1,5 +1,5 @@
 import {readFileSync} from 'fs'
-import OvsCstToSlimeNodeCreate from '../../src/factory/OvsCstToSlimeAstUtil'
+import OvsCstToSlimeNodeCreate from '../../src/factory/OvsCstToSlimeAstUtils'
 import OvsParser from '../../src/parser/OvsParser'
 import { SlimeGenerator } from 'slime-generator'
 

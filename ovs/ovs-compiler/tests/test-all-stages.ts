@@ -4,7 +4,7 @@
  */
 import { readFileSync } from 'fs'
 import OvsParser from '../src/parser/OvsParser'
-import {OvsCstToSlimeAstUtils} from '../src/factory/OvsCstToSlimeAstUtil'
+import {OvsCstToSlimeAstUtils} from '../src/factory/OvsCstToSlimeAstUtils'
 import { SlimeGenerator } from 'slime-generator'
 import { vitePluginOvsTransform } from '../src/index'
 

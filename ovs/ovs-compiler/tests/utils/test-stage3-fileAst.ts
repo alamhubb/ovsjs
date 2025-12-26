@@ -12,7 +12,7 @@
  */
 import { runTests, testStage3 } from 'slime-test'
 import OvsParser from '../../src/parser/OvsParser'
-import {OvsCstToSlimeAst} from '../../src/factory/OvsCstToSlimeAstUtil'
+import {OvsCstToSlimeAst} from '../../src/factory/OvsCstToSlimeAstUtils'
 
 /**
  * 包装类：让 toProgram 内部调用 toFileAst
