@@ -4,7 +4,7 @@
  */
 import { readFileSync } from 'fs'
 import OvsParser from '../src/parser/OvsParser'
-import OvsCstToSlimeAstUtil from '../src/factory/OvsCstToSlimeAstUtil'
+import {OvsCstToSlimeAstUtils} from '../src/factory/OvsCstToSlimeAstUtil'
 import { SlimeGenerator } from 'slime-generator'
 import { vitePluginOvsTransform } from '../src/index'
 
@@ -86,7 +86,7 @@ console.log('-'.repeat(40))
 let ast: any = null
 try {
     if (cst) {
-        ast = OvsCstToSlimeAstUtil.toProgram(cst)
+        ast = OvsCstToSlimeAstUtils.toProgram(cst)
         console.log('✅ AST 转换成功')
         console.log('AST body 数量:', ast?.body?.length)
         console.log('AST body 类型:', ast?.body?.map((n: any) => n.type).join(', '))

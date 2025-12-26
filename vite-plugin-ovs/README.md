@@ -149,7 +149,7 @@ export default function vitePluginOvs(options): Plugin[] {
 
 | 功能 | 文件 | 说明 |
 |------|------|------|
-| OVS 解析 | `ovs-compiler/src/factory/OvsCstToSlimeAstUtil.ts` | 继承自 `CssTsCstToAst` |
+| OVS 解析 | `ovs-compiler/src/factory/OvsCstToSlimeAstUtils.ts` | 继承自 `CssTsCstToAst` |
 | 原子类收集 | `ovs-compiler` | `getUsedAtoms()` 方法 |
 | 代码转换 | `vite-plugin-ovs/src/index.ts` | `transform()` 钩子 |
 | CSS 生成 | `vite-plugin-cssts/src/index.ts` | `generateUsedAtomsCss()` |

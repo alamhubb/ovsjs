@@ -2,7 +2,7 @@
  * 测试 css { } 表达式的解析和转换
  */
 import OvsParser from '../src/parser/OvsParser.ts'
-import OvsCstToSlimeAstUtil from '../src/factory/OvsCstToSlimeAstUtil.ts'
+import {OvsCstToSlimeAstUtils} from '../src/factory/OvsCstToSlimeAstUtils.ts'
 import { SlimeGenerator } from 'slime-generator'
 
 const testCode = `
@@ -31,11 +31,11 @@ try {
   console.log()
 
   // 2. 转换为 AST
-  const ast = OvsCstToSlimeAstUtil.toProgram(cst)
+  const ast = OvsCstToSlimeAstUtils.toProgram(cst)
   console.log('✅ AST 转换成功')
   
   // 3. 检查 usedAtoms
-  const usedAtoms = OvsCstToSlimeAstUtil.getUsedAtoms()
+  const usedAtoms = OvsCstToSlimeAstUtils.getUsedAtoms()
   console.log('使用的原子类:', Array.from(usedAtoms))
   console.log()
 

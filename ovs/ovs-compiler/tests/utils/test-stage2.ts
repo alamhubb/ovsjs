@@ -10,7 +10,7 @@
  */
 import { runTests, testStage2 } from 'slime-test'
 import OvsParser from "../../src/parser/OvsParser.ts";
-import {OvsCstToSlimeAst} from "../../src/factory/OvsCstToSlimeAstUtil.ts";
+import {OvsCstToSlimeAst} from "../../src/factory/OvsCstToSlimeAstUtils.ts";
 
 // 运行测试
 runTests(testStage2, {

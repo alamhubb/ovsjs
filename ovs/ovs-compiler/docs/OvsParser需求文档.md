@@ -382,7 +382,7 @@ export default (function(){
 - 更直观的代码输出
 
 **影响的文件**:
-- `OvsCstToSlimeAstUtil.ts` - `createSimpleView` 和 `createReturnOvsAPICreateVNode` 方法
+- `OvsCstToSlimeAstUtils.ts` - `createSimpleView` 和 `createReturnOvsAPICreateVNode` 方法
 
 #### 7.1.2 ✅ 简化顶层表达式包裹逻辑
 
