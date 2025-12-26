@@ -1584,8 +1584,8 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
 
 // ==================== 全局注册机制 ====================
 // 使用 Proxy 模式，确保导入的 ovsCstToSlimeAst 能动态代理到当前注册的实例
-
-let _ovsCstToSlimeAstUtil: OvsCstToSlimeAst
+// 初始化默认实例
+let _ovsCstToSlimeAstUtil: OvsCstToSlimeAst = new OvsCstToSlimeAst()
 
 /**
  * 注册 OvsCstToSlimeAst 实例到全局
@@ -1598,16 +1598,9 @@ export function registerOvsCstToSlimeAst(instance: OvsCstToSlimeAst): void {
 }
 
 // Proxy: 保持 ovsCstToSlimeAst.xxx() 调用方式，同时支持动态替换
-const ovsCstToSlimeAst = new Proxy({} as OvsCstToSlimeAst, {
+export const OvsCstToSlimeAstUtils = new Proxy({} as OvsCstToSlimeAst, {
   get(_, prop) {
     const val = (_ovsCstToSlimeAstUtil as any)[prop]
     return typeof val === 'function' ? val.bind(_ovsCstToSlimeAstUtil) : val
   }
 })
-
-// 初始化默认实例
-new OvsCstToSlimeAst()
-
-export default ovsCstToSlimeAst
-export { ovsCstToSlimeAst }
-
