@@ -387,5 +387,5 @@ export function simpleFormatWithMapping(code: string, mapping: SlimeCodeMapping[
 
 // 导出 Parser 和相关类型
 export { OvsParser }
-export { OvsCstToSlimeAstUtil }
+export { OvsCstToSlimeAstUtils }
 
