@@ -1585,8 +1585,9 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
 // ==================== 全局注册机制 ====================
 // 使用 Proxy 模式，确保导入的 ovsCstToSlimeAst 能动态代理到当前注册的实例
 // 初始化默认实例
-let _ovsCstToSlimeAstUtil: OvsCstToSlimeAst = new OvsCstToSlimeAst()
+let _ovsCstToSlimeAstUtil: OvsCstToSlimeAst
 
+_ovsCstToSlimeAstUtil = new OvsCstToSlimeAst()
 /**
  * 注册 OvsCstToSlimeAst 实例到全局
  * 
