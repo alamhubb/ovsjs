@@ -3,16 +3,16 @@ import { CssTsCstToAst } from "cssts-compiler";
 import { SubhutiCst } from "subhuti";
 import OvsParser from "../parser/OvsParser.ts";
 import {
-    SlimeAstTypeName,
-    type SlimeCallExpression,
-    type SlimeExpression,
-    type SlimeExpressionStatement,
-    type SlimeIdentifier,
-    type SlimeModuleDeclaration,
-    type SlimeProgram,
-    type SlimeStatement,
-    SlimeAstCreateUtils,
-    SlimeTokenCreateUtils
+  SlimeAstTypeName,
+  type SlimeCallExpression,
+  type SlimeExpression,
+  type SlimeExpressionStatement,
+  type SlimeIdentifier,
+  type SlimeModuleDeclaration,
+  type SlimeProgram,
+  type SlimeStatement,
+  SlimeAstCreateUtils,
+  SlimeTokenCreateUtils
 } from "slime-ast";
 import { SlimeParser, registerSlimeCstToAstUtil } from "slime-parser";
 
@@ -70,13 +70,13 @@ function isSideEffectExpression(expr: SlimeExpression): boolean {
 
   // delete 表达式 - 副作用
   if (expr.type === SlimeAstTypeName.UnaryExpression &&
-      (expr as any).operator === 'delete') {
+    (expr as any).operator === 'delete') {
     return true
   }
 
   // void 表达式 - 显式丢弃返回值，不渲染
   if (expr.type === SlimeAstTypeName.UnaryExpression &&
-      (expr as any).operator === 'void') {
+    (expr as any).operator === 'void') {
     return true
   }
 
@@ -163,11 +163,12 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
    */
   private attrsVarNameStack: Array<string | null> = [];
 
+
   constructor() {
-    // 传入 true 跳过父类注册，然后注册自己
-    super(true)
-    registerSlimeCstToAstUtil(this)
+    super()  // 父类构造链会自动注册到 cssts 和 slime 层
+    registerOvsCstToSlimeAst(this)  // 只注册到 ovs 层
   }
+
 
   /**
    * 将 CST 转换为 Program AST
@@ -210,22 +211,22 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
   toFileAst(cst: SubhutiCst): SlimeProgram {
     // 先调用 toProgram 做纯 AST 转换
     const program = this.toProgram(cst)
-    
+
     // 获取 body 进行后处理
     let body = [...program.body]
-    
+
     // 1. CSSTS 后处理：添加 cssts 和 csstsAtom 导入
     body = this.processCsstsPostTransform(body)
-    
+
     // 2. OVS 后处理：处理顶层表达式和自动导入
     body = this.processTopLevelAndImports(body)
-    
+
     // 更新 program.body
     program.body = body
-    
+
     return program
   }
-  
+
   /**
    * 处理顶层表达式和自动导入
    * 
@@ -240,18 +241,18 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
     if (!this.hasOvsSyntax) {
       return body
     }
-    
+
     // 1. 自动添加导入（不改变其他语句顺序）
     body = this.ensureRequiredImports(body)
-    
+
     // 2. 如果需要包装，才做包装（包装内部会重排序）
     if (this.shouldWrapAsComponent(body)) {
       body = this.wrapAsDefineOvsComponent(body)
     }
-    
+
     return body
   }
-  
+
   /**
    * 检查是否需要包装成 defineOvsComponent
    * 
@@ -263,10 +264,10 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
   private shouldWrapAsComponent(body: Array<SlimeStatement | SlimeModuleDeclaration>): boolean {
     let hasAnyExport = false
     let hasTopLevelExpression = false
-    
+
     for (const stmt of body) {
       if (stmt.type === SlimeAstTypeName.ExportDefaultDeclaration ||
-          stmt.type === SlimeAstTypeName.ExportNamedDeclaration) {
+        stmt.type === SlimeAstTypeName.ExportNamedDeclaration) {
         hasAnyExport = true
         break
       }
@@ -274,10 +275,10 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
         hasTopLevelExpression = true
       }
     }
-    
+
     return !hasAnyExport && hasTopLevelExpression
   }
-  
+
   /**
    * 自动添加必要的导入语句
    * 
@@ -288,11 +289,11 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
    */
   private ensureRequiredImports(body: Array<SlimeStatement | SlimeModuleDeclaration>): Array<SlimeStatement | SlimeModuleDeclaration> {
     const bodyJson = JSON.stringify(body)
-    
+
     // 提取现有的 imports
     let imports: any[] = []
     const nonImports: any[] = []
-    
+
     for (const stmt of body) {
       if (stmt.type === SlimeAstTypeName.ImportDeclaration) {
         imports.push(stmt)
@@ -300,7 +301,7 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
         nonImports.push(stmt)
       }
     }
-    
+
     //todo 实现不优雅，不应该判断字符串
     // 检查并添加必要的导入
     if (bodyJson.includes('$OvsHtmlTag')) {
@@ -309,11 +310,11 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
     if (bodyJson.includes('defineOvsComponent')) {
       imports = this.ensureDefineOvsComponentImport(imports)
     }
-    
+
     // 返回：imports 在前，其他语句保持原顺序
     return [...imports, ...nonImports]
   }
-  
+
   /**
    * 包装成 defineOvsComponent 导出
    * 
@@ -331,13 +332,13 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
     let declarations: any[] = []
     let expressions: SlimeStatement[] = []
     let otherStatements: any[] = []
-    
+
     for (const stmt of body) {
       if (stmt.type === SlimeAstTypeName.ImportDeclaration) {
         imports.push(stmt)
       } else if (stmt.type === SlimeAstTypeName.VariableDeclaration ||
-                 stmt.type === SlimeAstTypeName.FunctionDeclaration ||
-                 stmt.type === SlimeAstTypeName.ClassDeclaration) {
+        stmt.type === SlimeAstTypeName.FunctionDeclaration ||
+        stmt.type === SlimeAstTypeName.ClassDeclaration) {
         declarations.push(stmt)
       } else if (stmt.type === SlimeAstTypeName.ExpressionStatement) {
         expressions.push(stmt as SlimeStatement)
@@ -345,15 +346,15 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
         otherStatements.push(stmt)
       }
     }
-    
+
     // 确保有 defineOvsComponent 导入
     imports = this.ensureDefineOvsComponentImport(imports)
-    
+
     // 提取表达式值
-    const exprValues = expressions.map(e => 
+    const exprValues = expressions.map(e =>
       e.type === SlimeAstTypeName.ExpressionStatement ? (e as any).expression : e
     )
-    
+
     // 处理单个或多个表达式
     let finalExpr: any
     if (exprValues.length === 1) {
@@ -363,7 +364,7 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
       imports = this.ensureFragmentImport(imports)
       finalExpr = this.createFragmentWrapper(exprValues)
     }
-    
+
     // 创建 defineOvsComponent 包装
     // declarations 放在箭头函数体内，expressions 作为 return
     const returnStmt = SlimeAstCreateUtils.createReturnStatement(finalExpr)
@@ -378,7 +379,7 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
       SlimeAstCreateUtils.createIdentifier('defineOvsComponent'),
       [arrowFunction]
     )
-    
+
     // 重排序：imports 在前，然后是 export default
     return [
       ...imports,
@@ -388,7 +389,7 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
       } as any
     ]
   }
-  
+
   /**
    * 确保有 $OvsHtmlTag 导入
    */
@@ -416,7 +417,7 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
       source: SlimeAstCreateUtils.createStringLiteral('ovsjs')
     }, ...imports]
   }
-  
+
   /**
    * 确保有 defineOvsComponent 导入
    */
@@ -444,7 +445,7 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
       source: SlimeAstCreateUtils.createStringLiteral('ovsjs')
     }, ...imports]
   }
-  
+
   /**
    * 确保有 Fragment 和 h 导入
    */
@@ -478,7 +479,7 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
       source: SlimeAstCreateUtils.createStringLiteral('vue')
     }, ...imports]
   }
-  
+
   /**
    * 创建 Fragment 包装
    */
@@ -507,117 +508,117 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
     return super.createDeclarationAst(cst)
   }
 
-    /**
-     * 转换 OvsViewDeclaration 为 defineOvsComponent 包裹的组件
-     *
-     * 新语法输入：view ComponentName (props) { div { ... } }
-     * 输出：const ComponentName = defineOvsComponent(props => { ... return div(...) })
-     *
-     * 这样生成的组件既可以：
-     * 1. 在 OVS 内部作为函数调用（返回的组件会被 mapChildrenToVNodes 用 h() 渲染）
-     * 2. 在 Vue 模板中作为组件使用
-     * 3. 被 export 导出供其他文件使用
-     *
-     * CST 结构：OvsViewToken, IdentifierName, ArrowFormalParameters?, LBrace, StatementList?, RBrace
-     */
-    createOvsViewDeclarationAst(cst: SubhutiCst): any {
-        checkCstName(cst, OvsParser.prototype.OvsViewDeclaration.name)
-        
-        // 标记使用了 OVS 语法
-        this.hasOvsSyntax = true;
+  /**
+   * 转换 OvsViewDeclaration 为 defineOvsComponent 包裹的组件
+   *
+   * 新语法输入：view ComponentName (props) { div { ... } }
+   * 输出：const ComponentName = defineOvsComponent(props => { ... return div(...) })
+   *
+   * 这样生成的组件既可以：
+   * 1. 在 OVS 内部作为函数调用（返回的组件会被 mapChildrenToVNodes 用 h() 渲染）
+   * 2. 在 Vue 模板中作为组件使用
+   * 3. 被 export 导出供其他文件使用
+   *
+   * CST 结构：OvsViewToken, IdentifierName, ArrowFormalParameters?, LBrace, StatementList?, RBrace
+   */
+  createOvsViewDeclarationAst(cst: SubhutiCst): any {
+    checkCstName(cst, OvsParser.prototype.OvsViewDeclaration.name)
 
-        const children = cst.children || []
+    // 标记使用了 OVS 语法
+    this.hasOvsSyntax = true;
 
-        // 1. 提取组件名（第2个子节点：IdentifierName）
-        const componentNameCst = children[1]
-        if (!componentNameCst) {
-            throw new Error('OvsViewDeclaration: missing component name')
-        }
-        const componentName = this.createIdentifierAst(componentNameCst)
+    const children = cst.children || []
 
-        // 2. 提取参数（可选的 ArrowFormalParameters）
-        // view 声明的参数会成为 defineOvsComponent 内部箭头函数的参数
-        let params: any[] = []
-        const arrowFormalParamsName = SlimeParser.prototype.ArrowFormalParameters?.name || 'ArrowFormalParameters'
-        const formalParamsCst = children.find(c => c.name === arrowFormalParamsName)
-
-        if (formalParamsCst) {
-            params = this.createArrowFormalParametersAstWrapped(formalParamsCst)
-        }
-        // 如果没有声明参数，默认使用 props
-        if (params.length === 0) {
-            params = [SlimeAstCreateUtils.createIdentifier('props')]
-        }
-
-        // 3. 提取函数体内的 StatementList
-        const statementListName = SlimeParser.prototype.StatementList?.name || 'StatementList'
-        const statementListCst = children.find(c => c.name === statementListName)
-
-        let functionBodyStatements: SlimeStatement[] = []
-
-        if (statementListCst) {
-            // 转换 StatementList
-            functionBodyStatements = this.createStatementListAst(statementListCst)
-        }
-
-        // 4. 处理函数体：检查最后一条语句
-        // 如果最后一条是 ExpressionStatement 且表达式是 OvsRenderFunction 调用，
-        // 需要将其转换为 return 语句
-        if (functionBodyStatements.length > 0) {
-            const lastStmt = functionBodyStatements[functionBodyStatements.length - 1]
-
-            // 检查是否是 ExpressionStatement
-            if (lastStmt.type === SlimeAstTypeName.ExpressionStatement) {
-                const expr = (lastStmt as SlimeExpressionStatement).expression
-
-                // 检查是否是 CallExpression（OvsRenderFunction 转换后的结果）
-                // 简单视图：$OvsHtmlTag.div({}, [...])
-                // 复杂视图：(function() { ... })() - IIFE
-                if (expr.type === SlimeAstTypeName.CallExpression) {
-                    // 将最后的表达式语句转换为 return 语句
-                    functionBodyStatements[functionBodyStatements.length - 1] =
-                        SlimeAstCreateUtils.createReturnStatement(expr)
-                }
-            }
-        }
-
-        // 5. 创建箭头函数体
-        const arrowFunctionBody = SlimeAstCreateUtils.createBlockStatement(
-            functionBodyStatements,
-            cst.loc,
-            { type: 'LBrace', value: '{', loc: cst.loc } as any,
-            { type: 'RBrace', value: '}', loc: cst.loc } as any
-        )
-
-        // 6. 创建箭头函数：props => { ... }
-        const arrowFunction = SlimeAstCreateUtils.createArrowFunctionExpression(
-            arrowFunctionBody,
-            params,
-            false,  // async
-            false   // generator
-        )
-
-        // 7. 创建 defineOvsComponent(props => { ... }) 调用
-        const defineOvsCall = SlimeAstCreateUtils.createCallExpression(
-            SlimeAstCreateUtils.createIdentifier('defineOvsComponent'),
-            [arrowFunction]
-        )
-
-        // 8. 创建变量声明：const ComponentName = defineOvsComponent(...)
-        const variableDeclaration = SlimeAstCreateUtils.createVariableDeclaration(
-            SlimeTokenCreateUtils.createConstToken(),
-            [
-                SlimeAstCreateUtils.createVariableDeclarator(
-                    componentName,
-                    SlimeTokenCreateUtils.createAssignToken(),
-                    defineOvsCall
-                )
-            ]
-        )
-        variableDeclaration.loc = cst.loc
-
-        return variableDeclaration
+    // 1. 提取组件名（第2个子节点：IdentifierName）
+    const componentNameCst = children[1]
+    if (!componentNameCst) {
+      throw new Error('OvsViewDeclaration: missing component name')
     }
+    const componentName = this.createIdentifierAst(componentNameCst)
+
+    // 2. 提取参数（可选的 ArrowFormalParameters）
+    // view 声明的参数会成为 defineOvsComponent 内部箭头函数的参数
+    let params: any[] = []
+    const arrowFormalParamsName = SlimeParser.prototype.ArrowFormalParameters?.name || 'ArrowFormalParameters'
+    const formalParamsCst = children.find(c => c.name === arrowFormalParamsName)
+
+    if (formalParamsCst) {
+      params = this.createArrowFormalParametersAstWrapped(formalParamsCst)
+    }
+    // 如果没有声明参数，默认使用 props
+    if (params.length === 0) {
+      params = [SlimeAstCreateUtils.createIdentifier('props')]
+    }
+
+    // 3. 提取函数体内的 StatementList
+    const statementListName = SlimeParser.prototype.StatementList?.name || 'StatementList'
+    const statementListCst = children.find(c => c.name === statementListName)
+
+    let functionBodyStatements: SlimeStatement[] = []
+
+    if (statementListCst) {
+      // 转换 StatementList
+      functionBodyStatements = this.createStatementListAst(statementListCst)
+    }
+
+    // 4. 处理函数体：检查最后一条语句
+    // 如果最后一条是 ExpressionStatement 且表达式是 OvsRenderFunction 调用，
+    // 需要将其转换为 return 语句
+    if (functionBodyStatements.length > 0) {
+      const lastStmt = functionBodyStatements[functionBodyStatements.length - 1]
+
+      // 检查是否是 ExpressionStatement
+      if (lastStmt.type === SlimeAstTypeName.ExpressionStatement) {
+        const expr = (lastStmt as SlimeExpressionStatement).expression
+
+        // 检查是否是 CallExpression（OvsRenderFunction 转换后的结果）
+        // 简单视图：$OvsHtmlTag.div({}, [...])
+        // 复杂视图：(function() { ... })() - IIFE
+        if (expr.type === SlimeAstTypeName.CallExpression) {
+          // 将最后的表达式语句转换为 return 语句
+          functionBodyStatements[functionBodyStatements.length - 1] =
+            SlimeAstCreateUtils.createReturnStatement(expr)
+        }
+      }
+    }
+
+    // 5. 创建箭头函数体
+    const arrowFunctionBody = SlimeAstCreateUtils.createBlockStatement(
+      functionBodyStatements,
+      cst.loc,
+      { type: 'LBrace', value: '{', loc: cst.loc } as any,
+      { type: 'RBrace', value: '}', loc: cst.loc } as any
+    )
+
+    // 6. 创建箭头函数：props => { ... }
+    const arrowFunction = SlimeAstCreateUtils.createArrowFunctionExpression(
+      arrowFunctionBody,
+      params,
+      false,  // async
+      false   // generator
+    )
+
+    // 7. 创建 defineOvsComponent(props => { ... }) 调用
+    const defineOvsCall = SlimeAstCreateUtils.createCallExpression(
+      SlimeAstCreateUtils.createIdentifier('defineOvsComponent'),
+      [arrowFunction]
+    )
+
+    // 8. 创建变量声明：const ComponentName = defineOvsComponent(...)
+    const variableDeclaration = SlimeAstCreateUtils.createVariableDeclaration(
+      SlimeTokenCreateUtils.createConstToken(),
+      [
+        SlimeAstCreateUtils.createVariableDeclarator(
+          componentName,
+          SlimeTokenCreateUtils.createAssignToken(),
+          defineOvsCall
+        )
+      ]
+    )
+    variableDeclaration.loc = cst.loc
+
+    return variableDeclaration
+  }
 
   /**
    * Override: 处理 StatementList，支持 NoRenderBlock
@@ -630,15 +631,15 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
    */
   createStatementListAst(cst: SubhutiCst): SlimeStatement[] {
     checkCstName(cst, SlimeParser.prototype.StatementList.name)
-    
+
     const statements: SlimeStatement[] = []
-    
+
     if (!cst.children) return statements
-    
+
     for (const child of cst.children) {
       // StatementListItem 包裹了 Statement 或 Declaration
       const stmts = this.createStatementListItemAst(child)
-      
+
       // 展开数组
       if (Array.isArray(stmts)) {
         statements.push(...stmts)
@@ -646,10 +647,10 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
         statements.push(stmts as any)
       }
     }
-    
+
     return statements
   }
-  
+
   /**
    * Override: 处理 StatementListItem，支持 OvsRenderStatement 和 NoRenderBlock
    */
@@ -921,7 +922,7 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
       throw new Error('OvsRenderDomViewDeclaration has no identifier')
     }
     const id = this.createIdentifierReferenceAst(idCst)
-    
+
     // 设置 loc 信息，确保包含 value（标签名）用于源码映射
     if (idCst.loc) {
       id.loc = {
@@ -945,7 +946,7 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
       // 兼容旧语法：查找普通 Arguments 节点
       const argumentsName = SlimeParser.prototype.Arguments?.name || 'Arguments'
       const argumentsCst = cst.children?.find(child => child.name === argumentsName)
-      
+
       if (argumentsCst && argumentsCst.children) {
         // 提取 Arguments 内的参数
         // Arguments 结构：LParen, ArgumentList?, RParen
@@ -982,7 +983,7 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
       let bodyStatements: SlimeStatement[] = []
       if (statementListCst) {
         const statements = this.createStatementListAst(statementListCst)
-        
+
         // 展开数组（因为赋值表达式会返回两条语句）
         for (const stmt of statements) {
           if (Array.isArray(stmt)) {
@@ -1024,7 +1025,7 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
 
         return false
       })
-      
+
       const isSimple = !hasComplexStatements
       const currentAttrsVarName = this.attrsVarNameStack[this.attrsVarNameStack.length - 1]
 
@@ -1129,7 +1130,7 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
       // 1. 声明 children 数组：const children = []
       // 注意：这是自动生成的代码，不传递loc（避免创建错误映射）
       SlimeAstCreateUtils.createVariableDeclaration(
-          SlimeTokenCreateUtils.createConstToken(),
+        SlimeTokenCreateUtils.createConstToken(),
         [
           SlimeAstCreateUtils.createVariableDeclarator(
             SlimeAstCreateUtils.createIdentifier('children'),
@@ -1144,11 +1145,11 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
     // 注意：这也是自动生成的代码，不传递loc（避免创建错误映射）
     if (attrsVarName) {
       const attrsDeclaration = SlimeAstCreateUtils.createVariableDeclaration(
-          SlimeTokenCreateUtils.createConstToken(),
+        SlimeTokenCreateUtils.createConstToken(),
         [
           SlimeAstCreateUtils.createVariableDeclarator(
             SlimeAstCreateUtils.createIdentifier(attrsVarName),
-              SlimeTokenCreateUtils.createAssignToken(),
+            SlimeTokenCreateUtils.createAssignToken(),
             SlimeAstCreateUtils.createObjectExpression([])
           )
         ]
@@ -1213,11 +1214,11 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
     // 2. 如果有attrs，声明 attrs 对象
     if (attrsVarName) {
       const attrsDeclaration = SlimeAstCreateUtils.createVariableDeclaration(
-          SlimeTokenCreateUtils.createConstToken(),
+        SlimeTokenCreateUtils.createConstToken(),
         [
           SlimeAstCreateUtils.createVariableDeclarator(
             SlimeAstCreateUtils.createIdentifier(attrsVarName),
-              SlimeTokenCreateUtils.createAssignToken(),
+            SlimeTokenCreateUtils.createAssignToken(),
             SlimeAstCreateUtils.createObjectExpression([])
           )
         ]
@@ -1343,13 +1344,13 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
    */
   createOvsArgumentsAst(cst: SubhutiCst): SlimeExpression {
     const properties: any[] = []
-    
+
     // 查找 OvsPropertyDefinitionList
     const propListCst = cst.children?.find(child => child.name === 'OvsPropertyDefinitionList')
-    
+
     if (propListCst && propListCst.children) {
       const propDefs = propListCst.children.filter(c => c.name === 'OvsPropertyDefinition')
-      
+
       for (let i = 0; i < propDefs.length; i++) {
         const propDefCst = propDefs[i]
         const prop = this.createOvsPropertyDefinitionAst(propDefCst)
@@ -1365,7 +1366,7 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
         }
       }
     }
-    
+
     return SlimeAstCreateUtils.createObjectExpression(properties)
   }
 
@@ -1383,12 +1384,12 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
    */
   createOvsPropertyDefinitionAst(cst: SubhutiCst): any {
     if (!cst.children || cst.children.length === 0) return null
-    
+
     const firstChild = cst.children[0]
-    
+
     // 1. 展开属性: ... AssignmentExpression
     if (firstChild.name === 'Ellipsis' || firstChild.value === '...') {
-      const exprCst = cst.children.find(c => 
+      const exprCst = cst.children.find(c =>
         c.name !== 'Ellipsis' && c.value !== '...'
       )
       if (exprCst) {
@@ -1397,20 +1398,20 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
       }
       return null
     }
-    
+
     // 2. 方法定义: MethodDefinition
     if (firstChild.name === 'MethodDefinition') {
       // MethodDefinition 在对象字面量中会被转换为 Property with method: true
       // 先创建 MethodDefinition AST，然后转换为 Property
       const methodDef = this.createMethodDefinitionAst(null, firstChild)
-      
+
       const keyAst = SlimeAstCreateUtils.createPropertyAst(methodDef.key, methodDef.value)
-      
+
       // 继承 MethodDefinition 的 computed 标志
       if (methodDef.computed) {
         keyAst.computed = true
       }
-      
+
       // 继承 MethodDefinition 的 kind 标志（getter/setter/method）
       if (methodDef.kind === 'get' || methodDef.kind === 'set') {
         keyAst.kind = methodDef.kind
@@ -1418,40 +1419,40 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
         // 普通方法使用 method: true
         keyAst.method = true
       }
-      
+
       keyAst.loc = cst.loc
       return keyAst
     }
-    
+
     // 3. PropertyName = AssignmentExpression 或 简写属性
     // 查找 PropertyName
     const propertyNameCst = cst.children.find(c => c.name === 'PropertyName')
-    
+
     // 查找 = 号后的表达式
     const assignIndex = cst.children.findIndex(c => c.value === '=' || c.name === 'Assign')
-    
+
     if (propertyNameCst && assignIndex !== -1) {
       // 完整属性: name = value
       const key = this.createPropertyNameAst(propertyNameCst)
       const keyName = this.getPropertyKeyName(key)
-      
+
       // 找到 = 后面的表达式
       const valueCst = cst.children[assignIndex + 1]
       if (!valueCst) return null
-      
+
       let value = this.createExpressionAst(valueCst)
-      
+
       // 特殊处理 class 属性
       if (keyName === 'class' && value.type === SlimeAstTypeName.ObjectExpression) {
         value = this.transformClassObjectToArray(value)
       }
-      
+
       // 使用 createPropertyAst 创建属性
       const prop = SlimeAstCreateUtils.createPropertyAst(key, value)
       prop.loc = cst.loc
       return prop
     }
-    
+
     // 4. 简写属性: IdentifierReference
     const idRefCst = cst.children.find(c => c.name === 'IdentifierReference')
     if (idRefCst) {
@@ -1462,7 +1463,7 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
       prop.loc = cst.loc
       return prop
     }
-    
+
     return null
   }
 
@@ -1487,16 +1488,16 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
    */
   private transformClassObjectToArray(objExpr: any): SlimeExpression {
     const elements: any[] = []
-    
+
     if (objExpr.properties) {
       const propItems = objExpr.properties
       const totalProps = propItems.length
-      
+
       for (let i = 0; i < totalProps; i++) {
         const propItem = propItems[i]
         // SlimeObjectPropertyItem 结构: { property: SlimeProperty, commaToken? }
         const prop = propItem.property || propItem
-        
+
         // 只处理简写属性
         if (prop.shorthand && prop.key && prop.key.type === SlimeAstTypeName.Identifier) {
           const className = prop.key.name
@@ -1509,15 +1510,15 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
           elements.push(
             SlimeAstCreateUtils.createArrayElement(
               memberExpr,
-              i < totalProps - 1 
-                ? SlimeTokenCreateUtils.createCommaToken() 
+              i < totalProps - 1
+                ? SlimeTokenCreateUtils.createCommaToken()
                 : undefined
             )
           )
         }
       }
     }
-    
+
     return SlimeAstCreateUtils.createArrayExpression(elements)
   }
 
@@ -1526,19 +1527,19 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
    */
   private createPropertyNameAst(cst: SubhutiCst): any {
     if (!cst.children || cst.children.length === 0) return null
-    
+
     const child = cst.children[0]
-    
+
     // LiteralPropertyName
     if (child.name === 'LiteralPropertyName') {
       return this.createLiteralPropertyNameAst(child)
     }
-    
+
     // ComputedPropertyName
     if (child.name === 'ComputedPropertyName') {
       return this.createComputedPropertyNameAst(child)
     }
-    
+
     return null
   }
 
@@ -1547,20 +1548,20 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
    */
   private createLiteralPropertyNameAst(cst: SubhutiCst): any {
     if (!cst.children || cst.children.length === 0) return null
-    
+
     const child = cst.children[0]
-    
+
     // IdentifierName
     if (child.name === 'IdentifierName' || child.value) {
       const name = child.value || child.children?.[0]?.value
       return SlimeAstCreateUtils.createIdentifier(name)
     }
-    
+
     // StringLiteral / NumericLiteral
     if (child.name === 'StringLiteral' || child.name === 'NumericLiteral') {
       return this.createLiteralAst(child)
     }
-    
+
     return null
   }
 
@@ -1569,8 +1570,8 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
    */
   private createComputedPropertyNameAst(cst: SubhutiCst): any {
     // [expression]
-    const exprCst = cst.children?.find(c => 
-      c.name !== 'LBracket' && c.name !== 'RBracket' && 
+    const exprCst = cst.children?.find(c =>
+      c.name !== 'LBracket' && c.name !== 'RBracket' &&
       c.value !== '[' && c.value !== ']'
     )
     if (exprCst) {
@@ -1581,5 +1582,32 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
 
 }
 
-const OvsCstToSlimeNodeCreate = new OvsCstToSlimeAst()
-export default OvsCstToSlimeNodeCreate
+// ==================== 全局注册机制 ====================
+// 使用 Proxy 模式，确保导入的 ovsCstToSlimeAst 能动态代理到当前注册的实例
+
+let _ovsCstToSlimeAstUtil: OvsCstToSlimeAst
+
+/**
+ * 注册 OvsCstToSlimeAst 实例到全局
+ * 
+ * 子类构造函数会自动调用此方法，所以会注册最终的子类实例
+ * 父层（cssts-compiler 和 slime-parser）的注册已通过 super() 中的父类构造函数自动完成
+ */
+export function registerOvsCstToSlimeAst(instance: OvsCstToSlimeAst): void {
+  _ovsCstToSlimeAstUtil = instance
+}
+
+// Proxy: 保持 ovsCstToSlimeAst.xxx() 调用方式，同时支持动态替换
+const ovsCstToSlimeAst = new Proxy({} as OvsCstToSlimeAst, {
+  get(_, prop) {
+    const val = (_ovsCstToSlimeAstUtil as any)[prop]
+    return typeof val === 'function' ? val.bind(_ovsCstToSlimeAstUtil) : val
+  }
+})
+
+// 初始化默认实例
+new OvsCstToSlimeAst()
+
+export default ovsCstToSlimeAst
+export { ovsCstToSlimeAst }
+
