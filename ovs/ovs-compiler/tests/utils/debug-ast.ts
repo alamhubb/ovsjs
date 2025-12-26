@@ -1,7 +1,7 @@
 import {readFileSync} from 'fs'
-import OvsCstToSlimeNodeCreate from '../../src/factory/OvsCstToSlimeAstUtils'
+import {OvsCstToSlimeAstUtils} from '../../src/factory/OvsCstToSlimeAstUtils'
 import OvsParser from '../../src/parser/OvsParser'
-import { SlimeGenerator } from 'slime-generator'
+import {SlimeGenerator} from 'slime-generator'
 
 const code = readFileSync('./example/src/views/hello.ovs', 'utf-8')
 console.log('源代码:')
@@ -13,7 +13,7 @@ const cst = parser.Program()
 
 console.log('CST 解析成功')
 
-const ast = OvsCstToSlimeNodeCreate.toProgram(cst)
+const ast = OvsCstToSlimeAstUtils.toProgram(cst)
 console.log('AST 转换成功')
 console.log('AST body 长度:', ast.body.length)
 
