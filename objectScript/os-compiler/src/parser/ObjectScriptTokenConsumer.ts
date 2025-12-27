@@ -47,6 +47,6 @@ export default class ObjectScriptTokenConsumer extends SlimeTokenConsumer {
    * 例如：const object = someValue  // 合法
    */
   ObjectToken() {
-    return this.consumeIdentifierValue(ObjectScriptContextualKeywords.Object)
+    this.consumeIdentifierValue(ObjectScriptContextualKeywords.Object)
   }
 }

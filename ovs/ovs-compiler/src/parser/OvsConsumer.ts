@@ -41,11 +41,11 @@ export default class OvsTokenConsumer extends CssTsTokenConsumer {
    * 注意：view 可作为标识符使用，如 `const view = 123`
    */
   View() {
-    return this.consumeIdentifierValue(OvsContextualKeywordTypes.View)
+    this.consumeIdentifierValue(OvsContextualKeywordTypes.View)
   }
 
   /** 消费 # token（NoRenderBlock 的开始） */
   Hash() {
-    return this.consume(ovsTokenName.Hash)
+    this.consume(ovsTokenName.Hash)
   }
 }
