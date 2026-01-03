@@ -19,10 +19,10 @@
     "build": "tsdown",
     "prepublishOnly": "npm run build"
   },
-  "homepage": "https://github.com/nicholasyhuang/ovs",
+  "homepage": "https://github.com/alamhubb/ovs",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/nicholasyhuang/ovs.git"
+    "url": "git+https://github.com/alamhubb/ovs.git"
   },
   "keywords": [
     "ovs",
@@ -32,7 +32,7 @@
     "vue",
     "component"
   ],
-  "author": "nicholasyhuang",
+  "author": "alamhubb",
   "description": "OVS Runtime - A declarative UI syntax similar to Flutter and SwiftUI",
   "dependencies": {
     "vue": "^3.5.13"

@@ -11,10 +11,10 @@
     "build": "tsdown",
     "prepublishOnly": "npm run build"
   },
-  "homepage": "https://github.com/nicholasyhuang/ovs",
+  "homepage": "https://github.com/alamhubb/ovs",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/nicholasyhuang/ovs.git"
+    "url": "git+https://github.com/alamhubb/ovs.git"
   },
   "keywords": [
     "ovs",
@@ -22,10 +22,11 @@
     "parser",
     "ast"
   ],
-  "author": "nicholasyhuang",
+  "author": "alamhubb",
   "description": "OVS Compiler - Parser and AST transformer for OVS syntax",
   "dependencies": {
     "cssts-compiler": "file:../../../cssts/cssts/cssts-compiler",
+    "ovs-runtime": "file:../ovs-runtime",
     "slime-ast": "file:../../../slime/packages/slime-ast",
     "slime-generator": "file:../../../slime/packages/slime-generator",
     "slime-parser": "file:../../../slime/packages/slime-parser",

@@ -9,10 +9,10 @@
     "build": "tsdown",
     "prepublishOnly": "npm run build"
   },
-  "homepage": "https://github.com/nicholasyhuang/ovs",
+  "homepage": "https://github.com/alamhubb/ovs",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/nicholasyhuang/ovs.git"
+    "url": "git+https://github.com/alamhubb/ovs.git"
   },
   "keywords": [
     "objectscript",
