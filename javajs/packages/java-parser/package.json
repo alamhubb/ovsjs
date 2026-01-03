@@ -18,7 +18,7 @@
   "license": "ISC",
   "description": "Java 17 Parser based on Subhuti PEG framework",
   "dependencies": {
-    "subhuti": "^0.2.1"
+    "subhuti": "^0.2.86"
   },
   "devDependencies": {
     "fast-check": "^3.23.2",

@@ -26,7 +26,7 @@
     "slime-ast": "^0.2.1",
     "slime-generator": "^0.2.1",
     "slime-parser": "^0.2.1",
-    "subhuti": "^0.2.1",
+    "subhuti": "^0.2.86",
     "typescript-auto-import-cache": "^0.3.5",
     "volar-service-typescript": "^0.0.65",
     "vscode-languageserver": "^9.0.1",
