@@ -565,6 +565,8 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
     // 4. 处理函数体：检查最后一条语句
     // 如果最后一条是 ExpressionStatement 且表达式是 OvsRenderFunction 调用，
     // 需要将其转换为 return 语句
+    // 关键：返回箭头函数 () => expr，而不是直接返回 expr
+    // 这样 Vue 每次渲染时会重新执行箭头函数，响应式数据变化会触发更新
     if (functionBodyStatements.length > 0) {
       const lastStmt = functionBodyStatements[functionBodyStatements.length - 1]
 
@@ -576,12 +578,22 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
         // 简单视图：$OvsHtmlTag.div({}, [...])
         // 复杂视图：(function() { ... })() - IIFE
         if (expr.type === SlimeAstTypeName.CallExpression) {
-          // 将最后的表达式语句转换为 return 语句
+          // 将表达式包装成箭头函数：() => expr
+          // 这样 Vue 的渲染函数每次执行时都会重新求值响应式数据
+          const arrowFunc = SlimeAstCreateUtils.createArrowFunctionExpression(
+            expr,  // 表达式体
+            [],    // 无参数
+            false, // 非 async
+            false  // 非 generator
+          )
+
+          // 将最后的表达式语句转换为 return () => expr
           functionBodyStatements[functionBodyStatements.length - 1] =
-            SlimeAstCreateUtils.createReturnStatement(expr)
+            SlimeAstCreateUtils.createReturnStatement(arrowFunc)
         }
       }
     }
+
 
     // 5. 创建箭头函数体
     const arrowFunctionBody = SlimeAstCreateUtils.createBlockStatement(

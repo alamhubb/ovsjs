@@ -1,5 +1,5 @@
-import {h, reactive, isReactive, isRef, unref, defineComponent, markRaw} from 'vue'
-import type {Component, VNode, DefineComponent} from 'vue'
+import { h, reactive, isReactive, isRef, unref, defineComponent, markRaw } from 'vue'
+import type { Component, VNode, DefineComponent } from 'vue'
 
 // ==================== 类型定义 ====================
 
@@ -33,12 +33,12 @@ export function mapChildrenToVNodes(children: unknown): any {
     if (children == null) return undefined
     if (isRef(children)) return mapChildrenToVNodes(unref(children))
     if (Array.isArray(children)) return children.map(mapChildrenToVNodes)
-    
+
     // 如果已经是 VNode，直接返回
     if (typeof children === 'object' && (children as any).__v_isVNode) {
         return children
     }
-    
+
     if (isDefineComponent(children)) {
         // 如果是可调用的 OVS 组件，使用其内部的 Vue 组件
         const comp = (children as any).__vueComponent || children
@@ -73,20 +73,41 @@ export function defineOvsComponent(
                 return slots.default ? slots.default() : undefined
             }
         }
+
+        // factory 只执行一次，在 setup 阶段
+        // 这样 ref() 等状态初始化只执行一次
         const result = factory(unifiedProps)
+
+        // 返回渲染函数
         if (isDefineComponent(result)) {
             return () => h(result)
         }
         if (typeof result === 'function') {
-            return result
+            // result 是渲染函数（由 OVS 编译器生成的 () => expr）
+            // 每次渲染时调用它来获取新的组件/VNode
+            return () => {
+                const rendered = result()
+                // rendered 可能是：
+                // 1. DefineComponent（$OvsHtmlTag.div 返回的组件）
+                // 2. VNode
+                // 3. 原始值
+                if (isDefineComponent(rendered)) {
+                    return h(rendered)
+                }
+                return rendered
+            }
+        }
+        // result 是固定的组件/VNode
+        if (isDefineComponent(result)) {
+            return () => h(result)
         }
         return () => result
     })
-    ;(component as any).__isOvsComponent = true
-    
+        ; (component as any).__isOvsComponent = true
+
     // 用 markRaw 标记组件，防止被 reactive 包装（在这里标记一次，后续使用都不需要再标记）
     const rawComponent = markRaw(component)
-    
+
     // 创建一个可调用的函数
     // 关键：区分两种调用方式：
     // 1. OVS 调用：CountDisplay({count: 1}, []) - 第二个参数是数组
@@ -105,10 +126,10 @@ export function defineOvsComponent(
         // 否则是普通调用
         return h(rawComponent, props, context)
     }
-    
+
     // 函数的只读属性，不能被覆盖
     const readOnlyProps = new Set(['name', 'length', 'prototype', 'caller', 'arguments'])
-    
+
     // 复制 Vue 组件的所有属性到函数上
     // 这样 Vue 可以识别它是一个组件（有 setup/render 等属性）
     Object.keys(component).forEach(key => {
@@ -116,7 +137,7 @@ export function defineOvsComponent(
             (callable as any)[key] = (component as any)[key]
         }
     })
-    
+
     // 复制 Vue 组件的原型属性（setup, render 等可能在原型上）
     const proto = Object.getPrototypeOf(component)
     if (proto && proto !== Object.prototype) {
@@ -130,20 +151,20 @@ export function defineOvsComponent(
             }
         })
     }
-    
+
     // 标记为 OVS 组件
-    ;(callable as any).__isOvsComponent = true
-    ;(callable as any).__vueComponent = component
-    
+    ; (callable as any).__isOvsComponent = true
+        ; (callable as any).__vueComponent = component
+
     // 关键：设置 setup 属性，让 Vue 能识别这是一个组件
     // Vue 检查组件时会查看 setup 或 render 属性
     if ((component as any).setup) {
-        ;(callable as any).setup = (component as any).setup
+        ; (callable as any).setup = (component as any).setup
     }
     if ((component as any).render) {
-        ;(callable as any).render = (component as any).render
+        ; (callable as any).render = (component as any).render
     }
-    
+
     return markRaw(callable as any)
 }
 
@@ -160,7 +181,7 @@ export function createComponentVNode(
     const component = defineComponent((componentProps) => {
         const state: ReactiveVNodeState = reactive({
             type: componentFn,
-            props: {...ensureReactiveProps(props), ...componentProps},
+            props: { ...ensureReactiveProps(props), ...componentProps },
             children
         }) as ReactiveVNodeState
 
@@ -172,7 +193,7 @@ export function createComponentVNode(
             return h(state.type as Component, state.props, mapChildrenToVNodes(state.children))
         }
     })
-    ;(component as any).__isOvsComponent = true
+        ; (component as any).__isOvsComponent = true
     return markRaw(component)  // 标记为原始对象，防止被 reactive 包装
 }
 
@@ -199,22 +220,16 @@ export function createComponentVNodeNew(
 
 /**
  * 创建元素 VNode
+ * 
+ * 直接返回 h() 创建的 VNode，不再包装成组件
+ * 这样 Vue 可以正确复用元素，避免输入框焦点丢失等问题
  */
 export function createElementVNode(
     type: string,
     props: Record<string, any> = {},
     children: any = null
 ) {
-    const component = defineComponent((componentProps) => {
-        const state: ReactiveVNodeState = reactive({
-            type,
-            props: {...ensureReactiveProps(props), ...componentProps},
-            children
-        }) as ReactiveVNodeState
-
-        return () => h(state.type, state.props, mapChildrenToVNodes(state.children))
-    })
-    ;(component as any).__isOvsComponent = true
-    return markRaw(component)  // 标记为原始对象，防止被 reactive 包装
+    return h(type, props, mapChildrenToVNodes(children))
 }
+
 
