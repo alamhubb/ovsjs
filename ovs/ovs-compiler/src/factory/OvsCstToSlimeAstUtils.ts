@@ -4,6 +4,7 @@ import { SubhutiCst } from "subhuti";
 import OvsParser from "../parser/OvsParser.ts";
 import {
   SlimeAstTypeName,
+  type SlimeBlockStatement,
   type SlimeCallExpression,
   type SlimeExpression,
   type SlimeExpressionStatement,
@@ -1578,6 +1579,75 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
       return this.createExpressionAst(exprCst)
     }
     return null
+  }
+
+  // ==================== 函数作用域边界处理 ====================
+  // 
+  // 核心规则：OVS 渲染上下文不穿透函数边界
+  // 
+  // 问题场景：
+  //   div { button(onClick() { addTodo() }) {} }
+  //   
+  // 错误行为：addTodo() 被包装成 children.push(addTodo())
+  // 正确行为：addTodo() 直接执行，不包装
+  //
+  // 原因：函数体是独立的 JavaScript 执行上下文，不属于 OVS 渲染上下文
+
+  /**
+   * 重写 createFunctionBodyAst：进入函数体时暂时退出 OVS 渲染上下文
+   * 
+   * 覆盖的场景：
+   * - function f() { ... }
+   * - onClick() { ... }（MethodDefinition）
+   * - async function() { ... }
+   * - *function() { ... }（Generator）
+   */
+  createFunctionBodyAst(cst: SubhutiCst): Array<SlimeStatement> {
+    // 保存当前渲染上下文状态
+    const savedRenderDepth = this.ovsRenderDomViewDepth
+    const savedNoRenderDepth = this.noRenderDepth
+
+    // 进入函数体 = 退出 OVS 渲染上下文
+    this.ovsRenderDomViewDepth = 0
+    this.noRenderDepth = 0
+
+    try {
+      return super.createFunctionBodyAst(cst)
+    } finally {
+      // 退出函数体 = 恢复之前的渲染上下文
+      this.ovsRenderDomViewDepth = savedRenderDepth
+      this.noRenderDepth = savedNoRenderDepth
+    }
+  }
+
+  /**
+   * 重写 createConciseBodyAst：箭头函数体
+   * 
+   * 两种形式：
+   * 1. () => { statements } - block 形式，需要重置渲染上下文
+   * 2. () => expression - 表达式形式，不需要重置（不走 StatementList）
+   */
+  createConciseBodyAst(cst: SubhutiCst): SlimeBlockStatement | SlimeExpression {
+    const first = cst.children?.[0]
+
+    // 只有 block 形式 () => { ... } 需要重置渲染上下文
+    if (first?.name === 'LBrace') {
+      const savedRenderDepth = this.ovsRenderDomViewDepth
+      const savedNoRenderDepth = this.noRenderDepth
+
+      this.ovsRenderDomViewDepth = 0
+      this.noRenderDepth = 0
+
+      try {
+        return super.createConciseBodyAst(cst)
+      } finally {
+        this.ovsRenderDomViewDepth = savedRenderDepth
+        this.noRenderDepth = savedNoRenderDepth
+      }
+    }
+
+    // 表达式形式 () => expr 直接调用父类
+    return super.createConciseBodyAst(cst)
   }
 
 }
