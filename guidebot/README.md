@@ -172,7 +172,7 @@ app.mount('#app')
 在 `vite.config.ts` 中启用 OVS 支持：
 
 ```typescript
-import vitePluginOvs from '../ovs/src/index.ts'
+import vitePluginOvs from '../ovsjs/src/index.ts'
 
 export default defineConfig({
   plugins: [

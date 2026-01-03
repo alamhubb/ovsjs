@@ -2,8 +2,8 @@
   "$schema": "https://raw.githubusercontent.com/lerna-lite/lerna-lite/main/packages/cli/schemas/lerna-schema.json",
   "version": "0.2.3",
   "packages": [
-    "ovs/ovs-runtime",
-    "ovs/ovs-compiler",
+    "ovsjs/ovs-runtime",
+    "ovsjs/ovs-compiler",
     "create-ovs",
     "vite-plugin-ovs"
   ]

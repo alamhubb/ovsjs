@@ -40,7 +40,7 @@
     "vite": "^5.0.0 || ^6.0.0"
   },
   "dependencies": {
-    "ovs-compiler": "file:../ovs/ovs-compiler",
+    "ovs-compiler": "file:../ovsjs/ovs/ovs-compiler",
     "vite-plugin-cssts": "file:../../cssts/vite-plugin-cssts"
   },
   "devDependencies": {

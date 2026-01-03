@@ -1,0 +1,12 @@
+.idea
+.qin
+lib
+node_modules
+dist
+package-lock.json
+
+# Java build outputs
+build
+classes
+target
+*.class

@@ -8,7 +8,7 @@
       "runtimeExecutable": "${execPath}",
       "args": [
         "--extensionDevelopmentPath=${workspaceFolder}",
-        "${workspaceFolder}/../ovs/example"
+        "${workspaceFolder}/../ovsjs/example"
       ],
       "outFiles": [
         "${workspaceFolder}/dist/**/*.js",

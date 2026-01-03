@@ -152,7 +152,7 @@ div({
 ```typescript
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import vitePluginOvs from '../ovs/src/index.ts'
+import vitePluginOvs from '../ovsjs/src/index.ts'
 
 export default defineConfig({
   plugins: [
@@ -240,7 +240,7 @@ A: 使用 Vue DevTools 查看组件状态，或在浏览器控制台查看编译
 
 ### 主项目文档
 - [Test-Volar README](../../README.md) - 主项目说明
-- [OVS 使用指南](../../ovs/docs/USAGE_GUIDE.md) - OVS 语法详解
+- [OVS 使用指南](../../ovsjs/docs/USAGE_GUIDE.md) - OVS 语法详解
 - [OVS 设计思考](../../particula/OVS_DESIGN_THINKING.md) - 设计理念
 
 ### GuideBot 文档
