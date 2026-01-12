@@ -1,14 +1,34 @@
 <script lang="ts">
-import {defineComponent, h, ref} from 'vue'
+import { defineComponent, h, ref } from 'vue'
 import HelloWorld from './components/HelloWorld.vue'
 import HelloWorldTemplate from './components/HelloWorldTemplate.vue'
+import HelloWorldOvs from './components/HelloWorldOvs.ovs'
 
 export default defineComponent({
   setup() {
-    const isRenderMode = ref(true) // 默认渲染函数模式
+    // 0: h函数, 1: 模板, 2: OVS
+    const mode = ref(2) // 默认 OVS 模式
 
     const toggleMode = () => {
-      isRenderMode.value = !isRenderMode.value
+      mode.value = (mode.value + 1) % 3
+    }
+
+    const getModeLabel = () => {
+      switch (mode.value) {
+        case 0: return 'h 函数模式'
+        case 1: return '模板模式'
+        case 2: return 'OVS 语法模式'
+        default: return ''
+      }
+    }
+
+    const getButtonLabel = () => {
+      switch (mode.value) {
+        case 0: return '切换为模板模式'
+        case 1: return '切换为 OVS 模式'
+        case 2: return '切换为 h 函数模式'
+        default: return ''
+      }
     }
 
     return () => h('div', {}, [
@@ -36,9 +56,12 @@ export default defineComponent({
           })
         ])
       ]),
-      isRenderMode.value
-          ? h(HelloWorld, {msg: 'Render Function Mode'})
-          : h(HelloWorldTemplate, {msg: 'Template Mode'}),
+      // 根据 mode 显示不同组件
+      mode.value === 0
+        ? h(HelloWorld, { msg: 'Render Function Mode' })
+        : mode.value === 1
+          ? h(HelloWorldTemplate, { msg: 'Template Mode' })
+          : h(HelloWorldOvs),
       h('div', {
         style: 'display: flex; justify-content: center; margin: 2em 0;'
       }, [
@@ -46,7 +69,7 @@ export default defineComponent({
           type: 'button',
           onClick: toggleMode,
           style: 'padding: 0.6em 1.2em; font-size: 1em; font-weight: 500; border-radius: 8px; border: 1px solid transparent; background-color: #646cff; color: white; cursor: pointer; transition: background-color 0.25s;'
-        }, isRenderMode.value ? '切换为模板代码' : '切换为h函数代码')
+        }, getButtonLabel())
       ]),
     ])
   }

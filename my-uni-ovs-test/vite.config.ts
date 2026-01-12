@@ -1,6 +1,7 @@
-import {defineConfig} from "vite";
-import {uniRender} from "vite-plugin-uni-render";
-import {resolve} from "path";
+import { defineConfig } from "vite";
+import { uniRender } from "vite-plugin-uni-render";
+import ovs from "vite-plugin-ovs";
+import { resolve } from "path";
 import { createRequire } from "module";
 import { fileURLToPath } from "url";
 const require = createRequire(import.meta.url);
@@ -11,6 +12,7 @@ const __dirname = fileURLToPath(new URL('.', import.meta.url));
 export default defineConfig({
     plugins: [
         uniRender(),
+        ovs(),
         uni()
     ],
     resolve: {
