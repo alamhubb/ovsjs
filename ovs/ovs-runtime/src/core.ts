@@ -64,6 +64,7 @@ export function mapChildrenToVNodes(children: unknown): any {
 export function defineOvsComponent(
     factory: (props: Record<string, any>) => any
 ) {
+    console.log('zhixinel')
     const component = defineComponent((props, { slots, attrs }) => {
         // 合并 props + attrs + children，统一为 OVS 的 props
         const unifiedProps = {
@@ -164,6 +165,9 @@ export function defineOvsComponent(
     if ((component as any).render) {
         ; (callable as any).render = (component as any).render
     }
+
+    // 调试日志：确认 defineOvsComponent 返回的是函数
+    console.log('[OVS Debug] defineOvsComponent returning:', typeof callable, callable)
 
     return markRaw(callable as any)
 }
