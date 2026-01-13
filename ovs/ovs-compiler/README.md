@@ -174,7 +174,102 @@ export function registerOvsCstToSlimeAst(instance: OvsCstToSlimeAst): void {
 new OvsCstToSlimeAst()  // 再初始化
 ```
 
+## 响应式表达式包裹
+
+### 背景
+
+在 OVS 组件 body 中，需要让动态内容能够响应式更新。通过 `defineReactiveExpression` 包裹，可以将任意内容转换为响应式组件。
+
+### 包裹规则
+
+在 `ovsRenderDomViewDepth > 0`（即在 OVS 标签的 body 中）处理语句时：
+
+| 语句类型 | 处理 |
+|----------|------|
+| `OvsRenderStatement` | 原有逻辑，**不包裹**（已经是 VNode） |
+| `NoRenderBlock` | 原有逻辑，**不包裹** |
+| **其他所有** | 包裹为 `h(defineReactiveExpression(() => (() => { ... })()))` |
+
+### 包裹内部逻辑
+
+```typescript
+function wrapWithReactiveExpression(stmt) {
+  if (stmt.type === 'ExpressionStatement') {
+    // 表达式语句：添加 return，让表达式值作为返回值
+    // (() => { return expr })()
+    return createIIFE([createReturnStatement(stmt.expression)])
+  } else {
+    // 其他语句：直接放入块中，不额外处理
+    // (() => { stmt })()
+    return createIIFE([stmt])
+  }
+}
+```
+
+### 编译示例
+
+#### 表达式（ExpressionStatement）
+
+```ovs
+div {
+  '123'
+  count
+}
+```
+
+**编译为**：
+```typescript
+$OvsHtmlTag.div({}, [
+  h(defineReactiveExpression(() => (() => { return '123' })())),
+  h(defineReactiveExpression(() => (() => { return count })()))
+])
+```
+
+#### 控制流语句（IfStatement）
+
+```ovs
+div {
+  if (cond) {
+    span { "Yes" }
+  }
+}
+```
+
+**编译为**：
+```typescript
+$OvsHtmlTag.div({}, [
+  h(defineReactiveExpression(() => (() => {
+    if (cond) {
+      // 内部 OvsRenderStatement 按原有逻辑处理
+    }
+  })()))
+])
+```
+
+#### OvsRenderStatement（不包裹）
+
+```ovs
+div {
+  span { "Always" }
+}
+```
+
+**编译为**：
+```typescript
+$OvsHtmlTag.div({}, [
+  $OvsHtmlTag.span({}, ["Always"])  // 不包裹
+])
+```
+
+### 为什么这样设计
+
+1. **统一处理**：表达式和语句都用 IIFE 包裹，逻辑一致
+2. **响应式更新**：`defineReactiveExpression` 让内容变成组件，响应式数据变化会触发重新渲染
+3. **表达式返回值**：ExpressionStatement 添加 return，确保值能被渲染
+4. **语句原样执行**：if/for 等语句在 IIFE 中正常执行，内部的 OvsRenderStatement 按原有逻辑处理
+
 ## API
+
 
 ### vitePluginOvsTransform
 

@@ -171,3 +171,20 @@ export function defineOvsComponent(factory: OvsComponentFactory) {
 
     return markRaw(callable as any)
 }
+
+/**
+ * 定义响应式表达式
+ * 将简单的 getter 包装为响应式组件
+ * 
+ * @param getter - 返回响应式值的 getter 函数
+ * @returns 响应式 VNode
+ * 
+ * @example
+ * ```typescript
+ * const count = ref(0)
+ * h(defineReactiveExpression(() => count.value))
+ * ```
+ */
+export function defineReactiveExpression(getter: () => VNodeChild) {
+    return h(defineComponent(() => getter))
+}

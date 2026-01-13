@@ -1,36 +1,64 @@
-import {$OvsHtmlTag,defineOvsComponent} from "/node_modules/.vite/deps/ovsjs.js?v=33692da7";
-import {ref} from "/node_modules/.vite/deps/vue.js?v=33692da7";
-
+import { $OvsHtmlTag, defineOvsComponent, defineReactiveExpression } from "/@fs/D:/project/parserall/ovsjs/ovs/ovs-runtime/src/index.ts";
+import { ref, Fragment, h } from "/node_modules/.vite/deps/vue.js?v=5c91c757";
 export default defineOvsComponent(props => {
-    const CountDisplay = defineOvsComponent(props => {
-        return () => $OvsHtmlTag.div({class:'count-display'},[
-            $OvsHtmlTag.span({},['Current count: ']),
-            $OvsHtmlTag.strong({style:'color: #42b883; font-size: 24px;'},[props.count])
-        ]);
-    });
-    return (function(){
-        const children = [];
-        const temp$$attrs$$n4lhntgp = {};
-        children.push($OvsHtmlTag.h3({},[
-            "You've successfully created a project with ",
-            $OvsHtmlTag.a({href:'https://vite.dev/',target:'_blank',rel:'noopener'},['Vite']),
-            ' + ',
-            $OvsHtmlTag.a({href:'https://vuejs.org/',target:'_blank',rel:'noopener'},['Vue 3']),
-            ' + ',
-            $OvsHtmlTag.a({href:'https://github.com/alamhubb/ovsjs',target:'_blank',rel:'noopener'},['OVS']),
-            '.'
-        ]));
-        const msg = "You did it!";
-        let count = ref(0);
-        const timer = setInterval(() => {
-            count.value = count.value + 1;
-        },1000);
-        children.push($OvsHtmlTag.h1({class:'green'},[msg]));
-        const countView = $OvsHtmlTag.span({},[count]);
-        children.push(CountDisplay({count:countView},[]));
-        children.push($OvsHtmlTag.p({style:'color: #888; font-size: 12px;'},['(Click anywhere to reset)']));
-        return $OvsHtmlTag.div({class:'greetings',onClick(){
-                count.value = 0;
-            }},children);
-    })();
+    let count1 = ref(0);
+    return $OvsHtmlTag.div({ class: "level-1", style: "border: 2px solid red; padding: 20px; margin: 10px;" }, [
+        defineOvsComponent(() => {
+            const children = [];
+            const temp$$attrs$$qf59v13e = {};
+            children.push(h(defineReactiveExpression(() => "Level 1: ")));
+            {
+                children.push(h(defineReactiveExpression(() => count1)));
+            } return $OvsHtmlTag.h1({}, children);
+        })({}, []),
+        $OvsHtmlTag.button({
+            onClick() {
+                count1.value++;
+            }, style: "margin: 10px; padding: 8px 16px; cursor: pointer;"
+        }, [
+            h(defineReactiveExpression(() => "Click L1"))
+        ]),
+        defineOvsComponent(() => {
+            const children = [];
+            const temp$$attrs$$fu09utbq = {};
+            let count2 = ref(0);
+            children.push(defineOvsComponent(() => {
+                const children = [];
+                const temp$$attrs$$5tcmzl5l = {};
+                children.push(h(defineReactiveExpression(() => "Level 2: ")));
+                {
+                    children.push(h(defineReactiveExpression(() => count2)));
+                } return $OvsHtmlTag.h2({}, children);
+            })({}, []));
+            children.push($OvsHtmlTag.button({
+                onClick() {
+                    count2.value++;
+                }, style: "margin: 10px; padding: 8px 16px; cursor: pointer;"
+            }, [
+                h(defineReactiveExpression(() => "Click L2"))
+            ]));
+            children.push(defineOvsComponent(() => {
+                const children = [];
+                const temp$$attrs$$nhios30p = {};
+                let count3 = ref(0);
+                children.push(defineOvsComponent(() => {
+                    const children = [];
+                    const temp$$attrs$$3nu0syc5 = {};
+                    children.push(h(defineReactiveExpression(() => "Level 3: ")));
+                    {
+                        children.push(h(defineReactiveExpression(() => count3)));
+                    } return $OvsHtmlTag.h3({}, children);
+                })({}, []));
+                children.push($OvsHtmlTag.button({
+                    onClick() {
+                        count3.value++;
+                    }, style: "margin: 10px; padding: 8px 16px; cursor: pointer;"
+                }, [
+                    h(defineReactiveExpression(() => "Click L3"))
+                ]));
+                return $OvsHtmlTag.div({ class: "level-3", style: "border: 2px solid blue; padding: 10px; margin: 10px;" }, children);
+            })({}, []));
+            return $OvsHtmlTag.div({ class: "level-2", style: "border: 2px solid green; padding: 15px; margin: 10px;" }, children);
+        })({}, [])
+    ]);
 });

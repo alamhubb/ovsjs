@@ -32,7 +32,7 @@ export interface OvsPluginOptions {
  */
 export default function vitePluginOvs(options: OvsPluginOptions = {}): Plugin[] {
   const ovsFilter = createFilter(/\.ovs$/, null)
-  
+
   // 创建共享的样式集合
   const sharedStyles = new Set<string>()
 
@@ -48,7 +48,7 @@ export default function vitePluginOvs(options: OvsPluginOptions = {}): Plugin[] 
       const res = vitePluginOvsTransform(code, { globalStyles: sharedStyles })
 
       let transformedCode = res.code
-      
+
       // 如果收集到了样式，注入虚拟 CSS 导入
       if (sharedStyles.size > 0 && !transformedCode.includes(VIRTUAL_CSS_ID)) {
         transformedCode = `import '${VIRTUAL_CSS_ID}'\n` + transformedCode

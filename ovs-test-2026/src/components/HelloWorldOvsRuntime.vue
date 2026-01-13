@@ -1,7 +1,8 @@
 <script lang="ts">
-import { defineOvsComponent, $OvsHtmlTag } from 'ovsjs'
-import { defineComponent, h, ref, type VNodeChild } from 'vue'
-const defineReactiveComponent = (getter: () => VNodeChild) => h(defineComponent(() => getter))
+import { defineOvsComponent, defineReactiveExpression } from 'ovsjs'
+import { $OvsHtmlTag } from 'ovsjs'
+import { h, ref } from 'vue'
+
 
 
 export default defineOvsComponent(() => {
@@ -16,7 +17,7 @@ export default defineOvsComponent(() => {
     }, [
         $OvsHtmlTag.h1({}, [
             'Level 1: ',
-            h(defineReactiveComponent(() => count1.value))
+            h(defineReactiveExpression(() => count1.value))
         ]),
         $OvsHtmlTag.button({
             onClick: () => {
@@ -38,7 +39,7 @@ export default defineOvsComponent(() => {
             }, [
                 $OvsHtmlTag.h2({}, [
                     'Level 2: ',
-                    h(defineReactiveComponent(() => count2.value))
+                    h(defineReactiveExpression(() => count2.value))
                 ]),
                 $OvsHtmlTag.button({
                     onClick: () => {
@@ -60,7 +61,7 @@ export default defineOvsComponent(() => {
                     }, [
                         $OvsHtmlTag.h3({}, [
                             'Level 3: ',
-                            h(defineReactiveComponent(() => count3.value))
+                            h(defineReactiveExpression(() => count3.value))
                         ]),
                         $OvsHtmlTag.button({
                             onClick: () => {

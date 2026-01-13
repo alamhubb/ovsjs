@@ -18,6 +18,7 @@
 // 核心函数
 export {
     defineOvsComponent,
+    defineReactiveExpression,
     createComponentVNodeNew,
     createElementVNode,
     mapChildrenToVNodes,

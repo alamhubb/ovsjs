@@ -1,8 +1,8 @@
 import { h, isRef, unref } from 'vue'
 import type { Component } from 'vue'
 
-// 导出 defineOvsComponent
-export { defineOvsComponent } from './defineOvsComponent'
+// 导出 defineOvsComponent 和 defineReactiveExpression
+export { defineOvsComponent, defineReactiveExpression } from './defineOvsComponent'
 
 // ==================== 工具函数 ====================
 

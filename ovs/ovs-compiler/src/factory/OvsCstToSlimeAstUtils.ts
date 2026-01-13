@@ -351,6 +351,9 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
     // 确保有 defineOvsComponent 导入
     imports = this.ensureDefineOvsComponentImport(imports)
 
+    // 确保有 h 导入（用于响应式表达式包裹）
+    imports = this.ensureFragmentImport(imports)
+
     // 提取表达式值
     const exprValues = expressions.map(e =>
       e.type === SlimeAstTypeName.ExpressionStatement ? (e as any).expression : e
@@ -423,7 +426,7 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
   }
 
   /**
-   * 确保有 defineOvsComponent 导入
+   * 确保有 defineOvsComponent 和 defineReactiveExpression 导入
    */
   private ensureDefineOvsComponentImport(imports: any[]): any[] {
     for (const imp of imports) {
@@ -436,16 +439,30 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
             local: SlimeAstCreateUtils.createIdentifier('defineOvsComponent')
           })
         }
+        if (!specs.some((s: any) => s.imported?.name === 'defineReactiveExpression' || s.local?.name === 'defineReactiveExpression')) {
+          specs.push({
+            type: SlimeAstTypeName.ImportSpecifier,
+            imported: SlimeAstCreateUtils.createIdentifier('defineReactiveExpression'),
+            local: SlimeAstCreateUtils.createIdentifier('defineReactiveExpression')
+          })
+        }
         return imports
       }
     }
     return [{
       type: SlimeAstTypeName.ImportDeclaration,
-      specifiers: [{
-        type: SlimeAstTypeName.ImportSpecifier,
-        imported: SlimeAstCreateUtils.createIdentifier('defineOvsComponent'),
-        local: SlimeAstCreateUtils.createIdentifier('defineOvsComponent')
-      }],
+      specifiers: [
+        {
+          type: SlimeAstTypeName.ImportSpecifier,
+          imported: SlimeAstCreateUtils.createIdentifier('defineOvsComponent'),
+          local: SlimeAstCreateUtils.createIdentifier('defineOvsComponent')
+        },
+        {
+          type: SlimeAstTypeName.ImportSpecifier,
+          imported: SlimeAstCreateUtils.createIdentifier('defineReactiveExpression'),
+          local: SlimeAstCreateUtils.createIdentifier('defineReactiveExpression')
+        }
+      ],
       source: SlimeAstCreateUtils.createStringLiteral('ovsjs')
     }, ...imports]
   }
@@ -746,7 +763,12 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
     }
 
     // 正常处理（调用父类）
-    return super.createStatementListItemAst(cst)
+    const stmts = super.createStatementListItemAst(cst)
+
+    // TODO: 响应式表达式包裹应该在更底层处理（createRenderExpressionStatement）
+    // 这里不做包裹，避免破坏 children.push() 的提取逻辑
+
+    return stmts
   }
 
   createExpressionAst(cst: SubhutiCst): SlimeExpression {
@@ -868,16 +890,39 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
   }
 
   /**
-   * 创建渲染表达式语句 - 包装为 children.push(expr)
+   * 创建渲染表达式语句 - 包装为 children.push(h(defineReactiveExpression(() => expr)))
+   * 
+   * 响应式包裹使表达式能够响应数据变化
    */
   private createRenderExpressionStatement(expr: SlimeExpression, loc: any): SlimeExpressionStatement {
+    // 1. 创建箭头函数：() => expr
+    const arrowFunction = SlimeAstCreateUtils.createArrowFunctionExpression(
+      expr,  // 表达式体
+      [],    // 无参数
+      false, // 非 async
+      false  // 非 generator
+    )
+
+    // 2. 创建 defineReactiveExpression(() => expr)
+    const defineReactiveCall = SlimeAstCreateUtils.createCallExpression(
+      SlimeAstCreateUtils.createIdentifier('defineReactiveExpression'),
+      [arrowFunction]
+    )
+
+    // 3. 创建 h(defineReactiveExpression(...))
+    const hCall = SlimeAstCreateUtils.createCallExpression(
+      SlimeAstCreateUtils.createIdentifier('h'),
+      [defineReactiveCall]
+    )
+
+    // 4. 创建 children.push(h(...))
     const pushCall = SlimeAstCreateUtils.createCallExpression(
       SlimeAstCreateUtils.createMemberExpression(
         SlimeAstCreateUtils.createIdentifier('children'),
         SlimeTokenCreateUtils.createDotToken(loc),
         SlimeAstCreateUtils.createIdentifier('push')
       ),
-      [expr]
+      [hCall]
     )
     if (loc) {
       pushCall.loc = loc
@@ -1349,6 +1394,78 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
     )
 
     return componentCall
+  }
+
+  /**
+   * 将语句包裹为响应式表达式
+   * 
+   * - ExpressionStatement: h(defineReactiveExpression(() => ((() => { return expr })())))
+   * - 其他语句: h(defineReactiveExpression(() => ((() => { stmt })())))
+   * 
+   * 返回的是一个表达式，作为数组元素使用
+   */
+  private wrapWithReactiveExpression(stmt: SlimeStatement, loc?: any): SlimeStatement {
+    console.log('[wrapWithReactiveExpression] 被调用, stmt.type:', stmt.type)
+
+    // 1. 处理语句：ExpressionStatement 需要添加 return
+    let bodyStatements: SlimeStatement[]
+    if (stmt.type === SlimeAstTypeName.ExpressionStatement) {
+      // ExpressionStatement: 添加 return，让表达式值作为返回值
+      const exprStmt = stmt as SlimeExpressionStatement
+      bodyStatements = [SlimeAstCreateUtils.createReturnStatement(exprStmt.expression)]
+    } else {
+      // 其他语句：直接放入块中
+      bodyStatements = [stmt]
+    }
+
+    // 2. 创建 IIFE 的 BlockStatement
+    const blockStatement = SlimeAstCreateUtils.createBlockStatement(
+      bodyStatements,
+      loc,
+      SlimeTokenCreateUtils.createLBraceToken(loc),
+      SlimeTokenCreateUtils.createRBraceToken(loc)
+    )
+
+    // 3. 创建箭头函数：() => { ... }
+    const innerArrow = SlimeAstCreateUtils.createArrowFunctionExpression(
+      blockStatement,
+      [],    // 无参数
+      false, // 非 async
+      false  // 非 generator
+    )
+
+    // 4. 创建 IIFE 调用：(() => { ... })()
+    const iifeCall = SlimeAstCreateUtils.createCallExpression(innerArrow, [])
+
+    // 5. 用括号包裹 IIFE：((() => { ... })())
+    const parenIife = SlimeAstCreateUtils.createParenthesizedExpression(iifeCall, loc)
+
+    // 6. 创建外层箭头函数：() => (...)
+    const outerArrow = SlimeAstCreateUtils.createArrowFunctionExpression(
+      parenIife,
+      [],
+      false,
+      false
+    )
+
+    // 7. 创建 defineReactiveExpression(() => (...))
+    const defineReactiveCall = SlimeAstCreateUtils.createCallExpression(
+      SlimeAstCreateUtils.createIdentifier('defineReactiveExpression'),
+      [outerArrow]
+    )
+
+    // 8. 创建 h(defineReactiveExpression(...))
+    const hCall = SlimeAstCreateUtils.createCallExpression(
+      SlimeAstCreateUtils.createIdentifier('h'),
+      [defineReactiveCall]
+    )
+
+    // 9. 返回 ExpressionStatement，作为数组元素
+    return {
+      type: SlimeAstTypeName.ExpressionStatement,
+      expression: hCall,
+      loc
+    } as SlimeExpressionStatement
   }
 
   // ==================== OVS 参数语法转换 ====================
