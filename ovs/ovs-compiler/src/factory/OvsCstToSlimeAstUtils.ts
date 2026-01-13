@@ -367,18 +367,11 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
     }
 
     // 创建 defineOvsComponent 包装
-    // declarations 放在箭头函数体内，expressions 作为渲染函数返回
+    // declarations 放在箭头函数体内，直接返回 VNode
 
-    // 将 finalExpr 包装成箭头函数：return () => finalExpr
-    // 这样每次渲染都会重新执行，Vue 能正确追踪响应式依赖
-    const renderArrowFunc = SlimeAstCreateUtils.createArrowFunctionExpression(
-      finalExpr,  // 表达式体（不是块语句）
-      [],         // 无参数
-      false,      // 非 async
-      false       // 非 generator
-    )
-
-    const returnStmt = SlimeAstCreateUtils.createReturnStatement(renderArrowFunc)
+    // 新的运行时：直接 return finalExpr（VNode）
+    // 运行时会自动包装为 () => finalExpr
+    const returnStmt = SlimeAstCreateUtils.createReturnStatement(finalExpr)
     const blockStatement = SlimeAstCreateUtils.createBlockStatement([...declarations, ...otherStatements, returnStmt])
     const arrowFunction = SlimeAstCreateUtils.createArrowFunctionExpression(
       blockStatement,
