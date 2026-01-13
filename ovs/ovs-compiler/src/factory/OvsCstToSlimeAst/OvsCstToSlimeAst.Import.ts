@@ -144,9 +144,6 @@ export abstract class OvsCstToSlimeAstImport extends OvsCstToSlimeAstStatement {
         // 确保有 defineOvsComponent 导入
         imports = this.ensureDefineOvsComponentImport(imports)
 
-        // 确保有 h 导入（用于响应式表达式包裹）
-        imports = this.ensureFragmentImport(imports)
-
         // 提取表达式值
         const exprValues = expressions.map(e =>
             e.type === SlimeAstTypeName.ExpressionStatement ? (e as any).expression : e
@@ -157,9 +154,16 @@ export abstract class OvsCstToSlimeAstImport extends OvsCstToSlimeAstStatement {
         if (exprValues.length === 1) {
             finalExpr = exprValues[0]
         } else {
-            // 多个表达式，用 Fragment 包装
-            imports = this.ensureFragmentImport(imports)
-            finalExpr = this.createFragmentWrapper(exprValues)
+            // 多个表达式，使用数组形式
+            // 注意：如果需要Fragment包装，用户应自行导入并使用
+            finalExpr = SlimeAstCreateUtils.createArrayExpression(
+                exprValues.map((expr, index) =>
+                    SlimeAstCreateUtils.createArrayElement(
+                        expr,
+                        index < exprValues.length - 1 ? SlimeTokenCreateUtils.createCommaToken() : undefined
+                    )
+                )
+            )
         }
 
         // 创建 defineOvsComponent 包装
@@ -255,57 +259,5 @@ export abstract class OvsCstToSlimeAstImport extends OvsCstToSlimeAstStatement {
             ],
             source: SlimeAstCreateUtils.createStringLiteral('ovsjs')
         }, ...imports]
-    }
-
-    /**
-     * 确保有 Fragment 和 h 导入
-     */
-    private ensureFragmentImport(imports: any[]): any[] {
-        for (const imp of imports) {
-            if (imp.source?.value === 'vue') {
-                const specs = imp.specifiers || []
-                if (!specs.some((s: any) => s.imported?.name === 'Fragment')) {
-                    specs.push({
-                        type: SlimeAstTypeName.ImportSpecifier,
-                        imported: SlimeAstCreateUtils.createIdentifier('Fragment'),
-                        local: SlimeAstCreateUtils.createIdentifier('Fragment')
-                    })
-                }
-                if (!specs.some((s: any) => s.imported?.name === 'h')) {
-                    specs.push({
-                        type: SlimeAstTypeName.ImportSpecifier,
-                        imported: SlimeAstCreateUtils.createIdentifier('h'),
-                        local: SlimeAstCreateUtils.createIdentifier('h')
-                    })
-                }
-                return imports
-            }
-        }
-        return [{
-            type: SlimeAstTypeName.ImportDeclaration,
-            specifiers: [
-                { type: SlimeAstTypeName.ImportSpecifier, imported: SlimeAstCreateUtils.createIdentifier('Fragment'), local: SlimeAstCreateUtils.createIdentifier('Fragment') },
-                { type: SlimeAstTypeName.ImportSpecifier, imported: SlimeAstCreateUtils.createIdentifier('h'), local: SlimeAstCreateUtils.createIdentifier('h') }
-            ],
-            source: SlimeAstCreateUtils.createStringLiteral('vue')
-        }, ...imports]
-    }
-
-    /**
-     * 创建 Fragment 包装
-     */
-    private createFragmentWrapper(expressions: any[]): any {
-        const arrayElements = expressions.map((expr, index) => {
-            const isLast = index === expressions.length - 1
-            return SlimeAstCreateUtils.createArrayElement(expr, isLast ? undefined : SlimeTokenCreateUtils.createCommaToken())
-        })
-        return SlimeAstCreateUtils.createCallExpression(
-            SlimeAstCreateUtils.createIdentifier('h'),
-            [
-                SlimeAstCreateUtils.createIdentifier('Fragment'),
-                SlimeAstCreateUtils.createNullLiteralToken(),
-                SlimeAstCreateUtils.createArrayExpression(arrayElements)
-            ]
-        )
     }
 }
