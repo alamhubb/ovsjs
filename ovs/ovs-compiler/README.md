@@ -182,36 +182,68 @@ new OvsCstToSlimeAst()  // 再初始化
 
 ### 核心设计
 
-统一使用 `h(defineReactiveExpression(() => ...))` 进行响应式包裹，根据语句类型选择简单形式或块形式：
+编译器使用 **AST 判断逻辑**（而非 CST）来决定如何处理不同类型的语句。
 
-| 语句类型 | 包裹形式 | 说明 |
-|----------|----------|------|
-| `OvsRenderStatement` | 不包裹 | 已经是 VNode |
-| `ExpressionStatement` (普通表达式) | `h(defineReactiveExpression(() => expr))` | 简单形式 |
-| `IfStatement` / `ForStatement` 等 | `h(defineReactiveExpression(() => { const children = []; ...; return children }))` | 块形式 |
-| `VariableStatement` | 块形式 | 需要 IIFE 隔离作用域 |
-| `NoRenderBlock` | 块形式 | 显式不渲染块 |
+### 三种处理方式
 
-### IIFE 判断逻辑 (`isIIFERequiredByCst`)
+| 类型 | 示例 | 处理方式 |
+|------|------|----------|
+| **需要父级 IIFE** | `let x = ref(0)`、`#{ ... }`、`x++` | 触发父容器使用复杂模式（IIFE 包裹），语句本身不包裹 |
+| **需要响应式 IIFE 包裹** | `if (...) { ... }`、`for (...) { ... }` | 包裹为 `defineReactiveExpression(() => { const children = []; ...; return children })` |
+| **需要响应式简单包裹** | `"Hello"`、`count.value` | 包裹为 `defineReactiveExpression(() => expr)` |
+
+### 判断函数
+
+#### 1. `needsParentIIFE(stmt)` - 判断是否需要父级复杂模式
 
 ```typescript
-// 判断 CST 节点是否需要块形式包裹
-private isIIFERequiredByCst(cstNode: SubhutiCst): boolean {
-  const name = cstNode.name
+private needsParentIIFE(stmt: SlimeStatement): boolean {
+  // 1. 变量声明 → 需要父级 IIFE（作用域隔离）
+  if (stmt.type === 'VariableDeclaration') return true
 
-  // OvsRenderStatement → 不需要包裹
-  if (name === 'OvsRenderStatement') return false
+  // 2. NoRenderBlock 子节点（带标记）→ 需要父级 IIFE
+  if (stmt._isFromNoRenderBlock) return true
 
-  // NoRenderBlock → 需要块形式
-  if (name === 'NoRenderBlock') return true
-
-  // ExpressionStatement → 检查副作用（如 x++, x = 1）
-  if (name === 'ExpressionStatement') {
-    return this.containsSideEffectByCst(cstNode)
+  // 3. 副作用表达式（赋值、更新等）→ 需要父级 IIFE
+  if (stmt.type === 'ExpressionStatement') {
+    return isSideEffectExpression(stmt.expression)  // x++, x = 1
   }
 
-  // 其他都需要块形式（IfStatement, ForStatement, VariableStatement 等）
+  return false
+}
+```
+
+#### 2. `needsReactiveWrap(stmt)` - 判断是否需要在 createStatementListItemAst 中包裹
+
+```typescript
+private needsReactiveWrap(stmt: SlimeStatement): boolean {
+  // 复用：needsParentIIFE 返回 true 的不需要响应式包裹
+  if (this.needsParentIIFE(stmt)) return false
+  
+  // ExpressionStatement 已在 createExpressionStatementAst 中处理
+  if (stmt.type === 'ExpressionStatement') return false
+  
+  // 其他（控制流语句 if/for/while/switch 等）→ 需要响应式包裹
   return true
+}
+```
+
+#### 3. `isSideEffectExpression(expr)` - 判断是否是副作用表达式
+
+```typescript
+private isSideEffectExpression(expr: SlimeExpression): boolean {
+  // 赋值表达式：x = 1, x += 1
+  if (expr.type === 'AssignmentExpression') return true
+  
+  // 更新表达式：x++, ++x
+  if (expr.type === 'UpdateExpression') return true
+  
+  // delete/void 表达式
+  if (expr.type === 'UnaryExpression') {
+    if (expr.operator === 'delete' || expr.operator === 'void') return true
+  }
+  
+  return false
 }
 ```
 
@@ -229,19 +261,17 @@ div {
 **编译为**：
 ```typescript
 $OvsHtmlTag.div({}, [
-  h(defineReactiveExpression(() => "Hello")),
-  h(defineReactiveExpression(() => count.value))
+  defineReactiveExpression(() => "Hello"),
+  defineReactiveExpression(() => count.value)
 ])
 ```
 
-#### `if` 语句（块形式）
+#### `if` 语句（控制流）
 
 ```ovs
 div {
   if (isVisible) {
     p { "Visible" }
-  } else {
-    p { "Hidden" }
   }
 }
 ```
@@ -249,43 +279,37 @@ div {
 **编译为**：
 ```typescript
 $OvsHtmlTag.div({}, [
-  h(defineReactiveExpression(() => {
+  defineReactiveExpression(() => {
     const children = [];
     if (isVisible) {
       children.push($OvsHtmlTag.p({}, [
-        h(defineReactiveExpression(() => {
-          const children = [];
-          children.push(h(defineReactiveExpression(() => "Visible")));
-          return children;
-        }))
-      ]));
-    } else {
-      children.push($OvsHtmlTag.p({}, [
-        h(defineReactiveExpression(() => {
-          const children = [];
-          children.push(h(defineReactiveExpression(() => "Hidden")));
-          return children;
-        }))
+        defineReactiveExpression(() => "Visible")
       ]));
     }
     return children;
-  }))
+  })
 ])
 ```
 
-#### OvsRenderStatement（不包裹）
+#### 变量声明（触发父级 IIFE）
 
 ```ovs
 div {
-  span { "Always" }
+  let count = ref(0)
+  span { count.value }
 }
 ```
 
 **编译为**：
 ```typescript
-$OvsHtmlTag.div({}, [
-  $OvsHtmlTag.span({}, ["Always"])
-])
+defineOvsComponent(() => {
+  const children = [];
+  let count = ref(0);  // 变量声明在 IIFE 内，不包裹
+  children.push($OvsHtmlTag.span({}, [
+    defineReactiveExpression(() => count.value)
+  ]));
+  return $OvsHtmlTag.div({}, children);
+})({}, [])
 ```
 
 ### 双层模式架构
@@ -293,16 +317,17 @@ $OvsHtmlTag.div({}, [
 OVS 编译器使用双层模式来处理渲染元素：
 
 1. **简单模式 (`createSimpleView`)**：当标签内部只有简单表达式和渲染语句时，直接生成数组形式的 children
-2. **复杂模式 (`createComplexIIFE`)**：当标签内部包含需要作用域隔离的语句（如 `if`、`for`、变量声明等）时，生成 IIFE 包裹以保持变量作用域
+2. **复杂模式 (`createComplexIIFE`)**：当标签内部包含变量声明、NoRenderBlock 或副作用表达式时，生成 IIFE 包裹以保持变量作用域
 
-模式选择由 `needsIIFEByCst` 函数判断。
+模式选择由 `needsParentIIFE` 函数判断。
 
 ### 设计优势
 
-1. **统一响应式处理**：所有动态内容通过 `defineReactiveExpression` 包裹，响应式数据变化触发重新渲染
-2. **作用域隔离**：复杂模式通过 `defineOvsComponent` IIFE 包裹，确保变量声明不会泄露
-3. **块形式支持控制流**：`if`/`for` 等语句使用 `const children = []; ...; return children` 模式，内部元素通过 `children.push()` 收集
-4. **副作用表达式隔离**：`x++`、`x = 1` 等副作用表达式使用块形式，避免返回值被错误渲染
+1. **AST 判断更准确**：使用 AST 类型判断，避免 CST 嵌套结构导致的误判
+2. **统一响应式处理**：所有动态内容通过 `defineReactiveExpression` 包裹
+3. **作用域隔离**：变量声明通过父级 IIFE（`defineOvsComponent`）处理，保持作用域
+4. **控制流响应式**：`if`/`for` 等语句通过 `defineReactiveExpression` IIFE 包裹，内容可响应式更新
+5. **副作用表达式隔离**：`x++`、`x = 1` 等不渲染，只执行副作用
 
 ## API
 
