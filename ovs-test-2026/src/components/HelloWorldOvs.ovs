@@ -8,53 +8,53 @@ div(class="level-1", style="border: 2px solid red; padding: 20px; margin: 10px;"
     "Level 1: "
     count1.value
   }
-  
+
   button(
-    onClick() { 
-      count1.value++ 
+    onClick() {
+      count1.value++
     },
     style="margin: 10px; padding: 8px 16px; cursor: pointer;"
   ) {
     "Click L1"
   }
-  
+
   // 条件渲染：count1 为偶数时显示红色背景
   if (count1.value % 2 === 0) {
     div(style="background: red; padding: 10px; color: white;") {
       "偶数！"
     }
   }
-  
+
   // 第二层（IIFE 作用域）
   div(class="level-2", style="border: 2px solid green; padding: 15px; margin: 10px;") {
     let count2 = ref(0)
-    
+
     h2 {
       "Level 2: "
-      { count2.value }
+      count2.value
     }
-    
+
     button(
-      onClick() { 
-        count2.value++ 
+      onClick() {
+        count2.value++
       },
       style="margin: 10px; padding: 8px 16px; cursor: pointer;"
     ) {
       "Click L2"
     }
-    
+
     // 第三层（IIFE 作用域）
     div(class="level-3", style="border: 2px solid blue; padding: 10px; margin: 10px;") {
       let count3 = ref(0)
-      
+
       h3 {
         "Level 3: "
-        { count3.value }
+        count3.value
       }
-      
+
       button(
-        onClick() { 
-          count3.value++ 
+        onClick() {
+          count3.value++
         },
         style="margin: 10px; padding: 8px 16px; cursor: pointer;"
       ) {

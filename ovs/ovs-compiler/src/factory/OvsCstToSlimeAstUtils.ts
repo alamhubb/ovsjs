@@ -134,93 +134,80 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
   }
 
   /**
-   * 判断 CST 表达式是否是副作用表达式（不应该渲染）
+   * 判断 AST 表达式是否是副作用表达式（不应该渲染）
    * 
-   * 参考 isSideEffectExpression（AST 版本），这是 CST 版本
    * - AssignmentExpression: x = 1
    * - UpdateExpression: x++
    * - UnaryExpression + delete/void
    */
-  private isSideEffectExpressionByCst(cstNode: SubhutiCst): boolean {
-    const name = cstNode.name
+  private isSideEffectExpression(expr: SlimeExpression): boolean {
+    const type = expr.type
 
     // 赋值表达式
-    if (name === SlimeParser.prototype.AssignmentExpression.name) return true
+    if (type === SlimeAstTypeName.AssignmentExpression) return true
 
     // 更新表达式
-    if (name === SlimeParser.prototype.UpdateExpression.name) return true
+    if (type === SlimeAstTypeName.UpdateExpression) return true
 
-    // delete/void 表达式需要检查子节点
-    if (name === SlimeParser.prototype.UnaryExpression.name) {
-      // 检查是否包含 delete 或 void 关键字
-      const hasDelete = cstNode.children?.some(c => c.value === 'delete')
-      const hasVoid = cstNode.children?.some(c => c.value === 'void')
-      if (hasDelete || hasVoid) return true
+    // delete/void 表达式
+    if (type === SlimeAstTypeName.UnaryExpression) {
+      const unary = expr as any
+      if (unary.operator === 'delete' || unary.operator === 'void') return true
     }
 
     return false
   }
 
   /**
-   * 判断单个 CST 节点是否需要 IIFE 包裹
+   * 判断语句是否需要父级使用复杂模式（IIFE）
    * 
-   * 规则：
-   * 1. NoRenderBlock → 需要 IIFE
-   * 2. 不是 ExpressionStatement 和 OvsRenderStatement 就需要 IIFE
-   * 3. ExpressionStatement 内包含副作用表达式也需要 IIFE
+   * 只有以下情况需要父级 IIFE：
+   * 1. VariableDeclaration - 需要作用域隔离
+   * 2. NoRenderBlock 子节点（带标记）- 需要执行但不渲染
+   * 3. 副作用表达式 - 需要执行但不渲染
+   * 
+   * 控制流语句（if/for）已在 createStatementListItemAst 中被转换为
+   * ExpressionStatement（包含 defineReactiveExpression），不需要父级 IIFE
    */
-  private isIIFERequiredByCst(cstNode: SubhutiCst): boolean {
-    const name = cstNode.name
-
-    // OvsRenderStatement → 不需要 IIFE
-    if (name === OvsParser.prototype.OvsRenderStatement.name) return false
-
-    // NoRenderBlock → 需要 IIFE（显式判断，提高可读性，实际被最后的 return true 兜底）
-    if (name === OvsParser.prototype.NoRenderBlock.name) return true
-
-    // ExpressionStatement → 检查是否包含副作用表达式
-    if (name === SlimeParser.prototype.ExpressionStatement.name) {
-      return this.containsSideEffectByCst(cstNode)
+  private needsParentIIFE(stmt: SlimeStatement): boolean {
+    // 1. 变量声明 → 需要父级 IIFE（作用域隔离）
+    if (stmt.type === SlimeAstTypeName.VariableDeclaration) {
+      return true
     }
 
-    // 其他都需要 IIFE（VariableStatement, IfStatement 等）
+    // 2. NoRenderBlock 子节点（带标记）→ 需要父级 IIFE
+    if ((stmt as any)._isFromNoRenderBlock) {
+      return true
+    }
+
+    // 3. 副作用表达式（赋值、更新等）→ 需要父级 IIFE
+    if (stmt.type === SlimeAstTypeName.ExpressionStatement) {
+      return this.isSideEffectExpression((stmt as SlimeExpressionStatement).expression)
+    }
+
+    // 其他（包括已转换的控制流语句）→ 不需要父级 IIFE
+    return false
+  }
+
+  /**
+   * 判断语句是否需要响应式包裹（defineReactiveExpression）
+   * 
+   * 逻辑：
+   * 1. needsParentIIFE 返回 true 的 → 不需要（由父级 IIFE 处理）
+   * 2. ExpressionStatement → 不需要（已在 createExpressionStatementAst 中处理）
+   * 3. 其他（控制流语句 if/for/while/switch 等）→ 需要响应式包裹
+   */
+  private needsReactiveWrap(stmt: SlimeStatement): boolean {
+    // 复用：needsParentIIFE 返回 true 的不需要响应式包裹
+    if (this.needsParentIIFE(stmt)) return false
+
+    // ExpressionStatement 已在 createExpressionStatementAst 中处理
+    if (stmt.type === SlimeAstTypeName.ExpressionStatement) return false
+
+    // 其他（控制流语句 if/for/while/switch 等）→ 需要响应式包裹
     return true
   }
 
-  /**
-   * 递归检查 CST 节点是否包含副作用表达式
-   * 找到一个就返回 true，找不到就返回 false
-   */
-  private containsSideEffectByCst(cstNode: SubhutiCst): boolean {
-    // 检查当前节点
-    if (this.isSideEffectExpressionByCst(cstNode)) return true
-
-    // 递归检查子节点
-    for (const child of cstNode.children || []) {
-      if (this.containsSideEffectByCst(child)) return true
-    }
-
-    return false
-  }
-
-  /**
-   * 通过 CST 判断是否需要 IIFE 包裹
-   * 
-   * 遍历子节点，如果有任何一个需要 IIFE，就返回 true
-   */
-  private needsIIFEByCst(statementListCst: SubhutiCst): boolean {
-    const children = statementListCst.children || []
-
-    for (const child of children) {
-      // StatementListItem 或直接是 Statement
-      const statementCst = child.children?.[0] || child
-      if (this.isIIFERequiredByCst(statementCst)) {
-        return true
-      }
-    }
-
-    return false
-  }
 
 
   /**
@@ -813,18 +800,17 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
     // 正常处理（调用父类）
     const stmts = super.createStatementListItemAst(cst)
 
-    // 在渲染上下文中（div {} 内且非 #{} 内），对需要 IIFE 的语句进行响应式包裹
+    // 在渲染上下文中（div {} 内且非 #{} 内），对控制流语句进行响应式包裹
     if (this.ovsRenderDomViewDepth > 0 && this.noRenderDepth === 0) {
-      // 找到 Statement 子节点来判断 CST 类型
-      const statementChild = cst.children?.find(
-        c => c.name === SlimeParser.prototype.Statement.name
-      )?.children?.[0]
-
-      // 使用 CST 判断是否需要 IIFE（复用公用逻辑）
-      if (statementChild && this.isIIFERequiredByCst(statementChild)) {
-        // 需要 IIFE：将语句包裹成 h(defineReactiveExpression(() => { ... }))
-        return stmts.map((stmt: SlimeStatement) => this.wrapStatementWithReactiveExpression(stmt, statementChild, cst.loc))
-      }
+      // 遍历 stmts，对需要响应式包裹的语句（控制流语句）进行包裹
+      return stmts.map((stmt: SlimeStatement) => {
+        if (this.needsReactiveWrap(stmt)) {
+          // 控制流语句（if/for/while）需要响应式包裹
+          return this.wrapStatementWithReactiveExpression(stmt, null, cst.loc)
+        }
+        // 变量声明、普通表达式等直接返回
+        return stmt
+      })
     }
 
     return stmts
@@ -833,17 +819,17 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
   /**
    * 将语句包裹为响应式表达式
    * 
-   * 根据 CST 判断使用简单形式还是块形式：
-   * - 纯表达式 → h(defineReactiveExpression(() => expr))
-   * - 有语句（if/let/for）→ h(defineReactiveExpression(() => { const children = []; ...; return children }))
+   * 根据语句类型判断使用简单形式还是块形式：
+   * - ExpressionStatement → defineReactiveExpression(() => expr)
+   * - 其他（if/for/while）→ defineReactiveExpression(() => { const children = []; ...; return children })
    */
   private wrapStatementWithReactiveExpression(
     stmt: SlimeStatement,
-    statementCst: SubhutiCst,
+    _unused?: any,  // 保留参数位置兼容性
     loc?: any
   ): SlimeStatement {
-    // 使用 CST 判断是否需要块形式（复用公用逻辑）
-    const needsBlockForm = this.isIIFERequiredByCst(statementCst)
+    // ExpressionStatement → 简单包裹，其他 → IIFE 块形式包裹
+    const needsBlockForm = stmt.type !== SlimeAstTypeName.ExpressionStatement
 
     let arrowBody: SlimeExpression | SlimeBlockStatement
 
@@ -1022,7 +1008,7 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
 
       // 3. 副作用表达式（赋值、更新、delete）→ 不渲染
       // 这些表达式的主要目的是副作用，返回值只是副产品
-      if (this.isSideEffectExpressionByCst(exprCst)) {
+      if (this.isSideEffectExpression(expr)) {
         return {
           type: SlimeAstTypeName.ExpressionStatement,
           expression: expr,
@@ -1187,10 +1173,6 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
         child.name === statementListName
       )
 
-      // 先用 CST 判断是否需要 IIFE（在转换 AST 之前）
-      // CST 判断：NoRenderBlock、VariableStatement 等需要作用域隔离的语句
-      const needsComplexMode = statementListCst ? this.needsIIFEByCst(statementListCst) : false
-
       // StatementList是可选的（空div也合法）
       // 转换 StatementList，会自动处理所有语句
       // NoRenderBlock #{} 会被展开，其内部语句直接平铺
@@ -1207,6 +1189,10 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
           }
         }
       }
+
+      // 用 AST 判断是否需要复杂模式
+      // 只有变量声明、NoRenderBlock、副作用表达式需要父级 IIFE
+      const needsComplexMode = bodyStatements.some(stmt => this.needsParentIIFE(stmt))
 
       const currentAttrsVarName = this.attrsVarNameStack[this.attrsVarNameStack.length - 1]
 
