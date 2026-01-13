@@ -6,7 +6,7 @@ let count1 = ref(0)
 div(class="level-1", style="border: 2px solid red; padding: 20px; margin: 10px;") {
   h1 {
     "Level 1: "
-    { count1.value }
+    count1.value
   }
   
   button(
@@ -16,6 +16,13 @@ div(class="level-1", style="border: 2px solid red; padding: 20px; margin: 10px;"
     style="margin: 10px; padding: 8px 16px; cursor: pointer;"
   ) {
     "Click L1"
+  }
+  
+  // 条件渲染：count1 为偶数时显示红色背景
+  if (count1.value % 2 === 0) {
+    div(style="background: red; padding: 10px; color: white;") {
+      "偶数！"
+    }
   }
   
   // 第二层（IIFE 作用域）
