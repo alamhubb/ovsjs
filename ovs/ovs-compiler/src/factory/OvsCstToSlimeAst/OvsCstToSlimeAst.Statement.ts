@@ -255,12 +255,41 @@ export abstract class OvsCstToSlimeAstStatement extends OvsCstToSlimeAstProperty
     }
 
     /**
-     * 创建渲染表达式语句 - 包装为 children.push(defineReactiveExpression(() => expr))
+     * 创建渲染表达式语句
      * 
-     * 响应式包裹使表达式能够响应数据变化
+     * 优化：静态Literal不需要defineReactiveExpression包裹
+     * - 静态表达式：children.push(expr)
+     * - 动态表达式：children.push(defineReactiveExpression(() => expr))
      */
     private createRenderExpressionStatement(expr: SlimeExpression, loc: any): SlimeExpressionStatement {
-        // 使用公共方法创建 children.push(defineReactiveExpression(() => expr))
+        // 优化：Literal 是静态的，不需要响应式包裹
+        if (expr.type === SlimeAstTypeName.Literal) {
+            return this.createSimplePushStatement(expr, loc)
+        }
+
+        // 动态表达式：使用响应式包裹
         return this.createReactivePushStatement(expr, loc)
+    }
+
+    /**
+     * 创建简单的 children.push(expr) 语句（无响应式包裹）
+     */
+    private createSimplePushStatement(expr: SlimeExpression, loc: any): SlimeExpressionStatement {
+        const pushCall = SlimeAstCreateUtils.createCallExpression(
+            SlimeAstCreateUtils.createMemberExpression(
+                SlimeAstCreateUtils.createIdentifier('children'),
+                SlimeTokenCreateUtils.createDotToken(loc),
+                SlimeAstCreateUtils.createIdentifier('push')
+            ),
+            [expr]
+        )
+        if (loc) {
+            pushCall.loc = loc
+        }
+        return {
+            type: SlimeAstTypeName.ExpressionStatement,
+            expression: pushCall,
+            loc: loc
+        } as SlimeExpressionStatement
     }
 }
