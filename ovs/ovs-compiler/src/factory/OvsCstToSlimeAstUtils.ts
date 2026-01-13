@@ -170,6 +170,93 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
     registerOvsCstToSlimeAst(this)  // 只注册到 ovs 层
   }
 
+  /**
+   * 判断 CST 表达式是否是副作用表达式（不应该渲染）
+   * 
+   * 参考 isSideEffectExpression（AST 版本），这是 CST 版本
+   * - AssignmentExpression: x = 1
+   * - UpdateExpression: x++
+   * - UnaryExpression + delete/void
+   */
+  private isSideEffectExpressionByCst(cstNode: SubhutiCst): boolean {
+    const name = cstNode.name
+
+    // 赋值表达式
+    if (name === SlimeParser.prototype.AssignmentExpression.name) return true
+
+    // 更新表达式
+    if (name === SlimeParser.prototype.UpdateExpression.name) return true
+
+    // delete/void 表达式需要检查子节点
+    if (name === SlimeParser.prototype.UnaryExpression.name) {
+      // 检查是否包含 delete 或 void 关键字
+      const hasDelete = cstNode.children?.some(c => c.value === 'delete')
+      const hasVoid = cstNode.children?.some(c => c.value === 'void')
+      if (hasDelete || hasVoid) return true
+    }
+
+    return false
+  }
+
+  /**
+   * 判断单个 CST 节点是否需要 IIFE 包裹
+   * 
+   * 规则：
+   * 1. NoRenderBlock → 需要 IIFE
+   * 2. 不是 ExpressionStatement 和 OvsRenderStatement 就需要 IIFE
+   * 3. ExpressionStatement 内包含副作用表达式也需要 IIFE
+   */
+  private isIIFERequiredByCst(cstNode: SubhutiCst): boolean {
+    const name = cstNode.name
+
+    // NoRenderBlock → 需要 IIFE（显式判断，提高可读性，实际被最后的 return true 兜底）
+    if (name === OvsParser.prototype.NoRenderBlock.name) return true
+
+    // OvsRenderStatement → 不需要 IIFE
+    if (name === OvsParser.prototype.OvsRenderStatement.name) return false
+
+    // ExpressionStatement → 检查是否包含副作用表达式
+    if (name === SlimeParser.prototype.ExpressionStatement.name) {
+      return this.containsSideEffectByCst(cstNode)
+    }
+
+    // 其他都需要 IIFE（VariableStatement, IfStatement 等）
+    return true
+  }
+
+  /**
+   * 检查 CST 节点是否是或包含副作用表达式
+   */
+  private containsSideEffectByCst(cstNode: SubhutiCst): boolean {
+    // 只检查当前节点和第一个子节点（表达式节点）
+    if (this.isSideEffectExpressionByCst(cstNode)) return true
+
+    // ExpressionStatement 的第一个子节点是表达式
+    const firstChild = cstNode.children?.[0]
+    if (firstChild && this.isSideEffectExpressionByCst(firstChild)) return true
+
+    return false
+  }
+
+  /**
+   * 通过 CST 判断是否需要 IIFE 包裹
+   * 
+   * 遍历子节点，如果有任何一个需要 IIFE，就返回 true
+   */
+  private needsIIFEByCst(statementListCst: SubhutiCst): boolean {
+    const children = statementListCst.children || []
+
+    for (const child of children) {
+      // StatementListItem 或直接是 Statement
+      const statementCst = child.children?.[0] || child
+      if (this.isIIFERequiredByCst(statementCst)) {
+        return true
+      }
+    }
+
+    return false
+  }
+
 
   /**
    * 将 CST 转换为 Program AST
@@ -746,12 +833,8 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
 
           if (innerList) {
             // 递归处理内部语句，直接展开
+            // IIFE 判断已在父节点层面通过 CST 类型判断完成
             const innerStatements = this.createStatementListAst(innerList)
-            // ✨ 标记这些语句来自 #{} 块
-            // 后续 IIFE 决策会根据此标记判断是否需要复杂模式
-            innerStatements.forEach(stmt => {
-              (stmt as any).__fromNoRenderBlock = true
-            })
             return innerStatements  // 返回数组（会被展开）
           }
 
@@ -1038,6 +1121,10 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
         child.name === statementListName
       )
 
+      // 先用 CST 判断是否需要 IIFE（在转换 AST 之前）
+      // CST 判断：NoRenderBlock、非 ExpressionStatement
+      let needsComplexMode = statementListCst ? this.needsIIFEByCst(statementListCst) : false
+
       // StatementList是可选的（空div也合法）
       // 转换 StatementList，会自动处理所有语句
       // NoRenderBlock #{} 会被展开，其内部语句直接平铺
@@ -1055,39 +1142,7 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
         }
       }
 
-      // 判断是否有复杂语句（需要 IIFE）
-      //
-      // IIFE 判断规则：
-      // 只要满足以下任一条件，就需要复杂模式（IIFE）：
-      // 1. 有非 ExpressionStatement（声明/控制流）
-      // 2. 有来自 #{} 不渲染块的语句
-      // 3. 有副作用表达式（赋值/更新/delete）—— 这些不会变成 children.push()
-      //
-      // 这与 createExpressionStatementAst 中的渲染判断逻辑保持一致：
-      // - 副作用表达式不渲染，所以需要 IIFE 来执行它们
-      // - 求值表达式会变成 children.push()，可以内联到数组中
-      const hasComplexStatements = bodyStatements.some(stmt => {
-        // 情况1: 非 ExpressionStatement（声明/控制流）
-        if (stmt.type !== SlimeAstTypeName.ExpressionStatement) {
-          return true
-        }
-
-        // 情况2: 来自 #{} 不渲染块的语句
-        if ((stmt as any).__fromNoRenderBlock) {
-          return true
-        }
-
-        // 情况3: 副作用表达式（赋值/更新/delete）
-        // 这些表达式不会变成 children.push()，需要在 IIFE 中执行
-        const expr = (stmt as SlimeExpressionStatement).expression
-        if (expr && isSideEffectExpression(expr)) {
-          return true
-        }
-
-        return false
-      })
-
-      const isSimple = !hasComplexStatements
+      const isSimple = !needsComplexMode
       const currentAttrsVarName = this.attrsVarNameStack[this.attrsVarNameStack.length - 1]
 
       if (isSimple) {
