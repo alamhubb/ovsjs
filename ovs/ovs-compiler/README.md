@@ -13,16 +13,28 @@
 3. **组件包装** - 自动包装为 Vue 组件 (`defineOvsComponent`)
 4. **CSSTS 集成** - 继承 CSSTS 的原子类转换能力
 
-## OvsCstToSlimeAst 扩展机制
+## OvsCstToSlimeAst 模块化架构
 
-`OvsCstToSlimeAst` 继承自 `cssts-compiler` 的 `CssTsCstToAst`，形成三层继承链：
+`OvsCstToSlimeAst` 采用分层继承架构，每层负责不同的转换职责：
 
 ```
-SlimeCstToAst (slime-parser)
-    ↓
 CssTsCstToAst (cssts-compiler)
     ↓
-OvsCstToSlimeAst (ovs-compiler)
+OvsCstToSlimeAstHelpers - 基础辅助方法
+    ↓
+OvsCstToSlimeAstJudgement - 判断逻辑 (needsParentIIFE, needsReactiveWrap)
+    ↓
+OvsCstToSlimeAstIIFE - IIFE 和响应式包裹
+    ↓
+OvsCstToSlimeAstView - 视图创建 (createSimpleView, createComplexIIFE)
+    ↓
+OvsCstToSlimeAstProperty - OVS 属性转换
+    ↓
+OvsCstToSlimeAstStatement - 语句转换 (StatementList, if/for 响应式包裹)
+    ↓
+OvsCstToSlimeAstImport - 导入管理
+    ↓
+OvsCstToSlimeAst - 主类 ⭐
 ```
 
 ### 全局注册与继承链
@@ -83,6 +95,47 @@ new OvsCstToSlimeAst()
 
 export default OvsCstToSlimeAstUtils
 ```
+
+### 为什么需要全局注册 + Proxy？
+
+#### 问题场景
+
+假设 `slime-parser` 内部有这样的代码：
+
+```typescript
+// slime-parser 内部
+SlimeCstToAstUtils.createPrimaryExpressionAst(cst)
+```
+
+**问题**：如果直接实例化 `SlimeCstToAst`，上面的调用**无法**使用 `OvsCstToSlimeAst` 重写的方法！这意味着 OVS 的自定义语法处理不会生效。
+
+#### 解决方案
+
+通过 **全局注册 + Proxy 代理**，实现跨层多态：
+
+1. **全局变量**：每层维护一个全局变量存储当前实例
+2. **注册函数**：在构造函数中注册 `this`（最终子类实例）
+3. **Proxy 代理**：动态将方法调用路由到注册的实例
+
+```
+调用 SlimeCstToAstUtils.xxx()
+    ↓
+Proxy 拦截 → 获取 _SlimeCstToAstUtils.xxx
+    ↓
+_SlimeCstToAstUtils 指向 OvsCstToSlimeAst 实例
+    ↓
+调用 OvsCstToSlimeAst 的方法 ✅
+```
+
+#### 类比理解
+
+可以把它理解为**依赖注入容器**：
+- `registerOvsCstToSlimeAst()` = 注册服务实现
+- `OvsCstToSlimeAstUtils` = 服务定位器（Service Locator）
+- Proxy = 透明代理，调用方无需关心具体实现
+
+这种模式让**基层库**（slime-parser）预留扩展点，**上层库**（ovs-compiler）可以无缝替换实现！
+
 
 ### 继承链注册流程
 
@@ -261,8 +314,8 @@ div {
 **编译为**：
 ```typescript
 $OvsHtmlTag.div({}, [
-  defineReactiveExpression(() => "Hello"),
-  defineReactiveExpression(() => count.value)
+  "Hello",  // 静态字符串，不包裹
+  defineReactiveExpression(() => count.value)  // 动态内容，包裹
 ])
 ```
 
@@ -328,6 +381,38 @@ OVS 编译器使用双层模式来处理渲染元素：
 3. **作用域隔离**：变量声明通过父级 IIFE（`defineOvsComponent`）处理，保持作用域
 4. **控制流响应式**：`if`/`for` 等语句通过 `defineReactiveExpression` IIFE 包裹，内容可响应式更新
 5. **副作用表达式隔离**：`x++`、`x = 1` 等不渲染，只执行副作用
+6. **静态 Literal 优化**：字符串、数字等静态内容不需要 `defineReactiveExpression` 包裹
+
+## NoRenderBlock `#{}` 语法
+
+`#{}` 块用于执行副作用代码，块内的代码不会被渲染到 children 中。
+
+### 示例
+
+```ovs
+div {
+  "Hello"
+  
+  #{
+    console.log("副作用代码，不渲染")
+    let sideEffectVar = count.value * 2
+  }
+  
+  count.value
+}
+```
+
+**编译为**：
+```typescript
+defineOvsComponent(() => {
+  const children = [];
+  children.push("Hello");
+  console.log("副作用代码，不渲染");  // 直接执行，不放入 children
+  let sideEffectVar = count.value * 2;  // 直接执行
+  children.push(defineReactiveExpression(() => count.value));
+  return $OvsHtmlTag.div({}, children);
+})({},[]);
+```
 
 ## API
 

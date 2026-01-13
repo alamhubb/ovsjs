@@ -55,4 +55,10 @@ div(class="level-1", style="border: 2px solid red; padding: 20px; margin: 10px;"
     }
   }
 
+  // NoRenderBlock测试 - #{} 内的代码不会被渲染
+  #{
+    console.log("这是副作用代码，不会被渲染")
+    let sideEffectVar = count1.value * 2
+  }
+
 }
