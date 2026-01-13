@@ -11,10 +11,10 @@ import HelloWorldManual from './components/HelloWorldManual.vue'
       <h2>手写三层嵌套（验证方案）</h2>
       <HelloWorldManual></HelloWorldManual>
       
-      <hr style="margin: 40px 0;" />
+<!--      <hr style="margin: 40px 0;" />-->
       
-      <h2>OVS 编译（原始）</h2>
-      <HelloWorld></HelloWorld>
+<!--      <h2>OVS 编译（原始）</h2>-->
+<!--      <HelloWorld></HelloWorld>-->
     </div>
   </header>
 </template>
