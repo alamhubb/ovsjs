@@ -1,6 +1,6 @@
 <script lang="ts">
 import { defineOvsComponent, $OvsHtmlTag } from 'ovsjs'
-import {defineComponent, h, ref, type VNodeChild} from 'vue'
+import { defineComponent, h, ref, type VNodeChild } from 'vue'
 const defineReactiveComponent = (getter: () => VNodeChild) => h(defineComponent(() => getter))
 
 
@@ -83,10 +83,7 @@ export default defineOvsComponent(() => {
 
     console.log('[OVS Root] setup 结束')
 
-    return () => {
-        console.log('[OVS Root] render 执行')
-        return content
-    }
+    return content
 })
 </script>
 
