@@ -21,6 +21,30 @@ export type OvsRenderFunction = () => VNodeChild
  */
 export type OvsComponentFactory = (props: OvsProps) => VNodeChild
 
+/**
+ * 可调用的 OVS 组件类型
+ * 
+ * OVS 组件是一个函数，可以像这样调用：
+ * - MyComponent({}, [])  // OVS 风格
+ * - h(MyComponent, {})   // Vue 风格
+ */
+export type OvsCallableComponent = Component & {
+    /**
+     * OVS 调用签名
+     * @param props - 组件属性
+     * @param children - 子元素数组
+     */
+    (props?: Record<string, any>, children?: any[]): VNode
+
+    /**
+     * Vue 调用签名（通过 h() 函数）
+     */
+    (props?: Record<string, any>, context?: any): VNode
+
+    __isOvsComponent?: boolean
+    __vueComponent?: Component
+}
+
 // ==================== 工具函数 ====================
 
 function isDefineComponent(value: unknown): boolean {
@@ -151,7 +175,7 @@ function createCallable(rawComponent: Component): any {
  * })
  * ```
  */
-export function defineOvsComponent(factory: OvsComponentFactory) {
+export function defineOvsComponent(factory: OvsComponentFactory): OvsCallableComponent {
     const component = defineComponent((props, { slots, attrs }) => {
         const unifiedProps = unifyProps(props, attrs, slots)
 

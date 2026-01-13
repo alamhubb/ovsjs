@@ -905,22 +905,16 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
       [arrowFunction]
     )
 
-    // 创建 h(defineReactiveExpression(...))
-    const hCall = SlimeAstCreateUtils.createCallExpression(
-      SlimeAstCreateUtils.createIdentifier('h'),
-      [defineReactiveCall]
-    )
-
-    // 创建 children.push(h(...))
-    // 在复杂模式下需要通过 push 收集渲染结果
-    // 在简单模式下 createSimpleView 会提取表达式放入数组
+    // defineReactiveExpression 已经内部调用了 h()，返回的是 VNode
+    // 所以不需要再包裹一层 h()
+    // 创建 children.push(defineReactiveExpression(...))
     const pushCall = SlimeAstCreateUtils.createCallExpression(
       SlimeAstCreateUtils.createMemberExpression(
         SlimeAstCreateUtils.createIdentifier('children'),
         SlimeTokenCreateUtils.createDotToken(loc),
         SlimeAstCreateUtils.createIdentifier('push')
       ),
-      [hCall]
+      [defineReactiveCall]  // 直接使用 defineReactiveCall，不再包裹 h()
     )
 
     return {
@@ -1049,7 +1043,7 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
   }
 
   /**
-   * 创建渲染表达式语句 - 包装为 children.push(h(defineReactiveExpression(() => expr)))
+   * 创建渲染表达式语句 - 包装为 children.push(defineReactiveExpression(() => expr))
    * 
    * 响应式包裹使表达式能够响应数据变化
    */
@@ -1068,20 +1062,16 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
       [arrowFunction]
     )
 
-    // 3. 创建 h(defineReactiveExpression(...))
-    const hCall = SlimeAstCreateUtils.createCallExpression(
-      SlimeAstCreateUtils.createIdentifier('h'),
-      [defineReactiveCall]
-    )
-
-    // 4. 创建 children.push(h(...))
+    // 3. defineReactiveExpression 已经内部调用了 h()，返回的是 VNode
+    //    所以不需要再包裹一层 h()
+    // 创建 children.push(defineReactiveExpression(...))
     const pushCall = SlimeAstCreateUtils.createCallExpression(
       SlimeAstCreateUtils.createMemberExpression(
         SlimeAstCreateUtils.createIdentifier('children'),
         SlimeTokenCreateUtils.createDotToken(loc),
         SlimeAstCreateUtils.createIdentifier('push')
       ),
-      [hCall]
+      [defineReactiveCall]  // 直接使用 defineReactiveCall
     )
     if (loc) {
       pushCall.loc = loc

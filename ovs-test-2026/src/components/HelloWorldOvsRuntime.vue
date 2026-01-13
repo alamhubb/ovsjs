@@ -1,87 +1,90 @@
 <script lang="ts">
+// 编译自: D:\project\parserall\ovsjs\ovs-test-2026\src\components\HelloWorldOvs.ovs
+// 编译时间: 2026/1/13 22:25:43
+
 import { $OvsHtmlTag, defineOvsComponent, defineReactiveExpression } from "ovsjs";
 import { ref, Fragment, h } from 'vue';
 export default defineOvsComponent(props => {
     let count1 = ref(0);
     return defineOvsComponent(() => {
         const children = [];
-        const temp$$attrs$$gbq3zo0n = {};
+        const temp$$attrs$$soeq63b6 = {};
         children.push(defineOvsComponent(() => {
             const children = [];
-            const temp$$attrs$$zh68s9a8 = {};
-            children.push(h(defineReactiveExpression(() => {
+            const temp$$attrs$$jvo59kfy = {};
+            children.push(defineReactiveExpression(() => {
                 const children = [];
-                children.push(h(defineReactiveExpression(() => "Level 1: ")));
+                children.push(defineReactiveExpression(() => "Level 1: "));
                 return children;
-            })));
-            children.push(h(defineReactiveExpression(() => {
+            }));
+            children.push(defineReactiveExpression(() => {
                 const children = [];
-                children.push(h(defineReactiveExpression(() => count1.value)));
+                children.push(defineReactiveExpression(() => count1.value));
                 return children;
-            })));
+            }));
             return $OvsHtmlTag.h1({}, children);
         })({}, []));
         children.push(defineOvsComponent(() => {
             const children = [];
-            const temp$$attrs$$dpjxf8q5 = {};
-            children.push(h(defineReactiveExpression(() => {
+            const temp$$attrs$$ox90j2ml = {};
+            children.push(defineReactiveExpression(() => {
                 const children = [];
-                children.push(h(defineReactiveExpression(() => "Click L1")));
+                children.push(defineReactiveExpression(() => "Click L1"));
                 return children;
-            })));
+            }));
             return $OvsHtmlTag.button({
                 onClick() {
                     count1.value++;
                 }, style: "margin: 10px; padding: 8px 16px; cursor: pointer;"
             }, children);
         })({}, []));
-        children.push(h(defineReactiveExpression(() => {
+        children.push(defineReactiveExpression(() => {
             const children = [];
             if (count1.value % 2 === 0) {
                 children.push(defineOvsComponent(() => {
                     const children = [];
-                    const temp$$attrs$$u4v6fsa9 = {};
-                    children.push(h(defineReactiveExpression(() => {
+                    const temp$$attrs$$yfoamhps = {};
+                    children.push(defineReactiveExpression(() => {
                         const children = [];
-                        children.push(h(defineReactiveExpression(() => "偶数！")));
+                        children.push(defineReactiveExpression(() => "偶数！"));
                         return children;
-                    })));
+                    }));
                     return $OvsHtmlTag.div({ style: "background: red; padding: 10px; color: white;" }, children);
                 })({}, []));
             } return children;
-        })));
+        }));
         children.push(defineOvsComponent(() => {
             const children = [];
-            const temp$$attrs$$lofo0pbp = {};
+            const temp$$attrs$$hoq9yx78 = {};
             let count2 = ref(0);
             children.push(defineOvsComponent(() => {
                 const children = [];
-                const temp$$attrs$$wpo3rf99 = {};
-                children.push(h(defineReactiveExpression(() => {
+                const temp$$attrs$$1aq4eeqz = {};
+                children.push(defineReactiveExpression(() => {
                     const children = [];
-                    children.push(h(defineReactiveExpression(() => "Level 2: ")));
+                    children.push(defineReactiveExpression(() => "Level 2: "));
                     return children;
-                })));
-                children.push(h(defineReactiveExpression(() => {
+                }));
+                children.push(defineReactiveExpression(() => {
                     const children = [];
                     {
-                        children.push(h(defineReactiveExpression(() => {
+                        children.push(defineReactiveExpression(() => {
                             const children = [];
-                            children.push(h(defineReactiveExpression(() => count2.value)));
+                            children.push(defineReactiveExpression(() => count2.value));
                             return children;
-                        })));
+                        }));
                     } return children;
-                })));
+                }));
                 return $OvsHtmlTag.h2({}, children);
             })({}, []));
             children.push(defineOvsComponent(() => {
                 const children = [];
-                const temp$$attrs$$3x31icbu = {};
-                children.push(h(defineReactiveExpression(() => {
+                const temp$$attrs$$8ol2z0dw = {};
+                children.push(defineReactiveExpression(() => {
                     const children = [];
-                    children.push(h(defineReactiveExpression(() => "Click L2")));
+                    children.push(defineReactiveExpression(() => "Click L2"));
                     return children;
-                })));
+                }));
                 return $OvsHtmlTag.button({
                     onClick() {
                         count2.value++;
@@ -90,36 +93,36 @@ export default defineOvsComponent(props => {
             })({}, []));
             children.push(defineOvsComponent(() => {
                 const children = [];
-                const temp$$attrs$$n3jzz5jb = {};
+                const temp$$attrs$$2gzv47zn = {};
                 let count3 = ref(0);
                 children.push(defineOvsComponent(() => {
                     const children = [];
-                    const temp$$attrs$$cn79k7ob = {};
-                    children.push(h(defineReactiveExpression(() => {
+                    const temp$$attrs$$un4f9agm = {};
+                    children.push(defineReactiveExpression(() => {
                         const children = [];
-                        children.push(h(defineReactiveExpression(() => "Level 3: ")));
+                        children.push(defineReactiveExpression(() => "Level 3: "));
                         return children;
-                    })));
-                    children.push(h(defineReactiveExpression(() => {
+                    }));
+                    children.push(defineReactiveExpression(() => {
                         const children = [];
                         {
-                            children.push(h(defineReactiveExpression(() => {
+                            children.push(defineReactiveExpression(() => {
                                 const children = [];
-                                children.push(h(defineReactiveExpression(() => count3.value)));
+                                children.push(defineReactiveExpression(() => count3.value));
                                 return children;
-                            })));
+                            }));
                         } return children;
-                    })));
+                    }));
                     return $OvsHtmlTag.h3({}, children);
                 })({}, []));
                 children.push(defineOvsComponent(() => {
                     const children = [];
-                    const temp$$attrs$$t4ow53i6 = {};
-                    children.push(h(defineReactiveExpression(() => {
+                    const temp$$attrs$$5nkvjxmx = {};
+                    children.push(defineReactiveExpression(() => {
                         const children = [];
-                        children.push(h(defineReactiveExpression(() => "Click L3")));
+                        children.push(defineReactiveExpression(() => "Click L3"));
                         return children;
-                    })));
+                    }));
                     return $OvsHtmlTag.button({
                         onClick() {
                             count3.value++;
