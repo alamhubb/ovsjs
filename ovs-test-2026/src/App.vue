@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import HelloWorld from './components/HelloWorld.ovs'
-import HelloWorldManual from './components/HelloWorldManual.vue'
+import HelloWorldOvs from './components/HelloWorldOvs.ovs'
 import HelloWorldOvsRuntime from './components/HelloWorldOvsRuntime.vue'
 </script>
 
@@ -9,18 +8,13 @@ import HelloWorldOvsRuntime from './components/HelloWorldOvsRuntime.vue'
     <img alt="Vue logo" class="logo" src="./assets/logo.png" width="125" height="125" />
 
     <div class="wrapper">
-      <h2>1. Vue h 函数（IIFE 嵌套）</h2>
-      <HelloWorldManual></HelloWorldManual>
+      <h2>1. OVS 运行时（手写 IIFE）</h2>
+      <HelloWorldOvsRuntime></HelloWorldOvsRuntime>
 
       <hr style="margin: 40px 0;" />
 
-      <h2>2. OVS 运行时（IIFE 嵌套）</h2>
-      <HelloWorldOvsRuntime></HelloWorldOvsRuntime>
-
-      <!--      <hr style="margin: 40px 0;" />-->
-
-      <!--      <h2>3. OVS 编译（原始）</h2>-->
-      <!--      <HelloWorld></HelloWorld>-->
+      <h2>2. OVS 编译（.ovs 文件）</h2>
+      <HelloWorldOvs></HelloWorldOvs>
     </div>
   </header>
 </template>

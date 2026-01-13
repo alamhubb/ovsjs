@@ -13,13 +13,13 @@ export type OvsProps = Record<string, any> & {
 /**
  * OVS 组件的渲染函数类型
  */
-export type OvsRenderFunction = () => VNode | VNodeChild
+export type OvsRenderFunction = () => VNodeChild
 
 /**
  * OVS 组件的 Factory 类型
  * 接收 props，返回 VNode
  */
-export type OvsComponentFactory = (props: OvsProps) => VNode | VNodeChild
+export type OvsComponentFactory = (props: OvsProps) => VNodeChild
 
 // ==================== 工具函数 ====================
 
