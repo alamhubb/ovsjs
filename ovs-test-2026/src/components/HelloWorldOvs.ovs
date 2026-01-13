@@ -44,6 +44,15 @@ div(class="level-1", style="border: 2px solid red; padding: 20px; margin: 10px;"
     }
   }
 
+  // map测试
   [1,2,3].map(item => div { item })
+
+  // for循环测试
+  for (let i = 0; i < 3; i++) {
+    div(style="background: #eee; margin: 5px; padding: 5px;") {
+      "Item "
+      i
+    }
+  }
 
 }

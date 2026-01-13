@@ -1,5 +1,5 @@
 // 编译自: d:\project\parserall\ovsjs\ovs-test-2026\src\components\HelloWorldOvs.ovs
-// 编译时间: 2026/1/14 01:26:05
+// 编译时间: 2026/1/14 01:32:09
 
 import {$OvsHtmlTag,defineOvsComponent,defineReactiveExpression} from "ovsjs";
 import {ref,Fragment,h} from 'vue';
@@ -21,7 +21,7 @@ export default defineOvsComponent(props => {
     }),
     defineOvsComponent(() => {
       const children = [];
-      const temp$$attrs$$wtpwses5 = {};
+      const temp$$attrs$$ccfo7dc0 = {};
       let count2 = ref(0);
       children.push($OvsHtmlTag.h2({},[
         "Level 2: ",
@@ -30,20 +30,19 @@ export default defineOvsComponent(props => {
       children.push($OvsHtmlTag.button({onClick(){
         count2.value++;
       },style:"margin: 10px; padding: 8px 16px; cursor: pointer;"},["Click L2"]));
-      children.push(defineOvsComponent(() => {
-        const children = [];
-        const temp$$attrs$$tm4jqngt = {};
-        let count3 = ref(0);
-        children.push($OvsHtmlTag.h3({},[
-          "Level 3: ",
-          defineReactiveExpression(() => count3.value)
-        ]));
-        children.push($OvsHtmlTag.button({onClick(){
-          count3.value++;
-        },style:"margin: 10px; padding: 8px 16px; cursor: pointer;"},["Click L3"]));
-        return $OvsHtmlTag.div({class:"level-3",style:"border: 2px solid blue; padding: 10px; margin: 10px;"},children);
-      })({},[]));
       return $OvsHtmlTag.div({class:"level-2",style:"border: 2px solid green; padding: 15px; margin: 10px;"},children);
-    })({},[])
+    })({},[]),
+    defineReactiveExpression(() => [1,2,3].map(item => $OvsHtmlTag.div({},[
+      defineReactiveExpression(() => item)
+    ]))),
+    defineReactiveExpression(() => {
+      const children = [];
+      for (let i = 0;i < 3;i++){
+        children.push($OvsHtmlTag.div({style:"background: #eee; margin: 5px; padding: 5px;"},[
+          "Item ",
+          defineReactiveExpression(() => i)
+        ]));
+      }      return children;
+    })
   ]);
 });
