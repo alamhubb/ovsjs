@@ -1,25 +1,7 @@
-import { h, reactive, isReactive, isRef, unref, defineComponent, markRaw } from 'vue'
-import type { Component, VNode, DefineComponent } from 'vue'
-
-// ==================== 类型定义 ====================
-
-export interface ReactiveVNodeState {
-    type: string | OvsComponent | Component
-    props: Record<string, any>
-    children: any
-}
-
-/**
- * OVS 组件类型
- * 接收 state，返回 Vue 组件
- */
-export type OvsComponent = (state: ReactiveVNodeState) => DefineComponent<any, any, any>
+import { h, isRef, unref, defineComponent, markRaw } from 'vue'
+import type { Component, DefineComponent } from 'vue'
 
 // ==================== 工具函数 ====================
-
-function ensureReactiveProps<T extends object>(obj: T): T {
-    return (isReactive(obj) ? obj : reactive(obj)) as T
-}
 
 function isDefineComponent(value: unknown): boolean {
     if (!value) return false
@@ -64,7 +46,6 @@ export function mapChildrenToVNodes(children: unknown): any {
 export function defineOvsComponent(
     factory: (props: Record<string, any>) => any
 ) {
-    console.log('zhixinel')
     const component = defineComponent((props, { slots, attrs }) => {
         // 合并 props + attrs + children，统一为 OVS 的 props
         const unifiedProps = {
@@ -79,26 +60,18 @@ export function defineOvsComponent(
         // 这样 ref() 等状态初始化只执行一次
         const result = factory(unifiedProps)
 
-        // 返回渲染函数
-        if (isDefineComponent(result)) {
-            return () => h(result)
-        }
+        // 编译器保证 result 是渲染函数 () => VNode
         if (typeof result === 'function') {
-            // result 是渲染函数（由 OVS 编译器生成的 () => expr）
-            // 每次渲染时调用它来获取新的组件/VNode
             return () => {
                 const rendered = result()
-                // rendered 可能是：
-                // 1. DefineComponent（$OvsHtmlTag.div 返回的组件）
-                // 2. VNode
-                // 3. 原始值
                 if (isDefineComponent(rendered)) {
                     return h(rendered)
                 }
                 return rendered
             }
         }
-        // result 是固定的组件/VNode
+
+        // 兼容：如果直接返回组件或 VNode
         if (isDefineComponent(result)) {
             return () => h(result)
         }
@@ -176,41 +149,14 @@ export function defineOvsComponent(
 
 /**
  * 创建组件 VNode
- */
-export function createComponentVNode(
-    componentFn: OvsComponent | Component,
-    props: Record<string, any> = {},
-    children: any = null
-) {
-    const component = defineComponent((componentProps) => {
-        const state: ReactiveVNodeState = reactive({
-            type: componentFn,
-            props: { ...ensureReactiveProps(props), ...componentProps },
-            children
-        }) as ReactiveVNodeState
-
-        return () => {
-            if (typeof state.type === 'function') {
-                const result = (state.type as OvsComponent)(state)
-                return h(result as Component)
-            }
-            return h(state.type as Component, state.props, mapChildrenToVNodes(state.children))
-        }
-    })
-        ; (component as any).__isOvsComponent = true
-    return markRaw(component)  // 标记为原始对象，防止被 reactive 包装
-}
-
-/**
- * 创建组件 VNode
  *
- * 方式 3 优化：直接返回 h() 创建的 VNode，不再创建包装组件
+ * 直接返回 h() 创建的 VNode，不再创建包装组件
  * 这样更简洁，性能更好（少一层组件嵌套）
  *
  * 注意：调用方应该传入已经用 markRaw 标记的组件
  */
 export function createComponentVNodeNew(
-    componentFn: OvsComponent | Component,
+    componentFn: Component,
     props: Record<string, any> = {},
     children: any = null
 ) {

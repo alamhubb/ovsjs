@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import HelloWorld from './components/HelloWorld.ovs'
+import HelloWorldManual from './components/HelloWorldManual.vue'
 </script>
 
 <template>
@@ -7,6 +8,12 @@ import HelloWorld from './components/HelloWorld.ovs'
     <img alt="Vue logo" class="logo" src="./assets/logo.png" width="125" height="125" />
 
     <div class="wrapper">
+      <h2>手写三层嵌套（验证方案）</h2>
+      <HelloWorldManual></HelloWorldManual>
+      
+      <hr style="margin: 40px 0;" />
+      
+      <h2>OVS 编译（原始）</h2>
       <HelloWorld></HelloWorld>
     </div>
   </header>

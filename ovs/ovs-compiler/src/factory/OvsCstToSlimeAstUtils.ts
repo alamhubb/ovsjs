@@ -367,8 +367,18 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
     }
 
     // 创建 defineOvsComponent 包装
-    // declarations 放在箭头函数体内，expressions 作为 return
-    const returnStmt = SlimeAstCreateUtils.createReturnStatement(finalExpr)
+    // declarations 放在箭头函数体内，expressions 作为渲染函数返回
+
+    // 将 finalExpr 包装成箭头函数：return () => finalExpr
+    // 这样每次渲染都会重新执行，Vue 能正确追踪响应式依赖
+    const renderArrowFunc = SlimeAstCreateUtils.createArrowFunctionExpression(
+      finalExpr,  // 表达式体（不是块语句）
+      [],         // 无参数
+      false,      // 非 async
+      false       // 非 generator
+    )
+
+    const returnStmt = SlimeAstCreateUtils.createReturnStatement(renderArrowFunc)
     const blockStatement = SlimeAstCreateUtils.createBlockStatement([...declarations, ...otherStatements, returnStmt])
     const arrowFunction = SlimeAstCreateUtils.createArrowFunctionExpression(
       blockStatement,
@@ -1299,12 +1309,14 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
   }
 
   /**
-   * 创建 IIFE（立即执行函数表达式）
+   * 创建 defineOvsComponent 包裹的组件
    *
    * 生成：
-   * (function() {
+   * defineOvsComponent(() => {
    *   ...body
-   * })()
+   * })({}, [])
+   *
+   * 注意：body 应该包含 return 语句
    *
    * @param body 函数体语句数组
    * @returns CallExpression
@@ -1320,28 +1332,30 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
       SlimeTokenCreateUtils.createRBraceToken(loc)
     )
 
-    // 创建函数表达式
-    const functionExpression = SlimeAstCreateUtils.createFunctionExpression(
+    // 创建箭头函数：() => { ...body }
+    const arrowFunction = SlimeAstCreateUtils.createArrowFunctionExpression(
       blockStatement,
-      null,  // id
-      [],    // params (空参数)
-      false, // generator
-      false, // async
-      loc,
-      undefined, // functionToken
-      undefined, // asyncToken
-      undefined, // asteriskToken
-      SlimeTokenCreateUtils.createLParenToken(loc),  // lParenToken
-      SlimeTokenCreateUtils.createRParenToken(loc)   // rParenToken
+      [],    // 无参数
+      false, // 非 async
+      false  // 非 generator
     )
 
-    // 用括号包裹 function expression，使其成为合法的 IIFE
-    const parenExpr = SlimeAstCreateUtils.createParenthesizedExpression(functionExpression, loc)
+    // 创建 defineOvsComponent(() => { ...body })
+    const defineOvsCall = SlimeAstCreateUtils.createCallExpression(
+      SlimeAstCreateUtils.createIdentifier('defineOvsComponent'),
+      [arrowFunction]
+    )
 
-    // 创建函数调用（立即执行）
-    const callExpression = SlimeAstCreateUtils.createCallExpression(parenExpr, [])
+    // 创建 defineOvsComponent(...)({}, [])
+    const componentCall = SlimeAstCreateUtils.createCallExpression(
+      defineOvsCall,
+      [
+        SlimeAstCreateUtils.createObjectExpression([]),
+        SlimeAstCreateUtils.createArrayExpression([])
+      ]
+    )
 
-    return callExpression
+    return componentCall
   }
 
   // ==================== OVS 参数语法转换 ====================
