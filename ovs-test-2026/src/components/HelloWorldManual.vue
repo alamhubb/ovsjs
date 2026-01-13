@@ -1,8 +1,8 @@
 <script lang="ts">
-import { defineComponent, h, ref, markRaw } from 'vue'
+import {defineComponent, h, ref, type VNodeChild} from 'vue'
 
 // 响应式文本组件
-const defineReactiveComponent = (getter: () => string) => h(defineComponent(() => getter))
+const defineReactiveComponent = (getter: () => VNodeChild) => h(defineComponent(() => getter))
 
 export default defineComponent({
   name: 'HelloWorldManual',
@@ -19,7 +19,7 @@ export default defineComponent({
           class: 'level-1',
           style: 'border: 2px solid red; padding: 20px; margin: 10px;'
         }, [
-          h('h1', ['Level 1: ', defineReactiveComponent(() => String(count1.value))]),
+          h('h1', ['Level 1: ', defineReactiveComponent(() => count1.value)]),
           h('button', {
             onClick: () => {
               console.log('[L1] 点击前:', count1.value)
@@ -38,7 +38,7 @@ export default defineComponent({
               class: 'level-2',
               style: 'border: 2px solid green; padding: 15px; margin: 10px;'
             }, [
-              h('h2', ['Level 2: ', defineReactiveComponent(() => String(count2.value))]),
+              h('h2', ['Level 2: ', defineReactiveComponent(() => count2.value)]),
               h('button', {
                 onClick: () => {
                   console.log('[L2] 点击前:', count2.value)
@@ -57,7 +57,7 @@ export default defineComponent({
                   class: 'level-3',
                   style: 'border: 2px solid blue; padding: 10px; margin: 10px;'
                 }, [
-                  h('h3', ['Level 3: ', defineReactiveComponent(() => String(count3.value))]),
+                  h('h3', ['Level 3: ', defineReactiveComponent(() => count3.value)]),
                   h('button', {
                     onClick: () => {
                       console.log('[L3] 点击前:', count3.value)
