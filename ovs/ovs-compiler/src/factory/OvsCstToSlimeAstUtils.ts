@@ -209,11 +209,11 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
   private isIIFERequiredByCst(cstNode: SubhutiCst): boolean {
     const name = cstNode.name
 
-    // NoRenderBlock → 需要 IIFE（显式判断，提高可读性，实际被最后的 return true 兜底）
-    if (name === OvsParser.prototype.NoRenderBlock.name) return true
-
     // OvsRenderStatement → 不需要 IIFE
     if (name === OvsParser.prototype.OvsRenderStatement.name) return false
+
+    // NoRenderBlock → 需要 IIFE（显式判断，提高可读性，实际被最后的 return true 兜底）
+    if (name === OvsParser.prototype.NoRenderBlock.name) return true
 
     // ExpressionStatement → 检查是否包含副作用表达式
     if (name === SlimeParser.prototype.ExpressionStatement.name) {
@@ -225,15 +225,17 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
   }
 
   /**
-   * 检查 CST 节点是否是或包含副作用表达式
+   * 递归检查 CST 节点是否包含副作用表达式
+   * 找到一个就返回 true，找不到就返回 false
    */
   private containsSideEffectByCst(cstNode: SubhutiCst): boolean {
-    // 只检查当前节点和第一个子节点（表达式节点）
+    // 检查当前节点
     if (this.isSideEffectExpressionByCst(cstNode)) return true
 
-    // ExpressionStatement 的第一个子节点是表达式
-    const firstChild = cstNode.children?.[0]
-    if (firstChild && this.isSideEffectExpressionByCst(firstChild)) return true
+    // 递归检查子节点
+    for (const child of cstNode.children || []) {
+      if (this.containsSideEffectByCst(child)) return true
+    }
 
     return false
   }
