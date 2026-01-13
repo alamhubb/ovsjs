@@ -180,57 +180,68 @@ new OvsCstToSlimeAst()  // 再初始化
 
 在 OVS 组件 body 中，需要让动态内容能够响应式更新。通过 `defineReactiveExpression` 包裹，可以将任意内容转换为响应式组件。
 
-### 包裹规则
+### 核心设计
 
-在 `ovsRenderDomViewDepth > 0`（即在 OVS 标签的 body 中）处理语句时：
+统一使用 `h(defineReactiveExpression(() => ...))` 进行响应式包裹，根据语句类型选择简单形式或块形式：
 
-| 语句类型 | 处理 |
-|----------|------|
-| `OvsRenderStatement` | 原有逻辑，**不包裹**（已经是 VNode） |
-| `NoRenderBlock` | 原有逻辑，**不包裹** |
-| **其他所有** | 包裹为 `h(defineReactiveExpression(() => (() => { ... })()))` |
+| 语句类型 | 包裹形式 | 说明 |
+|----------|----------|------|
+| `OvsRenderStatement` | 不包裹 | 已经是 VNode |
+| `ExpressionStatement` (普通表达式) | `h(defineReactiveExpression(() => expr))` | 简单形式 |
+| `IfStatement` / `ForStatement` 等 | `h(defineReactiveExpression(() => { const children = []; ...; return children }))` | 块形式 |
+| `VariableStatement` | 块形式 | 需要 IIFE 隔离作用域 |
+| `NoRenderBlock` | 块形式 | 显式不渲染块 |
 
-### 包裹内部逻辑
+### IIFE 判断逻辑 (`isIIFERequiredByCst`)
 
 ```typescript
-function wrapWithReactiveExpression(stmt) {
-  if (stmt.type === 'ExpressionStatement') {
-    // 表达式语句：添加 return，让表达式值作为返回值
-    // (() => { return expr })()
-    return createIIFE([createReturnStatement(stmt.expression)])
-  } else {
-    // 其他语句：直接放入块中，不额外处理
-    // (() => { stmt })()
-    return createIIFE([stmt])
+// 判断 CST 节点是否需要块形式包裹
+private isIIFERequiredByCst(cstNode: SubhutiCst): boolean {
+  const name = cstNode.name
+
+  // OvsRenderStatement → 不需要包裹
+  if (name === 'OvsRenderStatement') return false
+
+  // NoRenderBlock → 需要块形式
+  if (name === 'NoRenderBlock') return true
+
+  // ExpressionStatement → 检查副作用（如 x++, x = 1）
+  if (name === 'ExpressionStatement') {
+    return this.containsSideEffectByCst(cstNode)
   }
+
+  // 其他都需要块形式（IfStatement, ForStatement, VariableStatement 等）
+  return true
 }
 ```
 
 ### 编译示例
 
-#### 表达式（ExpressionStatement）
+#### 简单表达式
 
 ```ovs
 div {
-  '123'
-  count
+  "Hello"
+  count.value
 }
 ```
 
 **编译为**：
 ```typescript
 $OvsHtmlTag.div({}, [
-  h(defineReactiveExpression(() => (() => { return '123' })())),
-  h(defineReactiveExpression(() => (() => { return count })()))
+  h(defineReactiveExpression(() => "Hello")),
+  h(defineReactiveExpression(() => count.value))
 ])
 ```
 
-#### 控制流语句（IfStatement）
+#### `if` 语句（块形式）
 
 ```ovs
 div {
-  if (cond) {
-    span { "Yes" }
+  if (isVisible) {
+    p { "Visible" }
+  } else {
+    p { "Hidden" }
   }
 }
 ```
@@ -238,11 +249,27 @@ div {
 **编译为**：
 ```typescript
 $OvsHtmlTag.div({}, [
-  h(defineReactiveExpression(() => (() => {
-    if (cond) {
-      // 内部 OvsRenderStatement 按原有逻辑处理
+  h(defineReactiveExpression(() => {
+    const children = [];
+    if (isVisible) {
+      children.push($OvsHtmlTag.p({}, [
+        h(defineReactiveExpression(() => {
+          const children = [];
+          children.push(h(defineReactiveExpression(() => "Visible")));
+          return children;
+        }))
+      ]));
+    } else {
+      children.push($OvsHtmlTag.p({}, [
+        h(defineReactiveExpression(() => {
+          const children = [];
+          children.push(h(defineReactiveExpression(() => "Hidden")));
+          return children;
+        }))
+      ]));
     }
-  })()))
+    return children;
+  }))
 ])
 ```
 
@@ -257,16 +284,25 @@ div {
 **编译为**：
 ```typescript
 $OvsHtmlTag.div({}, [
-  $OvsHtmlTag.span({}, ["Always"])  // 不包裹
+  $OvsHtmlTag.span({}, ["Always"])
 ])
 ```
 
-### 为什么这样设计
+### 双层模式架构
 
-1. **统一处理**：表达式和语句都用 IIFE 包裹，逻辑一致
-2. **响应式更新**：`defineReactiveExpression` 让内容变成组件，响应式数据变化会触发重新渲染
-3. **表达式返回值**：ExpressionStatement 添加 return，确保值能被渲染
-4. **语句原样执行**：if/for 等语句在 IIFE 中正常执行，内部的 OvsRenderStatement 按原有逻辑处理
+OVS 编译器使用双层模式来处理渲染元素：
+
+1. **简单模式 (`createSimpleView`)**：当标签内部只有简单表达式和渲染语句时，直接生成数组形式的 children
+2. **复杂模式 (`createComplexIIFE`)**：当标签内部包含需要作用域隔离的语句（如 `if`、`for`、变量声明等）时，生成 IIFE 包裹以保持变量作用域
+
+模式选择由 `needsIIFEByCst` 函数判断。
+
+### 设计优势
+
+1. **统一响应式处理**：所有动态内容通过 `defineReactiveExpression` 包裹，响应式数据变化触发重新渲染
+2. **作用域隔离**：复杂模式通过 `defineOvsComponent` IIFE 包裹，确保变量声明不会泄露
+3. **块形式支持控制流**：`if`/`for` 等语句使用 `const children = []; ...; return children` 模式，内部元素通过 `children.push()` 收集
+4. **副作用表达式隔离**：`x++`、`x = 1` 等副作用表达式使用块形式，避免返回值被错误渲染
 
 ## API
 

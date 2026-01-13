@@ -6,7 +6,7 @@ let count1 = ref(0)
 div(class="level-1", style="border: 2px solid red; padding: 20px; margin: 10px;") {
   h1 {
     "Level 1: "
-    { count1 }
+    { count1.value }
   }
   
   button(
@@ -24,7 +24,7 @@ div(class="level-1", style="border: 2px solid red; padding: 20px; margin: 10px;"
     
     h2 {
       "Level 2: "
-      { count2 }
+      { count2.value }
     }
     
     button(
@@ -42,7 +42,7 @@ div(class="level-1", style="border: 2px solid red; padding: 20px; margin: 10px;"
       
       h3 {
         "Level 3: "
-        { count3 }
+        { count3.value }
       }
       
       button(

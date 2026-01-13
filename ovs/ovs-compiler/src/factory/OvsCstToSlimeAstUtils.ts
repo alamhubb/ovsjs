@@ -820,17 +820,8 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
         c => c.name === SlimeParser.prototype.Statement.name
       )?.children?.[0]
 
-      // 调试日志
-      const isIIFERequired = statementChild && this.isIIFERequiredByCst(statementChild)
-      console.log('[DEBUG] createStatementListItemAst:', {
-        cstName: cst.name,
-        statementChildName: statementChild?.name,
-        statementChildValue: statementChild?.children?.[0]?.value || statementChild?.children?.[0]?.name,
-        isIIFERequired
-      })
-
       // 使用 CST 判断是否需要 IIFE（复用公用逻辑）
-      if (isIIFERequired) {
+      if (statementChild && this.isIIFERequiredByCst(statementChild)) {
         // 需要 IIFE：将语句包裹成 h(defineReactiveExpression(() => { ... }))
         return stmts.map((stmt: SlimeStatement) => this.wrapStatementWithReactiveExpression(stmt, statementChild, cst.loc))
       }
@@ -915,15 +906,26 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
     )
 
     // 创建 h(defineReactiveExpression(...))
-    // 直接作为 children 数组元素
     const hCall = SlimeAstCreateUtils.createCallExpression(
       SlimeAstCreateUtils.createIdentifier('h'),
       [defineReactiveCall]
     )
 
+    // 创建 children.push(h(...))
+    // 在复杂模式下需要通过 push 收集渲染结果
+    // 在简单模式下 createSimpleView 会提取表达式放入数组
+    const pushCall = SlimeAstCreateUtils.createCallExpression(
+      SlimeAstCreateUtils.createMemberExpression(
+        SlimeAstCreateUtils.createIdentifier('children'),
+        SlimeTokenCreateUtils.createDotToken(loc),
+        SlimeAstCreateUtils.createIdentifier('push')
+      ),
+      [hCall]
+    )
+
     return {
       type: SlimeAstTypeName.ExpressionStatement,
-      expression: hCall,
+      expression: pushCall,
       loc
     } as SlimeExpressionStatement
   }
@@ -1196,8 +1198,8 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
       )
 
       // 先用 CST 判断是否需要 IIFE（在转换 AST 之前）
-      // CST 判断：NoRenderBlock、非 ExpressionStatement
-      let needsComplexMode = statementListCst ? this.needsIIFEByCst(statementListCst) : false
+      // CST 判断：NoRenderBlock、VariableStatement 等需要作用域隔离的语句
+      const needsComplexMode = statementListCst ? this.needsIIFEByCst(statementListCst) : false
 
       // StatementList是可选的（空div也合法）
       // 转换 StatementList，会自动处理所有语句
@@ -1216,17 +1218,15 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
         }
       }
 
-      const isSimple = !needsComplexMode
       const currentAttrsVarName = this.attrsVarNameStack[this.attrsVarNameStack.length - 1]
 
-      // 测试：暂时禁用复杂模式的 IIFE 包裹，因为有了 defineReactiveExpression
-      // if (isSimple) {
-      // 简单情况：直接返回 h 调用，无 IIFE
-      return this.createSimpleView(id, bodyStatements, currentAttrsVarName, componentProps)
-      // } else {
-      //   // 复杂情况：生成完整 IIFE
-      //   return this.createComplexIIFE(id, bodyStatements, currentAttrsVarName, componentProps)
-      // }
+      if (!needsComplexMode) {
+        // 简单模式：直接返回 h 调用，无 IIFE
+        return this.createSimpleView(id, bodyStatements, currentAttrsVarName, componentProps)
+      } else {
+        // 复杂模式：生成完整 IIFE，保持变量作用域
+        return this.createComplexIIFE(id, bodyStatements, currentAttrsVarName, componentProps)
+      }
     } finally {
       // 退出 OvsRenderDomViewDeclaration，计数器 -1 并弹出栈
       // 使用 finally 确保即使出错也会恢复计数器和栈
