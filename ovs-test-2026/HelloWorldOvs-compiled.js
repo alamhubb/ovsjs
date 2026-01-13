@@ -1,5 +1,5 @@
 // 编译自: d:\project\parserall\ovsjs\ovs-test-2026\src\components\HelloWorldOvs.ovs
-// 编译时间: 2026/1/14 01:11:06
+// 编译时间: 2026/1/14 01:26:05
 
 import {$OvsHtmlTag,defineOvsComponent,defineReactiveExpression} from "ovsjs";
 import {ref,Fragment,h} from 'vue';
@@ -21,7 +21,7 @@ export default defineOvsComponent(props => {
     }),
     defineOvsComponent(() => {
       const children = [];
-      const temp$$attrs$$er2p23yd = {};
+      const temp$$attrs$$wtpwses5 = {};
       let count2 = ref(0);
       children.push($OvsHtmlTag.h2({},[
         "Level 2: ",
@@ -32,7 +32,7 @@ export default defineOvsComponent(props => {
       },style:"margin: 10px; padding: 8px 16px; cursor: pointer;"},["Click L2"]));
       children.push(defineOvsComponent(() => {
         const children = [];
-        const temp$$attrs$$x7wd6gps = {};
+        const temp$$attrs$$tm4jqngt = {};
         let count3 = ref(0);
         children.push($OvsHtmlTag.h3({},[
           "Level 3: ",

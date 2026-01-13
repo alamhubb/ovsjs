@@ -285,8 +285,18 @@ export class OvsCstToSlimeAst extends OvsCstToSlimeAstImport {
 
     /**
      * 将控制流语句包裹为响应式表达式
+     *
+     * 块形式：defineReactiveExpression(() => { const children = []; stmt; return children })
+     * 
+     * 注意：ExpressionStatement 不应传入此方法，由 needsReactiveWrap 过滤
      */
     protected wrapStatementWithReactiveExpression(stmt: SlimeStatement, _unused?: any, loc?: any): SlimeStatement {
+        // 安全检查：ExpressionStatement 不应进入此方法
+        if (stmt.type === SlimeAstTypeName.ExpressionStatement) {
+            throw new Error('wrapStatementWithReactiveExpression: ExpressionStatement should not reach here')
+        }
+
+        // 块形式：() => { const children = []; stmt; return children }
         const bodyStatements: SlimeStatement[] = [
             this.createChildrenDeclaration(),
             stmt,
@@ -303,6 +313,7 @@ export class OvsCstToSlimeAst extends OvsCstToSlimeAstImport {
 
         return this.createReactivePushStatement(arrowBody, loc)
     }
+
 
     /**
      * 转换 OvsRenderDomViewDeclaration 为表达式或 IIFE
