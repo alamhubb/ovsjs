@@ -49,11 +49,11 @@ export abstract class OvsCstToSlimeAstView extends OvsCstToSlimeAstIIFE {
 
             // 判断是否是 children.push(expr) 形式
             // 如果是，提取 push 的参数；否则直接使用表达式
-            if (expr && expr.type === 'CallExpression') {
+            if (expr && expr.type === SlimeAstTypeName.CallExpression) {
                 const callExpr = expr as SlimeCallExpression
                 const callee = callExpr.callee as any
                 // 检查是否是 children.push 形式
-                if (callee?.type === 'MemberExpression' &&
+                if (callee?.type === SlimeAstTypeName.MemberExpression &&
                     callee.object?.name === 'children' &&
                     callee.property?.name === 'push' &&
                     callExpr.arguments.length > 0) {
@@ -77,7 +77,7 @@ export abstract class OvsCstToSlimeAstView extends OvsCstToSlimeAstIIFE {
         const propsObject = componentProps || SlimeAstCreateUtils.createObjectExpression([])
 
         // 创建 callee：HTML 标签转换为 $OvsHtmlTag.xxx，其他保持原样
-        const callee = createCalleeForTag(id.name, id.loc, SlimeAstCreateUtils, SlimeTokenCreateUtils)
+        const callee = createCalleeForTag(id.name, id.loc)
 
         // 创建 tagName(props, children) 或 $OvsHtmlTag.tagName(props, children) 调用
         const vNodeCall = SlimeAstCreateUtils.createCallExpression(
@@ -125,7 +125,7 @@ export abstract class OvsCstToSlimeAstView extends OvsCstToSlimeAstIIFE {
         }
 
         // 创建 callee：HTML 标签转换为 $OvsHtmlTag.xxx，其他保持原样
-        const callee = createCalleeForTag(id.name, id.loc, SlimeAstCreateUtils, SlimeTokenCreateUtils)
+        const callee = createCalleeForTag(id.name, id.loc)
 
         // 创建函数调用：tagName(props, children) 或 $OvsHtmlTag.tagName(props, children)
         const callExpression = SlimeAstCreateUtils.createCallExpression(
