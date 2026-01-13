@@ -10,27 +10,24 @@ export default defineOvsComponent(() => {
     const count1 = ref(0)
 
     // 返回 VNode
-    return $OvsHtmlTag.div({}, [
-        // 第1层：直接构建 VNode（不用 IIFE）
-        $OvsHtmlTag.div({
-            class: 'level-1',
-            style: 'border: 2px solid red; padding: 20px; margin: 10px;'
-        }, [
-            $OvsHtmlTag.h1({}, [
-                'Level 1: ',
-                h(defineReactiveComponent(() => count1.value))
-            ]),
-            $OvsHtmlTag.button({
-                onClick: () => {
-                    console.log('[OVS L1] 点击前:', count1.value)
-                    count1.value++
-                    console.log('[OVS L1] 点击后:', count1.value)
-                },
-                style: 'margin: 10px; padding: 8px 16px; cursor: pointer;'
-            }, ['Click L1'])
+    return $OvsHtmlTag.div({
+        class: 'level-1',
+        style: 'border: 2px solid red; padding: 20px; margin: 10px;'
+    }, [
+        $OvsHtmlTag.h1({}, [
+            'Level 1: ',
+            h(defineReactiveComponent(() => count1.value))
         ]),
+        $OvsHtmlTag.button({
+            onClick: () => {
+                console.log('[OVS L1] 点击前:', count1.value)
+                count1.value++
+                console.log('[OVS L1] 点击后:', count1.value)
+            },
+            style: 'margin: 10px; padding: 8px 16px; cursor: pointer;'
+        }, ['Click L1']),
 
-        // 第2层：保持 IIFE
+        // 第2层：保持 IIFE（在第1层内部）
         (() => {
             console.log('[OVS L2] IIFE 开始')
             const count2 = ref(0)
@@ -52,7 +49,7 @@ export default defineOvsComponent(() => {
                     style: 'margin: 10px; padding: 8px 16px; cursor: pointer;'
                 }, ['Click L2']),
 
-                // 第3层：保持 IIFE
+                // 第3层：保持 IIFE（在第2层内部）
                 (() => {
                     console.log('[OVS L3] IIFE 开始')
                     const count3 = ref(0)
