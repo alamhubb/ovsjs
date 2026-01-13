@@ -18,12 +18,14 @@ export { OvsCstToSlimeAstUtils, registerOvsCstToSlimeAst } from './OvsCstToSlime
 // Export utility functions for backward compatibility
 import { SubhutiCst } from 'subhuti'
 
-export function checkCstName(cst: SubhutiCst, expectedName: string): void {
-  if (cst.name !== expectedName) {
-    throw new Error(`Expected CST name "${expectedName}", but got "${cst.name}"`)
-  }
+export function checkCstName(cst: SubhutiCst, cstName: string) {
+    if (cst.name !== cstName) {
+        console.log(cst)
+        throwNewError(cst.name)
+    }
+    return cstName
 }
 
-export function throwNewError(message: string): never {
-  throw new Error(message)
+export function throwNewError(errorMsg: string = 'syntax error') {
+    throw new Error(errorMsg)
 }

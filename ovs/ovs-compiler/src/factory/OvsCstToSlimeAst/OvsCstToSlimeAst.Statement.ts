@@ -10,6 +10,7 @@ import {
 } from "slime-ast"
 import { SlimeParser } from "slime-parser"
 import { OvsCstToSlimeAstProperty } from "./OvsCstToSlimeAst.Property"
+import { checkCstName } from "../OvsCstToSlimeAstUtils"
 
 /**
  * OVS 语句转换层
@@ -32,14 +33,32 @@ export abstract class OvsCstToSlimeAstStatement extends OvsCstToSlimeAstProperty
     protected abstract findOvsRenderFunction(cst: SubhutiCst): boolean
     protected abstract isSideEffectExpression(expr: SlimeExpression): boolean
     protected abstract needsReactiveWrap(stmt: SlimeStatement): boolean
-    protected abstract wrapStatementWithReactiveExpression(stmt: SlimeStatement, loc?: any): SlimeStatement
+    protected abstract wrapStatementWithReactiveExpression(stmt: SlimeStatement, _unused?: any, loc?: any): SlimeStatement
 
     // ==================== 语句转换方法 ====================
+
+    /**
+     * 重写 createExpressionAst 处理
+     * 
+     * 添加对 OvsRenderFunction 的支持
+     */
+    createExpressionAst(cst: SubhutiCst): SlimeExpression {
+        const astName = cst.name
+        let left
+        if (astName === OvsParser.prototype.OvsRenderFunction.name) {
+            left = this.createOvsRenderDomViewDeclarationAst(cst)
+        } else {
+            left = super.createExpressionAst(cst)
+        }
+        return left
+    }
 
     /**
      * Override: 处理 StatementList，支持 NoRenderBlock
      */
     createStatementListAst(cst: SubhutiCst): SlimeStatement[] {
+        checkCstName(cst, SlimeParser.prototype.StatementList.name)
+
         const statements: SlimeStatement[] = []
 
         if (!cst.children) return statements
@@ -63,6 +82,8 @@ export abstract class OvsCstToSlimeAstStatement extends OvsCstToSlimeAstProperty
      * Override: 处理 StatementListItem，支持 OvsRenderStatement 和 NoRenderBlock
      */
     createStatementListItemAst(cst: SubhutiCst): SlimeStatement[] {
+        checkCstName(cst, SlimeParser.prototype.StatementListItem.name)
+
         if (!cst.children || cst.children.length === 0) {
             return []
         }
@@ -145,7 +166,7 @@ export abstract class OvsCstToSlimeAstStatement extends OvsCstToSlimeAstProperty
             return stmts.map((stmt: SlimeStatement) => {
                 if (this.needsReactiveWrap(stmt)) {
                     // 控制流语句（if/for/while）需要响应式包裹
-                    return this.wrapStatementWithReactiveExpression(stmt, cst.loc)
+                    return this.wrapStatementWithReactiveExpression(stmt, null, cst.loc)
                 }
                 // 变量声明、普通表达式等直接返回
                 return stmt

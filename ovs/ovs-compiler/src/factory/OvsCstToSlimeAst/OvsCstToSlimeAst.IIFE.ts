@@ -20,6 +20,7 @@ export abstract class OvsCstToSlimeAstIIFE extends OvsCstToSlimeAstJudgement {
      */
     protected wrapStatementWithReactiveExpression(
         stmt: SlimeStatement,
+        _unused?: any,  // 保留参数位置兼容性
         loc?: any
     ): SlimeStatement {
         const bodyStatements: SlimeStatement[] = [
@@ -93,16 +94,22 @@ export abstract class OvsCstToSlimeAstIIFE extends OvsCstToSlimeAstJudgement {
      * 创建 IIFE
      */
     private createIIFE(body: Array<SlimeStatement>): SlimeCallExpression {
+        const loc = body[0]?.loc || undefined
+
+        // 创建函数体的 BlockStatement
+        const blockStatement = SlimeAstCreateUtils.createBlockStatement(
+            body,
+            loc,
+            SlimeTokenCreateUtils.createLBraceToken(loc),
+            SlimeTokenCreateUtils.createRBraceToken(loc)
+        )
+
+        // 创建箭头函数：() => { ...body }
         const arrowFunction = SlimeAstCreateUtils.createArrowFunctionExpression(
-            SlimeAstCreateUtils.createBlockStatement(
-                body,
-                undefined,
-                SlimeTokenCreateUtils.createLBraceToken(),
-                SlimeTokenCreateUtils.createRBraceToken()
-            ),
-            [],
-            false,
-            false
+            blockStatement,
+            [],    // 无参数
+            false, // 非 async
+            false  // 非 generator
         )
 
         const defineCall = SlimeAstCreateUtils.createCallExpression(

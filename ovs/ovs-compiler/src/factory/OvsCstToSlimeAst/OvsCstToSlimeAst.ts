@@ -286,7 +286,7 @@ export class OvsCstToSlimeAst extends OvsCstToSlimeAstImport {
     /**
      * 将控制流语句包裹为响应式表达式
      */
-    protected wrapStatementWithReactiveExpression(stmt: SlimeStatement, loc?: any): SlimeStatement {
+    protected wrapStatementWithReactiveExpression(stmt: SlimeStatement, _unused?: any, loc?: any): SlimeStatement {
         const bodyStatements: SlimeStatement[] = [
             this.createChildrenDeclaration(),
             stmt,
@@ -338,11 +338,6 @@ export class OvsCstToSlimeAst extends OvsCstToSlimeAstImport {
         const ovsArgumentsName = 'OvsArguments'
         const ovsArgumentsCst = cst.children?.find(child => child.name === ovsArgumentsName)
         let componentProps: SlimeExpression | null = null
-
-        // DEBUG: 打印CST children的名称
-        console.log('[DEBUG] createOvsRenderDomView - element:', id.name)
-        console.log('[DEBUG] CST children names:', cst.children?.map(c => c.name))
-        console.log('[DEBUG] ovsArgumentsCst found:', !!ovsArgumentsCst)
 
         if (ovsArgumentsCst) {
             componentProps = (this as any).createOvsArgumentsAst(ovsArgumentsCst)

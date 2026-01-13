@@ -1,7 +1,9 @@
 import { SubhutiCst } from "subhuti"
 import {
+    SlimeAstTypeName,
     type SlimeCallExpression,
     type SlimeExpression,
+    type SlimeExpressionStatement,
     type SlimeIdentifier,
     type SlimeStatement,
     SlimeAstCreateUtils,

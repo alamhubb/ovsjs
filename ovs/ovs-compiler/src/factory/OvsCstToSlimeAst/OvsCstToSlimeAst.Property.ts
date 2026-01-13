@@ -118,29 +118,14 @@ export abstract class OvsCstToSlimeAstProperty extends OvsCstToSlimeAstView {
 
         if (propertyNameCst && assignIndex !== -1) {
             // 完整属性: name = value
-            // PropertyName可以是Identifier、Literal或ComputedPropertyName
-            let key: any
-            const propNameChild = propertyNameCst.children?.[0]
-            if (propNameChild) {
-                if (propNameChild.name === 'ComputedPropertyName') {
-                    // [expr]
-                    key = (this as any).createComputedPropertyNameAst?.(propNameChild)
-                } else if (propNameChild.name === 'Identifier' || propNameChild.name === 'IdentifierName') {
-                    key = (this as any).createIdentifierAst?.(propNameChild)
-                } else if (propNameChild.name === 'Literal') {
-                    key = (this as any).createLiteralAst?.(propNameChild)
-                }
-            }
-
-            if (!key) return null
-
+            const key = this.createPropertyNameAst(propertyNameCst)
             const keyName = this.getPropertyKeyName(key)
 
             // 找到 = 后面的表达式
             const valueCst = cst.children[assignIndex + 1]
             if (!valueCst) return null
 
-            let value = (this as any).createExpressionAst?.(valueCst)
+            let value = (this as any).createExpressionAst(valueCst)
 
             // 特殊处理 class 属性
             if (keyName === 'class' && value.type === SlimeAstTypeName.ObjectExpression) {
@@ -176,6 +161,64 @@ export abstract class OvsCstToSlimeAstProperty extends OvsCstToSlimeAstView {
         }
         if (key.type === SlimeAstTypeName.Literal && typeof key.value === 'string') {
             return key.value
+        }
+        return null
+    }
+
+    /**
+     * 转换 PropertyName CST 为 AST
+     */
+    private createPropertyNameAst(cst: SubhutiCst): any {
+        if (!cst.children || cst.children.length === 0) return null
+
+        const child = cst.children[0]
+
+        // LiteralPropertyName
+        if (child.name === 'LiteralPropertyName') {
+            return this.createLiteralPropertyNameAst(child)
+        }
+
+        // ComputedPropertyName
+        if (child.name === 'ComputedPropertyName') {
+            return this.createComputedPropertyNameAst(child)
+        }
+
+        return null
+    }
+
+    /**
+     * 转换 LiteralPropertyName CST 为 AST
+     */
+    private createLiteralPropertyNameAst(cst: SubhutiCst): any {
+        if (!cst.children || cst.children.length === 0) return null
+
+        const child = cst.children[0]
+
+        // IdentifierName
+        if (child.name === 'IdentifierName' || child.value) {
+            const name = child.value || child.children?.[0]?.value
+            return SlimeAstCreateUtils.createIdentifier(name)
+        }
+
+        // StringLiteral / NumericLiteral
+        if (child.name === 'StringLiteral' || child.name === 'NumericLiteral') {
+            return (this as any).createLiteralAst(child)
+        }
+
+        return null
+    }
+
+    /**
+     * 转换 ComputedPropertyName CST 为 AST
+     */
+    private createComputedPropertyNameAst(cst: SubhutiCst): any {
+        // [expression]
+        const exprCst = cst.children?.find(c =>
+            c.name !== 'LBracket' && c.name !== 'RBracket' &&
+            c.value !== '[' && c.value !== ']'
+        )
+        if (exprCst) {
+            return (this as any).createExpressionAst(exprCst)
         }
         return null
     }

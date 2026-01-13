@@ -33,17 +33,18 @@ export function isHtmlTag(tagName: string): boolean {
     return HTML_TAGS.has(tagName.toLowerCase())
 }
 
+import {
+    SlimeAstCreateUtils,
+    SlimeTokenCreateUtils,
+    type SlimeExpression
+} from "slime-ast"
+
 /**
  * 创建 callee 表达式
  * - HTML 标签返回 $OvsHtmlTag.xxx
  * - 用户组件返回标识符（需要配合 h() 使用）
  */
-export function createCalleeForTag(
-    tagName: string,
-    loc?: any,
-    SlimeAstCreateUtils?: any,
-    SlimeTokenCreateUtils?: any
-): any {
+export function createCalleeForTag(tagName: string, loc?: any): SlimeExpression {
     if (isHtmlTag(tagName)) {
         // HTML 标签 → $OvsHtmlTag.tagName
         // 关键：给标签名标识符设置 loc，用于 source map 映射
