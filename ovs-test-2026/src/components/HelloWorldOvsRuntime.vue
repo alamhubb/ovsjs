@@ -5,12 +5,14 @@ const defineReactiveComponent = (getter: () => VNodeChild) => h(defineComponent(
 
 
 export default defineOvsComponent(() => {
-    // 第一层：在 setup 中执行 IIFE
-    const level1 = (() => {
-        console.log('[OVS L1] IIFE 开始')
-        const count1 = ref(0)
+    // 第一层状态提取
+    console.log('[OVS L1] setup')
+    const count1 = ref(0)
 
-        return $OvsHtmlTag.div({
+    // 返回 VNode
+    return $OvsHtmlTag.div({}, [
+        // 第1层：直接构建 VNode（不用 IIFE）
+        $OvsHtmlTag.div({
             class: 'level-1',
             style: 'border: 2px solid red; padding: 20px; margin: 10px;'
         }, [
@@ -26,14 +28,9 @@ export default defineOvsComponent(() => {
                 },
                 style: 'margin: 10px; padding: 8px 16px; cursor: pointer;'
             }, ['Click L1'])
-        ])
-    })()
+        ]),
 
-    // 返回 VNode，包含第一层和第二层
-    return $OvsHtmlTag.div({}, [
-        level1,
-
-        // 第2层：在 return 中的 IIFE
+        // 第2层：保持 IIFE
         (() => {
             console.log('[OVS L2] IIFE 开始')
             const count2 = ref(0)
@@ -55,7 +52,7 @@ export default defineOvsComponent(() => {
                     style: 'margin: 10px; padding: 8px 16px; cursor: pointer;'
                 }, ['Click L2']),
 
-                // 第3层 IIFE
+                // 第3层：保持 IIFE
                 (() => {
                     console.log('[OVS L3] IIFE 开始')
                     const count3 = ref(0)
