@@ -32,10 +32,13 @@ export default defineOvsComponent(props => {
         ]),
 
         // 条件渲染：count % 2 === 0 时显示红色 div（使用 if 语句）
+        // 使用 IIFE + children.push 的方式
         h(defineReactiveExpression(() => {
+            const children: any[] = []
             if (count1.value % 2 === 0) {
-                return $OvsHtmlTag.div({ style: 'background: red; padding: 10px; color: white;' }, ['偶数！'])
+                children.push($OvsHtmlTag.div({ style: 'background: red; padding: 10px; color: white;' }, ['偶数！']))
             }
+            return children
         })),
 
         // 第二层 div - 有 let 声明，需要 IIFE

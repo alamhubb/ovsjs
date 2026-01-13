@@ -47,43 +47,6 @@ function isHtmlTag(tagName: string): boolean {
   return HTML_TAGS.has(tagName.toLowerCase())
 }
 
-/**
- * 判断表达式是否是副作用表达式（不应该渲染）
- *
- * 副作用表达式的主要目的是产生副作用，返回值只是副产品：
- * - AssignmentExpression: x = 1, x += 1, x ||= 1 等
- * - UpdateExpression: x++, ++x, x--, --x
- * - UnaryExpression(delete): delete obj.prop
- * - UnaryExpression(void): void expr（显式丢弃返回值）
- *
- * 这些表达式在 OVS 渲染上下文中不应该被 children.push()
- */
-function isSideEffectExpression(expr: SlimeExpression): boolean {
-  // 赋值表达式 - 副作用
-  if (expr.type === SlimeAstTypeName.AssignmentExpression) {
-    return true
-  }
-
-  // 更新表达式 - 副作用
-  if (expr.type === SlimeAstTypeName.UpdateExpression) {
-    return true
-  }
-
-  // delete 表达式 - 副作用
-  if (expr.type === SlimeAstTypeName.UnaryExpression &&
-    (expr as any).operator === 'delete') {
-    return true
-  }
-
-  // void 表达式 - 显式丢弃返回值，不渲染
-  if (expr.type === SlimeAstTypeName.UnaryExpression &&
-    (expr as any).operator === 'void') {
-    return true
-  }
-
-  return false
-}
-
 /** 
  * 创建 callee 表达式
  * - HTML 标签返回 $OvsHtmlTag.xxx
@@ -850,10 +813,119 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
     // 正常处理（调用父类）
     const stmts = super.createStatementListItemAst(cst)
 
-    // TODO: 响应式表达式包裹应该在更底层处理（createRenderExpressionStatement）
-    // 这里不做包裹，避免破坏 children.push() 的提取逻辑
+    // 在渲染上下文中（div {} 内且非 #{} 内），对需要 IIFE 的语句进行响应式包裹
+    if (this.ovsRenderDomViewDepth > 0 && this.noRenderDepth === 0) {
+      // 找到 Statement 子节点来判断 CST 类型
+      const statementChild = cst.children?.find(
+        c => c.name === SlimeParser.prototype.Statement.name
+      )?.children?.[0]
+
+      // 调试日志
+      const isIIFERequired = statementChild && this.isIIFERequiredByCst(statementChild)
+      console.log('[DEBUG] createStatementListItemAst:', {
+        cstName: cst.name,
+        statementChildName: statementChild?.name,
+        statementChildValue: statementChild?.children?.[0]?.value || statementChild?.children?.[0]?.name,
+        isIIFERequired
+      })
+
+      // 使用 CST 判断是否需要 IIFE（复用公用逻辑）
+      if (isIIFERequired) {
+        // 需要 IIFE：将语句包裹成 h(defineReactiveExpression(() => { ... }))
+        return stmts.map((stmt: SlimeStatement) => this.wrapStatementWithReactiveExpression(stmt, statementChild, cst.loc))
+      }
+    }
 
     return stmts
+  }
+
+  /**
+   * 将语句包裹为响应式表达式
+   * 
+   * 根据 CST 判断使用简单形式还是块形式：
+   * - 纯表达式 → h(defineReactiveExpression(() => expr))
+   * - 有语句（if/let/for）→ h(defineReactiveExpression(() => { const children = []; ...; return children }))
+   */
+  private wrapStatementWithReactiveExpression(
+    stmt: SlimeStatement,
+    statementCst: SubhutiCst,
+    loc?: any
+  ): SlimeStatement {
+    // 使用 CST 判断是否需要块形式（复用公用逻辑）
+    const needsBlockForm = this.isIIFERequiredByCst(statementCst)
+
+    let arrowBody: SlimeExpression | SlimeBlockStatement
+
+    if (needsBlockForm) {
+      // 块形式：() => { const children = []; ...; return children }
+      // 需要创建 children 数组，因为 if/for 内部的渲染语句会 push 到这个数组
+      const bodyStatements: SlimeStatement[] = [
+        // 1. const children = []
+        SlimeAstCreateUtils.createVariableDeclaration(
+          SlimeTokenCreateUtils.createConstToken(),
+          [
+            SlimeAstCreateUtils.createVariableDeclarator(
+              SlimeAstCreateUtils.createIdentifier('children'),
+              SlimeTokenCreateUtils.createAssignToken(),
+              SlimeAstCreateUtils.createArrayExpression([])
+            )
+          ]
+        ),
+        // 2. 原语句（if/for 等）
+        stmt,
+        // 3. return children
+        SlimeAstCreateUtils.createReturnStatement(
+          SlimeAstCreateUtils.createIdentifier('children')
+        )
+      ]
+      arrowBody = SlimeAstCreateUtils.createBlockStatement(
+        bodyStatements,
+        loc,
+        SlimeTokenCreateUtils.createLBraceToken(loc),
+        SlimeTokenCreateUtils.createRBraceToken(loc)
+      )
+    } else {
+      // 简单形式：() => expr
+      // ExpressionStatement 需要提取表达式
+      if (stmt.type === SlimeAstTypeName.ExpressionStatement) {
+        arrowBody = (stmt as SlimeExpressionStatement).expression
+      } else {
+        // 其他情况也用块形式（保险起见）
+        arrowBody = SlimeAstCreateUtils.createBlockStatement(
+          [stmt],
+          loc,
+          SlimeTokenCreateUtils.createLBraceToken(loc),
+          SlimeTokenCreateUtils.createRBraceToken(loc)
+        )
+      }
+    }
+
+    // 创建箭头函数
+    const arrowFunction = SlimeAstCreateUtils.createArrowFunctionExpression(
+      arrowBody,
+      [],
+      false,
+      false
+    )
+
+    // 创建 defineReactiveExpression(() => ...)
+    const defineReactiveCall = SlimeAstCreateUtils.createCallExpression(
+      SlimeAstCreateUtils.createIdentifier('defineReactiveExpression'),
+      [arrowFunction]
+    )
+
+    // 创建 h(defineReactiveExpression(...))
+    // 直接作为 children 数组元素
+    const hCall = SlimeAstCreateUtils.createCallExpression(
+      SlimeAstCreateUtils.createIdentifier('h'),
+      [defineReactiveCall]
+    )
+
+    return {
+      type: SlimeAstTypeName.ExpressionStatement,
+      expression: hCall,
+      loc
+    } as SlimeExpressionStatement
   }
 
   createExpressionAst(cst: SubhutiCst): SlimeExpression {
@@ -954,7 +1026,7 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
 
       // 3. 副作用表达式（赋值、更新、delete）→ 不渲染
       // 这些表达式的主要目的是副作用，返回值只是副产品
-      if (isSideEffectExpression(expr)) {
+      if (this.isSideEffectExpressionByCst(exprCst)) {
         return {
           type: SlimeAstTypeName.ExpressionStatement,
           expression: expr,
@@ -1147,13 +1219,14 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
       const isSimple = !needsComplexMode
       const currentAttrsVarName = this.attrsVarNameStack[this.attrsVarNameStack.length - 1]
 
-      if (isSimple) {
-        // 简单情况：直接返回 h 调用，无 IIFE
-        return this.createSimpleView(id, bodyStatements, currentAttrsVarName, componentProps)
-      } else {
-        // 复杂情况：生成完整 IIFE
-        return this.createComplexIIFE(id, bodyStatements, currentAttrsVarName, componentProps)
-      }
+      // 测试：暂时禁用复杂模式的 IIFE 包裹，因为有了 defineReactiveExpression
+      // if (isSimple) {
+      // 简单情况：直接返回 h 调用，无 IIFE
+      return this.createSimpleView(id, bodyStatements, currentAttrsVarName, componentProps)
+      // } else {
+      //   // 复杂情况：生成完整 IIFE
+      //   return this.createComplexIIFE(id, bodyStatements, currentAttrsVarName, componentProps)
+      // }
     } finally {
       // 退出 OvsRenderDomViewDeclaration，计数器 -1 并弹出栈
       // 使用 finally 确保即使出错也会恢复计数器和栈
@@ -1184,12 +1257,26 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
     // 从 ExpressionStatement 中提取表达式，并包装为 ArrayElement
     const childElements = statements.map((stmt, index) => {
       const exprStmt = stmt as SlimeExpressionStatement
-      const pushCall = exprStmt.expression as SlimeCallExpression
+      const expr = exprStmt.expression
       let element: SlimeExpression
-      if (pushCall && pushCall.type === SlimeAstTypeName.CallExpression && pushCall.arguments.length > 0) {
-        element = pushCall.arguments[0] as SlimeExpression
+
+      // 判断是否是 children.push(expr) 形式
+      // 如果是，提取 push 的参数；否则直接使用表达式
+      if (expr && expr.type === SlimeAstTypeName.CallExpression) {
+        const callExpr = expr as SlimeCallExpression
+        const callee = callExpr.callee as any
+        // 检查是否是 children.push 形式
+        if (callee?.type === SlimeAstTypeName.MemberExpression &&
+          callee.object?.name === 'children' &&
+          callee.property?.name === 'push' &&
+          callExpr.arguments.length > 0) {
+          element = callExpr.arguments[0] as SlimeExpression
+        } else {
+          // 不是 children.push 形式，直接使用表达式（如 h(defineReactiveExpression(...))）
+          element = expr
+        }
       } else {
-        element = exprStmt.expression
+        element = expr
       }
       // 包装为 ArrayElement，除了最后一个元素都需要逗号
       const needComma = index < statements.length - 1
@@ -1451,78 +1538,6 @@ export class OvsCstToSlimeAst extends CssTsCstToAst {
     )
 
     return componentCall
-  }
-
-  /**
-   * 将语句包裹为响应式表达式
-   * 
-   * - ExpressionStatement: h(defineReactiveExpression(() => ((() => { return expr })())))
-   * - 其他语句: h(defineReactiveExpression(() => ((() => { stmt })())))
-   * 
-   * 返回的是一个表达式，作为数组元素使用
-   */
-  private wrapWithReactiveExpression(stmt: SlimeStatement, loc?: any): SlimeStatement {
-    console.log('[wrapWithReactiveExpression] 被调用, stmt.type:', stmt.type)
-
-    // 1. 处理语句：ExpressionStatement 需要添加 return
-    let bodyStatements: SlimeStatement[]
-    if (stmt.type === SlimeAstTypeName.ExpressionStatement) {
-      // ExpressionStatement: 添加 return，让表达式值作为返回值
-      const exprStmt = stmt as SlimeExpressionStatement
-      bodyStatements = [SlimeAstCreateUtils.createReturnStatement(exprStmt.expression)]
-    } else {
-      // 其他语句：直接放入块中
-      bodyStatements = [stmt]
-    }
-
-    // 2. 创建 IIFE 的 BlockStatement
-    const blockStatement = SlimeAstCreateUtils.createBlockStatement(
-      bodyStatements,
-      loc,
-      SlimeTokenCreateUtils.createLBraceToken(loc),
-      SlimeTokenCreateUtils.createRBraceToken(loc)
-    )
-
-    // 3. 创建箭头函数：() => { ... }
-    const innerArrow = SlimeAstCreateUtils.createArrowFunctionExpression(
-      blockStatement,
-      [],    // 无参数
-      false, // 非 async
-      false  // 非 generator
-    )
-
-    // 4. 创建 IIFE 调用：(() => { ... })()
-    const iifeCall = SlimeAstCreateUtils.createCallExpression(innerArrow, [])
-
-    // 5. 用括号包裹 IIFE：((() => { ... })())
-    const parenIife = SlimeAstCreateUtils.createParenthesizedExpression(iifeCall, loc)
-
-    // 6. 创建外层箭头函数：() => (...)
-    const outerArrow = SlimeAstCreateUtils.createArrowFunctionExpression(
-      parenIife,
-      [],
-      false,
-      false
-    )
-
-    // 7. 创建 defineReactiveExpression(() => (...))
-    const defineReactiveCall = SlimeAstCreateUtils.createCallExpression(
-      SlimeAstCreateUtils.createIdentifier('defineReactiveExpression'),
-      [outerArrow]
-    )
-
-    // 8. 创建 h(defineReactiveExpression(...))
-    const hCall = SlimeAstCreateUtils.createCallExpression(
-      SlimeAstCreateUtils.createIdentifier('h'),
-      [defineReactiveCall]
-    )
-
-    // 9. 返回 ExpressionStatement，作为数组元素
-    return {
-      type: SlimeAstTypeName.ExpressionStatement,
-      expression: hCall,
-      loc
-    } as SlimeExpressionStatement
   }
 
   // ==================== OVS 参数语法转换 ====================
