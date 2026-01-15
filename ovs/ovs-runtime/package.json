@@ -13,7 +13,6 @@
       "default": "./dist/index.mjs"
     }
   },
-  "monorepo": "./src/index.ts",
   "license": "MIT",
   "scripts": {
     "build": "tsdown",
