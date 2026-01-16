@@ -1,0 +1,58 @@
+import { ref } from 'vue'
+
+// OVS 语法示例 - 在 UniApp 中使用 OVS 声明式 UI
+// 语法类似 Flutter/SwiftUI，简洁直观
+
+// 定义计数显示组件
+view CountDisplay(props) {
+  div(class = 'count-display') {
+    span { 'Current count: ' }
+    strong(style = 'color: #42b883; font-size: 24px;') { props.count }
+  }
+}
+
+// 主视图
+div(class = 'hello-ovs', onClick() { count.value = 0 }) {
+
+  div(style = 'margin-top: 2em; text-align: center;') {
+    p(style = 'color: #42b883; font-size: 2em;') { 'Hello OVS + uni-render' }
+  }
+
+  let count = ref(0)
+
+  const timer = setInterval(() => {
+    count.value = count.value + 1
+  }, 1000)
+
+  h1(style = 'font-size: 2em; color: #333; line-height: 1.1; font-weight: bold; margin-top: 1em;') {
+    'OVS Syntax Demo'
+  }
+
+  div(class = 'card') {
+    button(type = 'button', onClick() { count.value++ }) {
+      'count is '
+      count
+    }
+    p(style = 'margin-top: 1em;') {
+      'Edit '
+      code { './components/HelloWorldOvs.ovs' }
+      ' to test OVS syntax'
+    }
+  }
+
+  const countView = span { count }
+
+  // 使用自定义组件
+  CountDisplay(count = countView) { }
+
+  p(style = 'display: flex; flex-direction: row; justify-content: center; margin-top: 1em;') {
+    'OVS Syntax: '
+    a(
+      style = 'font-weight: 500; color: #646cff; margin-left: 0.3em; text-decoration: inherit;',
+      href = 'https://github.com/alamhubb/ovsjs',
+      target = '_blank'
+    ) { 'https://github.com/alamhubb/ovsjs' }
+  }
+
+  p(style = 'color: #888; font-size: 12px;') { '(Click anywhere to reset counter)' }
+}
