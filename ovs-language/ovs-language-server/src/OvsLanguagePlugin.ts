@@ -1,10 +1,10 @@
-import {CodeMapping, forEachEmbeddedCode, LanguagePlugin, VirtualCode} from '@volar/language-core';
-import type {TypeScriptExtraServiceScript} from '@volar/typescript';
-import type {IScriptSnapshot} from 'typescript';
-import {URI} from 'vscode-uri';
-import {LogUtil} from "./logutil.js";
-import { SlimeCodeMapping } from "slime-generator";
-import {vitePluginOvsTransform} from "ovs-compiler";
+import { CodeMapping, forEachEmbeddedCode, LanguagePlugin, VirtualCode } from '@volar/language-core';
+import type { TypeScriptExtraServiceScript } from '@volar/typescript';
+import type { IScriptSnapshot } from 'typescript';
+import { URI } from 'vscode-uri';
+import { LogUtil } from "./logutil.js";
+import { SlimeMappingConverter, EnhancedMapping } from "slime-generator";
+import { vitePluginOvsTransform } from "ovs-compiler";
 
 // TypeScript ScriptKind 枚举值（避免运行时依赖 typescript）
 const ScriptKind = {
@@ -25,7 +25,7 @@ export const ovsLanguagePlugin: LanguagePlugin<URI> = {
         }
     },
     typescript: {
-        extraFileExtensions: [{extension: 'ovs', isMixedContent: true, scriptKind: ScriptKind.Deferred}],
+        extraFileExtensions: [{ extension: 'ovs', isMixedContent: true, scriptKind: ScriptKind.Deferred }],
         getServiceScript() {
             return undefined;
         },
@@ -58,48 +58,6 @@ export const ovsLanguagePlugin: LanguagePlugin<URI> = {
     },
 };
 
-
-interface BabelMapping {
-    generated: { line: number; column: number };
-    original: { line: number; column: number };
-    source: string;
-    name?: string;
-}
-
-interface SegmentInfo {
-    offset: number;
-    length: number;
-}
-
-interface EnhancedMapping {
-    generated: SegmentInfo;
-    original: SegmentInfo;
-}
-
-export class MappingConverter {
-    static convertMappings(mappings: SlimeCodeMapping[]): EnhancedMapping[] {
-        // 注意：无效映射已经在编译器（vitePluginOvsTransform）中过滤
-        // 这里只做基本的 null 检查，防御性编程
-        return mappings
-            .filter(mapping => {
-                // 基本的 null/undefined 检查
-                return mapping.source && mapping.generate;
-            })
-            .map((mapping, index) => {
-            const res = {
-                original: {
-                    offset: mapping.source.index,
-                    length: mapping.source.length,
-                },
-                generated: {
-                    offset: mapping.generate.index,
-                    length: mapping.generate.length,
-                },
-            };
-            return res
-        });
-    }
-}
 
 
 export class OvsVirtualCode implements VirtualCode {
@@ -147,7 +105,7 @@ export class OvsVirtualCode implements VirtualCode {
             newCode = styleText
             mapping = []
         }
-        const offsets = MappingConverter.convertMappings(mapping)
+        const offsets = SlimeMappingConverter.convertMappings(mapping)
 
         LogUtil.log('=== Mapping Debug ===')
         LogUtil.log('Raw mapping count: ' + mapping.length)
