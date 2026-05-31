@@ -21,10 +21,15 @@ export {
     defineReactiveExpression,
     createComponentVNodeNew,
     createElementVNode,
-    mapChildrenToVNodes,
-    type ReactiveVNodeState,
-    type OvsComponent
+    mapChildrenToVNodes
 } from './core'
+
+export type {
+    OvsProps,
+    OvsRenderFunction,
+    OvsComponentFactory,
+    OvsCallableComponent
+} from './defineOvsComponent'
 
 // HTML 元素命名空间
 export { $OvsHtmlTag } from './elements'

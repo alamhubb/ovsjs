@@ -111,10 +111,22 @@ export abstract class OvsCstToSlimeAstProperty extends OvsCstToSlimeAstView {
 
         // 3. PropertyName = AssignmentExpression 或 简写属性
         // 查找 PropertyName
-        const propertyNameCst = cst.children.find(c => c.name === 'PropertyName')
+        let propertyNameCst = null
+        for (let i = 0; i < cst.children.length; i++) {
+            if (cst.children[i].name === 'PropertyName') {
+                propertyNameCst = cst.children[i]
+                break
+            }
+        }
 
         // 查找 = 号后的表达式
-        const assignIndex = cst.children.findIndex(c => c.value === '=' || c.name === 'Assign')
+        let assignIndex = -1
+        for (let i = 0; i < cst.children.length; i++) {
+            if (cst.children[i].value === '=' || cst.children[i].name === 'Assign') {
+                assignIndex = i
+                break
+            }
+        }
 
         if (propertyNameCst && assignIndex !== -1) {
             // 完整属性: name = value
@@ -139,7 +151,13 @@ export abstract class OvsCstToSlimeAstProperty extends OvsCstToSlimeAstView {
         }
 
         // 4. 简写属性: IdentifierReference
-        const idRefCst = cst.children.find(c => c.name === 'IdentifierReference')
+        let idRefCst = null
+        for (let i = 0; i < cst.children.length; i++) {
+            if (cst.children[i].name === 'IdentifierReference') {
+                idRefCst = cst.children[i]
+                break
+            }
+        }
         if (idRefCst) {
             const id = (this as any).createIdentifierReferenceAst(idRefCst)
             // 创建简写属性

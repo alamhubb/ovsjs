@@ -29,6 +29,7 @@ import {
 } from "slime-ast";
 import { SubhutiMatchToken } from "subhuti";
 import { registerSlimeCstToAstUtil } from "slime-parser";
+import { CsstsInit } from "cssts-compiler";
 
 // ==================== 内部工具函数 ====================
 
@@ -41,7 +42,7 @@ function ensureDefineOvsComponentImport(imports: any[]): any[] {
     for (const imp of imports) {
         if (imp.type === SlimeAstTypeName.ImportDeclaration) {
             const source = (imp as SlimeImportDeclaration).source
-            if (source.value && (source.value.includes('ReactiveVNode') || source.value.includes('reactiveVNode'))) {
+            if (source.value === 'ovsjs') {
                 reactiveVNodeImport = imp as SlimeImportDeclaration
                 break
             }
@@ -119,25 +120,25 @@ function ensureFragmentImport(imports: any[]): any[] {
 /** 检查 AST 中是否使用了 $OvsHtmlTag */
 function usesOvsHtmlTag(ast: SlimeProgram): boolean {
     const code = JSON.stringify(ast)
-    return code.includes('$OvsHtmlTag')
+    return typeof code === 'string' && code.includes('$OvsHtmlTag')
 }
 
 /** 检查 AST 中是否使用了 defineOvsComponent */
 function usesDefineOvsComponent(ast: SlimeProgram): boolean {
     const code = JSON.stringify(ast)
-    return code.includes('defineOvsComponent')
+    return typeof code === 'string' && code.includes('defineOvsComponent')
 }
 
 /** 检查 AST 中是否使用了 cssts */
 function usesCssts(ast: SlimeProgram): boolean {
     const code = JSON.stringify(ast)
-    return code.includes('"cssts"') || code.includes('"name":"cssts"')
+    return typeof code === 'string' && (code.includes('"cssts"') || code.includes('"name":"cssts"'))
 }
 
 /** 检查 AST 中是否使用了 csstsAtom */
 function usesCsstsAtom(ast: SlimeProgram): boolean {
     const code = JSON.stringify(ast)
-    return code.includes('"csstsAtom"') || code.includes('"name":"csstsAtom"')
+    return typeof code === 'string' && (code.includes('"csstsAtom"') || code.includes('"name":"csstsAtom"'))
 }
 
 /** 确保有 $OvsHtmlTag 的导入 */
@@ -354,6 +355,11 @@ export interface VitePluginOvsTransformOptions {
 
 /** Vite 插件专用的 OVS 代码转换 */
 export function vitePluginOvsTransform(code: string, options?: VitePluginOvsTransformOptions): SlimeGeneratorResult {
+    CsstsInit.init({
+        dts: false,
+        usedStyles: options?.globalStyles
+    } as any)
+
     // 确保 OvsCstToSlimeAst 被注册（防止被其他模块覆盖，如 cssts-compiler 的 transformCssTs）
     registerSlimeCstToAstUtil(OvsCstToSlimeAstUtils)
 

@@ -25,7 +25,7 @@
   "description": "OVS Compiler - Parser and AST transformer for OVS syntax",
   "dependencies": {
     "cssts-compiler": "file:../../../cssts/cssts/cssts-compiler",
-    "ovs-runtime": "file:../ovs-runtime",
+    "ovsjs": "file:../ovs-runtime",
     "slime-ast": "file:../../../slime/slime-ast",
     "slime-generator": "file:../../../slime/slime-generator",
     "slime-parser": "file:../../../slime/slime-parser",

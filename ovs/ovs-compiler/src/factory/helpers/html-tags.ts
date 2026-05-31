@@ -2,7 +2,7 @@
  * HTML 标签列表
  * 用于判断是否需要转换为 $OvsHtmlTag.xxx()
  */
-export const HTML_TAGS = new Set([
+export const HTML_TAGS = [
     'a', 'abbr', 'address', 'area', 'article', 'aside', 'audio',
     'b', 'base', 'bdi', 'bdo', 'blockquote', 'body', 'br', 'button',
     'canvas', 'caption', 'cite', 'code', 'col', 'colgroup',
@@ -24,13 +24,19 @@ export const HTML_TAGS = new Set([
     'u', 'ul',
     'var', 'video',
     'wbr'
-])
+]
 
 /**
  * 检查标签名是否是 HTML 标签
  */
 export function isHtmlTag(tagName: string): boolean {
-    return HTML_TAGS.has(tagName.toLowerCase())
+    const normalizedTagName = tagName.trim().toLowerCase()
+    for (let i = 0; i < HTML_TAGS.length; i++) {
+        if (HTML_TAGS[i] === normalizedTagName) {
+            return true
+        }
+    }
+    return false
 }
 
 import {
@@ -45,10 +51,11 @@ import {
  * - 用户组件返回标识符（需要配合 h() 使用）
  */
 export function createCalleeForTag(tagName: string, loc?: any): SlimeExpression {
-    if (isHtmlTag(tagName)) {
+    const normalizedTagName = tagName.trim()
+    if (isHtmlTag(normalizedTagName)) {
         // HTML 标签 → $OvsHtmlTag.tagName
         // 关键：给标签名标识符设置 loc，用于 source map 映射
-        const tagIdentifier = SlimeAstCreateUtils.createIdentifier(tagName)
+        const tagIdentifier = SlimeAstCreateUtils.createIdentifier(normalizedTagName)
         if (loc) {
             tagIdentifier.loc = {
                 ...loc,
@@ -64,7 +71,7 @@ export function createCalleeForTag(tagName: string, loc?: any): SlimeExpression 
         return memberExpr
     } else {
         // 用户组件 → 直接使用标识符
-        const id = SlimeAstCreateUtils.createIdentifier(tagName)
+        const id = SlimeAstCreateUtils.createIdentifier(normalizedTagName)
         if (loc) id.loc = loc
         return id
     }

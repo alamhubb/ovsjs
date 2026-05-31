@@ -1,10 +1,10 @@
 import OvsTokenConsumer, {ovs6Tokens} from "./OvsConsumer.ts"
 import { Subhuti, SubhutiRule } from 'subhuti'
 // 使用包名导入
-import { CssTsParser } from "cssts-compiler";
+import CssTsParser from "cssts-compiler/src/parser/CssTsParser.js";
 import { ReservedWords } from "slime-parser";
 import type { ExpressionParams, StatementParams, DeclarationParams } from "slime-parser";
-import { SlimeJavascriptContextualKeywordTokenTypes } from "slime-token";
+import { SlimeJavascriptContextualKeywordTokenTypes, SlimeTokenType } from "slime-token";
 
 /** OVS 扩展的表达式参数 */
 interface OvsExpressionParams extends ExpressionParams {
@@ -48,6 +48,16 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
         })
     }
 
+    @SubhutiRule
+    ModuleItemList() {
+        this.Many(() => this.ModuleItem())
+    }
+
+    @SubhutiRule
+    StatementList(params: StatementParams = {}, stopTokens: Array<{ tokenName: string; tokenValue?: string }> = []) {
+        this.Many(() => this.StatementListItem(params))
+    }
+
 
     /**
      * OvsRenderFunction - OVS 视图渲染函数（表达式版本）
@@ -67,10 +77,9 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
      */
     @SubhutiRule
     OvsRenderFunction(params: OvsExpressionParams = {}) {
-        // 使用 IdentifierReference 并传递 params，和普通方法调用一样
-        const idRef = this.IdentifierReference(params)
+        this.tokenConsumer.IdentifierName()
         // 限制 1：组件标签名不能是 JavaScript 关键字
-        const tagName = idRef?.children?.[0]?.children?.[0]?.value || ''
+        const tagName = this.curToken?.tokenValue || ''
         this.assertCondition(!OVS_TAG_BLACKLIST.has(tagName))
 
         this.Option(() => {
@@ -80,12 +89,12 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
         // 限制 2：标签名和 { 之间不能有换行符 [no LineTerminator here]
         this.assertNoLineBreak()
         this.tokenConsumer.LBrace()
-        this.Option(() => {
+        if (!this.match(SlimeTokenType.RBrace)) {
             // ✅ 正确：传递 params
             // OvsRenderFunction 的 body 类似于 FunctionBody，需要传递 Yield/Await 参数
             // 这样在 async 组件中可以使用 await，在 generator 组件中可以使用 yield
-            return this.StatementList(params)
-        })
+            this.StatementList(params)
+        }
         this.tokenConsumer.RBrace()
         return this.curCst
     }
@@ -180,10 +189,9 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
      */
     @SubhutiRule
     OvsRenderStatement(params: StatementParams = {}) {
-        // 使用 IdentifierReference 并传递 params
-        const idRef = this.IdentifierReference(params)
+        this.tokenConsumer.IdentifierName()
         // 限制 1：组件标签名不能是 JavaScript 关键字
-        const tagName = idRef?.children?.[0]?.children?.[0]?.value || ''
+        const tagName = this.curToken?.tokenValue || ''
         this.assertCondition(!OVS_TAG_BLACKLIST.has(tagName))
 
         this.Option(() => {
@@ -193,10 +201,10 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
         // 限制 2：标签名和 { 之间不能有换行符 [no LineTerminator here]
         this.assertNoLineBreak()
         this.tokenConsumer.LBrace()
-        this.Option(() => {
+        if (!this.match(SlimeTokenType.RBrace)) {
             // 传递 params，继承 Yield/Await/Return 上下文
-            return this.StatementList(params)
-        })
+            this.StatementList(params)
+        }
         this.tokenConsumer.RBrace()
         // 不需要 SemicolonASI！这是语句版本，以 } 结尾即可
         return this.curCst

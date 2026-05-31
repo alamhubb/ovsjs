@@ -98,11 +98,13 @@ export abstract class OvsCstToSlimeAstImport extends OvsCstToSlimeAstStatement {
         }
 
         // 检查并添加必要的导入
-        if (bodyJson.includes('$OvsHtmlTag')) {
-            imports = this.ensureOvsHtmlTagImport(imports)
-        }
-        if (bodyJson.includes('defineOvsComponent')) {
-            imports = this.ensureDefineOvsComponentImport(imports)
+        if (bodyJson != null) {
+            if (bodyJson.includes('$OvsHtmlTag')) {
+                imports = this.ensureOvsHtmlTagImport(imports)
+            }
+            if (bodyJson.includes('defineOvsComponent')) {
+                imports = this.ensureDefineOvsComponentImport(imports)
+            }
         }
 
         // 返回：imports 在前，其他语句保持原顺序

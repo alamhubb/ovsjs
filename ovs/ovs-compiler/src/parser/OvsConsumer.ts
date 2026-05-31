@@ -2,7 +2,7 @@ import { createRegToken } from 'subhuti'
 import { SlimeTokensObj } from "slime-parser";
 import { SlimeTokenType } from "slime-token";
 // 使用包名导入
-import { CssTsTokenConsumer, CssTsContextualKeywordTypes, cssTsTokens } from "cssts-compiler";
+import { CssTsTokenConsumer, CssTsContextualKeywordTypes, cssTsTokens } from "cssts-compiler/src/parser/CssTsTokenConsumer.js";
 
 export const ovsTokenName = {
   ...SlimeTokenType,
@@ -20,10 +20,9 @@ export const OvsContextualKeywordTypes = {
 // 合并 tokens:
 // 1. cssTsTokens 包含了 SlimeTokensObj（PrivateIdentifier #name 需要优先于单独的 Hash #）
 // 2. Hash 放最后（作为 fallback，匹配不是 PrivateIdentifier 的单独 #）
-export const ovs6Tokens = [
-  ...cssTsTokens,  // 使用 CssTs 的 tokens（已包含 SlimeTokensObj）
+export const ovs6Tokens = cssTsTokens.concat([
   createRegToken(ovsTokenName.Hash, /#/)  // 放在 PrivateIdentifier 之后
-]
+])
 
 /**
  * OvsTokenConsumer - 继承 CssTsTokenConsumer

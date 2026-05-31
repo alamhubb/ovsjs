@@ -332,7 +332,9 @@ export class OvsCstToSlimeAst extends OvsCstToSlimeAstImport {
         if (!idCst) {
             throw new Error('OvsRenderDomViewDeclaration has no identifier')
         }
-        const id = (this as any).createIdentifierReferenceAst(idCst)
+        const id = idCst.name === 'IdentifierName'
+            ? (this as any).createIdentifierAst(idCst)
+            : (this as any).createIdentifierReferenceAst(idCst)
 
         // 设置 loc 信息
         if (idCst.loc) {
