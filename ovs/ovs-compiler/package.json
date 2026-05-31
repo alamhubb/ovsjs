@@ -26,10 +26,10 @@
   "dependencies": {
     "cssts-compiler": "file:../../../cssts/cssts/cssts-compiler",
     "ovs-runtime": "file:../ovs-runtime",
-    "slime-ast": "file:../../../slime/packages/slime-ast",
-    "slime-generator": "file:../../../slime/packages/slime-generator",
-    "slime-parser": "file:../../../slime/packages/slime-parser",
-    "slime-token": "file:../../../slime/packages/slime-token",
+    "slime-ast": "file:../../../slime/slime-ast",
+    "slime-generator": "file:../../../slime/slime-generator",
+    "slime-parser": "file:../../../slime/slime-parser",
+    "slime-token": "file:../../../slime/slime-token",
     "subhuti": "^0.2.86"
   },
   "devDependencies": {
