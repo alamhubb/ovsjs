@@ -1,8 +1,8 @@
 {
   "private": true,
   "workspaces": [
-    "ovsjs/ovs-runtime",
-    "ovsjs/ovs-compiler",
+    "ovs/ovs-runtime",
+    "ovs/ovs-compiler",
     "create-ovs",
     "vite-plugin-ovs"
   ],
