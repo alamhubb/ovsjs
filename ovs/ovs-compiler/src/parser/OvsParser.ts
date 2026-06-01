@@ -5,6 +5,7 @@ import CssTsParser from "cssts-compiler/src/parser/CssTsParser.js";
 import { ReservedWords } from "slime-parser";
 import type { ExpressionParams, StatementParams, DeclarationParams } from "slime-parser";
 import { SlimeJavascriptContextualKeywordTokenTypes, SlimeTokenType } from "slime-token";
+import { Alternative } from "java:com.subhuti.parser";
 
 /** OVS 扩展的表达式参数 */
 interface OvsExpressionParams extends ExpressionParams {
@@ -77,9 +78,9 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
      */
     @SubhutiRule
     OvsRenderFunction(params: OvsExpressionParams = {}) {
-        this.tokenConsumer.IdentifierName()
+        this.getTokenConsumer().IdentifierName()
         // 限制 1：组件标签名不能是 JavaScript 关键字
-        const tagName = this.curToken?.tokenValue || ''
+        const tagName = this.curToken()?.getTokenValue() || ''
         this.assertCondition(!OVS_TAG_BLACKLIST.has(tagName))
 
         this.Option(() => {
@@ -88,15 +89,15 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
         })
         // 限制 2：标签名和 { 之间不能有换行符 [no LineTerminator here]
         this.assertNoLineBreak()
-        this.tokenConsumer.LBrace()
+        this.getTokenConsumer().LBrace()
         if (!this.match(SlimeTokenType.RBrace)) {
             // ✅ 正确：传递 params
             // OvsRenderFunction 的 body 类似于 FunctionBody，需要传递 Yield/Await 参数
             // 这样在 async 组件中可以使用 await，在 generator 组件中可以使用 yield
             this.StatementList(params)
         }
-        this.tokenConsumer.RBrace()
-        return this.curCst
+        this.getTokenConsumer().RBrace()
+        return this.getCurCst()
     }
 
     // ==================== OVS 专属参数语法 ====================
@@ -116,12 +117,12 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
      */
     @SubhutiRule
     OvsArguments(params: OvsExpressionParams = {}) {
-        this.tokenConsumer.LParen()
+        this.getTokenConsumer().LParen()
         this.Option(() => {
             return this.OvsPropertyDefinitionList(params)
         })
-        this.tokenConsumer.RParen()
-        return this.curCst
+        this.getTokenConsumer().RParen()
+        return this.getCurCst()
     }
 
     /**
@@ -132,11 +133,11 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
     OvsPropertyDefinitionList(params: OvsExpressionParams = {}) {
         this.OvsPropertyDefinition(params)
         this.Many(() => {
-            this.tokenConsumer.Comma()
+            this.getTokenConsumer().Comma()
             this.OvsPropertyDefinition(params)
-            return this.curCst
+            return this.getCurCst()
         })
-        return this.curCst
+        return this.getCurCst()
     }
 
     /**
@@ -152,27 +153,19 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
      */
     @SubhutiRule
     OvsPropertyDefinition(params: OvsExpressionParams = {}) {
-        return this.Or([
-            // 1. ... AssignmentExpression - 扩展属性（最明确）
-            {
-                alt: () => {
-                    this.tokenConsumer.Ellipsis()
-                    return this.AssignmentExpression({...params, In: true})
-                }
-            },
-            // 2. PropertyName = AssignmentExpression - 完整属性（用 = 代替 :）
-            {
-                alt: () => {
-                    this.PropertyName(params)
-                    this.tokenConsumer.Assign()
-                    return this.AssignmentExpression({...params, In: true})
-                }
-            },
-            // 3. MethodDefinition - 方法定义：onClick() {}
-            {alt: () => this.MethodDefinition(params)},
-            // 4. IdentifierReference - 简写属性（最后尝试）：disabled
-            {alt: () => this.IdentifierReference(params)}
-        ])
+        return this.Or(
+            Alternative.of(() => {
+                this.getTokenConsumer().Ellipsis()
+                return this.AssignmentExpression({...params, In: true})
+            }),
+            Alternative.of(() => {
+                this.PropertyName(params)
+                this.getTokenConsumer().Assign()
+                return this.AssignmentExpression({...params, In: true})
+            }),
+            Alternative.of(() => this.MethodDefinition(params)),
+            Alternative.of(() => this.IdentifierReference(params))
+        )
     }
 
     /**
@@ -189,9 +182,9 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
      */
     @SubhutiRule
     OvsRenderStatement(params: StatementParams = {}) {
-        this.tokenConsumer.IdentifierName()
+        this.getTokenConsumer().IdentifierName()
         // 限制 1：组件标签名不能是 JavaScript 关键字
-        const tagName = this.curToken?.tokenValue || ''
+        const tagName = this.curToken()?.getTokenValue() || ''
         this.assertCondition(!OVS_TAG_BLACKLIST.has(tagName))
 
         this.Option(() => {
@@ -200,14 +193,14 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
         })
         // 限制 2：标签名和 { 之间不能有换行符 [no LineTerminator here]
         this.assertNoLineBreak()
-        this.tokenConsumer.LBrace()
+        this.getTokenConsumer().LBrace()
         if (!this.match(SlimeTokenType.RBrace)) {
             // 传递 params，继承 Yield/Await/Return 上下文
             this.StatementList(params)
         }
-        this.tokenConsumer.RBrace()
+        this.getTokenConsumer().RBrace()
         // 不需要 SemicolonASI！这是语句版本，以 } 结尾即可
-        return this.curCst
+        return this.getCurCst()
     }
 
     /**
@@ -218,7 +211,7 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
      */
     @SubhutiRule
     ClassHeritage(params: OvsExpressionParams = {}): any {
-        this.tokenConsumer.Extends()
+        this.getTokenConsumer().Extends()
         return this.LeftHandSideExpression({...params, DisableOvsRender: true} as any)
     }
 
@@ -243,20 +236,20 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
     @SubhutiRule
     OvsViewDeclaration() {
         // view ComponentName (params)? { StatementList }
-        this.tokenConsumer.View()                   // view 软关键字
-        this.tokenConsumer.IdentifierName()         // 组件名
+        this.consumeIdentifierValue("view")                   // view 软关键字
+        this.getTokenConsumer().IdentifierName()         // 组件名
         this.Option(() => {
             // 可选的参数列表 (state)
             return this.ArrowFormalParameters({Yield: false, Await: false})
         })
         // 函数体 { ... }
-        this.tokenConsumer.LBrace()
+        this.getTokenConsumer().LBrace()
         this.Option(() => {
             // 内部是 StatementList，支持 Return 语句
             return this.StatementList({Yield: false, Await: false, Return: true})
         })
-        this.tokenConsumer.RBrace()
-        return this.curCst
+        this.getTokenConsumer().RBrace()
+        return this.getCurCst()
     }
 
     /**
@@ -270,14 +263,14 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
     @SubhutiRule
     NoRenderBlock(params: StatementParams = {}) {
         // #{ statements } - 不渲染代码块
-        this.tokenConsumer.Hash()
-        this.tokenConsumer.LBrace()
+        this.getTokenConsumer().Hash()
+        this.getTokenConsumer().LBrace()
         this.Option(() => {
             // ✅ 正确：传递 params，继承外层的 Yield/Await/Return 上下文
             return this.StatementList(params)
         })
-        this.tokenConsumer.RBrace()
-        return this.curCst
+        this.getTokenConsumer().RBrace()
+        return this.getCurCst()
     }
 
     /**
@@ -300,24 +293,24 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
     @SubhutiRule
     Statement(params: StatementParams = {}): any {
         const {Return = false} = params
-        return this.Or([
-            { alt: () => this.OvsRenderStatement(params) },  // 🆕 OVS 渲染语句，优先尝试
-            { alt: () => this.NoRenderBlock(params) },
-            { alt: () => this.BlockStatement(params) },
-            { alt: () => this.VariableStatement(params) },
-            { alt: () => this.EmptyStatement() },
-            { alt: () => this.ExpressionStatement(params) },
-            { alt: () => this.IfStatement(params) },
-            { alt: () => this.BreakableStatement(params) },
-            { alt: () => this.ContinueStatement(params) },
-            { alt: () => this.BreakStatement(params) },
-            ...(Return ? [{ alt: () => this.ReturnStatement(params) }] : []),
-            { alt: () => this.WithStatement(params) },
-            { alt: () => this.LabelledStatement(params) },
-            { alt: () => this.ThrowStatement(params) },
-            { alt: () => this.TryStatement(params) },
-            { alt: () => this.DebuggerStatement() }
-        ])
+        return this.Or(
+            Alternative.of(() => this.OvsRenderStatement(params)),
+            Alternative.of(() => this.NoRenderBlock(params)),
+            Alternative.of(() => this.BlockStatement(params)),
+            Alternative.of(() => this.VariableStatement(params)),
+            Alternative.of(() => this.EmptyStatement()),
+            Alternative.of(() => this.ExpressionStatement(params)),
+            Alternative.of(() => this.IfStatement(params)),
+            Alternative.of(() => this.BreakableStatement(params)),
+            Alternative.of(() => this.ContinueStatement(params)),
+            Alternative.of(() => this.BreakStatement(params)),
+            ...(Return ? [Alternative.of(() => this.ReturnStatement(params))] : []),
+            Alternative.of(() => this.WithStatement(params)),
+            Alternative.of(() => this.LabelledStatement(params)),
+            Alternative.of(() => this.ThrowStatement(params)),
+            Alternative.of(() => this.TryStatement(params)),
+            Alternative.of(() => this.DebuggerStatement())
+        )
     }
 
     /**
@@ -328,12 +321,12 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
      */
     @SubhutiRule
     Declaration(params: DeclarationParams = {}): any {
-        return this.Or([
-            { alt: () => this.OvsViewDeclaration() },  // 添加 view 组件声明
-            { alt: () => this.HoistableDeclaration({ ...params, Default: false }) },
-            { alt: () => this.ClassDeclaration({ ...params, Default: false }) },
-            { alt: () => this.LexicalDeclaration({ ...params, In: true }) }
-        ])
+        return this.Or(
+            Alternative.of(() => this.OvsViewDeclaration()),
+            Alternative.of(() => this.HoistableDeclaration({ ...params, Default: false })),
+            Alternative.of(() => this.ClassDeclaration({ ...params, Default: false })),
+            Alternative.of(() => this.LexicalDeclaration({ ...params, In: true }))
+        )
     }
 
     /**
@@ -348,45 +341,23 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
     PrimaryExpression(params: OvsExpressionParams = {}) {
         const { DisableOvsRender = false } = params
 
-        return this.Or([
-            // === 1. 硬关键字表达式（不会被标识符遮蔽）===
-            {alt: () => this.tokenConsumer.This()},
-
-            // === 2. CssExpression（css 软关键字，必须在 IdentifierReference 之前）===
-            // css { colorRed, fontBold } → "color-red font-bold"
-            {alt: () => this.CssExpression(params)},
-
-            // === 3. async 开头（软关键字，必须在 IdentifierReference 之前）===
-            {alt: () => this.AsyncGeneratorExpression()},
-            {alt: () => this.AsyncFunctionExpression()},
-
-            // === 4. OvsRenderFunction（OVS 特有语法，放在 IdentifierReference 之前）===
-            // 因为 div { } 以 IdentifierName 开头，需要先尝试 OvsRenderFunction
-            // 当 DisableOvsRender 为 true 时跳过此分支
-            // 传递 params 确保 await/yield 在正确的上下文中被处理
-            ...(!DisableOvsRender ? [{alt: () => this.OvsRenderFunction(params)}] : []),
-
-            // === 5. 标识符（在所有软关键字表达式之后）===
-            {alt: () => this.IdentifierReference(params)},
-
-            // === 6. 字面量（null/true/false 是硬关键字，数字/字符串有独特首 token）===
-            {alt: () => this.Literal()},
-
-            // === 7. function 开头（硬关键字，按特异性排序）===
-            {alt: () => this.GeneratorExpression()},
-            {alt: () => this.FunctionExpression()},
-
-            // === 8. class 表达式（硬关键字）===
-            {alt: () => this.ClassExpression(params)},
-
-            // === 9. 符号开头（各有独特首 token，不会互相遮蔽）===
-            {alt: () => this.ArrayLiteral(params)},
-            {alt: () => this.ObjectLiteral(params)},
-            // RegularExpressionLiteral - 使用 InputElementRegExp 模式消费
-            {alt: () => this.consumeRegularExpressionLiteral()},
-            {alt: () => this.TemplateLiteral({...params, Tagged: false})},
-            {alt: () => this.CoverParenthesizedExpressionAndArrowParameterList(params)}
-        ])
+        return this.Or(
+            Alternative.of(() => this.getTokenConsumer().This()),
+            Alternative.of(() => this.CssExpression(params)),
+            Alternative.of(() => this.AsyncGeneratorExpression()),
+            Alternative.of(() => this.AsyncFunctionExpression()),
+            ...(!DisableOvsRender ? [Alternative.of(() => this.OvsRenderFunction(params))] : []),
+            Alternative.of(() => this.IdentifierReference(params)),
+            Alternative.of(() => this.Literal()),
+            Alternative.of(() => this.GeneratorExpression()),
+            Alternative.of(() => this.FunctionExpression()),
+            Alternative.of(() => this.ClassExpression(params)),
+            Alternative.of(() => this.ArrayLiteral(params)),
+            Alternative.of(() => this.ObjectLiteral(params)),
+            Alternative.of(() => this.consumeRegularExpressionLiteral()),
+            Alternative.of(() => this.TemplateLiteral({...params, Tagged: false})),
+            Alternative.of(() => this.CoverParenthesizedExpressionAndArrowParameterList(params))
+        )
     }
 
 }
