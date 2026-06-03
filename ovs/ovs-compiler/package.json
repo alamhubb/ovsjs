@@ -30,7 +30,7 @@
     "slime-generator": "file:../../../slime/slime-generator",
     "slime-parser": "file:../../../slime/slime-parser",
     "slime-token": "file:../../../slime/slime-token",
-    "subhuti": "^0.2.86"
+    "subhuti": "file:../../../subhuti"
   },
   "devDependencies": {
     "tsdown": "0.17.0-beta.6"

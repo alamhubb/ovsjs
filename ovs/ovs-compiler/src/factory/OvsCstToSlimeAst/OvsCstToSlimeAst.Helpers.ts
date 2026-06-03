@@ -1,4 +1,4 @@
-import { CssTsCstToAst } from "cssts-compiler/src/factory/CssTsCstToAstUtils.js"
+import { CssTsCstToAst } from "cssts-compiler"
 import {
     SlimeAstTypeName,
     type SlimeBlockStatement,

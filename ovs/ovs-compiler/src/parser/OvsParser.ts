@@ -1,11 +1,10 @@
 import OvsTokenConsumer, {ovs6Tokens} from "./OvsConsumer.ts"
-import { Subhuti, SubhutiRule } from 'subhuti'
+import { Alternative, Subhuti, SubhutiRule } from 'subhuti'
 // 使用包名导入
-import CssTsParser from "cssts-compiler/src/parser/CssTsParser.js";
+import { CssTsParser } from "cssts-compiler";
 import { ReservedWords } from "slime-parser";
 import type { ExpressionParams, StatementParams, DeclarationParams } from "slime-parser";
 import { SlimeJavascriptContextualKeywordTokenTypes, SlimeTokenType } from "slime-token";
-import { Alternative } from "java:com.subhuti.parser";
 
 /** OVS 扩展的表达式参数 */
 interface OvsExpressionParams extends ExpressionParams {
@@ -80,7 +79,7 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
     OvsRenderFunction(params: OvsExpressionParams = {}) {
         this.getTokenConsumer().IdentifierName()
         // 限制 1：组件标签名不能是 JavaScript 关键字
-        const tagName = this.curToken()?.getTokenValue() || ''
+        const tagName = this.curToken?.getTokenValue() || ''
         this.assertCondition(!OVS_TAG_BLACKLIST.has(tagName))
 
         this.Option(() => {
@@ -184,7 +183,7 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
     OvsRenderStatement(params: StatementParams = {}) {
         this.getTokenConsumer().IdentifierName()
         // 限制 1：组件标签名不能是 JavaScript 关键字
-        const tagName = this.curToken()?.getTokenValue() || ''
+        const tagName = this.curToken?.getTokenValue() || ''
         this.assertCondition(!OVS_TAG_BLACKLIST.has(tagName))
 
         this.Option(() => {
@@ -236,7 +235,7 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
     @SubhutiRule
     OvsViewDeclaration() {
         // view ComponentName (params)? { StatementList }
-        this.consumeIdentifierValue("view")                   // view 软关键字
+        this.getTokenConsumer().View()                   // view 软关键字
         this.getTokenConsumer().IdentifierName()         // 组件名
         this.Option(() => {
             // 可选的参数列表 (state)
