@@ -235,7 +235,7 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
     @SubhutiRule
     OvsViewDeclaration() {
         // view ComponentName (params)? { StatementList }
-        this.getTokenConsumer().View()                   // view 软关键字
+        this.consumeIdentifierValue("view")              // view 软关键字
         this.getTokenConsumer().IdentifierName()         // 组件名
         this.Option(() => {
             // 可选的参数列表 (state)
@@ -262,7 +262,7 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
     @SubhutiRule
     NoRenderBlock(params: StatementParams = {}) {
         // #{ statements } - 不渲染代码块
-        this.getTokenConsumer().Hash()
+        this.consume("Hash")
         this.getTokenConsumer().LBrace()
         this.Option(() => {
             // ✅ 正确：传递 params，继承外层的 Yield/Await/Return 上下文
