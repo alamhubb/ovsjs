@@ -22,6 +22,36 @@ const OVS_TAG_BLACKLIST = new Set([
     ...Object.values(SlimeJavascriptContextualKeywordTokenTypes)
 ])
 
+type OvsParserParams = ExpressionParams & StatementParams & DeclarationParams & OvsExpressionParams
+
+function readParamFlag(params: any, key: string, fallback = false): boolean {
+    if (!params) return fallback
+    const direct = params[key]
+    if (typeof direct === 'boolean') return direct
+    return fallback
+}
+
+function withParserParams(params: any = {}, overrides: Record<string, any> = {}): OvsParserParams {
+    const normalized: Record<string, any> = {
+        Yield: readParamFlag(params, 'Yield'),
+        Await: readParamFlag(params, 'Await'),
+        In: readParamFlag(params, 'In'),
+        Tagged: readParamFlag(params, 'Tagged'),
+        Return: readParamFlag(params, 'Return'),
+        Default: readParamFlag(params, 'Default'),
+        DisableOvsRender: readParamFlag(params, 'DisableOvsRender')
+    }
+    return {...normalized, ...overrides} as OvsParserParams
+}
+
+function declarationLexicalParams(): DeclarationParams {
+    return {In: true} as DeclarationParams
+}
+
+function declarationHoistableParams(): DeclarationParams {
+    return {Default: false} as DeclarationParams
+}
+
 /**
  * OvsParser - OVS 视图语法解析器
  * 
@@ -155,12 +185,12 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
         return this.Or(
             Alternative.of(() => {
                 this.getTokenConsumer().Ellipsis()
-                return this.AssignmentExpression({...params, In: true})
+                return this.AssignmentExpression(withParserParams(params, {In: true}))
             }),
             Alternative.of(() => {
                 this.PropertyName(params)
                 this.getTokenConsumer().Assign()
-                return this.AssignmentExpression({...params, In: true})
+                return this.AssignmentExpression(withParserParams(params, {In: true}))
             }),
             Alternative.of(() => this.MethodDefinition(params)),
             Alternative.of(() => this.IdentifierReference(params))
@@ -211,7 +241,7 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
     @SubhutiRule
     ClassHeritage(params: OvsExpressionParams = {}): any {
         this.getTokenConsumer().Extends()
-        return this.LeftHandSideExpression({...params, DisableOvsRender: true} as any)
+        return this.LeftHandSideExpression(withParserParams(params, {DisableOvsRender: true}) as any)
     }
 
     /**
@@ -291,7 +321,7 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
      */
     @SubhutiRule
     Statement(params: StatementParams = {}): any {
-        const {Return = false} = params
+        const Return = readParamFlag(params, 'Return')
         return this.Or(
             Alternative.of(() => this.OvsRenderStatement(params)),
             Alternative.of(() => this.NoRenderBlock(params)),
@@ -322,9 +352,9 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
     Declaration(params: DeclarationParams = {}): any {
         return this.Or(
             Alternative.of(() => this.OvsViewDeclaration()),
-            Alternative.of(() => this.HoistableDeclaration({ ...params, Default: false })),
-            Alternative.of(() => this.ClassDeclaration({ ...params, Default: false })),
-            Alternative.of(() => this.LexicalDeclaration({ ...params, In: true }))
+            Alternative.of(() => this.LexicalDeclaration(declarationLexicalParams())),
+            Alternative.of(() => this.HoistableDeclaration(declarationHoistableParams())),
+            Alternative.of(() => this.ClassDeclaration(declarationHoistableParams()))
         )
     }
 
@@ -338,7 +368,7 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
      */
     @SubhutiRule
     PrimaryExpression(params: OvsExpressionParams = {}) {
-        const { DisableOvsRender = false } = params
+        const DisableOvsRender = readParamFlag(params, 'DisableOvsRender')
 
         return this.Or(
             Alternative.of(() => this.getTokenConsumer().This()),
@@ -354,7 +384,7 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
             Alternative.of(() => this.ArrayLiteral(params)),
             Alternative.of(() => this.ObjectLiteral(params)),
             Alternative.of(() => this.consumeRegularExpressionLiteral()),
-            Alternative.of(() => this.TemplateLiteral({...params, Tagged: false})),
+            Alternative.of(() => this.TemplateLiteral(withParserParams(params, {Tagged: false}))),
             Alternative.of(() => this.CoverParenthesizedExpressionAndArrowParameterList(params))
         )
     }
