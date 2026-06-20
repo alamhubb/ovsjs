@@ -464,9 +464,21 @@ export function registerOvsCstToSlimeAst(instance: OvsCstToSlimeAst): void {
 }
 
 // Proxy: 保持 ovsCstToSlimeAst.xxx() 调用方式，同时支持动态替换
-export const OvsCstToSlimeAstUtils = new Proxy({} as OvsCstToSlimeAst, {
-    get(_, prop) {
-        const val = (_ovsCstToSlimeAstUtil as any)[prop]
-        return typeof val === 'function' ? val.bind(_ovsCstToSlimeAstUtil) : val
+export const OvsCstToSlimeAstUtils = {} as OvsCstToSlimeAst
+
+function bindOvsCstToSlimeAstForwarders(): void {
+    let proto: any = OvsCstToSlimeAst.prototype
+    while (proto != null) {
+        for (const prop of Object.getOwnPropertyNames(proto)) {
+            if (prop === 'constructor' || typeof proto[prop] !== 'function') {
+                continue
+            }
+            ;(OvsCstToSlimeAstUtils as any)[prop] = function (...args: any[]) {
+                return (_ovsCstToSlimeAstUtil as any)[prop](...args)
+            }
+        }
+        proto = Object.getPrototypeOf(proto)
     }
-})
+}
+
+bindOvsCstToSlimeAstForwarders()
