@@ -32,6 +32,6 @@ export default {
     id: "ovs",
     extension: ".ovs",
     server: "ovs-language-server/src/index.ts",
-    intellijClient: "ovs-intellij-client"
+    ideaLspClient: "../qin/packages/qin-idea-plugin-debug"
   }
 }
