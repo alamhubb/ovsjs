@@ -1,0 +1,30 @@
+export default {
+  name: "ovs-compiler",
+  version: "0.2.2",
+  description: "Qin-managed OVS parser and compiler package",
+  type: "library",
+  entry: "src/index.ts",
+  scripts: {
+    build: "npm run build",
+    test: "npm run build"
+  },
+  dependencies: {
+    "@qin/generated-qin-parser-ts": "file:../../../qin/packages/qin-language/generated/qin-parser-ts",
+    "cssts-compiler": "file:../../../cssts/cssts/cssts-compiler",
+    "ovsjs": "file:../ovs-runtime",
+    "slime-ast": "file:../../../slime/slime-ast",
+    "slime-generator": "file:../../../slime/slime-generator",
+    "slime-parser": "file:../../../slime/slime-parser",
+    "slime-token": "file:../../../slime/slime-token",
+    "subhuti": "file:../../../subhuti"
+  },
+  devDependencies: {
+    "tsdown": "0.17.0-beta.6"
+  },
+  language: {
+    id: "ovs",
+    extension: ".ovs",
+    parser: "@qin/generated-qin-parser-ts",
+    compiler: "src/index.ts"
+  }
+}
