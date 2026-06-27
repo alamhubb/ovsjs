@@ -31,11 +31,11 @@ connection.onInitialize(params => {
 
     try {
         // 从客户端传递的 initializationOptions 获取 TypeScript SDK 路径
-        const tsdkPath = params.initializationOptions?.typescript?.tsdk;
+        const tsdkPath = params.initializationOptions?.typescript?.tsdk ?? process.env.QIN_LSP_TYPESCRIPT_TSDK;
         LogUtil.log('TSDK path from client: ' + tsdkPath);
 
         if (!tsdkPath) {
-            throw new Error('OVS language server requires initializationOptions.typescript.tsdk');
+            throw new Error('OVS language server requires initializationOptions.typescript.tsdk or QIN_LSP_TYPESCRIPT_TSDK');
         }
 
         LogUtil.log('Loading TSDK...');
