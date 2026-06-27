@@ -13,6 +13,11 @@ const ScriptKind = {
     TS: 3,
 } as const;
 
+function createTransformErrorCode(error: unknown): string {
+    const message = error instanceof Error ? error.message : String(error);
+    return `throw new Error(${JSON.stringify(`OVS transform failed: ${message}`)});\n`;
+}
+
 export const ovsLanguagePlugin: LanguagePlugin<URI> = {
     getLanguageId(uri) {
         if (uri.path.endsWith('.ovs')) {
@@ -84,6 +89,7 @@ export class OvsVirtualCode implements VirtualCode {
         let newCode = styleText
         LogUtil.log('=== OVS Transform Start ===')
         let mapping: any[] = []
+        let transformError: unknown = null
         try {
             LogUtil.log('Input code length: ' + styleText.length)
             // 使用带格式化的同步方法（保持 source map 准确）
@@ -93,6 +99,7 @@ export class OvsVirtualCode implements VirtualCode {
             LogUtil.log('=== OVS Transform Success ===')
             LogUtil.log('Output code length: ' + newCode.length)
         } catch (e: unknown) {
+            transformError = e
             LogUtil.log('=== OVS Transform Error ===')
             if (e instanceof Error) {
                 LogUtil.log('Error type: ' + e.constructor.name)
@@ -101,11 +108,16 @@ export class OvsVirtualCode implements VirtualCode {
             } else {
                 LogUtil.log('Unknown error: ' + String(e))
             }
-            // 解析失败时，使用原始代码作为 fallback
-            newCode = styleText
+            // Keep parser failures visible to the language server instead of serving identity code.
+            newCode = createTransformErrorCode(e)
             mapping = []
         }
-        const offsets = SlimeMappingConverter.convertMappings(mapping)
+        const offsets = transformError
+            ? [{
+                original: { offset: 0, length: styleText.length },
+                generated: { offset: 0, length: newCode.length },
+            }]
+            : SlimeMappingConverter.convertMappings(mapping)
 
         LogUtil.log('=== Mapping Debug ===')
         LogUtil.log('Raw mapping count: ' + mapping.length)
