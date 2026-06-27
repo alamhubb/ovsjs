@@ -19,9 +19,10 @@ export { OvsCstToSlimeAstUtils, registerOvsCstToSlimeAst } from './OvsCstToSlime
 import { SubhutiCst } from 'subhuti'
 
 export function checkCstName(cst: SubhutiCst, cstName: string) {
-    if (cst.name !== cstName) {
+    const actualName = typeof (cst as any).getName === 'function' ? (cst as any).getName() : (cst as any).name
+    if (actualName !== cstName) {
         console.log(cst)
-        throwNewError(cst.name)
+        throwNewError(actualName)
     }
     return cstName
 }

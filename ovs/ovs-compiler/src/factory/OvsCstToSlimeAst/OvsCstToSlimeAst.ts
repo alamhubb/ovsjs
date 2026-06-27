@@ -11,7 +11,7 @@ import {
     SlimeAstCreateUtils,
     SlimeTokenCreateUtils
 } from "slime-ast"
-import { SlimeParser, registerSlimeCstToAstUtil } from "slime-parser"
+import { SlimeCstToAst, SlimeParser, registerSlimeCstToAstUtil } from "slime-parser"
 import { OvsCstToSlimeAstImport } from "./OvsCstToSlimeAst.Import"
 
 /**
@@ -110,10 +110,29 @@ export class OvsCstToSlimeAst extends OvsCstToSlimeAstImport {
 
     // ==================== 核心转换方法（实现抽象方法） ====================
 
+    private cstName(cst: SubhutiCst | undefined): string | undefined {
+        if (!cst) return undefined
+        return typeof (cst as any).getName === 'function' ? (cst as any).getName() : (cst as any).name
+    }
+
+    private cstChildren(cst: SubhutiCst | undefined): SubhutiCst[] {
+        if (!cst) return []
+        const children = typeof (cst as any).getChildren === 'function'
+            ? (cst as any).getChildren()
+            : (cst as any).children
+        if (Array.isArray(children)) return children
+        if (Array.isArray((children as any)?.__items)) return (children as any).__items
+        return []
+    }
+
+    private isCst(cst: SubhutiCst | undefined, name: string): boolean {
+        return this.cstName(cst) === name
+    }
+
     createDeclarationAst(cst: SubhutiCst): any {
         // Declaration -> OvsViewDeclaration | VariableDeclaration | FunctionDeclaration | ...
-        const first = cst.children?.[0]
-        if (first && first.name === OvsParser.prototype.OvsViewDeclaration.name) {
+        const first = this.cstChildren(cst)[0]
+        if (this.isCst(first, 'OvsViewDeclaration')) {
             return this.createOvsViewDeclarationAst(first)
         }
         // 调用基类方法（来自CssTsCstToAst或更底层）
@@ -129,7 +148,7 @@ export class OvsCstToSlimeAst extends OvsCstToSlimeAstImport {
     protected createOvsViewDeclarationAst(cst: SubhutiCst): any {
         this.hasOvsSyntax = true
 
-        const children = cst.children || []
+        const children = this.cstChildren(cst)
 
         // 1. 提取组件名
         const componentNameCst = children[1]
@@ -141,7 +160,7 @@ export class OvsCstToSlimeAst extends OvsCstToSlimeAstImport {
         // 2. 提取参数（可选）
         let params: any[] = []
         const arrowFormalParametersName = SlimeParser.prototype.ArrowFormalParameters?.name || 'ArrowFormalParameters'
-        const formalParamsCst = children.find(c => c.name === arrowFormalParametersName)
+        const formalParamsCst = children.find(c => this.cstName(c) === arrowFormalParametersName)
 
         if (formalParamsCst) {
             params = (this as any).createArrowFormalParametersAstWrapped(formalParamsCst)
@@ -153,7 +172,7 @@ export class OvsCstToSlimeAst extends OvsCstToSlimeAstImport {
 
         // 3. 提取函数体内的 StatementList
         const statementListName = SlimeParser.prototype.StatementList?.name || 'StatementList'
-        const statementListCst = children.find(c => c.name === statementListName)
+        const statementListCst = children.find(c => this.cstName(c) === statementListName)
 
         let functionBodyStatements: SlimeStatement[] = []
 
@@ -236,13 +255,14 @@ export class OvsCstToSlimeAst extends OvsCstToSlimeAstImport {
         if (!cst) return false
 
         // 直接匹配
-        if (cst.name === OvsParser.prototype.OvsRenderFunction.name) {
+        if (this.isCst(cst, 'OvsRenderFunction')) {
             return true
         }
 
         // 递归检查第一个子节点（表达式解析的核心路径）
-        if (cst.children && cst.children.length > 0) {
-            return this.findOvsRenderFunction(cst.children[0])
+        const children = this.cstChildren(cst)
+        if (children.length > 0) {
+            return this.findOvsRenderFunction(children[0])
         }
 
         return false
@@ -321,18 +341,20 @@ export class OvsCstToSlimeAst extends OvsCstToSlimeAstImport {
     protected createOvsRenderDomViewDeclarationAst(cst: SubhutiCst): SlimeExpression {
         this.hasOvsSyntax = true
 
-        const isRenderFunction = cst.name === OvsParser.prototype.OvsRenderFunction.name
-        const isRenderStatement = cst.name === OvsParser.prototype.OvsRenderStatement.name
+        const cstName = this.cstName(cst)
+        const isRenderFunction = cstName === 'OvsRenderFunction'
+        const isRenderStatement = cstName === 'OvsRenderStatement'
         if (!isRenderFunction && !isRenderStatement) {
-            throw new Error(`Expected OvsRenderFunction or OvsRenderStatement, got ${cst.name}`)
+            throw new Error(`Expected OvsRenderFunction or OvsRenderStatement, got ${cstName}`)
         }
 
         // 获取元素/组件名称
-        const idCst = cst.children?.[0]
+        const cstChildren = this.cstChildren(cst)
+        const idCst = cstChildren[0]
         if (!idCst) {
             throw new Error('OvsRenderDomViewDeclaration has no identifier')
         }
-        const id = idCst.name === 'IdentifierName'
+        const id = this.isCst(idCst, 'IdentifierName')
             ? (this as any).createIdentifierAst(idCst)
             : (this as any).createIdentifierReferenceAst(idCst)
 
@@ -349,7 +371,7 @@ export class OvsCstToSlimeAst extends OvsCstToSlimeAstImport {
 
         // 查找 OvsArguments 节点
         const ovsArgumentsName = 'OvsArguments'
-        const ovsArgumentsCst = cst.children?.find(child => child.name === ovsArgumentsName)
+        const ovsArgumentsCst = cstChildren.find(child => this.cstName(child) === ovsArgumentsName)
         let componentProps: SlimeExpression | null = null
 
         if (ovsArgumentsCst) {
@@ -357,13 +379,14 @@ export class OvsCstToSlimeAst extends OvsCstToSlimeAstImport {
         } else {
             // 兼容旧语法：查找普通 Arguments 节点
             const argumentsName = SlimeParser.prototype.Arguments?.name || 'Arguments'
-            const argumentsCst = cst.children?.find(child => child.name === argumentsName)
+            const argumentsCst = cstChildren.find(child => this.cstName(child) === argumentsName)
 
-            if (argumentsCst && argumentsCst.children) {
+            if (argumentsCst && this.cstChildren(argumentsCst).length > 0) {
                 const argumentListName = SlimeParser.prototype.ArgumentList?.name || 'ArgumentList'
-                const argListCst = argumentsCst.children.find(child => child.name === argumentListName)
-                if (argListCst && argListCst.children?.[0]?.children?.[0]) {
-                    componentProps = (this as any).createExpressionAst(argListCst.children[0].children[0])
+                const argListCst = this.cstChildren(argumentsCst).find(child => this.cstName(child) === argumentListName)
+                const firstArg = this.cstChildren(this.cstChildren(argListCst)[0])[0]
+                if (firstArg) {
+                    componentProps = (this as any).createExpressionAst(firstArg)
                 }
             }
         }
@@ -379,7 +402,7 @@ export class OvsCstToSlimeAst extends OvsCstToSlimeAstImport {
 
         try {
             const statementListName = SlimeParser.prototype.StatementList?.name || 'StatementList'
-            const statementListCst = cst.children?.find(child => child.name === statementListName)
+            const statementListCst = cstChildren.find(child => this.cstName(child) === statementListName)
 
             let bodyStatements: SlimeStatement[] = []
             if (statementListCst) {
@@ -431,10 +454,10 @@ export class OvsCstToSlimeAst extends OvsCstToSlimeAstImport {
      * 重写 createConciseBodyAst：箭头函数体
      */
     createConciseBodyAst(cst: SubhutiCst): SlimeBlockStatement | SlimeExpression {
-        const first = cst.children?.[0]
+        const first = this.cstChildren(cst)[0]
 
         // 只有 block 形式 () => { ... } 需要重置渲染上下文
-        if (first?.name === 'LBrace') {
+        if (this.isCst(first, 'LBrace')) {
             const savedRenderDepth = this.ovsRenderDomViewDepth
             const savedNoRenderDepth = this.noRenderDepth
 
@@ -468,7 +491,8 @@ export const OvsCstToSlimeAstUtils = {} as OvsCstToSlimeAst
 
 function bindOvsCstToSlimeAstForwarders(): void {
     let proto: any = OvsCstToSlimeAst.prototype
-    while (proto != null) {
+    const stopProto = Object.getPrototypeOf(SlimeCstToAst.prototype)
+    while (proto != null && proto !== stopProto) {
         for (const prop of Object.getOwnPropertyNames(proto)) {
             const descriptor = Object.getOwnPropertyDescriptor(proto, prop)
             if (prop === 'constructor' || typeof descriptor?.value !== 'function') {

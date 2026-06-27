@@ -30,6 +30,7 @@ import {
 import { SubhutiMatchToken } from "subhuti";
 import { registerSlimeCstToAstUtil } from "slime-parser";
 import { CsstsInit } from "cssts-compiler";
+import { normalizeGeneratedCst } from "./parser/generated-runtime-adapter.ts";
 
 // ==================== 内部工具函数 ====================
 
@@ -325,7 +326,7 @@ export interface ovsTransformBaseResult {
  */
 export function ovsTransformBase(code: string): ovsTransformBaseResult {
     const parser = new OvsParser(code)
-    let curCst = parser.Program()
+    let curCst = normalizeGeneratedCst(parser.Program())
     const tokens = parser.parsedTokens
     if (!tokens.length) return { ast: null, tokens: tokens }
     let ast = OvsCstToSlimeAstUtils.toProgram(curCst)
@@ -340,7 +341,7 @@ export function ovsTransformBase(code: string): ovsTransformBaseResult {
  */
 export function ovsTransformFile(code: string): ovsTransformBaseResult {
     const parser = new OvsParser(code)
-    let curCst = parser.Program()
+    let curCst = normalizeGeneratedCst(parser.Program())
     const tokens = parser.parsedTokens
     if (!tokens.length) return { ast: null, tokens: tokens }
     let ast = OvsCstToSlimeAstUtils.toFileAst(curCst)

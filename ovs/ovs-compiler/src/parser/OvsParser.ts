@@ -8,6 +8,7 @@ import {
     SlimeTokenType
 } from "@qin/generated-qin-parser-ts";
 import type { ExpressionParams, StatementParams, DeclarationParams } from "@qin/generated-qin-parser-ts";
+import { normalizeGeneratedTokens } from "./generated-runtime-adapter.ts"
 
 /** OVS 扩展的表达式参数 */
 interface OvsExpressionParams extends ExpressionParams {
@@ -65,6 +66,15 @@ function withParserParams(params: any = {}, overrides: Record<string, any> = {})
     if (cached) return cached
 
     const stableParams: Record<string, any> = {...normalized}
+    stableParams.yield = () => stableParams.Yield
+    stableParams.await = () => stableParams.Await
+    stableParams.in = () => stableParams.In
+    stableParams.tagged = () => stableParams.Tagged
+    stableParams.return = () => stableParams.Return
+    stableParams.isDefault = () => stableParams.Default
+    stableParams.disableOvsRender = () => stableParams.DisableOvsRender
+    stableParams.withIn = (value: boolean) => withParserParams(stableParams, {In: value})
+    stableParams.expressionParams = () => withParserParams(stableParams)
     stableParams.hashCode = () => {
         let hash = 17
         for (const key of PARSER_PARAM_KEYS) {
@@ -149,6 +159,13 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
             tokenDefinitions: ovs6Tokens
         })
         ;(this as any)._cache = new SubhutiPackratCache(100000)
+    }
+
+    get parsedTokens(): any[] {
+        const tokens = typeof (this as any).getParsedTokens === 'function'
+            ? (this as any).getParsedTokens()
+            : (this as any).__qin_field_parsedTokens
+        return normalizeGeneratedTokens(tokens)
     }
 
     private canStartOvsRender(): boolean {
@@ -459,13 +476,13 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
         this.getTokenConsumer().IdentifierName()         // 组件名
         this.Option(() => {
             // 可选的参数列表 (state)
-            return this.ArrowFormalParameters({Yield: false, Await: false})
+            return this.ArrowFormalParameters(withParserParams({}, {Yield: false, Await: false}) as any)
         })
         // 函数体 { ... }
         this.getTokenConsumer().LBrace()
         this.Option(() => {
             // 内部是 StatementList，支持 Return 语句
-            return this.StatementList({Yield: false, Await: false, Return: true})
+            return this.StatementList(withParserParams({}, {Yield: false, Await: false, Return: true}) as StatementParams)
         })
         this.getTokenConsumer().RBrace()
         return this.getCurCst()
@@ -482,7 +499,7 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
     @SubhutiRule
     NoRenderBlock(params: StatementParams = {}) {
         // #{ statements } - 不渲染代码块
-        this.consume("Hash")
+        this.getTokenConsumer().Hash()
         this.getTokenConsumer().LBrace()
         this.Option(() => {
             // ✅ 正确：传递 params，继承外层的 Yield/Await/Return 上下文
