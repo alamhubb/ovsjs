@@ -14,6 +14,7 @@ export default {
     "@volar/language-server": "~2.4.0",
     "@volar/language-service": "~2.4.0",
     "@volar/typescript": "~2.4.0",
+    "@qin/generated-qin-parser-ts": "file:../../qin/packages/qin-language/generated/qin-parser-ts",
     "ovs-compiler": "file:../ovs/ovs-compiler",
     "ovsjs": "file:../ovs/ovs-runtime",
     "slime-parser": "file:../../slime/slime-parser",
@@ -33,7 +34,8 @@ export default {
     extension: ".ovs",
     server: "ovs-language-server/src/index.ts",
     serverBundle: "dist/language-server.js",
-    parser: "../ovs/ovs-compiler",
+    parser: "@qin/generated-qin-parser-ts",
+    compiler: "../ovs/ovs-compiler",
     ideaLspClient: "../../qin/packages/qin-idea-plugin-debug"
   }
 }

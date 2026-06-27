@@ -89,6 +89,7 @@
     "typescript": "^5.6.2"
   },
   "dependencies": {
+    "@qin/generated-qin-parser-ts": "file:../../qin/packages/qin-language/generated/qin-parser-ts",
     "@oxc-project/runtime": "0.66.0",
     "ovs-compiler": "file:../ovs/ovs-compiler",
     "ovsjs": "file:../ovs/ovs-runtime",
