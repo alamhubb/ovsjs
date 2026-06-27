@@ -4,7 +4,8 @@
     "ovs/ovs-runtime",
     "ovs/ovs-compiler",
     "create-ovs",
-    "vite-plugin-ovs"
+    "vite-plugin-ovs",
+    "ovs-language"
   ],
   "scripts": {
     "build": "tsc -b",

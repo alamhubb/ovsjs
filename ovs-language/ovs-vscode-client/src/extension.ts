@@ -57,16 +57,20 @@ export async function activate(context: vscode.ExtensionContext) {
   try {
     // 添加超时，避免卡住
     const tsdkPromise = getTsdk(context);
-    const timeoutPromise = new Promise<undefined>((resolve) => {
+    const timeoutPromise = new Promise<never>((_resolve, reject) => {
       setTimeout(() => {
-        log('TSDK timeout after 5 seconds, using default');
-        resolve(undefined);
+        reject(new Error('Timed out resolving TypeScript SDK after 5 seconds'));
       }, 5000);
     });
     tsdk = await Promise.race([tsdkPromise, timeoutPromise]);
     log('TSDK result', tsdk);
   } catch (e) {
     log('Error getting TSDK', e);
+    throw e;
+  }
+
+  if (!tsdk?.tsdk) {
+    throw new Error('OVS extension requires a TypeScript SDK path');
   }
 
   const serverOptions: ServerOptions = {

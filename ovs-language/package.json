@@ -90,9 +90,12 @@
   },
   "dependencies": {
     "@oxc-project/runtime": "0.66.0",
+    "ovs-compiler": "file:../ovs/ovs-compiler",
+    "ovsjs": "file:../ovs/ovs-runtime",
     "path-browserify": "^1.0.1",
     "semver": "^7.6.2",
     "slime-generator": "file:../../slime/slime-generator",
+    "slime-parser": "file:../../slime/slime-parser",
     "typescript-auto-import-cache": "^0.3.5",
     "volar-service-typescript": "^0.0.65",
     "vscode-languageclient": "^9.0.1",

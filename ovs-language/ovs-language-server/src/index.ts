@@ -35,7 +35,7 @@ connection.onInitialize(params => {
         LogUtil.log('TSDK path from client: ' + tsdkPath);
 
         if (!tsdkPath) {
-            LogUtil.log('WARNING: No tsdk path provided, using fallback');
+            throw new Error('OVS language server requires initializationOptions.typescript.tsdk');
         }
 
         LogUtil.log('Loading TSDK...');
