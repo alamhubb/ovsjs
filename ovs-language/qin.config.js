@@ -7,7 +7,7 @@ export default {
   scripts: {
     build: "npm run build",
     dev: "tsx ovs-language-server/src/index.ts --stdio",
-    test: "npm run test:source"
+    test: "npm run test:all"
   },
   dependencies: {
     "@volar/language-core": "~2.4.0",
