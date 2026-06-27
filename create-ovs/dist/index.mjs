@@ -12,7 +12,7 @@ const bold = (text) => `\x1b[1m${text}\x1b[0m`;
 const dim = (text) => `\x1b[2m${text}\x1b[0m`;
 async function main() {
 	console.log();
-	console.log(cyan("┌  ") + bold("OVS - A declarative UI syntax without JSX"));
+	console.log(cyan("┌  ") + bold("OVS - A declarative UI syntax for Vue"));
 	console.log(cyan("│"));
 	let projectName = process.argv[2];
 	if (!projectName) projectName = await prompt("│  Project name: ", "my-ovs-app");
@@ -33,10 +33,8 @@ async function main() {
 	console.log(cyan("│"));
 	console.log(cyan("│  ") + `Scaffolding project in ${targetDir}...`);
 	copyDir(path.resolve(__dirname, "..", "template"), targetDir);
-	const pkgPath = path.join(targetDir, "package.json");
-	let pkgContent = fs.readFileSync(pkgPath, "utf-8");
-	pkgContent = pkgContent.replace("{{projectName}}", projectName);
-	fs.writeFileSync(pkgPath, pkgContent);
+	replaceTemplateVariable(path.join(targetDir, "package.json"), projectName);
+	replaceTemplateVariable(path.join(targetDir, "qin.config.js"), projectName);
 	console.log(cyan("│"));
 	console.log(cyan("└  ") + green("Done!") + " Now run:");
 	console.log();
@@ -85,6 +83,11 @@ function copyDir(src, dest) {
 		if (fs.statSync(srcPath).isDirectory()) copyDir(srcPath, destPath);
 		else fs.copyFileSync(srcPath, destPath);
 	}
+}
+function replaceTemplateVariable(filePath, projectName) {
+	let content = fs.readFileSync(filePath, "utf-8");
+	content = content.replaceAll("{{projectName}}", projectName);
+	fs.writeFileSync(filePath, content);
 }
 main().catch((err) => {
 	console.error(err);

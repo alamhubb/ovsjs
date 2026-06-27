@@ -48,10 +48,8 @@ async function main() {
   copyDir(templateDir, targetDir)
 
   // 修改 package.json 中的项目名
-  const pkgPath = path.join(targetDir, 'package.json')
-  let pkgContent = fs.readFileSync(pkgPath, 'utf-8')
-  pkgContent = pkgContent.replace('{{projectName}}', projectName)
-  fs.writeFileSync(pkgPath, pkgContent)
+  replaceTemplateVariable(path.join(targetDir, 'package.json'), projectName)
+  replaceTemplateVariable(path.join(targetDir, 'qin.config.js'), projectName)
 
   console.log(cyan('│'))
   console.log(cyan('└  ') + green('Done!') + ' Now run:')
@@ -112,6 +110,12 @@ function copyDir(src: string, dest: string) {
       fs.copyFileSync(srcPath, destPath)
     }
   }
+}
+
+function replaceTemplateVariable(filePath: string, projectName: string) {
+  let content = fs.readFileSync(filePath, 'utf-8')
+  content = content.replaceAll('{{projectName}}', projectName)
+  fs.writeFileSync(filePath, content)
 }
 
 main().catch((err) => {
