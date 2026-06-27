@@ -32,6 +32,7 @@ export default {
     id: "ovs",
     extension: ".ovs",
     server: "ovs-language-server/src/index.ts",
-    ideaLspClient: "../qin/packages/qin-idea-plugin-debug"
+    parser: "../ovs/ovs-compiler",
+    ideaLspClient: "../../qin/packages/qin-idea-plugin-debug"
   }
 }
