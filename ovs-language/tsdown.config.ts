@@ -10,6 +10,7 @@ export default defineConfig([
     outDir: 'dist',
     clean: true,
     target: 'es2020',
+    tsconfig: 'tsconfig.json',
     external: ['vscode'],
   },
   // Server (Language Server) - CommonJS with types
@@ -21,5 +22,6 @@ export default defineConfig([
     dts: true,
     outDir: 'dist',
     target: 'es2020',
+    tsconfig: 'tsconfig.json',
   },
 ])

@@ -5,7 +5,7 @@ import { isTsDocument } from '../shared';
 import { getLineText } from '../utils/lspConverters';
 import { getLanguageServiceByDocument } from './syntactic';
 
-const localize = nls.loadMessagetsxdle(); // TODO: not working
+const localize = nls.loadMessageBundle(); // TODO: not working
 
 const defaultJsDoc = `/**\n * $0\n */`;
 

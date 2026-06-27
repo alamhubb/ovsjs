@@ -1,6 +1,5 @@
 import { createRegToken } from 'subhuti'
-import { SlimeTokensObj } from "slime-parser";
-import { SlimeTokenType } from "slime-token";
+import { SlimeTokensObj, SlimeTokenType } from "@qin/generated-qin-parser-ts";
 // 使用包名导入
 import { CssTsTokenConsumer, CssTsContextualKeywordTypes, cssTsTokens } from "cssts-compiler";
 

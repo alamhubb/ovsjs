@@ -75,8 +75,30 @@
     "vscode:prepublish": "npm run build"
   },
   "devDependencies": {
+    "@types/node": "^22.15.21",
+    "@types/vscode": "^1.75.0",
+    "@volar/language-core": "^2.4.14",
+    "@volar/language-server": "^2.4.14",
+    "@volar/language-service": "^2.4.14",
+    "@volar/source-map": "^2.4.14",
+    "@volar/typescript": "^2.4.14",
+    "@volar/vscode": "^2.4.14",
     "@vscode/vsce": "^3.2.1",
     "tsdown": "^0.9.3",
+    "tsx": "^4.22.4",
     "typescript": "^5.6.2"
+  },
+  "dependencies": {
+    "@oxc-project/runtime": "0.66.0",
+    "path-browserify": "^1.0.1",
+    "semver": "^7.6.2",
+    "slime-generator": "file:../../slime/slime-generator",
+    "typescript-auto-import-cache": "^0.3.5",
+    "volar-service-typescript": "^0.0.65",
+    "vscode-languageclient": "^9.0.1",
+    "vscode-languageserver": "^9.0.1",
+    "vscode-languageserver-textdocument": "^1.0.12",
+    "vscode-nls": "^5.2.0",
+    "vscode-uri": "^3.0.8"
   }
 }

@@ -25,6 +25,7 @@
   "author": "alamhubb",
   "description": "OVS Compiler - Parser and AST transformer for OVS syntax",
   "dependencies": {
+    "@qin/generated-qin-parser-ts": "file:../../../qin/packages/qin-language/generated/qin-parser-ts",
     "cssts-compiler": "file:../../../cssts/cssts/cssts-compiler",
     "ovsjs": "file:../ovs-runtime",
     "slime-ast": "file:../../../slime/slime-ast",

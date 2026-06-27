@@ -470,7 +470,8 @@ function bindOvsCstToSlimeAstForwarders(): void {
     let proto: any = OvsCstToSlimeAst.prototype
     while (proto != null) {
         for (const prop of Object.getOwnPropertyNames(proto)) {
-            if (prop === 'constructor' || typeof proto[prop] !== 'function') {
+            const descriptor = Object.getOwnPropertyDescriptor(proto, prop)
+            if (prop === 'constructor' || typeof descriptor?.value !== 'function') {
                 continue
             }
             ;(OvsCstToSlimeAstUtils as any)[prop] = function (...args: any[]) {

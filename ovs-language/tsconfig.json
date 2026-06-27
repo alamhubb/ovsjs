@@ -1,0 +1,15 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "types": [
+      "node",
+      "vscode"
+    ]
+  },
+  "include": [
+    "ovs-language-server/src/**/*.ts",
+    "ovs-vscode-client/src/**/*.ts",
+    "tests/**/*.ts"
+  ]
+}

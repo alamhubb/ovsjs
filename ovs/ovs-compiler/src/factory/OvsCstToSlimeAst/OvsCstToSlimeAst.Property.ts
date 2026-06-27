@@ -29,6 +29,11 @@ export abstract class OvsCstToSlimeAstProperty extends OvsCstToSlimeAstView {
      * - class = { colorRed, fontBold } → class: [OvsCls.colorRed, OvsCls.fontBold]
      */
     protected createOvsArgumentsAst(cst: SubhutiCst): SlimeExpression {
+        const objectLiteralCst = cst.children?.find(child => child.name === 'ObjectLiteral')
+        if (objectLiteralCst) {
+            return (this as any).createObjectLiteralAst(objectLiteralCst)
+        }
+
         const properties: any[] = []
 
         // 查找 OvsPropertyDefinitionList

@@ -180,10 +180,10 @@ export function defineOvsComponent(factory: OvsComponentFactory): OvsCallableCom
         const unifiedProps = unifyProps(props, attrs, slots)
 
         // factory 在 setup 中执行（只执行一次），返回 VNode
-        const vnode = factory(unifiedProps)
+        const render = () => factory(unifiedProps)
 
         // 自动包装为渲染函数
-        return () => vnode
+        return render
     })
 
         ; (component as any).__isOvsComponent = true

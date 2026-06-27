@@ -17,7 +17,7 @@ const useSource = args.includes('--source')
 // 根据参数选择服务端路径
 const SERVER_PATH = useSource 
   ? path.join(__dirname, '../ovs-language-server/src/index.ts')
-  : path.join(__dirname, '../dist/language-server.cjs')
+  : path.join(__dirname, '../dist/language-server.js')
 
 const SERVER_MODE = useSource ? '源文件 (.ts)' : '打包文件 (.cjs)'
 
