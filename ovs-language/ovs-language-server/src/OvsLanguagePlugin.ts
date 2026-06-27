@@ -13,9 +13,13 @@ const ScriptKind = {
     TS: 3,
 } as const;
 
-function createTransformErrorCode(error: unknown): string {
+export function formatOvsTransformErrorMessage(error: unknown): string {
     const message = error instanceof Error ? error.message : String(error);
-    return `throw new Error(${JSON.stringify(`OVS transform failed: ${message}`)});\n`;
+    return `OVS transform failed: ${message}`;
+}
+
+function createTransformErrorCode(error: unknown): string {
+    return `throw new Error(${JSON.stringify(formatOvsTransformErrorMessage(error))});\n`;
 }
 
 export const ovsLanguagePlugin: LanguagePlugin<URI> = {

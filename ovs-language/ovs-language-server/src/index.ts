@@ -4,9 +4,12 @@ import {
     createTypeScriptProject,
     loadTsdkByPath
 } from '@volar/language-server/node.js';
+import { DiagnosticSeverity } from 'vscode-languageserver';
+import type { DidChangeTextDocumentParams, DidOpenTextDocumentParams } from 'vscode-languageserver';
 import { LogUtil } from "./logutil";
 import { createTypeScriptServices } from "./typescript";
-import { ovsLanguagePlugin } from "./OvsLanguagePlugin";
+import { formatOvsTransformErrorMessage, ovsLanguagePlugin } from "./OvsLanguagePlugin";
+import { vitePluginOvsTransform } from "ovs-compiler";
 
 LogUtil.log('=== OVS Language Server Starting ===');
 LogUtil.log('Process ID: ' + process.pid);
@@ -18,6 +21,66 @@ LogUtil.log('Connection created');
 
 const server = createServer(connection);
 LogUtil.log('Server created');
+
+const openDocuments = new Map<string, string>();
+
+function positionToOffset(text: string, line: number, character: number): number {
+    let currentLine = 0;
+    let offset = 0;
+    while (currentLine < line && offset < text.length) {
+        const next = text.indexOf('\n', offset);
+        if (next < 0) {
+            return text.length;
+        }
+        offset = next + 1;
+        currentLine++;
+    }
+    return Math.min(offset + character, text.length);
+}
+
+function applyDocumentChanges(text: string, params: DidChangeTextDocumentParams): string {
+    let nextText = text;
+    for (const change of params.contentChanges) {
+        if (!('range' in change) || !change.range) {
+            nextText = change.text;
+            continue;
+        }
+        const start = positionToOffset(nextText, change.range.start.line, change.range.start.character);
+        const end = positionToOffset(nextText, change.range.end.line, change.range.end.character);
+        nextText = nextText.slice(0, start) + change.text + nextText.slice(end);
+    }
+    return nextText;
+}
+
+function shouldValidateOvsDocument(uri: string, languageId?: string): boolean {
+    return languageId === 'ovs' || uri.toLowerCase().endsWith('.ovs');
+}
+
+function validateOvsDocument(uri: string, text: string): void {
+    LogUtil.log('=== OVS LSP Diagnostics Start ===');
+    LogUtil.log('Document URI: ' + uri);
+    try {
+        vitePluginOvsTransform(text);
+        connection.sendDiagnostics({ uri, diagnostics: [] });
+        LogUtil.log('OVS transform diagnostics count: 0');
+    } catch (error: unknown) {
+        const message = formatOvsTransformErrorMessage(error);
+        connection.sendDiagnostics({
+            uri,
+            diagnostics: [{
+                range: {
+                    start: { line: 0, character: 0 },
+                    end: { line: Math.max(text.split(/\r\n|\r|\n/).length - 1, 0), character: 0 },
+                },
+                severity: DiagnosticSeverity.Error,
+                source: 'ovs',
+                message,
+            }],
+        });
+        LogUtil.log('OVS transform diagnostics count: 1');
+        LogUtil.log('Diagnostic message: ' + message);
+    }
+}
 
 connection.listen();
 LogUtil.log('Connection listening...');
@@ -78,6 +141,32 @@ connection.onInitialize(params => {
 connection.onInitialized(() => {
     LogUtil.log('=== onInitialized - Client confirmed initialization ===');
     server.initialized();
+});
+
+connection.onDidOpenTextDocument((params: DidOpenTextDocumentParams) => {
+    const { uri, languageId, text } = params.textDocument;
+    openDocuments.set(uri, text);
+    if (shouldValidateOvsDocument(uri, languageId)) {
+        validateOvsDocument(uri, text);
+    }
+});
+
+connection.onDidChangeTextDocument((params: DidChangeTextDocumentParams) => {
+    const uri = params.textDocument.uri;
+    const previousText = openDocuments.get(uri) ?? '';
+    const nextText = applyDocumentChanges(previousText, params);
+    openDocuments.set(uri, nextText);
+    if (shouldValidateOvsDocument(uri)) {
+        validateOvsDocument(uri, nextText);
+    }
+});
+
+connection.onDidCloseTextDocument((params) => {
+    const uri = params.textDocument.uri;
+    openDocuments.delete(uri);
+    if (shouldValidateOvsDocument(uri)) {
+        connection.sendDiagnostics({ uri, diagnostics: [] });
+    }
 });
 
 connection.onShutdown(() => {

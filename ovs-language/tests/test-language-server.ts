@@ -35,6 +35,7 @@ class LSPClient {
   private messageId = 0
   private pendingRequests = new Map<number, { resolve: Function, reject: Function }>()
   private buffer = ''
+  readonly diagnostics: any[] = []
 
   constructor() {
     // Windows 下使用 cmd 来启动，避免 spawn 问题
@@ -77,6 +78,9 @@ class LSPClient {
       this.buffer = this.buffer.substring(start + len)
       try {
         const parsed: LSPMessage = JSON.parse(msg)
+        if (parsed.method === 'textDocument/publishDiagnostics') {
+          this.diagnostics.push(parsed.params)
+        }
         if (parsed.id !== undefined && this.pendingRequests.has(parsed.id)) {
           const { resolve, reject } = this.pendingRequests.get(parsed.id)!
           this.pendingRequests.delete(parsed.id)
@@ -151,6 +155,21 @@ async function runTests() {
     })
     console.log('✅ textDocument/didOpen'); passed++
     await new Promise(r => setTimeout(r, 500))
+
+    const badUri = 'file://' + path.resolve(__dirname, '../../create-ovs/template/src/bad.ovs')
+    client.sendNotification('textDocument/didOpen', {
+      textDocument: { uri: badUri, languageId: 'ovs', version: 1, text: `div { h1 { 'Broken' }` }
+    })
+    console.log('✅ bad textDocument/didOpen'); passed++
+    await new Promise(r => setTimeout(r, 1500))
+    const transformDiagnostic = client.diagnostics
+      .flatMap(item => item.diagnostics ?? [])
+      .find(item => String(item.message ?? '').includes('OVS transform failed'))
+    if (transformDiagnostic) {
+      console.log('✅ OVS transform diagnostics surfaced'); passed++
+    } else {
+      console.log('❌ OVS transform diagnostics missing'); failed++
+    }
 
     // 3. Shutdown
     console.log('\n--- 关闭 ---')
