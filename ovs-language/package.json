@@ -67,7 +67,7 @@
     "build": "tsdown",
     "watch": "tsdown --watch",
     "test": "npm run test:dist",
-    "test:source": "npx tsx tests/test-language-server.ts --source",
+    "test:source": "npx tsx tests/test-generated-parser-chain.ts && npx tsx tests/test-language-server.ts --source",
     "test:dist": "npx tsx tests/test-language-server.ts --dist",
     "test:all": "npm run test:source && npm run build && npm run test:dist",
     "pack": "vsce package",
