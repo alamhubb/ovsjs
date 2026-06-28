@@ -18,7 +18,7 @@ export const OvsContextualKeywordTypes = {
 
 // 合并 tokens:
 // 1. cssTsTokens 包含了 SlimeTokensObj（PrivateIdentifier #name 需要优先于单独的 Hash #）
-// 2. Hash 放最后（作为 fallback，匹配不是 PrivateIdentifier 的单独 #）
+// 2. Hash 放最后，确保 PrivateIdentifier 优先匹配，单独 # 用于 NoRenderBlock
 export const ovs6Tokens = cssTsTokens.concat([
   createRegToken(ovsTokenName.Hash, /#/)  // 放在 PrivateIdentifier 之后
 ])

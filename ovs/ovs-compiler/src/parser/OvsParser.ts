@@ -32,8 +32,8 @@ type OvsParserParamFlags = Record<string, boolean>
 const PARSER_PARAM_KEYS = ['Yield', 'Await', 'In', 'Tagged', 'Return', 'Default', 'DisableOvsRender']
 const PARSER_PARAM_CACHE = new Map<string, OvsParserParams>()
 
-function readParamFlag(params: any, key: string, fallback = false): boolean {
-    if (!params) return fallback
+function readParamFlag(params: any, key: string, defaultValue = false): boolean {
+    if (!params) return defaultValue
     const direct = params[key]
     if (typeof direct === 'boolean') return direct
     const lowerKey = key.charAt(0).toLowerCase() + key.slice(1)
@@ -43,7 +43,7 @@ function readParamFlag(params: any, key: string, fallback = false): boolean {
     const javaGetterKey = key === 'Default' ? 'isDefault' : lowerKey
     const javaGetter = params[javaGetterKey]
     if (typeof javaGetter === 'function') return !!javaGetter.call(params)
-    return fallback
+    return defaultValue
 }
 
 function withParserParams(params: any = {}, overrides: Record<string, any> = {}): OvsParserParams {

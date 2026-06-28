@@ -5,9 +5,9 @@ export default {
   type: "library",
   entry: "ovs-language-server/src/index.ts",
   scripts: {
-    build: "npm run build",
+    build: "tsdown",
     dev: "tsx ovs-language-server/src/index.ts --stdio",
-    test: "npm run test:all"
+    test: "tsx tests/test-generated-parser-chain.ts && tsx tests/test-language-server.ts --source && tsdown && tsx tests/test-language-server.ts --dist"
   },
   dependencies: {
     "@volar/language-core": "~2.4.0",
