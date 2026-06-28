@@ -37,5 +37,11 @@ export default {
     parser: "@qin/generated-qin-parser-ts",
     compiler: "../ovs/ovs-compiler",
     ideaLspClient: "../../qin/packages/qin-idea-plugin-debug"
+  },
+  languageServer: {
+    sourceExtension: ".ovs",
+    serviceExtension: ".ts",
+    generatedParserTarget: "@qin/generated-qin-parser-ts",
+    compilerPackage: "ovs-compiler"
   }
 }
