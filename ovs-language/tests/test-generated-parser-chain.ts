@@ -13,6 +13,7 @@ const workspaceRoot = path.join(languageRoot, '..')
 const languageConfigPath = path.join(languageRoot, 'qin.config.js')
 const compilerConfigPath = path.join(workspaceRoot, 'ovs', 'ovs-compiler', 'qin.config.js')
 const languagePackagePath = path.join(languageRoot, 'package.json')
+const languageServerPackagePath = path.join(languageRoot, 'ovs-language-server', 'package.json')
 const compilerPackagePath = path.join(workspaceRoot, 'ovs', 'ovs-compiler', 'package.json')
 const parserPath = path.join(workspaceRoot, 'ovs', 'ovs-compiler', 'src', 'parser', 'OvsParser.ts')
 const compilerIndexPath = path.join(workspaceRoot, 'ovs', 'ovs-compiler', 'src', 'index.ts')
@@ -21,6 +22,7 @@ const localAdapterPath = path.join(workspaceRoot, 'ovs', 'ovs-compiler', 'src', 
 const languageConfig = fs.readFileSync(languageConfigPath, 'utf-8')
 const compilerConfig = fs.readFileSync(compilerConfigPath, 'utf-8')
 const languagePackage = readJson(languagePackagePath)
+const languageServerPackage = readJson(languageServerPackagePath)
 const compilerPackage = readJson(compilerPackagePath)
 const generatedParserPackage = readJson(require.resolve('@qin/generated-qin-parser-ts/package.json'))
 const parserSource = fs.readFileSync(parserPath, 'utf-8')
@@ -55,6 +57,18 @@ function requireDependency(packageJson: any, dependencyName: string, label: stri
   }
 }
 
+function requireNoDependency(packageJson: any, dependencyName: string, label: string) {
+  const dependencySections = [
+    packageJson.dependencies ?? {},
+    packageJson.devDependencies ?? {},
+    packageJson.peerDependencies ?? {},
+    packageJson.optionalDependencies ?? {},
+  ]
+  if (dependencySections.some(section => typeof section[dependencyName] === 'string')) {
+    throw new Error(`${label} must not depend directly on ${dependencyName}; use @qin/generated-qin-parser-ts through ovs-compiler`)
+  }
+}
+
 async function main() {
   const languageConfigObject = await loadQinConfig(languageConfigPath)
   const compilerConfigObject = await loadQinConfig(compilerConfigPath)
@@ -65,6 +79,11 @@ async function main() {
   requireEquals(generatedParserPackage.name, generatedParserTarget, 'resolved generated parser package name')
   requireDependency(languagePackage, generatedParserTarget, 'ovs-language package.json')
   requireDependency(compilerPackage, generatedParserTarget, 'ovs-compiler package.json')
+
+  for (const legacyParserPackage of ['slime-ast', 'slime-parser', 'slime-token', 'subhuti']) {
+    requireNoDependency(languagePackage, legacyParserPackage, 'ovs-language package.json')
+    requireNoDependency(languageServerPackage, legacyParserPackage, 'ovs-language-server package.json')
+  }
 
   requireIncludes(languageConfig, 'parser: "@qin/generated-qin-parser-ts"', 'ovs-language qin.config.js')
   requireIncludes(compilerConfig, 'parser: "@qin/generated-qin-parser-ts"', 'ovs-compiler qin.config.js')
