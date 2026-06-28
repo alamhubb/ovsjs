@@ -5,8 +5,8 @@ export default {
   type: "library",
   entry: "src/index.ts",
   scripts: {
-    build: "npm run build",
-    test: "npm run build"
+    build: "tsdown",
+    test: "tsdown"
   },
   dependencies: {
     "@qin/generated-qin-parser-ts": "file:../../../qin/packages/qin-language/generated/qin-parser-ts",

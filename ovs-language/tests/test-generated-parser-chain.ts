@@ -23,6 +23,8 @@ function requireIncludes(source: string, needle: string, label: string) {
 
 requireIncludes(languageConfig, 'parser: "@qin/generated-qin-parser-ts"', 'ovs-language qin.config.js')
 requireIncludes(compilerConfig, 'parser: "@qin/generated-qin-parser-ts"', 'ovs-compiler qin.config.js')
+requireIncludes(compilerConfig, 'build: "tsdown"', 'ovs-compiler qin.config.js')
+requireIncludes(compilerConfig, 'test: "tsdown"', 'ovs-compiler qin.config.js')
 requireIncludes(parserSource, 'from "@qin/generated-qin-parser-ts"', 'OvsParser.ts')
 requireIncludes(parserSource, 'from "cssts-compiler"', 'OvsParser.ts')
 requireIncludes(parserSource, 'normalizeGeneratedTokens', 'OvsParser.ts')
@@ -32,6 +34,10 @@ requireIncludes(compilerIndexSource, 'normalizeGeneratedCst', 'ovs-compiler src/
 
 if (parserSource.includes('alt:')) {
   throw new Error('OvsParser.ts must use generated parser Alternative.of semantics, not legacy { alt } alternatives')
+}
+
+if (compilerConfig.includes('npm run')) {
+  throw new Error('ovs-compiler qin.config.js must run compiler tasks directly through Qin scripts, not npm run forwarding')
 }
 
 if (fs.existsSync(localAdapterPath)) {
