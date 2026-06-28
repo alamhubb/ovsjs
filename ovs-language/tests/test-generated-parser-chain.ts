@@ -40,6 +40,10 @@ if (compilerConfig.includes('npm run')) {
   throw new Error('ovs-compiler qin.config.js must run compiler tasks directly through Qin scripts, not npm run forwarding')
 }
 
+if (languageConfig.includes('npm run')) {
+  throw new Error('ovs-language qin.config.js must run language tasks directly through Qin scripts, not npm run forwarding')
+}
+
 if (fs.existsSync(localAdapterPath)) {
   throw new Error('OVS must inherit the generated runtime adapter from cssts-compiler instead of keeping a local copy')
 }
