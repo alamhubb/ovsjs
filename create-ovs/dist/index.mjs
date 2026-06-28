@@ -39,8 +39,8 @@ async function main() {
 	console.log(cyan("└  ") + green("Done!") + " Now run:");
 	console.log();
 	console.log(`   ${bold(green(`cd ${projectName}`))}`);
-	console.log(`   ${bold(green("npm install"))}`);
-	console.log(`   ${bold(green("npm run dev"))}`);
+	console.log(`   ${bold(green("qin install"))}`);
+	console.log(`   ${bold(green("qin dev"))}`);
 	console.log();
 }
 function prompt(message, defaultValue) {

@@ -6,7 +6,7 @@ export default {
   entry: "src/index.ts",
   scripts: {
     build: "tsdown",
-    test: "tsdown"
+    test: "tsdown && node tests/test-scaffold-output.mjs"
   },
   devDependencies: {
     "@types/node": "^22.8.6",
