@@ -443,6 +443,20 @@ async function testTsSubsetLanguageFeatures() {
       throw new Error(`OVS syntax definition did not resolve labelText declaration: ${JSON.stringify(ovsDefinitionResponse.result)}`)
     }
 
+    const ovsReferences = session.sendRequest('textDocument/references', {
+      textDocument: { uri: ovsSyntaxUri },
+      position: { line: 3, character: 10 },
+      context: { includeDeclaration: true },
+    })
+    const ovsReferencesResponse = await session.waitForResponse(ovsReferences.id, 'OVS syntax references response')
+    const ovsReferenceItems = Array.isArray(ovsReferencesResponse.result) ? ovsReferencesResponse.result : []
+    if (
+      !ovsReferenceItems.some(item => sameUri(locationUri(item), ovsSyntaxUri) && rangeStartsAt(item, 1, 6))
+      || !ovsReferenceItems.some(item => sameUri(locationUri(item), ovsSyntaxUri) && rangeStartsAt(item, 3, 7))
+    ) {
+      throw new Error(`OVS syntax references did not include labelText declaration and render usage: ${JSON.stringify(ovsReferencesResponse.result)}`)
+    }
+
     const ovsSymbols = session.sendRequest('textDocument/documentSymbol', {
       textDocument: { uri: ovsSyntaxUri },
     })
