@@ -402,6 +402,63 @@ async function testTsSubsetLanguageFeatures() {
     if (!Array.isArray(semanticTokensResponse.result?.data) || semanticTokensResponse.result.data.length === 0) {
       throw new Error(`OVS semanticTokens did not return token data: ${JSON.stringify(semanticTokensResponse.result)}`)
     }
+
+    const ovsSyntaxUri = toFileUri(path.join(__dirname, 'ovs-syntax.ovs'))
+    session.sendNotification('textDocument/didOpen', {
+      textDocument: {
+        uri: ovsSyntaxUri,
+        languageId: 'ovs',
+        version: 1,
+        text: [
+          'const cardStyle = css { displayFlex }',
+          'const labelText = "Hello"',
+          'export default div(class = cardStyle) {',
+          '  h1 { labelText }',
+          '}',
+          'lab',
+          '',
+        ].join('\n'),
+      },
+    })
+
+    const ovsCompletion = session.sendRequest('textDocument/completion', {
+      textDocument: { uri: ovsSyntaxUri },
+      position: { line: 5, character: 3 },
+      context: { triggerKind: 1 },
+    })
+    const ovsCompletionResponse = await session.waitForResponse(ovsCompletion.id, 'OVS syntax completion response')
+    const ovsCompletionItems = Array.isArray(ovsCompletionResponse.result) ? ovsCompletionResponse.result : ovsCompletionResponse.result?.items ?? []
+    const ovsCompletionLabels = ovsCompletionItems.map((item: any) => item.label)
+    if (!ovsCompletionLabels.includes('labelText')) {
+      throw new Error(`OVS syntax completion did not include labelText: ${JSON.stringify(ovsCompletionLabels.slice(0, 30))}`)
+    }
+
+    const ovsDefinition = session.sendRequest('textDocument/definition', {
+      textDocument: { uri: ovsSyntaxUri },
+      position: { line: 3, character: 10 },
+    })
+    const ovsDefinitionResponse = await session.waitForResponse(ovsDefinition.id, 'OVS syntax definition response')
+    const ovsDefinitions = Array.isArray(ovsDefinitionResponse.result) ? ovsDefinitionResponse.result : ovsDefinitionResponse.result ? [ovsDefinitionResponse.result] : []
+    if (!ovsDefinitions.some(item => sameUri(locationUri(item), ovsSyntaxUri) && rangeContains(item, 1, 6))) {
+      throw new Error(`OVS syntax definition did not resolve labelText declaration: ${JSON.stringify(ovsDefinitionResponse.result)}`)
+    }
+
+    const ovsSymbols = session.sendRequest('textDocument/documentSymbol', {
+      textDocument: { uri: ovsSyntaxUri },
+    })
+    const ovsSymbolsResponse = await session.waitForResponse(ovsSymbols.id, 'OVS syntax documentSymbol response')
+    const ovsSymbolNames = collectSymbolNames(Array.isArray(ovsSymbolsResponse.result) ? ovsSymbolsResponse.result : [])
+    if (!ovsSymbolNames.includes('cardStyle') || !ovsSymbolNames.includes('labelText')) {
+      throw new Error(`OVS syntax documentSymbol did not include style/text symbols: ${JSON.stringify(ovsSymbolsResponse.result)}`)
+    }
+
+    const ovsSemanticTokens = session.sendRequest('textDocument/semanticTokens/full', {
+      textDocument: { uri: ovsSyntaxUri },
+    })
+    const ovsSemanticTokensResponse = await session.waitForResponse(ovsSemanticTokens.id, 'OVS syntax semanticTokens response')
+    if (!Array.isArray(ovsSemanticTokensResponse.result?.data) || ovsSemanticTokensResponse.result.data.length === 0) {
+      throw new Error(`OVS syntax semanticTokens did not return token data: ${JSON.stringify(ovsSemanticTokensResponse.result)}`)
+    }
   } finally {
     await session.close()
   }
