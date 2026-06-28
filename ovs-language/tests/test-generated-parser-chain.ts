@@ -1,5 +1,6 @@
 import fs from 'node:fs'
 import path from 'node:path'
+import { OvsParser } from 'ovs-compiler'
 
 const languageRoot = path.join(__dirname, '..')
 const workspaceRoot = path.join(languageRoot, '..')
@@ -46,6 +47,20 @@ if (languageConfig.includes('npm run')) {
 
 if (fs.existsSync(localAdapterPath)) {
   throw new Error('OVS must inherit the generated runtime adapter from cssts-compiler instead of keeping a local copy')
+}
+
+const inheritedSyntaxSource = [
+  'const title = "Qin"',
+  'div(class = css { displayFlex }) {',
+  '  h1 { title }',
+  '}',
+  '',
+].join('\n')
+const parser = new OvsParser(inheritedSyntaxSource)
+parser.Program()
+
+if (!parser.parsedTokens.length) {
+  throw new Error('OvsParser must parse through the generated Qin/Slime -> CSSTS -> OVS parser chain')
 }
 
 console.log('test-generated-parser-chain passed')
