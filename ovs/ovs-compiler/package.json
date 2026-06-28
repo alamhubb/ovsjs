@@ -7,10 +7,6 @@
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.mts",
   "license": "MIT",
-  "scripts": {
-    "build": "tsdown",
-    "prepublishOnly": "npm run build"
-  },
   "homepage": "https://github.com/alamhubb/ovs",
   "repository": {
     "type": "git",
