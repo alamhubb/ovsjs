@@ -7,24 +7,6 @@
     "vite-plugin-ovs",
     "ovs-language"
   ],
-  "scripts": {
-    "build": "tsc -b",
-    "buildall": "npm run build:subhuti && npm run build:slime && npm run build:ovs && npm run build:plugins && npm run build:language",
-    "build:subhuti": "cd subhuti && npx tsdown",
-    "build:slime": "cd slime/packages/slime-token && npx tsdown && cd ../slime-ast && npx tsdown && cd ../slime-parser && npx tsdown && cd ../slime-generator && npx tsdown",
-    "build:ovs": "cd ovs/ovs-compiler && npx tsdown && cd ../ovs-runtime && npx tsdown",
-    "build:plugins": "cd vite-plugin-ovs && npx tsdown && cd ../create-ovs && npx tsdown",
-    "build:language": "cd ovs-language && npm run build",
-    "watch": "tsc -b -w",
-    "watch:labs": "cd extensions/labs && npm run watch",
-    "prerelease": "npm run buildall",
-    "release": "lerna publish --exact --force-publish --yes",
-    "release:next": "npm run release -- --dist-tag next --no-push",
-    "pub": "node -e \"const v=require('./lerna.json').version; require('child_process').execSync('npx lerna version '+v+' --force-publish --yes --no-push --no-git-tag-version && npx lerna publish from-package --yes', {stdio:'inherit'})\"",
-    "format": "dprint fmt",
-    "lint": "tsslint --project */*/tsconfig.json",
-    "lint:fix": "npm run lint -- --fix"
-  },
   "devDependencies": {
     "@lerna-lite/cli": "latest",
     "@lerna-lite/publish": "latest",
