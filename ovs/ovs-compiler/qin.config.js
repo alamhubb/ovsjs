@@ -13,9 +13,7 @@ export default {
     "cssts-compiler": "file:../../../cssts/cssts/cssts-compiler",
     "ovsjs": "file:../ovs-runtime",
     "slime-ast": "file:../../../slime/slime-ast",
-    "slime-generator": "file:../../../slime/slime-generator",
     "slime-parser": "file:../../../slime/slime-parser",
-    "slime-token": "file:../../../slime/slime-token",
     "subhuti": "file:../../../subhuti"
   },
   devDependencies: {

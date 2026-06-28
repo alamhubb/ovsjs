@@ -25,9 +25,21 @@ function requireIncludes(source: string, needle: string, label: string) {
   }
 }
 
+function requireExcludes(source: string, needle: string, label: string) {
+  if (source.includes(needle)) {
+    throw new Error(`${label} must not include ${needle}`)
+  }
+}
+
 requireIncludes(compilerConfig, 'parser: "@qin/generated-qin-parser-ts"', 'ovs-compiler qin.config.js')
 requireIncludes(compilerConfig, '"@qin/generated-qin-parser-ts": "file:../../../qin/packages/qin-language/generated/qin-parser-ts"', 'ovs-compiler qin.config.js')
 requireIncludes(compilerConfig, 'test: "tsx tests/test-generated-parser-chain.ts && tsdown"', 'ovs-compiler qin.config.js')
+for (const requiredCompilerDependency of ['"subhuti"', '"slime-ast"', '"slime-parser"']) {
+  requireIncludes(compilerConfig, requiredCompilerDependency, 'ovs-compiler qin.config.js')
+}
+for (const unusedCompilerDependency of ['"slime-generator"', '"slime-token"']) {
+  requireExcludes(compilerConfig, unusedCompilerDependency, 'ovs-compiler qin.config.js')
+}
 requireIncludes(parserSource, 'from "@qin/generated-qin-parser-ts"', 'OvsParser.ts')
 requireIncludes(parserSource, 'from "cssts-compiler"', 'OvsParser.ts')
 requireIncludes(parserSource, 'normalizeGeneratedTokens', 'OvsParser.ts')
