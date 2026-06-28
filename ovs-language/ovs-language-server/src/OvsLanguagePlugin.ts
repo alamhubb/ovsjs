@@ -35,8 +35,16 @@ export const ovsLanguagePlugin: LanguagePlugin<URI> = {
     },
     typescript: {
         extraFileExtensions: [{ extension: 'ovs', isMixedContent: true, scriptKind: ScriptKind.Deferred }],
-        getServiceScript() {
-            return undefined;
+        getServiceScript(root) {
+            const code = root.embeddedCodes.find(item => item.id === 'ovsts' && item.languageId === 'typescript');
+            if (!code) {
+                return undefined;
+            }
+            return {
+                code,
+                extension: '.ts',
+                scriptKind: ScriptKind.TS,
+            };
         },
         getExtraServiceScripts(fileName, root) {
             const scripts: TypeScriptExtraServiceScript[] = [];
@@ -46,6 +54,9 @@ export const ovsLanguagePlugin: LanguagePlugin<URI> = {
             // LogUtil.log(ary.length)
             // LogUtil.log(root.embeddedCodes)
             for (const code of ary) {
+                if (code.id === 'ovsts') {
+                    continue;
+                }
                 if (code.languageId === 'typescript') {
                     scripts.push({
                         fileName: fileName + '.' + code.id + '.ts',
@@ -71,7 +82,7 @@ export const ovsLanguagePlugin: LanguagePlugin<URI> = {
 
 export class OvsVirtualCode implements VirtualCode {
     id = 'root';
-    languageId = 'qqovs';
+    languageId = 'ovs';
     mappings: CodeMapping[];
     embeddedCodes: VirtualCode[] = [];
 
