@@ -12,12 +12,16 @@ const workspaceRoot = path.join(compilerRoot, '..', '..', '..')
 const compilerConfigPath = path.join(compilerRoot, 'qin.config.js')
 const parserPath = path.join(compilerRoot, 'src', 'parser', 'OvsParser.ts')
 const compilerIndexPath = path.join(compilerRoot, 'src', 'index.ts')
+const cstToAstPath = path.join(compilerRoot, 'src', 'factory', 'OvsCstToSlimeAst', 'OvsCstToSlimeAst.ts')
+const statementCstToAstPath = path.join(compilerRoot, 'src', 'factory', 'OvsCstToSlimeAst', 'OvsCstToSlimeAst.Statement.ts')
 const localAdapterPath = path.join(compilerRoot, 'src', 'parser', 'generated-runtime-adapter.ts')
 const generatedParserPath = path.join(workspaceRoot, 'qin', 'packages', 'qin-language', 'generated', 'qin-parser-ts')
 
 const compilerConfig = fs.readFileSync(compilerConfigPath, 'utf-8')
 const parserSource = fs.readFileSync(parserPath, 'utf-8')
 const compilerIndexSource = fs.readFileSync(compilerIndexPath, 'utf-8')
+const cstToAstSource = fs.readFileSync(cstToAstPath, 'utf-8')
+const statementCstToAstSource = fs.readFileSync(statementCstToAstPath, 'utf-8')
 
 function requireIncludes(source: string, needle: string, label: string) {
   if (!source.includes(needle)) {
@@ -41,11 +45,16 @@ for (const unusedCompilerDependency of ['"slime-generator"', '"slime-token"']) {
   requireExcludes(compilerConfig, unusedCompilerDependency, 'ovs-compiler qin.config.js')
 }
 requireIncludes(parserSource, 'from "@qin/generated-qin-parser-ts"', 'OvsParser.ts')
+requireExcludes(parserSource, 'slime-parser', 'OvsParser.ts')
 requireIncludes(parserSource, 'from "cssts-compiler"', 'OvsParser.ts')
 requireIncludes(parserSource, 'normalizeGeneratedTokens', 'OvsParser.ts')
 requireIncludes(parserSource, 'extends CssTsParser', 'OvsParser.ts')
 requireIncludes(parserSource, 'Alternative.of(', 'OvsParser.ts')
 requireIncludes(compilerIndexSource, 'normalizeGeneratedCst', 'ovs-compiler src/index.ts')
+requireIncludes(compilerIndexSource, 'import { registerSlimeCstToAstUtil } from "slime-parser"', 'ovs-compiler src/index.ts')
+requireIncludes(cstToAstSource, 'import { SlimeCstToAst, SlimeParser, registerSlimeCstToAstUtil } from "slime-parser"', 'OvsCstToSlimeAst.ts')
+requireIncludes(cstToAstSource, 'Object.getPrototypeOf(SlimeCstToAst.prototype)', 'OvsCstToSlimeAst.ts')
+requireIncludes(statementCstToAstSource, 'import { SlimeParser } from "slime-parser"', 'OvsCstToSlimeAst.Statement.ts')
 
 if (!fs.existsSync(generatedParserPath)) {
   throw new Error(`OVS compiler must resolve the shared generated Qin parser package: ${generatedParserPath}`)
