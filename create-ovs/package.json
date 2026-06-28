@@ -19,11 +19,6 @@
     "dist",
     "template"
   ],
-  "scripts": {
-    "build": "tsdown",
-    "dev": "tsdown --watch",
-    "prepublishOnly": "npm run build"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/alamhubb/ovsjs.git"
