@@ -7,10 +7,10 @@ export default {
     entry: "src/main.ts"
   },
   scripts: {
-    dev: "npm run dev",
-    build: "npm run build",
-    preview: "npm run preview",
-    test: "npm run build"
+    dev: "tsx ./node_modules/vite/bin/vite.js",
+    build: "vue-tsc --build && vite build",
+    preview: "vite preview",
+    test: "vue-tsc --build && vite build"
   },
   dependencies: {
     "vue": "^3.5.25",
