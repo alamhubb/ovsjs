@@ -6,7 +6,7 @@ export default {
   entry: "src/index.ts",
   scripts: {
     build: "tsdown",
-    test: "tsdown"
+    test: "tsx tests/test-generated-parser-chain.ts && tsdown"
   },
   dependencies: {
     "@qin/generated-qin-parser-ts": "file:../../../qin/packages/qin-language/generated/qin-parser-ts",
@@ -19,7 +19,8 @@ export default {
     "subhuti": "file:../../../subhuti"
   },
   devDependencies: {
-    "tsdown": "0.17.0-beta.6"
+    "tsdown": "0.17.0-beta.6",
+    "tsx": "^4.19.2"
   },
   language: {
     id: "ovs",
