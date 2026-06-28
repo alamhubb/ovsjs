@@ -17,7 +17,6 @@ export default {
     "@qin/generated-qin-parser-ts": "file:../../qin/packages/qin-language/generated/qin-parser-ts",
     "ovs-compiler": "file:../ovs/ovs-compiler",
     "ovsjs": "file:../ovs/ovs-runtime",
-    "slime-parser": "file:../../slime/slime-parser",
     "slime-generator": "file:../../slime/slime-generator",
     "volar-service-typescript": "^0.0.65",
     "vscode-languageserver": "^9.0.1",

@@ -81,6 +81,7 @@ async function main() {
   requireDependency(compilerPackage, generatedParserTarget, 'ovs-compiler package.json')
 
   for (const legacyParserPackage of ['slime-ast', 'slime-parser', 'slime-token', 'subhuti']) {
+    requireNoDependency(languageConfigObject, legacyParserPackage, 'ovs-language qin.config.js')
     requireNoDependency(languagePackage, legacyParserPackage, 'ovs-language package.json')
     requireNoDependency(languageServerPackage, legacyParserPackage, 'ovs-language-server package.json')
   }
