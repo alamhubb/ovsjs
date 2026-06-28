@@ -2,6 +2,8 @@ import { CodeMapping, forEachEmbeddedCode, LanguagePlugin, VirtualCode } from '@
 import type { TypeScriptExtraServiceScript } from '@volar/typescript';
 import type { IScriptSnapshot } from 'typescript';
 import { URI } from 'vscode-uri';
+import type { LanguageServerMetadata } from './LanguageServerMetadata';
+import { extensionWithoutDot } from './LanguageServerMetadata';
 import { LogUtil } from "./logutil.js";
 import { SlimeMappingConverter, EnhancedMapping } from "slime-generator";
 import { vitePluginOvsTransform } from "ovs-compiler";
@@ -22,61 +24,64 @@ function createTransformErrorCode(error: unknown): string {
     return `throw new Error(${JSON.stringify(formatOvsTransformErrorMessage(error))});\n`;
 }
 
-export const ovsLanguagePlugin: LanguagePlugin<URI> = {
-    getLanguageId(uri) {
-        if (uri.path.endsWith('.ovs')) {
-            return 'ovs';
-        }
-    },
-    createVirtualCode(_uri, languageId, snapshot) {
-        if (languageId === 'ovs') {
-            return new OvsVirtualCode(snapshot);
-        }
-    },
-    typescript: {
-        extraFileExtensions: [{ extension: 'ovs', isMixedContent: true, scriptKind: ScriptKind.Deferred }],
-        getServiceScript(root) {
-            const code = root.embeddedCodes.find(item => item.id === 'ovsts' && item.languageId === 'typescript');
-            if (!code) {
-                return undefined;
+export function ovsLanguagePlugin(metadata: LanguageServerMetadata): LanguagePlugin<URI> {
+    const sourceExtension = extensionWithoutDot(metadata.sourceExtension);
+    return {
+        getLanguageId(uri) {
+            if (uri.path.endsWith(`.${sourceExtension}`)) {
+                return 'ovs';
             }
-            return {
-                code,
-                extension: '.ts',
-                scriptKind: ScriptKind.TS,
-            };
         },
-        getExtraServiceScripts(fileName, root) {
-            const scripts: TypeScriptExtraServiceScript[] = [];
-            //得到所有的虚拟代码片段
-            const ary = [...forEachEmbeddedCode(root)]
-            // console.log(ary.length)
-            // LogUtil.log(ary.length)
-            // LogUtil.log(root.embeddedCodes)
-            for (const code of ary) {
-                if (code.id === 'ovsts') {
-                    continue;
-                }
-                if (code.languageId === 'typescript') {
-                    scripts.push({
-                        fileName: fileName + '.' + code.id + '.ts',
-                        code,
-                        extension: '.ts',
-                        scriptKind: ScriptKind.TS
-                    });
-                } else if (code.languageId === 'js') {
-                    scripts.push({
-                        fileName: fileName + '.' + code.id + '.js',
-                        code,
-                        extension: '.js',
-                        scriptKind: ScriptKind.JS
-                    });
-                }
+        createVirtualCode(_uri, languageId, snapshot) {
+            if (languageId === 'ovs') {
+                return new OvsVirtualCode(snapshot);
             }
-            return scripts;
         },
-    },
-};
+        typescript: {
+            extraFileExtensions: [{ extension: sourceExtension, isMixedContent: true, scriptKind: ScriptKind.Deferred }],
+            getServiceScript(root) {
+                const code = root.embeddedCodes.find(item => item.id === 'ovsts' && item.languageId === 'typescript');
+                if (!code) {
+                    return undefined;
+                }
+                return {
+                    code,
+                    extension: metadata.serviceExtension,
+                    scriptKind: ScriptKind.TS,
+                };
+            },
+            getExtraServiceScripts(fileName, root) {
+                const scripts: TypeScriptExtraServiceScript[] = [];
+                //得到所有的虚拟代码片段
+                const ary = [...forEachEmbeddedCode(root)]
+                // console.log(ary.length)
+                // LogUtil.log(ary.length)
+                // LogUtil.log(root.embeddedCodes)
+                for (const code of ary) {
+                    if (code.id === 'ovsts') {
+                        continue;
+                    }
+                    if (code.languageId === 'typescript') {
+                        scripts.push({
+                            fileName: fileName + '.' + code.id + metadata.serviceExtension,
+                            code,
+                            extension: metadata.serviceExtension,
+                            scriptKind: ScriptKind.TS
+                        });
+                    } else if (code.languageId === 'js') {
+                        scripts.push({
+                            fileName: fileName + '.' + code.id + '.js',
+                            code,
+                            extension: '.js',
+                            scriptKind: ScriptKind.JS
+                        });
+                    }
+                }
+                return scripts;
+            },
+        },
+    };
+}
 
 
 

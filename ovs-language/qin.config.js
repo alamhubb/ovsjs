@@ -7,7 +7,7 @@ export default {
   scripts: {
     build: "tsdown",
     dev: "tsx ovs-language-server/src/index.ts --stdio",
-    test: "tsx tests/test-generated-parser-chain.ts && tsx tests/test-language-server.ts --source && tsdown && tsx tests/test-language-server.ts --dist"
+    test: "tsx tests/test-generated-parser-chain.ts && tsx tests/test-language-server-metadata.ts && tsx tests/test-language-server.ts --source && tsdown && tsx tests/test-language-server.ts --dist"
   },
   dependencies: {
     "@volar/language-core": "~2.4.0",

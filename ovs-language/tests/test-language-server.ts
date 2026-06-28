@@ -267,6 +267,14 @@ async function createSession(): Promise<LspSession> {
     rootUri: toFileUri(path.join(__dirname, '..')),
     initializationOptions: {
       typescript: { tsdk: resolveTsdkPath() },
+      qin: {
+        languageServer: {
+          sourceExtension: '.ovs',
+          serviceExtension: '.ts',
+          generatedParserTarget: '@qin/generated-qin-parser-ts',
+          compilerPackage: 'ovs-compiler',
+        },
+      },
     },
   })
   const initResponse = await session.waitForResponse(init.id, 'OVS initialize response')

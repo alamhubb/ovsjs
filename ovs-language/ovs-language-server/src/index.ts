@@ -5,6 +5,7 @@ import {
   loadTsdkByPath,
 } from '@volar/language-server/node.js'
 import { create as createTypeScriptServices } from 'volar-service-typescript'
+import { extensionWithoutDot, resolveLanguageServerMetadata } from './LanguageServerMetadata'
 import { LogUtil } from './logutil'
 import { ovsLanguagePlugin } from './OvsLanguagePlugin'
 import { OvsLanguageServicePlugin } from './OvsLanguageServicePlugin'
@@ -30,15 +31,18 @@ connection.onInitialize((params) => {
   if (!tsdkPath) {
     throw new Error('OVS language server requires initializationOptions.typescript.tsdk or QIN_LSP_TYPESCRIPT_TSDK')
   }
+  const languageServerMetadata = resolveLanguageServerMetadata(params.initializationOptions)
+  const sourceExtension = extensionWithoutDot(languageServerMetadata.sourceExtension)
+  LogUtil.log('Language server metadata:', languageServerMetadata)
 
   const tsdk = loadTsdkByPath(tsdkPath, params.locale)
-  const languagePlugins = [ovsLanguagePlugin]
+  const languagePlugins = [ovsLanguagePlugin(languageServerMetadata)]
   const languageServicePlugins = [
     OvsLanguageServicePlugin,
     ...createTypeScriptServices(tsdk.typescript, {
       disableAutoImportCache: true,
       isValidationEnabled(document) {
-        return document.languageId !== 'ovs' && !isOvsDocumentUri(document.uri)
+        return document.languageId !== 'ovs' && !isOvsDocumentUri(document.uri, sourceExtension)
       },
     }),
   ]
@@ -71,11 +75,11 @@ process.on('unhandledRejection', (reason) => {
   LogUtil.log('Unhandled rejection:', String(reason))
 })
 
-function isOvsDocumentUri(uri: string): boolean {
+function isOvsDocumentUri(uri: string, sourceExtension: string): boolean {
   const lowerUri = uri.toLowerCase()
-  return lowerUri.endsWith('.ovs')
-    || lowerUri.includes('.ovs.')
-    || lowerUri.includes('.ovs%')
-    || lowerUri.includes('%2eovs')
-    || lowerUri.includes('%252eovs')
+  return lowerUri.endsWith(`.${sourceExtension}`)
+    || lowerUri.includes(`.${sourceExtension}.`)
+    || lowerUri.includes(`.${sourceExtension}%`)
+    || lowerUri.includes(`%2e${sourceExtension}`)
+    || lowerUri.includes(`%252e${sourceExtension}`)
 }
