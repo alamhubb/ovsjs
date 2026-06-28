@@ -53,21 +53,16 @@ import {
 export function createCalleeForTag(tagName: string, loc?: any): SlimeExpression {
     const normalizedTagName = tagName.trim()
     if (isHtmlTag(normalizedTagName)) {
-        // HTML 标签 → $OvsHtmlTag.tagName
-        // 关键：给标签名标识符设置 loc，用于 source map 映射
+        // HTML tag -> $OvsHtmlTag.tagName.
+        // Keep the synthetic member property unmapped; mapping the property
+        // back to the source tag can make the generator insert source-layout
+        // gaps between "$OvsHtmlTag." and the property name.
         const tagIdentifier = SlimeAstCreateUtils.createIdentifier(normalizedTagName)
-        if (loc) {
-            tagIdentifier.loc = {
-                ...loc,
-                value: tagName  // 确保 value 字段包含标签名，供 SlimeGenerator 使用
-            }
-        }
         const memberExpr = SlimeAstCreateUtils.createMemberExpression(
             SlimeAstCreateUtils.createIdentifier('$OvsHtmlTag'),
             SlimeTokenCreateUtils.createDotToken(),
             tagIdentifier
         )
-        if (loc) memberExpr.loc = loc
         return memberExpr
     } else {
         // 用户组件 → 直接使用标识符

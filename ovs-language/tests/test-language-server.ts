@@ -243,7 +243,7 @@ async function createSession(): Promise<LspSession> {
       if (exitCode !== null) return
       const shutdown = createRequest('shutdown', null)
       server.stdin!.write(shutdown.packet)
-      await waitFor(`shutdown response ${shutdown.id}`, () => messages.some(message => message.id === shutdown.id && !message.method), 3000).catch(() => undefined)
+      await waitFor(`shutdown response ${shutdown.id}`, () => messages.some(message => message.id === shutdown.id && !message.method), 3000)
       server.stdin!.write(createNotification('exit', null))
       await sleep(200)
       if (exitCode === null) server.kill()
