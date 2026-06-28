@@ -52,6 +52,15 @@ if (fs.existsSync(localAdapterPath)) {
 }
 
 const inheritedSyntaxSource = [
+  'object Labeler {',
+  '  label(name: string, flag: boolean): string {',
+  '    const prefix = "hello "',
+  '    if (flag) {',
+  '      return prefix + name',
+  '    }',
+  '    return "bye " + name',
+  '  }',
+  '}',
   'const title = "Qin"',
   'div(class = css { displayFlex }) {',
   '  h1 { title }',
@@ -72,6 +81,14 @@ parser.Program()
 
 if (!parser.parsedTokens.length) {
   throw new Error('OvsParser must parse through the generated Qin/Slime -> CSSTS -> OVS parser chain')
+}
+
+if (!parser.parsedTokens.some((token: any) => token.tokenValue === 'object')) {
+  throw new Error('OvsParser chain must preserve Qin object declaration syntax from the generated parser')
+}
+
+if (!parser.parsedTokens.some((token: any) => token.tokenValue === 'css')) {
+  throw new Error('OvsParser chain must preserve CSSTS css expression syntax')
 }
 
 console.log('ovs-compiler generated parser chain smoke passed')
