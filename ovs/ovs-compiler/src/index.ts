@@ -29,8 +29,7 @@ import {
 } from "slime-ast";
 import { SubhutiMatchToken } from "subhuti";
 import { registerSlimeCstToAstUtil } from "slime-parser";
-import { CsstsInit } from "cssts-compiler";
-import { normalizeGeneratedCst } from "./parser/generated-runtime-adapter.ts";
+import { CsstsInit, normalizeGeneratedCst } from "cssts-compiler";
 
 // ==================== 内部工具函数 ====================
 

@@ -8,7 +8,7 @@ import {
     SlimeTokenType
 } from "@qin/generated-qin-parser-ts";
 import type { ExpressionParams, StatementParams, DeclarationParams } from "@qin/generated-qin-parser-ts";
-import { normalizeGeneratedTokens } from "./generated-runtime-adapter.ts"
+import { normalizeGeneratedTokens } from "cssts-compiler"
 
 /** OVS 扩展的表达式参数 */
 interface OvsExpressionParams extends ExpressionParams {
