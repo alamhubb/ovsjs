@@ -4,9 +4,9 @@ export default {
   description: "Qin-managed OVS workspace",
   type: "workspace",
   scripts: {
-    build: "npm run buildall",
-    test: "npm run buildall",
-    lint: "npm run lint"
+    build: "..\\qin\\qin.bat language build --root ovs/ovs-runtime && ..\\qin\\qin.bat language build --root ovs/ovs-compiler && ..\\qin\\qin.bat language build --root create-ovs && ..\\qin\\qin.bat language build --root vite-plugin-ovs && ..\\qin\\qin.bat language build --root ovs-language",
+    test: "..\\qin\\qin.bat language test --root ovs/ovs-runtime && ..\\qin\\qin.bat language test --root ovs/ovs-compiler && ..\\qin\\qin.bat language test --root create-ovs && ..\\qin\\qin.bat language test --root vite-plugin-ovs && ..\\qin\\qin.bat language test --root ovs-language",
+    lint: "..\\qin\\qin.bat language test --root ovs/ovs-compiler && ..\\qin\\qin.bat language test --root ovs-language"
   },
   workspaces: [
     "ovs/ovs-runtime",
