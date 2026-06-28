@@ -203,10 +203,18 @@ function configurationForSection(section: string | undefined): any {
   return {}
 }
 
+function languageServerEnvironment(): NodeJS.ProcessEnv {
+  return {
+    ...process.env,
+    NODE_OPTIONS: [process.env.NODE_OPTIONS, '--max-old-space-size=512'].filter(Boolean).join(' '),
+  }
+}
+
 async function createSession(): Promise<LspSession> {
   const serverCommand = resolveServerCommand()
   const server = spawn(serverCommand.command, serverCommand.args, {
     cwd: path.join(__dirname, '..'),
+    env: languageServerEnvironment(),
     stdio: ['pipe', 'pipe', 'pipe'],
   })
 
