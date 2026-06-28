@@ -1,6 +1,8 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { OvsParser } from 'ovs-compiler'
+import { CssTsParser } from 'cssts-compiler'
+import { SlimeJavascriptParser } from '@qin/generated-qin-parser-ts'
 
 const languageRoot = path.join(__dirname, '..')
 const workspaceRoot = path.join(languageRoot, '..')
@@ -57,6 +59,15 @@ const inheritedSyntaxSource = [
   '',
 ].join('\n')
 const parser = new OvsParser(inheritedSyntaxSource)
+
+if (!(parser instanceof CssTsParser)) {
+  throw new Error('OvsParser must inherit CssTsParser from cssts-compiler')
+}
+
+if (!(parser instanceof SlimeJavascriptParser)) {
+  throw new Error('OvsParser must inherit the shared generated SlimeJavascriptParser export through CSSTS')
+}
+
 parser.Program()
 
 if (!parser.parsedTokens.length) {
