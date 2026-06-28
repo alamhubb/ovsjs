@@ -22,7 +22,7 @@ export default {
   language: {
     id: "ovs",
     extension: ".ovs",
-    compiler: "ovs-compiler",
+    compiler: "../ovs/ovs-compiler",
     plugin: "src/index.ts"
   }
 }
