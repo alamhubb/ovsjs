@@ -111,6 +111,32 @@ function collectSymbolNames(symbols: any[]): string[] {
   return names
 }
 
+function semanticTokenCovers(result: any, line: number, character: number): boolean {
+  const data = result?.data
+  if (!Array.isArray(data) || data.length % 5 !== 0) {
+    return false
+  }
+  let currentLine = 0
+  let currentCharacter = 0
+  for (let index = 0; index < data.length; index += 5) {
+    const deltaLine = data[index]
+    const deltaStart = data[index + 1]
+    const length = data[index + 2]
+    currentLine += deltaLine
+    currentCharacter = deltaLine === 0 ? currentCharacter + deltaStart : deltaStart
+    if (currentLine === line && currentCharacter <= character && character < currentCharacter + length) {
+      return true
+    }
+  }
+  return false
+}
+
+function requireSemanticTokenAt(result: any, line: number, character: number, label: string) {
+  if (!semanticTokenCovers(result, line, character)) {
+    throw new Error(`${label} semanticTokens did not cover ${line}:${character}: ${JSON.stringify(result)}`)
+  }
+}
+
 function summarizeMessages(messages: LspMessage[]): string {
   return JSON.stringify(messages.map(message => ({
     id: message.id,
@@ -481,6 +507,8 @@ async function testTsSubsetLanguageFeatures() {
     if (!Array.isArray(ovsSemanticTokensResponse.result?.data) || ovsSemanticTokensResponse.result.data.length === 0) {
       throw new Error(`OVS syntax semanticTokens did not return token data: ${JSON.stringify(ovsSemanticTokensResponse.result)}`)
     }
+    requireSemanticTokenAt(ovsSemanticTokensResponse.result, 1, 6, 'OVS syntax labelText declaration')
+    requireSemanticTokenAt(ovsSemanticTokensResponse.result, 3, 7, 'OVS syntax labelText render usage')
   } finally {
     await session.close()
   }
