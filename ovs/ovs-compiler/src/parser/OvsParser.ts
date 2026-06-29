@@ -40,6 +40,8 @@ function readParamFlag(params: any, key: string, defaultValue = false): boolean 
     const lowerDirect = params[lowerKey]
     if (typeof lowerDirect === 'boolean') return lowerDirect
     if (typeof lowerDirect === 'function') return !!lowerDirect.call(params)
+    const qinAccessor = params[`__qin_${lowerKey}`]
+    if (typeof qinAccessor === 'function') return !!qinAccessor.call(params)
     const javaGetterKey = key === 'Default' ? 'isDefault' : lowerKey
     const javaGetter = params[javaGetterKey]
     if (typeof javaGetter === 'function') return !!javaGetter.call(params)
@@ -69,6 +71,9 @@ function withParserParams(params: any = {}, overrides: Record<string, any> = {})
     stableParams.yield = () => stableParams.Yield
     stableParams.await = () => stableParams.Await
     stableParams.in = () => stableParams.In
+    stableParams.__qin_yield = () => stableParams.Yield
+    stableParams.__qin_await = () => stableParams.Await
+    stableParams.__qin_in = () => stableParams.In
     stableParams.tagged = () => stableParams.Tagged
     stableParams.return = () => stableParams.Return
     stableParams.isDefault = () => stableParams.Default
