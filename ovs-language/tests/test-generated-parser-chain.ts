@@ -146,6 +146,8 @@ async function main() {
     '  }',
     '}',
     'const title = "Qin"',
+    'const moduleUrl = import.meta.url',
+    'const loadedModule = import("./dep.qin")',
     'div(class = css { displayFlex }) {',
     '  h1 { title }',
     '}',
@@ -180,6 +182,15 @@ async function main() {
     || !parser.parsedTokens.some((token: any) => token.tokenValue === 'catch')
     || !parser.parsedTokens.some((token: any) => token.tokenValue === 'throw')) {
     throw new Error('OvsParser chain must preserve Qin try/catch/throw syntax from the generated parser')
+  }
+
+  if (!parser.parsedTokens.some((token: any) => token.tokenValue === 'import')
+    || !parser.parsedTokens.some((token: any) => token.tokenValue === 'meta')) {
+    throw new Error('OvsParser chain must preserve import.meta syntax from the generated parser')
+  }
+
+  if (!parser.parsedTokens.some((token: any) => String(token.tokenValue).includes('./dep.qin'))) {
+    throw new Error('OvsParser chain must preserve dynamic import syntax from the generated parser')
   }
 
   if (!parser.parsedTokens.some((token: any) => token.tokenValue === 'css')) {
