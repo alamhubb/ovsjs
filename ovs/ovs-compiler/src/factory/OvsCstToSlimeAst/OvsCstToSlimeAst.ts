@@ -131,12 +131,17 @@ export class OvsCstToSlimeAst extends OvsCstToSlimeAstImport {
 
     createDeclarationAst(cst: SubhutiCst): any {
         // Declaration -> OvsViewDeclaration | VariableDeclaration | FunctionDeclaration | ...
-        const first = this.cstChildren(cst)[0]
+        let first = cst
+        while (this.isCst(first, 'Declaration')) {
+            const child = this.cstChildren(first)[0]
+            if (!child) break
+            first = child
+        }
         if (this.isCst(first, 'OvsViewDeclaration')) {
             return this.createOvsViewDeclarationAst(first)
         }
         // 调用基类方法（来自CssTsCstToAst或更底层）
-        return (this as any).createDeclarationAstBase?.(cst) || super.createDeclarationAst?.(cst)
+        return (this as any).createDeclarationAstBase?.(first) || super.createDeclarationAst?.(first)
     }
 
     /**

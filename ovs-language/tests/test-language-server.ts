@@ -487,6 +487,102 @@ async function testTsSubsetLanguageFeatures() {
       throw new Error(`OVS semanticTokens did not return token data: ${JSON.stringify(semanticTokensResponse.result)}`)
     }
 
+    const tsRichUri = toFileUri(path.join(__dirname, 'ts-rich.ovs'))
+    session.sendNotification('textDocument/didOpen', {
+      textDocument: {
+        uri: tsRichUri,
+        languageId: 'ovs',
+        version: 1,
+        text: [
+          'export interface ChainUser {',
+          '  id: string',
+          '  active?: boolean',
+          '}',
+          'export type ChainPair<T, U> = { left: T, right: U }',
+          'class ChainService {',
+          '  name: string = "qin"',
+          '  count = 0',
+          '  constructor(name: string) {',
+          '    this.name = name',
+          '  }',
+          '  label(): string {',
+          '    return this.name',
+          '  }',
+          '}',
+          'const config = { name: "qin", values: [1, 2, 3] }',
+          'const { name: destructuredName, values: [firstValue] } = config',
+          'const service = new ChainService(destructuredName)',
+          'const finalLabel = service.label() + firstValue',
+          'des',
+          '',
+        ].join('\n'),
+      },
+    })
+
+    const tsRichDiagnostic = session.sendRequest('textDocument/diagnostic', {
+      textDocument: { uri: tsRichUri },
+    })
+    const tsRichDiagnosticResponse = await session.waitForResponse(tsRichDiagnostic.id, 'OVS TS-rich diagnostic response')
+    const tsRichDiagnostics = tsRichDiagnosticResponse.result?.items ?? []
+    if (tsRichDiagnostics.some((item: any) => String(item.message ?? '').includes('OVS transform failed'))) {
+      throw new Error(`OVS TS-rich source produced transform diagnostics: ${JSON.stringify(tsRichDiagnostics)}`)
+    }
+
+    const tsRichCompletion = session.sendRequest('textDocument/completion', {
+      textDocument: { uri: tsRichUri },
+      position: { line: 19, character: 3 },
+      context: { triggerKind: 1 },
+    })
+    const tsRichCompletionResponse = await session.waitForResponse(tsRichCompletion.id, 'OVS TS-rich completion response')
+    const tsRichCompletionItems = Array.isArray(tsRichCompletionResponse.result) ? tsRichCompletionResponse.result : tsRichCompletionResponse.result?.items ?? []
+    const tsRichCompletionLabels = tsRichCompletionItems.map((item: any) => item.label)
+    if (!tsRichCompletionLabels.includes('destructuredName')) {
+      throw new Error(`OVS TS-rich completion did not include destructuredName: ${JSON.stringify(tsRichCompletionLabels.slice(0, 30))}`)
+    }
+
+    const tsRichDefinition = session.sendRequest('textDocument/definition', {
+      textDocument: { uri: tsRichUri },
+      position: { line: 17, character: 38 },
+    })
+    const tsRichDefinitionResponse = await session.waitForResponse(tsRichDefinition.id, 'OVS TS-rich definition response')
+    const tsRichDefinitions = Array.isArray(tsRichDefinitionResponse.result) ? tsRichDefinitionResponse.result : tsRichDefinitionResponse.result ? [tsRichDefinitionResponse.result] : []
+    if (!tsRichDefinitions.some(item => sameUri(locationUri(item), tsRichUri) && rangeContains(item, 16, 14))) {
+      throw new Error(`OVS TS-rich definition did not resolve destructuredName declaration: ${JSON.stringify(tsRichDefinitionResponse.result)}`)
+    }
+
+    const tsRichReferences = session.sendRequest('textDocument/references', {
+      textDocument: { uri: tsRichUri },
+      position: { line: 17, character: 38 },
+      context: { includeDeclaration: true },
+    })
+    const tsRichReferencesResponse = await session.waitForResponse(tsRichReferences.id, 'OVS TS-rich references response')
+    const tsRichReferenceItems = Array.isArray(tsRichReferencesResponse.result) ? tsRichReferencesResponse.result : []
+    if (
+      !tsRichReferenceItems.some(item => sameUri(locationUri(item), tsRichUri) && rangeStartsAt(item, 16, 14))
+      || !tsRichReferenceItems.some(item => sameUri(locationUri(item), tsRichUri) && rangeStartsAt(item, 17, 33))
+    ) {
+      throw new Error(`OVS TS-rich references did not include destructuredName declaration and usage: ${JSON.stringify(tsRichReferencesResponse.result)}`)
+    }
+
+    const tsRichSymbols = session.sendRequest('textDocument/documentSymbol', {
+      textDocument: { uri: tsRichUri },
+    })
+    const tsRichSymbolsResponse = await session.waitForResponse(tsRichSymbols.id, 'OVS TS-rich documentSymbol response')
+    const tsRichSymbolNames = collectSymbolNames(Array.isArray(tsRichSymbolsResponse.result) ? tsRichSymbolsResponse.result : [])
+    if (!tsRichSymbolNames.includes('ChainUser') || !tsRichSymbolNames.includes('ChainPair') || !tsRichSymbolNames.includes('ChainService')) {
+      throw new Error(`OVS TS-rich documentSymbol did not include inherited TS declarations: ${JSON.stringify(tsRichSymbolsResponse.result)}`)
+    }
+
+    const tsRichSemanticTokens = session.sendRequest('textDocument/semanticTokens/full', {
+      textDocument: { uri: tsRichUri },
+    })
+    const tsRichSemanticTokensResponse = await session.waitForResponse(tsRichSemanticTokens.id, 'OVS TS-rich semanticTokens response')
+    if (!Array.isArray(tsRichSemanticTokensResponse.result?.data) || tsRichSemanticTokensResponse.result.data.length === 0) {
+      throw new Error(`OVS TS-rich semanticTokens did not return token data: ${JSON.stringify(tsRichSemanticTokensResponse.result)}`)
+    }
+    requireSemanticTokenAt(tsRichSemanticTokensResponse.result, 16, 14, 'OVS TS-rich destructuredName declaration')
+    requireSemanticTokenAt(tsRichSemanticTokensResponse.result, 17, 33, 'OVS TS-rich destructuredName usage')
+
     const ovsSyntaxUri = toFileUri(path.join(__dirname, 'ovs-syntax.ovs'))
     session.sendNotification('textDocument/didOpen', {
       textDocument: {

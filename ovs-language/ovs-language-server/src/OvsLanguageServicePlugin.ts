@@ -3,6 +3,7 @@ import { DiagnosticSeverity } from 'vscode-languageserver-protocol'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
 import { vitePluginOvsTransform } from 'ovs-compiler'
 import { formatOvsTransformErrorMessage } from './OvsLanguagePlugin'
+import { provideSourceDocumentSymbols } from './SourceDocumentSymbols'
 
 function isOvsDocument(document: TextDocument): boolean {
   return document.languageId === 'ovs' || document.uri.toLowerCase().endsWith('.ovs')
@@ -15,9 +16,16 @@ export const OvsLanguageServicePlugin: LanguageServicePlugin = {
       interFileDependencies: false,
       workspaceDiagnostics: false,
     },
+    documentSymbolProvider: true,
   },
   create() {
     return {
+      provideDocumentSymbols(document: TextDocument) {
+        if (!isOvsDocument(document)) {
+          return
+        }
+        return provideSourceDocumentSymbols(document)
+      },
       provideDiagnostics(document: TextDocument) {
         if (!isOvsDocument(document)) {
           return []
