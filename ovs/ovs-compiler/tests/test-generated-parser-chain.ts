@@ -128,6 +128,13 @@ const inheritedSyntaxSource = [
   '    } while (i < limit)',
   '    return i',
   '  }',
+  '  collect(values: List): number {',
+  '    let total = 0',
+  '    for (const item of values) {',
+  '      total = total + item',
+  '    }',
+  '    return total',
+  '  }',
   '}',
   'const title = "Qin"',
   'const moduleUrl = import.meta.url',
@@ -184,6 +191,13 @@ if (!parser.parsedTokens.some((token: any) => token.tokenValue === 'do')
   || !parser.parsedTokens.some((token: any) => token.tokenValue === 'while')
   || !parser.parsedTokens.some((token: any) => token.tokenValue === 'countAtLeastOnce')) {
   throw new Error('OvsParser chain must preserve Qin do-while syntax from the generated parser')
+}
+
+if (!parser.parsedTokens.some((token: any) => token.tokenValue === 'for')
+  || !parser.parsedTokens.some((token: any) => token.tokenValue === 'of')
+  || !parser.parsedTokens.some((token: any) => token.tokenValue === 'collect')
+  || !parser.parsedTokens.some((token: any) => token.tokenValue === 'item')) {
+  throw new Error('OvsParser chain must preserve Qin for...of syntax from the generated parser')
 }
 
 if (!parser.parsedTokens.some((token: any) => token.tokenValue === 'import')
