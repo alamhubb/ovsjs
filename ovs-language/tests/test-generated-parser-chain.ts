@@ -34,6 +34,12 @@ function requireIncludes(source: string, needle: string, label: string) {
   }
 }
 
+function requireExcludes(source: string, needle: string, label: string) {
+  if (source.includes(needle)) {
+    throw new Error(`${label} must not include ${needle}`)
+  }
+}
+
 async function loadQinConfig(configPath: string): Promise<any> {
   const moduleUrl = pathToFileURL(configPath).href
   const module = await import(`${moduleUrl}?mtime=${fs.statSync(configPath).mtimeMs}`)
@@ -95,6 +101,7 @@ async function main() {
   requireIncludes(parserSource, 'normalizeGeneratedTokens', 'OvsParser.ts')
   requireIncludes(parserSource, 'extends CssTsParser', 'OvsParser.ts')
   requireIncludes(parserSource, 'Alternative.of(', 'OvsParser.ts')
+  requireExcludes(parserSource, 'fallback', 'OvsParser.ts')
   requireIncludes(compilerIndexSource, 'normalizeGeneratedCst', 'ovs-compiler src/index.ts')
 
   if (parserSource.includes('alt:')) {
