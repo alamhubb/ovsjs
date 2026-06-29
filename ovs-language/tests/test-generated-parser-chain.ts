@@ -151,6 +151,19 @@ async function main() {
     '    }',
     '    return total',
     '  }',
+    '  sum(limit: number): number {',
+    '    let total = 0',
+    '    for (let i = 0; i < limit; i = i + 1) {',
+    '      if (i == 2) {',
+    '        continue',
+    '      }',
+    '      if (i == 5) {',
+    '        break',
+    '      }',
+    '      total = total + i',
+    '    }',
+    '    return total',
+    '  }',
     '}',
     'const title = "Qin"',
     'const moduleUrl = import.meta.url',
@@ -195,6 +208,12 @@ async function main() {
     || !parser.parsedTokens.some((token: any) => token.tokenValue === 'total')
     || !parser.parsedTokens.some((token: any) => token.tokenValue === '=')) {
     throw new Error('OvsParser chain must preserve Qin mutable while local and assignment syntax from the generated parser')
+  }
+
+  if (!parser.parsedTokens.some((token: any) => token.tokenValue === 'for')
+    || !parser.parsedTokens.some((token: any) => token.tokenValue === 'continue')
+    || !parser.parsedTokens.some((token: any) => token.tokenValue === 'break')) {
+    throw new Error('OvsParser chain must preserve Qin for/break/continue syntax from the generated parser')
   }
 
   if (!parser.parsedTokens.some((token: any) => token.tokenValue === 'import')
