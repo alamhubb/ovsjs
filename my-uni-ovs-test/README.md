@@ -19,13 +19,13 @@ npx create-uni-render my-project
 cd my-uni-render-project
 
 # 安装依赖
-npm install
+..\qin\qin.bat install
 
 # 启动 H5 开发
-npm run dev:h5
+..\qin\qin.bat language dev --root my-uni-ovs-test
 
 # 启动微信小程序开发
-npm run dev:mp-weixin
+..\qin\qin.bat language run dev:mp-weixin --root my-uni-ovs-test
 ```
 
 ### 方式二：手动克隆
@@ -38,10 +38,10 @@ git clone https://gitee.com/alamhubb/uni-render-template.git my-project
 cd my-project
 
 # 安装依赖
-npm install
+..\qin\qin.bat install
 
 # 启动开发
-npm run dev:h5
+..\qin\qin.bat language dev --root my-uni-ovs-test
 ```
 
 ### 方式三：在现有项目中安装
@@ -52,10 +52,7 @@ npm run dev:h5
 
 ```bash
 # 安装核心依赖
-npm install uni-render vite-plugin-uni-render
-
-# 或使用 pnpm
-pnpm add uni-render vite-plugin-uni-render
+..\qin\qin.bat install
 ```
 
 #### 2. 配置 vite.config.ts
@@ -222,32 +219,32 @@ export default defineConfig({
 
 | 命令 | 说明 |
 |------|------|
-| `npm run dev:h5` | H5 开发模式 |
-| `npm run dev:mp-weixin` | 微信小程序开发模式 |
-| `npm run dev:mp-alipay` | 支付宝小程序开发模式 |
-| `npm run dev:mp-baidu` | 百度小程序开发模式 |
-| `npm run dev:mp-qq` | QQ 小程序开发模式 |
-| `npm run dev:mp-toutiao` | 字节跳动小程序开发模式 |
-| `npm run dev:mp-lark` | 飞书小程序开发模式 |
-| `npm run dev:mp-kuaishou` | 快手小程序开发模式 |
-| `npm run dev:mp-jd` | 京东小程序开发模式 |
-| `npm run dev:mp-xhs` | 小红书小程序开发模式 |
-| `npm run dev:mp-harmony` | 鸿蒙开发模式 |
+| `..\qin\qin.bat language dev --root my-uni-ovs-test` | H5 开发模式 |
+| `..\qin\qin.bat language run dev:mp-weixin --root my-uni-ovs-test` | 微信小程序开发模式 |
+| `..\qin\qin.bat language run dev:mp-alipay --root my-uni-ovs-test` | 支付宝小程序开发模式 |
+| `..\qin\qin.bat language run dev:mp-baidu --root my-uni-ovs-test` | 百度小程序开发模式 |
+| `..\qin\qin.bat language run dev:mp-qq --root my-uni-ovs-test` | QQ 小程序开发模式 |
+| `..\qin\qin.bat language run dev:mp-toutiao --root my-uni-ovs-test` | 字节跳动小程序开发模式 |
+| `..\qin\qin.bat language run dev:mp-lark --root my-uni-ovs-test` | 飞书小程序开发模式 |
+| `..\qin\qin.bat language run dev:mp-kuaishou --root my-uni-ovs-test` | 快手小程序开发模式 |
+| `..\qin\qin.bat language run dev:mp-jd --root my-uni-ovs-test` | 京东小程序开发模式 |
+| `..\qin\qin.bat language run dev:mp-xhs --root my-uni-ovs-test` | 小红书小程序开发模式 |
+| `..\qin\qin.bat language run dev:mp-harmony --root my-uni-ovs-test` | 鸿蒙开发模式 |
 
 ### 构建
 
 | 命令 | 说明 |
 |------|------|
-| `npm run build:h5` | H5 生产构建 |
-| `npm run build:mp-weixin` | 微信小程序构建 |
-| `npm run build:mp-alipay` | 支付宝小程序构建 |
+| `..\qin\qin.bat language build --root my-uni-ovs-test` | H5 生产构建 |
+| `..\qin\qin.bat language run build:mp-weixin --root my-uni-ovs-test` | 微信小程序构建 |
+| `..\qin\qin.bat language run build:mp-alipay --root my-uni-ovs-test` | 支付宝小程序构建 |
 | ... | 其他平台类似 |
 
 ### 其他
 
 | 命令 | 说明 |
 |------|------|
-| `npm run type-check` | TypeScript 类型检查 |
+| `..\qin\qin.bat language run type-check --root my-uni-ovs-test` | TypeScript 类型检查 |
 
 ## 🔗 相关链接
 

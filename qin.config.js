@@ -4,8 +4,8 @@ export default {
   description: "Qin-managed OVS workspace",
   type: "workspace",
   scripts: {
-    build: "..\\qin\\qin.bat language build --root ovs/ovs-runtime && ..\\qin\\qin.bat language build --root ovs/ovs-compiler && ..\\qin\\qin.bat language build --root create-ovs && ..\\qin\\qin.bat language build --root vite-plugin-ovs && ..\\qin\\qin.bat language build --root ovs-language && ..\\qin\\qin.bat language build --root guidebot && ..\\qin\\qin.bat language build --root ovs-test-2026",
-    test: "..\\qin\\qin.bat language test --root ovs/ovs-runtime && ..\\qin\\qin.bat language test --root ovs/ovs-compiler && ..\\qin\\qin.bat language test --root create-ovs && ..\\qin\\qin.bat language test --root vite-plugin-ovs && ..\\qin\\qin.bat language test --root ovs-language && ..\\qin\\qin.bat language test --root guidebot && ..\\qin\\qin.bat language test --root ovs-test-2026",
+    build: "..\\qin\\qin.bat language build --root ovs/ovs-runtime && ..\\qin\\qin.bat language build --root ovs/ovs-compiler && ..\\qin\\qin.bat language build --root create-ovs && ..\\qin\\qin.bat language build --root vite-plugin-ovs && ..\\qin\\qin.bat language build --root ovs-language && ..\\qin\\qin.bat language build --root guidebot && ..\\qin\\qin.bat language build --root ovs-test-2026 && ..\\qin\\qin.bat language build --root my-uni-ovs-test",
+    test: "..\\qin\\qin.bat language test --root ovs/ovs-runtime && ..\\qin\\qin.bat language test --root ovs/ovs-compiler && ..\\qin\\qin.bat language test --root create-ovs && ..\\qin\\qin.bat language test --root vite-plugin-ovs && ..\\qin\\qin.bat language test --root ovs-language && ..\\qin\\qin.bat language test --root guidebot && ..\\qin\\qin.bat language test --root ovs-test-2026 && ..\\qin\\qin.bat language test --root my-uni-ovs-test",
     lint: "..\\qin\\qin.bat language test --root ovs/ovs-compiler && ..\\qin\\qin.bat language test --root ovs-language"
   },
   workspaces: [
@@ -15,7 +15,8 @@ export default {
     "vite-plugin-ovs",
     "ovs-language",
     "guidebot",
-    "ovs-test-2026"
+    "ovs-test-2026",
+    "my-uni-ovs-test"
   ],
   language: {
     id: "ovs",
