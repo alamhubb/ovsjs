@@ -134,6 +134,16 @@ npm install
 npm run dev
 ```
 
+The commands above are for a generated user app. This repository's OVS
+compiler, runtime, Vite plugin, scaffold CLI, and language server are
+Qin-managed through `qin.config.js`:
+
+```bash
+cd ovsjs
+..\qin\qin.bat language build --root ovs/ovs-compiler
+..\qin\qin.bat language test --root ovs-language
+```
+
 ### 2. Install VSCode Extension
 
 Install **[Ovs Language](https://marketplace.visualstudio.com/items?itemName=alamhubb.ovs-language)** from VSCode Extensions Marketplace.
