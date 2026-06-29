@@ -114,13 +114,18 @@ async function main() {
   }
 
   const inheritedSyntaxSource = [
-    'object Labeler {',
-    '  label(name: string, flag: boolean): string {',
-    '    const prefix = "hello "',
-    '    if (flag) {',
-    '      return prefix + name',
+    'object NestedLabeler {',
+    '  label(name: string, premium: boolean, active: boolean): string {',
+    '    const base = "hello "',
+    '    if (active) {',
+    '      if (premium) {',
+    '        const label = "vip "',
+    '        return label + name',
+    '      }',
+    '      const standard = "std "',
+    '      return standard + name',
     '    }',
-    '    return "bye " + name',
+    '    return base + name',
     '  }',
     '}',
     'const title = "Qin"',
@@ -147,6 +152,11 @@ async function main() {
 
   if (!parser.parsedTokens.some((token: any) => token.tokenValue === 'object')) {
     throw new Error('OvsParser chain must preserve Qin object declaration syntax from the generated parser')
+  }
+
+  if (!parser.parsedTokens.some((token: any) => token.tokenValue === 'premium')
+    || !parser.parsedTokens.some((token: any) => token.tokenValue === 'standard')) {
+    throw new Error('OvsParser chain must preserve nested Qin object method-body syntax from the generated parser')
   }
 
   if (!parser.parsedTokens.some((token: any) => token.tokenValue === 'css')) {
