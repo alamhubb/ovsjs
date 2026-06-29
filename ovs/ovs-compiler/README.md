@@ -6,6 +6,12 @@
 
 `ovs-compiler` 是 OVS DSL 的编译时处理器，继承自 `cssts-compiler`，支持 OVS 特有的视图声明语法和 CSSTS 原子类集成。
 
+## Parser Authority
+
+OVS 语法解析走 generated Qin parser 继承链：`OvsParser extends CssTsParser`，而 `CssTsParser extends QinParser`。`QinParser` 由 Java 版 QinParser 生成到 TypeScript，是 OVS/CSSTS 共享的语法核心。
+
+OVS 自己新增的 `view`、`tag {}`、`#{}` 等语法只通过 `@SubhutiRule`/PEG 规则扩展 parser；不要用正则扫描、字符串补丁或 fallback transform 来接受语法。`slime-parser` 只在 CST-to-AST 转换注册边界保留，用于让转换层复用和扩展既有 AST lowering。
+
 ## 核心职责
 
 1. **解析** - 解析 `.ovs` 文件中的 OVS DSL 语法

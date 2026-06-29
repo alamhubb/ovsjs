@@ -401,8 +401,8 @@ OVS compiler generates precise Source Maps, enabling IDE to:
 
 | Component | Description |
 |-----------|-------------|
-| **[Subhuti](./subhuti/)** | Parser generator framework, define grammar rules with decorators |
-| **[Slime](./slime/)** | JavaScript/TypeScript fault-tolerant parser |
+| **[Subhuti](./subhuti/)** | Parser generator framework for formal grammar rules |
+| **Generated Qin Parser** | Java QinParser generated to TypeScript and inherited by CSSTS/OVS parsers |
 | **[Volar](https://volarjs.dev/)** | Language Server framework, provides IDE support |
 | **[Vue 3](https://vuejs.org/)** | Runtime framework |
 
@@ -421,7 +421,8 @@ test-volar/
 ├── cssts-theme-element/    # Element Plus theme atoms
 ├── cssts-ui/               # Element Plus fork (CssTs implementation)
 ├── vite-plugin-cssts/      # CssTs Vite plugin
-├── slime/                  # JS/TS parser
+├── qin/packages/qin-language/generated/qin-parser-ts/
+│                            # Generated Qin parser used by CSSTS/OVS language tooling
 └── subhuti/                # Parser framework
 ```
 
