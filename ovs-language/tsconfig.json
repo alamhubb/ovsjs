@@ -3,13 +3,11 @@
   "compilerOptions": {
     "rootDir": ".",
     "types": [
-      "node",
-      "vscode"
+      "node"
     ]
   },
   "include": [
     "ovs-language-server/src/**/*.ts",
-    "ovs-vscode-client/src/**/*.ts",
     "tests/**/*.ts"
   ]
 }

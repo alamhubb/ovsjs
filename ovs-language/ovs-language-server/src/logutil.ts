@@ -1,9 +1,8 @@
 import fs from 'node:fs'
+import os from 'node:os'
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const logPath = path.join(__dirname, 'templog.txt')
+const logPath = path.join(os.tmpdir(), 'ovs-language-server.log')
 
 export class LogUtil {
   static log(...values: unknown[]) {
