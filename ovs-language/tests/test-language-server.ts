@@ -333,6 +333,37 @@ async function testDiagnostics() {
       },
     })
 
+    const qinRichUri = toFileUri(path.join(__dirname, 'qin-rich-valid.ovs'))
+    session.sendNotification('textDocument/didOpen', {
+      textDocument: {
+        uri: qinRichUri,
+        languageId: 'ovs',
+        version: 1,
+        text: [
+          'object NestedLabeler {',
+          '  label(name: string, premium: boolean, active: boolean): string {',
+          '    const base = "hello "',
+          '    if (active) {',
+          '      if (premium) {',
+          '        const label = "vip "',
+          '        return label + name',
+          '      }',
+          '      const standard = "std "',
+          '      return standard + name',
+          '    }',
+          '    return base + name',
+          '  }',
+          '}',
+          'const cardStyle = css { displayFlex }',
+          'const title = "Qin"',
+          'div(class = cardStyle) {',
+          '  h1 { title }',
+          '}',
+          '',
+        ].join('\n'),
+      },
+    })
+
     const invalidUri = toFileUri(path.join(__dirname, 'invalid.ovs'))
     session.sendNotification('textDocument/didOpen', {
       textDocument: {
@@ -343,6 +374,11 @@ async function testDiagnostics() {
       },
     })
 
+    const qinRichDiagnosticRequest = session.sendRequest('textDocument/diagnostic', {
+      textDocument: { uri: qinRichUri },
+    })
+    const qinRichDiagnosticResponse = await session.waitForResponse(qinRichDiagnosticRequest.id, 'OVS Qin-rich valid diagnostic response')
+
     const invalidDiagnosticRequest = session.sendRequest('textDocument/diagnostic', {
       textDocument: { uri: invalidUri },
     })
@@ -350,11 +386,17 @@ async function testDiagnostics() {
 
     const diagnostics = session.messages.filter(message => message.method === 'textDocument/publishDiagnostics')
     const validDiagnostics = diagnostics.filter(message => sameUri(message.params?.uri, validUri)).at(-1)?.params?.diagnostics ?? []
+    const qinRichDiagnostics = qinRichDiagnosticResponse.result?.items
+      ?? diagnostics.filter(message => sameUri(message.params?.uri, qinRichUri)).at(-1)?.params?.diagnostics
+      ?? []
     const invalidDiagnostics = invalidDiagnosticResponse.result?.items
       ?? diagnostics.filter(message => sameUri(message.params?.uri, invalidUri)).at(-1)?.params?.diagnostics
       ?? []
     if (validDiagnostics.some((item: any) => String(item.message ?? '').includes('OVS transform failed'))) {
       throw new Error(`Valid OVS source produced transform diagnostics: ${JSON.stringify(validDiagnostics)}`)
+    }
+    if (qinRichDiagnostics.some((item: any) => String(item.message ?? '').includes('OVS transform failed'))) {
+      throw new Error(`Qin-rich valid OVS source produced transform diagnostics: ${JSON.stringify(qinRichDiagnostics)}`)
     }
     if (!invalidDiagnostics.some((item: any) => String(item.message ?? '').includes('OVS transform failed'))) {
       throw new Error(`Invalid OVS source did not produce transform diagnostics: ${JSON.stringify(invalidDiagnostics)}`)
