@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { fileURLToPath, URL } from 'node:url'
-import vitePluginOvs from '../ovsjs/src/index.ts'
+import vitePluginOvs from '../vite-plugin-ovs/src/index.ts'
 
 export default defineConfig({
   plugins: [

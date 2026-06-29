@@ -21,17 +21,14 @@
 ### 安装依赖
 
 ```bash
-# 在项目根目录
-npm install
-
-# 进入 guidebot 目录
-cd guidebot
+# 在 OVS workspace 根目录
+..\qin\qin.bat install
 ```
 
 ### 运行项目
 
 ```bash
-npm run dev
+..\qin\qin.bat language dev --root guidebot
 ```
 
 访问 http://localhost:5173/ 查看效果
@@ -39,7 +36,7 @@ npm run dev
 ### 构建生产版本
 
 ```bash
-npm run build
+..\qin\qin.bat language build --root guidebot
 ```
 
 ---
@@ -55,6 +52,7 @@ guidebot/
 │   └── style.css             # 样式文件
 ├── index.html                # HTML 模板
 ├── vite.config.ts            # Vite 配置
+├── qin.config.js             # Qin 项目配置
 ├── package.json              # 项目配置
 └── README.md                 # 本文件
 ```
@@ -172,7 +170,7 @@ app.mount('#app')
 在 `vite.config.ts` 中启用 OVS 支持：
 
 ```typescript
-import vitePluginOvs from '../ovsjs/src/index.ts'
+import vitePluginOvs from '../vite-plugin-ovs/src/index.ts'
 
 export default defineConfig({
   plugins: [

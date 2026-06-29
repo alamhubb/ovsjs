@@ -4,8 +4,8 @@ export default {
   description: "Qin-managed OVS workspace",
   type: "workspace",
   scripts: {
-    build: "..\\qin\\qin.bat language build --root ovs/ovs-runtime && ..\\qin\\qin.bat language build --root ovs/ovs-compiler && ..\\qin\\qin.bat language build --root create-ovs && ..\\qin\\qin.bat language build --root vite-plugin-ovs && ..\\qin\\qin.bat language build --root ovs-language",
-    test: "..\\qin\\qin.bat language test --root ovs/ovs-runtime && ..\\qin\\qin.bat language test --root ovs/ovs-compiler && ..\\qin\\qin.bat language test --root create-ovs && ..\\qin\\qin.bat language test --root vite-plugin-ovs && ..\\qin\\qin.bat language test --root ovs-language",
+    build: "..\\qin\\qin.bat language build --root ovs/ovs-runtime && ..\\qin\\qin.bat language build --root ovs/ovs-compiler && ..\\qin\\qin.bat language build --root create-ovs && ..\\qin\\qin.bat language build --root vite-plugin-ovs && ..\\qin\\qin.bat language build --root ovs-language && ..\\qin\\qin.bat language build --root guidebot",
+    test: "..\\qin\\qin.bat language test --root ovs/ovs-runtime && ..\\qin\\qin.bat language test --root ovs/ovs-compiler && ..\\qin\\qin.bat language test --root create-ovs && ..\\qin\\qin.bat language test --root vite-plugin-ovs && ..\\qin\\qin.bat language test --root ovs-language && ..\\qin\\qin.bat language test --root guidebot",
     lint: "..\\qin\\qin.bat language test --root ovs/ovs-compiler && ..\\qin\\qin.bat language test --root ovs-language"
   },
   workspaces: [
@@ -13,7 +13,8 @@ export default {
     "ovs/ovs-compiler",
     "create-ovs",
     "vite-plugin-ovs",
-    "ovs-language"
+    "ovs-language",
+    "guidebot"
   ],
   language: {
     id: "ovs",
