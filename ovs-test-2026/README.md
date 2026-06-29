@@ -26,17 +26,17 @@ See [Vite Configuration Reference](https://vite.dev/config/).
 ## Project Setup
 
 ```sh
-npm install
+..\qin\qin.bat install
 ```
 
 ### Compile and Hot-Reload for Development
 
 ```sh
-npm run dev
+..\qin\qin.bat language dev --root ovs-test-2026
 ```
 
 ### Type-Check, Compile and Minify for Production
 
 ```sh
-npm run build
+..\qin\qin.bat language build --root ovs-test-2026
 ```
