@@ -50,9 +50,12 @@ div({ class: 'container' }) {
 - **Pure JavaScript** - All JS syntax works naturally
 - **Vue 3 Compatible** - Compiles to efficient Vue render functions
 
-## Quick Start
+## App Quick Start
 
-### 1. Create Project
+This section is for users creating an OVS app. Language tooling development is
+managed separately through Qin in the next section.
+
+### 1. Create App
 
 ```bash
 npm create ovs@latest my-app
@@ -60,6 +63,23 @@ cd my-app
 npm install
 npm run dev
 ```
+
+## Toolchain Development
+
+OVS language tooling is managed by `qin.config.js`. Use Qin as the project
+entrypoint for build, test, and language-server runs:
+
+```bash
+cd ovsjs/ovs-language
+..\..\qin\qin.bat language build
+..\..\qin\qin.bat language test
+..\..\qin\qin.bat language server --dry-run
+```
+
+The Volar server runs on Node/TypeScript because editor LSP tooling requires
+that ecosystem. OVS syntax authority still comes from the generated Qin parser
+package declared in `qin.config.js`; do not add a separate parser or fallback
+path in the editor package.
 
 ### 2. Write OVS
 
