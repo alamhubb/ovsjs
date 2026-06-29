@@ -60,8 +60,8 @@ managed separately through Qin in the next section.
 ```bash
 npm create ovs@latest my-app
 cd my-app
-npm install
-npm run dev
+qin install
+qin dev
 ```
 
 ## Toolchain Development

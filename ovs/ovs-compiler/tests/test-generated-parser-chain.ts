@@ -15,6 +15,7 @@ const compilerIndexPath = path.join(compilerRoot, 'src', 'index.ts')
 const cstToAstPath = path.join(compilerRoot, 'src', 'factory', 'OvsCstToSlimeAst', 'OvsCstToSlimeAst.ts')
 const statementCstToAstPath = path.join(compilerRoot, 'src', 'factory', 'OvsCstToSlimeAst', 'OvsCstToSlimeAst.Statement.ts')
 const localAdapterPath = path.join(compilerRoot, 'src', 'parser', 'generated-runtime-adapter.ts')
+const legacyOldFilePath = path.join(compilerRoot, 'src', 'factory', 'oldfile.ts')
 const generatedParserPath = path.join(workspaceRoot, 'qin', 'packages', 'qin-language', 'generated', 'qin-parser-ts')
 
 const compilerConfig = fs.readFileSync(compilerConfigPath, 'utf-8')
@@ -70,6 +71,10 @@ if (compilerConfig.includes('npm run')) {
 
 if (fs.existsSync(localAdapterPath)) {
   throw new Error('OVS must inherit the generated runtime adapter from cssts-compiler instead of keeping a local copy')
+}
+
+if (fs.existsSync(legacyOldFilePath)) {
+  throw new Error('OVS compiler must not keep historical oldfile.ts source beside the active CST-to-AST implementation')
 }
 
 const inheritedSyntaxSource = [
