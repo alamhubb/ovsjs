@@ -559,6 +559,91 @@ async function testTsSubsetLanguageFeatures() {
     }
     requireSemanticTokenAt(ovsSemanticTokensResponse.result, 1, 6, 'OVS syntax labelText declaration')
     requireSemanticTokenAt(ovsSemanticTokensResponse.result, 3, 7, 'OVS syntax labelText render usage')
+
+    const ovsForOfUri = toFileUri(path.join(__dirname, 'ovs-for-of.ovs'))
+    session.sendNotification('textDocument/didOpen', {
+      textDocument: {
+        uri: ovsForOfUri,
+        languageId: 'ovs',
+        version: 1,
+        text: [
+          'const items = [{ name: "Ada" }, { name: "Lin" }]',
+          'let selectedName = ""',
+          'export default ul {',
+          '  for (const item of items) {',
+          '    selectedName = item.name',
+          '    li { item.name }',
+          '  }',
+          '}',
+          'sele',
+          '',
+        ].join('\n'),
+      },
+    })
+
+    const ovsForOfDiagnostic = session.sendRequest('textDocument/diagnostic', {
+      textDocument: { uri: ovsForOfUri },
+    })
+    const ovsForOfDiagnosticResponse = await session.waitForResponse(ovsForOfDiagnostic.id, 'OVS for...of diagnostic response')
+    const ovsForOfDiagnostics = ovsForOfDiagnosticResponse.result?.items ?? []
+    if (ovsForOfDiagnostics.some((item: any) => String(item.message ?? '').includes('OVS transform failed'))) {
+      throw new Error(`OVS for...of source produced transform diagnostics: ${JSON.stringify(ovsForOfDiagnostics)}`)
+    }
+
+    const ovsForOfCompletion = session.sendRequest('textDocument/completion', {
+      textDocument: { uri: ovsForOfUri },
+      position: { line: 8, character: 4 },
+      context: { triggerKind: 1 },
+    })
+    const ovsForOfCompletionResponse = await session.waitForResponse(ovsForOfCompletion.id, 'OVS for...of completion response')
+    const ovsForOfCompletionItems = Array.isArray(ovsForOfCompletionResponse.result) ? ovsForOfCompletionResponse.result : ovsForOfCompletionResponse.result?.items ?? []
+    const ovsForOfCompletionLabels = ovsForOfCompletionItems.map((item: any) => item.label)
+    if (!ovsForOfCompletionLabels.includes('selectedName')) {
+      throw new Error(`OVS for...of completion did not include selectedName: ${JSON.stringify(ovsForOfCompletionLabels.slice(0, 30))}`)
+    }
+
+    const ovsForOfDefinition = session.sendRequest('textDocument/definition', {
+      textDocument: { uri: ovsForOfUri },
+      position: { line: 5, character: 10 },
+    })
+    const ovsForOfDefinitionResponse = await session.waitForResponse(ovsForOfDefinition.id, 'OVS for...of definition response')
+    const ovsForOfDefinitions = Array.isArray(ovsForOfDefinitionResponse.result) ? ovsForOfDefinitionResponse.result : ovsForOfDefinitionResponse.result ? [ovsForOfDefinitionResponse.result] : []
+    if (!ovsForOfDefinitions.some(item => sameUri(locationUri(item), ovsForOfUri) && rangeContains(item, 3, 13))) {
+      throw new Error(`OVS for...of definition did not resolve item declaration: ${JSON.stringify(ovsForOfDefinitionResponse.result)}`)
+    }
+
+    const ovsForOfReferences = session.sendRequest('textDocument/references', {
+      textDocument: { uri: ovsForOfUri },
+      position: { line: 5, character: 10 },
+      context: { includeDeclaration: true },
+    })
+    const ovsForOfReferencesResponse = await session.waitForResponse(ovsForOfReferences.id, 'OVS for...of references response')
+    const ovsForOfReferenceItems = Array.isArray(ovsForOfReferencesResponse.result) ? ovsForOfReferencesResponse.result : []
+    if (
+      !ovsForOfReferenceItems.some(item => sameUri(locationUri(item), ovsForOfUri) && rangeStartsAt(item, 3, 13))
+      || !ovsForOfReferenceItems.some(item => sameUri(locationUri(item), ovsForOfUri) && rangeStartsAt(item, 5, 9))
+    ) {
+      throw new Error(`OVS for...of references did not include item declaration and render usage: ${JSON.stringify(ovsForOfReferencesResponse.result)}`)
+    }
+
+    const ovsForOfSymbols = session.sendRequest('textDocument/documentSymbol', {
+      textDocument: { uri: ovsForOfUri },
+    })
+    const ovsForOfSymbolsResponse = await session.waitForResponse(ovsForOfSymbols.id, 'OVS for...of documentSymbol response')
+    const ovsForOfSymbolNames = collectSymbolNames(Array.isArray(ovsForOfSymbolsResponse.result) ? ovsForOfSymbolsResponse.result : [])
+    if (!ovsForOfSymbolNames.includes('items') || !ovsForOfSymbolNames.includes('selectedName')) {
+      throw new Error(`OVS for...of documentSymbol did not include loop source symbols: ${JSON.stringify(ovsForOfSymbolsResponse.result)}`)
+    }
+
+    const ovsForOfSemanticTokens = session.sendRequest('textDocument/semanticTokens/full', {
+      textDocument: { uri: ovsForOfUri },
+    })
+    const ovsForOfSemanticTokensResponse = await session.waitForResponse(ovsForOfSemanticTokens.id, 'OVS for...of semanticTokens response')
+    if (!Array.isArray(ovsForOfSemanticTokensResponse.result?.data) || ovsForOfSemanticTokensResponse.result.data.length === 0) {
+      throw new Error(`OVS for...of semanticTokens did not return token data: ${JSON.stringify(ovsForOfSemanticTokensResponse.result)}`)
+    }
+    requireSemanticTokenAt(ovsForOfSemanticTokensResponse.result, 3, 13, 'OVS for...of item declaration')
+    requireSemanticTokenAt(ovsForOfSemanticTokensResponse.result, 5, 9, 'OVS for...of item render usage')
   } finally {
     await session.close()
   }
