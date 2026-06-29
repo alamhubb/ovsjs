@@ -180,6 +180,23 @@ async function main() {
     '  }',
     '}',
     'const title = "Qin"',
+    'export interface ChainUser {',
+    '  id: string',
+    '  active?: boolean',
+    '}',
+    'export type ChainPair<T, U> = { left: T, right: U }',
+    'class ChainService {',
+    '  name: string = "qin"',
+    '  count = 0',
+    '  constructor(name: string) {',
+    '    this.name = name',
+    '  }',
+    '  label(): string {',
+    '    return this.name',
+    '  }',
+    '}',
+    'const config = { name: "qin", values: [1, 2, 3] }',
+    'const { name: destructuredName, values: [firstValue] } = config',
     'const optionalName = user?.profile?.name',
     'const fallbackName = user.name ?? "anonymous"',
     'const templateName = `hello ${name}`',
@@ -208,6 +225,23 @@ async function main() {
 
   if (!parser.parsedTokens.some((token: any) => token.tokenValue === 'object')) {
     throw new Error('OvsParser chain must preserve Qin object declaration syntax from the generated parser')
+  }
+
+  if (!parser.parsedTokens.some((token: any) => token.tokenValue === 'interface')
+    || !parser.parsedTokens.some((token: any) => token.tokenValue === 'ChainUser')
+    || !parser.parsedTokens.some((token: any) => token.tokenValue === 'ChainPair')) {
+    throw new Error('OvsParser chain must preserve TypeScript interface and type alias declarations from the generated parser')
+  }
+
+  if (!parser.parsedTokens.some((token: any) => token.tokenValue === 'class')
+    || !parser.parsedTokens.some((token: any) => token.tokenValue === 'ChainService')
+    || !parser.parsedTokens.some((token: any) => token.tokenValue === 'constructor')) {
+    throw new Error('OvsParser chain must preserve class fields and constructor syntax from the generated parser')
+  }
+
+  if (!parser.parsedTokens.some((token: any) => token.tokenValue === 'destructuredName')
+    || !parser.parsedTokens.some((token: any) => token.tokenValue === 'firstValue')) {
+    throw new Error('OvsParser chain must preserve destructuring declarations from the generated parser')
   }
 
   if (!parser.parsedTokens.some((token: any) => token.tokenValue === 'premium')

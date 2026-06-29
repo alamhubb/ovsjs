@@ -606,7 +606,8 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
             Alternative.of(() => (this as any).QinObjectDeclaration(params)),
             Alternative.of(() => this.LexicalDeclaration(declarationLexicalParams(params))),
             Alternative.of(() => this.HoistableDeclaration(declarationHoistableParams(params))),
-            Alternative.of(() => this.ClassDeclaration(declarationHoistableParams(params)))
+            Alternative.of(() => this.ClassDeclaration(declarationHoistableParams(params))),
+            Alternative.of(() => super.Declaration(params))
         )
     }
 
