@@ -71,7 +71,7 @@ function assertIncludes(source, expected, label) {
 }
 
 function assertNoExternalScriptForwarding(source, label) {
-  for (const forbidden of ['npm run', 'pnpm ', 'yarn ']) {
+  for (const forbidden of ['npm run', 'npx ', 'pnpm ', 'yarn ']) {
     assert.equal(source.includes(forbidden), false, `${label} should not contain ${forbidden}`)
   }
 }
