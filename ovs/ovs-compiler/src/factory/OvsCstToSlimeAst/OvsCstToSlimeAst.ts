@@ -11,7 +11,8 @@ import {
     SlimeAstCreateUtils,
     SlimeTokenCreateUtils
 } from "slime-ast"
-import { SlimeCstToAst, SlimeParser, registerSlimeCstToAstUtil } from "slime-parser"
+import { QinParser as SlimeParser } from "@qin/generated-qin-parser-ts"
+import { SlimeCstToAst, registerSlimeCstToAstUtil } from "@qin/generated-qin-parser-ts/SlimeCstToAstBridge"
 import { OvsCstToSlimeAstImport } from "./OvsCstToSlimeAst.Import"
 
 /**

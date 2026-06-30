@@ -8,7 +8,7 @@ import {
     SlimeAstCreateUtils,
     SlimeTokenCreateUtils
 } from "slime-ast"
-import { SlimeParser } from "slime-parser"
+import { QinParser as SlimeParser } from "@qin/generated-qin-parser-ts"
 import { OvsCstToSlimeAstProperty } from "./OvsCstToSlimeAst.Property"
 import { checkCstName } from "../OvsCstToSlimeAstUtils"
 

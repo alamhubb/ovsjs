@@ -28,7 +28,7 @@ import {
     SlimeAstTypeName
 } from "slime-ast";
 import { SubhutiMatchToken } from "subhuti";
-import { registerSlimeCstToAstUtil } from "slime-parser";
+import { registerSlimeCstToAstUtil } from "@qin/generated-qin-parser-ts/SlimeCstToAstBridge";
 import { CsstsInit, normalizeGeneratedCst } from "cssts-compiler";
 
 // ==================== 内部工具函数 ====================

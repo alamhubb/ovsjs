@@ -27,7 +27,7 @@ vsCstToSlimeAst.Helpers.ts - 基础辅助方法（96行）
 
 ## 注意事项
 
-当前拆分文件因缺少父类方法实现（如createIdentifierReferenceAst等来自slime-parser）
+当前拆分文件依赖父类方法实现（如 createIdentifierReferenceAst 等来自 generated SlimeCstToAstBridge）
 会有编译错误。需要先修复这些依赖关系后再完全替换原文件。
  */
 
