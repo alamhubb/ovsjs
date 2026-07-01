@@ -291,6 +291,7 @@ async function createSession(): Promise<LspSession> {
       textDocument: {
         completion: { completionItem: { snippetSupport: true, insertReplaceSupport: true } },
         hover: {},
+        declaration: {},
         definition: {},
         references: {},
         documentSymbol: {},
@@ -314,6 +315,9 @@ async function createSession(): Promise<LspSession> {
   const initResponse = await session.waitForResponse(init.id, 'OVS initialize response')
   if (!initResponse.result?.capabilities) {
     throw new Error(`OVS initialize failed. exitCode=${exitCode} stderr=${stderrText} messages=${summarizeMessages(messages)}`)
+  }
+  if (!initResponse.result.capabilities.declarationProvider) {
+    throw new Error(`OVS initialize did not expose declarationProvider: ${JSON.stringify(initResponse.result.capabilities)}`)
   }
   session.sendNotification('initialized', {})
 
@@ -454,6 +458,16 @@ async function testTsSubsetLanguageFeatures() {
     const definitions = Array.isArray(definitionResponse.result) ? definitionResponse.result : definitionResponse.result ? [definitionResponse.result] : []
     if (!definitions.some(item => sameUri(locationUri(item), tsSubsetUri) && rangeContains(item, 0, 6))) {
       throw new Error(`OVS definition did not resolve alphaNumber declaration: ${JSON.stringify(definitionResponse.result)}`)
+    }
+
+    const declaration = session.sendRequest('textDocument/declaration', {
+      textDocument: { uri: tsSubsetUri },
+      position: { line: 1, character: 20 },
+    })
+    const declarationResponse = await session.waitForResponse(declaration.id, 'OVS declaration response')
+    const declarations = Array.isArray(declarationResponse.result) ? declarationResponse.result : declarationResponse.result ? [declarationResponse.result] : []
+    if (!declarations.some(item => sameUri(locationUri(item), tsSubsetUri) && rangeContains(item, 0, 6))) {
+      throw new Error(`OVS declaration did not resolve alphaNumber declaration: ${JSON.stringify(declarationResponse.result)}`)
     }
 
     const references = session.sendRequest('textDocument/references', {
