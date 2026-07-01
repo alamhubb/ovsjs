@@ -23,6 +23,20 @@ export abstract class OvsCstToSlimeAstView extends OvsCstToSlimeAstIIFE {
 
     // ==================== 视图构建方法 ====================
 
+    private identifierName(id: SlimeIdentifier): string {
+        const rawName = (id as any).name
+        if (typeof rawName === 'string') return rawName
+        if (typeof rawName === 'function') return rawName.call(id)
+        throw new Error('OVS view identifier must expose a name')
+    }
+
+    private statementExpression(stmt: SlimeStatement): SlimeExpression {
+        const rawExpression = (stmt as any).expression
+        if (rawExpression && typeof rawExpression !== 'function') return rawExpression
+        if (typeof rawExpression === 'function') return rawExpression.call(stmt)
+        throw new Error('OVS render child statement must expose an expression')
+    }
+
     /**
      * 创建简单视图（直接返回标签函数调用，无 IIFE）
      *
@@ -44,7 +58,7 @@ export abstract class OvsCstToSlimeAstView extends OvsCstToSlimeAstIIFE {
         // 从 ExpressionStatement 中提取表达式，并包装为 ArrayElement
         const childElements = statements.map((stmt, index) => {
             const exprStmt = stmt as any
-            const expr = exprStmt.expression
+            const expr = this.statementExpression(exprStmt)
             let element: SlimeExpression
 
             // 判断是否是 children.push(expr) 形式
@@ -77,7 +91,7 @@ export abstract class OvsCstToSlimeAstView extends OvsCstToSlimeAstIIFE {
         const propsObject = componentProps || SlimeAstCreateUtils.createObjectExpression([])
 
         // 创建 callee：HTML 标签转换为 $OvsHtmlTag.xxx，其他保持原样
-        const callee = createCalleeForTag(id.name, id.loc)
+        const callee = createCalleeForTag(this.identifierName(id), id.loc)
 
         // 创建 tagName(props, children) 或 $OvsHtmlTag.tagName(props, children) 调用
         const vNodeCall = SlimeAstCreateUtils.createCallExpression(
@@ -125,7 +139,7 @@ export abstract class OvsCstToSlimeAstView extends OvsCstToSlimeAstIIFE {
         }
 
         // 创建 callee：HTML 标签转换为 $OvsHtmlTag.xxx，其他保持原样
-        const callee = createCalleeForTag(id.name, id.loc)
+        const callee = createCalleeForTag(this.identifierName(id), id.loc)
 
         // 创建函数调用：tagName(props, children) 或 $OvsHtmlTag.tagName(props, children)
         const callExpression = SlimeAstCreateUtils.createCallExpression(

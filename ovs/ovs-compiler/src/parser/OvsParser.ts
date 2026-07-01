@@ -611,6 +611,19 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
         )
     }
 
+    @SubhutiRule
+    ExportDeclaration(): any {
+        return this.Or(
+            Alternative.of(() => {
+                this.getTokenConsumer().Export()
+                this.getTokenConsumer().Default()
+                this.OvsRenderFunction(withParserParams({}, {In: true}))
+                this.SemicolonASI()
+            }),
+            Alternative.of(() => super.ExportDeclaration())
+        )
+    }
+
     /**
      * PrimaryExpression - 覆盖父类，添加 OvsRenderFunction 和 CssExpression 支持
      * OvsRenderFunction 放在 IdentifierReference 之前，因为都以 IdentifierName 开头

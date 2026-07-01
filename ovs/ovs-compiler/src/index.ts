@@ -11,7 +11,7 @@
 
 // 编译器版本号（用于调试确认代码是否更新）
 const OVS_COMPILER_VERSION = '0.0.2-reactive-expression'
-console.log(`[ovs-compiler] version: ${OVS_COMPILER_VERSION}`)
+console.error(`[ovs-compiler] version: ${OVS_COMPILER_VERSION}`)
 
 import { SlimeGenerator, SlimeCodeMapping, type SlimeGeneratorResult } from "slime-generator";
 import OvsParser from "./parser/OvsParser.ts";
@@ -29,7 +29,7 @@ import {
 } from "slime-ast";
 import { SubhutiMatchToken } from "subhuti";
 import { registerSlimeCstToAstUtil } from "@qin/generated-qin-parser-ts/SlimeCstToAstBridge";
-import { CsstsInit, normalizeGeneratedCst } from "cssts-compiler";
+import { CsstsInit, normalizeGeneratedAst, normalizeGeneratedCst } from "cssts-compiler";
 
 // ==================== 内部工具函数 ====================
 
@@ -328,7 +328,7 @@ export function ovsTransformBase(code: string): ovsTransformBaseResult {
     let curCst = normalizeGeneratedCst(parser.Program())
     const tokens = parser.parsedTokens
     if (!tokens.length) return { ast: null, tokens: tokens }
-    let ast = OvsCstToSlimeAstUtils.toProgram(curCst)
+    let ast = normalizeGeneratedAst(OvsCstToSlimeAstUtils.toProgram(curCst))
     return { ast, tokens }
 }
 
@@ -343,7 +343,7 @@ export function ovsTransformFile(code: string): ovsTransformBaseResult {
     let curCst = normalizeGeneratedCst(parser.Program())
     const tokens = parser.parsedTokens
     if (!tokens.length) return { ast: null, tokens: tokens }
-    let ast = OvsCstToSlimeAstUtils.toFileAst(curCst)
+    let ast = normalizeGeneratedAst(OvsCstToSlimeAstUtils.toFileAst(curCst))
     return { ast, tokens }
 }
 

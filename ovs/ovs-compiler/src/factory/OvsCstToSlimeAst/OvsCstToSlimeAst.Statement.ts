@@ -102,14 +102,39 @@ export abstract class OvsCstToSlimeAstStatement extends OvsCstToSlimeAstProperty
      * Override: 处理 StatementListItem，支持 OvsRenderStatement 和 NoRenderBlock
      */
     createStatementListItemAst(cst: SubhutiCst): SlimeStatement[] {
-        checkCstName(cst, SlimeParser.prototype.StatementListItem.name)
-
+        const name = this.cstName(cst)
         const children = this.cstChildren(cst)
-        if (children.length === 0) {
+        const isWrapper = name === 'ModuleItem' || name === 'StatementListItem'
+        const isStatementNode = name === 'Statement'
+        const isOvsStatementWrapper = name === 'Statement' && children.some(child => this.isCst(child, 'OvsRenderStatement') || this.isCst(child, 'NoRenderBlock'))
+        const isDirectStatementListItemChild = name === 'Declaration' || name === 'OvsRenderStatement'
+        if (!isWrapper && !isStatementNode && !isDirectStatementListItemChild) {
+            checkCstName(cst, SlimeParser.prototype.StatementListItem.name)
+        }
+
+        if (children.length === 0 && !isDirectStatementListItemChild && !isOvsStatementWrapper) {
             return []
         }
 
-        const child = children[0]
+        if (name === 'Statement' && !isOvsStatementWrapper) {
+            const baseResult = super.createStatementListItemAst(cst)
+            return baseResult == null ? [] : Array.isArray(baseResult) ? baseResult : [baseResult]
+        }
+
+        if (isWrapper || isOvsStatementWrapper) {
+            const collected: SlimeStatement[] = []
+            for (const child of children) {
+                const result = this.createStatementListItemAst(child)
+                collected.push(...(Array.isArray(result) ? result : [result]))
+            }
+            return this.wrapRenderContextStatements(collected, cst.loc)
+        }
+
+        const child = cst
+
+        if (this.isCst(child, 'OvsRenderStatement')) {
+            return this.createOvsRenderStatementAst(child, cst.loc)
+        }
 
         // 检查是否是 Statement
         if (this.isCst(child, 'Statement')) {
@@ -117,35 +142,7 @@ export abstract class OvsCstToSlimeAstStatement extends OvsCstToSlimeAstProperty
 
             // 处理 OvsRenderStatement - 语句版本的 OVS 渲染
             if (this.isCst(statementChild, 'OvsRenderStatement')) {
-                // OvsRenderStatement 和 OvsRenderFunction 的 CST 结构相同，复用转换逻辑
-                const expr = this.createOvsRenderDomViewDeclarationAst(statementChild)
-
-                // 在 OVS 渲染上下文中，需要包装成 children.push()
-                if (this.ovsRenderDomViewDepth > 0) {
-                    const pushCall = SlimeAstCreateUtils.createCallExpression(
-                        SlimeAstCreateUtils.createMemberExpression(
-                            SlimeAstCreateUtils.createIdentifier('children'),
-                            SlimeTokenCreateUtils.createDotToken(cst.loc),
-                            SlimeAstCreateUtils.createIdentifier('push')
-                        ),
-                        [expr]
-                    )
-                    if (cst.loc) {
-                        pushCall.loc = cst.loc
-                    }
-                    return [{
-                        type: SlimeAstTypeName.ExpressionStatement,
-                        expression: pushCall,
-                        loc: cst.loc
-                    } as SlimeExpressionStatement]
-                }
-
-                // 不在渲染上下文中，直接作为表达式语句
-                return [{
-                    type: SlimeAstTypeName.ExpressionStatement,
-                    expression: expr,
-                    loc: cst.loc
-                } as SlimeExpressionStatement]
+                return this.createOvsRenderStatementAst(statementChild, cst.loc)
             }
 
             // 处理 NoRenderBlock - 展开处理
@@ -179,22 +176,52 @@ export abstract class OvsCstToSlimeAstStatement extends OvsCstToSlimeAstProperty
         }
 
         // 正常处理（调用父类）
-        const stmts = super.createStatementListItemAst(cst)
+        const baseResult = super.createStatementListItemAst(cst)
+        const stmts = baseResult == null ? [] : Array.isArray(baseResult) ? baseResult : [baseResult]
 
         // 在渲染上下文中（div {} 内且非 #{} 内），对控制流语句进行响应式包裹
-        if (this.ovsRenderDomViewDepth > 0 && this.noRenderDepth === 0) {
-            // 遍历 stmts，对需要响应式包裹的语句（控制流语句）进行包裹
-            return stmts.map((stmt: SlimeStatement) => {
-                if (this.needsReactiveWrap(stmt)) {
-                    // 控制流语句（if/for/while）需要响应式包裹
-                    return this.wrapStatementWithReactiveExpression(stmt, null, cst.loc)
-                }
-                // 变量声明、普通表达式等直接返回
-                return stmt
-            })
+        return this.wrapRenderContextStatements(stmts, cst.loc)
+    }
+
+    private wrapRenderContextStatements(stmts: SlimeStatement[], loc: any): SlimeStatement[] {
+        if (this.ovsRenderDomViewDepth <= 0 || this.noRenderDepth !== 0) {
+            return stmts
+        }
+        return stmts.map((stmt: SlimeStatement) => {
+            if (this.needsReactiveWrap(stmt)) {
+                return this.wrapStatementWithReactiveExpression(stmt, null, loc)
+            }
+            return stmt
+        })
+    }
+
+    private createOvsRenderStatementAst(statementChild: SubhutiCst, loc: any): SlimeExpressionStatement[] {
+        const expr = this.createOvsRenderDomViewDeclarationAst(statementChild)
+
+        if (this.ovsRenderDomViewDepth > 0) {
+            const pushCall = SlimeAstCreateUtils.createCallExpression(
+                SlimeAstCreateUtils.createMemberExpression(
+                    SlimeAstCreateUtils.createIdentifier('children'),
+                    SlimeTokenCreateUtils.createDotToken(loc),
+                    SlimeAstCreateUtils.createIdentifier('push')
+                ),
+                [expr]
+            )
+            if (loc) {
+                pushCall.loc = loc
+            }
+            return [{
+                type: SlimeAstTypeName.ExpressionStatement,
+                expression: pushCall,
+                loc
+            } as SlimeExpressionStatement]
         }
 
-        return stmts
+        return [{
+            type: SlimeAstTypeName.ExpressionStatement,
+            expression: expr,
+            loc
+        } as SlimeExpressionStatement]
     }
 
     /**
