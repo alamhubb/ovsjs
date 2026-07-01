@@ -1,8 +1,9 @@
 import OvsTokenConsumer, {ovs6Tokens} from "./OvsConsumer.ts"
-import { Alternative, Subhuti, SubhutiPackratCache, SubhutiRule } from 'subhuti'
+import { Subhuti, SubhutiPackratCache, SubhutiRule } from 'subhuti'
 // 使用包名导入
 import { CssTsParser } from "cssts-compiler";
 import {
+    Alternative,
     ReservedWords,
     SlimeJavascriptContextualKeywordTokenTypes,
     SlimeTokenType
@@ -603,6 +604,10 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
     Declaration(params: DeclarationParams = {}): any {
         return this.Or(
             Alternative.of(() => this.OvsViewDeclaration()),
+            Alternative.of(() => (this as any).TSInterfaceDeclaration()),
+            Alternative.of(() => (this as any).TSTypeAliasDeclaration()),
+            Alternative.of(() => (this as any).TSEnumDeclaration()),
+            Alternative.of(() => (this as any).TSModuleDeclaration()),
             Alternative.of(() => (this as any).QinObjectDeclaration(params)),
             Alternative.of(() => this.LexicalDeclaration(declarationLexicalParams(params))),
             Alternative.of(() => this.HoistableDeclaration(declarationHoistableParams(params))),
@@ -619,6 +624,22 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
                 this.getTokenConsumer().Default()
                 this.OvsRenderFunction(withParserParams({}, {In: true}))
                 this.SemicolonASI()
+            }),
+            Alternative.of(() => {
+                this.getTokenConsumer().Export()
+                ;(this as any).TSInterfaceDeclaration()
+            }),
+            Alternative.of(() => {
+                this.getTokenConsumer().Export()
+                ;(this as any).TSTypeAliasDeclaration()
+            }),
+            Alternative.of(() => {
+                this.getTokenConsumer().Export()
+                ;(this as any).TSEnumDeclaration()
+            }),
+            Alternative.of(() => {
+                this.getTokenConsumer().Export()
+                ;(this as any).TSModuleDeclaration()
             }),
             Alternative.of(() => super.ExportDeclaration())
         )
