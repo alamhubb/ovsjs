@@ -43,13 +43,13 @@ OvsCstToSlimeAstImport - 导入管理
 OvsCstToSlimeAst - 主类 ⭐
 ```
 
-### 全局注册与继承链
+### Bridge Facade 与继承链
 
 #### 核心机制
 
-1. **三层 Proxy 代理**：每层都有自己的 Proxy，动态代理到注册的实例
-2. **自动链式注册**：通过 `super()` 调用，一个实例自动注册到所有层
-3. **多态行为**：所有层的方法调用都会路由到最终子类实例
+1. **标准类继承**：`OvsCstToSlimeAst extends CssTsCstToAst`，业务扩展通过实例方法覆盖和 `super` 调用完成。
+2. **显式 facade**：`OvsCstToSlimeAstUtils` 是固定对象，方法 forward 到当前注册实例，不使用 Proxy 或动态服务定位器。
+3. **generated bridge 注册**：转换入口把 OVS 实例注册到 generated `SlimeCstToAstBridge`，让 CST-to-AST lowering 使用同一个实例。
 
 #### 实现方式
 
@@ -58,11 +58,6 @@ OvsCstToSlimeAst - 主类 ⭐
 import { CssTsCstToAst, registerCssTsCstToAst } from 'cssts-compiler'
 
 export class OvsCstToSlimeAst extends CssTsCstToAst {
-  constructor() {
-    super()  // 继承链自动注册到 cssts 和 slime 层
-    registerOvsCstToSlimeAst(this)  // 注册到 ovs 层
-  }
-
   // 重写方法，处理 OVS 特有语法
   createDeclarationAst(cst) {
     const first = cst.children?.[0]
@@ -88,103 +83,72 @@ export function registerOvsCstToSlimeAst(instance: OvsCstToSlimeAst): void {
   _ovsCstToSlimeAstUtils = instance
 }
 
-// Proxy: 动态代理到当前注册的实例
-export const OvsCstToSlimeAstUtils = new Proxy({} as OvsCstToSlimeAst, {
-  get(_, prop) {
-    const val = (_ovsCstToSlimeAstUtils as any)[prop]
-    return typeof val === 'function' ? val.bind(_ovsCstToSlimeAstUtils) : val
-  }
-})
+// Facade: 启动时绑定方法，调用时 forward 到当前 OVS 实例
+export const OvsCstToSlimeAstUtils = {} as OvsCstToSlimeAst
 
-// 初始化默认实例
+// 构造链会先注册到 CSSTS/generated bridge，再注册到 OVS facade
 new OvsCstToSlimeAst()
 
 export default OvsCstToSlimeAstUtils
 ```
 
-### 为什么需要全局注册 + Proxy？
+### 为什么需要 bridge facade？
 
 #### 问题场景
 
-假设 `slime-parser` 内部有这样的代码：
+generated CST-to-AST bridge 会通过共享入口调用当前 lowering 实例：
 
 ```typescript
-// slime-parser 内部
-SlimeCstToAstUtils.createPrimaryExpressionAst(cst)
+SlimeCstToAstBridge.createPrimaryExpressionAst(cst)
 ```
 
-**问题**：如果直接实例化 `SlimeCstToAst`，上面的调用**无法**使用 `OvsCstToSlimeAst` 重写的方法！这意味着 OVS 的自定义语法处理不会生效。
+如果转换入口注册的是基础实例，OVS 的 `view`、`tag {}`、`#{}` 等节点就不会走 OVS 覆盖方法。
 
 #### 解决方案
 
-通过 **全局注册 + Proxy 代理**，实现跨层多态：
+通过 **构造链注册 + facade forwarders**，让 generated bridge、CSSTS facade、OVS facade 指向同一个 `OvsCstToSlimeAst` 实例：
 
-1. **全局变量**：每层维护一个全局变量存储当前实例
-2. **注册函数**：在构造函数中注册 `this`（最终子类实例）
-3. **Proxy 代理**：动态将方法调用路由到注册的实例
+1. **构造链注册**：`OvsCstToSlimeAst` 调用 `super()`，CSSTS 构造函数会把当前实例注册到 CSSTS/generated bridge；OVS 构造函数再注册到 OVS facade。
+2. **facade forwarders**：公开稳定的 `OvsCstToSlimeAstUtils.xxx()` 调用形状。
+3. **实例多态**：内部递归和扩展使用普通 `this` / `super` 调用。
 
 ```
-调用 SlimeCstToAstUtils.xxx()
+调用 OvsCstToSlimeAstUtils.xxx()
     ↓
-Proxy 拦截 → 获取 _SlimeCstToAstUtils.xxx
+facade forwarder
     ↓
-_SlimeCstToAstUtils 指向 OvsCstToSlimeAst 实例
+_ovsCstToSlimeAstUtil 指向 OvsCstToSlimeAst 实例
     ↓
 调用 OvsCstToSlimeAst 的方法 ✅
 ```
-
-#### 类比理解
-
-可以把它理解为**依赖注入容器**：
-- `registerOvsCstToSlimeAst()` = 注册服务实现
-- `OvsCstToSlimeAstUtils` = 服务定位器（Service Locator）
-- Proxy = 透明代理，调用方无需关心具体实现
-
-这种模式让**基层库**（slime-parser）预留扩展点，**上层库**（ovs-compiler）可以无缝替换实现！
 
 
 ### 继承链注册流程
 
 ```typescript
-// 实例化时的完整注册流程
 new OvsCstToSlimeAst()
-  → OvsCstToSlimeAst.constructor()
-    → super() → CssTsCstToAst.constructor()
-      → super() → SlimeCstToAst.constructor()
-        → registerSlimeCstToAstUtil(this)  // this = OvsCstToSlimeAst 实例 ✅
-      → registerCssTsCstToAst(this)  // this = OvsCstToSlimeAst 实例 ✅
-    → registerOvsCstToSlimeAst(this)  // this = OvsCstToSlimeAst 实例 ✅
+  → super() → CssTsCstToAst.constructor()
+    → registerCssTsCstToAst(this)
+      → registerSlimeCstToAstUtil(this)
+  → registerOvsCstToSlimeAst(this)
 
-// 最终结果：
-// - slime-parser 的 _SlimeCstToAstUtils = OvsCstToSlimeAst 实例
-// - cssts-compiler 的 _cssTsCstToAstUtils = OvsCstToSlimeAst 实例
-// - ovs-compiler 的 _ovsCstToSlimeAstUtils = OvsCstToSlimeAst 实例
-// 三层全局变量都指向同一个实例，实现完美的多态！
+// 最终结果：generated bridge、CSSTS facade、OVS facade 都指向同一个 OVS 实例。
 ```
 
 ### 为什么这样设计有效
 
-**JavaScript 继承的关键特性**：当子类调用 `super()` 时，父类构造函数中的 `this` 指向的是最终的子类实例。
+**JavaScript 继承的关键特性**：覆盖方法里的 `this` 指向当前实例，`super` 明确调用父类实现。
 
 ```typescript
-class Parent {
-  constructor() {
-    console.log(this.constructor.name)  // 输出 "Child"
-    register(this)  // 注册的是 Child 实例
-  }
-}
-
-class Child extends Parent {
-  constructor() {
-    super()  // Parent 构造中的 this 是 Child 实例
+class OvsCstToSlimeAst extends CssTsCstToAst {
+  createPrimaryExpressionAst(cst) {
+    if (this.isOvsRender(cst)) return this.createOvsRenderAst(cst)
+    return super.createPrimaryExpressionAst(cst)
   }
 }
 ```
 
-利用这个特性，我们不需要在每层手动调用父层注册，只需要：
-1. 每层在自己的构造函数中注册 `this`
-2. 通过 `super()` 触发父类构造
-3. 父类构造中的 `this` 自动是最终子类实例
+这种方式保持 Java/TypeScript 都能理解的长期模型：扩展点是类方法，不是动态代理或 fallback。
 
 ### 方法调用流程示例
 
@@ -192,7 +156,7 @@ class Child extends Parent {
 // 1. 用户代码：转换 .ovs 文件
 vitePluginOvsTransform(code) 
   → OvsCstToSlimeAstUtils.toFileAst(cst)
-    → 通过 Proxy 路由到 OvsCstToSlimeAst 实例
+    → facade forward 到 OvsCstToSlimeAst 实例
     → 调用实例的 toFileAst 方法
 
 // 2. toFileAst 内部调用 createDeclarationAst
@@ -211,26 +175,6 @@ super.createDeclarationAst(cst)
 super.createPrimaryExpressionAst(cst)
   → SlimeCstToAst.createPrimaryExpressionAst(cst)
     → 处理标准 JavaScript 表达式
-```
-
-### 注意事项
-
-⚠️ **避免循环引用**：全局变量必须先声明再初始化
-
-```typescript
-// ❌ 错误：循环引用
-let _ovsCstToSlimeAstUtils: OvsCstToSlimeAst = new OvsCstToSlimeAst()
-
-// ✅ 正确：分两步
-let _ovsCstToSlimeAstUtils: OvsCstToSlimeAst  // 先声明
-
-export function registerOvsCstToSlimeAst(instance: OvsCstToSlimeAst): void {
-  _ovsCstToSlimeAstUtils = instance
-}
-
-// ... Proxy 定义 ...
-
-new OvsCstToSlimeAst()  // 再初始化
 ```
 
 ## 响应式表达式包裹

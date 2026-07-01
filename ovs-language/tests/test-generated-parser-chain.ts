@@ -15,6 +15,7 @@ const languageConfigPath = path.join(languageRoot, 'qin.config.js')
 const compilerConfigPath = path.join(workspaceRoot, 'ovs', 'ovs-compiler', 'qin.config.js')
 const languagePackagePath = path.join(languageRoot, 'package.json')
 const languageServerPackagePath = path.join(languageRoot, 'ovs-language-server', 'package.json')
+const legacyLanguageServerEntryPath = path.join(languageRoot, 'ovs-language-server', 'src', 'indexOld.ts')
 const compilerPackagePath = path.join(workspaceRoot, 'ovs', 'ovs-compiler', 'package.json')
 const parserPath = path.join(workspaceRoot, 'ovs', 'ovs-compiler', 'src', 'parser', 'OvsParser.ts')
 const compilerIndexPath = path.join(workspaceRoot, 'ovs', 'ovs-compiler', 'src', 'index.ts')
@@ -119,6 +120,10 @@ async function main() {
 
   if (fs.existsSync(localAdapterPath)) {
     throw new Error('OVS must inherit the generated runtime adapter from cssts-compiler instead of keeping a local copy')
+  }
+
+  if (fs.existsSync(legacyLanguageServerEntryPath)) {
+    throw new Error('OVS language server must expose only the Qin-managed entry from qin.config.js')
   }
 
   const parser = new OvsParser(ovsInheritedSyntaxSource)
