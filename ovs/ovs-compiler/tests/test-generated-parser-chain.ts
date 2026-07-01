@@ -17,6 +17,7 @@ const compilerConfigPath = path.join(compilerRoot, 'qin.config.js')
 const compilerPackagePath = path.join(compilerRoot, 'package.json')
 const parserPath = path.join(compilerRoot, 'src', 'parser', 'OvsParser.ts')
 const compilerIndexPath = path.join(compilerRoot, 'src', 'index.ts')
+const compilerTsdownConfigPath = path.join(compilerRoot, 'tsdown.config.ts')
 const cstToAstPath = path.join(compilerRoot, 'src', 'factory', 'OvsCstToSlimeAst', 'OvsCstToSlimeAst.ts')
 const statementCstToAstPath = path.join(compilerRoot, 'src', 'factory', 'OvsCstToSlimeAst', 'OvsCstToSlimeAst.Statement.ts')
 const localAdapterPath = path.join(compilerRoot, 'src', 'parser', 'generated-runtime-adapter.ts')
@@ -28,6 +29,7 @@ const compilerPackage = readJson(compilerPackagePath)
 const generatedParserPackage = readJson(require.resolve('@qin/generated-qin-parser-ts/package.json'))
 const parserSource = fs.readFileSync(parserPath, 'utf-8')
 const compilerIndexSource = fs.readFileSync(compilerIndexPath, 'utf-8')
+const compilerTsdownConfigSource = fs.readFileSync(compilerTsdownConfigPath, 'utf-8')
 const cstToAstSource = fs.readFileSync(cstToAstPath, 'utf-8')
 const statementCstToAstSource = fs.readFileSync(statementCstToAstPath, 'utf-8')
 
@@ -97,6 +99,7 @@ for (const unusedCompilerDependency of ['slime-generator', 'slime-token']) {
 requireIncludes(compilerConfig, 'parser: "@qin/generated-qin-parser-ts"', 'ovs-compiler qin.config.js')
 requireIncludes(compilerConfig, '"@qin/generated-qin-parser-ts": "file:../../../qin/packages/qin-language/generated/qin-parser-ts"', 'ovs-compiler qin.config.js')
 requireIncludes(compilerConfig, 'test: "tsx tests/test-generated-parser-chain.ts && tsdown"', 'ovs-compiler qin.config.js')
+requireIncludes(compilerTsdownConfigSource, '@qin\\/generated-qin-parser-ts', 'ovs-compiler tsdown.config.ts')
 for (const requiredCompilerDependency of ['"subhuti"', '"slime-ast"']) {
   requireIncludes(compilerConfig, requiredCompilerDependency, 'ovs-compiler qin.config.js')
 }

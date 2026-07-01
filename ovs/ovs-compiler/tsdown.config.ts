@@ -7,6 +7,6 @@ export default defineConfig({
     clean: true,
     outDir: 'dist',
     target: 'es2022',
-    external: [/^(cssts-compiler|ovsjs|slime-ast|slime-generator|subhuti)(\/.*)?$/],
+    external: [/^(@qin\/generated-qin-parser-ts|cssts-compiler|ovsjs|slime-ast|slime-generator|subhuti)(\/.*)?$/],
 })
 
