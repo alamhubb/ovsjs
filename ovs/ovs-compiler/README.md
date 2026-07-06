@@ -14,23 +14,9 @@ OVS 自己新增的 `view`、`tag {}`、`#{}` 等语法只通过 `@SubhutiRule`/
 
 ## Canonical Element Props Syntax
 
-OVS 元素/组件的标准参数语法是类成员风格声明列表，不是 JavaScript object literal：
-
-```ovs
-div(class = "a"; style = "color:red"; onClick() { console.log(123) }) {
-  div { 123 }
-}
-```
-
-`tag(...)` 内部和 class/声明体类似，不同属性项使用分号 `;` 分隔，不支持逗号分隔。标准项包括
-`name = expression`、布尔 shorthand（如 `disabled`）以及方法体形式的事件处理
-器（如 `onClick() { save() }`）。`div({ class: "a" }) { ... }` 是错误 OVS
-源码语法，不是兼容写法或第二套正确写法；不能通过改业务 `.ovs` 文件为 object props
-来绕过 parser、CST-to-AST、lowering、emitter 或 runtime 缺陷。
-
-实现上可以复用/抽取类成员声明解析能力，但 `OvsArguments` 是 OVS 自己的受限
-props 语法，不能因为复用 class member parser 就自动接受完整 class body 的所有
-语义。
+完整语法以 `docs/OvsParser需求文档.md` 为准；README 只保留短提醒，避免两处
+维护同一套语法。OVS 元素/组件参数是类成员风格 `tag(...)` props，成员用分号
+`;` 分隔；逗号参数和 JavaScript object literal props 都不是正确 OVS 源码语法。
 
 ## 核心职责
 
