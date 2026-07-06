@@ -12,11 +12,10 @@ OVS 语法解析走 generated Qin parser 继承链：`OvsParser extends CssTsPar
 
 OVS 自己新增的 `view`、`tag {}`、`#{}` 等语法只通过 `@SubhutiRule`/PEG 规则扩展 parser；不要用正则扫描、字符串补丁或 fallback transform 来接受语法。`slime-parser` 只在 CST-to-AST 转换注册边界保留，用于让转换层复用和扩展既有 AST lowering。
 
-## Canonical Element Props Syntax
+## Canonical Grammar Pointer
 
-完整语法以 `docs/OvsParser需求文档.md` 为准；README 只保留短提醒，避免两处
-维护同一套语法。OVS 元素/组件参数是类成员风格 `tag(...)` props，成员用分号
-`;` 分隔；逗号参数和 JavaScript object literal props 都不是正确 OVS 源码语法。
+完整语法以 `docs/OvsParser需求文档.md` 为准；README 不复述 props grammar，
+避免两处维护同一套语法。
 
 ## 核心职责
 
