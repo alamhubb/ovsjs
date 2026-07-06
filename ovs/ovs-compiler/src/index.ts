@@ -80,6 +80,18 @@ function createFragmentWrapper(expressions: any[]): any {
         SlimeAstCreateUtils.createArrayExpression(arrayElements)])
 }
 
+function createArrowFunctionExpressionAst(params: any[], body: any, expression: boolean, async: boolean = false, loc?: any): any {
+    return normalizeGeneratedAst({
+        type: SlimeAstTypeName.ArrowFunctionExpression,
+        params,
+        body: normalizeGeneratedAst(body),
+        expression,
+        async,
+        paramsParenthesized: params.length !== 1,
+        loc: loc ?? null
+    } as any)
+}
+
 function ensureFragmentImport(imports: any[]): any[] {
     let vueImport: SlimeImportDeclaration | null = null
     for (const imp of imports) {
@@ -302,8 +314,8 @@ function wrapTopLevelExpressions(ast: SlimeProgram, sourceCode: string): SlimePr
     imports = ensureDefineOvsComponentImport(imports)
     const returnStmt = SlimeAstCreateUtils.createReturnStatement(finalExpr)
     const blockStatement = SlimeAstCreateUtils.createBlockStatement([...declarations, returnStmt])
-    const arrowFunction = SlimeAstCreateUtils.createArrowFunctionExpression(blockStatement,
-        [SlimeAstCreateUtils.createIdentifier('props')], false, false)
+    const arrowFunction = createArrowFunctionExpressionAst(
+        [SlimeAstCreateUtils.createIdentifier('props')], blockStatement, false, false, null)
     const defineOvsCall = SlimeAstCreateUtils.createCallExpression(
         SlimeAstCreateUtils.createIdentifier('defineOvsComponent'), [arrowFunction])
     return SlimeAstCreateUtils.createProgram([...imports,
@@ -351,14 +363,16 @@ export function ovsTransformFile(code: string): ovsTransformBaseResult {
 export interface VitePluginOvsTransformOptions {
     /** 共享的样式集合，用于收集 css {} 中的原子类名 */
     globalStyles?: Set<string>
+    /** CSSTS compiler options used by the standard OVS transform path. */
+    cssts?: Record<string, any>
 }
 
 /** Vite 插件专用的 OVS 代码转换 */
 export function vitePluginOvsTransform(code: string, options?: VitePluginOvsTransformOptions): SlimeGeneratorResult {
-    CsstsInit.init({
+    CsstsInit.init(Object.assign({}, options?.cssts ?? {}, {
         dts: false,
         usedStyles: options?.globalStyles
-    } as any)
+    }) as any)
 
     // 确保 OvsCstToSlimeAst 被注册（防止被其他模块覆盖，如 cssts-compiler 的 transformCssTs）
     registerSlimeCstToAstUtil(OvsCstToSlimeAstUtils)
