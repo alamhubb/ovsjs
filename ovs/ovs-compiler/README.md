@@ -12,6 +12,22 @@ OVS 语法解析走 generated Qin parser 继承链：`OvsParser extends CssTsPar
 
 OVS 自己新增的 `view`、`tag {}`、`#{}` 等语法只通过 `@SubhutiRule`/PEG 规则扩展 parser；不要用正则扫描、字符串补丁或 fallback transform 来接受语法。`slime-parser` 只在 CST-to-AST 转换注册边界保留，用于让转换层复用和扩展既有 AST lowering。
 
+## Canonical Element Props Syntax
+
+OVS 元素/组件的标准参数语法是声明列表，不是 JavaScript object literal：
+
+```ovs
+div(class = "a", style = "color:red", onClick() { console.log(123) }) {
+  div { 123 }
+}
+```
+
+`tag(...)` 内部和 class/声明体类似，但属性项支持逗号分隔。标准项包括
+`name = expression`、布尔 shorthand（如 `disabled`）以及方法体形式的事件处理
+器（如 `onClick() { save() }`）。`div({ class: "a" }) { ... }` 只能作为 JS
+interop/兼容输入形态；不能把它作为默认写法，也不能通过改业务 `.ovs` 文件为 object
+props 来绕过 parser、CST-to-AST、lowering、emitter 或 runtime 缺陷。
+
 ## 核心职责
 
 1. **解析** - 解析 `.ovs` 文件中的 OVS DSL 语法

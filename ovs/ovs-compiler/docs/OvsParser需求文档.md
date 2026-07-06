@@ -28,14 +28,29 @@ div {
 div(style) {
   content
 }
+
+// 标准属性声明列表参数
+div(class = "a", style = "color:red", onClick() { console.log(123) }) {
+  div { 123 }
+}
 ```
 
 **解析规则**:
 - `IdentifierName` - 标签名（div, h1, p 等）
-- `Arguments?` - 可选的参数
+- `OvsArguments?` - 可选的 OVS 属性声明列表参数
 - `LBrace` - 左大括号
 - `StatementList?` - 可选的语句列表
 - `RBrace` - 右大括号
+
+`OvsArguments` 是 OVS 的标准 props 语法，不是 JavaScript object literal。它的
+内部形态和 class/声明体类似，但属性项支持逗号分隔。标准属性项包括：
+
+- `name = expression`，例如 `class = "a"`、`style = "color:red"`。
+- 布尔 shorthand，例如 `disabled`。
+- 方法体形式的事件处理器，例如 `onClick() { save() }`。
+
+`div({ class: "a" }) { ... }` 可作为 JS interop/兼容输入形态存在，但不能作为
+OVS 默认语法，也不能作为 parser/compiler 缺陷的绕过方式。
 
 ### 2.2 OvsViewDeclaration（ovsView 组件声明）
 
@@ -217,6 +232,7 @@ OVS 编译器会将 `tagName { }` 语法转换为**函数调用**形式，开发
 |----------|----------|
 | `div { "hello" }` | `div({}, ["hello"])` |
 | `h1(props) { content }` | `h1(props, [content])` |
+| `div(class = "a") { "hello" }` | `div({ class: "a" }, ["hello"])` |
 
 **函数签名**: `tagName(props?: object, children?: any[]) => VNode`
 
