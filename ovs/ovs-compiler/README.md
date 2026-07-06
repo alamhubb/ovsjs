@@ -24,9 +24,9 @@ div(class = "a", style = "color:red", onClick() { console.log(123) }) {
 
 `tag(...)` 内部和 class/声明体类似，但属性项支持逗号分隔。标准项包括
 `name = expression`、布尔 shorthand（如 `disabled`）以及方法体形式的事件处理
-器（如 `onClick() { save() }`）。`div({ class: "a" }) { ... }` 只能作为 JS
-interop/兼容输入形态；不能把它作为默认写法，也不能通过改业务 `.ovs` 文件为 object
-props 来绕过 parser、CST-to-AST、lowering、emitter 或 runtime 缺陷。
+器（如 `onClick() { save() }`）。`div({ class: "a" }) { ... }` 是错误 OVS
+源码语法，不是兼容写法或第二套正确写法；不能通过改业务 `.ovs` 文件为 object props
+来绕过 parser、CST-to-AST、lowering、emitter 或 runtime 缺陷。
 
 ## 核心职责
 

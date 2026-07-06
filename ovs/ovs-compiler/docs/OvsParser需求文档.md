@@ -49,8 +49,8 @@ div(class = "a", style = "color:red", onClick() { console.log(123) }) {
 - 布尔 shorthand，例如 `disabled`。
 - 方法体形式的事件处理器，例如 `onClick() { save() }`。
 
-`div({ class: "a" }) { ... }` 可作为 JS interop/兼容输入形态存在，但不能作为
-OVS 默认语法，也不能作为 parser/compiler 缺陷的绕过方式。
+`div({ class: "a" }) { ... }` 是错误 OVS 源码语法，不是兼容写法或第二套
+正确写法，也不能作为 parser/compiler 缺陷的绕过方式。
 
 ### 2.2 OvsViewDeclaration（ovsView 组件声明）
 
