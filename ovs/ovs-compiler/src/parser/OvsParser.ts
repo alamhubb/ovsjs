@@ -174,6 +174,17 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
         return normalizeGeneratedTokens(tokens)
     }
 
+    @SubhutiRule
+    Program(..._args: any[]): any {
+        return this.OvsProgram()
+    }
+
+    @SubhutiRule
+    OvsProgram(): any {
+        this.parseOvsModuleItemList()
+        return this.getCurCst()
+    }
+
     private canStartOvsRender(): boolean {
         const first = this.LA(1)
         const cacheKey = tokenIndexOf(first)
@@ -260,8 +271,41 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
 
     @SubhutiRule
     ModuleItemList() {
-        this.ModuleItem()
-        this.Many(() => this.ModuleItem())
+        this.parseOvsModuleItemList()
+    }
+
+    private parseOvsModuleItemList() {
+        while (!this.isEof()) {
+            const before = this.currentTokenIndex()
+            this.ModuleItem()
+            if (this.currentTokenIndex() === before) {
+                this.assertCondition(false)
+                return
+            }
+        }
+    }
+
+    @SubhutiRule
+    ModuleItem(): any {
+        if (this.canStartOvsRender()) {
+            return this.StatementListItem(withParserParams({}, {Await: true}) as StatementParams)
+        }
+        return this.Or(
+            Alternative.of(() => this.ImportDeclaration()),
+            Alternative.of(() => this.ExportDeclaration()),
+            Alternative.of(() => this.StatementListItem(withParserParams({}, {Await: true}) as StatementParams))
+        )
+    }
+
+    @SubhutiRule
+    StatementListItem(params: StatementParams = {}): any {
+        if (this.canStartOvsRender()) {
+            return this.Statement(params)
+        }
+        return this.Or(
+            Alternative.of(() => this.Declaration(withParserParams(params, {Default: false}) as DeclarationParams)),
+            Alternative.of(() => this.Statement(params))
+        )
     }
 
     @SubhutiRule
@@ -355,11 +399,12 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
      */
     @SubhutiRule
     OvsArguments(params: OvsExpressionParams = {}) {
+        const normalizedParams = withParserParams(params) as OvsExpressionParams
         this.getTokenConsumer().LParen()
         this.Option(() => {
             return this.Or(
-                Alternative.of(() => this.ObjectLiteral(params)),
-                Alternative.of(() => this.OvsPropertyDefinitionList(params))
+                Alternative.of(() => this.ObjectLiteral(normalizedParams)),
+                Alternative.of(() => this.OvsPropertyDefinitionList(normalizedParams))
             )
         })
         this.getTokenConsumer().RParen()
@@ -522,16 +567,28 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
      * 如果这里不覆盖，块体内的 `return div {}` 会回到父类 StatementList，
      * 绕过 OVS 的 OvsRenderStatement/OvsRenderFunction 扩展。
      */
+    FunctionBody(...args: any[]): any {
+        if (args.length === 0) return this.OvsFunctionBody(withParserParams({}, {Yield: false, Await: false}) as ExpressionParams)
+        if (args.length === 1) return this.OvsFunctionBody(args[0] as ExpressionParams)
+        throw new Error(`Unsupported OVS FunctionBody arity: ${args.length}`)
+    }
+
     @SubhutiRule
-    FunctionBody(params: ExpressionParams = {}) {
+    OvsFunctionBody(params: ExpressionParams = {}) {
         this.Option(() => {
             return this.StatementList(withParserParams(params, {Return: true}) as StatementParams)
         })
         return this.getCurCst()
     }
 
+    AsyncFunctionBody(...args: any[]): any {
+        if (args.length === 0) return this.OvsAsyncFunctionBody(withParserParams({}, {Yield: false, Await: true}) as ExpressionParams)
+        if (args.length === 1) return this.OvsAsyncFunctionBody(args[0] as ExpressionParams)
+        throw new Error(`Unsupported OVS AsyncFunctionBody arity: ${args.length}`)
+    }
+
     @SubhutiRule
-    AsyncFunctionBody(params: ExpressionParams = {}) {
+    OvsAsyncFunctionBody(params: ExpressionParams = {}) {
         this.Option(() => {
             return this.StatementList(withParserParams(params, {Await: true, Return: true}) as StatementParams)
         })
@@ -602,13 +659,17 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
      */
     @SubhutiRule
     Declaration(params: DeclarationParams = {}): any {
+        const qinObjectDeclaration = (this as any).QinObjectDeclaration
+        const qinObjectAlternatives = typeof qinObjectDeclaration === 'function'
+            ? [Alternative.of(() => qinObjectDeclaration.call(this, params))]
+            : []
         return this.Or(
             Alternative.of(() => this.OvsViewDeclaration()),
             Alternative.of(() => (this as any).TSInterfaceDeclaration()),
             Alternative.of(() => (this as any).TSTypeAliasDeclaration()),
             Alternative.of(() => (this as any).TSEnumDeclaration()),
             Alternative.of(() => (this as any).TSModuleDeclaration()),
-            Alternative.of(() => (this as any).QinObjectDeclaration(params)),
+            ...qinObjectAlternatives,
             Alternative.of(() => this.LexicalDeclaration(declarationLexicalParams(params))),
             Alternative.of(() => this.HoistableDeclaration(declarationHoistableParams(params))),
             Alternative.of(() => this.ClassDeclaration(declarationHoistableParams(params))),
@@ -624,6 +685,14 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
                 this.getTokenConsumer().Default()
                 this.OvsRenderFunction(withParserParams({}, {In: true}))
                 this.SemicolonASI()
+            }),
+            Alternative.of(() => {
+                this.getTokenConsumer().Export()
+                this.VariableStatement(withParserParams({}, {Await: true}) as StatementParams)
+            }),
+            Alternative.of(() => {
+                this.getTokenConsumer().Export()
+                this.Declaration(withParserParams({}, {Default: false}) as DeclarationParams)
             }),
             Alternative.of(() => {
                 this.getTokenConsumer().Export()

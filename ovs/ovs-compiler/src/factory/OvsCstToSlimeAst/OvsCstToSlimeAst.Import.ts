@@ -83,8 +83,6 @@ export abstract class OvsCstToSlimeAstImport extends OvsCstToSlimeAstStatement {
      * 注意：只在 body 开头插入导入，不改变其他语句的顺序
      */
     private ensureRequiredImports(body: Array<SlimeStatement | SlimeModuleDeclaration>): Array<SlimeStatement | SlimeModuleDeclaration> {
-        const bodyJson = JSON.stringify(body)
-
         // 提取现有的 imports
         let imports: any[] = []
         const nonImports: any[] = []
@@ -98,17 +96,40 @@ export abstract class OvsCstToSlimeAstImport extends OvsCstToSlimeAstStatement {
         }
 
         // 检查并添加必要的导入
-        if (bodyJson != null) {
-            if (bodyJson.includes('$OvsHtmlTag')) {
-                imports = this.ensureOvsHtmlTagImport(imports)
-            }
-            if (bodyJson.includes('defineOvsComponent')) {
-                imports = this.ensureDefineOvsComponentImport(imports)
-            }
+        if (this.containsAstIdentifier(body, '$OvsHtmlTag')) {
+            imports = this.ensureOvsHtmlTagImport(imports)
+        }
+        if (this.containsAstIdentifier(body, 'defineOvsComponent')) {
+            imports = this.ensureDefineOvsComponentImport(imports)
         }
 
         // 返回：imports 在前，其他语句保持原顺序
         return [...imports, ...nonImports]
+    }
+
+    private containsAstIdentifier(value: any, name: string, seen: any[] = []): boolean {
+        if (value == null) return false
+        if (typeof value === 'string') return value === name
+        if (typeof value !== 'object') return false
+        if (seen.indexOf(value) >= 0) return false
+        seen.push(value)
+
+        if (Array.isArray(value)) {
+            return value.some(item => this.containsAstIdentifier(item, name, seen))
+        }
+
+        const nodeName = value.name
+        if (typeof nodeName === 'string' && nodeName === name) return true
+        const nodeValue = value.value
+        if (typeof nodeValue === 'string' && nodeValue === name) return true
+
+        for (const key of Object.keys(value)) {
+            if (key === 'loc' || key === 'location' || key.startsWith('__')) continue
+            const child = value[key]
+            if (typeof child === 'function') continue
+            if (this.containsAstIdentifier(child, name, seen)) return true
+        }
+        return false
     }
 
     /**

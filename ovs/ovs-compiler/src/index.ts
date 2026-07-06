@@ -325,7 +325,7 @@ export interface ovsTransformBaseResult {
  */
 export function ovsTransformBase(code: string): ovsTransformBaseResult {
     const parser = new OvsParser(code)
-    let curCst = normalizeGeneratedCst(parser.Program())
+    let curCst = normalizeGeneratedCst(parser.OvsProgram())
     const tokens = parser.parsedTokens
     if (!tokens.length) return { ast: null, tokens: tokens }
     let ast = normalizeGeneratedAst(OvsCstToSlimeAstUtils.toProgram(curCst))
@@ -340,7 +340,7 @@ export function ovsTransformBase(code: string): ovsTransformBaseResult {
  */
 export function ovsTransformFile(code: string): ovsTransformBaseResult {
     const parser = new OvsParser(code)
-    let curCst = normalizeGeneratedCst(parser.Program())
+    let curCst = normalizeGeneratedCst(parser.OvsProgram())
     const tokens = parser.parsedTokens
     if (!tokens.length) return { ast: null, tokens: tokens }
     let ast = normalizeGeneratedAst(OvsCstToSlimeAstUtils.toFileAst(curCst))

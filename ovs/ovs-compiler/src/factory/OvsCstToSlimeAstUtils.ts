@@ -22,7 +22,7 @@ export function checkCstName(cst: SubhutiCst, cstName: string) {
     const actualName = typeof (cst as any).getName === 'function' ? (cst as any).getName() : (cst as any).name
     if (actualName !== cstName) {
         console.log(cst)
-        throwNewError(actualName)
+        throwNewError(`Expected ${cstName}, got ${actualName}`)
     }
     return cstName
 }

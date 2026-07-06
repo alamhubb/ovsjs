@@ -16,6 +16,7 @@ import { QinParser as SlimeParser } from "@qin/generated-qin-parser-ts"
 import { SlimeCstToAst, registerSlimeCstToAstUtil } from "@qin/generated-qin-parser-ts/SlimeCstToAstBridge"
 import { normalizeGeneratedAst } from "cssts-compiler"
 import { OvsCstToSlimeAstImport } from "./OvsCstToSlimeAst.Import"
+import { cstChildrenOf, cstNameOf, isCstNamed, toArray } from "./cst-utils"
 
 /**
  * OVS CST 到 Slime AST 转换器（主类）
@@ -103,7 +104,7 @@ export class OvsCstToSlimeAst extends OvsCstToSlimeAstImport {
         const normalizedProgram = normalizeGeneratedAst(program as any) as any
 
         // 获取 body 进行后处理
-        let body = [...(this as any).javaListToArray(normalizedProgram.body)]
+        let body = toArray(normalizedProgram.body)
 
         // 1. CSSTS 后处理：添加 cssts 和 csstsAtom 导入
         body = (this as any).processCsstsPostTransform(body)
@@ -111,31 +112,23 @@ export class OvsCstToSlimeAst extends OvsCstToSlimeAstImport {
         // 2. OVS 后处理：处理顶层表达式和自动导入
         body = this.processTopLevelAndImports(body)
 
-        // 更新 program.body
-        ;(this as any).setGeneratedList(program as any, 'body', body)
-
-        return normalizeGeneratedAst(program as any) as SlimeProgram
+        return normalizeGeneratedAst(
+            SlimeAstCreateUtils.createProgram(body as any, SlimeProgramSourceType.Module) as any
+        ) as SlimeProgram
     }
 
     // ==================== 核心转换方法（实现抽象方法） ====================
 
     private cstName(cst: SubhutiCst | undefined): string | undefined {
-        if (!cst) return undefined
-        return typeof (cst as any).getName === 'function' ? (cst as any).getName() : (cst as any).name
+        return cstNameOf(cst)
     }
 
     private cstChildren(cst: SubhutiCst | undefined): SubhutiCst[] {
-        if (!cst) return []
-        const children = typeof (cst as any).getChildren === 'function'
-            ? (cst as any).getChildren()
-            : (cst as any).children
-        if (Array.isArray(children)) return children
-        if (Array.isArray((children as any)?.__items)) return (children as any).__items
-        return []
+        return cstChildrenOf(cst)
     }
 
     private isCst(cst: SubhutiCst | undefined, name: string): boolean {
-        return this.cstName(cst) === name
+        return isCstNamed(cst, name)
     }
 
     private collectProgramBody(cst: SubhutiCst | undefined): SlimeStatement[] {
@@ -160,10 +153,13 @@ export class OvsCstToSlimeAst extends OvsCstToSlimeAstImport {
     private createProgramBodyItemAst(cst: SubhutiCst): SlimeStatement[] {
         const exportNode = this.findFirstCst(cst, 'ExportDeclaration')
         if (exportNode) {
-            if (this.containsOvsSyntaxNode(exportNode)) {
+            if (this.isExportDefaultOvsRender(exportNode)) {
                 return [normalizeGeneratedAst(this.createExportOvsRenderAst(exportNode) as any) as SlimeStatement]
             }
-            return this.createBaseProgramBodyItems(cst)
+            if (this.isExportNamedDeclaration(exportNode)) {
+                return [normalizeGeneratedAst(this.createExportNamedDeclarationAst(exportNode) as any) as SlimeStatement]
+            }
+            return this.createBaseProgramBodyItems(exportNode)
         }
         if (this.containsOvsSyntaxNode(cst)) {
             const ovsResult = this.createStatementListItemAst(cst)
@@ -175,10 +171,16 @@ export class OvsCstToSlimeAst extends OvsCstToSlimeAstImport {
     }
 
     private createBaseProgramBodyItems(cst: SubhutiCst): SlimeStatement[] {
+        const importNode = this.unwrapNestedCst(this.findFirstCst(cst, 'ImportDeclaration'), 'ImportDeclaration')
+        if (importNode) {
+            return [normalizeGeneratedAst(
+                ((this as any).createImportDeclarationAstBase?.(importNode) || super.createImportDeclarationAst(importNode)) as any
+            ) as SlimeStatement]
+        }
         const exportNode = this.unwrapNestedCst(this.findFirstCst(cst, 'ExportDeclaration'), 'ExportDeclaration')
         const baseResult = exportNode
             ? (super.createExportDeclarationAst(exportNode) as any)
-            : (super.createStatementListItemAst(cst) as any)
+            : (this.createStatementListItemAst(cst) as any)
         const baseItems = baseResult == null ? [] : Array.isArray(baseResult) ? baseResult : [baseResult]
         return baseItems.map(item => normalizeGeneratedAst(item as any) as SlimeStatement)
     }
@@ -200,6 +202,19 @@ export class OvsCstToSlimeAst extends OvsCstToSlimeAstImport {
             return true
         }
         return this.cstChildren(cst).some(child => this.containsOvsSyntaxNode(child))
+    }
+
+    private isExportDefaultOvsRender(cst: SubhutiCst | undefined): boolean {
+        if (!cst || this.cstName(cst) !== 'ExportDeclaration') return false
+        const children = this.cstChildren(cst)
+        const defaultIndex = children.findIndex(child => this.cstName(child) === 'Default')
+        if (defaultIndex < 0) return false
+        return children.slice(defaultIndex + 1).some(child => this.containsOvsSyntaxNode(child))
+    }
+
+    private isExportNamedDeclaration(cst: SubhutiCst | undefined): boolean {
+        if (!cst || this.cstName(cst) !== 'ExportDeclaration') return false
+        return !!this.findExportDeclarationNode(cst)
     }
 
     private findFirstCst(cst: SubhutiCst | undefined, name: string): SubhutiCst | undefined {
@@ -224,16 +239,190 @@ export class OvsCstToSlimeAst extends OvsCstToSlimeAstImport {
         }
     }
 
+    private createExportNamedDeclarationAst(cst: SubhutiCst): any {
+        const declarationNode = this.findExportDeclarationNode(cst)
+        if (!declarationNode) {
+            throw new Error('OVS named export requires a declaration')
+        }
+        const declaration = normalizeGeneratedAst(this.createExportDeclarationAst(declarationNode) as any)
+        return SlimeAstCreateUtils.createExportNamedDeclaration(declaration as any, [], null, cst.loc as any)
+    }
+
+    private findExportDeclarationNode(cst: SubhutiCst): SubhutiCst | undefined {
+        const children = this.cstChildren(cst)
+        const exportIndex = children.findIndex(child => this.cstName(child) === 'Export')
+        if (exportIndex < 0) return undefined
+        for (const child of children.slice(exportIndex + 1)) {
+            const name = this.cstName(child)
+            if (name === 'VariableStatement' || name === 'Declaration') {
+                return child
+            }
+        }
+        return undefined
+    }
+
+    private createExportDeclarationAst(cst: SubhutiCst | undefined): any {
+        if (!cst) return null
+        const name = this.cstName(cst)
+        if (name === 'Declaration' || name === 'HoistableDeclaration') {
+            for (const child of this.cstChildren(cst)) {
+                const nested = this.createExportDeclarationAst(child)
+                if (nested) return nested
+            }
+            return null
+        }
+        if (name === 'VariableStatement' || name === 'VariableDeclaration' || name === 'LexicalDeclaration') {
+            if (this.containsOvsSyntaxNode(cst)) {
+                const ovsVariable = this.createOvsAwareVariableDeclarationAst(cst)
+                if (ovsVariable) return ovsVariable
+            }
+            return (this as any).createVariableDeclarationAst(cst)
+        }
+        return this.createDeclarationAst(cst)
+    }
+
+    private createOvsAwareVariableDeclarationAst(cst: SubhutiCst): any {
+        const declarations = this.collectVariableDeclaratorCsts(cst)
+            .map(declarator => this.createOvsAwareVariableDeclaratorAst(declarator))
+            .filter(Boolean)
+
+        if (declarations.length === 0) return null
+
+        return SlimeAstCreateUtils.createVariableDeclaration(
+            this.createVariableKindToken(this.findVariableKind(cst), cst.loc),
+            declarations,
+            cst.loc
+        )
+    }
+
+    private collectVariableDeclaratorCsts(cst: SubhutiCst | undefined): SubhutiCst[] {
+        if (!cst) return []
+        const name = this.cstName(cst)
+        const children = this.cstChildren(cst)
+        if ((name === 'LexicalBinding' || name === 'VariableDeclarator' || name === 'VariableDeclaration')
+            && children.some(child => this.cstName(child) === 'Initializer')) {
+            return [cst]
+        }
+        const out: SubhutiCst[] = []
+        for (const child of children) {
+            out.push(...this.collectVariableDeclaratorCsts(child))
+        }
+        return out
+    }
+
+    private createOvsAwareVariableDeclaratorAst(cst: SubhutiCst): any {
+        const idName = this.findBindingIdentifierName(cst)
+        if (!idName) return null
+
+        const initializer = this.cstChildren(cst).find(child => this.cstName(child) === 'Initializer')
+        const arrow = this.findFirstCstByNames(initializer, ['ArrowFunction', 'AsyncArrowFunction'])
+        if (!arrow || !this.containsOvsSyntaxNode(arrow)) return null
+
+        return SlimeAstCreateUtils.createVariableDeclarator(
+            SlimeAstCreateUtils.createIdentifier(idName, cst.loc),
+            SlimeTokenCreateUtils.createAssignToken(cst.loc),
+            this.createOvsAwareArrowFunctionExpressionAst(arrow),
+            cst.loc
+        )
+    }
+
+    private createOvsAwareArrowFunctionExpressionAst(cst: SubhutiCst): any {
+        const children = this.cstChildren(cst)
+        const paramsCst = children.find(child => this.cstName(child) === 'ArrowParameters')
+        const conciseBody = children.find(child => {
+            const name = this.cstName(child)
+            return name === 'ConciseBody' || name === 'AsyncConciseBody'
+        })
+        const params = paramsCst
+            ? (((this as any).createFormalParametersAst?.(paramsCst) || (this as any).createArrowFormalParametersAstWrapped?.(paramsCst) || []) as any[])
+            : []
+        const body = conciseBody
+            ? this.createConciseBodyAst(conciseBody)
+            : SlimeAstCreateUtils.createBlockStatement([], cst.loc)
+        const expression = this.astType(body) !== SlimeAstTypeName.BlockStatement
+
+        return SlimeAstCreateUtils.createArrowFunctionExpression(
+            body,
+            params,
+            expression,
+            this.cstName(cst) === 'AsyncArrowFunction',
+            cst.loc,
+            SlimeTokenCreateUtils.createArrowToken(cst.loc)
+        )
+    }
+
+    private findVariableKind(cst: SubhutiCst | undefined): 'const' | 'let' | 'var' {
+        if (!cst) return 'const'
+        const value = (cst as any).value
+        const name = this.cstName(cst)
+        if (value === 'var' || name === 'Var') return 'var'
+        if (value === 'let' || name === 'Let') return 'let'
+        if (value === 'const' || name === 'Const') return 'const'
+        for (const child of this.cstChildren(cst)) {
+            const kind = this.findVariableKind(child)
+            if (kind !== 'const' || (child as any).value === 'const' || this.cstName(child) === 'Const') return kind
+        }
+        return 'const'
+    }
+
+    private createVariableKindToken(kind: 'const' | 'let' | 'var', loc: any): any {
+        if (kind === 'var') return SlimeTokenCreateUtils.createVarToken(loc)
+        if (kind === 'let') return SlimeTokenCreateUtils.createLetToken(loc)
+        return SlimeTokenCreateUtils.createConstToken(loc)
+    }
+
+    private findBindingIdentifierName(cst: SubhutiCst | undefined): string | undefined {
+        if (!cst) return undefined
+        const name = this.cstName(cst)
+        if (name === 'BindingIdentifier' || name === 'Identifier' || name === 'IdentifierReference') {
+            return this.firstCstValue(cst)
+        }
+        for (const child of this.cstChildren(cst)) {
+            if (this.cstName(child) === 'Initializer') break
+            const found = this.findBindingIdentifierName(child)
+            if (found) return found
+        }
+        return undefined
+    }
+
+    private firstCstValue(cst: SubhutiCst | undefined): string | undefined {
+        if (!cst) return undefined
+        const value = (cst as any).value
+        if (typeof value === 'string' && value.length > 0) return value
+        for (const child of this.cstChildren(cst)) {
+            const found = this.firstCstValue(child)
+            if (found) return found
+        }
+        return undefined
+    }
+
+    private findFirstCstByNames(cst: SubhutiCst | undefined, names: string[]): SubhutiCst | undefined {
+        if (!cst) return undefined
+        const name = this.cstName(cst)
+        if (name && names.indexOf(name) >= 0) return cst
+        for (const child of this.cstChildren(cst)) {
+            const found = this.findFirstCstByNames(child, names)
+            if (found) return found
+        }
+        return undefined
+    }
+
     createDeclarationAst(cst: SubhutiCst): any {
         // Declaration -> OvsViewDeclaration | VariableDeclaration | FunctionDeclaration | ...
         let first = cst
         while (this.isCst(first, 'Declaration')) {
-            const child = this.cstChildren(first)[0]
-            if (!child) break
+            const child = this.cstChildren(first).find(candidate => {
+                const name = this.cstName(candidate)
+                return name !== 'Export' && name !== 'Default'
+            })
+            if (!child) return null
             first = child
         }
         if (this.isCst(first, 'OvsViewDeclaration')) {
             return this.createOvsViewDeclarationAst(first)
+        }
+        if (this.isCst(first, 'VariableStatement') || this.isCst(first, 'LexicalDeclaration') || this.isCst(first, 'VariableDeclaration')) {
+            return (this as any).createVariableDeclarationAst(first)
         }
         // 调用基类方法（来自CssTsCstToAst或更底层）
         return (this as any).createDeclarationAstBase?.(first) || super.createDeclarationAst?.(first)
@@ -549,10 +738,45 @@ export class OvsCstToSlimeAst extends OvsCstToSlimeAstImport {
         }
     }
 
+    private isOvsBlockBodyContainer(cst: SubhutiCst | undefined): boolean {
+        const name = this.cstName(cst)
+        return name === 'FunctionBody'
+            || name === 'OvsFunctionBody'
+            || name === 'AsyncFunctionBody'
+            || name === 'OvsAsyncFunctionBody'
+            || name === 'Block'
+            || name === 'BlockStatement'
+            || name === 'ConciseBody'
+            || name === 'AsyncConciseBody'
+    }
+
+    private createOvsBlockBodyAst(cst: SubhutiCst): SlimeBlockStatement {
+        const children = this.cstChildren(cst)
+        const statementListCst = children.find(child => this.cstName(child) === 'StatementList')
+        if (statementListCst) {
+            return SlimeAstCreateUtils.createBlockStatement(
+                this.createStatementListAst(statementListCst),
+                cst.loc,
+                SlimeTokenCreateUtils.createLBraceToken(cst.loc),
+                SlimeTokenCreateUtils.createRBraceToken(cst.loc)
+            )
+        }
+        const nestedBody = children.find(child => this.isOvsBlockBodyContainer(child))
+        if (nestedBody) {
+            return this.createOvsBlockBodyAst(nestedBody)
+        }
+        return SlimeAstCreateUtils.createBlockStatement(
+            [],
+            cst.loc,
+            SlimeTokenCreateUtils.createLBraceToken(cst.loc),
+            SlimeTokenCreateUtils.createRBraceToken(cst.loc)
+        )
+    }
+
     /**
      * 重写 createFunctionBodyAst：进入函数体时退出 OVS 渲染上下文
      */
-    createFunctionBodyAst(cst: SubhutiCst): Array<SlimeStatement> {
+    createFunctionBodyAst(cst: SubhutiCst): SlimeBlockStatement {
         const savedRenderDepth = this.ovsRenderDomViewDepth
         const savedNoRenderDepth = this.noRenderDepth
 
@@ -560,6 +784,9 @@ export class OvsCstToSlimeAst extends OvsCstToSlimeAstImport {
         this.noRenderDepth = 0
 
         try {
+            if (this.isOvsBlockBodyContainer(cst)) {
+                return this.createOvsBlockBodyAst(cst)
+            }
             return (this as any).createFunctionBodyAstBase?.(cst) || super.createFunctionBodyAst?.(cst)
         } finally {
             this.ovsRenderDomViewDepth = savedRenderDepth
@@ -571,10 +798,11 @@ export class OvsCstToSlimeAst extends OvsCstToSlimeAstImport {
      * 重写 createConciseBodyAst：箭头函数体
      */
     createConciseBodyAst(cst: SubhutiCst): SlimeBlockStatement | SlimeExpression {
-        const first = this.cstChildren(cst)[0]
+        const children = this.cstChildren(cst)
+        const first = children[0]
 
         // 只有 block 形式 () => { ... } 需要重置渲染上下文
-        if (this.isCst(first, 'LBrace')) {
+        if (this.isCst(first, 'LBrace') || children.some(child => this.isOvsBlockBodyContainer(child))) {
             const savedRenderDepth = this.ovsRenderDomViewDepth
             const savedNoRenderDepth = this.noRenderDepth
 
@@ -582,7 +810,7 @@ export class OvsCstToSlimeAst extends OvsCstToSlimeAstImport {
             this.noRenderDepth = 0
 
             try {
-                return (this as any).createConciseBodyAstBase?.(cst) || super.createConciseBodyAst?.(cst)
+                return this.createOvsBlockBodyAst(cst)
             } finally {
                 this.ovsRenderDomViewDepth = savedRenderDepth
                 this.noRenderDepth = savedNoRenderDepth
@@ -608,8 +836,7 @@ export const OvsCstToSlimeAstUtils = {} as OvsCstToSlimeAst
 
 function bindOvsCstToSlimeAstForwarders(): void {
     let proto: any = OvsCstToSlimeAst.prototype
-    const stopProto = Object.getPrototypeOf(SlimeCstToAst.prototype)
-    while (proto != null && proto !== stopProto) {
+    while (proto != null && proto !== Object.prototype) {
         for (const prop of Object.getOwnPropertyNames(proto)) {
             const descriptor = Object.getOwnPropertyDescriptor(proto, prop)
             if (prop === 'constructor' || typeof descriptor?.value !== 'function') {
