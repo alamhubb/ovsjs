@@ -29,21 +29,21 @@ div(style) {
   content
 }
 
-// 标准属性声明列表参数
-div(class = "a", style = "color:red", onClick() { console.log(123) }) {
+// 标准类成员风格属性声明列表参数
+div(class = "a"; style = "color:red"; onClick() { console.log(123) }) {
   div { 123 }
 }
 ```
 
 **解析规则**:
 - `IdentifierName` - 标签名（div, h1, p 等）
-- `OvsArguments?` - 可选的 OVS 属性声明列表参数
+- `OvsArguments?` - 可选的 OVS 类成员风格属性声明列表参数
 - `LBrace` - 左大括号
 - `StatementList?` - 可选的语句列表
 - `RBrace` - 右大括号
 
 `OvsArguments` 是 OVS 的标准 props 语法，不是 JavaScript object literal。它的
-内部形态和 class/声明体类似，但属性项支持逗号分隔。标准属性项包括：
+内部形态和 class/声明体类似，不同属性项使用分号 `;` 分隔，不支持逗号分隔。标准属性项包括：
 
 - `name = expression`，例如 `class = "a"`、`style = "color:red"`。
 - 布尔 shorthand，例如 `disabled`。
@@ -51,6 +51,11 @@ div(class = "a", style = "color:red", onClick() { console.log(123) }) {
 
 `div({ class: "a" }) { ... }` 是错误 OVS 源码语法，不是兼容写法或第二套
 正确写法，也不能作为 parser/compiler 缺陷的绕过方式。
+
+实现时可以复用/抽取类成员声明解析能力作为 `OvsArgumentMember` 的基础，但
+`OvsArguments` 仍然是 OVS 自己的受限语法：它位于 `tag(...)` 内，只接受 OVS
+props 需要的字段、布尔 shorthand 和方法体处理器，不自动继承完整 class body 的
+所有语义。
 
 ### 2.2 OvsViewDeclaration（ovsView 组件声明）
 
