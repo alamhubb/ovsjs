@@ -105,24 +105,25 @@ export abstract class OvsCstToSlimeAstIIFE extends OvsCstToSlimeAstJudgement {
         )
 
         // 创建箭头函数：() => { ...body }
-        const arrowFunction = SlimeAstCreateUtils.createArrowFunctionExpression(
+        const arrowFunction = this.createArrowFunctionExpressionAst(
+            [],
             blockStatement,
-            [],    // 无参数
-            false, // 非 async
-            false  // 非 generator
+            false,
+            false,
+            loc ?? null
         )
 
         const defineCall = SlimeAstCreateUtils.createCallExpression(
             SlimeAstCreateUtils.createIdentifier('defineOvsComponent'),
-            [arrowFunction]
+            this.createCallArguments([arrowFunction])
         )
 
         return SlimeAstCreateUtils.createCallExpression(
             defineCall,
-            [
+            this.createCallArguments([
                 SlimeAstCreateUtils.createObjectExpression([]),
                 SlimeAstCreateUtils.createArrayExpression([])
-            ]
+            ])
         )
     }
 

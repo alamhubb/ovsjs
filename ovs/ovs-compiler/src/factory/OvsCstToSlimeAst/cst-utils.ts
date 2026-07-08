@@ -1,8 +1,14 @@
-import type { SubhutiCst } from "subhuti"
+export type SubhutiCst = any
 
 export function cstNameOf(cst: SubhutiCst | undefined): string | undefined {
     if (!cst) return undefined
     return typeof (cst as any).getName === 'function' ? (cst as any).getName() : (cst as any).name
+}
+
+export function cstValueOf(cst: SubhutiCst | undefined): string | undefined {
+    if (!cst) return undefined
+    const value = typeof (cst as any).getValue === 'function' ? (cst as any).getValue() : (cst as any).value
+    return typeof value === 'string' ? value : undefined
 }
 
 export function toArray<T = any>(value: any): T[] {

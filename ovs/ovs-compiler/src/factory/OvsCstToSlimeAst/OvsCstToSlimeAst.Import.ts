@@ -22,6 +22,23 @@ export abstract class OvsCstToSlimeAstImport extends OvsCstToSlimeAstStatement {
 
     // ==================== 导入管理方法 ====================
 
+    private createNamedImportSpecifierItem(name: string): any {
+        return SlimeAstCreateUtils.createImportSpecifierItem(
+            SlimeAstCreateUtils.createImportSpecifier(
+                SlimeAstCreateUtils.createIdentifier(name),
+                SlimeAstCreateUtils.createIdentifier(name)
+            )
+        )
+    }
+
+    private importSpecifierOf(item: any): any {
+        const specifier = item?.specifier
+        if (!specifier) {
+            throw new Error('OVS import declaration specifier must use Slime import-specifier wrapper')
+        }
+        return specifier
+    }
+
     /**
      * 处理顶层表达式和自动导入
      * 
@@ -193,15 +210,16 @@ export abstract class OvsCstToSlimeAstImport extends OvsCstToSlimeAstStatement {
         // 新的运行时：直接 return finalExpr（VNode）
         const returnStmt = SlimeAstCreateUtils.createReturnStatement(finalExpr)
         const blockStatement = SlimeAstCreateUtils.createBlockStatement([...declarations, ...otherStatements, returnStmt])
-        const arrowFunction = SlimeAstCreateUtils.createArrowFunctionExpression(
-            blockStatement,
+        const arrowFunction = this.createArrowFunctionExpressionAst(
             [SlimeAstCreateUtils.createIdentifier('props')],
+            blockStatement,
             false,
-            false
+            false,
+            null
         )
         const defineOvsCall = SlimeAstCreateUtils.createCallExpression(
             SlimeAstCreateUtils.createIdentifier('defineOvsComponent'),
-            [arrowFunction]
+            this.createCallArguments([arrowFunction])
         )
 
         // 重排序：imports 在前，然后是 export default
@@ -221,23 +239,18 @@ export abstract class OvsCstToSlimeAstImport extends OvsCstToSlimeAstStatement {
         for (const imp of imports) {
             if (imp.source?.value === 'ovsjs') {
                 const specs = imp.specifiers || []
-                if (!specs.some((s: any) => s.imported?.name === '$OvsHtmlTag' || s.local?.name === '$OvsHtmlTag')) {
-                    specs.push({
-                        type: SlimeAstTypeName.ImportSpecifier,
-                        imported: SlimeAstCreateUtils.createIdentifier('$OvsHtmlTag'),
-                        local: SlimeAstCreateUtils.createIdentifier('$OvsHtmlTag')
-                    })
+                if (!specs.some((s: any) => {
+                    const spec = this.importSpecifierOf(s)
+                    return spec.imported?.name === '$OvsHtmlTag' || spec.local?.name === '$OvsHtmlTag'
+                })) {
+                    specs.push(this.createNamedImportSpecifierItem('$OvsHtmlTag'))
                 }
                 return imports
             }
         }
         return [{
             type: SlimeAstTypeName.ImportDeclaration,
-            specifiers: [{
-                type: SlimeAstTypeName.ImportSpecifier,
-                imported: SlimeAstCreateUtils.createIdentifier('$OvsHtmlTag'),
-                local: SlimeAstCreateUtils.createIdentifier('$OvsHtmlTag')
-            }],
+            specifiers: [this.createNamedImportSpecifierItem('$OvsHtmlTag')],
             source: SlimeAstCreateUtils.createStringLiteral('ovsjs')
         }, ...imports]
     }
@@ -249,19 +262,17 @@ export abstract class OvsCstToSlimeAstImport extends OvsCstToSlimeAstStatement {
         for (const imp of imports) {
             if (imp.source?.value === 'ovsjs') {
                 const specs = imp.specifiers || []
-                if (!specs.some((s: any) => s.imported?.name === 'defineOvsComponent' || s.local?.name === 'defineOvsComponent')) {
-                    specs.push({
-                        type: SlimeAstTypeName.ImportSpecifier,
-                        imported: SlimeAstCreateUtils.createIdentifier('defineOvsComponent'),
-                        local: SlimeAstCreateUtils.createIdentifier('defineOvsComponent')
-                    })
+                if (!specs.some((s: any) => {
+                    const spec = this.importSpecifierOf(s)
+                    return spec.imported?.name === 'defineOvsComponent' || spec.local?.name === 'defineOvsComponent'
+                })) {
+                    specs.push(this.createNamedImportSpecifierItem('defineOvsComponent'))
                 }
-                if (!specs.some((s: any) => s.imported?.name === 'defineReactiveExpression' || s.local?.name === 'defineReactiveExpression')) {
-                    specs.push({
-                        type: SlimeAstTypeName.ImportSpecifier,
-                        imported: SlimeAstCreateUtils.createIdentifier('defineReactiveExpression'),
-                        local: SlimeAstCreateUtils.createIdentifier('defineReactiveExpression')
-                    })
+                if (!specs.some((s: any) => {
+                    const spec = this.importSpecifierOf(s)
+                    return spec.imported?.name === 'defineReactiveExpression' || spec.local?.name === 'defineReactiveExpression'
+                })) {
+                    specs.push(this.createNamedImportSpecifierItem('defineReactiveExpression'))
                 }
                 return imports
             }
@@ -269,16 +280,8 @@ export abstract class OvsCstToSlimeAstImport extends OvsCstToSlimeAstStatement {
         return [{
             type: SlimeAstTypeName.ImportDeclaration,
             specifiers: [
-                {
-                    type: SlimeAstTypeName.ImportSpecifier,
-                    imported: SlimeAstCreateUtils.createIdentifier('defineOvsComponent'),
-                    local: SlimeAstCreateUtils.createIdentifier('defineOvsComponent')
-                },
-                {
-                    type: SlimeAstTypeName.ImportSpecifier,
-                    imported: SlimeAstCreateUtils.createIdentifier('defineReactiveExpression'),
-                    local: SlimeAstCreateUtils.createIdentifier('defineReactiveExpression')
-                }
+                this.createNamedImportSpecifierItem('defineOvsComponent'),
+                this.createNamedImportSpecifierItem('defineReactiveExpression')
             ],
             source: SlimeAstCreateUtils.createStringLiteral('ovsjs')
         }, ...imports]

@@ -11,11 +11,7 @@ import {
 import type { ExpressionParams, StatementParams, DeclarationParams } from "@qin/generated-qin-parser-ts";
 import { normalizeGeneratedTokens } from "cssts-compiler"
 
-/** OVS 扩展的表达式参数 */
-interface OvsExpressionParams extends ExpressionParams {
-    /** 禁用 OvsRenderFunction（用于 ClassHeritage 等上下文） */
-    DisableOvsRender?: boolean
-}
+type OvsExpressionParams = OvsParserParams
 
 /**
  * OVS 组件标签名黑名单
@@ -27,84 +23,179 @@ const OVS_TAG_BLACKLIST = new Set([
     ...Object.values(SlimeJavascriptContextualKeywordTokenTypes)
 ])
 
-type OvsParserParams = ExpressionParams & StatementParams & DeclarationParams & OvsExpressionParams
-type OvsParserParamFlags = Record<string, boolean>
+type OvsParserParamSource = OvsParserParams | ExpressionParams | StatementParams | DeclarationParams | undefined
+type OvsParserParamOverrides = {
+    Yield?: boolean
+    Await?: boolean
+    In?: boolean
+    Tagged?: boolean
+    Return?: boolean
+    Default?: boolean
+    DisableOvsRender?: boolean
+}
+type OvsParserProfileCounters = {
+    laCalls: number
+    tokenEntryCalls: number
+    tokenEntryTime: number
+    ruleCalls: number
+    ruleTime: number
+    saveStateCalls: number
+    restoreStateCalls: number
+    canStartOvsRenderCalls: number
+    canStartOvsRenderTime: number
+}
+type OvsParserRuleProfile = { calls: number, ms: number, self: number }
+type OvsParserRuleFrame = { name: string, started: number, child: number }
 
-const PARSER_PARAM_KEYS = ['Yield', 'Await', 'In', 'Tagged', 'Return', 'Default', 'DisableOvsRender']
 const PARSER_PARAM_CACHE = new Map<string, OvsParserParams>()
+const SubhutiClass = Subhuti as ClassDecorator
 
-function readParamFlag(params: any, key: string, defaultValue = false): boolean {
-    if (!params) return defaultValue
-    const direct = params[key]
-    if (typeof direct === 'boolean') return direct
-    const lowerKey = key.charAt(0).toLowerCase() + key.slice(1)
-    const lowerDirect = params[lowerKey]
-    if (typeof lowerDirect === 'boolean') return lowerDirect
-    if (typeof lowerDirect === 'function') return !!lowerDirect.call(params)
-    const qinAccessor = params[`__qin_${lowerKey}`]
-    if (typeof qinAccessor === 'function') return !!qinAccessor.call(params)
-    const javaGetterKey = key === 'Default' ? 'isDefault' : lowerKey
-    const javaGetter = params[javaGetterKey]
-    if (typeof javaGetter === 'function') return !!javaGetter.call(params)
-    return defaultValue
+class OvsParserParams {
+    static DEFAULT = new OvsParserParams(true, false, false, false, false, false, false)
+    readonly __qin_structural_object__ = true
+
+    constructor(
+        private readonly inEnabled: boolean,
+        private readonly yieldEnabled: boolean,
+        private readonly awaitEnabled: boolean,
+        private readonly taggedEnabled: boolean,
+        private readonly returnEnabled: boolean,
+        private readonly defaultEnabled: boolean,
+        private readonly disableRenderEnabled: boolean
+    ) {}
+
+    withIn(value: boolean): OvsParserParams {
+        return withParserParams(this, {In: value})
+    }
+
+    expressionParams(): OvsParserParams {
+        return withParserParams(this)
+    }
+
+    __qin_in(): boolean {
+        return this.inEnabled
+    }
+
+    __qin_yield(): boolean {
+        return this.yieldEnabled
+    }
+
+    __qin_await(): boolean {
+        return this.awaitEnabled
+    }
+
+    tagged(): boolean {
+        return this.taggedEnabled
+    }
+
+    returnAllowed(): boolean {
+        return this.returnEnabled
+    }
+
+    isDefault(): boolean {
+        return this.defaultEnabled
+    }
+
+    disableOvsRender(): boolean {
+        return this.disableRenderEnabled
+    }
+
+    equals(other: OvsParserParams): boolean {
+        return other instanceof OvsParserParams
+            && this.inEnabled === other.inEnabled
+            && this.yieldEnabled === other.yieldEnabled
+            && this.awaitEnabled === other.awaitEnabled
+            && this.taggedEnabled === other.taggedEnabled
+            && this.returnEnabled === other.returnEnabled
+            && this.defaultEnabled === other.defaultEnabled
+            && this.disableRenderEnabled === other.disableRenderEnabled
+    }
+
+    hashCode(): number {
+        let hash = 17
+        hash = hash * 31 + (this.inEnabled ? 1231 : 1237)
+        hash = hash * 31 + (this.yieldEnabled ? 1231 : 1237)
+        hash = hash * 31 + (this.awaitEnabled ? 1231 : 1237)
+        hash = hash * 31 + (this.taggedEnabled ? 1231 : 1237)
+        hash = hash * 31 + (this.returnEnabled ? 1231 : 1237)
+        hash = hash * 31 + (this.defaultEnabled ? 1231 : 1237)
+        hash = hash * 31 + (this.disableRenderEnabled ? 1231 : 1237)
+        return hash
+    }
 }
 
-function withParserParams(params: any = {}, overrides: Record<string, any> = {}): OvsParserParams {
-    const normalized: OvsParserParamFlags = {
-        Yield: readParamFlag(params, 'Yield'),
-        Await: readParamFlag(params, 'Await'),
-        In: readParamFlag(params, 'In'),
-        Tagged: readParamFlag(params, 'Tagged'),
-        Return: readParamFlag(params, 'Return'),
-        Default: readParamFlag(params, 'Default'),
-        DisableOvsRender: readParamFlag(params, 'DisableOvsRender')
+const OVS_DEFAULT_PARAMS = OvsParserParams.DEFAULT
+
+function hasInParam(params: OvsParserParamSource): params is ExpressionParams {
+    return !!params && typeof (params as ExpressionParams).__qin_in === 'function'
+}
+
+function hasYieldAwaitParam(params: OvsParserParamSource): params is ExpressionParams | StatementParams | DeclarationParams {
+    return !!params
+        && typeof params.__qin_yield === 'function'
+        && typeof params.__qin_await === 'function'
+}
+
+function hasTaggedParam(params: OvsParserParamSource): params is OvsParserParams {
+    return !!params && typeof (params as OvsParserParams).tagged === 'function'
+}
+
+function hasReturnParam(params: OvsParserParamSource): params is StatementParams {
+    return !!params && typeof (params as StatementParams).returnAllowed === 'function'
+}
+
+function hasDefaultParam(params: OvsParserParamSource): params is DeclarationParams {
+    return !!params && typeof (params as DeclarationParams).isDefault === 'function'
+}
+
+function hasDisableRenderParam(params: OvsParserParamSource): params is OvsParserParams {
+    return !!params && typeof (params as OvsParserParams).disableOvsRender === 'function'
+}
+
+function withParserParams(params: OvsParserParamSource = OVS_DEFAULT_PARAMS, overrides: OvsParserParamOverrides = {}): OvsParserParams {
+    const source = params ?? OVS_DEFAULT_PARAMS
+    if (!hasYieldAwaitParam(source)) {
+        throw new Error("OvsParser expected fixed parser params with __qin_yield()/__qin_await()")
     }
-    for (const key of PARSER_PARAM_KEYS) {
-        if (Object.prototype.hasOwnProperty.call(overrides, key)) {
-            normalized[key] = !!overrides[key]
-        }
-    }
-    const cacheKey = PARSER_PARAM_KEYS.map((key) => normalized[key] ? '1' : '0').join('')
+    const inEnabled = overrides.In ?? (hasInParam(source) ? !!source.__qin_in() : true)
+    const yieldEnabled = overrides.Yield ?? !!source.__qin_yield()
+    const awaitEnabled = overrides.Await ?? !!source.__qin_await()
+    const taggedEnabled = overrides.Tagged ?? (hasTaggedParam(source) ? !!source.tagged() : false)
+    const returnEnabled = overrides.Return ?? (hasReturnParam(source) ? !!source.returnAllowed() : false)
+    const defaultEnabled = overrides.Default ?? (hasDefaultParam(source) ? !!source.isDefault() : false)
+    const disableRenderEnabled = overrides.DisableOvsRender
+        ?? (hasDisableRenderParam(source) ? !!source.disableOvsRender() : false)
+    const cacheKey = [
+        inEnabled,
+        yieldEnabled,
+        awaitEnabled,
+        taggedEnabled,
+        returnEnabled,
+        defaultEnabled,
+        disableRenderEnabled
+    ].map((value) => value ? '1' : '0').join('')
     const cached = PARSER_PARAM_CACHE.get(cacheKey)
     if (cached) return cached
 
-    const stableParams: Record<string, any> = {...normalized}
-    stableParams.yield = () => stableParams.Yield
-    stableParams.await = () => stableParams.Await
-    stableParams.in = () => stableParams.In
-    stableParams.__qin_yield = () => stableParams.Yield
-    stableParams.__qin_await = () => stableParams.Await
-    stableParams.__qin_in = () => stableParams.In
-    stableParams.tagged = () => stableParams.Tagged
-    stableParams.return = () => stableParams.Return
-    stableParams.isDefault = () => stableParams.Default
-    stableParams.disableOvsRender = () => stableParams.DisableOvsRender
-    stableParams.withIn = (value: boolean) => withParserParams(stableParams, {In: value})
-    stableParams.expressionParams = () => withParserParams(stableParams)
-    stableParams.hashCode = () => {
-        let hash = 17
-        for (const key of PARSER_PARAM_KEYS) {
-            hash = hash * 31 + (stableParams[key] ? 1231 : 1237)
-        }
-        return hash
-    }
-    stableParams.equals = (other: any) => {
-        if (!other) return false
-        for (const key of PARSER_PARAM_KEYS) {
-            if (readParamFlag(other, key) !== stableParams[key]) return false
-        }
-        return true
-    }
-    PARSER_PARAM_CACHE.set(cacheKey, stableParams as OvsParserParams)
-    return stableParams as OvsParserParams
+    const stableParams = new OvsParserParams(
+        inEnabled,
+        yieldEnabled,
+        awaitEnabled,
+        taggedEnabled,
+        returnEnabled,
+        defaultEnabled,
+        disableRenderEnabled
+    )
+    PARSER_PARAM_CACHE.set(cacheKey, stableParams)
+    return stableParams
 }
 
-function declarationLexicalParams(params: any = {}): ExpressionParams {
-    return withParserParams(params, {In: true}) as ExpressionParams
+function declarationLexicalParams(params: OvsParserParamSource = OVS_DEFAULT_PARAMS): ExpressionParams {
+    return withParserParams(params, {In: true}) as unknown as ExpressionParams
 }
 
-function declarationHoistableParams(params: any = {}): DeclarationParams {
-    return withParserParams(params, {Default: false}) as DeclarationParams
+function declarationHoistableParams(params: OvsParserParamSource = OVS_DEFAULT_PARAMS): DeclarationParams {
+    return withParserParams(params, {Default: false}) as unknown as DeclarationParams
 }
 
 function tokenNameOf(token: any): string {
@@ -145,15 +236,58 @@ function tokenIndexOf(token: any): string {
  * 这样 OVS 文件中可以同时使用：
  * - ES2025 标准语法（来自 SlimeParser）
  * - CssTs 样式表达式语法（来自 CssTsParser）：css { colorRed, fontBold }
- * - OVS 视图语法：view ComponentName() { }, tag({ props }) { children }
+ * - OVS 视图语法：view ComponentName() { }, tag(class = "a"; onClick() {}) { children }
  * 
  * 注意：不支持 css 声明语法（如 `css colorRed`），只支持 css 表达式语法。
  * 详见 CssTsParser 和 ARCHITECTURE.md 的说明。
  */
-@Subhuti
+@SubhutiClass
 export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
     private ovsRenderLookaheadCache = new Map<string, boolean>()
     private forInOfLookaheadCache = new Map<string, boolean>()
+    private profileEnabled = false
+    private profileCounters: OvsParserProfileCounters = {
+        laCalls: 0,
+        tokenEntryCalls: 0,
+        tokenEntryTime: 0,
+        ruleCalls: 0,
+        ruleTime: 0,
+        saveStateCalls: 0,
+        restoreStateCalls: 0,
+        canStartOvsRenderCalls: 0,
+        canStartOvsRenderTime: 0,
+    }
+    private profileRuleStats = new Map<string, OvsParserRuleProfile>()
+    private profileRuleStack: OvsParserRuleFrame[] = []
+
+    declare getTokenConsumer: () => OvsTokenConsumer
+    declare getCurCst: () => any
+    declare isEof: () => boolean
+    declare currentTokenIndex: () => number
+    declare assertCondition: (condition: boolean) => void
+    declare assertNoLineBreak: () => void
+    declare match: (tokenType: any) => boolean
+    declare curToken: any
+    declare Or: (...alternatives: any[]) => any
+    declare Many: (fn: () => any) => any
+    declare Option: (fn: () => any) => any
+    declare ImportDeclaration: (...args: any[]) => any
+    declare Expression: (...args: any[]) => any
+    declare IfStatementBody: (...args: any[]) => any
+    declare ForInOfStatement: (...args: any[]) => any
+    declare DoWhileStatement: (...args: any[]) => any
+    declare WhileStatement: (...args: any[]) => any
+    declare ForStatement: (...args: any[]) => any
+    declare SwitchStatement: (...args: any[]) => any
+    declare AssignmentExpression: (...args: any[]) => any
+    declare PropertyName: (...args: any[]) => any
+    declare MethodDefinition: (...args: any[]) => any
+    declare IdentifierReference: (...args: any[]) => any
+    declare ExpressionStatement: (...args: any[]) => any
+    declare LabelledStatement: (...args: any[]) => any
+    declare LeftHandSideExpression: (...args: any[]) => any
+    declare consumeIdentifierValue: (value: string) => any
+    declare ArrowFormalParameters: (...args: any[]) => any
 
     /**
      * 构造函数 - 使用按需词法分析模式
@@ -165,6 +299,86 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
             tokenDefinitions: ovs6Tokens
         })
         ;(this as any)._cache = new SubhutiPackratCache(100000)
+    }
+
+    enableProfile(): this {
+        this.profileEnabled = true
+        return this
+    }
+
+    getProfileReport(): string {
+        const topRules = Array.from(this.profileRuleStats.entries())
+            .sort((a, b) => b[1].ms - a[1].ms)
+            .slice(0, 8)
+            .map(([name, stat]) => `${name}:${stat.ms}ms,self=${stat.self}ms/${stat.calls}`)
+            .join(", ")
+        const topSelfRules = Array.from(this.profileRuleStats.entries())
+            .sort((a, b) => b[1].self - a[1].self)
+            .slice(0, 8)
+            .map(([name, stat]) => `${name}:${stat.self}ms,total=${stat.ms}ms/${stat.calls}`)
+            .join(", ")
+        return [
+            `rules=${this.profileCounters.ruleCalls}/${this.profileCounters.ruleTime}ms`,
+            `la=${this.profileCounters.laCalls}`,
+            `tokenEntry=${this.profileCounters.tokenEntryCalls}/${this.profileCounters.tokenEntryTime}ms`,
+            `state=${this.profileCounters.saveStateCalls}/${this.profileCounters.restoreStateCalls}`,
+            `ovsLookahead=${this.profileCounters.canStartOvsRenderCalls}/${this.profileCounters.canStartOvsRenderTime}ms`,
+            `top=${topRules}`,
+            `topSelf=${topSelfRules}`,
+        ].join(", ")
+    }
+
+    LA(...args: any[]): any {
+        if (this.profileEnabled) this.profileCounters.laCalls++
+        return (CssTsParser.prototype as any).LA.apply(this, args)
+    }
+
+    _getOrParseTokenEntry(...args: any[]): any {
+        const started = this.profileEnabled ? Date.now() : 0
+        try {
+            return (CssTsParser.prototype as any)._getOrParseTokenEntry.apply(this, args)
+        } finally {
+            if (this.profileEnabled) {
+                this.profileCounters.tokenEntryCalls++
+                this.profileCounters.tokenEntryTime += Date.now() - started
+            }
+        }
+    }
+
+    executeRuleWrapper(...args: any[]): any {
+        const ruleName = typeof args[1] === 'string' ? args[1] : '<unknown>'
+        const started = this.profileEnabled ? Date.now() : 0
+        const frame = this.profileEnabled ? { name: ruleName, started, child: 0 } : null
+        if (frame) this.profileRuleStack.push(frame)
+        try {
+            return (CssTsParser.prototype as any).executeRuleWrapper.apply(this, args)
+        } finally {
+            if (this.profileEnabled) {
+                const elapsed = Date.now() - started
+                const finished = this.profileRuleStack.pop() ?? frame
+                const child = finished?.child ?? 0
+                const self = Math.max(0, elapsed - child)
+                const parent = this.profileRuleStack[this.profileRuleStack.length - 1]
+                if (parent) parent.child += elapsed
+                this.profileCounters.ruleCalls++
+                this.profileCounters.ruleTime += elapsed
+                const stat = this.profileRuleStats.get(ruleName) ?? { calls: 0, ms: 0, self: 0 }
+                stat.calls++
+                stat.ms += elapsed
+                stat.self += self
+                this.profileRuleStats.set(ruleName, stat)
+            }
+        }
+    }
+
+    saveState(...args: any[]): any {
+        if (this.profileEnabled) this.profileCounters.saveStateCalls++
+        return (CssTsParser.prototype as any).saveState.apply(this, args)
+    }
+
+    restoreState(...args: any[]): any {
+        if (this.profileEnabled) this.profileCounters.restoreStateCalls++
+        return (CssTsParser.prototype as any).restoreState.apply(this, args)
     }
 
     get parsedTokens(): any[] {
@@ -186,6 +400,8 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
     }
 
     private canStartOvsRender(): boolean {
+        const profileStarted = this.profileEnabled ? Date.now() : 0
+        try {
         const first = this.LA(1)
         const cacheKey = tokenIndexOf(first)
         if (cacheKey) {
@@ -220,6 +436,12 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
             }
         }
         return finish(false)
+        } finally {
+            if (this.profileEnabled) {
+                this.profileCounters.canStartOvsRenderCalls++
+                this.profileCounters.canStartOvsRenderTime += Date.now() - profileStarted
+            }
+        }
     }
 
     private canStartForInOfStatement(): boolean {
@@ -287,37 +509,53 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
 
     @SubhutiRule
     ModuleItem(): any {
+        const firstName = tokenNameOf(this.LA(1))
         if (this.canStartOvsRender()) {
-            return this.StatementListItem(withParserParams({}, {Await: true}) as StatementParams)
+            return this.StatementListItem(withParserParams(OVS_DEFAULT_PARAMS, {Await: true}) as unknown as StatementParams)
         }
-        return this.Or(
-            Alternative.of(() => this.ImportDeclaration()),
-            Alternative.of(() => this.ExportDeclaration()),
-            Alternative.of(() => this.StatementListItem(withParserParams({}, {Await: true}) as StatementParams))
-        )
+        if (firstName === 'Import') {
+            this.ImportDeclaration()
+            return this.getCurCst()
+        }
+        if (firstName === 'Export') {
+            this.ExportDeclaration()
+            return this.getCurCst()
+        }
+        return this.StatementListItem(withParserParams(OVS_DEFAULT_PARAMS, {Await: true}) as unknown as StatementParams)
     }
 
     @SubhutiRule
-    StatementListItem(params: StatementParams = {}): any {
+    StatementListItem(params: StatementParams = OVS_DEFAULT_PARAMS as unknown as StatementParams): any {
         if (this.canStartOvsRender()) {
             return this.Statement(params)
         }
+        const first = this.LA(1)
+        const firstName = tokenNameOf(first)
+        const firstValue = tokenValueOf(first)
+        const canStartDeclaration = firstName === 'Function'
+            || firstName === 'Class'
+            || firstName === 'Let'
+            || firstName === 'Const'
+            || firstValue === 'async'
+        if (!canStartDeclaration) {
+            return this.Statement(params)
+        }
         return this.Or(
-            Alternative.of(() => this.Declaration(withParserParams(params, {Default: false}) as DeclarationParams)),
+            Alternative.of(() => this.Declaration(withParserParams(params, {Default: false}) as unknown as DeclarationParams)),
             Alternative.of(() => this.Statement(params))
         )
     }
 
     @SubhutiRule
-    StatementList(params: StatementParams = {}, stopTokens: Array<{ tokenName: string; tokenValue?: string }> = []) {
+    StatementList(params: StatementParams = OVS_DEFAULT_PARAMS as unknown as StatementParams, stopTokens: Array<{ tokenName: string; tokenValue?: string }> = []) {
         this.Many(() => this.StatementListItem(params))
     }
 
     @SubhutiRule
-    IfStatement(params: StatementParams = {}) {
+    IfStatement(params: StatementParams = OVS_DEFAULT_PARAMS as unknown as StatementParams) {
         this.getTokenConsumer().If()
         this.getTokenConsumer().LParen()
-        this.Expression(withParserParams(params, {In: true}) as ExpressionParams)
+        this.Expression(withParserParams(params, {In: true}) as unknown as ExpressionParams)
         this.getTokenConsumer().RParen()
         this.IfStatementBody(params)
         this.Option(() => {
@@ -328,7 +566,7 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
     }
 
     @SubhutiRule
-    IterationStatement(params: StatementParams = {}) {
+    IterationStatement(params: StatementParams = OVS_DEFAULT_PARAMS as unknown as StatementParams) {
         if (this.canStartForInOfStatement()) {
             return this.ForInOfStatement(params)
         }
@@ -358,7 +596,8 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
      * 语句版本请使用 OvsRenderStatement
      */
     @SubhutiRule
-    OvsRenderFunction(params: OvsExpressionParams = {}) {
+    OvsRenderFunction(params: OvsParserParamSource = OVS_DEFAULT_PARAMS) {
+        const normalizedParams = withParserParams(params)
         this.assertCondition(this.canStartOvsRender())
         this.getTokenConsumer().IdentifierName()
         // 限制 1：组件标签名不能是 JavaScript 关键字
@@ -367,7 +606,7 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
 
         this.Option(() => {
             // 使用 OVS 专属的参数语法
-            return this.OvsArguments(params)
+            return this.OvsArguments(normalizedParams)
         })
         // 限制 2：标签名和 { 之间不能有换行符 [no LineTerminator here]
         this.assertNoLineBreak()
@@ -376,7 +615,7 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
             // ✅ 正确：传递 params
             // OvsRenderFunction 的 body 类似于 FunctionBody，需要传递 Yield/Await 参数
             // 这样在 async 组件中可以使用 await，在 generator 组件中可以使用 yield
-            this.StatementList(params)
+            this.StatementList(withParserParams(normalizedParams, {Return: false}) as unknown as StatementParams)
         }
         this.getTokenConsumer().RBrace()
         return this.getCurCst()
@@ -394,18 +633,15 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
      * 
      * 示例：
      * - div() {} 等价于 div({}) {}
-     * - div(class = "foo", id = "bar") {}
+     * - div(class = "foo"; id = "bar") {}
      * - div(onClick() { console.log('clicked') }) {}
      */
     @SubhutiRule
-    OvsArguments(params: OvsExpressionParams = {}) {
+    OvsArguments(params: OvsParserParamSource = OVS_DEFAULT_PARAMS) {
         const normalizedParams = withParserParams(params) as OvsExpressionParams
         this.getTokenConsumer().LParen()
         this.Option(() => {
-            return this.Or(
-                Alternative.of(() => this.ObjectLiteral(normalizedParams)),
-                Alternative.of(() => this.OvsPropertyDefinitionList(normalizedParams))
-            )
+            return this.OvsPropertyDefinitionList(normalizedParams)
         })
         this.getTokenConsumer().RParen()
         return this.getCurCst()
@@ -413,16 +649,18 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
 
     /**
      * OvsPropertyDefinitionList - OVS 属性定义列表
-     * 语法: OvsPropertyDefinition (, OvsPropertyDefinition)*
+     * 语法: OvsPropertyDefinition (; OvsPropertyDefinition)* ;?
      */
     @SubhutiRule
-    OvsPropertyDefinitionList(params: OvsExpressionParams = {}) {
-        this.OvsPropertyDefinition(params)
+    OvsPropertyDefinitionList(params: OvsParserParamSource = OVS_DEFAULT_PARAMS) {
+        const normalizedParams = withParserParams(params)
+        this.OvsPropertyDefinition(normalizedParams)
         this.Many(() => {
-            this.getTokenConsumer().Comma()
-            this.OvsPropertyDefinition(params)
+            this.getTokenConsumer().Semicolon()
+            this.OvsPropertyDefinition(normalizedParams)
             return this.getCurCst()
         })
+        this.Option(() => this.getTokenConsumer().Semicolon())
         return this.getCurCst()
     }
 
@@ -438,19 +676,20 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
      * - IdentifierReference                // 简写属性：disabled
      */
     @SubhutiRule
-    OvsPropertyDefinition(params: OvsExpressionParams = {}) {
+    OvsPropertyDefinition(params: OvsParserParamSource = OVS_DEFAULT_PARAMS) {
+        const normalizedParams = withParserParams(params)
         return this.Or(
             Alternative.of(() => {
                 this.getTokenConsumer().Ellipsis()
-                return this.AssignmentExpression(withParserParams(params, {In: true}))
+                return this.AssignmentExpression(withParserParams(normalizedParams, {In: true}) as unknown as ExpressionParams)
             }),
             Alternative.of(() => {
-                this.PropertyName(params)
+                this.PropertyName(normalizedParams as unknown as ExpressionParams)
                 this.getTokenConsumer().Assign()
-                return this.AssignmentExpression(withParserParams(params, {In: true}))
+                return this.AssignmentExpression(withParserParams(normalizedParams, {In: true}) as unknown as ExpressionParams)
             }),
-            Alternative.of(() => this.MethodDefinition(params)),
-            Alternative.of(() => this.IdentifierReference(params))
+            Alternative.of(() => this.MethodDefinition(normalizedParams as unknown as ExpressionParams)),
+            Alternative.of(() => this.IdentifierReference(normalizedParams as unknown as ExpressionParams))
         )
     }
 
@@ -467,7 +706,7 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
      * - 类似于 ES 中 FunctionDeclaration 和 BlockStatement 不需要分号
      */
     @SubhutiRule
-    OvsRenderStatement(params: StatementParams = {}) {
+    OvsRenderStatement(params: StatementParams = OVS_DEFAULT_PARAMS as unknown as StatementParams) {
         this.assertCondition(this.canStartOvsRender())
         this.getTokenConsumer().IdentifierName()
         // 限制 1：组件标签名不能是 JavaScript 关键字
@@ -497,7 +736,7 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
      * 通过传递 DisableOvsRender: true 参数来禁用。
      */
     @SubhutiRule
-    ClassHeritage(params: OvsExpressionParams = {}): any {
+    ClassHeritage(params: OvsExpressionParams = OVS_DEFAULT_PARAMS): any {
         this.getTokenConsumer().Extends()
         return this.LeftHandSideExpression(withParserParams(params, {DisableOvsRender: true}) as any)
     }
@@ -527,13 +766,13 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
         this.getTokenConsumer().IdentifierName()         // 组件名
         this.Option(() => {
             // 可选的参数列表 (state)
-            return this.ArrowFormalParameters(withParserParams({}, {Yield: false, Await: false}) as any)
+            return this.ArrowFormalParameters(withParserParams(OVS_DEFAULT_PARAMS, {Yield: false, Await: false}) as any)
         })
         // 函数体 { ... }
         this.getTokenConsumer().LBrace()
         this.Option(() => {
             // 内部是 StatementList，支持 Return 语句
-            return this.StatementList(withParserParams({}, {Yield: false, Await: false, Return: true}) as StatementParams)
+            return this.StatementList(withParserParams(OVS_DEFAULT_PARAMS, {Yield: false, Await: false, Return: true}) as unknown as StatementParams)
         })
         this.getTokenConsumer().RBrace()
         return this.getCurCst()
@@ -548,7 +787,7 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
      * 例如在 async 函数中的 #{ await something } 需要正确解析 await。
      */
     @SubhutiRule
-    NoRenderBlock(params: StatementParams = {}) {
+    NoRenderBlock(params: StatementParams = OVS_DEFAULT_PARAMS as unknown as StatementParams) {
         // #{ statements } - 不渲染代码块
         this.getTokenConsumer().Hash()
         this.getTokenConsumer().LBrace()
@@ -568,29 +807,29 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
      * 绕过 OVS 的 OvsRenderStatement/OvsRenderFunction 扩展。
      */
     FunctionBody(...args: any[]): any {
-        if (args.length === 0) return this.OvsFunctionBody(withParserParams({}, {Yield: false, Await: false}) as ExpressionParams)
-        if (args.length === 1) return this.OvsFunctionBody(args[0] as ExpressionParams)
+        if (args.length === 0) return this.OvsFunctionBody(withParserParams(OVS_DEFAULT_PARAMS, {Yield: false, Await: false}) as unknown as ExpressionParams)
+        if (args.length === 1) return this.OvsFunctionBody(args[0] as unknown as ExpressionParams)
         throw new Error(`Unsupported OVS FunctionBody arity: ${args.length}`)
     }
 
     @SubhutiRule
-    OvsFunctionBody(params: ExpressionParams = {}) {
+    OvsFunctionBody(params: ExpressionParams = OVS_DEFAULT_PARAMS as unknown as ExpressionParams) {
         this.Option(() => {
-            return this.StatementList(withParserParams(params, {Return: true}) as StatementParams)
+            return this.StatementList(withParserParams(params, {Return: true}) as unknown as StatementParams)
         })
         return this.getCurCst()
     }
 
     AsyncFunctionBody(...args: any[]): any {
-        if (args.length === 0) return this.OvsAsyncFunctionBody(withParserParams({}, {Yield: false, Await: true}) as ExpressionParams)
-        if (args.length === 1) return this.OvsAsyncFunctionBody(args[0] as ExpressionParams)
+        if (args.length === 0) return this.OvsAsyncFunctionBody(withParserParams(OVS_DEFAULT_PARAMS, {Yield: false, Await: true}) as unknown as ExpressionParams)
+        if (args.length === 1) return this.OvsAsyncFunctionBody(args[0] as unknown as ExpressionParams)
         throw new Error(`Unsupported OVS AsyncFunctionBody arity: ${args.length}`)
     }
 
     @SubhutiRule
-    OvsAsyncFunctionBody(params: ExpressionParams = {}) {
+    OvsAsyncFunctionBody(params: ExpressionParams = OVS_DEFAULT_PARAMS as unknown as ExpressionParams) {
         this.Option(() => {
-            return this.StatementList(withParserParams(params, {Await: true, Return: true}) as StatementParams)
+            return this.StatementList(withParserParams(params, {Await: true, Return: true}) as unknown as StatementParams)
         })
         return this.getCurCst()
     }
@@ -613,8 +852,8 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
      * 只支持 css 表达式语法（css { colorRed }），通过 PrimaryExpression 中的 CssExpression 实现。
      */
     @SubhutiRule
-    Statement(params: StatementParams = {}): any {
-        const Return = readParamFlag(params, 'Return')
+    Statement(params: StatementParams = OVS_DEFAULT_PARAMS as unknown as StatementParams): any {
+        const Return = !!params.returnAllowed()
         const firstName = tokenNameOf(this.LA(1))
         if (this.canStartOvsRender()) return this.OvsRenderStatement(params)
         if (firstName === 'Hash') return this.NoRenderBlock(params)
@@ -623,6 +862,7 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
         if (firstName === 'Semicolon') return this.EmptyStatement()
         if (firstName === 'If') return this.IfStatement(params)
         if (firstName === 'Do' || firstName === 'While' || firstName === 'For') return this.IterationStatement(params)
+        if (firstName === 'Switch') return this.SwitchStatement(params)
         if (firstName === 'Continue') return this.ContinueStatement(params)
         if (firstName === 'Break') return this.BreakStatement(params)
         if (firstName === 'Return' && Return) return this.ReturnStatement(params)
@@ -630,25 +870,9 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
         if (firstName === 'Throw') return this.ThrowStatement(params)
         if (firstName === 'Try') return this.TryStatement(params)
         if (firstName === 'Debugger') return this.DebuggerStatement()
+        if (firstName === 'IdentifierName' && tokenNameOf(this.LA(2)) === 'Colon') return this.LabelledStatement(params)
 
-        return this.Or(
-            Alternative.of(() => this.OvsRenderStatement(params)),
-            Alternative.of(() => this.NoRenderBlock(params)),
-            Alternative.of(() => this.BlockStatement(params)),
-            Alternative.of(() => this.VariableStatement(params)),
-            Alternative.of(() => this.EmptyStatement()),
-            Alternative.of(() => this.ExpressionStatement(params)),
-            Alternative.of(() => this.IfStatement(params)),
-            Alternative.of(() => this.BreakableStatement(params)),
-            Alternative.of(() => this.ContinueStatement(params)),
-            Alternative.of(() => this.BreakStatement(params)),
-            ...(Return ? [Alternative.of(() => this.ReturnStatement(params))] : []),
-            Alternative.of(() => this.WithStatement(params)),
-            Alternative.of(() => this.LabelledStatement(params)),
-            Alternative.of(() => this.ThrowStatement(params)),
-            Alternative.of(() => this.TryStatement(params)),
-            Alternative.of(() => this.DebuggerStatement())
-        )
+        return this.ExpressionStatement(params)
     }
 
     /**
@@ -658,11 +882,42 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
      * 只支持 css 表达式语法（css { colorRed }），通过 PrimaryExpression 中的 CssExpression 实现。
      */
     @SubhutiRule
-    Declaration(params: DeclarationParams = {}): any {
+    Declaration(params: DeclarationParams = OVS_DEFAULT_PARAMS as unknown as DeclarationParams): any {
+        const first = this.LA(1)
+        const firstName = tokenNameOf(first)
+        const firstValue = tokenValueOf(first)
         const qinObjectDeclaration = (this as any).QinObjectDeclaration
         const qinObjectAlternatives = typeof qinObjectDeclaration === 'function'
             ? [Alternative.of(() => qinObjectDeclaration.call(this, params))]
             : []
+        if (firstValue === 'view') {
+            this.OvsViewDeclaration()
+            return this.getCurCst()
+        }
+        if (firstName === 'Interface') {
+            ;(this as any).TSInterfaceDeclaration()
+            return this.getCurCst()
+        }
+        if (firstName === 'Type') {
+            ;(this as any).TSTypeAliasDeclaration()
+            return this.getCurCst()
+        }
+        if (firstName === 'Enum') {
+            ;(this as any).TSEnumDeclaration()
+            return this.getCurCst()
+        }
+        if (firstName === 'Const' || firstName === 'Let') {
+            this.LexicalDeclaration(declarationLexicalParams(params))
+            return this.getCurCst()
+        }
+        if (firstName === 'Function' || firstName === 'Async') {
+            this.HoistableDeclaration(declarationHoistableParams(params))
+            return this.getCurCst()
+        }
+        if (firstName === 'Class') {
+            this.ClassDeclaration(declarationHoistableParams(params))
+            return this.getCurCst()
+        }
         return this.Or(
             Alternative.of(() => this.OvsViewDeclaration()),
             Alternative.of(() => (this as any).TSInterfaceDeclaration()),
@@ -673,7 +928,7 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
             Alternative.of(() => this.LexicalDeclaration(declarationLexicalParams(params))),
             Alternative.of(() => this.HoistableDeclaration(declarationHoistableParams(params))),
             Alternative.of(() => this.ClassDeclaration(declarationHoistableParams(params))),
-            Alternative.of(() => super.Declaration(params))
+            Alternative.of(() => (CssTsParser.prototype as any).Declaration.call(this, params))
         )
     }
 
@@ -683,16 +938,16 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
             Alternative.of(() => {
                 this.getTokenConsumer().Export()
                 this.getTokenConsumer().Default()
-                this.OvsRenderFunction(withParserParams({}, {In: true}))
+                this.OvsRenderFunction(withParserParams(OVS_DEFAULT_PARAMS, {In: true}))
                 this.SemicolonASI()
             }),
             Alternative.of(() => {
                 this.getTokenConsumer().Export()
-                this.VariableStatement(withParserParams({}, {Await: true}) as StatementParams)
+                this.VariableStatement(withParserParams(OVS_DEFAULT_PARAMS, {Await: true}) as unknown as StatementParams)
             }),
             Alternative.of(() => {
                 this.getTokenConsumer().Export()
-                this.Declaration(withParserParams({}, {Default: false}) as DeclarationParams)
+                this.Declaration(withParserParams(OVS_DEFAULT_PARAMS, {Default: false}) as unknown as DeclarationParams)
             }),
             Alternative.of(() => {
                 this.getTokenConsumer().Export()
@@ -710,7 +965,7 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
                 this.getTokenConsumer().Export()
                 ;(this as any).TSModuleDeclaration()
             }),
-            Alternative.of(() => super.ExportDeclaration())
+            Alternative.of(() => (CssTsParser.prototype as any).ExportDeclaration.call(this))
         )
     }
 
@@ -723,25 +978,26 @@ export default class OvsParser extends CssTsParser<OvsTokenConsumer> {
      * 这用于 ClassHeritage 等上下文，避免 `class A extends B {}` 中的 `B {}` 被误解析。
      */
     @SubhutiRule
-    PrimaryExpression(params: OvsExpressionParams = {}) {
-        const DisableOvsRender = readParamFlag(params, 'DisableOvsRender')
+    PrimaryExpression(params: OvsParserParamSource = OVS_DEFAULT_PARAMS) {
+        const normalizedParams = withParserParams(params)
+        const DisableOvsRender = normalizedParams.disableOvsRender()
 
         return this.Or(
             Alternative.of(() => this.getTokenConsumer().This()),
-            Alternative.of(() => this.CssExpression(params)),
+            Alternative.of(() => this.CssExpression(normalizedParams as unknown as ExpressionParams)),
             Alternative.of(() => this.AsyncGeneratorExpression()),
             Alternative.of(() => this.AsyncFunctionExpression()),
-            ...(!DisableOvsRender ? [Alternative.of(() => this.OvsRenderFunction(params))] : []),
-            Alternative.of(() => this.IdentifierReference(params)),
+            ...(!DisableOvsRender ? [Alternative.of(() => this.OvsRenderFunction(normalizedParams))] : []),
+            Alternative.of(() => this.IdentifierReference(normalizedParams as unknown as ExpressionParams)),
             Alternative.of(() => this.Literal()),
             Alternative.of(() => this.GeneratorExpression()),
             Alternative.of(() => this.FunctionExpression()),
-            Alternative.of(() => this.ClassExpression(params)),
-            Alternative.of(() => this.ArrayLiteral(params)),
-            Alternative.of(() => this.ObjectLiteral(params)),
+            Alternative.of(() => this.ClassExpression(normalizedParams as unknown as ExpressionParams)),
+            Alternative.of(() => this.ArrayLiteral(normalizedParams as unknown as ExpressionParams)),
+            Alternative.of(() => this.ObjectLiteral(normalizedParams as unknown as ExpressionParams)),
             Alternative.of(() => this.consumeRegularExpressionLiteral()),
-            Alternative.of(() => this.TemplateLiteral(withParserParams(params, {Tagged: false}))),
-            Alternative.of(() => this.CoverParenthesizedExpressionAndArrowParameterList(params))
+            Alternative.of(() => this.TemplateLiteral(withParserParams(normalizedParams, {Tagged: false}) as unknown as ExpressionParams)),
+            Alternative.of(() => this.CoverParenthesizedExpressionAndArrowParameterList(normalizedParams as unknown as ExpressionParams))
         )
     }
 

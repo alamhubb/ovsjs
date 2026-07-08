@@ -15,8 +15,7 @@
 // Re-export all from the new architecture
 export { OvsCstToSlimeAstUtils, registerOvsCstToSlimeAst } from './OvsCstToSlimeAst/OvsCstToSlimeAst'
 
-// Export utility functions for backward compatibility
-import { SubhutiCst } from 'subhuti'
+import type { SubhutiCst } from './OvsCstToSlimeAst/cst-utils'
 
 export function checkCstName(cst: SubhutiCst, cstName: string) {
     const actualName = typeof (cst as any).getName === 'function' ? (cst as any).getName() : (cst as any).name

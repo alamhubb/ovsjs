@@ -28,13 +28,37 @@ import {
     SlimeAstTypeName
 } from "slime-ast";
 import { SubhutiMatchToken } from "subhuti";
-import { registerSlimeCstToAstUtil } from "@qin/generated-qin-parser-ts/SlimeCstToAstBridge";
+import { registerSlimeCstToAstUtil, type SlimeCstToAst } from "@qin/generated-qin-parser-ts/SlimeCstToAstBridge";
 import { CsstsInit, normalizeGeneratedAst, normalizeGeneratedCst } from "cssts-compiler";
 
 // ==================== 内部工具函数 ====================
 
 function hasReactiveExpression(sourceCode: string): boolean {
     return sourceCode.includes('#{')
+}
+
+function createCallArguments(args: any[]): any[] {
+    return args.map((arg, index) => SlimeAstCreateUtils.createCallArgument(
+        normalizeGeneratedAst(arg),
+        index < args.length - 1 ? SlimeTokenCreateUtils.createCommaToken() : undefined
+    ))
+}
+
+function createNamedImportSpecifierItem(name: string): any {
+    return SlimeAstCreateUtils.createImportSpecifierItem(
+        SlimeAstCreateUtils.createImportSpecifier(
+            SlimeAstCreateUtils.createIdentifier(name),
+            SlimeAstCreateUtils.createIdentifier(name)
+        )
+    )
+}
+
+function importSpecifierOf(item: any): any {
+    const specifier = item?.specifier
+    if (!specifier) {
+        throw new Error('OVS import declaration specifier must use Slime import-specifier wrapper')
+    }
+    return specifier
 }
 
 function ensureDefineOvsComponentImport(imports: any[]): any[] {
@@ -50,22 +74,17 @@ function ensureDefineOvsComponentImport(imports: any[]): any[] {
     }
     if (reactiveVNodeImport) {
         const specifiers = reactiveVNodeImport.specifiers || []
-        const has = specifiers.some((s: any) => s.type === SlimeAstTypeName.ImportSpecifier &&
-            (s.imported?.name === 'defineOvsComponent' || s.local?.name === 'defineOvsComponent'))
+        const has = specifiers.some((s: any) => {
+            const spec = importSpecifierOf(s)
+            return spec.imported?.name === 'defineOvsComponent' || spec.local?.name === 'defineOvsComponent'
+        })
         if (!has) {
-            specifiers.push({
-                type: SlimeAstTypeName.ImportSpecifier,
-                imported: SlimeAstCreateUtils.createIdentifier('defineOvsComponent'),
-                local: SlimeAstCreateUtils.createIdentifier('defineOvsComponent')
-            })
+            specifiers.push(createNamedImportSpecifierItem('defineOvsComponent'))
         }
         return imports
     }
     const newImport = SlimeAstCreateUtils.createImportDeclaration(
-        [{
-            type: SlimeAstTypeName.ImportSpecifier, imported: SlimeAstCreateUtils.createIdentifier('defineOvsComponent'),
-            local: SlimeAstCreateUtils.createIdentifier('defineOvsComponent')
-        } as SlimeImportSpecifier],
+        [createNamedImportSpecifierItem('defineOvsComponent')],
         SlimeAstCreateUtils.createStringLiteral('ovsjs'))
     return [newImport, ...imports]
 }
@@ -76,8 +95,11 @@ function createFragmentWrapper(expressions: any[]): any {
         return SlimeAstCreateUtils.createArrayElement(expr, isLast ? undefined : SlimeTokenCreateUtils.createCommaToken())
     })
     return SlimeAstCreateUtils.createCallExpression(SlimeAstCreateUtils.createIdentifier('h'),
-        [SlimeAstCreateUtils.createIdentifier('Fragment'), SlimeAstCreateUtils.createNullLiteralToken(),
-        SlimeAstCreateUtils.createArrayExpression(arrayElements)])
+        createCallArguments([
+            SlimeAstCreateUtils.createIdentifier('Fragment'),
+            SlimeAstCreateUtils.createNullLiteralToken(),
+            SlimeAstCreateUtils.createArrayExpression(arrayElements)
+        ]))
 }
 
 function createArrowFunctionExpressionAst(params: any[], body: any, expression: boolean, async: boolean = false, loc?: any): any {
@@ -102,29 +124,21 @@ function ensureFragmentImport(imports: any[]): any[] {
     }
     if (vueImport) {
         const specifiers = vueImport.specifiers || []
-        const hasFragment = specifiers.some((s: any) => s.type === SlimeAstTypeName.ImportSpecifier &&
-            (s.imported?.name === 'Fragment' || s.local?.name === 'Fragment'))
-        const hasH = specifiers.some((s: any) => s.type === SlimeAstTypeName.ImportSpecifier &&
-            (s.imported?.name === 'h' || s.local?.name === 'h'))
-        if (!hasFragment) specifiers.push({
-            type: SlimeAstTypeName.ImportSpecifier,
-            imported: SlimeAstCreateUtils.createIdentifier('Fragment'), local: SlimeAstCreateUtils.createIdentifier('Fragment')
+        const hasFragment = specifiers.some((s: any) => {
+            const spec = importSpecifierOf(s)
+            return spec.imported?.name === 'Fragment' || spec.local?.name === 'Fragment'
         })
-        if (!hasH) specifiers.push({
-            type: SlimeAstTypeName.ImportSpecifier,
-            imported: SlimeAstCreateUtils.createIdentifier('h'), local: SlimeAstCreateUtils.createIdentifier('h')
+        const hasH = specifiers.some((s: any) => {
+            const spec = importSpecifierOf(s)
+            return spec.imported?.name === 'h' || spec.local?.name === 'h'
         })
+        if (!hasFragment) specifiers.push(createNamedImportSpecifierItem('Fragment'))
+        if (!hasH) specifiers.push(createNamedImportSpecifierItem('h'))
         return imports
     }
     const newImport = SlimeAstCreateUtils.createImportDeclaration([
-        {
-            type: SlimeAstTypeName.ImportSpecifier, imported: SlimeAstCreateUtils.createIdentifier('Fragment'),
-            local: SlimeAstCreateUtils.createIdentifier('Fragment')
-        } as SlimeImportSpecifier,
-        {
-            type: SlimeAstTypeName.ImportSpecifier, imported: SlimeAstCreateUtils.createIdentifier('h'),
-            local: SlimeAstCreateUtils.createIdentifier('h')
-        } as SlimeImportSpecifier
+        createNamedImportSpecifierItem('Fragment'),
+        createNamedImportSpecifierItem('h')
     ], SlimeAstCreateUtils.createStringLiteral('vue'))
     return [newImport, ...imports]
 }
@@ -169,23 +183,18 @@ function ensureOvsHtmlTagImport(imports: any[]): any[] {
     if (ovsjsImport) {
         // 已有 ovsjs 导入，检查是否有 $OvsHtmlTag
         const specifiers = ovsjsImport.specifiers || []
-        const has = specifiers.some((s: any) => s.type === SlimeAstTypeName.ImportSpecifier &&
-            (s.imported?.name === '$OvsHtmlTag' || s.local?.name === '$OvsHtmlTag'))
+        const has = specifiers.some((s: any) => {
+            const spec = importSpecifierOf(s)
+            return spec.imported?.name === '$OvsHtmlTag' || spec.local?.name === '$OvsHtmlTag'
+        })
         if (!has) {
-            specifiers.push({
-                type: SlimeAstTypeName.ImportSpecifier,
-                imported: SlimeAstCreateUtils.createIdentifier('$OvsHtmlTag'),
-                local: SlimeAstCreateUtils.createIdentifier('$OvsHtmlTag')
-            })
+            specifiers.push(createNamedImportSpecifierItem('$OvsHtmlTag'))
         }
         return imports
     }
     // 没有 ovsjs 导入，创建新的
     const newImport = SlimeAstCreateUtils.createImportDeclaration(
-        [{
-            type: SlimeAstTypeName.ImportSpecifier, imported: SlimeAstCreateUtils.createIdentifier('$OvsHtmlTag'),
-            local: SlimeAstCreateUtils.createIdentifier('$OvsHtmlTag')
-        } as SlimeImportSpecifier],
+        [createNamedImportSpecifierItem('$OvsHtmlTag')],
         SlimeAstCreateUtils.createStringLiteral('ovsjs'))
     return [newImport, ...imports]
 }
@@ -198,14 +207,12 @@ function ensureCsstsImport(imports: any[]): any[] {
             const source = (imp as SlimeImportDeclaration).source
             if (source.value === 'cssts') {
                 const specifiers = imp.specifiers || []
-                const has = specifiers.some((s: any) => s.type === SlimeAstTypeName.ImportSpecifier &&
-                    (s.imported?.name === 'cssts' || s.local?.name === 'cssts'))
+                const has = specifiers.some((s: any) => {
+                    const spec = importSpecifierOf(s)
+                    return spec.imported?.name === 'cssts' || spec.local?.name === 'cssts'
+                })
                 if (!has) {
-                    specifiers.push({
-                        type: SlimeAstTypeName.ImportSpecifier,
-                        imported: SlimeAstCreateUtils.createIdentifier('cssts'),
-                        local: SlimeAstCreateUtils.createIdentifier('cssts')
-                    })
+                    specifiers.push(createNamedImportSpecifierItem('cssts'))
                 }
                 return imports
             }
@@ -213,10 +220,7 @@ function ensureCsstsImport(imports: any[]): any[] {
     }
     // 没有 cssts 导入，创建新的
     const newImport = SlimeAstCreateUtils.createImportDeclaration(
-        [{
-            type: SlimeAstTypeName.ImportSpecifier, imported: SlimeAstCreateUtils.createIdentifier('cssts'),
-            local: SlimeAstCreateUtils.createIdentifier('cssts')
-        } as SlimeImportSpecifier],
+        [createNamedImportSpecifierItem('cssts')],
         SlimeAstCreateUtils.createStringLiteral('cssts'))
     return [newImport, ...imports]
 }
@@ -229,14 +233,12 @@ function ensureCsstsAtomImport(imports: any[]): any[] {
             const source = (imp as SlimeImportDeclaration).source
             if (source.value === 'cssts-theme-element') {
                 const specifiers = imp.specifiers || []
-                const has = specifiers.some((s: any) => s.type === SlimeAstTypeName.ImportSpecifier &&
-                    (s.imported?.name === 'csstsAtom' || s.local?.name === 'csstsAtom'))
+                const has = specifiers.some((s: any) => {
+                    const spec = importSpecifierOf(s)
+                    return spec.imported?.name === 'csstsAtom' || spec.local?.name === 'csstsAtom'
+                })
                 if (!has) {
-                    specifiers.push({
-                        type: SlimeAstTypeName.ImportSpecifier,
-                        imported: SlimeAstCreateUtils.createIdentifier('csstsAtom'),
-                        local: SlimeAstCreateUtils.createIdentifier('csstsAtom')
-                    })
+                    specifiers.push(createNamedImportSpecifierItem('csstsAtom'))
                 }
                 return imports
             }
@@ -244,10 +246,7 @@ function ensureCsstsAtomImport(imports: any[]): any[] {
     }
     // 没有 cssts-theme-element 导入，创建新的
     const newImport = SlimeAstCreateUtils.createImportDeclaration(
-        [{
-            type: SlimeAstTypeName.ImportSpecifier, imported: SlimeAstCreateUtils.createIdentifier('csstsAtom'),
-            local: SlimeAstCreateUtils.createIdentifier('csstsAtom')
-        } as SlimeImportSpecifier],
+        [createNamedImportSpecifierItem('csstsAtom')],
         SlimeAstCreateUtils.createStringLiteral('cssts-theme-element'))
     return [newImport, ...imports]
 }
@@ -317,7 +316,7 @@ function wrapTopLevelExpressions(ast: SlimeProgram, sourceCode: string): SlimePr
     const arrowFunction = createArrowFunctionExpressionAst(
         [SlimeAstCreateUtils.createIdentifier('props')], blockStatement, false, false, null)
     const defineOvsCall = SlimeAstCreateUtils.createCallExpression(
-        SlimeAstCreateUtils.createIdentifier('defineOvsComponent'), [arrowFunction])
+        SlimeAstCreateUtils.createIdentifier('defineOvsComponent'), createCallArguments([arrowFunction]))
     return SlimeAstCreateUtils.createProgram([...imports,
     SlimeAstCreateUtils.createExportDefaultDeclaration(defineOvsCall)] as any, SlimeProgramSourceType.Module)
 }
@@ -327,6 +326,40 @@ function wrapTopLevelExpressions(ast: SlimeProgram, sourceCode: string): SlimePr
 export interface ovsTransformBaseResult {
     ast: SlimeProgram
     tokens: SubhutiMatchToken[]
+}
+
+type OvsTransformProfileCheckpoint = (phase: string, started: number, detail?: string) => void
+
+function ovsNow(): number {
+    return Date.now()
+}
+
+function createOvsTransformProfiler(enabled?: boolean): OvsTransformProfileCheckpoint | undefined {
+    if (!enabled) return undefined
+    return (phase: string, started: number, detail?: string) => {
+        const suffix = detail ? " :: " + detail : ""
+        console.log("[QinProfile] ovs-compiler " + phase + " +" + (ovsNow() - started) + "ms" + suffix)
+    }
+}
+
+function emitOvsTransformProfile(profile: OvsTransformProfileCheckpoint | undefined, phase: string, started: number, detail?: string): void {
+    if (profile) profile(phase, started, detail)
+}
+
+function ovsTransformFileWithProfile(code: string, profile?: OvsTransformProfileCheckpoint): ovsTransformBaseResult {
+    const parseStarted = ovsNow()
+    const parser = new OvsParser(code)
+    let curCst = normalizeGeneratedCst(parser.OvsProgram())
+    const tokens = parser.parsedTokens
+    emitOvsTransformProfile(profile, "parse+cst", parseStarted, "tokens=" + tokens.length + ", chars=" + code.length)
+    const cacheStats = typeof (parser as any).getCacheStats === "function" ? (parser as any).getCacheStats() : ""
+    if (cacheStats) emitOvsTransformProfile(profile, "parser-cache", parseStarted, cacheStats)
+    if (!tokens.length) return { ast: null, tokens: tokens }
+
+    const astStarted = ovsNow()
+    let ast = normalizeGeneratedAst(OvsCstToSlimeAstUtils.toFileAst(curCst))
+    emitOvsTransformProfile(profile, "cst-to-ast", astStarted, "body=" + ((ast as any)?.body?.length ?? 0))
+    return { ast, tokens }
 }
 
 /**
@@ -351,12 +384,7 @@ export function ovsTransformBase(code: string): ovsTransformBaseResult {
  * 适用场景：vite 插件、实际编译
  */
 export function ovsTransformFile(code: string): ovsTransformBaseResult {
-    const parser = new OvsParser(code)
-    let curCst = normalizeGeneratedCst(parser.OvsProgram())
-    const tokens = parser.parsedTokens
-    if (!tokens.length) return { ast: null, tokens: tokens }
-    let ast = normalizeGeneratedAst(OvsCstToSlimeAstUtils.toFileAst(curCst))
-    return { ast, tokens }
+    return ovsTransformFileWithProfile(code)
 }
 
 /** Vite 插件转换选项 */
@@ -365,36 +393,53 @@ export interface VitePluginOvsTransformOptions {
     globalStyles?: Set<string>
     /** CSSTS compiler options used by the standard OVS transform path. */
     cssts?: Record<string, any>
+    /** Enables opt-in phase profiling for the standard OVS transform path. */
+    profile?: boolean
 }
 
 /** Vite 插件专用的 OVS 代码转换 */
 export function vitePluginOvsTransform(code: string, options?: VitePluginOvsTransformOptions): SlimeGeneratorResult {
+    const profile = createOvsTransformProfiler(options?.profile)
+    const initStarted = ovsNow()
     CsstsInit.init(Object.assign({}, options?.cssts ?? {}, {
         dts: false,
         usedStyles: options?.globalStyles
     }) as any)
+    emitOvsTransformProfile(profile, "cssts-init", initStarted)
 
     // 确保 OvsCstToSlimeAst 被注册（防止被其他模块覆盖，如 cssts-compiler 的 transformCssTs）
-    registerSlimeCstToAstUtil(OvsCstToSlimeAstUtils)
+    const registerStarted = ovsNow()
+    registerSlimeCstToAstUtil(OvsCstToSlimeAstUtils as unknown as SlimeCstToAst)
+    emitOvsTransformProfile(profile, "register-cst-to-ast", registerStarted)
 
     // 转换前清空 usedAtoms
+    const clearStarted = ovsNow()
     OvsCstToSlimeAstUtils.clearUsedAtoms()
+    emitOvsTransformProfile(profile, "clear-used-atoms", clearStarted)
 
     // 使用 toFileAst 进行完整转换（包含导入处理和组件包装）
-    let codeResult = ovsTransformFile(code)
+    const transformStarted = ovsNow()
+    let codeResult = ovsTransformFileWithProfile(code, profile)
+    emitOvsTransformProfile(profile, "ovs-transform-file", transformStarted)
     let ast = codeResult.ast
     if (!ast) return { code: '', mapping: [] }
 
     // 把收集到的 usedAtoms 写入共享的 globalStyles
     if (options?.globalStyles) {
+        const atomsStarted = ovsNow()
         const usedAtoms = OvsCstToSlimeAstUtils.getUsedAtoms()
         for (const atom of usedAtoms) {
             options.globalStyles.add(atom)
         }
+        emitOvsTransformProfile(profile, "collect-used-atoms", atomsStarted, "atoms=" + usedAtoms.size)
     }
 
+    const generatorStarted = ovsNow()
     const result = SlimeGenerator.generator(ast, codeResult.tokens)
+    emitOvsTransformProfile(profile, "slime-generator", generatorStarted, "tokens=" + codeResult.tokens.length)
+    const mappingStarted = ovsNow()
     result.mapping = result.mapping.filter(m => m.source && m.source.value && m.source.value !== '' && m.source.length > 0)
+    emitOvsTransformProfile(profile, "mapping-filter", mappingStarted, "mapping=" + result.mapping.length)
     return result
 }
 

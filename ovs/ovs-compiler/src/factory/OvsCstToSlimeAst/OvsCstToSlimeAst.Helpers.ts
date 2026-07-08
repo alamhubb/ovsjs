@@ -1,4 +1,4 @@
-import { CssTsCstToAst } from "cssts-compiler"
+import { CssTsCstToAst, normalizeGeneratedAst } from "cssts-compiler"
 import {
     SlimeAstTypeName,
     type SlimeBlockStatement,
@@ -55,22 +55,65 @@ export abstract class OvsCstToSlimeAstHelpers extends CssTsCstToAst {
      * 
      * 统一响应式包裹逻辑，被多个方法复用
      */
+    protected createArrowFunctionExpressionAst(
+        params: any[],
+        body: SlimeExpression | SlimeBlockStatement,
+        expression: boolean,
+        async: boolean = false,
+        loc?: any
+    ): any {
+        return normalizeGeneratedAst({
+            type: SlimeAstTypeName.ArrowFunctionExpression,
+            params,
+            body: normalizeGeneratedAst(body as any),
+            expression,
+            async,
+            paramsParenthesized: params.length !== 1,
+            loc: loc ?? null
+        } as any)
+    }
+
+    protected createCallArgument(argument: SlimeExpression | any, commaToken?: any): any {
+        return SlimeAstCreateUtils.createCallArgument(
+            normalizeGeneratedAst(argument as any) as any,
+            commaToken
+        )
+    }
+
+    protected createCallArguments(args: Array<SlimeExpression | any>): any[] {
+        return args.map((arg, index) => this.createCallArgument(
+            arg,
+            index < args.length - 1 ? SlimeTokenCreateUtils.createCommaToken() : undefined
+        ))
+    }
+
+    protected callArgumentExpression(argumentItem: any): SlimeExpression {
+        const argument = argumentItem?.argument
+        if (!argument) {
+            throw new Error('OVS call expression argument must use Slime call-argument wrapper')
+        }
+        return normalizeGeneratedAst(argument as any) as SlimeExpression
+    }
+
     protected createReactivePushStatement(
         bodyExpr: SlimeExpression | SlimeBlockStatement,
         loc?: any
     ): SlimeExpressionStatement {
+        const normalizedBodyExpr = normalizeGeneratedAst(bodyExpr as any) as SlimeExpression | SlimeBlockStatement
+
         // 1. 创建箭头函数：() => body
-        const arrowFunction = SlimeAstCreateUtils.createArrowFunctionExpression(
-            bodyExpr,
+        const arrowFunction = this.createArrowFunctionExpressionAst(
             [],
+            normalizedBodyExpr,
+            (normalizedBodyExpr as any).type !== SlimeAstTypeName.BlockStatement,
             false,
-            false
+            loc ?? null
         )
 
         // 2. 创建 defineReactiveExpression(() => body)
         const defineReactiveCall = SlimeAstCreateUtils.createCallExpression(
             SlimeAstCreateUtils.createIdentifier('defineReactiveExpression'),
-            [arrowFunction]
+            this.createCallArguments([arrowFunction])
         )
 
         // 3. 创建 children.push(defineReactiveExpression(...))
@@ -80,7 +123,7 @@ export abstract class OvsCstToSlimeAstHelpers extends CssTsCstToAst {
                 SlimeTokenCreateUtils.createDotToken(loc),
                 SlimeAstCreateUtils.createIdentifier('push')
             ),
-            [defineReactiveCall]
+            this.createCallArguments([defineReactiveCall])
         )
         if (loc) {
             pushCall.loc = loc

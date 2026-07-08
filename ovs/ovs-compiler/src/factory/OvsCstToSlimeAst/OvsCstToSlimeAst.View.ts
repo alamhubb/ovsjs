@@ -1,4 +1,3 @@
-import { SubhutiCst } from "subhuti"
 import {
     SlimeAstTypeName,
     type SlimeCallExpression,
@@ -9,6 +8,7 @@ import {
     SlimeAstCreateUtils,
     SlimeTokenCreateUtils
 } from "slime-ast"
+import { normalizeGeneratedAst } from "cssts-compiler"
 import { createCalleeForTag } from "../helpers/html-tags"
 import { OvsCstToSlimeAstIIFE } from "./OvsCstToSlimeAst.IIFE"
 
@@ -23,7 +23,7 @@ export abstract class OvsCstToSlimeAstView extends OvsCstToSlimeAstIIFE {
 
     // ==================== 视图构建方法 ====================
 
-    private identifierName(id: SlimeIdentifier): string {
+    private readIdentifierName(id: SlimeIdentifier): string {
         const rawName = (id as any).name
         if (typeof rawName === 'string') return rawName
         if (typeof rawName === 'function') return rawName.call(id)
@@ -71,7 +71,7 @@ export abstract class OvsCstToSlimeAstView extends OvsCstToSlimeAstIIFE {
                     callee.object?.name === 'children' &&
                     callee.property?.name === 'push' &&
                     callExpr.arguments.length > 0) {
-                    element = callExpr.arguments[0] as SlimeExpression
+                    element = this.callArgumentExpression(callExpr.arguments[0])
                 } else {
                     // 不是 children.push 形式，直接使用表达式
                     element = expr
@@ -88,18 +88,20 @@ export abstract class OvsCstToSlimeAstView extends OvsCstToSlimeAstIIFE {
         const childrenArray = SlimeAstCreateUtils.createArrayExpression(childElements)
 
         // 创建 props 对象：如果是组件调用，使用 componentProps，否则用空对象
-        const propsObject = componentProps || SlimeAstCreateUtils.createObjectExpression([])
+        const propsObject = componentProps
+            ? normalizeGeneratedAst(componentProps as any) as SlimeExpression
+            : SlimeAstCreateUtils.createObjectExpression([])
 
         // 创建 callee：HTML 标签转换为 $OvsHtmlTag.xxx，其他保持原样
-        const callee = createCalleeForTag(this.identifierName(id), id.loc)
+        const callee = createCalleeForTag(this.readIdentifierName(id), id.loc)
 
         // 创建 tagName(props, children) 或 $OvsHtmlTag.tagName(props, children) 调用
         const vNodeCall = SlimeAstCreateUtils.createCallExpression(
             callee,
-            [
+            this.createCallArguments([
                 propsObject,      // 第一个参数：props
                 childrenArray     // 第二个参数：children
-            ]
+            ])
         )
 
         // 关键：设置 CallExpression 的 loc，使其指向源代码中的标签位置
@@ -132,22 +134,22 @@ export abstract class OvsCstToSlimeAstView extends OvsCstToSlimeAstIIFE {
         let propsObject
         if (componentProps) {
             // 组件调用：使用 componentProps
-            propsObject = componentProps
+            propsObject = normalizeGeneratedAst(componentProps as any) as SlimeExpression
         } else {
             // 普通元素无自定义props：{}
             propsObject = SlimeAstCreateUtils.createObjectExpression([])
         }
 
         // 创建 callee：HTML 标签转换为 $OvsHtmlTag.xxx，其他保持原样
-        const callee = createCalleeForTag(this.identifierName(id), id.loc)
+        const callee = createCalleeForTag(this.readIdentifierName(id), id.loc)
 
         // 创建函数调用：tagName(props, children) 或 $OvsHtmlTag.tagName(props, children)
         const callExpression = SlimeAstCreateUtils.createCallExpression(
             callee,
-            [
+            this.createCallArguments([
                 propsObject,                                  // 第一个参数：props 对象
                 SlimeAstCreateUtils.createIdentifier('children')    // 第二个参数：children 数组（固定名字）
-            ]
+            ])
         )
 
         // 关键：设置 CallExpression 的 loc，使其指向源代码中的标签位置
