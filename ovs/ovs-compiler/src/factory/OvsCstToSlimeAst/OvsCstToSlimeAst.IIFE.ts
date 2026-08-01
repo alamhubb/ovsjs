@@ -1,13 +1,9 @@
 import { OvsCstToSlimeAstJudgement } from './OvsCstToSlimeAst.Judgement'
 import {
-    SlimeAstTypeName,
-    type SlimeBlockStatement,
     type SlimeCallExpression,
     type SlimeExpression,
     type SlimeIdentifier,
-    type SlimeStatement,
-    SlimeAstCreateUtils,
-    SlimeTokenCreateUtils
+    type SlimeStatement
 } from "slime-ast"
 
 /**
@@ -26,18 +22,11 @@ export abstract class OvsCstToSlimeAstIIFE extends OvsCstToSlimeAstJudgement {
         const bodyStatements: SlimeStatement[] = [
             this.createChildrenDeclaration(),
             stmt,
-            SlimeAstCreateUtils.createReturnStatement(
-                SlimeAstCreateUtils.createIdentifier('children')
-            )
+            this.createReturnStatementNode(this.createIdentifierNode('children'), loc)
         ]
-        const arrowBody = SlimeAstCreateUtils.createBlockStatement(
-            bodyStatements,
-            loc,
-            SlimeTokenCreateUtils.createLBraceToken(loc),
-            SlimeTokenCreateUtils.createRBraceToken(loc)
-        )
+        const arrowBody = this.createBlockStatementNode(bodyStatements, loc)
 
-        return this.createReactivePushStatement(arrowBody, loc)
+        return this.createReactivePushStatement(arrowBody, loc, false)
     }
 
     /**
@@ -51,16 +40,16 @@ export abstract class OvsCstToSlimeAstIIFE extends OvsCstToSlimeAstJudgement {
             this.createChildrenDeclaration()
         ]
 
-        if (attrsVarName) {
+        if (attrsVarName !== null && attrsVarName !== undefined) {
             iifeFunctionBody.push(this.createAttrsDeclaration(attrsVarName))
         }
 
-        iifeFunctionBody.push(...statements)
+        for (let index = 0; index < statements.length; index++) {
+            iifeFunctionBody.push(statements[index])
+        }
 
         iifeFunctionBody.push(
-            SlimeAstCreateUtils.createReturnStatement(
-                SlimeAstCreateUtils.createIdentifier('children')
-            )
+            this.createReturnStatementNode(this.createIdentifierNode('children'))
         )
 
         return this.createIIFE(iifeFunctionBody)
@@ -69,40 +58,24 @@ export abstract class OvsCstToSlimeAstIIFE extends OvsCstToSlimeAstJudgement {
     /**
      * 创建完整的 IIFE（需要id）
      */
-    protected createComplexIIFE(
+    protected abstract createComplexIIFE(
         id: SlimeIdentifier,
         statements: SlimeStatement[],
         attrsVarName: string | null,
         componentProps: SlimeExpression | null
-    ): SlimeCallExpression {
-        const iifeFunctionBody: SlimeStatement[] = [
-            this.createChildrenDeclaration()
-        ]
-
-        if (attrsVarName) {
-            iifeFunctionBody.push(this.createAttrsDeclaration(attrsVarName))
-        }
-
-        iifeFunctionBody.push(...statements)
-
-        iifeFunctionBody.push(this.createReturnOvsAPICreateVNode(id, attrsVarName, componentProps))
-
-        return this.createIIFE(iifeFunctionBody)
-    }
+    ): SlimeCallExpression
 
     /**
      * 创建 IIFE
      */
-    private createIIFE(body: Array<SlimeStatement>): SlimeCallExpression {
-        const loc = body[0]?.loc || undefined
+    protected createIIFE(body: Array<SlimeStatement>): SlimeCallExpression {
+        let loc: any = undefined
+        if (body.length > 0) {
+            loc = body[0].loc
+        }
 
         // 创建函数体的 BlockStatement
-        const blockStatement = SlimeAstCreateUtils.createBlockStatement(
-            body,
-            loc,
-            SlimeTokenCreateUtils.createLBraceToken(loc),
-            SlimeTokenCreateUtils.createRBraceToken(loc)
-        )
+        const blockStatement = this.createBlockStatementNode(body, loc)
 
         // 创建箭头函数：() => { ...body }
         const arrowFunction = this.createArrowFunctionExpressionAst(
@@ -113,18 +86,18 @@ export abstract class OvsCstToSlimeAstIIFE extends OvsCstToSlimeAstJudgement {
             loc ?? null
         )
 
-        const defineCall = SlimeAstCreateUtils.createCallExpression(
-            SlimeAstCreateUtils.createIdentifier('defineOvsComponent'),
+        const defineCall = this.createCallExpressionNode(
+            this.createIdentifierNode('defineOvsComponent'),
             this.createCallArguments([arrowFunction])
         )
 
-        return SlimeAstCreateUtils.createCallExpression(
+        return this.createCallExpressionNode(
             defineCall,
             this.createCallArguments([
-                SlimeAstCreateUtils.createObjectExpression([]),
-                SlimeAstCreateUtils.createArrayExpression([])
+                this.createObjectExpressionNode([]),
+                this.createArrayExpressionNode([])
             ])
-        )
+        ) as SlimeCallExpression
     }
 
     // 抽象方法，由更上层实现

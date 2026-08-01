@@ -1,12 +1,9 @@
 import {
-    SlimeAstTypeName,
     type SlimeCallExpression,
     type SlimeExpression,
     type SlimeExpressionStatement,
     type SlimeIdentifier,
-    type SlimeStatement,
-    SlimeAstCreateUtils,
-    SlimeTokenCreateUtils
+    type SlimeStatement
 } from "slime-ast"
 import { normalizeGeneratedAst } from "cssts-compiler"
 import { createCalleeForTag } from "../helpers/html-tags"
@@ -24,16 +21,22 @@ export abstract class OvsCstToSlimeAstView extends OvsCstToSlimeAstIIFE {
     // ==================== 视图构建方法 ====================
 
     private readIdentifierName(id: SlimeIdentifier): string {
-        const rawName = (id as any).name
+        const rawName = this.readAstField(id, 'name')
         if (typeof rawName === 'string') return rawName
-        if (typeof rawName === 'function') return rawName.call(id)
         throw new Error('OVS view identifier must expose a name')
     }
 
     private statementExpression(stmt: SlimeStatement): SlimeExpression {
-        const rawExpression = (stmt as any).expression
-        if (rawExpression && typeof rawExpression !== 'function') return rawExpression
-        if (typeof rawExpression === 'function') return rawExpression.call(stmt)
+        const stmtType = this.readAstType(stmt)
+        if (typeof stmtType === 'string' && stmtType !== 'ExpressionStatement') {
+            return stmt as any as SlimeExpression
+        }
+        const rawExpression = this.readAstField(stmt, 'expression')
+        if (rawExpression !== null && rawExpression !== undefined) {
+            if (typeof rawExpression !== 'function') return rawExpression
+            throw new Error('OVS render child expression must be a static field')
+        }
+        if (stmt !== null && stmt !== undefined) return stmt as any as SlimeExpression
         throw new Error('OVS render child statement must expose an expression')
     }
 
@@ -56,22 +59,29 @@ export abstract class OvsCstToSlimeAstView extends OvsCstToSlimeAstIIFE {
         componentProps: SlimeExpression | null
     ): SlimeCallExpression {
         // 从 ExpressionStatement 中提取表达式，并包装为 ArrayElement
-        const childElements = statements.map((stmt, index) => {
-            const exprStmt = stmt as any
+        const childElements: any[] = []
+        for (let index = 0; index < statements.length; index++) {
+            const exprStmt = statements[index] as any
             const expr = this.statementExpression(exprStmt)
-            let element: SlimeExpression
-
             // 判断是否是 children.push(expr) 形式
             // 如果是，提取 push 的参数；否则直接使用表达式
-            if (expr && expr.type === SlimeAstTypeName.CallExpression) {
-                const callExpr = expr as SlimeCallExpression
-                const callee = callExpr.callee as any
+            /*
+            if (expr !== null && expr !== undefined && expr.type === 'CallExpression') {
+                const callExpr = expr as SlimeSimpleCallExpression
+                const callee = callExpr.callee
                 // 检查是否是 children.push 形式
-                if (callee?.type === SlimeAstTypeName.MemberExpression &&
-                    callee.object?.name === 'children' &&
-                    callee.property?.name === 'push' &&
-                    callExpr.arguments.length > 0) {
-                    element = this.callArgumentExpression(callExpr.arguments[0])
+                if (callee.type === 'MemberExpression') {
+                    const memberCallee = callee as SlimeMemberExpression
+                    const calleeObject = memberCallee.object as SlimeIdentifier
+                    const calleeProperty = memberCallee.property as SlimeIdentifier
+                    if (calleeObject.name === 'children' &&
+                        calleeProperty.name === 'push' &&
+                        callExpr.arguments.length > 0) {
+                        element = this.callArgumentExpression(callExpr.arguments[0])
+                    } else {
+                        // 涓嶆槸 children.push 褰㈠紡锛岀洿鎺ヤ娇鐢ㄨ〃杈惧紡
+                        element = expr
+                    }
                 } else {
                     // 不是 children.push 形式，直接使用表达式
                     element = expr
@@ -80,36 +90,58 @@ export abstract class OvsCstToSlimeAstView extends OvsCstToSlimeAstIIFE {
                 element = expr
             }
             // 包装为 ArrayElement，除了最后一个元素都需要逗号
+            */
             const needComma = index < statements.length - 1
-            return SlimeAstCreateUtils.createArrayElement(element, needComma ? SlimeTokenCreateUtils.createCommaToken() : undefined)
-        })
+            childElements.push(this.createArrayElementNode(expr, needComma ? this.createCommaToken() : undefined))
+        }
 
         // 创建 children 数组
-        const childrenArray = SlimeAstCreateUtils.createArrayExpression(childElements)
+        const childrenArray = this.createArrayExpressionNode(childElements)
 
         // 创建 props 对象：如果是组件调用，使用 componentProps，否则用空对象
-        const propsObject = componentProps
+        const propsObject = componentProps !== null && componentProps !== undefined
             ? normalizeGeneratedAst(componentProps as any) as SlimeExpression
-            : SlimeAstCreateUtils.createObjectExpression([])
+            : this.createObjectExpressionNode([])
 
         // 创建 callee：HTML 标签转换为 $OvsHtmlTag.xxx，其他保持原样
         const callee = createCalleeForTag(this.readIdentifierName(id), id.loc)
 
         // 创建 tagName(props, children) 或 $OvsHtmlTag.tagName(props, children) 调用
-        const vNodeCall = SlimeAstCreateUtils.createCallExpression(
+        const vNodeCall = this.createCallExpressionNode(
             callee,
             this.createCallArguments([
                 propsObject,      // 第一个参数：props
                 childrenArray     // 第二个参数：children
-            ])
-        )
+            ]),
+            id.loc
+        ) as SlimeCallExpression
 
         // 关键：设置 CallExpression 的 loc，使其指向源代码中的标签位置
-        if (id.loc) {
-            vNodeCall.loc = id.loc
+        return vNodeCall
+    }
+
+    protected createComplexIIFE(
+        id: SlimeIdentifier,
+        statements: SlimeStatement[],
+        attrsVarName: string | null,
+        componentProps: SlimeExpression | null
+    ): SlimeCallExpression {
+        const iifeFunctionBody: SlimeStatement[] = [
+            this.createChildrenDeclaration()
+        ]
+
+        if (attrsVarName !== null && attrsVarName !== undefined) {
+            iifeFunctionBody.push(this.createAttrsDeclaration(attrsVarName))
         }
 
-        return vNodeCall
+        for (let index = 0; index < statements.length; index++) {
+            iifeFunctionBody.push(statements[index])
+        }
+        iifeFunctionBody.push(
+            this.createReturnOvsAPICreateVNode(id, attrsVarName, componentProps)
+        )
+
+        return this.createIIFE(iifeFunctionBody)
     }
 
     /**
@@ -131,33 +163,30 @@ export abstract class OvsCstToSlimeAstView extends OvsCstToSlimeAstIIFE {
     ): SlimeStatement {
 
         // 创建 props 对象
-        let propsObject
-        if (componentProps) {
+        let propsObject: SlimeExpression
+        if (componentProps !== null && componentProps !== undefined) {
             // 组件调用：使用 componentProps
             propsObject = normalizeGeneratedAst(componentProps as any) as SlimeExpression
         } else {
             // 普通元素无自定义props：{}
-            propsObject = SlimeAstCreateUtils.createObjectExpression([])
+            propsObject = this.createObjectExpressionNode([])
         }
 
         // 创建 callee：HTML 标签转换为 $OvsHtmlTag.xxx，其他保持原样
         const callee = createCalleeForTag(this.readIdentifierName(id), id.loc)
 
         // 创建函数调用：tagName(props, children) 或 $OvsHtmlTag.tagName(props, children)
-        const callExpression = SlimeAstCreateUtils.createCallExpression(
+        const callExpression = this.createCallExpressionNode(
             callee,
             this.createCallArguments([
                 propsObject,                                  // 第一个参数：props 对象
-                SlimeAstCreateUtils.createIdentifier('children')    // 第二个参数：children 数组（固定名字）
-            ])
+                this.createIdentifierNode('children')    // 第二个参数：children 数组（固定名字）
+            ]),
+            id.loc
         )
 
         // 关键：设置 CallExpression 的 loc，使其指向源代码中的标签位置
-        if (id.loc) {
-            callExpression.loc = id.loc
-        }
-
         // 包装为 return 语句
-        return SlimeAstCreateUtils.createReturnStatement(callExpression)
+        return this.createReturnStatementNode(callExpression, id.loc)
     }
 }
