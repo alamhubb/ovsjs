@@ -1,10 +1,5 @@
-import {
-    SlimeAstTypeName,
-    type SlimeModuleDeclaration,
-    type SlimeStatement,
-    SlimeAstCreateUtils,
-    SlimeTokenCreateUtils
-} from "slime-ast"
+import { com_slime_parser_cstToAst_SlimeAstCreateUtils as GeneratedSlimeAstCreateUtils } from "@qin/generated-qin-parser-ts/SlimeAstCreateUtils"
+import { com_slime_ast_nodes_misc_ImportSpecifier as GeneratedSlimeImportSpecifier } from "@qin/generated-qin-parser-ts/com/slime/ast/nodes/misc/ImportSpecifier"
 import { OvsCstToSlimeAstStatement } from "./OvsCstToSlimeAst.Statement"
 
 /**
@@ -18,25 +13,20 @@ import { OvsCstToSlimeAstStatement } from "./OvsCstToSlimeAst.Statement"
 export abstract class OvsCstToSlimeAstImport extends OvsCstToSlimeAstStatement {
 
     // 需要从主类访问的状态变量
-    protected abstract hasOvsSyntax: boolean
+    protected usesOvsSyntax(): boolean {
+        return true
+    }
 
     // ==================== 导入管理方法 ====================
 
     private createNamedImportSpecifierItem(name: string): any {
-        return SlimeAstCreateUtils.createImportSpecifierItem(
-            SlimeAstCreateUtils.createImportSpecifier(
-                SlimeAstCreateUtils.createIdentifier(name),
-                SlimeAstCreateUtils.createIdentifier(name)
-            )
-        )
+        const imported = GeneratedSlimeAstCreateUtils.createIdentifier(name, null)
+        const local = GeneratedSlimeAstCreateUtils.createIdentifier(name, null)
+        return new GeneratedSlimeImportSpecifier(imported, local, null)
     }
 
-    private importSpecifierOf(item: any): any {
-        const specifier = item?.specifier
-        if (!specifier) {
-            throw new Error('OVS import declaration specifier must use Slime import-specifier wrapper')
-        }
-        return specifier
+    private createStringLiteralNode(value: string): any {
+        return GeneratedSlimeAstCreateUtils.createStringLiteral(value, null, JSON.stringify(value))
     }
 
     /**
@@ -48,9 +38,9 @@ export abstract class OvsCstToSlimeAstImport extends OvsCstToSlimeAstStatement {
      * 
      * 只有在需要包装时才会重排序，避免普通 JS 代码被错误重排
      */
-    protected processTopLevelAndImports(body: Array<SlimeStatement | SlimeModuleDeclaration>): Array<SlimeStatement | SlimeModuleDeclaration> {
+    protected processTopLevelAndImports(body: any[]): any[] {
         // 如果没有使用 OVS 语法，直接返回原始 body，保持语句顺序不变
-        if (!this.hasOvsSyntax) {
+        if (!this.usesOvsSyntax()) {
             return body
         }
 
@@ -73,17 +63,18 @@ export abstract class OvsCstToSlimeAstImport extends OvsCstToSlimeAstStatement {
      * - 没有任何 export 语句
      * - 有顶层表达式语句
      */
-    private shouldWrapAsComponent(body: Array<SlimeStatement | SlimeModuleDeclaration>): boolean {
+    private shouldWrapAsComponent(body: any[]): boolean {
         let hasAnyExport = false
         let hasTopLevelExpression = false
 
         for (const stmt of body) {
-            if (stmt.type === SlimeAstTypeName.ExportDefaultDeclaration ||
-                stmt.type === SlimeAstTypeName.ExportNamedDeclaration) {
+            const type = this.readAstType(stmt)
+            if (type === 'ExportDefaultDeclaration' ||
+                type === 'ExportNamedDeclaration') {
                 hasAnyExport = true
                 break
             }
-            if (stmt.type === SlimeAstTypeName.ExpressionStatement) {
+            if (type === 'ExpressionStatement') {
                 hasTopLevelExpression = true
             }
         }
@@ -99,54 +90,32 @@ export abstract class OvsCstToSlimeAstImport extends OvsCstToSlimeAstStatement {
      * 
      * 注意：只在 body 开头插入导入，不改变其他语句的顺序
      */
-    private ensureRequiredImports(body: Array<SlimeStatement | SlimeModuleDeclaration>): Array<SlimeStatement | SlimeModuleDeclaration> {
+    private ensureRequiredImports(body: any[]): any[] {
         // 提取现有的 imports
         let imports: any[] = []
         const nonImports: any[] = []
 
         for (const stmt of body) {
-            if (stmt.type === SlimeAstTypeName.ImportDeclaration) {
-                imports.push(stmt)
+            if (this.readAstType(stmt) === 'ImportDeclaration') {
+                imports.push(stmt as any)
             } else {
                 nonImports.push(stmt)
             }
         }
 
         // 检查并添加必要的导入
-        if (this.containsAstIdentifier(body, '$OvsHtmlTag')) {
-            imports = this.ensureOvsHtmlTagImport(imports)
-        }
-        if (this.containsAstIdentifier(body, 'defineOvsComponent')) {
-            imports = this.ensureDefineOvsComponentImport(imports)
-        }
+        imports = this.ensureOvsHtmlTagImport(imports)
+        imports = this.ensureDefineOvsComponentImport(imports)
 
         // 返回：imports 在前，其他语句保持原顺序
-        return [...imports, ...nonImports]
-    }
-
-    private containsAstIdentifier(value: any, name: string, seen: any[] = []): boolean {
-        if (value == null) return false
-        if (typeof value === 'string') return value === name
-        if (typeof value !== 'object') return false
-        if (seen.indexOf(value) >= 0) return false
-        seen.push(value)
-
-        if (Array.isArray(value)) {
-            return value.some(item => this.containsAstIdentifier(item, name, seen))
+        const result: any[] = []
+        for (let index = 0; index < imports.length; index++) {
+            result.push(imports[index] as any)
         }
-
-        const nodeName = value.name
-        if (typeof nodeName === 'string' && nodeName === name) return true
-        const nodeValue = value.value
-        if (typeof nodeValue === 'string' && nodeValue === name) return true
-
-        for (const key of Object.keys(value)) {
-            if (key === 'loc' || key === 'location' || key.startsWith('__')) continue
-            const child = value[key]
-            if (typeof child === 'function') continue
-            if (this.containsAstIdentifier(child, name, seen)) return true
+        for (let index = 0; index < nonImports.length; index++) {
+            result.push(nonImports[index])
         }
-        return false
+        return result
     }
 
     /**
@@ -160,22 +129,23 @@ export abstract class OvsCstToSlimeAstImport extends OvsCstToSlimeAstStatement {
      * 
      * 注意：只有这个方法内部会重排序（imports → export default）
      */
-    private wrapAsDefineOvsComponent(body: Array<SlimeStatement | SlimeModuleDeclaration>): Array<SlimeStatement | SlimeModuleDeclaration> {
+    private wrapAsDefineOvsComponent(body: any[]): any[] {
         // 分类语句
         let imports: any[] = []
         let declarations: any[] = []
-        let expressions: SlimeStatement[] = []
+        let expressions: any[] = []
         let otherStatements: any[] = []
 
         for (const stmt of body) {
-            if (stmt.type === SlimeAstTypeName.ImportDeclaration) {
-                imports.push(stmt)
-            } else if (stmt.type === SlimeAstTypeName.VariableDeclaration ||
-                stmt.type === SlimeAstTypeName.FunctionDeclaration ||
-                stmt.type === SlimeAstTypeName.ClassDeclaration) {
+            const type = this.readAstType(stmt)
+            if (type === 'ImportDeclaration') {
+                imports.push(stmt as any)
+            } else if (type === 'VariableDeclaration' ||
+                type === 'FunctionDeclaration' ||
+                type === 'ClassDeclaration') {
                 declarations.push(stmt)
-            } else if (stmt.type === SlimeAstTypeName.ExpressionStatement) {
-                expressions.push(stmt as SlimeStatement)
+            } else if (type === 'ExpressionStatement') {
+                expressions.push(stmt as any)
             } else {
                 otherStatements.push(stmt)
             }
@@ -185,9 +155,15 @@ export abstract class OvsCstToSlimeAstImport extends OvsCstToSlimeAstStatement {
         imports = this.ensureDefineOvsComponentImport(imports)
 
         // 提取表达式值
-        const exprValues = expressions.map(e =>
-            e.type === SlimeAstTypeName.ExpressionStatement ? (e as any).expression : e
-        )
+        const exprValues: any[] = []
+        for (let index = 0; index < expressions.length; index++) {
+            const expressionStatement = expressions[index] as any
+            if (this.readAstType(expressionStatement) === 'ExpressionStatement') {
+                exprValues.push(this.readAstField(expressionStatement, 'expression'))
+            } else {
+                exprValues.push(expressionStatement)
+            }
+        }
 
         // 处理单个或多个表达式
         let finalExpr: any
@@ -196,62 +172,62 @@ export abstract class OvsCstToSlimeAstImport extends OvsCstToSlimeAstStatement {
         } else {
             // 多个表达式，使用数组形式
             // 注意：如果需要Fragment包装，用户应自行导入并使用
-            finalExpr = SlimeAstCreateUtils.createArrayExpression(
-                exprValues.map((expr, index) =>
-                    SlimeAstCreateUtils.createArrayElement(
-                        expr,
-                        index < exprValues.length - 1 ? SlimeTokenCreateUtils.createCommaToken() : undefined
-                    )
-                )
-            )
+            const elements: any[] = []
+            for (let index = 0; index < exprValues.length; index++) {
+                const commaToken = index < exprValues.length - 1 ? this.createCommaToken() : undefined
+                elements.push(this.createArrayElementNode(exprValues[index], commaToken))
+            }
+            finalExpr = this.createArrayExpressionNode(elements)
         }
 
         // 创建 defineOvsComponent 包装
         // 新的运行时：直接 return finalExpr（VNode）
-        const returnStmt = SlimeAstCreateUtils.createReturnStatement(finalExpr)
-        const blockStatement = SlimeAstCreateUtils.createBlockStatement([...declarations, ...otherStatements, returnStmt])
+        const returnStmt = this.createReturnStatementNode(finalExpr)
+        const blockBody: any[] = []
+        for (let index = 0; index < declarations.length; index++) {
+            blockBody.push(declarations[index])
+        }
+        for (let index = 0; index < otherStatements.length; index++) {
+            blockBody.push(otherStatements[index])
+        }
+        blockBody.push(returnStmt)
+        const blockStatement = this.createBlockStatementNode(blockBody)
         const arrowFunction = this.createArrowFunctionExpressionAst(
-            [SlimeAstCreateUtils.createIdentifier('props')],
+            [this.createIdentifierNode('props')],
             blockStatement,
             false,
             false,
             null
         )
-        const defineOvsCall = SlimeAstCreateUtils.createCallExpression(
-            SlimeAstCreateUtils.createIdentifier('defineOvsComponent'),
+        const defineOvsCall = this.createCallExpressionNode(
+            this.createIdentifierNode('defineOvsComponent'),
             this.createCallArguments([arrowFunction])
         )
 
         // 重排序：imports 在前，然后是 export default
-        return [
-            ...imports,
-            {
-                type: SlimeAstTypeName.ExportDefaultDeclaration,
+        const result: any[] = []
+        for (let index = 0; index < imports.length; index++) {
+            result.push(imports[index] as any)
+        }
+        result.push({
+                type: 'ExportDefaultDeclaration',
                 declaration: defineOvsCall
-            } as any
-        ]
+            } as any)
+        return result
     }
 
     /**
      * 确保有 $OvsHtmlTag 导入
      */
     private ensureOvsHtmlTagImport(imports: any[]): any[] {
-        for (const imp of imports) {
-            if (imp.source?.value === 'ovsjs') {
-                const specs = imp.specifiers || []
-                if (!specs.some((s: any) => {
-                    const spec = this.importSpecifierOf(s)
-                    return spec.imported?.name === '$OvsHtmlTag' || spec.local?.name === '$OvsHtmlTag'
-                })) {
-                    specs.push(this.createNamedImportSpecifierItem('$OvsHtmlTag'))
-                }
-                return imports
-            }
-        }
         return [{
-            type: SlimeAstTypeName.ImportDeclaration,
-            specifiers: [this.createNamedImportSpecifierItem('$OvsHtmlTag')],
-            source: SlimeAstCreateUtils.createStringLiteral('ovsjs')
+            type: 'ImportDeclaration',
+            specifiers: [
+                this.createNamedImportSpecifierItem('$OvsHtmlTag'),
+                this.createNamedImportSpecifierItem('defineOvsComponent'),
+                this.createNamedImportSpecifierItem('defineReactiveExpression')
+            ],
+            source: this.createStringLiteralNode('ovsjs')
         }, ...imports]
     }
 
@@ -259,31 +235,6 @@ export abstract class OvsCstToSlimeAstImport extends OvsCstToSlimeAstStatement {
      * 确保有 defineOvsComponent 和 defineReactiveExpression 导入
      */
     private ensureDefineOvsComponentImport(imports: any[]): any[] {
-        for (const imp of imports) {
-            if (imp.source?.value === 'ovsjs') {
-                const specs = imp.specifiers || []
-                if (!specs.some((s: any) => {
-                    const spec = this.importSpecifierOf(s)
-                    return spec.imported?.name === 'defineOvsComponent' || spec.local?.name === 'defineOvsComponent'
-                })) {
-                    specs.push(this.createNamedImportSpecifierItem('defineOvsComponent'))
-                }
-                if (!specs.some((s: any) => {
-                    const spec = this.importSpecifierOf(s)
-                    return spec.imported?.name === 'defineReactiveExpression' || spec.local?.name === 'defineReactiveExpression'
-                })) {
-                    specs.push(this.createNamedImportSpecifierItem('defineReactiveExpression'))
-                }
-                return imports
-            }
-        }
-        return [{
-            type: SlimeAstTypeName.ImportDeclaration,
-            specifiers: [
-                this.createNamedImportSpecifierItem('defineOvsComponent'),
-                this.createNamedImportSpecifierItem('defineReactiveExpression')
-            ],
-            source: SlimeAstCreateUtils.createStringLiteral('ovsjs')
-        }, ...imports]
+        return imports
     }
 }

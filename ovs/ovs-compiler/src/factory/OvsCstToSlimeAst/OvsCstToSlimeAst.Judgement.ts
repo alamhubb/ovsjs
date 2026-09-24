@@ -1,10 +1,4 @@
 import { OvsCstToSlimeAstHelpers } from './OvsCstToSlimeAst.Helpers'
-import {
-    SlimeAstTypeName,
-    type SlimeExpression,
-    type SlimeExpressionStatement,
-    type SlimeStatement
-} from "slime-ast"
 
 /**
  * OVS 判断逻辑层
@@ -20,19 +14,18 @@ export abstract class OvsCstToSlimeAstJudgement extends OvsCstToSlimeAstHelpers 
      * - UpdateExpression: x++
      * - UnaryExpression + delete/void
      */
-    protected isSideEffectExpression(expr: SlimeExpression): boolean {
-        const type = expr.type
+    protected isSideEffectExpression(expr: any): boolean {
+        const type = this.readAstType(expr)
 
         // 赋值表达式
-        if (type === SlimeAstTypeName.AssignmentExpression) return true
+        if (type === 'AssignmentExpression') return true
 
         // 更新表达式
-        if (type === SlimeAstTypeName.UpdateExpression) return true
+        if (type === 'UpdateExpression') return true
 
-        // delete/void 表达式
-        if (type === SlimeAstTypeName.UnaryExpression) {
-            const unary = expr as any
-            if (unary.operator === 'delete' || unary.operator === 'void') return true
+        // MVP: UnaryExpression is execution-only in OVS render bodies; do not inspect dynamic operator tokens.
+        if (type === 'UnaryExpression') {
+            return true
         }
 
         return false
@@ -49,20 +42,20 @@ export abstract class OvsCstToSlimeAstJudgement extends OvsCstToSlimeAstHelpers 
      * 控制流语句（if/for）已在 createStatementListItemAst 中被转换为
      * ExpressionStatement（包含 defineReactiveExpression），不需要父级 IIFE
      */
-    protected needsParentIIFE(stmt: SlimeStatement): boolean {
+    protected needsParentIIFE(stmt: any): boolean {
         // 1. 变量声明 → 需要父级 IIFE（作用域隔离）
-        if (stmt.type === SlimeAstTypeName.VariableDeclaration) {
+        if (this.readAstType(stmt) === 'VariableDeclaration') {
             return true
         }
 
-        // 2. NoRenderBlock 子节点（带标记）→ 需要父级 IIFE
-        if ((stmt as any)._isFromNoRenderBlock) {
+        // 2. BlockStatement 子节点（包括 NoRenderBlock 包装块）→ 需要父级 IIFE
+        if (this.readAstType(stmt) === 'BlockStatement') {
             return true
         }
 
         // 3. 副作用表达式（赋值、更新等）→ 需要父级 IIFE
-        if (stmt.type === SlimeAstTypeName.ExpressionStatement) {
-            return this.isSideEffectExpression((stmt as SlimeExpressionStatement).expression)
+        if (this.readAstType(stmt) === 'ExpressionStatement') {
+            return true
         }
 
         // 其他（包括已转换的控制流语句）→ 不需要父级 IIFE
@@ -77,12 +70,12 @@ export abstract class OvsCstToSlimeAstJudgement extends OvsCstToSlimeAstHelpers 
      * 2. ExpressionStatement → 不需要（已在 createExpressionStatementAst 中处理）
      * 3. 其他（控制流语句 if/for/while/switch 等）→ 需要响应式包裹
      */
-    protected needsReactiveWrap(stmt: SlimeStatement): boolean {
+    protected needsReactiveWrap(stmt: any): boolean {
         // 复用：needsParentIIFE 返回 true 的不需要响应式包裹
         if (this.needsParentIIFE(stmt)) return false
 
         // ExpressionStatement 已在 createExpressionStatementAst 中处理
-        if (stmt.type === SlimeAstTypeName.ExpressionStatement) return false
+        if (this.readAstType(stmt) === 'ExpressionStatement') return false
 
         // 其他（控制流语句 if/for/while/switch 等）→ 需要响应式包裹
         return true

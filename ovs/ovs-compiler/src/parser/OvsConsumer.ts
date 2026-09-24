@@ -1,26 +1,24 @@
 import { createRegToken } from 'subhuti'
-import { SlimeTokensObj, SlimeTokenType } from "@qin/generated-qin-parser-ts";
 // 使用包名导入
-import { CssTsTokenConsumer, CssTsContextualKeywordTypes, cssTsTokens } from "cssts-compiler";
+import { CssTsTokenConsumer, cssTsTokens } from "cssts-compiler";
 
 export const ovsTokenName = {
-  ...SlimeTokenType,
   Hash: "Hash"
-}
+} as const
 
 // OVS 软关键字（上下文关键字）
 // 这些在词法层是 IdentifierName，在语法层通过值检查来识别
 // 这样用户仍然可以使用 view 作为变量名
 export const OvsContextualKeywordTypes = {
-  ...CssTsContextualKeywordTypes,  // 继承 CssTs 的软关键字 (css)
-  View: 'view',  // view ComponentName() { ... }
+  Css: 'css',
+  View: 'view',
 } as const;
 
 // 合并 tokens:
 // 1. cssTsTokens 包含了 SlimeTokensObj（PrivateIdentifier #name 需要优先于单独的 Hash #）
 // 2. Hash 放最后，确保 PrivateIdentifier 优先匹配，单独 # 用于 NoRenderBlock
 export const ovs6Tokens = cssTsTokens.concat([
-  createRegToken(ovsTokenName.Hash, /#/)  // 放在 PrivateIdentifier 之后
+  createRegToken("Hash", /#/)  // 放在 PrivateIdentifier 之后
 ])
 
 /**
@@ -44,6 +42,6 @@ export default class OvsTokenConsumer extends CssTsTokenConsumer {
 
   /** 消费 # token（NoRenderBlock 的开始） */
   Hash() {
-    this.consume(ovsTokenName.Hash)
+    this.consume("Hash")
   }
 }

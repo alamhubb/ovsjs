@@ -39,35 +39,29 @@ export function isHtmlTag(tagName: string): boolean {
     return false
 }
 
-import {
-    SlimeAstCreateUtils,
-    SlimeTokenCreateUtils,
-    type SlimeExpression
-} from "slime-ast"
+import { com_slime_parser_cstToAst_SlimeAstCreateUtils as GeneratedSlimeAstCreateUtils } from "@qin/generated-qin-parser-ts/SlimeAstCreateUtils"
 
 /**
  * 创建 callee 表达式
  * - HTML 标签返回 $OvsHtmlTag.xxx
  * - 用户组件返回标识符（需要配合 h() 使用）
  */
-export function createCalleeForTag(tagName: string, loc?: any): SlimeExpression {
+export function createCalleeForTag(tagName: string, loc?: any): any {
     const normalizedTagName = tagName.trim()
     if (isHtmlTag(normalizedTagName)) {
         // HTML tag -> $OvsHtmlTag.tagName.
         // Keep the synthetic member property unmapped; mapping the property
         // back to the source tag can make the generator insert source-layout
         // gaps between "$OvsHtmlTag." and the property name.
-        const tagIdentifier = SlimeAstCreateUtils.createIdentifier(normalizedTagName)
-        const memberExpr = SlimeAstCreateUtils.createMemberExpression(
-            SlimeAstCreateUtils.createIdentifier('$OvsHtmlTag'),
-            SlimeTokenCreateUtils.createDotToken(),
-            tagIdentifier
-        )
-        return memberExpr
+        return GeneratedSlimeAstCreateUtils.createMemberExpression(
+            GeneratedSlimeAstCreateUtils.createIdentifier('$OvsHtmlTag', null),
+            GeneratedSlimeAstCreateUtils.createIdentifier(normalizedTagName, null),
+            false,
+            false,
+            loc ?? null
+        ) as any
     } else {
         // 用户组件 → 直接使用标识符
-        const id = SlimeAstCreateUtils.createIdentifier(normalizedTagName)
-        if (loc) id.loc = loc
-        return id
+        return GeneratedSlimeAstCreateUtils.createIdentifier(normalizedTagName, loc ?? null) as any
     }
 }

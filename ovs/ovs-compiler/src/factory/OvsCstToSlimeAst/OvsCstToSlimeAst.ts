@@ -1,11 +1,3 @@
-import {
-    type SlimeBlockStatement,
-    type SlimeExpression,
-    type SlimeIdentifier,
-    type SlimeNode,
-    type SlimeProgram,
-    type SlimeStatement,
-} from "slime-ast"
 import { SlimeCstToAst, registerSlimeCstToAstUtil } from "@qin/generated-qin-parser-ts/SlimeCstToAstBridge"
 import { normalizeGeneratedAst } from "cssts-compiler"
 import { OvsCstToSlimeAstImport } from "./OvsCstToSlimeAst.Import"
@@ -110,12 +102,12 @@ export class OvsCstToSlimeAst extends OvsCstToSlimeAstImport {
     }
 
     private createProgramNode(body: any[]): any {
-        return normalizeGeneratedAst({
+        return {
             type: 'Program',
             sourceType: 'module',
             body,
             loc: null
-        } as any) as SlimeProgram
+        } as any
     }
 
     toOvsProgram(cst: OvsCst): any {
@@ -124,7 +116,7 @@ export class OvsCstToSlimeAst extends OvsCstToSlimeAstImport {
         return this.createProgramNode(body)
     }
 
-    toProgram(cst: OvsCst): SlimeProgram {
+    toProgram(cst: OvsCst): any {
         return this.toOvsProgram(cst)
     }
 
@@ -139,8 +131,8 @@ export class OvsCstToSlimeAst extends OvsCstToSlimeAstImport {
       * 适用场景：vite 插件、实际编译
       */
     toOvsFileAst(cst: OvsCst): any {
-        const program = this.toOvsProgram(cst)
-        let body = toArray(this.readAstField(program, 'body'))
+        this.resetState()
+        let body = this.collectProgramBody(cst) as any
 
         // 1. CSSTS 后处理：仅在实际使用 CSSTS 语法时执行
         if (this.hasCsstsSyntax) {
@@ -185,46 +177,44 @@ export class OvsCstToSlimeAst extends OvsCstToSlimeAstImport {
         throw new Error(`Expected identifier CST with token value, got ${name}`)
     }
 
-    private collectProgramBody(cst: OvsCst | undefined): SlimeStatement[] {
+    private collectProgramBody(cst: OvsCst | undefined): any[] {
         if (cst === null || cst === undefined) return []
         if (this.isProgramBodyItemCst(cst)) {
-            const rawResult = this.createProgramBodyItemAst(cst)
-            const result: SlimeStatement[] = toArray<SlimeStatement>(rawResult)
-            return result
+            return this.createProgramBodyItemAst(cst)
         }
-        let body: SlimeStatement[] = []
+        const body: any[] = []
         const children = this.rootCstChildren(cst)
         for (let index = 0; index < children.length; index++) {
-            body = body.concat(this.collectProgramBody(children[index]) as any)
+            const childBody: any[] = this.collectProgramBody(children[index])
+            const item0 = childBody[0]
+            if (item0 !== undefined) body.push(item0)
+            const item1 = childBody[1]
+            if (item1 !== undefined) body.push(item1)
+            const item2 = childBody[2]
+            if (item2 !== undefined) body.push(item2)
+            const item3 = childBody[3]
+            if (item3 !== undefined) body.push(item3)
+            const item4 = childBody[4]
+            if (item4 !== undefined) body.push(item4)
+            const item5 = childBody[5]
+            if (item5 !== undefined) body.push(item5)
+            const item6 = childBody[6]
+            if (item6 !== undefined) body.push(item6)
+            const item7 = childBody[7]
+            if (item7 !== undefined) body.push(item7)
+            const overflow = childBody[8]
+            if (overflow !== undefined) {
+                throw new Error('OVS program body child produced more than 8 statements')
+            }
         }
         return body
-    }
-
-    private collectProgramBodyInto(cst: OvsCst | undefined, body: SlimeStatement[]): void {
-        if (cst === null || cst === undefined) return
-        if (this.isProgramBodyItemCst(cst)) {
-            const rawResult = this.createProgramBodyItemAst(cst)
-            const result: SlimeStatement[] = toArray<SlimeStatement>(rawResult)
-            for (let index = 0; index < result.length; index++) {
-                body.push(result[index])
-            }
-            return
-        }
-        const name = this.rootCstName(cst)
-        const children = this.rootCstChildren(cst)
-        for (let index = 0; index < children.length; index++) {
-            const child = children[index]
-            this.collectProgramBodyInto(child, body)
-        }
     }
 
     private isProgramBodyItemCst(cst: OvsCst | undefined): boolean {
         if (cst === null || cst === undefined) return false
         const name = this.rootCstName(cst)
-        return name === 'ModuleItem'
-            || name === 'StatementListItem'
-            || name === 'Statement'
-            || name === 'Declaration'
+        return name === 'ImportDeclaration'
+            || name === 'ExportDeclaration'
             || name === 'VariableStatement'
             || name === 'LexicalDeclaration'
             || name === 'VariableDeclaration'
@@ -249,33 +239,32 @@ export class OvsCstToSlimeAst extends OvsCstToSlimeAstImport {
             || name === 'NoRenderBlock'
     }
 
-    private createProgramBodyItemAst(cst: OvsCst): SlimeStatement[] {
+    private createProgramBodyItemAst(cst: OvsCst): any[] {
         const cstName = this.rootCstName(cst)
         const exportNode = this.rootFindFirstCst(cst, 'ExportDeclaration')
         if (exportNode !== null && exportNode !== undefined) {
             if (this.isExportDefaultOvsRender(exportNode)) {
-                return [normalizeGeneratedAst(this.createExportOvsRenderAst(exportNode) as any) as SlimeStatement]
+                return [normalizeGeneratedAst(this.createExportOvsRenderAst(exportNode) as any) as any]
             }
             if (this.isExportNamedDeclaration(exportNode)) {
-                return [normalizeGeneratedAst(this.createExportNamedDeclarationAst(exportNode) as any) as SlimeStatement]
+                return [normalizeGeneratedAst(this.createExportNamedDeclarationAst(exportNode) as any) as any]
             }
             return this.createBaseProgramBodyItems(exportNode)
         }
         const directRender = this.findDirectWrappedStatementCst(cst, 'OvsRenderStatement')
             ?? this.rootFindFirstCst(cst, 'OvsRenderStatement')
         if (directRender !== null && directRender !== undefined) {
-            return [normalizeGeneratedAst({
-                type: 'ExpressionStatement',
-                expression: this.createOvsRenderDomViewDeclarationAst(directRender),
-                loc: cstLocOf(directRender) ?? null
-            } as any) as SlimeStatement]
+            return [this.createExpressionStatementNode(
+                this.createOvsRenderDomViewDeclarationAst(directRender),
+                cstLocOf(directRender) ?? null
+            ) as any]
         }
         if (this.containsOvsSyntaxNode(cst)) {
             const ovsResult = this.createStatementListItemAst(cst)
             if (ovsResult.length > 0) {
-                const normalized: SlimeStatement[] = []
+                const normalized: any[] = []
                 for (let index = 0; index < ovsResult.length; index++) {
-                    normalized.push(normalizeGeneratedAst(ovsResult[index] as any) as SlimeStatement)
+                    normalized.push(normalizeGeneratedAst(ovsResult[index] as any) as any)
                 }
                 return normalized
             }
@@ -298,21 +287,21 @@ export class OvsCstToSlimeAst extends OvsCstToSlimeAstImport {
         return undefined
     }
 
-    private createBaseProgramBodyItems(cst: OvsCst): SlimeStatement[] {
+    private createBaseProgramBodyItems(cst: OvsCst): any[] {
         const importNode = this.unwrapNestedCst(this.rootFindFirstCst(cst, 'ImportDeclaration'), 'ImportDeclaration')
         if (importNode !== null && importNode !== undefined) {
             return [normalizeGeneratedAst(
                 super.createImportDeclarationAst(importNode) as any
-            ) as SlimeStatement]
+            ) as any]
         }
         const exportNode = this.unwrapNestedCst(this.rootFindFirstCst(cst, 'ExportDeclaration'), 'ExportDeclaration')
         if (exportNode !== null && exportNode !== undefined) {
-            return [normalizeGeneratedAst(super.createExportDeclarationAst(exportNode) as any) as SlimeStatement]
+            return [normalizeGeneratedAst(super.createExportDeclarationAst(exportNode) as any) as any]
         }
-        const baseItems: SlimeStatement[] = this.createStatementListItemAst(cst)
-        const normalized: SlimeStatement[] = []
+        const baseItems: any[] = this.createStatementListItemAst(cst)
+        const normalized: any[] = []
         for (let index = 0; index < baseItems.length; index++) {
-            normalized.push(normalizeGeneratedAst(baseItems[index] as any) as SlimeStatement)
+            normalized.push(normalizeGeneratedAst(baseItems[index] as any) as any)
         }
         return normalized
     }
@@ -557,7 +546,7 @@ export class OvsCstToSlimeAst extends OvsCstToSlimeAstImport {
         }
         const params: any[] = []
         if (paramsCst !== null && paramsCst !== undefined) {
-            const rawParams = this.createFormalParametersAst(paramsCst)
+            const rawParams: any[] = this.createFormalParametersAst(paramsCst)
             for (let index = 0; index < rawParams.length; index++) {
                 params.push(normalizeGeneratedAst(rawParams[index] as any))
             }
@@ -710,7 +699,7 @@ export class OvsCstToSlimeAst extends OvsCstToSlimeAstImport {
         }
 
         if (formalParamsCst !== null && formalParamsCst !== undefined) {
-            const rawParams = this.createFormalParametersAst(formalParamsCst)
+            const rawParams: any[] = this.createFormalParametersAst(formalParamsCst)
             for (let index = 0; index < rawParams.length; index++) {
                 params.push(normalizeGeneratedAst(rawParams[index] as any))
             }
@@ -731,7 +720,7 @@ export class OvsCstToSlimeAst extends OvsCstToSlimeAstImport {
             }
         }
 
-        let functionBodyStatements: SlimeStatement[] = []
+        let functionBodyStatements: any[] = []
 
         if (statementListCst !== null && statementListCst !== undefined) {
             // 转换 StatementList
@@ -746,7 +735,7 @@ export class OvsCstToSlimeAst extends OvsCstToSlimeAstImport {
 
             // 检查是否是 ExpressionStatement
             if (this.readAstType(lastStmt) === 'ExpressionStatement') {
-                const expr = this.readAstField(lastStmt, 'expression') as SlimeExpression
+                const expr = this.readAstField(lastStmt, 'expression') as any
 
                 // 检查是否是 CallExpression（OvsRenderFunction 转换后的结果）
                     // 将表达式包装成箭头函数：() => expr
@@ -844,7 +833,7 @@ export class OvsCstToSlimeAst extends OvsCstToSlimeAstImport {
     /**
      * 判断语句是否需要父级IIFE包裹
      */
-    protected needsParentIIFE(stmt: SlimeStatement): boolean {
+    protected needsParentIIFE(stmt: any): boolean {
         const type = this.rootAstType(stmt)
         if (type === 'VariableDeclaration') return true
         if (type === 'BlockStatement') return true
@@ -857,7 +846,7 @@ export class OvsCstToSlimeAst extends OvsCstToSlimeAstImport {
     /**
      * 判断语句是否需要响应式包裹
      */
-    protected needsReactiveWrap(stmt: SlimeStatement): boolean {
+    protected needsReactiveWrap(stmt: any): boolean {
         if (this.needsParentIIFE(stmt)) return false
         if (this.rootAstType(stmt) === 'ExpressionStatement') return false
         return true
@@ -870,17 +859,17 @@ export class OvsCstToSlimeAst extends OvsCstToSlimeAstImport {
      * 
      * 注意：ExpressionStatement 不应传入此方法，由 needsReactiveWrap 过滤
      */
-    protected wrapStatementWithReactiveExpression(stmt: SlimeStatement, _unused?: any, loc?: any): SlimeStatement {
+    protected wrapStatementWithReactiveExpression(stmt: any, _unused?: any, loc?: any): any {
         // 安全检查：ExpressionStatement 不应进入此方法
         if (this.readAstType(stmt) === 'ExpressionStatement') {
             throw new Error('wrapStatementWithReactiveExpression: ExpressionStatement should not reach here')
         }
 
         // 块形式：() => { const children = []; stmt; return children }
-        const bodyStatements: SlimeStatement[] = [
+        const bodyStatements: any[] = [
             this.createChildrenDeclaration(),
-            normalizeGeneratedAst(stmt as any) as SlimeStatement,
-            this.createReturnStatementNode(this.createIdentifierNode('children'), loc) as SlimeStatement
+            normalizeGeneratedAst(stmt as any) as any,
+            this.createReturnStatementNode(this.createIdentifierNode('children'), loc) as any
         ]
         const arrowBody = this.createBlockStatementNode(bodyStatements, loc)
 
@@ -891,7 +880,7 @@ export class OvsCstToSlimeAst extends OvsCstToSlimeAstImport {
     /**
      * 转换 OvsRenderDomViewDeclaration 为表达式或 IIFE
      */
-    protected createOvsRenderDomViewDeclarationAst(cst: OvsCst): SlimeExpression {
+    protected createOvsRenderDomViewDeclarationAst(cst: OvsCst): any {
         this.hasOvsSyntax = true
 
         const cstName = this.rootCstName(cst)
@@ -911,7 +900,7 @@ export class OvsCstToSlimeAst extends OvsCstToSlimeAstImport {
         if (idCst === null || idCst === undefined) {
             throw new Error('OvsRenderDomViewDeclaration has no identifier')
         }
-        const id = this.createIdentifierNode(this.rootIdentifierName(idCst), null) as SlimeIdentifier
+        const id = this.createIdentifierNode(this.rootIdentifierName(idCst), null) as any
 
         // 设置 loc 信息
 
@@ -919,10 +908,10 @@ export class OvsCstToSlimeAst extends OvsCstToSlimeAstImport {
         // 查找 OvsArguments 节点
         const ovsArgumentsName = 'OvsArguments'
         const ovsArgumentsCst = this.rootFindChildByName(cstChildren, ovsArgumentsName)
-        let componentProps: SlimeExpression | null = null
+        let componentProps: any = null
 
         if (ovsArgumentsCst !== null && ovsArgumentsCst !== undefined) {
-            componentProps = normalizeGeneratedAst(this.createOvsArgumentsAst(ovsArgumentsCst) as any) as SlimeExpression
+            componentProps = normalizeGeneratedAst(this.createOvsArgumentsAst(ovsArgumentsCst) as any)
         }
 
         // 进入 OvsRenderDomViewDeclaration
@@ -935,18 +924,12 @@ export class OvsCstToSlimeAst extends OvsCstToSlimeAstImport {
         try {
             const statementListName = 'StatementList'
             const statementListCst = this.rootFindChildByName(cstChildren, statementListName)
-            let bodyStatements: SlimeStatement[] = []
+            let bodyStatements: any[] = []
             if (statementListCst !== null && statementListCst !== undefined) {
                 const statements = this.createStatementListAst(statementListCst)
 
                 for (const stmt of statements) {
-                    if (Array.isArray(stmt)) {
-                        for (let index = 0; index < stmt.length; index++) {
-                            bodyStatements.push(stmt[index])
-                        }
-                    } else {
-                        bodyStatements.push(stmt)
-                    }
+                    bodyStatements.push(stmt)
                 }
             }
 
@@ -1009,19 +992,19 @@ export class OvsCstToSlimeAst extends OvsCstToSlimeAstImport {
         return undefined
     }
 
-    private createOvsBlockBodyAst(cst: OvsCst): SlimeBlockStatement {
+    private createOvsBlockBodyAst(cst: OvsCst): any {
         const statementListCst = this.findNearestStatementList(cst)
         if (statementListCst !== null && statementListCst !== undefined) {
-            return this.createBlockStatementNode(this.createStatementListAst(statementListCst), cstLocOf(cst)) as SlimeBlockStatement
+            return this.createBlockStatementNode(this.createStatementListAst(statementListCst), cstLocOf(cst)) as any
         }
-        const emptyStatements: SlimeStatement[] = []
-        return this.createBlockStatementNode(emptyStatements, cstLocOf(cst)) as SlimeBlockStatement
+        const emptyStatements: any[] = []
+        return this.createBlockStatementNode(emptyStatements, cstLocOf(cst)) as any
     }
 
     /**
      * 重写 createFunctionBodyAst：进入函数体时退出 OVS 渲染上下文
      */
-    createFunctionBodyAst(cst: OvsCst): SlimeBlockStatement {
+    createFunctionBodyAst(cst: OvsCst): any {
         const savedRenderDepth = this.ovsRenderDomViewDepth
         const savedNoRenderDepth = this.noRenderDepth
 
@@ -1042,7 +1025,7 @@ export class OvsCstToSlimeAst extends OvsCstToSlimeAstImport {
     /**
      * 重写 createConciseBodyAst：箭头函数体
      */
-    createConciseBodyAst(cst: OvsCst): SlimeBlockStatement | SlimeExpression {
+    createConciseBodyAst(cst: OvsCst): any {
         const children = this.rootCstChildren(cst)
         const first = children[0]
         let hasBlockBodyContainerChild = false

@@ -1,55 +1,51 @@
-export type SubhutiCst = any
+export type OvsCst = any
 
-export function cstNameOf(cst: SubhutiCst | undefined): string | undefined {
-    if (!cst) return undefined
-    return typeof (cst as any).getName === 'function' ? (cst as any).getName() : (cst as any).name
+import { normalizeGeneratedCst } from "cssts-compiler";
+
+declare function __qin_cst_name_of__(cst: any): any
+declare function __qin_cst_value_of__(cst: any): any
+declare function __qin_cst_children_of__(cst: any): any
+declare function __qin_cst_loc_of__(cst: any): any
+declare function __qin_collection_to_array__(value: any): any[]
+declare function __qin_ast_type_of__(node: any): any
+
+function isDescriptorText(value: any): boolean {
+    return typeof value === 'string' && value.startsWith('{__qin_accessor_descriptor=')
 }
 
-export function cstValueOf(cst: SubhutiCst | undefined): string | undefined {
-    if (!cst) return undefined
-    const value = typeof (cst as any).getValue === 'function' ? (cst as any).getValue() : (cst as any).value
-    return typeof value === 'string' ? value : undefined
+function toTextValue(value: any): string | undefined {
+    if (value === null || value === undefined || isDescriptorText(value)) return undefined
+    return '' + value
+}
+
+export function cstNameOf(cst: OvsCst | undefined): string | undefined {
+    if (cst === null || cst === undefined) return undefined
+    return toTextValue(__qin_cst_name_of__(cst))
+}
+
+export function cstValueOf(cst: OvsCst | undefined): string | undefined {
+    if (cst === null || cst === undefined) return undefined
+    return toTextValue(__qin_cst_value_of__(cst))
 }
 
 export function toArray<T = any>(value: any): T[] {
-    if (!value) return []
-    if (Array.isArray(value)) return value as T[]
-    if (Array.isArray(value.__items)) return value.__items as T[]
-    if (typeof value.size === 'function' && typeof value.get === 'function') {
-        const result: T[] = []
-        for (let i = 0; i < value.size(); i++) {
-            result.push(value.get(i))
-        }
-        return result
-    }
-    if (typeof value.size === 'number' && typeof value.get === 'function') {
-        const result: T[] = []
-        for (let i = 0; i < value.size; i++) {
-            result.push(value.get(i))
-        }
-        return result
-    }
-    if (typeof value.length === 'number') {
-        const result: T[] = []
-        for (let i = 0; i < value.length; i++) {
-            result.push(value[i])
-        }
-        return result
-    }
-    if (typeof value[Symbol.iterator] === 'function') {
-        return Array.from(value) as T[]
-    }
-    return []
+    return __qin_collection_to_array__(value) as T[]
 }
 
-export function cstChildrenOf(cst: SubhutiCst | undefined): SubhutiCst[] {
-    if (!cst) return []
-    const children = typeof (cst as any).getChildren === 'function'
-        ? (cst as any).getChildren()
-        : (cst as any).children
-    return toArray<SubhutiCst>(children)
+export function cstChildrenOf(cst: OvsCst | undefined): OvsCst[] {
+    if (cst === null || cst === undefined) return []
+    return toArray<OvsCst>(__qin_cst_children_of__(cst)).map(child => {
+        const astType = __qin_ast_type_of__(child)
+        if (astType !== null && astType !== undefined && ('' + astType).length > 0) return child
+        return normalizeGeneratedCst(child)
+    })
 }
 
-export function isCstNamed(cst: SubhutiCst | undefined, name: string): boolean {
+export function cstLocOf(cst: OvsCst | undefined): any {
+    if (cst === null || cst === undefined) return undefined
+    return __qin_cst_loc_of__(cst)
+}
+
+export function isCstNamed(cst: OvsCst | undefined, name: string): boolean {
     return cstNameOf(cst) === name
 }

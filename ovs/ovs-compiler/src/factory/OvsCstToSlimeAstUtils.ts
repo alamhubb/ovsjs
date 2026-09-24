@@ -15,10 +15,10 @@
 // Re-export all from the new architecture
 export { OvsCstToSlimeAstUtils, registerOvsCstToSlimeAst } from './OvsCstToSlimeAst/OvsCstToSlimeAst'
 
-import type { SubhutiCst } from './OvsCstToSlimeAst/cst-utils'
+import { cstNameOf, type OvsCst } from './OvsCstToSlimeAst/cst-utils'
 
-export function checkCstName(cst: SubhutiCst, cstName: string) {
-    const actualName = typeof (cst as any).getName === 'function' ? (cst as any).getName() : (cst as any).name
+export function checkCstName(cst: OvsCst, cstName: string) {
+    const actualName = cstNameOf(cst)
     if (actualName !== cstName) {
         console.log(cst)
         throwNewError(`Expected ${cstName}, got ${actualName}`)

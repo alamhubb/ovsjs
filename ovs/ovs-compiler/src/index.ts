@@ -16,6 +16,7 @@ console.error(`[ovs-compiler] version: ${OVS_COMPILER_VERSION}`)
 import { SlimeGenerator, SlimeCodeMapping, type SlimeGeneratorResult } from "slime-generator";
 import OvsParser from "./parser/OvsParser.ts";
 import { OvsCstToSlimeAstUtils } from "./factory/OvsCstToSlimeAstUtils.ts";
+import { OvsCstToSlimeAst, registerOvsCstToSlimeAst } from "./factory/OvsCstToSlimeAst/OvsCstToSlimeAst.ts";
 import {
     type SlimeProgram,
     type SlimeStatement,
@@ -29,7 +30,7 @@ import {
 } from "slime-ast";
 import { SubhutiMatchToken } from "subhuti";
 import { registerSlimeCstToAstUtil, type SlimeCstToAst } from "@qin/generated-qin-parser-ts/SlimeCstToAstBridge";
-import { CsstsInit, normalizeGeneratedAst, normalizeGeneratedCst } from "cssts-compiler";
+import { CsstsInit, normalizeGeneratedAst, normalizeGeneratedCst, registerCssTsCstToAst } from "cssts-compiler";
 
 // ==================== 内部工具函数 ====================
 
@@ -324,7 +325,7 @@ function wrapTopLevelExpressions(ast: SlimeProgram, sourceCode: string): SlimePr
 // ==================== 导出的 API ====================
 
 export interface ovsTransformBaseResult {
-    ast: SlimeProgram
+    ast: SlimeProgram | null
     tokens: SubhutiMatchToken[]
 }
 
@@ -335,30 +336,61 @@ function ovsNow(): number {
 }
 
 function createOvsTransformProfiler(enabled?: boolean): OvsTransformProfileCheckpoint | undefined {
-    if (!enabled) return undefined
+    if (enabled !== true) return undefined
     return (phase: string, started: number, detail?: string) => {
-        const suffix = detail ? " :: " + detail : ""
+        const hasDetail = detail !== null && detail !== undefined && detail !== ""
+        const suffix = hasDetail ? " :: " + detail : ""
         console.log("[QinProfile] ovs-compiler " + phase + " +" + (ovsNow() - started) + "ms" + suffix)
     }
 }
 
 function emitOvsTransformProfile(profile: OvsTransformProfileCheckpoint | undefined, phase: string, started: number, detail?: string): void {
-    if (profile) profile(phase, started, detail)
+    if (profile !== null && profile !== undefined) profile(phase, started, detail)
+}
+
+function ovsTokenCount(tokens: SubhutiMatchToken[]): number {
+    return tokens.length
+}
+
+function ovsProgramBodyCount(ast: SlimeProgram | null): number {
+    if (ast === null || ast === undefined) return 0
+    const body = ast.body
+    if (body === null || body === undefined) return 0
+    return body.length
+}
+
+function createOvsCstToSlimeAst(): any {
+    const instance = new OvsCstToSlimeAst()
+    console.error("[QinProfile] create-ovs-helper register-cssts-start")
+    registerCssTsCstToAst(instance as any)
+    console.error("[QinProfile] create-ovs-helper register-cssts-done")
+    console.error("[QinProfile] create-ovs-helper register-ovs-start")
+    registerOvsCstToSlimeAst(instance)
+    console.error("[QinProfile] create-ovs-helper register-ovs-done")
+    return instance
 }
 
 function ovsTransformFileWithProfile(code: string, profile?: OvsTransformProfileCheckpoint): ovsTransformBaseResult {
     const parseStarted = ovsNow()
     const parser = new OvsParser(code)
     let curCst = normalizeGeneratedCst(parser.OvsProgram())
-    const tokens = parser.parsedTokens
-    emitOvsTransformProfile(profile, "parse+cst", parseStarted, "tokens=" + tokens.length + ", chars=" + code.length)
-    const cacheStats = typeof (parser as any).getCacheStats === "function" ? (parser as any).getCacheStats() : ""
-    if (cacheStats) emitOvsTransformProfile(profile, "parser-cache", parseStarted, cacheStats)
-    if (!tokens.length) return { ast: null, tokens: tokens }
+    const tokens = parser.getParsedTokens()
+    const tokenCount = ovsTokenCount(tokens)
+    emitOvsTransformProfile(profile, "parse+cst", parseStarted, "tokens=" + tokenCount + ", chars=" + code.length)
+    if (profile !== null && profile !== undefined) {
+        const cacheStats = parser.getCacheStats()
+        if (cacheStats !== null && cacheStats !== undefined && cacheStats !== "") {
+            emitOvsTransformProfile(profile, "parser-cache", parseStarted, cacheStats)
+        }
+    }
+    if (tokenCount === 0) return { ast: null, tokens: tokens }
 
     const astStarted = ovsNow()
-    let ast = normalizeGeneratedAst(OvsCstToSlimeAstUtils.toFileAst(curCst))
-    emitOvsTransformProfile(profile, "cst-to-ast", astStarted, "body=" + ((ast as any)?.body?.length ?? 0))
+    console.error("[QinProfile] create-ovs-helper file-start")
+    const ovsCstToSlimeAst: any = createOvsCstToSlimeAst()
+    console.error("[QinProfile] create-ovs-helper file-after-helper")
+    let ast = normalizeGeneratedAst(ovsCstToSlimeAst.toOvsFileAst(curCst))
+    emitOvsTransformProfile(profile, "cst-to-ast", astStarted, "body=" + ovsProgramBodyCount(ast))
     return { ast, tokens }
 }
 
@@ -371,9 +403,10 @@ function ovsTransformFileWithProfile(code: string, profile?: OvsTransformProfile
 export function ovsTransformBase(code: string): ovsTransformBaseResult {
     const parser = new OvsParser(code)
     let curCst = normalizeGeneratedCst(parser.OvsProgram())
-    const tokens = parser.parsedTokens
-    if (!tokens.length) return { ast: null, tokens: tokens }
-    let ast = normalizeGeneratedAst(OvsCstToSlimeAstUtils.toProgram(curCst))
+    const tokens = parser.getParsedTokens()
+    if (ovsTokenCount(tokens) === 0) return { ast: null, tokens: tokens }
+    const ovsCstToSlimeAst: any = createOvsCstToSlimeAst()
+    let ast = normalizeGeneratedAst(ovsCstToSlimeAst.toOvsProgram(curCst))
     return { ast, tokens }
 }
 
@@ -399,46 +432,77 @@ export interface VitePluginOvsTransformOptions {
 
 /** Vite 插件专用的 OVS 代码转换 */
 export function vitePluginOvsTransform(code: string, options?: VitePluginOvsTransformOptions): SlimeGeneratorResult {
-    const profile = createOvsTransformProfiler(options?.profile)
+    const hasOptions = options !== null && options !== undefined
+    const profile = createOvsTransformProfiler(hasOptions && options.profile === true)
+    const csstsOptions = hasOptions && options.cssts !== null && options.cssts !== undefined ? options.cssts : {}
+    const globalStyles = hasOptions ? options.globalStyles : undefined
     const initStarted = ovsNow()
-    CsstsInit.init(Object.assign({}, options?.cssts ?? {}, {
+    CsstsInit.init(Object.assign({}, csstsOptions, {
         dts: false,
-        usedStyles: options?.globalStyles
+        usedStyles: globalStyles
     }) as any)
     emitOvsTransformProfile(profile, "cssts-init", initStarted)
 
     // 确保 OvsCstToSlimeAst 被注册（防止被其他模块覆盖，如 cssts-compiler 的 transformCssTs）
+    const createStarted = ovsNow()
+    emitOvsTransformProfile(profile, "ovs-ast-create-start", createStarted)
+    let ovsCstToSlimeAst: any
+    try {
+        ovsCstToSlimeAst = createOvsCstToSlimeAst()
+    } catch (error) {
+        console.error("[QinProfile] ovs-ast-create failed", error)
+        throw error
+    }
+    emitOvsTransformProfile(profile, "ovs-ast-create", createStarted)
     const registerStarted = ovsNow()
-    registerSlimeCstToAstUtil(OvsCstToSlimeAstUtils as unknown as SlimeCstToAst)
+    emitOvsTransformProfile(profile, "ovs-ast-register-start", registerStarted)
+    registerOvsCstToSlimeAst(ovsCstToSlimeAst)
+    emitOvsTransformProfile(profile, "ovs-ast-register", registerStarted)
+    registerSlimeCstToAstUtil(ovsCstToSlimeAst as unknown as SlimeCstToAst)
     emitOvsTransformProfile(profile, "register-cst-to-ast", registerStarted)
 
     // 转换前清空 usedAtoms
     const clearStarted = ovsNow()
-    OvsCstToSlimeAstUtils.clearUsedAtoms()
+    try {
+        console.error("[QinProfile] create-ovs-helper clear-start")
+        ovsCstToSlimeAst.clearUsedAtoms()
+        console.error("[QinProfile] create-ovs-helper clear-done")
+    } catch (error) {
+        console.error("[QinProfile] ovs-clear-used-atoms failed", error)
+        throw error
+    }
     emitOvsTransformProfile(profile, "clear-used-atoms", clearStarted)
 
     // 使用 toFileAst 进行完整转换（包含导入处理和组件包装）
     const transformStarted = ovsNow()
+    console.error("[QinProfile] transform-call-start", typeof ovsTransformFileWithProfile)
     let codeResult = ovsTransformFileWithProfile(code, profile)
+    console.error("[QinProfile] transform-call-done")
     emitOvsTransformProfile(profile, "ovs-transform-file", transformStarted)
     let ast = codeResult.ast
-    if (!ast) return { code: '', mapping: [] }
+    if (ast === null || ast === undefined) return { code: '', mapping: [] }
 
     // 把收集到的 usedAtoms 写入共享的 globalStyles
-    if (options?.globalStyles) {
+    if (globalStyles !== null && globalStyles !== undefined) {
         const atomsStarted = ovsNow()
-        const usedAtoms = OvsCstToSlimeAstUtils.getUsedAtoms()
+        const usedAtoms = ovsCstToSlimeAst.getUsedAtoms()
         for (const atom of usedAtoms) {
-            options.globalStyles.add(atom)
+            globalStyles.add(atom)
         }
         emitOvsTransformProfile(profile, "collect-used-atoms", atomsStarted, "atoms=" + usedAtoms.size)
     }
 
     const generatorStarted = ovsNow()
     const result = SlimeGenerator.generator(ast, codeResult.tokens)
-    emitOvsTransformProfile(profile, "slime-generator", generatorStarted, "tokens=" + codeResult.tokens.length)
+    emitOvsTransformProfile(profile, "slime-generator", generatorStarted, "tokens=" + ovsTokenCount(codeResult.tokens))
     const mappingStarted = ovsNow()
-    result.mapping = result.mapping.filter(m => m.source && m.source.value && m.source.value !== '' && m.source.length > 0)
+    result.mapping = result.mapping.filter(m =>
+        m.source !== null &&
+        m.source !== undefined &&
+        m.source.value !== null &&
+        m.source.value !== undefined &&
+        m.source.value !== '' &&
+        m.source.length > 0)
     emitOvsTransformProfile(profile, "mapping-filter", mappingStarted, "mapping=" + result.mapping.length)
     return result
 }

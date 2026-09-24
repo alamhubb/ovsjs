@@ -1,17 +1,7 @@
-import OvsParser from "../../parser/OvsParser"
-import {
-    SlimeAstTypeName,
-    type SlimeExpression,
-    type SlimeExpressionStatement,
-    type SlimeStatement,
-    SlimeAstCreateUtils,
-    SlimeTokenCreateUtils
-} from "slime-ast"
-import { QinParser as SlimeParser } from "@qin/generated-qin-parser-ts"
 import { normalizeGeneratedAst } from "cssts-compiler"
 import { OvsCstToSlimeAstProperty } from "./OvsCstToSlimeAst.Property"
 import { checkCstName } from "../OvsCstToSlimeAstUtils"
-import { cstChildrenOf, cstNameOf, cstValueOf, isCstNamed, type SubhutiCst } from "./cst-utils"
+import { cstChildrenOf, cstLocOf, cstNameOf, cstValueOf, isCstNamed, type OvsCst } from "./cst-utils"
 
 /**
  * OVS 语句转换层
@@ -25,51 +15,36 @@ import { cstChildrenOf, cstNameOf, cstValueOf, isCstNamed, type SubhutiCst } fro
 export abstract class OvsCstToSlimeAstStatement extends OvsCstToSlimeAstProperty {
 
     // 需要从主类访问的状态变量（声明为abstract）
-    protected abstract hasOvsSyntax: boolean
-    protected abstract ovsRenderDomViewDepth: number
-    protected abstract noRenderDepth: number
-
     // 需要从主类访问的抽象方法
-    protected abstract createOvsRenderDomViewDeclarationAst(cst: SubhutiCst): SlimeExpression
-    protected abstract findOvsRenderFunction(cst: SubhutiCst): boolean
-    protected abstract isSideEffectExpression(expr: SlimeExpression): boolean
-    protected abstract needsReactiveWrap(stmt: SlimeStatement): boolean
-    protected abstract wrapStatementWithReactiveExpression(stmt: SlimeStatement, _unused?: any, loc?: any): SlimeStatement
+    protected abstract createOvsRenderDomViewDeclarationAst(cst: OvsCst): any
+    protected abstract findOvsRenderFunction(cst: OvsCst): boolean
+    protected abstract isSideEffectExpression(expr: any): boolean
+    protected abstract needsReactiveWrap(stmt: any): boolean
+    protected abstract wrapStatementWithReactiveExpression(stmt: any, _unused?: any, loc?: any): any
+    protected abstract enterNoRenderBlock(): void
+    protected abstract leaveNoRenderBlock(): void
+    protected abstract isInsideOvsRenderDomView(): boolean
+    protected abstract isInsideNoRenderBlock(): boolean
+    protected abstract shouldWrapRenderContext(): boolean
 
-    private readCstName(cst: SubhutiCst | undefined): string | undefined {
+    private readCstName(cst: OvsCst | undefined): string | undefined {
         return cstNameOf(cst)
     }
 
-    private readCstChildren(cst: SubhutiCst | undefined): SubhutiCst[] {
+    private readCstChildren(cst: OvsCst | undefined): OvsCst[] {
         return cstChildrenOf(cst)
     }
 
-    private hasCstName(cst: SubhutiCst | undefined, name: string): boolean {
+    private hasCstName(cst: OvsCst | undefined, name: string): boolean {
         return isCstNamed(cst, name)
     }
 
-    private readAstType(node: any): string | undefined {
-        const rawType = node?.type
-        if (typeof rawType === 'string') return rawType
-        const value = typeof rawType === 'function' ? rawType.call(node) : rawType
-        if (typeof value === 'string') return value
-        const enumName = typeof value?.name === 'function' ? value.name() : value?.__qinEnumName
-        if (typeof enumName === 'string' && enumName.length > 0) {
-            return enumName.split('_').filter(Boolean).map(part => {
-                if (part === 'TS') return 'TS'
-                const lower = part.toLowerCase()
-                return lower.slice(0, 1).toUpperCase() + lower.slice(1)
-            }).join('')
-        }
-        return undefined
-    }
-
-    private findFirstCst(cst: SubhutiCst | undefined, name: string): SubhutiCst | undefined {
-        if (!cst) return undefined
+    private findFirstCst(cst: OvsCst | undefined, name: string): OvsCst | undefined {
+        if (cst === null || cst === undefined) return undefined
         if (this.readCstName(cst) === name) return cst
         for (const child of this.readCstChildren(cst)) {
             const found = this.findFirstCst(child, name)
-            if (found) return found
+            if (found !== null && found !== undefined) return found
         }
         return undefined
     }
@@ -109,50 +84,54 @@ export abstract class OvsCstToSlimeAstStatement extends OvsCstToSlimeAstProperty
             || name === 'OvsRenderFunction'
     }
 
-    private blockFromStatements(statements: SlimeStatement[], loc: any): SlimeStatement {
-        return SlimeAstCreateUtils.createBlockStatement(
-            statements,
-            loc,
-            SlimeTokenCreateUtils.createLBraceToken(loc),
-            SlimeTokenCreateUtils.createRBraceToken(loc)
-        ) as SlimeStatement
+    private blockFromStatements(statements: any[], loc: any): any {
+        return this.createBlockStatementNode(statements, loc) as any
     }
 
-    private createIfBodyStatementAst(cst: SubhutiCst | undefined): SlimeStatement | null {
-        if (!cst) return null
-        const name = this.readCstName(cst)
-        if (!name) return null
+    private createIfBodyStatementAst(cst: OvsCst | undefined): any | null {
+        if (cst === null || cst === undefined) return null
+        const name: string = this.readCstName(cst) as string
+        if (name === null || name === undefined || name.length === 0) return null
 
         if (name === 'IfStatementBody') {
             const statementList = this.findFirstCst(cst, 'StatementList')
-            if (statementList) {
-                return this.blockFromStatements(this.createStatementListAst(statementList), cst.loc)
+            if (statementList !== null && statementList !== undefined) {
+                return this.blockFromStatements(this.createStatementListAst(statementList), cstLocOf(cst))
             }
-            for (const child of this.readCstChildren(cst)) {
+            const children: OvsCst[] = this.readCstChildren(cst)
+            for (let index = 0; index < children.length; index++) {
+                const child = children[index]
                 const body = this.createIfBodyStatementAst(child)
-                if (body) return body
+                if (body !== null && body !== undefined) return body
             }
             return null
         }
 
         if (name === 'Block' || name === 'BlockStatement') {
             const statementList = this.findFirstCst(cst, 'StatementList')
-            return this.blockFromStatements(statementList ? this.createStatementListAst(statementList) : [], cst.loc)
+            const statements = statementList !== null && statementList !== undefined
+                ? this.createStatementListAst(statementList)
+                : []
+            return this.blockFromStatements(statements, cstLocOf(cst))
         }
 
         if (name === 'Statement' || name === 'StatementListItem' || name === 'Declaration' || name === 'OvsRenderStatement'
             || name === 'ExpressionStatement' || name === 'ReturnStatement' || name === 'IfStatement'
             || name === 'VariableStatement' || name === 'LexicalDeclaration' || name === 'VariableDeclaration') {
-            const result = this.createStatementListItemAst(cst)
-            const statements = Array.isArray(result) ? result : [result as any]
+            const statements: any[] = this.createStatementListItemAst(cst)
             if (statements.length === 0) return null
-            return statements.length === 1 ? statements[0] : this.blockFromStatements(statements, cst.loc)
+            return statements.length === 1 ? statements[0] : this.blockFromStatements(statements, cstLocOf(cst))
         }
 
         return null
     }
 
-    createExpressionAst(cst: SubhutiCst): SlimeExpression {
+    createExpressionAst(cst: OvsCst): any {
+        const existingAstType = this.readAstType(cst as any)
+        if (existingAstType !== null && existingAstType !== undefined && existingAstType.length > 0) {
+            return normalizeGeneratedAst(cst as any)
+        }
+
         const astName = this.readCstName(cst)
         let left
         if (astName === 'OvsRenderFunction') {
@@ -165,13 +144,12 @@ export abstract class OvsCstToSlimeAstStatement extends OvsCstToSlimeAstProperty
         return left
     }
 
-    createReturnStatementAst(cst: SubhutiCst): SlimeStatement {
+    createReturnStatementAst(cst: OvsCst): any {
         const render = this.findFirstCst(cst, 'OvsRenderFunction')
-        if (render) {
-            return SlimeAstCreateUtils.createReturnStatement(
-                this.createOvsRenderDomViewDeclarationAst(render),
-                cst.loc
-            ) as SlimeStatement
+        if (render !== null && render !== undefined) {
+            return this.createReturnStatementNode(
+                this.createOvsRenderDomViewDeclarationAst(render)
+            ) as any
         }
         return super.createReturnStatementAst(cst)
     }
@@ -179,47 +157,51 @@ export abstract class OvsCstToSlimeAstStatement extends OvsCstToSlimeAstProperty
     /**
      * Override: 处理 StatementList，支持 NoRenderBlock
      */
-    createIfStatementAst(cst: SubhutiCst): SlimeStatement {
-        let test: SlimeExpression | null = null
-        let consequent: SlimeStatement | null = null
-        let alternate: SlimeStatement | null = null
+    createIfStatementAst(cst: OvsCst): any {
+        let test: any | null = null
+        let consequent: any | null = null
+        let alternate: any | null = null
         let sawElse = false
 
-        for (const child of this.readCstChildren(cst)) {
-            const name = this.readCstName(child)
-            if (name === 'Else' || cstValueOf(child) === 'else') {
+        const children: OvsCst[] = this.readCstChildren(cst)
+        for (let index = 0; index < children.length; index++) {
+            const child = children[index]
+            const name: string = this.readCstName(child) as string
+            const value: string = cstValueOf(child) as string
+            if (name === 'Else' || value === 'else') {
                 sawElse = true
                 continue
             }
-            if (!test && this.isExpressionCstName(name)) {
-                test = normalizeGeneratedAst((this as any).createExpressionAst(child) as any) as SlimeExpression
+            if (test === null && this.isExpressionCstName(name)) {
+                test = normalizeGeneratedAst(this.createExpressionAst(child) as any) as any
                 continue
             }
             const body = this.createIfBodyStatementAst(child)
-            if (!body) continue
-            if (!sawElse && !consequent) {
+            if (body === null || body === undefined) continue
+            if (!sawElse && consequent === null) {
                 consequent = body
-            } else if (sawElse && !alternate) {
+            } else if (sawElse && alternate === null) {
                 alternate = body
             }
         }
 
-        if (!test) {
+        if (test === null) {
             throw new Error('IfStatement has no test expression')
         }
 
-        return SlimeAstCreateUtils.createIfStatement(
+        return normalizeGeneratedAst({
+            type: 'IfStatement',
             test,
-            consequent || this.blockFromStatements([], cst.loc),
+            consequent: consequent === null ? this.blockFromStatements([], undefined) : consequent,
             alternate,
-            cst.loc
-        ) as SlimeStatement
+            loc: null
+        } as any) as any
     }
 
-    createStatementListAst(cst: SubhutiCst): SlimeStatement[] {
-        checkCstName(cst, SlimeParser.prototype.StatementList.name)
+    createStatementListAst(cst: OvsCst): any[] {
+        checkCstName(cst, 'StatementList')
 
-        const statements: SlimeStatement[] = []
+        const statements: any[] = []
 
         const children = this.readCstChildren(cst)
         if (children.length === 0) return statements
@@ -229,10 +211,10 @@ export abstract class OvsCstToSlimeAstStatement extends OvsCstToSlimeAstProperty
             const stmts = this.createStatementListItemAst(child)
 
             // 展开数组
-            if (Array.isArray(stmts)) {
-                statements.push(...stmts)
-            } else {
-                statements.push(stmts as any)
+            if (stmts.length > 0) {
+                for (let index = 0; index < stmts.length; index++) {
+                    statements.push(stmts[index])
+                }
             }
         }
 
@@ -242,12 +224,20 @@ export abstract class OvsCstToSlimeAstStatement extends OvsCstToSlimeAstProperty
     /**
      * Override: 处理 StatementListItem，支持 OvsRenderStatement 和 NoRenderBlock
      */
-    createStatementListItemAst(cst: SubhutiCst): SlimeStatement[] {
-        const name = this.readCstName(cst)
-        const children = this.readCstChildren(cst)
+    createStatementListItemAst(cst: OvsCst): any[] {
+        const name: string = this.readCstName(cst) as string
+        const children: OvsCst[] = this.readCstChildren(cst)
         const isWrapper = name === 'ModuleItem' || name === 'StatementListItem' || name === 'Statement'
         const isStatementNode = name === 'Statement'
-        const isOvsStatementWrapper = name === 'Statement' && children.some(child => this.hasCstName(child, 'OvsRenderStatement') || this.hasCstName(child, 'NoRenderBlock'))
+        let hasOvsStatementChild = false
+        for (let index = 0; index < children.length; index++) {
+            const child = children[index]
+            if (this.hasCstName(child, 'OvsRenderStatement') || this.hasCstName(child, 'NoRenderBlock')) {
+                hasOvsStatementChild = true
+                break
+            }
+        }
+        const isOvsStatementWrapper = name === 'Statement' && hasOvsStatementChild
         const isDirectStatementListItemChild = name === 'Declaration'
             || name === 'VariableStatement'
             || name === 'LexicalDeclaration'
@@ -271,7 +261,7 @@ export abstract class OvsCstToSlimeAstStatement extends OvsCstToSlimeAstProperty
             || name === 'LabelledStatement'
             || name === 'SwitchStatement'
         if (!isWrapper && !isStatementNode && !isDirectStatementListItemChild) {
-            checkCstName(cst, SlimeParser.prototype.StatementListItem.name)
+            checkCstName(cst, 'StatementListItem')
         }
 
         if (children.length === 0 && !isDirectStatementListItemChild && !isOvsStatementWrapper) {
@@ -279,18 +269,21 @@ export abstract class OvsCstToSlimeAstStatement extends OvsCstToSlimeAstProperty
         }
 
         if (isWrapper || isOvsStatementWrapper) {
-            const collected: SlimeStatement[] = []
-            for (const child of children) {
+            const collected: any[] = []
+            for (let index = 0; index < children.length; index++) {
+                const child = children[index]
                 const result = this.createStatementListItemAst(child)
-                collected.push(...(Array.isArray(result) ? result : [result]))
+                for (let resultIndex = 0; resultIndex < result.length; resultIndex++) {
+                    collected.push(result[resultIndex])
+                }
             }
-            return this.wrapRenderContextStatements(collected, cst.loc)
+            return this.wrapRenderContextStatements(collected, cstLocOf(cst))
         }
 
         const child = cst
 
         if (this.hasCstName(child, 'OvsRenderStatement')) {
-            return this.createOvsRenderStatementAst(child, cst.loc)
+            return this.createOvsRenderStatementAst(child, cstLocOf(cst))
         }
 
         if (this.hasCstName(child, 'ExpressionStatement')) {
@@ -302,53 +295,57 @@ export abstract class OvsCstToSlimeAstStatement extends OvsCstToSlimeAstProperty
         }
 
         if (this.hasCstName(child, 'IfStatement')) {
-            return this.wrapRenderContextStatements([this.createIfStatementAst(child)], cst.loc)
+            return this.wrapRenderContextStatements([this.createIfStatementAst(child)], cstLocOf(cst))
         }
 
         if (this.hasCstName(child, 'VariableStatement') || this.hasCstName(child, 'LexicalDeclaration') || this.hasCstName(child, 'VariableDeclaration')) {
-            return [this.wrapRenderContextStatement((this as any).createVariableDeclarationAst(child), cst.loc)]
+            return [this.wrapRenderContextStatement((this as any).createVariableDeclarationAst(child), cstLocOf(cst))]
         }
 
         if (this.hasCstName(child, 'Declaration')) {
             const declaration = (this as any).createDeclarationAst(child)
-            return declaration ? [this.wrapRenderContextStatement(declaration, cst.loc)] : []
+            return declaration !== null && declaration !== undefined
+                ? [this.wrapRenderContextStatement(declaration, cstLocOf(cst))]
+                : []
         }
 
         // 检查是否是 Statement
         if (this.hasCstName(child, 'Statement')) {
-            const statementChild = this.readCstChildren(child)[0]
+            const statementChildren: OvsCst[] = this.readCstChildren(child)
+            const statementChild = statementChildren[0]
 
             // 处理 OvsRenderStatement - 语句版本的 OVS 渲染
             if (this.hasCstName(statementChild, 'OvsRenderStatement')) {
-                return this.createOvsRenderStatementAst(statementChild, cst.loc)
+                return this.createOvsRenderStatementAst(statementChild, cstLocOf(cst))
             }
 
             // 处理 NoRenderBlock - 展开处理
             if (this.hasCstName(statementChild, 'NoRenderBlock')) {
                 // 识别为 NoRenderBlock，展开处理
-                this.noRenderDepth++
+                this.enterNoRenderBlock()
 
                 try {
                     // 找到内部的 StatementList
-                    const innerList = this.readCstChildren(statementChild).find(
-                        c => this.readCstName(c) === 'StatementList'
-                    )
-
-                    if (innerList) {
-                        // 递归处理内部语句，直接展开
-                        const innerStatements = this.createStatementListAst(innerList)
-
-                        // 给所有子语句添加 NoRenderBlock 标记，用于父级 IIFE 判断
-                        for (const stmt of innerStatements) {
-                            (stmt as any)._isFromNoRenderBlock = true
+                    const noRenderChildren: OvsCst[] = this.readCstChildren(statementChild)
+                    let innerList: OvsCst | undefined = undefined
+                    for (let index = 0; index < noRenderChildren.length; index++) {
+                        const noRenderChild = noRenderChildren[index]
+                        const noRenderChildName: string = this.readCstName(noRenderChild) as string
+                        if (noRenderChildName === 'StatementList') {
+                            innerList = noRenderChild
+                            break
                         }
+                    }
 
-                        return innerStatements  // 返回数组（会被展开）
+                    if (innerList !== null && innerList !== undefined) {
+                        // NoRenderBlock stays a standard BlockStatement instead of adding dynamic marker fields.
+                        const innerStatements = this.createStatementListAst(innerList)
+                        return [this.blockFromStatements(innerStatements, cstLocOf(cst))]
                     }
 
                     return []
                 } finally {
-                    this.noRenderDepth--
+                    this.leaveNoRenderBlock()
                 }
             }
         }
@@ -358,50 +355,45 @@ export abstract class OvsCstToSlimeAstStatement extends OvsCstToSlimeAstProperty
         const stmts = baseResult == null ? [] : Array.isArray(baseResult) ? baseResult : [baseResult]
 
         // 在渲染上下文中（div {} 内且非 #{} 内），对控制流语句进行响应式包裹
-        return this.wrapRenderContextStatements(stmts, cst.loc)
+        return this.wrapRenderContextStatements(stmts, cstLocOf(cst))
     }
 
-    private wrapRenderContextStatements(stmts: SlimeStatement[], loc: any): SlimeStatement[] {
-        if (this.ovsRenderDomViewDepth <= 0 || this.noRenderDepth !== 0) {
+    private wrapRenderContextStatements(stmts: any[], loc: any): any[] {
+        if (!this.shouldWrapRenderContext()) {
             return stmts
         }
-        return stmts.map((stmt: SlimeStatement) => this.wrapRenderContextStatement(stmt, loc))
+        const wrapped: any[] = []
+        for (let index = 0; index < stmts.length; index++) {
+            wrapped.push(this.wrapRenderContextStatement(stmts[index], loc))
+        }
+        return wrapped
     }
 
-    private wrapRenderContextStatement(stmt: SlimeStatement, loc: any): SlimeStatement {
-        if (this.ovsRenderDomViewDepth > 0 && this.noRenderDepth === 0 && this.needsReactiveWrap(stmt)) {
+    private wrapRenderContextStatement(stmt: any, loc: any): any {
+        if (this.shouldWrapRenderContext() && this.needsReactiveWrap(stmt)) {
             return this.wrapStatementWithReactiveExpression(stmt, null, loc)
         }
         return stmt
     }
 
-    private createOvsRenderStatementAst(statementChild: SubhutiCst, loc: any): SlimeExpressionStatement[] {
+    private createOvsRenderStatementAst(statementChild: OvsCst, loc: any): any[] {
         const expr = this.createOvsRenderDomViewDeclarationAst(statementChild)
 
-        if (this.ovsRenderDomViewDepth > 0) {
-            const pushCall = SlimeAstCreateUtils.createCallExpression(
-                SlimeAstCreateUtils.createMemberExpression(
-                    SlimeAstCreateUtils.createIdentifier('children'),
-                    SlimeTokenCreateUtils.createDotToken(loc),
-                    SlimeAstCreateUtils.createIdentifier('push')
+        if (this.isInsideOvsRenderDomView()) {
+            const pushCall = this.createCallExpressionNode(
+                this.createMemberExpressionNode(
+                    this.createIdentifierNode('children'),
+                    this.createDotToken(loc),
+                    this.createIdentifierNode('push'),
+                    loc
                 ),
-                this.createCallArguments([expr])
-            )
-            if (loc) {
-                pushCall.loc = loc
-            }
-            return [{
-                type: SlimeAstTypeName.ExpressionStatement,
-                expression: pushCall,
+                this.createCallArguments([expr]),
                 loc
-            } as SlimeExpressionStatement]
+            )
+            return [this.createExpressionStatementNode(pushCall, loc) as any]
         }
 
-        return [{
-            type: SlimeAstTypeName.ExpressionStatement,
-            expression: expr,
-            loc
-        } as SlimeExpressionStatement]
+        return [this.createExpressionStatementNode(expr, loc) as any]
     }
 
     /**
@@ -410,7 +402,12 @@ export abstract class OvsCstToSlimeAstStatement extends OvsCstToSlimeAstProperty
      * 添加对 OvsRenderFunction 的支持
      * OvsRenderFunction 在 OvsParser 中被放在 PrimaryExpression 层级
      */
-    createPrimaryExpressionAst(cst: SubhutiCst): SlimeExpression {
+    createPrimaryExpressionAst(cst: OvsCst): any {
+        const existingAstType = this.readAstType(cst as any)
+        if (existingAstType !== null && existingAstType !== undefined && existingAstType.length > 0) {
+            return normalizeGeneratedAst(cst as any)
+        }
+
         const first = this.readCstChildren(cst)[0]
 
         // 处理 OvsRenderFunction
@@ -422,7 +419,7 @@ export abstract class OvsCstToSlimeAstStatement extends OvsCstToSlimeAstProperty
         return super.createPrimaryExpressionAst(cst)
     }
 
-    private expressionStatementExpressionCst(cst: SubhutiCst): SubhutiCst {
+    private expressionStatementExpressionCst(cst: OvsCst): OvsCst {
         let current = cst
         let children = this.readCstChildren(current)
 
@@ -431,11 +428,25 @@ export abstract class OvsCstToSlimeAstStatement extends OvsCstToSlimeAstProperty
             children = this.readCstChildren(current)
         }
 
-        const expression = children.find(child => this.hasCstName(child, 'Expression')) || children.find(child => {
-            const name = this.readCstName(child)
-            return name !== 'Semicolon' && name !== 'SemicolonASI'
-        })
-        if (!expression) {
+        let expression: OvsCst | undefined = undefined
+        for (let index = 0; index < children.length; index++) {
+            const child = children[index]
+            if (this.hasCstName(child, 'Expression')) {
+                expression = child
+                break
+            }
+        }
+        if (expression === null || expression === undefined) {
+            for (let index = 0; index < children.length; index++) {
+                const child = children[index]
+                const name = this.readCstName(child)
+                if (name !== 'Semicolon' && name !== 'SemicolonASI') {
+                    expression = child
+                    break
+                }
+            }
+        }
+        if (expression === null || expression === undefined) {
             throw new Error('ExpressionStatement has no expression')
         }
         return expression
@@ -451,51 +462,39 @@ export abstract class OvsCstToSlimeAstStatement extends OvsCstToSlimeAstProperty
      * - 在 div {} 内（ovsRenderDomViewDepth > 0）：渲染
      * - 其他：保持原样（不渲染）
      */
-    createExpressionStatementAst(cst: SubhutiCst): SlimeExpressionStatement | any {
+    createExpressionStatementAst(cst: OvsCst): any {
         const exprCst = this.expressionStatementExpressionCst(cst)
 
         // 检查是否包含 OvsRenderFunction（递归查找）
         const isOvsRenderFunction = this.findOvsRenderFunction(exprCst)
 
-        const expr = normalizeGeneratedAst((this as any).createExpressionAst(exprCst) as any) as SlimeExpression
+        const expr: any = normalizeGeneratedAst(this.createExpressionFromCstOrAst(exprCst) as any)
 
         // 判断逻辑
-        if (this.ovsRenderDomViewDepth > 0) {
+        if (this.isInsideOvsRenderDomView()) {
             // 在 div {} 内
 
             // 1. OvsRenderFunction → 永远渲染（优先级最高）
             if (isOvsRenderFunction) {
-                return this.createRenderExpressionStatement(expr, cst.loc)
+                return this.createRenderExpressionStatement(expr, cstLocOf(cst))
             }
 
             // 2. 在 #{} 内 → 不渲染，保持原样
-            if (this.noRenderDepth > 0) {
-                return {
-                    type: SlimeAstTypeName.ExpressionStatement,
-                    expression: expr,
-                    loc: cst.loc
-                } as SlimeExpressionStatement
+            if (this.isInsideNoRenderBlock()) {
+                return this.createExpressionStatementNode(expr, cstLocOf(cst)) as any
             }
 
             // 3. 副作用表达式（赋值、更新、delete）→ 不渲染
             if (this.isSideEffectExpression(expr)) {
-                return {
-                    type: SlimeAstTypeName.ExpressionStatement,
-                    expression: expr,
-                    loc: cst.loc
-                } as SlimeExpressionStatement
+                return this.createExpressionStatementNode(expr, cstLocOf(cst)) as any
             }
 
             // 4. 求值表达式 → 渲染
-            return this.createRenderExpressionStatement(expr, cst.loc)
+            return this.createRenderExpressionStatement(expr, cstLocOf(cst))
         }
 
         // 不在 div {} 内 → 保持原样
-        return {
-            type: SlimeAstTypeName.ExpressionStatement,
-            expression: expr,
-            loc: cst.loc
-        } as SlimeExpressionStatement
+        return this.createExpressionStatementNode(expr, cstLocOf(cst)) as any
     }
 
     /**
@@ -505,12 +504,8 @@ export abstract class OvsCstToSlimeAstStatement extends OvsCstToSlimeAstProperty
      * - 静态表达式：children.push(expr)
      * - 动态表达式：children.push(defineReactiveExpression(() => expr))
      */
-    private createRenderExpressionStatement(expr: SlimeExpression, loc: any): SlimeExpressionStatement {
+    private createRenderExpressionStatement(expr: any, loc: any): any {
         // 优化：Literal 是静态的，不需要响应式包裹
-        if (this.readAstType(expr) === SlimeAstTypeName.Literal) {
-            return this.createSimplePushStatement(expr, loc)
-        }
-
         // 动态表达式：使用响应式包裹
         return this.createReactivePushStatement(expr, loc)
     }
@@ -518,23 +513,4 @@ export abstract class OvsCstToSlimeAstStatement extends OvsCstToSlimeAstProperty
     /**
      * 创建简单的 children.push(expr) 语句（无响应式包裹）
      */
-    private createSimplePushStatement(expr: SlimeExpression, loc: any): SlimeExpressionStatement {
-        const normalizedExpr = normalizeGeneratedAst(expr as any) as SlimeExpression
-        const pushCall = SlimeAstCreateUtils.createCallExpression(
-            SlimeAstCreateUtils.createMemberExpression(
-                SlimeAstCreateUtils.createIdentifier('children'),
-                SlimeTokenCreateUtils.createDotToken(loc),
-                SlimeAstCreateUtils.createIdentifier('push')
-            ),
-            this.createCallArguments([normalizedExpr])
-        )
-        if (loc) {
-            pushCall.loc = loc
-        }
-        return {
-            type: SlimeAstTypeName.ExpressionStatement,
-            expression: pushCall,
-            loc: loc
-        } as SlimeExpressionStatement
-    }
 }
